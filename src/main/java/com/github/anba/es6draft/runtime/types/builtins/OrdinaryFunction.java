@@ -302,15 +302,14 @@ public class OrdinaryFunction extends FunctionObject {
     /**
      * 9.2.11 SetFunctionName Abstract Operation
      */
-    public static void SetFunctionName(ExecutionContext cx, FunctionObject f, String name) {
-        SetFunctionName(cx, f, name, null);
+    public static void SetFunctionName(FunctionObject f, String name) {
+        SetFunctionName(f, name, null);
     }
 
     /**
      * 9.2.11 SetFunctionName Abstract Operation
      */
-    public static void SetFunctionName(ExecutionContext cx, FunctionObject f, String name,
-            String prefix) {
+    public static void SetFunctionName(FunctionObject f, String name, String prefix) {
         /* step 1 */
         assert f.isExtensible() && !f.hasOwnProperty("name");
         /* step 2 (implicit) */
@@ -320,7 +319,7 @@ public class OrdinaryFunction extends FunctionObject {
             name = prefix + " " + name;
         }
         /* step 5 */
-        boolean success = f.defineOwnProperty(cx, "name", new PropertyDescriptor(name, false,
+        boolean success = f.ordinaryDefineOwnProperty("name", new PropertyDescriptor(name, false,
                 false, true));
         /* step 6 */
         assert success;
@@ -330,20 +329,19 @@ public class OrdinaryFunction extends FunctionObject {
     /**
      * 9.2.11 SetFunctionName Abstract Operation
      */
-    public static void SetFunctionName(ExecutionContext cx, FunctionObject f, Symbol name) {
-        SetFunctionName(cx, f, name, null);
+    public static void SetFunctionName(FunctionObject f, Symbol name) {
+        SetFunctionName(f, name, null);
     }
 
     /**
      * 9.2.11 SetFunctionName Abstract Operation
      */
-    public static void SetFunctionName(ExecutionContext cx, FunctionObject f, Symbol name,
-            String prefix) {
+    public static void SetFunctionName(FunctionObject f, Symbol name, String prefix) {
         /* step 3 */
         String description = name.getDescription();
         String sname = description == null ? "" : "[" + description + "]";
         /* steps 1-2, 4-7 */
-        SetFunctionName(cx, f, sname, prefix);
+        SetFunctionName(f, sname, prefix);
     }
 
     /**

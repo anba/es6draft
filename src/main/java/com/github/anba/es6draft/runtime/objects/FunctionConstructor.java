@@ -128,7 +128,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         /* step 22 */
         // FIXME: if-test missing in spec https://bugs.ecmascript.org/show_bug.cgi?id=2335
         if (!HasOwnProperty(calleeContext, fn, "name")) {
-            SetFunctionName(calleeContext, fn, "anonymous");
+            SetFunctionName(fn, "anonymous");
         }
         /* step 23 */
         return fn;

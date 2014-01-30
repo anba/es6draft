@@ -195,15 +195,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                                 Types.LexicalEnvironment, Type.BOOLEAN_TYPE));
 
         // class: OrdinaryFunction
-        static final MethodDesc OrdinaryFunction_SetFunctionName_String = MethodDesc
-                .create(MethodType.Static, Types.OrdinaryFunction, "SetFunctionName", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
-                                Types.FunctionObject, Types.String));
+        static final MethodDesc OrdinaryFunction_SetFunctionName_String = MethodDesc.create(
+                MethodType.Static, Types.OrdinaryFunction, "SetFunctionName",
+                Type.getMethodType(Type.VOID_TYPE, Types.FunctionObject, Types.String));
 
-        static final MethodDesc OrdinaryFunction_SetFunctionName_Symbol = MethodDesc
-                .create(MethodType.Static, Types.OrdinaryFunction, "SetFunctionName", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
-                                Types.FunctionObject, Types.Symbol));
+        static final MethodDesc OrdinaryFunction_SetFunctionName_Symbol = MethodDesc.create(
+                MethodType.Static, Types.OrdinaryFunction, "SetFunctionName",
+                Type.getMethodType(Type.VOID_TYPE, Types.FunctionObject, Types.Symbol));
 
         // class: ScriptException
         static final MethodDesc ScriptException_getValue = MethodDesc.create(MethodType.Virtual,
@@ -867,12 +865,9 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.ifne(hasOwnName);
         }
 
-        // stack: [propertyKey, function] -> [propertyKey, function, cx, function, propertyKey]
+        // stack: [propertyKey, function] -> [propertyKey, function, function, propertyKey]
         mv.dup2();
         mv.swap();
-        mv.loadExecutionContext();
-        mv.dupX2();
-        mv.pop();
 
         if (propertyKeyType == ValType.String) {
             mv.invoke(Methods.OrdinaryFunction_SetFunctionName_String);
@@ -883,7 +878,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.instanceOf(Types.String);
             mv.ifeq(isString);
             {
-                // stack: [propertyKey, function, cx, function, propertyKey] -> [propertyKey, fun.]
+                // stack: [propertyKey, function, function, propertyKey] -> [propertyKey, function]
                 mv.checkcast(Types.String);
                 mv.invoke(Methods.OrdinaryFunction_SetFunctionName_String);
                 mv.goTo(afterSetFunctionName);
@@ -920,12 +915,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.ifne(hasOwnName);
         }
 
-        // stack: [function] -> [function, cx, function, name]
+        // stack: [function] -> [function, function, name]
         mv.dup();
-        mv.loadExecutionContext();
-        mv.swap();
         mv.aconst(name);
-        // stack: [function, cx, function, name] -> [function]
+        // stack: [function, function, name] -> [function]
         mv.invoke(Methods.OrdinaryFunction_SetFunctionName_String);
 
         if (hasOwnName != null) {

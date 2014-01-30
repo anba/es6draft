@@ -131,7 +131,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         /* step 24 */
         // FIXME: if-test missing in spec https://bugs.ecmascript.org/show_bug.cgi?id=2335
         if (!HasOwnProperty(calleeContext, fn, "name")) {
-            SetFunctionName(calleeContext, fn, "anonymous");
+            SetFunctionName(fn, "anonymous");
         }
         /* step 25 */
         return fn;

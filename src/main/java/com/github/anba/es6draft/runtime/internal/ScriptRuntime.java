@@ -988,7 +988,7 @@ public final class ScriptRuntime {
         /* step 5 */
         MakeConstructor(cx, f);
         /* step 6 */
-        SetFunctionName(cx, f, name);
+        SetFunctionName(f, name);
         /* step 7 */
         return f;
     }
@@ -1037,7 +1037,7 @@ public final class ScriptRuntime {
             /* step 8 */
             MakeConstructor(cx, closure);
             /* step 9 */
-            SetFunctionName(cx, closure, name);
+            SetFunctionName(closure, name);
             /* step 10 */
             envRec.initialiseBinding(name, closure);
         }
@@ -1132,7 +1132,7 @@ public final class ScriptRuntime {
             MakeMethod(closure, propKey, object);
         }
         /* step 3 */
-        SetFunctionName(cx, closure, propKey);
+        SetFunctionName(closure, propKey);
         /* step 4 */
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
         /* step 5 */
@@ -1160,7 +1160,7 @@ public final class ScriptRuntime {
             MakeMethod(closure, propKey, object);
         }
         /* step 3 */
-        SetFunctionName(cx, closure, propKey);
+        SetFunctionName(closure, propKey);
         /* step 4 */
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
         /* step 5 */
@@ -1204,7 +1204,7 @@ public final class ScriptRuntime {
             MakeMethod(closure, propKey, object);
         }
         /* step 8 */
-        SetFunctionName(cx, closure, propKey, "get");
+        SetFunctionName(closure, propKey, "get");
         /* step 9 */
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setGetter(closure);
@@ -1234,7 +1234,7 @@ public final class ScriptRuntime {
             MakeMethod(closure, propKey, object);
         }
         /* step 8 */
-        SetFunctionName(cx, closure, propKey, "get");
+        SetFunctionName(closure, propKey, "get");
         /* step 9 */
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setGetter(closure);
@@ -1281,7 +1281,7 @@ public final class ScriptRuntime {
             MakeMethod(closure, propKey, object);
         }
         /* step 7 */
-        SetFunctionName(cx, closure, propKey, "set");
+        SetFunctionName(closure, propKey, "set");
         /* step 8 */
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setSetter(closure);
@@ -1311,7 +1311,7 @@ public final class ScriptRuntime {
             MakeMethod(closure, propKey, object);
         }
         /* step 7 */
-        SetFunctionName(cx, closure, propKey, "set");
+        SetFunctionName(closure, propKey, "set");
         /* step 8 */
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setSetter(closure);
@@ -1324,7 +1324,7 @@ public final class ScriptRuntime {
     /**
      * 14.4 Generator Function Definitions
      * <p>
-     * Runtime Semantics: InstantiateFunctionObject
+     * 14.4.12 Runtime Semantics: InstantiateFunctionObject
      */
     public static OrdinaryGenerator InstantiateGeneratorObject(LexicalEnvironment scope,
             ExecutionContext cx, RuntimeInfo.Function fd) {
@@ -1342,7 +1342,7 @@ public final class ScriptRuntime {
         /* step 7 */
         MakeConstructor(cx, f, true, prototype);
         // TODO: missing in spec
-        SetFunctionName(cx, f, name);
+        SetFunctionName(f, name);
         /* step 8 */
         return f;
     }
@@ -1350,7 +1350,7 @@ public final class ScriptRuntime {
     /**
      * 14.4 Generator Function Definitions
      * <p>
-     * Runtime Semantics: InstantiateFunctionObject
+     * 14.4.12 Runtime Semantics: InstantiateFunctionObject
      */
     public static OrdinaryGenerator InstantiateLegacyGeneratorObject(LexicalEnvironment scope,
             ExecutionContext cx, RuntimeInfo.Function fd) {
@@ -1368,7 +1368,7 @@ public final class ScriptRuntime {
         /* step 7 */
         MakeConstructor(cx, f, true, prototype);
         // TODO: missing in spec
-        SetFunctionName(cx, f, name);
+        SetFunctionName(f, name);
         /* step 8 */
         return f;
     }
@@ -1416,7 +1416,7 @@ public final class ScriptRuntime {
         /* step 9 */
         MakeConstructor(cx, closure, true, prototype);
         /* step 10 */
-        SetFunctionName(cx, closure, propKey);
+        SetFunctionName(closure, propKey);
         /* steps 11-12 */
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
         DefinePropertyOrThrow(cx, object, propKey, desc);
@@ -1448,7 +1448,7 @@ public final class ScriptRuntime {
         /* step 9 */
         MakeConstructor(cx, closure, true, prototype);
         /* step 10 */
-        SetFunctionName(cx, closure, propKey);
+        SetFunctionName(closure, propKey);
         /* steps 11-12 */
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
         DefinePropertyOrThrow(cx, object, propKey, desc);
@@ -1502,7 +1502,7 @@ public final class ScriptRuntime {
             /* step 10 */
             MakeConstructor(cx, closure, true, prototype);
             // TODO: missing in spec
-            SetFunctionName(cx, closure, name);
+            SetFunctionName(closure, name);
             /* step 11 */
             envRec.initialiseBinding(name, closure);
         }
@@ -1558,7 +1558,7 @@ public final class ScriptRuntime {
             /* step 10 */
             MakeConstructor(cx, closure, true, prototype);
             // TODO: missing in spec
-            SetFunctionName(cx, closure, name);
+            SetFunctionName(closure, name);
             /* step 11 */
             envRec.initialiseBinding(name, closure);
         }
