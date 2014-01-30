@@ -72,7 +72,7 @@ public final class Realm {
     /**
      * [[intrinsics]]
      */
-    private Map<Intrinsics, ScriptObject> intrinsics = new EnumMap<>(Intrinsics.class);
+    private final Map<Intrinsics, ScriptObject> intrinsics = new EnumMap<>(Intrinsics.class);
 
     /**
      * [[realmObject]]
@@ -374,15 +374,10 @@ public final class Realm {
     static <GLOBAL extends GlobalObject> Realm newRealm(World<GLOBAL> world, RealmObject realmObject) {
         Realm realm = new Realm(world);
         GlobalObject globalThis = world.getAllocator().newInstance(realm);
-        ExecutionContext defaultContext = newScriptExecutionContext(null, realm);
+        ExecutionContext defaultContext = newScriptExecutionContext(realm, null);
         GlobalEnvironmentRecord envRec = new GlobalEnvironmentRecord(defaultContext, globalThis);
         LexicalEnvironment globalEnv = new LexicalEnvironment(defaultContext, envRec);
 
-        //
-        defaultContext.setVariableEnvironment(globalEnv);
-        defaultContext.setLexicalEnvironment(globalEnv);
-
-        //
         boolean defaultRealmObject = realmObject == null;
         if (defaultRealmObject) {
             realmObject = new RealmObject(realm);

@@ -45,7 +45,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     protected final ExecutionContext cx;
-    private Map<String, Binding> bindings = new HashMap<>();
+    private final Map<String, Binding> bindings = new HashMap<>();
 
     public DeclarativeEnvironmentRecord(ExecutionContext cx) {
         this.cx = cx;

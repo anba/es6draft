@@ -1747,8 +1747,8 @@ public final class ScriptRuntime {
 
     public static Object DefaultConstructor(OrdinaryFunction callee,
             ExecutionContext callerContext, Object thisValue, Object[] args) {
-        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(callee,
-                thisValue);
+        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(
+                callerContext, callee, thisValue);
         DefaultConstructorInit(calleeContext, callee, args);
         return DefaultConstructor(calleeContext);
     }
@@ -1791,8 +1791,8 @@ public final class ScriptRuntime {
 
     public static Object DefaultEmptyConstructor(OrdinaryFunction callee,
             ExecutionContext callerContext, Object thisValue, Object[] args) {
-        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(callee,
-                thisValue);
+        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(
+                callerContext, callee, thisValue);
         DefaultEmptyConstructorInit(calleeContext, callee, args);
         return DefaultEmptyConstructor(calleeContext);
     }

@@ -31,8 +31,9 @@ final class FunctionCodeGenerator {
     private static final class Methods {
         // ExecutionContext
         static final MethodDesc ExecutionContext_newFunctionExecutionContext = MethodDesc.create(
-                MethodType.Static, Types.ExecutionContext, "newFunctionExecutionContext",
-                Type.getMethodType(Types.ExecutionContext, Types.FunctionObject, Types.Object));
+                MethodType.Static, Types.ExecutionContext, "newFunctionExecutionContext", Type
+                        .getMethodType(Types.ExecutionContext, Types.ExecutionContext,
+                                Types.FunctionObject, Types.Object));
 
         static final MethodDesc ExecutionContext_getCurrentFunction = MethodDesc.create(
                 MethodType.Virtual, Types.ExecutionContext, "getCurrentFunction",
@@ -145,7 +146,7 @@ final class FunctionCodeGenerator {
      * oldArguments = function.getLegacyArguments()
      * function.setLegacyCaller(callerContext.getCurrentFunction())
      * try {
-     *   calleeContext = newFunctionExecutionContext(function, thisValue)
+     *   calleeContext = newFunctionExecutionContext(callerContext, function, thisValue)
      *   function_init(calleeContext, function, arguments)
      *   return function_code(calleeContext)
      * } finally {
@@ -182,7 +183,7 @@ final class FunctionCodeGenerator {
         mv.mark(startFinally);
         {
             // (3) Create a new ExecutionContext
-            newFunctionExecutionContext(calleeContext, function, thisValue, mv);
+            newFunctionExecutionContext(calleeContext, callerContext, function, thisValue, mv);
 
             // (4) Perform FunctionDeclarationInstantiation
             functionDeclarationInstantiation(node, calleeContext, function, arguments, mv);
@@ -212,13 +213,15 @@ final class FunctionCodeGenerator {
      * Generate bytecode for:
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(function, thisValue)
+     * calleeContext = newFunctionExecutionContext(callerContext, function, thisValue)
      * function_init(calleeContext, function, arguments)
      * return function_code(calleeContext)
      * </pre>
      */
     private void generateFunction(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryFunction> function = mv.getParameter(FUNCTION, OrdinaryFunction.class);
+        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
+                ExecutionContext.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
@@ -226,7 +229,7 @@ final class FunctionCodeGenerator {
                 ExecutionContext.class);
 
         // (1) Create a new ExecutionContext
-        newFunctionExecutionContext(calleeContext, function, thisValue, mv);
+        newFunctionExecutionContext(calleeContext, callerContext, function, thisValue, mv);
 
         // (2) Perform FunctionDeclarationInstantiation
         functionDeclarationInstantiation(node, calleeContext, function, arguments, mv);
@@ -242,13 +245,15 @@ final class FunctionCodeGenerator {
      * Generate bytecode for:
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(generator, thisValue)
+     * calleeContext = newFunctionExecutionContext(callerContext, generator, thisValue)
      * function_init(calleeContext, generator, arguments)
      * return EvaluateBody(calleeContext, generator)
      * </pre>
      */
     private void generateGenerator(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryGenerator> generator = mv.getParameter(GENERATOR, OrdinaryGenerator.class);
+        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
+                ExecutionContext.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
@@ -256,7 +261,7 @@ final class FunctionCodeGenerator {
                 ExecutionContext.class);
 
         // (1) Create a new ExecutionContext
-        newFunctionExecutionContext(calleeContext, generator, thisValue, mv);
+        newFunctionExecutionContext(calleeContext, callerContext, generator, thisValue, mv);
 
         // (2) Perform FunctionDeclarationInstantiation
         functionDeclarationInstantiation(node, calleeContext, generator, arguments, mv);
@@ -274,13 +279,15 @@ final class FunctionCodeGenerator {
      * Generate bytecode for:
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(generator, thisValue)
+     * calleeContext = newFunctionExecutionContext(callerContext, generator, thisValue)
      * function_init(calleeContext, generator, arguments)
      * return EvaluateBodyComprehension(calleeContext, generator)
      * </pre>
      */
     private void generateGeneratorComprehension(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryGenerator> generator = mv.getParameter(GENERATOR, OrdinaryGenerator.class);
+        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
+                ExecutionContext.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
@@ -288,7 +295,7 @@ final class FunctionCodeGenerator {
                 ExecutionContext.class);
 
         // (1) Create a new ExecutionContext
-        newFunctionExecutionContext(calleeContext, generator, thisValue, mv);
+        newFunctionExecutionContext(calleeContext, callerContext, generator, thisValue, mv);
 
         // (2) Perform FunctionDeclarationInstantiation
         functionDeclarationInstantiation(node, calleeContext, generator, arguments, mv);
@@ -304,12 +311,13 @@ final class FunctionCodeGenerator {
 
     /**
      * <code>
-     * calleeContext = newFunctionExecutionContext(function, thisValue)
+     * calleeContext = newFunctionExecutionContext(callerContext, function, thisValue)
      * </code>
      */
     private void newFunctionExecutionContext(Variable<ExecutionContext> calleeContext,
-            Variable<? extends FunctionObject> function, Variable<Object> thisValue,
-            InstructionVisitor mv) {
+            Variable<ExecutionContext> callerContext, Variable<? extends FunctionObject> function,
+            Variable<Object> thisValue, InstructionVisitor mv) {
+        mv.load(callerContext);
         mv.load(function);
         mv.load(thisValue);
         mv.invoke(Methods.ExecutionContext_newFunctionExecutionContext);

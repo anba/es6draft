@@ -28,19 +28,20 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
  * </ul>
  */
 public final class ExecutionContext {
-    private Realm realm;
+    private final Realm realm;
+    private final LexicalEnvironment varEnv;
     private LexicalEnvironment lexEnv;
-    private LexicalEnvironment varEnv;
-    private Script script = null;
-    private FunctionObject function = null;
+    private final Script script;
+    private final FunctionObject function;
     private GeneratorObject generator = null;
 
-    void setLexicalEnvironment(LexicalEnvironment lexEnv) {
-        this.lexEnv = lexEnv;
-    }
-
-    void setVariableEnvironment(LexicalEnvironment varEnv) {
+    private ExecutionContext(Realm realm, LexicalEnvironment varEnv, LexicalEnvironment lexEnv,
+            Script script, FunctionObject function) {
+        this.realm = realm;
         this.varEnv = varEnv;
+        this.lexEnv = lexEnv;
+        this.script = script;
+        this.function = function;
     }
 
     public Realm getRealm() {
@@ -104,14 +105,9 @@ public final class ExecutionContext {
      * <p>
      * Runtime Semantics: Script Evaluation
      */
-    public static ExecutionContext newScriptExecutionContext(Script script, Realm realm) {
+    public static ExecutionContext newScriptExecutionContext(Realm realm, Script script) {
         /* steps 3-6 */
-        ExecutionContext progCxt = new ExecutionContext();
-        progCxt.realm = realm;
-        progCxt.varEnv = realm.getGlobalEnv();
-        progCxt.lexEnv = realm.getGlobalEnv();
-        progCxt.script = script;
-        return progCxt;
+        return new ExecutionContext(realm, realm.getGlobalEnv(), realm.getGlobalEnv(), script, null);
     }
 
     /**
@@ -127,11 +123,7 @@ public final class ExecutionContext {
      */
     public static ExecutionContext newModuleExecutionContext(Realm realm, LexicalEnvironment env) {
         /* steps 8-11 */
-        ExecutionContext initCxt = new ExecutionContext();
-        initCxt.realm = realm;
-        initCxt.varEnv = env;
-        initCxt.lexEnv = env;
-        return initCxt;
+        return new ExecutionContext(realm, env, env, null, null);
     }
 
     /**
@@ -146,31 +138,23 @@ public final class ExecutionContext {
     public static ExecutionContext newEvalExecutionContext(ExecutionContext callerContext,
             LexicalEnvironment varEnv, LexicalEnvironment lexEnv) {
         /* steps 17-20 */
-        ExecutionContext progCxt = new ExecutionContext();
-        progCxt.realm = callerContext.realm;
-        progCxt.varEnv = varEnv;
-        progCxt.lexEnv = lexEnv;
-        progCxt.script = callerContext.script;
-        progCxt.function = callerContext.function;
-        return progCxt;
+        return new ExecutionContext(callerContext.realm, varEnv, lexEnv, callerContext.script,
+                callerContext.function);
     }
 
     /**
      * <div>
      * <ul>
-     * <li>9 ECMAScript Ordinary and Exotic Objects Behaviours
+     * <li>9 Ordinary and Exotic Objects Behaviours
      * <ul>
-     * <li>9.1 Ordinary Object Internal Methods and Internal Data Properties
-     * <ul>
-     * <li>9.1.15 Ordinary Function Objects</div>
+     * <li>9.2 ECMAScript Function Objects</div>
      * <p>
-     * 9.1.15.1 [[Call]] (thisArgument, argumentsList)
+     * 9.2.4 [[Call]] (thisArgument, argumentsList)
      */
-    public static ExecutionContext newFunctionExecutionContext(FunctionObject f, Object thisArgument) {
+    public static ExecutionContext newFunctionExecutionContext(ExecutionContext callerContext,
+            FunctionObject f, Object thisArgument) {
         /* 9.1.15.1, steps 4-12 */
-        ExecutionContext calleeContext = new ExecutionContext();
         Realm calleeRealm = f.getRealm();
-        calleeContext.realm = calleeRealm;
         ThisMode thisMode = f.getThisMode();
         LexicalEnvironment localEnv;
         if (thisMode == ThisMode.Lexical) {
@@ -190,7 +174,8 @@ public final class ExecutionContext {
                 case Number:
                 case String:
                 case Symbol:
-                    thisValue = ToObject(calleeContext, thisArgument);
+                    // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=2484
+                    thisValue = ToObject(callerContext, thisArgument);
                     break;
                 case Object:
                 default:
@@ -198,12 +183,9 @@ public final class ExecutionContext {
                     break;
                 }
             }
-            localEnv = newFunctionEnvironment(calleeContext, f, thisValue);
+            localEnv = newFunctionEnvironment(callerContext, f, thisValue);
         }
-        calleeContext.varEnv = localEnv;
-        calleeContext.lexEnv = localEnv;
-        calleeContext.function = f;
-        return calleeContext;
+        return new ExecutionContext(calleeRealm, localEnv, localEnv, null, f);
     }
 
     /**

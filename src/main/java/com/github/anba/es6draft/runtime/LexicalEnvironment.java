@@ -96,12 +96,7 @@ public final class LexicalEnvironment {
      * 8.1.2.3 NewObjectEnvironment (O, E)
      */
     public static LexicalEnvironment newObjectEnvironment(ScriptObject o, LexicalEnvironment e) {
-        /* steps 2-3 */
-        EnvironmentRecord envRec = new ObjectEnvironmentRecord(e.cx, o, false);
-        /* steps 1, 4-5 */
-        LexicalEnvironment env = new LexicalEnvironment(e, envRec);
-        /* step 6 */
-        return env;
+        return newObjectEnvironment(o, e, false);
     }
 
     /**
@@ -120,19 +115,21 @@ public final class LexicalEnvironment {
     /**
      * 8.1.2.4 NewFunctionEnvironment (F, T)
      */
-    public static LexicalEnvironment newFunctionEnvironment(ExecutionContext cx, FunctionObject f,
-            Object t) {
+    public static LexicalEnvironment newFunctionEnvironment(ExecutionContext callerContext,
+            FunctionObject f, Object t) {
         /* step 1 */
         assert f.getThisMode() != ThisMode.Lexical;
         /* step 5 */
         if (f.isNeedsSuper() && f.getHomeObject() == null) {
-            throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
+            // FIXME: spec bug like https://bugs.ecmascript.org/show_bug.cgi?id=2484 ?
+            throw newReferenceError(callerContext, Messages.Key.MissingSuperBinding);
         }
+        LexicalEnvironment e = f.getEnvironment();
         /* steps 3-6 */
-        EnvironmentRecord envRec = new FunctionEnvironmentRecord(cx, t, f.getHomeObject(),
+        EnvironmentRecord envRec = new FunctionEnvironmentRecord(e.cx, t, f.getHomeObject(),
                 f.getMethodName());
         /* steps 2, 7-8 */
-        LexicalEnvironment env = new LexicalEnvironment(f.getEnvironment(), envRec);
+        LexicalEnvironment env = new LexicalEnvironment(e, envRec);
         /* step 9 */
         return env;
     }

@@ -120,6 +120,7 @@ public final class Eval {
         boolean globalCode = EvalFlags.GlobalCode.isSet(flags);
         boolean globalScope = EvalFlags.GlobalScope.isSet(flags);
         boolean withStatement = EvalFlags.EnclosedByWithStatement.isSet(flags);
+        assert direct || cx == cx.getRealm().defaultContext() : "indirect eval with non-default context";
         /* step 1 */
         if (!Type.isString(source)) {
             return source;
@@ -140,8 +141,8 @@ public final class Eval {
         Realm evalRealm = cx.getRealm();
         /* step 9 */
         if (!direct && !strictScript) {
-            assert cx.getVariableEnvironment() == evalRealm.getGlobalEnv();
-            assert cx.getLexicalEnvironment() == evalRealm.getGlobalEnv();
+            assert cx.getVariableEnvironment() == null;
+            assert cx.getLexicalEnvironment() == null;
             return ScriptEvaluation(script, evalRealm, true);
         }
         /* step 10 */

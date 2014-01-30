@@ -46,7 +46,7 @@ public final class ScriptLoader {
         scriptBody.globalDeclarationInstantiation(realm.defaultContext(), globalEnv, globalEnv,
                 deletableBindings);
         /* steps 6-9 */
-        ExecutionContext progCxt = newScriptExecutionContext(script, realm);
+        ExecutionContext progCxt = newScriptExecutionContext(realm, script);
         ExecutionContext oldScriptContext = realm.getScriptContext();
         try {
             realm.setScriptContext(progCxt);
