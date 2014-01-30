@@ -6,7 +6,7 @@
  */
 
 const {
-  assertSame
+  assertSame, fail
 } = Assert;
 
 const stackLimit = (function() {
@@ -25,9 +25,14 @@ const stackLimit = (function() {
     return f(limit - 1);
   }
 
-  try {
-    f(stackLimit * 10);
-    fail("tail call in non-strict mode should not be supported");
-  } catch (e) {
+  function test() {
+    try {
+      f(stackLimit * 10);
+    } catch (e) {
+      // catch expected stackoverflow error
+      return;
+    }
+    fail `tail call in non-strict mode should not be supported`;
   }
+  test();
 }
