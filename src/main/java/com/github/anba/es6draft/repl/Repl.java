@@ -400,10 +400,7 @@ public final class Repl {
      * REPL: Loop
      */
     private void loop() {
-        ShellGlobalObject global = newGlobal();
-        runStartScript(global);
-
-        Realm realm = global.getRealm();
+        Realm realm = newRealm();
         for (int line = 1;; line += 1) {
             drainTaskQueue(realm);
             try {
@@ -448,7 +445,7 @@ public final class Repl {
         }
     }
 
-    private ShellGlobalObject newGlobal() {
+    private Realm newRealm() {
         ReplConsole console = this.console;
         Path baseDir = Paths.get("").toAbsolutePath();
         Path script = Paths.get("./.");
@@ -484,31 +481,34 @@ public final class Repl {
         World<? extends ShellGlobalObject> world = new World<>(allocator, compatibilityOptions,
                 compilerOptions);
         ShellGlobalObject global = world.newGlobal();
-        console.addCompletion(global.getRealm());
+        Realm realm = global.getRealm();
+        ExecutionContext cx = realm.defaultContext();
 
+        // Add completion to console
+        console.addCompletion(realm);
+
+        // Add global "arguments" property
+        ScriptObject arguments = CreateArrayFromList(cx, startScript.arguments);
+        global.defineOwnProperty(cx, "arguments", new PropertyDescriptor(arguments, true, false,
+                true));
+
+        // Execute any global specific initialisation scripts
         try {
             global.executeInitialisation();
         } catch (ParserException | CompilationException | IOException e) {
             printException(e);
         }
 
-        return global;
-    }
-
-    private void runStartScript(ShellGlobalObject global) {
-        ExecutionContext cx = global.getRealm().defaultContext();
-
-        ScriptObject arguments = CreateArrayFromList(cx, startScript.arguments);
-        global.defineOwnProperty(cx, "arguments", new PropertyDescriptor(arguments, true, false,
-                true));
-
-        Path script = startScript.script;
-        if (!script.toString().equals("-")) {
+        // Run start script, if defined
+        Path startScriptPath = startScript.script;
+        if (!startScriptPath.toString().equals("-")) {
             try {
-                global.eval(script, script);
+                global.eval(startScriptPath, startScriptPath);
             } catch (ParserException | CompilationException | IOException e) {
                 printException(e);
             }
         }
+
+        return realm;
     }
 }
