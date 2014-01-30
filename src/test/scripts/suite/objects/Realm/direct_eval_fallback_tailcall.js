@@ -13,40 +13,29 @@ const {
 // - direct eval fallback and 'wrong' eval function have both tail calls enabled
 // - chaining them should preserve the tail call property
 
-const stackLimit = (function() {
-  let limit = 0;
-  try {
-    (function f(){ f(limit++) })();
-  } catch (e) {
-  }
-  return limit;
-})();
-
-function gauss(n) {
-  return (n * n + n) / 2;
-}
-
-let callCount;
 let realm = new Realm({
   directEval: {
     fallback(thisArgument, callee, ...args) {
       "use strict";
-      callCount += 1;
       return callee(...args);
     }
   }
 });
 realm.eval(`
-  function sum(n, acc) {
-    "use strict";
-    if (n === 0) return acc;
-    return eval(n - 1, acc + n);
+  function returnCaller() {
+    return returnCaller.caller;
   }
-  eval = sum;
+
+  function tailCall() {
+    "use strict";
+    return returnCaller();
+  }
+
+  function testFunction() {
+    return eval("123");
+  }
+
+  eval = tailCall;
 `);
 
-for (let v of [1, 10, 100, 1000, 10000, stackLimit * 10]) {
-  callCount = 0;
-  assertSame(gauss(v), realm.eval(`sum(${v}, 0)`));
-  assertSame(v, callCount);
-}
+assertSame(realm.global.testFunction, realm.eval(`testFunction()`));
