@@ -15,7 +15,6 @@ import java.util.List;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Task;
-import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
@@ -239,9 +238,8 @@ public final class PromiseAbstractOperations {
     public static void TriggerPromiseReactions(ExecutionContext cx,
             List<PromiseReaction> reactions, Object argument) {
         Realm realm = cx.getRealm();
-        World<?> world = realm.getWorld();
         for (PromiseReaction reaction : reactions) {
-            world.enqueuePromiseTask(new PromiseReactionTask(realm, reaction, argument));
+            realm.enqueuePromiseTask(new PromiseReactionTask(realm, reaction, argument));
         }
     }
 

@@ -126,14 +126,12 @@ public final class PromisePrototype extends OrdinaryObject implements Initialisa
             /* step 18 */
             else if (promise.getStatus() == PromiseObject.Status.HasResolution) {
                 Object resolution = promise.getResult();
-                realm.getWorld().enqueuePromiseTask(
-                        new PromiseReactionTask(realm, resolveReaction, resolution));
+                realm.enqueuePromiseTask(new PromiseReactionTask(realm, resolveReaction, resolution));
             }
             /* step 19 */
             else if (promise.getStatus() == PromiseObject.Status.HasRejection) {
                 Object reason = promise.getResult();
-                realm.getWorld().enqueuePromiseTask(
-                        new PromiseReactionTask(realm, rejectReaction, reason));
+                realm.enqueuePromiseTask(new PromiseReactionTask(realm, rejectReaction, reason));
             }
             /* step 20 */
             return promiseCapability.getPromise();

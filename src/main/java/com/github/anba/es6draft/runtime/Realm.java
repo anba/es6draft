@@ -294,6 +294,24 @@ public final class Realm {
     }
 
     /**
+     * 8.4.1 EnqueueTask ( queueName, task, arguments) Abstract Operation
+     * <p>
+     * Enqueues {@code task} to the queue of pending loading-tasks
+     */
+    public void enqueueLoadingTask(Task task) {
+        world.enqueueLoadingTask(task);
+    }
+
+    /**
+     * 8.4.1 EnqueueTask ( queueName, task, arguments) Abstract Operation
+     * <p>
+     * Enqueues {@code task} to the queue of pending promise-tasks
+     */
+    public void enqueuePromiseTask(Task task) {
+        world.enqueuePromiseTask(task);
+    }
+
+    /**
      * Returns the template call-site object for {@code key}
      */
     public ScriptObject getTemplateCallSite(String key) {
