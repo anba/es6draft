@@ -81,8 +81,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         static final MethodDesc AbstractOperations_ToPrimitive = MethodDesc
                 .create(MethodType.Static, Types.AbstractOperations, "ToPrimitive", Type
-                        .getMethodType(Types.Object, Types.ExecutionContext, Types.Object,
-                                Types._Type));
+                        .getMethodType(Types.Object, Types.ExecutionContext, Types.Object));
 
         static final MethodDesc AbstractOperations_ToBoolean = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToBoolean",
@@ -544,7 +543,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         default:
             mv.loadExecutionContext();
             mv.swap();
-            mv.aconst(null);
             mv.invoke(Methods.AbstractOperations_ToPrimitive);
             return ValType.Any;
         }

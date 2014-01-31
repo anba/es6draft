@@ -710,9 +710,9 @@ public final class ScriptRuntime {
     public static Object add(Object lval, Object rval, ExecutionContext cx) {
         /* steps 1-6 (generated code) */
         /* steps 7-8 */
-        Object lprim = ToPrimitive(cx, lval, null);
+        Object lprim = ToPrimitive(cx, lval);
         /* steps 9-10 */
-        Object rprim = ToPrimitive(cx, rval, null);
+        Object rprim = ToPrimitive(cx, rval);
         /* step 11 */
         if (Type.isString(lprim) || Type.isString(rprim)) {
             CharSequence lstr = ToString(cx, lprim);

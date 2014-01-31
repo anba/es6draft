@@ -61,17 +61,41 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.1 ToPrimitive
+     * Hint string for
+     * {@link AbstractOperations#ToPrimitive(ExecutionContext, Object, ToPrimitiveHint)}
      */
-    public static Object ToPrimitive(ExecutionContext cx, Object val) {
-        // null == no hint
-        return ToPrimitive(cx, val, null);
+    public enum ToPrimitiveHint {
+        Default, String, Number;
+
+        @Override
+        public String toString() {
+            switch (this) {
+            case String:
+                return "string";
+            case Number:
+                return "number";
+            case Default:
+            default:
+                return "default";
+            }
+        }
     }
 
     /**
      * 7.1.1 ToPrimitive
      */
-    public static Object ToPrimitive(ExecutionContext cx, Object argument, Type preferredType) {
+    public static Object ToPrimitive(ExecutionContext cx, Object argument) {
+        if (!Type.isObject(argument)) {
+            return argument;
+        }
+        return ToPrimitive(cx, Type.objectValue(argument), ToPrimitiveHint.Default);
+    }
+
+    /**
+     * 7.1.1 ToPrimitive
+     */
+    public static Object ToPrimitive(ExecutionContext cx, Object argument,
+            ToPrimitiveHint preferredType) {
         if (!Type.isObject(argument)) {
             return argument;
         }
@@ -83,25 +107,16 @@ public final class AbstractOperations {
      * <p>
      * ToPrimitive for the Object type
      */
-    private static Object ToPrimitive(ExecutionContext cx, ScriptObject argument, Type preferredType) {
-        // TODO: change Type to enum ToPrimitiveHint { Default, String, Number }
-        /* steps 1-3 (moved) */
+    private static Object ToPrimitive(ExecutionContext cx, ScriptObject argument,
+            ToPrimitiveHint preferredType) {
+        /* steps 1-3 */
+        String hint = preferredType.toString();
         /* steps 4-5 */
         Object exoticToPrim = Get(cx, argument, BuiltinSymbol.toPrimitive.get());
         /* step 6 */
         if (!Type.isUndefined(exoticToPrim)) {
             if (!IsCallable(exoticToPrim))
                 throw newTypeError(cx, Messages.Key.NotCallable);
-            /* steps 1-3 */
-            String hint;
-            if (preferredType == null) {
-                hint = "default";
-            } else if (preferredType == Type.String) {
-                hint = "string";
-            } else {
-                assert preferredType == Type.Number;
-                hint = "number";
-            }
             Object result = ((Callable) exoticToPrim).call(cx, argument, hint);
             if (!Type.isObject(result)) {
                 return result;
@@ -109,8 +124,8 @@ public final class AbstractOperations {
             throw newTypeError(cx, Messages.Key.NotPrimitiveType);
         }
         /* step 7 */
-        if (preferredType == null) {
-            preferredType = Type.Number;
+        if (preferredType == ToPrimitiveHint.Default) {
+            preferredType = ToPrimitiveHint.Number;
         }
         /* step 8 */
         return OrdinaryToPrimitive(cx, argument, preferredType);
@@ -121,12 +136,13 @@ public final class AbstractOperations {
      * <p>
      * OrdinaryToPrimitive
      */
-    public static Object OrdinaryToPrimitive(ExecutionContext cx, ScriptObject object, Type hint) {
+    public static Object OrdinaryToPrimitive(ExecutionContext cx, ScriptObject object,
+            ToPrimitiveHint hint) {
         /* steps 1-2 */
-        assert hint == Type.String || hint == Type.Number;
+        assert hint == ToPrimitiveHint.String || hint == ToPrimitiveHint.Number;
         /* steps 3-4 */
         String tryFirst, trySecond;
-        if (hint == Type.String) {
+        if (hint == ToPrimitiveHint.String) {
             tryFirst = "toString";
             trySecond = "valueOf";
         } else {
@@ -203,7 +219,7 @@ public final class AbstractOperations {
             return Double.NaN;
         case Object:
         default:
-            Object primValue = ToPrimitive(cx, val, Type.Number);
+            Object primValue = ToPrimitive(cx, val, ToPrimitiveHint.Number);
             return ToNumber(cx, primValue);
         }
     }
@@ -405,7 +421,7 @@ public final class AbstractOperations {
             throw newTypeError(cx, Messages.Key.SymbolString);
         case Object:
         default:
-            Object primValue = ToPrimitive(cx, val, Type.String);
+            Object primValue = ToPrimitive(cx, val, ToPrimitiveHint.String);
             return ToString(cx, primValue);
         }
     }
@@ -696,11 +712,11 @@ public final class AbstractOperations {
         /* steps 3-4 */
         Object px, py;
         if (leftFirst) {
-            px = ToPrimitive(cx, x, Type.Number);
-            py = ToPrimitive(cx, y, Type.Number);
+            px = ToPrimitive(cx, x, ToPrimitiveHint.Number);
+            py = ToPrimitive(cx, y, ToPrimitiveHint.Number);
         } else {
-            py = ToPrimitive(cx, y, Type.Number);
-            px = ToPrimitive(cx, x, Type.Number);
+            py = ToPrimitive(cx, y, ToPrimitiveHint.Number);
+            px = ToPrimitive(cx, x, ToPrimitiveHint.Number);
         }
         /* steps 5-6 */
         if (!(Type.isString(px) && Type.isString(py))) {
@@ -776,11 +792,11 @@ public final class AbstractOperations {
         }
         /* step 8 */
         if ((tx == Type.String || tx == Type.Number) && ty == Type.Object) {
-            return EqualityComparison(cx, x, ToPrimitive(cx, y, null));
+            return EqualityComparison(cx, x, ToPrimitive(cx, y));
         }
         /* step 9 */
         if (tx == Type.Object && (ty == Type.String || ty == Type.Number)) {
-            return EqualityComparison(cx, ToPrimitive(cx, x, null), y);
+            return EqualityComparison(cx, ToPrimitive(cx, x), y);
         }
         /* step 10 */
         return false;

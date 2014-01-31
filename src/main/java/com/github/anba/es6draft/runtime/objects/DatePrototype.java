@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import com.github.anba.es6draft.runtime.AbstractOperations;
+import com.github.anba.es6draft.runtime.AbstractOperations.ToPrimitiveHint;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
@@ -918,7 +919,7 @@ public final class DatePrototype extends OrdinaryObject implements Initialisable
             /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
             /* step 2 */
-            Object tv = AbstractOperations.ToPrimitive(cx, o, Type.Number);
+            Object tv = AbstractOperations.ToPrimitive(cx, o, ToPrimitiveHint.Number);
             /* step 3 */
             if (Type.isNumber(tv) && !isFinite(Type.numberValue(tv))) {
                 return NULL;
@@ -944,17 +945,17 @@ public final class DatePrototype extends OrdinaryObject implements Initialisable
             if (!Type.isObject(thisValue)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
-            Type tryFirst;
             /* step 5 */
             if (!Type.isString(hint)) {
                 throw newTypeError(cx, Messages.Key.InvalidToPrimitiveHint, "?");
             }
             /* steps 3-5 */
+            ToPrimitiveHint tryFirst;
             String _hint = Type.stringValue(hint).toString();
             if ("string".equals(_hint) || "default".equals(_hint)) {
-                tryFirst = Type.String;
+                tryFirst = ToPrimitiveHint.String;
             } else if ("number".equals(_hint)) {
-                tryFirst = Type.Number;
+                tryFirst = ToPrimitiveHint.Number;
             } else {
                 throw newTypeError(cx, Messages.Key.InvalidToPrimitiveHint, _hint);
             }
