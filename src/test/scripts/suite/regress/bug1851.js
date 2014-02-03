@@ -11,6 +11,7 @@ const {
 
 // 8.3.16.10: Invalid assertion in step 1
 // https://bugs.ecmascript.org/show_bug.cgi?id=1851
+// https://bugs.ecmascript.org/show_bug.cgi?id=1613
 
 let f = Function[Symbol.create]();
 Object.defineProperty(f, "prototype", {get() { return String.prototype }});
