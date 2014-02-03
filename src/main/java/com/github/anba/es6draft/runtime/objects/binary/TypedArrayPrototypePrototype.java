@@ -178,7 +178,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 /* step 26 */
                 long limit = (long) (targetByteIndex + targetElementSize
                         * Math.min(srcLength, targetLength - targetOffset));
-                /* steps 24, 27 */
+                /* steps 25, 27 */
                 for (long k = 0; targetByteIndex < limit; ++k, targetByteIndex += targetElementSize) {
                     String pk = ToString(k);
                     Object kValue = Get(cx, src, pk);
