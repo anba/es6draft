@@ -233,9 +233,8 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 /* steps 24-25 */
                 long srcByteIndex;
                 if (SameValue(srcBuffer, targetBuffer)) {
-                    srcBuffer = CloneArrayBuffer(cx, srcBuffer, srcByteOffset);
                     // FIXME: CloneArrayBuffer is not side-effect free!
-                    assert srcBuffer.getByteLength() == srcLength * srcType.size();
+                    srcBuffer = CloneArrayBuffer(cx, srcBuffer, srcByteOffset);
                     srcByteIndex = 0;
                 } else {
                     srcByteIndex = srcByteOffset;
