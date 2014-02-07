@@ -18,123 +18,16 @@ public final class RuntimeInfo {
     private RuntimeInfo() {
     }
 
-    public static Function newFunction(final String functionName, final int functionFlags,
-            final int expectedArgumentCount, final String source, final MethodHandle handle,
-            final MethodHandle callMethod) {
-        return new Function() {
-            @Override
-            public String functionName() {
-                return functionName;
-            }
-
-            @Override
-            public boolean isStrict() {
-                return FunctionFlags.Strict.isSet(functionFlags);
-            }
-
-            @Override
-            public boolean hasSuperReference() {
-                return FunctionFlags.Super.isSet(functionFlags);
-            }
-
-            @Override
-            public boolean hasScopedName() {
-                return FunctionFlags.ScopedName.isSet(functionFlags);
-            }
-
-            @Override
-            public boolean isGenerator() {
-                return FunctionFlags.Generator.isSet(functionFlags);
-            }
-
-            @Override
-            public boolean hasTailCall() {
-                return FunctionFlags.TailCall.isSet(functionFlags);
-            }
-
-            @Override
-            public boolean isLegacy() {
-                return FunctionFlags.Legacy.isSet(functionFlags);
-            }
-
-            @Override
-            public boolean hasSyntheticMethods() {
-                return FunctionFlags.SyntheticMethods.isSet(functionFlags);
-            }
-
-            @Override
-            public int expectedArgumentCount() {
-                return expectedArgumentCount;
-            }
-
-            @Override
-            public String source() {
-                return source;
-            }
-
-            @Override
-            public MethodHandle handle() {
-                return handle;
-            }
-
-            @Override
-            public MethodHandle callMethod() {
-                return callMethod;
-            }
-        };
+    public static Function newFunction(String functionName, int functionFlags,
+            int expectedArgumentCount, String source, MethodHandle handle, MethodHandle callMethod) {
+        return new CompiledFunction(functionName, functionFlags, expectedArgumentCount, source,
+                handle, callMethod);
     }
 
-    public static ScriptBody newScriptBody(final String sourceFile, final boolean isStrict,
-            final MethodHandle initialisation, final MethodHandle evalinitialisation,
-            final MethodHandle handle) {
-        return new ScriptBody() {
-            @Override
-            public String sourceFile() {
-                return sourceFile;
-            }
-
-            @Override
-            public boolean isStrict() {
-                return isStrict;
-            }
-
-            @Override
-            public void globalDeclarationInstantiation(ExecutionContext cx,
-                    LexicalEnvironment globalEnv, LexicalEnvironment lexicalEnv,
-                    boolean deletableBindings) {
-                try {
-                    initialisation.invokeExact(cx, globalEnv, lexicalEnv, deletableBindings);
-                } catch (RuntimeException | Error e) {
-                    throw e;
-                } catch (Throwable e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-            @Override
-            public void evalDeclarationInstantiation(ExecutionContext cx,
-                    LexicalEnvironment variableEnv, LexicalEnvironment lexicalEnv,
-                    boolean deletableBindings) {
-                try {
-                    evalinitialisation.invokeExact(cx, variableEnv, lexicalEnv, deletableBindings);
-                } catch (RuntimeException | Error e) {
-                    throw e;
-                } catch (Throwable e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-            @Override
-            public Object evaluate(ExecutionContext cx) {
-                try {
-                    return handle.invokeExact(cx);
-                } catch (RuntimeException | Error e) {
-                    throw e;
-                } catch (Throwable e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
+    public static ScriptBody newScriptBody(String sourceFile, boolean isStrict,
+            MethodHandle initialisation, MethodHandle evalinitialisation, MethodHandle handle) {
+        return new CompiledScriptBody(sourceFile, isStrict, initialisation, evalinitialisation,
+                handle);
     }
 
     /**
@@ -152,6 +45,70 @@ public final class RuntimeInfo {
                 LexicalEnvironment lexicalEnv, boolean deletableBindings);
 
         Object evaluate(ExecutionContext cx);
+    }
+
+    private static final class CompiledScriptBody implements ScriptBody {
+        private final String sourceFile;
+        private final boolean isStrict;
+        private final MethodHandle initialisation;
+        private final MethodHandle evalinitialisation;
+        private final MethodHandle handle;
+
+        CompiledScriptBody(String sourceFile, boolean isStrict, MethodHandle initialisation,
+                MethodHandle evalinitialisation, MethodHandle handle) {
+            this.sourceFile = sourceFile;
+            this.isStrict = isStrict;
+            this.initialisation = initialisation;
+            this.evalinitialisation = evalinitialisation;
+            this.handle = handle;
+        }
+
+        @Override
+        public String sourceFile() {
+            return sourceFile;
+        }
+
+        @Override
+        public boolean isStrict() {
+            return isStrict;
+        }
+
+        @Override
+        public void globalDeclarationInstantiation(ExecutionContext cx,
+                LexicalEnvironment globalEnv, LexicalEnvironment lexicalEnv,
+                boolean deletableBindings) {
+            try {
+                initialisation.invokeExact(cx, globalEnv, lexicalEnv, deletableBindings);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void evalDeclarationInstantiation(ExecutionContext cx,
+                LexicalEnvironment variableEnv, LexicalEnvironment lexicalEnv,
+                boolean deletableBindings) {
+            try {
+                evalinitialisation.invokeExact(cx, variableEnv, lexicalEnv, deletableBindings);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public Object evaluate(ExecutionContext cx) {
+            try {
+                return handle.invokeExact(cx);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public enum FunctionFlags {
@@ -238,5 +195,84 @@ public final class RuntimeInfo {
          * (ExecutionContext, ...?) -> Object
          */
         MethodHandle handle();
+    }
+
+    private static final class CompiledFunction implements Function {
+        private final String functionName;
+        private final int functionFlags;
+        private final int expectedArgumentCount;
+        private final String source;
+        private final MethodHandle handle;
+        private final MethodHandle callMethod;
+
+        CompiledFunction(String functionName, int functionFlags, int expectedArgumentCount,
+                String source, MethodHandle handle, MethodHandle callMethod) {
+            this.functionName = functionName;
+            this.functionFlags = functionFlags;
+            this.expectedArgumentCount = expectedArgumentCount;
+            this.source = source;
+            this.handle = handle;
+            this.callMethod = callMethod;
+        }
+
+        @Override
+        public String functionName() {
+            return functionName;
+        }
+
+        @Override
+        public boolean isStrict() {
+            return FunctionFlags.Strict.isSet(functionFlags);
+        }
+
+        @Override
+        public boolean hasSuperReference() {
+            return FunctionFlags.Super.isSet(functionFlags);
+        }
+
+        @Override
+        public boolean hasScopedName() {
+            return FunctionFlags.ScopedName.isSet(functionFlags);
+        }
+
+        @Override
+        public boolean isGenerator() {
+            return FunctionFlags.Generator.isSet(functionFlags);
+        }
+
+        @Override
+        public boolean hasTailCall() {
+            return FunctionFlags.TailCall.isSet(functionFlags);
+        }
+
+        @Override
+        public boolean isLegacy() {
+            return FunctionFlags.Legacy.isSet(functionFlags);
+        }
+
+        @Override
+        public boolean hasSyntheticMethods() {
+            return FunctionFlags.SyntheticMethods.isSet(functionFlags);
+        }
+
+        @Override
+        public int expectedArgumentCount() {
+            return expectedArgumentCount;
+        }
+
+        @Override
+        public String source() {
+            return source;
+        }
+
+        @Override
+        public MethodHandle handle() {
+            return handle;
+        }
+
+        @Override
+        public MethodHandle callMethod() {
+            return callMethod;
+        }
     }
 }
