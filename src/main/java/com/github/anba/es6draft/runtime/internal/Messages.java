@@ -92,6 +92,7 @@ public final class Messages {
         InvalidFormalParameterList("parser.invalid_formal_parameter_list"),
         InvalidFunctionBody("parser.invalid_function_body"),
         FormalParameterRedeclaration("parser.formal_parameter_redeclaration"),
+        DuplicateFormalParameter("parser.duplicate_formal_parameter"),
         UnexpectedEndOfLine("parser.unexpected_end_of_line"),
         MissingSemicolon("parser.missing_semicolon"),
         EmptyParenthesisedExpression("parser.empty_parenthesised_expression"),
@@ -116,7 +117,6 @@ public final class Messages {
         ConstMissingInitialiser("parser.const_missing_initialiser"),
 
         // strict mode TokenStream/Parser errors
-        StrictModeDuplicateFormalParameter("parser.strict.duplicate_formal_parameter"),
         StrictModeRestrictedIdentifier("parser.strict.restricted_identifier"),
         StrictModeWithStatement("parser.strict.with_statement"),
         StrictModeInvalidAssignmentTarget("parser.strict.invalid_assignment_target"),

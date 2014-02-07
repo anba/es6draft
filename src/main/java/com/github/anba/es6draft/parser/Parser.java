@@ -95,7 +95,7 @@ public final class Parser {
         List<FunctionNode> deferred = null;
         ArrayDeque<ObjectLiteral> objectLiterals = null;
 
-        Map<String, LabelContext> labelSet = null;
+        HashMap<String, LabelContext> labelSet = null;
         LabelContext labels = null;
 
         ScopeContext scopeContext;
@@ -158,7 +158,7 @@ public final class Parser {
         }
 
         int countLiterals() {
-            return (objectLiterals != null ? objectLiterals.size() : 0);
+            return objectLiterals != null ? objectLiterals.size() : 0;
         }
 
         void addLiteral(ObjectLiteral object) {
@@ -352,7 +352,7 @@ public final class Parser {
         }
 
         boolean isTopLevel() {
-            return (parent == null);
+            return parent == null;
         }
 
         boolean addVarDeclaredName(String name) {
@@ -360,7 +360,7 @@ public final class Parser {
                 varDeclaredNames = new HashSet<>();
             }
             varDeclaredNames.add(name);
-            return (lexDeclaredNames == null || !lexDeclaredNames.contains(name));
+            return lexDeclaredNames == null || !lexDeclaredNames.contains(name);
         }
 
         boolean addLexDeclaredName(String name) {
@@ -958,8 +958,7 @@ public final class Parser {
                 restoreContext();
             }
 
-            createScript(new ExpressionStatement(function.getBeginPosition(),
-                    function.getEndPosition(), function));
+            createScript(function);
 
             return function;
         } finally {
@@ -1012,8 +1011,7 @@ public final class Parser {
                 restoreContext();
             }
 
-            createScript(new ExpressionStatement(generator.getBeginPosition(),
-                    generator.getEndPosition(), generator));
+            createScript(generator);
 
             return generator;
         } finally {
@@ -1021,7 +1019,9 @@ public final class Parser {
         }
     }
 
-    private Script createScript(StatementListItem statement) {
+    private <FUNEXPR extends Expression & FunctionNode> Script createScript(FUNEXPR funExpr) {
+        StatementListItem statement = new ExpressionStatement(funExpr.getBeginPosition(),
+                funExpr.getEndPosition(), funExpr);
         List<StatementListItem> statements = singletonList(statement);
         boolean strict = (context.strictMode == StrictMode.Strict);
 
@@ -1754,8 +1754,8 @@ public final class Parser {
         return new FormalParameterList(begin, ts.endPosition(), formals);
     }
 
-    private static <T> T containsAny(Set<T> set, List<T> list) {
-        for (T element : list) {
+    private static String containsAny(HashSet<String> set, List<String> list) {
+        for (String element : list) {
             if (set.contains(element)) {
                 return element;
             }
@@ -1770,6 +1770,27 @@ public final class Parser {
             if (redeclared != null) {
                 reportSyntaxError(node, Messages.Key.FormalParameterRedeclaration, redeclared);
             }
+        }
+    }
+
+    private static String findDuplicate(HashSet<String> set, List<String> list) {
+        assert list.size() > set.size();
+        HashSet<String> copy = new HashSet<>(set);
+        for (String element : list) {
+            if (!copy.remove(element)) {
+                return element;
+            }
+        }
+        assert false : String.format("no duplicate: %s - %s", set, list);
+        return null;
+    }
+
+    private void checkFormalParameterDuplication(FunctionNode node, List<String> boundNames,
+            HashSet<String> names) {
+        boolean hasDuplicates = (boundNames.size() != names.size());
+        if (hasDuplicates) {
+            String duplicate = findDuplicate(names, boundNames);
+            reportSyntaxError(node, Messages.Key.DuplicateFormalParameter, duplicate);
         }
     }
 
@@ -1801,11 +1822,8 @@ public final class Parser {
      * 14.1.1 Static Semantics: Early Errors
      */
     private void strictFormalParameters_EarlyErrors(FunctionNode node, List<String> boundNames,
-            Set<String> names, boolean simple) {
-        boolean hasDuplicates = (boundNames.size() != names.size());
-        if (hasDuplicates) {
-            reportSyntaxError(node, Messages.Key.StrictModeDuplicateFormalParameter);
-        }
+            HashSet<String> names, boolean simple) {
+        checkFormalParameterDuplication(node, boundNames, names);
         formalParameters_EarlyErrors(node, boundNames, names, simple);
     }
 
@@ -1813,12 +1831,9 @@ public final class Parser {
      * 14.1.1 Static Semantics: Early Errors
      */
     private void formalParameters_EarlyErrors(FunctionNode node, List<String> boundNames,
-            Set<String> names, boolean simple) {
+            HashSet<String> names, boolean simple) {
         if (!simple) {
-            boolean hasDuplicates = (boundNames.size() != names.size());
-            if (hasDuplicates) {
-                reportSyntaxError(node, Messages.Key.StrictModeDuplicateFormalParameter);
-            }
+            checkFormalParameterDuplication(node, boundNames, names);
         }
     }
 
@@ -2227,23 +2242,20 @@ public final class Parser {
      * 14.3.1 Static Semantics: Early Errors
      */
     private void propertySetParameterList_EarlyErrors(FunctionNode node, List<String> boundNames,
-            Set<String> names, boolean simple) {
-        boolean hasDuplicates = (boundNames.size() != names.size());
+            HashSet<String> names, boolean simple) {
         boolean hasEvalOrArguments = (names.contains("eval") || names.contains("arguments"));
         if (!simple && hasEvalOrArguments) {
             reportSyntaxError(node, Messages.Key.StrictModeRestrictedIdentifier);
         }
-        if (hasDuplicates) {
-            reportSyntaxError(node, Messages.Key.StrictModeDuplicateFormalParameter);
-        }
+        checkFormalParameterDuplication(node, boundNames, names);
     }
 
     /**
      * <strong>[14.4] Generator Function Definitions</strong>
      * 
      * <pre>
-     * GeneratorMethod :
-     *     * PropertyName ( StrictFormalParameters ) { FunctionBody<sub>[Yield]</sub> }
+     * GeneratorMethod<sub>[Yield]</sub> :
+     *     * PropertyName<sub>[?Yield]</sub> ( StrictFormalParameters<sub>[Yield, GeneratorParameter]</sub> ) { FunctionBody<sub>[Yield]</sub> }
      * </pre>
      */
     private MethodDefinition generatorMethod(boolean alwaysStrict) {
@@ -2289,7 +2301,7 @@ public final class Parser {
      * 
      * <pre>
      * GeneratorDeclaration<sub>[Default]</sub> :
-     *     function * BindingIdentifier<sub>[?Default]</sub> ( FormalParameters ) { FunctionBody<sub>[Yield]</sub> }
+     *     function * BindingIdentifier<sub>[?Default]</sub> ( FormalParameters<sub>[Yield, GeneratorParameter]</sub> ) { FunctionBody<sub>[Yield]</sub> }
      * </pre>
      */
     private GeneratorDeclaration generatorDeclaration(boolean allowDefault, boolean starless) {
@@ -2341,7 +2353,7 @@ public final class Parser {
      * 
      * <pre>
      * GeneratorExpression :
-     *     function * BindingIdentifier<sub>opt</sub> ( FormalParameters ) { FunctionBody<sub>[Yield]</sub> }
+     *     function * BindingIdentifier<sub>[Yield]opt</sub> ( FormalParameters<sub>[Yield, GeneratorParameter]</sub> ) { FunctionBody<sub>[Yield]</sub> }
      * </pre>
      */
     private GeneratorExpression generatorExpression(boolean starless) {
@@ -2424,14 +2436,7 @@ public final class Parser {
      * </pre>
      */
     private YieldExpression yieldExpression(boolean allowIn) {
-        if (!context.yieldAllowed) {
-            if (context.kind == ContextKind.Function
-                    && isEnabled(CompatibilityOption.LegacyGenerator)) {
-                throw new RetryGenerator();
-            }
-            reportSyntaxError(Messages.Key.InvalidYieldExpression);
-        }
-
+        assert context.kind == ContextKind.Generator && context.yieldAllowed;
         long begin = ts.beginPosition();
         consume(Token.YIELD);
         boolean delegatedYield = false;
@@ -2705,8 +2710,8 @@ public final class Parser {
      *     ExpressionStatement<sub>[?Yield]</sub>
      *     IfStatement<sub>[?Yield, ?Return]</sub>
      *     BreakableStatement<sub>[?Yield, ?Return]</sub>
-     *     ContinueStatement<sub>[?Yield]</sub>
-     *     BreakStatement<sub>[?Yield]</sub>
+     *     ContinueStatement
+     *     BreakStatement
      *     <sub>[+Return]</sub>ReturnStatement<sub>[?Yield]</sub>
      *     WithStatement<sub>[?Yield, ?Return]</sub>
      *     LabelledStatement<sub>[?Yield, ?Return]</sub>
@@ -3698,7 +3703,7 @@ public final class Parser {
         if (forStatement != null) {
             return forStatement;
         }
-        // Reset tokenstream to ensure correct block scopes are created
+        // Reset tokenstream and parse again to ensure correct block scopes are created
         ts.reset(position, lineinfo);
         return forInOfStatement(labelSet);
     }
@@ -4867,7 +4872,7 @@ public final class Parser {
             if (context.strictMode != StrictMode.NonStrict) {
                 reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
             }
-            return (context.strictMode != StrictMode.Strict);
+            return context.strictMode != StrictMode.Strict;
         default:
             return false;
         }
@@ -4893,7 +4898,7 @@ public final class Parser {
             if (context.strictMode != StrictMode.NonStrict) {
                 reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
             }
-            return (context.strictMode != StrictMode.Strict);
+            return context.strictMode != StrictMode.Strict;
         default:
             return false;
         }
@@ -4936,6 +4941,10 @@ public final class Parser {
     private boolean isYieldName(ParseContext context) {
         // 'yield' is always a keyword in strict-mode and in generators
         if (context.strictMode == StrictMode.Strict || context.kind == ContextKind.Generator) {
+            return false;
+        }
+        // 'yield' nested in generator comprehension, nested in generator
+        if (context.kind == ContextKind.GeneratorComprehension && context.yieldAllowed) {
             return false;
         }
         // proactively flag as syntax error if current strict mode is unknown
@@ -5251,17 +5260,20 @@ public final class Parser {
         return object;
     }
 
-    private void objectLiteral_StaticSemantics(int oldCount) {
+    /**
+     * 12.1.5.1 Static Semantics: Early Errors
+     */
+    private void objectLiteral_EarlyErrors(int oldCount) {
         ArrayDeque<ObjectLiteral> literals = context.objectLiterals;
         for (int i = oldCount, newCount = literals.size(); i < newCount; ++i) {
-            objectLiteral_StaticSemantics(literals.pop());
+            objectLiteral_EarlyErrors(literals.pop());
         }
     }
 
     /**
      * 12.1.5.1 Static Semantics: Early Errors
      */
-    private void objectLiteral_StaticSemantics(ObjectLiteral object) {
+    private void objectLiteral_EarlyErrors(ObjectLiteral object) {
         final int VALUE = 0, GETTER = 1, SETTER = 2, SPECIAL = 4;
         Map<String, Integer> values = new HashMap<>();
         for (PropertyDefinition def : object.getProperties()) {
@@ -5450,6 +5462,9 @@ public final class Parser {
                     scope, comprehension);
             scope.node = generator;
 
+            // generator comprehensions have no named parameters
+            scope.parameterNames = new HashSet<>();
+
             return inheritStrictness(generator);
         } finally {
             restoreContext();
@@ -5483,6 +5498,9 @@ public final class Parser {
             GeneratorComprehension generator = new GeneratorComprehension(begin, ts.endPosition(),
                     scope, comprehension);
             scope.node = generator;
+
+            // generator comprehensions have no named parameters
+            scope.parameterNames = new HashSet<>();
 
             return inheritStrictness(generator);
         } finally {
@@ -5800,10 +5818,12 @@ public final class Parser {
             UnaryExpression unary = new UnaryExpression(begin, ts.endPosition(),
                     unaryOp(tok, false), operand);
             if (tok == Token.INC || tok == Token.DEC) {
+                // 12.4.1 Static Semantics: Early Errors
                 validateSimpleAssignment(operand, ExceptionType.ReferenceError,
                         Messages.Key.InvalidIncDecTarget);
             }
             if (tok == Token.DELETE) {
+                // 12.4.4.1 Static Semantics: Early Errors
                 if (operand instanceof Identifier) {
                     reportStrictModeSyntaxError(unary, Messages.Key.StrictModeInvalidDeleteOperand);
                 }
@@ -5815,6 +5835,7 @@ public final class Parser {
             if (noLineTerminator()) {
                 tok = token();
                 if (tok == Token.INC || tok == Token.DEC) {
+                    // 12.3.1 Static Semantics: Early Errors
                     validateSimpleAssignment(lhs, ExceptionType.ReferenceError,
                             Messages.Key.InvalidIncDecTarget);
                     consume(tok);
@@ -6013,11 +6034,16 @@ public final class Parser {
         int count = context.countLiterals();
         Expression expr = assignmentExpression(allowIn, count);
         if (count < context.countLiterals()) {
-            objectLiteral_StaticSemantics(count);
+            objectLiteral_EarlyErrors(count);
         }
         return expr;
     }
 
+    /**
+     * Same as {@link #assignmentExpression(boolean)} except object literal early errors are not
+     * checked. This method needs to be used if the AssignmentExpression is in a possible
+     * destructuring assignment position.
+     */
     private Expression assignmentExpressionNoValidation(boolean allowIn) {
         return assignmentExpression(allowIn, context.countLiterals());
     }
@@ -6025,13 +6051,17 @@ public final class Parser {
     private Expression assignmentExpression(boolean allowIn, int oldCount) {
         if (token() == Token.YIELD) {
             if (context.kind == ContextKind.Generator) {
+                if (!context.yieldAllowed) {
+                    // yield in default parameters
+                    reportSyntaxError(Messages.Key.InvalidYieldExpression);
+                }
                 return yieldExpression(allowIn);
-            } else if (context.kind == ContextKind.Function
-                    && isEnabled(CompatibilityOption.LegacyGenerator)) {
-                throw new RetryGenerator();
             } else if (context.kind == ContextKind.GeneratorComprehension && context.yieldAllowed) {
                 // yield nested in generator comprehension, nested in generator
                 reportSyntaxError(Messages.Key.InvalidYieldExpression);
+            } else if (context.kind == ContextKind.Function
+                    && isEnabled(CompatibilityOption.LegacyGenerator)) {
+                throw new RetryGenerator();
             }
         }
         long position = ts.position(), lineinfo = ts.lineinfo();
@@ -6046,10 +6076,10 @@ public final class Parser {
         } else if (tok == Token.ARROW) {
             // discard parsed object literals
             if (oldCount < context.countLiterals()) {
-                // TODO: still need to verify this
+                // TODO: still need to verify this, https://bugs.ecmascript.org/show_bug.cgi?id=2506
                 // perform Static Semantics early error detection since the parameter production is
                 // first parsed as an Expression
-                objectLiteral_StaticSemantics(oldCount);
+                objectLiteral_EarlyErrors(oldCount);
             }
             ts.reset(position, lineinfo);
             return arrowFunction(allowIn);
@@ -6196,7 +6226,7 @@ public final class Parser {
      */
     private boolean isName(String name) {
         Token tok = token();
-        return (tok == Token.NAME && name.equals(getName(tok)));
+        return tok == Token.NAME && name.equals(getName(tok));
     }
 
     /**
@@ -6337,7 +6367,7 @@ public final class Parser {
         case WITH:
             return true;
         case YIELD:
-            return (context.strictMode == StrictMode.Strict);
+            return context.strictMode == StrictMode.Strict;
         default:
             return false;
         }
@@ -6359,7 +6389,7 @@ public final class Parser {
         case PROTECTED:
         case PUBLIC:
         case STATIC:
-            return (context.strictMode == StrictMode.Strict);
+            return context.strictMode == StrictMode.Strict;
         default:
             return false;
         }
