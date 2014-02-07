@@ -499,6 +499,10 @@ public final class Parser {
         return context.scopeContext = parent;
     }
 
+    private static String BoundName(BindingIdentifier binding) {
+        return binding.getName();
+    }
+
     private void addFunctionDeclaration(FunctionDeclaration decl) {
         addDeclaration(decl, BoundName(decl.getIdentifier()));
     }
@@ -1740,7 +1744,7 @@ public final class Parser {
         List<FormalParameter> formals = newSmallList();
         for (;;) {
             if (token() == Token.TRIPLE_DOT) {
-                formals.add(bindingRestElementStrict());
+                formals.add(bindingRestElement());
                 break;
             } else {
                 formals.add(bindingElement());
@@ -3044,37 +3048,13 @@ public final class Parser {
      *     Identifier
      * </pre>
      */
-    private BindingIdentifier bindingIdentifierStrict(boolean allowLet) {
-        long begin = ts.beginPosition();
-        if (token() == Token.LET && !allowLet) {
-            reportTokenNotIdentifier(Token.LET);
-        }
-        String identifier = identifierReference();
-        if ("arguments".equals(identifier) || "eval".equals(identifier)) {
-            reportSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
-        }
-        return new BindingIdentifier(begin, ts.endPosition(), identifier);
-    }
-
-    /**
-     * <strong>[13.2.1] Let and Const Declarations</strong>
-     * <p>
-     * Difference when compared to {@link #bindingIdentifier()}:<br>
-     * Neither "arguments" nor "eval" is allowed.
-     * 
-     * <pre>
-     * BindingIdentifier<sub>[Default, Yield]</sub> :
-     *     <sub>[+Default]</sub> default
-     *     <sub>[~Yield]</sub> yield
-     *     Identifier
-     * </pre>
-     */
     private BindingIdentifier bindingIdentifierClassName(boolean allowDefault) {
         long begin = ts.beginPosition();
         if (allowDefault && token() == Token.DEFAULT) {
             consume(Token.DEFAULT);
             return new BindingIdentifier(begin, ts.endPosition(), getName(Token.DEFAULT));
         }
+        // [10.2.1 Strict Mode Code]
         String identifier = strictIdentifierReference();
         if ("arguments".equals(identifier) || "eval".equals(identifier)) {
             reportSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
@@ -3259,8 +3239,6 @@ public final class Parser {
         }
         consume(Token.RC);
 
-        objectBindingPattern_EarlyErrors(list);
-
         return new ObjectBindingPattern(begin, ts.endPosition(), list);
     }
 
@@ -3286,7 +3264,7 @@ public final class Parser {
             } else if (token() == Token.LB) {
                 binding = arrayBindingPattern(allowLet);
             } else {
-                binding = bindingIdentifierStrict(allowLet);
+                binding = bindingIdentifier(allowLet);
             }
             Expression initialiser = null;
             if (token() == Token.ASSIGN) {
@@ -3294,7 +3272,7 @@ public final class Parser {
             }
             return new BindingProperty(propertyName, binding, initialiser);
         } else {
-            BindingIdentifier binding = bindingIdentifierStrict(allowLet);
+            BindingIdentifier binding = bindingIdentifier(allowLet);
             Expression initialiser = null;
             if (token() == Token.ASSIGN) {
                 initialiser = initialiser(true);
@@ -3332,16 +3310,14 @@ public final class Parser {
                 consume(Token.COMMA);
                 list.add(new BindingElision(0, 0));
             } else if (tok == Token.TRIPLE_DOT) {
-                list.add(bindingRestElementStrict(allowLet));
+                list.add(bindingRestElement(allowLet));
                 break;
             } else {
-                list.add(bindingElementStrict(allowLet));
+                list.add(bindingElement(allowLet));
                 needComma = true;
             }
         }
         consume(Token.RB);
-
-        arrayBindingPattern_EarlyErrors(list);
 
         return new ArrayBindingPattern(begin, ts.endPosition(), list);
     }
@@ -3372,27 +3348,6 @@ public final class Parser {
             return arrayBindingPattern(allowLet);
         default:
             return bindingIdentifier(allowLet);
-        }
-    }
-
-    /**
-     * Difference when compared to {@link #binding()}:<br>
-     * Neither "arguments" nor "eval" is allowed.
-     * 
-     * <pre>
-     * Binding<sub>[Yield, GeneratorParameter]</sub> :
-     *     BindingIdentifier<sub>[?Yield, ?GeneratorParameter]</sub>
-     *     BindingPattern<sub>[?Yield, ?GeneratorParameter]</sub>
-     * </pre>
-     */
-    private Binding bindingStrict(boolean allowLet) {
-        switch (token()) {
-        case LC:
-            return objectBindingPattern(allowLet);
-        case LB:
-            return arrayBindingPattern(allowLet);
-        default:
-            return bindingIdentifierStrict(allowLet);
         }
     }
 
@@ -3433,26 +3388,15 @@ public final class Parser {
 
     /**
      * <strong>[13.2.3] Destructuring Binding Patterns</strong>
-     * <p>
-     * Difference when compared to {@link #bindingElement()}:<br>
-     * Neither "arguments" nor "eval" is allowed.
      * 
      * <pre>
-     * BindingElement<sub>[Yield, GeneratorParameter]</sub> :
-     *     SingleNameBinding<sub>[?Yield, ?GeneratorParameter]</sub>
-     *     <sub>[+GeneratorParameter]</sub>BindingPattern<sub>[?Yield, GeneratorParameter]</sub> Initialiser<sub>[In]opt</sub>
-     *     <sub>[~GeneratorParameter]</sub>BindingPattern<sub>[?Yield]</sub> Initialiser<sub>[In, ?Yield]opt</sub>
+     * BindingRestElement<sub>[Yield, GeneratorParameter]</sub> :
+     *     <sub>[+GeneratorParameter]</sub>... BindingIdentifier<sub>[Yield]</sub>
+     *     <sub>[~GeneratorParameter]</sub>... BindingIdentifier<sub>[?Yield]</sub>
      * </pre>
      */
-    private BindingElement bindingElementStrict(boolean allowLet) {
-        long begin = ts.beginPosition();
-        Binding binding = bindingStrict(allowLet);
-        Expression initialiser = null;
-        if (token() == Token.ASSIGN) {
-            initialiser = initialiser(true);
-        }
-
-        return new BindingElement(begin, ts.endPosition(), binding, initialiser);
+    private BindingRestElement bindingRestElement() {
+        return bindingRestElement(true);
     }
 
     /**
@@ -3464,114 +3408,12 @@ public final class Parser {
      *     <sub>[~GeneratorParameter]</sub>... BindingIdentifier<sub>[?Yield]</sub>
      * </pre>
      */
-    @SuppressWarnings("unused")
     private BindingRestElement bindingRestElement(boolean allowLet) {
         long begin = ts.beginPosition();
         consume(Token.TRIPLE_DOT);
         BindingIdentifier identifier = bindingIdentifier(allowLet);
 
         return new BindingRestElement(begin, ts.endPosition(), identifier);
-    }
-
-    /**
-     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
-     * <p>
-     * Difference when compared to {@link #bindingRestElement()}:<br>
-     * Neither "arguments" nor "eval" is allowed.
-     * 
-     * <pre>
-     * BindingRestElement<sub>[Yield, GeneratorParameter]</sub> :
-     *     <sub>[+GeneratorParameter]</sub>... BindingIdentifier<sub>[Yield]</sub>
-     *     <sub>[~GeneratorParameter]</sub>... BindingIdentifier<sub>[?Yield]</sub>
-     * </pre>
-     */
-    private BindingRestElement bindingRestElementStrict() {
-        return bindingRestElementStrict(true);
-    }
-
-    /**
-     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
-     * <p>
-     * Difference when compared to {@link #bindingRestElement()}:<br>
-     * Neither "arguments" nor "eval" is allowed.
-     * 
-     * <pre>
-     * BindingRestElement<sub>[Yield, GeneratorParameter]</sub> :
-     *     <sub>[+GeneratorParameter]</sub>... BindingIdentifier<sub>[Yield]</sub>
-     *     <sub>[~GeneratorParameter]</sub>... BindingIdentifier<sub>[?Yield]</sub>
-     * </pre>
-     */
-    private BindingRestElement bindingRestElementStrict(boolean allowLet) {
-        long begin = ts.beginPosition();
-        consume(Token.TRIPLE_DOT);
-        BindingIdentifier identifier = bindingIdentifierStrict(allowLet);
-
-        return new BindingRestElement(begin, ts.endPosition(), identifier);
-    }
-
-    private static String BoundName(BindingIdentifier binding) {
-        return binding.getName();
-    }
-
-    private static String BoundName(BindingRestElement element) {
-        return element.getBindingIdentifier().getName();
-    }
-
-    /**
-     * 13.2.3.1 Static Semantics: Early Errors
-     */
-    private void objectBindingPattern_EarlyErrors(List<BindingProperty> list) {
-        for (BindingProperty property : list) {
-            // BindingProperty : PropertyName ':' BindingElement
-            // BindingProperty : BindingIdentifier Initialiser<opt>
-            Binding binding = property.getBinding();
-            if (binding instanceof BindingIdentifier) {
-                String name = BoundName(((BindingIdentifier) binding));
-                if ("arguments".equals(name) || "eval".equals(name)) {
-                    reportSyntaxError(binding, Messages.Key.StrictModeRestrictedIdentifier);
-                }
-            } else {
-                assert binding instanceof BindingPattern;
-                assert property.getPropertyName() != null;
-                // already done implicitly
-                // objectBindingPattern_StaticSemantics(((ObjectBindingPattern) binding).getList());
-                // arrayBindingPattern_StaticSemantics(((ArrayBindingPattern)
-                // binding).getElements());
-            }
-        }
-    }
-
-    /**
-     * 13.2.3.1 Static Semantics: Early Errors
-     */
-    private void arrayBindingPattern_EarlyErrors(List<BindingElementItem> list) {
-        for (BindingElementItem element : list) {
-            if (element instanceof BindingElement) {
-                Binding binding = ((BindingElement) element).getBinding();
-                if (binding instanceof ArrayBindingPattern) {
-                    // already done implicitly
-                    // arrayBindingPattern_StaticSemantics(((ArrayBindingPattern) binding)
-                    // .getElements());
-                } else if (binding instanceof ObjectBindingPattern) {
-                    // already done implicitly
-                    // objectBindingPattern_StaticSemantics(((ObjectBindingPattern)
-                    // binding).getList());
-                } else {
-                    assert (binding instanceof BindingIdentifier);
-                    String name = BoundName(((BindingIdentifier) binding));
-                    if ("arguments".equals(name) || "eval".equals(name)) {
-                        reportSyntaxError(binding, Messages.Key.StrictModeRestrictedIdentifier);
-                    }
-                }
-            } else if (element instanceof BindingRestElement) {
-                String name = BoundName(((BindingRestElement) element));
-                if ("arguments".equals(name) || "eval".equals(name)) {
-                    reportSyntaxError(element, Messages.Key.StrictModeRestrictedIdentifier);
-                }
-            } else {
-                assert element instanceof BindingElision;
-            }
-        }
     }
 
     /**
@@ -3967,197 +3809,6 @@ public final class Parser {
         Binding binding = forBinding(true);
         VariableDeclaration variableDeclaration = new VariableDeclaration(binding, null);
         return new VariableStatement(beginVar, ts.endPosition(), singletonList(variableDeclaration));
-    }
-
-    /**
-     * Static Semantics: IsValidSimpleAssignmentTarget
-     */
-    private LeftHandSideExpression validateSimpleAssignment(Expression lhs, ExceptionType type,
-            Messages.Key messageKey) {
-        if (lhs instanceof Identifier) {
-            if (context.strictMode != StrictMode.NonStrict) {
-                String name = ((Identifier) lhs).getName();
-                if ("eval".equals(name) || "arguments".equals(name)) {
-                    reportStrictModeSyntaxError(lhs, Messages.Key.StrictModeInvalidAssignmentTarget);
-                }
-            }
-            return (Identifier) lhs;
-        } else if (lhs instanceof ElementAccessor) {
-            return (ElementAccessor) lhs;
-        } else if (lhs instanceof PropertyAccessor) {
-            return (PropertyAccessor) lhs;
-        } else if (lhs instanceof SuperExpression) {
-            SuperExpression superExpr = (SuperExpression) lhs;
-            if (superExpr.getType() == SuperExpression.Type.ElementAccessor
-                    || superExpr.getType() == SuperExpression.Type.PropertyAccessor) {
-                return superExpr;
-            }
-        }
-        // everything else => invalid lhs
-        throw reportError(type, lhs.getBeginPosition(), messageKey);
-    }
-
-    /**
-     * Static Semantics: IsValidSimpleAssignmentTarget
-     */
-    private LeftHandSideExpression validateAssignment(Expression lhs, ExceptionType type,
-            Messages.Key messageKey) {
-        // rewrite object/array literal to destructuring form
-        if (lhs instanceof ObjectLiteral) {
-            return toDestructuring((ObjectLiteral) lhs);
-        } else if (lhs instanceof ArrayLiteral) {
-            return toDestructuring((ArrayLiteral) lhs);
-        }
-        return validateSimpleAssignment(lhs, type, messageKey);
-    }
-
-    private ObjectAssignmentPattern toDestructuring(ObjectLiteral object) {
-        List<AssignmentProperty> list = newSmallList();
-        for (PropertyDefinition p : object.getProperties()) {
-            AssignmentProperty property;
-            if (p instanceof PropertyValueDefinition) {
-                // AssignmentProperty : PropertyName ':' AssignmentElement
-                // AssignmentElement : DestructuringAssignmentTarget Initialiser{opt}
-                // DestructuringAssignmentTarget : LeftHandSideExpression
-                PropertyValueDefinition def = (PropertyValueDefinition) p;
-                PropertyName propertyName = def.getPropertyName();
-                Expression propertyValue = def.getPropertyValue();
-                LeftHandSideExpression target;
-                Expression initialiser;
-                if (propertyValue instanceof AssignmentExpression) {
-                    AssignmentExpression assignment = (AssignmentExpression) propertyValue;
-                    if (assignment.getOperator() != AssignmentExpression.Operator.ASSIGN) {
-                        reportSyntaxError(p, Messages.Key.InvalidDestructuring);
-                    }
-                    target = destructuringAssignmentTarget(assignment.getLeft());
-                    initialiser = assignment.getRight();
-                } else {
-                    target = destructuringAssignmentTarget(propertyValue);
-                    initialiser = null;
-                }
-                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
-                        propertyName, target, initialiser);
-            } else if (p instanceof PropertyNameDefinition) {
-                // AssignmentProperty : Identifier
-                PropertyNameDefinition def = (PropertyNameDefinition) p;
-                assignmentProperty_EarlyErrors(def.getPropertyName());
-                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
-                        def.getPropertyName(), null);
-            } else if (p instanceof CoverInitialisedName) {
-                // AssignmentProperty : Identifier Initialiser
-                CoverInitialisedName def = (CoverInitialisedName) p;
-                assignmentProperty_EarlyErrors(def.getPropertyName());
-                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
-                        def.getPropertyName(), def.getInitialiser());
-            } else {
-                assert p instanceof MethodDefinition;
-                throw reportSyntaxError(p, Messages.Key.InvalidDestructuring);
-            }
-            list.add(property);
-        }
-        context.removeLiteral(object);
-        ObjectAssignmentPattern pattern = new ObjectAssignmentPattern(object.getBeginPosition(),
-                object.getEndPosition(), list);
-        if (object.isParenthesised()) {
-            pattern.addParentheses();
-        }
-        return pattern;
-    }
-
-    private ArrayAssignmentPattern toDestructuring(ArrayLiteral array) {
-        List<AssignmentElementItem> list = newSmallList();
-        for (Iterator<Expression> iterator = array.getElements().iterator(); iterator.hasNext();) {
-            Expression e = iterator.next();
-            AssignmentElementItem element;
-            if (e instanceof Elision) {
-                // Elision
-                element = (Elision) e;
-            } else if (e instanceof SpreadElement) {
-                // AssignmentRestElement : ... DestructuringAssignmentTarget
-                // DestructuringAssignmentTarget : LeftHandSideExpression
-                Expression expression = ((SpreadElement) e).getExpression();
-                LeftHandSideExpression target = destructuringSimpleAssignmentTarget(expression);
-                element = new AssignmentRestElement(e.getBeginPosition(), e.getEndPosition(),
-                        target);
-                // no further elements after AssignmentRestElement allowed
-                if (iterator.hasNext()) {
-                    reportSyntaxError(iterator.next(), Messages.Key.InvalidDestructuring);
-                }
-            } else {
-                // AssignmentElement : DestructuringAssignmentTarget Initialiser{opt}
-                // DestructuringAssignmentTarget : LeftHandSideExpression
-                LeftHandSideExpression target;
-                Expression initialiser;
-                if (e instanceof AssignmentExpression) {
-                    AssignmentExpression assignment = (AssignmentExpression) e;
-                    if (assignment.getOperator() != AssignmentExpression.Operator.ASSIGN) {
-                        reportSyntaxError(e, Messages.Key.InvalidDestructuring);
-                    }
-                    target = destructuringAssignmentTarget(assignment.getLeft());
-                    initialiser = assignment.getRight();
-                } else {
-                    target = destructuringAssignmentTarget(e);
-                    initialiser = null;
-                }
-                element = new AssignmentElement(e.getBeginPosition(), e.getEndPosition(), target,
-                        initialiser);
-            }
-            list.add(element);
-        }
-        ArrayAssignmentPattern pattern = new ArrayAssignmentPattern(array.getBeginPosition(),
-                array.getEndPosition(), list);
-        if (array.isParenthesised()) {
-            pattern.addParentheses();
-        }
-        return pattern;
-    }
-
-    private LeftHandSideExpression destructuringAssignmentTarget(Expression lhs) {
-        return destructuringAssignmentTarget(lhs, true);
-    }
-
-    private LeftHandSideExpression destructuringSimpleAssignmentTarget(Expression lhs) {
-        return destructuringAssignmentTarget(lhs, false);
-    }
-
-    private LeftHandSideExpression destructuringAssignmentTarget(Expression lhs, boolean extended) {
-        if (lhs instanceof Identifier) {
-            String name = ((Identifier) lhs).getName();
-            if ("eval".equals(name) || "arguments".equals(name)) {
-                reportSyntaxError(lhs, Messages.Key.InvalidAssignmentTarget);
-            }
-            return (Identifier) lhs;
-        } else if (lhs instanceof ElementAccessor) {
-            return (ElementAccessor) lhs;
-        } else if (lhs instanceof PropertyAccessor) {
-            return (PropertyAccessor) lhs;
-        } else if (extended && lhs instanceof ObjectAssignmentPattern) {
-            return (ObjectAssignmentPattern) lhs;
-        } else if (extended && lhs instanceof ArrayAssignmentPattern) {
-            return (ArrayAssignmentPattern) lhs;
-        } else if (extended && lhs instanceof ObjectLiteral) {
-            return toDestructuring((ObjectLiteral) lhs);
-        } else if (extended && lhs instanceof ArrayLiteral) {
-            return toDestructuring((ArrayLiteral) lhs);
-        } else if (lhs instanceof SuperExpression) {
-            SuperExpression superExpr = (SuperExpression) lhs;
-            if (superExpr.getType() == SuperExpression.Type.ElementAccessor
-                    || superExpr.getType() == SuperExpression.Type.PropertyAccessor) {
-                return superExpr;
-            }
-        }
-        // everything else => invalid lhs
-        throw reportSyntaxError(lhs, Messages.Key.InvalidDestructuring);
-    }
-
-    private void assignmentProperty_EarlyErrors(Identifier identifier) {
-        switch (identifier.getName()) {
-        case "eval":
-        case "arguments":
-        case "this":
-        case "super":
-            reportSyntaxError(identifier, Messages.Key.InvalidDestructuring);
-        }
     }
 
     /**
@@ -6156,6 +5807,244 @@ public final class Parser {
         default:
             return false;
         }
+    }
+
+    /**
+     * Static Semantics: IsValidSimpleAssignmentTarget
+     * <ul>
+     * <li>12.1.0.4 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.1.10.3 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.2.1.4 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.3.3 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.4.3 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.5.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.6.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.7.2 Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.8.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.9.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.10.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.11.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.12.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.13.3 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.14.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * </ul>
+     */
+    private LeftHandSideExpression validateSimpleAssignment(Expression lhs, ExceptionType type,
+            Messages.Key messageKey) {
+        if (lhs instanceof Identifier) {
+            Identifier ident = (Identifier) lhs;
+            if (context.strictMode != StrictMode.NonStrict) {
+                String name = ident.getName();
+                if ("eval".equals(name) || "arguments".equals(name)) {
+                    reportStrictModeSyntaxError(ident,
+                            Messages.Key.StrictModeInvalidAssignmentTarget);
+                }
+            }
+            return ident;
+        } else if (lhs instanceof ElementAccessor) {
+            return (ElementAccessor) lhs;
+        } else if (lhs instanceof PropertyAccessor) {
+            return (PropertyAccessor) lhs;
+        } else if (lhs instanceof SuperExpression) {
+            SuperExpression superExpr = (SuperExpression) lhs;
+            if (superExpr.getType() == SuperExpression.Type.ElementAccessor
+                    || superExpr.getType() == SuperExpression.Type.PropertyAccessor) {
+                return superExpr;
+            }
+        }
+        // everything else => invalid lhs
+        throw reportError(type, lhs.getBeginPosition(), messageKey);
+    }
+
+    /**
+     * <strong>[12.13.5] Destructuring Assignment</strong>
+     * 
+     * <ul>
+     * <li>12.13.1 Static Semantics: Early Errors
+     * <li>12.13.5.1 Static Semantics: Early Errors
+     * <li>13.6.4.1 Static Semantics: Early Errors
+     * </ul>
+     */
+    private LeftHandSideExpression validateAssignment(Expression lhs, ExceptionType type,
+            Messages.Key messageKey) {
+        // rewrite object/array literal to destructuring form
+        if (lhs instanceof ObjectLiteral) {
+            return toDestructuring((ObjectLiteral) lhs);
+        } else if (lhs instanceof ArrayLiteral) {
+            return toDestructuring((ArrayLiteral) lhs);
+        }
+        return validateSimpleAssignment(lhs, type, messageKey);
+    }
+
+    /**
+     * <strong>[12.13.5] Destructuring Assignment</strong>
+     * 
+     * <pre>
+     * ObjectAssignmentPattern<sub>[Yield]</sub> :
+     *     { }
+     *     { AssignmentPropertyList<sub>[?Yield]</sub> }
+     *     { AssignmentPropertyList<sub>[?Yield]</sub> , }
+     * AssignmentPropertyList<sub>[Yield]</sub> :
+     *     AssignmentProperty<sub>[?Yield]</sub>
+     *     AssignmentPropertyList<sub>[?Yield]</sub> , AssignmentProperty<sub>[?Yield]</sub>
+     * AssignmentProperty<sub>[Yield]</sub> :
+     *     IdentifierReference<sub>[?Yield]</sub> Initialiser<sub>[In, ?Yield]opt</sub>
+     *     PropertyName : AssignmentElement<sub>[?Yield]</sub>
+     * AssignmentElement<sub>[Yield]</sub> :
+     *     DestructuringAssignmentTarget<sub>[?Yield]</sub> Initialiser<sub>[In, ?Yield]opt</sub>
+     * AssignmentElement<sub>[Yield]</sub> :
+     *     DestructuringAssignmentTarget<sub>[?Yield]</sub> Initialiser<sub>[In, ?Yield]opt</sub>
+     * DestructuringAssignmentTarget<sub>[Yield]</sub> :
+     *     LeftHandSideExpression<sub>[?Yield]</sub>
+     * </pre>
+     */
+    private ObjectAssignmentPattern toDestructuring(ObjectLiteral object) {
+        List<AssignmentProperty> list = newSmallList();
+        for (PropertyDefinition p : object.getProperties()) {
+            AssignmentProperty property;
+            if (p instanceof PropertyValueDefinition) {
+                // AssignmentProperty : PropertyName ':' AssignmentElement
+                PropertyValueDefinition def = (PropertyValueDefinition) p;
+                PropertyName propertyName = def.getPropertyName();
+                Expression propertyValue = def.getPropertyValue();
+                LeftHandSideExpression target;
+                Expression initialiser;
+                if (propertyValue instanceof AssignmentExpression) {
+                    // AssignmentElement : DestructuringAssignmentTarget Initialiser
+                    AssignmentExpression assignment = (AssignmentExpression) propertyValue;
+                    if (assignment.getOperator() != AssignmentExpression.Operator.ASSIGN) {
+                        reportSyntaxError(p, Messages.Key.InvalidDestructuring);
+                    }
+                    target = destructuringAssignmentTarget_EarlyErrors(assignment.getLeft());
+                    initialiser = assignment.getRight();
+                } else {
+                    // AssignmentElement : DestructuringAssignmentTarget
+                    target = destructuringAssignmentTarget_EarlyErrors(propertyValue);
+                    initialiser = null;
+                }
+                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
+                        propertyName, target, initialiser);
+            } else if (p instanceof PropertyNameDefinition) {
+                // AssignmentProperty : IdentifierReference
+                PropertyNameDefinition def = (PropertyNameDefinition) p;
+                assignmentProperty_EarlyErrors(def.getPropertyName());
+                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
+                        def.getPropertyName(), null);
+            } else if (p instanceof CoverInitialisedName) {
+                // AssignmentProperty : IdentifierReference Initialiser
+                CoverInitialisedName def = (CoverInitialisedName) p;
+                assignmentProperty_EarlyErrors(def.getPropertyName());
+                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
+                        def.getPropertyName(), def.getInitialiser());
+            } else {
+                assert p instanceof MethodDefinition;
+                throw reportSyntaxError(p, Messages.Key.InvalidDestructuring);
+            }
+            list.add(property);
+        }
+        context.removeLiteral(object);
+        ObjectAssignmentPattern pattern = new ObjectAssignmentPattern(object.getBeginPosition(),
+                object.getEndPosition(), list);
+        if (object.isParenthesised()) {
+            pattern.addParentheses();
+        }
+        return pattern;
+    }
+
+    /**
+     * <strong>[12.13.5] Destructuring Assignment</strong>
+     * 
+     * <pre>
+     * ArrayAssignmentPattern<sub>[Yield]</sub> :
+     *     [ Elision<sub>opt</sub> AssignmentRestElement<sub>[?Yield]opt</sub> ]
+     *     [ AssignmentElementList<sub>[?Yield]</sub>  ]
+     *     [ AssignmentElementList<sub>[?Yield]</sub> , Elision<sub>opt</sub> AssignmentRestElement<sub>[?Yield]opt</sub> ]
+     * AssignmentElementList<sub>[Yield]</sub> :
+     *     AssignmentElisionElement<sub>[?Yield]</sub>
+     *     AssignmentElementList<sub>[?Yield]</sub> , AssignmentElisionElement<sub>[?Yield]</sub>
+     * AssignmentElisionElement<sub>[Yield]</sub> :
+     *     Elision<sub>opt</sub>  AssignmentElement<sub>[?Yield]</sub>
+     * AssignmentElement<sub>[Yield]</sub> :
+     *     DestructuringAssignmentTarget<sub>[?Yield]</sub> Initialiser<sub>[In, ?Yield]opt</sub>
+     * AssignmentRestElement<sub>[Yield]</sub> : 
+     *     ... DestructuringAssignmentTarget<sub>[?Yield]</sub>
+     * DestructuringAssignmentTarget<sub>[Yield]</sub> :
+     *     LeftHandSideExpression<sub>[?Yield]</sub>
+     * </pre>
+     */
+    private ArrayAssignmentPattern toDestructuring(ArrayLiteral array) {
+        List<AssignmentElementItem> list = newSmallList();
+        for (Iterator<Expression> iterator = array.getElements().iterator(); iterator.hasNext();) {
+            Expression e = iterator.next();
+            AssignmentElementItem element;
+            if (e instanceof Elision) {
+                // Elision
+                element = (Elision) e;
+            } else if (e instanceof SpreadElement) {
+                // AssignmentRestElement : ... DestructuringAssignmentTarget
+                Expression expression = ((SpreadElement) e).getExpression();
+                LeftHandSideExpression target = assignmentRestElement_EarlyErrors(expression);
+                element = new AssignmentRestElement(e.getBeginPosition(), e.getEndPosition(),
+                        target);
+                // no further elements after AssignmentRestElement allowed
+                if (iterator.hasNext()) {
+                    reportSyntaxError(iterator.next(), Messages.Key.InvalidDestructuring);
+                }
+            } else {
+                LeftHandSideExpression target;
+                Expression initialiser;
+                if (e instanceof AssignmentExpression) {
+                    // AssignmentElement : DestructuringAssignmentTarget Initialiser
+                    AssignmentExpression assignment = (AssignmentExpression) e;
+                    if (assignment.getOperator() != AssignmentExpression.Operator.ASSIGN) {
+                        reportSyntaxError(e, Messages.Key.InvalidDestructuring);
+                    }
+                    target = destructuringAssignmentTarget_EarlyErrors(assignment.getLeft());
+                    initialiser = assignment.getRight();
+                } else {
+                    // AssignmentElement : DestructuringAssignmentTarget
+                    target = destructuringAssignmentTarget_EarlyErrors(e);
+                    initialiser = null;
+                }
+                element = new AssignmentElement(e.getBeginPosition(), e.getEndPosition(), target,
+                        initialiser);
+            }
+            list.add(element);
+        }
+        ArrayAssignmentPattern pattern = new ArrayAssignmentPattern(array.getBeginPosition(),
+                array.getEndPosition(), list);
+        if (array.isParenthesised()) {
+            pattern.addParentheses();
+        }
+        return pattern;
+    }
+
+    /**
+     * 12.13.5.1 Static Semantics: Early Errors
+     */
+    private LeftHandSideExpression destructuringAssignmentTarget_EarlyErrors(Expression lhs) {
+        if (lhs instanceof ObjectAssignmentPattern) {
+            return (ObjectAssignmentPattern) lhs;
+        } else if (lhs instanceof ArrayAssignmentPattern) {
+            return (ArrayAssignmentPattern) lhs;
+        }
+        return validateAssignment(lhs, ExceptionType.SyntaxError, Messages.Key.InvalidDestructuring);
+    }
+
+    /**
+     * 12.13.5.1 Static Semantics: Early Errors
+     */
+    private LeftHandSideExpression assignmentRestElement_EarlyErrors(Expression lhs) {
+        return validateSimpleAssignment(lhs, ExceptionType.SyntaxError,
+                Messages.Key.InvalidDestructuring);
+    }
+
+    /**
+     * 12.13.5.1 Static Semantics: Early Errors
+     */
+    private void assignmentProperty_EarlyErrors(Identifier identifier) {
+        validateSimpleAssignment(identifier, ExceptionType.SyntaxError,
+                Messages.Key.InvalidDestructuring);
     }
 
     /**

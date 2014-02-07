@@ -23,9 +23,11 @@ const bindings = {
   // It is a Syntax Error if the BoundNames of ForBinding contains "let".
   for (let binding of bindings.letIsBoundName) {
     assertSyntaxError(`[for (${binding} of []) 0];`);
+    assertSyntaxError(`(for (${binding} of []) 0);`);
   }
   for (let binding of bindings.letIsntBoundName) {
     Function(`[for (${binding} of []) 0];`);
+    Function(`(for (${binding} of []) 0);`);
   }
 }
 
@@ -35,10 +37,22 @@ const bindings = {
   for (let binding of bindings.letIsBoundName) {
     assertSyntaxError(`let ${binding} = {};`);
     assertSyntaxError(`const ${binding} = {};`);
+    assertSyntaxError(`for (let ${binding} = {};;);`);
+    assertSyntaxError(`for (const ${binding} = {};;);`);
+    assertSyntaxError(`for (let ${binding} in {});`);
+    assertSyntaxError(`for (const ${binding} in {});`);
+    assertSyntaxError(`for (let ${binding} of {});`);
+    assertSyntaxError(`for (const ${binding} of {});`);
   }
   for (let binding of bindings.letIsntBoundName) {
     Function(`let ${binding} = {};`);
     Function(`const ${binding} = {};`);
+    Function(`for (let ${binding} = {};;);`);
+    Function(`for (const ${binding} = {};;);`);
+    Function(`for (let ${binding} in {});`);
+    Function(`for (const ${binding} in {});`);
+    Function(`for (let ${binding} of {});`);
+    Function(`for (const ${binding} of {});`);
   }
 }
 
@@ -46,13 +60,16 @@ const bindings = {
   // "let" is always allowed as binding-identifier in VariableDeclaration
   for (let binding of [...bindings.letIsBoundName, ...bindings.letIsntBoundName]) {
     Function(`var ${binding} = {};`);
+    Function(`for (var ${binding} = {};;);`);
+    Function(`for (var ${binding} in {});`);
+    Function(`for (var ${binding} of {});`);
   }
 }
 
 {
   // "let" is always allowed as binding-identifier in CatchParameter
   for (let binding of [...bindings.letIsBoundName, ...bindings.letIsntBoundName]) {
-    Function(`try {} catch(${binding}) {}`);
+    Function(`try {} catch (${binding}) {}`);
   }
 }
 

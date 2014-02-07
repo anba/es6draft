@@ -17,10 +17,28 @@ const {
   function f2(arguments) { }
 }
 
-// Non-strict, not simple parameter list
+// Non-strict, parameter list with initialiser
 {
   function f1(a = 0, eval) { }
   function f2(a = 0, arguments) { }
+}
+
+// Non-strict, parameter list with rest parameter
+{
+  function f1(...eval) { }
+  function f2(...arguments) { }
+}
+
+// Non-strict, parameter list with object binding pattern
+{
+  function f1({eval}) { }
+  function f2({arguments}) { }
+}
+
+// Non-strict, parameter list with array binding pattern
+{
+  function f1([eval]) { }
+  function f2([arguments]) { }
 }
 
 // Strict, simple parameter list
@@ -29,7 +47,7 @@ const {
   assertSyntaxError(`"use strict"; function f2(arguments) { }`);
 }
 
-// Strict, not simple parameter list
+// Strict, parameter list with initialiser
 {
   assertSyntaxError(`"use strict"; function f1(a = 0, eval) { }`);
   assertSyntaxError(`"use strict"; function f2(a = 0, arguments) { }`);
