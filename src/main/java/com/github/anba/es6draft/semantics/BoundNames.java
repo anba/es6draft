@@ -13,8 +13,20 @@ import com.github.anba.es6draft.ast.*;
 /**
  * Static Semantics: BoundNames
  */
-final class BoundNames extends StaticSemanticsVisitor<List<String>, List<String>> {
+final class BoundNames extends DefaultNodeVisitor<List<String>, List<String>> {
     static final NodeVisitor<List<String>, List<String>> INSTANCE = new BoundNames();
+
+    @Override
+    protected List<String> visit(Node node, List<String> value) {
+        throw new IllegalStateException();
+    }
+
+    private List<String> forEach(Iterable<? extends Node> list, List<String> value) {
+        for (Node node : list) {
+            node.accept(this, value);
+        }
+        return value;
+    }
 
     /**
      * <pre>
@@ -24,8 +36,7 @@ final class BoundNames extends StaticSemanticsVisitor<List<String>, List<String>
      */
     @Override
     public List<String> visit(LexicalDeclaration node, List<String> value) {
-        forEach(this, node.getElements(), value);
-        return value;
+        return forEach(node.getElements(), value);
     }
 
     /**
@@ -57,8 +68,7 @@ final class BoundNames extends StaticSemanticsVisitor<List<String>, List<String>
      */
     @Override
     public List<String> visit(VariableStatement node, List<String> value) {
-        forEach(this, node.getElements(), value);
-        return value;
+        return forEach(node.getElements(), value);
     }
 
     /**
@@ -84,8 +94,7 @@ final class BoundNames extends StaticSemanticsVisitor<List<String>, List<String>
      */
     @Override
     public List<String> visit(ArrayBindingPattern node, List<String> value) {
-        forEach(this, node.getElements(), value);
-        return value;
+        return forEach(node.getElements(), value);
     }
 
     /**
@@ -96,8 +105,7 @@ final class BoundNames extends StaticSemanticsVisitor<List<String>, List<String>
      */
     @Override
     public List<String> visit(ObjectBindingPattern node, List<String> value) {
-        forEach(this, node.getProperties(), value);
-        return value;
+        return forEach(node.getProperties(), value);
     }
 
     /**
@@ -228,6 +236,27 @@ final class BoundNames extends StaticSemanticsVisitor<List<String>, List<String>
 
     /**
      * <pre>
+     * StrictFormalParameters :
+     *     FormalParameters
+     * FormalParameters :
+     *     [empty]
+     *     FormalParameterList
+     * FormalParameterList :
+     *     FunctionRestParameter
+     *     FormalsList
+     *     FormalsList , FunctionRestParameter
+     * FormalsList :
+     *     FormalParameter
+     *     FormalsList , FormalParameter
+     * </pre>
+     */
+    @Override
+    public List<String> visit(FormalParameterList node, List<String> value) {
+        return forEach(node.getFormals(), value);
+    }
+
+    /**
+     * <pre>
      * ImportDeclaration : ModuleImport
      * ImportDeclaration : import ImportClause FromClause ;
      * ImportDeclaration : import ModuleSpecifier ;
@@ -267,8 +296,7 @@ final class BoundNames extends StaticSemanticsVisitor<List<String>, List<String>
         if (node.getDefaultEntry() != null) {
             node.getDefaultEntry().accept(this, value);
         }
-        forEach(this, node.getNamedImports(), value);
-        return value;
+        return forEach(node.getNamedImports(), value);
     }
 
     /**

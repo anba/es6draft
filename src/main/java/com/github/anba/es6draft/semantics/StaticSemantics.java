@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.semantics;
 
-import static com.github.anba.es6draft.semantics.StaticSemanticsVisitor.forEach;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 
@@ -75,10 +74,8 @@ public final class StaticSemantics {
     /**
      * 14.1.2 Static Semantics: BoundNames
      */
-    public static List<String> BoundNames(FormalParameterList formals) {
-        List<String> result = new SmallArrayList<>();
-        forEach(BoundNames.INSTANCE, formals, result);
-        return result;
+    public static List<String> BoundNames(FormalParameterList node) {
+        return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
     }
 
     /**
