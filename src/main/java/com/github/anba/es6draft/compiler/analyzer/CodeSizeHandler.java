@@ -17,5 +17,5 @@ import com.github.anba.es6draft.ast.TopLevelNode;
 interface CodeSizeHandler {
     int reportSize(Node node, int size);
 
-    void submit(TopLevelNode node, List<? extends Node> children);
+    void submit(TopLevelNode<?> node, List<? extends Node> children);
 }

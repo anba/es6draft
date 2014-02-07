@@ -15,7 +15,7 @@ import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 /**
  * Subdivides statements into {@link StatementListMethod} elements
  */
-abstract class TopLevelSubMethod<NODE extends TopLevelNode> extends SubMethod<NODE> {
+abstract class TopLevelSubMethod<NODE extends TopLevelNode<?>> extends SubMethod<NODE> {
     static final class FunctionSubMethod extends TopLevelSubMethod<FunctionNode> {
         @Override
         int processNode(FunctionNode node, int oldSize) {

@@ -121,7 +121,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
 
     private static final int COMPLETION_SLOT = 1;
 
-    private final TopLevelNode topLevelNode;
+    private final TopLevelNode<?> topLevelNode;
     private final CodeType codeType;
     private final boolean isScriptCode;
     private final boolean isGenerator;
@@ -143,7 +143,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     protected StatementVisitor(MethodCode method, boolean recordStack, boolean strict,
-            TopLevelNode topLevelNode, CodeType codeType) {
+            TopLevelNode<?> topLevelNode, CodeType codeType) {
         super(method, recordStack, strict, codeType == CodeType.GlobalScript, topLevelNode
                 .hasSyntheticNodes());
         this.topLevelNode = topLevelNode;
@@ -154,7 +154,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
         this.labels.returnLabel = codeType == CodeType.Function ? new ReturnLabel() : null;
     }
 
-    private static boolean isGeneratorNode(TopLevelNode node) {
+    private static boolean isGeneratorNode(TopLevelNode<?> node) {
         assert node instanceof FunctionNode;
         return ((FunctionNode) node).isGenerator();
     }
@@ -171,7 +171,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
     /**
      * Returns the {@link TopLevelNode} for this statement visitor
      */
-    TopLevelNode getTopLevelNode() {
+    TopLevelNode<?> getTopLevelNode() {
         return topLevelNode;
     }
 

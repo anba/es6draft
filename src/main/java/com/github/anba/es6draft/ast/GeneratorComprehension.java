@@ -56,12 +56,12 @@ public final class GeneratorComprehension extends Expression implements Function
 
     @Override
     public String getHeaderSource() {
-        return "function gencompr()";
+        return "function gencompr() ";
     }
 
     @Override
     public String getBodySource() {
-        return "\n[generator expression]\n";
+        return "\n  /* generator comprehension */\n";
     }
 
     @Override

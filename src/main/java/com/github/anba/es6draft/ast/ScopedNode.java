@@ -10,5 +10,8 @@ package com.github.anba.es6draft.ast;
  * Base interface for {@link Node} objects which hold any {@link Scope} information
  */
 public interface ScopedNode extends Node {
+    /**
+     * Returns the scope object for this node.
+     */
     Scope getScope();
 }

@@ -33,7 +33,7 @@ final class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
         return node.accept(this, value);
     }
 
-    private void submit(TopLevelNode node, List<? extends Node> children, CodeSizeHandler value) {
+    private void submit(TopLevelNode<?> node, List<? extends Node> children, CodeSizeHandler value) {
         value.submit(node, children);
     }
 

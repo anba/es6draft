@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
  * <li>15.1 Script
  * </ul>
  */
-public final class Script extends AstNode implements TopLevelNode, ScopedNode {
+public final class Script extends AstNode implements TopLevelNode<StatementListItem>, ScopedNode {
     private String sourceFile;
     private ScriptScope scope;
     private List<StatementListItem> statements;
@@ -53,6 +53,7 @@ public final class Script extends AstNode implements TopLevelNode, ScopedNode {
         return statements;
     }
 
+    @Override
     public void setStatements(List<StatementListItem> statements) {
         this.statements = statements;
     }

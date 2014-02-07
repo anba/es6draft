@@ -49,7 +49,7 @@ public final class CodeSizeAnalysis implements AutoCloseable {
         executor.shutdownNow();
     }
 
-    private void submit(TopLevelNode node, List<? extends Node> children) {
+    private void submit(TopLevelNode<?> node, List<? extends Node> children) {
         queue.add(executor.submit(new Entry(node, children)));
     }
 
@@ -74,10 +74,10 @@ public final class CodeSizeAnalysis implements AutoCloseable {
     }
 
     private final class Entry implements Callable<Integer> {
-        private TopLevelNode node;
+        private TopLevelNode<?> node;
         private List<? extends Node> children;
 
-        Entry(TopLevelNode node, List<? extends Node> children) {
+        Entry(TopLevelNode<?> node, List<? extends Node> children) {
             this.node = node;
             this.children = children;
         }
@@ -92,9 +92,9 @@ public final class CodeSizeAnalysis implements AutoCloseable {
 
     private final class CodeSizeHandlerImpl extends DefaultNodeVisitor<Integer, Integer> implements
             CodeSizeHandler {
-        private final TopLevelNode topLevelNode;
+        private final TopLevelNode<?> topLevelNode;
 
-        public CodeSizeHandlerImpl(TopLevelNode topLevelNode) {
+        public CodeSizeHandlerImpl(TopLevelNode<?> topLevelNode) {
             this.topLevelNode = topLevelNode;
         }
 
@@ -109,7 +109,7 @@ public final class CodeSizeAnalysis implements AutoCloseable {
         }
 
         @Override
-        public void submit(TopLevelNode node, List<? extends Node> children) {
+        public void submit(TopLevelNode<?> node, List<? extends Node> children) {
             CodeSizeAnalysis.this.submit(node, children);
         }
 

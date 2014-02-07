@@ -25,7 +25,7 @@ public interface TopLevelScope extends Scope {
     Scope getEnclosingScope();
 
     @Override
-    TopLevelNode getNode();
+    TopLevelNode<?> getNode();
 
     /**
      * Returns the set of lexically declared names.

@@ -207,7 +207,7 @@ final class CodeGenerator implements AutoCloseable {
         return name;
     }
 
-    private String methodName(TopLevelNode topLevel, StatementListMethod node) {
+    private String methodName(TopLevelNode<?> topLevel, StatementListMethod node) {
         String baseName;
         if (topLevel instanceof FunctionNode) {
             baseName = methodName((FunctionNode) topLevel, FunctionName.Call);
@@ -384,7 +384,7 @@ final class CodeGenerator implements AutoCloseable {
         return publicStaticMethod(methodName(node), methodDescriptor(node));
     }
 
-    private MethodCode newMethod(TopLevelNode topLevel, StatementListMethod node) {
+    private MethodCode newMethod(TopLevelNode<?> topLevel, StatementListMethod node) {
         return publicStaticMethod(methodName(topLevel, node), methodDescriptor(node));
     }
 
