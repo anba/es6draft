@@ -207,6 +207,7 @@ final class BindingInitialisationGenerator {
             // step 2-3:
             // stack: [(env), value] -> [(env)]
             Variable<Iterator<?>> iterator = uncheckedCast(mv.newScratchVariable(Iterator.class));
+            mv.lineInfo(node);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getIterator);
             mv.store(iterator);

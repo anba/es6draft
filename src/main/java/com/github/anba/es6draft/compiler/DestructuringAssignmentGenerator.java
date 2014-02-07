@@ -158,6 +158,7 @@ final class DestructuringAssignmentGenerator {
         public Void visit(ArrayAssignmentPattern node, Void value) {
             // stack: [obj] -> [iterator]
             Variable<Iterator<?>> iterator = uncheckedCast(mv.newScratchVariable(Iterator.class));
+            mv.lineInfo(node);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getIterator);
             mv.store(iterator);

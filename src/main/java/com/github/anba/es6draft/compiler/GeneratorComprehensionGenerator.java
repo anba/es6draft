@@ -48,7 +48,10 @@ final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     protected Void visit(Expression node, ExpressionVisitor mv) {
         assert initialised : "generator-comprehension generator not initialised";
 
+        /* steps 1-3 */
         expressionBoxedValue(node, mv);
+        /* step 4 (not applicable) */
+        /* steps 5-8 */
         yield(node, mv);
         mv.pop();
 

@@ -55,6 +55,7 @@ final class ArrayComprehensionGenerator extends ComprehensionGenerator {
             return visit((Expression) node, mv);
         }
 
+        /* step 1 */
         mv.enterVariableScope();
         result = mv.newVariable("result", ArrayList.class);
         mv.anew(Types.ArrayList);
@@ -62,8 +63,10 @@ final class ArrayComprehensionGenerator extends ComprehensionGenerator {
         mv.invoke(Methods.ArrayList_init);
         mv.store(result);
 
+        /* steps 2-3 */
         node.getComprehension().accept(this, mv);
 
+        /* step 4 */
         mv.loadExecutionContext();
         mv.load(result);
         mv.invoke(Methods.AbstractOperations_CreateArrayFromList);
@@ -81,11 +84,14 @@ final class ArrayComprehensionGenerator extends ComprehensionGenerator {
     protected Void visit(Expression node, ExpressionVisitor mv) {
         assert result != null : "array-comprehension generator not initialised";
 
+        /* steps 1-3 */
         expressionBoxedValue(node, mv);
+        /* step 4 */
         mv.load(result);
         mv.swap();
         mv.invoke(Methods.ArrayList_add);
         mv.pop();
+        /* steps 5-8 (not applicable) */
 
         return null;
     }

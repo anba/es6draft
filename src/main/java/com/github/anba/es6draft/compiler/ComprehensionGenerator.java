@@ -30,7 +30,11 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
- * 12.1.4.2 Array Comprehension
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.1 Primary Expressions</h2>
+ * <ul>
+ * <li>12.1.4.2 Array Comprehension
+ * </ul>
  */
 abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
     private static final class Methods {
@@ -167,17 +171,21 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     /**
      * 12.1.4.2.4 Runtime Semantics: ComprehensionComponentEvaluation
      * <p>
-     * ComprehensionFor : if ( AssignmentExpression )
+     * ComprehensionIf : if ( AssignmentExpression )
      */
     @Override
     public Void visit(ComprehensionIf node, ExpressionVisitor mv) {
-        Label lblTest = new Label();
+        /* steps 1-2 */
         ValType type = expressionValue(node.getTest(), mv);
+        /* steps 3-4 */
         ToBoolean(type, mv);
+        /* steps 5-6 */
+        Label lblTest = new Label();
         mv.ifeq(lblTest);
-
-        elements.next().accept(this, mv);
-
+        {
+            /* step 5a */
+            elements.next().accept(this, mv);
+        }
         mv.mark(lblTest);
 
         return null;
@@ -190,23 +198,29 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
      */
     @Override
     public Void visit(ComprehensionFor node, ExpressionVisitor mv) {
-        Label lblContinue = new Label(), lblBreak = new Label();
+        Label lblTest = new Label(), lblLoop = new Label();
 
+        /* steps 1-2 */
         expressionBoxedValue(node.getExpression(), mv);
 
+        /* steps 3-6 */
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_iterate);
 
         Variable<Iterator<?>> iter = iterators.next();
         mv.store(iter);
 
-        mv.mark(lblContinue);
-        mv.load(iter);
-        mv.invoke(Methods.Iterator_hasNext);
-        mv.ifeq(lblBreak);
+        /* step 7 (not applicable) */
+
+        /* step 8 */
+        mv.goTo(lblTest);
+
+        /* steps 8d-8e */
+        mv.mark(lblLoop);
         mv.load(iter);
         mv.invoke(Methods.Iterator_next);
 
+        /* steps 8f-8j */
         // create new declarative lexical environment
         // stack: [nextValue] -> [nextValue, forEnv]
         newDeclarativeEnvironment(mv);
@@ -236,15 +250,20 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         // stack: [forEnv] -> []
         pushLexicalEnvironment(mv);
 
+        /* steps 8k, 8m */
         mv.enterScope(node);
         elements.next().accept(this, mv);
         mv.exitScope();
 
+        /* step 8l */
         // restore previous lexical environment
         popLexicalEnvironment(mv);
 
-        mv.goTo(lblContinue);
-        mv.mark(lblBreak);
+        /* steps 8a-8c */
+        mv.mark(lblTest);
+        mv.load(iter);
+        mv.invoke(Methods.Iterator_hasNext);
+        mv.ifne(lblLoop);
 
         return null;
     }
@@ -256,17 +275,18 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
      */
     @Override
     public Void visit(LegacyComprehensionFor node, ExpressionVisitor mv) {
-        Label lblContinue = new Label(), lblBreak = new Label();
+        Label lblTest = new Label(), lblLoop = new Label(), lblFail = new Label();
 
         ValType type = expressionValue(node.getExpression(), mv);
         if (type != ValType.Object) {
-            mv.toBoxed(type);
+            // fail-safe behaviour for null/undefined values in legacy comprehensions
             Label loopstart = new Label();
+            mv.toBoxed(type);
             mv.dup();
             isUndefinedOrNull(mv);
             mv.ifeq(loopstart);
             mv.pop();
-            mv.goTo(lblBreak);
+            mv.goTo(lblFail);
             mv.mark(loopstart);
         }
 
@@ -298,10 +318,8 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         Variable<Iterator<?>> iter = iterators.next();
         mv.store(iter);
 
-        mv.mark(lblContinue);
-        mv.load(iter);
-        mv.invoke(Methods.Iterator_hasNext);
-        mv.ifeq(lblBreak);
+        mv.goTo(lblTest);
+        mv.mark(lblLoop);
         mv.load(iter);
         mv.invoke(Methods.Iterator_next);
 
@@ -315,8 +333,11 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
         elements.next().accept(this, mv);
 
-        mv.goTo(lblContinue);
-        mv.mark(lblBreak);
+        mv.mark(lblTest);
+        mv.load(iter);
+        mv.invoke(Methods.Iterator_hasNext);
+        mv.ifne(lblLoop);
+        mv.mark(lblFail);
 
         return null;
     }
