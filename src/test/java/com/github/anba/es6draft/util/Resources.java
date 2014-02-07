@@ -178,9 +178,11 @@ public final class Resources {
         if (basedir == null) {
             return emptyList();
         }
+        Path searchdir = basedir.resolve(config.getString("searchdir", ""));
         Set<String> excludeDirs = Collections.emptySet();
         Set<String> excludeFiles = Collections.emptySet();
-        List<TestInfo> tests = TestInfo.loadTests(basedir, basedir, excludeDirs, excludeFiles, fn);
+        List<TestInfo> tests = TestInfo
+                .loadTests(searchdir, basedir, excludeDirs, excludeFiles, fn);
 
         Pattern excludePattern = Pattern.compile(config.getString("exclude_re", ""));
         Set<String> excludes = readExcludeXMLs(config.getList("exclude", emptyList()));
