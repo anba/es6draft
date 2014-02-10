@@ -28,6 +28,10 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
  *
  */
 public final class SourceBuilder {
+    private static final int MAX_STACK_DEPTH = 5;
+    private static final int MAX_OBJECT_PROPERTIES = 30;
+    private static final int MAX_ARRAY_PROPERTIES = 80;
+
     private SourceBuilder() {
     }
 
@@ -176,7 +180,7 @@ public final class SourceBuilder {
             if (IsCallable(objValue)) {
                 return ((Callable) objValue).toSource();
             }
-            if (stack.contains(objValue)) {
+            if (stack.contains(objValue) || stack.size() > MAX_STACK_DEPTH) {
                 return "« ... »";
             }
             stack.add(objValue);
@@ -266,11 +270,15 @@ public final class SourceBuilder {
         if (keys.isEmpty()) {
             return "{}";
         }
+        List<Object> view = keys.subList(0, Math.min(keys.size(), MAX_OBJECT_PROPERTIES));
         StringBuilder properties = new StringBuilder();
-        for (Object k : keys) {
+        for (Object k : view) {
             String key = propertyKeyToSource(mode, k);
             String p = toSource(mode, cx, stack, Get(cx, value, k));
             properties.append(", ").append(key).append(": ").append(p);
+        }
+        if (view.size() < keys.size()) {
+            properties.append(", [...]");
         }
         properties.append(" }").setCharAt(0, '{');
         return properties.toString();
@@ -282,10 +290,14 @@ public final class SourceBuilder {
         if (len <= 0) {
             return "[]";
         }
+        int viewLen = (int) Math.min(len, MAX_ARRAY_PROPERTIES);
         StringBuilder properties = new StringBuilder();
-        for (long index = 0; index < len; ++index) {
+        for (int index = 0; index < viewLen; ++index) {
             String p = toSource(mode, cx, stack, Get(cx, value, ToString(index)));
             properties.append(", ").append(p);
+        }
+        if (viewLen < len) {
+            properties.append(", [...]");
         }
         properties.append(" ]").setCharAt(0, '[');
         return properties.toString();
