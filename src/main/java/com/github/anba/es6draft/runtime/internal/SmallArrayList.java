@@ -40,22 +40,26 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
 
     private void ensureCapacity(int c) {
         if (c > capacity) {
-            E[] ext = this.extended;
-            if (ext == null) {
-                int len = Math.max(c, INIT_SIZE);
-                E[] array = newArray(len);
-                array[0] = fst;
-                array[1] = snd;
-                array[2] = thd;
-                capacity = len;
-                extended = array;
-                fst = snd = thd = null;
-            } else {
-                int len = Math.max(c, ext.length + (ext.length >> 1));
-                E[] array = Arrays.copyOf(ext, len);
-                capacity = len;
-                extended = array;
-            }
+            grow(c);
+        }
+    }
+
+    private void grow(int c) {
+        E[] ext = this.extended;
+        if (this.extended == null) {
+            int len = Math.max(c, INIT_SIZE);
+            E[] array = newArray(len);
+            array[0] = fst;
+            array[1] = snd;
+            array[2] = thd;
+            capacity = len;
+            extended = array;
+            fst = snd = thd = null;
+        } else {
+            int len = Math.max(c, ext.length + (ext.length >> 1));
+            E[] array = Arrays.copyOf(ext, len);
+            capacity = len;
+            extended = array;
         }
     }
 
