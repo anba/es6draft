@@ -66,17 +66,17 @@ public final class RegExpParser {
         this.out = new StringBuilder(length);
     }
 
-    public static RegExpMatcher parse(String p, String f, String sourceFile, int sourceLine,
-            int sourceColumn) throws ParserException {
+    public static RegExpMatcher parse(String pattern, String flags, String sourceFile,
+            int sourceLine, int sourceColumn) throws ParserException {
         // flags :: g | i | m | u | y
         final int global = 0b00001, ignoreCase = 0b00010, multiline = 0b00100, unicode = 0b01000, sticky = 0b10000;
-        int flags = 0b00000;
-        for (int i = 0, len = f.length(); i < len; ++i) {
-            char c = f.charAt(i);
+        int mask = 0b00000;
+        for (int i = 0, len = flags.length(); i < len; ++i) {
+            char c = flags.charAt(i);
             int flag = (c == 'g' ? global : c == 'i' ? ignoreCase : c == 'm' ? multiline
                     : c == 'u' ? unicode : c == 'y' ? sticky : -1);
-            if (flag != -1 && (flags & flag) == 0) {
-                flags |= flag;
+            if (flag != -1 && (mask & flag) == 0) {
+                mask |= flag;
             } else {
                 String detail;
                 Messages.Key reason;
@@ -111,17 +111,18 @@ public final class RegExpParser {
         }
 
         int iflags = 0;
-        if ((flags & ignoreCase) != 0) {
+        if ((mask & ignoreCase) != 0) {
             iflags |= Pattern.CASE_INSENSITIVE;
         }
-        if ((flags & unicode) != 0) {
+        if ((mask & unicode) != 0) {
             iflags |= Pattern.UNICODE_CASE;
         }
-        if ((flags & multiline) != 0) {
+        if ((mask & multiline) != 0) {
             iflags |= Pattern.MULTILINE;
         }
 
-        RegExpParser parser = new RegExpParser(p, iflags, sourceFile, sourceLine, sourceColumn);
+        RegExpParser parser = new RegExpParser(pattern, iflags, sourceFile, sourceLine,
+                sourceColumn);
         parser.pattern();
 
         // System.out.printf("pattern = %s%n", parser.out.toString());
