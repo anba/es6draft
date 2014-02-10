@@ -171,6 +171,13 @@ public final class Parser {
         void removeLiteral(ObjectLiteral object) {
             objectLiterals.removeFirstOccurrence(object);
         }
+
+        boolean assertLiteralsUnchecked(int expected) {
+            int count = countLiterals();
+            assert count == expected : String.format(
+                    "%d unchecked object literals, but expected %d", count, expected);
+            return count == expected;
+        }
     }
 
     private static final class FunctionContext extends TopContext implements FunctionScope {
@@ -1056,6 +1063,7 @@ public final class Parser {
             List<StatementListItem> prologue = directivePrologue();
             List<StatementListItem> body = statementList(Token.EOF);
             List<StatementListItem> statements = merge(prologue, body);
+            assert context.assertLiteralsUnchecked(0);
             boolean strict = (context.strictMode == StrictMode.Strict);
 
             ScriptContext scope = context.scriptContext;
@@ -1085,6 +1093,7 @@ public final class Parser {
         try {
             ts.initialise();
             List<ModuleItem> statements = moduleItemList();
+            assert context.assertLiteralsUnchecked(0);
 
             ModuleContext scope = context.modContext;
             Module module = new Module(beginSource(), ts.endPosition(), sourceFile, scope,
@@ -1856,6 +1865,7 @@ public final class Parser {
         context.yieldAllowed = (context.kind == ContextKind.Generator);
         List<StatementListItem> prologue = directivePrologue();
         List<StatementListItem> body = statementList(end);
+        assert context.assertLiteralsUnchecked(0);
         return merge(prologue, body);
     }
 
@@ -1871,6 +1881,7 @@ public final class Parser {
         // need to call manually b/c directivePrologue() isn't used here
         applyStrictMode(false);
         Expression expr = assignmentExpression(true);
+        assert context.assertLiteralsUnchecked(0);
         return Collections.<StatementListItem> singletonList(new ReturnStatement(
                 ts.beginPosition(), ts.endPosition(), expr));
     }
@@ -1948,6 +1959,7 @@ public final class Parser {
 
                 int startBody = ts.position();
                 Expression expression = assignmentExpression(allowIn);
+                assert context.assertLiteralsUnchecked(0);
                 int endFunction = ts.position();
 
                 String header = source.toString();
@@ -2193,9 +2205,15 @@ public final class Parser {
         return MethodType.Function;
     }
 
-    private boolean isPropertyName(Token token) {
-        return token == Token.STRING || token == Token.NUMBER || token == Token.LB
-                || isIdentifierName(token);
+    private static boolean isPropertyName(Token token) {
+        switch (token) {
+        case STRING:
+        case NUMBER:
+        case LB:
+            return true;
+        default:
+            return isIdentifierName(token);
+        }
     }
 
     /**
@@ -3424,7 +3442,7 @@ public final class Parser {
      * </pre>
      */
     private EmptyStatement emptyStatement() {
-        long begin = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.SEMI);
 
         return new EmptyStatement(begin, ts.endPosition());
@@ -4910,13 +4928,24 @@ public final class Parser {
         return object;
     }
 
+    private void discardUncheckedObjectLiterals(int oldCount) {
+        ArrayDeque<ObjectLiteral> literals = context.objectLiterals;
+        if (literals != null) {
+            for (int i = oldCount, newCount = literals.size(); i < newCount; ++i) {
+                literals.pop();
+            }
+        }
+    }
+
     /**
      * 12.1.5.1 Static Semantics: Early Errors
      */
     private void objectLiteral_EarlyErrors(int oldCount) {
         ArrayDeque<ObjectLiteral> literals = context.objectLiterals;
-        for (int i = oldCount, newCount = literals.size(); i < newCount; ++i) {
-            objectLiteral_EarlyErrors(literals.pop());
+        if (literals != null) {
+            for (int i = oldCount, newCount = literals.size(); i < newCount; ++i) {
+                objectLiteral_EarlyErrors(literals.pop());
+            }
         }
     }
 
@@ -4983,7 +5012,7 @@ public final class Parser {
      *     PropertyName<sub>[?Yield]</sub> : AssignmentExpression<sub>[In, ?Yield]</sub>
      *     MethodDefinition<sub>[?Yield]</sub>
      * CoverInitialisedName<sub>[Yield]</sub> :
-     *     IdentifierName Initialiser<sub>[In, ?Yield]</sub>
+     *     IdentifierReference Initialiser<sub>[In, ?Yield]</sub>
      * Initialiser<sub>[In, Yield]</sub> :
      *     = AssignmentExpression<sub>[?In, ?Yield]</sub>
      * </pre>
@@ -5106,6 +5135,7 @@ public final class Parser {
             consume(Token.LP);
             Comprehension comprehension = comprehension();
             consume(Token.RP);
+            assert context.assertLiteralsUnchecked(0);
 
             FunctionContext scope = context.funContext;
             GeneratorComprehension generator = new GeneratorComprehension(begin, ts.endPosition(),
@@ -5143,6 +5173,7 @@ public final class Parser {
             consume(Token.LP);
             LegacyComprehension comprehension = legacyComprehension();
             consume(Token.RP);
+            assert context.assertLiteralsUnchecked(0);
 
             FunctionContext scope = context.funContext;
             GeneratorComprehension generator = new GeneratorComprehension(begin, ts.endPosition(),
@@ -5177,9 +5208,9 @@ public final class Parser {
     /**
      * 12.1.8.1 Static Semantics: Early Errors
      */
-    private void regularExpressionLiteral_EarlyErrors(long sourcePos, String p, String f) {
+    private void regularExpressionLiteral_EarlyErrors(long sourcePos, String pattern, String flags) {
         // parse to validate regular expression, but ignore actual result
-        RegExpParser.parse(p, f, sourceFile, toLine(sourcePos), toColumn(sourcePos));
+        RegExpParser.parse(pattern, flags, sourceFile, toLine(sourcePos), toColumn(sourcePos));
     }
 
     /**
@@ -5694,9 +5725,7 @@ public final class Parser {
     private Expression assignmentExpression(boolean allowIn) {
         int count = context.countLiterals();
         Expression expr = assignmentExpression(allowIn, count);
-        if (count < context.countLiterals()) {
-            objectLiteral_EarlyErrors(count);
-        }
+        objectLiteral_EarlyErrors(count);
         return expr;
     }
 
@@ -5800,7 +5829,7 @@ public final class Parser {
      *     *=  /=  %=  +=  -=  <<=  >>=  >>>=  &=  ^=  |=
      * </pre>
      */
-    private boolean isAssignmentOperator(Token tok) {
+    private static boolean isAssignmentOperator(Token tok) {
         switch (tok) {
         case ASSIGN_ADD:
         case ASSIGN_BITAND:
@@ -6069,16 +6098,29 @@ public final class Parser {
     private Expression expression(boolean allowIn) {
         Expression expr = assignmentExpression(allowIn);
         if (token() == Token.COMMA) {
-            List<Expression> list = new ArrayList<>();
-            list.add(expr);
-            while (token() == Token.COMMA) {
-                consume(Token.COMMA);
-                expr = assignmentExpression(allowIn);
-                list.add(expr);
-            }
-            return new CommaExpression(list);
+            return commaExpression(expr, allowIn);
         }
         return expr;
+    }
+
+    /**
+     * <strong>[12.14] Comma Operator</strong>
+     * 
+     * <pre>
+     * Expression<sub>[In, Yield]</sub> :
+     *     AssignmentExpression<sub>[?In, ?Yield]</sub>
+     *     Expression<sub>[?In, ?Yield]</sub> , AssignmentExpression<sub>[?In, ?Yield]</sub>
+     * </pre>
+     */
+    private CommaExpression commaExpression(Expression expr, boolean allowIn) {
+        List<Expression> list = newList();
+        list.add(expr);
+        while (token() == Token.COMMA) {
+            consume(Token.COMMA);
+            expr = assignmentExpression(allowIn);
+            list.add(expr);
+        }
+        return new CommaExpression(list);
     }
 
     /* ***************************************************************************************** */
@@ -6197,6 +6239,7 @@ public final class Parser {
         case YIELD:
             // Future Reserved Words
         case ENUM:
+            // Future Reserved Words (Strict Mode)
         case IMPLEMENTS:
         case INTERFACE:
         case LET:
