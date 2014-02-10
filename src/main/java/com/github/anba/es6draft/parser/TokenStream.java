@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.parser;
 
-import static com.github.anba.es6draft.parser.NumberParser.parseBinary;
-import static com.github.anba.es6draft.parser.NumberParser.parseDecimal;
-import static com.github.anba.es6draft.parser.NumberParser.parseHex;
-import static com.github.anba.es6draft.parser.NumberParser.parseOctal;
+import static com.github.anba.es6draft.parser.NumberParser.*;
 
 import java.util.Arrays;
 
@@ -814,17 +811,16 @@ public final class TokenStream {
             }
         case '`':
             return Token.TEMPLATE;
-        }
-
-        if (c == '\\') {
+        case '\\':
             mustMatch('u');
             c = readUnicode();
+            // fall-through
+        default:
+            if (isIdentifierStart(c)) {
+                return readIdentifier(c);
+            }
+            return Token.ERROR;
         }
-        if (isIdentifierStart(c)) {
-            return readIdentifier(c);
-        }
-
-        return Token.ERROR;
     }
 
     /**
@@ -1664,6 +1660,7 @@ public final class TokenStream {
 
     private double readDecimalLiteral(int c, boolean reset) {
         assert c == '.' || isDecimalDigit(c);
+        boolean isInteger = true;
         TokenStreamInput input = this.input;
         StringBuffer buffer = reset ? this.buffer() : this.buffer;
         if (c != '.' && c != '0') {
@@ -1676,12 +1673,14 @@ public final class TokenStream {
             c = input.get();
         }
         if (c == '.') {
+            isInteger = false;
             buffer.add(c);
             while (isDecimalDigit(c = input.get())) {
                 buffer.add(c);
             }
         }
         if (c == 'e' || c == 'E') {
+            isInteger = false;
             buffer.add(c);
             c = input.get();
             if (c == '+' || c == '-') {
@@ -1700,6 +1699,9 @@ public final class TokenStream {
             throw error(Messages.Key.InvalidNumberLiteral);
         }
         input.unget(c);
+        if (isInteger) {
+            return parseInteger(buffer.cbuf, buffer.length);
+        }
         return parseDecimal(buffer.cbuf, buffer.length);
     }
 

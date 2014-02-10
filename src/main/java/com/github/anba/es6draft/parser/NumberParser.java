@@ -15,6 +15,27 @@ final class NumberParser {
     private NumberParser() {
     }
 
+    static double parseInteger(char[] cbuf, int length) {
+        if (length < 10) {
+            // integer [0, 9999_99999]
+            int num = 0;
+            for (int i = 0; i < length; ++i) {
+                num = (num * 10) | digit(cbuf[i]);
+            }
+            return num;
+        } else if (length < 19) {
+            // integer [0, 999_99999_99999_99999]
+            long num = 0;
+            for (int i = 0; i < length; ++i) {
+                num = (num * 10) | digit(cbuf[i]);
+            }
+            return num;
+        } else {
+            // integer ]999_99999_99999_99999, ...]
+            return parseDecimal(cbuf, length);
+        }
+    }
+
     static double parseDecimal(char[] cbuf, int length) {
         String string = new String(cbuf, 0, length);
         return Double.parseDouble(string);
@@ -103,5 +124,4 @@ final class NumberParser {
         }
         return -1;
     }
-
 }
