@@ -1995,17 +1995,17 @@ public final class Parser {
      *     set PropertyName ( PropertySetParameterList ) { FunctionBody }
      * </pre>
      */
-    private MethodDefinition methodDefinition(boolean alwaysStrict) {
+    private MethodDefinition methodDefinition() {
         switch (methodType()) {
         case Generator:
-            return generatorMethod(alwaysStrict);
+            return generatorMethod();
         case Getter:
-            return getterMethod(alwaysStrict);
+            return getterMethod();
         case Setter:
-            return setterMethod(alwaysStrict);
+            return setterMethod();
         case Function:
         default:
-            return normalMethod(alwaysStrict);
+            return normalMethod();
         }
     }
 
@@ -2017,18 +2017,14 @@ public final class Parser {
      *     PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </pre>
      */
-    private MethodDefinition normalMethod(boolean alwaysStrict) {
+    private MethodDefinition normalMethod() {
         long begin = ts.beginPosition();
         PropertyName propertyName = propertyName();
-        return normalMethod(begin, propertyName, alwaysStrict);
+        return normalMethod(begin, propertyName);
     }
 
-    private MethodDefinition normalMethod(long begin, PropertyName propertyName,
-            boolean alwaysStrict) {
+    private MethodDefinition normalMethod(long begin, PropertyName propertyName) {
         newContext(ContextKind.Method);
-        if (alwaysStrict) {
-            context.strictMode = StrictMode.Strict;
-        }
         try {
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -2065,16 +2061,13 @@ public final class Parser {
      *     get PropertyName ( ) { FunctionBody }
      * </pre>
      */
-    private MethodDefinition getterMethod(boolean alwaysStrict) {
+    private MethodDefinition getterMethod() {
         long begin = ts.beginPosition();
 
         consume(Token.NAME); // "get"
         PropertyName propertyName = propertyName();
 
         newContext(ContextKind.Method);
-        if (alwaysStrict) {
-            context.strictMode = StrictMode.Strict;
-        }
         try {
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -2124,16 +2117,13 @@ public final class Parser {
      *     set PropertyName ( PropertySetParameterList ) { FunctionBody }
      * </pre>
      */
-    private MethodDefinition setterMethod(boolean alwaysStrict) {
+    private MethodDefinition setterMethod() {
         long begin = ts.beginPosition();
 
         consume(Token.NAME); // "set"
         PropertyName propertyName = propertyName();
 
         newContext(ContextKind.Method);
-        if (alwaysStrict) {
-            context.strictMode = StrictMode.Strict;
-        }
         try {
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -2262,16 +2252,13 @@ public final class Parser {
      *     * PropertyName<sub>[?Yield]</sub> ( StrictFormalParameters<sub>[Yield, GeneratorParameter]</sub> ) { FunctionBody<sub>[Yield]</sub> }
      * </pre>
      */
-    private MethodDefinition generatorMethod(boolean alwaysStrict) {
+    private MethodDefinition generatorMethod() {
         long begin = ts.beginPosition();
 
         consume(Token.MUL);
         PropertyName propertyName = propertyName();
 
         newContext(ContextKind.Generator);
-        if (alwaysStrict) {
-            context.strictMode = StrictMode.Strict;
-        }
         try {
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -2553,32 +2540,38 @@ public final class Parser {
      * ClassTail :
      *     ClassHeritage<sub>opt</sub> { ClassBody<sub>opt</sub> }
      * ClassHeritage :
-     *     extends AssignmentExpression
+     *     extends LeftHandSideExpression
      * </pre>
      */
     private ClassDeclaration classDeclaration(boolean allowDefault) {
-        long begin = ts.beginPosition();
-        consume(Token.CLASS);
-        // 10.2.1 - ClassDeclaration and ClassExpression is always strict code
-        BindingIdentifier name = bindingIdentifierClassName(allowDefault);
-        Expression heritage = null;
-        if (token() == Token.EXTENDS) {
-            consume(Token.EXTENDS);
-            heritage = leftHandSideExpression(true);
-        }
-        consume(Token.LC);
-        enterBlockContext(name);
-        List<MethodDefinition> staticMethods = newList();
-        List<MethodDefinition> prototypeMethods = newList();
-        classBody(name, staticMethods, prototypeMethods);
-        exitBlockContext();
-        consume(Token.RC);
+        StrictMode strictMode = context.strictMode;
+        try {
+            // 10.2.1 - ClassDeclaration and ClassExpression is always strict code
+            context.strictMode = StrictMode.Strict;
+            long begin = ts.beginPosition();
+            consume(Token.CLASS);
+            BindingIdentifier name = bindingIdentifierClassName(allowDefault);
+            Expression heritage = null;
+            if (token() == Token.EXTENDS) {
+                consume(Token.EXTENDS);
+                heritage = leftHandSideExpressionWithValidation();
+            }
+            consume(Token.LC);
+            enterBlockContext(name);
+            List<MethodDefinition> staticMethods = newList();
+            List<MethodDefinition> prototypeMethods = newList();
+            classBody(name, staticMethods, prototypeMethods);
+            exitBlockContext();
+            consume(Token.RC);
 
-        ClassDeclaration decl = new ClassDeclaration(begin, ts.endPosition(), name, heritage,
-                staticMethods, prototypeMethods);
-        addLexDeclaredName(name);
-        addLexScopedDeclaration(decl);
-        return decl;
+            ClassDeclaration decl = new ClassDeclaration(begin, ts.endPosition(), name, heritage,
+                    staticMethods, prototypeMethods);
+            addLexDeclaredName(name);
+            addLexScopedDeclaration(decl);
+            return decl;
+        } finally {
+            context.strictMode = strictMode;
+        }
     }
 
     /**
@@ -2590,36 +2583,42 @@ public final class Parser {
      * ClassTail :
      *     ClassHeritage<sub>opt</sub> { ClassBody<sub>opt</sub> }
      * ClassHeritage :
-     *     extends AssignmentExpression
+     *     extends LeftHandSideExpression
      * </pre>
      */
     private ClassExpression classExpression() {
-        long begin = ts.beginPosition();
-        consume(Token.CLASS);
-        BindingIdentifier name = null;
-        if (token() != Token.EXTENDS && token() != Token.LC) {
+        StrictMode strictMode = context.strictMode;
+        try {
             // 10.2.1 - ClassDeclaration and ClassExpression is always strict code
-            name = bindingIdentifierClassName(false);
-        }
-        Expression heritage = null;
-        if (token() == Token.EXTENDS) {
-            consume(Token.EXTENDS);
-            heritage = leftHandSideExpression(true);
-        }
-        consume(Token.LC);
-        if (name != null) {
-            enterBlockContext(name);
-        }
-        List<MethodDefinition> staticMethods = newList();
-        List<MethodDefinition> prototypeMethods = newList();
-        classBody(name, staticMethods, prototypeMethods);
-        if (name != null) {
-            exitBlockContext();
-        }
-        consume(Token.RC);
+            context.strictMode = StrictMode.Strict;
+            long begin = ts.beginPosition();
+            consume(Token.CLASS);
+            BindingIdentifier name = null;
+            if (token() != Token.EXTENDS && token() != Token.LC) {
+                name = bindingIdentifierClassName(false);
+            }
+            Expression heritage = null;
+            if (token() == Token.EXTENDS) {
+                consume(Token.EXTENDS);
+                heritage = leftHandSideExpressionWithValidation();
+            }
+            consume(Token.LC);
+            if (name != null) {
+                enterBlockContext(name);
+            }
+            List<MethodDefinition> staticMethods = newList();
+            List<MethodDefinition> prototypeMethods = newList();
+            classBody(name, staticMethods, prototypeMethods);
+            if (name != null) {
+                exitBlockContext();
+            }
+            consume(Token.RC);
 
-        return new ClassExpression(begin, ts.endPosition(), name, heritage, staticMethods,
-                prototypeMethods);
+            return new ClassExpression(begin, ts.endPosition(), name, heritage, staticMethods,
+                    prototypeMethods);
+        } finally {
+            context.strictMode = strictMode;
+        }
     }
 
     /**
@@ -2644,9 +2643,9 @@ public final class Parser {
                 consume(Token.SEMI);
             } else if (token() == Token.STATIC && !LOOKAHEAD(Token.LP)) {
                 consume(Token.STATIC);
-                staticMethods.add(methodDefinition(true));
+                staticMethods.add(methodDefinition());
             } else {
-                prototypeMethods.add(methodDefinition(true));
+                prototypeMethods.add(methodDefinition());
             }
         }
 
@@ -5002,7 +5001,7 @@ public final class Parser {
                         propertyValue);
             }
             // otherwise it's MethodDefinition (normal)
-            return normalMethod(begin, propertyName, false);
+            return normalMethod(begin, propertyName);
         }
         if (LOOKAHEAD(Token.COLON)) {
             PropertyName propertyName = literalPropertyName();
@@ -5022,7 +5021,7 @@ public final class Parser {
             Expression initialiser = assignmentExpression(true);
             return new CoverInitialisedName(begin, ts.endPosition(), identifier, initialiser);
         }
-        return methodDefinition(false);
+        return methodDefinition();
     }
 
     /**
@@ -5365,6 +5364,17 @@ public final class Parser {
                 return lhs;
             }
         }
+    }
+
+    /**
+     * Entry point for {@link #leftHandSideExpression(boolean)} which additionally performs object
+     * literal early error checks.
+     */
+    private Expression leftHandSideExpressionWithValidation() {
+        int count = context.countLiterals();
+        Expression lhs = leftHandSideExpression(true);
+        objectLiteral_EarlyErrors(count);
+        return lhs;
     }
 
     /**
