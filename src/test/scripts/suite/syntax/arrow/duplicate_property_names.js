@@ -10,7 +10,13 @@ const {
 
 // https://bugs.ecmascript.org/show_bug.cgi?id=2506
 
-// CoverInitialisedName in ArrowParameters is not a SyntaxError
-({a = 0}) => {};
-({a = 0, b = 0}) => {};
-({a = 0}, {b = 0}) => {};
+// Duplicate property names in ArrowParameters is not a SyntaxError
+
+function nonStrictMode() {
+  ({x: a, x: b}) => {};
+}
+
+function strictMode() {
+  "use strict";
+  ({x: a, x: b}) => {};
+}

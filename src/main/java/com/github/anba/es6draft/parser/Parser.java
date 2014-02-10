@@ -4439,14 +4439,19 @@ public final class Parser {
         } else if (token() == Token.TRIPLE_DOT) {
             expr = arrowFunctionRestParameter();
         } else {
-            // inlined `expression(true)`
+            // Inlined `expression(true)`, all occurences of assignmentExpression() are replaced
+            // with assignmentExpressionNoValidation() to support cover-init-name and duplicate
+            // property names in case this production is an ArrowParameterList.
             expr = assignmentExpressionNoValidation(true);
             if (token() == Token.FOR && isEnabled(CompatibilityOption.LegacyComprehension)) {
+                // NB: It is not necessary to remove unchecked object literals from
+                // assignmentExpressionNoValidation(), because any early errors will reappear
+                // in legacyGeneratorComprehension().
                 ts.reset(position, lineinfo);
                 return legacyGeneratorComprehension();
             }
             if (token() == Token.COMMA) {
-                List<Expression> list = new ArrayList<>();
+                List<Expression> list = newList();
                 list.add(expr);
                 while (token() == Token.COMMA) {
                     consume(Token.COMMA);
@@ -4454,7 +4459,7 @@ public final class Parser {
                         list.add(arrowFunctionRestParameter());
                         break;
                     }
-                    expr = assignmentExpression(true);
+                    expr = assignmentExpressionNoValidation(true);
                     list.add(expr);
                 }
                 expr = new CommaExpression(list);
@@ -4673,6 +4678,9 @@ public final class Parser {
                     consume(Token.LB);
                     Expression expression = assignmentExpressionNoValidation(true);
                     if (token() == Token.FOR) {
+                        // NB: It is not necessary to remove unchecked object literals from
+                        // assignmentExpressionNoValidation(), because any early errors will
+                        // reappear in legacyArrayComprehension()
                         ts.reset(position, lineinfo);
                         return legacyArrayComprehension();
                     }
@@ -5791,12 +5799,7 @@ public final class Parser {
             return new ConditionalExpression(left, then, otherwise);
         } else if (tok == Token.ARROW) {
             // discard parsed object literals
-            if (oldCount < context.countLiterals()) {
-                // TODO: still need to verify this, https://bugs.ecmascript.org/show_bug.cgi?id=2506
-                // perform Static Semantics early error detection since the parameter production is
-                // first parsed as an Expression
-                objectLiteral_EarlyErrors(oldCount);
-            }
+            discardUncheckedObjectLiterals(oldCount);
             ts.reset(position, lineinfo);
             return arrowFunction(allowIn);
         } else if (tok == Token.ASSIGN) {
