@@ -20,14 +20,14 @@ final class NumberParser {
             // integer [0, 9999_99999]
             int num = 0;
             for (int i = 0; i < length; ++i) {
-                num = (num * 10) | digit(cbuf[i]);
+                num = (num * 10) + digit(cbuf[i]);
             }
             return num;
         } else if (length < 19) {
             // integer [0, 999_99999_99999_99999]
             long num = 0;
             for (int i = 0; i < length; ++i) {
-                num = (num * 10) | digit(cbuf[i]);
+                num = (num * 10) + digit(cbuf[i]);
             }
             return num;
         } else {
