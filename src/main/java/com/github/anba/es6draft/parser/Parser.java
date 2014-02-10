@@ -3613,7 +3613,7 @@ public final class Parser {
             // 'let' as identifier, e.g. `for (let ;;) {}`
             // fall-through
         default:
-            head = expression(false);
+            head = expressionOrLeftHandSideExpression(false);
             break;
         }
 
@@ -3679,6 +3679,29 @@ public final class Parser {
     }
 
     /**
+     * Parses the Expression or LeftHandSideExpression production in ForStatement.
+     * 
+     * @see #expression(boolean)
+     * @see #leftHandSideExpression(boolean)
+     */
+    private Expression expressionOrLeftHandSideExpression(boolean allowIn) {
+        int count = context.countLiterals();
+        Expression expr = assignmentExpressionNoValidation(allowIn);
+        if (token() == Token.SEMI || token() == Token.COMMA) {
+            // ForStatement, apply early error checks for object literals
+            objectLiteral_EarlyErrors(count);
+            // Proceed to parse expression tail, if any
+            if (token() == Token.COMMA) {
+                return commaExpression(expr, allowIn);
+            }
+            return expr;
+        }
+        // ForInStatement or ForOfStatement, discard unchecked object literals
+        discardUncheckedObjectLiterals(count);
+        return expr;
+    }
+
+    /**
      * <strong>[13.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
      * 
      * <pre>
@@ -3731,9 +3754,12 @@ public final class Parser {
             // 'let' as identifier, e.g. `for (let in "") {}`
             // fall-through
         default:
+            int count = context.countLiterals();
             Expression lhs = leftHandSideExpression(true);
             head = validateAssignment(lhs, ExceptionType.SyntaxError,
                     Messages.Key.InvalidAssignmentTarget);
+            // Number of unchecked object literals should not have changed
+            assert context.assertLiteralsUnchecked(count);
             break;
         }
 
