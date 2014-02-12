@@ -337,7 +337,6 @@ tests/basic/testBug714650.js
 tests/self-test/assertDeepEq.js
 
 # SameValueZero comparison for Map and Set not implemented in SM
-tests/auto-regress/bug770954.js
 tests/collections/key-equality-0.js
 tests/collections/Map-gc-4.js
 tests/collections/Map-get.js
@@ -574,5 +573,4 @@ tests/basic/testBug621202.js
 # OutOfMemory: Java heap space
 tests/auto-regress/bug690933.js
 tests/auto-regress/bug735313.js
-tests/basic/bug698584.js
 tests/basic/bug710947.js

@@ -190,6 +190,7 @@ fast/js/excessive-comma-usage.js
 fast/js/regexp-stack-overflow.js
 
 # Timeout (slow)
+array-splice.js
 comparison-operators.js
 comparison-operators-less.js
 comparison-operators-greater.js
@@ -199,3 +200,4 @@ sort-with-side-effecting-comparisons.js
 
 # OutOfMemory
 function-apply-aliased.js
+string-replacement-outofmemory.js

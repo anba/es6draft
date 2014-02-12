@@ -122,12 +122,6 @@ compiler/literals.js
 # \n\r are two separate line terminators
 newline-in-string.js
 
-# Object.property.__proto__ is poisoned in V8
-proto-poison.js
-
-# String.prototype.trim() removes \u200B in V8
-third_party/string-trim.js
-
 # Date.parse incompatibility
 date-parse.js
 json.js
@@ -163,6 +157,9 @@ error-tostring-omit.js
 
 # different precision for Math.hypot()
 harmony/math-hypot.js
+
+# V8 throws RangeError is string constructed in Array.prototype.join exceeds internal limit
+regress/regress-336820.js
 
 
 ############################################
@@ -293,6 +290,9 @@ regress/regress-1119.js
 
 # MethodDefinition syntax not supported
 regress/regress-parse-object-literal.js
+
+# per iteration let bindings in for-statement
+harmony/block-for.js
 
 
 #######################################

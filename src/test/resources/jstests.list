@@ -41,6 +41,13 @@ ecma_6/Proxy/regress-bug950407.js
 # lexical declarations must not be duplicated in same scope
 ecma_6/Generators/syntax.js
 
+# Invalid tests: "var __proto__ = {};" in global scope alters [[Prototype]] of global object
+ecma_5/extensions/destructuring-__proto__-shorthand-assignment.js
+ecma_5/extensions/destructuring-__proto__-shorthand-assignment-before-var.js
+
+# Invalid test: destructuring source must be object
+ecma_5/extensions/destructuring-for-inof-__proto__.js
+
 
 ####################################
 # Intl only partially supported    #
@@ -270,6 +277,7 @@ js1_7/iterable/regress-568056.js
 
 # Proxy implementation in SpiderMonkey is incomplete
 ecma_5/extensions/proxy-array-target-length-definition.js
+js1_8_5/extensions/mutable-proto-special-form.js
 
 # legacy generator support requires adding non-standard properties to GeneratorPrototype
 ecma_6/Generators/runtime.js
