@@ -243,9 +243,19 @@ final class StackMethodVisitor extends MethodVisitor {
         } else if (isFunctionObject(left)) {
             if (isFunctionObject(right)) {
                 commonType = Types.FunctionObject;
+            } else if (isOrdinaryObject(right)) {
+                commonType = Types.OrdinaryObject;
+            } else if (isScriptObject(right)) {
+                commonType = Types.ScriptObject;
+            }
+        } else if (isOrdinaryObject(left)) {
+            if (isFunctionObject(right) || isOrdinaryObject(right)) {
+                commonType = Types.OrdinaryObject;
+            } else if (isScriptObject(right)) {
+                commonType = Types.ScriptObject;
             }
         } else if (isScriptObject(left)) {
-            if (isScriptObject(right)) {
+            if (isFunctionObject(right) || isOrdinaryObject(right) || isScriptObject(right)) {
                 commonType = Types.ScriptObject;
             }
         }
@@ -265,10 +275,14 @@ final class StackMethodVisitor extends MethodVisitor {
                 || Types.FunctionObject.equals(type);
     }
 
+    private static boolean isOrdinaryObject(Type type) {
+        return Types.OrdinaryObject.equals(type) || Types.ExoticArray.equals(type)
+                || Types.ExoticArguments.equals(type) || Types.RegExpObject.equals(type)
+                || Types.GeneratorObject.equals(type);
+    }
+
     private static boolean isScriptObject(Type type) {
-        return Types.ScriptObject.equals(type) || Types.OrdinaryObject.equals(type)
-                || Types.ExoticArray.equals(type) || Types.ExoticArguments.equals(type)
-                || Types.RegExpObject.equals(type) || Types.GeneratorObject.equals(type);
+        return Types.ScriptObject.equals(type);
     }
 
     private Type peek() {
