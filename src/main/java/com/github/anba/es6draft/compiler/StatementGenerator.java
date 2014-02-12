@@ -45,14 +45,40 @@ final class StatementGenerator extends
             return this != Normal;
         }
 
+        /**
+         * <pre>
+         * then :: Completion -> Completion -> Completion
+         * then a b = case (a, b) of
+         *              (Normal, _) -> b
+         *              _ -> a
+         * </pre>
+         */
         Completion then(Completion next) {
             return this != Normal ? this : next;
         }
 
+        /**
+         * <pre>
+         * select :: Completion -> Completion -> Completion
+         * select a b = case (a, b) of
+         *                (Normal, _) -> Normal
+         *                (_, Normal) -> Normal
+         *                _ | a == b -> a
+         *                _ -> Abrupt
+         * </pre>
+         */
         Completion select(Completion other) {
             return this == Normal || other == Normal ? Normal : this == other ? this : Abrupt;
         }
 
+        /**
+         * <pre>
+         * normal :: Completion -> Bool -> Completion
+         * normal a b = case (a, b) of
+         *                (_, True) -> Normal
+         *                _ -> a
+         * </pre>
+         */
         Completion normal(boolean b) {
             return b ? Normal : this;
         }
@@ -1287,8 +1313,11 @@ final class StatementGenerator extends
         mv.enterVariableScope();
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
-        Completion result;
+        /* step 2 */
         mv.goToAndSetStack(lblContinue);
+
+        /* step 2e-2g */
+        Completion result;
         mv.mark(lblNext);
         {
             mv.enterIteration(node, lblBreak, lblContinue);
@@ -1301,10 +1330,12 @@ final class StatementGenerator extends
             restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
         }
 
+        /* steps 2a-2d */
         ValType type = expressionValue(node.getTest(), mv);
         ToBoolean(type, mv);
         mv.ifne(lblNext);
 
+        /* step 2g */
         if (lblBreak.isUsed()) {
             mv.mark(lblBreak);
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
@@ -1319,25 +1350,29 @@ final class StatementGenerator extends
      */
     @Override
     public Completion visit(WithStatement node, StatementVisitor mv) {
-        // with(<Expression>)
+        /* steps 1-2 */
         ValType type = expressionValue(node.getExpression(), mv);
 
-        // ToObject(<Expression>)
+        /* steps 2-3 */
         ToObject(type, mv);
 
+        /* steps 4-7 */
         // create new object lexical environment (withEnvironment-flag = true)
         newObjectEnvironment(mv, true);
         pushLexicalEnvironment(mv);
 
+        /* step 8 */
         mv.enterScope(node);
         Completion result = node.getStatement().accept(this, mv);
         mv.exitScope();
 
+        /* step 9 */
         // restore previous lexical environment
         if (!result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
 
+        /* step 10 */
         return result;
     }
 }
