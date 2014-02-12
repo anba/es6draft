@@ -94,6 +94,12 @@ public final class ExecutionContext {
         this.lexEnv = lexEnv;
     }
 
+    // Helper
+    public void replaceLexicalEnvironment(LexicalEnvironment lexEnv) {
+        assert lexEnv.getOuter() == this.lexEnv.getOuter();
+        this.lexEnv = lexEnv;
+    }
+
     /**
      * <div>
      * <ul>

@@ -531,6 +531,7 @@ final class StatementGenerator extends
      */
     @Override
     public Completion visit(ForStatement node, StatementVisitor mv) {
+        boolean perIterationsLets = false;
         Node head = node.getHead();
         if (head == null) {
             // empty
@@ -542,6 +543,8 @@ final class StatementGenerator extends
         } else {
             assert head instanceof LexicalDeclaration;
             LexicalDeclaration lexDecl = (LexicalDeclaration) head;
+            boolean isConst = IsConstantDeclaration(lexDecl);
+            perIterationsLets = !isConst;
 
             newDeclarativeEnvironment(mv);
             {
@@ -549,7 +552,6 @@ final class StatementGenerator extends
                 mv.dup();
                 mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
-                boolean isConst = IsConstantDeclaration(lexDecl);
                 for (String dn : BoundNames(lexDecl)) {
                     if (isConst) {
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `loopEnv`)
@@ -569,7 +571,15 @@ final class StatementGenerator extends
 
         // Runtime Semantics: ForBodyEvaluation
         mv.enterVariableScope();
-        Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
+        Variable<LexicalEnvironment> savedEnv;
+        if (perIterationsLets) {
+            savedEnv = mv.newVariable("savedEnv", LexicalEnvironment.class);
+            // initialise with <null> to simplify data flow analysis
+            mv.aconst(null);
+            mv.store(savedEnv);
+        } else {
+            savedEnv = saveEnvironment(node, mv);
+        }
 
         Label lblTest = new Label(), lblStmt = new Label();
         ContinueLabel lblContinue = new ContinueLabel();
@@ -595,6 +605,12 @@ final class StatementGenerator extends
         }
 
         mv.mark(lblTest);
+        if (perIterationsLets) {
+            // Create let-iteration environment
+            cloneDeclarativeEnvironment(mv);
+            mv.store(savedEnv);
+            replaceLexicalEnvironment(savedEnv, mv);
+        }
         if (node.getTest() != null) {
             ValType type = expressionValue(node.getTest(), mv);
             ToBoolean(type, mv);

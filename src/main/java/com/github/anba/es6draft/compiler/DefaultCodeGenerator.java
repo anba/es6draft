@@ -175,6 +175,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 MethodType.Virtual, Types.ExecutionContext, "popLexicalEnvironment",
                 Type.getMethodType(Type.VOID_TYPE));
 
+        static final MethodDesc ExecutionContext_replaceLexicalEnvironment = MethodDesc.create(
+                MethodType.Virtual, Types.ExecutionContext, "replaceLexicalEnvironment",
+                Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+
         static final MethodDesc ExecutionContext_restoreLexicalEnvironment = MethodDesc.create(
                 MethodType.Virtual, Types.ExecutionContext, "restoreLexicalEnvironment",
                 Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
@@ -183,6 +187,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
                 MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
                 Type.getMethodType(Types.EnvironmentRecord));
+
+        static final MethodDesc LexicalEnvironment_cloneDeclarativeEnvironment = MethodDesc.create(
+                MethodType.Static, Types.LexicalEnvironment, "cloneDeclarativeEnvironment",
+                Type.getMethodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
         static final MethodDesc LexicalEnvironment_newDeclarativeEnvironment = MethodDesc.create(
                 MethodType.Static, Types.LexicalEnvironment, "newDeclarativeEnvironment",
@@ -312,6 +320,16 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
+     * stack: [] -> []
+     */
+    protected final void replaceLexicalEnvironment(Variable<LexicalEnvironment> savedEnv,
+            StatementVisitor mv) {
+        mv.loadExecutionContext();
+        mv.load(savedEnv);
+        mv.invoke(Methods.ExecutionContext_replaceLexicalEnvironment);
+    }
+
+    /**
      * stack: [] -> [lexEnv]
      */
     protected final void getLexicalEnvironment(ExpressionVisitor mv) {
@@ -345,6 +363,15 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
+    }
+
+    /**
+     * stack: [] -> [lexEnv]
+     */
+    protected final void cloneDeclarativeEnvironment(ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
+        mv.invoke(Methods.LexicalEnvironment_cloneDeclarativeEnvironment);
     }
 
     /**

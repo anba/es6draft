@@ -740,7 +740,7 @@ public final class AbstractOperations {
             if (nx == Double.NEGATIVE_INFINITY) {
                 return 1;
             }
-            return (nx < ny ? 1 : 0);
+            return nx < ny ? 1 : 0;
         } else {
             int c = Type.stringValue(px).toString().compareTo(Type.stringValue(py).toString());
             return c < 0 ? 1 : 0;

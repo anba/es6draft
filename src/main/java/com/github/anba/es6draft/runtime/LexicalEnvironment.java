@@ -69,6 +69,14 @@ public final class LexicalEnvironment {
         throw newReferenceError(lex.cx, Messages.Key.UnresolvableReference, name);
     }
 
+    public static LexicalEnvironment cloneDeclarativeEnvironment(LexicalEnvironment e) {
+        assert e.envRec instanceof DeclarativeEnvironmentRecord;
+        LexicalEnvironment clone = newDeclarativeEnvironment(e.outer);
+        DeclarativeEnvironmentRecord envRec = (DeclarativeEnvironmentRecord) clone.envRec;
+        ((DeclarativeEnvironmentRecord) e.envRec).copyBindings(envRec);
+        return clone;
+    }
+
     /**
      * 8.1.2.1 GetIdentifierReference (lex, name, strict)
      */

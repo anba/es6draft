@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
-    private static final class Binding {
+    private static final class Binding implements Cloneable {
         final boolean mutable;
         final boolean deletable;
         Object value;
@@ -35,6 +35,13 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         public Binding(boolean mutable, boolean deletable) {
             this.mutable = mutable;
             this.deletable = deletable;
+        }
+
+        @Override
+        public Binding clone() {
+            Binding clone = new Binding(mutable, deletable);
+            clone.value = value;
+            return clone;
         }
 
         @Override
@@ -70,6 +77,19 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
             sb.append(',');
         }
         return sb.append('\n').append('}').toString();
+    }
+
+    /**
+     * Copies this record's bindings to {@code target}.
+     */
+    void copyBindings(DeclarativeEnvironmentRecord target) {
+        assert target.bindings.isEmpty() : "target bindings not empty";
+        for (Map.Entry<String, Binding> entry : bindings.entrySet()) {
+            String name = entry.getKey();
+            Binding binding = entry.getValue();
+            assert binding.value != null;
+            target.bindings.put(name, binding.clone());
+        }
     }
 
     /**
