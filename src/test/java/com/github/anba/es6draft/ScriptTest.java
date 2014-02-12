@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -23,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.SimpleShellGlobalObject;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -54,6 +56,11 @@ public class ScriptTest {
         protected ObjectAllocator<SimpleShellGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
             return newGlobalObjectAllocator(console, test.basedir, test.script, scriptCache);
+        }
+
+        @Override
+        protected EnumSet<Compiler.Option> getCompilerOptions() {
+            return EnumSet.of(Compiler.Option.VerifyStack);
         }
     };
 

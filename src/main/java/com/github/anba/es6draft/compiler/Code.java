@@ -98,14 +98,15 @@ final class Code {
      * Add a new method to main class module
      */
     MethodCode newMainMethod(int access, String methodName, String methodDescriptor) {
-        return mainClass.newMethod(access, methodName, methodDescriptor, null, null);
+        return mainClass.newMethod(access, methodName, methodDescriptor, null, null, false);
     }
 
     /**
      * Add a new method to a class module
      */
-    MethodCode newMethod(int access, String methodName, String methodDescriptor) {
-        return requestClassForMethod().newMethod(access, methodName, methodDescriptor, null, null);
+    MethodCode newMethod(int access, String methodName, String methodDescriptor, boolean stack) {
+        return requestClassForMethod().newMethod(access, methodName, methodDescriptor, null, null,
+                stack);
     }
 
     /**
@@ -154,7 +155,7 @@ final class Code {
         }
 
         MethodCode newMethod(int access, String methodName, String methodDescriptor,
-                String signature, String[] exceptions) {
+                String signature, String[] exceptions, boolean stack) {
             methodCount += 1;
             MethodVisitor mv = classWriter.visitMethod(access, methodName, methodDescriptor,
                     signature, exceptions);
@@ -163,6 +164,9 @@ final class Code {
             }
             if (EVALUATE_SIZE) {
                 mv = new $CodeSizeEvaluator(methodName, mv);
+            }
+            if (stack) {
+                mv = new StackInspector(mv);
             }
             return new MethodCode(this, access, methodName, methodDescriptor, mv);
         }

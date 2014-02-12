@@ -54,7 +54,7 @@ public abstract class TestShellGlobals<GLOBAL extends ShellGlobalObject> extends
 
     public GLOBAL newGlobal(ShellConsole console, TestInfo test) throws IOException {
         ObjectAllocator<GLOBAL> allocator = newAllocator(console, test, getScriptCache());
-        World<GLOBAL> world = new World<>(allocator, getOptions());
+        World<GLOBAL> world = new World<>(allocator, getOptions(), getCompilerOptions());
         GLOBAL global = world.newGlobal();
         // evaluate initialisation scripts
         for (Script script : initScripts) {

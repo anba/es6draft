@@ -87,7 +87,7 @@ final class FunctionDeclarationInstantiationGenerator extends
 
     private static final class FunctionDeclInitMethodGenerator extends ExpressionVisitor {
         FunctionDeclInitMethodGenerator(MethodCode method, FunctionNode node) {
-            super(method, false, IsStrict(node), false, false);
+            super(method, IsStrict(node), false, false);
         }
 
         @Override

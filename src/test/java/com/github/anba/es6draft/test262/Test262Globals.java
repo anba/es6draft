@@ -36,7 +36,7 @@ public class Test262Globals extends TestGlobals<Test262GlobalObject> {
             public Test262GlobalObject newInstance(Realm realm) {
                 return new Test262GlobalObject(realm, libpath, getScriptCache(), test);
             }
-        }, getOptions());
+        }, getOptions(), getCompilerOptions());
         Test262GlobalObject global = world.newGlobal();
 
         // start initialization

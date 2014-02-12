@@ -39,7 +39,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
  */
 public final class Compiler {
     public enum Option {
-        Debug, FullDebug, SourceMap
+        Debug, FullDebug, SourceMap, VerifyStack
     }
 
     private final EnumSet<Option> compilerOptions;
@@ -63,7 +63,7 @@ public final class Compiler {
         Code code = new Code(clazzName, superClassName, script.getSourceFile(), sourceMap(script));
 
         // generate code
-        try (CodeGenerator codegen = new CodeGenerator(code, script.getOptions())) {
+        try (CodeGenerator codegen = new CodeGenerator(code, script.getOptions(), compilerOptions)) {
             codegen.compile(script);
         }
 
@@ -109,7 +109,7 @@ public final class Compiler {
         Code code = new Code(clazzName, superClassName, "<Function>", null);
 
         // generate code
-        try (CodeGenerator codegen = new CodeGenerator(code, optionsFrom(function))) {
+        try (CodeGenerator codegen = new CodeGenerator(code, optionsFrom(function), compilerOptions)) {
             codegen.compileFunction(function);
         }
 

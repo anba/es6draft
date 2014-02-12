@@ -6,11 +6,13 @@
  */
 package com.github.anba.es6draft.util;
 
+import java.util.EnumSet;
 import java.util.Set;
 
 import org.apache.commons.configuration.Configuration;
 import org.junit.rules.ExternalResource;
 
+import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
@@ -33,6 +35,10 @@ public abstract class TestGlobals<GLOBAL extends GlobalObject> extends ExternalR
 
     protected Set<CompatibilityOption> getOptions() {
         return options;
+    }
+
+    protected Set<Compiler.Option> getCompilerOptions() {
+        return EnumSet.noneOf(Compiler.Option.class);
     }
 
     protected ScriptCache getScriptCache() {

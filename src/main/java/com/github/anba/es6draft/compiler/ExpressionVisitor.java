@@ -72,9 +72,9 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         this.syntheticMethods = true;
     }
 
-    protected ExpressionVisitor(MethodCode method, boolean recordStack, boolean strict,
-            boolean globalCode, boolean syntheticMethods) {
-        super(method, recordStack);
+    protected ExpressionVisitor(MethodCode method, boolean strict, boolean globalCode,
+            boolean syntheticMethods) {
+        super(method);
         this.strict = strict;
         this.globalCode = globalCode;
         this.syntheticMethods = syntheticMethods;
@@ -179,8 +179,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         private final int offset;
         private final int line;
 
-        private ExecutionState(VariablesView locals, Type[] stack, Label instruction, int offset,
-                int line) {
+        ExecutionState(VariablesView locals, Type[] stack, Label instruction, int offset, int line) {
             this.locals = locals;
             this.stack = stack;
             this.instruction = instruction;

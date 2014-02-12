@@ -14,7 +14,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.InstructionVisitor.VariablesView;
 
 /**
@@ -37,8 +36,15 @@ final class StackInspector extends MethodVisitor {
         }
     }
 
-    public StackInspector(MethodCode method) {
-        super(Opcodes.ASM4, method.methodVisitor);
+    public StackInspector(MethodVisitor mv) {
+        super(Opcodes.ASM4, mv);
+    }
+
+    /**
+     * Returns the underlying method visitor
+     */
+    public MethodVisitor getMethodVisitor() {
+        return mv;
     }
 
     /**

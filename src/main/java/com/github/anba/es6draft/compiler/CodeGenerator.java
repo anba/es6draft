@@ -29,6 +29,7 @@ import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.compiler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.Compiler.Option;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.ExpressionVisitor.GeneratorState;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -119,15 +120,17 @@ final class CodeGenerator implements AutoCloseable {
 
     private final Code code;
     private final EnumSet<CompatibilityOption> options;
+    private final EnumSet<Option> compilerOptions;
     private ExecutorService sourceCompressor;
 
     private final StatementGenerator stmtgen = new StatementGenerator(this);
     private final ExpressionGenerator exprgen = new ExpressionGenerator(this);
     private final PropertyGenerator propgen = new PropertyGenerator(this);
 
-    CodeGenerator(Code code, EnumSet<CompatibilityOption> options) {
+    CodeGenerator(Code code, EnumSet<CompatibilityOption> options, EnumSet<Option> compilerOptions) {
         this.code = code;
         this.options = options;
+        this.compilerOptions = compilerOptions;
         if (INCLUDE_SOURCE) {
             this.sourceCompressor = Executors.newFixedThreadPool(1);
         }
@@ -371,8 +374,13 @@ final class CodeGenerator implements AutoCloseable {
     private final Map<String, String> methodClasses = new HashMap<>(32 * 4);
 
     private MethodCode publicStaticMethod(String methodName, String methodDescriptor) {
+        return publicStaticMethod(methodName, methodDescriptor, false);
+    }
+
+    private MethodCode publicStaticMethod(String methodName, String methodDescriptor, boolean stack) {
         final int access = Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC;
-        MethodCode method = code.newMethod(access, methodName, methodDescriptor);
+        stack |= compilerOptions.contains(Compiler.Option.VerifyStack);
+        MethodCode method = code.newMethod(access, methodName, methodDescriptor, stack);
         // System.out.printf("add <%s, %s>%n", methodName, method.classCode.className);
         assert !methodClasses.containsKey(methodName) : String.format(
                 "method '%s' already compiled", methodName);
@@ -408,7 +416,13 @@ final class CodeGenerator implements AutoCloseable {
         return publicStaticMethod(methodName(node), methodDescriptor(node));
     }
 
+    private MethodCode newMethod(FunctionNode node, FunctionName name, boolean stack) {
+        assert name == FunctionName.Code;
+        return publicStaticMethod(methodName(node, name), methodDescriptor(node, name), stack);
+    }
+
     MethodCode newMethod(FunctionNode node, FunctionName name) {
+        assert name != FunctionName.Code;
         return publicStaticMethod(methodName(node, name), methodDescriptor(node, name));
     }
 
@@ -640,7 +654,8 @@ final class CodeGenerator implements AutoCloseable {
     }
 
     private boolean conciseFunctionBody(ArrowFunction node) {
-        ExpressionVisitor body = new ArrowFunctionVisitor(newMethod(node, FunctionName.Code), node);
+        ExpressionVisitor body = new ArrowFunctionVisitor(
+                newMethod(node, FunctionName.Code, false), node);
         body.lineInfo(node);
         body.begin();
 
@@ -661,8 +676,8 @@ final class CodeGenerator implements AutoCloseable {
     }
 
     private boolean functionBody(FunctionNode node) {
-        StatementVisitor body = new FunctionStatementVisitor(newMethod(node, FunctionName.Code),
-                node);
+        StatementVisitor body = new FunctionStatementVisitor(newMethod(node, FunctionName.Code,
+                false), node);
         body.lineInfo(node);
         body.begin();
 
@@ -682,8 +697,8 @@ final class CodeGenerator implements AutoCloseable {
     }
 
     private boolean generatorBody(FunctionNode node) {
-        StatementVisitor body = new GeneratorStatementVisitor(newMethod(node, FunctionName.Code),
-                node);
+        StatementVisitor body = new GeneratorStatementVisitor(newMethod(node, FunctionName.Code,
+                true), node);
         body.lineInfo(node);
         body.begin();
         Variable<ResumptionPoint> resume = body.getParameter(1, ResumptionPoint.class);
@@ -707,7 +722,7 @@ final class CodeGenerator implements AutoCloseable {
 
     private boolean generatorComprehensionBody(GeneratorComprehension node) {
         ExpressionVisitor body = new GeneratorComprehensionVisitor(newMethod(node,
-                FunctionName.Code), node);
+                FunctionName.Code, true), node);
         body.lineInfo(node);
         body.begin();
         Variable<ResumptionPoint> resume = body.getParameter(1, ResumptionPoint.class);
@@ -887,7 +902,7 @@ final class CodeGenerator implements AutoCloseable {
 
     private static final class ScriptStatementVisitor extends StatementVisitor {
         ScriptStatementVisitor(MethodCode method, Script node) {
-            super(method, false, IsStrict(node), node, node.isGlobalCode() ? CodeType.GlobalScript
+            super(method, IsStrict(node), node, node.isGlobalCode() ? CodeType.GlobalScript
                     : CodeType.NonGlobalScript);
         }
 
@@ -900,7 +915,7 @@ final class CodeGenerator implements AutoCloseable {
 
     private static final class FunctionStatementVisitor extends StatementVisitor {
         FunctionStatementVisitor(MethodCode method, FunctionNode node) {
-            super(method, node.isGenerator(), IsStrict(node), node, CodeType.Function);
+            super(method, IsStrict(node), node, CodeType.Function);
         }
 
         @Override
@@ -912,7 +927,7 @@ final class CodeGenerator implements AutoCloseable {
 
     private static final class GeneratorStatementVisitor extends StatementVisitor {
         GeneratorStatementVisitor(MethodCode method, FunctionNode node) {
-            super(method, node.isGenerator(), IsStrict(node), node, CodeType.Function);
+            super(method, IsStrict(node), node, CodeType.Function);
         }
 
         @Override
@@ -938,7 +953,7 @@ final class CodeGenerator implements AutoCloseable {
 
     private static final class ArrowFunctionVisitor extends ExpressionVisitor {
         ArrowFunctionVisitor(MethodCode method, ArrowFunction node) {
-            super(method, false, IsStrict(node), false, node.hasSyntheticNodes());
+            super(method, IsStrict(node), false, node.hasSyntheticNodes());
         }
 
         @Override
@@ -950,7 +965,7 @@ final class CodeGenerator implements AutoCloseable {
 
     private static final class GeneratorComprehensionVisitor extends ExpressionVisitor {
         GeneratorComprehensionVisitor(MethodCode method, GeneratorComprehension node) {
-            super(method, true, IsStrict(node), false, node.hasSyntheticNodes());
+            super(method, IsStrict(node), false, node.hasSyntheticNodes());
         }
 
         @Override

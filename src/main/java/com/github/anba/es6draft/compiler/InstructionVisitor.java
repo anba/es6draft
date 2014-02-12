@@ -362,10 +362,10 @@ class InstructionVisitor extends InstructionAdapter {
 
     private static final int MAX_STRING_SIZE = 16384;
 
-    private final MethodVisitor methodVisitor;
     private final String methodName;
     private final Type methodDescriptor;
     private final MethodAllocation methodAllocation;
+    private final MethodVisitor methodVisitor;
     private final StackInspector stack;
     private final Variables variables = new Variables();
     private final ClassValue<Type> typeCache = new ClassValue<Type>() {
@@ -381,26 +381,18 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     protected InstructionVisitor(MethodCode method) {
-        this(method, false);
-    }
-
-    protected InstructionVisitor(MethodCode method, boolean recordStack) {
-        super(Opcodes.ASM4, wrapIf(method, recordStack));
-        this.methodVisitor = method.methodVisitor;
+        super(Opcodes.ASM4, method.methodVisitor);
         this.methodName = method.methodName;
         this.methodDescriptor = Type.getMethodType(method.methodDescriptor);
         this.methodAllocation = MethodAllocation.from(method.access);
-        this.stack = recordStack ? (StackInspector) mv : null;
-        if (recordStack) {
+        if (method.methodVisitor instanceof StackInspector) {
+            this.stack = (StackInspector) method.methodVisitor;
+            this.methodVisitor = stack.getMethodVisitor();
             stack.setVariables(variables);
+        } else {
+            this.stack = null;
+            this.methodVisitor = method.methodVisitor;
         }
-    }
-
-    private static MethodVisitor wrapIf(MethodCode method, boolean recordStack) {
-        if (recordStack) {
-            return new StackInspector(method);
-        }
-        return method.methodVisitor;
     }
 
     public final MethodVisitor getMethodVisitor() {
