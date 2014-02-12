@@ -18,8 +18,6 @@ import java.util.Set;
  */
 public final class ForInStatement extends IterationStatement implements ScopedNode {
     private BlockScope scope;
-    private EnumSet<Abrupt> abrupt;
-    private Set<String> labelSet;
     private Node head;
     private Expression expression;
     private Statement statement;
@@ -27,10 +25,8 @@ public final class ForInStatement extends IterationStatement implements ScopedNo
     public ForInStatement(long beginPosition, long endPosition, BlockScope scope,
             EnumSet<Abrupt> abrupt, Set<String> labelSet, Node head, Expression expression,
             Statement statement) {
-        super(beginPosition, endPosition);
+        super(beginPosition, endPosition, abrupt, labelSet);
         this.scope = scope;
-        this.abrupt = abrupt;
-        this.labelSet = labelSet;
         this.head = head;
         this.expression = expression;
         this.statement = statement;
@@ -39,16 +35,6 @@ public final class ForInStatement extends IterationStatement implements ScopedNo
     @Override
     public BlockScope getScope() {
         return scope;
-    }
-
-    @Override
-    public EnumSet<Abrupt> getAbrupt() {
-        return abrupt;
-    }
-
-    @Override
-    public Set<String> getLabelSet() {
-        return labelSet;
     }
 
     public Node getHead() {

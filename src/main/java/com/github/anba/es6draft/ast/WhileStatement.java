@@ -17,28 +17,14 @@ import java.util.Set;
  * </ul>
  */
 public final class WhileStatement extends IterationStatement {
-    private EnumSet<Abrupt> abrupt;
-    private Set<String> labelSet;
     private Expression test;
     private Statement statement;
 
     public WhileStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt,
             Set<String> labelSet, Expression test, Statement statement) {
-        super(beginPosition, endPosition);
-        this.abrupt = abrupt;
-        this.labelSet = labelSet;
+        super(beginPosition, endPosition, abrupt, labelSet);
         this.test = test;
         this.statement = statement;
-    }
-
-    @Override
-    public EnumSet<Abrupt> getAbrupt() {
-        return abrupt;
-    }
-
-    @Override
-    public Set<String> getLabelSet() {
-        return labelSet;
     }
 
     public Expression getTest() {

@@ -6,6 +6,9 @@
  */
 package com.github.anba.es6draft.ast;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
@@ -13,7 +16,15 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class IterationStatement extends BreakableStatement {
-    protected IterationStatement(long beginPosition, long endPosition) {
-        super(beginPosition, endPosition);
+    protected IterationStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt,
+            Set<String> labelSet) {
+        super(beginPosition, endPosition, abrupt, labelSet);
+    }
+
+    /**
+     * Returns <code>true</code> if this node is the target of a ContinueStatement
+     */
+    public final boolean hasContinue() {
+        return getAbrupt().contains(Abrupt.Continue);
     }
 }

@@ -18,18 +18,14 @@ import java.util.Set;
  */
 public final class SwitchStatement extends BreakableStatement implements ScopedNode {
     private BlockScope scope;
-    private EnumSet<Abrupt> abrupt;
-    private Set<String> labelSet;
     private Expression expression;
     private List<SwitchClause> clauses;
 
     public SwitchStatement(long beginPosition, long endPosition, BlockScope scope,
             EnumSet<Abrupt> abrupt, Set<String> labelSet, Expression expression,
             List<SwitchClause> clauses) {
-        super(beginPosition, endPosition);
+        super(beginPosition, endPosition, abrupt, labelSet);
         this.scope = scope;
-        this.abrupt = abrupt;
-        this.labelSet = labelSet;
         this.expression = expression;
         this.clauses = clauses;
     }
@@ -37,16 +33,6 @@ public final class SwitchStatement extends BreakableStatement implements ScopedN
     @Override
     public BlockScope getScope() {
         return scope;
-    }
-
-    @Override
-    public EnumSet<Abrupt> getAbrupt() {
-        return abrupt;
-    }
-
-    @Override
-    public Set<String> getLabelSet() {
-        return labelSet;
     }
 
     public Expression getExpression() {

@@ -6,11 +6,37 @@
  */
 package com.github.anba.es6draft.ast;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  */
 public abstract class BreakableStatement extends Statement implements AbruptNode {
-    protected BreakableStatement(long beginPosition, long endPosition) {
+    private EnumSet<Abrupt> abrupt;
+    private Set<String> labelSet;
+
+    protected BreakableStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt,
+            Set<String> labelSet) {
         super(beginPosition, endPosition);
+        this.abrupt = abrupt;
+        this.labelSet = labelSet;
+    }
+
+    @Override
+    public final EnumSet<Abrupt> getAbrupt() {
+        return abrupt;
+    }
+
+    @Override
+    public final Set<String> getLabelSet() {
+        return labelSet;
+    }
+
+    /**
+     * Returns <code>true</code> if this node is the target of a BreakStatement
+     */
+    public final boolean hasBreak() {
+        return getAbrupt().contains(Abrupt.Break);
     }
 }

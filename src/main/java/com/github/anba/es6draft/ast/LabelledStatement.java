@@ -38,6 +38,13 @@ public final class LabelledStatement extends Statement implements AbruptNode {
         return labels;
     }
 
+    /**
+     * Returns <code>true</code> if this node is the target of a BreakStatement
+     */
+    public boolean hasBreak() {
+        return getAbrupt().contains(Abrupt.Break);
+    }
+
     public Statement getStatement() {
         return statement;
     }

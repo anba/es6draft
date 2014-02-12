@@ -16,7 +16,6 @@ import java.util.Map;
 
 import org.objectweb.asm.Label;
 
-import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
@@ -284,8 +283,8 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * Start code generation for {@link IterationStatement} nodes
      */
     void enterIteration(IterationStatement node, BreakLabel lblBreak, ContinueLabel lblContinue) {
-        boolean hasBreak = node.getAbrupt().contains(Abrupt.Break);
-        boolean hasContinue = node.getAbrupt().contains(Abrupt.Continue);
+        boolean hasBreak = node.hasBreak();
+        boolean hasContinue = node.hasContinue();
         if (!(hasBreak || hasContinue))
             return;
         Labels labels = this.labels;
@@ -305,8 +304,8 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * Stop code generation for {@link IterationStatement} nodes
      */
     void exitIteration(IterationStatement node) {
-        boolean hasBreak = node.getAbrupt().contains(Abrupt.Break);
-        boolean hasContinue = node.getAbrupt().contains(Abrupt.Continue);
+        boolean hasBreak = node.hasBreak();
+        boolean hasContinue = node.hasContinue();
         if (!(hasBreak || hasContinue))
             return;
         Labels labels = this.labels;
@@ -326,7 +325,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * Start code generation for {@link BreakableStatement} nodes
      */
     void enterBreakable(BreakableStatement node, BreakLabel lblBreak) {
-        if (!node.getAbrupt().contains(Abrupt.Break))
+        if (!node.hasBreak())
             return;
         Labels labels = this.labels;
         labels.breakTargets.push(lblBreak);
@@ -339,7 +338,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * Stop code generation for {@link BreakableStatement} nodes
      */
     void exitBreakable(BreakableStatement node) {
-        if (!node.getAbrupt().contains(Abrupt.Break))
+        if (!node.hasBreak())
             return;
         Labels labels = this.labels;
         labels.breakTargets.pop();
@@ -352,7 +351,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * Start code generation for {@link LabelledStatement} nodes
      */
     void enterLabelled(LabelledStatement node, BreakLabel lblBreak) {
-        if (!node.getAbrupt().contains(Abrupt.Break))
+        if (!node.hasBreak())
             return;
         Labels labels = this.labels;
         for (String label : node.getLabelSet()) {
@@ -364,7 +363,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * Stop code generation for {@link LabelledStatement} nodes
      */
     void exitLabelled(LabelledStatement node) {
-        if (!node.getAbrupt().contains(Abrupt.Break))
+        if (!node.hasBreak())
             return;
         Labels labels = this.labels;
         for (String label : node.getLabelSet()) {

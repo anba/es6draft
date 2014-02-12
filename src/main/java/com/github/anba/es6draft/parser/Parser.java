@@ -4002,8 +4002,8 @@ public final class Parser {
         consume(Token.RP);
 
         consume(Token.LC);
-        LabelContext labelCx = enterBreakable(begin, labelSet);
         BlockContext scope = enterBlockContext();
+        LabelContext labelCx = enterBreakable(begin, labelSet);
         boolean hasDefault = false;
         for (;;) {
             long beginClause = ts.beginPosition();
