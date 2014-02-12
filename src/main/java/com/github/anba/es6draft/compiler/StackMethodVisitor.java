@@ -189,7 +189,9 @@ final class StackMethodVisitor extends MethodVisitor {
         if (info == null) {
             // new backward label
             if (stack == null) {
-                // label after discard stack (goto, return, throw), create new stack
+                // label after discard stack (goto, return, throw), create new stack (or assert in
+                // debug mode)
+                assert false : "newStack after discard stack";
                 newStack();
             }
             setInfo(label, true);

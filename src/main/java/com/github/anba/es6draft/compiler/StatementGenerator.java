@@ -279,9 +279,6 @@ final class StatementGenerator extends
         ContinueLabel lblContinue = new ContinueLabel();
         BreakLabel lblBreak = new BreakLabel();
 
-        // L1: <statement>
-        // IFNE ToBoolean(<expr>) L1
-
         mv.enterVariableScope();
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
@@ -292,8 +289,9 @@ final class StatementGenerator extends
             result = node.getStatement().accept(this, mv);
             mv.exitIteration(node);
         }
-        mv.mark(lblContinue);
+
         if (lblContinue.isUsed()) {
+            mv.mark(lblContinue);
             restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
         }
 
@@ -303,11 +301,10 @@ final class StatementGenerator extends
             mv.ifne(lblNext);
         }
 
-        mv.mark(lblBreak);
         if (lblBreak.isUsed()) {
+            mv.mark(lblBreak);
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
-
         mv.exitVariableScope();
 
         return result.normal(lblContinue.isUsed() || lblBreak.isUsed());
@@ -428,9 +425,7 @@ final class StatementGenerator extends
 
         // Runtime Semantics: ForIn/OfBodyEvaluation
         mv.store(iter);
-
-        mv.goTo(lblContinue);
-
+        mv.goToAndSetStack(lblContinue);
         mv.mark(loopbody);
         mv.load(iter);
         mv.invoke(Methods.Iterator_next);
@@ -523,7 +518,6 @@ final class StatementGenerator extends
         if (lblBreak.isUsed()) {
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
-
         mv.exitVariableScope();
 
         return result.normal(lblContinue.isUsed() || lblBreak.isUsed()).select(Completion.Normal);
@@ -573,6 +567,7 @@ final class StatementGenerator extends
             lexDecl.accept(this, mv);
         }
 
+        // Runtime Semantics: ForBodyEvaluation
         mv.enterVariableScope();
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
@@ -581,7 +576,7 @@ final class StatementGenerator extends
         BreakLabel lblBreak = new BreakLabel();
 
         Completion result;
-        mv.goTo(lblTest);
+        mv.goToAndSetStack(lblTest);
         mv.mark(lblStmt);
         {
             mv.enterIteration(node, lblBreak, lblContinue);
@@ -589,8 +584,8 @@ final class StatementGenerator extends
             mv.exitIteration(node);
         }
 
-        mv.mark(lblContinue);
         if (lblContinue.isUsed()) {
+            mv.mark(lblContinue);
             restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
         }
 
@@ -608,11 +603,10 @@ final class StatementGenerator extends
             mv.goTo(lblStmt);
         }
 
-        mv.mark(lblBreak);
         if (lblBreak.isUsed()) {
+            mv.mark(lblBreak);
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
-
         mv.exitVariableScope();
 
         if (head instanceof LexicalDeclaration) {
@@ -674,7 +668,9 @@ final class StatementGenerator extends
             }
             mv.mark(l0);
             Completion resultOtherwise = node.getOtherwise().accept(this, mv);
-            mv.mark(l1);
+            if (!resultThen.isAbrupt()) {
+                mv.mark(l1);
+            }
             return resultThen.select(resultOtherwise);
         } else {
             mv.mark(l0);
@@ -695,9 +691,9 @@ final class StatementGenerator extends
         mv.enterLabelled(node, label);
         Completion result = node.getStatement().accept(this, mv);
         mv.exitLabelled(node);
-        mv.mark(label);
 
         if (label.isUsed()) {
+            mv.mark(label);
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
         mv.exitVariableScope();
@@ -948,7 +944,10 @@ final class StatementGenerator extends
         Completion catchResult = emitCatchBlock(node, savedEnv, handlerCatch,
                 handlerCatchStackOverflow, mv);
 
-        mv.mark(exceptionHandled);
+        if (!tryResult.isAbrupt()) {
+            mv.mark(exceptionHandled);
+        }
+
         mv.exitVariableScope();
         mv.tryCatch(startCatch, endCatch, handlerCatch, Types.ScriptException);
         mv.tryCatch(startCatch, endCatch, handlerCatchStackOverflow, Types.Error);
@@ -1043,7 +1042,9 @@ final class StatementGenerator extends
                 catchResult = Completion.Throw;
             }
 
-            mv.mark(mv.catchWithGuardedLabel());
+            if (!result.isAbrupt()) {
+                mv.mark(mv.catchWithGuardedLabel());
+            }
             mv.exitCatchWithGuarded(node);
             mv.exitVariableScope();
 
@@ -1271,13 +1272,14 @@ final class StatementGenerator extends
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         Completion result;
-        mv.goTo(lblContinue);
+        mv.goToAndSetStack(lblContinue);
         mv.mark(lblNext);
         {
             mv.enterIteration(node, lblBreak, lblContinue);
             result = node.getStatement().accept(this, mv);
             mv.exitIteration(node);
         }
+
         mv.mark(lblContinue);
         if (lblContinue.isUsed()) {
             restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
@@ -1287,11 +1289,10 @@ final class StatementGenerator extends
         ToBoolean(type, mv);
         mv.ifne(lblNext);
 
-        mv.mark(lblBreak);
         if (lblBreak.isUsed()) {
+            mv.mark(lblBreak);
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
-
         mv.exitVariableScope();
 
         return result.normal(lblContinue.isUsed() || lblBreak.isUsed()).select(Completion.Normal);

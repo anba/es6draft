@@ -504,7 +504,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         // stack: [args, thisValue, func(Callable)] -> result
         standardCall(call, mv);
 
-        mv.mark(afterCall);
+        if (directEval) {
+            mv.mark(afterCall);
+        }
     }
 
     /**
@@ -562,7 +564,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         // stack: [args, thisValue, func(Callable)] -> result
         standardCall(call, mv);
 
-        mv.mark(afterCall);
+        if (directEval) {
+            mv.mark(afterCall);
+        }
     }
 
     /**

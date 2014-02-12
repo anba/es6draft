@@ -206,8 +206,9 @@ final class SwitchStatementGenerator extends
         if (hasDeclarations && !result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
-
-        mv.mark(lblBreak);
+        if (lblBreak.isUsed() || !hasDefaultClause(node)) {
+            mv.mark(lblBreak);
+        }
         if (lblBreak.isUsed()) {
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
@@ -321,6 +322,7 @@ final class SwitchStatementGenerator extends
      * var $v = v;
      * if (strictEquals($v, key1)) goto L1
      * if (strictEquals($v, key2)) goto L2
+     * goTo (default | break)
      * L1: ...
      * L2: ...
      * </pre>
@@ -328,6 +330,7 @@ final class SwitchStatementGenerator extends
     private void emitGenericSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
             Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
         assert switchValue.getType().equals(Types.Object);
+        Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
 
         int index = 0;
         for (SwitchClause switchClause : clauses) {
@@ -341,11 +344,7 @@ final class SwitchStatementGenerator extends
             }
         }
 
-        if (defaultClause != null) {
-            mv.goTo(defaultClause);
-        } else {
-            mv.goTo(lblBreak);
-        }
+        mv.goTo(switchDefault);
     }
 
     /**
