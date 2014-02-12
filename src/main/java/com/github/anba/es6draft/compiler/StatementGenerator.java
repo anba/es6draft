@@ -884,13 +884,12 @@ final class StatementGenerator extends
      * <code>try-catch-finally</code>
      */
     private Completion visitTryCatchFinally(TryStatement node, StatementVisitor mv) {
-        Label startCatchFinally = new Label();
-        Label endCatch = new Label(), handlerCatch = new Label();
-        Label endFinally = new Label(), handlerFinally = new Label();
-        Label handlerCatchStackOverflow = new Label();
-        Label handlerFinallyStackOverflow = new Label();
+        LocationLabel startCatchFinally = new LocationLabel();
+        LocationLabel endCatch = new LocationLabel(), handlerCatch = new LocationLabel();
+        LocationLabel endFinally = new LocationLabel(), handlerFinally = new LocationLabel();
+        LocationLabel handlerCatchStackOverflow = new LocationLabel();
+        LocationLabel handlerFinallyStackOverflow = new LocationLabel();
         Label noException = new Label();
-        Label exceptionHandled = new Label();
 
         mv.enterVariableScope();
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
@@ -914,10 +913,9 @@ final class StatementGenerator extends
 
         // Emit finally-block
         Completion finallyResult = emitFinallyBlock(node, savedEnv, completion, tryResult,
-                catchResult, handlerFinally, handlerFinallyStackOverflow, noException,
-                exceptionHandled, tempLabels, mv);
+                catchResult, handlerFinally, handlerFinallyStackOverflow, noException, tempLabels,
+                mv);
 
-        mv.mark(exceptionHandled);
         mv.exitVariableScope();
         mv.tryCatch(startCatchFinally, endCatch, handlerCatch, Types.ScriptException);
         mv.tryCatch(startCatchFinally, endCatch, handlerCatchStackOverflow, Types.Error);
@@ -933,8 +931,9 @@ final class StatementGenerator extends
      * <code>try-catch</code>
      */
     private Completion visitTryCatch(TryStatement node, StatementVisitor mv) {
-        Label startCatch = new Label(), endCatch = new Label(), handlerCatch = new Label();
-        Label handlerCatchStackOverflow = new Label();
+        LocationLabel startCatch = new LocationLabel(), endCatch = new LocationLabel();
+        LocationLabel handlerCatch = new LocationLabel();
+        LocationLabel handlerCatchStackOverflow = new LocationLabel();
         Label exceptionHandled = new Label();
 
         mv.enterVariableScope();
@@ -963,10 +962,10 @@ final class StatementGenerator extends
      * <code>try-finally</code>
      */
     private Completion visitTryFinally(TryStatement node, StatementVisitor mv) {
-        Label startFinally = new Label(), endFinally = new Label(), handlerFinally = new Label();
-        Label handlerFinallyStackOverflow = new Label();
+        LocationLabel startFinally = new LocationLabel(), endFinally = new LocationLabel();
+        LocationLabel handlerFinally = new LocationLabel();
+        LocationLabel handlerFinallyStackOverflow = new LocationLabel();
         Label noException = new Label();
-        Label exceptionHandled = new Label();
 
         mv.enterVariableScope();
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
@@ -983,9 +982,8 @@ final class StatementGenerator extends
         // Emit finally-block
         Completion finallyResult = emitFinallyBlock(node, savedEnv, completion, tryResult,
                 Completion.Abrupt, handlerFinally, handlerFinallyStackOverflow, noException,
-                exceptionHandled, tempLabels, mv);
+                tempLabels, mv);
 
-        mv.mark(exceptionHandled);
         mv.exitVariableScope();
         mv.tryCatch(startFinally, endFinally, handlerFinally, Types.ScriptException);
         mv.tryCatch(startFinally, endFinally, handlerFinallyStackOverflow, Types.Error);
@@ -1004,7 +1002,7 @@ final class StatementGenerator extends
     }
 
     private Completion emitCatchBlock(TryStatement node, Variable<LexicalEnvironment> savedEnv,
-            Label handlerCatch, Label handlerCatchStackOverflow, StatementVisitor mv) {
+            LocationLabel handlerCatch, LocationLabel handlerCatchStackOverflow, StatementVisitor mv) {
         boolean isWrapped = node.getFinallyBlock() != null;
         CatchNode catchNode = node.getCatchNode();
         List<GuardedCatchNode> guardedCatchNodes = node.getGuardedCatchNodes();
@@ -1061,8 +1059,8 @@ final class StatementGenerator extends
 
     private Completion emitFinallyBlock(TryStatement node, Variable<LexicalEnvironment> savedEnv,
             Variable<Object> completion, Completion tryResult, Completion catchResult,
-            Label handlerFinally, Label handlerFinallyStackOverflow, Label noException,
-            Label exceptionHandled, List<TempLabel> tempLabels, StatementVisitor mv) {
+            LocationLabel handlerFinally, LocationLabel handlerFinallyStackOverflow,
+            Label noException, List<TempLabel> tempLabels, StatementVisitor mv) {
         BlockStatement finallyBlock = node.getFinallyBlock();
         assert finallyBlock != null;
 
@@ -1084,10 +1082,12 @@ final class StatementGenerator extends
 
         // (2) finally block if 'try' did not complete abruptly
         // (3) finally block if 'catch' did not complete abruptly
+        Label exceptionHandled = null;
         if (!tryResult.isAbrupt() || !catchResult.isAbrupt()) {
             mv.mark(noException);
             emitFinallyBlock(finallyBlock, mv);
             if (!finallyResult.isAbrupt()) {
+                exceptionHandled = new Label();
                 mv.goTo(exceptionHandled);
             }
         }
@@ -1100,6 +1100,10 @@ final class StatementGenerator extends
             if (!finallyResult.isAbrupt()) {
                 mv.goTo(temp, completion);
             }
+        }
+
+        if (exceptionHandled != null) {
+            mv.mark(exceptionHandled);
         }
 
         return finallyResult;

@@ -565,6 +565,10 @@ class InstructionVisitor extends InstructionAdapter {
         return lastLineNumber;
     }
 
+    public void mark(LocationLabel label) {
+        getMethodVisitor().visitLabel(label);
+    }
+
     /**
      * value → not(value)
      */
@@ -807,22 +811,22 @@ class InstructionVisitor extends InstructionAdapter {
         hconst(new Handle(method.type.toTag(), method.owner, method.name, method.desc));
     }
 
-    public void tryCatch(Label start, Label end, Label handler, Type type) {
+    public void tryCatch(LocationLabel start, LocationLabel end, LocationLabel handler, Type type) {
         visitTryCatchBlock(start, end, handler, type.getInternalName());
     }
 
-    public void tryFinally(Label start, Label end, Label handler) {
+    public void tryFinally(LocationLabel start, LocationLabel end, LocationLabel handler) {
         visitTryCatchBlock(start, end, handler, null);
     }
 
-    public void catchHandler(Label handler, Type exception) {
+    public void catchHandler(LocationLabel handler, Type exception) {
         if (stack != null) {
             stack.catchHandler(exception);
         }
         mark(handler);
     }
 
-    public void finallyHandler(Label handler) {
+    public void finallyHandler(LocationLabel handler) {
         catchHandler(handler, Types.Throwable);
     }
 

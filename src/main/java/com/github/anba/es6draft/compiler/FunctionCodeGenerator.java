@@ -8,7 +8,6 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 
-import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.FunctionNode;
@@ -179,7 +178,8 @@ final class FunctionCodeGenerator {
         // (2) Update 'caller' property
         setLegacyCaller(function, callerContext, mv);
 
-        Label startFinally = new Label(), endFinally = new Label(), handlerFinally = new Label();
+        LocationLabel startFinally = new LocationLabel(), endFinally = new LocationLabel();
+        LocationLabel handlerFinally = new LocationLabel();
         mv.mark(startFinally);
         {
             // (3) Create a new ExecutionContext
