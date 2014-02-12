@@ -600,9 +600,7 @@ final class StatementGenerator extends
         Variable<LexicalEnvironment> savedEnv;
         if (perIterationsLets) {
             savedEnv = mv.newVariable("savedEnv", LexicalEnvironment.class);
-            // initialise with <null> to simplify data flow analysis
-            mv.aconst(null);
-            mv.store(savedEnv);
+            CreatePerIterationEnvironment(savedEnv, mv);
         } else {
             savedEnv = saveEnvironment(node, mv);
         }
@@ -625,18 +623,16 @@ final class StatementGenerator extends
             restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
         }
 
+        if (perIterationsLets) {
+            CreatePerIterationEnvironment(savedEnv, mv);
+        }
+
         if (node.getStep() != null && (!result.isAbrupt() || lblContinue.isUsed())) {
             ValType type = expressionValue(node.getStep(), mv);
             mv.pop(type);
         }
 
         mv.mark(lblTest);
-        if (perIterationsLets) {
-            // Create let-iteration environment
-            cloneDeclarativeEnvironment(mv);
-            mv.store(savedEnv);
-            replaceLexicalEnvironment(savedEnv, mv);
-        }
         if (node.getTest() != null) {
             ValType type = expressionValue(node.getTest(), mv);
             ToBoolean(type, mv);
@@ -665,6 +661,17 @@ final class StatementGenerator extends
             return result.normal(lblBreak.isUsed());
         }
         return result.normal(lblContinue.isUsed() || lblBreak.isUsed()).select(Completion.Normal);
+    }
+
+    /**
+     * 13.6.3.4 Runtime Semantics: CreatePerIterationEnvironment
+     */
+    private void CreatePerIterationEnvironment(Variable<LexicalEnvironment> savedEnv,
+            StatementVisitor mv) {
+        // Create let-iteration environment
+        cloneDeclarativeEnvironment(mv);
+        mv.store(savedEnv);
+        replaceLexicalEnvironment(savedEnv, mv);
     }
 
     /**
