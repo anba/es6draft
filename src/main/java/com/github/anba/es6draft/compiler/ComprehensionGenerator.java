@@ -213,7 +213,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         /* step 7 (not applicable) */
 
         /* step 8 */
-        mv.goTo(lblTest);
+        mv.goToAndSetStack(lblTest);
 
         /* steps 8d-8e */
         mv.mark(lblLoop);
@@ -318,7 +318,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         Variable<Iterator<?>> iter = iterators.next();
         mv.store(iter);
 
-        mv.goTo(lblTest);
+        mv.goToAndSetStack(lblTest);
         mv.mark(lblLoop);
         mv.load(iter);
         mv.invoke(Methods.Iterator_next);

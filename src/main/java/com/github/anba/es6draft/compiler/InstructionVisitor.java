@@ -366,7 +366,7 @@ class InstructionVisitor extends InstructionAdapter {
     private final Type methodDescriptor;
     private final MethodAllocation methodAllocation;
     private final MethodVisitor methodVisitor;
-    private final StackInspector stack;
+    private final StackMethodVisitor stack;
     private final Variables variables = new Variables();
     private final ClassValue<Type> typeCache = new ClassValue<Type>() {
         @Override
@@ -385,8 +385,8 @@ class InstructionVisitor extends InstructionAdapter {
         this.methodName = method.methodName;
         this.methodDescriptor = Type.getMethodType(method.methodDescriptor);
         this.methodAllocation = MethodAllocation.from(method.access);
-        if (method.methodVisitor instanceof StackInspector) {
-            this.stack = (StackInspector) method.methodVisitor;
+        if (method.methodVisitor instanceof StackMethodVisitor) {
+            this.stack = (StackMethodVisitor) method.methodVisitor;
             this.methodVisitor = stack.getMethodVisitor();
             stack.setVariables(variables);
         } else {
@@ -567,6 +567,23 @@ class InstructionVisitor extends InstructionAdapter {
 
     public void mark(LocationLabel label) {
         getMethodVisitor().visitLabel(label);
+    }
+
+    /**
+     * Emit a <code>goto</code> instruction and update the stack state
+     */
+    public void goToAndSetStack(Label target) {
+        goToAndSetStack(target, target);
+    }
+
+    /**
+     * Emit a <code>goto</code> instruction and update the stack state
+     */
+    public void goToAndSetStack(Label target, Label stackLabel) {
+        goTo(target);
+        if (stack != null) {
+            stack.setStack(stackLabel);
+        }
     }
 
     /**

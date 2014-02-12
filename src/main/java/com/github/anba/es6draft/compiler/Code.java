@@ -166,7 +166,7 @@ final class Code {
                 mv = new $CodeSizeEvaluator(methodName, mv);
             }
             if (stack) {
-                mv = new StackInspector(mv);
+                mv = new StackMethodVisitor(mv);
             }
             return new MethodCode(this, access, methodName, methodDescriptor, mv);
         }

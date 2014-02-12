@@ -19,7 +19,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.VariablesView;
 /**
  * Basic stack type information tracking, complex control instructions are not supported
  */
-final class StackInspector extends MethodVisitor {
+final class StackMethodVisitor extends MethodVisitor {
     private static final int MIN_STACK_SIZE = 8;
     private static final Type OBJECT_TYPE = Types.Object;
     private VariablesView variables;
@@ -36,7 +36,7 @@ final class StackInspector extends MethodVisitor {
         }
     }
 
-    public StackInspector(MethodVisitor mv) {
+    public StackMethodVisitor(MethodVisitor mv) {
         super(Opcodes.ASM4, mv);
     }
 
@@ -58,6 +58,9 @@ final class StackInspector extends MethodVisitor {
      * Start exception handler for {@code exception}
      */
     public void catchHandler(Type exception) {
+        if (stack == null) {
+            newStack();
+        }
         sp = 0;
         push(exception);
     }
@@ -78,9 +81,23 @@ final class StackInspector extends MethodVisitor {
         setStack(Arrays.copyOf(stack, newSize), stack.length);
     }
 
+    /**
+     * Replace the stack type information with the information from {@code label}
+     */
+    public void setStack(Label label) {
+        LabelInfo info = getInfo(label);
+        assert info != null : "label.info is null";
+        assert stack == null : "current stack is not undefined";
+        setStack(info.stack);
+    }
+
     private void setStack(Type[] stack, int sp) {
         this.stack = stack;
         this.sp = sp;
+    }
+
+    private void increaseStack(int newSize) {
+        stack = Arrays.copyOf(stack, newSize);
     }
 
     private void newStack() {
@@ -94,6 +111,9 @@ final class StackInspector extends MethodVisitor {
     }
 
     private String getStackString() {
+        if (stack == null) {
+            return "<null>";
+        }
         return Arrays.toString(getStack());
     }
 
@@ -102,7 +122,7 @@ final class StackInspector extends MethodVisitor {
     }
 
     private void setInfo(Label label, boolean resolved) {
-        label.info = new LabelInfo(Arrays.copyOf(stack, sp), resolved);
+        label.info = new LabelInfo(getStack(), resolved);
     }
 
     private static Type type(int sort) {
@@ -135,9 +155,9 @@ final class StackInspector extends MethodVisitor {
         }
     }
 
-    private static void assertEqualTypes(Type[] stack, int sp, Type[] labelStack) {
-        assert sp == labelStack.length : String.format("%d != %d (%s, %s)", labelStack.length, sp,
-                Arrays.toString(labelStack), Arrays.toString(stack));
+    private static void assertEqualTypes(Type[] stack, int sp, Type[] labelStack, int labelsp) {
+        assert sp == labelsp : String.format("%d != %d (%s, %s)", sp, labelsp,
+                Arrays.toString(stack), Arrays.toString(labelStack));
         for (int i = 0; i < sp; ++i) {
             Type t0 = stack[i], t1 = labelStack[i];
             assert t0.equals(t1) : String.format("%s != %s", t0, t1);
@@ -157,7 +177,7 @@ final class StackInspector extends MethodVisitor {
             setInfo(label, false);
         } else if (info.resolved) {
             // label already visited
-            assertEqualTypes(stack, sp, info.stack);
+            assertEqualTypes(stack, sp, info.stack, info.stack.length);
         } else {
             // update label stack state
             alignStack(info.stack, info.stack.length, stack, sp);
@@ -270,7 +290,7 @@ final class StackInspector extends MethodVisitor {
 
     private void push(Type type) {
         if (sp == stack.length) {
-            stack = Arrays.copyOf(stack, sp << 1);
+            increaseStack(sp << 1);
         }
         stack[sp++] = type;
     }

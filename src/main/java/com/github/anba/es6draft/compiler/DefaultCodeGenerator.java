@@ -79,9 +79,9 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 MethodType.Static, Types.AbstractOperations, "IteratorValue",
                 Type.getMethodType(Types.Object, Types.ExecutionContext, Types.ScriptObject));
 
-        static final MethodDesc AbstractOperations_ToPrimitive = MethodDesc
-                .create(MethodType.Static, Types.AbstractOperations, "ToPrimitive", Type
-                        .getMethodType(Types.Object, Types.ExecutionContext, Types.Object));
+        static final MethodDesc AbstractOperations_ToPrimitive = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "ToPrimitive",
+                Type.getMethodType(Types.Object, Types.ExecutionContext, Types.Object));
 
         static final MethodDesc AbstractOperations_ToBoolean = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToBoolean",
@@ -1100,7 +1100,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.load(iterator);
             mv.load(received);
             mv.invoke(Methods.AbstractOperations_IteratorNext);
-            mv.goTo(iteratorComplete);
+            mv.goToAndSetStack(iteratorComplete, iteratorNext);
 
             /* step 7b (I) */
             // stack: [] -> [innerResult]
