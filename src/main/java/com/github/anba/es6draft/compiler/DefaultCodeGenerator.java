@@ -257,14 +257,23 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         this.codegen = codegen;
     }
 
+    /**
+     * stack: [] -> [value|reference]
+     */
     protected final ValType expression(Expression node, ExpressionVisitor mv) {
         return codegen.expression(node, mv);
     }
 
+    /**
+     * stack: [] -> [value]
+     */
     protected final ValType expressionValue(Expression node, ExpressionVisitor mv) {
         return codegen.expressionValue(node, mv);
     }
 
+    /**
+     * stack: [] -> [boxed(value)]
+     */
     protected final ValType expressionBoxedValue(Expression node, ExpressionVisitor mv) {
         return codegen.expressionBoxedValue(node, mv);
     }

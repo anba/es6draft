@@ -495,7 +495,7 @@ final class CodeGenerator implements AutoCloseable {
     /* ----------------------------------------------------------------------------------------- */
 
     /**
-     * [12.1.9] Runtime Semantics: GetTemplateCallSite Abstract Operation
+     * [12.1.9.2.2] Runtime Semantics: GetTemplateCallSite
      */
     void GetTemplateCallSite(TemplateLiteral node, ExpressionVisitor mv) {
         assert isCompiled(node);

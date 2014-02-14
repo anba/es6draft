@@ -128,26 +128,19 @@ final class BindingInitialisationGenerator {
         }
 
         protected final void BindingInitialisation(Node node) {
-            BindingInitialisation init = new BindingInitialisation(codegen, mv, environment);
-            node.accept(init, null);
+            node.accept(new BindingInitialisation(codegen, mv, environment), null);
         }
 
         protected final void IteratorBindingInitialisation(Node node, Variable<Iterator<?>> iterator) {
-            IteratorBindingInitialisation init = new IteratorBindingInitialisation(codegen, mv,
-                    environment);
-            node.accept(init, iterator);
+            node.accept(new IteratorBindingInitialisation(codegen, mv, environment), iterator);
         }
 
         protected final void KeyedBindingInitialisation(Node node, String key) {
-            KeyedBindingInitialisation init = new KeyedBindingInitialisation(codegen, mv,
-                    environment);
-            node.accept(init, key);
+            node.accept(new KeyedBindingInitialisation(codegen, mv, environment), key);
         }
 
         protected final void ComputedKeyedBindingInitialisation(Node node, ComputedPropertyName key) {
-            ComputedKeyedBindingInitialisation init = new ComputedKeyedBindingInitialisation(
-                    codegen, mv, environment);
-            node.accept(init, key);
+            node.accept(new ComputedKeyedBindingInitialisation(codegen, mv, environment), key);
         }
 
         @Override

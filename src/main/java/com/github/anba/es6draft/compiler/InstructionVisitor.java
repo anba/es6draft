@@ -502,11 +502,17 @@ class InstructionVisitor extends InstructionAdapter {
         }
     }
 
+    /**
+     * Creates a new named variable
+     */
     public <T> Variable<T> newVariable(String name, Class<T> clazz) {
         assert name != null;
         return variables.newVariable(name, getType(clazz));
     }
 
+    /**
+     * Creates a new unnamed variable
+     */
     public <T> Variable<T> newScratchVariable(Class<T> clazz) {
         return variables.newVariable(null, getType(clazz));
     }
@@ -517,12 +523,12 @@ class InstructionVisitor extends InstructionAdapter {
 
     @Override
     public final void load(int var, Type type) {
-        assert variables.isActive(var);
+        assert variables.isActive(var) : "variable is not initialised";
         super.load(var, type);
     }
 
     public void load(Variable<?> variable) {
-        assert variable.isAlive();
+        assert variable.isAlive() : "variable out of scope";
         load(variable.getSlot(), variable.getType());
     }
 
@@ -533,7 +539,7 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     public void store(Variable<?> variable) {
-        assert variable.isAlive();
+        assert variable.isAlive() : "variable out of scope";
         store(variable.getSlot(), variable.getType());
     }
 
@@ -603,14 +609,14 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     /**
-     * [] → value
+     * &#x2205; → value
      */
     public void iconst(boolean b) {
         iconst(b ? 1 : 0);
     }
 
     /**
-     * [] → value
+     * &#x2205; → value
      */
     public void aconst(String cst) {
         if (cst == null || cst.length() <= MAX_STRING_SIZE) {
@@ -828,14 +834,29 @@ class InstructionVisitor extends InstructionAdapter {
         hconst(new Handle(method.type.toTag(), method.owner, method.name, method.desc));
     }
 
+    /**
+     * Defines a try-catch block for the error {@code type}
+     * 
+     * @see MethodVisitor#visitTryCatchBlock(Label, Label, Label, String)
+     */
     public void tryCatch(LocationLabel start, LocationLabel end, LocationLabel handler, Type type) {
         visitTryCatchBlock(start, end, handler, type.getInternalName());
     }
 
+    /**
+     * Defines a try-finally block
+     * 
+     * @see MethodVisitor#visitTryCatchBlock(Label, Label, Label, String)
+     */
     public void tryFinally(LocationLabel start, LocationLabel end, LocationLabel handler) {
         visitTryCatchBlock(start, end, handler, null);
     }
 
+    /**
+     * Marks the start of a catch-handler
+     * 
+     * @see #tryCatch(LocationLabel, LocationLabel, LocationLabel, Type)
+     */
     public void catchHandler(LocationLabel handler, Type exception) {
         if (stack != null) {
             stack.catchHandler(exception);
@@ -843,6 +864,11 @@ class InstructionVisitor extends InstructionAdapter {
         mark(handler);
     }
 
+    /**
+     * Marks the start of a finally-handler
+     * 
+     * @see #tryFinally(LocationLabel, LocationLabel, LocationLabel)
+     */
     public void finallyHandler(LocationLabel handler) {
         catchHandler(handler, Types.Throwable);
     }
@@ -930,6 +956,9 @@ class InstructionVisitor extends InstructionAdapter {
         }
     }
 
+    /**
+     * Returns the wrapper for {@code type}, or {@code type} if it does not represent a primitive
+     */
     public Type getWrapper(Type type) {
         switch (type.getSort()) {
         case Type.VOID:

@@ -317,7 +317,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.invoke(Methods.Reference_getValue);
     }
 
-    private void PutValue(Expression node, ValType type, ExpressionVisitor mv) {
+    private void PutValue(LeftHandSideExpression node, ValType type, ExpressionVisitor mv) {
         assert type == ValType.Reference : "type is not reference: " + type;
         mv.loadExecutionContext();
         mv.invoke(Methods.Reference_putValue);
@@ -480,7 +480,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         /* steps 3-4 */
         // stack: [func] -> [args, func]
-        boolean hasSpread = ArgumentListEvaluation(arguments, mv);
+        ArgumentListEvaluation(arguments, mv);
         mv.swap();
 
         // stack: [args, func]
@@ -497,7 +497,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.swap();
 
         if (directEval) {
-            directEvalCall(call, base, type, arguments, hasSpread, afterCall, mv);
+            directEvalCall(base, type, afterCall, mv);
         }
 
         /* steps 9-13 */
@@ -527,7 +527,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         /* steps 3-4 */
         // stack: [ref, func] -> [args, ref, func]
-        boolean hasSpread = ArgumentListEvaluation(arguments, mv);
+        ArgumentListEvaluation(arguments, mv);
         mv.dupX2();
         mv.pop();
 
@@ -557,7 +557,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.swap();
 
         if (directEval) {
-            directEvalCall(call, base, type, arguments, hasSpread, afterCall, mv);
+            directEvalCall(base, type, afterCall, mv);
         }
 
         /* steps 9-13 */
@@ -572,8 +572,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     /**
      * [18.2.1.1] Direct Call to Eval
      */
-    private void directEvalCall(Expression call, Expression base, ValType type,
-            List<Expression> arguments, boolean hasSpread, Label afterCall, ExpressionVisitor mv) {
+    private void directEvalCall(Expression base, ValType type, Label afterCall, ExpressionVisitor mv) {
         assert type == ValType.Reference && base instanceof Identifier;
 
         // test for possible direct-eval call
@@ -652,11 +651,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     /**
      * [12.2.5.1 ArgumentListEvaluation]
      */
-    private boolean ArgumentListEvaluation(List<Expression> arguments, ExpressionVisitor mv) {
-        boolean hasSpread = false;
+    private void ArgumentListEvaluation(List<Expression> arguments, ExpressionVisitor mv) {
         if (arguments.isEmpty()) {
             mv.get(Fields.ScriptRuntime_EMPTY_ARRAY);
         } else {
+            boolean hasSpread = false;
             mv.newarray(arguments.size(), Types.Object);
             for (int i = 0, size = arguments.size(); i < size; ++i) {
                 mv.dup();
@@ -672,7 +671,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 mv.invoke(Methods.ScriptRuntime_toFlatArray);
             }
         }
-        return hasSpread;
     }
 
     /* ----------------------------------------------------------------------------------------- */
@@ -767,7 +765,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
             arrayLiteralWithSpread(node, mv);
 
-            // stack: [array, nextIndex] -> [array, 'length', (nextIndex), false, cx]
+            // stack: [array, nextIndex] -> [(nextIndex), array, array, cx]
             mv.toBoxed(Type.INT_TYPE);
             mv.swap();
             mv.dup();
@@ -831,7 +829,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 mv.dup2();
                 evalAndGetBoxedValue(element, mv);
                 mv.loadExecutionContext();
-                // stack: [array, nextIndex, array, nextIndex, obj] -> [array, nextIndex]
+                // stack: [array, nextIndex, array, nextIndex, value, cx] -> [array, nextIndex]
                 mv.invoke(Methods.ScriptRuntime_defineProperty__int);
                 elisionWidth += 1;
             }
@@ -853,13 +851,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.dupX1();
         mv.swap();
 
-        // stack: [array, array, nextIndex] -> [array, array, nextIndex, obj]
+        // stack: [array, array, nextIndex] -> [array, array, nextIndex, value]
         Expression spread = node.getExpression();
         evalAndGetBoxedValue(spread, mv);
 
         mv.loadExecutionContext();
 
-        // stack: [array, array, nextIndex, obj, cx] -> [array, nextIndex']
+        // stack: [array, array, nextIndex, value, cx] -> [array, nextIndex']
         mv.invoke(Methods.ScriptRuntime_ArrayAccumulationSpreadElement);
 
         return ValType.Any;
@@ -896,16 +894,17 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     public ValType visit(ArrowFunction node, ExpressionVisitor mv) {
         codegen.compile(node);
 
-        // Runtime Semantics: Evaluation -> ArrowFunction
+        /* steps 1-4 */
         mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateArrowFunction);
 
+        /* step 5 */
         return ValType.Object;
     }
 
     /**
-     * 12.13.3 Runtime Semantics: Evaluation
+     * 12.13.4 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(AssignmentExpression node, ExpressionVisitor mv) {
@@ -1682,13 +1681,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.14.2 Runtime Semantics: Evaluation
+     * 12.14.3 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(CommaExpression node, ExpressionVisitor mv) {
         ValType type = null;
-        List<Expression> list = node.getOperands();
-        for (Expression e : list) {
+        for (Expression e : node.getOperands()) {
             if (type != null) {
                 mv.pop(type);
             }
@@ -1699,17 +1697,21 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.12.2 Runtime Semantics: Evaluation
+     * 12.12.3 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(ConditionalExpression node, ExpressionVisitor mv) {
         Label l0 = new Label(), l1 = new Label();
 
+        /* steps 1-2 */
         ValType typeTest = evalAndGetValue(node.getTest(), mv);
+        /* step 2 */
         ToBoolean(typeTest, mv);
+        /* step 3 */
         mv.ifeq(l0);
         evalAndGetBoxedValue(node.getThen(), mv);
         mv.goTo(l1);
+        /* step 4 */
         mv.mark(l0);
         evalAndGetBoxedValue(node.getOtherwise(), mv);
         mv.mark(l1);
@@ -1722,8 +1724,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(ElementAccessor node, ExpressionVisitor mv) {
+        /* steps 1-3 */
         evalAndGetBoxedValue(node.getBase(), mv);
+        /* steps 4-6 */
         ValType elementType = evalAndGetValue(node.getElement(), mv);
+        /* steps 7-11 */
         if (elementType.isPrimitive()) {
             ToFlatString(elementType, mv);
             mv.loadExecutionContext();
@@ -1734,7 +1739,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getElement);
         }
-
+        /* step 11 */
         return ValType.Reference;
     }
 
@@ -1743,8 +1748,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(ElementAccessorValue node, ExpressionVisitor mv) {
+        /* steps 1-3 */
         evalAndGetBoxedValue(node.getBase(), mv);
+        /* steps 4-6 */
         ValType elementType = evalAndGetValue(node.getElement(), mv);
+        /* steps 7-11 */
         if (elementType.isPrimitive()) {
             ToFlatString(elementType, mv);
             mv.loadExecutionContext();
@@ -1755,7 +1763,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getElementValue);
         }
-
+        /* step 11 */
         return ValType.Any;
     }
 
@@ -1770,17 +1778,18 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 14.1.15 Runtime Semantics: Evaluation
+     * 14.1.17 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(FunctionExpression node, ExpressionVisitor mv) {
         codegen.compile(node);
 
-        // Runtime Semantics: Evaluation -> FunctionExpression
+        /* steps 1-5/10 */
         mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateFunctionExpression);
 
+        /* step 6/11 */
         return ValType.Object;
     }
 
@@ -1791,6 +1800,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     public ValType visit(GeneratorComprehension node, ExpressionVisitor mv) {
         codegen.compile(node);
 
+        /* steps 1-8 */
         mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
         mv.loadExecutionContext();
         if (!(node.getComprehension() instanceof LegacyComprehension)) {
@@ -1799,44 +1809,48 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.invoke(Methods.ScriptRuntime_EvaluateLegacyGeneratorComprehension);
         }
 
+        /* step 9 */
         return ValType.Object;
     }
 
     /**
-     * 14.4.12 Runtime Semantics: Evaluation
+     * 14.4.14 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(GeneratorExpression node, ExpressionVisitor mv) {
         codegen.compile(node);
 
-        // Runtime Semantics: Evaluation -> FunctionExpression
+        /* steps 1-7/11 */
         mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorExpression);
 
+        /* step 8/12 */
         return ValType.Object;
     }
 
     /**
-     * 14.4.12 Runtime Semantics: Evaluation
+     * 14.4.14 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(LegacyGeneratorExpression node, ExpressionVisitor mv) {
         codegen.compile(node);
 
-        // Runtime Semantics: Evaluation -> FunctionExpression
+        /* steps 1-7 */
         mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateLegacyGeneratorExpression);
 
+        /* step 8 */
         return ValType.Object;
     }
 
     /**
-     * 12.1.2.2 Runtime Semantics: Evaluation
+     * 12.1.2.3 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(Identifier node, ExpressionVisitor mv) {
+        /* steps 1-2 */
         return identifierResolution.resolve(node, mv);
     }
 
@@ -1845,6 +1859,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(IdentifierValue node, ExpressionVisitor mv) {
+        /* steps 1-2 */
         return identifierResolution.resolveValue(node, mv);
     }
 
@@ -1905,7 +1920,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(NewExpression node, ExpressionVisitor mv) {
+        /* steps 1-3 */
         evalAndGetBoxedValue(node.getExpression(), mv);
+        /* steps 4-5 */
         ArgumentListEvaluation(node.getArguments(), mv);
         mv.lineInfo(node);
         mv.loadExecutionContext();
@@ -1922,8 +1939,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(NullLiteral node, ExpressionVisitor mv) {
+        /* step 1 */
         mv.loadNull();
-
         return ValType.Null;
     }
 
@@ -1934,9 +1951,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     public ValType visit(NumericLiteral node, ExpressionVisitor mv) {
         double v = node.getValue();
         if ((int) v == v && (v != 0 || Double.doubleToRawLongBits(v) == 0L)) {
+            /* step 1 */
             mv.iconst((int) v);
             return ValType.Number_int;
         } else {
+            /* step 1 */
             mv.dconst(v);
             return ValType.Number;
         }
@@ -1947,14 +1966,16 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(ObjectLiteral node, ExpressionVisitor mv) {
+        /* step 1 */
         mv.loadExecutionContext();
         mv.get(Fields.Intrinsics_ObjectPrototype);
         mv.invoke(Methods.OrdinaryObject_ObjectCreate);
+        /* steps 2-3 */
         for (PropertyDefinition property : node.getProperties()) {
             mv.dup();
             codegen.propertyDefinition(property, mv);
         }
-
+        /* step 4 */
         return ValType.Object;
     }
 
@@ -1963,12 +1984,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(PropertyAccessor node, ExpressionVisitor mv) {
+        /* steps 1-3 */
         evalAndGetBoxedValue(node.getBase(), mv);
+        /* steps 4-6 */
         mv.aconst(node.getName());
+        /* steps 7-11 */
         mv.loadExecutionContext();
         mv.iconst(mv.isStrict());
         mv.invoke(Methods.ScriptRuntime_getProperty);
-
+        /* step 11 */
         return ValType.Reference;
     }
 
@@ -1977,12 +2001,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(PropertyAccessorValue node, ExpressionVisitor mv) {
+        /* steps 1-3 */
         evalAndGetBoxedValue(node.getBase(), mv);
+        /* steps 4-6 */
         mv.aconst(node.getName());
+        /* steps 7-11 */
         mv.loadExecutionContext();
         mv.iconst(mv.isStrict());
         mv.invoke(Methods.ScriptRuntime_getPropertyValue);
-
+        /* step 11 */
         return ValType.Any;
     }
 
@@ -1992,10 +2019,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     @Override
     public ValType visit(RegularExpressionLiteral node, ExpressionVisitor mv) {
         mv.loadExecutionContext();
+        /* step 1 */
         mv.aconst(node.getRegexp());
+        /* step 2 */
         mv.aconst(node.getFlags());
+        /* step 3 */
         mv.invoke(Methods.RegExpConstructor_RegExpCreate);
-
         return ValType.Object;
     }
 
@@ -2004,8 +2033,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(StringLiteral node, ExpressionVisitor mv) {
+        /* step 1 */
         mv.aconst(node.getValue());
-
         return ValType.String;
     }
 
@@ -2114,14 +2143,19 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     public ValType visit(TemplateCallExpression node, ExpressionVisitor mv) {
         codegen.compile(node.getTemplate());
 
+        // 12.1.9.2.1 Runtime Semantics: ArgumentListEvaluation
+        // 12.1.9.2.2 Runtime Semantics: GetTemplateCallSite
+        // 12.1.9.2.3 Runtime Semantics: SubstitutionEvaluation
         TemplateLiteral template = node.getTemplate();
         List<Expression> substitutions = Substitutions(template);
         List<Expression> arguments = new ArrayList<>(substitutions.size() + 1);
         arguments.add(template);
         arguments.addAll(substitutions);
 
+        /* step 1 */
         ValType type = node.getBase().accept(this, mv);
         mv.toBoxed(type);
+        /* steps 2-4 */
         EvaluateCall(node, node.getBase(), type, arguments, false, mv);
 
         return ValType.Any;
@@ -2175,9 +2209,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(ThisExpression node, ExpressionVisitor mv) {
+        /* step 1 */
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_resolveThisBinding);
-
         return ValType.Any;
     }
 
@@ -2200,6 +2234,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         case POST_INC: {
             // 12.3.3 Postfix Increment Operator
             Expression expr = node.getOperand();
+            assert expr instanceof LeftHandSideExpression;
             ValType type = expr.accept(this, mv);
             mv.dup();
             GetValue(expr, type, mv);
@@ -2208,12 +2243,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.dconst(1d);
             mv.add(Type.DOUBLE_TYPE);
             mv.toBoxed(ValType.Number);
-            PutValue(expr, type, mv);
+            PutValue((LeftHandSideExpression) expr, type, mv);
             return ValType.Number;
         }
         case POST_DEC: {
             // 12.3.4 Postfix Decrement Operator
             Expression expr = node.getOperand();
+            assert expr instanceof LeftHandSideExpression;
             ValType type = expr.accept(this, mv);
             mv.dup();
             GetValue(expr, type, mv);
@@ -2222,7 +2258,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.dconst(1d);
             mv.sub(Type.DOUBLE_TYPE);
             mv.toBoxed(ValType.Number);
-            PutValue(expr, type, mv);
+            PutValue((LeftHandSideExpression) expr, type, mv);
             return ValType.Number;
         }
         case DELETE: {
@@ -2263,6 +2299,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         case PRE_INC: {
             // 12.4.6 Prefix Increment Operator
             Expression expr = node.getOperand();
+            assert expr instanceof LeftHandSideExpression;
             ValType type = expr.accept(this, mv);
             mv.dup();
             GetValue(expr, type, mv);
@@ -2271,12 +2308,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.add(Type.DOUBLE_TYPE);
             mv.dupX(type, ValType.Number);
             mv.toBoxed(ValType.Number);
-            PutValue(expr, type, mv);
+            PutValue((LeftHandSideExpression) expr, type, mv);
             return ValType.Number;
         }
         case PRE_DEC: {
             // 12.4.7 Prefix Decrement Operator
             Expression expr = node.getOperand();
+            assert expr instanceof LeftHandSideExpression;
             ValType type = expr.accept(this, mv);
             mv.dup();
             GetValue(expr, type, mv);
@@ -2285,7 +2323,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.sub(Type.DOUBLE_TYPE);
             mv.dupX(type, ValType.Number);
             mv.toBoxed(ValType.Number);
-            PutValue(expr, type, mv);
+            PutValue((LeftHandSideExpression) expr, type, mv);
             return ValType.Number;
         }
         case POS: {
@@ -2325,7 +2363,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 14.4.12 Runtime Semantics: Evaluation
+     * 14.4.14 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(YieldExpression node, ExpressionVisitor mv) {

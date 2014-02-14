@@ -24,7 +24,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.13 Assignment Operators</h2>
  * <ul>
- * <li>12.13.1 Destructuring Assignment (Runtime Semantics)
+ * <li>12.13.5 Destructuring Assignment
  * </ul>
  */
 final class DestructuringAssignmentGenerator {
@@ -80,9 +80,8 @@ final class DestructuringAssignmentGenerator {
         node.accept(init, null);
     }
 
-    private static void PutValue(Expression node, ValType type, ExpressionVisitor mv) {
+    private static void PutValue(LeftHandSideExpression node, ValType type, ExpressionVisitor mv) {
         assert type == ValType.Reference : "lhs is not reference: " + type;
-
         mv.loadExecutionContext();
         mv.invoke(Methods.Reference_putValue);
     }
@@ -102,29 +101,21 @@ final class DestructuringAssignmentGenerator {
         }
 
         protected final void DestructuringAssignmentEvaluation(Node node) {
-            DestructuringAssignmentEvaluation init = new DestructuringAssignmentEvaluation(codegen,
-                    mv);
-            node.accept(init, null);
+            node.accept(new DestructuringAssignmentEvaluation(codegen, mv), null);
         }
 
         protected final void IteratorDestructuringAssignmentEvaluation(Node node,
                 Variable<Iterator<?>> iterator) {
-            IteratorDestructuringAssignmentEvaluation init = new IteratorDestructuringAssignmentEvaluation(
-                    codegen, mv);
-            node.accept(init, iterator);
+            node.accept(new IteratorDestructuringAssignmentEvaluation(codegen, mv), iterator);
         }
 
         protected final void KeyedDestructuringAssignmentEvaluation(Node node, String key) {
-            KeyedDestructuringAssignmentEvaluation init = new KeyedDestructuringAssignmentEvaluation(
-                    codegen, mv);
-            node.accept(init, key);
+            node.accept(new KeyedDestructuringAssignmentEvaluation(codegen, mv), key);
         }
 
         protected final void ComputedKeyedDestructuringAssignmentEvaluation(Node node,
                 ComputedPropertyName key) {
-            ComputedKeyedDestructuringAssignmentEvaluation init = new ComputedKeyedDestructuringAssignmentEvaluation(
-                    codegen, mv);
-            node.accept(init, key);
+            node.accept(new ComputedKeyedDestructuringAssignmentEvaluation(codegen, mv), key);
         }
 
         protected final ValType expression(Expression node, ExpressionVisitor mv) {

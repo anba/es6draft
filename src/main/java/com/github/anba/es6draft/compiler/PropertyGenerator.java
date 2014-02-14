@@ -104,7 +104,9 @@ final class PropertyGenerator extends
      */
     @Override
     public ValType visit(ComputedPropertyName node, ExpressionVisitor mv) {
+        /* steps 1-3 */
         ValType type = expressionValue(node.getExpression(), mv);
+        /* step 4 */
         ToPropertyKey(type, mv);
 
         return type != ValType.Any ? ValType.String : ValType.Any;
@@ -190,7 +192,7 @@ final class PropertyGenerator extends
     /**
      * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      * <p>
-     * PropertyDefinition : IdentifierName
+     * PropertyDefinition : IdentifierReference
      */
     @Override
     public ValType visit(PropertyNameDefinition node, ExpressionVisitor mv) {

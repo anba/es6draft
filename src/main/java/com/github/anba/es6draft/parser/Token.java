@@ -9,12 +9,27 @@ package com.github.anba.es6draft.parser;
 /**
  * Enumeration of lexer tokens
  */
-public enum Token {
+public enum Token {/* @formatter:off */
     // Keyword -> 11.6.2.1
-    BREAK("break"), CASE("case"), CATCH("catch"), CLASS("class"), CONTINUE("continue"), CONST(
-            "const"), DEBUGGER("debugger"), DEFAULT("default"), DELETE("delete"), DO("do"), ELSE(
-            "else"), EXPORT("export"), EXTENDS("extends"), FINALLY("finally"), FOR("for"),
-    FUNCTION("function"), IF("if"), IMPORT("import"), IN("in"),
+    BREAK("break"),
+    CASE("case"),
+    CATCH("catch"),
+    CLASS("class"),
+    CONTINUE("continue"),
+    CONST("const"),
+    DEBUGGER("debugger"),
+    DEFAULT("default"),
+    DELETE("delete"),
+    DO("do"),
+    ELSE("else"),
+    EXPORT("export"),
+    EXTENDS("extends"),
+    FINALLY("finally"),
+    FOR("for"),
+    FUNCTION("function"),
+    IF("if"),
+    IMPORT("import"),
+    IN("in"),
     INSTANCEOF("instanceof"),
     NEW("new"),
     RETURN("return"),
@@ -51,22 +66,25 @@ public enum Token {
     REGEXP("<regexp>"),
     // Template
     TEMPLATE("`"),
-    // Punctuator -> 11.7
-    LC("{"), RC("}"), LP("("), RP(")"), LB("["), RB("]"), DOT("."), SEMI(";"), COMMA(","), LT("<"),
-    GT(">"), LE("<="), GE(">="), EQ("=="), NE("!="), SHEQ("==="), SHNE("!=="), ADD("+"), SUB("-"),
-    MUL("*"), MOD("%"), INC("++"), DEC("--"), SHL("<<"), SHR(">>"), USHR(">>>"), BITAND("&"),
-    BITOR("|"), BITXOR("^"), NOT("!"), BITNOT("~"), AND("&&"), OR("||"), HOOK("?"), COLON(":"),
-    ASSIGN("="), ASSIGN_ADD("+="), ASSIGN_SUB("-="), ASSIGN_MUL("*="), ASSIGN_MOD("%="),
-    ASSIGN_SHL("<<="), ASSIGN_SHR(">>="), ASSIGN_USHR(">>>="), ASSIGN_BITAND("&="), ASSIGN_BITOR(
-            "|="), ASSIGN_BITXOR("^="), ARROW("=>"),
-    // missing punctuator
-    TRIPLE_DOT("..."),
-    // DivPunctuator -> 11.7
-    DIV("/"), ASSIGN_DIV("/="),
+    // Punctuators -> 11.7
+    LC("{"), RC("}"), LP("("), RP(")"), LB("["), RB("]"),
+    DOT("."), TRIPLE_DOT("..."), SEMI(";"), COMMA(","),
+    INC("++"), DEC("--"), NOT("!"), BITNOT("~"),
+    LT("<"), GT(">"), LE("<="), GE(">="), EQ("=="), NE("!="), SHEQ("==="), SHNE("!=="),
+    ADD("+"), SUB("-"), MUL("*"), MOD("%"), DIV("/"),
+    SHL("<<"), SHR(">>"), USHR(">>>"), BITAND("&"), BITOR("|"), BITXOR("^"),
+    AND("&&"), OR("||"),
+    HOOK("?"), COLON(":"),
+    ASSIGN("="),
+    ASSIGN_ADD("+="), ASSIGN_SUB("-="), ASSIGN_MUL("*="), ASSIGN_MOD("%="), ASSIGN_DIV("/="),
+    ASSIGN_SHL("<<="), ASSIGN_SHR(">>="), ASSIGN_USHR(">>>="),
+    ASSIGN_BITAND("&="), ASSIGN_BITOR("|="), ASSIGN_BITXOR("^="),
+    ARROW("=>"),
     // Comment
     COMMENT("<comment>"),
     // EOF, Error
     EOF("<eof>"), ERROR("<error>");
+    /* @formatter:on */
 
     private final String name;
 

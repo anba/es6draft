@@ -135,13 +135,13 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         this.scope = scope;
     }
 
-    Scope enterScope(ScopedNode node) {
+    void enterScope(ScopedNode node) {
         assert node.getScope().getParent() == this.scope;
-        return this.scope = node.getScope();
+        this.scope = node.getScope();
     }
 
-    Scope exitScope() {
-        return scope = scope.getParent();
+    void exitScope() {
+        scope = scope.getParent();
     }
 
     void lineInfo(Node node) {
