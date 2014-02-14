@@ -79,6 +79,21 @@ public abstract class ShellGlobalObject extends GlobalObject {
         }
     }
 
+    protected static String concat(String... strings) {
+        if (strings.length == 0) {
+            return "";
+        } else if (strings.length == 1) {
+            return strings[0];
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (String string : strings) {
+                sb.append(string).append(' ');
+            }
+            sb.setLength(sb.length() - 1);
+            return sb.toString();
+        }
+    }
+
     protected final Path absolutePath(Path file) {
         return baseDir.resolve(file);
     }
@@ -173,8 +188,8 @@ public abstract class ShellGlobalObject extends GlobalObject {
 
     /** shell-function: {@code print(message)} */
     @Function(name = "print", arity = 1)
-    public void print(String message) {
-        console.print(message);
+    public void print(String... messages) {
+        console.print(concat(messages));
     }
 
     /** shell-function: {@code load(filename)} */

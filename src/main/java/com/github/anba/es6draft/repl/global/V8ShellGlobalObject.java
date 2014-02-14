@@ -61,21 +61,6 @@ public final class V8ShellGlobalObject extends ShellGlobalObject {
         return scripts;
     }
 
-    private String concat(String... strings) {
-        if (strings.length == 0) {
-            return "";
-        } else if (strings.length == 1) {
-            return strings[0];
-        } else {
-            StringBuilder sb = new StringBuilder();
-            for (String string : strings) {
-                sb.append(string).append(' ');
-            }
-            sb.setLength(sb.length() - 1);
-            return sb.toString();
-        }
-    }
-
     /** shell-function: {@code write(message)} */
     @Function(name = "write", arity = 1)
     public void write(String... messages) {
