@@ -374,16 +374,8 @@ final class StatementGenerator extends
      */
     @Override
     public Completion visit(ForEachStatement node, StatementVisitor mv) {
-        ContinueLabel lblContinue = new ContinueLabel();
-        BreakLabel lblBreak = new BreakLabel();
-
-        /* steps 1-2 */
-        ForInOfExpressionEvaluation(node.getExpression(), IterationKind.EnumerateValues, lblBreak,
-                mv);
-
-        /* step 3 */
-        return ForInOfBodyEvaluation(node, node.getHead(), node.getStatement(), lblBreak,
-                lblContinue, mv);
+        return visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
+                IterationKind.EnumerateValues, mv);
     }
 
     /**
@@ -393,15 +385,8 @@ final class StatementGenerator extends
      */
     @Override
     public Completion visit(ForInStatement node, StatementVisitor mv) {
-        ContinueLabel lblContinue = new ContinueLabel();
-        BreakLabel lblBreak = new BreakLabel();
-
-        /* steps 1-2 */
-        ForInOfExpressionEvaluation(node.getExpression(), IterationKind.Enumerate, lblBreak, mv);
-
-        /* step 3 */
-        return ForInOfBodyEvaluation(node, node.getHead(), node.getStatement(), lblBreak,
-                lblContinue, mv);
+        return visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
+                IterationKind.Enumerate, mv);
     }
 
     /**
@@ -411,15 +396,28 @@ final class StatementGenerator extends
      */
     @Override
     public Completion visit(ForOfStatement node, StatementVisitor mv) {
-        ContinueLabel lblContinue = new ContinueLabel();
-        BreakLabel lblBreak = new BreakLabel();
+        return visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
+                IterationKind.Iterate, mv);
+    }
+
+    /**
+     * 13.6.4.5 Runtime Semantics: LabelledEvaluation
+     */
+    private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion visitForInOfLoop(
+            FORSTATEMENT node, Expression expr, Node lhs, Statement stmt,
+            IterationKind iterationKind, StatementVisitor mv) {
+        Label lblFail = new Label();
 
         /* steps 1-2 */
-        ForInOfExpressionEvaluation(node.getExpression(), IterationKind.Iterate, lblBreak, mv);
+        ValType type = ForInOfExpressionEvaluation(expr, iterationKind, lblFail, mv);
 
         /* step 3 */
-        return ForInOfBodyEvaluation(node, node.getHead(), node.getStatement(), lblBreak,
-                lblContinue, mv);
+        Completion result = ForInOfBodyEvaluation(node, lhs, stmt, mv);
+
+        if (type != ValType.Object) {
+            mv.mark(lblFail);
+        }
+        return result;
     }
 
     /**
@@ -427,8 +425,8 @@ final class StatementGenerator extends
      * <p>
      * stack: [] -> [Iterator]
      */
-    private void ForInOfExpressionEvaluation(Expression expr, IterationKind iterationKind,
-            BreakLabel lblBreak, StatementVisitor mv) {
+    private ValType ForInOfExpressionEvaluation(Expression expr, IterationKind iterationKind,
+            Label lblFail, StatementVisitor mv) {
         /* steps 1-3 */
         ValType type = expressionValue(expr, mv);
 
@@ -440,7 +438,7 @@ final class StatementGenerator extends
             isUndefinedOrNull(mv);
             mv.ifeq(loopstart);
             mv.pop();
-            mv.goTo(lblBreak);
+            mv.goTo(lblFail);
             mv.mark(loopstart);
         }
 
@@ -474,6 +472,8 @@ final class StatementGenerator extends
                 mv.invoke(Methods.ScriptRuntime_iterate);
             }
         }
+
+        return type;
     }
 
     /**
@@ -482,8 +482,9 @@ final class StatementGenerator extends
      * stack: [Iterator] -> []
      */
     private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion ForInOfBodyEvaluation(
-            FORSTATEMENT node, Node lhs, Statement stmt, BreakLabel lblBreak,
-            ContinueLabel lblContinue, StatementVisitor mv) {
+            FORSTATEMENT node, Node lhs, Statement stmt, StatementVisitor mv) {
+        ContinueLabel lblContinue = new ContinueLabel();
+        BreakLabel lblBreak = new BreakLabel();
         Label loopbody = new Label();
 
         mv.enterVariableScope();
@@ -596,8 +597,8 @@ final class StatementGenerator extends
         mv.ifne(loopbody);
 
         /* steps 3j-3k */
-        mv.mark(lblBreak);
         if (lblBreak.isUsed()) {
+            mv.mark(lblBreak);
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
         mv.exitVariableScope();
