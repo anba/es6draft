@@ -5,6 +5,9 @@
 # <https://github.com/anba/es6draft>
 #
 
+# Math.clz32(), not yet in published draft
+harmony/math-clz32.js
+
 # spec "9.1.3.1 ToNumber Applied to the String Type" not updated for new number literals
 harmony/numeric-literals.js
 
@@ -57,6 +60,9 @@ harmony/dataview-accessors.js
 # invalid test, Math.cosh(-Infinity) == Infinity, test expects Math.cosh(-Infinity) == -Infinity
 harmony/math-hyperbolic.js
 
+# invalid test, wrong behaviour for duplicate property key check when key is "__proto__"
+regress-3135.js
+
 
 ###################
 # Misc issues     #
@@ -93,6 +99,7 @@ harmony/proxies-symbols.js
 harmony/proxies.js
 regress/regress-2219.js
 regress/regress-2225.js
+regress/regress-lookup-transition.js
 
 
 ############################################
@@ -115,6 +122,7 @@ object-prevent-extensions.js
 object-seal.js
 regress/regress-1591.js
 regress/regress-1980.js
+regress/regress-3159.js
 
 # forward-slash not escaped in RegExp
 compiler/literals.js
@@ -262,6 +270,7 @@ regress/regress-1170.js
 regress/regress-1178598.js
 regress/regress-1182832.js
 regress/regress-186.js
+regress/regress-3138.js
 regress/regress-641.js
 regress/regress-88591.js
 

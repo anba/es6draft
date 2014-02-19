@@ -409,6 +409,9 @@ tests/arguments/defaults-invalid-syntax.js
 # re-assignement to 'const' is not an early error
 tests/basic/bug821470.js
 
+# let is per iteration bound in for-loop
+tests/basic/testBug763950.js
+
 
 ############################################
 # Unsupported built-in object functions    #
@@ -537,6 +540,7 @@ tests/basic/testOOMInAutoEnterCompartment.js
 tests/basic/offThreadCompileScript-01.js
 # setJitCompilerOption
 tests/bug953337.js
+tests/basic/bug970643.js
 
 
 #######################################
@@ -574,3 +578,6 @@ tests/basic/testBug621202.js
 tests/auto-regress/bug690933.js
 tests/auto-regress/bug735313.js
 tests/basic/bug710947.js
+
+# Intermittent stackoverflow error
+tests/auto-regress/bug622167.js
