@@ -916,6 +916,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
                 if (rtype != ValType.Object) {
                     mv.toBoxed(rtype);
+                    mv.lineInfo(left);
                     mv.loadExecutionContext();
                     mv.invoke(Methods.ScriptRuntime_ensureObject);
                 }

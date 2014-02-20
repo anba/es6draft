@@ -377,6 +377,7 @@ final class BindingInitialisationGenerator {
 
                 // step 7
                 // stack: [(env), v'] -> [(env), v']
+                mv.lineInfo(binding);
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
 
@@ -448,6 +449,7 @@ final class BindingInitialisationGenerator {
             if (binding instanceof BindingPattern) {
                 // step 4
                 // stack: [(env), v'] -> [(env), v']
+                mv.lineInfo(binding);
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
             }
@@ -510,6 +512,7 @@ final class BindingInitialisationGenerator {
             if (binding instanceof BindingPattern) {
                 // step 4
                 // stack: [(env), v'] -> [(env), v']
+                mv.lineInfo(binding);
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
             }

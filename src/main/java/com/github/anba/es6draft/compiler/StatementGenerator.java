@@ -185,8 +185,9 @@ final class StatementGenerator extends
     /**
      * stack: [value] -> [value]
      */
-    private void ensureObjectOrThrow(ValType type, StatementVisitor mv) {
+    private void ensureObjectOrThrow(Node pattern, ValType type, StatementVisitor mv) {
         if (type != ValType.Object) {
+            mv.lineInfo(pattern);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_ensureObject);
         }
@@ -515,7 +516,7 @@ final class StatementGenerator extends
                 PutValue((LeftHandSideExpression) lhs, lhsType, mv);
             } else {
                 /* step 3f.iii */
-                ensureObjectOrThrow(ValType.Any, mv);
+                ensureObjectOrThrow(lhs, ValType.Any, mv);
                 DestructuringAssignment((AssignmentPattern) lhs, mv);
             }
         } else if (lhs instanceof VariableStatement) {
@@ -524,7 +525,7 @@ final class StatementGenerator extends
             Binding binding = varDecl.getBinding();
             // 12.1.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
             if (binding instanceof BindingPattern) {
-                ensureObjectOrThrow(ValType.Any, mv);
+                ensureObjectOrThrow(lhs, ValType.Any, mv);
             }
             BindingInitialisation(binding, mv);
         } else {
@@ -557,7 +558,7 @@ final class StatementGenerator extends
 
                 // 12.1.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
                 if (lexicalBinding.getBinding() instanceof BindingPattern) {
-                    ensureObjectOrThrow(ValType.Any, mv);
+                    ensureObjectOrThrow(lexicalBinding, ValType.Any, mv);
                 }
 
                 // stack: [iterEnv, envRec, nextValue] -> [iterEnv]
@@ -918,7 +919,7 @@ final class StatementGenerator extends
             /* steps 1-3 */
             ValType type = expressionBoxedValue(initialiser, mv);
             /* step 4 */
-            ensureObjectOrThrow(type, mv);
+            ensureObjectOrThrow(binding, type, mv);
         }
         /* step 5 */
         getEnvironmentRecord(mv);
@@ -1300,7 +1301,7 @@ final class StatementGenerator extends
             /* steps 4-5 */
             // 13.14.3 Runtime Semantics: BindingInitialisation :: CatchParameter
             if (catchParameter instanceof BindingPattern) {
-                ensureObjectOrThrow(ValType.Any, mv);
+                ensureObjectOrThrow(catchParameter, ValType.Any, mv);
             }
             // stack: [catchEnv, envRec, ex] -> [catchEnv]
             BindingInitialisationWithEnvironment(catchParameter, mv);
@@ -1357,7 +1358,7 @@ final class StatementGenerator extends
             /* steps 4-5 */
             // 13.14.3 Runtime Semantics: BindingInitialisation :: CatchParameter
             if (catchParameter instanceof BindingPattern) {
-                ensureObjectOrThrow(ValType.Any, mv);
+                ensureObjectOrThrow(catchParameter, ValType.Any, mv);
             }
             // stack: [catchEnv, envRec, ex] -> [catchEnv]
             BindingInitialisationWithEnvironment(catchParameter, mv);
@@ -1418,7 +1419,7 @@ final class StatementGenerator extends
             /* steps 1-3 */
             ValType type = expressionBoxedValue(initialiser, mv);
             /* step 4 */
-            ensureObjectOrThrow(type, mv);
+            ensureObjectOrThrow(binding, type, mv);
         }
         /* step 5 */
         BindingInitialisation(binding, mv);

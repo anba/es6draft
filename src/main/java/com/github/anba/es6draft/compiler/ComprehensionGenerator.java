@@ -240,6 +240,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
             // 12.1.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
             if (node.getBinding() instanceof BindingPattern) {
+                mv.lineInfo(node.getBinding());
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
             }

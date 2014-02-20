@@ -243,6 +243,7 @@ final class DestructuringAssignmentGenerator {
 
             if (target instanceof AssignmentPattern) {
                 // stack: [v'] -> [v']
+                mv.lineInfo(target);
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
 
@@ -317,6 +318,7 @@ final class DestructuringAssignmentGenerator {
             // steps 4-6
             if (target instanceof AssignmentPattern) {
                 // stack: [v'] -> [v']
+                mv.lineInfo(target);
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
 
@@ -381,6 +383,7 @@ final class DestructuringAssignmentGenerator {
             // steps 4-6
             if (target instanceof AssignmentPattern) {
                 // stack: [v'] -> [v']
+                mv.lineInfo(target);
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
 
