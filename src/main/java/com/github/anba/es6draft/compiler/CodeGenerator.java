@@ -59,11 +59,6 @@ final class CodeGenerator implements AutoCloseable {
                 Types.CompiledScript, "<init>",
                 Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$ScriptBody));
 
-        // class: Reference
-        static final MethodDesc Reference_getValue = MethodDesc.create(MethodType.Virtual,
-                Types.Reference, "getValue",
-                Type.getMethodType(Types.Object, Types.ExecutionContext));
-
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_GetTemplateCallSite = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "GetTemplateCallSite", Type.getMethodType(
@@ -859,13 +854,10 @@ final class CodeGenerator implements AutoCloseable {
     }
 
     ValType expressionValue(Expression node, ExpressionVisitor mv) {
-        Expression nodeValue = node.asValue();
-        ValType type = nodeValue.accept(exprgen, mv);
-        if (type == ValType.Reference) {
-            mv.loadExecutionContext();
-            mv.invoke(Methods.Reference_getValue);
-        }
-        return (type != ValType.Reference ? type : ValType.Any);
+        Expression valueNode = node.asValue();
+        ValType type = valueNode.accept(exprgen, mv);
+        assert type != ValType.Reference : "value node returned reference: " + valueNode.getClass();
+        return type;
     }
 
     ValType expressionBoxedValue(Expression node, ExpressionVisitor mv) {

@@ -304,14 +304,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     private ValType evalAndGetValue(Expression node, ExpressionVisitor mv) {
         Expression valueNode = node.asValue();
         ValType type = valueNode.accept(this, mv);
-        if (type == ValType.Reference) {
-            GetValue(valueNode, type, mv);
-            return ValType.Any;
-        }
+        assert type != ValType.Reference : "value node returned reference: " + valueNode.getClass();
         return type;
     }
 
-    private void GetValue(Expression node, ValType type, ExpressionVisitor mv) {
+    private void GetValue(LeftHandSideExpression node, ValType type, ExpressionVisitor mv) {
         assert type == ValType.Reference : "type is not reference: " + type;
         mv.loadExecutionContext();
         mv.invoke(Methods.Reference_getValue);
@@ -379,12 +376,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     private void EvaluateCall(Expression call, Expression base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
         if (type == ValType.Reference) {
+            assert base instanceof LeftHandSideExpression;
             if (isPropertyReference(base, type)) {
-                EvaluateCallPropRef(call, base, type, arguments, mv);
+                EvaluateCallPropRef(call, (LeftHandSideExpression) base, type, arguments, mv);
             } else if (isEnclosedByWithStatement(mv)) {
-                EvaluateCallWithIdentRef(call, base, type, arguments, directEval, mv);
+                EvaluateCallWithIdentRef(call, (Identifier) base, type, arguments, directEval, mv);
             } else {
-                EvaluateCallIdentRef(call, base, type, arguments, directEval, mv);
+                EvaluateCallIdentRef(call, (Identifier) base, type, arguments, directEval, mv);
             }
         } else {
             EvaluateCallWithValue(call, base, type, arguments, mv);
@@ -394,10 +392,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     /**
      * [12.2.4.2 Runtime Semantics: EvaluateCall]
      */
-    private void EvaluateCallPropRef(Expression call, Expression base, ValType type,
+    private void EvaluateCallPropRef(Expression call, LeftHandSideExpression base, ValType type,
             List<Expression> arguments, ExpressionVisitor mv) {
         // only called for the property reference case (`obj.method(...)` or `obj[method](...)`)
         assert isPropertyReference(base, type);
+        assert base instanceof ElementAccessor || base instanceof PropertyAccessor
+                || base instanceof SuperExpression;
 
         // stack: [ref] -> [ref, ref]
         mv.dup();
@@ -468,9 +468,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     /**
      * [12.2.4.2 Runtime Semantics: EvaluateCall]
      */
-    private void EvaluateCallIdentRef(Expression call, Expression base, ValType type,
+    private void EvaluateCallIdentRef(Expression call, Identifier base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
-        assert type == ValType.Reference && base instanceof Identifier;
+        assert type == ValType.Reference;
 
         Label afterCall = new Label();
 
@@ -512,9 +512,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     /**
      * [12.2.4.2 Runtime Semantics: EvaluateCall]
      */
-    private void EvaluateCallWithIdentRef(Expression call, Expression base, ValType type,
+    private void EvaluateCallWithIdentRef(Expression call, Identifier base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
-        assert type == ValType.Reference && base instanceof Identifier;
+        assert type == ValType.Reference;
 
         Label afterCall = new Label(), baseObjNotNull = new Label();
 
@@ -572,8 +572,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     /**
      * [18.2.1.1] Direct Call to Eval
      */
-    private void directEvalCall(Expression base, ValType type, Label afterCall, ExpressionVisitor mv) {
-        assert type == ValType.Reference && base instanceof Identifier;
+    private void directEvalCall(Identifier base, ValType type, Label afterCall, ExpressionVisitor mv) {
+        assert type == ValType.Reference;
 
         // test for possible direct-eval call
         Label notEval = new Label();
@@ -2234,8 +2234,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         switch (node.getOperator()) {
         case POST_INC: {
             // 12.3.3 Postfix Increment Operator
-            Expression expr = node.getOperand();
-            assert expr instanceof LeftHandSideExpression;
+            assert node.getOperand() instanceof LeftHandSideExpression;
+            LeftHandSideExpression expr = (LeftHandSideExpression) node.getOperand();
             ValType type = expr.accept(this, mv);
             mv.dup();
             GetValue(expr, type, mv);
@@ -2244,13 +2244,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.dconst(1d);
             mv.add(Type.DOUBLE_TYPE);
             mv.toBoxed(ValType.Number);
-            PutValue((LeftHandSideExpression) expr, type, mv);
+            PutValue(expr, type, mv);
             return ValType.Number;
         }
         case POST_DEC: {
             // 12.3.4 Postfix Decrement Operator
-            Expression expr = node.getOperand();
-            assert expr instanceof LeftHandSideExpression;
+            assert node.getOperand() instanceof LeftHandSideExpression;
+            LeftHandSideExpression expr = (LeftHandSideExpression) node.getOperand();
             ValType type = expr.accept(this, mv);
             mv.dup();
             GetValue(expr, type, mv);
@@ -2259,7 +2259,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.dconst(1d);
             mv.sub(Type.DOUBLE_TYPE);
             mv.toBoxed(ValType.Number);
-            PutValue((LeftHandSideExpression) expr, type, mv);
+            PutValue(expr, type, mv);
             return ValType.Number;
         }
         case DELETE: {
@@ -2299,8 +2299,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         }
         case PRE_INC: {
             // 12.4.6 Prefix Increment Operator
-            Expression expr = node.getOperand();
-            assert expr instanceof LeftHandSideExpression;
+            assert node.getOperand() instanceof LeftHandSideExpression;
+            LeftHandSideExpression expr = (LeftHandSideExpression) node.getOperand();
             ValType type = expr.accept(this, mv);
             mv.dup();
             GetValue(expr, type, mv);
@@ -2309,13 +2309,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.add(Type.DOUBLE_TYPE);
             mv.dupX(type, ValType.Number);
             mv.toBoxed(ValType.Number);
-            PutValue((LeftHandSideExpression) expr, type, mv);
+            PutValue(expr, type, mv);
             return ValType.Number;
         }
         case PRE_DEC: {
             // 12.4.7 Prefix Decrement Operator
-            Expression expr = node.getOperand();
-            assert expr instanceof LeftHandSideExpression;
+            assert node.getOperand() instanceof LeftHandSideExpression;
+            LeftHandSideExpression expr = (LeftHandSideExpression) node.getOperand();
             ValType type = expr.accept(this, mv);
             mv.dup();
             GetValue(expr, type, mv);
@@ -2324,7 +2324,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.sub(Type.DOUBLE_TYPE);
             mv.dupX(type, ValType.Number);
             mv.toBoxed(ValType.Number);
-            PutValue((LeftHandSideExpression) expr, type, mv);
+            PutValue(expr, type, mv);
             return ValType.Number;
         }
         case POS: {
