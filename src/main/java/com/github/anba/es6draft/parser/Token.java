@@ -44,12 +44,13 @@ public enum Token {/* @formatter:off */
     WHILE("while"),
     WITH("with"),
     YIELD("yield"),
+    // Contextual Keywords
+    LET("let"),
     // FutureReservedWord -> 11.6.2.2
     ENUM("enum"),
     // FutureReservedWord (strict) -> 11.6.2.2
     IMPLEMENTS("implements"),
     INTERFACE("interface"),
-    LET("let"),
     PACKAGE("package"),
     PRIVATE("private"),
     PROTECTED("protected"),
@@ -57,6 +58,12 @@ public enum Token {/* @formatter:off */
     STATIC("static"),
     // Identifier
     NAME("<name>"),
+    // Escaped names
+    ESCAPED_NAME("<escaped-name>"),
+    ESCAPED_RESERVED_WORD("<escaped-reserved-word>"),
+    ESCAPED_STRICT_RESERVED_WORD("<escaped-strict-reserved-word>"),
+    ESCAPED_YIELD("<escaped-yield>"),
+    ESCAPED_LET("<escaped-let>"),
     // Literal
     NULL("null"),
     TRUE("true"),
@@ -101,31 +108,198 @@ public enum Token {/* @formatter:off */
         return name;
     }
 
+    /**
+     * <strong>[11.6] Identifier Names and Identifiers</strong>
+     */
+    public static boolean isIdentifierName(Token tok) {
+        switch (tok) {
+        case NAME:
+        case ESCAPED_NAME:
+        case ESCAPED_RESERVED_WORD:
+        case ESCAPED_STRICT_RESERVED_WORD:
+        case ESCAPED_YIELD:
+        case ESCAPED_LET:
+            // Names
+        case BREAK:
+        case CASE:
+        case CATCH:
+        case CLASS:
+        case CONST:
+        case CONTINUE:
+        case DEBUGGER:
+        case DEFAULT:
+        case DELETE:
+        case DO:
+        case ELSE:
+        case EXPORT:
+        case EXTENDS:
+        case FINALLY:
+        case FOR:
+        case FUNCTION:
+        case IF:
+        case IMPORT:
+        case IN:
+        case INSTANCEOF:
+        case NEW:
+        case RETURN:
+        case SUPER:
+        case SWITCH:
+        case THIS:
+        case THROW:
+        case TRY:
+        case TYPEOF:
+        case VAR:
+        case VOID:
+        case WHILE:
+        case WITH:
+        case YIELD:
+            // Keywords
+        case LET:
+            // Contextual Keywords
+        case ENUM:
+            // Future Reserved Words
+        case IMPLEMENTS:
+        case INTERFACE:
+        case PACKAGE:
+        case PRIVATE:
+        case PROTECTED:
+        case PUBLIC:
+        case STATIC:
+            // Future Reserved Words (Strict Mode)
+        case NULL:
+        case FALSE:
+        case TRUE:
+            // Literals
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * <strong>[11.6.1] Reserved Words</strong>
+     */
+    public static boolean isReservedWord(Token token) {
+        switch (token) {
+        case BREAK:
+        case CASE:
+        case CATCH:
+        case CLASS:
+        case CONST:
+        case CONTINUE:
+        case DEBUGGER:
+        case DEFAULT:
+        case DELETE:
+        case DO:
+        case ELSE:
+        case EXPORT:
+        case EXTENDS:
+        case FINALLY:
+        case FOR:
+        case FUNCTION:
+        case IF:
+        case IMPORT:
+        case IN:
+        case INSTANCEOF:
+        case NEW:
+        case RETURN:
+        case SUPER:
+        case SWITCH:
+        case THIS:
+        case THROW:
+        case TRY:
+        case TYPEOF:
+        case VAR:
+        case VOID:
+        case WHILE:
+        case WITH:
+        case YIELD:
+            // 11.6.2.1 Keywords
+        case LET:
+            // Contextual Keywords
+        case ENUM:
+            // 11.6.2.2 Future Reserved Words
+        case FALSE:
+        case TRUE:
+            // 11.8.2 Boolean Literals
+        case NULL:
+            // 11.8.1 Null Literals
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * <strong>[11.6.1] Reserved Words</strong>
+     */
+    public static boolean isStrictReservedWord(Token token) {
+        switch (token) {
+        case IMPLEMENTS:
+        case INTERFACE:
+        case PACKAGE:
+        case PRIVATE:
+        case PROTECTED:
+        case PUBLIC:
+        case STATIC:
+            // 11.6.2.2 Future Reserved Words (Strict Mode)
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    public static Token toEscapedNameToken(Token token) {
+        if (token == Token.NAME) {
+            return Token.ESCAPED_NAME;
+        }
+        if (token == Token.YIELD) {
+            // FIXME: spec bug https://bugs.ecmascript.org/show_bug.cgi?id=2519
+            return Token.ESCAPED_YIELD;
+        }
+        if (token == Token.LET) {
+            // TODO: spec incomplete? - contextual keywords
+            return Token.ESCAPED_LET;
+        }
+        if (Token.isReservedWord(token)) {
+            return Token.ESCAPED_RESERVED_WORD;
+        }
+        assert Token.isStrictReservedWord(token);
+        return Token.ESCAPED_STRICT_RESERVED_WORD;
+    }
+
     public static boolean isBinaryOperator(Token token) {
         switch (token) {
+        case MUL:
+        case MOD:
+        case DIV:
+            // 12.5 Multiplicative Operators
         case ADD:
-        case AND:
+        case SUB:
+            // 12.6 Additive Operators
+        case SHL:
+        case SHR:
+        case USHR:
+            // 12.7 Bitwise Shift Operators
+        case LT:
+        case GT:
+        case LE:
+        case GE:
+        case IN:
+        case INSTANCEOF:
+            // 12.8 Relational Operators
+        case EQ:
+        case NE:
+        case SHEQ:
+        case SHNE:
+            // 12.9 Equality Operators
         case BITAND:
         case BITOR:
         case BITXOR:
-        case DIV:
-        case EQ:
-        case GE:
-        case GT:
-        case IN:
-        case INSTANCEOF:
-        case LE:
-        case LT:
-        case MOD:
-        case MUL:
-        case NE:
+            // 12.10 Binary Bitwise Operators
+        case AND:
         case OR:
-        case SHEQ:
-        case SHL:
-        case SHNE:
-        case SHR:
-        case SUB:
-        case USHR:
+            // 12.11 Binary Logical Operators
             return true;
         default:
             return false;

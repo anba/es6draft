@@ -17,6 +17,8 @@ const {
   function f3() { (yield) => 0; }
   function f4() { (yield = yield * 2) => 0; }
   function f5() { (a = yield * 2) => 0; }
+  function f6() { (...yield) => 0; }
+  function f7() { (a, ...yield) => 0; }
 }
 
 // Strict mode, 'yield' and ArrowFunction in FunctionDeclaration
@@ -27,6 +29,8 @@ const {
   assertSyntaxError(`"use strict"; function f3() { (yield) => 0; }`);
   assertSyntaxError(`"use strict"; function f4() { (yield = yield * 2) => 0; }`);
   assertSyntaxError(`"use strict"; function f5() { (a = yield * 2) => 0; }`);
+  assertSyntaxError(`"use strict"; function f6() { (...yield) => 0; }`);
+  assertSyntaxError(`"use strict"; function f7() { (a, ...yield) => 0; }`);
 }
 
 // Non-strict mode, 'yield' and ArrowFunction in GeneratorDeclaration
@@ -37,6 +41,8 @@ const {
   function* f3() { (yield) => 0; }
   assertSyntaxError(`function* f4() { (yield = yield * 2) => 0; }`);
   function* f5() { (a = yield * 2) => 0; }
+  assertSyntaxError(`function* f6() { (...yield) => 0; }`);
+  assertSyntaxError(`function* f7() { (a, ...yield) => 0; }`);
 }
 
 // Strict mode, 'yield' and ArrowFunction in GeneratorDeclaration
@@ -47,4 +53,6 @@ const {
   assertSyntaxError(`"use strict"; function* f3() { (yield) => 0; }`);
   assertSyntaxError(`"use strict"; function* f4() { (yield = yield * 2) => 0; }`);
   assertSyntaxError(`"use strict"; function* f5() { (a = yield * 2) => 0; }`);
+  assertSyntaxError(`"use strict"; function* f6() { (...yield) => 0; }`);
+  assertSyntaxError(`"use strict"; function* f7() { (a, ...yield) => 0; }`);
 }

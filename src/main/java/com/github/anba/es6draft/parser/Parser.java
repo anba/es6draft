@@ -1279,28 +1279,34 @@ public final class Parser {
      * </pre>
      */
     private ImportSpecifier importSpecifier() {
-        assert context.strictMode != StrictMode.Unknown : "undefined strict-mode in import specifier";
         long begin = ts.beginPosition();
         String importName;
         BindingIdentifier localName;
-        if (!isReservedWord(token())) {
+        if (importSpecifierFollowSet(peek())) {
             BindingIdentifier binding = importedBinding();
             importName = binding.getName();
-            if (isName("as")) {
-                consume("as");
-                localName = importedBinding();
-            } else {
-                localName = binding;
-            }
+            localName = binding;
         } else {
             importName = identifierName();
             consume("as");
             localName = importedBinding();
         }
-
         addLexDeclaredName(localName);
 
         return new ImportSpecifier(begin, ts.endPosition(), importName, localName);
+    }
+
+    /**
+     * Returns FOLLOW(ImportSpecifier): « <tt>,</tt> , <tt>}</tt> »
+     */
+    private boolean importSpecifierFollowSet(Token token) {
+        switch (token) {
+        case COMMA:
+        case RC:
+            return true;
+        default:
+            return false;
+        }
     }
 
     /**
@@ -2212,7 +2218,7 @@ public final class Parser {
         case LB:
             return true;
         default:
-            return isIdentifierName(token);
+            return Token.isIdentifierName(token);
         }
     }
 
@@ -2516,15 +2522,20 @@ public final class Parser {
         case ASSIGN_DIV:
             // FIRST(RegularExpressionLiteral)
             return true;
-        case NAME:
+        case LET:
         case IMPLEMENTS:
         case INTERFACE:
-        case LET:
         case PACKAGE:
         case PRIVATE:
         case PROTECTED:
         case PUBLIC:
         case STATIC:
+        case NAME:
+        case ESCAPED_NAME:
+        case ESCAPED_RESERVED_WORD:
+        case ESCAPED_STRICT_RESERVED_WORD:
+        case ESCAPED_YIELD:
+        case ESCAPED_LET:
             // FIRST(Identifier)
             return isIdentifierReference(token);
         default:
@@ -2792,6 +2803,11 @@ public final class Parser {
         case PUBLIC:
         case STATIC:
         case NAME:
+        case ESCAPED_NAME:
+        case ESCAPED_RESERVED_WORD:
+        case ESCAPED_STRICT_RESERVED_WORD:
+        case ESCAPED_YIELD:
+        case ESCAPED_LET:
             if (LOOKAHEAD(Token.COLON)) {
                 return labelledStatement();
             }
@@ -3040,8 +3056,11 @@ public final class Parser {
      */
     private BindingIdentifier bindingIdentifier(boolean allowLet) {
         long begin = ts.beginPosition();
-        if (token() == Token.LET && !allowLet) {
-            reportTokenNotIdentifier(Token.LET);
+        if (!allowLet) {
+            Token tok = token();
+            if (tok == Token.LET || tok == Token.ESCAPED_LET) {
+                reportTokenNotIdentifier(Token.LET);
+            }
         }
         String identifier = identifierReference();
         if (context.strictMode != StrictMode.NonStrict) {
@@ -3095,19 +3114,20 @@ public final class Parser {
         // FIXME: Preliminary solution to provide SpiderMonkey/V8 compatibility
         // 'yield' is always a keyword in strict-mode and in generators, but parse function name
         // in the context of the surrounding environment
-        if (token() == Token.YIELD) {
+        Token tok = token();
+        if (tok == Token.YIELD || tok == Token.ESCAPED_YIELD) {
             long begin = ts.beginPosition();
             if (isYieldName(context.parent)) {
-                consume(Token.YIELD);
+                consume(tok);
                 return new BindingIdentifier(begin, ts.endPosition(), getName(Token.YIELD));
             }
             reportStrictModeSyntaxError(begin, Messages.Key.StrictModeInvalidIdentifier,
                     getName(Token.YIELD));
             reportTokenNotIdentifier(Token.YIELD);
         }
-        if (allowDefault && token() == Token.DEFAULT) {
+        if (allowDefault && tok == Token.DEFAULT) {
             long begin = ts.beginPosition();
-            consume(Token.DEFAULT);
+            consume(tok);
             return new BindingIdentifier(begin, ts.endPosition(), getName(Token.DEFAULT));
         }
         return bindingIdentifier();
@@ -4080,6 +4100,11 @@ public final class Parser {
             case PUBLIC:
             case STATIC:
             case NAME:
+            case ESCAPED_NAME:
+            case ESCAPED_RESERVED_WORD:
+            case ESCAPED_STRICT_RESERVED_WORD:
+            case ESCAPED_YIELD:
+            case ESCAPED_LET:
                 if (LOOKAHEAD(Token.COLON)) {
                     break;
                 }
@@ -4558,16 +4583,22 @@ public final class Parser {
     private boolean isNonResolvedIdentifier(Token tok) {
         switch (tok) {
         case NAME:
+        case ESCAPED_NAME:
             return true;
+        case ESCAPED_RESERVED_WORD:
+            throw reportSyntaxError(Messages.Key.InvalidIdentifier, getName(tok));
         case YIELD:
+        case ESCAPED_YIELD:
+        case LET:
+        case ESCAPED_LET:
         case IMPLEMENTS:
         case INTERFACE:
-        case LET:
         case PACKAGE:
         case PRIVATE:
         case PROTECTED:
         case PUBLIC:
         case STATIC:
+        case ESCAPED_STRICT_RESERVED_WORD:
             if (context.strictMode != StrictMode.NonStrict) {
                 reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
             }
@@ -4583,17 +4614,23 @@ public final class Parser {
     private boolean isIdentifierReference(Token tok) {
         switch (tok) {
         case NAME:
+        case ESCAPED_NAME:
             return true;
+        case ESCAPED_RESERVED_WORD:
+            throw reportSyntaxError(Messages.Key.InvalidIdentifier, getName(tok));
         case YIELD:
+        case ESCAPED_YIELD:
             return isYieldName();
+        case LET:
+        case ESCAPED_LET:
         case IMPLEMENTS:
         case INTERFACE:
-        case LET:
         case PACKAGE:
         case PRIVATE:
         case PROTECTED:
         case PUBLIC:
         case STATIC:
+        case ESCAPED_STRICT_RESERVED_WORD:
             if (context.strictMode != StrictMode.NonStrict) {
                 reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
             }
@@ -4609,16 +4646,22 @@ public final class Parser {
     private boolean isStrictIdentifierReference(Token tok) {
         switch (tok) {
         case NAME:
+        case ESCAPED_NAME:
             return true;
+        case ESCAPED_RESERVED_WORD:
+            throw reportSyntaxError(Messages.Key.InvalidIdentifier, getName(tok));
         case YIELD:
+        case ESCAPED_YIELD:
+        case LET:
+        case ESCAPED_LET:
         case IMPLEMENTS:
         case INTERFACE:
-        case LET:
         case PACKAGE:
         case PRIVATE:
         case PROTECTED:
         case PUBLIC:
         case STATIC:
+        case ESCAPED_STRICT_RESERVED_WORD:
             throw reportSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
         default:
             return false;
@@ -6203,10 +6246,17 @@ public final class Parser {
      * Returns the token's name
      */
     private String getName(Token tok) {
-        if (tok == Token.NAME) {
+        switch (tok) {
+        case NAME:
+        case ESCAPED_NAME:
+        case ESCAPED_RESERVED_WORD:
+        case ESCAPED_STRICT_RESERVED_WORD:
+        case ESCAPED_YIELD:
+        case ESCAPED_LET:
             return ts.getString();
+        default:
+            return tok.getName();
         }
-        return tok.getName();
     }
 
     /**
@@ -6214,156 +6264,12 @@ public final class Parser {
      */
     private String identifierName() {
         Token tok = token();
-        if (!isIdentifierName(tok)) {
+        if (!Token.isIdentifierName(tok)) {
             reportTokenNotIdentifierName(tok);
         }
         String name = getName(tok);
         consume(tok);
         return name;
-    }
-
-    /**
-     * <strong>[11.6] Identifier Names and Identifiers</strong>
-     */
-    private static boolean isIdentifierName(Token tok) {
-        switch (tok) {
-        case NAME:
-            // Literals
-        case NULL:
-        case FALSE:
-        case TRUE:
-            // Keywords
-        case BREAK:
-        case CASE:
-        case CATCH:
-        case CLASS:
-        case CONST:
-        case CONTINUE:
-        case DEBUGGER:
-        case DEFAULT:
-        case DELETE:
-        case DO:
-        case ELSE:
-        case EXPORT:
-        case EXTENDS:
-        case FINALLY:
-        case FOR:
-        case FUNCTION:
-        case IF:
-        case IMPORT:
-        case IN:
-        case INSTANCEOF:
-        case NEW:
-        case RETURN:
-        case SUPER:
-        case SWITCH:
-        case THIS:
-        case THROW:
-        case TRY:
-        case TYPEOF:
-        case VAR:
-        case VOID:
-        case WHILE:
-        case WITH:
-        case YIELD:
-            // Future Reserved Words
-        case ENUM:
-            // Future Reserved Words (Strict Mode)
-        case IMPLEMENTS:
-        case INTERFACE:
-        case LET:
-        case PACKAGE:
-        case PRIVATE:
-        case PROTECTED:
-        case PUBLIC:
-        case STATIC:
-            return true;
-        default:
-            return false;
-        }
-    }
-
-    /**
-     * <strong>[11.6.2] Reserved Words</strong>
-     */
-    private boolean isReservedWord(Token tok) {
-        assert context.strictMode != StrictMode.Unknown : "unknown strict-mode";
-        switch (tok) {
-        case FALSE:
-        case NULL:
-        case TRUE:
-            return true;
-        default:
-            return isKeyword(tok) || isFutureReservedWord(tok);
-        }
-    }
-
-    /**
-     * <strong>[11.6.2.1] Keywords</strong>
-     */
-    private boolean isKeyword(Token tok) {
-        assert context.strictMode != StrictMode.Unknown : "unknown strict-mode";
-        switch (tok) {
-        case BREAK:
-        case CASE:
-        case CATCH:
-        case CLASS:
-        case CONST:
-        case CONTINUE:
-        case DEBUGGER:
-        case DEFAULT:
-        case DELETE:
-        case DO:
-        case ELSE:
-        case EXPORT:
-        case EXTENDS:
-        case FINALLY:
-        case FOR:
-        case FUNCTION:
-        case IF:
-        case IMPORT:
-        case IN:
-        case INSTANCEOF:
-        case NEW:
-        case RETURN:
-        case SUPER:
-        case SWITCH:
-        case THIS:
-        case THROW:
-        case TRY:
-        case TYPEOF:
-        case VAR:
-        case VOID:
-        case WHILE:
-        case WITH:
-            return true;
-        case YIELD:
-            return context.strictMode == StrictMode.Strict;
-        default:
-            return false;
-        }
-    }
-
-    /**
-     * <strong>[11.6.2.2] Future Reserved Words</strong>
-     */
-    private boolean isFutureReservedWord(Token tok) {
-        assert context.strictMode != StrictMode.Unknown : "unknown strict-mode";
-        switch (tok) {
-        case ENUM:
-            return true;
-        case IMPLEMENTS:
-        case INTERFACE:
-        case LET:
-        case PACKAGE:
-        case PRIVATE:
-        case PROTECTED:
-        case PUBLIC:
-        case STATIC:
-            return context.strictMode == StrictMode.Strict;
-        default:
-            return false;
-        }
     }
 
     /**

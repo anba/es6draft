@@ -224,8 +224,16 @@ public final class TokenStream {
     public Token peekToken() {
         assert !(current == Token.DIV || current == Token.ASSIGN_DIV);
         if (next == null) {
-            if (current == Token.NAME || current == Token.STRING) {
+            switch (current) {
+            case NAME:
+            case ESCAPED_NAME:
+            case ESCAPED_RESERVED_WORD:
+            case ESCAPED_STRICT_RESERVED_WORD:
+            case ESCAPED_YIELD:
+            case ESCAPED_LET:
+            case STRING:
                 string = getString();
+            default:
             }
             hasLineTerminator = false;
             nextposition = input.position();
@@ -636,7 +644,7 @@ public final class TokenStream {
         case 'z':
         case '$':
         case '_':
-            return readIdentifier(c);
+            return readIdentifier(c, false);
         case '{':
             return Token.LC;
         case '}':
@@ -814,10 +822,13 @@ public final class TokenStream {
         case '\\':
             mustMatch('u');
             c = readUnicode();
-            // fall-through
+            if (isIdentifierStart(c)) {
+                return readIdentifier(c, true);
+            }
+            return Token.ERROR;
         default:
             if (isIdentifierStart(c)) {
-                return readIdentifier(c);
+                return readIdentifier(c, false);
             }
             return Token.ERROR;
         }
@@ -1026,7 +1037,7 @@ public final class TokenStream {
      *     IdentifierName IdentifierPart
      * </pre>
      */
-    private Token readIdentifier(int c) {
+    private Token readIdentifier(int c, boolean hasEscape) {
         assert isIdentifierStart(c);
 
         TokenStreamInput input = this.input;
@@ -1037,13 +1048,13 @@ public final class TokenStream {
             if (isIdentifierPart(c)) {
                 buffer.add(c);
             } else if (c == '\\') {
+                hasEscape = true;
                 mustMatch('u');
                 c = readUnicode();
                 if (!isIdentifierPart(c)) {
                     throw error(Messages.Key.InvalidUnicodeEscapedIdentifierPart);
                 }
                 buffer.addCodepoint(c);
-                continue;
             } else {
                 input.unget(c);
                 break;
@@ -1051,10 +1062,10 @@ public final class TokenStream {
         }
 
         Token tok = readReservedWord(buffer);
-        if (tok != null) {
-            return tok;
+        if (hasEscape) {
+            return Token.toEscapedNameToken(tok);
         }
-        return Token.NAME;
+        return tok;
     }
 
     /**
@@ -1101,27 +1112,37 @@ public final class TokenStream {
      *     BooleanLiteral
      * </pre>
      * 
-     * <strong>[11.6.1.1] Keywords</strong>
+     * <strong>[11.6.2.1] Keywords</strong>
      * 
      * <pre>
      * Keyword :: one of
-     *     break        delete      import      this
-     *     case         do          in          throw
-     *     catch        else        instanceof  try
-     *     class        export      let         typeof
-     *     continue     finally     new         var
-     *     const        for         return      void
-     *     debugger     function    super       while
-     *     default      if          switch      with
+     *     break       do          in          typeof
+     *     case        else        instanceof  var
+     *     catch       export      new         void
+     *     class       extends     return      while
+     *     const       finally     super       with
+     *     continue    for         switch      yield
+     *     debugger    function    this
+     *     default     if          throw
+     *     delete      import      try
      * </pre>
      * 
-     * <strong>[11.6.1.2] Future Reserved Words</strong>
+     * <strong>[11.6.2.2] Future Reserved Words</strong>
      * 
      * <pre>
      * FutureReservedWord :: one of
-     *     enum         extends
-     *     implements   private     public      yield
-     *     interface    package     protected   static
+     *     enum
+     * </pre>
+     * 
+     * <pre>
+     * StrictFutureReservedWord :: one of
+     *     implements  package     protected   static
+     *     interface   private     public
+     * </pre>
+     * 
+     * <pre>
+     * ContextualKeyword :: one of
+     *     let
      * </pre>
      * 
      * <strong>[11.8.1] Null Literals</strong>
@@ -1139,10 +1160,10 @@ public final class TokenStream {
      *     false
      * </pre>
      */
-    private Token readReservedWord(StringBuffer buffer) {
+    private static Token readReservedWord(StringBuffer buffer) {
         int length = buffer.length;
         if (length < 2 || length > 10)
-            return null;
+            return Token.NAME;
         char[] cbuf = buffer.cbuf;
         char c0 = cbuf[0], c1 = cbuf[1];
         Token test = null;
@@ -1270,7 +1291,7 @@ public final class TokenStream {
         if (test != null && equals(cbuf, test.getName())) {
             return test;
         }
-        return null;
+        return Token.NAME;
     }
 
     private static boolean equals(char[] cbuf, String test) {
