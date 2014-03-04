@@ -44,7 +44,8 @@ public class Test262GlobalObject extends GlobalObject {
      * Parses, compiles and executes the javascript file
      */
     public void eval(Path file) throws IOException {
-        Script script = scriptCache.script(file.getFileName().toString(), 1, file);
+        Script script = scriptCache.script(file.getFileName().toString(), 1, file, getRealm()
+                .getExecutor());
         ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
@@ -88,10 +89,10 @@ public class Test262GlobalObject extends GlobalObject {
      */
     @Function(name = "$INCLUDE", arity = 1, attributes = @Attributes(writable = false,
             enumerable = true, configurable = false))
-    public void include(String file) throws IOException {
+    public void include(ExecutionContext cx, String file) throws IOException {
         // resolve the input file against the library path
         Path path = libpath.resolve(Paths.get(file));
-        Script script = scriptCache.get(path);
+        Script script = scriptCache.get(path, cx.getRealm().getExecutor());
         ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 

@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 
 import org.apache.commons.configuration.Configuration;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -40,8 +41,9 @@ public class Test262Globals extends TestGlobals<Test262GlobalObject> {
         Test262GlobalObject global = world.newGlobal();
 
         // start initialization
-        global.include("sta.js");
-        createProperties(global, global.getRealm().defaultContext(), Test262GlobalObject.class);
+        ExecutionContext cx = global.getRealm().defaultContext();
+        global.include(cx, "sta.js");
+        createProperties(global, global, cx, Test262GlobalObject.class);
 
         return global;
     }
