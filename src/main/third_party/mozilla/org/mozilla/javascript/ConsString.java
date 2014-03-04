@@ -23,24 +23,40 @@ package org.mozilla.javascript;
  * <p>Both the name and the concept are borrowed from V8.</p>
  */
 public final class ConsString implements CharSequence {
-
-    private CharSequence s1, s2;
     private final int length;
     private int depth;
+    private CharSequence s1, s2;
 
     public ConsString(CharSequence str1, CharSequence str2) {
-        s1 = str1;
-        s2 = str2;
-        length = str1.length() + str2.length();
-        depth = 1;
+        int length = 0, depth = 1;
         if (str1 instanceof ConsString) {
-            depth += ((ConsString)str1).depth;
+            ConsString s = (ConsString) str1;
+            length += s.length;
+            depth += s.depth;
+            if (s.depth == 0) {
+                // Directly access string if ConsString is flattened
+                str1 = s.s1;
+            }
+        } else {
+            length += ((String) str1).length();
         }
         if (str2 instanceof ConsString) {
-            depth += ((ConsString)str2).depth;
+            ConsString s = (ConsString) str2;
+            length += s.length;
+            depth += s.depth;
+            if (s.depth == 0) {
+                // Directly access string if ConsString is flattened
+                str2 = s.s1;
+            }
+        } else {
+            length += ((String) str2).length();
         }
+        this.length = length;
+        this.depth = depth;
+        this.s1 = str1;
+        this.s2 = str2;
         // Don't let it grow too deep, can cause stack overflows
-        if (depth > 200) {
+        if (depth > 200 && str1 instanceof ConsString && str2 instanceof ConsString) {
             flatten();
         }
     }
@@ -52,26 +68,57 @@ public final class ConsString implements CharSequence {
 
     private String flatten() {
         if (depth > 0) {
-            StringBuilder b = new StringBuilder(length);
-            appendTo(b);
-            s1 = b.toString();
+            s1 = flatten(this);
             s2 = "";
             depth = 0;
         }
-        return (String)s1;
+        return (String) s1;
     }
 
-    private void appendTo(StringBuilder b) {
-        appendFragment(s1, b);
-        appendFragment(s2, b);
+    private static String flatten(ConsString s) {
+        char[] ca = new char[s.length()];
+        appendTo(s, ca, 0);
+        return new String(ca);
     }
 
-    private static void appendFragment(CharSequence s, StringBuilder b) {
-        if (s instanceof ConsString) {
-            ((ConsString)s).appendTo(b);
-        } else {
-            b.append(s);
+    private static void appendTo(ConsString s, char[] ca, int offset) {
+        for (;;) {
+            // Flattened ConsString or both parts are simple Strings, just append and return
+            if (s.depth <= 1) {
+                String s1 = (String) s.s1, s2 = (String) s.s2;
+                appendTo(s1, ca, offset);
+                appendTo(s2, ca, offset + s1.length());
+                return;
+            }
+            // At least one part is a ConsString
+            if (s.s1 instanceof String) {
+                // Left is String and right is ConsString, append left and continue with right
+                String s1 = (String) s.s1;
+                s = (ConsString) s.s2;
+                appendTo(s1, ca, offset);
+                offset += s1.length();
+            } else if (s.s2 instanceof String) {
+                // Left is ConsString and right is String, append right and continue with left
+                String s2 = (String) s.s2;
+                s = (ConsString) s.s1;
+                appendTo(s2, ca, offset + s.length());
+            } else {
+                // Both are ConsStrings, descend into less deeper one and continue with the other
+                ConsString s1 = (ConsString) s.s1, s2 = (ConsString) s.s2;
+                if (s1.depth < s2.depth) {
+                    s = s2;
+                    appendTo(s1, ca, offset);
+                    offset += s1.length();
+                } else {
+                    s = s1;
+                    appendTo(s2, ca, offset + s.length());
+                }
+            }
         }
+    }
+
+    private static void appendTo(String s, char[] ca, int offset) {
+        s.getChars(0, s.length(), ca, offset);
     }
 
     @Override
