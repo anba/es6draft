@@ -1154,7 +1154,7 @@ public final class Parser {
                 moduleItemList.add(exportDeclaration());
             } else if (token() == Token.IMPORT) {
                 moduleItemList.add(importDeclaration());
-            } else if (isName("module") && isIdentifierReference(peek()) && noNextLineTerminator()) {
+            } else if (isName("module") && isIdentifier(peek()) && noNextLineTerminator()) {
                 moduleItemList.add(importDeclaration());
             } else {
                 moduleItemList.add(statementListItem());
@@ -1504,7 +1504,7 @@ public final class Parser {
             localName = null;
         } else {
             importName = null;
-            localName = identifierReference();
+            localName = identifierReference().getName();
             if (isName("as")) {
                 consume("as");
                 exportName = identifierName();
@@ -2565,7 +2565,7 @@ public final class Parser {
         case ESCAPED_YIELD:
         case ESCAPED_LET:
             // FIRST(Identifier)
-            return isIdentifierReference(token);
+            return isIdentifier(token);
         default:
             return false;
         }
@@ -3049,7 +3049,7 @@ public final class Parser {
     private boolean lexicalBindingFirstSet(Token token) {
         switch (token) {
         default:
-            if (!isIdentifierReference(token)) {
+            if (!isIdentifier(token)) {
                 return false;
             }
         case LB:
@@ -3090,7 +3090,7 @@ public final class Parser {
                 reportTokenNotIdentifier(Token.LET);
             }
         }
-        String identifier = identifierReference();
+        String identifier = identifier();
         if (context.strictMode != StrictMode.NonStrict) {
             if ("arguments".equals(identifier) || "eval".equals(identifier)) {
                 reportStrictModeSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
@@ -3119,7 +3119,7 @@ public final class Parser {
             return new BindingIdentifier(begin, ts.endPosition(), getName(Token.DEFAULT));
         }
         // [10.2.1 Strict Mode Code]
-        String identifier = strictIdentifierReference();
+        String identifier = strictIdentifier();
         if ("arguments".equals(identifier) || "eval".equals(identifier)) {
             reportSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
         }
@@ -4453,8 +4453,7 @@ public final class Parser {
                 reportTokenMismatch(Token.DIV, Token.REGEXP);
             }
         default:
-            String ident = identifierReference();
-            return new Identifier(begin, ts.endPosition(), ident);
+            return identifierReference();
         }
     }
 
@@ -4492,9 +4491,9 @@ public final class Parser {
         } else if (token() == Token.TRIPLE_DOT) {
             expr = arrowFunctionRestParameter();
         } else {
-            // Inlined `expression(true)`, all occurences of assignmentExpression() are replaced
-            // with assignmentExpressionNoValidation() to support cover-init-name and duplicate
-            // property names in case this production is an ArrowParameterList.
+            // Inlined `expression(true)`, all calls to assignmentExpression() are replaced with
+            // assignmentExpressionNoValidation() to support cover-init-name and duplicate property
+            // names in case this production is an ArrowParameterList.
             expr = assignmentExpressionNoValidation(true);
             if (token() == Token.FOR && isEnabled(CompatibilityOption.LegacyComprehension)) {
                 // NB: It is not necessary to remove unchecked object literals from
@@ -4533,13 +4532,27 @@ public final class Parser {
     private SpreadElement arrowFunctionRestParameter() {
         long begin = ts.beginPosition();
         consume(Token.TRIPLE_DOT);
-        String ident = identifierReference(); // actually bindingIdentifier()
+        String ident = bindingIdentifier().getName();
         Identifier identifier = new Identifier(ts.beginPosition(), ts.endPosition(), ident);
         SpreadElement spread = new SpreadElement(begin, ts.endPosition(), identifier);
         if (!(token() == Token.RP && LOOKAHEAD(Token.ARROW))) {
             reportSyntaxError(spread, Messages.Key.InvalidSpreadExpression);
         }
         return spread;
+    }
+
+    /**
+     * <strong>[12.1.2] Identifier Reference</strong>
+     * 
+     * <pre>
+     * IdentifierReference<sub>[Yield]</sub> :
+     *     NonResolvedIdentifier<sub>[?Yield]</sub>
+     * </pre>
+     */
+    private Identifier identifierReference() {
+        long begin = ts.beginPosition();
+        String identifier = identifier();
+        return new Identifier(begin, ts.endPosition(), identifier);
     }
 
     /**
@@ -4565,17 +4578,14 @@ public final class Parser {
      * <strong>[12.1.2] Identifier Reference</strong>
      * 
      * <pre>
-     * IdentifierReference<sub>[Yield]</sub> :
-     *     NonResolvedIdentifier<sub>[?Yield]</sub>
-     * 
      * NonResolvedIdentifier<sub>[Yield]</sub> :
      *     Identifier
      *     <sub>[~Yield]</sub> yield
      * </pre>
      */
-    private String identifierReference() {
+    private String identifier() {
         Token tok = token();
-        if (!isIdentifierReference(tok)) {
+        if (!isIdentifier(tok)) {
             reportTokenNotIdentifier(tok);
         }
         String name = getName(tok);
@@ -4587,17 +4597,14 @@ public final class Parser {
      * <strong>[12.1.2] Identifier Reference</strong>
      * 
      * <pre>
-     * IdentifierReference<sub>[Yield]</sub> :
-     *     NonResolvedIdentifier<sub>[?Yield]</sub>
-     * 
      * NonResolvedIdentifier<sub>[Yield]</sub> :
      *     Identifier
      *     <sub>[~Yield]</sub> yield
      * </pre>
      */
-    private String strictIdentifierReference() {
+    private String strictIdentifier() {
         Token tok = token();
-        if (!isStrictIdentifierReference(tok)) {
+        if (!isStrictIdentifier(tok)) {
             reportTokenNotIdentifier(tok);
         }
         String name = getName(tok);
@@ -4639,7 +4646,7 @@ public final class Parser {
     /**
      * <strong>[12.1.2] Identifier Reference</strong>
      */
-    private boolean isIdentifierReference(Token tok) {
+    private boolean isIdentifier(Token tok) {
         switch (tok) {
         case NAME:
         case ESCAPED_NAME:
@@ -4671,7 +4678,7 @@ public final class Parser {
     /**
      * <strong>[12.1.2] Identifier Reference</strong>
      */
-    private boolean isStrictIdentifierReference(Token tok) {
+    private boolean isStrictIdentifier(Token tok) {
         switch (tok) {
         case NAME:
         case ESCAPED_NAME:
@@ -5144,13 +5151,11 @@ public final class Parser {
             return new PropertyValueDefinition(begin, ts.endPosition(), propertyName, propertyValue);
         }
         if (LOOKAHEAD(Token.COMMA) || LOOKAHEAD(Token.RC)) {
-            String ident = identifierReference();
-            Identifier identifier = new Identifier(begin, ts.endPosition(), ident);
+            Identifier identifier = identifierReference();
             return new PropertyNameDefinition(begin, ts.endPosition(), identifier);
         }
         if (LOOKAHEAD(Token.ASSIGN)) {
-            String ident = identifierReference();
-            Identifier identifier = new Identifier(begin, ts.endPosition(), ident);
+            Identifier identifier = identifierReference();
             consume(Token.ASSIGN);
             Expression initialiser = assignmentExpression(true);
             return new CoverInitialisedName(begin, ts.endPosition(), identifier, initialiser);
