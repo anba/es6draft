@@ -22,7 +22,7 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * Global object class with support for some v8-shell functions
@@ -34,7 +34,7 @@ public final class V8ShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    public void defineBuiltinProperties(ExecutionContext cx, ScriptObject object) {
+    public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
         super.defineBuiltinProperties(cx, object);
         createProperties(object, this, cx, V8ShellGlobalObject.class);
     }

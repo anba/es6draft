@@ -32,6 +32,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>26 Reflection</h1><br>
@@ -64,7 +65,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
     /**
      * Abstract Operation: DefineBuiltinProperties (realm, builtins)
      */
-    public static void DefineBuiltinProperties(Realm realm, ScriptObject builtins) {
+    public static void DefineBuiltinProperties(Realm realm, OrdinaryObject builtins) {
         // TODO: not yet specified
         realm.defineBuiltinProperties(builtins);
     }
@@ -121,7 +122,8 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         realmObject.setRealm(realm);
         /* step 29 */
         if (initializer != null) {
-            ScriptObject builtins = ObjectCreate(realm.defaultContext(), Intrinsics.ObjectPrototype);
+            OrdinaryObject builtins = ObjectCreate(realm.defaultContext(),
+                    Intrinsics.ObjectPrototype);
             DefineBuiltinProperties(realm, builtins);
             // TODO: spec bug? necessary to provide realm object as thisArgument and 1st parameter?
             initializer.call(calleeContext, realmObject, realmObject, builtins);

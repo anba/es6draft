@@ -23,7 +23,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtensi
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -48,7 +47,7 @@ public class GlobalObject extends OrdinaryObject {
     /**
      * Initialise {@code object} with the default properties of the Global Object
      */
-    public void defineBuiltinProperties(ExecutionContext cx, ScriptObject object) {
+    public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
         createProperties(object, cx, ValueProperties.class);
         createProperties(object, cx, FunctionProperties.class);
         createProperties(object, cx, URIHandlingFunctions.class);

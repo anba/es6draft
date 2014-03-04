@@ -291,22 +291,19 @@ public final class Properties {
      * Sets the {@link Prototype} and creates own properties for {@link Value}, {@link Function} and
      * {@link Accessor} fields
      */
-    public static void createProperties(ScriptObject owner, ExecutionContext cx, Class<?> holder) {
-        createProperties(owner, owner, cx, holder);
+    public static void createProperties(OrdinaryObject owner, ExecutionContext cx, Class<?> holder) {
+        assert holder.getName().startsWith(INTERNAL_PACKAGE);
+        createInternalProperties(owner, cx, holder);
     }
 
     /**
      * Sets the {@link Prototype} and creates own properties for {@link Value}, {@link Function} and
      * {@link Accessor} fields
      */
-    public static void createProperties(ScriptObject target, ScriptObject owner,
-            ExecutionContext cx, Class<?> holder) {
-        if (holder.getName().startsWith(INTERNAL_PACKAGE)) {
-            assert owner instanceof OrdinaryObject && owner == target;
-            createInternalProperties((OrdinaryObject) owner, cx, holder);
-        } else {
-            createExternalProperties(target, owner, cx, holder);
-        }
+    public static <OWNER> void createProperties(ScriptObject target, OWNER owner,
+            ExecutionContext cx, Class<OWNER> holder) {
+        assert !holder.getName().startsWith(INTERNAL_PACKAGE);
+        createExternalProperties(target, owner, cx, holder);
     }
 
     private static final String INTERNAL_PACKAGE = "com.github.anba.es6draft.runtime.objects.";
@@ -519,8 +516,8 @@ public final class Properties {
         }
     }
 
-    private static void createExternalProperties(ScriptObject target, ScriptObject owner,
-            ExecutionContext cx, Class<?> holder) {
+    private static <OWNER> void createExternalProperties(ScriptObject target, OWNER owner,
+            ExecutionContext cx, Class<OWNER> holder) {
         ObjectLayout layout = externalLayouts.get(holder);
         if (layout.functions != null) {
             Converter converter = new Converter(cx);
@@ -531,7 +528,7 @@ public final class Properties {
         }
     }
 
-    private static void createExternalFunction(ScriptObject target, ScriptObject owner,
+    private static void createExternalFunction(ScriptObject target, Object owner,
             ExecutionContext cx, Converter converter, Function function, MethodHandle unreflect) {
         MethodHandle handle = getInstanceMethodHandle(cx, converter, unreflect, owner);
         String name = function.name();

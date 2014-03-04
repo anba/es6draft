@@ -369,7 +369,7 @@ public final class Realm {
     /**
      * Defines the built-in objects as properties of the supplied object
      */
-    public void defineBuiltinProperties(ScriptObject builtins) {
+    public void defineBuiltinProperties(OrdinaryObject builtins) {
         assert this.builtinEval == null : "built-ins already initialised";
         ExecutionContext defaultContext = this.defaultContext;
 

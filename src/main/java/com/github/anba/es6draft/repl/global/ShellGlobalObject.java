@@ -33,7 +33,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  *
@@ -54,7 +54,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
     }
 
     @Override
-    public void defineBuiltinProperties(ExecutionContext cx, ScriptObject object) {
+    public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
         super.defineBuiltinProperties(cx, object);
         createProperties(object, this, cx, ShellGlobalObject.class);
     }
@@ -121,8 +121,15 @@ public abstract class ShellGlobalObject extends GlobalObject {
      */
     public final void executeInitialisation() throws IOException, ParserException,
             CompilationException {
-        for (Script initScript : initialisationScripts()) {
-            eval(initScript);
+        eval(initialisationScripts());
+    }
+
+    /**
+     * Evaluates the input scripts
+     */
+    protected final void eval(List<Script> scripts) {
+        for (Script script : scripts) {
+            eval(script);
         }
     }
 

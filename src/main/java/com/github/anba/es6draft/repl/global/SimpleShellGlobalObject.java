@@ -27,6 +27,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  *
@@ -38,7 +39,7 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    public void defineBuiltinProperties(ExecutionContext cx, ScriptObject object) {
+    public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
         super.defineBuiltinProperties(cx, object);
         createProperties(object, this, cx, SimpleShellGlobalObject.class);
     }
