@@ -37,6 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticLegacyArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
@@ -96,7 +97,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initialisab
                 builtinTag = "String";
             } else if (o instanceof ExoticProxy) {
                 builtinTag = "Proxy";
-            } else if (o instanceof ExoticArguments) {
+            } else if (o instanceof ExoticArguments || o instanceof ExoticLegacyArguments) {
                 builtinTag = "Arguments";
             } else if (o instanceof FunctionObject || o instanceof BuiltinFunction
                     || o instanceof ExoticBoundFunction) {
