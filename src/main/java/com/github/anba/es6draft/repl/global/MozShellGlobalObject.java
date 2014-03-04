@@ -46,6 +46,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 public final class MozShellGlobalObject extends ShellGlobalObject {
     private final long startMilli = System.currentTimeMillis();
     private final long startNano = System.nanoTime();
+    private List<Script> initScripts = null;
 
     private MozShellGlobalObject(Realm realm, ShellConsole console, Path baseDir, Path script,
             ScriptCache scriptCache) {
@@ -309,7 +310,10 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     public GlobalObject newGlobal(ExecutionContext cx) {
         MozShellGlobalObject global = (MozShellGlobalObject) cx.getRealm().getWorld().newGlobal();
         try {
-            global.executeInitialisation();
+            if (initScripts == null) {
+                initScripts = initialisationScripts();
+            }
+            global.eval(initScripts);
         } catch (ParserException | CompilationException | IOException e) {
             throw newError(cx, e.getMessage());
         }
