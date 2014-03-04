@@ -13,11 +13,11 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class WithStatement extends Statement implements ScopedNode {
-    private BlockScope scope;
+    private WithScope scope;
     private Expression expression;
     private Statement statement;
 
-    public WithStatement(long beginPosition, long endPosition, BlockScope scope,
+    public WithStatement(long beginPosition, long endPosition, WithScope scope,
             Expression expression, Statement statement) {
         super(beginPosition, endPosition);
         this.scope = scope;
@@ -26,7 +26,7 @@ public final class WithStatement extends Statement implements ScopedNode {
     }
 
     @Override
-    public BlockScope getScope() {
+    public WithScope getScope() {
         return scope;
     }
 

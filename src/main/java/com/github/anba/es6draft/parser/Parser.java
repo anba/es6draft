@@ -189,11 +189,6 @@ public final class Parser {
         }
 
         @Override
-        protected boolean isStrict() {
-            return IsStrict(node);
-        }
-
-        @Override
         public FunctionNode getNode() {
             return node;
         }
@@ -202,6 +197,23 @@ public final class Parser {
         public Set<String> parameterNames() {
             return parameterNames;
         }
+
+        @Override
+        public boolean isDynamic() {
+            return directEval && !IsStrict(node);
+        }
+
+        @Override
+        public boolean isDeclared(String name) {
+            if ("arguments".equals(name)
+                    && !(node instanceof ArrowFunction || node instanceof GeneratorComprehension)) {
+                return true;
+            }
+            if (parameterNames.contains(name)) {
+                return true;
+            }
+            return super.isDeclared(name);
+        }
     }
 
     private static final class ScriptContext extends TopContext implements ScriptScope {
@@ -209,11 +221,6 @@ public final class Parser {
 
         ScriptContext(ParseContext context) {
             super(context);
-        }
-
-        @Override
-        protected boolean isStrict() {
-            return IsStrict(node);
         }
 
         @Override
@@ -229,11 +236,6 @@ public final class Parser {
 
         ModuleContext(ParseContext context) {
             super(context);
-        }
-
-        @Override
-        protected boolean isStrict() {
-            return true;
         }
 
         @Override
@@ -277,11 +279,6 @@ public final class Parser {
         }
 
         @Override
-        public boolean isDynamic() {
-            return directEval && !isStrict();
-        }
-
-        @Override
         public Set<String> lexicallyDeclaredNames() {
             return lexDeclaredNames;
         }
@@ -300,15 +297,24 @@ public final class Parser {
         public List<StatementListItem> varScopedDeclarations() {
             return varScopedDeclarations;
         }
+
+        @Override
+        public boolean isDeclared(String name) {
+            if (varDeclaredNames != null && varDeclaredNames.contains(name)) {
+                return true;
+            }
+            if (lexDeclaredNames != null && lexDeclaredNames.contains(name)) {
+                return true;
+            }
+            return false;
+        }
     }
 
     private static final class BlockContext extends ScopeContext implements BlockScope {
-        final boolean dynamic;
         ScopedNode node = null;
 
-        BlockContext(ScopeContext parent, boolean dynamic) {
+        BlockContext(ScopeContext parent) {
             super(parent);
-            this.dynamic = dynamic;
         }
 
         @Override
@@ -327,8 +333,26 @@ public final class Parser {
         }
 
         @Override
-        public boolean isDynamic() {
-            return dynamic;
+        public boolean isDeclared(String name) {
+            return lexDeclaredNames != null && lexDeclaredNames.contains(name);
+        }
+    }
+
+    private static final class WithContext extends ScopeContext implements WithScope {
+        WithStatement node = null;
+
+        WithContext(ScopeContext parent) {
+            super(parent);
+        }
+
+        @Override
+        public WithStatement getNode() {
+            return node;
+        }
+
+        @Override
+        public boolean isDeclared(String name) {
+            return false;
         }
     }
 
@@ -460,8 +484,8 @@ public final class Parser {
         return context = context.parent;
     }
 
-    private BlockContext enterWithContext() {
-        BlockContext cx = new BlockContext(context.scopeContext, true);
+    private WithContext enterWithContext() {
+        WithContext cx = new WithContext(context.scopeContext);
         context.scopeContext = cx;
         return cx;
     }
@@ -471,7 +495,7 @@ public final class Parser {
     }
 
     private BlockContext enterBlockContext() {
-        BlockContext cx = new BlockContext(context.scopeContext, false);
+        BlockContext cx = new BlockContext(context.scopeContext);
         context.scopeContext = cx;
         return cx;
     }
@@ -3986,7 +4010,7 @@ public final class Parser {
         Expression expr = expression(true);
         consume(Token.RP);
 
-        BlockContext scope = enterWithContext();
+        WithContext scope = enterWithContext();
         Statement stmt = statement();
         exitWithContext();
 

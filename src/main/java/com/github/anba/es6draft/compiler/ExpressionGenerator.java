@@ -334,22 +334,39 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         return type == ValType.Reference && !(base instanceof Identifier);
     }
 
+    private static boolean isEnclosedByWithStatement(String name, ExpressionVisitor mv) {
+        for (Scope scope = mv.getScope();;) {
+            if (scope instanceof WithScope) {
+                return true;
+            }
+            if (scope.isDeclared(name)) {
+                return false;
+            }
+            Scope nextScope = scope.getParent();
+            if (nextScope == null) {
+                assert scope instanceof TopLevelScope;
+                nextScope = ((TopLevelScope) scope).getEnclosingScope();
+            }
+            if (nextScope == null) {
+                ScopedNode node = scope.getNode();
+                if (node instanceof Script) {
+                    return ((Script) node).isEnclosedByWithStatement();
+                }
+                return false;
+            }
+            scope = nextScope;
+        }
+    }
+
     private static boolean isEnclosedByWithStatement(ExpressionVisitor mv) {
         for (Scope scope = mv.getScope();;) {
-            Scope nextScope;
-            if (scope instanceof BlockScope) {
-                BlockScope blockScope = (BlockScope) scope;
-                if (blockScope.isDynamic()) {
-                    return true;
-                }
-                nextScope = scope.getParent();
-            } else if (scope instanceof TopLevelScope) {
-                TopLevelScope topScope = (TopLevelScope) scope;
-                assert topScope.getParent() == null;
-                nextScope = topScope.getEnclosingScope();
-            } else {
-                assert false : "unknown scope class: " + scope.getClass().getName();
-                return false;
+            if (scope instanceof WithScope) {
+                return true;
+            }
+            Scope nextScope = scope.getParent();
+            if (nextScope == null) {
+                assert scope instanceof TopLevelScope;
+                nextScope = ((TopLevelScope) scope).getEnclosingScope();
             }
             if (nextScope == null) {
                 ScopedNode node = scope.getNode();
@@ -377,12 +394,16 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
         if (type == ValType.Reference) {
             assert base instanceof LeftHandSideExpression;
-            if (isPropertyReference(base, type)) {
-                EvaluateCallPropRef(call, (LeftHandSideExpression) base, type, arguments, mv);
-            } else if (isEnclosedByWithStatement(mv)) {
-                EvaluateCallWithIdentRef(call, (Identifier) base, type, arguments, directEval, mv);
+            LeftHandSideExpression lhs = (LeftHandSideExpression) base;
+            if (isPropertyReference(lhs, type)) {
+                EvaluateCallPropRef(call, lhs, type, arguments, mv);
             } else {
-                EvaluateCallIdentRef(call, (Identifier) base, type, arguments, directEval, mv);
+                Identifier ident = (Identifier) base;
+                if (isEnclosedByWithStatement(ident.getName(), mv)) {
+                    EvaluateCallWithIdentRef(call, ident, type, arguments, directEval, mv);
+                } else {
+                    EvaluateCallIdentRef(call, ident, type, arguments, directEval, mv);
+                }
             }
         } else {
             EvaluateCallWithValue(call, base, type, arguments, mv);

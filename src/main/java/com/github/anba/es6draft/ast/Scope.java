@@ -21,11 +21,7 @@ public interface Scope {
     ScopedNode getNode();
 
     /**
-     * Returns <code>true</code> for dynamically scoped objects, <code>false</code> otherwise.
-     * <p>
-     * A scope is considered dynamic if it can change over the course of runtime, this applies to,
-     * for example, a {@link FunctionScope} with non-strict, direct-eval calls or the
-     * {@link BlockScope} of a {@link WithStatement}.
+     * Returns <code>true</code> if {@code name} is declared in this scope.
      */
-    boolean isDynamic();
+    boolean isDeclared(String name);
 }
