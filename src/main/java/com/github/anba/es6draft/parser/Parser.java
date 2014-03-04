@@ -265,13 +265,19 @@ public final class Parser {
     private static abstract class TopContext extends ScopeContext implements TopLevelScope {
         final ScopeContext enclosing;
         boolean directEval = false;
+        List<StatementListItem> varScopedDeclarations = null;
 
         TopContext(ParseContext context) {
             super(null);
             this.enclosing = context.parent.scopeContext;
         }
 
-        protected abstract boolean isStrict();
+        void addVarScopedDeclaration(StatementListItem decl) {
+            if (varScopedDeclarations == null) {
+                varScopedDeclarations = newSmallList();
+            }
+            varScopedDeclarations.add(decl);
+        }
 
         @Override
         public ScopeContext getEnclosingScope() {
@@ -361,7 +367,6 @@ public final class Parser {
 
         HashSet<String> varDeclaredNames = null;
         HashSet<String> lexDeclaredNames = null;
-        List<StatementListItem> varScopedDeclarations = null;
         List<Declaration> lexScopedDeclarations = null;
 
         ScopeContext(ScopeContext parent) {
@@ -382,8 +387,16 @@ public final class Parser {
             return sb.toString();
         }
 
-        boolean isTopLevel() {
-            return parent == null;
+        boolean allowVarDeclaredName(String name) {
+            return lexDeclaredNames == null || !lexDeclaredNames.contains(name);
+        }
+
+        void addVarDeclaredNames(HashSet<String> names) {
+            if (varDeclaredNames == null) {
+                varDeclaredNames = names;
+            } else {
+                varDeclaredNames.addAll(names);
+            }
         }
 
         boolean addVarDeclaredName(String name) {
@@ -400,13 +413,6 @@ public final class Parser {
             }
             return lexDeclaredNames.add(name)
                     && (varDeclaredNames == null || !varDeclaredNames.contains(name));
-        }
-
-        void addVarScopedDeclaration(StatementListItem decl) {
-            if (varScopedDeclarations == null) {
-                varScopedDeclarations = newSmallList();
-            }
-            varScopedDeclarations.add(decl);
         }
 
         void addLexScopedDeclaration(Declaration decl) {
@@ -522,10 +528,8 @@ public final class Parser {
         assert parent != null : "exitScopeContext() on top-level";
         HashSet<String> varDeclaredNames = scope.varDeclaredNames;
         if (varDeclaredNames != null) {
+            parent.addVarDeclaredNames(varDeclaredNames);
             scope.varDeclaredNames = null;
-            for (String name : varDeclaredNames) {
-                addVarDeclaredName(parent, name);
-            }
         }
         return context.scopeContext = parent;
     }
@@ -546,10 +550,11 @@ public final class Parser {
             String name) {
         ParseContext parentContext = context.parent;
         ScopeContext parentScope = parentContext.scopeContext;
-        if (parentScope.isTopLevel() && !parentContext.kind.isModule()) {
+        TopContext topScope = parentContext.topContext;
+        if (parentScope == topScope && !parentContext.kind.isModule()) {
             // top-level function declaration in scripts/functions context
-            parentScope.addVarScopedDeclaration(decl);
-            if (!parentScope.addVarDeclaredName(name)) {
+            topScope.addVarScopedDeclaration(decl);
+            if (!topScope.addVarDeclaredName(name)) {
                 reportSyntaxError(decl, Messages.Key.VariableRedeclaration, name);
             }
         } else {
@@ -567,25 +572,6 @@ public final class Parser {
 
     private void addVarScopedDeclaration(VariableStatement decl) {
         context.topContext.addVarScopedDeclaration(decl);
-    }
-
-    private void addVarDeclaredName(ScopeContext scope, String name) {
-        if (!scope.addVarDeclaredName(name)) {
-            // FIXME: provide correct line/source information
-            reportSyntaxError(Messages.Key.VariableRedeclaration, name);
-        }
-    }
-
-    private void addVarDeclaredName(ScopeContext scope, Binding binding, String name) {
-        if (!scope.addVarDeclaredName(name)) {
-            reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
-        }
-    }
-
-    private void addLexDeclaredName(ScopeContext scope, Binding binding, String name) {
-        if (!scope.addLexDeclaredName(name)) {
-            reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
-        }
     }
 
     /**
@@ -608,12 +594,24 @@ public final class Parser {
 
     private void addVarDeclaredName(BindingIdentifier bindingIdentifier) {
         String name = BoundName(bindingIdentifier);
-        addVarDeclaredName(context.scopeContext, bindingIdentifier, name);
+        addVarDeclaredName(bindingIdentifier, name);
     }
 
     private void addVarDeclaredName(BindingPattern bindingPattern) {
         for (String name : BoundNames(bindingPattern)) {
-            addVarDeclaredName(context.scopeContext, bindingPattern, name);
+            addVarDeclaredName(bindingPattern, name);
+        }
+    }
+
+    private void addVarDeclaredName(Binding binding, String name) {
+        ScopeContext scope = context.scopeContext;
+        if (!scope.addVarDeclaredName(name)) {
+            reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
+        }
+        for (ScopeContext parent = scope.parent; parent != null; parent = parent.parent) {
+            if (!parent.allowVarDeclaredName(name)) {
+                reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
+            }
         }
     }
 
@@ -639,12 +637,19 @@ public final class Parser {
 
     private void addLexDeclaredName(BindingIdentifier bindingIdentifier) {
         String name = BoundName(bindingIdentifier);
-        addLexDeclaredName(context.scopeContext, bindingIdentifier, name);
+        addLexDeclaredName(bindingIdentifier, name);
     }
 
     private void addLexDeclaredName(BindingPattern bindingPattern) {
         for (String name : BoundNames(bindingPattern)) {
-            addLexDeclaredName(context.scopeContext, bindingPattern, name);
+            addLexDeclaredName(bindingPattern, name);
+        }
+    }
+
+    private void addLexDeclaredName(Binding binding, String name) {
+        ScopeContext scope = context.scopeContext;
+        if (!scope.addLexDeclaredName(name)) {
+            reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
         }
     }
 
