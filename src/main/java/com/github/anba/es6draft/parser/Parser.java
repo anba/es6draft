@@ -5440,13 +5440,11 @@ public final class Parser {
         for (;;) {
             switch (token()) {
             case DOT:
-                begin = ts.beginPosition();
                 consume(Token.DOT);
                 String name = identifierName();
                 lhs = new PropertyAccessor(begin, ts.endPosition(), lhs, name);
                 break;
             case LB:
-                begin = ts.beginPosition();
                 consume(Token.LB);
                 Expression expr = expression(true);
                 consume(Token.RB);
@@ -5459,12 +5457,10 @@ public final class Parser {
                 if (lhs instanceof Identifier && "eval".equals(((Identifier) lhs).getName())) {
                     context.topContext.directEval = true;
                 }
-                begin = ts.beginPosition();
                 List<Expression> args = arguments();
                 lhs = new CallExpression(begin, ts.endPosition(), lhs, args);
                 break;
             case TEMPLATE:
-                begin = ts.beginPosition();
                 TemplateLiteral templ = templateLiteral(true);
                 lhs = new TemplateCallExpression(begin, ts.endPosition(), lhs, templ);
                 break;
