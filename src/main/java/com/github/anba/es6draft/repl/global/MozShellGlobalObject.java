@@ -80,10 +80,12 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
         return scripts;
     }
 
-    private Object evaluate(Realm realm, String source, String sourceName, int sourceLine)
+    private Object evaluate(GlobalObject global, String source, String sourceName, int sourceLine)
             throws IOException {
+        Realm realm = global.getRealm();
         try {
-            Script script = scriptCache.script(sourceName, sourceLine, new StringReader(source));
+            StringReader reader = new StringReader(source);
+            Script script = scriptCache.script(sourceName, sourceLine, reader, realm.getExecutor());
             return ScriptLoader.ScriptEvaluation(script, realm, false);
         } catch (ParserException | CompilationException e) {
             // create a script exception from the requested code realm, not from the caller's realm!
@@ -146,7 +148,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
         }
 
         try {
-            Object result = evaluate(global.getRealm(), source, sourceName, sourceLine);
+            Object result = evaluate(global, source, sourceName, sourceLine);
             return (!noScriptRval ? result : UNDEFINED);
         } catch (StackOverflowError e) {
             throw e;
@@ -230,7 +232,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
             throw newError(cx, "invalid global argument");
         }
         try {
-            return evaluate(((GlobalObject) global).getRealm(), s, "evalcx", 1);
+            return evaluate((GlobalObject) global, s, "evalcx", 1);
         } catch (IOException e) {
             throw newError(cx, e.getMessage());
         }

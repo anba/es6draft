@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.ExecutorService;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
@@ -70,9 +71,10 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
 
     /** shell-function: {@code compile(filename)} */
     @Function(name = "compile", arity = 1)
-    public String compile(String filename) {
+    public String compile(ExecutionContext cx, String filename) {
         try {
-            scriptCache.script(filename, 1, absolutePath(Paths.get(filename)));
+            ExecutorService executor = cx.getRealm().getExecutor();
+            scriptCache.script(filename, 1, absolutePath(Paths.get(filename)), executor);
         } catch (ParserException | CompilationException | IOException e) {
             return "error: " + e.getMessage();
         }

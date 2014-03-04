@@ -131,23 +131,26 @@ public abstract class ShellGlobalObject extends GlobalObject {
      */
     public void eval(Path fileName, Path file) throws IOException, ParserException,
             CompilationException {
-        Script script = scriptCache.script(fileName.toString(), 1, file);
-        ScriptLoader.ScriptEvaluation(script, getRealm(), false);
+        Realm realm = getRealm();
+        Script script = scriptCache.script(fileName.toString(), 1, file, realm.getExecutor());
+        ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
     /**
      * Executes the given script
      */
     public void eval(Script script) {
-        ScriptLoader.ScriptEvaluation(script, getRealm(), false);
+        Realm realm = getRealm();
+        ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
     /**
      * Parses, compiles and executes the javascript file (uses {@link #scriptCache})
      */
     public void include(Path file) throws IOException, ParserException, CompilationException {
-        Script script = scriptCache.get(absolutePath(file));
-        ScriptLoader.ScriptEvaluation(script, getRealm(), false);
+        Realm realm = getRealm();
+        Script script = scriptCache.get(absolutePath(file), realm.getExecutor());
+        ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
     protected static ScriptException newError(ExecutionContext cx, String message) {
