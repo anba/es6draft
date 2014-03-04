@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime;
 
+import java.util.Set;
+
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
@@ -16,6 +18,11 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public interface EnvironmentRecord {
+    /**
+     * Returns an iterable for all binding names of this environment record
+     */
+    Set<String> bindingNames();
+
     /**
      * HasBinding(N)
      */

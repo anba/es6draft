@@ -45,6 +45,14 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
                 objectEnv, declEnv);
     }
 
+    @Override
+    public Set<String> bindingNames() {
+        HashSet<String> names = new HashSet<>();
+        names.addAll(declEnv.bindingNames());
+        names.addAll(objectEnv.bindingNames());
+        return names;
+    }
+
     /**
      * 8.1.1.4.1 HasBinding(N)
      */

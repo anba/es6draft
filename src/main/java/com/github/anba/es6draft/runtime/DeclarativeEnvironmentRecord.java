@@ -141,6 +141,11 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         }
     }
 
+    @Override
+    public Set<String> bindingNames() {
+        return Collections.unmodifiableSet(bindings.keySet());
+    }
+
     /**
      * 8.1.1.1.1 HasBinding(N)
      */

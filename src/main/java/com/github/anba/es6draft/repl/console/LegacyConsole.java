@@ -12,6 +12,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Formatter;
 
@@ -21,13 +24,21 @@ import com.github.anba.es6draft.runtime.Realm;
  * {@link ReplConsole} implementation for legacy consoles
  */
 public final class LegacyConsole implements ReplConsole {
-    private final PrintStream out;
+    private final PrintWriter out;
     private final BufferedReader reader;
     private final Formatter formatter;
 
     public LegacyConsole(PrintStream out, InputStream in) {
+        this(new PrintWriter(out), new InputStreamReader(in, Charset.defaultCharset()));
+    }
+
+    public LegacyConsole(Writer out, Reader in) {
+        this(new PrintWriter(out), in);
+    }
+
+    public LegacyConsole(PrintWriter out, Reader in) {
         this.out = out;
-        this.reader = new BufferedReader(new InputStreamReader(in, Charset.defaultCharset()));
+        this.reader = new BufferedReader(in);
         this.formatter = new Formatter(out);
     }
 

@@ -54,6 +54,34 @@ public enum Type {
     }
 
     /**
+     * Returns <code>true</code> if {@code value} is a valid language type
+     */
+    public static boolean isType(Object val) {
+        if (val == UNDEFINED) {
+            return true;
+        }
+        if (val == NULL) {
+            return true;
+        }
+        if (val instanceof Boolean) {
+            return true;
+        }
+        if (val instanceof String || val instanceof ConsString) {
+            return true;
+        }
+        if (val instanceof Symbol) {
+            return true;
+        }
+        if (val instanceof Double || val instanceof Integer || val instanceof Long) {
+            return true;
+        }
+        if (val instanceof ScriptObject) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Short cut for:<br>
      * <code>Type.of(val) == Type.Undefined</code>
      */

@@ -6,12 +6,14 @@
  */
 package com.github.anba.es6draft.runtime;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.HasProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.Put;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
@@ -42,6 +44,20 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
     @Override
     public String toString() {
         return String.format("%s: {bindings=%s}", getClass().getSimpleName(), bindings);
+    }
+
+    @Override
+    public Set<String> bindingNames() {
+        HashSet<String> names = new HashSet<>();
+        Iterator<?> keys = FromListIterator(cx, bindings, bindings.enumerate(cx));
+        while (keys.hasNext()) {
+            Object key = keys.next();
+            Object propertyKey = ToPropertyKey(cx, key);
+            if (propertyKey instanceof String) {
+                names.add((String) propertyKey);
+            }
+        }
+        return names;
     }
 
     /**
