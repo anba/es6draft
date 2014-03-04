@@ -174,7 +174,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /**
      * [Called from generated code]
      */
-    public final void setLegacyArguments(ExoticArguments arguments) {
+    public final void setLegacyArguments(ExoticLegacyArguments arguments) {
         this.arguments.applyValue(arguments);
     }
 

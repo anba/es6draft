@@ -40,7 +40,7 @@ import com.github.anba.es6draft.runtime.types.Type;
  */
 public class OrdinaryObject implements ScriptObject {
     // Map<String|Symbol, Property> properties
-    private LinkedHashMap<Object, Property> properties = new LinkedHashMap<>();
+    private final LinkedHashMap<Object, Property> properties;
 
     /** [[Realm]] */
     @SuppressWarnings("unused")
@@ -54,6 +54,12 @@ public class OrdinaryObject implements ScriptObject {
 
     public OrdinaryObject(Realm realm) {
         this.realm = realm;
+        this.properties = new LinkedHashMap<>();
+    }
+
+    protected OrdinaryObject(Realm realm, LinkedHashMap<Object, Property> properties) {
+        this.realm = realm;
+        this.properties = properties;
     }
 
     /**

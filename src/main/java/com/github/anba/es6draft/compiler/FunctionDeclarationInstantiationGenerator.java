@@ -60,21 +60,23 @@ final class FunctionDeclarationInstantiationGenerator extends
                 MethodType.Static, Types.ExoticArguments, "CreateStrictArgumentsObject",
                 Type.getMethodType(Types.ExoticArguments, Types.ExecutionContext, Types.Object_));
 
-        static final MethodDesc ExoticArguments_CreateLegacyArgumentsObject = MethodDesc.create(
-                MethodType.Static, Types.ExoticArguments, "CreateLegacyArgumentsObject", Type
-                        .getMethodType(Types.ExoticArguments, Types.ExecutionContext,
+        static final MethodDesc ExoticLegacyArguments_CreateLegacyArgumentsObject = MethodDesc
+                .create(MethodType.Static, Types.ExoticLegacyArguments,
+                        "CreateLegacyArgumentsObject", Type.getMethodType(
+                                Types.ExoticLegacyArguments, Types.ExecutionContext,
                                 Types.FunctionObject, Types.Object_, Types.String_,
                                 Types.LexicalEnvironment));
 
-        static final MethodDesc ExoticArguments_CreateLegacyArgumentsObjectFrom = MethodDesc
-                .create(MethodType.Static, Types.ExoticArguments, "CreateLegacyArgumentsObject",
-                        Type.getMethodType(Types.ExoticArguments, Types.ExecutionContext,
+        static final MethodDesc ExoticLegacyArguments_CreateLegacyArgumentsObjectFrom = MethodDesc
+                .create(MethodType.Static, Types.ExoticLegacyArguments,
+                        "CreateLegacyArgumentsObject", Type.getMethodType(
+                                Types.ExoticLegacyArguments, Types.ExecutionContext,
                                 Types.FunctionObject, Types.Object_, Types.ExoticArguments));
 
         // FunctionObject
         static final MethodDesc FunctionObject_setLegacyArguments = MethodDesc.create(
                 MethodType.Virtual, Types.FunctionObject, "setLegacyArguments",
-                Type.getMethodType(Type.VOID_TYPE, Types.ExoticArguments));
+                Type.getMethodType(Type.VOID_TYPE, Types.ExoticLegacyArguments));
 
         // class: List
         static final MethodDesc List_iterator = MethodDesc.create(MethodType.Interface, Types.List,
@@ -304,7 +306,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             mv.loadParameter(ARGUMENTS, Object[].class);
             newStringArray(mv, mappedNames(formals));
             mv.load(env);
-            mv.invoke(Methods.ExoticArguments_CreateLegacyArgumentsObject);
+            mv.invoke(Methods.ExoticLegacyArguments_CreateLegacyArgumentsObject);
         }
         mv.invoke(Methods.FunctionObject_setLegacyArguments);
     }
@@ -318,7 +320,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             mv.loadParameter(FUNCTION, FunctionObject.class);
             mv.loadParameter(ARGUMENTS, Object[].class);
             mv.load(argumentsObj);
-            mv.invoke(Methods.ExoticArguments_CreateLegacyArgumentsObjectFrom);
+            mv.invoke(Methods.ExoticLegacyArguments_CreateLegacyArgumentsObjectFrom);
         }
         mv.invoke(Methods.FunctionObject_setLegacyArguments);
     }

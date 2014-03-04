@@ -277,8 +277,8 @@ final class StackMethodVisitor extends MethodVisitor {
 
     private static boolean isOrdinaryObject(Type type) {
         return Types.OrdinaryObject.equals(type) || Types.ExoticArray.equals(type)
-                || Types.ExoticArguments.equals(type) || Types.RegExpObject.equals(type)
-                || Types.GeneratorObject.equals(type);
+                || Types.ExoticArguments.equals(type) || Types.ExoticLegacyArguments.equals(type)
+                || Types.RegExpObject.equals(type) || Types.GeneratorObject.equals(type);
     }
 
     private static boolean isScriptObject(Type type) {
