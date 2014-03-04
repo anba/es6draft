@@ -633,6 +633,9 @@ public final class ScriptRuntime {
             return true;
         }
         /* step 6 */
+        if (ref instanceof Reference.BindingReference) {
+            return false;
+        }
         assert ref instanceof Reference.IdentifierReference;
         Reference.IdentifierReference idref = (Reference.IdentifierReference) ref;
         EnvironmentRecord bindings = idref.getBase();

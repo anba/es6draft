@@ -11,6 +11,8 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord.Binding;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -114,6 +116,70 @@ public abstract class Reference<BASE, NAME> {
         return ((Reference<?, ?>) v).getThisValue(cx);
     }
 
+    public static final class BindingReference extends
+            Reference<DeclarativeEnvironmentRecord.Binding, String> {
+        private final DeclarativeEnvironmentRecord.Binding base;
+        private final String referencedName;
+        private final boolean strictReference;
+
+        public BindingReference(DeclarativeEnvironmentRecord.Binding base, String referencedName,
+                boolean strictReference) {
+            this.base = base;
+            this.referencedName = referencedName;
+            this.strictReference = strictReference;
+        }
+
+        @Override
+        public Binding getBase() {
+            return base;
+        }
+
+        @Override
+        public String getReferencedName() {
+            return referencedName;
+        }
+
+        @Override
+        public boolean isStrictReference() {
+            return strictReference;
+        }
+
+        @Override
+        public boolean hasPrimitiveBase() {
+            return false;
+        }
+
+        @Override
+        public boolean isPropertyReference() {
+            return false;
+        }
+
+        @Override
+        public boolean isUnresolvableReference() {
+            return false;
+        }
+
+        @Override
+        public boolean isSuperReference() {
+            return false;
+        }
+
+        @Override
+        public Object getValue(ExecutionContext cx) {
+            return base.getValue(cx, referencedName, strictReference);
+        }
+
+        @Override
+        public void putValue(Object w, ExecutionContext cx) {
+            base.setValue(cx, referencedName, w, strictReference);
+        }
+
+        @Override
+        public Object getThisValue(ExecutionContext cx) {
+            throw new IllegalStateException();
+        }
+    }
+
     public static final class IdentifierReference extends Reference<EnvironmentRecord, String> {
         private final EnvironmentRecord base;
         private final String referencedName;
@@ -153,7 +219,7 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public boolean isUnresolvableReference() {
-            return (base == null);
+            return base == null;
         }
 
         @Override

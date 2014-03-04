@@ -16,6 +16,7 @@ import java.util.List;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.runtime.AbstractOperations;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
@@ -90,6 +91,10 @@ final class Types {
 
     // runtime
     static final Type AbstractOperations = Type.getType(AbstractOperations.class);
+    static final Type DeclarativeEnvironmentRecord = Type
+            .getType(DeclarativeEnvironmentRecord.class);
+    static final Type DeclarativeEnvironmentRecord$Binding = Type
+            .getType(DeclarativeEnvironmentRecord.Binding.class);
     static final Type EnvironmentRecord = Type.getType(EnvironmentRecord.class);
     static final Type ExecutionContext = Type.getType(ExecutionContext.class);
     static final Type GlobalEnvironmentRecord = Type.getType(GlobalEnvironmentRecord.class);

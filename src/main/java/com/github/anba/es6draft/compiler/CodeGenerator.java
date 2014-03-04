@@ -8,14 +8,15 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 import static com.github.anba.es6draft.semantics.StaticSemantics.TemplateStrings;
+import static com.github.anba.es6draft.semantics.StaticSemantics.VarDeclaredNames;
 
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,6 +37,8 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord.Binding;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
@@ -58,6 +61,21 @@ final class CodeGenerator {
         static final MethodDesc CompiledScript_Constructor = MethodDesc.create(MethodType.Special,
                 Types.CompiledScript, "<init>",
                 Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$ScriptBody));
+
+        // class: DeclarativeEnvironmentRecord
+        static final MethodDesc DeclarativeEnvironmentRecord_getBinding = MethodDesc.create(
+                MethodType.Virtual, Types.DeclarativeEnvironmentRecord, "getBinding",
+                Type.getMethodType(Types.DeclarativeEnvironmentRecord$Binding, Types.String));
+
+        // class: ExecutionContext
+        static final MethodDesc ExecutionContext_getVariableEnvironment = MethodDesc.create(
+                MethodType.Virtual, Types.ExecutionContext, "getVariableEnvironment",
+                Type.getMethodType(Types.LexicalEnvironment));
+
+        // class: LexicalEnvironment
+        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
+                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
+                Type.getMethodType(Types.EnvironmentRecord));
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_GetTemplateCallSite = MethodDesc.create(
@@ -667,6 +685,9 @@ final class CodeGenerator {
         body.lineInfo(node);
         body.begin();
 
+        // Create fast variable access bindings
+        // createVariableBindings(node, body);
+
         body.enterScope(node);
         Completion result = statements(node.getStatements(), body);
         body.exitScope();
@@ -680,6 +701,43 @@ final class CodeGenerator {
         body.end();
 
         return body.hasTailCalls();
+    }
+
+    @SuppressWarnings("unused")
+    private void createVariableBindings(FunctionNode node, StatementVisitor body) {
+        if (node.getScope().isDynamic()) {
+            // Don't create bindings for non-strict functions with direct eval calls
+            return;
+        }
+        Set<String> varDeclaredNames = VarDeclaredNames(node);
+        Set<String> parameterNames = node.getScope().parameterNames();
+        int size = varDeclaredNames.size() + parameterNames.size();
+        if (size == 0 || size > 5) {
+            // Don't create more than five bindings
+            return;
+        }
+        HashMap<String, Variable<DeclarativeEnvironmentRecord.Binding>> variables = new HashMap<>();
+        body.loadExecutionContext();
+        body.invoke(Methods.ExecutionContext_getVariableEnvironment);
+        body.invoke(Methods.LexicalEnvironment_getEnvRec);
+        body.checkcast(Types.DeclarativeEnvironmentRecord);
+        for (String name : parameterNames) {
+            variables.put(name, createBinding(name, body));
+        }
+        for (String name : varDeclaredNames) {
+            variables.put(name, createBinding(name, body));
+        }
+        body.pop();
+        body.setVariables(variables);
+    }
+
+    private Variable<Binding> createBinding(String name, StatementVisitor body) {
+        Variable<Binding> variable = body.newVariable(name, Binding.class);
+        body.dup();
+        body.aconst(name);
+        body.invoke(Methods.DeclarativeEnvironmentRecord_getBinding);
+        body.store(variable);
+        return variable;
     }
 
     private boolean generatorBody(FunctionNode node) {

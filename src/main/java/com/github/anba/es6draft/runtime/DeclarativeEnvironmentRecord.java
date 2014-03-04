@@ -10,12 +10,14 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
@@ -27,12 +29,12 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
-    private static final class Binding implements Cloneable {
+    public static final class Binding implements Cloneable {
         final boolean mutable;
         final boolean deletable;
         Object value;
 
-        public Binding(boolean mutable, boolean deletable) {
+        Binding(boolean mutable, boolean deletable) {
             this.mutable = mutable;
             this.deletable = deletable;
         }
@@ -49,13 +51,60 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
             return String.format("{value = %s, mutable = %b, deletable = %b}", value, mutable,
                     deletable);
         }
+
+        public void initialise(Object value) {
+            assert this.value == null && value != null;
+            this.value = value;
+        }
+
+        public void setValue(Object value) {
+            assert this.value != null && value != null && this.mutable;
+            this.value = value;
+        }
+
+        public Object getValue() {
+            assert this.value != null;
+            return value;
+        }
+
+        public Reference<Binding, String> toReference(String name, boolean strict) {
+            return new Reference.BindingReference(this, name, strict);
+        }
+
+        public void setValue(ExecutionContext cx, String name, Object value, boolean strict) {
+            assert value != null;
+            if (this.value == null) {
+                throw newReferenceError(cx, Messages.Key.UninitialisedBinding, name);
+            } else if (mutable) {
+                this.value = value;
+            } else if (strict) {
+                throw newTypeError(cx, Messages.Key.ImmutableBinding, name);
+            }
+        }
+
+        public Object getValue(ExecutionContext cx, String name, boolean strict) {
+            if (value == null) {
+                if (!strict) {
+                    return UNDEFINED;
+                }
+                throw newReferenceError(cx, Messages.Key.UninitialisedBinding, name);
+            }
+            return value;
+        }
     }
 
     protected final ExecutionContext cx;
-    private final Map<String, Binding> bindings = new HashMap<>();
+    private final HashMap<String, Binding> bindings = new HashMap<>();
 
     public DeclarativeEnvironmentRecord(ExecutionContext cx) {
         this.cx = cx;
+    }
+
+    public final Binding getBinding(String name) {
+        assert name != null : "null name for binding";
+        Binding b = bindings.get(name);
+        assert b != null : "binding not found: " + name;
+        return b;
     }
 
     @Override
@@ -69,8 +118,8 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         }
         StringBuilder sb = new StringBuilder();
         sb.append('{');
-        for (Iterator<Entry<KEY, VALUE>> iter = map.entrySet().iterator();;) {
-            Entry<KEY, VALUE> entry = iter.next();
+        for (Iterator<Map.Entry<KEY, VALUE>> iter = map.entrySet().iterator();;) {
+            Map.Entry<KEY, VALUE> entry = iter.next();
             sb.append("\n  ").append(entry.getKey()).append('=').append(entry.getValue());
             if (!iter.hasNext())
                 break;
