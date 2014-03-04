@@ -11,7 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 
-import java.util.Collection;
+import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -167,18 +167,18 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
 
     /** 9.4.5.5 [[Enumerate]] () */
     @Override
-    protected Collection<String> enumerateKeys() {
+    protected List<String> enumerateKeys() {
         // FIXME: spec incomplete
-        Collection<String> keys = super.enumerateKeys();
+        List<String> keys = super.enumerateKeys();
         addIntegerIndices(keys);
         return keys;
     }
 
     /** 9.4.5.6 [[OwnPropertyKeys]] () */
     @Override
-    protected Collection<Object> enumerateOwnKeys() {
+    protected List<Object> enumerateOwnKeys() {
         // FIXME: spec incomplete
-        Collection<Object> keys = super.enumerateOwnKeys();
+        List<Object> keys = super.enumerateOwnKeys();
         addIntegerIndices(keys);
         return keys;
     }
@@ -196,7 +196,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     /**
      * Append integer indices to {@code keys} collection
      */
-    private void addIntegerIndices(Collection<? super String> keys) {
+    private void addIntegerIndices(List<? super String> keys) {
         for (long i = 0, length = getLength(); i < length; ++i) {
             keys.add(Long.toString(i));
         }

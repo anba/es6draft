@@ -14,7 +14,6 @@ import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.Fro
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -615,7 +614,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /** 9.1.11 [[Enumerate]] () */
-    protected Collection<String> enumerateKeys() {
+    protected List<String> enumerateKeys() {
         List<String> propList = new ArrayList<>();
         for (Object key : __keys__()) {
             if (key instanceof String) {
@@ -698,7 +697,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /** 9.1.12 [[OwnPropertyKeys]] ( ) */
-    protected Collection<Object> enumerateOwnKeys() {
+    protected List<Object> enumerateOwnKeys() {
         return new ArrayList<>(__keys__());
     }
 

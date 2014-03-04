@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 
-import java.util.Collection;
+import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -118,8 +118,8 @@ public final class ExoticString extends OrdinaryObject {
      * 9.4.3.3 [[Enumerate]] ()
      */
     @Override
-    protected Collection<String> enumerateKeys() {
-        Collection<String> keys = super.enumerateKeys();
+    protected List<String> enumerateKeys() {
+        List<String> keys = super.enumerateKeys();
         addStringIndices(keys);
         return keys;
     }
@@ -128,8 +128,8 @@ public final class ExoticString extends OrdinaryObject {
      * 9.4.3.4 [[OwnPropertyKeys]] ()
      */
     @Override
-    protected Collection<Object> enumerateOwnKeys() {
-        Collection<Object> keys = super.enumerateOwnKeys();
+    protected List<Object> enumerateOwnKeys() {
+        List<Object> keys = super.enumerateOwnKeys();
         addStringIndices(keys);
         return keys;
     }
@@ -168,7 +168,7 @@ public final class ExoticString extends OrdinaryObject {
     /**
      * Append string indices to {@code keys} collection
      */
-    private void addStringIndices(Collection<? super String> keys) {
+    private void addStringIndices(List<? super String> keys) {
         // No longer possible to simply add string indices, cf.
         // ---
         // s = new (class extends String{constructor(){}})()

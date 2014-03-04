@@ -13,7 +13,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
-import java.util.Collection;
+import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -229,8 +229,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     @Override
-    protected Collection<Object> enumerateOwnKeys() {
-        Collection<Object> ownKeys = super.enumerateOwnKeys();
+    protected List<Object> enumerateOwnKeys() {
+        List<Object> ownKeys = super.enumerateOwnKeys();
         if (isLegacy()) {
             if (!super.hasOwnProperty("caller")) {
                 ownKeys.add("caller");
