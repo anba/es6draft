@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -26,12 +27,12 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  */
 public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     private final ExecutionContext cx;
-    private final ScriptObject globalObject;
+    private final GlobalObject globalObject;
     private final ObjectEnvironmentRecord objectEnv;
     private final DeclarativeEnvironmentRecord declEnv;
     private final Set<String> varNames = new HashSet<>();
 
-    public GlobalEnvironmentRecord(ExecutionContext cx, ScriptObject globalObject) {
+    public GlobalEnvironmentRecord(ExecutionContext cx, GlobalObject globalObject) {
         this.cx = cx;
         this.globalObject = globalObject;
         objectEnv = new ObjectEnvironmentRecord(cx, globalObject, false);
@@ -182,7 +183,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      * 8.1.1.4.11 GetThisBinding ()
      */
     @Override
-    public Object getThisBinding() {
+    public GlobalObject getThisBinding() {
         /* steps 1-3 (omitted) */
         /* step 4 */
         return globalObject;
