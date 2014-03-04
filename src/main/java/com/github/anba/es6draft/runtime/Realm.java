@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.compiler.Compiler.Option;
@@ -263,6 +264,13 @@ public final class Realm {
      */
     public Callable getBuiltinEval() {
         return builtinEval;
+    }
+
+    /**
+     * Returns the shared runtime executor
+     */
+    public ExecutorService getExecutor() {
+        return world.getExecutor();
     }
 
     /**

@@ -90,8 +90,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
             Realm realm = calleeContext.getRealm();
             Parser parser = new Parser("<Function>", 1, realm.getOptions());
             FunctionDefinition functionDef = parser.parseFunction(p, bodyText);
-            String className = calleeContext.getRealm().nextFunctionName();
-            function = ScriptLoader.compile(className, functionDef, realm.getCompilerOptions());
+            function = ScriptLoader.compile(realm, functionDef);
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(calleeContext);
         }

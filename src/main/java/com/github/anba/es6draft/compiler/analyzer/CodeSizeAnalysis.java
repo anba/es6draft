@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.github.anba.es6draft.ast.*;
 
@@ -21,45 +21,64 @@ import com.github.anba.es6draft.ast.*;
  * Analyzes code size and possibly splits statements or expressions into sub-methods to avoid
  * compilation errors due to excess byte code size. Byte code size is limited to 64K.
  */
-public final class CodeSizeAnalysis implements AutoCloseable {
+public final class CodeSizeAnalysis {
     private static final int MAX_SIZE = 65535;
     private static final int MAX_SIZE_ALLOWED = MAX_SIZE / 2;
 
-    private ExecutorService executor = Executors.newFixedThreadPool(2);
-    private LinkedBlockingQueue<Future<Integer>> queue = new LinkedBlockingQueue<>();
+    private final ExecutorService executor;
+    private final LinkedBlockingQueue<Future<Integer>> queue = new LinkedBlockingQueue<>();
+    private final ReentrantLock submitLock = new ReentrantLock();
+    private boolean cancelled = false;
+
+    public CodeSizeAnalysis(ExecutorService executor) {
+        this.executor = executor;
+    }
 
     /**
      * Start method
      */
-    public void submit(Script script) {
-        submit(script, script.getStatements());
+    public void submit(Script script) throws CodeSizeException {
+        submitAndExec(script, script.getStatements());
         drainQueue();
     }
 
     /**
      * Start method
      */
-    public void submit(FunctionNode function) {
-        submit(function, function.getStatements());
+    public void submit(FunctionNode function) throws CodeSizeException {
+        submitAndExec(function, function.getStatements());
         drainQueue();
     }
 
-    @Override
-    public void close() {
-        executor.shutdownNow();
+    private void submitAndExec(TopLevelNode<?> node, List<? extends Node> children) {
+        // Execute the initial node on the main thread to avoid unnecessary thread creation
+        new Entry(node, children).call();
     }
 
     private void submit(TopLevelNode<?> node, List<? extends Node> children) {
-        queue.add(executor.submit(new Entry(node, children)));
+        if (!isCancelled()) {
+            queue.add(executor.submit(new Entry(node, children)));
+        }
+    }
+
+    private boolean isCancelled() {
+        final ReentrantLock submitLock = this.submitLock;
+        submitLock.lock();
+        try {
+            return cancelled;
+        } finally {
+            submitLock.unlock();
+        }
     }
 
     private void drainQueue() {
+        boolean abrupt = true;
         try {
+            LinkedBlockingQueue<Future<Integer>> queue = this.queue;
             while (!queue.isEmpty()) {
                 queue.take().get();
             }
-            executor.shutdown();
-            executor.awaitTermination(10, TimeUnit.MINUTES);
+            abrupt = false;
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
             if (cause instanceof RuntimeException) {
@@ -70,6 +89,30 @@ public final class CodeSizeAnalysis implements AutoCloseable {
             throw new RuntimeException(cause);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        } finally {
+            if (abrupt) {
+                purgeQueue();
+            }
+        }
+    }
+
+    private void purgeQueue() {
+        final ReentrantLock submitLock = this.submitLock;
+        submitLock.lock();
+        try {
+            cancelled = true;
+            // Cancel pending tasks
+            LinkedBlockingQueue<Future<Integer>> queue = this.queue;
+            for (Future<Integer> task : queue) {
+                task.cancel(true);
+            }
+            // Purge work queue
+            ExecutorService executor = this.executor;
+            if (executor instanceof ThreadPoolExecutor) {
+                ((ThreadPoolExecutor) executor).purge();
+            }
+        } finally {
+            submitLock.unlock();
         }
     }
 
@@ -83,7 +126,7 @@ public final class CodeSizeAnalysis implements AutoCloseable {
         }
 
         @Override
-        public Integer call() throws Exception {
+        public Integer call() {
             CodeSizeVisitor visitor = new CodeSizeVisitor();
             CodeSizeHandler handler = new CodeSizeHandlerImpl(node);
             return visitor.startAnalyze(node, children, handler);

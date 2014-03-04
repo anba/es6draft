@@ -14,6 +14,7 @@ import java.util.EnumSet;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Handle;
@@ -42,17 +43,19 @@ public final class Compiler {
         Debug, FullDebug, SourceMap, VerifyStack
     }
 
+    private final ExecutorService executor;
     private final EnumSet<Option> compilerOptions;
 
-    public Compiler(EnumSet<Option> compilerOptions) {
+    public Compiler(ExecutorService executor, EnumSet<Option> compilerOptions) {
+        this.executor = executor;
         this.compilerOptions = EnumSet.copyOf(compilerOptions);
     }
 
-    public CompiledScript compile(Script script, String className) {
-        try (CodeSizeAnalysis analysis = new CodeSizeAnalysis()) {
+    public CompiledScript compile(Script script, String className) throws CompilationException {
+        try {
+            CodeSizeAnalysis analysis = new CodeSizeAnalysis(executor);
             analysis.submit(script);
         } catch (CodeSizeException e) {
-            e.printStackTrace();
             throw new CompilationException(e.getMessage());
         }
 
@@ -63,11 +66,48 @@ public final class Compiler {
         Code code = new Code(clazzName, superClassName, script.getSourceFile(), sourceMap(script));
 
         // generate code
-        try (CodeGenerator codegen = new CodeGenerator(code, script.getOptions(), compilerOptions)) {
-            codegen.compile(script);
-        }
+        CodeGenerator codegen = new CodeGenerator(code, executor, script.getOptions(),
+                compilerOptions);
+        codegen.compile(script);
 
         // finalize
+        return defineAndLoad(code, clazzName);
+    }
+
+    public CompiledFunction compile(FunctionDefinition function, String className)
+            throws CompilationException {
+        return compile((FunctionNode) function, className);
+    }
+
+    public CompiledFunction compile(GeneratorDefinition generator, String className)
+            throws CompilationException {
+        return compile((FunctionNode) generator, className);
+    }
+
+    private CompiledFunction compile(FunctionNode function, String className) {
+        try {
+            CodeSizeAnalysis analysis = new CodeSizeAnalysis(executor);
+            analysis.submit(function);
+        } catch (CodeSizeException e) {
+            throw new CompilationException(e.getMessage());
+        }
+
+        // set-up
+        // prepend '#' to mark generated classes, cf. ErrorPrototype
+        String clazzName = "#" + className;
+        String superClassName = Types.CompiledFunction.getInternalName();
+        Code code = new Code(clazzName, superClassName, "<Function>", null);
+
+        // generate code
+        CodeGenerator codegen = new CodeGenerator(code, executor, optionsFrom(function),
+                compilerOptions);
+        codegen.compileFunction(function);
+
+        // finalize
+        return defineAndLoad(code, clazzName);
+    }
+
+    private <T> T defineAndLoad(Code code, String clazzName) {
         CodeLoader loader = new CodeLoader();
         List<ClassCode> classes = code.getClasses();
         for (ClassCode classCode : classes) {
@@ -81,52 +121,9 @@ public final class Compiler {
 
         try {
             Class<?> c = loader.loadClass(clazzName);
-            return (CompiledScript) c.newInstance();
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public CompiledFunction compile(FunctionDefinition function, String className) {
-        return compile((FunctionNode) function, className);
-    }
-
-    public CompiledFunction compile(GeneratorDefinition generator, String className) {
-        return compile((FunctionNode) generator, className);
-    }
-
-    private CompiledFunction compile(FunctionNode function, String className) {
-        try (CodeSizeAnalysis analysis = new CodeSizeAnalysis()) {
-            analysis.submit(function);
-        } catch (CodeSizeException e) {
-            throw new CompilationException(e.getMessage());
-        }
-
-        // set-up
-        // prepend '#' to mark generated classes, cf. ErrorPrototype
-        String clazzName = "#" + className;
-        String superClassName = Types.CompiledFunction.getInternalName();
-        Code code = new Code(clazzName, superClassName, "<Function>", null);
-
-        // generate code
-        try (CodeGenerator codegen = new CodeGenerator(code, optionsFrom(function), compilerOptions)) {
-            codegen.compileFunction(function);
-        }
-
-        // finalize
-        CodeLoader loader = new CodeLoader();
-        List<ClassCode> classes = code.getClasses();
-        for (ClassCode classCode : classes) {
-            byte[] bytes = classCode.toByteArray();
-            if (compilerOptions.contains(Option.Debug)) {
-                debug(bytes);
-            }
-            loader.defineClass(classCode.className, bytes);
-        }
-
-        try {
-            Class<?> c = loader.loadClass(clazzName);
-            return (CompiledFunction) c.newInstance();
+            @SuppressWarnings("unchecked")
+            T instance = (T) c.newInstance();
+            return instance;
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }

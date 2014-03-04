@@ -260,8 +260,7 @@ public final class Eval {
             if (parsedScript.getStatements().isEmpty()) {
                 return null;
             }
-            String className = realm.nextEvalName();
-            return ScriptLoader.load(className, parsedScript, realm.getCompilerOptions());
+            return ScriptLoader.load(realm, parsedScript);
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         }

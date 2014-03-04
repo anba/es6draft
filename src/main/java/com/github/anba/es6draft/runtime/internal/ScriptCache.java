@@ -19,11 +19,13 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 
@@ -42,8 +44,10 @@ public final class ScriptCache {
         }
     });
 
-    private Set<CompatibilityOption> options;
-    private AtomicInteger scriptCounter = new AtomicInteger(0);
+    private final EnumSet<CompatibilityOption> options;
+    private final EnumSet<Parser.Option> parserOptions;
+    private final EnumSet<Compiler.Option> compilerOptions;
+    private final AtomicInteger scriptCounter = new AtomicInteger(0);
 
     private String nextScriptName() {
         return "Script_" + scriptCounter.incrementAndGet();
@@ -51,6 +55,14 @@ public final class ScriptCache {
 
     public ScriptCache(Set<CompatibilityOption> options) {
         this.options = EnumSet.copyOf(options);
+        this.parserOptions = EnumSet.noneOf(Parser.Option.class);
+        this.compilerOptions = EnumSet.noneOf(Compiler.Option.class);
+    }
+
+    public ScriptCache(Set<CompatibilityOption> options, Set<Parser.Option> parserOptions) {
+        this.options = EnumSet.copyOf(options);
+        this.parserOptions = EnumSet.copyOf(parserOptions);
+        this.compilerOptions = EnumSet.noneOf(Compiler.Option.class);
     }
 
     /**
@@ -66,7 +78,7 @@ public final class ScriptCache {
     private com.github.anba.es6draft.ast.Script parse(String sourceFile, int sourceLine,
             Reader reader) throws ParserException, IOException {
         String source = readFully(reader);
-        Parser parser = new Parser(sourceFile, sourceLine, options);
+        Parser parser = new Parser(sourceFile, sourceLine, options, parserOptions);
         com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(source);
         return parsedScript;
     }
@@ -94,7 +106,8 @@ public final class ScriptCache {
     public Script script(String sourceName, int sourceLine, InputStream stream) throws IOException,
             ParserException, CompilationException {
         try (Reader r = newReader(stream)) {
-            return ScriptLoader.load(nextScriptName(), parse(sourceName, sourceLine, r));
+            com.github.anba.es6draft.ast.Script parsedScript = parse(sourceName, sourceLine, r);
+            return ScriptLoader.load(parsedScript, nextScriptName(), compilerOptions);
         }
     }
 
@@ -104,7 +117,8 @@ public final class ScriptCache {
     public Script script(String sourceName, int sourceLine, Reader reader) throws IOException,
             ParserException, CompilationException {
         try (Reader r = reader) {
-            return ScriptLoader.load(nextScriptName(), parse(sourceName, sourceLine, r));
+            com.github.anba.es6draft.ast.Script parsedScript = parse(sourceName, sourceLine, r);
+            return ScriptLoader.load(parsedScript, nextScriptName(), compilerOptions);
         }
     }
 
@@ -118,6 +132,51 @@ public final class ScriptCache {
         String sourceName = file.getFileName().toString();
         int sourceLine = 1;
         Script script = script(sourceName, sourceLine, file);
+        cache.put(file, script);
+        return script;
+    }
+
+    /**
+     * Parses and compiles the javascript file
+     */
+    public Script script(String sourceName, int sourceLine, Path file, ExecutorService executor)
+            throws IOException, ParserException, CompilationException {
+        return script(sourceName, sourceLine, Files.newInputStream(file), executor);
+    }
+
+    /**
+     * Parses and compiles the javascript file
+     */
+    public Script script(String sourceName, int sourceLine, InputStream stream,
+            ExecutorService executor) throws IOException, ParserException, CompilationException {
+        try (Reader r = newReader(stream)) {
+            com.github.anba.es6draft.ast.Script parsedScript = parse(sourceName, sourceLine, r);
+            return ScriptLoader.load(parsedScript, nextScriptName(), executor, compilerOptions);
+        }
+    }
+
+    /**
+     * Parses and compiles the javascript file
+     */
+    public Script script(String sourceName, int sourceLine, Reader reader, ExecutorService executor)
+            throws IOException, ParserException, CompilationException {
+        try (Reader r = reader) {
+            com.github.anba.es6draft.ast.Script parsedScript = parse(sourceName, sourceLine, r);
+            return ScriptLoader.load(parsedScript, nextScriptName(), executor, compilerOptions);
+        }
+    }
+
+    /**
+     * Compiles {@code file} to a {@link Script} and caches the result
+     */
+    public Script get(Path file, ExecutorService executor) throws IOException, ParserException,
+            CompilationException {
+        if (cache.containsKey(file)) {
+            return cache.get(file);
+        }
+        String sourceName = file.getFileName().toString();
+        int sourceLine = 1;
+        Script script = script(sourceName, sourceLine, file, executor);
         cache.put(file, script);
         return script;
     }

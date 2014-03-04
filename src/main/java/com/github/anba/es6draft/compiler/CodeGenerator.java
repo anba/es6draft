@@ -47,7 +47,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 /**
  * 
  */
-final class CodeGenerator implements AutoCloseable {
+final class CodeGenerator {
     private static final class Methods {
         // class: CompiledFunction
         static final MethodDesc CompiledFunction_Constructor = MethodDesc.create(
@@ -116,36 +116,27 @@ final class CodeGenerator implements AutoCloseable {
     private final Code code;
     private final EnumSet<CompatibilityOption> options;
     private final EnumSet<Option> compilerOptions;
-    private ExecutorService sourceCompressor;
+    private final ExecutorService executor;
 
     private final StatementGenerator stmtgen = new StatementGenerator(this);
     private final ExpressionGenerator exprgen = new ExpressionGenerator(this);
     private final PropertyGenerator propgen = new PropertyGenerator(this);
 
-    CodeGenerator(Code code, EnumSet<CompatibilityOption> options, EnumSet<Option> compilerOptions) {
+    CodeGenerator(Code code, ExecutorService executor, EnumSet<CompatibilityOption> options,
+            EnumSet<Option> compilerOptions) {
         this.code = code;
         this.options = options;
         this.compilerOptions = compilerOptions;
-        if (INCLUDE_SOURCE) {
-            this.sourceCompressor = Executors.newFixedThreadPool(1);
-        }
+        this.executor = executor;
     }
 
     boolean isEnabled(CompatibilityOption option) {
         return options.contains(option);
     }
 
-    @Override
-    public void close() {
-        if (INCLUDE_SOURCE) {
-            sourceCompressor.shutdown();
-        }
-        sourceCompressor = null;
-    }
-
     private Future<String> compressed(String source) {
         if (INCLUDE_SOURCE) {
-            return sourceCompressor.submit(SourceCompressor.compress(source));
+            return executor.submit(SourceCompressor.compress(source));
         } else {
             return NO_SOURCE;
         }

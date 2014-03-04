@@ -91,8 +91,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
             Realm realm = calleeContext.getRealm();
             Parser parser = new Parser("<GeneratorFunction>", 1, realm.getOptions());
             GeneratorDefinition generatorDef = parser.parseGenerator(p, bodyText);
-            String className = calleeContext.getRealm().nextFunctionName();
-            function = ScriptLoader.compile(className, generatorDef, realm.getCompilerOptions());
+            function = ScriptLoader.compile(realm, generatorDef);
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(calleeContext);
         }

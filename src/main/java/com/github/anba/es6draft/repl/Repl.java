@@ -378,9 +378,9 @@ public final class Repl {
         String className = "typein_" + scriptCounter.incrementAndGet();
         Script script;
         if (options.contains(Option.NoInterpreter)) {
-            script = ScriptLoader.compile(className, parsedScript, realm.getCompilerOptions());
+            script = ScriptLoader.compile(realm, parsedScript, className);
         } else {
-            script = ScriptLoader.load(className, parsedScript, realm.getCompilerOptions());
+            script = ScriptLoader.load(realm, parsedScript, className);
         }
         return ScriptLoader.ScriptEvaluation(script, realm, false);
     }

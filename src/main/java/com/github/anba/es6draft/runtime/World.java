@@ -11,6 +11,12 @@ import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.compiler.Compiler.Option;
@@ -28,7 +34,11 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
  * </ul>
  */
 public final class World<GLOBAL extends GlobalObject> {
+    private static final int THREAD_POOL_SIZE = 2;
+    private static final long THREAD_POOL_TTL = 5 * 60;
+
     private final ObjectAllocator<GLOBAL> allocator;
+    private final ThreadPoolExecutor executor;
     private final EnumSet<CompatibilityOption> options;
     private final EnumSet<Option> compilerOptions;
 
@@ -77,8 +87,59 @@ public final class World<GLOBAL extends GlobalObject> {
     public World(ObjectAllocator<GLOBAL> allocator, Set<CompatibilityOption> options,
             Set<Compiler.Option> compilerOptions) {
         this.allocator = allocator;
+        this.executor = createThreadPoolExecutor();
         this.options = EnumSet.copyOf(options);
         this.compilerOptions = EnumSet.copyOf(compilerOptions);
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        executor.shutdown();
+        super.finalize();
+    }
+
+    /**
+     * Returns the shared runtime executor
+     */
+    public ExecutorService getExecutor() {
+        return executor;
+    }
+
+    /**
+     * Create a new executor service
+     */
+    private static ThreadPoolExecutor createThreadPoolExecutor() {
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(THREAD_POOL_SIZE, THREAD_POOL_SIZE,
+                THREAD_POOL_TTL, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
+                new RuntimeThreadFactory());
+        executor.allowCoreThreadTimeOut(true);
+        return executor;
+    }
+
+    private static final class RuntimeThreadFactory implements ThreadFactory {
+        private static final AtomicInteger runtimeCount = new AtomicInteger(0);
+        private final AtomicInteger workerCount = new AtomicInteger(0);
+        private final ThreadGroup group;
+        private final String namePrefix;
+
+        RuntimeThreadFactory() {
+            SecurityManager sec = System.getSecurityManager();
+            group = sec != null ? sec.getThreadGroup() : Thread.currentThread().getThreadGroup();
+            namePrefix = "runtime-" + runtimeCount.incrementAndGet() + "-worker-";
+        }
+
+        @Override
+        public Thread newThread(Runnable r) {
+            String name = namePrefix + workerCount.incrementAndGet();
+            Thread newThread = new Thread(group, r, name);
+            if (!newThread.isDaemon()) {
+                newThread.setDaemon(true);
+            }
+            if (newThread.getPriority() != Thread.NORM_PRIORITY) {
+                newThread.setPriority(Thread.NORM_PRIORITY);
+            }
+            return newThread;
+        }
     }
 
     /**
