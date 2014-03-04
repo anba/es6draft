@@ -9,6 +9,8 @@ package com.github.anba.es6draft.traceur;
 import static com.github.anba.es6draft.repl.global.V8ShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
@@ -33,7 +35,9 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
@@ -86,7 +90,15 @@ public class TraceurTest {
     public ExpectedException expected = ExpectedException.none();
 
     @Parameter(0)
-    public TestInfo test;
+    public TraceurTestInfo test;
+
+    private static class TraceurTestInfo extends TestInfo {
+        boolean async = false;
+
+        TraceurTestInfo(Path basedir, Path script) {
+            super(basedir, script);
+        }
+    }
 
     private V8ShellGlobalObject global;
 
@@ -116,8 +128,33 @@ public class TraceurTest {
 
     @Test
     public void runTest() throws Throwable {
+        // create global 'done' function for async tests
+        AsyncHelper helper = null;
+        if (test.async) {
+            helper = new AsyncHelper();
+            ExecutionContext cx = global.getRealm().defaultContext();
+            Properties.createProperties(global, helper, cx, AsyncHelper.class);
+        }
+
         // evaluate actual test-script
         global.eval(test.script, test.toFile());
+
+        // wait for pending tasks to finish
+        if (test.async) {
+            assertFalse(helper.doneCalled);
+            global.getRealm().getWorld().executeTasks();
+            assertTrue(helper.doneCalled);
+        }
+    }
+
+    public static class AsyncHelper {
+        boolean doneCalled = false;
+
+        @Properties.Function(name = "done", arity = 0)
+        public void done() {
+            assertFalse(doneCalled);
+            doneCalled = true;
+        }
     }
 
     private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
@@ -130,7 +167,7 @@ public class TraceurTest {
 
         @Override
         public TestInfo apply(Path file, Iterator<String> lines) {
-            TestInfo test = new TestInfo(basedir, file);
+            TraceurTestInfo test = new TraceurTestInfo(basedir, file);
             Pattern p = FlagsPattern;
             while (lines.hasNext()) {
                 String line = lines.next();
@@ -141,6 +178,8 @@ public class TraceurTest {
                         test.expect = false;
                     } else if ("Only in browser.".equals(s) || s.startsWith("Skip.")) {
                         test.enable = false;
+                    } else if (s.equals("Async.")) {
+                        test.async = true;
                     } else if (s.startsWith("Error:")) {
                         // ignore
                     } else if (s.startsWith("Options:")) {
