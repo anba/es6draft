@@ -10,6 +10,7 @@ import java.util.BitSet;
 import java.util.regex.Pattern;
 
 import org.jcodings.Encoding;
+import org.joni.Matcher;
 import org.joni.Option;
 import org.joni.Regex;
 
@@ -45,7 +46,8 @@ final class JoniRegExpMatcher implements RegExpMatcher {
             }
             Encoding enc = UCS2Encoding.INSTANCE;
             byte[] bytes = UCS2Encoding.toBytes(regex);
-            pattern = new Regex(bytes, 0, bytes.length, flags, enc, JoniSyntax.ECMAScript);
+            // -2 to account for null-terminating bytes in c-string
+            pattern = new Regex(bytes, 0, bytes.length - 2, flags, enc, JoniSyntax.ECMAScript);
         }
         return pattern;
     }
@@ -56,7 +58,9 @@ final class JoniRegExpMatcher implements RegExpMatcher {
             lastInput = s;
             lastInputBytes = UCS2Encoding.toBytes(s);
         }
-        return new JoniMatchState(getPattern().matcher(lastInputBytes), s);
+        // -2 to account for null-terminating bytes in c-string
+        Matcher matcher = getPattern().matcher(lastInputBytes, 0, lastInputBytes.length - 2);
+        return new JoniMatchState(matcher, s);
     }
 
     @Override

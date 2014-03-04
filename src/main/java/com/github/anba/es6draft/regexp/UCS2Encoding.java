@@ -24,7 +24,7 @@ final class UCS2Encoding extends UnicodeEncoding {
 
     public static byte[] toBytes(String s) {
         char[] chars = s.toCharArray();
-        byte[] bytes = new byte[chars.length * 2];
+        byte[] bytes = new byte[chars.length * 2 + 2]; // null-terminated c-string
         for (int i = 0, j = 0, len = chars.length; i < len; ++i) {
             char c = chars[i];
             bytes[j++] = (byte) ((c >>> 8) & 0xff);
