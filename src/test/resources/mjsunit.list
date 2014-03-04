@@ -8,6 +8,9 @@
 # Math.clz32(), not yet in published draft
 harmony/math-clz32.js
 
+# Object.prototype.__proto__ not yet updated to return undefined
+proto-accessor.js
+
 # spec "9.1.3.1 ToNumber Applied to the String Type" not updated for new number literals
 harmony/numeric-literals.js
 
@@ -23,7 +26,7 @@ harmony/typedarrays.js
 
 # invalid test `function f(x){function x(){}}` is valid syntax
 harmony/block-conflicts.js
-regress/regress-2243.js
+harmony/regress/regress-2243.js
 
 # invalid test, assignment on const not early errors
 harmony/block-const-assign.js
@@ -61,7 +64,7 @@ harmony/dataview-accessors.js
 harmony/math-hyperbolic.js
 
 # invalid test, wrong behaviour for duplicate property key check when key is "__proto__"
-regress-3135.js
+regress/regress-3135.js
 
 
 ###################
@@ -97,9 +100,9 @@ harmony/proxies-hash.js
 harmony/proxies-json.js
 harmony/proxies-symbols.js
 harmony/proxies.js
-regress/regress-2219.js
-regress/regress-2225.js
-regress/regress-lookup-transition.js
+harmony/regress/regress-2219.js
+harmony/regress/regress-2225.js
+harmony/regress/regress-lookup-transition.js
 
 
 ############################################
@@ -219,7 +222,7 @@ regress/regress-105.js
 
 # Object.getPrototypeOf() wraps/ignores primitives
 get-prototype-of.js
-set-prototype-of.js
+harmony/set-prototype-of.js
 
 # Object.keys() wraps/ignores primitives
 third_party/object-keys.js

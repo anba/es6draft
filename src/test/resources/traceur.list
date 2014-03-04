@@ -5,9 +5,6 @@
 # <https://github.com/anba/es6draft>
 #
 
-# ES6 open issue: CoverInitialisedName and ArrowParameters
-feature/ArrowFunctions/ArrowFunctions.js
-feature/ArrowFunctions/CoverInitialiser.js
 
 # ES6 spec bug? 'extends null' and default constructor
 feature/Classes/DefaultConstructor.js
@@ -54,11 +51,6 @@ feature/Yield/TryCatchGenerator.js
 
 # stack enhanced with class-name
 feature/Classes/ClassNameInStack.js
-
-# traceur specific tests
-feature/FreeVariableChecker/Error_With.js
-feature/FreeVariableChecker/WithVarDecl.js
-feature/Tools/FreeVariableChecker.js
 
 # actually runtime exception
 feature/Scope/Error_BlockBinding1.js
@@ -149,9 +141,6 @@ feature/TemplateLiterals/resources/f.js
 feature/TemplateLiterals/resources/m.js
 feature/TemplateLiterals/resources/n.js
 feature/Yield/Tree.js
-
-# generators without *
-feature/Yield/UnstarredGenerators.js
 
 # Type declaration syntax
 feature/Classes/Types.js

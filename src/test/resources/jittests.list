@@ -500,8 +500,6 @@ tests/basic/decompile-script.js
 tests/basic/bug923390.js
 # neuter
 tests/basic/testNeutering.js
-# getSelfHostedValue
-tests/self-hosting/makewrappable.js
 # offThreadCompileScript
 tests/basic/offThreadCompileScript-02.js
 
@@ -533,6 +531,7 @@ tests/basic/functionnames.js
 # getObjectMetadata/setObjectMetadata/setObjectMetadataCallback
 tests/basic/metadata-hook.js
 tests/basic/bug951213.js
+tests/basic/bug951346.js
 tests/basic/bug951632.js
 # getBuildConfiguration
 tests/basic/testOOMInAutoEnterCompartment.js

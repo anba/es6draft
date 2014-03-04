@@ -254,6 +254,9 @@ js1_8_5/regress/regress-469758.js
 js1_8_5/regress/regress-619003-1.js
 js1_8_5/regress/regress-618572.js
 
+# column number support in stack traces
+js1_8_5/extensions/column-numbers.js
+
 # ignore marked as 'fail' test
 ecma_3/String/15.5.4.11.js
 ecma_3/String/regress-392378.js
@@ -651,6 +654,9 @@ js1_2/regexp/regress-9141.js
 # StackOverflow (CodeAnalyzer recursion)
 js1_5/Expressions/regress-394673.js
 js1_5/Regress/regress-98901.js
+
+# Intermittent StackOverflow error
+js1_8_5/extensions/recursion.js
 
 # OutOfMemory: Java heap space
 js1_5/Regress/regress-422348.js
