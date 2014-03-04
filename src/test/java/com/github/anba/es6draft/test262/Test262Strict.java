@@ -19,6 +19,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -74,12 +76,14 @@ public final class Test262Strict {
     @Parameter(0)
     public Test262Info test;
 
-    @Test
-    public void runTest() throws Throwable {
+    private Test262GlobalObject global;
+
+    @Before
+    public void setUp() throws IOException {
         // filter disabled tests
         assumeTrue(test.enable);
 
-        Test262GlobalObject global = globals.newGlobal(test);
+        global = globals.newGlobal(test);
         ExecutionContext cx = global.getRealm().defaultContext();
         exceptionHandler.setExecutionContext(cx);
 
@@ -96,7 +100,17 @@ public final class Test262Strict {
                         matchesPattern(errorType, Pattern.CASE_INSENSITIVE)));
             }
         }
+    }
 
+    @After
+    public void tearDown() {
+        if (global != null) {
+            global.getRealm().getExecutor().shutdown();
+        }
+    }
+
+    @Test
+    public void runTest() throws Throwable {
         // evaluate actual test-script
         global.eval(test.toFile());
     }

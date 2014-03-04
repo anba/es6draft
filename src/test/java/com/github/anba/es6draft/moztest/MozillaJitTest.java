@@ -22,6 +22,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -107,12 +109,14 @@ public class MozillaJitTest {
         }
     }
 
-    @Test
-    public void runTest() throws Throwable {
+    private MozShellGlobalObject global;
+
+    @Before
+    public void setUp() throws IOException {
         // filter disabled tests
         assumeTrue(moztest.enable);
 
-        MozShellGlobalObject global = globals.newGlobal(new MozTestConsole(collector), moztest);
+        global = globals.newGlobal(new MozTestConsole(collector), moztest);
         ExecutionContext cx = global.getRealm().defaultContext();
         exceptionHandler.setExecutionContext(cx);
 
@@ -124,8 +128,19 @@ public class MozillaJitTest {
                     ScriptExceptionHandler.defaultMatcher()));
             expected.expect(hasErrorMessage(cx, containsString(moztest.error)));
         }
+    }
 
+    @After
+    public void tearDown() {
+        if (global != null) {
+            global.getRealm().getExecutor().shutdown();
+        }
+    }
+
+    @Test
+    public void runTest() throws Throwable {
         // set required global variables
+        ExecutionContext cx = global.getRealm().defaultContext();
         global.set(cx, "libdir", "lib/", global);
         global.set(cx, "environment", OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype),
                 global);

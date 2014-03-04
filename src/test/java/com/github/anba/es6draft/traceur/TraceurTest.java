@@ -20,6 +20,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -86,12 +88,14 @@ public class TraceurTest {
     @Parameter(0)
     public TestInfo test;
 
-    @Test
-    public void runTest() throws Throwable {
+    private V8ShellGlobalObject global;
+
+    @Before
+    public void setUp() throws IOException {
         // filter disabled tests
         assumeTrue(test.enable);
 
-        V8ShellGlobalObject global = globals.newGlobal(new TraceurConsole(), test);
+        global = globals.newGlobal(new TraceurConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
 
         if (test.expect) {
@@ -101,7 +105,17 @@ public class TraceurTest {
             expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher()).or(
                     ScriptExceptionHandler.defaultMatcher()));
         }
+    }
 
+    @After
+    public void tearDown() {
+        if (global != null) {
+            global.getRealm().getExecutor().shutdown();
+        }
+    }
+
+    @Test
+    public void runTest() throws Throwable {
         // evaluate actual test-script
         global.eval(test.script, test.toFile());
     }

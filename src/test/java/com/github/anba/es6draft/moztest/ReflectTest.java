@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -73,14 +75,26 @@ public class ReflectTest {
     @Parameter(0)
     public TestInfo test;
 
-    @Test
-    public void runTest() throws Throwable {
+    private MozShellGlobalObject global;
+
+    @Before
+    public void setUp() throws IOException {
         // filter disabled tests
         assumeTrue(test.enable);
 
-        MozShellGlobalObject global = globals.newGlobal(new MozTestConsole(collector), test);
+        global = globals.newGlobal(new MozTestConsole(collector), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
+    }
 
+    @After
+    public void tearDown() {
+        if (global != null) {
+            global.getRealm().getExecutor().shutdown();
+        }
+    }
+
+    @Test
+    public void runTest() throws Throwable {
         // evaluate actual test-script
         global.eval(test.script, test.toFile());
     }

@@ -27,6 +27,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -121,12 +123,14 @@ public class MozillaJSTest {
         FailsIf, SkipIf, RandomIf
     }
 
-    @Test
-    public void runTest() throws Throwable {
+    private MozShellGlobalObject global;
+
+    @Before
+    public void setUp() throws IOException {
         // filter disabled tests
         assumeTrue(moztest.enable);
 
-        MozShellGlobalObject global = globals.newGlobal(new MozTestConsole(collector), moztest);
+        global = globals.newGlobal(new MozTestConsole(collector), moztest);
         ExecutionContext cx = global.getRealm().defaultContext();
         exceptionHandler.setExecutionContext(cx);
 
@@ -146,7 +150,17 @@ public class MozillaJSTest {
                     .or(ScriptExceptionHandler.defaultMatcher())
                     .or(Matchers.instanceOf(MultipleFailureException.class)));
         }
+    }
 
+    @After
+    public void tearDown() {
+        if (global != null) {
+            global.getRealm().getExecutor().shutdown();
+        }
+    }
+
+    @Test
+    public void runTest() throws Throwable {
         // load and execute shell.js files
         for (Path shell : shellJS(moztest)) {
             global.include(shell);
