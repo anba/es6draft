@@ -680,17 +680,16 @@ public final class Parser {
         }
     }
 
-    private void addExportBindings(List<String> bindings) {
+    private void addExportBindings(long sourcePosition, List<String> bindings) {
         for (String binding : bindings) {
-            addExportBinding(binding);
+            addExportBinding(sourcePosition, binding);
         }
     }
 
-    private void addExportBinding(String binding) {
+    private void addExportBinding(long sourcePosition, String binding) {
         assert context.scopeContext == context.modContext : "not in module scope";
         if (!context.modContext.addExportBinding(binding)) {
-            // TODO: error location
-            reportSyntaxError(Messages.Key.VariableRedeclaration, binding);
+            reportSyntaxError(sourcePosition, Messages.Key.VariableRedeclaration, binding);
         }
     }
 
@@ -1414,7 +1413,7 @@ public final class Parser {
             // export VariableStatement
             VariableStatement variableStatement = variableStatement();
 
-            addExportBindings(BoundNames(variableStatement));
+            addExportBindings(begin, BoundNames(variableStatement));
 
             return new ExportDeclaration(begin, ts.endPosition(), variableStatement);
         }
@@ -1426,7 +1425,7 @@ public final class Parser {
             // export Declaration[Default]
             Declaration declaration = declaration(true);
 
-            addExportBindings(BoundNames(declaration));
+            addExportBindings(begin, BoundNames(declaration));
 
             return new ExportDeclaration(begin, ts.endPosition(), declaration);
         }
@@ -1443,7 +1442,7 @@ public final class Parser {
             // "default");
             // addLexDeclaredName(id);
 
-            addExportBinding("default");
+            addExportBinding(begin, "default");
 
             return new ExportDeclaration(begin, ts.endPosition(), expression);
         }
@@ -1514,7 +1513,7 @@ public final class Parser {
             }
         }
 
-        addExportBinding(exportName);
+        addExportBinding(begin, exportName);
 
         return new ExportSpecifier(begin, ts.endPosition(), importName, localName, exportName);
     }
