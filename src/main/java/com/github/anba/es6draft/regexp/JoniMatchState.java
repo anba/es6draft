@@ -19,20 +19,17 @@ import org.joni.Region;
 final class JoniMatchState implements MatchState {
     private final Matcher matcher;
     private final String string;
-    private final int byteLength;
     private int begin = -1, end = 0;
     private Region region;
 
     public JoniMatchState(Matcher matcher, String string) {
         this.matcher = matcher;
         this.string = string;
-        this.byteLength = string.length() << 1;
     }
 
     private JoniMatchState(String string, int begin, int end, Region region) {
         this.matcher = null;
         this.string = string;
-        this.byteLength = string.length() << 1;
         this.begin = begin;
         this.end = end;
         this.region = region;
@@ -45,9 +42,30 @@ final class JoniMatchState implements MatchState {
         return r > Matcher.FAILED;
     }
 
+    private int stringLength() {
+        return string.length();
+    }
+
+    private int byteLength() {
+        return string.length() << 1;
+    }
+
+    private int toStringIndex(int byteIndex) {
+        return byteIndex >> 1;
+    }
+
+    private int toByteIndex(int stringIndex) {
+        return stringIndex << 1;
+    }
+
     private void ensureResult() {
         if (begin < 0)
             throw new IllegalStateException("No match!");
+    }
+
+    private void ensureValidIndex(int index) {
+        if (index < 0 || index > stringLength())
+            throw new IndexOutOfBoundsException("Invalid index: " + index);
     }
 
     private void ensureValidGroup(int group) {
@@ -63,43 +81,45 @@ final class JoniMatchState implements MatchState {
     @Override
     public boolean find() {
         int start = end != begin ? end : end + 2;
-        return update(matcher.search(start, byteLength, Option.NONE));
+        return update(matcher.search(start, byteLength(), Option.NONE));
     }
 
     @Override
     public boolean find(int start) {
-        return update(matcher.search(start << 1, byteLength, Option.NONE));
+        ensureValidIndex(start);
+        return update(matcher.search(toByteIndex(start), byteLength(), Option.NONE));
     }
 
     @Override
     public boolean matches(int start) {
-        return update(matcher.match(start << 1, byteLength, Option.NONE));
+        ensureValidIndex(start);
+        return update(matcher.match(toByteIndex(start), byteLength(), Option.NONE));
     }
 
     @Override
     public int start() {
         ensureResult();
-        return begin >> 1;
+        return toStringIndex(begin);
     }
 
     @Override
     public int start(int group) {
         ensureResult();
         ensureValidGroup(group);
-        return (group == 0 ? begin : region.beg[group]) >> 1;
+        return toStringIndex(group == 0 ? begin : region.beg[group]);
     }
 
     @Override
     public int end() {
         ensureResult();
-        return end >> 1;
+        return toStringIndex(end);
     }
 
     @Override
     public int end(int group) {
         ensureResult();
         ensureValidGroup(group);
-        return (group == 0 ? end : region.end[group]) >> 1;
+        return toStringIndex(group == 0 ? end : region.end[group]);
     }
 
     @Override
