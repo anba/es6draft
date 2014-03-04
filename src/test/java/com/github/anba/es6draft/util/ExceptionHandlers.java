@@ -104,6 +104,36 @@ public final class ExceptionHandlers {
     }
 
     /**
+     * {@link ExceptionHandler} for {@link ParserException}, {@link CompilationException},
+     * {@link StackOverflowError} and {@link ScriptException} errors
+     */
+    public static class IgnoreExceptionHandler extends ExceptionHandler {
+        private static final Matcher<Object> defaultMatcher = anyInstanceOf(ParserException.class,
+                CompilationException.class, StackOverflowError.class, ScriptException.class);
+
+        public IgnoreExceptionHandler() {
+            this(defaultMatcher());
+        }
+
+        public IgnoreExceptionHandler(Matcher<?> matcher) {
+            super(matcher);
+        }
+
+        @Override
+        protected void handle(Throwable t) {
+            // Ignore any errors
+        }
+
+        public static IgnoreExceptionHandler none() {
+            return new IgnoreExceptionHandler(nothing());
+        }
+
+        public static Matcher<Object> defaultMatcher() {
+            return defaultMatcher;
+        }
+    }
+
+    /**
      * {@link ExceptionHandler} for {@link StopExecutionException} errors
      */
     public static class StopExecutionHandler extends ExceptionHandler {

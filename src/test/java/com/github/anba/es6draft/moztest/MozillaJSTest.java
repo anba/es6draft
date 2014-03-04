@@ -46,15 +46,13 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.types.Undefined;
+import com.github.anba.es6draft.util.ExceptionHandlers.IgnoreExceptionHandler;
 import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.ExceptionHandlers.StopExecutionHandler;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Functional.Function;
-import com.github.anba.es6draft.util.Parallelized;
-import com.github.anba.es6draft.util.TestConfiguration;
-import com.github.anba.es6draft.util.TestInfo;
-import com.github.anba.es6draft.util.TestShellGlobals;
+import com.github.anba.es6draft.util.*;
 
 /**
  * Test suite for the Mozilla js-tests.
@@ -96,6 +94,9 @@ public class MozillaJSTest {
 
     @Rule
     public ScriptExceptionHandler exceptionHandler = ScriptExceptionHandler.none();
+
+    @Rule
+    public IgnoreExceptionHandler ignoreHandler = IgnoreExceptionHandler.none();
 
     @Rule
     public StopExecutionHandler stopHandler = new StopExecutionHandler();
@@ -141,7 +142,8 @@ public class MozillaJSTest {
         assumeTrue(moztest.enable);
 
         if (moztest.random) {
-            // results from random tests are ignored...
+            // results from random tests are simply ignored...
+            ignoreHandler.match(IgnoreExceptionHandler.defaultMatcher());
         } else if (moztest.expect) {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
             exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
