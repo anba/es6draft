@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecutionContext;
 
+import java.security.SecureRandom;
 import java.text.Collator;
 import java.text.DecimalFormatSymbols;
 import java.util.EnumMap;
@@ -16,6 +17,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
@@ -117,6 +119,8 @@ public final class Realm {
 
     private final World<? extends GlobalObject> world;
 
+    private final SecureRandom random = new SecureRandom();
+
     // TODO: move into function source object
     private Map<String, ScriptObject> templateCallSites = new HashMap<>();
 
@@ -179,6 +183,13 @@ public final class Realm {
      */
     public Callable getIndirectEval() {
         return indirectEval;
+    }
+
+    /**
+     * Returns the {@link Random} for this realm
+     */
+    public Random getRandom() {
+        return random;
     }
 
     /**

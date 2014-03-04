@@ -248,8 +248,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "random", arity = 0)
         public static Object random(ExecutionContext cx, Object thisValue) {
-            // TODO: Possibly create an own random generator for each Realm?
-            return Math.random();
+            return cx.getRealm().getRandom().nextDouble();
         }
 
         /**
