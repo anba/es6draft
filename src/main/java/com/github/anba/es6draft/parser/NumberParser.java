@@ -15,6 +15,9 @@ final class NumberParser {
     private NumberParser() {
     }
 
+    /**
+     * Parse a decimal integer literal
+     */
     static double parseInteger(char[] cbuf, int length) {
         if (length < 10) {
             // integer [0, 9999_99999]
@@ -36,11 +39,17 @@ final class NumberParser {
         }
     }
 
+    /**
+     * Parse a decimal number literal
+     */
     static double parseDecimal(char[] cbuf, int length) {
         String string = new String(cbuf, 0, length);
         return Double.parseDouble(string);
     }
 
+    /**
+     * Parse a binary integer literal
+     */
     static double parseBinary(char[] cbuf, int length) {
         if (length < 32) {
             // integer [0, 7FFFFFFF]
@@ -63,6 +72,9 @@ final class NumberParser {
         }
     }
 
+    /**
+     * Parse an octal integer literal
+     */
     static double parseOctal(char[] cbuf, int length) {
         if (length <= 10) {
             // integer [0, 07777777777]
@@ -85,6 +97,9 @@ final class NumberParser {
         }
     }
 
+    /**
+     * Parse a hexadecimal integer literal
+     */
     static double parseHex(char[] cbuf, int length) {
         if (length < 8) {
             // integer [0, FFFFFFF]

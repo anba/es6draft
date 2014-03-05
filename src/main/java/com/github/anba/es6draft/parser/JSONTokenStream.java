@@ -79,7 +79,7 @@ public final class JSONTokenStream {
 
         int c;
         for (;;) {
-            c = input.get();
+            c = input.getChar();
             if (c == TokenStreamInput.EOF) {
                 return Token.EOF;
             } else if (c <= 0x20) {
@@ -133,7 +133,7 @@ public final class JSONTokenStream {
 
     private Token readNullLiteral(int c) {
         TokenStreamInput input = this.input;
-        if (c == 'n' && input.get() == 'u' && input.get() == 'l' && input.get() == 'l') {
+        if (c == 'n' && input.getChar() == 'u' && input.getChar() == 'l' && input.getChar() == 'l') {
             return Token.NULL;
         }
         return Token.ERROR;
@@ -141,8 +141,8 @@ public final class JSONTokenStream {
 
     private Token readFalseLiteral(int c) {
         TokenStreamInput input = this.input;
-        if (c == 'f' && input.get() == 'a' && input.get() == 'l' && input.get() == 's'
-                && input.get() == 'e') {
+        if (c == 'f' && input.getChar() == 'a' && input.getChar() == 'l' && input.getChar() == 's'
+                && input.getChar() == 'e') {
             return Token.FALSE;
         }
         return Token.ERROR;
@@ -150,7 +150,7 @@ public final class JSONTokenStream {
 
     private Token readTrueLiteral(int c) {
         TokenStreamInput input = this.input;
-        if (c == 't' && input.get() == 'r' && input.get() == 'u' && input.get() == 'e') {
+        if (c == 't' && input.getChar() == 'r' && input.getChar() == 'u' && input.getChar() == 'e') {
             return Token.TRUE;
         }
         return Token.ERROR;
@@ -163,7 +163,7 @@ public final class JSONTokenStream {
         TokenStreamInput input = this.input;
         StringBuffer buffer = this.buffer();
         for (;;) {
-            int c = input.get();
+            int c = input.getChar();
             if (c == EOF) {
                 throw error(Messages.Key.JSONUnterminatedStringLiteral);
             }
@@ -178,7 +178,7 @@ public final class JSONTokenStream {
                 buffer.add(c);
                 continue;
             }
-            c = input.get();
+            c = input.getChar();
             // escape sequences
             switch (c) {
             case '"':
@@ -201,8 +201,8 @@ public final class JSONTokenStream {
                 c = '\t';
                 break;
             case 'u':
-                c = (hexDigit(input.get()) << 12) | (hexDigit(input.get()) << 8)
-                        | (hexDigit(input.get()) << 4) | hexDigit(input.get());
+                c = (hexDigit(input.getChar()) << 12) | (hexDigit(input.getChar()) << 8)
+                        | (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
                 if (c < 0) {
                     throw error(Messages.Key.JSONInvalidUnicodeEscape);
                 }
@@ -240,44 +240,44 @@ public final class JSONTokenStream {
         StringBuffer buffer = this.buffer();
         if (c == '-') {
             buffer.add(c);
-            if (!isDigit(c = input.get())) {
+            if (!isDigit(c = input.getChar())) {
                 throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
         }
         buffer.add(c);
         if (c != '0') {
-            while (isDigit(c = input.get())) {
+            while (isDigit(c = input.getChar())) {
                 buffer.add(c);
             }
         } else {
-            c = input.get();
+            c = input.getChar();
         }
         if (c == '.') {
             buffer.add(c);
-            if (!isDigit(c = input.get())) {
+            if (!isDigit(c = input.getChar())) {
                 throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
             buffer.add(c);
-            while (isDigit(c = input.get())) {
+            while (isDigit(c = input.getChar())) {
                 buffer.add(c);
             }
         }
         if (c == 'e' || c == 'E') {
             buffer.add(c);
-            c = input.get();
+            c = input.getChar();
             if (c == '+' || c == '-') {
                 buffer.add(c);
-                c = input.get();
+                c = input.getChar();
             }
             if (!isDigit(c)) {
                 throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
             buffer.add(c);
-            while (isDigit(c = input.get())) {
+            while (isDigit(c = input.getChar())) {
                 buffer.add(c);
             }
         }
-        input.unget(c);
+        input.ungetChar(c);
         return parseDecimal(buffer.cbuf, buffer.length);
     }
 

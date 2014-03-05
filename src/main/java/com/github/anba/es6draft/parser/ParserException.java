@@ -51,26 +51,44 @@ public class ParserException extends InternalException {
         return message;
     }
 
+    /**
+     * Returns the type of this parser exception
+     */
     public ExceptionType getType() {
         return type;
     }
 
+    /**
+     * Returns the source file location
+     */
     public String getFile() {
         return file;
     }
 
+    /**
+     * Returns the line number of this exception
+     */
     public int getLine() {
         return line;
     }
 
+    /**
+     * Returns the column number of this exception
+     */
     public int getColumn() {
         return column;
     }
 
+    /**
+     * Returns a formatted message describing this exception
+     */
     public String getFormattedMessage() {
         return getFormattedMessage(Locale.getDefault());
     }
 
+    /**
+     * Returns a formatted message describing this exception
+     */
     public String getFormattedMessage(Locale locale) {
         return Messages.create(locale).getMessage(messageKey, messageArguments);
     }

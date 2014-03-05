@@ -445,7 +445,7 @@ public final class Parser {
     }
 
     public enum Option {
-        Strict, FunctionCode, LocalScope, DirectEval, EvalScript, EnclosedByWithStatement;
+        Strict, FunctionCode, LocalScope, DirectEval, EvalScript, EnclosedByWithStatement
     }
 
     public Parser(String sourceFile, int sourceLine, Set<CompatibilityOption> options) {

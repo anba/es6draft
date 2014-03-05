@@ -16,6 +16,10 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
  * Lexer for ECMAScript 6 source code
+ * <ul>
+ * <li>10 ECMAScript Language: Source Code
+ * <li>11 ECMAScript Language: Lexical Grammar
+ * </ul>
  */
 public final class TokenStream {
     private static final boolean DEBUG = false;
@@ -307,11 +311,11 @@ public final class TokenStream {
         }
         boolean inClass = false;
         for (;;) {
-            int c = input.get();
+            int c = input.getChar();
             if (c == '\\') {
                 // escape sequence
                 buffer.add(c);
-                c = input.get();
+                c = input.getChar();
             } else if (c == '[') {
                 inClass = true;
             } else if (c == ']') {
@@ -337,7 +341,7 @@ public final class TokenStream {
                 input.unget(c);
                 break;
             }
-            buffer.add(c);
+            buffer.addCodepoint(c);
         }
 
         String flags = buffer.toString();
@@ -384,7 +388,7 @@ public final class TokenStream {
         StringBuffer buffer = buffer();
         int pos = input.position();
         for (;;) {
-            int c = input.get();
+            int c = input.getChar();
             if (c == EOF) {
                 throw eofError(Messages.Key.UnterminatedTemplateLiteral);
             }
@@ -417,7 +421,7 @@ public final class TokenStream {
                 continue;
             }
 
-            c = input.get();
+            c = input.getChar();
             if (c == EOF) {
                 throw eofError(Messages.Key.UnterminatedTemplateLiteral);
             }
@@ -459,7 +463,7 @@ public final class TokenStream {
                 c = '\0';
                 break;
             case 'x':
-                c = (hexDigit(input.get()) << 4) | hexDigit(input.get());
+                c = (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
                 if (c < 0) {
                     throw error(Messages.Key.InvalidHexEscape);
                 }
@@ -835,7 +839,7 @@ public final class TokenStream {
     }
 
     /**
-     * <strong>[11.6] Identifier Names and Identifiers</strong>
+     * <strong>[11.6] Names and Keywords</strong>
      * 
      * <pre>
      * IdentifierStart ::
@@ -848,11 +852,14 @@ public final class TokenStream {
      * </pre>
      */
     private static boolean isIdentifierStart(int c) {
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '$' || c == '_')
-            return true;
-        if (c <= 127)
-            return false;
-        // cf. http://www.unicode.org/reports/tr31/ for definition of "UnicodeIDStart"
+        if (c <= 127) {
+            return ((c | 0x20) >= 'a' && (c | 0x20) <= 'z') || c == '$' || c == '_';
+        }
+        return isIdentifierStartUnlikely(c);
+    }
+
+    private static boolean isIdentifierStartUnlikely(int c) {
+        // cf. http://www.unicode.org/reports/tr31/ for definition of "ID_Start"
         if (c == '\u2E2F') {
             // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
             return false;
@@ -866,18 +873,27 @@ public final class TokenStream {
         case Character.LETTER_NUMBER:
             return true;
         }
+        // Additional characters for ID_Start based on Unicode 5.1.
+        // Also applies to Unicode 6.0 (Java 7), Unicode 6.2 (Java 8) and Unicode 6.3 (Current).
+        switch (c) {
+        case '\u2118':
+        case '\u212E':
+        case '\u309B':
+        case '\u309C':
+            return true;
+        }
         return false;
     }
 
     /**
-     * <strong>[11.6] Identifier Names and Identifiers</strong>
+     * <strong>[11.6] Names and Keywords</strong>
      * 
      * <pre>
      * IdentifierPart ::
      *     UnicodeIDContinue
      *     $
      *     _
-     *     \ UnicodeEscapeSequence 
+     *     \ UnicodeEscapeSequence
      *     &lt;ZWNJ&gt;
      *     &lt;ZWJ&gt;
      * UnicodeIDContinue ::
@@ -885,14 +901,17 @@ public final class TokenStream {
      * </pre>
      */
     private static boolean isIdentifierPart(int c) {
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '$'
-                || c == '_')
-            return true;
-        if (c <= 127)
-            return false;
+        if (c <= 127) {
+            return ((c | 0x20) >= 'a' && (c | 0x20) <= 'z') || (c >= '0' && c <= '9') || c == '$'
+                    || c == '_';
+        }
+        return isIdentifierPartUnlikely(c);
+    }
+
+    private static boolean isIdentifierPartUnlikely(int c) {
         if (c == '\u200C' || c == '\u200D')
             return true;
-        // cf. http://www.unicode.org/reports/tr31/ for definition of "UnicodeIDContinue"
+        // cf. http://www.unicode.org/reports/tr31/ for definition of "ID_Continue"
         if (c == '\u2E2F') {
             // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
             return false;
@@ -908,6 +927,31 @@ public final class TokenStream {
         case Character.COMBINING_SPACING_MARK:
         case Character.DECIMAL_DIGIT_NUMBER:
         case Character.CONNECTOR_PUNCTUATION:
+            return true;
+        }
+        // Additional characters for ID_Continue based on Unicode 5.1.
+        switch (c) {
+        case '\u00B7':
+        case '\u0387':
+        case '\u1369':
+        case '\u136A':
+        case '\u136B':
+        case '\u136C':
+        case '\u136D':
+        case '\u136E':
+        case '\u136F':
+        case '\u1370':
+        case '\u1371':
+        case '\u2118':
+        case '\u212E':
+        case '\u309B':
+        case '\u309C':
+            return true;
+        }
+        // Additional characters for ID_Continue based on Unicode 6.0 (Java 7).
+        // Also applies to Unicode 6.2 (Java 8) and Unicode 6.3 (Current).
+        switch (c) {
+        case '\u19DA':
             return true;
         }
         return false;
@@ -973,13 +1017,13 @@ public final class TokenStream {
         final int EOF = TokenStreamInput.EOF;
         TokenStreamInput input = this.input;
         for (;;) {
-            int c = input.get();
+            int c = input.getChar();
             if (c == EOF) {
                 break;
             }
             if (isLineTerminator(c)) {
                 // EOL is not part of the single-line comment!
-                input.unget(c);
+                input.ungetChar(c);
                 break;
             }
         }
@@ -1008,9 +1052,9 @@ public final class TokenStream {
         final int EOF = TokenStreamInput.EOF;
         TokenStreamInput input = this.input;
         loop: for (;;) {
-            int c = input.get();
+            int c = input.getChar();
             while (c == '*') {
-                if ((c = input.get()) == '/')
+                if ((c = input.getChar()) == '/')
                     break loop;
             }
             if (isLineTerminator(c)) {
@@ -1027,7 +1071,7 @@ public final class TokenStream {
     }
 
     /**
-     * <strong>[11.6] Identifier Names and Identifiers</strong>
+     * <strong>[11.6] Names and Keywords</strong>
      * 
      * <pre>
      * Identifier ::
@@ -1046,7 +1090,7 @@ public final class TokenStream {
         for (;;) {
             c = input.get();
             if (isIdentifierPart(c)) {
-                buffer.add(c);
+                buffer.addCodepoint(c);
             } else if (c == '\\') {
                 hasEscape = true;
                 mustMatch('u');
@@ -1079,21 +1123,21 @@ public final class TokenStream {
      */
     private int readUnicode() {
         TokenStreamInput input = this.input;
-        int c = input.get();
+        int c = input.getChar();
         if (c == '{') {
             int acc = 0;
-            c = input.get();
+            c = input.getChar();
             do {
                 acc = (acc << 4) | hexDigit(c);
-            } while ((acc >= 0 && acc <= 0x10FFFF) && (c = input.get()) != '}');
+            } while ((acc >= 0 && acc <= 0x10FFFF) && (c = input.getChar()) != '}');
             if (c == '}') {
                 c = acc;
             } else {
                 c = -1;
             }
         } else {
-            c = (hexDigit(c) << 12) | (hexDigit(input.get()) << 8) | (hexDigit(input.get()) << 4)
-                    | hexDigit(input.get());
+            c = (hexDigit(c) << 12) | (hexDigit(input.getChar()) << 8)
+                    | (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
         }
         if (c < 0 || c > 0x10FFFF) {
             throw error(Messages.Key.InvalidUnicodeEscape);
@@ -1366,7 +1410,7 @@ public final class TokenStream {
         StringBuffer buffer = this.buffer();
         hasEscape = false;
         for (;;) {
-            int c = input.get();
+            int c = input.getChar();
             if (c == EOF) {
                 throw eofError(Messages.Key.UnterminatedStringLiteral);
             }
@@ -1382,7 +1426,7 @@ public final class TokenStream {
             }
             buffer.add(input.range(start, input.position() - 1));
             hasEscape = true;
-            c = input.get();
+            c = input.getChar();
             if (isLineTerminator(c)) {
                 // line continuation
                 if (c == '\r' && match('\n')) {
@@ -1413,7 +1457,7 @@ public final class TokenStream {
                 c = '\u000B';
                 break;
             case 'x':
-                c = (hexDigit(input.get()) << 4) | hexDigit(input.get());
+                c = (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
                 if (c < 0) {
                     throw error(Messages.Key.InvalidHexEscape);
                 }
@@ -1481,17 +1525,17 @@ public final class TokenStream {
     private int readOctalEscape(int c) {
         parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalEscapeSequence);
         int d = (c - '0');
-        c = input.get();
+        c = input.getChar();
         if (c < '0' || c > '7') {
             // FIXME: spec bug? behaviour for non-octal decimal digits?
-            input.unget(c);
+            input.ungetChar(c);
         } else {
             d = d * 8 + (c - '0');
             if (d <= 037) {
-                c = input.get();
+                c = input.getChar();
                 if (c < '0' || c > '7') {
                     // FIXME: spec bug? behaviour for non-octal decimal digits?
-                    input.unget(c);
+                    input.ungetChar(c);
                 } else {
                     d = d * 8 + (c - '0');
                 }
@@ -1513,7 +1557,7 @@ public final class TokenStream {
      */
     private Token readNumberLiteral(int c) {
         if (c == '0') {
-            int d = input.get();
+            int d = input.getChar();
             if (d == 'x' || d == 'X') {
                 number = readHexIntegerLiteral();
             } else if (d == 'b' || d == 'B') {
@@ -1522,10 +1566,10 @@ public final class TokenStream {
                 number = readOctalIntegerLiteral();
             } else if (isDecimalDigit(d)
                     && parser.isEnabled(CompatibilityOption.LegacyOctalIntegerLiteral)) {
-                input.unget(d);
+                input.ungetChar(d);
                 number = readLegacyOctalIntegerLiteral();
             } else {
-                input.unget(d);
+                input.ungetChar(d);
                 number = readDecimalLiteral(c);
             }
         } else {
@@ -1812,8 +1856,8 @@ public final class TokenStream {
     }
 
     private void mustMatch(char c) {
-        if (input.get() != c) {
-            throw error(Messages.Key.UnexpectedCharacter, String.valueOf((char) c));
+        if (input.getChar() != c) {
+            throw error(Messages.Key.UnexpectedCharacter, String.valueOf(c));
         }
     }
 }

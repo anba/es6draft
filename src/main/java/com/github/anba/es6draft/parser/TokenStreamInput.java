@@ -25,23 +25,44 @@ public final class TokenStreamInput {
     }
 
     /**
-     * Returns the current character or {@link TokenStreamInput#EOF} when the end of the input has
+     * Returns the current code point or {@link TokenStreamInput#EOF} when the end of the input has
      * been reached
      */
     public int get() {
+        if (cursor >= length)
+            return EOF;
+        int cp = source.codePointAt(cursor);
+        cursor += Character.charCount(cp);
+        return cp;
+    }
+
+    /**
+     * Returns the current character or {@link TokenStreamInput#EOF} when the end of the input has
+     * been reached
+     */
+    public int getChar() {
         if (cursor >= length)
             return EOF;
         return source.charAt(cursor++);
     }
 
     /**
+     * Ungets the code point {@code c}
+     */
+    public void unget(int c) {
+        assert c != EOF ? source.codePointAt(cursor - Character.charCount(c)) == c
+                : cursor >= length;
+        if (c != EOF)
+            cursor -= Character.charCount(c);
+    }
+
+    /**
      * Ungets the character {@code c}
      */
-    public int unget(int c) {
+    public void ungetChar(int c) {
         assert c != EOF ? source.charAt(cursor - 1) == c : cursor >= length;
         if (c != EOF)
             cursor -= 1;
-        return c;
     }
 
     /**
