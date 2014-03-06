@@ -113,7 +113,7 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
     /** shell-function: {@code nextTick(function)} */
     @Function(name = "nextTick", arity = 1)
     public void nextTick(final ExecutionContext cx, final Callable function) {
-        cx.getRealm().getWorld().enqueuePromiseTask(new Task() {
+        cx.getRealm().enqueuePromiseTask(new Task() {
             @Override
             public void execute() {
                 function.call(cx, UNDEFINED);

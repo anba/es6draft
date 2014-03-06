@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -52,6 +53,7 @@ import com.github.anba.es6draft.repl.global.StopExecutionException.Reason;
 import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -342,13 +344,6 @@ public final class Repl {
         return index;
     }
 
-    private void printException(Exception e) {
-        System.err.println(e);
-        if (options.contains(Option.StackTrace)) {
-            printStackTrace(e);
-        }
-    }
-
     /**
      * REPL: Read
      */
@@ -420,7 +415,7 @@ public final class Repl {
                 handleException(realm, e);
             } catch (ParserException | CompilationException | StackOverflowError e) {
                 handleException(e);
-            } catch (BootstrapMethodError e) {
+            } catch (BootstrapMethodError | UncheckedIOException e) {
                 handleException(e.getCause());
             }
         }
@@ -435,11 +430,13 @@ public final class Repl {
                 if (e.getReason() == Reason.Quit) {
                     System.exit(0);
                 }
+            } catch (ParserExceptionWithSource e) {
+                handleException(e, 1);
             } catch (ScriptException e) {
                 handleException(realm, e);
-            } catch (StackOverflowError e) {
+            } catch (ParserException | CompilationException | StackOverflowError e) {
                 handleException(e);
-            } catch (BootstrapMethodError e) {
+            } catch (BootstrapMethodError | UncheckedIOException e) {
                 handleException(e.getCause());
             }
         }
@@ -480,8 +477,8 @@ public final class Repl {
 
         World<? extends ShellGlobalObject> world = new World<>(allocator, compatibilityOptions,
                 compilerOptions);
-        ShellGlobalObject global = world.newGlobal();
-        Realm realm = global.getRealm();
+        final ShellGlobalObject global = world.newGlobal();
+        final Realm realm = global.getRealm();
         ExecutionContext cx = realm.defaultContext();
 
         // Add completion to console
@@ -493,20 +490,36 @@ public final class Repl {
                 true));
 
         // Execute any global specific initialisation scripts
-        try {
-            global.executeInitialisation();
-        } catch (ParserException | CompilationException | IOException e) {
-            printException(e);
-        }
+        realm.enqueueLoadingTask(new Task() {
+            @Override
+            public void execute() {
+                try {
+                    global.executeInitialisation();
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        });
 
         // Run start script, if defined
-        Path startScriptPath = startScript.script;
+        final Path startScriptPath = startScript.script;
         if (!startScriptPath.toString().equals("-")) {
-            try {
-                global.eval(startScriptPath, startScriptPath);
-            } catch (ParserException | CompilationException | IOException e) {
-                printException(e);
-            }
+            realm.enqueueLoadingTask(new Task() {
+                @Override
+                public void execute() {
+                    try {
+                        try {
+                            global.eval(startScriptPath, startScriptPath);
+                        } catch (ParserException e) {
+                            byte[] content = Files.readAllBytes(startScriptPath);
+                            String source = new String(content, StandardCharsets.UTF_8);
+                            throw new ParserExceptionWithSource(e, source);
+                        }
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                }
+            });
         }
 
         return realm;
