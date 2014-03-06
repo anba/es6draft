@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects.collection;
 import java.util.WeakHashMap;
 
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -20,13 +21,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class WeakSetObject extends OrdinaryObject {
     /** [[WeakSetData]] */
-    private WeakHashMap<Object, Boolean> weakSetData = null;
+    private WeakHashMap<ScriptObject, Boolean> weakSetData = null;
 
     public WeakSetObject(Realm realm) {
         super(realm);
     }
 
-    public WeakHashMap<Object, Boolean> getWeakSetData() {
+    public WeakHashMap<ScriptObject, Boolean> getWeakSetData() {
         return weakSetData;
     }
 

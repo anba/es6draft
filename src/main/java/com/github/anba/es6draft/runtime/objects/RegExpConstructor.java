@@ -67,11 +67,9 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /* steps 1-2 (omitted) */
         RegExpObject obj;
-        if (!Type.isObject(thisValue) || !(thisValue instanceof RegExpObject)
-                || ((RegExpObject) thisValue).isInitialised()) {
+        if (!(thisValue instanceof RegExpObject) || ((RegExpObject) thisValue).isInitialised()) {
             /* step 3 */
-            if (Type.isObject(pattern) && pattern instanceof RegExpObject
-                    && Type.isUndefined(flags)) {
+            if (pattern instanceof RegExpObject && Type.isUndefined(flags)) {
                 return pattern;
             }
             obj = RegExpAlloc(calleeContext, this);
@@ -81,7 +79,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         }
 
         Object p, f;
-        if (Type.isObject(pattern) && pattern instanceof RegExpObject) {
+        if (pattern instanceof RegExpObject) {
             /* step 4 */
             RegExpObject regexp = (RegExpObject) pattern;
             if (!regexp.isInitialised()) {

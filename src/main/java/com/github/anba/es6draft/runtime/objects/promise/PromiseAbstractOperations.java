@@ -214,20 +214,12 @@ public final class PromiseAbstractOperations {
      * 25.4.1.6 IsPromise ( x )
      */
     public static boolean IsPromise(Object x) {
-        /* step 1 */
-        if (!Type.isObject(x)) {
-            return false;
-        }
-        /* step 2 */
+        /* steps 1-2 */
         if (!(x instanceof PromiseObject)) {
             return false;
         }
-        /* step 3 */
-        if (((PromiseObject) x).getStatus() == null) {
-            return false;
-        }
-        /* step 4 */
-        return true;
+        /* steps 3-4 */
+        return ((PromiseObject) x).getStatus() != null;
     }
 
     /**

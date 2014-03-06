@@ -385,16 +385,8 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
          */
         @Function(name = "isView", arity = 1)
         public static Object isView(ExecutionContext cx, Object thisValue, Object arg) {
-            /* step 1 */
-            if (!Type.isObject(arg)) {
-                return false;
-            }
-            /* step 2 */
-            if (arg instanceof ArrayBufferView) {
-                return true;
-            }
-            /* step 3 */
-            return false;
+            /* steps 1-3 */
+            return arg instanceof ArrayBufferView;
         }
 
         /**

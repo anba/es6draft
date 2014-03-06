@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -49,7 +50,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initialisa
         ;
 
         private static WeakMapObject thisWeakMapValue(ExecutionContext cx, Object obj) {
-            if (Type.isObject(obj) && obj instanceof WeakMapObject) {
+            if (obj instanceof WeakMapObject) {
                 WeakMapObject map = (WeakMapObject) obj;
                 if (map.isInitialised()) {
                     return map;
@@ -89,7 +90,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initialisa
             /* steps 1-4 */
             WeakMapObject m = thisWeakMapValue(cx, thisValue);
             /* step 5 */
-            WeakHashMap<Object, Object> entries = m.getWeakMapData();
+            WeakHashMap<ScriptObject, Object> entries = m.getWeakMapData();
             /* step 6 */
             if (!Type.isObject(key)) {
                 return false;
@@ -106,7 +107,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initialisa
             /* steps 1-4 */
             WeakMapObject m = thisWeakMapValue(cx, thisValue);
             /* step 5 */
-            WeakHashMap<Object, Object> entries = m.getWeakMapData();
+            WeakHashMap<ScriptObject, Object> entries = m.getWeakMapData();
             /* step 6 */
             if (!Type.isObject(key)) {
                 return UNDEFINED;
@@ -124,7 +125,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initialisa
             /* steps 1-4 */
             WeakMapObject m = thisWeakMapValue(cx, thisValue);
             /* step 5 */
-            WeakHashMap<Object, Object> entries = m.getWeakMapData();
+            WeakHashMap<ScriptObject, Object> entries = m.getWeakMapData();
             /* step 6 */
             if (!Type.isObject(key)) {
                 return false;
@@ -141,13 +142,13 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initialisa
             /* steps 1-4 */
             WeakMapObject m = thisWeakMapValue(cx, thisValue);
             /* step 5 */
-            WeakHashMap<Object, Object> entries = m.getWeakMapData();
+            WeakHashMap<ScriptObject, Object> entries = m.getWeakMapData();
             /* step 6 */
             if (!Type.isObject(key)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             /* steps 7-9 */
-            entries.put(key, value);
+            entries.put(Type.objectValue(key), value);
             /* step 7.a.ii, 10 */
             return m;
         }

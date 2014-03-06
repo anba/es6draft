@@ -125,8 +125,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         /* step 1 (omitted) */
         /* steps 2-4 */
         ErrorObject obj;
-        if (!Type.isObject(thisValue) || !(thisValue instanceof ErrorObject)
-                || ((ErrorObject) thisValue).isInitialised()) {
+        if (!(thisValue instanceof ErrorObject) || ((ErrorObject) thisValue).isInitialised()) {
             obj = OrdinaryCreateFromConstructor(calleeContext, this, type.prototype(),
                     NativeErrorObjectAllocator.INSTANCE);
         } else {

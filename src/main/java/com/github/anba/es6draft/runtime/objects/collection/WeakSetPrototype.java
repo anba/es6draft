@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -49,7 +50,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initialisa
         ;
 
         private static WeakSetObject thisWeakSetValue(ExecutionContext cx, Object obj) {
-            if (Type.isObject(obj) && obj instanceof WeakSetObject) {
+            if (obj instanceof WeakSetObject) {
                 WeakSetObject set = (WeakSetObject) obj;
                 if (set.isInitialised()) {
                     return set;
@@ -80,9 +81,9 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initialisa
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             /* step 6 */
-            WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
+            WeakHashMap<ScriptObject, Boolean> entries = s.getWeakSetData();
             /* steps 7-8 */
-            entries.put(value, Boolean.TRUE);
+            entries.put(Type.objectValue(value), Boolean.TRUE);
             /* step 7.a.i, 9 */
             return s;
         }
@@ -112,7 +113,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initialisa
                 return false;
             }
             /* step 6 */
-            WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
+            WeakHashMap<ScriptObject, Boolean> entries = s.getWeakSetData();
             /* steps 7-8 */
             return entries.remove(value);
         }
@@ -129,7 +130,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initialisa
                 return false;
             }
             /* step 5 */
-            WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
+            WeakHashMap<ScriptObject, Boolean> entries = s.getWeakSetData();
             /* steps 6-7 */
             return entries.containsKey(value);
         }
