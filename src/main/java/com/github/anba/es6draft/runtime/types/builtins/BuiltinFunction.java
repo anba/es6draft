@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
@@ -33,17 +34,40 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
 
     private final String name;
 
+    /**
+     * Creates a new built-in function, does <strong>not</strong> set the [[Prototype]] or any
+     * properties.
+     */
     public BuiltinFunction(Realm realm, String name) {
         super(realm);
         this.realm = realm;
         this.name = name;
     }
 
+    /**
+     * Creates a new built-in function, sets the [[Prototype]] property to
+     * <code>%FunctionPrototype%</code> and defines the "name", "length" and other restricted
+     * function properties.
+     */
     public BuiltinFunction(Realm realm, String name, int arity) {
         super(realm);
         this.realm = realm;
         this.name = name;
         createDefaultFunctionProperties(name, arity);
+    }
+
+    /**
+     * Returns the i-th argument or {@link #UNDEFINED} if the argument index is out of bounds.
+     */
+    protected static final Object getArgument(Object[] arguments, int index) {
+        return arguments.length > index ? arguments[index] : UNDEFINED;
+    }
+
+    /**
+     * Returns the i-th argument or {@code defaultValue} if the argument index is out of bounds.
+     */
+    protected static final Object getArgument(Object[] arguments, int index, Object defaultValue) {
+        return arguments.length > index ? arguments[index] : defaultValue;
     }
 
     /**

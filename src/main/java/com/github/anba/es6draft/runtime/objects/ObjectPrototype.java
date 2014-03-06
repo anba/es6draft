@@ -267,8 +267,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initialisab
             }
             /* steps 5-6 */
             ScriptObject obj = Type.objectValue(o);
-            ScriptObject p = Type.objectValueOrNull(proto);
-            boolean status = obj.setPrototypeOf(cx, p);
+            boolean status = obj.setPrototypeOf(cx, Type.objectValueOrNull(proto));
             /* step 7 */
             if (!status) {
                 // provide better error messages for ordinary objects

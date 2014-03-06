@@ -140,7 +140,7 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
             LinkedMap<Object, Object> entries = m.getMapData();
             /* steps 6-9 */
             Object value = entries.get(key);
-            return (value != null ? value : UNDEFINED);
+            return value != null ? value : UNDEFINED;
         }
 
         /**

@@ -167,9 +167,8 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
             if (!Type.isObjectOrNull(o)) {
                 throw newTypeError(cx, Messages.Key.NotObjectOrNull);
             }
-            ScriptObject proto = Type.objectValueOrNull(o);
             /* step 2 */
-            ScriptObject obj = ObjectCreate(cx, proto);
+            ScriptObject obj = ObjectCreate(cx, Type.objectValueOrNull(o));
             /* step 3 */
             if (!Type.isUndefined(properties)) {
                 return ObjectDefineProperties(cx, obj, properties);
@@ -388,8 +387,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
             }
             /* steps 5-6 */
             ScriptObject obj = Type.objectValue(o);
-            ScriptObject p = Type.objectValueOrNull(proto);
-            boolean status = obj.setPrototypeOf(cx, p);
+            boolean status = obj.setPrototypeOf(cx, Type.objectValueOrNull(proto));
             /* step 7 */
             if (!status) {
                 // provide better error messages for ordinary objects

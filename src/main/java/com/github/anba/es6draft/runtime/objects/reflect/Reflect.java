@@ -84,8 +84,7 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
                 throw newTypeError(cx, Messages.Key.NotObjectOrNull);
             }
             /* step 4 */
-            ScriptObject p = Type.objectValueOrNull(proto);
-            return obj.setPrototypeOf(cx, p);
+            return obj.setPrototypeOf(cx, Type.objectValueOrNull(proto));
         }
 
         /**
