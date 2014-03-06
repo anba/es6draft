@@ -116,6 +116,7 @@ public final class Messages {
         DestructuringMissingInitialiser("parser.destructuring_missing_initialiser"),
         ConstMissingInitialiser("parser.const_missing_initialiser"),
         InvalidIdentifier("parser.invalid_identifier"),
+        DuplicateExport("parser.duplicate_export"),
 
         // strict mode TokenStream/Parser errors
         StrictModeRestrictedIdentifier("parser.strict.restricted_identifier"),

@@ -6,11 +6,16 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
+import static com.github.anba.es6draft.semantics.StaticSemantics.DeclaredNames;
+import static com.github.anba.es6draft.semantics.StaticSemantics.KnownExportEntries;
+import static com.github.anba.es6draft.semantics.StaticSemantics.UnknownExportEntries;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -27,7 +32,7 @@ import com.github.anba.es6draft.runtime.objects.modules.ModuleObject;
  */
 public final class ModuleLinkage {
     /** [[Body]] */
-    private final ModuleBody body;
+    private final Module body;
 
     /** [[Environment]] */
     private final LexicalEnvironment environment;
@@ -66,7 +71,7 @@ public final class ModuleLinkage {
         return moduleObject;
     }
 
-    public ModuleLinkage(ModuleObject moduleObject, ModuleBody body, LexicalEnvironment environment) {
+    public ModuleLinkage(ModuleObject moduleObject, Module body, LexicalEnvironment environment) {
         this.moduleObject = moduleObject;
         this.body = body;
         this.environment = environment;
@@ -74,26 +79,26 @@ public final class ModuleLinkage {
     }
 
     /** [[Body]] */
-    public ModuleBody getBody() {
+    public Module getBody() {
         return body;
     }
 
     /** [[BoundNames]] */
     public List<String> getBoundNames() {
         assert body != null;
-        return body.boundNames();
+        return DeclaredNames(body);
     }
 
     /** [[KnownExportEntries]] */
     public List<ExportEntry> getKnownExportEntries() {
         assert body != null;
-        return body.knownExportEntries();
+        return KnownExportEntries(body);
     }
 
     /** [[UnknownExportEntries]] */
     public List<ExportEntry> getUnknownExportEntries() {
         assert body != null;
-        return body.unknownExportEntries();
+        return UnknownExportEntries(body);
     }
 
     /** [[ExportDefinitions]] */
@@ -187,7 +192,7 @@ public final class ModuleLinkage {
     /**
      * 15.2.5.1.1 CreateModuleLinkageRecord (loader, body) Abstract Operation
      */
-    public static ModuleLinkage CreateModuleLinkageRecord(Loader loader, ModuleBody body) {
+    public static ModuleLinkage CreateModuleLinkageRecord(Loader loader, Module body) {
         /* step 1 (not applicable) */
         /* step 14 */
         Realm realm = loader.getRealm();

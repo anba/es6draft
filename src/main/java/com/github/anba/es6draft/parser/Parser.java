@@ -257,7 +257,7 @@ public final class Parser {
             moduleRequests.add(moduleSpecifier);
         }
 
-        boolean addExportBinding(String binding) {
+        boolean addExportedBindings(String binding) {
             return exportBindings.add(binding);
         }
     }
@@ -570,6 +570,11 @@ public final class Parser {
         context.scopeContext.addLexScopedDeclaration(decl);
     }
 
+    private void addLexScopedDeclaration(ImportDeclaration decl) {
+        assert context.scopeContext == context.modContext : "not in module scope";
+        // TODO: check if ImportDeclarations really need to be stored as lexically scoped
+    }
+
     private void addVarScopedDeclaration(VariableStatement decl) {
         context.topContext.addVarScopedDeclaration(decl);
     }
@@ -680,21 +685,22 @@ public final class Parser {
         }
     }
 
-    private void addExportBindings(long sourcePosition, List<String> bindings) {
+    private void addExportedBindings(long sourcePosition, List<String> bindings) {
         for (String binding : bindings) {
-            addExportBinding(sourcePosition, binding);
+            addExportedBindings(sourcePosition, binding);
         }
     }
 
-    private void addExportBinding(long sourcePosition, String binding) {
+    private void addExportedBindings(long sourcePosition, String binding) {
         assert context.scopeContext == context.modContext : "not in module scope";
-        if (!context.modContext.addExportBinding(binding)) {
-            reportSyntaxError(sourcePosition, Messages.Key.VariableRedeclaration, binding);
+        if (!context.modContext.addExportedBindings(binding)) {
+            reportSyntaxError(sourcePosition, Messages.Key.DuplicateExport, binding);
         }
     }
 
     private void addModuleRequest(String moduleSpecifier) {
         assert context.scopeContext == context.modContext : "not in module scope";
+        // TODO: remove from parser if not subject to early error restrictions
         context.modContext.addModuleRequest(moduleSpecifier);
     }
 
@@ -1175,10 +1181,12 @@ public final class Parser {
      */
     private ImportDeclaration importDeclaration() {
         long begin = ts.beginPosition();
+        ImportDeclaration decl;
         if (token() != Token.IMPORT) {
             ModuleImport moduleImport = moduleImport();
-            // TODO: add lex declared
-            return new ImportDeclaration(begin, ts.endPosition(), moduleImport);
+
+            decl = new ImportDeclaration(begin, ts.endPosition(), moduleImport);
+            addLexScopedDeclaration(decl);
         } else {
             consume(Token.IMPORT);
             if (token() != Token.STRING) {
@@ -1186,22 +1194,24 @@ public final class Parser {
                 String moduleSpecifier = fromClause();
                 semicolon();
 
-                addModuleRequest(moduleSpecifier);
-                if (importClause.getDefaultEntry() != null
-                        || !importClause.getNamedImports().isEmpty()) {
-                    // TODO: add lex declared
-                }
+                // Only lexically scoped if BoundNames(ImportDeclaration) is not empty
+                boolean isLexicallyScoped = importClause.getDefaultEntry() != null
+                        || !importClause.getNamedImports().isEmpty();
 
-                return new ImportDeclaration(begin, ts.endPosition(), importClause, moduleSpecifier);
+                decl = new ImportDeclaration(begin, ts.endPosition(), importClause, moduleSpecifier);
+                if (isLexicallyScoped) {
+                    addLexScopedDeclaration(decl);
+                }
+                addModuleRequest(moduleSpecifier);
             } else {
                 String moduleSpecifier = moduleSpecifier();
                 semicolon();
 
+                decl = new ImportDeclaration(begin, ts.endPosition(), moduleSpecifier);
                 addModuleRequest(moduleSpecifier);
-
-                return new ImportDeclaration(begin, ts.endPosition(), moduleSpecifier);
             }
         }
+        return decl;
     }
 
     /**
@@ -1222,8 +1232,8 @@ public final class Parser {
         String moduleSpecifier = fromClause();
         semicolon();
 
-        addModuleRequest(moduleSpecifier);
         addLexDeclaredName(importedBinding);
+        addModuleRequest(moduleSpecifier);
 
         return new ModuleImport(begin, ts.endPosition(), importedBinding, moduleSpecifier);
     }
@@ -1398,14 +1408,23 @@ public final class Parser {
                 String moduleSpecifier = fromClause();
                 semicolon();
 
+                for (ExportSpecifier export : exportsClause.getExports()) {
+                    addExportedBindings(export.getBeginPosition(), export.getExportName());
+                }
                 addModuleRequest(moduleSpecifier);
 
                 return new ExportDeclaration(begin, ts.endPosition(), exportsClause,
                         moduleSpecifier);
             }
+            // rollback and try resolving exports with local references
             ts.reset(position, lineinfo);
             exportsClause = exportsClause(false);
             semicolon();
+
+            for (ExportSpecifier export : exportsClause.getExports()) {
+                addExportedBindings(export.getBeginPosition(), export.getExportName());
+            }
+
             return new ExportDeclaration(begin, ts.endPosition(), exportsClause);
         }
 
@@ -1413,7 +1432,9 @@ public final class Parser {
             // export VariableStatement
             VariableStatement variableStatement = variableStatement();
 
-            addExportBindings(begin, BoundNames(variableStatement));
+            // FIXME: spec bug - BoundNames(VariableStatement) also declared as lexical names
+
+            addExportedBindings(begin, BoundNames(variableStatement));
 
             return new ExportDeclaration(begin, ts.endPosition(), variableStatement);
         }
@@ -1425,7 +1446,7 @@ public final class Parser {
             // export Declaration[Default]
             Declaration declaration = declaration(true);
 
-            addExportBindings(begin, BoundNames(declaration));
+            addExportedBindings(begin, BoundNames(declaration));
 
             return new ExportDeclaration(begin, ts.endPosition(), declaration);
         }
@@ -1442,7 +1463,7 @@ public final class Parser {
             // "default");
             // addLexDeclaredName(id);
 
-            addExportBinding(begin, "default");
+            addExportedBindings(begin, "default");
 
             return new ExportDeclaration(begin, ts.endPosition(), expression);
         }
@@ -1512,8 +1533,6 @@ public final class Parser {
                 exportName = localName;
             }
         }
-
-        addExportBinding(begin, exportName);
 
         return new ExportSpecifier(begin, ts.endPosition(), importName, localName, exportName);
     }

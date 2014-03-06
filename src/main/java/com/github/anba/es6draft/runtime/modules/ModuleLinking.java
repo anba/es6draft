@@ -230,25 +230,26 @@ public final class ModuleLinking {
         List<String> boundNames = module.getBoundNames();
         /* step 4 */
         for (ExportEntry entry : module.getKnownExportEntries()) {
-            String modReq = entry.moduleRequest;
+            String modReq = entry.getModuleRequest();
             ModuleLinkage otherMod = LookupModuleDependency(module, modReq);
             // FIXME: spec bug - entry.[[Module]] does not exist
-            if (entry.moduleRequest == null && entry.localName != null
-                    && !boundNames.contains(entry.localName)) {
+            if (entry.getModuleRequest() == null && entry.getLocalName() != null
+                    && !boundNames.contains(entry.getLocalName())) {
                 ScriptException error = newReferenceError(cx, Messages.Key.ModulesUnresolvedExport,
-                        entry.localName);
+                        entry.getLocalName());
                 module.getLinkErrors().add(error);
             }
             // FIXME: spec bug? - otherwise take these steps?
             else {
-                defs.add(new ExportDefinition(otherMod, entry.importName, entry.localName,
-                        entry.exportName, true));
+                defs.add(new ExportDefinition(otherMod, entry.getImportName(),
+                        entry.getLocalName(), entry.getExportName(), true));
             }
         }
         /* step 5 */
         for (ExportEntry entry : module.getUnknownExportEntries()) {
-            assert entry.importName == null && entry.localName == null && entry.exportName == null;
-            String modReq = entry.moduleRequest;
+            assert entry.getImportName() == null && entry.getLocalName() == null
+                    && entry.getExportName() == null;
+            String modReq = entry.getModuleRequest();
             ModuleLinkage otherMod = LookupModuleDependency(module, modReq);
             if (visited.contains(otherMod)) {
                 ScriptException error = newSyntaxError(cx, Messages.Key.ModulesCyclicExport);
@@ -357,9 +358,9 @@ public final class ModuleLinking {
         List<ImportDefinition> defs = new ArrayList<>();
         /* step 3 */
         for (ImportEntry entry : entries) {
-            String modReq = entry.moduleRequest;
+            String modReq = entry.getModuleRequest();
             ModuleLinkage otherMod = LookupModuleDependency(module, modReq);
-            defs.add(new ImportDefinition(otherMod, entry.importName, entry.localName));
+            defs.add(new ImportDefinition(otherMod, entry.getImportName(), entry.getLocalName()));
         }
         /* step 4 */
         return defs;

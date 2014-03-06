@@ -6,19 +6,38 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
+/**
+ * 15.2.0.6 Static Semantics: ImportEntries<br>
+ * 15.2.1.3 Static Semantics: ImportEntries
+ */
 public final class ImportEntry {
     /** [[ModuleRequest]] */
-    final String moduleRequest;
+    private final String moduleRequest;
 
     /** [[ImportName]] */
-    final String importName;
+    private final String importName;
 
     /** [[LocalName]] */
-    final String localName;
+    private final String localName;
 
     public ImportEntry(String moduleRequest, String importName, String localName) {
         this.moduleRequest = moduleRequest;
         this.importName = importName;
         this.localName = localName;
+    }
+
+    /** [[ModuleRequest]] */
+    public String getModuleRequest() {
+        return moduleRequest;
+    }
+
+    /** [[ImportName]] */
+    public String getImportName() {
+        return importName;
+    }
+
+    /** [[LocalName]] */
+    public String getLocalName() {
+        return localName;
     }
 }

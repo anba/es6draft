@@ -17,6 +17,7 @@ import static com.github.anba.es6draft.runtime.modules.Load.CreateLoadRequestObj
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
+import static com.github.anba.es6draft.semantics.StaticSemantics.ModuleRequests;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -446,16 +447,14 @@ public final class ModuleLoading {
             if (Type.isUndefined(instantiateResult)) {
                 /* step 4 */
                 Parser parser = new Parser("", 1, calleeContext.getRealm().getOptions());
-                Module parsedModule;
+                Module body;
                 try {
-                    parsedModule = parser.parseModule(load.getSource());
+                    body = parser.parseModule(load.getSource());
                 } catch (ParserException e) {
                     throw e.toScriptException(calleeContext);
                 }
-                // TODO: parsedModule as ModuleBody
-                ModuleBody body = null;
                 load.declarative(body);
-                depsList = parsedModule.getScope().getModuleRequests();
+                depsList = ModuleRequests(body);
             } else if (Type.isObject(instantiateResult)) {
                 /* step 5 */
                 ScriptObject instantiateResultObject = Type.objectValue(instantiateResult);

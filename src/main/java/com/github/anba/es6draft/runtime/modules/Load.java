@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -76,7 +77,7 @@ public final class Load {
     private Kind kind;
 
     /** [[Body]] */
-    private ModuleBody body;
+    private Module body;
 
     /** [[Execute]] */
     private Callable execute; // sometimes referred to as [[Factory]]
@@ -157,7 +158,7 @@ public final class Load {
     }
 
     /** [[Body]] */
-    public ModuleBody getBody() {
+    public Module getBody() {
         return body;
     }
 
@@ -210,10 +211,10 @@ public final class Load {
     /**
      * Changes this Load record to 'declarative'
      */
-    void declarative(ModuleBody moduleBody) {
+    void declarative(Module body) {
         assert kind == null;
         this.kind = Kind.Declarative;
-        this.body = moduleBody;
+        this.body = body;
     }
 
     /**

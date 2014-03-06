@@ -18,6 +18,8 @@ import java.util.Set;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.runtime.internal.SmallArrayList;
+import com.github.anba.es6draft.runtime.modules.ExportEntry;
+import com.github.anba.es6draft.runtime.modules.ImportEntry;
 
 /**
  * <h1>Static Semantics</h1>
@@ -75,6 +77,20 @@ public final class StaticSemantics {
      * 14.1.2 Static Semantics: BoundNames
      */
     public static List<String> BoundNames(FormalParameterList node) {
+        return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
+    }
+
+    /**
+     * 15.2.1.2 Static Semantics: BoundNames
+     */
+    public static List<String> BoundNames(ImportDeclaration node) {
+        return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
+    }
+
+    /**
+     * 15.2.2.1 Static Semantics: BoundNames
+     */
+    public static List<String> BoundNames(ExportDeclaration node) {
         return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
     }
 
@@ -198,10 +214,17 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.2 Static Semantics: IsStrict
+     * 15.1.2 Static Semantics: IsStrict
      */
     public static boolean IsStrict(Script node) {
         return node.isStrict();
+    }
+
+    /**
+     * 15.2.0.7 Static Semantics: IsStrict
+     */
+    public static boolean IsStrict(Module node) {
+        return true;
     }
 
     /**
@@ -328,6 +351,203 @@ public final class StaticSemantics {
      * 15.2.6 Static Semantics: VarScopedDeclarations
      */
     public static List<StatementListItem> VarScopedDeclarations(Script node) {
+        return emptyIfNull(node.getScope().varScopedDeclarations());
+    }
+
+    /**
+     * 15.2.0.2 Static Semantics: DeclaredNames
+     */
+    public static List<String> DeclaredNames(Module node) {
+        List<String> names = new ArrayList<>();
+        names.addAll(LexicallyDeclaredNames(node));
+        names.addAll(VarDeclaredNames(node));
+        return names;
+    }
+
+    /**
+     * 15.2.0.3 Static Semantics: ExportedBindings<br>
+     * 15.2.2.2 Static Semantics: ExportedBindings
+     */
+    public static Set<String> ExportedBindings(Module node) {
+        return emptyIfNull(node.getScope().getExportBindings());
+    }
+
+    /**
+     * 15.2.0.4 Static Semantics: ExportEntries<br>
+     * 15.2.2.3 Static Semantics: ExportEntries
+     */
+    public static List<ExportEntry> ExportEntries(Module node) {
+        List<ExportEntry> entries = new ArrayList<>();
+        for (ModuleItem item : node.getStatements()) {
+            if (item instanceof ExportDeclaration) {
+                ExportDeclaration exportDecl = (ExportDeclaration) item;
+                switch (exportDecl.getType()) {
+                case All: {
+                    String module = exportDecl.getModuleSpecifier();
+                    entries.add(new ExportEntry(module, "<all>", null, null));
+                    break;
+                }
+                case External: {
+                    String module = exportDecl.getModuleSpecifier();
+                    ExportEntriesForModule(exportDecl.getExportsClause(), module, entries);
+                    break;
+                }
+                case Local:
+                    ExportEntriesForModule(exportDecl.getExportsClause(), null, entries);
+                    break;
+                case Variable:
+                    for (String name : BoundNames(exportDecl.getVariableStatement())) {
+                        entries.add(new ExportEntry(null, null, name, name));
+                    }
+                    break;
+                case Declaration:
+                    for (String name : BoundNames(exportDecl.getDeclaration())) {
+                        entries.add(new ExportEntry(null, null, name, name));
+                    }
+                    break;
+                case Default:
+                default:
+                    entries.add(new ExportEntry(null, null, "default", "default"));
+                    break;
+                }
+            }
+        }
+        return entries;
+    }
+
+    /**
+     * 15.2.2.4 Static Semantics: ExportEntriesForModule
+     */
+    private static void ExportEntriesForModule(ExportsClause node, String module,
+            List<ExportEntry> entries) {
+        for (ExportSpecifier specifier : node.getExports()) {
+            entries.add(new ExportEntry(module, specifier.getImportName(),
+                    specifier.getLocalName(), specifier.getExportName()));
+        }
+    }
+
+    /**
+     * 15.2.0.5 Static Semantics: ImportedBindings
+     */
+    public static List<String> ImportedBindings(Module node) {
+        List<String> bindings = new ArrayList<>();
+        for (ModuleItem item : node.getStatements()) {
+            if (item instanceof ImportDeclaration) {
+                item.accept(BoundNames.INSTANCE, bindings);
+            }
+        }
+        return bindings;
+    }
+
+    /**
+     * 15.2.0.6 Static Semantics: ImportEntries<br>
+     * 15.2.1.3 Static Semantics: ImportEntries
+     */
+    public static List<ImportEntry> ImportEntries(Module node) {
+        List<ImportEntry> entries = new ArrayList<>();
+        for (ModuleItem item : node.getStatements()) {
+            if (item instanceof ImportDeclaration) {
+                ImportDeclaration importDecl = (ImportDeclaration) item;
+                switch (importDecl.getType()) {
+                case ImportFrom: {
+                    String module = importDecl.getModuleSpecifier();
+                    ImportEntriesForModule(importDecl.getImportClause(), module, entries);
+                    break;
+                }
+                case ModuleImport: {
+                    ModuleImport moduleImport = importDecl.getModuleImport();
+                    String module = moduleImport.getModuleSpecifier();
+                    String localName = moduleImport.getImportedBinding().getName();
+                    entries.add(new ImportEntry(module, "default", localName));
+                    break;
+                }
+                case ImportModule:
+                default:
+                    /* empty */
+                    break;
+                }
+            }
+        }
+        return entries;
+    }
+
+    /**
+     * 15.2.1.4 Static Semantics: ImportEntriesForModule
+     */
+    private static void ImportEntriesForModule(ImportClause node, String module,
+            List<ImportEntry> entries) {
+        if (node.getDefaultEntry() != null) {
+            String localName = node.getDefaultEntry().getName();
+            entries.add(new ImportEntry(module, "default", localName));
+        }
+        for (ImportSpecifier specifier : node.getNamedImports()) {
+            String importName = specifier.getImportName();
+            String localName = specifier.getLocalName().getName();
+            entries.add(new ImportEntry(module, importName, localName));
+        }
+    }
+
+    /**
+     * 15.2.0.8 Static Semantics: KnownExportEntries
+     */
+    public static List<ExportEntry> KnownExportEntries(Module node) {
+        List<ExportEntry> knownExports = new ArrayList<>();
+        for (ExportEntry entry : ExportEntries(node)) {
+            if (!"<all>".equals(entry.getImportName())) {
+                knownExports.add(entry);
+            }
+        }
+        return knownExports;
+    }
+
+    /**
+     * 15.2.0.9 Static Semantics: ModuleRequests<br>
+     * 15.2.1.5 Static Semantics: ModuleRequests<br>
+     * 15.2.2.5 Static Semantics: ModuleRequests
+     */
+    public static Set<String> ModuleRequests(Module node) {
+        return emptyIfNull(node.getScope().getModuleRequests());
+    }
+
+    /**
+     * 15.2.0.10 Static Semantics: LexicallyDeclaredNames
+     */
+    public static Set<String> LexicallyDeclaredNames(Module node) {
+        return emptyIfNull(node.getScope().lexicallyDeclaredNames());
+    }
+
+    /**
+     * 15.2.0.11 Static Semantics: LexicalDeclarations
+     */
+    public static List<Declaration> LexicalDeclarations(Module node) {
+        // TODO: does not include ImportDeclaration nodes
+        return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
+    }
+
+    /**
+     * 15.2.0.12 Static Semantics: UnknownExportEntries
+     */
+    public static List<ExportEntry> UnknownExportEntries(Module node) {
+        List<ExportEntry> unknownExports = new ArrayList<>();
+        for (ExportEntry entry : ExportEntries(node)) {
+            if ("<all>".equals(entry.getImportName())) {
+                unknownExports.add(entry);
+            }
+        }
+        return unknownExports;
+    }
+
+    /**
+     * 15.2.0.13 Static Semantics: VarDeclaredNames
+     */
+    public static Set<String> VarDeclaredNames(Module node) {
+        return emptyIfNull(node.getScope().varDeclaredNames());
+    }
+
+    /**
+     * 15.2.0.14 Static Semantics: VarScopedDeclarations
+     */
+    public static List<StatementListItem> VarScopedDeclarations(Module node) {
         return emptyIfNull(node.getScope().varScopedDeclarations());
     }
 

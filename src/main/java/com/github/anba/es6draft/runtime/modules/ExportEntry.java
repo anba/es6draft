@@ -6,23 +6,47 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
+/**
+ * 15.2.0.4 Static Semantics: ExportEntries<br>
+ * 15.2.2.3 Static Semantics: ExportEntries
+ */
 public final class ExportEntry {
     /** [[ModuleRequest]] */
-    final String moduleRequest;
+    private final String moduleRequest;
 
     /** [[ImportName]] */
-    final String importName;
+    private final String importName;
 
     /** [[LocalName]] */
-    final String localName;
+    private final String localName;
 
     /** [[ExportName]] */
-    final String exportName;
+    private final String exportName;
 
     public ExportEntry(String moduleRequest, String importName, String localName, String exportName) {
         this.moduleRequest = moduleRequest;
         this.importName = importName;
         this.localName = localName;
         this.exportName = exportName;
+    }
+
+    /** [[ModuleRequest]] */
+    public String getModuleRequest() {
+        return moduleRequest;
+    }
+
+    /** [[ImportName]] */
+    public String getImportName() {
+        return importName;
+    }
+
+    /** [[LocalName]] */
+    public String getLocalName() {
+        return localName;
+    }
+
+    /** [[ExportName]] */
+    public String getExportName() {
+        return exportName;
     }
 }
