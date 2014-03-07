@@ -195,15 +195,15 @@ public final class Resources {
     /**
      * Filter the initially collected test cases
      */
-    private static <T extends TestInfo> List<T> filterTests(List<T> tests, InputStream resource)
-            throws IOException {
+    private static <TEST extends TestInfo> List<TEST> filterTests(List<TEST> tests,
+            InputStream resource) throws IOException {
         // list->map
-        Map<Path, TestInfo> map = new LinkedHashMap<>();
-        for (TestInfo test : tests) {
+        Map<Path, TEST> map = new LinkedHashMap<>();
+        for (TEST test : tests) {
             map.put(test.script, test);
         }
         // disable tests
-        List<TestInfo> disabledTests = new ArrayList<>();
+        List<TEST> disabledTests = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource,
                 StandardCharsets.UTF_8))) {
             String line;
@@ -212,13 +212,13 @@ public final class Resources {
                 if (line.startsWith("#") || line.isEmpty()) {
                     continue;
                 }
-                TestInfo t = map.get(Paths.get(line));
-                if (t == null) {
+                TEST test = map.get(Paths.get(line));
+                if (test == null) {
                     System.err.printf("detected stale entry '%s'\n", line);
                     continue;
                 }
-                disabledTests.add(t);
-                t.enable = false;
+                disabledTests.add(test);
+                test.enable = false;
             }
         }
         System.out.printf("disabled %d tests of %d in total%n", disabledTests.size(), tests.size());

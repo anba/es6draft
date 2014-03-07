@@ -2750,9 +2750,13 @@ public final class Parser {
                 if ("constructor".equals(key) && SpecialMethod(def)) {
                     reportSyntaxError(def, Messages.Key.InvalidConstructorMethod);
                 }
-                // Give the constructor a better for name for stacktraces
+                // Give methods a better for name for stacktraces
                 if (className != null) {
-                    def.setFunctionName(className.getName());
+                    if ("constructor".equals(key)) {
+                        def.setFunctionName(className.getName());
+                    } else {
+                        def.setFunctionName(className.getName() + "." + key);
+                    }
                 }
             }
             MethodDefinition.MethodType type = def.getType();

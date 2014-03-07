@@ -48,7 +48,7 @@ public class ErrorMessageMatcher<T extends Throwable> extends TypeSafeMatcher<T>
         return matcher.matches(getMessage(error));
     }
 
-    protected String getMessage(T error) {
+    private String getMessage(T error) {
         if (error instanceof ScriptException) {
             return ((ScriptException) error).getMessage(cx);
         }
