@@ -5,9 +5,6 @@
 # <https://github.com/anba/es6draft>
 #
 
-# Math.clz32(), not yet in published draft
-harmony/math-clz32.js
-
 # Object.prototype.__proto__ not yet updated to return undefined
 proto-accessor.js
 
@@ -54,17 +51,8 @@ regress/regress-2438.js
 # invalid test, Array.prototype.sort throws if array is frozen
 regress/regress-2419.js
 
-# invalid test, Array.prototype.push calls Put() with strict=true flag
-regress/regress-2711.js
-
 # spec issue/invalid test, GetViewValue() throws RangeError instead of TypeError for invalid indices
 harmony/dataview-accessors.js
-
-# invalid test, Math.cosh(-Infinity) == Infinity, test expects Math.cosh(-Infinity) == -Infinity
-harmony/math-hyperbolic.js
-
-# invalid test, wrong behaviour for duplicate property key check when key is "__proto__"
-regress/regress-3135.js
 
 
 ###################
@@ -78,11 +66,6 @@ regexp-loop-capture.js
 regexp-UC16.js
 regress/regress-176.js
 third_party/regexp-pcre.js
-
-# Works with Joni
-regress/regress-187.js
-unicodelctest.js
-unicodelctest-no-optimization.js
 
 # repeat in qualifier too large
 regexp.js
@@ -242,9 +225,8 @@ array-length.js
 # String.prototype.split changed to call ToLength instead of ToUint32 on limit argument
 string-split.js
 
-# String.prototype.{ends,starts}With throws TypeError when argument is RegExp
-harmony/string-endswith.js
-harmony/string-startswith.js
+# RegExp.prototype.compile requires extensible object
+regress/regress-349870.js
 
 
 #######################################
@@ -320,6 +302,10 @@ regress/regress-1122.js
 # StackOverflowError during invokedynamic linking (intermittent)
 regress/regress-1132.js
 regress/regress-148378.js
+
+# Timeout (slow)
+unicodelctest.js
+unicodelctest-no-optimization.js
 
 # Timeout
 array-concat.js

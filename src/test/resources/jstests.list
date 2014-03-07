@@ -53,8 +53,6 @@ ecma_5/extensions/destructuring-for-inof-__proto__.js
 # Intl only partially supported    #
 ####################################
 
-Intl/DateTimeFormat/format.js
-Intl/NumberFormat/format.js
 Intl/NumberFormat/StringBuffer.js
 
 
@@ -97,9 +95,6 @@ ecma_5/RegExp/instance-property-storage-introspection.js
 # Misc issues     #
 ###################
 
-# BOM is also whitespace in RegExp
-ecma_5/RegExp/regexp-space-character-class.js
-
 # BlockScope and WithStatement issue
 js1_5/Scope/regress-184107.js
 js1_5/Scope/regress-185485.js
@@ -115,9 +110,6 @@ ecma_3/RegExp/regress-209919.js
 ecma_5/RegExp/regress-613820-2.js
 ecma_5/RegExp/regress-613820-3.js
 ecma_5/String/split-xregexp.js
-
-# Works in Joni
-js1_5/Regress/regress-247179.js
 
 # __noSuchMethod__ not supported
 js1_5/extensions/no-such-method.js
@@ -173,9 +165,6 @@ ecma_5/extensions/proxy-__proto__.js
 
 # old 'Proxy' not completely emulated
 js1_8_5/extensions/proxy-enumerateOwn-duplicates.js
-
-# Array.prototype.sort does not throw if no setter defined
-js1_6/extensions/regress-414098.js
 
 # Date parser
 ecma/Date/15.9.4.2.js
@@ -307,9 +296,6 @@ js1_8_5/extensions/censor-strict-caller.js
 # [[Set]] on non-existant property key triggers [[Set]] on prototype
 js1_8_5/extensions/correct-this-for-nonnatives-on-array-proto-chain.js
 
-# __proto__ must be either object or null
-js1_5/extensions/regress-455408.js
-
 # Function.length is configurable
 ecma/Array/15.4.4.3-1.js
 ecma/Array/15.4.4.4-1.js
@@ -334,9 +320,6 @@ ecma_5/strict/15.3.5.1.js
 # function .name property is configurable=true
 ecma_5/strict/function-name.js
 
-# Missing properties in destructuring throw TypeError
-js1_7/geniter/regress-345736.js
-
 # No implicit ToObject() in destructuring
 js1_5/extensions/regress-469625.js
 js1_7/extensions/regress-355410.js
@@ -349,10 +332,6 @@ js1_8_5/regress/regress-646820-3.js
 # String.prototype.split changed to use ToLength instead of ToUint32
 ecma_2/String/split-002.js
 ecma_5/String/split-undefined-separator.js
-
-# Generator.prototype.next does not throw TypeError after iteration finished
-ecma_6/Generators/iteration.js
-ecma_6/Generators/delegating-yield-6.js
 
 
 #######################################
@@ -373,14 +352,8 @@ js1_7/block/regress-349507.js
 ecma_5/misc/future-reserved-words.js
 
 # ES6-change: 'eval'/'arguments' not allowed in binding pattern
-ecma_5/extensions/bug496985.js
-ecma_5/strict/12.14.1.js
 ecma_5/strict/13.1.js
-ecma_5/strict/regress-532254.js
-js1_8_1/regress/regress-509354.js
 js1_8_1/strict/12.2.1.js
-js1_8_1/strict/generator-eval-arguments.js
-js1_8_1/strict/let-block-eval-arguments.js
 
 # ES6-change: var-redeclaration in try-catch verboten
 ecma_3/ExecutionContexts/regress-448595-01.js

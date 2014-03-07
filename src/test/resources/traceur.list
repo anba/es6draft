@@ -13,11 +13,6 @@ feature/Classes/ExtendStrange.js
 # super works in nested functions
 feature/Classes/NestedFunctionSuper.js
 
-# block-binding in for(;;) loop
-feature/Scope/BlockBinding4.js
-feature/Scope/BlockBinding5.js
-feature/Scope/BlockBinding11.js
-
 # invalid test, symbol-valued properties are not strict properties
 feature/Symbol/Inherited.js
 
@@ -48,9 +43,6 @@ feature/Yield/GeneratorReturn.js
 feature/Yield/GeneratorSend.js
 feature/Yield/GeneratorThrow.js
 feature/Yield/TryCatchGenerator.js
-
-# stack enhanced with class-name
-feature/Classes/ClassNameInStack.js
 
 # actually runtime exception
 feature/Scope/Error_BlockBinding1.js
@@ -111,9 +103,8 @@ feature/Destructuring/Rest.js
 feature/Spread/Type.js
 feature/TempVarTransformer/UseStrictDirective.js
 
-# ClassDeclaration binds name
+# SetFunctionName() not supported in traceur
 feature/Classes/ClassNameBinding.js
-feature/Classes/Constructor.js
 
 # No error when calling next() on closed generator
 feature/Yield/Try.js
@@ -140,7 +131,6 @@ feature/TemplateLiterals/InModule.js
 feature/TemplateLiterals/resources/f.js
 feature/TemplateLiterals/resources/m.js
 feature/TemplateLiterals/resources/n.js
-feature/Yield/Tree.js
 
 # Type declaration syntax
 feature/Classes/Types.js

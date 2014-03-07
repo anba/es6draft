@@ -37,18 +37,14 @@ tests/for-of/typedarrays-2.js
 tests/for-of/typedarrays-3.js
 tests/for-of/typedarrays-6.js
 
+# ES6 spec incomplete: integer indices beyond 2^53-1
+tests/basic/typed-array-index-out-of-range.js
+
 # potential ES6 spec bug? for-of over undefined
 tests/for-of/non-iterable.js
 
-# potential ES6 spec bug? Number.isInteger(Infinity)
-tests/basic/number-isinteger.js
-
 # ES6 spec bug wrt destructuring
 tests/basic/bug719750.js
-tests/basic/testDestructuringFormalError.js
-
-# spec bug - web compat issue?
-tests/basic/bug683140.js
 
 # ES6 spec incomplete for [[OwnPropertyKeys]] on indexed exotic objects
 tests/basic/typed-array-sealed-frozen.js
@@ -56,9 +52,6 @@ tests/basic/typed-array-sealed-frozen.js
 # ES6-change: assignment to function call is early error
 # ES6: invalid destructuring is SyntaxError
 tests/basic/spread-call-setcall.js
-
-# Global property name conflict: 'Module'
-tests/bug830943.js
 
 
 ###################
@@ -68,10 +61,6 @@ tests/bug830943.js
 # lib/asserts.js: assertDeepEq() considers `{a: 1, b: 2}` and `{b: 2, a: 1}` as different objects...
 tests/arrays/sort-getter-only.js
 
-# invalid test, Array.of() creates properties with writable=enumerable=configurable=true, but
-# TypedArrays have non-configurable properties
-tests/collections/Array-of-generic-3.js
-
 # invalid test, Array.of() creates properties with DefinePropertyOrThrow(), but Proxy defined in
 # the test case does return a positive success value from [[DefineOwnProperty]]
 tests/collections/Array-of-ordering.js
@@ -79,9 +68,6 @@ tests/collections/Array-of-ordering.js
 # invalid test case (relies on order in which elements are visited in Array.prototype.sort)
 # and its strcmp function is broken as well
 tests/basic/testBug720695.js
-
-# invalid test case Array.prototype.push calls Put() with throw=true
-tests/basic/bug829821.js
 
 # WithStatement vs. block scope
 tests/basic/testBug753158.js
@@ -135,7 +121,6 @@ tests/basic/testLet.js
 # different error message
 tests/basic/bug827104.js
 tests/basic/bug839420.js
-tests/basic/bug882416.js
 tests/basic/bug934997.js
 tests/basic/expression-autopsy.js
 tests/basic/spread-call-maxarg.js
@@ -152,9 +137,6 @@ tests/self-hosting/invoke-self-hosted-with-primitive-this.js
 
 # Different Parser strategy
 tests/basic/bug862228.js
-
-# eval() and Function() set parser line relative to current source line
-tests/basic/spread-call-eval.js
 
 # Different realm change on function calls
 tests/collections/bug-743101.js
@@ -201,9 +183,6 @@ tests/basic/testBug761439.js
 
 # missing [object Function] for proxied functions
 tests/basic/bug807623.js
-
-# ES6 spec bug or SpiderMonkey bug? Proxy and [[Delete]]
-tests/basic/bug821850.js
 
 # Old Proxy API not completely emulated
 tests/auto-regress/bug578015.js
@@ -297,9 +276,6 @@ tests/basic/bug745360.js
 # RegExp.prototype.{source,ignoreCase,global,multiline} now accessor
 tests/basic/bug750307.js
 
-# ES6-change: Array.prototype.splice calls Put("length") already in step 13
-tests/basic/splice-fail-step-16.js
-
 # ES6-change or? Map|Set.length is 0
 # - Emulated Map/Set need to use delegation to pass surface test
 tests/collections/Map-surfaces-1.js
@@ -311,11 +287,6 @@ tests/proxy/testDirectProxyConstruct2.js
 # ES6-change: <this> within generator is always a generator object
 tests/auto-regress/bug678090.js
 
-# __proto__ must be either object or null
-tests/auto-regress/bug652177.js
-tests/basic/testInitProtoPrimitive.js
-tests/basic/testSetPropNeitherMissNorHit.js
-
 # ToLength() moved array length restriction to 2^53-1
 tests/for-of/array-iterator-generic.js
 
@@ -324,8 +295,6 @@ tests/basic/bug943126.js
 
 # Missing properties in destructuring throw TypeError
 tests/auto-regress/bug785776.js
-tests/basic/bug641229.js
-tests/collections/Map-constructor-3.js
 
 # No implicit ToObject() in destructuring
 tests/basic/bug685321-1.js
@@ -335,11 +304,6 @@ tests/basic/testBug714650.js
 
 # contextual .name property for functions
 tests/self-test/assertDeepEq.js
-
-# SameValueZero comparison for Map and Set not implemented in SM
-tests/collections/key-equality-0.js
-tests/collections/Map-gc-4.js
-tests/collections/Map-get.js
 
 # for-of does not call .next() with undefined as a single argument
 tests/for-of/next-arity.js
@@ -358,22 +322,12 @@ tests/basic/testBug775807.js
 # ES6-change: let-block scope even in global scope
 tests/basic/bug646968-3.js
 
-# ES6-change: 'eval'/'arguments' not allowed in binding pattern
-tests/arguments/rest-arguments-as-parameters.js
-tests/basic/testBug741497.js
-
 # missing const initialiser
 tests/auto-regress/bug487570.js
 tests/auto-regress/bug495843.js
 
-# cannot assign to 'arguments'
-tests/auto-regress/bug735936.js
-
 # let variable must no be redeclared
 tests/basic/bug778268.js
-
-# lex-scoped variable re-declaration on global with eval
-tests/bug825379.js
 
 # ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
 tests/auto-regress/bug765055.js
@@ -392,9 +346,7 @@ tests/basic/testFunctionStatementAliasLocals.js
 tests/basic/testWeirdThingsInFunctionConstructor.js
 
 # CallExpression no longer valid LHS
-tests/auto-regress/bug521279.js
 tests/auto-regress/bug701248.js
-tests/basic/bug728609.js
 tests/basic/bug738841.js
 
 # Initialiser in for-in
@@ -520,12 +472,6 @@ tests/basic/testStringBufferMallocAccounting.js
 tests/basic/bug782337.js
 # internalConst
 tests/basic/bug656261.js
-# mjitChunkLimit
-tests/auto-regress/bug726799.js
-tests/auto-regress/bug728509.js
-tests/auto-regress/bug740654.js
-tests/auto-regress/bug743876.js
-tests/basic/testBug755916.js
 # displayName
 tests/basic/functionnames.js
 # getObjectMetadata/setObjectMetadata/setObjectMetadataCallback
