@@ -19,7 +19,6 @@ import static com.github.anba.es6draft.runtime.objects.text.StringIteratorProtot
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
-import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -47,6 +46,7 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.ibm.icu.lang.UCharacter;
+import com.ibm.icu.text.Normalizer;
 import com.ibm.icu.util.ULocale;
 
 /**
@@ -763,18 +763,25 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
             /* step 1 */
             Object obj = CheckObjectCoercible(cx, thisValue);
             /* steps 2-3 */
-            CharSequence s = ToString(cx, obj);
+            String s = ToFlatString(cx, obj);
             /* steps 4-6 */
             String f = "NFC";
             if (!Type.isUndefined(form)) {
                 f = ToFlatString(cx, form);
             }
-            /* step 7 */
-            if (!("NFC".equals(f) || "NFD".equals(f) || "NFKC".equals(f) || "NFKD".equals(f))) {
+            /* steps 7-9 */
+            switch (f) {
+            case "NFC":
+                return Normalizer.normalize(s, Normalizer.NFC);
+            case "NFD":
+                return Normalizer.normalize(s, Normalizer.NFD);
+            case "NFKC":
+                return Normalizer.normalize(s, Normalizer.NFKC);
+            case "NFKD":
+                return Normalizer.normalize(s, Normalizer.NFKD);
+            default:
                 throw newRangeError(cx, Messages.Key.InvalidNormalizationForm);
             }
-            /* steps 8-9 */
-            return Normalizer.normalize(s, Normalizer.Form.valueOf(f));
         }
 
         /**
