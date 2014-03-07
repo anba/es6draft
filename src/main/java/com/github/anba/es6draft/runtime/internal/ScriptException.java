@@ -11,7 +11,6 @@ import java.util.Objects;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
-import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * Runtime exception to represent exceptions thrown from the ThrowStatement
@@ -47,9 +46,6 @@ public final class ScriptException extends RuntimeException {
 
     @Override
     public String getMessage() {
-        if (!Type.isObject(value)) {
-            return AbstractOperations.ToFlatString(null, value);
-        }
         return Objects.toString(value);
     }
 

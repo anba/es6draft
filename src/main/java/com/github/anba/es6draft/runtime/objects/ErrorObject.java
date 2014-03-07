@@ -8,10 +8,14 @@ package com.github.anba.es6draft.runtime.objects;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.GeneratorThread;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -26,14 +30,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class ErrorObject extends OrdinaryObject {
-    private final Realm realm;
     private boolean initialised = false;
     private ScriptException exception = null;
     private List<StackTraceElement[]> stackTraces;
 
     public ErrorObject(Realm realm) {
         super(realm);
-        this.realm = realm;
         this.exception = new ScriptException(this);
         this.stackTraces = collectStackTraces();
     }
@@ -67,6 +69,39 @@ public final class ErrorObject extends OrdinaryObject {
 
     @Override
     public String toString() {
-        return getException().getMessage(realm.defaultContext());
+        String name = getErrorObjectProperty(this, "name", "Error");
+        String message = getErrorObjectProperty(this, "message", "");
+        if (name.length() == 0) {
+            return message;
+        }
+        if (message.length() == 0) {
+            return name;
+        }
+        return name + ": " + message;
+    }
+
+    /**
+     * Specialized property retrieval to prevent any script execution
+     */
+    private static String getErrorObjectProperty(ErrorObject error, String propertyName,
+            String defaultValue) {
+        Property property = error.ordinaryGetOwnProperty(propertyName);
+        if (property == null) {
+            ScriptObject proto = error.getPrototype();
+            if (proto instanceof ErrorPrototype) {
+                property = ((ErrorPrototype) proto).getOwnProperty(propertyName);
+            } else if (proto instanceof NativeErrorPrototype) {
+                property = ((NativeErrorPrototype) proto).getOwnProperty(propertyName);
+            }
+        }
+        Object value = property != null && property.isDataDescriptor() ? property.getValue() : null;
+        if (value == null || Type.isUndefined(value)) {
+            return defaultValue;
+        }
+        // Prevent possible recursion
+        if (value instanceof ErrorObject) {
+            return "<error>";
+        }
+        return Objects.toString(value);
     }
 }

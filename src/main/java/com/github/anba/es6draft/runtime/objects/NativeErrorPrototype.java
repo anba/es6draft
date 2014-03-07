@@ -15,6 +15,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -33,6 +34,13 @@ public final class NativeErrorPrototype extends OrdinaryObject implements Initia
     public NativeErrorPrototype(Realm realm, ErrorType type) {
         super(realm);
         this.type = type;
+    }
+
+    /**
+     * Package private accessor for {@link ErrorObject#toString()}
+     */
+    Property getOwnProperty(String propertyKey) {
+        return ordinaryGetOwnProperty(propertyKey);
     }
 
     @Override
