@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.reflect;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.RegExpCreate;
+import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.RegExpCreate;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Type.isUndefinedOrNull;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.DenseArrayCreate;

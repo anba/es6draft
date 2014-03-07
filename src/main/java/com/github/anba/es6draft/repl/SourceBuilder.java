@@ -14,10 +14,10 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.objects.DateObject;
-import com.github.anba.es6draft.runtime.objects.DatePrototype;
-import com.github.anba.es6draft.runtime.objects.RegExpObject;
-import com.github.anba.es6draft.runtime.objects.RegExpPrototype;
+import com.github.anba.es6draft.runtime.objects.date.DateObject;
+import com.github.anba.es6draft.runtime.objects.date.DatePrototype;
+import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
+import com.github.anba.es6draft.runtime.objects.text.RegExpPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;

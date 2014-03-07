@@ -4,18 +4,18 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.runtime.objects;
+package com.github.anba.es6draft.runtime.objects.text;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.RegExpCreate;
-import static com.github.anba.es6draft.runtime.objects.StringIteratorPrototype.CreateStringIterator;
 import static com.github.anba.es6draft.runtime.objects.intl.CollatorPrototype.CompareStrings;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.CanonicalizeLocaleList;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.DefaultLocale;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.LookupSupportedLocales;
+import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.RegExpCreate;
+import static com.github.anba.es6draft.runtime.objects.text.StringIteratorPrototype.CreateStringIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
