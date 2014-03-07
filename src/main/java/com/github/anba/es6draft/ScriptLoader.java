@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import com.github.anba.es6draft.ast.FunctionDefinition;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.compiler.CompiledFunction;
 import com.github.anba.es6draft.compiler.CompiledScript;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.interpreter.InterpretedScript;
@@ -111,8 +112,7 @@ public final class ScriptLoader {
     public static CompiledScript compile(com.github.anba.es6draft.ast.Script parsedScript,
             String className, ExecutorService executor, EnumSet<Compiler.Option> options)
             throws CompilationException {
-        Compiler compiler = new Compiler(executor, options);
-        return compiler.compile(parsedScript, className);
+        return tryCompile(parsedScript, className, executor, options);
     }
 
     /**
@@ -151,8 +151,8 @@ public final class ScriptLoader {
     public static CompiledScript compile(Realm realm,
             com.github.anba.es6draft.ast.Script parsedScript, String className)
             throws CompilationException {
-        Compiler compiler = new Compiler(realm.getExecutor(), realm.getCompilerOptions());
-        return compiler.compile(parsedScript, className);
+        ExecutorService executor = realm.getExecutor();
+        return tryCompile(parsedScript, className, executor, realm.getCompilerOptions());
     }
 
     /**
@@ -161,9 +161,9 @@ public final class ScriptLoader {
      */
     public static RuntimeInfo.Function compile(Realm realm, FunctionDefinition function)
             throws CompilationException {
+        ExecutorService executor = realm.getExecutor();
         String className = realm.nextFunctionName();
-        Compiler compiler = new Compiler(realm.getExecutor(), realm.getCompilerOptions());
-        return compiler.compile(function, className).getFunction();
+        return tryCompile(function, className, executor, realm.getCompilerOptions()).getFunction();
     }
 
     /**
@@ -172,8 +172,69 @@ public final class ScriptLoader {
      */
     public static RuntimeInfo.Function compile(Realm realm, GeneratorDefinition generator)
             throws CompilationException {
+        ExecutorService executor = realm.getExecutor();
         String className = realm.nextFunctionName();
-        Compiler compiler = new Compiler(realm.getExecutor(), realm.getCompilerOptions());
-        return compiler.compile(generator, className).getFunction();
+        return tryCompile(generator, className, executor, realm.getCompilerOptions()).getFunction();
+    }
+
+    /**
+     * Try to compile the script with the given executor, unless it has been shutdown, in that case
+     * create a new executor for compilation
+     */
+    private static CompiledScript tryCompile(com.github.anba.es6draft.ast.Script parsedScript,
+            String className, ExecutorService executor, EnumSet<Compiler.Option> options) {
+        if (executor.isShutdown()) {
+            return compile(parsedScript, className, options);
+        }
+        Compiler compiler = new Compiler(executor, options);
+        return compiler.compile(parsedScript, className);
+    }
+
+    /**
+     * Try to compile the function with the given executor, unless it has been shutdown, in that
+     * case create a new executor for compilation
+     */
+    private static CompiledFunction tryCompile(FunctionDefinition function, String className,
+            ExecutorService executor, EnumSet<Compiler.Option> options) {
+        if (executor.isShutdown()) {
+            return compile(function, className, options);
+        }
+        Compiler compiler = new Compiler(executor, options);
+        return compiler.compile(function, className);
+    }
+
+    private static CompiledFunction compile(FunctionDefinition function, String className,
+            EnumSet<Compiler.Option> options) throws CompilationException {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Compiler compiler = new Compiler(executor, options);
+            return compiler.compile(function, className);
+        } finally {
+            executor.shutdown();
+        }
+    }
+
+    /**
+     * Try to compile the generator with the given executor, unless it has been shutdown, in that
+     * case create a new executor for compilation
+     */
+    private static CompiledFunction tryCompile(GeneratorDefinition generator, String className,
+            ExecutorService executor, EnumSet<Compiler.Option> options) {
+        if (executor.isShutdown()) {
+            return compile(generator, className, options);
+        }
+        Compiler compiler = new Compiler(executor, options);
+        return compiler.compile(generator, className);
+    }
+
+    private static CompiledFunction compile(GeneratorDefinition generator, String className,
+            EnumSet<Compiler.Option> options) throws CompilationException {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Compiler compiler = new Compiler(executor, options);
+            return compiler.compile(generator, className);
+        } finally {
+            executor.shutdown();
+        }
     }
 }
