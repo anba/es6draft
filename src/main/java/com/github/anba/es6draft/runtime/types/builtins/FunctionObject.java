@@ -217,8 +217,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     @Override
-    protected boolean hasOwnProperty(String propertyKey) {
-        boolean has = super.hasOwnProperty(propertyKey);
+    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+        boolean has = super.hasOwnProperty(cx, propertyKey);
         if (has) {
             return true;
         }
@@ -229,13 +229,13 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     @Override
-    protected List<Object> enumerateOwnKeys() {
-        List<Object> ownKeys = super.enumerateOwnKeys();
+    protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
+        List<Object> ownKeys = super.enumerateOwnKeys(cx);
         if (isLegacy()) {
-            if (!super.hasOwnProperty("caller")) {
+            if (!super.hasOwnProperty(cx, "caller")) {
                 ownKeys.add("caller");
             }
-            if (!super.hasOwnProperty("arguments")) {
+            if (!super.hasOwnProperty(cx, "arguments")) {
                 ownKeys.add("arguments");
             }
         }

@@ -66,7 +66,7 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
     }
 
     @Override
-    protected boolean hasOwnProperty(String propertyKey) {
+    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         switch (propertyKey) {
         case "callee":
         case "length":
@@ -78,27 +78,27 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
     }
 
     @Override
-    protected boolean hasOwnProperty(Symbol propertyKey) {
+    protected boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey) {
         // legacy arguments object has no own symbol-keyed properties
         return false;
     }
 
     @Override
-    protected List<String> enumerateKeys() {
+    protected List<String> enumerateKeys(ExecutionContext cx) {
         ArrayList<String> keys = new ArrayList<>();
         addArgumentIndices(keys);
         return keys;
     }
 
     @Override
-    protected List<Object> enumerateOwnKeys() {
+    protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
         ArrayList<Object> keys = new ArrayList<>();
         addArgumentIndices(keys);
         return keys;
     }
 
     @Override
-    protected boolean isEnumerableOwnProperty(String key) {
+    protected boolean isEnumerableOwnProperty(ExecutionContext cx, String key) {
         int index = ParameterMap.toArgumentIndex(key);
         return index >= 0 && index < arguments.length;
     }

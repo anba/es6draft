@@ -64,8 +64,8 @@ public final class ExoticString extends OrdinaryObject {
      * [[HasOwnProperty]] (P)
      */
     @Override
-    protected boolean hasOwnProperty(String propertyKey) {
-        boolean has = super.hasOwnProperty(propertyKey);
+    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+        boolean has = super.hasOwnProperty(cx, propertyKey);
         if (has) {
             return true;
         }
@@ -118,8 +118,8 @@ public final class ExoticString extends OrdinaryObject {
      * 9.4.3.3 [[Enumerate]] ()
      */
     @Override
-    protected List<String> enumerateKeys() {
-        List<String> keys = super.enumerateKeys();
+    protected List<String> enumerateKeys(ExecutionContext cx) {
+        List<String> keys = super.enumerateKeys(cx);
         addStringIndices(keys);
         return keys;
     }
@@ -128,19 +128,19 @@ public final class ExoticString extends OrdinaryObject {
      * 9.4.3.4 [[OwnPropertyKeys]] ()
      */
     @Override
-    protected List<Object> enumerateOwnKeys() {
-        List<Object> keys = super.enumerateOwnKeys();
+    protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
+        List<Object> keys = super.enumerateOwnKeys(cx);
         addStringIndices(keys);
         return keys;
     }
 
     @Override
-    protected boolean isEnumerableOwnProperty(String key) {
+    protected boolean isEnumerableOwnProperty(ExecutionContext cx, String key) {
         int index = toStringIndex(key);
-        if (index >= 0 && index < getStringDataOrEmpty().length() && !super.hasOwnProperty(key)) {
+        if (index >= 0 && index < getStringDataOrEmpty().length() && !super.hasOwnProperty(cx, key)) {
             return true;
         }
-        return super.isEnumerableOwnProperty(key);
+        return super.isEnumerableOwnProperty(cx, key);
     }
 
     /**

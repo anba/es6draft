@@ -276,7 +276,7 @@ public final class ExoticArray extends OrdinaryObject {
     }
 
     private static long SparseArraySetLength(ExecutionContext cx, ExoticArray array, long newLen) {
-        long[] indices = array.indices(newLen);
+        long[] indices = array.indices(cx, newLen);
         for (int i = indices.length - 1; i >= 0; --i) {
             long oldLen = indices[i];
             boolean deleteSucceeded = array.delete(cx, ToString(oldLen));
@@ -287,8 +287,8 @@ public final class ExoticArray extends OrdinaryObject {
         return -1;
     }
 
-    private long[] indices(long minIndex) {
-        Collection<String> keys = enumerateKeys();
+    private long[] indices(ExecutionContext cx, long minIndex) {
+        Collection<String> keys = enumerateKeys(cx);
         long[] indices = new long[keys.size()];
         int i = 0;
         for (String key : keys) {

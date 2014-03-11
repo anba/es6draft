@@ -99,13 +99,13 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /** [[HasOwnProperty]] (P) */
-    protected boolean hasOwnProperty(String propertyKey) {
+    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         // optimised: HasOwnProperty(cx, this, propertyKey)
         return __has__(propertyKey);
     }
 
     /** [[HasOwnProperty]] (P) */
-    protected boolean hasOwnProperty(Symbol propertyKey) {
+    protected boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey) {
         // optimised: HasOwnProperty(cx, this, propertyKey)
         return __has__(propertyKey);
     }
@@ -404,7 +404,7 @@ public class OrdinaryObject implements ScriptObject {
     public boolean hasProperty(ExecutionContext cx, String propertyKey) {
         /* step 1 (implicit) */
         /* steps 2-3 */
-        boolean hasOwn = hasOwnProperty(propertyKey);
+        boolean hasOwn = hasOwnProperty(cx, propertyKey);
         /* step 4 */
         if (!hasOwn) {
             ScriptObject parent = getPrototypeOf(cx);
@@ -423,7 +423,7 @@ public class OrdinaryObject implements ScriptObject {
     public boolean hasProperty(ExecutionContext cx, Symbol propertyKey) {
         /* step 1 (implicit) */
         /* steps 2-3 */
-        boolean hasOwn = hasOwnProperty(propertyKey);
+        boolean hasOwn = hasOwnProperty(cx, propertyKey);
         /* step 4 */
         if (!hasOwn) {
             ScriptObject parent = getPrototypeOf(cx);
@@ -620,7 +620,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /** 9.1.11 [[Enumerate]] () */
-    protected List<String> enumerateKeys() {
+    protected List<String> enumerateKeys(ExecutionContext cx) {
         List<String> propList = new ArrayList<>();
         for (Object key : __keys__()) {
             if (key instanceof String) {
@@ -633,7 +633,7 @@ public class OrdinaryObject implements ScriptObject {
     /**
      * Subclasses need to override this method if they have virtual, enumerable properties
      */
-    protected boolean isEnumerableOwnProperty(String key) {
+    protected boolean isEnumerableOwnProperty(ExecutionContext cx, String key) {
         Property prop = ordinaryGetOwnProperty(key);
         return (prop != null && prop.isEnumerable());
     }
@@ -648,7 +648,7 @@ public class OrdinaryObject implements ScriptObject {
         EnumKeysIterator(ExecutionContext cx, OrdinaryObject obj) {
             this.cx = cx;
             this.obj = obj;
-            this.keys = obj.enumerateKeys().iterator();
+            this.keys = obj.enumerateKeys(cx).iterator();
         }
 
         @Override
@@ -659,16 +659,16 @@ public class OrdinaryObject implements ScriptObject {
                 assert protoKeys == null;
                 while (keys.hasNext()) {
                     String key = keys.next();
-                    if (visitedKeys.add(key) && obj.isEnumerableOwnProperty(key)) {
+                    if (visitedKeys.add(key) && obj.isEnumerableOwnProperty(cx, key)) {
                         return key;
                     }
                 }
                 // switch to prototype enumerate
-                ScriptObject proto = this.obj.getPrototypeOf(cx);
+                ScriptObject proto = obj.getPrototypeOf(cx);
                 if (proto != null) {
                     if (proto instanceof OrdinaryObject) {
                         this.obj = ((OrdinaryObject) proto);
-                        this.keys = ((OrdinaryObject) proto).enumerateKeys().iterator();
+                        this.keys = ((OrdinaryObject) proto).enumerateKeys(cx).iterator();
                         return tryNext();
                     } else {
                         this.obj = null;
@@ -699,11 +699,11 @@ public class OrdinaryObject implements ScriptObject {
     /** 9.1.12 [[OwnPropertyKeys]] ( ) */
     @Override
     public final ScriptObject ownPropertyKeys(ExecutionContext cx) {
-        return CreateListIterator(cx, enumerateOwnKeys());
+        return CreateListIterator(cx, enumerateOwnKeys(cx));
     }
 
     /** 9.1.12 [[OwnPropertyKeys]] ( ) */
-    protected List<Object> enumerateOwnKeys() {
+    protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
         return new ArrayList<>(__keys__());
     }
 

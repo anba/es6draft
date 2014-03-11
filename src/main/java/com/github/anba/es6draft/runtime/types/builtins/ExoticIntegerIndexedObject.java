@@ -42,7 +42,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
 
     /** [[HasOwnProperty]] (P) */
     @Override
-    protected boolean hasOwnProperty(String propertyKey) {
+    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         double intIndex = toIntegerIndex(propertyKey);
@@ -57,7 +57,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
             return true;
         }
         /* step 4 */
-        return super.hasOwnProperty(propertyKey);
+        return super.hasOwnProperty(cx, propertyKey);
     }
 
     /** 9.4.5.1 [[GetOwnProperty]] (P) */
@@ -167,30 +167,30 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
 
     /** 9.4.5.5 [[Enumerate]] () */
     @Override
-    protected List<String> enumerateKeys() {
+    protected List<String> enumerateKeys(ExecutionContext cx) {
         // FIXME: spec incomplete
-        List<String> keys = super.enumerateKeys();
+        List<String> keys = super.enumerateKeys(cx);
         addIntegerIndices(keys);
         return keys;
     }
 
     /** 9.4.5.6 [[OwnPropertyKeys]] () */
     @Override
-    protected List<Object> enumerateOwnKeys() {
+    protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
         // FIXME: spec incomplete
-        List<Object> keys = super.enumerateOwnKeys();
+        List<Object> keys = super.enumerateOwnKeys(cx);
         addIntegerIndices(keys);
         return keys;
     }
 
     @Override
-    protected boolean isEnumerableOwnProperty(String key) {
+    protected boolean isEnumerableOwnProperty(ExecutionContext cx, String key) {
         double intIndex = toIntegerIndex(key);
         if (!Double.isNaN(intIndex)) {
             long length = getLength();
             return 0 <= intIndex && intIndex < length;
         }
-        return super.isEnumerableOwnProperty(key);
+        return super.isEnumerableOwnProperty(cx, key);
     }
 
     /**

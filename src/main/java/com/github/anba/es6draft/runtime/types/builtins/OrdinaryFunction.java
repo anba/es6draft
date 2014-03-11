@@ -311,7 +311,7 @@ public class OrdinaryFunction extends FunctionObject {
      */
     public static void SetFunctionName(FunctionObject f, String name, String prefix) {
         /* step 1 */
-        assert f.isExtensible() && !f.hasOwnProperty("name");
+        assert f.isExtensible() && !f.hasOwnProperty(null, "name"); // TODO: replace null
         /* step 2 (implicit) */
         /* step 3 (not applicable) */
         /* step 4 */
