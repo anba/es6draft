@@ -14,7 +14,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class ComputedPropertyName extends AstNode implements PropertyName {
-    private Expression expression;
+    private final Expression expression;
 
     public ComputedPropertyName(long beginPosition, long endPosition, Expression expression) {
         super(beginPosition, endPosition);

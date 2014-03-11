@@ -15,9 +15,9 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class LegacyComprehensionFor extends ComprehensionQualifier {
-    private IterationKind iterationKind;
-    private Binding binding;
-    private Expression expression;
+    private final IterationKind iterationKind;
+    private final Binding binding;
+    private final Expression expression;
 
     public enum IterationKind {
         Enumerate, Iterate, EnumerateValues

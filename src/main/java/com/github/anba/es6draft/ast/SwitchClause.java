@@ -15,7 +15,7 @@ import java.util.List;
  * </ul>
  */
 public final class SwitchClause extends AstNode {
-    private Expression expression;
+    private final Expression expression;
     private List<StatementListItem> statements;
 
     public SwitchClause(long beginPosition, long endPosition, Expression expression,

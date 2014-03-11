@@ -16,7 +16,7 @@ import java.util.List;
  * </ul>
  */
 public final class BlockStatement extends Statement implements ScopedNode {
-    private BlockScope scope;
+    private final BlockScope scope;
     private List<StatementListItem> statements = new ArrayList<>();
 
     public BlockStatement(long beginPosition, long endPosition, BlockScope scope,

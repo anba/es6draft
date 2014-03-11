@@ -49,7 +49,7 @@ public final class BinaryExpression extends Expression {
         }
     }
 
-    private Operator operator;
+    private final Operator operator;
     private Expression left;
     private Expression right;
 

@@ -14,7 +14,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class BindingIdentifier extends Binding {
-    private String name;
+    private final String name;
 
     public BindingIdentifier(long beginPosition, long endPosition, String name) {
         super(beginPosition, endPosition);

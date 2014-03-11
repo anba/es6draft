@@ -14,7 +14,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class BindingRestElement extends FormalParameter implements BindingElementItem {
-    private BindingIdentifier bindingIdentifier;
+    private final BindingIdentifier bindingIdentifier;
 
     public BindingRestElement(long beginPosition, long endPosition,
             BindingIdentifier bindingIdentifier) {

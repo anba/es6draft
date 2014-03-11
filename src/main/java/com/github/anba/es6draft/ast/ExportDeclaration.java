@@ -11,12 +11,12 @@ package com.github.anba.es6draft.ast;
  * <h2>15.3 Modules</h2>
  */
 public final class ExportDeclaration extends ModuleItem {
-    private Type type;
-    private String moduleSpecifier;
-    private ExportsClause exportsClause;
-    private Expression expression;
-    private VariableStatement variableStatement;
-    private Declaration declaration;
+    private final Type type;
+    private final String moduleSpecifier;
+    private final ExportsClause exportsClause;
+    private final Expression expression;
+    private final VariableStatement variableStatement;
+    private final Declaration declaration;
 
     public enum Type {
         All, Local, External, Default, Variable, Declaration
@@ -26,12 +26,20 @@ public final class ExportDeclaration extends ModuleItem {
         super(beginPosition, endPosition);
         this.type = Type.All;
         this.moduleSpecifier = moduleSpecifier;
+        this.exportsClause = null;
+        this.expression = null;
+        this.variableStatement = null;
+        this.declaration = null;
     }
 
     public ExportDeclaration(long beginPosition, long endPosition, ExportsClause exportsClause) {
         super(beginPosition, endPosition);
         this.type = Type.Local;
+        this.moduleSpecifier = null;
         this.exportsClause = exportsClause;
+        this.expression = null;
+        this.variableStatement = null;
+        this.declaration = null;
     }
 
     public ExportDeclaration(long beginPosition, long endPosition, ExportsClause exportsClause,
@@ -40,12 +48,19 @@ public final class ExportDeclaration extends ModuleItem {
         this.type = Type.External;
         this.exportsClause = exportsClause;
         this.moduleSpecifier = moduleSpecifier;
+        this.expression = null;
+        this.variableStatement = null;
+        this.declaration = null;
     }
 
     public ExportDeclaration(long beginPosition, long endPosition, Expression expression) {
         super(beginPosition, endPosition);
         this.type = Type.Default;
         this.expression = expression;
+        this.exportsClause = null;
+        this.moduleSpecifier = null;
+        this.variableStatement = null;
+        this.declaration = null;
     }
 
     public ExportDeclaration(long beginPosition, long endPosition,
@@ -53,12 +68,20 @@ public final class ExportDeclaration extends ModuleItem {
         super(beginPosition, endPosition);
         this.type = Type.Variable;
         this.variableStatement = variableStatement;
+        this.exportsClause = null;
+        this.moduleSpecifier = null;
+        this.expression = null;
+        this.declaration = null;
     }
 
     public ExportDeclaration(long beginPosition, long endPosition, Declaration declaration) {
         super(beginPosition, endPosition);
         this.type = Type.Declaration;
         this.declaration = declaration;
+        this.exportsClause = null;
+        this.moduleSpecifier = null;
+        this.expression = null;
+        this.variableStatement = null;
     }
 
     public Type getType() {

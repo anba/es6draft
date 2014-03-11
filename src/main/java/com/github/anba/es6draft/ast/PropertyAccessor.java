@@ -16,8 +16,8 @@ import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
  * </ul>
  */
 public class PropertyAccessor extends LeftHandSideExpression {
-    private Expression base;
-    private String name;
+    private final Expression base;
+    private final String name;
 
     public PropertyAccessor(long beginPosition, long endPosition, Expression base, String name) {
         super(beginPosition, endPosition);

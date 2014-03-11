@@ -17,11 +17,11 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
  * <h2>15.3 Modules</h2>
  */
 public final class Module extends AstNode implements TopLevelNode<ModuleItem>, ScopedNode {
-    private String sourceFile;
-    private ModuleScope scope;
+    private final String sourceFile;
+    private final ModuleScope scope;
     private List<ModuleItem> statements;
-    private EnumSet<CompatibilityOption> options;
-    private EnumSet<Parser.Option> parserOptions;
+    private final EnumSet<CompatibilityOption> options;
+    private final EnumSet<Parser.Option> parserOptions;
     private boolean syntheticNodes;
 
     public Module(long beginPosition, long endPosition, String sourceFile, ModuleScope scope,

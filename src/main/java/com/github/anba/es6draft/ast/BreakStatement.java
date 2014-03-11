@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class BreakStatement extends Statement {
-    private String label;
+    private final String label;
 
     public BreakStatement(long beginPosition, long endPosition, String label) {
         super(beginPosition, endPosition);

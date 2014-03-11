@@ -16,7 +16,7 @@ import java.util.List;
  * </ul>
  */
 public final class ArrayAssignmentPattern extends AssignmentPattern {
-    private List<AssignmentElementItem> elements;
+    private final List<AssignmentElementItem> elements;
 
     public ArrayAssignmentPattern(long beginPosition, long endPosition,
             List<AssignmentElementItem> elements) {

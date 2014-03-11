@@ -16,9 +16,9 @@ import java.util.List;
  * </ul>
  */
 public final class LetExpression extends Expression implements ScopedNode {
-    private BlockScope scope;
-    private List<LexicalBinding> bindings;
-    private Expression expression;
+    private final BlockScope scope;
+    private final List<LexicalBinding> bindings;
+    private final Expression expression;
 
     public LetExpression(long beginPosition, long endPosition, BlockScope scope,
             List<LexicalBinding> bindings, Expression expression) {

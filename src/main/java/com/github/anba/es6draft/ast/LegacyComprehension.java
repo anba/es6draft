@@ -17,7 +17,7 @@ import java.util.List;
  * </ul>
  */
 public final class LegacyComprehension extends Comprehension implements ScopedNode {
-    private BlockScope scope;
+    private final BlockScope scope;
 
     public LegacyComprehension(BlockScope scope, List<ComprehensionQualifier> list,
             Expression expression) {

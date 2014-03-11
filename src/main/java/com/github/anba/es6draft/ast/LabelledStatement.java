@@ -16,9 +16,9 @@ import java.util.Set;
  * </ul>
  */
 public final class LabelledStatement extends Statement implements AbruptNode {
-    private EnumSet<Abrupt> abrupt;
-    private Set<String> labels;
-    private Statement statement;
+    private final EnumSet<Abrupt> abrupt;
+    private final Set<String> labels;
+    private final Statement statement;
 
     public LabelledStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt,
             Set<String> labels, Statement statement) {

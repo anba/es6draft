@@ -14,8 +14,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class TemplateCallExpression extends Expression {
-    private Expression base;
-    private TemplateLiteral template;
+    private final Expression base;
+    private final TemplateLiteral template;
 
     public TemplateCallExpression(long beginPosition, long endPosition, Expression base,
             TemplateLiteral template) {

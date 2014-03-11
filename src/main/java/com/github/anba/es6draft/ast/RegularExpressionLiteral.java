@@ -14,8 +14,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class RegularExpressionLiteral extends Expression {
-    private String flags;
-    private String regexp;
+    private final String flags;
+    private final String regexp;
 
     public RegularExpressionLiteral(long beginPosition, long endPosition, String regexp,
             String flags) {

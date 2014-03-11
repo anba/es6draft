@@ -17,8 +17,8 @@ import java.util.List;
  * </ul>
  */
 public final class GeneratorComprehension extends Expression implements FunctionNode {
-    private FunctionScope scope;
-    private Comprehension comprehension;
+    private final FunctionScope scope;
+    private final Comprehension comprehension;
     private StrictMode strictMode;
     private boolean syntheticNodes;
 

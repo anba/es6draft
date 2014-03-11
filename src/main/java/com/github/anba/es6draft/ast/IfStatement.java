@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class IfStatement extends Statement {
-    private Expression test;
+    private final Expression test;
     private Statement then;
     private Statement otherwise;
 

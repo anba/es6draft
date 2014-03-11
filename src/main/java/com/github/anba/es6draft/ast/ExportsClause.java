@@ -13,7 +13,7 @@ import java.util.List;
  * <h2>15.3 Modules</h2>
  */
 public final class ExportsClause extends AstNode {
-    private List<ExportSpecifier> exports;
+    private final List<ExportSpecifier> exports;
 
     public ExportsClause(long beginPosition, long endPosition, List<ExportSpecifier> exports) {
         super(beginPosition, endPosition);

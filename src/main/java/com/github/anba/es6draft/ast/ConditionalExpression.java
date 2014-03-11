@@ -13,9 +13,9 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class ConditionalExpression extends Expression {
-    private Expression test;
-    private Expression then;
-    private Expression otherwise;
+    private final Expression test;
+    private final Expression then;
+    private final Expression otherwise;
 
     public ConditionalExpression(Expression test, Expression then, Expression otherwise) {
         super(test.getBeginPosition(), otherwise.getEndPosition());

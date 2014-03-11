@@ -16,8 +16,8 @@ import java.util.List;
  * </ul>
  */
 public final class LexicalDeclaration extends Declaration {
-    private Type type;
-    private List<LexicalBinding> elements;
+    private final Type type;
+    private final List<LexicalBinding> elements;
 
     public enum Type {
         Let, Const

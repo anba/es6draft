@@ -14,7 +14,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class PropertyNameDefinition extends PropertyDefinition {
-    private Identifier propertyName;
+    private final Identifier propertyName;
 
     public PropertyNameDefinition(long beginPosition, long endPosition, Identifier propertyName) {
         super(beginPosition, endPosition);

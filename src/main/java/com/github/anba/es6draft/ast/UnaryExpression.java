@@ -31,8 +31,8 @@ public final class UnaryExpression extends Expression {
         DELETE("delete"), VOID("void"), TYPEOF("typeof"), PRE_INC("++"), PRE_DEC("--"), POST_INC(
                 "++", true), POST_DEC("--", true), POS("+"), NEG("-"), BITNOT("~"), NOT("!");
 
-        private String name;
-        private boolean postfix;
+        private final String name;
+        private final boolean postfix;
 
         private Operator(String name) {
             this(name, false);
@@ -52,8 +52,8 @@ public final class UnaryExpression extends Expression {
         }
     }
 
-    private Operator operator;
-    private Expression operand;
+    private final Operator operator;
+    private final Expression operand;
 
     public UnaryExpression(long beginPosition, long endPosition, Operator operator,
             Expression operand) {

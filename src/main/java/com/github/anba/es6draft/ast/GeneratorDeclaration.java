@@ -15,13 +15,13 @@ import java.util.List;
  * </ul>
  */
 public class GeneratorDeclaration extends Declaration implements GeneratorDefinition {
-    private FunctionScope scope;
-    private BindingIdentifier identifier;
-    private FormalParameterList parameters;
+    private final FunctionScope scope;
+    private final BindingIdentifier identifier;
+    private final FormalParameterList parameters;
     private List<StatementListItem> statements;
     private StrictMode strictMode;
-    private boolean superReference;
-    private String headerSource, bodySource;
+    private final boolean superReference;
+    private final String headerSource, bodySource;
     private boolean syntheticNodes;
 
     public GeneratorDeclaration(long beginPosition, long endPosition, FunctionScope scope,

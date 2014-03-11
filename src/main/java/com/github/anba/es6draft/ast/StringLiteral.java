@@ -14,7 +14,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class StringLiteral extends ValueLiteral<String> implements PropertyName {
-    private String value;
+    private final String value;
 
     public StringLiteral(long beginPosition, long endPosition, String value) {
         super(beginPosition, endPosition);

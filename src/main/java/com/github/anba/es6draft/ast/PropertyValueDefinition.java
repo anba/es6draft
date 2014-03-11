@@ -14,8 +14,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class PropertyValueDefinition extends PropertyDefinition {
-    private PropertyName propertyName;
-    private Expression propertyValue;
+    private final PropertyName propertyName;
+    private final Expression propertyValue;
 
     public PropertyValueDefinition(long beginPosition, long endPosition, PropertyName propertyName,
             Expression propertyValue) {

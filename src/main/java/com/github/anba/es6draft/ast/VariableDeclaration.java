@@ -14,8 +14,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class VariableDeclaration extends AstNode {
-    private Binding binding;
-    private Expression initialiser;
+    private final Binding binding;
+    private final Expression initialiser;
 
     public VariableDeclaration(Binding binding, Expression initialiser) {
         super(binding.getBeginPosition(), eitherOr(initialiser, binding).getEndPosition());

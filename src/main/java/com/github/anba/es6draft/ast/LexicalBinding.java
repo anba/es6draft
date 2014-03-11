@@ -14,8 +14,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class LexicalBinding extends AstNode {
-    private Binding binding;
-    private Expression initialiser;
+    private final Binding binding;
+    private final Expression initialiser;
 
     public LexicalBinding(long beginPosition, long endPosition, Binding binding,
             Expression initialiser) {

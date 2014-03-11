@@ -14,7 +14,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class AssignmentRestElement extends AstNode implements AssignmentElementItem {
-    private LeftHandSideExpression target;
+    private final LeftHandSideExpression target;
 
     public AssignmentRestElement(long beginPosition, long endPosition, LeftHandSideExpression target) {
         super(beginPosition, endPosition);

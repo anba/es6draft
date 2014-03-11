@@ -17,8 +17,8 @@ import java.util.List;
  * </ul>
  */
 public class Comprehension extends AstNode {
-    private List<ComprehensionQualifier> list;
-    private Expression expression;
+    private final List<ComprehensionQualifier> list;
+    private final Expression expression;
 
     public Comprehension(List<ComprehensionQualifier> list, Expression expression) {
         super(first(list).getBeginPosition(), expression.getEndPosition());

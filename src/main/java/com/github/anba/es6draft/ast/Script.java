@@ -19,12 +19,12 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
  * </ul>
  */
 public final class Script extends AstNode implements TopLevelNode<StatementListItem>, ScopedNode {
-    private String sourceFile;
-    private ScriptScope scope;
+    private final String sourceFile;
+    private final ScriptScope scope;
     private List<StatementListItem> statements;
-    private EnumSet<CompatibilityOption> options;
-    private EnumSet<Parser.Option> parserOptions;
-    private boolean strict;
+    private final EnumSet<CompatibilityOption> options;
+    private final EnumSet<Parser.Option> parserOptions;
+    private final boolean strict;
     private boolean syntheticNodes;
 
     public Script(long beginPosition, long endPosition, String sourceFile, ScriptScope scope,

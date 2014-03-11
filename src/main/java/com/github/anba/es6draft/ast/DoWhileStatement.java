@@ -17,8 +17,8 @@ import java.util.Set;
  * </ul>
  */
 public final class DoWhileStatement extends IterationStatement {
-    private Expression test;
-    private Statement statement;
+    private final Expression test;
+    private final Statement statement;
 
     public DoWhileStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt,
             Set<String> labelSet, Expression test, Statement statement) {

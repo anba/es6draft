@@ -16,7 +16,7 @@ import java.util.List;
  * </ul>
  */
 public final class ObjectAssignmentPattern extends AssignmentPattern {
-    private List<AssignmentProperty> properties;
+    private final List<AssignmentProperty> properties;
 
     public ObjectAssignmentPattern(long beginPosition, long endPosition,
             List<AssignmentProperty> properties) {

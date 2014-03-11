@@ -15,12 +15,12 @@ import java.util.List;
  * </ul>
  */
 public final class ArrowFunction extends Expression implements FunctionNode {
-    private FunctionScope scope;
-    private FormalParameterList parameters;
+    private final FunctionScope scope;
+    private final FormalParameterList parameters;
     private List<StatementListItem> statements;
-    private Expression expression;
+    private final Expression expression;
     private StrictMode strictMode;
-    private String headerSource, bodySource;
+    private final String headerSource, bodySource;
     private boolean syntheticNodes;
 
     public ArrowFunction(long beginPosition, long endPosition, FunctionScope scope,

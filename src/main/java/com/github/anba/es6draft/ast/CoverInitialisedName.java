@@ -14,8 +14,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class CoverInitialisedName extends PropertyDefinition {
-    private Identifier identifier;
-    private Expression initialiser;
+    private final Identifier identifier;
+    private final Expression initialiser;
 
     public CoverInitialisedName(long beginPosition, long endPosition, Identifier identifier,
             Expression initialiser) {

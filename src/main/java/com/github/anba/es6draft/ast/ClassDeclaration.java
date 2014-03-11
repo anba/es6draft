@@ -15,10 +15,10 @@ import java.util.List;
  * </ul>
  */
 public final class ClassDeclaration extends Declaration implements ClassDefinition {
-    private BindingIdentifier name;
-    private Expression heritage;
-    private List<MethodDefinition> staticMethods;
-    private List<MethodDefinition> prototypeMethods;
+    private final BindingIdentifier name;
+    private final Expression heritage;
+    private final List<MethodDefinition> staticMethods;
+    private final List<MethodDefinition> prototypeMethods;
 
     public ClassDeclaration(long beginPosition, long endPosition, BindingIdentifier name,
             Expression heritage, List<MethodDefinition> staticMethods,

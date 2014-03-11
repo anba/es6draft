@@ -16,8 +16,8 @@ import java.util.List;
  * </ul>
  */
 public final class TemplateLiteral extends Expression {
-    private List<Expression> elements;
-    private boolean tagged;
+    private final List<Expression> elements;
+    private final boolean tagged;
 
     public TemplateLiteral(long beginPosition, long endPosition, boolean tagged,
             List<Expression> elements) {

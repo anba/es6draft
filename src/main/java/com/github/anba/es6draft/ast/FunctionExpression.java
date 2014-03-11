@@ -15,14 +15,14 @@ import java.util.List;
  * </ul>
  */
 public final class FunctionExpression extends Expression implements FunctionDefinition {
-    private FunctionScope scope;
-    private BindingIdentifier identifier;
-    private String functionName;
-    private FormalParameterList parameters;
+    private final FunctionScope scope;
+    private final BindingIdentifier identifier;
+    private final String functionName;
+    private final FormalParameterList parameters;
     private List<StatementListItem> statements;
     private StrictMode strictMode;
-    private boolean superReference;
-    private String headerSource, bodySource;
+    private final boolean superReference;
+    private final String headerSource, bodySource;
     private boolean syntheticNodes;
 
     public FunctionExpression(long beginPosition, long endPosition, FunctionScope scope,

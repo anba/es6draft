@@ -13,9 +13,9 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class CatchNode extends AstNode implements ScopedNode {
-    private BlockScope scope;
-    private Binding catchParameter;
-    private BlockStatement catchBlock;
+    private final BlockScope scope;
+    private final Binding catchParameter;
+    private final BlockStatement catchBlock;
 
     public CatchNode(long beginPosition, long endPosition, BlockScope scope,
             Binding catchParameter, BlockStatement catchBlock) {

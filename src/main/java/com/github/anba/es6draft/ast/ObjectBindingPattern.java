@@ -16,7 +16,7 @@ import java.util.List;
  * </ul>
  */
 public final class ObjectBindingPattern extends BindingPattern {
-    private List<BindingProperty> properties;
+    private final List<BindingProperty> properties;
 
     public ObjectBindingPattern(long beginPosition, long endPosition,
             List<BindingProperty> properties) {

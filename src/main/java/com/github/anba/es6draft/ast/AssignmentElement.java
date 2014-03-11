@@ -14,8 +14,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class AssignmentElement extends AstNode implements AssignmentElementItem {
-    private LeftHandSideExpression target;
-    private Expression initialiser;
+    private final LeftHandSideExpression target;
+    private final Expression initialiser;
 
     public AssignmentElement(long beginPosition, long endPosition, LeftHandSideExpression target,
             Expression initialiser) {

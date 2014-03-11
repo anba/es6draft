@@ -15,10 +15,10 @@ import java.util.List;
  * </ul>
  */
 public final class TryStatement extends Statement {
-    private BlockStatement tryBlock;
-    private CatchNode catchNode;
-    private BlockStatement finallyBlock;
-    private List<GuardedCatchNode> guardedCatchNodes;
+    private final BlockStatement tryBlock;
+    private final CatchNode catchNode;
+    private final BlockStatement finallyBlock;
+    private final List<GuardedCatchNode> guardedCatchNodes;
 
     public TryStatement(long beginPosition, long endPosition, BlockStatement tryBlock,
             CatchNode catchNode, List<GuardedCatchNode> guardedCatchNodes,

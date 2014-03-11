@@ -13,8 +13,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class YieldExpression extends Expression {
-    private boolean delegatedYield;
-    private Expression expression;
+    private final boolean delegatedYield;
+    private final Expression expression;
 
     public YieldExpression(long beginPosition, long endPosition, boolean delegatedYield,
             Expression expression) {

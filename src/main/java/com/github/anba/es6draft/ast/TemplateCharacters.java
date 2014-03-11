@@ -14,8 +14,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class TemplateCharacters extends Expression {
-    private String value;
-    private String rawValue;
+    private final String value;
+    private final String rawValue;
 
     public TemplateCharacters(long beginPosition, long endPosition, String value, String rawValue) {
         super(beginPosition, endPosition);

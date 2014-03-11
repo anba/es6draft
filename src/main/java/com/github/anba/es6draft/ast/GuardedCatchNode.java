@@ -14,10 +14,10 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class GuardedCatchNode extends AstNode implements ScopedNode {
-    private BlockScope scope;
-    private Binding catchParameter;
-    private BlockStatement catchBlock;
-    private Expression guard;
+    private final BlockScope scope;
+    private final Binding catchParameter;
+    private final BlockStatement catchBlock;
+    private final Expression guard;
 
     public GuardedCatchNode(long beginPosition, long endPosition, BlockScope scope,
             Binding catchParameter, Expression guard, BlockStatement catchBlock) {

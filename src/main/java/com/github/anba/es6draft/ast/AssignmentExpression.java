@@ -29,9 +29,9 @@ public final class AssignmentExpression extends Expression {
         }
     }
 
-    private Operator operator;
-    private LeftHandSideExpression left;
-    private Expression right;
+    private final Operator operator;
+    private final LeftHandSideExpression left;
+    private final Expression right;
 
     public AssignmentExpression(Operator operator, LeftHandSideExpression left, Expression right) {
         super(left.getBeginPosition(), right.getEndPosition());

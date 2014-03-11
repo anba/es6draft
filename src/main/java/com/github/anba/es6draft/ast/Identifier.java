@@ -16,7 +16,7 @@ import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
  * </ul>
  */
 public class Identifier extends LeftHandSideExpression implements PropertyName {
-    private String name;
+    private final String name;
 
     public Identifier(long beginPosition, long endPosition, String name) {
         super(beginPosition, endPosition);

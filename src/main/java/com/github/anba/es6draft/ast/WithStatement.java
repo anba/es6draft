@@ -13,9 +13,9 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class WithStatement extends Statement implements ScopedNode {
-    private WithScope scope;
-    private Expression expression;
-    private Statement statement;
+    private final WithScope scope;
+    private final Expression expression;
+    private final Statement statement;
 
     public WithStatement(long beginPosition, long endPosition, WithScope scope,
             Expression expression, Statement statement) {

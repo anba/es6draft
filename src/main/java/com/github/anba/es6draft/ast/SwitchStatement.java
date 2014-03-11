@@ -17,9 +17,9 @@ import java.util.Set;
  * </ul>
  */
 public final class SwitchStatement extends BreakableStatement implements ScopedNode {
-    private BlockScope scope;
-    private Expression expression;
-    private List<SwitchClause> clauses;
+    private final BlockScope scope;
+    private final Expression expression;
+    private final List<SwitchClause> clauses;
 
     public SwitchStatement(long beginPosition, long endPosition, BlockScope scope,
             EnumSet<Abrupt> abrupt, Set<String> labelSet, Expression expression,

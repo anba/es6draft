@@ -14,9 +14,9 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class AssignmentProperty extends AstNode {
-    private PropertyName propertyName;
-    private LeftHandSideExpression target;
-    private Expression initialiser;
+    private final PropertyName propertyName;
+    private final LeftHandSideExpression target;
+    private final Expression initialiser;
 
     public AssignmentProperty(long beginPosition, long endPosition, PropertyName propertyName,
             LeftHandSideExpression target, Expression initialiser) {

@@ -16,8 +16,8 @@ import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
  * </ul>
  */
 public class ElementAccessor extends LeftHandSideExpression {
-    private Expression base;
-    private Expression element;
+    private final Expression base;
+    private final Expression element;
 
     public ElementAccessor(long beginPosition, long endPosition, Expression base, Expression element) {
         super(beginPosition, endPosition);

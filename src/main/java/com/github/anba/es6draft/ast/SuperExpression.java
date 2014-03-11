@@ -23,14 +23,17 @@ public class SuperExpression extends LeftHandSideExpression {
     }
 
     private final Type type;
-    private String name;
-    private Expression expression;
-    private List<Expression> arguments;
+    private final String name;
+    private final Expression expression;
+    private final List<Expression> arguments;
 
     public SuperExpression(long beginPosition, long endPosition) {
         // new super()
         super(beginPosition, endPosition);
         this.type = Type.NewExpression;
+        this.name = null;
+        this.expression = null;
+        this.arguments = null;
     }
 
     public SuperExpression(long beginPosition, long endPosition, String name) {
@@ -38,6 +41,8 @@ public class SuperExpression extends LeftHandSideExpression {
         super(beginPosition, endPosition);
         this.type = Type.PropertyAccessor;
         this.name = name;
+        this.expression = null;
+        this.arguments = null;
     }
 
     public SuperExpression(long beginPosition, long endPosition, Expression expression) {
@@ -45,6 +50,8 @@ public class SuperExpression extends LeftHandSideExpression {
         super(beginPosition, endPosition);
         this.type = Type.ElementAccessor;
         this.expression = expression;
+        this.name = null;
+        this.arguments = null;
     }
 
     public SuperExpression(long beginPosition, long endPosition, List<Expression> arguments) {
@@ -52,6 +59,8 @@ public class SuperExpression extends LeftHandSideExpression {
         super(beginPosition, endPosition);
         this.type = Type.CallExpression;
         this.arguments = arguments;
+        this.name = null;
+        this.expression = null;
     }
 
     public Type getType() {

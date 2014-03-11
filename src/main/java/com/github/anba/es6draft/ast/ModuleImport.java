@@ -11,8 +11,8 @@ package com.github.anba.es6draft.ast;
  * <h2>15.3 Modules</h2>
  */
 public final class ModuleImport extends AstNode {
-    private BindingIdentifier importedBinding;
-    private String moduleSpecifier;
+    private final BindingIdentifier importedBinding;
+    private final String moduleSpecifier;
 
     public ModuleImport(long beginPosition, long endPosition, BindingIdentifier importedBinding,
             String moduleSpecifier) {

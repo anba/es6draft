@@ -15,9 +15,9 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class ComprehensionFor extends ComprehensionQualifier implements ScopedNode {
-    private BlockScope scope;
-    private Binding binding;
-    private Expression expression;
+    private final BlockScope scope;
+    private final Binding binding;
+    private final Expression expression;
 
     public ComprehensionFor(long beginPosition, long endPosition, BlockScope scope,
             Binding binding, Expression expression) {

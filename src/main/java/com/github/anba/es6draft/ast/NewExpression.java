@@ -16,8 +16,8 @@ import java.util.List;
  * </ul>
  */
 public final class NewExpression extends Expression {
-    private Expression expression;
-    private List<Expression> arguments;
+    private final Expression expression;
+    private final List<Expression> arguments;
 
     public NewExpression(long beginPosition, long endPosition, Expression expression,
             List<Expression> arguments) {

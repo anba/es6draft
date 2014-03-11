@@ -13,8 +13,8 @@ import java.util.Set;
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  */
 public abstract class BreakableStatement extends Statement implements AbruptNode {
-    private EnumSet<Abrupt> abrupt;
-    private Set<String> labelSet;
+    private final EnumSet<Abrupt> abrupt;
+    private final Set<String> labelSet;
 
     protected BreakableStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt,
             Set<String> labelSet) {

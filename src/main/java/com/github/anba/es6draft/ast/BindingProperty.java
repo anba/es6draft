@@ -17,9 +17,9 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class BindingProperty extends AstNode {
-    private PropertyName propertyName;
-    private Binding binding;
-    private Expression initialiser;
+    private final PropertyName propertyName;
+    private final Binding binding;
+    private final Expression initialiser;
 
     public BindingProperty(PropertyName propertyName, Binding binding, Expression initialiser) {
         super(propertyName.getBeginPosition(), eitherOr(initialiser, binding).getEndPosition());

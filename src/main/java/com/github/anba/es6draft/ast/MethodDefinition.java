@@ -15,15 +15,15 @@ import java.util.List;
  * </ul>
  */
 public final class MethodDefinition extends PropertyDefinition implements FunctionNode {
-    private FunctionScope scope;
-    private MethodType type;
-    private PropertyName propertyName;
+    private final FunctionScope scope;
+    private final MethodType type;
+    private final PropertyName propertyName;
     private String functionName;
-    private FormalParameterList parameters;
+    private final FormalParameterList parameters;
     private List<StatementListItem> statements;
     private StrictMode strictMode;
-    private boolean superReference;
-    private String headerSource, bodySource;
+    private final boolean superReference;
+    private final String headerSource, bodySource;
     private boolean syntheticNodes;
 
     public enum MethodType {

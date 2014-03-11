@@ -17,11 +17,11 @@ import java.util.Set;
  * </ul>
  */
 public final class ForStatement extends IterationStatement implements ScopedNode {
-    private BlockScope scope;
-    private Node head;
-    private Expression test;
-    private Expression step;
-    private Statement statement;
+    private final BlockScope scope;
+    private final Node head;
+    private final Expression test;
+    private final Expression step;
+    private final Statement statement;
 
     public ForStatement(long beginPosition, long endPosition, BlockScope scope,
             EnumSet<Abrupt> abrupt, Set<String> labelSet, Node head, Expression test,

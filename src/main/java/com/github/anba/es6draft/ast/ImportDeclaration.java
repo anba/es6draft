@@ -11,10 +11,10 @@ package com.github.anba.es6draft.ast;
  * <h2>15.3 Modules</h2>
  */
 public final class ImportDeclaration extends ModuleItem {
-    private Type type;
-    private ModuleImport moduleImport;
-    private ImportClause importClause;
-    private String moduleSpecifier;
+    private final Type type;
+    private final ModuleImport moduleImport;
+    private final ImportClause importClause;
+    private final String moduleSpecifier;
 
     public enum Type {
         ModuleImport, ImportModule, ImportFrom
@@ -24,6 +24,8 @@ public final class ImportDeclaration extends ModuleItem {
         super(beginPosition, endPosition);
         this.type = Type.ModuleImport;
         this.moduleImport = moduleImport;
+        this.importClause = null;
+        this.moduleSpecifier = null;
     }
 
     public ImportDeclaration(long beginPosition, long endPosition, ImportClause importClause,
@@ -32,12 +34,15 @@ public final class ImportDeclaration extends ModuleItem {
         this.type = Type.ImportFrom;
         this.importClause = importClause;
         this.moduleSpecifier = moduleSpecifier;
+        this.moduleImport = null;
     }
 
     public ImportDeclaration(long beginPosition, long endPosition, String moduleSpecifier) {
         super(beginPosition, endPosition);
         this.type = Type.ImportModule;
         this.moduleSpecifier = moduleSpecifier;
+        this.moduleImport = null;
+        this.importClause = null;
     }
 
     public Type getType() {

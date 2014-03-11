@@ -15,9 +15,9 @@ import java.util.List;
  * </ul>
  */
 public final class LetStatement extends Statement implements ScopedNode {
-    private BlockScope scope;
-    private List<LexicalBinding> bindings;
-    private BlockStatement statement;
+    private final BlockScope scope;
+    private final List<LexicalBinding> bindings;
+    private final BlockStatement statement;
 
     public LetStatement(long beginPosition, long endPosition, BlockScope scope,
             List<LexicalBinding> bindings, BlockStatement statement) {

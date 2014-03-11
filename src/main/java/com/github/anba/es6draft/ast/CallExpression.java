@@ -16,8 +16,8 @@ import java.util.List;
  * </ul>
  */
 public final class CallExpression extends Expression {
-    private Expression base;
-    private List<Expression> arguments;
+    private final Expression base;
+    private final List<Expression> arguments;
 
     public CallExpression(long beginPosition, long endPosition, Expression base,
             List<Expression> arguments) {

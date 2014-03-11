@@ -13,8 +13,8 @@ import java.util.List;
  * <h2>15.3 Modules</h2>
  */
 public final class ImportClause extends AstNode {
-    private BindingIdentifier defaultEntry;
-    private List<ImportSpecifier> namedImports;
+    private final BindingIdentifier defaultEntry;
+    private final List<ImportSpecifier> namedImports;
 
     public ImportClause(long beginPosition, long endPosition, BindingIdentifier defaultEntry,
             List<ImportSpecifier> namedImports) {

@@ -14,8 +14,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class BindingElement extends FormalParameter implements BindingElementItem {
-    private Binding binding;
-    private Expression initialiser;
+    private final Binding binding;
+    private final Expression initialiser;
 
     public BindingElement(long beginPosition, long endPosition, Binding binding,
             Expression initialiser) {
