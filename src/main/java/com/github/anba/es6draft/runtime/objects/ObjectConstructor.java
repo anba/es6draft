@@ -43,9 +43,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>19 Fundamental Objects</h1><br>
  * <h2>19.1 Object Objects</h2>
  * <ul>
- * <li>19.1.1 The Object Constructor Called as a Function
- * <li>19.1.2 The Object Constructor
- * <li>19.1.3 Properties of the Object Constructor
+ * <li>19.1.1 The Object Constructor
+ * <li>19.1.2 Properties of the Object Constructor
  * </ul>
  */
 public final class ObjectConstructor extends BuiltinConstructor implements Initialisable {
@@ -83,7 +82,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 19.1.3 Properties of the Object Constructor
+     * 19.1.2 Properties of the Object Constructor
      */
     public enum Properties {
         ;
@@ -100,14 +99,14 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         public static final String name = "Object";
 
         /**
-         * 19.1.3.16 Object.prototype
+         * 19.1.2.16 Object.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.ObjectPrototype;
 
         /**
-         * 19.1.3.9 Object.getPrototypeOf ( O )
+         * 19.1.2.9 Object.getPrototypeOf ( O )
          */
         @Function(name = "getPrototypeOf", arity = 1)
         public static Object getPrototypeOf(ExecutionContext cx, Object thisValue, Object o) {
@@ -119,7 +118,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.6 Object.getOwnPropertyDescriptor ( O, P )
+         * 19.1.2.6 Object.getOwnPropertyDescriptor ( O, P )
          */
         @Function(name = "getOwnPropertyDescriptor", arity = 2)
         public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue,
@@ -140,7 +139,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.7 Object.getOwnPropertyNames ( O )
+         * 19.1.2.7 Object.getOwnPropertyNames ( O )
          */
         @Function(name = "getOwnPropertyNames", arity = 1)
         public static Object getOwnPropertyNames(ExecutionContext cx, Object thisValue, Object o) {
@@ -149,7 +148,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.8 Object.getOwnPropertySymbols ( O )
+         * 19.1.2.8 Object.getOwnPropertySymbols ( O )
          */
         @Function(name = "getOwnPropertySymbols", arity = 1)
         public static Object getOwnPropertySymbols(ExecutionContext cx, Object thisValue, Object o) {
@@ -158,7 +157,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.2 Object.create ( O [, Properties] )
+         * 19.1.2.2 Object.create ( O [, Properties] )
          */
         @Function(name = "create", arity = 2)
         public static Object create(ExecutionContext cx, Object thisValue, Object o,
@@ -178,7 +177,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.4 Object.defineProperty ( O, P, Attributes )
+         * 19.1.2.4 Object.defineProperty ( O, P, Attributes )
          */
         @Function(name = "defineProperty", arity = 3)
         public static Object defineProperty(ExecutionContext cx, Object thisValue, Object o,
@@ -198,7 +197,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.3 Object.defineProperties ( O, Properties )
+         * 19.1.2.3 Object.defineProperties ( O, Properties )
          */
         @Function(name = "defineProperties", arity = 2)
         public static Object defineProperties(ExecutionContext cx, Object thisValue, Object o,
@@ -208,7 +207,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.17 Object.seal ( O )
+         * 19.1.2.17 Object.seal ( O )
          */
         @Function(name = "seal", arity = 1)
         public static Object seal(ExecutionContext cx, Object thisValue, Object o) {
@@ -227,7 +226,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.5 Object.freeze ( O )
+         * 19.1.2.5 Object.freeze ( O )
          */
         @Function(name = "freeze", arity = 1)
         public static Object freeze(ExecutionContext cx, Object thisValue, Object o) {
@@ -246,7 +245,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.15 Object.preventExtensions ( O )
+         * 19.1.2.15 Object.preventExtensions ( O )
          */
         @Function(name = "preventExtensions", arity = 1)
         public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object o) {
@@ -265,7 +264,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.13 Object.isSealed ( O )
+         * 19.1.2.13 Object.isSealed ( O )
          */
         @Function(name = "isSealed", arity = 1)
         public static Object isSealed(ExecutionContext cx, Object thisValue, Object o) {
@@ -278,7 +277,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.12 Object.isFrozen ( O )
+         * 19.1.2.12 Object.isFrozen ( O )
          */
         @Function(name = "isFrozen", arity = 1)
         public static Object isFrozen(ExecutionContext cx, Object thisValue, Object o) {
@@ -291,7 +290,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.11 Object.isExtensible ( O )
+         * 19.1.2.11 Object.isExtensible ( O )
          */
         @Function(name = "isExtensible", arity = 1)
         public static Object isExtensible(ExecutionContext cx, Object thisValue, Object o) {
@@ -304,7 +303,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.14 Object.keys ( O )
+         * 19.1.2.14 Object.keys ( O )
          */
         @Function(name = "keys", arity = 1)
         public static Object keys(ExecutionContext cx, Object thisValue, Object o) {
@@ -317,7 +316,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.10 Object.is ( value1, value2 )
+         * 19.1.2.10 Object.is ( value1, value2 )
          */
         @Function(name = "is", arity = 2)
         public static Object is(ExecutionContext cx, Object thisValue, Object value1, Object value2) {
@@ -326,7 +325,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.1 Object.assign ( target, source )
+         * 19.1.2.1 Object.assign ( target, source )
          */
         @Function(name = "assign", arity = 2)
         public static Object assign(ExecutionContext cx, Object thisValue, Object target,
@@ -370,7 +369,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.3.18 Object.setPrototypeOf ( O, proto )
+         * 19.1.2.18 Object.setPrototypeOf ( O, proto )
          */
         @Function(name = "setPrototypeOf", arity = 2)
         public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object o,
@@ -405,9 +404,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 19.1.3.3 Object.defineProperties ( O, Properties )
-     * <p>
-     * Runtime Semantics: ObjectDefineProperties Abstract Operation
+     * 19.1.2.3.1 Runtime Semantics: ObjectDefineProperties Abstract Operation
      */
     public static ScriptObject ObjectDefineProperties(ExecutionContext cx, Object o,
             Object properties) {
@@ -451,7 +448,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 19.1.3.8.1 GetOwnPropertyKey ( O, Type ) Abstract Operation, with Type = String
+     * 19.1.2.8.1 GetOwnPropertyKey ( O, Type ) Abstract Operation, with Type = String
      */
     public static ScriptObject GetOwnPropertyNames(ExecutionContext cx, Object o) {
         /* steps 1-2 */
@@ -473,7 +470,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 19.1.3.8.1 GetOwnPropertyKey ( O, Type ) Abstract Operation, with Type = Symbol
+     * 19.1.2.8.1 GetOwnPropertyKey ( O, Type ) Abstract Operation, with Type = Symbol
      */
     public static ScriptObject GetOwnPropertySymbols(ExecutionContext cx, Object o) {
         /* steps 1-2 */

@@ -221,9 +221,11 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
          */
         @Function(name = "isNaN", arity = 1)
         public static Object isNaN(ExecutionContext cx, Object thisValue, Object number) {
+            /* step 1 */
             if (!Type.isNumber(number)) {
                 return false;
             }
+            /* steps 2-3 */
             return Double.isNaN(Type.numberValue(number));
         }
 
@@ -232,10 +234,12 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
          */
         @Function(name = "isFinite", arity = 1)
         public static Object isFinite(ExecutionContext cx, Object thisValue, Object number) {
+            /* step 1 */
             if (!Type.isNumber(number)) {
                 return false;
             }
             double num = Type.numberValue(number);
+            /* steps 2-3 */
             return !(Double.isInfinite(num) || Double.isNaN(num));
         }
 
@@ -244,14 +248,18 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
          */
         @Function(name = "isInteger", arity = 1)
         public static Object isInteger(ExecutionContext cx, Object thisValue, Object number) {
+            /* step 1 */
             if (!Type.isNumber(number)) {
                 return false;
             }
             double num = Type.numberValue(number);
+            /* step 2 */
             if (Double.isNaN(num) || Double.isInfinite(num)) {
                 return false;
             }
+            /* step 3 */
             double integer = ToInteger(num);
+            /* steps 4-5 */
             return integer == num;
         }
 
@@ -260,17 +268,22 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
          */
         @Function(name = "isSafeInteger", arity = 1)
         public static Object isSafeInteger(ExecutionContext cx, Object thisValue, Object number) {
+            /* step 1 */
             if (!Type.isNumber(number)) {
                 return false;
             }
             double num = Type.numberValue(number);
+            /* step 2 */
             if (Double.isNaN(num) || Double.isInfinite(num)) {
                 return false;
             }
+            /* step 3 */
             double integer = ToInteger(num);
+            /* step 4 */
             if (integer != num) {
                 return false;
             }
+            /* steps 5-6 */
             return Math.abs(integer) <= 0x1F_FFFF_FFFF_FFFFL;
         }
 

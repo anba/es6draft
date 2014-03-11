@@ -96,7 +96,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
         public static final Intrinsics constructor = Intrinsics.Function;
 
         /**
-         * 19.2.3.5 Function.prototype.toString ( )
+         * 19.2.3.6 Function.prototype.toString ( )
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -124,7 +124,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
             }
             /* steps 3-4 */
             Object[] argList = CreateListFromArrayLike(cx, argArray);
-            /* step 5 */
+            /* steps 5-6 */
             return PrepareForTailCall(argList, thisArg, func);
         }
 
@@ -140,7 +140,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
                 throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             Callable func = (Callable) thisValue;
-            /* steps 2-4 */
+            /* steps 2-5 */
             return PrepareForTailCall(args, thisArg, func);
         }
 
@@ -208,7 +208,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
         }
 
         /**
-         * 19.2.4.6 Function.prototype[ @@create ] ( )
+         * 19.2.4.7 Function.prototype[ @@create ] ( )
          */
         @Function(name = "[Symbol.create]", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -217,7 +217,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
         }
 
         /**
-         * 19.2.4.7 Function.prototype[@@hasInstance] (V)
+         * 19.2.4.8 Function.prototype[@@hasInstance] (V)
          */
         @Function(
                 name = "[Symbol.hasInstance]",

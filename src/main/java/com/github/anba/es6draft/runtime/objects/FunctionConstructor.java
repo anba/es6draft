@@ -83,7 +83,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
             bodyText = ToString(calleeContext, args[k - 1]);
         }
 
-        /* steps 8-12 */
+        /* steps 8-11 */
         RuntimeInfo.Function function;
         try {
             Realm realm = calleeContext.getRealm();
@@ -94,13 +94,13 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
             throw e.toScriptException(calleeContext);
         }
 
-        /* step 13 */
+        /* step 12 */
         boolean strict = function.isStrict();
-        /* step 14 */
+        /* step 13 */
         LexicalEnvironment scope = calleeContext.getRealm().getGlobalEnv();
-        /* step 15 */
+        /* step 14 */
         Object f = thisValue;
-        /* step 16 */
+        /* steps 15-16 */
         if (!(f instanceof FunctionObject) || ((FunctionObject) f).getCode() != null) {
             ScriptObject proto = GetPrototypeFromConstructor(calleeContext, this,
                     Intrinsics.FunctionPrototype);

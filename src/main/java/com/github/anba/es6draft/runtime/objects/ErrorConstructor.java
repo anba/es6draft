@@ -58,7 +58,6 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
         /* step 1 (omitted) */
         /* steps 2-4 */
         ErrorObject obj;
-
         if (!(thisValue instanceof ErrorObject) || ((ErrorObject) thisValue).isInitialised()) {
             obj = OrdinaryCreateFromConstructor(calleeContext, this, Intrinsics.ErrorPrototype,
                     ErrorObjectAllocator.INSTANCE);
