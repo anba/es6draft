@@ -51,7 +51,7 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
      * 23.3.1.1 WeakMap (iterable = undefined)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public WeakMapObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
 

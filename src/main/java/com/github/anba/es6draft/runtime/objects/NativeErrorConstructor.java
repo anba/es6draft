@@ -118,7 +118,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
      * <strong>Extension</strong>: NativeError (message, fileName, lineNumber, columnNumber)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public ErrorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object message = args.length > 0 ? args[0] : UNDEFINED;
 

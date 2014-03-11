@@ -32,6 +32,7 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
@@ -68,7 +69,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
      * [[Call]]
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
         return UNDEFINED;
     }
 

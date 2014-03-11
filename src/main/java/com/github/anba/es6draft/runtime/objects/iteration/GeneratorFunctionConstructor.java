@@ -61,7 +61,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
      * 25.2.1.1 GeneratorFunction (p1, p2, ... , pn, body)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public OrdinaryGenerator call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
 
         /* steps 1-7 */

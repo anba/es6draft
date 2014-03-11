@@ -62,7 +62,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
      * 19.1.1.1 Object ( [ value ] )
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object value = args.length > 0 ? args[0] : UNDEFINED;
         /* step 1 */
@@ -78,7 +78,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return (ScriptObject) call(callerContext, UNDEFINED, args);
+        return call(callerContext, UNDEFINED, args);
     }
 
     /**

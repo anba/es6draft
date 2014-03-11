@@ -44,6 +44,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -438,7 +439,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             return UNDEFINED;
         }
     }
@@ -446,17 +447,17 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
     /**
      * Constant Functions
      */
-    public static final class ConstantFunction extends BuiltinFunction {
+    public static final class ConstantFunction<VALUE> extends BuiltinFunction {
         /** [[ConstantValue]] */
-        private final Object constantValue;
+        private final VALUE constantValue;
 
-        public ConstantFunction(Realm realm, String name, Object constantValue) {
+        public ConstantFunction(Realm realm, String name, VALUE constantValue) {
             super(realm, name, 0);
             this.constantValue = constantValue;
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public VALUE call(ExecutionContext callerContext, Object thisValue, Object... args) {
             return constantValue;
         }
     }
@@ -466,6 +467,6 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
      */
     public static Callable CreateConstantGetter(ExecutionContext cx, String key, Object value) {
         /* steps 1-3 */
-        return new ConstantFunction(cx.getRealm(), "get " + key, value);
+        return new ConstantFunction<>(cx.getRealm(), "get " + key, value);
     }
 }

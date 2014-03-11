@@ -120,7 +120,7 @@ public final class CollatorPrototype extends CollatorObject implements Initialis
          * [[Call]]
          */
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Integer call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof CollatorObject;
             ExecutionContext calleeContext = calleeContext();
             Object arg0 = args.length > 0 ? args[0] : UNDEFINED;

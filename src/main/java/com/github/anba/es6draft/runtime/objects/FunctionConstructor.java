@@ -60,7 +60,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
      * 19.2.1.1 Function (p1, p2, ... , pn, body)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public OrdinaryFunction call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
 
         /* steps 1-7 */

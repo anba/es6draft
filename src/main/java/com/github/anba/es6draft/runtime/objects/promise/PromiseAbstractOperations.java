@@ -23,6 +23,7 @@ import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
@@ -61,7 +62,7 @@ public final class PromiseAbstractOperations {
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
             Object reason = args.length > 0 ? args[0] : UNDEFINED;
             /* step 1 (not applicable) */
@@ -103,7 +104,7 @@ public final class PromiseAbstractOperations {
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
             Object resolution = args.length > 0 ? args[0] : UNDEFINED;
             /* step 1 (not applicable) */
@@ -185,7 +186,7 @@ public final class PromiseAbstractOperations {
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
             Object resolve = args.length > 0 ? args[0] : UNDEFINED;
             Object reject = args.length > 1 ? args[1] : UNDEFINED;
@@ -379,23 +380,23 @@ public final class PromiseAbstractOperations {
         ScriptObject iterator = CreateListIterator(cx, list);
         // Promote Iterator to Iterable
         CreateDataProperty(cx, iterator, BuiltinSymbol.iterator.get(),
-                new ConstantFunction(cx.getRealm(), iterator));
+                new ConstantFunction<>(cx.getRealm(), iterator));
         Object p = PromiseConstructor.Properties.all(cx, promiseConstructor, iterator);
         assert p instanceof ScriptObject;
         return (ScriptObject) p;
     }
 
-    private static final class ConstantFunction extends BuiltinFunction {
+    private static final class ConstantFunction<VALUE> extends BuiltinFunction {
         /** [[ConstantValue]] */
-        private final Object constantValue;
+        private final VALUE constantValue;
 
-        public ConstantFunction(Realm realm, Object constantValue) {
+        public ConstantFunction(Realm realm, VALUE constantValue) {
             super(realm, ANONYMOUS, 0);
             this.constantValue = constantValue;
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public VALUE call(ExecutionContext callerContext, Object thisValue, Object... args) {
             return constantValue;
         }
     }

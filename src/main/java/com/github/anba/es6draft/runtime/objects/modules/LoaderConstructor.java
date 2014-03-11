@@ -56,7 +56,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
      * 26.3.1.1 %Loader% (options = { })
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public LoaderObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object options = args.length > 0 ? args[0] : UNDEFINED;
         /* steps 2-3 */

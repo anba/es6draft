@@ -285,7 +285,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
      * 11.1.2.1 Intl.NumberFormat.call (this [, locales [, options]])
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;

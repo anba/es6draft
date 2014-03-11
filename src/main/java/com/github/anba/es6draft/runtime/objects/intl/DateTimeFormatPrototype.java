@@ -148,7 +148,7 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
          * [[Call]]
          */
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public String call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof DateTimeFormatObject;
             ExecutionContext calleeContext = calleeContext();
             Object date = args.length > 0 ? args[0] : UNDEFINED;

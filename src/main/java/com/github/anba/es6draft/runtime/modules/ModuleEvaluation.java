@@ -16,6 +16,7 @@ import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.objects.modules.ModuleObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
@@ -42,7 +43,7 @@ public final class ModuleEvaluation {
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public ModuleObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
             Object loadArg = args.length > 0 ? args[0] : null;
             assert loadArg instanceof Load;

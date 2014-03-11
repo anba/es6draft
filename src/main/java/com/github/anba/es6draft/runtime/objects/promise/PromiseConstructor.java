@@ -64,7 +64,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
      * 25.4.3.1 Promise ( executor )
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public PromiseObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object executor = args.length > 0 ? args[0] : UNDEFINED;
         /* step 2 */

@@ -60,7 +60,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
      * 22.2.1.5 %TypedArray% ( binary data stuff ) [TODO]<br>
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public TypedArrayObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object arg0 = args.length > 0 ? args[0] : UNDEFINED;
         if (!Type.isObject(arg0)) {
@@ -81,7 +81,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
     /**
      * 22.2.1.1 %TypedArray% ( length )
      */
-    private Object callWithLength(ExecutionContext cx, Object thisValue, Object length) {
+    private TypedArrayObject callWithLength(ExecutionContext cx, Object thisValue, Object length) {
         /* step 1 */
         assert !Type.isObject(length);
         /* step 2 */
@@ -133,7 +133,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
     /**
      * 22.2.1.2 %TypedArray% ( typedArray )
      */
-    private Object callWithTypedArray(ExecutionContext cx, Object thisValue,
+    private TypedArrayObject callWithTypedArray(ExecutionContext cx, Object thisValue,
             TypedArrayObject typedArray) {
         /* step 1 (implicit) */
         /* step 2 */
@@ -211,7 +211,8 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
     /**
      * 22.2.1.3 %TypedArray% ( array )
      */
-    private Object callWithArray(ExecutionContext cx, Object thisValue, ScriptObject _array) {
+    private TypedArrayObject callWithArray(ExecutionContext cx, Object thisValue,
+            ScriptObject _array) {
         /* step 1 */
         assert !(_array instanceof TypedArrayObject || _array instanceof ArrayBufferObject);
         /* step 2 */
@@ -268,7 +269,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
     /**
      * 22.2.1.4 %TypedArray% ( buffer, byteOffset=0, length=undefined )
      */
-    private Object callWithArrayBuffer(ExecutionContext cx, Object thisValue,
+    private TypedArrayObject callWithArrayBuffer(ExecutionContext cx, Object thisValue,
             ArrayBufferObject buffer, Object byteOffset, Object length) {
         /* step 1 (implicit) */
         /* step 2 */

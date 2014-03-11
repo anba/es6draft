@@ -51,7 +51,7 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
      * 19.4.1.1 Symbol ( description=undefined )
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public Symbol call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object description = args.length > 0 ? args[0] : UNDEFINED;
         /* steps 1-3 */

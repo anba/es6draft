@@ -18,7 +18,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
@@ -85,7 +84,7 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
      * 22.2.4.1 TypedArray (...args)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public TypedArrayObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* step 1 */
         Object obj = thisValue;
@@ -104,8 +103,9 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
         Realm realmF = calleeContext.getRealm();
         /* step 8 */
         ScriptObject super_ = realmF.getIntrinsic(Intrinsics.TypedArray);
+        assert super_ instanceof TypedArrayConstructorPrototype;
         /* steps 9-10 */
-        return ((Callable) super_).call(calleeContext, thisValue, args);
+        return ((TypedArrayConstructorPrototype) super_).call(calleeContext, thisValue, args);
     }
 
     /**

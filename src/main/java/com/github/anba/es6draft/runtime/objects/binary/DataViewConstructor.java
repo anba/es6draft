@@ -152,7 +152,7 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
      * 24.2.2.1 DataView (buffer, byteOffset=0, byteLength=undefined)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public DataViewObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object buffer = args.length > 0 ? args[0] : UNDEFINED;
         Object byteOffset = args.length > 1 ? args[1] : 0;

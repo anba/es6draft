@@ -85,7 +85,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
      * 26.2.1.1 %Realm% (options = { }, initialiser = undefined)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public RealmObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object options = args.length > 0 ? args[0] : UNDEFINED;
         /* steps 2-3 */

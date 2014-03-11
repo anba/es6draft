@@ -316,7 +316,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      * 24.1.2.1 ArrayBuffer(length)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public ArrayBufferObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object length = args.length > 0 ? args[0] : UNDEFINED;
         /* step 1 (omitted) */

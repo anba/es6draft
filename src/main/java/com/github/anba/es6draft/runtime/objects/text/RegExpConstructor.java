@@ -60,7 +60,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
      * 21.2.3.1 RegExp(pattern, flags)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public RegExpObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object pattern = args.length > 0 ? args[0] : UNDEFINED;
         Object flags = args.length > 1 ? args[1] : UNDEFINED;
@@ -70,7 +70,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         if (!(thisValue instanceof RegExpObject) || ((RegExpObject) thisValue).isInitialised()) {
             /* step 3 */
             if (pattern instanceof RegExpObject && Type.isUndefined(flags)) {
-                return pattern;
+                return (RegExpObject) pattern;
             }
             obj = RegExpAlloc(calleeContext, this);
         } else {

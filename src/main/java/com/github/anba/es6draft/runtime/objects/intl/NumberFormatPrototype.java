@@ -142,7 +142,7 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
          * [[Call]]
          */
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public String call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof NumberFormatObject;
             ExecutionContext calleeContext = calleeContext();
             Object value = args.length > 0 ? args[0] : UNDEFINED;

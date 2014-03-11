@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
@@ -116,7 +117,7 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             /* step 1 */
             ExoticProxy p = revokableProxy;
             /* step 2 */

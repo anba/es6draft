@@ -51,7 +51,7 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
      * 23.1.1.1 Map (iterable = undefined)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public MapObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
 

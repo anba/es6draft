@@ -54,7 +54,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
      * 22.1.1.2 Array (len)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public ExoticArray call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         int numberOfArgs = args.length;
         if (numberOfArgs != 1) {

@@ -35,6 +35,7 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
@@ -155,7 +156,7 @@ public final class ModuleLoading {
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Load call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
             Object nameArg = args.length > 0 ? args[0] : UNDEFINED;
             /* step 1 */
@@ -492,7 +493,7 @@ public final class ModuleLoading {
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
             Object exc = args.length > 0 ? args[0] : UNDEFINED;
             /* step 1 */
@@ -556,7 +557,7 @@ public final class ModuleLoading {
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             @SuppressWarnings("unused")
             ExecutionContext calleeContext = calleeContext();
             Object depLoadArg = args.length > 0 ? args[0] : null;
@@ -597,7 +598,7 @@ public final class ModuleLoading {
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
             /* step 1 */
             Load load = this.load;
@@ -658,7 +659,7 @@ public final class ModuleLoading {
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
             Object resolveArg = args.length > 0 ? args[0] : UNDEFINED;
             Object rejectArg = args.length > 1 ? args[1] : UNDEFINED;

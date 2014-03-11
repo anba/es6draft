@@ -51,7 +51,7 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
      * 23.4.1.1 WeakSet (iterable = undefined)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public WeakSetObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
 

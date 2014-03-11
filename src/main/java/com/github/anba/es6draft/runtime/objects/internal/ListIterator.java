@@ -89,8 +89,8 @@ public final class ListIterator<T> extends OrdinaryObject {
     }
 
     private static final class IteratorWrapper extends SimpleIterator<Object> {
-        private ExecutionContext cx;
-        private ScriptObject object;
+        private final ExecutionContext cx;
+        private final ScriptObject object;
 
         IteratorWrapper(ExecutionContext cx, ScriptObject object) {
             this.cx = cx;

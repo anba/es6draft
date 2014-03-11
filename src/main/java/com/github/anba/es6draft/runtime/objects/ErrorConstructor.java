@@ -51,7 +51,7 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
      * <strong>Extension</strong>: Error (message, fileName, lineNumber, columnNumber)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public ErrorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object message = args.length > 0 ? args[0] : UNDEFINED;
 

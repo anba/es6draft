@@ -310,7 +310,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
      * 10.1.2.1 Intl.Collator.call (this [, locales [, options]])
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
