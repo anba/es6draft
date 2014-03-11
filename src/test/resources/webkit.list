@@ -76,6 +76,7 @@ fast/regex/invalid-range-in-class.js
 fast/js/caller-property.js
 fast/js/deep-recursion-test.js
 fast/js/function-constructor-error.js
+fast/js/Promise-init.js
 fast/js/reserved-words-strict.js
 fast/js/string-anchor.js
 fast/js/string-fontcolor.js

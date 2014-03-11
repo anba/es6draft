@@ -274,6 +274,12 @@ ecma_6/Generators/runtime.js
 # Various issues, see modified reflect-parse.js file
 js1_8_5/extensions/reflect-parse.js
 
+# SpiderMonkey does not yet support correct scoping in comprehension
+ecma_6/Comprehensions/scope.js
+
+# SpiderMonkey does not support 'yield' as identifier in generator comprehensions
+ecma_6/Comprehensions/error-messages.js
+
 
 #######################################
 # ES6 related runtime changes         #

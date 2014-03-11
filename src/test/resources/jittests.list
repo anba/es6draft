@@ -454,6 +454,8 @@ tests/basic/bug923390.js
 tests/basic/testNeutering.js
 # offThreadCompileScript
 tests/basic/offThreadCompileScript-02.js
+# newGlobal() with principal option
+tests/basic/shell-principals.js
 
 # Unsupported 'Testing' functions
 # gcparam

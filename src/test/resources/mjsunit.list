@@ -228,6 +228,9 @@ string-split.js
 # RegExp.prototype.compile requires extensible object
 regress/regress-349870.js
 
+# RegExp.prototype.test fetches "exec" dynamically
+regexp-string-methods.js
+
 
 #######################################
 # ES6 related syntax changes          #
