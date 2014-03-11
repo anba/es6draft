@@ -148,9 +148,6 @@ js1_7/extensions/regress-381301.js
 js1_8/extensions/regress-385729.js
 js1_8_5/regress/regress-584355.js
 
-# Extended toPrecision() range
-js1_5/Regress/regress-452346.js
-
 # JSON.stringify() - for-in enumeration order
 ecma_5/JSON/stringify.js
 

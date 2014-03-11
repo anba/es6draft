@@ -19,6 +19,7 @@ import org.mozilla.javascript.DToA;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -147,7 +148,8 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
             /* steps 3-4 */
             double f = ToInteger(cx, fractionDigits);
             /* step 5 */
-            if (f < 0 || f > 20) {
+            boolean extPrecision = cx.getRealm().isEnabled(CompatibilityOption.ExtendedPrecision);
+            if (f < 0 || f > (extPrecision ? 100 : 20)) {
                 throw newRangeError(cx, Messages.Key.InvalidPrecision);
             }
             /* step 6 */
@@ -180,7 +182,8 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
                 return "-Infinity";
             }
             /* step 10 */
-            if (f < 0 || f > 20) {
+            boolean extPrecision = cx.getRealm().isEnabled(CompatibilityOption.ExtendedPrecision);
+            if (f < 0 || f > (extPrecision ? 100 : 20)) {
                 throw newRangeError(cx, Messages.Key.InvalidPrecision);
             }
             /* steps 11-17 */
@@ -215,7 +218,8 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
                 return "-Infinity";
             }
             /* step 10 */
-            if (p < 1 || p > 21) {
+            boolean extPrecision = cx.getRealm().isEnabled(CompatibilityOption.ExtendedPrecision);
+            if (p < 1 || p > (extPrecision ? 100 : 21)) {
                 throw newRangeError(cx, Messages.Key.InvalidPrecision);
             }
             /* steps 11-16 */

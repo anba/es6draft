@@ -118,7 +118,12 @@ public enum CompatibilityOption {
     /**
      * Moz-Extension: Reflect.parse() function
      */
-    ReflectParse;
+    ReflectParse,
+
+    /**
+     * Moz-Extension: Extended precision for toFixed, toExponential, toPrecision
+     */
+    ExtendedPrecision;
 
     /**
      * Returns a set of all options for strict-compatibility
@@ -138,6 +143,6 @@ public enum CompatibilityOption {
      * Returns a set of all options for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return EnumSet.range(LegacyOctalIntegerLiteral, ReflectParse);
+        return EnumSet.range(LegacyOctalIntegerLiteral, ExtendedPrecision);
     }
 }
