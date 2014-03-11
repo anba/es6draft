@@ -69,6 +69,7 @@ public enum Intrinsics {/* @formatter:off */
     JSON,
     Proxy,
     Reflect,
+    System,
 
     // binary module
     ArrayBuffer,

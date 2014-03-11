@@ -466,6 +466,12 @@ public class GlobalObject extends OrdinaryObject {
         @Value(name = "Reflect")
         public static final Intrinsics Reflect = Intrinsics.Reflect;
 
+        /**
+         * 18.4.5 System
+         */
+        @Value(name = "System")
+        public static final Intrinsics System = Intrinsics.System;
+
         // Internationalization API
 
         @Value(name = "Intl")

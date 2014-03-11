@@ -55,6 +55,7 @@ import com.github.anba.es6draft.runtime.objects.modules.LoaderPrototype;
 import com.github.anba.es6draft.runtime.objects.modules.RealmConstructor;
 import com.github.anba.es6draft.runtime.objects.modules.RealmObject;
 import com.github.anba.es6draft.runtime.objects.modules.RealmPrototype;
+import com.github.anba.es6draft.runtime.objects.modules.SystemObject;
 import com.github.anba.es6draft.runtime.objects.number.MathObject;
 import com.github.anba.es6draft.runtime.objects.number.NumberConstructor;
 import com.github.anba.es6draft.runtime.objects.number.NumberPrototype;
@@ -882,6 +883,7 @@ public final class Realm {
         LoaderIteratorPrototype loaderIteratorPrototype = new LoaderIteratorPrototype(realm);
         RealmConstructor realmConstructor = new RealmConstructor(realm);
         RealmPrototype realmPrototype = new RealmPrototype(realm);
+        SystemObject systemObject = new SystemObject(realm);
 
         // registration phase
         intrinsics.put(Intrinsics.Loader, loaderConstructor);
@@ -889,6 +891,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.LoaderIteratorPrototype, loaderIteratorPrototype);
         intrinsics.put(Intrinsics.Realm, realmConstructor);
         intrinsics.put(Intrinsics.RealmPrototype, realmPrototype);
+        intrinsics.put(Intrinsics.System, systemObject);
 
         // initialisation phase
         loaderConstructor.initialise(defaultContext);
@@ -896,6 +899,7 @@ public final class Realm {
         loaderIteratorPrototype.initialise(defaultContext);
         realmConstructor.initialise(defaultContext);
         realmPrototype.initialise(defaultContext);
+        systemObject.initialise(defaultContext);
     }
 
     /**
