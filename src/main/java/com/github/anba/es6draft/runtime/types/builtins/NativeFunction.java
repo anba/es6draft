@@ -21,9 +21,22 @@ public final class NativeFunction extends BuiltinFunction {
     // (Object, Object[]) -> Object
     private final MethodHandle mh;
 
+    private final NativeFunctionId id;
+
+    public enum NativeFunctionId {
+        None
+    }
+
     public NativeFunction(Realm realm, String name, int arity, MethodHandle mh) {
         super(realm, name, arity);
         this.mh = mh;
+        this.id = NativeFunctionId.None;
+    }
+
+    public NativeFunction(Realm realm, String name, int arity, NativeFunctionId id, MethodHandle mh) {
+        super(realm, name, arity);
+        this.mh = mh;
+        this.id = id;
     }
 
     /**
@@ -31,6 +44,13 @@ public final class NativeFunction extends BuiltinFunction {
      */
     public MethodHandle getCallMethod() {
         return mh;
+    }
+
+    /**
+     * Returns the id for this native function
+     */
+    public final NativeFunctionId getId() {
+        return id;
     }
 
     /**

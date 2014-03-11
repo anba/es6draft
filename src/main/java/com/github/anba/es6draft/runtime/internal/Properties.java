@@ -42,6 +42,7 @@ import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction.NativeFunctionId;
 import com.github.anba.es6draft.runtime.types.builtins.NativeTailCallFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -99,6 +100,11 @@ public final class Properties {
          */
         Attributes attributes() default @Attributes(writable = true, enumerable = false,
                 configurable = true);
+
+        /**
+         * Native function identifier
+         */
+        NativeFunctionId nativeId() default NativeFunctionId.None;
     }
 
     /**
@@ -937,10 +943,11 @@ public final class Properties {
         BuiltinSymbol sym = function.symbol();
         int arity = function.arity();
         Attributes attrs = function.attributes();
+        NativeFunctionId nativeId = function.nativeId();
 
         mh = MethodHandles.insertArguments(mh, 0, cx);
 
-        NativeFunction fun = new NativeFunction(cx.getRealm(), name, arity, mh);
+        NativeFunction fun = new NativeFunction(cx.getRealm(), name, arity, nativeId, mh);
         if (sym == BuiltinSymbol.NONE) {
             owner.defineOwnProperty(cx, name, propertyDescriptor(fun, attrs));
         } else {

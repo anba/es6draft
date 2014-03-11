@@ -100,6 +100,13 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
+     * Returns the function's name
+     */
+    public final String getName() {
+        return name;
+    }
+
+    /**
      * [[Realm]]
      */
     public final Realm getRealm() {
