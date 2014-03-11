@@ -61,6 +61,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                         .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
                                 Types.ScriptObject, Types.String));
 
+        static final MethodDesc AbstractOperations_IsExtensible = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "IsExtensible",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Types.ScriptObject));
+
         static final MethodDesc AbstractOperations_IteratorComplete = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "IteratorComplete",
                 Type.getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Types.ScriptObject));
@@ -939,6 +943,18 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         Label hasOwnName = null;
         if (node instanceof ClassDefinition) {
             hasOwnName = new Label();
+
+            // FIXME: workaround for https://bugs.ecmascript.org/show_bug.cgi?id=2578
+            // stack: [function] -> [function, cx, function]
+            if (((ClassDefinition) node).getName() != null) {
+                // Call to SetFunctionName for non-anonymous class definition
+                mv.dup();
+                mv.loadExecutionContext();
+                mv.swap();
+                mv.invoke(Methods.AbstractOperations_IsExtensible);
+                mv.ifeq(hasOwnName);
+            }
+
             // stack: [function] -> [function, cx, function, "name"]
             mv.dup();
             mv.loadExecutionContext();
