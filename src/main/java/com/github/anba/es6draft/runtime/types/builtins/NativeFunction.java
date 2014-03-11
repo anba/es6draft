@@ -24,7 +24,7 @@ public final class NativeFunction extends BuiltinFunction {
     private final NativeFunctionId id;
 
     public enum NativeFunctionId {
-        None
+        None, RegExpPrototypeExec
     }
 
     public NativeFunction(Realm realm, String name, int arity, MethodHandle mh) {

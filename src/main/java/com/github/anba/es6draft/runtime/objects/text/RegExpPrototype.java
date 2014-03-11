@@ -39,6 +39,8 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction.NativeFunctionId;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -89,7 +91,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
         /**
          * 21.2.5.2 RegExp.prototype.exec(string)
          */
-        @Function(name = "exec", arity = 1)
+        @Function(name = "exec", arity = 1, nativeId = NativeFunctionId.RegExpPrototypeExec)
         public static Object exec(ExecutionContext cx, Object thisValue, Object string) {
             /* steps 1-4 */
             RegExpObject r = thisRegExpValue(cx, thisValue);
@@ -159,17 +161,34 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
          */
         @Function(name = "test", arity = 1)
         public static Object test(ExecutionContext cx, Object thisValue, Object string) {
-            /* steps 1-4 */
-            RegExpObject r = thisRegExpValue(cx, thisValue);
-            /* steps 5-6 */
-            String s = ToFlatString(cx, string);
-            /* steps 7-9 */
-            MatchResult m = getMatcherOrNull(cx, r, s);
-            if (m == null) {
-                return false;
+            /* steps 1-2 */
+            if (!Type.isObject(thisValue)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
             }
-            RegExpConstructor.storeLastMatchResult(cx, r, s, m);
-            return true;
+            /* steps 3-4 */
+            // inlined: Invoke(cx, Type.objectValue(thisValue), "exec", string);
+            ScriptObject object = Type.objectValue(thisValue);
+            Object func = object.get(cx, "exec", object);
+            // special cased to avoid RegExp.prototype.exec match array creation
+            if (func instanceof NativeFunction
+                    && ((NativeFunction) func).getId() == NativeFunctionId.RegExpPrototypeExec
+                    && ((NativeFunction) func).getRealm() == cx.getRealm()) {
+                RegExpObject r = thisRegExpValue(cx, thisValue);
+                String s = ToFlatString(cx, string);
+                MatchResult m = getMatcherOrNull(cx, r, s);
+                if (m == null) {
+                    return false;
+                }
+                RegExpConstructor.storeLastMatchResult(cx, r, s, m);
+                return true;
+            }
+            /* steps 3-4 (cont'ed) */
+            if (!IsCallable(func)) {
+                throw newTypeError(cx, Messages.Key.NotCallable);
+            }
+            Object match = ((Callable) func).call(cx, object, string);
+            /* step 5 */
+            return !Type.isNull(match);
         }
 
         /**
