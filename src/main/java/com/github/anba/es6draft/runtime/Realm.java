@@ -16,9 +16,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,7 +83,7 @@ public final class Realm {
     /**
      * [[intrinsics]]
      */
-    private final Map<Intrinsics, ScriptObject> intrinsics = new EnumMap<>(Intrinsics.class);
+    private final EnumMap<Intrinsics, ScriptObject> intrinsics = new EnumMap<>(Intrinsics.class);
 
     /**
      * [[realmObject]]
@@ -132,7 +130,7 @@ public final class Realm {
     private final SecureRandom random = new SecureRandom();
 
     // TODO: move into function source object
-    private Map<String, ScriptObject> templateCallSites = new HashMap<>();
+    private HashMap<String, ScriptObject> templateCallSites = new HashMap<>();
 
     private Realm(World<? extends GlobalObject> world) {
         this.world = world;
@@ -297,7 +295,7 @@ public final class Realm {
     /**
      * Returns the compatibility options for this realm instance
      */
-    public Set<CompatibilityOption> getOptions() {
+    public EnumSet<CompatibilityOption> getOptions() {
         return world.getOptions();
     }
 
@@ -305,7 +303,7 @@ public final class Realm {
      * Tests whether the requested compatibility option is enabled in this code realm
      */
     public boolean isEnabled(CompatibilityOption option) {
-        return world.getOptions().contains(option);
+        return world.isEnabled(option);
     }
 
     /**
@@ -471,7 +469,7 @@ public final class Realm {
      * Fundamental built-in objects which must be initialised early
      */
     private static void initialiseFundamentalObjects(Realm realm) {
-        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -506,7 +504,7 @@ public final class Realm {
      * Standard built-in objects
      */
     private static void initialiseStandardObjects(Realm realm) {
-        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -582,7 +580,7 @@ public final class Realm {
      * Native Error built-in objects
      */
     private static void initialiseNativeErrors(Realm realm) {
-        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -651,7 +649,7 @@ public final class Realm {
      * Additional internal built-in objects used in this implementation
      */
     private static void initialiseInternalObjects(Realm realm) {
-        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
 
         // intrinsic functions
         intrinsics.put(Intrinsics.ListIteratorNext, new ListIteratorNext(realm));
@@ -661,7 +659,7 @@ public final class Realm {
      * <h1>23 Keyed Collection</h1>
      */
     private static void initialiseCollectionModule(Realm realm) {
-        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -705,7 +703,7 @@ public final class Realm {
      * <h1>26 The Reflect Module</h1>
      */
     private static void initialiseReflectModule(Realm realm) {
-        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -725,7 +723,7 @@ public final class Realm {
      * <h1>25 The "std:iteration" Module</h1>
      */
     private static void initialiseIterationModule(Realm realm) {
-        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -754,7 +752,7 @@ public final class Realm {
      * <h1>22.2 TypedArray Objects, 24.1 ArrayBuffer Objects, 24.2 DataView Objects</h1>
      */
     private static void initialiseBinaryModule(Realm realm) {
-        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -855,7 +853,7 @@ public final class Realm {
      * <h1>Promise Objects</h1>
      */
     private static void initialisePromiseObjects(Realm realm) {
-        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -875,7 +873,7 @@ public final class Realm {
      * <h1>Loader, Module, Realm Objects</h1>
      */
     private static void initialiseModuleModules(Realm realm) {
-        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -907,7 +905,7 @@ public final class Realm {
      * Additional built-in objects from the Internationalisation API
      */
     private static void initialiseInternationalisation(Realm realm) {
-        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase

@@ -1688,17 +1688,19 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 14.5.15 Runtime Semantics: Evaluation
+     * 14.5.16 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(ClassExpression node, ExpressionVisitor mv) {
+        /* steps 1-2 */
         String className = (node.getName() != null ? node.getName().getName() : null);
+        /* steps 3-4 */
         ClassDefinitionEvaluation(node, className, mv);
-
+        /* step 5 */
         if (node.getName() != null) {
             SetFunctionName(node, node.getName().getName(), mv);
         }
-
+        /* step 6 */
         return ValType.Object;
     }
 

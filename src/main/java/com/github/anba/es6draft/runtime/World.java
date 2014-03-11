@@ -225,7 +225,7 @@ public final class World<GLOBAL extends GlobalObject> {
     /**
      * Returns the compatibility options for this instance
      */
-    public Set<CompatibilityOption> getOptions() {
+    public EnumSet<CompatibilityOption> getOptions() {
         return options;
     }
 
