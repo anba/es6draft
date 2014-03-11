@@ -33,6 +33,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     }
 
     private static double toIntegerIndex(String propertyKey) {
+        // FIXME: spec issue https://bugs.ecmascript.org/show_bug.cgi?id=2049
         double intIndex = ToInteger(ToNumber(propertyKey));
         if (ToString(intIndex).equals(propertyKey)) {
             return intIndex;
@@ -47,14 +48,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         /* step 3 */
         double intIndex = toIntegerIndex(propertyKey);
         if (!Double.isNaN(intIndex)) {
-            if (intIndex < 0) {
-                return false;
-            }
-            long length = getLength();
-            if (intIndex >= length) {
-                return false;
-            }
-            return true;
+            return elementHas(cx, intIndex);
         }
         /* step 4 */
         return super.hasOwnProperty(cx, propertyKey);
@@ -86,24 +80,34 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         /* step 3 */
         double intIndex = toIntegerIndex(propertyKey);
         if (!Double.isNaN(intIndex)) {
+            /* step 3.c.i */
             if (intIndex < 0) {
                 return false;
             }
+            /* step 3.c.ii */
             long length = getLength();
+            /* step 3.c.iii (not applicable) */
+            /* step 3.c.iv */
             if (intIndex >= length) {
                 return false;
             }
+            /* step 3.c.v */
             if (desc.isAccessorDescriptor()) {
                 return false;
             }
+            /* step 3.c.vi */
             if (desc.hasConfigurable() && desc.isConfigurable()) {
                 return false;
             }
+            /* step 3.c.vii */
             if (desc.hasEnumerable() && !desc.isEnumerable()) {
                 return false;
             }
+            /* step 3.c.viii */
             boolean writable = getWritable();
+            /* step 3.c.ix */
             boolean makeReadOnly = false;
+            /* step 3.c.x */
             if (desc.hasWritable()) {
                 if (desc.isWritable() && !writable) {
                     return false;
@@ -112,6 +116,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
                     makeReadOnly = true;
                 }
             }
+            /* step 3.c.xi */
             if (desc.hasValue()) {
                 Object value = desc.getValue();
                 if (!writable) {
@@ -126,9 +131,11 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
                     elementSet(cx, intIndex, value);
                 }
             }
+            /* step 3.c.xii */
             if (makeReadOnly) {
                 setNonWritable();
             }
+            /* step 3.c.xiii */
             return true;
         }
         /* step 4 */
@@ -219,6 +226,9 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
 
     /** Not in spec */
     protected abstract long getLength();
+
+    /** Not in spec */
+    protected abstract boolean elementHas(ExecutionContext cx, double index);
 
     /**
      * 9.4.5.8 IntegerIndexedElementGet (O, index) Abstract Operation
