@@ -6,11 +6,12 @@
  */
 
 const {
-  assertThrows
+  assertUndefined
 } = Assert;
 
 // 9.5.6: No TypeError thrown in step 21b if [[Configurable]] field not present
 // https://bugs.ecmascript.org/show_bug.cgi?id=2297
 
 let proxy = new Proxy({}, { defineProperty(){ return true } });
-assertThrows(() => Object.defineProperty(proxy, "p", {}), TypeError);
+Object.defineProperty(proxy, "p", {}); // no error here, and no property was created
+assertUndefined(Object.getOwnPropertyDescriptor(proxy, "p"));

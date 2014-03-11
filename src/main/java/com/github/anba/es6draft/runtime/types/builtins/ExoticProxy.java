@@ -528,7 +528,7 @@ public class ExoticProxy implements ScriptObject {
             if (!extensibleTarget) {
                 throw newTypeError(cx, Messages.Key.ProxyAbsentNotExtensible);
             }
-            if (!desc.isConfigurable()) {
+            if (settingConfigFalse) {
                 throw newTypeError(cx, Messages.Key.ProxyAbsentOrConfigurable);
             }
         } else {
