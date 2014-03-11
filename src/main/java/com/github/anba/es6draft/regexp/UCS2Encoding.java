@@ -92,35 +92,22 @@ final class UCS2Encoding extends UnicodeEncoding {
         return codeToMbc(caseFold, to, 0);
     }
 
+    private static int[] allCaseFoldData;
+
     @Override
     public void applyAllCaseFold(int flag, ApplyAllCaseFoldFunction fun, Object arg) {
+        int[] caseFoldData = allCaseFoldData;
+        if (caseFoldData == null) {
+            allCaseFoldData = caseFoldData = CaseFoldData.allCaseFoldData();
+        }
+
         int[] to = { 0 };
-        for (int codePoint = Character.MIN_VALUE; codePoint <= Character.MAX_VALUE; ++codePoint) {
-            if (!CaseFoldData.caseFoldType(codePoint)) {
-                continue;
-            }
-            int toUpper = Character.toUpperCase(codePoint);
-            int toLower = Character.toLowerCase(codePoint);
-            if (CaseFoldData.isValidCaseFold(codePoint, toUpper, toLower)) {
-                int caseFold1 = CaseFoldData.caseFold1(codePoint);
-                int caseFold2 = CaseFoldData.caseFold2(codePoint);
-                if (codePoint != toUpper) {
-                    to[0] = toUpper;
-                    fun.apply(codePoint, to, 1, arg);
-                }
-                if (codePoint != toLower && CaseFoldData.isValidToLower(codePoint)) {
-                    to[0] = toLower;
-                    fun.apply(codePoint, to, 1, arg);
-                }
-                if (caseFold1 != -1) {
-                    to[0] = caseFold1;
-                    fun.apply(codePoint, to, 1, arg);
-                }
-                if (caseFold2 != -1) {
-                    to[0] = caseFold2;
-                    fun.apply(codePoint, to, 1, arg);
-                }
-            }
+        for (int i = 0, len = caseFoldData.length; i < len; ++i) {
+            int entry = caseFoldData[i];
+            int codePoint = (entry >>> 16) & 0xffff;
+            int foldCodePoint = (entry >>> 0) & 0xffff;
+            to[0] = foldCodePoint;
+            fun.apply(codePoint, to, 1, arg);
         }
     }
 

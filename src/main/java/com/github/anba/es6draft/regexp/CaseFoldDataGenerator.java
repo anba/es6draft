@@ -24,13 +24,16 @@ final class CaseFoldDataGenerator {
     public static void main(String[] args) {
         // generateSpaceRange();
         // generateInvalidToLowerCases();
-        // generateCaseFoldMethods(findEntries());
+        // generateCaseFoldMethods();
         // generateUnicodeCaseFoldRange();
 
         // findSpecialUnicodeCaseFold();
         // findEntries();
     }
 
+    /**
+     * Create {@link CaseFoldData#appendCaseInsensitiveUnicodeRange(RegExpParser, int, int)} method
+     */
     public static void generateUnicodeCaseFoldRange() {
         StringBuilder code = new StringBuilder();
         code.append("public static final void appendCaseInsensitiveUnicodeRange(RegExpParser parser, int startChar, int endChar) {\n");
@@ -143,6 +146,9 @@ final class CaseFoldDataGenerator {
         code.append(ifStatement);
     }
 
+    /**
+     * Create {@link CaseFoldData#isValidToLower(int)} method
+     */
     public static void generateInvalidToLowerCases() {
         StringBuilder code = new StringBuilder();
         String methodName = "isValidToLower";
@@ -164,6 +170,9 @@ final class CaseFoldDataGenerator {
         System.out.println(code);
     }
 
+    /**
+     * Check {@link CaseFoldData#hasAdditionalUnicodeCaseFold(int)} is correct
+     */
     public static void findSpecialUnicodeCaseFold() {
         LinkedHashMap<Integer, Integer> entries = new LinkedHashMap<>();
         for (int codePoint = Character.MIN_CODE_POINT; codePoint <= Character.MAX_CODE_POINT; ++codePoint) {
@@ -191,6 +200,9 @@ final class CaseFoldDataGenerator {
         assert entries.equals(Collections.singletonMap(0x00df, 0x1e9e));
     }
 
+    /**
+     * Generate {@link UCS2Encoding#codeRangeSpace} array
+     */
     public static void generateSpaceRange() {
         StringBuilder code = new StringBuilder();
         int count = 0;
@@ -227,7 +239,7 @@ final class CaseFoldDataGenerator {
         }
     }
 
-    public static TreeMap<Integer, List<Integer>> findEntries() {
+    private static TreeMap<Integer, List<Integer>> findEntries() {
         TreeMap<Integer, List<Integer>> entries = new TreeMap<>();
         for (int codePoint = Character.MIN_VALUE; codePoint <= Character.MAX_VALUE; ++codePoint) {
             if (!CaseFoldData.caseFoldType(codePoint)) {
@@ -288,7 +300,8 @@ final class CaseFoldDataGenerator {
         return entries;
     }
 
-    public static void generateCaseFoldMethods(TreeMap<Integer, List<Integer>> entries) {
+    public static void generateCaseFoldMethods() {
+        TreeMap<Integer, List<Integer>> entries = findEntries();
         for (int minListSize = 1;; minListSize += 1) {
             StringBuilder code = new StringBuilder();
             String methodName = "caseFold" + minListSize;

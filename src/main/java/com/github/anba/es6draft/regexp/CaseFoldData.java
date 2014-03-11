@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.regexp;
 
+import java.util.Arrays;
+
 /**
  * Additional case fold support class
  */
@@ -16,7 +18,7 @@ final class CaseFoldData {
     /**
      * Is {@code codePoint} a code point which is applicable for case folding
      */
-    public static boolean caseFoldType(int codePoint) {
+    public static final boolean caseFoldType(int codePoint) {
         switch (Character.getType(codePoint)) {
         case Character.UPPERCASE_LETTER:
         case Character.LOWERCASE_LETTER:
@@ -45,7 +47,7 @@ final class CaseFoldData {
     /**
      * Returns {@code true} if {@code ToUpper(codePoint) == ToUpper(ToLower(codePoint))}
      */
-    public static boolean isValidToLower(int codePoint) {
+    public static final boolean isValidToLower(int codePoint) {
         switch (codePoint) {
         case 0x0130:
         case 0x03f4:
@@ -57,6 +59,41 @@ final class CaseFoldData {
         default:
             return true;
         }
+    }
+
+    public static final int[] allCaseFoldData() {
+        /*
+         * Format: (codeUnit:31:16) + (foldCodeUnit:0:15)
+         */
+        int index = 0;
+        int[] data = new int[0x80F];
+        for (int codePoint = Character.MIN_VALUE; codePoint <= Character.MAX_VALUE; ++codePoint) {
+            if (!CaseFoldData.caseFoldType(codePoint)) {
+                continue;
+            }
+            int toUpper = Character.toUpperCase(codePoint);
+            int toLower = Character.toLowerCase(codePoint);
+            if (CaseFoldData.isValidCaseFold(codePoint, toUpper, toLower)) {
+                if (index + 4 > data.length) {
+                    data = Arrays.copyOf(data, data.length + (data.length >> 1));
+                }
+                int caseFold1 = CaseFoldData.caseFold1(codePoint);
+                int caseFold2 = CaseFoldData.caseFold2(codePoint);
+                if (codePoint != toUpper) {
+                    data[index++] = (codePoint << 16) | toUpper;
+                }
+                if (codePoint != toLower && CaseFoldData.isValidToLower(codePoint)) {
+                    data[index++] = (codePoint << 16) | toLower;
+                }
+                if (caseFold1 != -1) {
+                    data[index++] = (codePoint << 16) | caseFold1;
+                }
+                if (caseFold2 != -1) {
+                    data[index++] = (codePoint << 16) | caseFold2;
+                }
+            }
+        }
+        return Arrays.copyOf(data, index);
     }
 
     /*
