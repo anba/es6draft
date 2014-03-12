@@ -13,7 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,14 +40,14 @@ final class IntlDataTools {
     public static void main(String[] args) throws IOException {
         // Path cldrMainDir = Paths.get("/tmp/cldr-2.0.0-core--main");
         // oldStyleLanguageTags(cldrMainDir);
-        //
+
         // Path currencyFile = Paths.get("/tmp/iso_currency.xml");
         // currencyDigits(currencyFile);
-        //
+
         // Path tzdataDir = Paths.get("/tmp/tzdata2013c.tar");
         // jdkTimezoneNames(tzdataDir);
-        //
-        // Path langSubtagReg = Paths.get("/language-subtag-registry.txt");
+
+        // Path langSubtagReg = Paths.get("/tmp/language-subtag-registry.txt");
         // languageSubtagRegistry(langSubtagReg);
     }
 
@@ -110,68 +109,84 @@ final class IntlDataTools {
             }
         }
 
-        System.out.println("---");
-
+        /* Generate LanguageSubtagRegistryData#scriptData entries */
+        System.out.println("--- [LanguageSubtagRegistryData#scriptData] ---");
         for (Record record : script) {
             assert record.has(Field.Prefix);
-            System.out.printf("%s -> %s [%s]\n", record.get(Field.Subtag),
+            System.out.printf("%s -> %s [%s]%n", record.get(Field.Subtag),
                     record.get(Field.PreferredValue), record.get(Field.Prefix));
         }
-        System.out.println("---");
+        System.out.println();
+        assert script.isEmpty() : "no preferred values for 'script' expected";
 
+        /* Generate LanguageSubtagRegistryData#extlangData entries */
+        System.out.println("--- [LanguageSubtagRegistryData#extlangData] ---");
         for (Record record : extlang) {
             assert record.has(Field.Prefix);
             assert record.get(Field.Subtag).equals(record.get(Field.PreferredValue)) : record
                     .get(Field.Subtag);
-            System.out.printf("map.put(\"%s\", \"%s\");\n", record.get(Field.Subtag),
+            System.out.printf("map.put(\"%s\", \"%s\");%n", record.get(Field.Subtag),
                     record.get(Field.Prefix));
         }
-        System.out.println("---");
+        System.out.println();
 
+        /* Generate LanguageSubtagRegistryData#variantData entries */
+        System.out.println("--- [LanguageSubtagRegistryData#variantData] ---");
         for (Record record : variant) {
             assert record.has(Field.Prefix);
-            System.out.printf("%s -> %s [%s]\n", record.get(Field.Subtag),
+            System.out.printf("%s -> %s [%s]%n", record.get(Field.Subtag),
                     record.get(Field.PreferredValue), record.get(Field.Prefix));
-            System.out.printf("map.put(\"%s\", \"%s\");\n", record.get(Field.Subtag),
+            System.out.printf("map.put(\"%s\", \"%s\");%n", record.get(Field.Subtag),
                     record.get(Field.PreferredValue));
         }
-        System.out.println("---");
+        System.out.println();
+        assert variant.size() == 1 : "Only one variant entry expected";
+        assert variant.get(0).get(Field.Subtag).equals("heploc");
+        assert variant.get(0).get(Field.PreferredValue).equals("alalc97");
 
+        /* Generate LanguageSubtagRegistryData#regionData entries */
+        System.out.println("--- [LanguageSubtagRegistryData#regionData] ---");
         for (Record record : region) {
             assert !record.has(Field.Prefix);
-            System.out.printf("map.put(\"%s\", \"%s\");\n",
+            System.out.printf("map.put(\"%s\", \"%s\");%n",
                     record.get(Field.Subtag).toLowerCase(Locale.ROOT),
                     record.get(Field.PreferredValue));
         }
-        System.out.println("---");
+        System.out.println();
 
+        /* Generate LanguageSubtagRegistryData#languageData entries */
+        System.out.println("--- [LanguageSubtagRegistryData#languageData] ---");
         for (Record record : language) {
             assert !record.has(Field.Prefix);
-            System.out.printf("map.put(\"%s\", \"%s\");\n", record.get(Field.Subtag),
+            System.out.printf("map.put(\"%s\", \"%s\");%n", record.get(Field.Subtag),
                     record.get(Field.PreferredValue));
         }
-        System.out.println("---");
+        System.out.println();
 
+        /* Generate LanguageSubtagRegistryData#grandfatheredData entries */
+        System.out.println("--- [LanguageSubtagRegistryData#grandfatheredData] ---");
         for (Record record : grandfathered) {
             assert !record.has(Field.Prefix);
             if (record.has(Field.PreferredValue)) {
-                System.out.printf("map.put(\"%s\", \"%s\");\n",
+                System.out.printf("map.put(\"%s\", \"%s\");%n",
                         record.get(Field.Tag).toLowerCase(Locale.ROOT),
                         record.get(Field.PreferredValue));
             } else {
-                System.out.printf("map.put(\"%s\", \"%s\");\n",
+                System.out.printf("map.put(\"%s\", \"%s\");%n",
                         record.get(Field.Tag).toLowerCase(Locale.ROOT), record.get(Field.Tag));
             }
         }
-        System.out.println("---");
+        System.out.println();
 
+        /* Generate LanguageSubtagRegistryData#redundantData entries */
+        System.out.println("--- [LanguageSubtagRegistryData#redundantData] ---");
         for (Record record : redundant) {
             assert !record.has(Field.Prefix);
-            System.out.printf("map.put(\"%s\", \"%s\");\n",
+            System.out.printf("map.put(\"%s\", \"%s\");%n",
                     record.get(Field.Tag).toLowerCase(Locale.ROOT),
                     record.get(Field.PreferredValue));
         }
-        System.out.println("---");
+        System.out.println();
     }
 
     private enum Field {
@@ -270,8 +285,7 @@ final class IntlDataTools {
         TreeSet<String> names = new TreeSet<>();
         TreeMap<String, String> links = new TreeMap<>();
 
-        Path dir = Paths.get("C:\\Users\\André\\Downloads\\tzdata2013c.tar");
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(tzdataDir)) {
             for (Path path : stream) {
                 String filename = path.getFileName().toString();
                 if (pFileName.matcher(filename).matches()) {
@@ -368,9 +382,9 @@ final class IntlDataTools {
             }
             for (Map.Entry<Integer, List<String>> entry : sorted.entrySet()) {
                 for (String c : entry.getValue()) {
-                    System.out.printf("case \"%s\":\n", c);
+                    System.out.printf("case \"%s\":%n", c);
                 }
-                System.out.printf("    return %d;\n", entry.getKey());
+                System.out.printf("    return %d;%n", entry.getKey());
             }
             System.out.println("default:\n    return 2;");
         }

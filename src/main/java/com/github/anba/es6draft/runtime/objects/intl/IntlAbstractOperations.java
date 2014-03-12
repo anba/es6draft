@@ -569,7 +569,7 @@ public final class IntlAbstractOperations {
             double match = matcher
                     .match(canonicalized, maximized, entry.getKey(), entry.getValue());
             // if (match > 0.90) {
-            // System.out.printf("[%s; %s, %s] -> [%s; %s, %s]  => %f\n", requestedLocale,
+            // System.out.printf("[%s; %s, %s] -> [%s; %s, %s]  => %f%n", requestedLocale,
             // canonicalized, maximized, available.getKey(), entry.getKey(), entry.getValue(),
             // match);
             // }

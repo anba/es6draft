@@ -255,7 +255,7 @@ final class LanguageTagParser {
         token = tok;
         tokenStart = start;
         tokenLength = len;
-        // System.out.printf("token=%d, tokenStart=%d, tokenLength=%d\n", token, tokenStart,
+        // System.out.printf("token=%d, tokenStart=%d, tokenLength=%d%n", token, tokenStart,
         // tokenLength);
     }
 

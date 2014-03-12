@@ -9,7 +9,9 @@ package com.github.anba.es6draft.runtime.objects.intl;
 import java.util.HashMap;
 
 /**
- * Supplemental data for canonicalization of language tags
+ * Supplemental data for canonicalization of language tags.
+ * <p>
+ * Data generated from: language-subtag-registry, 2014-02-18
  * 
  * @see <a
  *      href="http://www.iana.org/assignments/language-subtag-registry">language-subtag-registry</a>
@@ -167,17 +169,22 @@ final class LanguageSubtagRegistryData {
         map.put("gav", "dev");
         map.put("hrr", "jal");
         map.put("ibi", "opa");
+        map.put("ilw", "gal");
         map.put("kgh", "kml");
-        map.put("lcq", "ppr");
+        map.put("meg", "cir");
         map.put("mst", "mry");
         map.put("myt", "mry");
+        map.put("pcr", "adx");
+        map.put("ppr", "lcq");
         map.put("sca", "hle");
         map.put("tie", "ras");
         map.put("tkk", "twm");
         map.put("tlw", "weo");
         map.put("tnf", "prs");
+        map.put("xia", "acn");
         map.put("ybd", "rki");
         map.put("yma", "lrr");
+        map.put("yos", "zom");
         languageData = map;
     }
 
