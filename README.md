@@ -14,7 +14,7 @@ Non-Goals:
 
 ### Implementation Status ###
 
-[ECMAScript 6 draft rev. 21] [es6drafts].
+[ECMAScript 6 draft rev. 22] [es6drafts].
 
 [ECMAScript Internationalization API 2.0, draft 2013-02-28] [intldrafts]:
 * basic support using the [ICU4J] [icu] library
