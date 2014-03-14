@@ -2633,15 +2633,16 @@ public final class Parser {
                 heritage = leftHandSideExpressionWithValidation();
             }
             consume(Token.LC);
-            enterBlockContext(name);
+            BlockContext scope = enterBlockContext(name);
             List<MethodDefinition> staticMethods = newList();
             List<MethodDefinition> prototypeMethods = newList();
             classBody(name, staticMethods, prototypeMethods);
             exitBlockContext();
             consume(Token.RC);
 
-            ClassDeclaration decl = new ClassDeclaration(begin, ts.endPosition(), name, heritage,
-                    staticMethods, prototypeMethods);
+            ClassDeclaration decl = new ClassDeclaration(begin, ts.endPosition(), scope, name,
+                    heritage, staticMethods, prototypeMethods);
+            scope.node = decl;
             addLexDeclaredName(name);
             addLexScopedDeclaration(decl);
             return decl;
@@ -2679,8 +2680,9 @@ public final class Parser {
                 heritage = leftHandSideExpressionWithValidation();
             }
             consume(Token.LC);
+            BlockContext scope = null;
             if (name != null) {
-                enterBlockContext(name);
+                scope = enterBlockContext(name);
             }
             List<MethodDefinition> staticMethods = newList();
             List<MethodDefinition> prototypeMethods = newList();
@@ -2690,8 +2692,12 @@ public final class Parser {
             }
             consume(Token.RC);
 
-            return new ClassExpression(begin, ts.endPosition(), name, heritage, staticMethods,
-                    prototypeMethods);
+            ClassExpression expr = new ClassExpression(begin, ts.endPosition(), scope, name,
+                    heritage, staticMethods, prototypeMethods);
+            if (name != null) {
+                scope.node = expr;
+            }
+            return expr;
         } finally {
             context.strictMode = strictMode;
         }
@@ -4916,7 +4922,9 @@ public final class Parser {
         Expression expression = assignmentExpression(true);
         consume(Token.RP);
         BlockContext scope = enterBlockContext(b);
-        return new ComprehensionFor(begin, ts.endPosition(), scope, b, expression);
+        ComprehensionFor node = new ComprehensionFor(begin, ts.endPosition(), scope, b, expression);
+        scope.node = node;
+        return node;
     }
 
     /**
@@ -5029,7 +5037,9 @@ public final class Parser {
 
         exitBlockContext();
 
-        return new LegacyComprehension(scope, list, expr);
+        LegacyComprehension comprehension = new LegacyComprehension(scope, list, expr);
+        scope.node = comprehension;
+        return comprehension;
     }
 
     /**

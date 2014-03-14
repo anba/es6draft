@@ -14,7 +14,7 @@ import java.util.List;
  * <li>14.5 Class Definitions
  * </ul>
  */
-public interface ClassDefinition extends Node {
+public interface ClassDefinition extends ScopedNode {
     BindingIdentifier getName();
 
     Expression getHeritage();

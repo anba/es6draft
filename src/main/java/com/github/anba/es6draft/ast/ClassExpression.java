@@ -15,19 +15,26 @@ import java.util.List;
  * </ul>
  */
 public final class ClassExpression extends Expression implements ClassDefinition {
+    private final BlockScope scope;
     private final BindingIdentifier name;
     private final Expression heritage;
     private final List<MethodDefinition> staticMethods;
     private final List<MethodDefinition> prototypeMethods;
 
-    public ClassExpression(long beginPosition, long endPosition, BindingIdentifier name,
-            Expression heritage, List<MethodDefinition> staticMethods,
+    public ClassExpression(long beginPosition, long endPosition, BlockScope scope,
+            BindingIdentifier name, Expression heritage, List<MethodDefinition> staticMethods,
             List<MethodDefinition> prototypeMethods) {
         super(beginPosition, endPosition);
+        this.scope = scope;
         this.name = name;
         this.heritage = heritage;
         this.staticMethods = staticMethods;
         this.prototypeMethods = prototypeMethods;
+    }
+
+    @Override
+    public BlockScope getScope() {
+        return scope;
     }
 
     @Override

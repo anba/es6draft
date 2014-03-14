@@ -1027,8 +1027,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // steps 4-5
         if (className != null) {
             // stack: [ctor, proto] -> [ctor, proto, scope]
-            // TODO: make explicit...
-            // implicit: mv.enterScope(def)
             newDeclarativeEnvironment(mv);
 
             // stack: [ctor, proto, scope] -> [ctor, proto, scope]
@@ -1039,6 +1037,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
             // stack: [ctor, proto, scope] -> [ctor, proto]
             pushLexicalEnvironment(mv);
+            mv.enterScope(def);
         }
 
         // stack: [ctor, proto] -> [proto, ctor, proto]
@@ -1107,9 +1106,9 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         // step 19
         if (className != null) {
+            mv.exitScope();
             // restore previous lexical environment
             popLexicalEnvironment(mv);
-            // implicit: mv.exitScope()
         }
         // step 20 (empty)
         mv.exitClassDefinition();
