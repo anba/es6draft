@@ -176,14 +176,4 @@ public class ScriptEngineTest {
     public void evalSyntaxError() throws ScriptException {
         engine.eval("invalid[syntax");
     }
-
-    @Test(expected = StackOverflowError.class)
-    public void evalStackOverflow() throws ScriptException {
-        engine.eval("(function f(){ f() })()");
-    }
-
-    @Test(expected = ScriptException.class)
-    public void evalStackOverflowRethrow() throws ScriptException {
-        engine.eval("try { (function f(){ f() })() } catch (e) { throw e }");
-    }
 }

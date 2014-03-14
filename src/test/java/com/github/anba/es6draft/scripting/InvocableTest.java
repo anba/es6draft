@@ -72,18 +72,6 @@ public class InvocableTest {
         invocable.invokeFunction("NaN");
     }
 
-    @Test(expected = StackOverflowError.class)
-    public void invokeFunctionStackOverflow() throws NoSuchMethodException, ScriptException {
-        engine.eval("function f() { f() }");
-        invocable.invokeFunction("f");
-    }
-
-    @Test(expected = ScriptException.class)
-    public void invokeFunctionStackOverflowRethrow() throws NoSuchMethodException, ScriptException {
-        engine.eval("function f() { try{ f() } catch (e) { throw e } }");
-        invocable.invokeFunction("f");
-    }
-
     @Test
     public void invokeMethod() throws NoSuchMethodException, ScriptException {
         Object obj = engine
@@ -123,18 +111,6 @@ public class InvocableTest {
     public void invokeNonMethod() throws NoSuchMethodException, ScriptException {
         Object obj = engine.eval("({notFunction: 0})");
         invocable.invokeMethod(obj, "notFunction");
-    }
-
-    @Test(expected = StackOverflowError.class)
-    public void invokeMethodStackOverflow() throws NoSuchMethodException, ScriptException {
-        Object obj = engine.eval("({m() { this.m() }})");
-        invocable.invokeMethod(obj, "m");
-    }
-
-    @Test(expected = ScriptException.class)
-    public void invokeMethodStackOverflowRethrow() throws NoSuchMethodException, ScriptException {
-        Object obj = engine.eval("({m() { try { this.m() } catch (e) { throw e } }})");
-        invocable.invokeMethod(obj, "m");
     }
 
     @Test
