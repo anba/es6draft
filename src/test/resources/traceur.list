@@ -34,10 +34,6 @@ feature/ObjectMixin.js
 # Implementation specific differences      #
 ############################################
 
-# tests traceur limitation
-feature/Yield/Error_UnsupportedYieldExpression1.js
-feature/Yield/Error_UnsupportedYieldExpression2.js
-
 # different error message
 feature/Yield/GeneratorReturn.js
 feature/Yield/GeneratorSend.js

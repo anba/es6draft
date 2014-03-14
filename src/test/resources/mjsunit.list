@@ -150,7 +150,7 @@ regress/regress-331444.js
 error-tostring-omit.js
 
 # different precision for Math.hypot()
-harmony/math-hypot.js
+es6/math-hypot.js
 
 # V8 throws RangeError is string constructed in Array.prototype.join exceeds internal limit
 regress/regress-336820.js
