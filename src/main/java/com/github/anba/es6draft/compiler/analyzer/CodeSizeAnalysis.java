@@ -162,7 +162,7 @@ public final class CodeSizeAnalysis {
 
         @Override
         protected Integer visit(Node node, Integer size) {
-            throw new IllegalStateException("unhandled node: " + node.getClass());
+            throw new CodeSizeException(size);
         }
 
         @Override
@@ -184,11 +184,6 @@ public final class CodeSizeAnalysis {
         }
 
         @Override
-        public Integer visit(CallExpression node, Integer size) {
-            throw new CodeSizeException(size);
-        }
-
-        @Override
         public Integer visit(CommaExpression node, Integer size) {
             return visit(node, size, new CommaExpressionSubMethod());
         }
@@ -201,11 +196,6 @@ public final class CodeSizeAnalysis {
         @Override
         public Integer visit(FunctionExpression node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
-        }
-
-        @Override
-        public Integer visit(Comprehension node, Integer size) {
-            throw new CodeSizeException(size);
         }
 
         @Override
@@ -249,18 +239,8 @@ public final class CodeSizeAnalysis {
         }
 
         @Override
-        public Integer visit(SuperExpression node, Integer size) {
-            throw new CodeSizeException(size);
-        }
-
-        @Override
         public Integer visit(SwitchClause node, Integer size) {
             return visit(node, size, new NestedSubMethod.SwitchClauseSubMethod());
-        }
-
-        @Override
-        public Integer visit(TemplateLiteral node, Integer size) {
-            throw new CodeSizeException(size);
         }
     }
 }
