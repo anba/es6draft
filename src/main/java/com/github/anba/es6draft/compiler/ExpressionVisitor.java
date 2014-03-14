@@ -62,6 +62,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     private final boolean strict;
     private final boolean globalCode;
     private final boolean syntheticMethods;
+    private int classDef = 0;
     private Variable<ExecutionContext> executionContext;
     private Scope scope;
     private Map<String, Variable<DeclarativeEnvironmentRecord.Binding>> variables = emptyMap();
@@ -120,7 +121,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     }
 
     boolean isStrict() {
-        return strict;
+        return strict || classDef != 0;
     }
 
     boolean isGlobalCode() {
@@ -129,6 +130,14 @@ abstract class ExpressionVisitor extends InstructionVisitor {
 
     boolean hasSyntheticMethods() {
         return syntheticMethods;
+    }
+
+    void enterClassDefinition() {
+        ++classDef;
+    }
+
+    void exitClassDefinition() {
+        --classDef;
     }
 
     Variable<DeclarativeEnvironmentRecord.Binding> getVariable(String name) {

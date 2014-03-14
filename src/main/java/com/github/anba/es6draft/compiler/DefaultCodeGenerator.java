@@ -945,12 +945,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             hasOwnName = new Label();
 
             // FIXME: workaround for https://bugs.ecmascript.org/show_bug.cgi?id=2578
-            // stack: [function] -> [function, cx, function]
             if (((ClassDefinition) node).getName() != null) {
                 // Call to SetFunctionName for non-anonymous class definition
+                // stack: [function] -> [function, cx, function]
                 mv.dup();
                 mv.loadExecutionContext();
                 mv.swap();
+                // stack: [function, cx, function] -> [function]
                 mv.invoke(Methods.AbstractOperations_IsExtensible);
                 mv.ifeq(hasOwnName);
             }
@@ -1003,6 +1004,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      */
     protected final void ClassDefinitionEvaluation(ClassDefinition def, String className,
             ExpressionVisitor mv) {
+        mv.enterClassDefinition();
         // steps 1-3
         // stack: [] -> [<proto,ctor>]
         if (def.getHeritage() == null) {
@@ -1110,6 +1112,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             // implicit: mv.exitScope()
         }
         // step 20 (empty)
+        mv.exitClassDefinition();
     }
 
     /**

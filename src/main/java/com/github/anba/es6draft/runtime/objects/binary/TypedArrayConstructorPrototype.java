@@ -57,7 +57,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
      * 22.2.1.2 %TypedArray% ( typedArray )<br>
      * 22.2.1.3 %TypedArray% ( array )<br>
      * 22.2.1.4 %TypedArray% ( buffer, byteOffset=0, length=undefined )<br>
-     * 22.2.1.5 %TypedArray% ( binary data stuff ) [TODO]<br>
+     * 22.2.1.5 %TypedArray% ( all other argument combinations )<br>
      */
     @Override
     public TypedArrayObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
