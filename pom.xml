@@ -155,6 +155,49 @@
         </plugins>
       </reporting>
     </profile>
+    <profile>
+      <id>skip-external</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>default-test</id>
+                <configuration>
+                  <skip>true</skip>
+                </configuration>
+              </execution>
+              <execution>
+                <id>surefire-test</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>test</goal>
+                </goals>
+                <configuration>
+                  <excludes>
+                    <exclude>**/moztest/*</exclude>
+                    <exclude>**/test262/*</exclude>
+                    <exclude>**/traceur/*</exclude>
+                    <exclude>**/v8test/*</exclude>
+                  </excludes>
+                  <systemPropertyVariables>
+                    <java.awt.headless>true</java.awt.headless>
+                  </systemPropertyVariables>
+                  <argLine>
+                    -Duser.language=${test.user.language}
+                    -Duser.country=${test.user.country}
+                    -Duser.timezone=${test.user.timezone}
+                    -Xbootclasspath/a:"${project.build.outputDirectory}${path.separator}${dependencies.list}"
+                  </argLine>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <build>
