@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
- *
+ * Object representing a tail-call invocation
  */
 public final class TailCallInvocation {
     private enum InvokeType {
@@ -64,6 +64,9 @@ public final class TailCallInvocation {
         return result;
     }
 
+    /**
+     * Converts this tail-call invocation into a construct tail-call invocation
+     */
     public TailCallInvocation toConstructTailCall(ScriptObject object) {
         if (this.type == InvokeType.Construct) {
             return this;

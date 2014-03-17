@@ -338,7 +338,7 @@ public abstract class Reference<BASE, NAME> {
     }
 
     public static final class PropertyNameReference extends PropertyReference<String> {
-        private String referencedName;
+        private final String referencedName;
 
         public PropertyNameReference(Object base, String referencedName, boolean strictReference) {
             super(base, strictReference);
@@ -394,7 +394,7 @@ public abstract class Reference<BASE, NAME> {
     }
 
     public static final class PropertySymbolReference extends PropertyReference<Symbol> {
-        private Symbol referencedName;
+        private final Symbol referencedName;
 
         public PropertySymbolReference(Object base, Symbol referencedName, boolean strictReference) {
             super(base, strictReference);
@@ -486,7 +486,7 @@ public abstract class Reference<BASE, NAME> {
     }
 
     public static final class SuperNameReference extends SuperReference<String> {
-        private String referencedName;
+        private final String referencedName;
 
         public SuperNameReference(ScriptObject base, String referencedName,
                 boolean strictReference, Object thisValue) {
@@ -516,7 +516,7 @@ public abstract class Reference<BASE, NAME> {
     }
 
     public static final class SuperSymbolReference extends SuperReference<Symbol> {
-        private Symbol referencedName;
+        private final Symbol referencedName;
 
         public SuperSymbolReference(ScriptObject base, Symbol referencedName,
                 boolean strictReference, Object thisValue) {

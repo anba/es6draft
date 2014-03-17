@@ -15,7 +15,7 @@ import java.util.concurrent.TimeoutException;
  * {@link Future} with an immediate result
  */
 public class ImmediateFuture<V> implements Future<V> {
-    private V result;
+    private final V result;
 
     public ImmediateFuture(V result) {
         this.result = result;

@@ -19,5 +19,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * @see OrdinaryObject#ObjectCreate(ExecutionContext, ScriptObject, ObjectAllocator)
  */
 public interface ObjectAllocator<OBJECT extends OrdinaryObject> {
+    /**
+     * Allocates a new instance of the requested class
+     */
     OBJECT newInstance(Realm realm);
 }

@@ -22,7 +22,7 @@ public class LinkedMapTest {
 
     @Test
     public void test() {
-        LinkedMap<String, String> map = new LinkedMap<>(LinkedMap.HashMapBuilder);
+        LinkedMap<String, String> map = new LinkedMap<>();
 
         assertEquals(0, map.size());
         map.set("key1", "value1");
@@ -56,7 +56,7 @@ public class LinkedMapTest {
 
     @Test
     public void testIterator1() {
-        LinkedMap<String, String> map = new LinkedMap<>(LinkedMap.HashMapBuilder);
+        LinkedMap<String, String> map = new LinkedMap<>();
         map.set("key1", "value1");
         map.set("key2", "value2");
 
@@ -76,7 +76,7 @@ public class LinkedMapTest {
 
     @Test
     public void testIterator2() {
-        LinkedMap<String, String> map = new LinkedMap<>(LinkedMap.HashMapBuilder);
+        LinkedMap<String, String> map = new LinkedMap<>();
 
         Iterator<Entry<String, String>> itr = map.iterator();
 
@@ -90,7 +90,7 @@ public class LinkedMapTest {
 
     @Test
     public void testIterator3() {
-        LinkedMap<String, String> map = new LinkedMap<>(LinkedMap.HashMapBuilder);
+        LinkedMap<String, String> map = new LinkedMap<>();
 
         Iterator<Entry<String, String>> itr = map.iterator();
 
@@ -108,7 +108,7 @@ public class LinkedMapTest {
 
     @Test
     public void testIterator4() {
-        LinkedMap<String, String> map = new LinkedMap<>(LinkedMap.HashMapBuilder);
+        LinkedMap<String, String> map = new LinkedMap<>();
 
         Iterator<Entry<String, String>> itr = map.iterator();
 
@@ -127,7 +127,7 @@ public class LinkedMapTest {
 
     @Test
     public void testIterator5() {
-        LinkedMap<String, String> map = new LinkedMap<>(LinkedMap.HashMapBuilder);
+        LinkedMap<String, String> map = new LinkedMap<>();
 
         Iterator<Entry<String, String>> itr = map.iterator();
 
@@ -152,7 +152,7 @@ public class LinkedMapTest {
 
     @Test
     public void testIterator6() {
-        LinkedMap<String, String> map = new LinkedMap<>(LinkedMap.HashMapBuilder);
+        LinkedMap<String, String> map = new LinkedMap<>();
 
         Iterator<Entry<String, String>> itr = map.iterator();
 
@@ -177,7 +177,7 @@ public class LinkedMapTest {
 
     @Test
     public void testIterator7() {
-        LinkedMap<String, String> map = new LinkedMap<>(LinkedMap.HashMapBuilder);
+        LinkedMap<String, String> map = new LinkedMap<>();
 
         Iterator<Entry<String, String>> itr = map.iterator();
 

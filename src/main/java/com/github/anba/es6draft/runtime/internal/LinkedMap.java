@@ -25,26 +25,11 @@ public class LinkedMap<KEY, VALUE> {
         }
     }
 
-    public interface MapBuilder {
-        <K, V> Map<K, V> create();
-    }
-
-    public static final MapBuilder HashMapBuilder = new MapBuilder() {
-        @Override
-        public <K, V> Map<K, V> create() {
-            return new HashMap<K, V>();
-        }
-    };
-
-    private final Map<KEY, Entry<KEY, VALUE>> map;
+    private final HashMap<KEY, Entry<KEY, VALUE>> map;
     private final Entry<KEY, VALUE> head;
 
     public LinkedMap() {
-        this(HashMapBuilder);
-    }
-
-    public LinkedMap(MapBuilder builder) {
-        map = builder.create();
+        map = new HashMap<>();
         head = new Entry<KEY, VALUE>(null, null);
         head.prev = head;
         head.next = head;

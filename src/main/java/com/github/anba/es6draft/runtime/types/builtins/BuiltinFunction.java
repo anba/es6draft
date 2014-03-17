@@ -57,7 +57,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
-     * Returns the i-th argument or {@link #UNDEFINED} if the argument index is out of bounds.
+     * Returns the i-th argument or {@code undefined} if the argument index is out of bounds.
      */
     protected static final Object getArgument(Object[] arguments, int index) {
         return arguments.length > index ? arguments[index] : UNDEFINED;

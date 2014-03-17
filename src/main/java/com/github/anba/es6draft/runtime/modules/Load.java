@@ -86,6 +86,7 @@ public final class Load {
     private List<Dependency> dependencies;
 
     /** [[Exception]] */
+    @SuppressWarnings("unused")
     private Object exception;
 
     /** [[Module]] */

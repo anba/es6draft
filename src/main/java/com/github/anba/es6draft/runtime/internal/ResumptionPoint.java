@@ -10,9 +10,9 @@ package com.github.anba.es6draft.runtime.internal;
  * Method execution resumption point
  */
 public final class ResumptionPoint {
-    private Object[] stack;
-    private Object[] locals;
-    private int offset;
+    private final Object[] stack;
+    private final Object[] locals;
+    private final int offset;
 
     public ResumptionPoint(Object[] stack, Object[] locals, int offset) {
         assert stack != null && locals != null && offset >= 0;
