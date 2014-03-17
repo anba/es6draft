@@ -11,14 +11,22 @@ jdk:
   - oraclejdk7
   - oraclejdk8
 
+env:
+  global:
+    - TEST262_PATH='~/test262'
+  matrix:
+    - PROFILE='skip-external'
+    - PROFILE='test262'
+
 before_install:
   - if [[ $TRAVIS_JDK_VERSION = 'oraclejdk8' ]]; then sudo apt-get update; sudo apt-get install oracle-java8-installer; else true; fi
 
-# install: <cmd>
+install:
+  - if [[ $PROFILE = 'test262' ]]; then git clone --depth 1 --branch master git@github.com:tc39/test262.git "${TEST262_PATH}"; else true; fi
 
 # before_script: <cmd>
 
-script: mvn verify -Pskip-external
+script: mvn verify -P "${PROFILE}"
 
 # after_script: <cmd>
 
