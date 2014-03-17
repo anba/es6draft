@@ -23,6 +23,7 @@ before_install:
 
 install:
   - if [[ $PROFILE = 'test262' ]]; then git clone --depth 1 --branch master git://github.com/tc39/test262.git "${TEST262_PATH}"; else true; fi
+  - mvn install --show-version --quiet --errors -DskipTests=true
 
 # before_script: <cmd>
 
