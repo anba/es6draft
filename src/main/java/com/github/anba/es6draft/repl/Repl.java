@@ -502,14 +502,15 @@ public final class Repl {
         });
 
         // Run start script, if defined
-        final Path startScriptPath = startScript.script;
-        if (!startScriptPath.toString().equals("-")) {
+        if (!startScript.script.toString().equals("-")) {
+            final Path startScriptName = startScript.script.getFileName();
+            final Path startScriptPath = baseDir.resolve(startScript.script);
             realm.enqueueLoadingTask(new Task() {
                 @Override
                 public void execute() {
                     try {
                         try {
-                            global.eval(startScriptPath, startScriptPath);
+                            global.eval(startScriptName, startScriptPath);
                         } catch (ParserException e) {
                             byte[] content = Files.readAllBytes(startScriptPath);
                             String source = new String(content, StandardCharsets.UTF_8);

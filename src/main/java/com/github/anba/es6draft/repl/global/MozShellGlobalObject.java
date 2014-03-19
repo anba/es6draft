@@ -258,7 +258,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     /** shell-function: {@code readRelativeToScript(filename)} */
     @Function(name = "readRelativeToScript", arity = 1)
     public Object readRelativeToScript(ExecutionContext cx, String filename) {
-        return read(cx, relativePath(Paths.get(filename)));
+        return read(cx, Paths.get(filename), relativePath(Paths.get(filename)));
     }
 
     /** shell-function: {@code elapsed()} */

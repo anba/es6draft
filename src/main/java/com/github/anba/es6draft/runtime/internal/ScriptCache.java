@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,10 +39,10 @@ public final class ScriptCache {
     private static final int MAX_SIZE = 10;
 
     @SuppressWarnings("serial")
-    private Map<Path, Script> cache = Collections.synchronizedMap(new LinkedHashMap<Path, Script>(
-            16, .75f, true) {
+    private Map<URI, Script> cache = Collections.synchronizedMap(new LinkedHashMap<URI, Script>(16,
+            .75f, true) {
         @Override
-        protected boolean removeEldestEntry(Map.Entry<Path, Script> eldest) {
+        protected boolean removeEldestEntry(Map.Entry<URI, Script> eldest) {
             return (size() > MAX_SIZE);
         }
     });
@@ -97,7 +100,16 @@ public final class ScriptCache {
      */
     public Script script(String sourceName, int sourceLine, Path file) throws IOException,
             ParserException, CompilationException {
+        assert file.isAbsolute() : String.format("'%s' is not an absolute path", file);
         return script(sourceName, sourceLine, Files.newInputStream(file));
+    }
+
+    /**
+     * Parses and compiles the javascript file
+     */
+    public Script script(String sourceName, int sourceLine, URL file) throws IOException,
+            ParserException, CompilationException {
+        return script(sourceName, sourceLine, file.openStream());
     }
 
     /**
@@ -126,13 +138,30 @@ public final class ScriptCache {
      * Compiles {@code file} to a {@link Script} and caches the result
      */
     public Script get(Path file) throws IOException, ParserException, CompilationException {
-        if (cache.containsKey(file)) {
-            return cache.get(file);
+        URI cacheKey = file.toUri();
+        if (cache.containsKey(cacheKey)) {
+            return cache.get(cacheKey);
         }
         String sourceName = file.getFileName().toString();
         int sourceLine = 1;
         Script script = script(sourceName, sourceLine, file);
-        cache.put(file, script);
+        cache.put(cacheKey, script);
+        return script;
+    }
+
+    /**
+     * Compiles {@code file} to a {@link Script} and caches the result
+     */
+    public Script get(URL file) throws IOException, URISyntaxException, ParserException,
+            CompilationException {
+        URI cacheKey = file.toURI();
+        if (cache.containsKey(cacheKey)) {
+            return cache.get(cacheKey);
+        }
+        String sourceName = file.getFile();
+        int sourceLine = 1;
+        Script script = script(sourceName, sourceLine, file);
+        cache.put(cacheKey, script);
         return script;
     }
 
@@ -141,7 +170,16 @@ public final class ScriptCache {
      */
     public Script script(String sourceName, int sourceLine, Path file, ExecutorService executor)
             throws IOException, ParserException, CompilationException {
+        assert file.isAbsolute() : String.format("'%s' is not an absolute path", file);
         return script(sourceName, sourceLine, Files.newInputStream(file), executor);
+    }
+
+    /**
+     * Parses and compiles the javascript file
+     */
+    public Script script(String sourceName, int sourceLine, URL file, ExecutorService executor)
+            throws IOException, ParserException, CompilationException {
+        return script(sourceName, sourceLine, file.openStream(), executor);
     }
 
     /**
@@ -171,13 +209,30 @@ public final class ScriptCache {
      */
     public Script get(Path file, ExecutorService executor) throws IOException, ParserException,
             CompilationException {
-        if (cache.containsKey(file)) {
-            return cache.get(file);
+        URI cacheKey = file.toUri();
+        if (cache.containsKey(cacheKey)) {
+            return cache.get(cacheKey);
         }
         String sourceName = file.getFileName().toString();
         int sourceLine = 1;
         Script script = script(sourceName, sourceLine, file, executor);
-        cache.put(file, script);
+        cache.put(cacheKey, script);
+        return script;
+    }
+
+    /**
+     * Compiles {@code file} to a {@link Script} and caches the result
+     */
+    public Script get(URL file, ExecutorService executor) throws IOException, URISyntaxException,
+            ParserException, CompilationException {
+        URI cacheKey = file.toURI();
+        if (cache.containsKey(cacheKey)) {
+            return cache.get(cacheKey);
+        }
+        String sourceName = file.getFile();
+        int sourceLine = 1;
+        Script script = script(sourceName, sourceLine, file, executor);
+        cache.put(cacheKey, script);
         return script;
     }
 }

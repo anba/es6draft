@@ -70,6 +70,18 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
         return "success";
     }
 
+    /** shell-function: {@code parseScript(source)} */
+    @Function(name = "parseScript", arity = 1)
+    public String parseScript(ExecutionContext cx, String source) {
+        Parser parser = new Parser("<script>", 1, cx.getRealm().getOptions());
+        try {
+            parser.parseScript(source);
+        } catch (ParserException e) {
+            throw e.toScriptException(cx);
+        }
+        return "success";
+    }
+
     /** shell-function: {@code compile(filename)} */
     @Function(name = "compile", arity = 1)
     public String compile(ExecutionContext cx, String filename) {

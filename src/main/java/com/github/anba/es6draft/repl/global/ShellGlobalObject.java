@@ -48,7 +48,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
             ScriptCache scriptCache) {
         super(realm);
         this.console = console;
-        this.baseDir = baseDir;
+        this.baseDir = baseDir.toAbsolutePath();
         this.script = script;
         this.scriptCache = scriptCache;
     }
@@ -70,7 +70,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
         }
     }
 
-    protected static String getResourceInfo(String resourceName, String defaultValue) {
+    protected static final String getResourceInfo(String resourceName, String defaultValue) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                 ShellGlobalObject.class.getResourceAsStream(resourceName), StandardCharsets.UTF_8))) {
             return reader.readLine();
@@ -79,7 +79,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
         }
     }
 
-    protected static String concat(String... strings) {
+    protected static final String concat(String... strings) {
         if (strings.length == 0) {
             return "";
         } else if (strings.length == 1) {
@@ -164,9 +164,9 @@ public abstract class ShellGlobalObject extends GlobalObject {
         return Errors.newError(cx, Objects.toString(message, ""));
     }
 
-    protected String read(ExecutionContext cx, Path path) {
+    protected String read(ExecutionContext cx, Path fileName, Path path) {
         if (!Files.exists(path)) {
-            throw ScriptException.create(String.format("can't open '%s'", path.toString()));
+            throw ScriptException.create(String.format("can't open '%s'", fileName.toString()));
         }
         try {
             byte[] bytes = Files.readAllBytes(path);
@@ -178,7 +178,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
 
     protected Object load(ExecutionContext cx, Path fileName, Path path) {
         if (!Files.exists(path)) {
-            throw ScriptException.create(String.format("can't open '%s'", path.toString()));
+            throw ScriptException.create(String.format("can't open '%s'", fileName.toString()));
         }
         try {
             eval(fileName, path);
@@ -211,7 +211,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
     /** shell-function: {@code read(filename)} */
     @Function(name = "read", arity = 1)
     public Object read(ExecutionContext cx, String filename) {
-        return read(cx, absolutePath(Paths.get(filename)));
+        return read(cx, Paths.get(filename), absolutePath(Paths.get(filename)));
     }
 
     /** shell-function: {@code quit()} */
