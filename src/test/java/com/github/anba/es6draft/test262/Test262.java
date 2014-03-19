@@ -75,7 +75,7 @@ public final class Test262 {
     };
 
     @Rule
-    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
+    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(600));
 
     @Rule
     public StandardErrorHandler errorHandler = StandardErrorHandler.none();
