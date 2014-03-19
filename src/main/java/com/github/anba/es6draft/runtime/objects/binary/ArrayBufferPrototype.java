@@ -43,7 +43,7 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
     }
 
     /**

@@ -39,7 +39,7 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
 

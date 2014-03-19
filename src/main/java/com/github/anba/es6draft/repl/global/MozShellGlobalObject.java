@@ -56,7 +56,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     @Override
     public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
         super.defineBuiltinProperties(cx, object);
-        createProperties(object, this, cx, MozShellGlobalObject.class);
+        createProperties(cx, object, this, MozShellGlobalObject.class);
     }
 
     /**

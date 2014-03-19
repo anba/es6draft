@@ -54,7 +54,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
 

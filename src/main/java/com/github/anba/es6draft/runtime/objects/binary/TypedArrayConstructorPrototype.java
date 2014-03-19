@@ -48,7 +48,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
 

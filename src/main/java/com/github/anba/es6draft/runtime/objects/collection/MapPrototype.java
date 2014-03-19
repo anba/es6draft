@@ -46,7 +46,7 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
     }
 
     /**

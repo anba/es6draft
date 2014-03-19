@@ -44,7 +44,7 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
 

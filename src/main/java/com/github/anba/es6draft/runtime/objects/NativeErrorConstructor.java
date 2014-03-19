@@ -86,25 +86,25 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
     public void initialise(ExecutionContext cx) {
         switch (type) {
         case EvalError:
-            createProperties(this, cx, EvalErrorConstructorProperties.class);
+            createProperties(cx, this, EvalErrorConstructorProperties.class);
             break;
         case RangeError:
-            createProperties(this, cx, RangeErrorConstructorProperties.class);
+            createProperties(cx, this, RangeErrorConstructorProperties.class);
             break;
         case ReferenceError:
-            createProperties(this, cx, ReferenceErrorConstructorProperties.class);
+            createProperties(cx, this, ReferenceErrorConstructorProperties.class);
             break;
         case SyntaxError:
-            createProperties(this, cx, SyntaxErrorConstructorProperties.class);
+            createProperties(cx, this, SyntaxErrorConstructorProperties.class);
             break;
         case TypeError:
-            createProperties(this, cx, TypeErrorConstructorProperties.class);
+            createProperties(cx, this, TypeErrorConstructorProperties.class);
             break;
         case URIError:
-            createProperties(this, cx, URIErrorConstructorProperties.class);
+            createProperties(cx, this, URIErrorConstructorProperties.class);
             break;
         case InternalError:
-            createProperties(this, cx, InternalErrorConstructorProperties.class);
+            createProperties(cx, this, InternalErrorConstructorProperties.class);
             break;
         default:
             throw new IllegalStateException();

@@ -297,19 +297,19 @@ public final class Properties {
      * Sets the {@link Prototype} and creates own properties for {@link Value}, {@link Function} and
      * {@link Accessor} fields
      */
-    public static void createProperties(OrdinaryObject owner, ExecutionContext cx, Class<?> holder) {
+    public static void createProperties(ExecutionContext cx, OrdinaryObject owner, Class<?> holder) {
         assert holder.getName().startsWith(INTERNAL_PACKAGE);
-        createInternalProperties(owner, cx, holder);
+        createInternalProperties(cx, owner, holder);
     }
 
     /**
      * Sets the {@link Prototype} and creates own properties for {@link Value}, {@link Function} and
      * {@link Accessor} fields
      */
-    public static <OWNER> void createProperties(ScriptObject target, OWNER owner,
-            ExecutionContext cx, Class<OWNER> holder) {
+    public static <OWNER> void createProperties(ExecutionContext cx, ScriptObject target,
+            OWNER owner, Class<OWNER> holder) {
         assert !holder.getName().startsWith(INTERNAL_PACKAGE);
-        createExternalProperties(target, owner, cx, holder);
+        createExternalProperties(cx, target, owner, holder);
     }
 
     private static final String INTERNAL_PACKAGE = "com.github.anba.es6draft.runtime.objects.";
@@ -522,20 +522,20 @@ public final class Properties {
         }
     }
 
-    private static <OWNER> void createExternalProperties(ScriptObject target, OWNER owner,
-            ExecutionContext cx, Class<OWNER> holder) {
+    private static <OWNER> void createExternalProperties(ExecutionContext cx, ScriptObject target,
+            OWNER owner, Class<OWNER> holder) {
         ObjectLayout layout = externalLayouts.get(holder);
         if (layout.functions != null) {
             Converter converter = new Converter(cx);
             for (Entry<Function, MethodHandle> entry : layout.functions.entrySet()) {
-                createExternalFunction(target, owner, cx, converter, entry.getKey(),
+                createExternalFunction(cx, target, owner, converter, entry.getKey(),
                         entry.getValue());
             }
         }
     }
 
-    private static void createExternalFunction(ScriptObject target, Object owner,
-            ExecutionContext cx, Converter converter, Function function, MethodHandle unreflect) {
+    private static void createExternalFunction(ExecutionContext cx, ScriptObject target,
+            Object owner, Converter converter, Function function, MethodHandle unreflect) {
         MethodHandle handle = getInstanceMethodHandle(cx, converter, unreflect, owner);
         String name = function.name();
         int arity = function.arity();
@@ -546,7 +546,7 @@ public final class Properties {
         target.defineOwnProperty(cx, name, propertyDescriptor(fun, attrs));
     }
 
-    private static void createInternalProperties(OrdinaryObject owner, ExecutionContext cx,
+    private static void createInternalProperties(ExecutionContext cx, OrdinaryObject owner,
             Class<?> holder) {
         ObjectLayout layout = internalLayouts.get(holder);
         if (layout.extension != null && !cx.getRealm().isEnabled(layout.extension.value())) {
@@ -554,34 +554,34 @@ public final class Properties {
             return;
         }
         if (layout.proto != null) {
-            createPrototype(owner, cx, layout.proto, layout.protoValue);
+            createPrototype(cx, owner, layout.proto, layout.protoValue);
         }
         if (layout.values != null) {
             for (Entry<Value, Object> entry : layout.values.entrySet()) {
-                createValue(owner, cx, entry.getKey(), entry.getValue());
+                createValue(cx, owner, entry.getKey(), entry.getValue());
             }
         }
         if (layout.functions != null) {
             for (Entry<Function, MethodHandle> entry : layout.functions.entrySet()) {
-                createFunction(owner, cx, entry.getKey(), entry.getValue());
+                createFunction(cx, owner, entry.getKey(), entry.getValue());
             }
         }
         if (layout.tcfunctions != null) {
             for (Entry<Function, MethodHandle> entry : layout.tcfunctions.entrySet()) {
-                createTailCallFunction(owner, cx, entry.getKey(), entry.getValue());
+                createTailCallFunction(cx, owner, entry.getKey(), entry.getValue());
             }
         }
         if (layout.accessors != null) {
             Map<String, PropertyDescriptor> accessors1 = new LinkedHashMap<>();
             Map<BuiltinSymbol, PropertyDescriptor> accessors2 = new EnumMap<>(BuiltinSymbol.class);
             for (Entry<Accessor, MethodHandle> entry : layout.accessors.entrySet()) {
-                createAccessor(owner, cx, entry.getKey(), entry.getValue(), accessors1, accessors2);
+                createAccessor(cx, owner, entry.getKey(), entry.getValue(), accessors1, accessors2);
             }
-            completeAccessors(owner, cx, accessors1, accessors2);
+            completeAccessors(cx, owner, accessors1, accessors2);
         }
         if (layout.aliases != null) {
             for (Entry<AliasFunction, Function> entry : layout.aliases) {
-                createAliasFunction(owner, cx, entry.getKey(), entry.getValue());
+                createAliasFunction(cx, owner, entry.getKey(), entry.getValue());
             }
         }
     }
@@ -916,7 +916,7 @@ public final class Properties {
         }
     }
 
-    private static void createPrototype(OrdinaryObject owner, ExecutionContext cx, Prototype proto,
+    private static void createPrototype(ExecutionContext cx, OrdinaryObject owner, Prototype proto,
             Object rawValue) {
         Object value = resolveValue(cx, rawValue);
         assert value == null || value instanceof ScriptObject;
@@ -924,7 +924,7 @@ public final class Properties {
         owner.setPrototype(prototype);
     }
 
-    private static void createValue(OrdinaryObject owner, ExecutionContext cx, Value val,
+    private static void createValue(ExecutionContext cx, OrdinaryObject owner, Value val,
             Object rawValue) {
         String name = val.name();
         BuiltinSymbol sym = val.symbol();
@@ -937,7 +937,7 @@ public final class Properties {
         }
     }
 
-    private static void createFunction(OrdinaryObject owner, ExecutionContext cx,
+    private static void createFunction(ExecutionContext cx, OrdinaryObject owner,
             Function function, MethodHandle mh) {
         String name = function.name();
         BuiltinSymbol sym = function.symbol();
@@ -955,7 +955,7 @@ public final class Properties {
         }
     }
 
-    private static void createTailCallFunction(OrdinaryObject owner, ExecutionContext cx,
+    private static void createTailCallFunction(ExecutionContext cx, OrdinaryObject owner,
             Function function, MethodHandle mh) {
         String name = function.name();
         BuiltinSymbol sym = function.symbol();
@@ -972,7 +972,7 @@ public final class Properties {
         }
     }
 
-    private static void createAccessor(OrdinaryObject owner, ExecutionContext cx,
+    private static void createAccessor(ExecutionContext cx, OrdinaryObject owner,
             Accessor accessor, MethodHandle mh, Map<String, PropertyDescriptor> accessors1,
             Map<BuiltinSymbol, PropertyDescriptor> accessors2) {
         String name = accessor.name();
@@ -1006,7 +1006,7 @@ public final class Properties {
         }
     }
 
-    private static void completeAccessors(OrdinaryObject owner, ExecutionContext cx,
+    private static void completeAccessors(ExecutionContext cx, OrdinaryObject owner,
             Map<String, PropertyDescriptor> accessors1,
             Map<BuiltinSymbol, PropertyDescriptor> accessors2) {
         if (accessors1 != null) {
@@ -1021,7 +1021,7 @@ public final class Properties {
         }
     }
 
-    private static void createAliasFunction(OrdinaryObject owner, ExecutionContext cx,
+    private static void createAliasFunction(ExecutionContext cx, OrdinaryObject owner,
             AliasFunction alias, Function function) {
         String name = alias.name();
         BuiltinSymbol sym = alias.symbol();

@@ -133,7 +133,7 @@ public class TraceurTest {
         if (test.async) {
             helper = new AsyncHelper();
             ExecutionContext cx = global.getRealm().defaultContext();
-            Properties.createProperties(global, helper, cx, AsyncHelper.class);
+            Properties.createProperties(cx, global, helper, AsyncHelper.class);
         }
 
         // evaluate actual test-script

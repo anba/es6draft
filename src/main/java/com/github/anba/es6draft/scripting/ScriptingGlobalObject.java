@@ -26,7 +26,7 @@ public final class ScriptingGlobalObject extends GlobalObject {
     @Override
     public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
         super.defineBuiltinProperties(cx, object);
-        createProperties(object, this, cx, ScriptingGlobalObject.class);
+        createProperties(cx, object, this, ScriptingGlobalObject.class);
     }
 
     /**

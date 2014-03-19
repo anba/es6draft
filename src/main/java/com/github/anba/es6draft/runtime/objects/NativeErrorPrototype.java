@@ -47,25 +47,25 @@ public final class NativeErrorPrototype extends OrdinaryObject implements Initia
     public void initialise(ExecutionContext cx) {
         switch (type) {
         case EvalError:
-            createProperties(this, cx, EvalErrorPrototypeProperties.class);
+            createProperties(cx, this, EvalErrorPrototypeProperties.class);
             break;
         case RangeError:
-            createProperties(this, cx, RangeErrorPrototypeProperties.class);
+            createProperties(cx, this, RangeErrorPrototypeProperties.class);
             break;
         case ReferenceError:
-            createProperties(this, cx, ReferenceErrorPrototypeProperties.class);
+            createProperties(cx, this, ReferenceErrorPrototypeProperties.class);
             break;
         case SyntaxError:
-            createProperties(this, cx, SyntaxErrorPrototypeProperties.class);
+            createProperties(cx, this, SyntaxErrorPrototypeProperties.class);
             break;
         case TypeError:
-            createProperties(this, cx, TypeErrorPrototypeProperties.class);
+            createProperties(cx, this, TypeErrorPrototypeProperties.class);
             break;
         case URIError:
-            createProperties(this, cx, URIErrorPrototypeProperties.class);
+            createProperties(cx, this, URIErrorPrototypeProperties.class);
             break;
         case InternalError:
-            createProperties(this, cx, InternalErrorPrototypeProperties.class);
+            createProperties(cx, this, InternalErrorPrototypeProperties.class);
             break;
         default:
             throw new IllegalStateException();

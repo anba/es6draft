@@ -41,7 +41,7 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
     @Override
     public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
         super.defineBuiltinProperties(cx, object);
-        createProperties(object, this, cx, SimpleShellGlobalObject.class);
+        createProperties(cx, object, this, SimpleShellGlobalObject.class);
     }
 
     /**

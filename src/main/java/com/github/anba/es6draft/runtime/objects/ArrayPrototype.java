@@ -58,7 +58,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
     }
 
     private static Realm getConstructorRealm(Constructor constructor) {

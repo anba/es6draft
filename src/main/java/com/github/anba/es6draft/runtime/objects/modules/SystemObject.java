@@ -30,7 +30,7 @@ public final class SystemObject extends LoaderObject implements Initialisable {
         Loader loaderRecord = CreateLoader(cx.getRealm(), this);
         setLoader(loaderRecord);
 
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
     }
 
     /**

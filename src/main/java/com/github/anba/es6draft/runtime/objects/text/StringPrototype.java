@@ -64,8 +64,8 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
-        createProperties(this, cx, AdditionalProperties.class);
+        createProperties(cx, this, Properties.class);
+        createProperties(cx, this, AdditionalProperties.class);
     }
 
     /**

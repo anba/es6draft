@@ -126,7 +126,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
 

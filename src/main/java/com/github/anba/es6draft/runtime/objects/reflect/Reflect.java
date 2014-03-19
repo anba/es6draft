@@ -46,8 +46,8 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
-        createProperties(this, cx, AdditionalProperties.class);
+        createProperties(cx, this, Properties.class);
+        createProperties(cx, this, AdditionalProperties.class);
     }
 
     /**

@@ -216,7 +216,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
 

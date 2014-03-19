@@ -26,7 +26,7 @@ public final class IntlObject extends OrdinaryObject implements Initialisable {
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
     }
 
     /**

@@ -38,7 +38,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initialis
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
     }
 
     /**

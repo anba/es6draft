@@ -40,7 +40,7 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
 
         // initialise Intl.NumberFormat.prototype's internal state
         NumberFormatConstructor.InitializeNumberFormat(cx, this, UNDEFINED, UNDEFINED);

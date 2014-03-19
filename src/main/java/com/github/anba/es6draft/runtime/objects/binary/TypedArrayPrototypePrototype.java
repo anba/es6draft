@@ -54,7 +54,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
     }
 
     /**

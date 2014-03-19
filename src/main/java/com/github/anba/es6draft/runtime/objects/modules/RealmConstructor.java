@@ -49,7 +49,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
 

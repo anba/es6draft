@@ -48,7 +48,7 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
 
         // initialise Intl.DateTimeFormat.prototype's internal state
         DateTimeFormatConstructor.InitializeDateTimeFormat(cx, this, UNDEFINED, UNDEFINED);

@@ -48,12 +48,12 @@ public class GlobalObject extends OrdinaryObject {
      * Initialise {@code object} with the default properties of the Global Object
      */
     public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
-        createProperties(object, cx, ValueProperties.class);
-        createProperties(object, cx, FunctionProperties.class);
-        createProperties(object, cx, URIHandlingFunctions.class);
-        createProperties(object, cx, ConstructorProperties.class);
-        createProperties(object, cx, OtherProperties.class);
-        createProperties(object, cx, AdditionalProperties.class);
+        createProperties(cx, object, ValueProperties.class);
+        createProperties(cx, object, FunctionProperties.class);
+        createProperties(cx, object, URIHandlingFunctions.class);
+        createProperties(cx, object, ConstructorProperties.class);
+        createProperties(cx, object, OtherProperties.class);
+        createProperties(cx, object, AdditionalProperties.class);
     }
 
     /**

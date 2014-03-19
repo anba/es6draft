@@ -45,7 +45,7 @@ public final class SetPrototype extends OrdinaryObject implements Initialisable 
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
     }
 
     /**

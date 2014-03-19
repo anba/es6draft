@@ -39,7 +39,7 @@ public final class CollatorPrototype extends CollatorObject implements Initialis
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
 
         // initialise Intl.Collator.prototype's internal state
         CollatorConstructor.InitializeCollator(cx, this, UNDEFINED, UNDEFINED);

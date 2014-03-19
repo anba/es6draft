@@ -54,7 +54,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
 

@@ -45,7 +45,7 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
     }
 
     /**

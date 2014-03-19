@@ -36,7 +36,7 @@ public final class V8ShellGlobalObject extends ShellGlobalObject {
     @Override
     public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
         super.defineBuiltinProperties(cx, object);
-        createProperties(object, this, cx, V8ShellGlobalObject.class);
+        createProperties(cx, object, this, V8ShellGlobalObject.class);
     }
 
     /**

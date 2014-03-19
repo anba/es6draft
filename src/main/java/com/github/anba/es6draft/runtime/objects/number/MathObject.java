@@ -39,8 +39,8 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
     public void initialise(ExecutionContext cx) {
         setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
 
-        createProperties(this, cx, ValueProperties.class);
-        createProperties(this, cx, FunctionProperties.class);
+        createProperties(cx, this, ValueProperties.class);
+        createProperties(cx, this, FunctionProperties.class);
     }
 
     /**

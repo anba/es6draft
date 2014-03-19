@@ -51,8 +51,8 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
-        createProperties(this, cx, RegExpStatics.class);
+        createProperties(cx, this, Properties.class);
+        createProperties(cx, this, RegExpStatics.class);
         AddRestrictedFunctionProperties(cx, this);
     }
 

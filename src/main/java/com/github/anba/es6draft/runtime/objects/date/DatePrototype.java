@@ -55,8 +55,8 @@ public final class DatePrototype extends OrdinaryObject implements Initialisable
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
-        createProperties(this, cx, AdditionalProperties.class);
+        createProperties(cx, this, Properties.class);
+        createProperties(cx, this, AdditionalProperties.class);
     }
 
     private static final String ISO_FORMAT = "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ";

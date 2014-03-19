@@ -56,7 +56,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
     @Override
     public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
         super.defineBuiltinProperties(cx, object);
-        createProperties(object, this, cx, ShellGlobalObject.class);
+        createProperties(cx, object, this, ShellGlobalObject.class);
     }
 
     /**

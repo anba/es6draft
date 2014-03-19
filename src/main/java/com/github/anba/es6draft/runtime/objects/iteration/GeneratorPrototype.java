@@ -36,7 +36,7 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
     }
 
     /**

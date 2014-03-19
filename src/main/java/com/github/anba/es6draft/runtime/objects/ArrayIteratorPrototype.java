@@ -40,7 +40,7 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, Properties.class);
+        createProperties(cx, this, Properties.class);
     }
 
     /**

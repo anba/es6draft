@@ -36,31 +36,31 @@ public final class TypedArrayPrototype extends OrdinaryObject implements Initial
     public void initialise(ExecutionContext cx) {
         switch (elementKind) {
         case Int8:
-            createProperties(this, cx, Properties_Int8Array.class);
+            createProperties(cx, this, Properties_Int8Array.class);
             break;
         case Uint8:
-            createProperties(this, cx, Properties_Uint8Array.class);
+            createProperties(cx, this, Properties_Uint8Array.class);
             break;
         case Uint8C:
-            createProperties(this, cx, Properties_Uint8Clamped.class);
+            createProperties(cx, this, Properties_Uint8Clamped.class);
             break;
         case Int16:
-            createProperties(this, cx, Properties_Int16Array.class);
+            createProperties(cx, this, Properties_Int16Array.class);
             break;
         case Uint16:
-            createProperties(this, cx, Properties_Uint16Array.class);
+            createProperties(cx, this, Properties_Uint16Array.class);
             break;
         case Int32:
-            createProperties(this, cx, Properties_Int32Array.class);
+            createProperties(cx, this, Properties_Int32Array.class);
             break;
         case Uint32:
-            createProperties(this, cx, Properties_Uint32Array.class);
+            createProperties(cx, this, Properties_Uint32Array.class);
             break;
         case Float32:
-            createProperties(this, cx, Properties_Float32Array.class);
+            createProperties(cx, this, Properties_Float32Array.class);
             break;
         case Float64:
-            createProperties(this, cx, Properties_Float64Array.class);
+            createProperties(cx, this, Properties_Float64Array.class);
             break;
         default:
             throw new IllegalStateException();
