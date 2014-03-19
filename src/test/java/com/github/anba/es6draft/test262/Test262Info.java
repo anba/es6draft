@@ -55,7 +55,7 @@ class Test262Info extends TestInfo {
      */
     public String getTestName() {
         if (testName == null) {
-            String filename = script.getFileName().toString();
+            String filename = getScript().getFileName().toString();
             Matcher matcher = fileNamePattern.matcher(filename);
             if (!matcher.matches()) {
                 assert false : "regexp failure";

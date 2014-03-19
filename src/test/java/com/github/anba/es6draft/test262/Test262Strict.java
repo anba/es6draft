@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.test262;
 
+import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.test262.Test262GlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.ErrorMessageMatcher.hasErrorMessage;
 import static com.github.anba.es6draft.util.PatternMatcher.matchesPattern;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
@@ -13,6 +15,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -30,13 +33,17 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.Resources;
 import com.github.anba.es6draft.util.TestConfiguration;
+import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
 
 /**
@@ -44,13 +51,13 @@ import com.github.anba.es6draft.util.TestInfo;
  * 
  */
 @RunWith(Parallelized.class)
-@TestConfiguration(name = "test.suite.test262-strict", file = "resource:test262.properties")
+@TestConfiguration(name = "test262.test.strict", file = "resource:/test-configuration.properties")
 public final class Test262Strict {
     private static final Configuration configuration = loadConfiguration(Test262Strict.class);
 
     @Parameters(name = "{0}")
     public static Iterable<TestInfo[]> suiteValues() throws IOException {
-        return Resources.loadXMLTests(configuration, new BiFunction<Path, Path, TestInfo>() {
+        return Resources.loadTests(configuration, new BiFunction<Path, Path, TestInfo>() {
             @Override
             public TestInfo apply(Path basedir, Path file) {
                 return new Test262Info(basedir, file);
@@ -59,7 +66,14 @@ public final class Test262Strict {
     }
 
     @ClassRule
-    public static Test262Globals globals = new Test262Globals(configuration);
+    public static TestGlobals<Test262GlobalObject, Test262Info> globals = new TestGlobals<Test262GlobalObject, Test262Info>(
+            configuration) {
+        @Override
+        protected ObjectAllocator<Test262GlobalObject> newAllocator(ShellConsole console,
+                Test262Info test, ScriptCache scriptCache) {
+            return newGlobalObjectAllocator(console, test, scriptCache);
+        }
+    };
 
     @Rule
     public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
@@ -79,11 +93,13 @@ public final class Test262Strict {
     private Test262GlobalObject global;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws IOException, URISyntaxException {
         // filter disabled tests
-        assumeTrue(test.enable);
+        assumeTrue(test.isEnabled());
 
-        global = globals.newGlobal(test);
+        test.readFileInformation();
+
+        global = globals.newGlobal(new Test262Console(), test);
         ExecutionContext cx = global.getRealm().defaultContext();
         exceptionHandler.setExecutionContext(cx);
 
@@ -111,7 +127,11 @@ public final class Test262Strict {
 
     @Test
     public void runTest() throws Throwable {
+        // Install test hooks
+        ExecutionContext cx = global.getRealm().defaultContext();
+        createProperties(cx, global, global, Test262GlobalObject.class);
+
         // evaluate actual test-script
-        global.eval(test.toFile());
+        global.eval(test.getScript(), test.toFile());
     }
 }

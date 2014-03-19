@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,7 +59,7 @@ import com.github.anba.es6draft.util.*;
  * Test suite for the Mozilla js-tests.
  */
 @RunWith(Parallelized.class)
-@TestConfiguration(name = "mozilla.test.jstests", file = "resource:test-configuration.properties")
+@TestConfiguration(name = "mozilla.test.jstests", file = "resource:/test-configuration.properties")
 public class MozillaJSTest {
     private static final Configuration configuration = loadConfiguration(MozillaJSTest.class);
 
@@ -74,12 +75,13 @@ public class MozillaJSTest {
     }
 
     @ClassRule
-    public static TestShellGlobals<MozShellGlobalObject> globals = new TestShellGlobals<MozShellGlobalObject>(
+    public static TestGlobals<MozShellGlobalObject, TestInfo> globals = new TestGlobals<MozShellGlobalObject, TestInfo>(
             configuration) {
         @Override
         protected ObjectAllocator<MozShellGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test.basedir, test.script, scriptCache);
+            return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
+                    scriptCache);
         }
     };
 
@@ -110,6 +112,7 @@ public class MozillaJSTest {
     private static class MozTest extends TestInfo {
         List<Entry<Condition, String>> conditions = new ArrayList<>();
         boolean random = false;
+        boolean expect = true;
 
         public MozTest(Path basedir, Path script) {
             super(basedir, script);
@@ -127,9 +130,9 @@ public class MozillaJSTest {
     private MozShellGlobalObject global;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws IOException, URISyntaxException {
         // filter disabled tests
-        assumeTrue(moztest.enable);
+        assumeTrue(moztest.isEnabled());
 
         global = globals.newGlobal(new MozTestConsole(collector), moztest);
         ExecutionContext cx = global.getRealm().defaultContext();
@@ -139,7 +142,7 @@ public class MozillaJSTest {
         scriptConditions(cx, global);
 
         // filter disabled tests (may have changed after applying scripted conditions)
-        assumeTrue(moztest.enable);
+        assumeTrue(moztest.isEnabled());
 
         if (moztest.random) {
             // results from random tests are simply ignored...
@@ -169,7 +172,7 @@ public class MozillaJSTest {
         }
 
         // evaluate actual test-script
-        global.eval(moztest.script, moztest.toFile());
+        global.eval(moztest.getScript(), moztest.toFile());
     }
 
     /**
@@ -178,9 +181,9 @@ public class MozillaJSTest {
     private static Iterable<Path> shellJS(MozTest test) {
         // add 'shell.js' files from each directory
         List<Path> files = new ArrayList<>();
-        Path testDir = test.basedir;
+        Path testDir = test.getBaseDir();
         Path dir = Paths.get("");
-        for (Iterator<Path> iterator = test.script.iterator(); iterator.hasNext(); dir = dir
+        for (Iterator<Path> iterator = test.getScript().iterator(); iterator.hasNext(); dir = dir
                 .resolve(iterator.next())) {
             Path f = testDir.resolve(dir.resolve("shell.js"));
             if (Files.exists(f)) {
@@ -205,7 +208,7 @@ public class MozillaJSTest {
                 moztest.random = true;
                 break;
             case SkipIf:
-                moztest.enable = false;
+                moztest.setEnabled(false);
                 break;
             default:
                 throw new IllegalStateException();
@@ -257,12 +260,12 @@ public class MozillaJSTest {
                 if (p.equals("fails")) {
                     test.expect = false;
                 } else if (p.equals("skip")) {
-                    test.enable = false;
+                    test.setEnabled(false);
                 } else if (p.equals("random")) {
                     test.random = true;
                 } else if (p.equals("slow")) {
                     // don't run slow tests
-                    test.enable = false;
+                    test.setEnabled(false);
                 } else if (p.equals("silentfail")) {
                     // ignore for now...
                 } else if (p.startsWith("fails-if")) {

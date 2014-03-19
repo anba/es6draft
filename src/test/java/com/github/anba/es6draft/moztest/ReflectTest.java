@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -34,14 +35,14 @@ import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestConfiguration;
+import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
-import com.github.anba.es6draft.util.TestShellGlobals;
 
 /**
  * Test suite for the Reflect API tests.
  */
 @RunWith(Parallelized.class)
-@TestConfiguration(name = "mozilla.test.reflect", file = "resource:test-configuration.properties")
+@TestConfiguration(name = "mozilla.test.reflect", file = "resource:/test-configuration.properties")
 public class ReflectTest {
     private static final Configuration configuration = loadConfiguration(ReflectTest.class);
 
@@ -51,12 +52,13 @@ public class ReflectTest {
     }
 
     @ClassRule
-    public static TestShellGlobals<MozShellGlobalObject> globals = new TestShellGlobals<MozShellGlobalObject>(
+    public static TestGlobals<MozShellGlobalObject, TestInfo> globals = new TestGlobals<MozShellGlobalObject, TestInfo>(
             configuration) {
         @Override
         protected ObjectAllocator<MozShellGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test.basedir, test.script, scriptCache);
+            return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
+                    scriptCache);
         }
     };
 
@@ -78,9 +80,9 @@ public class ReflectTest {
     private MozShellGlobalObject global;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws IOException, URISyntaxException {
         // filter disabled tests
-        assumeTrue(test.enable);
+        assumeTrue(test.isEnabled());
 
         global = globals.newGlobal(new MozTestConsole(collector), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
@@ -96,6 +98,6 @@ public class ReflectTest {
     @Test
     public void runTest() throws Throwable {
         // evaluate actual test-script
-        global.eval(test.script, test.toFile());
+        global.eval(test.getScript(), test.toFile());
     }
 }

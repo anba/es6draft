@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -58,17 +57,6 @@ public abstract class ShellGlobalObject extends GlobalObject {
     public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
         super.defineBuiltinProperties(cx, object);
         createProperties(cx, object, this, ShellGlobalObject.class);
-    }
-
-    /**
-     * Compiles the script {@code name} from the 'scripts' directory
-     */
-    public static Script compileScript(ScriptCache scriptCache, String name) throws IOException,
-            ParserException, CompilationException {
-        String sourceName = "/scripts/" + name;
-        try (InputStream stream = ShellGlobalObject.class.getResourceAsStream(sourceName)) {
-            return scriptCache.script(sourceName, 1, stream);
-        }
     }
 
     /**

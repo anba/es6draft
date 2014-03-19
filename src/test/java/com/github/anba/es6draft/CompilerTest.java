@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
@@ -35,14 +36,14 @@ import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestConfiguration;
+import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
-import com.github.anba.es6draft.util.TestShellGlobals;
 
 /**
  *
  */
 @RunWith(Parallelized.class)
-@TestConfiguration(name = "compiler.test", file = "resource:test-configuration.properties")
+@TestConfiguration(name = "compiler.test", file = "resource:/test-configuration.properties")
 public class CompilerTest {
     private static final Configuration configuration = loadConfiguration(CompilerTest.class);
 
@@ -52,12 +53,13 @@ public class CompilerTest {
     }
 
     @ClassRule
-    public static TestShellGlobals<SimpleShellGlobalObject> globals = new TestShellGlobals<SimpleShellGlobalObject>(
+    public static TestGlobals<SimpleShellGlobalObject, TestInfo> globals = new TestGlobals<SimpleShellGlobalObject, TestInfo>(
             configuration) {
         @Override
         protected ObjectAllocator<SimpleShellGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test.basedir, test.script, scriptCache);
+            return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
+                    scriptCache);
         }
 
         @Override
@@ -81,9 +83,9 @@ public class CompilerTest {
     private SimpleShellGlobalObject global;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws IOException, URISyntaxException {
         // filter disabled tests
-        assumeTrue(test.enable);
+        assumeTrue(test.isEnabled());
 
         global = globals.newGlobal(new ScriptTestConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
@@ -99,6 +101,6 @@ public class CompilerTest {
     @Test
     public void runTest() throws Throwable {
         // evaluate actual test-script
-        global.eval(test.script, test.toFile());
+        global.eval(test.getScript(), test.toFile());
     }
 }

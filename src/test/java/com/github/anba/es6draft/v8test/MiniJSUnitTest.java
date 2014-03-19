@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -40,14 +41,14 @@ import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestConfiguration;
+import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
-import com.github.anba.es6draft.util.TestShellGlobals;
 
 /**
  *
  */
 @RunWith(Parallelized.class)
-@TestConfiguration(name = "v8.test.mjsunit", file = "resource:test-configuration.properties")
+@TestConfiguration(name = "v8.test.mjsunit", file = "resource:/test-configuration.properties")
 public class MiniJSUnitTest {
     private static final Configuration configuration = loadConfiguration(MiniJSUnitTest.class);
 
@@ -63,12 +64,13 @@ public class MiniJSUnitTest {
     }
 
     @ClassRule
-    public static TestShellGlobals<V8ShellGlobalObject> globals = new TestShellGlobals<V8ShellGlobalObject>(
+    public static TestGlobals<V8ShellGlobalObject, TestInfo> globals = new TestGlobals<V8ShellGlobalObject, TestInfo>(
             configuration) {
         @Override
         protected ObjectAllocator<V8ShellGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test.basedir, test.script, scriptCache);
+            return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
+                    scriptCache);
         }
     };
 
@@ -90,9 +92,9 @@ public class MiniJSUnitTest {
     private V8ShellGlobalObject global;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws IOException, URISyntaxException {
         // filter disabled tests
-        assumeTrue(test.enable);
+        assumeTrue(test.isEnabled());
 
         global = globals.newGlobal(new V8TestConsole(collector), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
@@ -108,7 +110,7 @@ public class MiniJSUnitTest {
     @Test
     public void runTest() throws Throwable {
         // evaluate actual test-script
-        global.eval(test.script, test.toFile());
+        global.eval(test.getScript(), test.toFile());
     }
 
     private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
@@ -136,26 +138,26 @@ public class MiniJSUnitTest {
                                 ++i;
                             }
                             // don't run debug-mode tests
-                            test.enable = false;
+                            test.setEnabled(false);
                         } else if (flag.startsWith("--expose-natives-as")) {
                             // don't run tests with natives or lazy compilation
                             if (flag.equals("--expose-natives-as")) {
                                 // two arguments form, consume next argument as well
                                 ++i;
                             }
-                            test.enable = false;
+                            test.setEnabled(false);
                         } else if (flag.equals("--expose-externalize-string")) {
                             // don't run tests with natives or lazy compilation
-                            test.enable = false;
+                            test.setEnabled(false);
                         } else if (flag.equals("--allow-natives-syntax")) {
                             // don't run tests with natives or lazy compilation
-                            test.enable = false;
+                            test.setEnabled(false);
                         } else if (flag.equals("--lazy")) {
                             // don't run tests with natives or lazy compilation
-                            test.enable = false;
+                            test.setEnabled(false);
                         } else if (flag.equals("--expose-trigger-failure")) {
                             // don't run tests with trigger-failure
-                            test.enable = false;
+                            test.setEnabled(false);
                         } else {
                             // ignore other flags
                         }

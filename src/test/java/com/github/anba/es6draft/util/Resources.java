@@ -8,7 +8,7 @@ package com.github.anba.es6draft.util;
 
 import static com.github.anba.es6draft.util.Functional.intoCollection;
 import static com.github.anba.es6draft.util.Functional.toStrings;
-import static com.github.anba.es6draft.util.TestInfo.toObjectArray;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 
 import java.io.BufferedReader;
@@ -17,22 +17,39 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
-import java.util.*;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.configuration.interpol.ConfigurationInterpolator;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang.text.StrLookup;
+import org.junit.runners.Parameterized;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -85,11 +102,14 @@ public final class Resources {
         String file = config.file();
         String name = config.name();
         try {
-            PropertiesConfiguration configuration = new PropertiesConfiguration();
+            PropertiesConfiguration properties = new PropertiesConfiguration();
             // entries are mandatory unless an explicit default value was given
-            configuration.setThrowExceptionOnMissing(true);
-            configuration.getInterpolator().setParentInterpolator(MISSING_VAR);
-            configuration.load(resource(file), "UTF-8");
+            properties.setThrowExceptionOnMissing(true);
+            properties.getInterpolator().setParentInterpolator(MISSING_VAR);
+            properties.load(resource(file), "UTF-8");
+
+            Configuration configuration = new CompositeConfiguration(Arrays.asList(
+                    new SystemConfiguration(), properties));
             return configuration.subset(name);
         } catch (ConfigurationException | IOException e) {
             throw new RuntimeException(e);
@@ -99,28 +119,37 @@ public final class Resources {
     }
 
     /**
-     * Loads the named resource through {@link Class#getResourceAsStream(String)} if the uri is
-     * prepended with "resource:", otherwise loads the resource with
+     * Loads the named resource through {@link Class#getResourceAsStream(String)} if the uri starts
+     * with "resource:", otherwise loads the resource with
      * {@link Files#newInputStream(Path, java.nio.file.OpenOption...)}
      */
     public static InputStream resource(String uri) throws IOException {
+        return resource(uri, Paths.get(""));
+    }
+
+    /**
+     * Loads the named resource through {@link Class#getResourceAsStream(String)} if the uri starts
+     * with "resource:", otherwise loads the resource with
+     * {@link Files#newInputStream(Path, java.nio.file.OpenOption...)}
+     */
+    public static InputStream resource(String uri, Path basedir) throws IOException {
         final String RESOURCE = "resource:";
         if (uri.startsWith(RESOURCE)) {
-            String name = "/" + uri.substring(RESOURCE.length());
+            String name = uri.substring(RESOURCE.length());
             InputStream res = Resources.class.getResourceAsStream(name);
             if (res == null) {
                 throw new IOException("resource not found: " + name);
             }
             return res;
         } else {
-            return Files.newInputStream(Paths.get(uri));
+            return Files.newInputStream(basedir.resolve(Paths.get(uri)));
         }
     }
 
     /**
      * Returns the test suite's base path
      */
-    private static Path getTestSuitePath(Configuration configuration) {
+    public static Path getTestSuitePath(Configuration configuration) {
         String testSuite;
         try {
             testSuite = configuration.getString("");
@@ -128,14 +157,26 @@ public final class Resources {
             System.err.println(e.getMessage());
             return null;
         }
-        return Paths.get(testSuite);
+        return Paths.get(testSuite).toAbsolutePath();
     }
 
     /**
      * Load the test files based on the supplied {@link Configuration}
      */
     public static Iterable<TestInfo[]> loadTests(Configuration config) throws IOException {
-        return loadTests(config, null);
+        return loadTests(config, defaultCreate);
+    }
+
+    /**
+     * Load the test files based on the supplied {@link Configuration}
+     */
+    public static Iterable<TestInfo[]> loadTests(Configuration config,
+            BiFunction<Path, Path, TestInfo> fn) throws IOException {
+        Path basedir = getTestSuitePath(config);
+        if (basedir == null) {
+            return emptyList();
+        }
+        return loadTests(config, mapper(fn, basedir), basedir);
     }
 
     /**
@@ -147,63 +188,50 @@ public final class Resources {
         if (basedir == null) {
             return emptyList();
         }
-        Path searchdir = basedir.resolve(config.getString("searchdir", ""));
-        Iterable<Object> excludeDirs = config.getList("exclude.dirs", emptyList());
-        Iterable<Object> excludeFiles = config.getList("exclude.files", emptyList());
-        Set<String> excludeDirSet = intoCollection(toStrings(excludeDirs), new HashSet<String>());
-        Set<String> excludeFilesSet = intoCollection(toStrings(excludeFiles), new HashSet<String>());
-
-        List<TestInfo> tests;
-        if (fn == null) {
-            tests = TestInfo.loadTests(searchdir, basedir, excludeDirSet, excludeFilesSet);
-        } else {
-            tests = TestInfo
-                    .loadTests(searchdir, excludeDirSet, excludeFilesSet, fn.apply(basedir));
-        }
-
-        if (config.containsKey("exclude.list")) {
-            InputStream exclusionList = Resources.resource(config.getString("exclude.list"));
-            tests = filterTests(tests, exclusionList);
-        }
-
-        return toObjectArray(tests);
+        return loadTests(config, mapper(fn.apply(basedir)), basedir);
     }
 
     /**
-     * Load the test files based on the supplied {@link Configuration}
+     * Recursively searches for js-file test cases in {@code searchdir} and its sub-directories
      */
-    public static Iterable<TestInfo[]> loadXMLTests(Configuration config,
-            BiFunction<Path, Path, TestInfo> fn) throws IOException {
-        Path basedir = getTestSuitePath(config);
-        if (basedir == null) {
-            return emptyList();
-        }
-        Path searchdir = basedir.resolve(config.getString("searchdir", ""));
-        Set<String> excludeDirs = Collections.emptySet();
-        Set<String> excludeFiles = Collections.emptySet();
-        List<TestInfo> tests = TestInfo
-                .loadTests(searchdir, basedir, excludeDirs, excludeFiles, fn);
-
-        Pattern excludePattern = Pattern.compile(config.getString("exclude_re", ""));
-        Set<String> excludes = readExcludeXMLs(config.getList("exclude", emptyList()));
-        Set<String> includes = readExcludeXMLs(config.getList("include", emptyList()));
-        boolean onlyExcluded = config.getBoolean("only_excluded", false);
-
-        return toObjectArray(filterTests(tests, excludePattern, excludes, includes, onlyExcluded));
+    private static Iterable<TestInfo[]> loadTests(Configuration config,
+            Function<Path, TestInfo> mapper, Path basedir) throws IOException {
+        FilterFileVisitor<Path> ffv = newFilterFileVisitor(basedir, config);
+        CollectorFileVisitor<Path, TestInfo> cfv = new CollectorFileVisitor<>(ffv, mapper);
+        Files.walkFileTree(basedir, cfv);
+        List<TestInfo> tests = cfv.getResult();
+        filterTests(tests, basedir, config);
+        return toObjectArray(tests);
     }
 
     /**
      * Filter the initially collected test cases
      */
-    private static <TEST extends TestInfo> List<TEST> filterTests(List<TEST> tests,
-            InputStream resource) throws IOException {
+    private static <TEST extends TestInfo> void filterTests(List<TEST> tests, Path basedir,
+            Configuration config) throws IOException {
+        if (config.containsKey("exclude.list")) {
+            InputStream exclusionList = Resources.resource(config.getString("exclude.list"),
+                    basedir);
+            filterTests(tests, exclusionList);
+        }
+        if (config.containsKey("exclude.xml")) {
+            Set<String> excludes = readExcludeXMLs(config.getList("exclude.xml", emptyList()),
+                    basedir);
+            filterTests(tests, excludes);
+        }
+    }
+
+    /**
+     * Filter the initially collected test cases
+     */
+    private static <TEST extends TestInfo> void filterTests(List<TEST> tests, InputStream resource)
+            throws IOException {
         // list->map
         Map<Path, TEST> map = new LinkedHashMap<>();
         for (TEST test : tests) {
-            map.put(test.script, test);
+            map.put(test.getScript(), test);
         }
         // disable tests
-        List<TEST> disabledTests = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource,
                 StandardCharsets.UTF_8))) {
             String line;
@@ -217,51 +245,37 @@ public final class Resources {
                     System.err.printf("detected stale entry '%s'\n", line);
                     continue;
                 }
-                disabledTests.add(test);
-                test.enable = false;
+                test.setEnabled(false);
             }
         }
-        System.out.printf("disabled %d tests of %d in total%n", disabledTests.size(), tests.size());
-        return tests;
     }
 
     /**
      * Filter the initially collected test cases
      */
-    private static <T extends TestInfo> List<T> filterTests(List<T> tests, Pattern excludePattern,
-            Set<String> excludes, Set<String> includes, boolean onlyExcluded) {
+    private static <T extends TestInfo> void filterTests(List<T> tests, Set<String> excludes) {
         Pattern pattern = Pattern.compile("(.+?)(?:\\.([^.]*)$|$)");
         for (TestInfo test : tests) {
-            String rel = test.script.toString();
-            if (excludePattern.matcher(rel).matches()) {
-                test.enable = false;
-                continue;
-            }
-            String filename = test.script.getFileName().toString();
+            String filename = test.getScript().getFileName().toString();
             Matcher matcher = pattern.matcher(filename);
             if (!matcher.matches()) {
                 assert false : "regexp failure";
             }
             String testname = matcher.group(1);
-            if (excludes.contains(testname) ^ onlyExcluded) {
-                test.enable = false;
-                continue;
-            }
-            if (!includes.isEmpty() && !includes.contains(testname)) {
-                test.enable = false;
+            if (excludes.contains(testname)) {
+                test.setEnabled(false);
                 continue;
             }
         }
-        return tests;
     }
 
     /**
      * Reads all exlusion xml-files from the configuration
      */
-    private static Set<String> readExcludeXMLs(List<?> values) throws IOException {
+    private static Set<String> readExcludeXMLs(List<?> values, Path basedir) throws IOException {
         Set<String> exclude = new HashSet<>();
         for (String s : Functional.toStrings(values)) {
-            try (InputStream res = Resources.resource(s)) {
+            try (InputStream res = Resources.resource(s, basedir)) {
                 exclude.addAll(readExcludeXML(res));
             }
         }
@@ -306,6 +320,211 @@ public final class Resources {
             return factory.newDocumentBuilder().parse(new InputSource(xml));
         } catch (ParserConfigurationException | SAXException e) {
             throw new IOException(e);
+        }
+    }
+
+    /**
+     * {@link Parameterized} expects a list of {@code Object[]}
+     */
+    private static Iterable<TestInfo[]> toObjectArray(Iterable<? extends TestInfo> iterable) {
+        List<TestInfo[]> list = new ArrayList<TestInfo[]>();
+        for (TestInfo o : iterable) {
+            list.add(new TestInfo[] { o });
+        }
+        return list;
+    }
+
+    private static final BiFunction<Path, Path, TestInfo> defaultCreate = new BiFunction<Path, Path, TestInfo>() {
+        @Override
+        public TestInfo apply(Path basedir, Path file) {
+            return new TestInfo(basedir, file);
+        }
+    };
+
+    private static <T extends TestInfo> Function<Path, T> mapper(
+            final BiFunction<Path, Path, T> fn, final Path basedir) {
+        return new Function<Path, T>() {
+            @Override
+            public T apply(Path file) {
+                return fn.apply(basedir, file);
+            }
+        };
+    }
+
+    private static <T extends TestInfo> Function<Path, T> mapper(
+            final BiFunction<Path, Iterator<String>, T> fn) {
+        return new Function<Path, T>() {
+            @Override
+            public T apply(Path file) {
+                try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+                    return fn.apply(file, new LineIterator(reader));
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        };
+    }
+
+    private static final class LineIterator implements Iterator<String> {
+        private final BufferedReader reader;
+        private String line = null;
+
+        LineIterator(BufferedReader reader) {
+            this.reader = reader;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (line == null) {
+                try {
+                    line = reader.readLine();
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+            return line != null;
+        }
+
+        @Override
+        public String next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            String line = this.line;
+            this.line = null;
+            return line;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    private static final class CollectorFileVisitor<PATH extends Path, T> extends
+            SimpleFileVisitor<PATH> {
+        private final FileVisitor<PATH> visitor;
+        private Function<PATH, T> mapper;
+        private ArrayList<T> result = new ArrayList<>();
+
+        CollectorFileVisitor(FileVisitor<PATH> visitor, Function<PATH, T> mapper) {
+            this.visitor = visitor;
+            this.mapper = mapper;
+        }
+
+        public ArrayList<T> getResult() {
+            return result;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(PATH dir, BasicFileAttributes attrs)
+                throws IOException {
+            return visitor.preVisitDirectory(dir, attrs);
+        }
+
+        @Override
+        public FileVisitResult visitFile(PATH file, BasicFileAttributes attrs) throws IOException {
+            if (visitor.visitFile(file, attrs) == FileVisitResult.CONTINUE) {
+                try {
+                    result.add(mapper.apply(file));
+                } catch (UncheckedIOException e) {
+                    throw e.getCause();
+                }
+            }
+            return FileVisitResult.CONTINUE;
+        }
+    }
+
+    private static FilterFileVisitor<Path> newFilterFileVisitor(Path basedir, Configuration config) {
+        Iterable<Object> include = config.getList("include", asList("**/*.js", "*.js"));
+        Iterable<Object> includeDirs = config.getList("include.dirs", emptyList());
+        Iterable<Object> includeFiles = config.getList("include.files", emptyList());
+        Iterable<Object> exclude = config.getList("exclude", emptyList());
+        Iterable<Object> excludeDirs = config.getList("exclude.dirs", emptyList());
+        Iterable<Object> excludeFiles = config.getList("exclude.files", emptyList());
+
+        List<String> includeList = intoCollection(toStrings(include), new ArrayList<String>());
+        Set<String> includeDirSet = intoCollection(toStrings(includeDirs), new HashSet<String>());
+        Set<String> includeFilesSet = intoCollection(toStrings(includeFiles), new HashSet<String>());
+        List<String> excludeList = intoCollection(toStrings(exclude), new ArrayList<String>());
+        Set<String> excludeDirSet = intoCollection(toStrings(excludeDirs), new HashSet<String>());
+        Set<String> excludeFilesSet = intoCollection(toStrings(excludeFiles), new HashSet<String>());
+
+        return new FilterFileVisitor<Path>(basedir, includeList, includeDirSet, includeFilesSet,
+                excludeList, excludeDirSet, excludeFilesSet);
+    }
+
+    private static final class FilterFileVisitor<PATH extends Path> extends SimpleFileVisitor<PATH> {
+        private final Path basedir;
+        private final List<PathMatcher> includeMatchers;
+        private final Set<String> includeDirs;
+        private final Set<String> includeFiles;
+        private final List<PathMatcher> excludeMatchers;
+        private final Set<String> excludeDirs;
+        private final Set<String> excludeFiles;
+
+        FilterFileVisitor(Path basedir, List<String> includes, Set<String> includeDirs,
+                Set<String> includeFiles, List<String> excludes, Set<String> excludeDirs,
+                Set<String> excludeFiles) {
+            this.basedir = basedir;
+            this.includeMatchers = matchers(includes);
+            this.includeDirs = includeDirs;
+            this.includeFiles = includeFiles;
+            this.excludeMatchers = matchers(excludes);
+            this.excludeDirs = excludeDirs;
+            this.excludeFiles = excludeFiles;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(PATH dir, BasicFileAttributes attrs)
+                throws IOException {
+            if (matches(excludeDirs, dir.getFileName())) {
+                return FileVisitResult.SKIP_SUBTREE;
+            }
+            return super.preVisitDirectory(dir, attrs);
+        }
+
+        @Override
+        public FileVisitResult visitFile(PATH path, BasicFileAttributes attrs) throws IOException {
+            Path file = basedir.relativize(path);
+            if (attrs.isRegularFile() && attrs.size() != 0L && !matches(excludeMatchers, file)
+                    && matches(includeMatchers, file)) {
+                if (!matches(excludeFiles, file.getFileName())
+                        && (includeDirs.isEmpty() || matches(includeDirs, file.getParent()))
+                        && (includeFiles.isEmpty() || matches(includeFiles, file.getFileName()))) {
+                    return FileVisitResult.CONTINUE;
+                }
+            }
+            return FileVisitResult.TERMINATE;
+        }
+
+        private static List<PathMatcher> matchers(List<String> patterns) {
+            List<PathMatcher> matchers = new ArrayList<>();
+            for (String pattern : patterns) {
+                if (!(pattern.startsWith("glob:") || pattern.startsWith("regex:"))) {
+                    pattern = "glob:" + pattern;
+                }
+                matchers.add(FileSystems.getDefault().getPathMatcher(pattern));
+            }
+            return matchers;
+        }
+
+        private static boolean matches(Set<String> names, Path path) {
+            for (Path p : path) {
+                if (names.contains(p.getFileName().toString())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static boolean matches(List<PathMatcher> matchers, Path path) {
+            for (PathMatcher matcher : matchers) {
+                if (matcher.matches(path)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

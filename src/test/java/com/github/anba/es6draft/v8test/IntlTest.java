@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -34,14 +35,14 @@ import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestConfiguration;
+import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
-import com.github.anba.es6draft.util.TestShellGlobals;
 
 /**
  *
  */
 @RunWith(Parallelized.class)
-@TestConfiguration(name = "v8.test.intl", file = "resource:test-configuration.properties")
+@TestConfiguration(name = "v8.test.intl", file = "resource:/test-configuration.properties")
 public class IntlTest {
     private static final Configuration configuration = loadConfiguration(IntlTest.class);
 
@@ -51,12 +52,13 @@ public class IntlTest {
     }
 
     @ClassRule
-    public static TestShellGlobals<V8ShellGlobalObject> globals = new TestShellGlobals<V8ShellGlobalObject>(
+    public static TestGlobals<V8ShellGlobalObject, TestInfo> globals = new TestGlobals<V8ShellGlobalObject, TestInfo>(
             configuration) {
         @Override
         protected ObjectAllocator<V8ShellGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test.basedir, test.script, scriptCache);
+            return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
+                    scriptCache);
         }
     };
 
@@ -78,9 +80,9 @@ public class IntlTest {
     private V8ShellGlobalObject global;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws IOException, URISyntaxException {
         // filter disabled tests
-        assumeTrue(test.enable);
+        assumeTrue(test.isEnabled());
 
         global = globals.newGlobal(new V8TestConsole(collector), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
@@ -96,6 +98,6 @@ public class IntlTest {
     @Test
     public void runTest() throws Throwable {
         // evaluate actual test-script
-        global.eval(test.script, test.toFile());
+        global.eval(test.getScript(), test.toFile());
     }
 }

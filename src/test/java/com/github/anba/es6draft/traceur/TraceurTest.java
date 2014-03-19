@@ -14,6 +14,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -45,14 +46,14 @@ import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestConfiguration;
+import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
-import com.github.anba.es6draft.util.TestShellGlobals;
 
 /**
  *
  */
 @RunWith(Parallelized.class)
-@TestConfiguration(name = "traceur.test", file = "resource:test-configuration.properties")
+@TestConfiguration(name = "traceur.test", file = "resource:/test-configuration.properties")
 public class TraceurTest {
     private static final Configuration configuration = loadConfiguration(TraceurTest.class);
 
@@ -68,12 +69,13 @@ public class TraceurTest {
     }
 
     @ClassRule
-    public static TestShellGlobals<V8ShellGlobalObject> globals = new TestShellGlobals<V8ShellGlobalObject>(
+    public static TestGlobals<V8ShellGlobalObject, TraceurTestInfo> globals = new TestGlobals<V8ShellGlobalObject, TraceurTestInfo>(
             configuration) {
         @Override
         protected ObjectAllocator<V8ShellGlobalObject> newAllocator(ShellConsole console,
-                TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test.basedir, test.script, scriptCache);
+                TraceurTestInfo test, ScriptCache scriptCache) {
+            return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
+                    scriptCache);
         }
     };
 
@@ -93,6 +95,7 @@ public class TraceurTest {
     public TraceurTestInfo test;
 
     private static class TraceurTestInfo extends TestInfo {
+        boolean expect = true;
         boolean async = false;
 
         TraceurTestInfo(Path basedir, Path script) {
@@ -103,9 +106,9 @@ public class TraceurTest {
     private V8ShellGlobalObject global;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws IOException, URISyntaxException {
         // filter disabled tests
-        assumeTrue(test.enable);
+        assumeTrue(test.isEnabled());
 
         global = globals.newGlobal(new TraceurConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
@@ -137,7 +140,7 @@ public class TraceurTest {
         }
 
         // evaluate actual test-script
-        global.eval(test.script, test.toFile());
+        global.eval(test.getScript(), test.toFile());
 
         // wait for pending tasks to finish
         if (test.async) {
@@ -177,7 +180,7 @@ public class TraceurTest {
                     if ("Should not compile.".equals(s)) {
                         test.expect = false;
                     } else if ("Only in browser.".equals(s) || s.startsWith("Skip.")) {
-                        test.enable = false;
+                        test.setEnabled(false);
                     } else if (s.equals("Async.")) {
                         test.async = true;
                     } else if (s.startsWith("Error:")) {

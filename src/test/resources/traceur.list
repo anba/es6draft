@@ -124,9 +124,6 @@ feature/Yield/Try12.js
 # module syntax
 feature/Syntax/Error_WithInModule.module.js
 feature/TemplateLiterals/InModule.js
-feature/TemplateLiterals/resources/f.js
-feature/TemplateLiterals/resources/m.js
-feature/TemplateLiterals/resources/n.js
 
 # Type declaration syntax
 feature/Classes/Types.js

@@ -10,43 +10,41 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.ScriptLoader;
+import com.github.anba.es6draft.repl.console.ShellConsole;
+import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 
 /**
  * Global object for test262 tests, includes all necessary global function definitions.
  */
-public class Test262GlobalObject extends GlobalObject {
-    private final Realm realm;
-    private final Path libpath;
-    private final ScriptCache scriptCache;
+public class Test262GlobalObject extends ShellGlobalObject {
     private final Test262Info test;
 
-    public Test262GlobalObject(Realm realm, Path libpath, ScriptCache scriptCache, Test262Info test) {
-        super(realm);
-        this.realm = realm;
-        this.libpath = libpath;
-        this.scriptCache = scriptCache;
+    public Test262GlobalObject(Realm realm, ShellConsole console, Test262Info test,
+            ScriptCache scriptCache) {
+        super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
         this.test = test;
     }
 
     /**
-     * Parses, compiles and executes the javascript file
+     * Returns an object to allocate new instances of this class
      */
-    public void eval(Path file) throws IOException {
-        Script script = scriptCache.script(file.getFileName().toString(), 1, file, getRealm()
-                .getExecutor());
-        ScriptLoader.ScriptEvaluation(script, realm, false);
+    public static ObjectAllocator<Test262GlobalObject> newGlobalObjectAllocator(
+            final ShellConsole console, final Test262Info test, final ScriptCache scriptCache) {
+        return new ObjectAllocator<Test262GlobalObject>() {
+            @Override
+            public Test262GlobalObject newInstance(Realm realm) {
+                return new Test262GlobalObject(realm, console, test, scriptCache);
+            }
+        };
     }
 
     /**
@@ -60,7 +58,7 @@ public class Test262GlobalObject extends GlobalObject {
     /**
      * {@code $ERROR} function for canonical test262 tests
      */
-    @Function(name = "$ERROR", arity = 1, attributes = @Attributes(writable = false,
+    @Function(name = "$ERROR", arity = 1, attributes = @Attributes(writable = true,
             enumerable = true, configurable = false))
     public void error(String message) {
         failure(message);
@@ -69,7 +67,7 @@ public class Test262GlobalObject extends GlobalObject {
     /**
      * {@code $FAIL} function for canonical test262 tests
      */
-    @Function(name = "$FAIL", arity = 1, attributes = @Attributes(writable = false,
+    @Function(name = "$FAIL", arity = 1, attributes = @Attributes(writable = true,
             enumerable = true, configurable = false))
     public void fail(String message) {
         failure(message);
@@ -78,28 +76,26 @@ public class Test262GlobalObject extends GlobalObject {
     /**
      * {@code $PRINT} function for canonical test262 tests
      */
-    @Function(name = "$PRINT", arity = 1, attributes = @Attributes(writable = false,
+    @Function(name = "$PRINT", arity = 1, attributes = @Attributes(writable = true,
             enumerable = true, configurable = false))
     public void print(String message) {
-        // System.out.println(message);
+        console.print(message);
     }
 
     /**
      * {@code $INCLUDE} function for canonical test262 tests
      */
-    @Function(name = "$INCLUDE", arity = 1, attributes = @Attributes(writable = false,
+    @Function(name = "$INCLUDE", arity = 1, attributes = @Attributes(writable = true,
             enumerable = true, configurable = false))
-    public void include(ExecutionContext cx, String file) throws IOException {
+    public void include(String file) throws IOException {
         // resolve the input file against the library path
-        Path path = libpath.resolve(Paths.get(file));
-        Script script = scriptCache.get(path, cx.getRealm().getExecutor());
-        ScriptLoader.ScriptEvaluation(script, realm, false);
+        super.include(Paths.get("harness", file));
     }
 
     /**
      * {@code runTestCase} function for canonical test262 tests
      */
-    @Function(name = "runTestCase", arity = 1, attributes = @Attributes(writable = false,
+    @Function(name = "runTestCase", arity = 1, attributes = @Attributes(writable = true,
             enumerable = true, configurable = false))
     public void runTestCase(ExecutionContext cx, Callable testcase) {
         Object value = testcase.call(cx, UNDEFINED);

@@ -14,6 +14,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -48,14 +49,14 @@ import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestConfiguration;
+import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
-import com.github.anba.es6draft.util.TestShellGlobals;
 
 /**
  * Test suite for the Mozilla jit-tests.
  */
 @RunWith(Parallelized.class)
-@TestConfiguration(name = "mozilla.test.jittests", file = "resource:test-configuration.properties")
+@TestConfiguration(name = "mozilla.test.jittests", file = "resource:/test-configuration.properties")
 public class MozillaJitTest {
     private static final Configuration configuration = loadConfiguration(MozillaJitTest.class);
 
@@ -71,12 +72,13 @@ public class MozillaJitTest {
     }
 
     @ClassRule
-    public static TestShellGlobals<MozShellGlobalObject> globals = new TestShellGlobals<MozShellGlobalObject>(
+    public static TestGlobals<MozShellGlobalObject, MozTest> globals = new TestGlobals<MozShellGlobalObject, MozTest>(
             configuration) {
         @Override
         protected ObjectAllocator<MozShellGlobalObject> newAllocator(ShellConsole console,
-                TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test.basedir, test.script, scriptCache);
+                MozTest test, ScriptCache scriptCache) {
+            return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
+                    scriptCache);
         }
     };
 
@@ -112,9 +114,9 @@ public class MozillaJitTest {
     private MozShellGlobalObject global;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws IOException, URISyntaxException {
         // filter disabled tests
-        assumeTrue(moztest.enable);
+        assumeTrue(moztest.isEnabled());
 
         global = globals.newGlobal(new MozTestConsole(collector), moztest);
         ExecutionContext cx = global.getRealm().defaultContext();
@@ -146,7 +148,7 @@ public class MozillaJitTest {
                 global);
 
         // evaluate actual test-script
-        global.eval(moztest.script, moztest.toFile());
+        global.eval(moztest.getScript(), moztest.toFile());
     }
 
     private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
@@ -191,11 +193,11 @@ public class MozillaJitTest {
                     switch (name) {
                     case "slow":
                         // don't run slow tests
-                        test.enable = false;
+                        test.setEnabled(false);
                         break;
                     case "debug":
                         // don't run debug-mode tests
-                        test.enable = false;
+                        test.setEnabled(false);
                         break;
                     case "allow-oom":
                     case "valgrind":
