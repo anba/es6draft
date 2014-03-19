@@ -15,6 +15,9 @@ fast/regex/lastIndex.js
 fast/js/JSON-parse-reviver.js
 fast/js/toString-overrides.js
 
+# Promise.resolve vs Promise.cast, next draft update
+fast/js/Promise-static-cast.js
+
 
 ###################
 # Misc issues     #

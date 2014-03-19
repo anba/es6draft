@@ -23,6 +23,7 @@ tests/basic/bug623859.js
 tests/basic/bug648773.js
 tests/basic/bug652054.js
 tests/basic/bug836601.js
+tests/basic/bug984766.js
 tests/basic/spread-array.js
 tests/basic/spread-call.js
 tests/basic/spread-call-length.js
