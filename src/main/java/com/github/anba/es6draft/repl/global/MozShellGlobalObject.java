@@ -14,9 +14,9 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.github.anba.es6draft.Script;
@@ -46,7 +46,6 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 public final class MozShellGlobalObject extends ShellGlobalObject {
     private final long startMilli = System.currentTimeMillis();
     private final long startNano = System.nanoTime();
-    private List<Script> initScripts = null;
 
     private MozShellGlobalObject(Realm realm, ShellConsole console, Path baseDir, Path script,
             ScriptCache scriptCache) {
@@ -74,11 +73,10 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    protected List<Script> initialisationScripts() throws IOException, ParserException,
-            CompilationException {
-        List<Script> scripts = super.initialisationScripts();
-        scripts.add(compileScript(scriptCache, "mozlegacy.js"));
-        return scripts;
+    public void initialise(OrdinaryObject object) throws IOException, URISyntaxException,
+            ParserException, CompilationException {
+        assert object == this : "not yet supported";
+        include(getScriptURL("mozlegacy.js"));
     }
 
     private Object evaluate(GlobalObject global, String source, String sourceName, int sourceLine)
@@ -310,11 +308,10 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     public GlobalObject newGlobal(ExecutionContext cx) {
         MozShellGlobalObject global = (MozShellGlobalObject) cx.getRealm().getWorld().newGlobal();
         try {
-            if (initScripts == null) {
-                initScripts = initialisationScripts();
-            }
-            global.eval(initScripts);
-        } catch (ParserException | CompilationException | IOException e) {
+            global.initialise(global);
+        } catch (ParserException | CompilationException e) {
+            throw e.toScriptException(cx);
+        } catch (IOException | URISyntaxException e) {
             throw newError(cx, e.getMessage());
         }
         return global;

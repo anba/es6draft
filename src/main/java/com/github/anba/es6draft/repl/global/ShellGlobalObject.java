@@ -13,11 +13,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -70,6 +71,18 @@ public abstract class ShellGlobalObject extends GlobalObject {
         }
     }
 
+    /**
+     * Returns the URL for the script {@code name} from the 'scripts' directory
+     */
+    protected static final URL getScriptURL(String name) throws IOException {
+        String sourceName = "/scripts/" + name;
+        URL url = ShellGlobalObject.class.getResource(sourceName);
+        if (url == null) {
+            throw new IOException(String.format("script '%s' not found", name));
+        }
+        return url;
+    }
+
     protected static final String getResourceInfo(String resourceName, String defaultValue) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                 ShellGlobalObject.class.getResourceAsStream(resourceName), StandardCharsets.UTF_8))) {
@@ -109,22 +122,6 @@ public abstract class ShellGlobalObject extends GlobalObject {
     }
 
     /**
-     * Returns the initialisation scripts which should be run for this global instance
-     */
-    protected List<Script> initialisationScripts() throws IOException, ParserException,
-            CompilationException {
-        return new ArrayList<>();
-    }
-
-    /**
-     * Execute the initialisation scripts which should be run for this global instance
-     */
-    public final void executeInitialisation() throws IOException, ParserException,
-            CompilationException {
-        eval(initialisationScripts());
-    }
-
-    /**
      * Evaluates the input scripts
      */
     protected final void eval(List<Script> scripts) {
@@ -160,7 +157,17 @@ public abstract class ShellGlobalObject extends GlobalObject {
         ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
-    protected static ScriptException newError(ExecutionContext cx, String message) {
+    /**
+     * Parses, compiles and executes the javascript file (uses {@link #scriptCache})
+     */
+    public void include(URL file) throws IOException, URISyntaxException, ParserException,
+            CompilationException {
+        Realm realm = getRealm();
+        Script script = scriptCache.get(file, realm.getExecutor());
+        ScriptLoader.ScriptEvaluation(script, realm, false);
+    }
+
+    protected static final ScriptException newError(ExecutionContext cx, String message) {
         return Errors.newError(cx, Objects.toString(message, ""));
     }
 

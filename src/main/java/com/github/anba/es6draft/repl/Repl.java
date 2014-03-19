@@ -15,6 +15,7 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -494,9 +495,11 @@ public final class Repl {
             @Override
             public void execute() {
                 try {
-                    global.executeInitialisation();
+                    global.initialise(global);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
+                } catch (URISyntaxException e) {
+                    throw new UncheckedIOException(new IOException(e));
                 }
             }
         });

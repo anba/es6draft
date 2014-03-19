@@ -9,10 +9,9 @@ package com.github.anba.es6draft.repl.global;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.List;
 
-import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
@@ -54,11 +53,10 @@ public final class V8ShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    protected List<Script> initialisationScripts() throws IOException, ParserException,
-            CompilationException {
-        List<Script> scripts = super.initialisationScripts();
-        scripts.add(compileScript(scriptCache, "v8legacy.js"));
-        return scripts;
+    public void initialise(OrdinaryObject object) throws IOException, URISyntaxException,
+            ParserException, CompilationException {
+        assert object == this : "not yet supported";
+        include(getScriptURL("v8legacy.js"));
     }
 
     /** shell-function: {@code write(message)} */

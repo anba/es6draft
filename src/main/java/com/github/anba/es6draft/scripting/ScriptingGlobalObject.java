@@ -29,6 +29,11 @@ public final class ScriptingGlobalObject extends GlobalObject {
         createProperties(cx, object, this, ScriptingGlobalObject.class);
     }
 
+    @Override
+    public void initialise(OrdinaryObject object) {
+        /* no initialisation required */
+    }
+
     /**
      * Returns an object to allocate new instances of this class
      */

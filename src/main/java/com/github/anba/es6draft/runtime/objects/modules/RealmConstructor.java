@@ -10,11 +10,17 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetOption;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.Realm.CreateRealm;
+import static com.github.anba.es6draft.runtime.internal.Errors.newError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+
+import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
@@ -68,6 +74,15 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
     public static void DefineBuiltinProperties(Realm realm, OrdinaryObject builtins) {
         // TODO: not yet specified
         realm.defineBuiltinProperties(builtins);
+
+        // Run any initialisation scripts, if required
+        try {
+            realm.getGlobalThis().initialise(builtins);
+        } catch (ParserException | CompilationException e) {
+            throw e.toScriptException(realm.defaultContext());
+        } catch (IOException | URISyntaxException e) {
+            throw newError(realm.defaultContext(), e.getMessage());
+        }
     }
 
     private static Callable getFunctionOption(ExecutionContext cx, Object options, String name) {

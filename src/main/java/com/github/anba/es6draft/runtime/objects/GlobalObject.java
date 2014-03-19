@@ -14,6 +14,11 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.objects.Eval.indirectEval;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+
+import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
@@ -54,6 +59,14 @@ public class GlobalObject extends OrdinaryObject {
         createProperties(cx, object, ConstructorProperties.class);
         createProperties(cx, object, OtherProperties.class);
         createProperties(cx, object, AdditionalProperties.class);
+    }
+
+    /**
+     * Execute any initialisation scripts which should be run for this global instance
+     */
+    public void initialise(OrdinaryObject object) throws IOException, URISyntaxException,
+            ParserException, CompilationException {
+        /* empty */
     }
 
     /**
