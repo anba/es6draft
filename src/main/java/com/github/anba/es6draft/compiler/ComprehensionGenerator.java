@@ -85,11 +85,6 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         super(codegen);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private static final Variable<Iterator<?>> uncheckedCast(Variable<Iterator> o) {
-        return (Variable<Iterator<?>>) (Variable<?>) o;
-    }
-
     @Override
     protected Void visit(Node node, ExpressionVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
@@ -117,7 +112,8 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         List<Variable<Iterator<?>>> iters = new ArrayList<>();
         for (Node e : list) {
             if (e instanceof ComprehensionFor || e instanceof LegacyComprehensionFor) {
-                iters.add(uncheckedCast(mv.newVariable("iter", Iterator.class)));
+                Variable<Iterator<?>> iter = mv.newVariable("iter", Iterator.class).uncheckedCast();
+                iters.add(iter);
             }
         }
         iterators = iters.iterator();

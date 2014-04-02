@@ -137,7 +137,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         boolean hasParameters = !function.getParameters().getFormals().isEmpty();
         Variable<Iterator<?>> iterator = null;
         if (hasParameters) {
-            iterator = uncheckedCast(mv.newVariable("iterator", Iterator.class));
+            iterator = mv.newVariable("iterator", Iterator.class).uncheckedCast();
             mv.loadParameter(ARGUMENTS, Object[].class);
             mv.invoke(Methods.Arrays_asList);
             mv.invoke(Methods.List_iterator);
@@ -352,10 +352,5 @@ final class FunctionDeclarationInstantiationGenerator extends
         for (String string : strings) {
             mv.astore(index++, string);
         }
-    }
-
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private static final Variable<Iterator<?>> uncheckedCast(Variable<Iterator> o) {
-        return (Variable<Iterator<?>>) (Variable<?>) o;
     }
 }

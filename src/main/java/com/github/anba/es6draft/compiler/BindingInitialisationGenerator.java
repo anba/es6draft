@@ -106,10 +106,7 @@ final class BindingInitialisationGenerator {
         node.accept(init, null);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private static final Variable<Iterator<?>> uncheckedCast(Variable<Iterator> o) {
-        return (Variable<Iterator<?>>) (Variable<?>) o;
-    }
+
 
     private enum EnvironmentType {
         NoEnvironment, EnvironmentFromStack
@@ -201,7 +198,7 @@ final class BindingInitialisationGenerator {
 
             // step 2-3:
             // stack: [(env), value] -> [(env)]
-            Variable<Iterator<?>> iterator = uncheckedCast(mv.newScratchVariable(Iterator.class));
+            Variable<Iterator<?>> iterator = mv.newScratchVariable(Iterator.class).uncheckedCast();
             mv.lineInfo(node);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getIterator);

@@ -270,6 +270,11 @@ class InstructionVisitor extends InstructionAdapter {
         public boolean isAlive() {
             return alive;
         }
+
+        @SuppressWarnings("unchecked")
+        public <U> Variable<U> uncheckedCast() {
+            return (Variable<U>) this;
+        }
     }
 
     enum MethodType {

@@ -86,11 +86,6 @@ final class DestructuringAssignmentGenerator {
         mv.invoke(Methods.Reference_putValue);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private static final Variable<Iterator<?>> uncheckedCast(Variable<Iterator> o) {
-        return (Variable<Iterator<?>>) (Variable<?>) o;
-    }
-
     private abstract static class RuntimeSemantics<R, V> extends DefaultNodeVisitor<R, V> {
         protected final CodeGenerator codegen;
         protected final ExpressionVisitor mv;
@@ -149,7 +144,7 @@ final class DestructuringAssignmentGenerator {
         @Override
         public Void visit(ArrayAssignmentPattern node, Void value) {
             // stack: [obj] -> [iterator]
-            Variable<Iterator<?>> iterator = uncheckedCast(mv.newScratchVariable(Iterator.class));
+            Variable<Iterator<?>> iterator = mv.newScratchVariable(Iterator.class).uncheckedCast();
             mv.lineInfo(node);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getIterator);
