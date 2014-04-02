@@ -111,6 +111,11 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
     }
 
     @Override
+    public boolean isAsync() {
+        return false;
+    }
+
+    @Override
     public boolean hasSuperReference() {
         return superReference;
     }

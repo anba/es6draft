@@ -174,6 +174,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                         .getMethodType(Types.OrdinaryFunction, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_EvaluateAsyncFunctionExpression = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluateAsyncFunctionExpression", Type
+                        .getMethodType(Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_EvaluateConstructorCall = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateConstructorCall", Type
                         .getMethodType(Types.Object, Types.Object, Types.Object_,
@@ -1249,6 +1254,35 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 throw new IllegalStateException(Objects.toString(node.getOperator(), "<null>"));
             }
         }
+    }
+
+    /**
+     * Extension: Async Function Definitions
+     */
+    @Override
+    public ValType visit(AsyncFunctionExpression node, ExpressionVisitor mv) {
+        codegen.compile(node);
+
+        /* steps 1-5/10 */
+        mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_EvaluateAsyncFunctionExpression);
+
+        /* step 6/11 */
+        return ValType.Object;
+    }
+
+    /**
+     * Extension: Async Function Definitions
+     */
+    @Override
+    public ValType visit(AwaitExpression node, ExpressionVisitor mv) {
+        Expression expr = node.getExpression();
+        evalAndGetBoxedValue(expr, mv);
+
+        yield(node, mv);
+
+        return ValType.Any;
     }
 
     /**

@@ -147,7 +147,12 @@ public final class RuntimeInfo {
         /**
          * Flag for functions with synthetic sub-methods
          */
-        SyntheticMethods(0b0100_0000);
+        SyntheticMethods(0b0100_0000),
+
+        /**
+         * Flag for async functions
+         */
+        Async(0b1000_0000);
 
         private final int value;
 
@@ -177,6 +182,8 @@ public final class RuntimeInfo {
         boolean hasScopedName();
 
         boolean isGenerator();
+
+        boolean isAsync();
 
         boolean hasTailCall();
 
@@ -240,6 +247,11 @@ public final class RuntimeInfo {
         @Override
         public boolean isGenerator() {
             return FunctionFlags.Generator.isSet(functionFlags);
+        }
+
+        @Override
+        public boolean isAsync() {
+            return FunctionFlags.Async.isSet(functionFlags);
         }
 
         @Override

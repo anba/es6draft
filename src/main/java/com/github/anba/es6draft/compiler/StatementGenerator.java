@@ -199,6 +199,16 @@ final class StatementGenerator extends
     }
 
     /**
+     * Extension: Async Function Definitions
+     */
+    @Override
+    public Completion visit(AsyncFunctionDeclaration node, StatementVisitor mv) {
+        codegen.compile(node);
+        /* step 1 */
+        return Completion.Normal;
+    }
+
+    /**
      * 13.1.10 Runtime Semantics: Evaluation
      */
     @Override

@@ -20,6 +20,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
@@ -55,6 +56,11 @@ final class FunctionCodeGenerator {
                 MethodType.Virtual, Types.FunctionObject, "restoreLegacyProperties",
                 Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.Object));
 
+        // OrdinaryAsyncFunction
+        static final MethodDesc OrdinaryAsyncFunction_EvaluateBody = MethodDesc.create(
+                MethodType.Static, Types.OrdinaryAsyncFunction, "EvaluateBody", Type.getMethodType(
+                        Types.PromiseObject, Types.ExecutionContext, Types.OrdinaryAsyncFunction));
+
         // OrdinaryGenerator
         static final MethodDesc OrdinaryGenerator_EvaluateBody = MethodDesc.create(
                 MethodType.Static, Types.OrdinaryGenerator, "EvaluateBody", Type.getMethodType(
@@ -71,6 +77,21 @@ final class FunctionCodeGenerator {
     private static final int EXECUTION_CONTEXT = 1;
     private static final int THIS_VALUE = 2;
     private static final int ARGUMENTS = 3;
+
+    private static final class AsyncFunctionCodeMethodGenerator extends InstructionVisitor {
+        AsyncFunctionCodeMethodGenerator(MethodCode method) {
+            super(method);
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("function", FUNCTION, Types.OrdinaryAsyncFunction);
+            setParameterName("callerContext", EXECUTION_CONTEXT, Types.ExecutionContext);
+            setParameterName("thisValue", THIS_VALUE, Types.Object);
+            setParameterName("arguments", ARGUMENTS, Types.Object_);
+        }
+    }
 
     private static final class FunctionCodeMethodGenerator extends InstructionVisitor {
         FunctionCodeMethodGenerator(MethodCode method) {
@@ -120,6 +141,14 @@ final class FunctionCodeGenerator {
             } else {
                 generateGenerator(node, mv);
             }
+
+            mv.end();
+        } else if (node.isAsync()) {
+            InstructionVisitor mv = new AsyncFunctionCodeMethodGenerator(method);
+            mv.lineInfo(node.getBeginLine());
+            mv.begin();
+
+            generateAsyncFunction(node, mv);
 
             mv.end();
         } else {
@@ -236,6 +265,41 @@ final class FunctionCodeGenerator {
 
         // (3) Perform EvaluateBody
         evaluateBody(node, calleeContext, mv);
+
+        // (4) Return result value
+        mv.areturn(Types.Object);
+    }
+
+    /**
+     * Generate bytecode for:
+     * 
+     * <pre>
+     * calleeContext = newFunctionExecutionContext(callerContext, function, thisValue)
+     * function_init(calleeContext, function, arguments)
+     * return EvaluateBody(calleeContext, generator)
+     * </pre>
+     */
+    private void generateAsyncFunction(FunctionNode node, InstructionVisitor mv) {
+        Variable<OrdinaryAsyncFunction> function = mv.getParameter(FUNCTION,
+                OrdinaryAsyncFunction.class);
+        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
+                ExecutionContext.class);
+        Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
+        Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
+
+        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext",
+                ExecutionContext.class);
+
+        // (1) Create a new ExecutionContext
+        newFunctionExecutionContext(calleeContext, callerContext, function, thisValue, mv);
+
+        // (2) Perform FunctionDeclarationInstantiation
+        functionDeclarationInstantiation(node, calleeContext, function, arguments, mv);
+
+        // (3) Perform EvaluateBody
+        mv.load(calleeContext);
+        mv.load(function);
+        mv.invoke(Methods.OrdinaryAsyncFunction_EvaluateBody);
 
         // (4) Return result value
         mv.areturn(Types.Object);

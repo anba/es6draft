@@ -15,6 +15,7 @@ import java.util.Set;
 
 import org.objectweb.asm.Type;
 
+import com.github.anba.es6draft.ast.AsyncFunctionDeclaration;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
@@ -157,7 +158,8 @@ final class GlobalDeclarationInstantiationGenerator extends
         Set<String> declaredFunctionNames = new HashSet<>();
         /* step 9 */
         for (StatementListItem item : reverse(varDeclarations)) {
-            if (item instanceof FunctionDeclaration || item instanceof GeneratorDeclaration) {
+            if (item instanceof FunctionDeclaration || item instanceof GeneratorDeclaration
+                    || item instanceof AsyncFunctionDeclaration) {
                 Declaration d = (Declaration) item;
                 String fn = BoundName(d);
                 if (!declaredFunctionNames.contains(fn)) {
@@ -188,8 +190,10 @@ final class GlobalDeclarationInstantiationGenerator extends
             // stack: [] -> [fo]
             if (f instanceof GeneratorDeclaration) {
                 InstantiateGeneratorObject(context, lexEnv, (GeneratorDeclaration) f, mv);
-            } else {
+            } else if (f instanceof FunctionDeclaration) {
                 InstantiateFunctionObject(context, lexEnv, (FunctionDeclaration) f, mv);
+            } else {
+                InstantiateAsyncFunctionObject(context, lexEnv, (AsyncFunctionDeclaration) f, mv);
             }
             createGlobalFunctionBinding(envRec, fn, deletableBindings, mv);
         }

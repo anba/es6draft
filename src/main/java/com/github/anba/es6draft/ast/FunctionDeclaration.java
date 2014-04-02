@@ -94,6 +94,11 @@ public final class FunctionDeclaration extends Declaration implements FunctionDe
     }
 
     @Override
+    public boolean isAsync() {
+        return false;
+    }
+
+    @Override
     public boolean hasSuperReference() {
         return superReference;
     }

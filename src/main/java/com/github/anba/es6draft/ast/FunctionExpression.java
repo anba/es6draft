@@ -111,6 +111,11 @@ public final class FunctionExpression extends Expression implements FunctionDefi
     }
 
     @Override
+    public boolean isAsync() {
+        return false;
+    }
+
+    @Override
     public boolean hasSuperReference() {
         return superReference;
     }

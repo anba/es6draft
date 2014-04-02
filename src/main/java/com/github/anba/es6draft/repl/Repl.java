@@ -160,7 +160,7 @@ public final class Repl {
 
     private enum Option {
         NoInterpreter, Debug, FullDebug, StackTrace, Strict, SimpleShell, MozillaShell, V8Shell,
-        NoJLine, NoColor;
+        NoJLine, NoColor, Async;
 
         static EnumSet<Option> fromArgs(String[] args) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
@@ -198,6 +198,9 @@ public final class Repl {
                 case "--no-color":
                     options.add(NoColor);
                     break;
+                case "--async":
+                    options.add(Async);
+                    break;
                 case "--help":
                     System.out.print(getHelp());
                     System.exit(0);
@@ -221,6 +224,7 @@ public final class Repl {
         sb.append("Options: \n");
         sb.append("  --shell=[mode]    Set default shell emulation [simple, mozilla, v8] (default = simple)\n");
         sb.append("  --strict          Strict semantics without web compatibility\n");
+        sb.append("  --async           Enable experimental support for async functions\n");
         sb.append("  --no-interpreter  Disable interpreter\n");
         sb.append("  --no-color        Disable colored output\n");
         sb.append("  --no-jline        Disable JLine support\n");
@@ -454,6 +458,9 @@ public final class Repl {
             compatibilityOptions = CompatibilityOption.MozCompatibility();
         } else {
             compatibilityOptions = CompatibilityOption.WebCompatibility();
+        }
+        if (options.contains(Option.Async)) {
+            compatibilityOptions.add(CompatibilityOption.AsyncFunction);
         }
         Set<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
         if (options.contains(Option.Debug)) {

@@ -236,6 +236,16 @@ final class BoundNames extends DefaultNodeVisitor<List<String>, List<String>> {
 
     /**
      * <pre>
+     * AsyncFunctionDeclaration : async function BindingIdentifier ( FormalParameterList ) { FunctionBody }
+     * </pre>
+     */
+    @Override
+    public List<String> visit(AsyncFunctionDeclaration node, List<String> value) {
+        return node.getIdentifier().accept(this, value);
+    }
+
+    /**
+     * <pre>
      * StrictFormalParameters :
      *     FormalParameters
      * FormalParameters :

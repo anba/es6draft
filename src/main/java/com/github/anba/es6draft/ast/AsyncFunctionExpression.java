@@ -9,16 +9,12 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 /**
- * <h1>14 ECMAScript Language: Functions and Classes</h1>
- * <ul>
- * <li>14.3 Method Definitions
- * </ul>
+ * Extension: Async Function Expression
  */
-public final class MethodDefinition extends PropertyDefinition implements FunctionNode {
+public final class AsyncFunctionExpression extends Expression implements AsyncFunctionDefinition {
     private final FunctionScope scope;
-    private final MethodType type;
-    private final PropertyName propertyName;
-    private String functionName;
+    private final BindingIdentifier identifier;
+    private final String functionName;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
     private StrictMode strictMode;
@@ -26,18 +22,29 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     private final String headerSource, bodySource;
     private boolean syntheticNodes;
 
-    public enum MethodType {
-        AsyncFunction, Function, Generator, Getter, Setter
-    }
-
-    public MethodDefinition(long beginPosition, long endPosition, FunctionScope scope,
-            MethodType type, PropertyName propertyName, FormalParameterList parameters,
+    public AsyncFunctionExpression(long beginPosition, long endPosition, FunctionScope scope,
+            BindingIdentifier identifier, FormalParameterList parameters,
             List<StatementListItem> statements, boolean superReference, String headerSource,
             String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
-        this.type = type;
-        this.propertyName = propertyName;
+        this.identifier = identifier;
+        this.functionName = (identifier != null ? identifier.getName() : "");
+        this.parameters = parameters;
+        this.statements = statements;
+        this.superReference = superReference;
+        this.headerSource = headerSource;
+        this.bodySource = bodySource;
+    }
+
+    public AsyncFunctionExpression(long beginPosition, long endPosition, FunctionScope scope,
+            String functionName, FormalParameterList parameters,
+            List<StatementListItem> statements, boolean superReference, String headerSource,
+            String bodySource) {
+        super(beginPosition, endPosition);
+        this.scope = scope;
+        this.identifier = null;
+        this.functionName = functionName;
         this.parameters = parameters;
         this.statements = statements;
         this.superReference = superReference;
@@ -50,25 +57,14 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         return scope;
     }
 
-    public MethodType getType() {
-        return type;
-    }
-
     @Override
-    public PropertyName getPropertyName() {
-        return propertyName;
+    public BindingIdentifier getIdentifier() {
+        return identifier;
     }
 
     @Override
     public String getFunctionName() {
-        if (functionName != null) {
-            return functionName;
-        }
-        return propertyName.getName();
-    }
-
-    public void setFunctionName(String functionName) {
-        this.functionName = functionName;
+        return functionName;
     }
 
     @Override
@@ -108,12 +104,12 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
 
     @Override
     public boolean isGenerator() {
-        return getType() == MethodType.Generator;
+        return false;
     }
 
     @Override
     public boolean isAsync() {
-        return getType() == MethodType.AsyncFunction;
+        return true;
     }
 
     @Override

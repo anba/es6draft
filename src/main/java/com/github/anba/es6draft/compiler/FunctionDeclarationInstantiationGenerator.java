@@ -169,7 +169,8 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
         /* step 9 */
         for (StatementListItem item : reverse(varDeclarations)) {
-            if (item instanceof FunctionDeclaration || item instanceof GeneratorDeclaration) {
+            if (item instanceof FunctionDeclaration || item instanceof GeneratorDeclaration
+                    || item instanceof AsyncFunctionDeclaration) {
                 Declaration d = (Declaration) item;
                 String fn = BoundName(d);
                 if ("arguments".equals(fn)) {
@@ -238,8 +239,10 @@ final class FunctionDeclarationInstantiationGenerator extends
             // stack: [] -> [fo]
             if (f instanceof GeneratorDeclaration) {
                 InstantiateGeneratorObject(context, env, (GeneratorDeclaration) f, mv);
-            } else {
+            } else if (f instanceof FunctionDeclaration) {
                 InstantiateFunctionObject(context, env, (FunctionDeclaration) f, mv);
+            } else {
+                InstantiateAsyncFunctionObject(context, env, (AsyncFunctionDeclaration) f, mv);
             }
             // stack: [fo] -> []
             // setMutableBinding(envRec, fn, false, mv);

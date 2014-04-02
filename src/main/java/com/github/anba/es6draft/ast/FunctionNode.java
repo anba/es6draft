@@ -58,6 +58,11 @@ public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNod
     boolean isGenerator();
 
     /**
+     * Returns <code>true</code> if this function is an async function.
+     */
+    boolean isAsync();
+
+    /**
      * Returns <code>true</code> if the <code>"super"</code> keyword is used within this function.
      */
     boolean hasSuperReference();

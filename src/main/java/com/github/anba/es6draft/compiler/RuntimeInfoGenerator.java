@@ -14,6 +14,7 @@ import java.util.concurrent.Future;
 
 import org.objectweb.asm.Type;
 
+import com.github.anba.es6draft.ast.AsyncFunctionExpression;
 import com.github.anba.es6draft.ast.FunctionExpression;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.GeneratorExpression;
@@ -64,11 +65,14 @@ final class RuntimeInfoGenerator {
         if (node.isGenerator()) {
             functionFlags |= FunctionFlags.Generator.getValue();
         }
+        if (node.isAsync()) {
+            functionFlags |= FunctionFlags.Async.getValue();
+        }
         if (node.hasSyntheticNodes()) {
             functionFlags |= FunctionFlags.SyntheticMethods.getValue();
         }
         if (tailCall) {
-            assert !node.isGenerator() && strict;
+            assert !node.isGenerator() && !node.isAsync() && strict;
             functionFlags |= FunctionFlags.TailCall.getValue();
         }
         if (legacy) {
@@ -82,6 +86,8 @@ final class RuntimeInfoGenerator {
             return ((FunctionExpression) node).getIdentifier() != null;
         } else if (node instanceof GeneratorExpression) {
             return ((GeneratorExpression) node).getIdentifier() != null;
+        } else if (node instanceof AsyncFunctionExpression) {
+            return ((AsyncFunctionExpression) node).getIdentifier() != null;
         } else {
             return false;
         }

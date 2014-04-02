@@ -170,6 +170,9 @@ public final class StaticSemantics {
         if (node instanceof ClassExpression) {
             return ((ClassExpression) node).getName() == null;
         }
+        if (node instanceof AsyncFunctionExpression) {
+            return ((AsyncFunctionExpression) node).getIdentifier() == null;
+        }
         return false;
     }
 
@@ -599,6 +602,7 @@ public final class StaticSemantics {
      */
     public static boolean SpecialMethod(MethodDefinition node) {
         switch (node.getType()) {
+        case AsyncFunction:
         case Generator:
         case Getter:
         case Setter:

@@ -179,6 +179,16 @@ public final class CodeSizeAnalysis {
         }
 
         @Override
+        public Integer visit(AsyncFunctionDeclaration node, Integer size) {
+            return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
+        }
+
+        @Override
+        public Integer visit(AsyncFunctionExpression node, Integer size) {
+            return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
+        }
+
+        @Override
         public Integer visit(BinaryExpression node, Integer size) {
             return visit(node, size, new BinaryExpressionSubMethod());
         }

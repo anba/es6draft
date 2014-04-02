@@ -12,6 +12,7 @@ import java.util.ListIterator;
 
 import org.objectweb.asm.Type;
 
+import com.github.anba.es6draft.ast.AsyncFunctionDeclaration;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
@@ -58,6 +59,11 @@ abstract class DeclarationBindingInstantiationGenerator {
                 Type.getMethodType(Types.EnvironmentRecord));
 
         // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_InstantiateAsyncFunctionObject = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "InstantiateAsyncFunctionObject", Type
+                        .getMethodType(Types.OrdinaryAsyncFunction, Types.LexicalEnvironment,
+                                Types.ExecutionContext, Types.RuntimeInfo$Function));
+
         static final MethodDesc ScriptRuntime_InstantiateFunctionObject = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "InstantiateFunctionObject", Type
                         .getMethodType(Types.OrdinaryFunction, Types.LexicalEnvironment,
@@ -225,6 +231,33 @@ abstract class DeclarationBindingInstantiationGenerator {
 
     /**
      * Emit function call for:
+     * {@link ScriptRuntime#InstantiateAsyncFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
+     * <p>
+     * stack: [] -> [fo]
+     */
+    protected void InstantiateAsyncFunctionObject(Variable<ExecutionContext> context,
+            Variable<LexicalEnvironment<?>> env, AsyncFunctionDeclaration f, InstructionVisitor mv) {
+        mv.load(env);
+        mv.load(context);
+
+        InstantiateAsyncFunctionObject(f, mv);
+    }
+
+    /**
+     * Emit function call for:
+     * {@link ScriptRuntime#InstantiateAsyncFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
+     * <p>
+     * stack: [env, cx] -> [fo]
+     */
+    protected void InstantiateAsyncFunctionObject(AsyncFunctionDeclaration f, InstructionVisitor mv) {
+        codegen.compile(f);
+
+        mv.invoke(codegen.methodDesc(f, FunctionName.RTI));
+        mv.invoke(Methods.ScriptRuntime_InstantiateAsyncFunctionObject);
+    }
+
+    /**
+     * Emit function call for:
      * {@link ScriptRuntime#InstantiateFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
      * <p>
      * stack: [] -> [fo]
@@ -284,9 +317,11 @@ abstract class DeclarationBindingInstantiationGenerator {
     protected static String BoundName(Declaration d) {
         if (d instanceof FunctionDeclaration) {
             return ((FunctionDeclaration) d).getIdentifier().getName();
-        } else {
-            assert d instanceof GeneratorDeclaration;
+        } else if (d instanceof GeneratorDeclaration) {
             return ((GeneratorDeclaration) d).getIdentifier().getName();
+        } else {
+            assert d instanceof AsyncFunctionDeclaration;
+            return ((AsyncFunctionDeclaration) d).getIdentifier().getName();
         }
     }
 

@@ -38,6 +38,16 @@ final class PropertyGenerator extends
                         .getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.String,
                                 Types.RuntimeInfo$Function, Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionAsync = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluatePropertyDefinitionAsync", Type
+                        .getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.Object,
+                                Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionAsync_String = MethodDesc
+                .create(MethodType.Static, Types.ScriptRuntime, "EvaluatePropertyDefinitionAsync",
+                        Type.getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.String,
+                                Types.RuntimeInfo$Function, Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionGenerator = MethodDesc
                 .create(MethodType.Static, Types.ScriptRuntime,
                         "EvaluatePropertyDefinitionGenerator", Type.getMethodType(Type.VOID_TYPE,
@@ -146,6 +156,9 @@ final class PropertyGenerator extends
             mv.loadExecutionContext();
 
             switch (node.getType()) {
+            case AsyncFunction:
+                mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionAsync);
+                break;
             case Function:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinition);
                 break;
@@ -168,6 +181,9 @@ final class PropertyGenerator extends
             mv.loadExecutionContext();
 
             switch (node.getType()) {
+            case AsyncFunction:
+                mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionAsync_String);
+                break;
             case Function:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinition_String);
                 break;
@@ -238,7 +254,8 @@ final class PropertyGenerator extends
                 updateMethodFields = false;
             } else {
                 assert propertyValue instanceof FunctionExpression
-                        || propertyValue instanceof GeneratorExpression;
+                        || propertyValue instanceof GeneratorExpression
+                        || propertyValue instanceof AsyncFunctionExpression;
                 updateMethodFields = ((FunctionNode) propertyValue).hasSuperReference();
             }
         }

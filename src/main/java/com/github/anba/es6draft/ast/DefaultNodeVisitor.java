@@ -129,6 +129,21 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(AsyncFunctionDeclaration node, V value) {
+        return visit((Declaration) node, value);
+    }
+
+    @Override
+    public R visit(AsyncFunctionExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
+    public R visit(AwaitExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public R visit(BinaryExpression node, V value) {
         return visit((Expression) node, value);
     }

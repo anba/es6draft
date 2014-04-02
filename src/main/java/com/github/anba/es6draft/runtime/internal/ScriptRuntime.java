@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstra
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CreateStrictArgumentsObject;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction.AsyncFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeMethod;
@@ -43,6 +44,7 @@ import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -1802,6 +1804,147 @@ public final class ScriptRuntime {
                 callerContext, callee, thisValue);
         DefaultEmptyConstructorInit(calleeContext, callee, args);
         return DefaultEmptyConstructor(calleeContext);
+    }
+
+    /**
+     * Extension: Async Function Definitions
+     */
+    public static OrdinaryAsyncFunction InstantiateAsyncFunctionObject(LexicalEnvironment<?> scope,
+            ExecutionContext cx, RuntimeInfo.Function fd) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        String name = fd.functionName();
+        /* steps 3-4 */
+        OrdinaryAsyncFunction f = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        /* step 5 */
+        if (fd.hasSuperReference()) {
+            MakeMethod(f, name, null);
+        }
+        /* step 6 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
+        /* step 7 */
+        MakeConstructor(cx, f, true, prototype);
+        // TODO: missing in spec
+        SetFunctionName(f, name);
+        /* step 8 */
+        return f;
+    }
+
+    /**
+     * Extension: Async Function Definitions
+     */
+    public static OrdinaryAsyncFunction EvaluateAsyncFunctionExpression(RuntimeInfo.Function fd,
+            ExecutionContext cx) {
+        OrdinaryAsyncFunction closure;
+        if (!fd.hasScopedName()) {
+            /* steps 1-2 (generated code) */
+            /* step 3 */
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+            /* step 4 */
+            closure = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+            /* step 5 */
+            if (fd.hasSuperReference()) {
+                MakeMethod(closure, (String) null, null);
+            }
+            /* step 6 */
+            OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
+            /* step 7 */
+            MakeConstructor(cx, closure, true, prototype);
+        } else {
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+            /* steps 1-2 (generated code) */
+            /* step 3 */
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = LexicalEnvironment
+                    .newDeclarativeEnvironment(scope);
+            /* step 4 */
+            DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
+            /* step 5 */
+            String name = fd.functionName();
+            /* step 6 */
+            envRec.createImmutableBinding(name);
+            /* step 7 */
+            closure = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
+            /* step 8 */
+            if (fd.hasSuperReference()) {
+                MakeMethod(closure, name, null);
+            }
+            /* step 9 */
+            OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
+            /* step 10 */
+            MakeConstructor(cx, closure, true, prototype);
+            // TODO: missing in spec
+            SetFunctionName(closure, name);
+            /* step 11 */
+            envRec.initialiseBinding(name, closure);
+        }
+        /* step 8/12 */
+        return closure;
+    }
+
+    /**
+     * Extension: Async Function Definitions
+     */
+    public static void EvaluatePropertyDefinitionAsync(ScriptObject object, Object propKey,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
+        if (propKey instanceof String) {
+            EvaluatePropertyDefinitionAsync(object, (String) propKey, fd, cx);
+        } else {
+            EvaluatePropertyDefinitionAsync(object, (Symbol) propKey, fd, cx);
+        }
+    }
+
+    /**
+     * Extension: Async Function Definitions
+     */
+    public static void EvaluatePropertyDefinitionAsync(ScriptObject object, String propKey,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-2 (bytecode) */
+        /* step 3 (not applicable) */
+        /* step 4 */
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+        /* step 5 (not applicable) */
+        /* step 6 */
+        OrdinaryAsyncFunction closure = AsyncFunctionCreate(cx, FunctionKind.Method, fd, scope);
+        /* step 7 */
+        if (fd.hasSuperReference()) {
+            MakeMethod(closure, propKey, object);
+        }
+        /* step 8 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
+        /* step 9 */
+        MakeConstructor(cx, closure, true, prototype);
+        /* step 10 */
+        SetFunctionName(closure, propKey);
+        /* steps 11-12 */
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
+        DefinePropertyOrThrow(cx, object, propKey, desc);
+    }
+
+    /**
+     * Extension: Async Function Definitions
+     */
+    public static void EvaluatePropertyDefinitionAsync(ScriptObject object, Symbol propKey,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-2 (bytecode) */
+        /* step 3 (not applicable) */
+        /* step 4 */
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+        /* step 5 (not applicable) */
+        /* step 6 */
+        OrdinaryAsyncFunction closure = AsyncFunctionCreate(cx, FunctionKind.Method, fd, scope);
+        /* step 7 */
+        if (fd.hasSuperReference()) {
+            MakeMethod(closure, propKey, object);
+        }
+        /* step 8 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
+        /* step 9 */
+        MakeConstructor(cx, closure, true, prototype);
+        /* step 10 */
+        SetFunctionName(closure, propKey);
+        /* steps 11-12 */
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
+        DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
     /**

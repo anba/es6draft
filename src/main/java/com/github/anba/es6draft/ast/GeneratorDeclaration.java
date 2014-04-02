@@ -94,6 +94,11 @@ public class GeneratorDeclaration extends Declaration implements GeneratorDefini
     }
 
     @Override
+    public boolean isAsync() {
+        return false;
+    }
+
+    @Override
     public boolean hasSuperReference() {
         return superReference;
     }

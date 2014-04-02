@@ -40,6 +40,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     protected static final MethodHandle uninitialisedFunctionMH;
     protected static final MethodHandle uninitialisedGeneratorMH;
+    protected static final MethodHandle uninitialisedAsyncFunctionMH;
     static {
         Lookup lookup = MethodHandles.lookup();
         try {
@@ -49,6 +50,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
             mh = MethodHandles.dropArguments(mh, 1, Object.class, Object[].class);
             uninitialisedFunctionMH = MethodHandles.dropArguments(mh, 0, OrdinaryFunction.class);
             uninitialisedGeneratorMH = MethodHandles.dropArguments(mh, 0, OrdinaryGenerator.class);
+            uninitialisedAsyncFunctionMH = MethodHandles.dropArguments(mh, 0, OrdinaryAsyncFunction.class);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new IllegalStateException(e);
         }

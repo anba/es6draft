@@ -16,6 +16,7 @@ import java.util.List;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
+import com.github.anba.es6draft.ast.AsyncFunctionDeclaration;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
@@ -137,8 +138,11 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                 // stack: [] -> [fo]
                 if (f instanceof GeneratorDeclaration) {
                     InstantiateGeneratorObject(context, lexEnv, (GeneratorDeclaration) f, mv);
-                } else {
+                } else if (f instanceof FunctionDeclaration) {
                     InstantiateFunctionObject(context, lexEnv, (FunctionDeclaration) f, mv);
+                } else {
+                    InstantiateAsyncFunctionObject(context, lexEnv, (AsyncFunctionDeclaration) f,
+                            mv);
                 }
 
                 hasBinding(envRec, fn, mv);

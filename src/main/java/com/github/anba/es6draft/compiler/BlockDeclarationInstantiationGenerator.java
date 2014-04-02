@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarat
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.anba.es6draft.ast.AsyncFunctionDeclaration;
 import com.github.anba.es6draft.ast.BlockStatement;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
@@ -104,7 +105,8 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
                     createMutableBinding(dn, false, mv);
                 }
             }
-            if (d instanceof FunctionDeclaration || d instanceof GeneratorDeclaration) {
+            if (d instanceof FunctionDeclaration || d instanceof GeneratorDeclaration
+                    || d instanceof AsyncFunctionDeclaration) {
                 functionsToInitialise.add(d);
             }
         }
@@ -124,8 +126,10 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
                 // stack: [envRec, env, envRec, env, cx] -> [envRec, env, envRec, fo]
                 if (f instanceof FunctionDeclaration) {
                     InstantiateFunctionObject((FunctionDeclaration) f, mv);
-                } else {
+                } else if (f instanceof GeneratorDeclaration) {
                     InstantiateGeneratorObject((GeneratorDeclaration) f, mv);
+                } else {
+                    InstantiateAsyncFunctionObject((AsyncFunctionDeclaration) f, mv);
                 }
 
                 // stack: [envRec, env, envRec, fo] -> [envRec, env]

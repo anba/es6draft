@@ -103,6 +103,11 @@ public final class ArrowFunction extends Expression implements FunctionNode {
     }
 
     @Override
+    public boolean isAsync() {
+        return false;
+    }
+
+    @Override
     public boolean hasSuperReference() {
         return false;
     }

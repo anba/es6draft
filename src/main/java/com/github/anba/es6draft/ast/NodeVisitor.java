@@ -38,6 +38,12 @@ public interface NodeVisitor<R, V> {
 
     R visit(AssignmentRestElement node, V value);
 
+    R visit(AsyncFunctionDeclaration node, V value);
+
+    R visit(AsyncFunctionExpression node, V value);
+
+    R visit(AwaitExpression node, V value);
+
     R visit(BinaryExpression node, V value);
 
     R visit(BindingElement node, V value);

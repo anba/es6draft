@@ -85,6 +85,11 @@ public final class GeneratorComprehension extends Expression implements Function
     }
 
     @Override
+    public boolean isAsync() {
+        return false;
+    }
+
+    @Override
     public boolean hasSuperReference() {
         return false;
     }

@@ -272,7 +272,7 @@ final class StackMethodVisitor extends MethodVisitor {
 
     private static boolean isFunctionObject(Type type) {
         return Types.OrdinaryFunction.equals(type) || Types.OrdinaryGenerator.equals(type)
-                || Types.FunctionObject.equals(type);
+                || Types.OrdinaryAsyncFunction.equals(type) || Types.FunctionObject.equals(type);
     }
 
     private static boolean isOrdinaryObject(Type type) {

@@ -123,7 +123,12 @@ public enum CompatibilityOption {
     /**
      * Moz-Extension: Extended precision for toFixed, toExponential, toPrecision
      */
-    ExtendedPrecision;
+    ExtendedPrecision,
+
+    /**
+     * Extension: Async Function Definitions
+     */
+    AsyncFunction;
 
     /**
      * Returns a set of all options for strict-compatibility

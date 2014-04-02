@@ -123,7 +123,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
     private final TopLevelNode<?> topLevelNode;
     private final CodeType codeType;
     private final boolean isScriptCode;
-    private final boolean isGenerator;
+    private final boolean isGeneratorOrAsync;
     private Variable<Object> completionValue;
     private Labels labels = new Labels(null, null);
     private int finallyDepth = 0;
@@ -136,7 +136,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
         this.topLevelNode = parent.getTopLevelNode();
         this.codeType = parent.getCodeType();
         this.isScriptCode = codeType != CodeType.Function;
-        this.isGenerator = codeType == CodeType.Function && isGeneratorNode(topLevelNode);
+        this.isGeneratorOrAsync = codeType == CodeType.Function && isGeneratorOrAsync(topLevelNode);
         // no return in script code
         this.labels.returnLabel = codeType == CodeType.Function ? new ReturnLabel() : null;
     }
@@ -147,14 +147,14 @@ abstract class StatementVisitor extends ExpressionVisitor {
         this.topLevelNode = topLevelNode;
         this.codeType = codeType;
         this.isScriptCode = codeType != CodeType.Function;
-        this.isGenerator = codeType == CodeType.Function && isGeneratorNode(topLevelNode);
+        this.isGeneratorOrAsync = codeType == CodeType.Function && isGeneratorOrAsync(topLevelNode);
         // no return in script code
         this.labels.returnLabel = codeType == CodeType.Function ? new ReturnLabel() : null;
     }
 
-    private static boolean isGeneratorNode(TopLevelNode<?> node) {
+    private static boolean isGeneratorOrAsync(TopLevelNode<?> node) {
         assert node instanceof FunctionNode;
-        return ((FunctionNode) node).isGenerator();
+        return ((FunctionNode) node).isGenerator() || ((FunctionNode) node).isAsync();
     }
 
     @Override
@@ -205,7 +205,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
 
     @Override
     void enterTailCallPosition(Expression expr) {
-        if (!isWrapped() && !isGenerator) {
+        if (!isWrapped() && !isGeneratorOrAsync) {
             assert !isScriptCode;
             super.enterTailCallPosition(expr);
         }

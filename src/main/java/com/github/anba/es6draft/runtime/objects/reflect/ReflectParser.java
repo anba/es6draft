@@ -557,6 +557,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         ScriptObject defaults = createList(getParameterDefaults(node.getParameters()), value);
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
         Object body = createFunctionBody(node, value);
+        // TODO: async functions
         boolean generator = node.getType() == MethodDefinition.MethodType.Generator;
         boolean expression = false;
         if (hasBuilder(Type.FunctionExpression)) {
@@ -579,6 +580,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
             return "get";
         case Setter:
             return "set";
+        case AsyncFunction:
         case Function:
         case Generator:
         default:
@@ -713,6 +715,66 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(AssignmentRestElement node, Void value) {
         return node.getTarget().accept(this, value);
+    }
+
+    @Override
+    public Object visit(AsyncFunctionDeclaration node, Void value) {
+        Object id = node.getIdentifier().accept(this, value);
+        ScriptObject params = createList(getParameterBindings(node.getParameters()), value);
+        ScriptObject defaults = createList(getParameterDefaults(node.getParameters()), value);
+        Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
+        Object body = createFunctionBody(node, value);
+        // TODO: flag for async
+        boolean generator = false;
+        boolean expression = false;
+        if (hasBuilder(Type.FunctionDeclaration)) {
+            return call(Type.FunctionDeclaration, node, id, params, body, generator, expression);
+        }
+        ScriptObject function = createFunction(node, Type.FunctionDeclaration);
+        addProperty(function, "id", id);
+        addProperty(function, "params", params);
+        addProperty(function, "defaults", defaults);
+        addProperty(function, "body", body);
+        addProperty(function, "rest", rest);
+        addProperty(function, "generator", generator);
+        addProperty(function, "expression", expression);
+        return function;
+    }
+
+    @Override
+    public Object visit(AsyncFunctionExpression node, Void value) {
+        Object id = acceptOrNull(node.getIdentifier(), value);
+        ScriptObject params = createList(getParameterBindings(node.getParameters()), value);
+        ScriptObject defaults = createList(getParameterDefaults(node.getParameters()), value);
+        Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
+        Object body = createFunctionBody(node, value);
+        // TODO: flag for async
+        boolean generator = false;
+        boolean expression = false;
+        if (hasBuilder(Type.FunctionExpression)) {
+            return call(Type.FunctionExpression, node, id, params, body, generator, expression);
+        }
+        ScriptObject function = createFunction(node, Type.FunctionExpression);
+        addProperty(function, "id", id);
+        addProperty(function, "params", params);
+        addProperty(function, "defaults", defaults);
+        addProperty(function, "body", body);
+        addProperty(function, "rest", rest);
+        addProperty(function, "generator", generator);
+        addProperty(function, "expression", expression);
+        return function;
+    }
+
+    @Override
+    public Object visit(AwaitExpression node, Void value) {
+        // TODO: add own expression node
+        Object argument = acceptOrNull(node.getExpression(), value);
+        if (hasBuilder(Type.YieldExpression)) {
+            return call(Type.YieldExpression, node, argument);
+        }
+        ScriptObject expression = createExpression(node, Type.YieldExpression);
+        addProperty(expression, "argument", argument);
+        return expression;
     }
 
     @Override

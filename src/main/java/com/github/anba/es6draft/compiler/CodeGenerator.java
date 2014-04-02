@@ -102,11 +102,15 @@ final class CodeGenerator {
         static final String BlockDeclarationInit = Type.getMethodDescriptor(
                 Types.LexicalEnvironment, Types.ExecutionContext, Types.LexicalEnvironment);
 
+        static final String AsyncFunction_Call = Type.getMethodDescriptor(Types.Object,
+                Types.OrdinaryAsyncFunction, Types.ExecutionContext, Types.Object, Types.Object_);
         static final String Function_Call = Type.getMethodDescriptor(Types.Object,
                 Types.OrdinaryFunction, Types.ExecutionContext, Types.Object, Types.Object_);
         static final String Generator_Call = Type.getMethodDescriptor(Types.Object,
                 Types.OrdinaryGenerator, Types.ExecutionContext, Types.Object, Types.Object_);
 
+        static final String AsyncFunction_Code = Type.getMethodDescriptor(Types.Object,
+                Types.ExecutionContext, Types.ResumptionPoint);
         static final String FunctionNode_Code = Type.getMethodDescriptor(Types.Object,
                 Types.ExecutionContext);
         static final String Generator_Code = Type.getMethodDescriptor(Types.Object,
@@ -340,10 +344,16 @@ final class CodeGenerator {
             if (node.isGenerator()) {
                 return MethodDescriptors.Generator_Call;
             }
+            if (node.isAsync()) {
+                return MethodDescriptors.AsyncFunction_Call;
+            }
             return MethodDescriptors.Function_Call;
         case Code:
             if (node.isGenerator()) {
                 return MethodDescriptors.Generator_Code;
+            }
+            if (node.isAsync()) {
+                return MethodDescriptors.AsyncFunction_Code;
             }
             return MethodDescriptors.FunctionNode_Code;
         case Init:
@@ -576,6 +586,7 @@ final class CodeGenerator {
     }
 
     void compileFunction(FunctionNode function) {
+        // TODO: async functions
         if (function instanceof FunctionDefinition) {
             compile((FunctionDefinition) function);
         } else {
@@ -618,6 +629,10 @@ final class CodeGenerator {
         compile((FunctionNode) node);
     }
 
+    void compile(AsyncFunctionDefinition node) {
+        compile((FunctionNode) node);
+    }
+
     private void compile(FunctionNode node) {
         if (!isCompiled(node)) {
             Future<String> source = getSource(node);
@@ -633,6 +648,8 @@ final class CodeGenerator {
                 tailCalls = generatorComprehensionBody((GeneratorComprehension) node);
             } else if (node.isGenerator()) {
                 tailCalls = generatorBody(node);
+            } else if (node.isAsync()) {
+                tailCalls = asyncFunctionBody(node);
             } else {
                 tailCalls = functionBody(node);
             }
@@ -738,6 +755,11 @@ final class CodeGenerator {
         body.invoke(Methods.DeclarativeEnvironmentRecord_getBinding);
         body.store(variable);
         return variable;
+    }
+
+    private boolean asyncFunctionBody(FunctionNode node) {
+        // Create the same function body as for generator functions
+        return generatorBody(node);
     }
 
     private boolean generatorBody(FunctionNode node) {

@@ -28,6 +28,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.objects.text.RegExpConstructor;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -41,6 +42,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticLegacyArguments;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -104,6 +106,7 @@ final class Types {
 
     // runtime.objects
     static final Type Eval = Type.getType(Eval.class);
+    static final Type PromiseObject = Type.getType(PromiseObject.class);
     static final Type RegExpConstructor = Type.getType(RegExpConstructor.class);
     static final Type RegExpObject = Type.getType(RegExpObject.class);
 
@@ -126,6 +129,7 @@ final class Types {
     static final Type ExoticLegacyArguments = Type.getType(ExoticLegacyArguments.class);
     static final Type ExoticArray = Type.getType(ExoticArray.class);
     static final Type FunctionObject = Type.getType(FunctionObject.class);
+    static final Type OrdinaryAsyncFunction = Type.getType(OrdinaryAsyncFunction.class);
     static final Type OrdinaryGenerator = Type.getType(OrdinaryGenerator.class);
     static final Type OrdinaryFunction = Type.getType(OrdinaryFunction.class);
     static final Type OrdinaryObject = Type.getType(OrdinaryObject.class);

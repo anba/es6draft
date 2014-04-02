@@ -208,6 +208,23 @@ final class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
+    public Integer visit(AsyncFunctionDeclaration node, CodeSizeHandler value) {
+        submit(node, node.getStatements(), value);
+        return 0;
+    }
+
+    @Override
+    public Integer visit(AsyncFunctionExpression node, CodeSizeHandler value) {
+        submit(node, node.getStatements(), value);
+        return 10;
+    }
+
+    @Override
+    public Integer visit(AwaitExpression node, CodeSizeHandler value) {
+        return analyze(node, node.getExpression(), 150, value);
+    }
+
+    @Override
     public Integer visit(BinaryExpression node, CodeSizeHandler value) {
         return analyze(node, node.getLeft(), node.getRight(), 20, value);
     }
