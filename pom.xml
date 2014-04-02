@@ -599,6 +599,7 @@
             <exclude>src/main/resources/build-date</exclude>
             <exclude>src/main/resources/version</exclude>
             <exclude>src/test/scripts/reflect/**</exclude>
+            <exclude>src/test/scripts/promise/**</exclude>
           </excludes>
           <includes>
             <include>src/**</include>
