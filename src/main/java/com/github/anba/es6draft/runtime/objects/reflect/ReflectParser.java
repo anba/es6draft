@@ -853,7 +853,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(ClassDeclaration node, Void value) {
         Object id = node.getName().accept(this, value);
-        Object superClass = node.getHeritage().accept(this, value);
+        Object superClass = acceptOrNull(node.getHeritage(), value);
         Object body = createClassBody(node, value);
         ScriptObject classDef = createClass(node, Type.ClassDeclaration);
         addProperty(classDef, "id", id);
