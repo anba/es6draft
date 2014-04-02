@@ -183,7 +183,7 @@ final class SwitchStatementGenerator extends
         }
 
         mv.enterVariableScope();
-        Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
+        Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(node, mv);
 
         Variable<?> switchValue = null;
         if (type != SwitchType.Default) {

@@ -99,7 +99,7 @@ public final class Realm {
     /**
      * [[globalEnv]]
      */
-    private LexicalEnvironment globalEnv;
+    private LexicalEnvironment<GlobalEnvironmentRecord> globalEnv;
 
     /**
      * [[ThrowTypeError]]
@@ -161,7 +161,7 @@ public final class Realm {
     /**
      * [[globalEnv]]
      */
-    public LexicalEnvironment getGlobalEnv() {
+    public LexicalEnvironment<GlobalEnvironmentRecord> getGlobalEnv() {
         return globalEnv;
     }
 
@@ -422,7 +422,8 @@ public final class Realm {
         GlobalObject globalThis = world.getAllocator().newInstance(realm);
         ExecutionContext defaultContext = newScriptExecutionContext(realm, null);
         GlobalEnvironmentRecord envRec = new GlobalEnvironmentRecord(defaultContext, globalThis);
-        LexicalEnvironment globalEnv = new LexicalEnvironment(defaultContext, envRec);
+        LexicalEnvironment<GlobalEnvironmentRecord> globalEnv = new LexicalEnvironment<>(
+                defaultContext, envRec);
 
         boolean defaultRealmObject = realmObject == null;
         if (defaultRealmObject) {

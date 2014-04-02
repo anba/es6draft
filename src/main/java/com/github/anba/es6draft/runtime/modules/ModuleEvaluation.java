@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.github.anba.es6draft.ast.Module;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -106,7 +107,8 @@ public final class ModuleEvaluation {
     /**
      * 15.2.0.15 Runtime Semantics: ModuleDeclarationInstantiation
      */
-    private static void ModuleDeclarationInstantiation(Module body, LexicalEnvironment env) {
+    private static void ModuleDeclarationInstantiation(Module body,
+            LexicalEnvironment<DeclarativeEnvironmentRecord> env) {
         // TODO: implement
     }
 

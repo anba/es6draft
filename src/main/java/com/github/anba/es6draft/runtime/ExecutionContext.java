@@ -29,14 +29,14 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
  */
 public final class ExecutionContext {
     private final Realm realm;
-    private final LexicalEnvironment varEnv;
-    private LexicalEnvironment lexEnv;
+    private final LexicalEnvironment<?> varEnv;
+    private LexicalEnvironment<?> lexEnv;
     private final Script script;
     private final FunctionObject function;
     private GeneratorObject generator = null;
 
-    private ExecutionContext(Realm realm, LexicalEnvironment varEnv, LexicalEnvironment lexEnv,
-            Script script, FunctionObject function) {
+    private ExecutionContext(Realm realm, LexicalEnvironment<?> varEnv,
+            LexicalEnvironment<?> lexEnv, Script script, FunctionObject function) {
         this.realm = realm;
         this.varEnv = varEnv;
         this.lexEnv = lexEnv;
@@ -48,11 +48,11 @@ public final class ExecutionContext {
         return realm;
     }
 
-    public LexicalEnvironment getLexicalEnvironment() {
+    public LexicalEnvironment<?> getLexicalEnvironment() {
         return lexEnv;
     }
 
-    public LexicalEnvironment getVariableEnvironment() {
+    public LexicalEnvironment<?> getVariableEnvironment() {
         return varEnv;
     }
 
@@ -78,24 +78,32 @@ public final class ExecutionContext {
         this.generator = requireNonNull(generator);
     }
 
-    // Helper
-    public void pushLexicalEnvironment(LexicalEnvironment lexEnv) {
+    /**
+     * [Called from generated code]
+     */
+    public void pushLexicalEnvironment(LexicalEnvironment<?> lexEnv) {
         assert lexEnv.getOuter() == this.lexEnv;
         this.lexEnv = lexEnv;
     }
 
-    // Helper
+    /**
+     * [Called from generated code]
+     */
     public void popLexicalEnvironment() {
         this.lexEnv = lexEnv.getOuter();
     }
 
-    // Helper
-    public void restoreLexicalEnvironment(LexicalEnvironment lexEnv) {
+    /**
+     * [Called from generated code]
+     */
+    public void restoreLexicalEnvironment(LexicalEnvironment<?> lexEnv) {
         this.lexEnv = lexEnv;
     }
 
-    // Helper
-    public void replaceLexicalEnvironment(LexicalEnvironment lexEnv) {
+    /**
+     * [Called from generated code]
+     */
+    public void replaceLexicalEnvironment(LexicalEnvironment<?> lexEnv) {
         assert lexEnv.getOuter() == this.lexEnv.getOuter();
         this.lexEnv = lexEnv;
     }
@@ -127,7 +135,8 @@ public final class ExecutionContext {
      * <p>
      * 15.2.6.2 EnsureEvaluated(mod, seen, loader) Abstract Operation
      */
-    public static ExecutionContext newModuleExecutionContext(Realm realm, LexicalEnvironment env) {
+    public static ExecutionContext newModuleExecutionContext(Realm realm,
+            LexicalEnvironment<DeclarativeEnvironmentRecord> env) {
         /* steps 8-11 */
         return new ExecutionContext(realm, env, env, null, null);
     }
@@ -142,7 +151,7 @@ public final class ExecutionContext {
      * 18.2.1 eval (x)
      */
     public static ExecutionContext newEvalExecutionContext(ExecutionContext callerContext,
-            LexicalEnvironment varEnv, LexicalEnvironment lexEnv) {
+            LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv) {
         /* steps 17-20 */
         return new ExecutionContext(callerContext.realm, varEnv, lexEnv, callerContext.script,
                 callerContext.function);
@@ -162,7 +171,7 @@ public final class ExecutionContext {
         /* 9.1.15.1, steps 4-12 */
         Realm calleeRealm = f.getRealm();
         ThisMode thisMode = f.getThisMode();
-        LexicalEnvironment localEnv;
+        LexicalEnvironment<? extends DeclarativeEnvironmentRecord> localEnv;
         if (thisMode == ThisMode.Lexical) {
             localEnv = newDeclarativeEnvironment(f.getEnvironment());
         } else {
@@ -215,7 +224,7 @@ public final class ExecutionContext {
      */
     public EnvironmentRecord getThisEnvironment() {
         /* step 1 */
-        LexicalEnvironment lex = lexEnv;
+        LexicalEnvironment<?> lex = lexEnv;
         /* step 2 */
         for (;;) {
             EnvironmentRecord envRec = lex.getEnvRec();

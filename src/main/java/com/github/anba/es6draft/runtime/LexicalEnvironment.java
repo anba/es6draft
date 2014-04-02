@@ -21,18 +21,18 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
  * <li>8.1.2 Lexical Environment Operations
  * </ul>
  */
-public final class LexicalEnvironment {
+public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     private final ExecutionContext cx;
-    private final LexicalEnvironment outer;
-    private final EnvironmentRecord envRec;
+    private final LexicalEnvironment<?> outer;
+    private final RECORD envRec;
 
-    public LexicalEnvironment(ExecutionContext cx, EnvironmentRecord envRec) {
+    public LexicalEnvironment(ExecutionContext cx, RECORD envRec) {
         this.cx = cx;
         this.outer = null;
         this.envRec = envRec;
     }
 
-    public LexicalEnvironment(LexicalEnvironment outer, EnvironmentRecord envRec) {
+    public LexicalEnvironment(LexicalEnvironment<?> outer, RECORD envRec) {
         this.cx = outer.cx;
         this.outer = outer;
         this.envRec = envRec;
@@ -43,15 +43,18 @@ public final class LexicalEnvironment {
         return String.format("%s: {envRec=%s}", getClass().getSimpleName(), envRec);
     }
 
-    public EnvironmentRecord getEnvRec() {
+    public RECORD getEnvRec() {
         return envRec;
     }
 
-    public LexicalEnvironment getOuter() {
+    public LexicalEnvironment<?> getOuter() {
         return outer;
     }
 
-    private static EnvironmentRecord getIdentifierRecord(LexicalEnvironment lex, String name) {
+    /**
+     * Returns the first {@link EnvironmentRecord} which has a binding for {@code name}.
+     */
+    private static EnvironmentRecord getIdentifierRecord(LexicalEnvironment<?> lex, String name) {
         for (; lex != null; lex = lex.outer) {
             EnvironmentRecord envRec = lex.envRec;
             if (envRec.hasBinding(name)) {
@@ -61,7 +64,11 @@ public final class LexicalEnvironment {
         return null;
     }
 
-    static Object getIdentifierValueOrThrow(LexicalEnvironment lex, String name, boolean strict) {
+    /**
+     * Retrieves the binding value of the first {@link EnvironmentRecord} which has a binding for
+     * {@code name}, if no such binding exists a ReferenceError is thrown.
+     */
+    static Object getIdentifierValueOrThrow(LexicalEnvironment<?> lex, String name, boolean strict) {
         EnvironmentRecord envRec = getIdentifierRecord(lex, name);
         if (envRec != null) {
             return envRec.getBindingValue(name, strict);
@@ -69,11 +76,16 @@ public final class LexicalEnvironment {
         throw newReferenceError(lex.cx, Messages.Key.UnresolvableReference, name);
     }
 
-    public static LexicalEnvironment cloneDeclarativeEnvironment(LexicalEnvironment e) {
-        assert e.envRec instanceof DeclarativeEnvironmentRecord;
-        LexicalEnvironment clone = newDeclarativeEnvironment(e.outer);
-        DeclarativeEnvironmentRecord envRec = (DeclarativeEnvironmentRecord) clone.envRec;
-        ((DeclarativeEnvironmentRecord) e.envRec).copyBindings(envRec);
+    /**
+     * Clones the given declarative {@link LexicalEnvironment}.
+     * <p>
+     * [Called from generated code]
+     */
+    public static LexicalEnvironment<DeclarativeEnvironmentRecord> cloneDeclarativeEnvironment(
+            LexicalEnvironment<DeclarativeEnvironmentRecord> e) {
+        LexicalEnvironment<DeclarativeEnvironmentRecord> clone = newDeclarativeEnvironment(e.outer);
+        DeclarativeEnvironmentRecord envRec = clone.envRec;
+        e.envRec.copyBindings(envRec);
         return clone;
     }
 
@@ -81,7 +93,7 @@ public final class LexicalEnvironment {
      * 8.1.2.1 GetIdentifierReference (lex, name, strict)
      */
     public static Reference<EnvironmentRecord, String> getIdentifierReference(
-            LexicalEnvironment lex, String name, boolean strict) {
+            LexicalEnvironment<?> lex, String name, boolean strict) {
         /* steps 2-3, 5 */
         EnvironmentRecord envRec = getIdentifierRecord(lex, name);
         /* steps 1, 4 */
@@ -91,11 +103,12 @@ public final class LexicalEnvironment {
     /**
      * 8.1.2.2 NewDeclarativeEnvironment (E)
      */
-    public static LexicalEnvironment newDeclarativeEnvironment(LexicalEnvironment e) {
+    public static LexicalEnvironment<DeclarativeEnvironmentRecord> newDeclarativeEnvironment(
+            LexicalEnvironment<?> e) {
         /* step 2 */
-        EnvironmentRecord envRec = new DeclarativeEnvironmentRecord(e.cx);
+        DeclarativeEnvironmentRecord envRec = new DeclarativeEnvironmentRecord(e.cx);
         /* steps 1, 3-4 */
-        LexicalEnvironment env = new LexicalEnvironment(e, envRec);
+        LexicalEnvironment<DeclarativeEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
         /* step 5 */
         return env;
     }
@@ -103,19 +116,20 @@ public final class LexicalEnvironment {
     /**
      * 8.1.2.3 NewObjectEnvironment (O, E)
      */
-    public static LexicalEnvironment newObjectEnvironment(ScriptObject o, LexicalEnvironment e) {
+    public static LexicalEnvironment<ObjectEnvironmentRecord> newObjectEnvironment(ScriptObject o,
+            LexicalEnvironment<?> e) {
         return newObjectEnvironment(o, e, false);
     }
 
     /**
      * 8.1.2.3 NewObjectEnvironment (O, E)
      */
-    public static LexicalEnvironment newObjectEnvironment(ScriptObject o, LexicalEnvironment e,
-            boolean withEnvironment) {
+    public static LexicalEnvironment<ObjectEnvironmentRecord> newObjectEnvironment(ScriptObject o,
+            LexicalEnvironment<?> e, boolean withEnvironment) {
         /* steps 2-3 */
-        EnvironmentRecord envRec = new ObjectEnvironmentRecord(e.cx, o, withEnvironment);
+        ObjectEnvironmentRecord envRec = new ObjectEnvironmentRecord(e.cx, o, withEnvironment);
         /* steps 1, 4-5 */
-        LexicalEnvironment env = new LexicalEnvironment(e, envRec);
+        LexicalEnvironment<ObjectEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
         /* step 6 */
         return env;
     }
@@ -123,8 +137,8 @@ public final class LexicalEnvironment {
     /**
      * 8.1.2.4 NewFunctionEnvironment (F, T)
      */
-    public static LexicalEnvironment newFunctionEnvironment(ExecutionContext callerContext,
-            FunctionObject f, Object t) {
+    public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(
+            ExecutionContext callerContext, FunctionObject f, Object t) {
         /* step 1 */
         assert f.getThisMode() != ThisMode.Lexical;
         /* step 5 */
@@ -132,12 +146,12 @@ public final class LexicalEnvironment {
             // FIXME: spec bug like https://bugs.ecmascript.org/show_bug.cgi?id=2484 ?
             throw newReferenceError(callerContext, Messages.Key.MissingSuperBinding);
         }
-        LexicalEnvironment e = f.getEnvironment();
+        LexicalEnvironment<?> e = f.getEnvironment();
         /* steps 3-6 */
-        EnvironmentRecord envRec = new FunctionEnvironmentRecord(e.cx, t, f.getHomeObject(),
-                f.getMethodName());
+        FunctionEnvironmentRecord envRec = new FunctionEnvironmentRecord(e.cx, t,
+                f.getHomeObject(), f.getMethodName());
         /* steps 2, 7-8 */
-        LexicalEnvironment env = new LexicalEnvironment(e, envRec);
+        LexicalEnvironment<FunctionEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
         /* step 9 */
         return env;
     }
@@ -145,11 +159,12 @@ public final class LexicalEnvironment {
     /**
      * 8.1.2.? NewModuleEnvironment (E)
      */
-    public static LexicalEnvironment newModuleEnvironment(LexicalEnvironment e) {
+    public static LexicalEnvironment<DeclarativeEnvironmentRecord> newModuleEnvironment(
+            LexicalEnvironment<?> e) {
         /* step 2 */
-        EnvironmentRecord envRec = new DeclarativeEnvironmentRecord(e.cx);
+        DeclarativeEnvironmentRecord envRec = new DeclarativeEnvironmentRecord(e.cx);
         /* steps 1, 3-4 */
-        LexicalEnvironment env = new LexicalEnvironment(e, envRec);
+        LexicalEnvironment<DeclarativeEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
         /* step 5 */
         return env;
     }

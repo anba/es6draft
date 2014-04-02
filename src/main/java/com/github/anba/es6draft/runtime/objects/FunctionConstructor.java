@@ -20,6 +20,7 @@ import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
@@ -97,7 +98,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         /* step 12 */
         boolean strict = function.isStrict();
         /* step 13 */
-        LexicalEnvironment scope = calleeContext.getRealm().getGlobalEnv();
+        LexicalEnvironment<GlobalEnvironmentRecord> scope = calleeContext.getRealm().getGlobalEnv();
         /* step 14 */
         Object f = thisValue;
         /* steps 15-16 */

@@ -145,8 +145,8 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         try {
             Realm realm = getEvalRealm(context);
             ExecutionContext cx = realm.defaultContext();
-            LexicalEnvironment lexEnv = new LexicalEnvironment(realm.getGlobalEnv(),
-                    new ScriptContextEnvironmentRecord(cx, context));
+            LexicalEnvironment<ScriptContextEnvironmentRecord> lexEnv = new LexicalEnvironment<>(
+                    realm.getGlobalEnv(), new ScriptContextEnvironmentRecord(cx, context));
             script.getScriptBody().evalDeclarationInstantiation(cx, lexEnv, lexEnv, true);
             ExecutionContext evalCxt = newEvalExecutionContext(cx, lexEnv, lexEnv);
             Object result = script.evaluate(evalCxt);

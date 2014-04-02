@@ -306,7 +306,7 @@ final class StatementGenerator extends
         BreakLabel lblBreak = new BreakLabel();
 
         mv.enterVariableScope();
-        Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
+        Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(node, mv);
 
         /* step 1 (not applicable) */
         /* step 2 (repeat loop) */
@@ -489,7 +489,7 @@ final class StatementGenerator extends
         Label loopbody = new Label();
 
         mv.enterVariableScope();
-        Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
+        Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(node, mv);
         @SuppressWarnings("rawtypes")
         Variable<Iterator> iter = mv.newVariable("iter", Iterator.class);
 
@@ -655,9 +655,9 @@ final class StatementGenerator extends
 
         // Runtime Semantics: ForBodyEvaluation
         mv.enterVariableScope();
-        Variable<LexicalEnvironment> savedEnv;
+        Variable<LexicalEnvironment<?>> savedEnv;
         if (perIterationsLets) {
-            savedEnv = mv.newVariable("savedEnv", LexicalEnvironment.class);
+            savedEnv = mv.newVariable("savedEnv", LexicalEnvironment.class).uncheckedCast();
             CreatePerIterationEnvironment(savedEnv, mv);
         } else {
             savedEnv = saveEnvironment(node, mv);
@@ -724,7 +724,7 @@ final class StatementGenerator extends
     /**
      * 13.6.3.4 Runtime Semantics: CreatePerIterationEnvironment
      */
-    private void CreatePerIterationEnvironment(Variable<LexicalEnvironment> savedEnv,
+    private void CreatePerIterationEnvironment(Variable<LexicalEnvironment<?>> savedEnv,
             StatementVisitor mv) {
         // Create let-iteration environment
         cloneDeclarativeEnvironment(mv);
@@ -802,7 +802,7 @@ final class StatementGenerator extends
     @Override
     public Completion visit(LabelledStatement node, StatementVisitor mv) {
         mv.enterVariableScope();
-        Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
+        Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(node, mv);
 
         /* steps 1-3 */
         BreakLabel label = new BreakLabel();
@@ -1029,7 +1029,7 @@ final class StatementGenerator extends
         Label noException = new Label();
 
         mv.enterVariableScope();
-        Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
+        Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(mv);
         Variable<Object> completion = mv.enterFinallyScoped();
 
         /* step 1 */
@@ -1078,7 +1078,7 @@ final class StatementGenerator extends
         Label exceptionHandled = new Label();
 
         mv.enterVariableScope();
-        Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
+        Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(mv);
 
         /* step 1 */
         // Emit try-block
@@ -1116,7 +1116,7 @@ final class StatementGenerator extends
         Label noException = new Label();
 
         mv.enterVariableScope();
-        Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
+        Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(mv);
         Variable<Object> completion = mv.enterFinallyScoped();
 
         /* step 1 */
@@ -1152,7 +1152,7 @@ final class StatementGenerator extends
         return tryResult;
     }
 
-    private Completion emitCatchBlock(TryStatement node, Variable<LexicalEnvironment> savedEnv,
+    private Completion emitCatchBlock(TryStatement node, Variable<LexicalEnvironment<?>> savedEnv,
             LocationLabel handlerCatch, LocationLabel handlerCatchStackOverflow, StatementVisitor mv) {
         boolean isWrapped = node.getFinallyBlock() != null;
         CatchNode catchNode = node.getCatchNode();
@@ -1210,10 +1210,11 @@ final class StatementGenerator extends
         return catchResult;
     }
 
-    private Completion emitFinallyBlock(TryStatement node, Variable<LexicalEnvironment> savedEnv,
-            Variable<Object> completion, Completion tryResult, Completion catchResult,
-            LocationLabel handlerFinally, LocationLabel handlerFinallyStackOverflow,
-            Label noException, List<TempLabel> tempLabels, StatementVisitor mv) {
+    private Completion emitFinallyBlock(TryStatement node,
+            Variable<LexicalEnvironment<?>> savedEnv, Variable<Object> completion,
+            Completion tryResult, Completion catchResult, LocationLabel handlerFinally,
+            LocationLabel handlerFinallyStackOverflow, Label noException,
+            List<TempLabel> tempLabels, StatementVisitor mv) {
         BlockStatement finallyBlock = node.getFinallyBlock();
         assert finallyBlock != null;
 
@@ -1451,7 +1452,7 @@ final class StatementGenerator extends
         BreakLabel lblBreak = new BreakLabel();
 
         mv.enterVariableScope();
-        Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
+        Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(node, mv);
 
         /* step 1 (not applicable) */
         /* step 2 (repeat loop) */

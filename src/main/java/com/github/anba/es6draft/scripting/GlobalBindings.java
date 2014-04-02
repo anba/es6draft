@@ -19,7 +19,7 @@ import java.util.Set;
 
 import javax.script.Bindings;
 
-import com.github.anba.es6draft.runtime.EnvironmentRecord;
+import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.objects.GlobalObject;
  */
 final class GlobalBindings implements Bindings {
     private final GlobalObject globalObject;
-    private final EnvironmentRecord envRec;
+    private final GlobalEnvironmentRecord envRec;
 
     public GlobalBindings(GlobalObject globalObject) {
         this.globalObject = globalObject;

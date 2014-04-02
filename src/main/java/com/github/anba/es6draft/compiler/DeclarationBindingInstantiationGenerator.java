@@ -209,7 +209,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * <p>
      * stack: [] -> [envRec]
      */
-    protected void getEnvironmentRecord(Variable<LexicalEnvironment> env, InstructionVisitor mv) {
+    protected void getEnvironmentRecord(Variable<LexicalEnvironment<?>> env, InstructionVisitor mv) {
         mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
     }
@@ -230,7 +230,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * stack: [] -> [fo]
      */
     protected void InstantiateFunctionObject(Variable<ExecutionContext> context,
-            Variable<LexicalEnvironment> env, FunctionDeclaration f, InstructionVisitor mv) {
+            Variable<LexicalEnvironment<?>> env, FunctionDeclaration f, InstructionVisitor mv) {
         mv.load(env);
         mv.load(context);
 
@@ -257,7 +257,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * stack: [] -> [fo]
      */
     protected void InstantiateGeneratorObject(Variable<ExecutionContext> context,
-            Variable<LexicalEnvironment> env, GeneratorDeclaration f, InstructionVisitor mv) {
+            Variable<LexicalEnvironment<?>> env, GeneratorDeclaration f, InstructionVisitor mv) {
         mv.load(env);
         mv.load(context);
 

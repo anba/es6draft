@@ -21,6 +21,7 @@ import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.interpreter.InterpretedScript;
 import com.github.anba.es6draft.interpreter.Interpreter;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
@@ -44,7 +45,7 @@ public final class ScriptLoader {
         if (scriptBody == null)
             return null;
         /* step 3 */
-        LexicalEnvironment globalEnv = realm.getGlobalEnv();
+        LexicalEnvironment<GlobalEnvironmentRecord> globalEnv = realm.getGlobalEnv();
         /* steps 4-5 */
         scriptBody.globalDeclarationInstantiation(realm.defaultContext(), globalEnv, globalEnv,
                 deletableBindings);

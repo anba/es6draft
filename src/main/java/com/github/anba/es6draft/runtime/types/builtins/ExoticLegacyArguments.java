@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -40,7 +41,8 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
      * [Called from generated code]
      */
     public static ExoticLegacyArguments CreateLegacyArgumentsObject(ExecutionContext cx,
-            FunctionObject func, Object[] args, String[] formals, LexicalEnvironment env) {
+            FunctionObject func, Object[] args, String[] formals,
+            LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
         ParameterMap map = ParameterMap.create(args.length, formals, env);
         return createLegacyArguments(cx, func, args, map);
     }

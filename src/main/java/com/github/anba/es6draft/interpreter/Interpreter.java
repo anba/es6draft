@@ -25,6 +25,7 @@ import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BinaryExpression.Operator;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
@@ -747,15 +748,15 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
         @Override
         public void globalDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment globalEnv, LexicalEnvironment lexicalEnv,
-                boolean deletableBindings) {
+                LexicalEnvironment<GlobalEnvironmentRecord> globalEnv,
+                LexicalEnvironment<?> lexicalEnv, boolean deletableBindings) {
             GlobalDeclarationInstantiation(cx, parsedScript, globalEnv, lexicalEnv,
                     deletableBindings);
         }
 
         @Override
-        public void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment varEnv,
-                LexicalEnvironment lexEnv, boolean deletableBindings) {
+        public void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment<?> varEnv,
+                LexicalEnvironment<?> lexEnv, boolean deletableBindings) {
             EvalDeclarationInstantiation(cx, parsedScript, varEnv, lexEnv, deletableBindings);
         }
 

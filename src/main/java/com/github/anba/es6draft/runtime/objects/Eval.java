@@ -17,7 +17,9 @@ import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
@@ -163,7 +165,7 @@ public final class Eval {
         if (direct) {
             // FIXME: ValidInFunction and ValidInModule missing in spec (Bug 949)
         }
-        LexicalEnvironment lexEnv, varEnv;
+        LexicalEnvironment<?> lexEnv, varEnv;
         if (direct) {
             /* step 12 */
             lexEnv = cx.getLexicalEnvironment();
@@ -175,7 +177,8 @@ public final class Eval {
         }
         /* step 14 */
         if (strictScript || (direct && strictCaller)) {
-            LexicalEnvironment strictVarEnv = LexicalEnvironment.newDeclarativeEnvironment(lexEnv);
+            LexicalEnvironment<DeclarativeEnvironmentRecord> strictVarEnv = LexicalEnvironment
+                    .newDeclarativeEnvironment(lexEnv);
             lexEnv = strictVarEnv;
             varEnv = strictVarEnv;
         } else {
@@ -206,9 +209,9 @@ public final class Eval {
         if (scriptBody == null)
             return null;
         /* step 3 */
-        LexicalEnvironment variableEnv = cx.getVariableEnvironment();
-        assert variableEnv == realm.getGlobalEnv();
-        LexicalEnvironment lexicalEnv = cx.getLexicalEnvironment();
+        assert cx.getVariableEnvironment() == realm.getGlobalEnv();
+        LexicalEnvironment<GlobalEnvironmentRecord> variableEnv = realm.getGlobalEnv();
+        LexicalEnvironment<?> lexicalEnv = cx.getLexicalEnvironment();
 
         // begin-modification
         // lexically declared variables are placed into a new declarative environment

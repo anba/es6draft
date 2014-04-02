@@ -285,7 +285,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * stack: [] -> []
      */
-    protected final Variable<LexicalEnvironment> saveEnvironment(AbruptNode node,
+    protected final Variable<LexicalEnvironment<?>> saveEnvironment(AbruptNode node,
             StatementVisitor mv) {
         EnumSet<Abrupt> abrupt = node.getAbrupt();
         if (abrupt.contains(Abrupt.Break) || abrupt.contains(Abrupt.Continue)) {
@@ -297,9 +297,9 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * stack: [] -> []
      */
-    protected final Variable<LexicalEnvironment> saveEnvironment(StatementVisitor mv) {
-        Variable<LexicalEnvironment> savedEnv = mv
-                .newVariable("savedEnv", LexicalEnvironment.class);
+    protected final Variable<LexicalEnvironment<?>> saveEnvironment(StatementVisitor mv) {
+        Variable<LexicalEnvironment<?>> savedEnv = mv.newVariable("savedEnv",
+                LexicalEnvironment.class).uncheckedCast();
         saveEnvironment(savedEnv, mv);
         return savedEnv;
     }
@@ -307,7 +307,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * stack: [] -> []
      */
-    protected final void saveEnvironment(Variable<LexicalEnvironment> savedEnv, StatementVisitor mv) {
+    protected final void saveEnvironment(Variable<LexicalEnvironment<?>> savedEnv,
+            StatementVisitor mv) {
         getLexicalEnvironment(mv);
         mv.store(savedEnv);
     }
@@ -316,7 +317,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * stack: [] -> []
      */
     protected final void restoreEnvironment(AbruptNode node, Abrupt abrupt,
-            Variable<LexicalEnvironment> savedEnv, StatementVisitor mv) {
+            Variable<LexicalEnvironment<?>> savedEnv, StatementVisitor mv) {
         assert node.getAbrupt().contains(abrupt);
         assert savedEnv != null;
         restoreEnvironment(savedEnv, mv);
@@ -325,7 +326,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * stack: [] -> []
      */
-    protected final void restoreEnvironment(Variable<LexicalEnvironment> savedEnv,
+    protected final void restoreEnvironment(Variable<LexicalEnvironment<?>> savedEnv,
             StatementVisitor mv) {
         mv.loadExecutionContext();
         mv.load(savedEnv);
@@ -335,7 +336,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * stack: [] -> []
      */
-    protected final void replaceLexicalEnvironment(Variable<LexicalEnvironment> savedEnv,
+    protected final void replaceLexicalEnvironment(Variable<LexicalEnvironment<?>> savedEnv,
             StatementVisitor mv) {
         mv.loadExecutionContext();
         mv.load(savedEnv);

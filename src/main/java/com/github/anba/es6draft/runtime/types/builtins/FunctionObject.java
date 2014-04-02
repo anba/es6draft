@@ -60,7 +60,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /** [[Environment]] */
-    private LexicalEnvironment environment;
+    private LexicalEnvironment<?> environment;
     /** [[FunctionKind]] */
     private FunctionKind functionKind;
     /** [[FormalParameters]] / [[Code]] */
@@ -315,7 +315,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * 9.2.5 FunctionInitialise Abstract Operation
      */
     protected final void initialise(FunctionKind kind, RuntimeInfo.Function function,
-            LexicalEnvironment scope) {
+            LexicalEnvironment<?> scope) {
         assert this.function == null && function != null : "function object already initialised";
         assert this.functionKind == kind : String.format("%s != %s", functionKind, kind);
         /* step 6 */
@@ -373,7 +373,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /**
      * [[Environment]]
      */
-    public final LexicalEnvironment getEnvironment() {
+    public final LexicalEnvironment<?> getEnvironment() {
         return environment;
     }
 

@@ -119,7 +119,7 @@ public class OrdinaryFunction extends FunctionObject {
      */
     public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
-            LexicalEnvironment scope) {
+            LexicalEnvironment<?> scope) {
         /* step 1 */
         int len = function.expectedArgumentCount();
         /* step 2 */
@@ -140,7 +140,7 @@ public class OrdinaryFunction extends FunctionObject {
      * 9.2.6 FunctionCreate Abstract Operation
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope) {
+            RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
         return FunctionCreate(cx, kind, function, scope, null);
     }
 
@@ -148,7 +148,8 @@ public class OrdinaryFunction extends FunctionObject {
      * 9.2.6 FunctionCreate Abstract Operation
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject functionPrototype) {
+            RuntimeInfo.Function function, LexicalEnvironment<?> scope,
+            ScriptObject functionPrototype) {
         assert !function.isGenerator();
         /* step 1 */
         if (functionPrototype == null) {

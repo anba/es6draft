@@ -97,10 +97,12 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
 
         Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
-        Variable<LexicalEnvironment> varEnv = mv.getParameter(VAR_ENV, LexicalEnvironment.class);
-        Variable<LexicalEnvironment> lexEnv = mv.getParameter(LEX_ENV, LexicalEnvironment.class);
+        Variable<LexicalEnvironment<?>> varEnv = mv.getParameter(VAR_ENV, LexicalEnvironment.class)
+                .uncheckedCast();
+        Variable<LexicalEnvironment<?>> lexEnv = mv.getParameter(LEX_ENV, LexicalEnvironment.class)
+                .uncheckedCast();
         Variable<Boolean> deletableBindings = mv.getParameter(DELETABLE_BINDINGS, boolean.class);
-        Variable<LexicalEnvironment> env = varEnv;
+        Variable<LexicalEnvironment<?>> env = varEnv;
 
         Variable<EnvironmentRecord> envRec = mv.newVariable("envRec", EnvironmentRecord.class);
         getEnvironmentRecord(env, mv);

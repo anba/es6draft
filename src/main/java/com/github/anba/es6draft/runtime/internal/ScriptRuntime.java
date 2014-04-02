@@ -31,6 +31,7 @@ import java.util.Iterator;
 
 import org.mozilla.javascript.ConsString;
 
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
@@ -205,7 +206,7 @@ public final class ScriptRuntime {
             ExecutionContext cx) {
         /* step 1 (omitted) */
         /* step 2 */
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
         /* steps 3-4 (not applicable) */
         /* step 5 */
         OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Arrow, fd, scope);
@@ -228,7 +229,7 @@ public final class ScriptRuntime {
             ExecutionContext cx) {
         /* step 1 (omitted) */
         /* step 2 */
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
         /* steps 3-4 (not applicable) */
         /* step 5 */
         OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Arrow, fd, scope);
@@ -977,7 +978,7 @@ public final class ScriptRuntime {
      * <p>
      * 14.1.14 Runtime Semantics: InstantiateFunctionObject
      */
-    public static OrdinaryFunction InstantiateFunctionObject(LexicalEnvironment scope,
+    public static OrdinaryFunction InstantiateFunctionObject(LexicalEnvironment<?> scope,
             ExecutionContext cx, RuntimeInfo.Function fd) {
         /* step 1 (not applicable) */
         /* step 2 */
@@ -1011,7 +1012,7 @@ public final class ScriptRuntime {
         if (!fd.hasScopedName()) {
             /* step 1 (not applicable) */
             /* step 2 */
-            LexicalEnvironment scope = cx.getLexicalEnvironment();
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
             /* step 3 */
             closure = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
             /* step 4 */
@@ -1021,12 +1022,13 @@ public final class ScriptRuntime {
             /* step 5 */
             MakeConstructor(cx, closure);
         } else {
-            LexicalEnvironment scope = cx.getLexicalEnvironment();
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
             /* step 1 (not applicable) */
             /* step 2 */
-            LexicalEnvironment funcEnv = LexicalEnvironment.newDeclarativeEnvironment(scope);
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = LexicalEnvironment
+                    .newDeclarativeEnvironment(scope);
             /* step 3 */
-            EnvironmentRecord envRec = funcEnv.getEnvRec();
+            DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
             /* step 4 */
             String name = fd.functionName();
             /* step 5 */
@@ -1060,7 +1062,7 @@ public final class ScriptRuntime {
             ExecutionContext cx) {
         /* step 1 (not applicable) */
         /* step 2 */
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
         /* steps 3-4 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Arrow, fd, scope);
         /* step 5 */
@@ -1078,7 +1080,7 @@ public final class ScriptRuntime {
         // ClassDefinitionEvaluation - steps 9-10
         // -> calls DefineMethod
         String propKey = "constructor";
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
         OrdinaryFunction constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd,
                 scope, constructorParent);
         if (fd.hasSuperReference()) {
@@ -1127,7 +1129,7 @@ public final class ScriptRuntime {
         /* steps 1-2 (DefineMethod) */
         /* DefineMethod: steps 1-3 (generated code) */
         /* DefineMethod: step 4 */
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
         /* DefineMethod: step 5 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* DefineMethod: step 6 */
@@ -1155,7 +1157,7 @@ public final class ScriptRuntime {
         /* steps 1-2 (DefineMethod) */
         /* DefineMethod: steps 1-3 (generated code) */
         /* DefineMethod: step 4 */
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
         /* DefineMethod: step 5 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* DefineMethod: step 6 */
@@ -1199,7 +1201,7 @@ public final class ScriptRuntime {
             RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
         /* steps 5-6 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 7 */
@@ -1229,7 +1231,7 @@ public final class ScriptRuntime {
             RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
         /* steps 5-6 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 7 */
@@ -1276,7 +1278,7 @@ public final class ScriptRuntime {
             RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
         /* step 5 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
@@ -1306,7 +1308,7 @@ public final class ScriptRuntime {
             RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
         /* step 5 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
@@ -1329,7 +1331,7 @@ public final class ScriptRuntime {
      * <p>
      * 14.4.12 Runtime Semantics: InstantiateFunctionObject
      */
-    public static OrdinaryGenerator InstantiateGeneratorObject(LexicalEnvironment scope,
+    public static OrdinaryGenerator InstantiateGeneratorObject(LexicalEnvironment<?> scope,
             ExecutionContext cx, RuntimeInfo.Function fd) {
         /* step 1 (not applicable) */
         /* step 2 */
@@ -1355,7 +1357,7 @@ public final class ScriptRuntime {
      * <p>
      * 14.4.12 Runtime Semantics: InstantiateFunctionObject
      */
-    public static OrdinaryGenerator InstantiateLegacyGeneratorObject(LexicalEnvironment scope,
+    public static OrdinaryGenerator InstantiateLegacyGeneratorObject(LexicalEnvironment<?> scope,
             ExecutionContext cx, RuntimeInfo.Function fd) {
         /* step 1 (not applicable) */
         /* step 2 */
@@ -1406,7 +1408,7 @@ public final class ScriptRuntime {
         /* steps 1-2 (bytecode) */
         /* step 3 (not applicable) */
         /* step 4 */
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
         /* step 5 (not applicable) */
         /* step 6 */
         OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
@@ -1438,7 +1440,7 @@ public final class ScriptRuntime {
         /* steps 1-2 (bytecode) */
         /* step 3 (not applicable) */
         /* step 4 */
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
         /* step 5 (not applicable) */
         /* step 6 */
         OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
@@ -1472,7 +1474,7 @@ public final class ScriptRuntime {
         if (!fd.hasScopedName()) {
             /* steps 1-2 (generated code) */
             /* step 3 */
-            LexicalEnvironment scope = cx.getLexicalEnvironment();
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
             /* step 4 */
             closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
             /* step 5 */
@@ -1484,12 +1486,13 @@ public final class ScriptRuntime {
             /* step 7 */
             MakeConstructor(cx, closure, true, prototype);
         } else {
-            LexicalEnvironment scope = cx.getLexicalEnvironment();
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
             /* steps 1-2 (generated code) */
             /* step 3 */
-            LexicalEnvironment funcEnv = LexicalEnvironment.newDeclarativeEnvironment(scope);
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = LexicalEnvironment
+                    .newDeclarativeEnvironment(scope);
             /* step 4 */
-            EnvironmentRecord envRec = funcEnv.getEnvRec();
+            DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
             /* step 5 */
             String name = fd.functionName();
             /* step 6 */
@@ -1528,7 +1531,7 @@ public final class ScriptRuntime {
         if (!fd.hasScopedName()) {
             /* steps 1-2 (generated code) */
             /* step 3 */
-            LexicalEnvironment scope = cx.getLexicalEnvironment();
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
             /* step 4 */
             closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
             /* step 5 */
@@ -1540,12 +1543,13 @@ public final class ScriptRuntime {
             /* step 7 */
             MakeConstructor(cx, closure, true, prototype);
         } else {
-            LexicalEnvironment scope = cx.getLexicalEnvironment();
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
             /* steps 1-2 (generated code) */
             /* step 3 */
-            LexicalEnvironment funcEnv = LexicalEnvironment.newDeclarativeEnvironment(scope);
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = LexicalEnvironment
+                    .newDeclarativeEnvironment(scope);
             /* step 4 */
-            EnvironmentRecord envRec = funcEnv.getEnvRec();
+            DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
             /* step 5 */
             String name = fd.functionName();
             /* step 6 */

@@ -41,9 +41,10 @@ final class DeclarationBindingInstantiation {
      * [15.2.8 Runtime Semantics: GlobalDeclarationInstantiation]
      */
     public static void GlobalDeclarationInstantiation(ExecutionContext cx, Script script,
-            LexicalEnvironment globalEnv, LexicalEnvironment lexicalEnv, boolean deletableBindings) {
-        LexicalEnvironment env = globalEnv;
-        GlobalEnvironmentRecord envRec = (GlobalEnvironmentRecord) env.getEnvRec();
+            LexicalEnvironment<GlobalEnvironmentRecord> globalEnv,
+            LexicalEnvironment<?> lexicalEnv, boolean deletableBindings) {
+        LexicalEnvironment<GlobalEnvironmentRecord> env = globalEnv;
+        GlobalEnvironmentRecord envRec = env.getEnvRec();
 
         for (String name : VarDeclaredNames(script)) {
             if (envRec.hasLexicalDeclaration(name)) {
@@ -73,10 +74,10 @@ final class DeclarationBindingInstantiation {
      * [18.2.1.2 Eval Declaration Instantiation]
      */
     public static void EvalDeclarationInstantiation(ExecutionContext cx, Script script,
-            LexicalEnvironment varEnv, LexicalEnvironment lexEnv, boolean deletableBindings) {
+            LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv, boolean deletableBindings) {
         // FIXME: spec incomplete (using modified ES5.1 algorithm for now...)
 
-        LexicalEnvironment env = varEnv;
+        LexicalEnvironment<?> env = varEnv;
         EnvironmentRecord envRec = env.getEnvRec();
         // boolean strict = script.isStrict();
         for (StatementListItem d : VarScopedDeclarations(script)) {

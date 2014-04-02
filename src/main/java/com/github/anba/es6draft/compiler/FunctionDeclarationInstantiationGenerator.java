@@ -121,7 +121,8 @@ final class FunctionDeclarationInstantiationGenerator extends
         Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
 
-        Variable<LexicalEnvironment> env = mv.newVariable("env", LexicalEnvironment.class);
+        Variable<LexicalEnvironment<?>> env = mv.newVariable("env", LexicalEnvironment.class)
+                .uncheckedCast();
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getVariableEnvironment);
         mv.store(env);
@@ -279,7 +280,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         new BindingInitialisationGenerator(codegen).generate(node, iterator, mv);
     }
 
-    private void CreateMappedArgumentsObject(Variable<LexicalEnvironment> env,
+    private void CreateMappedArgumentsObject(Variable<LexicalEnvironment<?>> env,
             FormalParameterList formals, ExpressionVisitor mv) {
         mv.loadExecutionContext();
         mv.loadParameter(FUNCTION, FunctionObject.class);
@@ -295,7 +296,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         mv.invoke(Methods.ExoticArguments_CreateStrictArgumentsObject);
     }
 
-    private void CreateLegacyArguments(Variable<LexicalEnvironment> env,
+    private void CreateLegacyArguments(Variable<LexicalEnvironment<?>> env,
             FormalParameterList formals, ExpressionVisitor mv) {
         // function.setLegacyArguments(<legacy-arguments>)
         mv.loadParameter(FUNCTION, FunctionObject.class);

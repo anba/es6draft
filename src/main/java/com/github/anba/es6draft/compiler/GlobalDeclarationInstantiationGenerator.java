@@ -110,9 +110,10 @@ final class GlobalDeclarationInstantiationGenerator extends
     private void generate(Script script, InstructionVisitor mv) {
         Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
-        Variable<LexicalEnvironment> env = mv.getParameter(GLOBAL_ENV, LexicalEnvironment.class);
-        Variable<LexicalEnvironment> lexEnv = mv
-                .getParameter(LEXICAL_ENV, LexicalEnvironment.class);
+        Variable<LexicalEnvironment<?>> env = mv.getParameter(GLOBAL_ENV, LexicalEnvironment.class)
+                .uncheckedCast();
+        Variable<LexicalEnvironment<?>> lexEnv = mv.getParameter(LEXICAL_ENV,
+                LexicalEnvironment.class).uncheckedCast();
         Variable<Boolean> deletableBindings = mv.getParameter(DELETABLE_BINDINGS, boolean.class);
 
         Variable<GlobalEnvironmentRecord> envRec = mv.newVariable("envRec",

@@ -16,7 +16,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.github.anba.es6draft.ast.Module;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -35,7 +37,7 @@ public final class ModuleLinkage {
     private final Module body;
 
     /** [[Environment]] */
-    private final LexicalEnvironment environment;
+    private final LexicalEnvironment<DeclarativeEnvironmentRecord> environment;
 
     /** [[LinkErrors]] */
     private final List<ScriptException> linkErrors;
@@ -71,7 +73,8 @@ public final class ModuleLinkage {
         return moduleObject;
     }
 
-    public ModuleLinkage(ModuleObject moduleObject, Module body, LexicalEnvironment environment) {
+    public ModuleLinkage(ModuleObject moduleObject, Module body,
+            LexicalEnvironment<DeclarativeEnvironmentRecord> environment) {
         this.moduleObject = moduleObject;
         this.body = body;
         this.environment = environment;
@@ -164,7 +167,7 @@ public final class ModuleLinkage {
     }
 
     /** [[Environment]] */
-    public LexicalEnvironment getEnvironment() {
+    public LexicalEnvironment<DeclarativeEnvironmentRecord> getEnvironment() {
         return this.environment;
     }
 
@@ -197,9 +200,10 @@ public final class ModuleLinkage {
         /* step 14 */
         Realm realm = loader.getRealm();
         /* step 15 */
-        LexicalEnvironment globalEnv = realm.getGlobalEnv();
+        LexicalEnvironment<GlobalEnvironmentRecord> globalEnv = realm.getGlobalEnv();
         /* step 16 */
-        LexicalEnvironment env = LexicalEnvironment.newModuleEnvironment(globalEnv);
+        LexicalEnvironment<DeclarativeEnvironmentRecord> env = LexicalEnvironment
+                .newModuleEnvironment(globalEnv);
         /* steps 2-13, 17 */
         ModuleObject module = new ModuleObject(realm);
         ModuleLinkage moduleLinkage = new ModuleLinkage(module, body, env);

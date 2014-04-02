@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import java.util.BitSet;
 
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.Strings;
 
@@ -19,12 +20,12 @@ import com.github.anba.es6draft.runtime.internal.Strings;
  * </ul>
  */
 final class ParameterMap {
-    private final LexicalEnvironment env;
+    private final LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env;
     private final int length;
     private final String[] parameters;
     private final BitSet legacyUnmapped;
 
-    private ParameterMap(LexicalEnvironment env, int length) {
+    private ParameterMap(LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env, int length) {
         this.env = env;
         this.length = length;
         this.parameters = new String[length];
@@ -43,7 +44,8 @@ final class ParameterMap {
      * Returns a new {@link ParameterMap} if there are any mapped arguments, otherwise
      * <code>null</code>.
      */
-    static ParameterMap create(int len, String[] formals, LexicalEnvironment env) {
+    static ParameterMap create(int len, String[] formals,
+            LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
         boolean hasMapped = false;
         int numberOfNonRestFormals = formals.length;
         ParameterMap map = new ParameterMap(env, len);

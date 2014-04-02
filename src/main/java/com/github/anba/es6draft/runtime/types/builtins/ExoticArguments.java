@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
 
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -48,7 +49,8 @@ public final class ExoticArguments extends OrdinaryObject {
      * [Called from generated code]
      */
     public static ExoticArguments CreateMappedArgumentsObject(ExecutionContext cx,
-            FunctionObject func, Object[] args, String[] formals, LexicalEnvironment env) {
+            FunctionObject func, Object[] args, String[] formals,
+            LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
         ExoticArguments arguments = InstantiateArgumentsObject(cx, args);
         CompleteMappedArgumentsObject(cx, arguments, func, formals, env);
         return arguments;
@@ -110,7 +112,8 @@ public final class ExoticArguments extends OrdinaryObject {
      * [9.4.4.1 Arguments Object] CompleteMappedArgumentsObject
      */
     public static void CompleteMappedArgumentsObject(ExecutionContext cx, ExoticArguments obj,
-            FunctionObject func, String[] formals, LexicalEnvironment env) {
+            FunctionObject func, String[] formals,
+            LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
         // added ToInt32()
         int len = ToInt32(cx, Get(cx, obj, "length"));
         obj.parameterMap = ParameterMap.create(len, formals, env);
