@@ -27,7 +27,7 @@ install:
 
 # before_script: <cmd>
 
-script: mvn verify -P "${PROFILE}"
+script: mvn verify --batch-mode -P "${PROFILE}"
 
 # after_script: <cmd>
 
