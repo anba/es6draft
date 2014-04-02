@@ -48,7 +48,6 @@ const {
   assertNativeFunction(result.reject, undefined, 1);
 }
 
-// Access to 'IdentityFunction' and 'ThrowerFunction'
 // Access to 'ResolvePromiseFunction' and 'RejectPromiseFunction'
 {
   let stepCount = 0;
@@ -61,7 +60,7 @@ const {
   class XPromise extends Promise {
     then(fulfill, reject) {
       let step = ++stepCount;
-      assertTrue(1 <= step && step <= 6, `step = ${step}`);
+      assertTrue(1 <= step && step <= 4, `step = ${step}`);
       switch (step) {
         case 1:
           assertUndefined(fulfill);
@@ -82,18 +81,6 @@ const {
           assertNativeFunction(fulfill, undefined, 1);
           assertNativeFunction(reject, undefined, 1);
           break;
-        case 5:
-          // 'IdentityFunction' and 'ThrowerFunction'
-          builtins.identity = fulfill;
-          builtins.thrower = reject;
-          assertNativeFunction(fulfill, undefined, 1);
-          assertNativeFunction(reject, undefined, 1);
-          break;
-        case 6:
-          // 'ResolvePromiseFunction' and 'RejectPromiseFunction'
-          assertNativeFunction(fulfill, undefined, 1);
-          assertNativeFunction(reject, undefined, 1);
-          break;
       }
       return super(fulfill, reject);
     }
@@ -108,31 +95,11 @@ const {
   }
 
   function testBuiltinFunctions() {
-    assertSame(6, stepCount);
-    testIdentityFunction(builtins.identity);
-    testThrowerFunction(builtins.thrower);
+    assertSame(4, stepCount);
 
     // calling these functions should have no effect
     builtins.resolvePromise();
     builtins.rejectPromise();
-  }
-
-  function testIdentityFunction(f) {
-    for (let v of [void 0, null, 1, "", {}, [], () => {}]) {
-      assertSame(v, f(v));
-    }
-  }
-
-  function testThrowerFunction(f) {
-    for (let v of [void 0, null, 1, "", {}, [], () => {}]) {
-      try {
-        f(v);
-      } catch (e) {
-        assertSame(v, e);
-        continue;
-      }
-      fail `expected error: ${v}`;
-    }
   }
 
   let d = XPromise.deferred();
@@ -155,7 +122,7 @@ const {
       r(() => {}, () => {});
     }
 
-    static cast(v) {
+    static resolve(v) {
       return v;
     }
   }

@@ -69,10 +69,10 @@ function tamper(p) {
     yield tamper(Promise.resolve(0));
   }
 
-  // Prevent countdownHolder.[[Countdown]] from ever reaching zero
+  // Cannot prevent countdownHolder.[[Countdown]] from ever reaching zero
   Promise
     .all(g())
-    .then(() => { throw new Error("resolve called") })
+    .then(v => { assertEquals([void 0], v) })
     .catch(reportFailure);
 }
 
@@ -86,12 +86,12 @@ function tamper(p) {
         assertFalse(fulfillCalled);
       })
       .then(() => {
-        assertTrue(fulfillCalled);
+        assertFalse(fulfillCalled);
       })
       .catch(reportFailure);
   }
 
-  // Promise from Promise.all resolved before arguments
+  // Promise from Promise.all never resolved before arguments
   let fulfillCalled = false;
   Promise
     .all(g())
@@ -110,12 +110,14 @@ function tamper(p) {
     yield Promise.reject(2);
   }
 
-  // Promise from Promise.all resolved despite rejected promise in arguments
+  // Promise from Promise.all never resolved if rejected promise in arguments
   Promise
     .all(g())
     .then(v => {
-      assertEquals([0, 1], v);
-    }, reportFailure)
+       fail `fulfilled with ${v}`
+    }, v => {
+      assertSame(2, v)
+    })
     .catch(reportFailure);
 }
 
@@ -137,7 +139,7 @@ function tamper(p) {
       }
     }
 
-    static cast(p) {
+    static resolve(p) {
       return p;
     }
   }
@@ -147,11 +149,9 @@ function tamper(p) {
     yield Promise.resolve(2);
   }
   let actualArguments = [];
-  let expectedArguments = [];
-  expectedArguments.push([, void 0]);
-  expectedArguments.push([0, 1]);
+  let expectedArguments = [[0, void 0, 2]];
 
-  // Promise.all calls resolver twice
+  // Promise.all never calls resolver multiple times
   P.all(g()).catch(reportFailure);
   Promise
     .resolve()

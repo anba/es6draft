@@ -23,7 +23,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  */
 public final class PromiseCapability {
     /** [[Promise]] */
-    private final ScriptObject promise;
+    private final ScriptObject promise;// TODO: generify
 
     /** [[Resolve]] */
     private final Callable resolve;

@@ -26,6 +26,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.NewPromiseReactionTask;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseReactionTask;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.Thenable;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
@@ -78,10 +79,64 @@ public final class PromisePrototype extends OrdinaryObject implements Initialisa
             return Invoke(cx, promise, "then", UNDEFINED, onRejected);
         }
 
+        @Function(name = "then", arity = 2)
+        public static Object newThen(ExecutionContext cx, Object thisValue, Object onFulfilled,
+                Object onRejected) {
+            Realm realm = cx.getRealm();
+            /* step 2 */
+            if (!IsPromise(thisValue)) {
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            /* step 1 */
+            PromiseObject promise = (PromiseObject) thisValue;
+            /* steps 3-4 */
+            Object c = Get(cx, promise, "constructor");
+            /* steps 5-6 */
+            PromiseCapability promiseCapability = NewPromiseCapability(cx, c);
+            /* steps 7-8 */
+            Callable fulfillmentHandler;
+            if (IsCallable(onFulfilled)) {
+                fulfillmentHandler = (Callable) onFulfilled;
+            } else {
+                fulfillmentHandler = new IdentityFunction(cx.getRealm());
+            }
+            /* steps 9-10 */
+            Callable rejectionHandler;
+            if (IsCallable(onRejected)) {
+                rejectionHandler = (Callable) onRejected;
+            } else {
+                rejectionHandler = new ThrowerFunction(cx.getRealm());
+            }
+            /* step 11 */
+            PromiseReaction fulfillReaction = new PromiseReaction(promiseCapability,
+                    fulfillmentHandler);
+            /* step 12 */
+            PromiseReaction rejectReaction = new PromiseReaction(promiseCapability,
+                    rejectionHandler);
+            /* step 13 */
+            if (promise.getState() == PromiseObject.State.Pending) {
+                promise.addResolveReaction(fulfillReaction);
+                promise.addRejectReaction(rejectReaction);
+            }
+            /* step 14 */
+            else if (promise.getState() == PromiseObject.State.Fulfilled) {
+                Object value = promise.getResult();
+                realm.enqueuePromiseTask(new NewPromiseReactionTask(realm, fulfillReaction, value));
+            }
+            /* step 15 */
+            else if (promise.getState() == PromiseObject.State.Rejected) {
+                Object reason = promise.getResult();
+                realm.enqueuePromiseTask(new NewPromiseReactionTask(realm, rejectReaction, reason));
+            }
+            /* step 16 */
+            return promiseCapability.getPromise();
+        }
+
         /**
          * 25.4.5.3 Promise.prototype.then ( onFulfilled , onRejected )
          */
-        @Function(name = "then", arity = 2)
+        // @Function(name = "then", arity = 2)
+        @Deprecated
         public static Object then(ExecutionContext cx, Object thisValue, Object onFulfilled,
                 Object onRejected) {
             Realm realm = cx.getRealm();
@@ -164,6 +219,7 @@ public final class PromisePrototype extends OrdinaryObject implements Initialisa
     /**
      * 25.4.5.3.2 Promise Resolution Handler Functions
      */
+    @Deprecated
     public static final class PromiseResolutionHandlerFunction extends BuiltinFunction {
         /** [[Promise]] */
         private final PromiseObject promise;

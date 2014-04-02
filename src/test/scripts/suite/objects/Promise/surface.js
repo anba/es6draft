@@ -40,7 +40,6 @@ assertSame(Promise, Promise.prototype.constructor);
 assertPrototypeProperty(Promise);
 assertCreateFunctionProperty(Promise, Symbol.create);
 assertFunctionProperty(Promise, "all");
-assertFunctionProperty(Promise, "cast");
 assertFunctionProperty(Promise, "race");
 assertFunctionProperty(Promise, "reject");
 assertFunctionProperty(Promise, "resolve");

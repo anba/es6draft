@@ -10,15 +10,13 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.CreateRejectFunction;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.CreateResolveFunction;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.IsPromise;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.NewPromiseCapability;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseCapability.IfAbruptRejectPromise;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -33,6 +31,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseRejectFunction;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseResolveFunction;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.ResolvingFunctions;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -78,20 +77,42 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         /* step 1 */
         PromiseObject promise = (PromiseObject) thisValue;
         /* step 5 */
-        if (promise.getStatus() != null) {
+        if (promise.getState() != null) {
             throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
         /* step 6 */
-        return InitialisePromise(calleeContext, promise, (Callable) executor);
+        return NewInitialisePromise(calleeContext, promise, (Callable) executor);
+    }
+
+    public static PromiseObject NewInitialisePromise(ExecutionContext cx, PromiseObject promise,
+            Callable executor) {
+        /* step 1 */
+        assert promise.getState() == null;
+        /* step 2 (not applicable) */
+        /* steps 3-5 */
+        promise.initialise();
+        /* step 6 */
+        ResolvingFunctions resolvingFunctions = CreateResolvingFunctions(cx, promise);
+        /* step 7 */
+        try {
+            executor.call(cx, UNDEFINED, resolvingFunctions.getResolve(),
+                    resolvingFunctions.getReject());
+        } catch (ScriptException e) {
+            /* step 9 */
+            resolvingFunctions.getReject().call(cx, UNDEFINED, e.getValue());
+        }
+        /* step 10 */
+        return promise;
     }
 
     /**
      * 25.4.3.1.1 InitialisePromise( promise, executor) Abstract Operation
      */
+    @Deprecated
     public static PromiseObject InitialisePromise(ExecutionContext cx, PromiseObject promise,
             Callable executor) {
         /* step 1 */
-        assert promise.getStatus() == null;
+        assert promise.getState() == null;
         /* step 2 (not applicable) */
         /* steps 3-5 */
         promise.initialise();
@@ -163,7 +184,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* step 6 */
             ScriptObject values = ArrayCreate(cx, 0);
             /* step 7 */
-            AtomicInteger remainingElementsCount = new AtomicInteger(0);
+            AtomicInteger remainingElementsCount = new AtomicInteger(1);
             /* steps 8-9 */
             for (int index = 0; index + 1 > 0;) {
                 /* steps 9.a-9.b */
@@ -175,7 +196,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
                 }
                 /* step 9.c */
                 if (next == null) {
-                    if (index == 0) {
+                    if (remainingElementsCount.decrementAndGet() == 0) {
                         promiseCapability.getResolve().call(cx, UNDEFINED, values);
                     }
                     return promiseCapability.getPromise();
@@ -190,48 +211,26 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
                 /* steps 9.f-9.g */
                 Object nextPromise;
                 try {
-                    nextPromise = Invoke(cx, c, "cast", nextValue);
+                    nextPromise = Invoke(cx, c, "resolve", nextValue);
                 } catch (ScriptException e) {
                     return IfAbruptRejectPromise(cx, e, promiseCapability);
                 }
-                /* steps 9.h-9.l */
+                /* steps 9.h-9.m */
                 PromiseAllResolveElementFunction resolveElement = new PromiseAllResolveElementFunction(
                         cx.getRealm(), index, values, promiseCapability, remainingElementsCount);
-                /* steps 9.m-9.n */
+                /* step 9.n */
+                remainingElementsCount.incrementAndGet();
+                /* steps 9.o-9.p */
                 try {
                     Invoke(cx, nextPromise, "then", resolveElement, promiseCapability.getReject());
                 } catch (ScriptException e) {
                     return IfAbruptRejectPromise(cx, e, promiseCapability);
                 }
-                /* step 9.o */
+                /* step 9.q */
                 index += 1;
-                /* step 9.p */
-                remainingElementsCount.incrementAndGet();
             }
             // prevent integer overflow for 'index'
             throw newInternalError(cx, Messages.Key.InternalError, "integer overflow");
-        }
-
-        /**
-         * 25.4.4.2 Promise.cast ( x )
-         */
-        @Function(name = "cast", arity = 1)
-        public static Object cast(ExecutionContext cx, Object thisValue, Object x) {
-            /* step 1 */
-            Object c = thisValue;
-            /* step 2 */
-            if (IsPromise(x)) {
-                Constructor constructor = ((PromiseObject) x).getConstructor();
-                if (SameValue(constructor, c)) {
-                    return x;
-                }
-            }
-            /* steps 3-4 */
-            PromiseCapability promiseCapability = NewPromiseCapability(cx, c);
-            /* steps 5-6 */
-            promiseCapability.getResolve().call(cx, UNDEFINED, x);
-            /* step 7 */
-            return promiseCapability.getPromise();
         }
 
         /**
@@ -274,7 +273,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
                 /* steps 6.f-6.g */
                 Object nextPromise;
                 try {
-                    nextPromise = Invoke(cx, c, "cast", nextValue);
+                    nextPromise = Invoke(cx, c, "resolve", nextValue);
                 } catch (ScriptException e) {
                     return IfAbruptRejectPromise(cx, e, promiseCapability);
                 }
@@ -310,11 +309,18 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         public static Object resolve(ExecutionContext cx, Object thisValue, Object x) {
             /* step 1 */
             Object c = thisValue;
-            /* steps 2-3 */
+            /* step 2 */
+            if (IsPromise(x)) {
+                Constructor constructor = ((PromiseObject) x).getConstructor();
+                if (SameValue(constructor, c)) {
+                    return x;
+                }
+            }
+            /* steps 3-4 */
             PromiseCapability promiseCapability = NewPromiseCapability(cx, c);
-            /* steps 4-5 */
+            /* steps 5-6 */
             promiseCapability.getResolve().call(cx, UNDEFINED, x);
-            /* step 6 */
+            /* step 7 */
             return promiseCapability.getPromise();
         }
 
@@ -368,6 +374,9 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         /** [[RemainingElements]] */
         private final AtomicInteger remainingElements;
 
+        /** [[AlreadyCalled]] */
+        private final AtomicBoolean alreadyCalled;
+
         public PromiseAllResolveElementFunction(Realm realm, int index, ScriptObject values,
                 PromiseCapability capabilities, AtomicInteger remainingElements) {
             super(realm, ANONYMOUS, 1);
@@ -375,37 +384,37 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             this.values = values;
             this.capabilities = capabilities;
             this.remainingElements = remainingElements;
+            this.alreadyCalled = new AtomicBoolean(false);
         }
 
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
             Object x = args.length > 0 ? args[0] : UNDEFINED;
-            /* step 1 */
-            int index = this.index;
-            /* step 2 */
-            ScriptObject values = this.values;
+            /* steps 1-2 */
+            if (!alreadyCalled.compareAndSet(false, true)) {
+                return UNDEFINED;
+            }
             /* step 3 */
-            PromiseCapability promiseCapability = this.capabilities;
+            int index = this.index;
             /* step 4 */
-            AtomicInteger remainingElementsCount = this.remainingElements;
+            ScriptObject values = this.values;
             /* step 5 */
+            PromiseCapability promiseCapability = this.capabilities;
+            /* step 6 */
+            AtomicInteger remainingElementsCount = this.remainingElements;
+            /* step 7 */
             try {
                 CreateDataProperty(calleeContext, values, ToString(index), x);
             } catch (ScriptException e) {
-                /* step 6 */
+                /* step 8 */
                 return IfAbruptRejectPromise(calleeContext, e, promiseCapability);
             }
-            if (remainingElementsCount.get() == Integer.MIN_VALUE) {
-                // prevent integer overflow for 'remainingElementsCount'
-                throw newInternalError(calleeContext, Messages.Key.InternalError,
-                        "integer overflow");
-            }
-            /* steps 7-8 */
+            /* steps 9-10 */
             if (remainingElementsCount.decrementAndGet() == 0) {
                 return promiseCapability.getResolve().call(calleeContext, UNDEFINED, values);
             }
-            /* step 9 */
+            /* step 11 */
             return UNDEFINED;
         }
     }

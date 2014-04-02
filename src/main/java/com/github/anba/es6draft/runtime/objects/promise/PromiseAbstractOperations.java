@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -38,11 +39,202 @@ public final class PromiseAbstractOperations {
     private PromiseAbstractOperations() {
     }
 
+    public static final class ResolvingFunctions {
+        /** [[Resolve]] */
+        private final NewPromiseResolveFunction resolve;
+
+        /** [[Reject]] */
+        private final NewPromiseRejectFunction reject;
+
+        ResolvingFunctions(NewPromiseResolveFunction resolve, NewPromiseRejectFunction reject) {
+            this.resolve = resolve;
+            this.reject = reject;
+        }
+
+        /** [[Resolve]] */
+        public NewPromiseResolveFunction getResolve() {
+            return resolve;
+        }
+
+        /** [[Reject]] */
+        public NewPromiseRejectFunction getReject() {
+            return reject;
+        }
+    }
+
+    /**
+     * CreateResolvingFunctions ( promise )
+     */
+    public static ResolvingFunctions CreateResolvingFunctions(ExecutionContext cx,
+            PromiseObject promise) {
+        /* step 1 */
+        AtomicBoolean alreadyResolved = new AtomicBoolean(false);
+        /* steps 2-4 */
+        NewPromiseResolveFunction resolve = new NewPromiseResolveFunction(cx.getRealm(), promise,
+                alreadyResolved);
+        /* steps 5-7 */
+        NewPromiseRejectFunction reject = new NewPromiseRejectFunction(cx.getRealm(), promise,
+                alreadyResolved);
+        /* step 8 */
+        return new ResolvingFunctions(resolve, reject);
+    }
+
+    /**
+     * Promise Reject Functions
+     */
+    public static final class NewPromiseRejectFunction extends BuiltinFunction {
+        /** [[Promise]] */
+        private final PromiseObject promise;
+        /** [[AlreadyResolved]] */
+        private final AtomicBoolean alreadyResolved;
+
+        public NewPromiseRejectFunction(Realm realm, PromiseObject promise,
+                AtomicBoolean alreadyResolved) {
+            super(realm, ANONYMOUS, 1);
+            this.promise = promise;
+            this.alreadyResolved = alreadyResolved;
+        }
+
+        @Override
+        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
+            ExecutionContext calleeContext = calleeContext();
+            Object reason = args.length > 0 ? args[0] : UNDEFINED;
+            /* step 1 (not applicable) */
+            /* step 2 */
+            PromiseObject promise = this.promise;
+            /* steps 3-5 */
+            if (!alreadyResolved.compareAndSet(false, true)) {
+                return UNDEFINED;
+            }
+            /* step 6 */
+            RejectPromise(calleeContext, promise, reason);
+            return UNDEFINED;
+        }
+    }
+
+    /**
+     * Promise Resolve Functions
+     */
+    public static final class NewPromiseResolveFunction extends BuiltinFunction {
+        /** [[Promise]] */
+        private final PromiseObject promise;
+        /** [[AlreadyResolved]] */
+        private final AtomicBoolean alreadyResolved;
+
+        public NewPromiseResolveFunction(Realm realm, PromiseObject promise,
+                AtomicBoolean alreadyResolved) {
+            super(realm, ANONYMOUS, 1);
+            this.promise = promise;
+            this.alreadyResolved = alreadyResolved;
+        }
+
+        @Override
+        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
+            ExecutionContext calleeContext = calleeContext();
+            Object resolution = args.length > 0 ? args[0] : UNDEFINED;
+            /* step 1 (not applicable) */
+            /* step 2 */
+            PromiseObject promise = this.promise;
+            /* steps 3-5 */
+            if (!alreadyResolved.compareAndSet(false, true)) {
+                return UNDEFINED;
+            }
+            /* step 6 */
+            if (SameValue(resolution, promise)) {
+                ScriptException selfResolutionError = newTypeError(calleeContext,
+                        Messages.Key.PromiseSelfResolution);
+                RejectPromise(calleeContext, promise, selfResolutionError.getValue());
+                return UNDEFINED;
+            }
+            /* step 7 */
+            if (!Type.isObject(resolution)) {
+                FulfillPromise(calleeContext, promise, resolution);
+                return UNDEFINED;
+            }
+            /* steps 8-10 */
+            Object then;
+            try {
+                then = Get(calleeContext, Type.objectValue(resolution), "then");
+            } catch (ScriptException e) {
+                /* step 9 */
+                RejectPromise(calleeContext, promise, e.getValue());
+                return UNDEFINED;
+            }
+            /* step 11 */
+            if (!IsCallable(then)) {
+                FulfillPromise(calleeContext, promise, resolution);
+                return UNDEFINED;
+            }
+            /* step 12 */
+            ResolvingFunctions resolvingFunctions = CreateResolvingFunctions(calleeContext, promise);
+            /* steps 13-14 */
+            try {
+                ((Callable) then).call(calleeContext, resolution, resolvingFunctions.getResolve(),
+                        resolvingFunctions.getReject());
+            } catch (ScriptException e) {
+                return resolvingFunctions.getReject().call(calleeContext, UNDEFINED, e.getValue());
+            }
+            return UNDEFINED;
+        }
+    }
+
+    /**
+     * FulfillPromise ( promise, value )
+     */
+    public static void FulfillPromise(ExecutionContext cx, PromiseObject promise, Object value) {
+        List<PromiseReaction> reactions = promise.resolve(value);
+        TriggerPromiseReactions(cx, reactions, value);
+    }
+
+    /**
+     * RejectPromise ( promise, reason )
+     */
+    public static void RejectPromise(ExecutionContext cx, PromiseObject promise, Object reason) {
+        List<PromiseReaction> reactions = promise.reject(reason);
+        TriggerPromiseReactions(cx, reactions, reason);
+    }
+
+    public static final class NewPromiseReactionTask implements Task {
+        private final Realm realm;
+        private final PromiseReaction reaction;
+        private final Object argument;
+
+        public NewPromiseReactionTask(Realm realm, PromiseReaction reaction, Object argument) {
+            this.realm = realm;
+            this.reaction = reaction;
+            this.argument = argument;
+        }
+
+        @Override
+        public void execute() {
+            ExecutionContext cx = realm.defaultContext();
+            /* step 1 (not applicable) */
+            /* step 2 */
+            PromiseCapability promiseCapability = reaction.getCapabilities();
+            /* step 3 */
+            Callable handler = reaction.getHandler();
+            /* steps 4-6 */
+            Object handlerResult;
+            try {
+                handlerResult = handler.call(cx, UNDEFINED, argument);
+            } catch (ScriptException e) {
+                /* step 5 */
+                promiseCapability.getReject().call(cx, UNDEFINED, e.getValue());
+                return;
+            }
+            /* steps 7-8 */
+            promiseCapability.getResolve().call(cx, UNDEFINED, handlerResult);
+        }
+    }
+
+    /* ***************************************************************************************** */
+
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
      * 25.4.1.3 CreateRejectFunction ( promise )
      */
+    @Deprecated
     public static PromiseRejectFunction CreateRejectFunction(ExecutionContext cx,
             PromiseObject promise) {
         /* steps 1-3 */
@@ -52,6 +244,7 @@ public final class PromiseAbstractOperations {
     /**
      * 25.4.1.3.1 Promise Reject Functions
      */
+    @Deprecated
     public static final class PromiseRejectFunction extends BuiltinFunction {
         /** [[Promise]] */
         private final PromiseObject promise;
@@ -85,6 +278,7 @@ public final class PromiseAbstractOperations {
      * <p>
      * 25.4.1.4 CreateResolveFunction ( promise )
      */
+    @Deprecated
     public static PromiseResolveFunction CreateResolveFunction(ExecutionContext cx,
             PromiseObject promise) {
         /* steps 1-3 */
@@ -94,6 +288,7 @@ public final class PromiseAbstractOperations {
     /**
      * 25.4.1.4.1 Promise Resolve Functions
      */
+    @Deprecated
     public static final class PromiseResolveFunction extends BuiltinFunction {
         /** [[Promise]] */
         private final PromiseObject promise;
@@ -220,7 +415,7 @@ public final class PromiseAbstractOperations {
             return false;
         }
         /* steps 3-4 */
-        return ((PromiseObject) x).getStatus() != null;
+        return ((PromiseObject) x).getState() != null;
     }
 
     /**
@@ -245,6 +440,7 @@ public final class PromiseAbstractOperations {
      * <p>
      * 25.4.1.8 UpdatePromiseFromPotentialThenable ( x, promiseCapability)
      */
+    @Deprecated
     public static Thenable UpdatePromiseFromPotentialThenable(ExecutionContext cx, Object x,
             PromiseCapability promiseCapability) {
         /* step 1 */
@@ -282,6 +478,7 @@ public final class PromiseAbstractOperations {
      * <p>
      * 25.4.2.1 PromiseReactionTask( reaction, argument )
      */
+    @Deprecated
     public static final class PromiseReactionTask implements Task {
         private final Realm realm;
         private final PromiseReaction reaction;
@@ -338,7 +535,7 @@ public final class PromiseAbstractOperations {
     public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
             Callable onFulfilled) {
         // TODO: make safe
-        Object p = PromisePrototype.Properties.then(cx, promise, onFulfilled, UNDEFINED);
+        Object p = PromisePrototype.Properties.newThen(cx, promise, onFulfilled, UNDEFINED);
         assert p instanceof ScriptObject;
         return (ScriptObject) p;
     }
@@ -351,7 +548,7 @@ public final class PromiseAbstractOperations {
     public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
             Callable onFulfilled, Callable onRejected) {
         // TODO: make safe
-        Object p = PromisePrototype.Properties.then(cx, promise, onFulfilled, onRejected);
+        Object p = PromisePrototype.Properties.newThen(cx, promise, onFulfilled, onRejected);
         assert p instanceof ScriptObject;
         return (ScriptObject) p;
     }

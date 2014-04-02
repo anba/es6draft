@@ -25,8 +25,15 @@ public final class PromiseObject extends OrdinaryObject {
         Unresolved, HasResolution, HasRejection
     }
 
+    public enum State {
+        Pending, Fulfilled, Rejected
+    }
+
     /** [[PromiseStatus]] */
     private Status status;
+
+    /** [[PromiseState]] */
+    private State state;
 
     /** [[PromiseConstructor]] */
     private Constructor constructor;
@@ -45,15 +52,22 @@ public final class PromiseObject extends OrdinaryObject {
     }
 
     public void initialise() {
-        assert status == null;
+        assert status == null && state == null;
         status = PromiseObject.Status.Unresolved;
+        state = PromiseObject.State.Pending;
         resolveReactions = new ArrayList<>();
         rejectReactions = new ArrayList<>();
     }
 
     /** [[PromiseStatus]] */
+    @Deprecated
     public Status getStatus() {
         return status;
+    }
+
+    /** [[PromiseState]] */
+    public State getState() {
+        return state;
     }
 
     /** [[PromiseConstructor]] */
@@ -74,33 +88,33 @@ public final class PromiseObject extends OrdinaryObject {
 
     /** [[PromiseResolveReactions]] */
     public void addResolveReaction(PromiseReaction reaction) {
-        assert status == Status.Unresolved;
+        assert state == State.Pending;
         resolveReactions.add(reaction);
     }
 
     /** [[PromiseRejectReactions]] */
     public void addRejectReaction(PromiseReaction reaction) {
-        assert status == Status.Unresolved;
+        assert state == State.Pending;
         rejectReactions.add(reaction);
     }
 
     public List<PromiseReaction> resolve(Object resolution) {
         List<PromiseReaction> reactions = resolveReactions;
-        resolve(Status.HasResolution, resolution);
+        resolve(State.Fulfilled, resolution);
         return reactions;
     }
 
     public List<PromiseReaction> reject(Object reason) {
         List<PromiseReaction> reactions = rejectReactions;
-        resolve(Status.HasRejection, reason);
+        resolve(State.Rejected, reason);
         return reactions;
     }
 
-    private void resolve(Status status, Object result) {
-        assert this.status == Status.Unresolved;
+    private void resolve(State state, Object result) {
+        assert this.state == State.Pending;
         this.result = result;
         this.resolveReactions = null;
         this.rejectReactions = null;
-        this.status = status;
+        this.state = state;
     }
 }

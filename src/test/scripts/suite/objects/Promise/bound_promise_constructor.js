@@ -20,7 +20,6 @@ const {
   }
 
   assertThrows(() => BoundPromise().all([]), TypeError);
-  assertThrows(() => BoundPromise().cast(0), TypeError);
   assertThrows(() => BoundPromise().race([]), TypeError);
   assertThrows(() => BoundPromise().reject(0), TypeError);
   assertThrows(() => BoundPromise().resolve(0), TypeError);
@@ -35,7 +34,6 @@ const {
     return Object.setPrototypeOf(Promise.bind(boundThis), Promise);
   }
   assertThrows(() => BoundPromise().all([]), TypeError);
-  assertThrows(() => BoundPromise().cast(0), TypeError);
   assertThrows(() => BoundPromise().race([]), TypeError);
   assertThrows(() => BoundPromise().reject(0), TypeError);
   assertThrows(() => BoundPromise().resolve(0), TypeError);
