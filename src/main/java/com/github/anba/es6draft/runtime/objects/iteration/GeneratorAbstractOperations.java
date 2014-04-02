@@ -63,4 +63,20 @@ public final class GeneratorAbstractOperations {
         /* steps 5-11 */
         return generator.yield(iterNextObj);
     }
+
+    /**
+     * GeneratorThrow(generator, value)
+     */
+    public static Object GeneratorThrow(ExecutionContext cx, Object generator, Object exception) {
+        /* steps 1-2 */
+        if (!Type.isObject(generator)) {
+            throw newTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* step 3 */
+        if (!(generator instanceof GeneratorObject)) {
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        /* steps 4-18 */
+        return ((GeneratorObject) generator)._throw(cx, exception);
+    }
 }

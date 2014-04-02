@@ -6,14 +6,13 @@
  */
 package com.github.anba.es6draft.runtime.objects.iteration;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorResume;
+import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorThrow;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -68,12 +67,7 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
          */
         @Function(name = "throw", arity = 1)
         public static Object _throw(ExecutionContext cx, Object thisValue, Object exception) {
-            /* steps 1-3 */
-            if (!(thisValue instanceof GeneratorObject)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
-            }
-            /* steps 4-18 */
-            return ((GeneratorObject) thisValue)._throw(cx, exception);
+            return GeneratorThrow(cx, thisValue, exception);
         }
 
         /**
