@@ -22,8 +22,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  * </ul>
  */
 public final class TokenStream {
-    private static final boolean DEBUG = false;
-
     private final Parser parser;
     private final TokenStreamInput input;
 
@@ -98,57 +96,100 @@ public final class TokenStream {
         }
     }
 
+    /**
+     * Resets and returns the internal character buffer
+     */
     private StringBuffer buffer() {
         StringBuffer buffer = this.buffer;
         buffer.clear();
         return buffer;
     }
 
+    /**
+     * Updates line state information for line breaks within literals, does <strong>not</strong> set
+     * the {@link #hasLineTerminator} flag.
+     */
     private void incrementLine() {
         line += 1;
         linestart = input.position();
     }
 
+    /**
+     * Updates the line state information, must not be used for line breaks within literals.
+     */
     private void incrementLineAndUpdate() {
         line += 1;
         linestart = input.position();
         hasLineTerminator = true;
     }
 
+    /**
+     * Sets the source position (line / column information) for the next token
+     */
     private void updateSourcePosition() {
         nextSourcePosition = ((long) (input.position() - linestart) << 32) | line;
     }
 
+    /**
+     * Public constructor, token stream still needs to be initialised by calling the
+     * {@link #initialise()} method.
+     */
     public TokenStream(Parser parser, TokenStreamInput input) {
         this.parser = parser;
         this.input = input;
     }
 
+    /**
+     * Return the start position of current token, includes leading whitespace and comments. Also
+     * needed to reset the token stream.
+     * 
+     * @see #reset(long, long)
+     */
     public int position() {
         return position;
     }
 
+    /**
+     * Returns the raw source characters from the underlying input source.
+     */
     public String range(int from, int to) {
         return input.range(from, to);
     }
 
+    /**
+     * Returns the encoded line information, needed to reset the token stream.
+     * 
+     * @see #reset(long, long)
+     */
     public long lineinfo() {
         return ((long) line << 32) | linestart;
     }
 
+    /**
+     * Returns the encoded line/column information of the current source position.
+     */
     public long sourcePosition() {
         return sourcePosition;
     }
 
+    /**
+     * Returns the encoded start line/column information for current token.
+     */
     public long beginPosition() {
         return sourcePosition;
     }
 
+    /**
+     * Returns the encoded end line/column information for current token.
+     */
     public long endPosition() {
         // add one to make columns 1-indexed
         return ((long) (1 + position - linestart) << 32) | line;
     }
 
+    /**
+     * Initialises this token stream, needs to be called before fetching any tokens.
+     */
     public TokenStream initialise() {
         // set internal state to default values
         this.hasLineTerminator = true;
@@ -163,6 +204,12 @@ public final class TokenStream {
         return this;
     }
 
+    /**
+     * Resets this token stream to the requested position.
+     * 
+     * @see #position()
+     * @see #lineinfo()
+     */
     public void reset(long position, long lineinfo) {
         // reset character stream
         input.reset((int) position);
@@ -179,6 +226,9 @@ public final class TokenStream {
         this.linestart = (int) lineinfo;
     }
 
+    /**
+     * Returns the string data of the current token.
+     */
     public String getString() {
         if (string == null) {
             string = buffer.toString();
@@ -186,24 +236,40 @@ public final class TokenStream {
         return string;
     }
 
+    /**
+     * Returns <code>true</code> iff the current token is a string literal which contains an escape
+     * sequence.
+     */
     public boolean hasEscape() {
         return hasEscape;
     }
 
+    /**
+     * Returns the number data of the current token.
+     */
     public double getNumber() {
         return number;
     }
 
+    /**
+     * Returns the current line number.
+     */
     public int getLine() {
         return line;
     }
 
+    /**
+     * Returns the current column number.
+     */
     public int getColumn() {
         return input.position() - linestart;
     }
 
     //
 
+    /**
+     * Advances the token stream to the next token.
+     */
     public Token nextToken() {
         if (next == null) {
             hasLineTerminator = false;
@@ -221,10 +287,16 @@ public final class TokenStream {
         return current;
     }
 
+    /**
+     * Returns the current token.
+     */
     public Token currentToken() {
         return current;
     }
 
+    /**
+     * Peeks the next token in this token stream.
+     */
     public Token peekToken() {
         assert !(current == Token.DIV || current == Token.ASSIGN_DIV);
         if (next == null) {
@@ -246,11 +318,17 @@ public final class TokenStream {
         return next;
     }
 
+    /**
+     * Returns <code>true</code> iff there is no line terminator before the current token.
+     */
     public boolean hasCurrentLineTerminator() {
         assert current != null;
         return hasCurrentLineTerminator;
     }
 
+    /**
+     * Returns <code>true</code> iff there is no line terminator before the next token.
+     */
     public boolean hasNextLineTerminator() {
         assert next != null;
         return hasLineTerminator;
@@ -576,9 +654,6 @@ public final class TokenStream {
         }
         updateSourcePosition();
 
-        if (DEBUG)
-            System.out.printf("scanToken() -> %c\n", (char) c);
-
         switch (c) {
         case '\'':
         case '"':
@@ -707,7 +782,7 @@ public final class TokenStream {
                 mustMatch('!');
                 mustMatch('-');
                 mustMatch('-');
-                readSingleComment();
+                readSingleLineComment();
                 return Token.COMMENT;
             } else {
                 return Token.LT;
@@ -766,7 +841,7 @@ public final class TokenStream {
                         && parser.isEnabled(CompatibilityOption.HTMLComments)) {
                     // html end-comment at line start
                     mustMatch('>');
-                    readSingleComment();
+                    readSingleLineComment();
                     return Token.COMMENT;
                 }
                 return Token.DEC;
@@ -791,10 +866,10 @@ public final class TokenStream {
             if (match('=')) {
                 return Token.ASSIGN_DIV;
             } else if (match('/')) {
-                readSingleComment();
+                readSingleLineComment();
                 return Token.COMMENT;
             } else if (match('*')) {
-                readMultiComment();
+                readMultiLineComment();
                 return Token.COMMENT;
             } else {
                 return Token.DIV;
@@ -1013,7 +1088,7 @@ public final class TokenStream {
      *     SourceCharacter but not LineTerminator
      * </pre>
      */
-    private Token readSingleComment() {
+    private Token readSingleLineComment() {
         final int EOF = TokenStreamInput.EOF;
         TokenStreamInput input = this.input;
         for (;;) {
@@ -1048,7 +1123,7 @@ public final class TokenStream {
      *     SourceCharacter but not one of / or *
      * </pre>
      */
-    private Token readMultiComment() {
+    private Token readMultiLineComment() {
         final int EOF = TokenStreamInput.EOF;
         TokenStreamInput input = this.input;
         loop: for (;;) {
@@ -1770,6 +1845,10 @@ public final class TokenStream {
         return parseDecimal(buffer.cbuf, buffer.length);
     }
 
+    /**
+     * Returns <code>true</code> if {@code c} is either a decimal digit or an identifier start
+     * character.
+     */
     private boolean isDecimalDigitOrIdentifierStart(int c) {
         return isDecimalDigit(c) || isIdentifierStart(c);
     }
@@ -1841,20 +1920,34 @@ public final class TokenStream {
         return -1;
     }
 
+    /**
+     * Throws a {@link ParserException}.
+     */
     private ParserException error(Messages.Key messageKey, String... args) {
         throw new ParserException(ExceptionType.SyntaxError, parser.getSourceFile(), getLine(),
                 getColumn(), messageKey, args);
     }
 
+    /**
+     * Throws a {@link ParserEOFException}.
+     */
     private ParserException eofError(Messages.Key messageKey, String... args) {
         throw new ParserEOFException(parser.getSourceFile(), getLine(), getColumn(), messageKey,
                 args);
     }
 
+    /**
+     * Returns <code>true</code> and advances the source position if the current character is
+     * {@code c}. Otherwise returns <code>false</code> and does not advance the source position.
+     */
     private boolean match(char c) {
         return input.match(c);
     }
 
+    /**
+     * Advances the source position if the current character is {@code c}. Otherwise throws a parser
+     * exception.
+     */
     private void mustMatch(char c) {
         if (input.getChar() != c) {
             throw error(Messages.Key.UnexpectedCharacter, String.valueOf(c));

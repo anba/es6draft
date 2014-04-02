@@ -22,8 +22,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  * </ul>
  */
 public final class JSONTokenStream {
-    private static final boolean DEBUG = false;
-
     private final TokenStreamInput input;
     // token data
     private Token current;
@@ -47,6 +45,11 @@ public final class JSONTokenStream {
             cbuf[len] = (char) c;
             length = len + 1;
         }
+
+        @Override
+        public String toString() {
+            return new String(cbuf, 0, length);
+        }
     }
 
     public JSONTokenStream(TokenStreamInput input) {
@@ -54,20 +57,32 @@ public final class JSONTokenStream {
         this.current = scanToken();
     }
 
+    /**
+     * Returns the string data of the current token.
+     */
     public String getString() {
-        return new String(buffer.cbuf, 0, buffer.length);
+        return buffer.toString();
     }
 
+    /**
+     * Returns the number data of the current token.
+     */
     public double getNumber() {
         return number;
     }
 
     //
 
+    /**
+     * Advances the token stream to the next token.
+     */
     public Token nextToken() {
         return (current = scanToken());
     }
 
+    /**
+     * Returns the current token.
+     */
     public Token currentToken() {
         return current;
     }
@@ -90,8 +105,6 @@ public final class JSONTokenStream {
             }
             break;
         }
-        if (DEBUG)
-            System.out.printf("scanToken() -> %c\n", (char) c);
 
         switch (c) {
         case '"':
@@ -131,6 +144,11 @@ public final class JSONTokenStream {
         return Token.ERROR;
     }
 
+    /**
+     * <pre>
+     * JSONNullLiteral::NullLiteral
+     * </pre>
+     */
     private Token readNullLiteral(int c) {
         TokenStreamInput input = this.input;
         if (c == 'n' && input.getChar() == 'u' && input.getChar() == 'l' && input.getChar() == 'l') {
@@ -139,6 +157,11 @@ public final class JSONTokenStream {
         return Token.ERROR;
     }
 
+    /**
+     * <pre>
+     * JSONBooleanLiteral::BooleanLiteral
+     * </pre>
+     */
     private Token readFalseLiteral(int c) {
         TokenStreamInput input = this.input;
         if (c == 'f' && input.getChar() == 'a' && input.getChar() == 'l' && input.getChar() == 's'
@@ -148,6 +171,11 @@ public final class JSONTokenStream {
         return Token.ERROR;
     }
 
+    /**
+     * <pre>
+     * JSONBooleanLiteral::BooleanLiteral
+     * </pre>
+     */
     private Token readTrueLiteral(int c) {
         TokenStreamInput input = this.input;
         if (c == 't' && input.getChar() == 'r' && input.getChar() == 'u' && input.getChar() == 'e') {
@@ -156,6 +184,22 @@ public final class JSONTokenStream {
         return Token.ERROR;
     }
 
+    /**
+     * <pre>
+     * JSONString ::
+     *     " JSONStringCharacters[opt] "
+     * JSONStringCharacters ::
+     *     JSONStringCharacter JSONStringCharacters[opt]
+     * JSONStringCharacter ::
+     *     SourceCharacter but not one of " or \ or U+0000 through U+001F
+     *     \ JSONEscapeSequence
+     * JSONEscapeSequence ::
+     *     JSONEscapeCharacter
+     *     u HexDigit HexDigit HexDigit HexDigit
+     * JSONEscapeCharacter :: one of
+     *     " / \ b f n r t
+     * </pre>
+     */
     private Token readString(int quoteChar) {
         assert quoteChar == '"';
 
@@ -281,6 +325,9 @@ public final class JSONTokenStream {
         return parseDecimal(buffer.cbuf, buffer.length);
     }
 
+    /**
+     * Resets and returns the internal character buffer
+     */
     private StringBuffer buffer() {
         StringBuffer buffer = this.buffer;
         buffer.clear();
@@ -302,6 +349,9 @@ public final class JSONTokenStream {
         return -1;
     }
 
+    /**
+     * Throws a {@link ParserException}.
+     */
     private ParserException error(Messages.Key messageKey, String... args) {
         throw new ParserException(ExceptionType.SyntaxError, "<json>", 1, 1, messageKey, args);
     }
