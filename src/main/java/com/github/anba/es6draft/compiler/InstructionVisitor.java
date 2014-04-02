@@ -278,17 +278,20 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     enum MethodType {
-        Interface, Virtual, Special, Static;
+        Interface, Virtual, Special, Static, VirtualInterface, SpecialInterface, StaticInterface;
 
         final int toTag() {
             switch (this) {
             case Interface:
                 return Opcodes.H_INVOKEINTERFACE;
             case Special:
+            case SpecialInterface:
                 return Opcodes.H_INVOKESPECIAL;
             case Static:
+            case StaticInterface:
                 return Opcodes.H_INVOKESTATIC;
             case Virtual:
+            case VirtualInterface:
                 return Opcodes.H_INVOKEVIRTUAL;
             default:
                 throw new IllegalStateException();
@@ -311,10 +314,6 @@ class InstructionVisitor extends InstructionAdapter {
 
         static MethodDesc create(MethodType type, Type owner, String name, Type desc) {
             return new MethodDesc(type, owner.getInternalName(), name, desc.getDescriptor());
-        }
-
-        static MethodDesc create(MethodType type, String owner, String name, Type desc) {
-            return new MethodDesc(type, owner, name, desc.getDescriptor());
         }
 
         static MethodDesc create(MethodType type, String owner, String name, String desc) {
@@ -386,7 +385,7 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     protected InstructionVisitor(MethodCode method) {
-        super(Opcodes.ASM4, method.methodVisitor);
+        super(Opcodes.ASM5, method.methodVisitor);
         this.methodName = method.methodName;
         this.methodDescriptor = Type.getMethodType(method.methodDescriptor);
         this.methodAllocation = MethodAllocation.from(method.access);
@@ -819,13 +818,22 @@ class InstructionVisitor extends InstructionAdapter {
             invokeinterface(method.owner, method.name, method.desc);
             break;
         case Special:
-            invokespecial(method.owner, method.name, method.desc);
+            invokespecial(method.owner, method.name, method.desc, false);
+            break;
+        case SpecialInterface:
+            invokespecial(method.owner, method.name, method.desc, true);
             break;
         case Static:
-            invokestatic(method.owner, method.name, method.desc);
+            invokestatic(method.owner, method.name, method.desc, false);
+            break;
+        case StaticInterface:
+            invokestatic(method.owner, method.name, method.desc, true);
             break;
         case Virtual:
-            invokevirtual(method.owner, method.name, method.desc);
+            invokevirtual(method.owner, method.name, method.desc, false);
+            break;
+        case VirtualInterface:
+            invokevirtual(method.owner, method.name, method.desc, true);
             break;
         default:
             throw new IllegalStateException();
@@ -893,28 +901,28 @@ class InstructionVisitor extends InstructionAdapter {
         case Type.VOID:
             return;
         case Type.BOOLEAN:
-            invokestatic("java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;");
+            invokestatic("java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
             return;
         case Type.CHAR:
-            invokestatic("java/lang/Character", "valueOf", "(C)Ljava/lang/Character;");
+            invokestatic("java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
             return;
         case Type.BYTE:
-            invokestatic("java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;");
+            invokestatic("java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
             return;
         case Type.SHORT:
-            invokestatic("java/lang/Short", "valueOf", "(S)Ljava/lang/Short;");
+            invokestatic("java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
             return;
         case Type.INT:
-            invokestatic("java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;");
+            invokestatic("java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
             return;
         case Type.FLOAT:
-            invokestatic("java/lang/Float", "valueOf", "(F)Ljava/lang/Float;");
+            invokestatic("java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false);
             return;
         case Type.LONG:
-            invokestatic("java/lang/Long", "valueOf", "(J)Ljava/lang/Long;");
+            invokestatic("java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
             return;
         case Type.DOUBLE:
-            invokestatic("java/lang/Double", "valueOf", "(D)Ljava/lang/Double;");
+            invokestatic("java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
             return;
         case Type.ARRAY:
         case Type.OBJECT:
@@ -931,28 +939,28 @@ class InstructionVisitor extends InstructionAdapter {
         case Type.VOID:
             return;
         case Type.BOOLEAN:
-            invokevirtual("java/lang/Boolean", "booleanValue", "()Z");
+            invokevirtual("java/lang/Boolean", "booleanValue", "()Z", false);
             return;
         case Type.CHAR:
-            invokevirtual("java/lang/Character", "charValue", "()C");
+            invokevirtual("java/lang/Character", "charValue", "()C", false);
             return;
         case Type.BYTE:
-            invokevirtual("java/lang/Byte", "byteValue", "()B");
+            invokevirtual("java/lang/Byte", "byteValue", "()B", false);
             return;
         case Type.SHORT:
-            invokevirtual("java/lang/Short", "shortValue", "()S");
+            invokevirtual("java/lang/Short", "shortValue", "()S", false);
             return;
         case Type.INT:
-            invokevirtual("java/lang/Integer", "intValue", "()I");
+            invokevirtual("java/lang/Integer", "intValue", "()I", false);
             return;
         case Type.FLOAT:
-            invokevirtual("java/lang/Float", "floatValue", "()F");
+            invokevirtual("java/lang/Float", "floatValue", "()F", false);
             return;
         case Type.LONG:
-            invokevirtual("java/lang/Long", "longValue", "()J");
+            invokevirtual("java/lang/Long", "longValue", "()J", false);
             return;
         case Type.DOUBLE:
-            invokevirtual("java/lang/Double", "doubleValue", "()D");
+            invokevirtual("java/lang/Double", "doubleValue", "()D", false);
             return;
         case Type.ARRAY:
         case Type.OBJECT:

@@ -167,7 +167,7 @@ public final class Compiler {
 
     private static final class SimpleTypeTextifier extends Textifier {
         SimpleTypeTextifier() {
-            super(Opcodes.ASM4);
+            super(Opcodes.ASM5);
         }
 
         @Override

@@ -37,7 +37,7 @@ final class StackMethodVisitor extends MethodVisitor {
     }
 
     public StackMethodVisitor(MethodVisitor mv) {
-        super(Opcodes.ASM4, mv);
+        super(Opcodes.ASM5, mv);
     }
 
     /**
@@ -957,8 +957,14 @@ final class StackMethodVisitor extends MethodVisitor {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-        super.visitMethodInsn(opcode, owner, name, desc);
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+        super.visitMethodInsn(opcode, owner, name, desc, itf);
 
         invoke(opcode, desc);
     }

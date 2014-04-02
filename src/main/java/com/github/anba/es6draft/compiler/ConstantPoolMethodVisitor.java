@@ -26,7 +26,7 @@ class ConstantPoolMethodVisitor extends MethodVisitor {
     private final InlineConstantPool constantPool;
 
     public ConstantPoolMethodVisitor(MethodVisitor mv, InlineConstantPool constantPool) {
-        super(Opcodes.ASM4, mv);
+        super(Opcodes.ASM5, mv);
         this.constantPool = constantPool;
     }
 
@@ -348,7 +348,7 @@ class ConstantPoolMethodVisitor extends MethodVisitor {
                     mv.visitJumpInsn(Opcodes.IF_ICMPGE, label);
                     mv.visitVarInsn(Opcodes.ILOAD, 0);
                     mv.visitMethodInsn(Opcodes.INVOKESTATIC, classCode.className, name + "_"
-                            + index, desc);
+                            + index, desc, false);
                     mv.visitInsn(type.getOpcode(Opcodes.IRETURN));
                     mv.visitLabel(label);
                 }
@@ -398,7 +398,7 @@ class ConstantPoolMethodVisitor extends MethodVisitor {
             } else {
                 throw new IllegalArgumentException();
             }
-            mv.visitMethodInsn(Opcodes.INVOKESTATIC, classCode.className, name, desc);
+            mv.visitMethodInsn(Opcodes.INVOKESTATIC, classCode.className, name, desc, false);
         }
 
         @Override

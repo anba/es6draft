@@ -176,7 +176,7 @@ final class Code {
         private final String methodName;
 
         $CodeSizeEvaluator(String methodName, MethodVisitor mv) {
-            super(Opcodes.ASM4, mv);
+            super(Opcodes.ASM5, mv);
             this.methodName = methodName;
         }
 

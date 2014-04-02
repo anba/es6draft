@@ -62,8 +62,7 @@
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm-debug-all</artifactId>
-      <version>4.2</version>
-      <scope>compile</scope>
+      <version>5.0.1</version>
     </dependency>
     <dependency>
       <groupId>com.ibm.icu</groupId>
