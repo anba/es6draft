@@ -127,19 +127,21 @@ final class BindingInitialisationGenerator {
             this.environment = environment;
         }
 
-        protected final void BindingInitialisation(Node node) {
+        protected final void BindingInitialisation(Binding node) {
             node.accept(new BindingInitialisation(codegen, mv, environment), null);
         }
 
-        protected final void IteratorBindingInitialisation(Node node, Variable<Iterator<?>> iterator) {
+        protected final void IteratorBindingInitialisation(ArrayBindingPattern node,
+                Variable<Iterator<?>> iterator) {
             node.accept(new IteratorBindingInitialisation(codegen, mv, environment), iterator);
         }
 
-        protected final void KeyedBindingInitialisation(Node node, String key) {
+        protected final void KeyedBindingInitialisation(BindingProperty node, String key) {
             node.accept(new KeyedBindingInitialisation(codegen, mv, environment), key);
         }
 
-        protected final void ComputedKeyedBindingInitialisation(Node node, ComputedPropertyName key) {
+        protected final void ComputedKeyedBindingInitialisation(BindingProperty node,
+                ComputedPropertyName key) {
             node.accept(new ComputedKeyedBindingInitialisation(codegen, mv, environment), key);
         }
 
@@ -194,7 +196,7 @@ final class BindingInitialisationGenerator {
         }
 
         @Override
-        public Void visit(ArrayBindingPattern node, Void _) {
+        public Void visit(ArrayBindingPattern node, Void value) {
             // step 1: Assert: Type(value) is Object
 
             // step 2-3:
@@ -217,7 +219,7 @@ final class BindingInitialisationGenerator {
         }
 
         @Override
-        public Void visit(ObjectBindingPattern node, Void _) {
+        public Void visit(ObjectBindingPattern node, Void value) {
             // step 1: Assert: Type(value) is Object
 
             // step 2: [...]
@@ -252,7 +254,7 @@ final class BindingInitialisationGenerator {
          * 13.2.1.5 Runtime Semantics: BindingInitialisation
          */
         @Override
-        public Void visit(BindingIdentifier node, Void _) {
+        public Void visit(BindingIdentifier node, Void value) {
             if (environment == EnvironmentType.EnvironmentFromStack) {
                 // stack: [envRec, value] -> [envRec, id, value]
                 mv.aconst(node.getName());

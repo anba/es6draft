@@ -100,21 +100,22 @@ final class DestructuringAssignmentGenerator {
             this.mv = mv;
         }
 
-        protected final void DestructuringAssignmentEvaluation(Node node) {
+        protected final void DestructuringAssignmentEvaluation(AssignmentPattern node) {
             node.accept(new DestructuringAssignmentEvaluation(codegen, mv), null);
         }
 
-        protected final void IteratorDestructuringAssignmentEvaluation(Node node,
+        protected final void IteratorDestructuringAssignmentEvaluation(AssignmentElementItem node,
                 Variable<Iterator<?>> iterator) {
             node.accept(new IteratorDestructuringAssignmentEvaluation(codegen, mv), iterator);
         }
 
-        protected final void KeyedDestructuringAssignmentEvaluation(Node node, String key) {
+        protected final void KeyedDestructuringAssignmentEvaluation(AssignmentProperty node,
+                String key) {
             node.accept(new KeyedDestructuringAssignmentEvaluation(codegen, mv), key);
         }
 
-        protected final void ComputedKeyedDestructuringAssignmentEvaluation(Node node,
-                ComputedPropertyName key) {
+        protected final void ComputedKeyedDestructuringAssignmentEvaluation(
+                AssignmentProperty node, ComputedPropertyName key) {
             node.accept(new ComputedKeyedDestructuringAssignmentEvaluation(codegen, mv), key);
         }
 
@@ -248,7 +249,7 @@ final class DestructuringAssignmentGenerator {
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
 
                 // stack: [v'] -> []
-                DestructuringAssignmentEvaluation(target);
+                DestructuringAssignmentEvaluation((AssignmentPattern) target);
             } else {
                 // stack: [lref, 'v] -> []
                 PutValue(target, refType, mv);
@@ -323,7 +324,7 @@ final class DestructuringAssignmentGenerator {
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
 
                 // stack: [v'] -> []
-                DestructuringAssignmentEvaluation(target);
+                DestructuringAssignmentEvaluation((AssignmentPattern) target);
             } else {
                 // stack: [v'] -> [lref, 'v]
                 ValType refType = expression(target, mv);
@@ -388,7 +389,7 @@ final class DestructuringAssignmentGenerator {
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
 
                 // stack: [v'] -> []
-                DestructuringAssignmentEvaluation(target);
+                DestructuringAssignmentEvaluation((AssignmentPattern) target);
             } else {
                 // stack: [v'] -> [lref, 'v]
                 ValType refType = expression(target, mv);
