@@ -2939,10 +2939,10 @@ public final class Parser {
                 return declaration(false);
             }
             // 'let' as identifier, e.g. `let + 1`
-            // fall-through
+            break;
         default:
-            return statement();
         }
+        return statement();
     }
 
     /**
@@ -4476,14 +4476,16 @@ public final class Parser {
             if (isEnabled(CompatibilityOption.LetExpression)) {
                 return letExpression();
             }
+            break;
         case YIELD:
-            if (context.noDivAfterYield && LOOKAHEAD(Token.DIV)) {
+            if (context.noDivAfterYield && (LOOKAHEAD(Token.DIV) || LOOKAHEAD(Token.ASSIGN_DIV))) {
                 consume(Token.YIELD);
                 reportTokenMismatch(Token.DIV, Token.REGEXP);
             }
+            break;
         default:
-            return identifierReference();
         }
+        return identifierReference();
     }
 
     private Expression functionOrGeneratorExpression() {

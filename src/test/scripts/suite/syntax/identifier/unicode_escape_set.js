@@ -64,7 +64,7 @@ for (let name of names) {
   }
 }
 
-// "set" is allowed to contain Unicode escape sequences when not used as getter
+// "set" is allowed to contain Unicode escape sequences when not used as setter
 for (let name of names) {
   let code = `class C { ${name}(v) {} }`;
   Function(code);
