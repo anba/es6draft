@@ -145,6 +145,7 @@ function-names.js
 # different maximum arguments size
 regress/regress-3027.js
 regress/regress-331444.js
+regress/regress-358090.js
 
 # Error.prototype.message is limited to 350 characters in V8
 error-tostring-omit.js
@@ -152,8 +153,12 @@ error-tostring-omit.js
 # different precision for Math.hypot()
 es6/math-hypot.js
 
-# V8 throws RangeError is string constructed in Array.prototype.join exceeds internal limit
+# V8 throws RangeError if strings exceed internal limit
 regress/regress-336820.js
+string-oom-array-join.js
+string-oom-concat.js
+string-oom-replace-global-regexp-with-string.js
+string-oom-replace-regexp-global-with-function.js
 
 
 ############################################
@@ -174,6 +179,9 @@ regress/regress-280531.js
 
 # readbuffer function
 regress/d8-readbuffer.js
+
+# Object.observe
+regress/regress-356589.js
 
 
 ###############################################################
@@ -269,6 +277,7 @@ regress/regress-1130.js
 regress/regress-1201933.js
 regress/regress-1207276.js
 regress/regress-799761.js
+regress/regress-handle-illegal-redeclaration.js
 
 # Static Semantics: Early errors for return statement not implemented
 delay-syntax-error.js
@@ -297,10 +306,11 @@ harmony/block-for.js
 #######################################
 
 # Method code too large
-# too many variables
-limit-locals.js
 # too many arguments
 regress/regress-1122.js
+
+# Different maximal stack depth
+regress/regress-353551.js
 
 # StackOverflowError during invokedynamic linking (intermittent)
 regress/regress-1132.js

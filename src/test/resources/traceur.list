@@ -49,24 +49,9 @@ feature/Scope/Error_BlockBinding1.js
 ############################################
 
 
-
 #######################################
 # Unsupported features                #
 #######################################
-
-# unsupported option 'disabled'
-feature/ArrayComprehension/Error_Disabled.js
-feature/Classes/Error_Disabled.js
-feature/ComputedPropertyNames/Error_Disabled.js
-feature/Destructuring/Error_Disabled.js
-feature/GeneratorComprehension/Error_Disabled.js
-feature/GeneratorComprehension/Error_Disabled.js
-feature/NumericLiteral/Error_Disabled.js
-feature/ObjectInitialiserShorthand/Error_Disabled.js
-feature/Scope/Error_Disabled.js
-feature/Spread/Error_Disabled.js
-feature/TemplateLiterals/Error_Disabled.js
-feature/Yield/Error_Disabled.js
 
 
 #######################################
@@ -83,19 +68,15 @@ feature/Scope/LetForInInitializers1.js
 #######################################
 
 # No implicit ToObject() in destructuring
-feature/Destructuring/ArrowFunction.js
-feature/Destructuring/Catch.js
-feature/Destructuring/Class.js
-feature/Destructuring/Empty.js
+# (https://github.com/google/traceur-compiler/issues/937)
 feature/Destructuring/ForInLoop.js
-feature/Destructuring/ForOfLoop.js
-feature/Destructuring/Method.js
-feature/Destructuring/SetAccessor.js
 
 # Array destructuring without @@iterator
+# (https://github.com/google/traceur-compiler/issues/840)
 feature/Destructuring/Rest.js
 
 # ... spread call without @@iterator, no implicit ToObject
+# (https://github.com/google/traceur-compiler/issues/842)
 feature/Spread/Type.js
 feature/TempVarTransformer/UseStrictDirective.js
 
@@ -103,6 +84,7 @@ feature/TempVarTransformer/UseStrictDirective.js
 feature/Classes/ClassNameBinding.js
 
 # No error when calling next() on closed generator
+# (https://github.com/google/traceur-compiler/issues/841)
 feature/Yield/Try.js
 feature/Yield/Try2.js
 feature/Yield/Try3.js

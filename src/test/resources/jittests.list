@@ -309,6 +309,9 @@ tests/self-test/assertDeepEq.js
 # for-of does not call .next() with undefined as a single argument
 tests/for-of/next-arity.js
 
+# Object.getPrototypeOf() works with primitives
+tests/basic/setPrototypeOf.js
+
 
 #######################################
 # ES6 related syntax changes          #
@@ -489,6 +492,7 @@ tests/basic/offThreadCompileScript-01.js
 # setJitCompilerOption
 tests/bug953337.js
 tests/basic/bug970643.js
+tests/basic/testBug686274.js
 
 
 #######################################

@@ -22,11 +22,6 @@ date-format/wellformed-unsupported-locale.js
 number-format/default-locale.js
 number-format/wellformed-unsupported-locale.js
 
-# v8-intl restriction tests
-collator/protected-icu-internals.js
-date-format/protected-icu-internals.js
-number-format/protected-icu-internals.js
-
 # unsupported v8-intl extension "Intl.DateTimeFormat.prototype.v8Parse"
 date-format/parse-invalid-input.js
 date-format/parse-mdy.js
