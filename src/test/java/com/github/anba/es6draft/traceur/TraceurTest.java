@@ -16,7 +16,9 @@ import static org.junit.Assume.assumeTrue;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,9 +36,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.github.anba.es6draft.WindowTimers;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Task;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -71,6 +76,13 @@ public class TraceurTest {
     @ClassRule
     public static TestGlobals<V8ShellGlobalObject, TraceurTestInfo> globals = new TestGlobals<V8ShellGlobalObject, TraceurTestInfo>(
             configuration) {
+        @Override
+        protected Set<CompatibilityOption> getOptions() {
+            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            options.add(CompatibilityOption.AsyncFunction);
+            return options;
+        }
+
         @Override
         protected ObjectAllocator<V8ShellGlobalObject> newAllocator(ShellConsole console,
                 TraceurTestInfo test, ScriptCache scriptCache) {
@@ -132,11 +144,12 @@ public class TraceurTest {
     @Test
     public void runTest() throws Throwable {
         // create global 'done' function for async tests
-        AsyncHelper helper = null;
+        AsyncHelper async = new AsyncHelper();
+        WindowTimers timers = new WindowTimers();
         if (test.async) {
-            helper = new AsyncHelper();
             ExecutionContext cx = global.getRealm().defaultContext();
-            Properties.createProperties(cx, global, helper, AsyncHelper.class);
+            Properties.createProperties(cx, global, async, AsyncHelper.class);
+            Properties.createProperties(cx, global, timers, WindowTimers.class);
         }
 
         // evaluate actual test-script
@@ -144,9 +157,16 @@ public class TraceurTest {
 
         // wait for pending tasks to finish
         if (test.async) {
-            assertFalse(helper.doneCalled);
-            global.getRealm().getWorld().executeTasks();
-            assertTrue(helper.doneCalled);
+            assertFalse(async.doneCalled);
+            for (;;) {
+                global.getRealm().getWorld().executeTasks();
+                Task task = timers.nextTaskOrNull();
+                if (task == null) {
+                    break;
+                }
+                global.getRealm().enqueueLoadingTask(task);
+            }
+            assertTrue(async.doneCalled);
         }
     }
 

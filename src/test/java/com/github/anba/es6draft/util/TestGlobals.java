@@ -56,7 +56,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
     protected void before() throws Throwable {
         // read options ...
         options = compatibilityOptions(configuration.getString("mode", ""));
-        scriptCache = new ScriptCache(options);
+        scriptCache = new ScriptCache(getOptions());
 
         // pre-compile initialisation scripts
         Path basedir = Resources.getTestSuitePath(configuration);
