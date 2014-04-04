@@ -5,15 +5,33 @@
 # <https://github.com/anba/es6draft>
 #
 
+# Symbol.iterator for arguments object (not yet in draft)
+js/script-tests/arguments-iterator.js
+js/script-tests/for-of-arguments-continue-hang.js
 
-# ES5.1/6 spec vs. browser reality
-# - Object.defineProperty(/x/,"lastIndex",{writable:false}).exec("")
-# - browsers return `null`, whereas spec says to throw a TypeError
-fast/regex/lastIndex.js
+# array destructuring uses Symbol.iterator
+js/script-tests/destructuring-assignment.js
+
+# 'values' in [] returns false in WebKit?
+js/script-tests/array-iterators.js
+
+# computed property names are defined after literal property names in WebKit?
+js/script-tests/basic-computed-property-name.js
+
+# no iteration support in WebKit
+js/script-tests/basic-map.js
+
+# Add custom jsclegacy.js file?
+js/script-tests/basic-set.js
+js/script-tests/basic-spread.js
+
+# JSC has legacy Name builtin
+js/script-tests/names.js
 
 # invalid tests
-fast/js/JSON-parse-reviver.js
-fast/js/toString-overrides.js
+js/script-tests/JSON-parse-reviver.js
+js/script-tests/number-clz.js
+js/script-tests/typedarray-set-overlapping-elements-of-same-size.js
 
 
 ###################
@@ -21,12 +39,7 @@ fast/js/toString-overrides.js
 ###################
 
 # RegExp differences Java<->JavaScript (resp. V8)
-fast/js/regexp-non-capturing-groups.js
-fast/js/string-split-conformance.js
-fast/regex/ecma-regex-examples.js
-fast/regex/parentheses.js
-fast/regex/repeat-match-waldemar.js
-regexp-zero-length-alternatives.js
+js/script-tests/regexp-zero-length-alternatives.js
 
 
 ############################################
@@ -36,75 +49,68 @@ regexp-zero-length-alternatives.js
 # array-holes and sort
 # - Array.prototype[0] = "hole"; [,1].sort()
 # - SpiderMonkey returns [1, "hole"], JSC/V8 return [1,]
-array-holes.js
- 
-# [[Prototype]] of global object is not %Object.prototype% in V8
-fast/js/Object-defineProperty.js
-
-# RegExp.prototype.toString(): escape single / in character class
-# - SpiderMonkeys escapes it, JSC/V8 don't escape it
-fast/regex/toString.js
+js/script-tests/array-holes.js
 
 # RegExp.prototype.compile
 # - .compile(undefined) vs. .compile()
 # - SpiderMonkey treats both the same, JSC/V8 treat .compile(undefined) as .compile('undefined')
-regexp-compile.js
-
-# RegExp range
-# - var regexp01c = /[1-\s35]+/
-# - Not allowed in SpiderMonkey, allowed in JSC/V8
-fast/js/regexp-ranges-and-escaped-hyphens.js
+js/script-tests/regexp-compile.js
 
 # different completion result with try-finally
-eval-throw-return.js
+js/script-tests/eval-throw-return.js
 
 # different html-comments parser
 # Function("1/*\n*/-->")
 # Allowed in SpiderMonkey, not allowed in V8/JSC
-parser-xml-close-comment.js
+js/script-tests/parser-xml-close-comment.js
 
 # `'use strict'; delete void 0;` is an early error in JSC
-fast/js/basic-strict-mode.js
+js/script-tests/basic-strict-mode.js
 
 # different handling of noctal escapes in strings
-fast/js/numeric-escapes-in-string-literals.js
-
-# different handling of invalid class ranges
-fast/regex/invalid-range-in-class.js
+js/script-tests/numeric-escapes-in-string-literals.js
 
 # different error message
-fast/js/caller-property.js
-fast/js/deep-recursion-test.js
-fast/js/function-constructor-error.js
-fast/js/Promise-init.js
-fast/js/reserved-words-strict.js
-fast/js/string-anchor.js
-fast/js/string-fontcolor.js
-fast/js/string-fontsize.js
-fast/js/string-link.js
-fast/regex/overflow.js
+js/script-tests/caller-property.js
+js/script-tests/date-proto-generic-invocation.js
+js/script-tests/exception-expression-offset.js
+js/script-tests/function-constructor-error.js
+js/script-tests/reserved-words-strict.js
 
 # Date.parse incompatibility
-date-constructor.js
-date-parse-comments-test.js
-fast/js/date-toisostring.js
+js/script-tests/date-constructor.js
+js/script-tests/date-parse-comments-test.js
+js/script-tests/date-parse-test.js
+js/script-tests/date-toisostring.js
 
 # different function source representation
-dfg-redundant-load-of-captured-variable-proven-constant.js
-dfg-resolve-global-specific-dictionary.js
-fast/js/function-toString-semicolon-insertion.js
+js/kde/script-tests/function.js
+js/kde/script-tests/inbuilt_function_tostring.js
+js/script-tests/dfg-redundant-load-of-captured-variable-proven-constant.js
+js/script-tests/dfg-resolve-global-specific-dictionary.js
+js/script-tests/function-toString-semicolon-insertion.js
 
 # String.prototype.trim() removes \u200B in V8
-string-trim.js
+js/script-tests/string-trim.js
 
 # error objects have non-standard 'line' and 'sourceURL' properties in JSC
-fast/js/exception-properties.js
+js/script-tests/exception-properties.js
+js/script-tests/exception-linenums.js
 
 # cause?
-fast/js/stack-overflow-arrity-catch.js
+js/script-tests/stack-overflow-arrity-catch.js
 
 # property key enumeration order
-fast/js/array-functions-non-arrays.js
+js/script-tests/array-functions-non-arrays.js
+
+# WebKit bug test?
+js/kde/script-tests/evil-n.js
+
+# JSC ignores empty lines in multi-line string literal
+js/script-tests/parse-backslash-before-newline.js
+
+# RegExp.input has a setter in JSC
+js/script-tests/static-put-in-prototype-chain.js
 
 
 ###############################################################
@@ -112,87 +118,81 @@ fast/js/array-functions-non-arrays.js
 ###############################################################
 
 # (String|Number|Boolean).prototype no longer instanceof (String|Number|Boolean)
-prototypes.js
-fast/js/kde/prototype_length.js
+js/kde/script-tests/prototype_length.js
 
 
 #######################################
 # ES6 related runtime changes         #
 #######################################
 
-# Error.prototype no longer instanceof Error
-fast/js/native-error-prototype.js
-
 # RegExp.prototype no longer instanceof RegExp
-fast/js/kde/RegExp.js
+js/kde/script-tests/RegExp.js
 
 # various new built-in properties
-fast/js/Object-getOwnPropertyNames.js
+js/script-tests/Object-getOwnPropertyNames.js
+
+# Object.getPrototypeOf() works with primitives
+js/script-tests/prototypes.js
 
 
 #######################################
 # ES6 related syntax changes          #
 #######################################
 
-# for-in with initialiser
-toString-for-var-decl.js
-fast/js/parser-syntax-check.js
-
 # for-in with invalid assignment
-fast/js/kde/exception_propagation.js
+js/kde/script-tests/exception_propagation.js
 
 # Static Semantics: Early errors invalid LHS
-toString-prefix-postfix-preserve-parens.js
-fast/js/function-toString-parentheses.js
-fast/js/modify-non-references.js
+js/script-tests/toString-prefix-postfix-preserve-parens.js
+js/script-tests/function-toString-parentheses.js
+js/script-tests/modify-non-references.js
+js/script-tests/dfg-activation-register-overwritten-in-throw.js
 
 # re-declaration of catch-variable
-vardecl-blocks-init.js
+js/script-tests/vardecl-blocks-init.js
 
 # setter in object literal requires exactly one argument
-for-in-cached.js
-object-literal-direct-put.js
-object-literal-syntax.js
+js/script-tests/for-in-cached.js
+js/script-tests/object-literal-direct-put.js
+js/script-tests/object-literal-syntax.js
 
 # function declaration are block scoped
-fast/js/kde/func-decl.js
+js/kde/script-tests/func-decl.js
 
 # function declaration not in block
-function-declaration-statement.js
+js/script-tests/function-declaration-statement.js
 
 # function declaration redeclaration at block-level not allowed
-function-declarations-in-switch-statement.js
+js/script-tests/function-declarations-in-switch-statement.js
 
 # const without initialiser
-const-without-initializer.js
-constant-count.js
-fast/js/arguments.js
+js/script-tests/const-without-initializer.js
+js/script-tests/constant-count.js
+js/script-tests/arguments.js
+js/script-tests/parser-syntax-check.js
+js/script-tests/function-dot-arguments.js
 
 
 #######################################
 # Compilation or runtime issues       #
 #######################################
 
-# Different maximal stack depth
-function-call-register-allocation.js
-stack-overflow-catch.js
+# Too many local variables
+js/script-tests/excessive-comma-usage.js
 
-# Method code too large
-# too many variables
-fast/js/excessive-comma-usage.js
- 
-# StackOverflowError in java.util.regex.Pattern
-fast/js/regexp-stack-overflow.js
+# Different maximal stack depth
+js/script-tests/stack-overflow-catch.js
 
 # Timeout (slow)
-array-splice.js
-comparison-operators.js
-comparison-operators-less.js
-comparison-operators-greater.js
-dfg-double-vote-fuzz.js
-dfg-int-overflow-in-loop.js
-sort-with-side-effecting-comparisons.js
+js/script-tests/array-splice.js
+js/script-tests/comparison-operators.js
+js/script-tests/comparison-operators-less.js
+js/script-tests/comparison-operators-greater.js
+js/script-tests/dfg-double-vote-fuzz.js
+js/script-tests/dfg-int-overflow-in-loop.js
+js/script-tests/dfg-min-max.js
+js/script-tests/sort-with-side-effecting-comparisons.js
+js/script-tests/typedarray-zero-size.js
 
 # OutOfMemory
-function-apply-aliased.js
-string-replacement-outofmemory.js
+js/script-tests/function-apply-aliased.js
