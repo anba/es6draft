@@ -7,17 +7,13 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
-import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorStart;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.objects.async.AsyncAbstractOperations.Spawn;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialise;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.objects.async.AsyncAbstractOperations.Spawn;
-import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -82,22 +78,12 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
         return getTailCallMethod().invokeExact(this, callerContext, thisValue, args);
     }
 
+    /**
+     * [Called from generated code]
+     */
     public static PromiseObject EvaluateBody(ExecutionContext cx,
             OrdinaryAsyncFunction functionObject) {
-        GeneratorObject gen = ObjectCreate(cx, cx.getIntrinsic(Intrinsics.GeneratorPrototype),
-                GeneratorObjectAllocator.INSTANCE);
-        GeneratorStart(cx, gen, functionObject.getCode());
-        Spawn spawn = new Spawn(cx.getRealm(), gen);
-        return spawn.call(cx, UNDEFINED);
-    }
-
-    private static final class GeneratorObjectAllocator implements ObjectAllocator<GeneratorObject> {
-        static final ObjectAllocator<GeneratorObject> INSTANCE = new GeneratorObjectAllocator();
-
-        @Override
-        public GeneratorObject newInstance(Realm realm) {
-            return new GeneratorObject(realm);
-        }
+        return Spawn(cx, functionObject);
     }
 
     /* ***************************************************************************************** */

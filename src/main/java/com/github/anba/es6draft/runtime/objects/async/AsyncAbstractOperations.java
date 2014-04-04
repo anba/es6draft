@@ -7,19 +7,24 @@
 package com.github.anba.es6draft.runtime.objects.async;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorResume;
+import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorStart;
+import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorThrow;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
 
 /**
  * Extension: Async Function Definitions
@@ -29,36 +34,29 @@ public final class AsyncAbstractOperations {
     }
 
     /**
-     * <pre>
-     * function spawn() {
-     *     return new Promise(spawnExecutor);
-     * }
-     * </pre>
+     * Spawn Abstract Operation
      */
-    public static final class Spawn extends BuiltinFunction {
-        private final GeneratorObject generator;
+    public static PromiseObject Spawn(ExecutionContext cx, OrdinaryAsyncFunction functionObject) {
+        GeneratorObject generator = ObjectCreate(cx,
+                cx.getIntrinsic(Intrinsics.GeneratorPrototype), GeneratorObjectAllocator.INSTANCE);
+        GeneratorStart(cx, generator, functionObject.getCode());
+        Callable executor = new SpawnExecutor(cx.getRealm(), generator);
+        return PromiseNew(cx, executor);
+    }
 
-        public Spawn(Realm realm, GeneratorObject generator) {
-            super(realm, ANONYMOUS, 1);
-            this.generator = generator;
-        }
+    private static final class GeneratorObjectAllocator implements ObjectAllocator<GeneratorObject> {
+        static final ObjectAllocator<GeneratorObject> INSTANCE = new GeneratorObjectAllocator();
 
         @Override
-        public PromiseObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Callable executor = new SpawnExecutor(calleeContext.getRealm(), generator);
-            return PromiseNew(calleeContext, executor);
+        public GeneratorObject newInstance(Realm realm) {
+            return new GeneratorObject(realm);
         }
     }
 
     /**
-     * <pre>
-     * function spawnExecutor(resolve, reject) {
-     *     step(callNext);
-     * }
-     * </pre>
+     * Spawn Executor Functions
      */
-    public static final class SpawnExecutor extends BuiltinFunction {
+    private static final class SpawnExecutor extends BuiltinFunction {
         private final GeneratorObject generator;
 
         public SpawnExecutor(Realm realm, GeneratorObject generator) {
@@ -67,182 +65,91 @@ public final class AsyncAbstractOperations {
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
             Object resolve = getArgument(args, 0);
             Object reject = getArgument(args, 1);
-            if (!IsCallable(resolve)) {
-                throw newTypeError(calleeContext, Messages.Key.NotCallable);
-            }
-            if (!IsCallable(reject)) {
-                throw newTypeError(calleeContext, Messages.Key.NotCallable);
-            }
-            Callable nextF = new CallNext(calleeContext.getRealm(), generator, UNDEFINED);
-            Callable step = new StepFunction(calleeContext.getRealm(), generator,
-                    (Callable) resolve, (Callable) reject);
-            step.call(calleeContext, UNDEFINED, nextF);
+            assert IsCallable(resolve) : "resolve not callable";
+            assert IsCallable(reject) : "reject not callable";
+            InitialStep(calleeContext, generator, (Callable) resolve, (Callable) reject);
             return UNDEFINED;
         }
     }
 
     /**
-     * <pre>
-     * function step(nextF) {
-     *     try {
-     *         var next = nextF();
-     *     } catch (e) {
-     *         reject(e);
-     *         return;
-     *     }
-     *     if (next.done) {
-     *         resolve(next.value);
-     *         return;
-     *     }
-     *     Promise(next.value).then(callStepWithNext, callStepWithThrow);
-     * }
-     * </pre>
+     * AsyncState Records
      */
-    public static final class StepFunction extends BuiltinFunction {
-        private final GeneratorObject generator;
-        private final Callable resolve;
-        private final Callable reject;
+    private static final class AsyncState {
+        final GeneratorObject generator;
+        final Callable resolve, reject;
+        final CallStep resolvedAction, rejectedAction;
 
-        public StepFunction(Realm realm, GeneratorObject generator, Callable resolve,
+        public AsyncState(ExecutionContext cx, GeneratorObject generator, Callable resolve,
                 Callable reject) {
-            super(realm, ANONYMOUS, 1);
             this.generator = generator;
             this.resolve = resolve;
             this.reject = reject;
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object nextF = getArgument(args, 0);
-            if (!IsCallable(nextF)) {
-                throw newTypeError(calleeContext, Messages.Key.NotCallable);
-            }
-            Object next;
-            try {
-                next = ((Callable) nextF).call(calleeContext, UNDEFINED);
-            } catch (ScriptException e) {
-                reject.call(calleeContext, UNDEFINED, e.getValue());
-                return UNDEFINED;
-            }
-            if (!Type.isObject(next)) {
-                throw newTypeError(calleeContext, Messages.Key.NotObjectType);
-            }
-            ScriptObject nextObject = Type.objectValue(next);
-            if (IteratorComplete(calleeContext, nextObject)) {
-                resolve.call(calleeContext, UNDEFINED, IteratorValue(calleeContext, nextObject));
-                return UNDEFINED;
-            }
-            ScriptObject p = PromiseOf(calleeContext, IteratorValue(calleeContext, nextObject));
-            Callable resolveAction = new CallStepWithNext(calleeContext.getRealm(), generator, this);
-            Callable rejectAction = new CallStepWithThrow(calleeContext.getRealm(), generator, this);
-            PromiseThen(calleeContext, p, resolveAction, rejectAction);
-            return UNDEFINED;
+            this.resolvedAction = new CallStep(cx.getRealm(), this, StepAction.Next);
+            this.rejectedAction = new CallStep(cx.getRealm(), this, StepAction.Throw);
         }
     }
 
-    /**
-     * <pre>
-     * function callNext() {
-     *     generator.next(value);
-     * }
-     * </pre>
-     */
-    public static final class CallNext extends BuiltinFunction {
-        private final GeneratorObject generator;
-        private final Object value;
-
-        public CallNext(Realm realm, GeneratorObject generator, Object value) {
-            super(realm, ANONYMOUS, 0);
-            this.generator = generator;
-            this.value = value;
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            return IteratorNext(calleeContext, generator, value);
-        }
+    private enum StepAction {
+        Next, Throw
     }
 
     /**
-     * <pre>
-     * function callThrow() {
-     *     generator.throw(value);
-     * }
-     * </pre>
+     * InitialStep Abstract Operation
      */
-    public static final class CallThrow extends BuiltinFunction {
-        private final GeneratorObject generator;
-        private final Object value;
-
-        public CallThrow(Realm realm, GeneratorObject generator, Object value) {
-            super(realm, ANONYMOUS, 0);
-            this.generator = generator;
-            this.value = value;
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            return IteratorThrow(calleeContext, generator, value);
-        }
+    private static void InitialStep(ExecutionContext cx, GeneratorObject generator,
+            Callable resolve, Callable reject) {
+        AsyncState asyncState = new AsyncState(cx, generator, (Callable) resolve, (Callable) reject);
+        Step(cx, asyncState, StepAction.Next, UNDEFINED);
     }
 
     /**
-     * <pre>
-     * function callStepWithNext() {
-     *     step(callNext);
-     * }
-     * </pre>
+     * Step Abstract Operation
      */
-    public static final class CallStepWithNext extends BuiltinFunction {
-        private final GeneratorObject generator;
-        private final Callable step;
+    private static void Step(ExecutionContext cx, AsyncState asyncState, StepAction action,
+            Object value) {
+        GeneratorObject generator = asyncState.generator;
+        ScriptObject next;
+        try {
+            if (action == StepAction.Next) {
+                next = GeneratorResume(cx, generator, value);
+            } else {
+                next = GeneratorThrow(cx, generator, value);
+            }
+        } catch (ScriptException e) {
+            asyncState.reject.call(cx, UNDEFINED, e.getValue());
+            return;
+        }
+        if (IteratorComplete(cx, next)) {
+            asyncState.resolve.call(cx, UNDEFINED, IteratorValue(cx, next));
+            return;
+        }
+        PromiseObject p = PromiseOf(cx, IteratorValue(cx, next));
+        PromiseThen(cx, p, asyncState.resolvedAction, asyncState.rejectedAction);
+    }
 
-        public CallStepWithNext(Realm realm, GeneratorObject generator, Callable step) {
+    /**
+     * Call Step Functions
+     */
+    private static final class CallStep extends BuiltinFunction {
+        private final AsyncState asyncState;
+        private final StepAction action;
+
+        public CallStep(Realm realm, AsyncState asyncState, StepAction action) {
             super(realm, ANONYMOUS, 1);
-            this.generator = generator;
-            this.step = step;
+            this.asyncState = asyncState;
+            this.action = action;
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
             Object value = getArgument(args, 0);
-            Callable nextF = new CallNext(calleeContext.getRealm(), generator, value);
-            step.call(calleeContext, UNDEFINED, nextF);
-            return UNDEFINED;
-        }
-    }
-
-    /**
-     * <pre>
-     * function callStepWithThrow() {
-     *     step(callThrow);
-     * }
-     * </pre>
-     */
-    public static final class CallStepWithThrow extends BuiltinFunction {
-        private final GeneratorObject generator;
-        private final Callable step;
-
-        public CallStepWithThrow(Realm realm, GeneratorObject generator, Callable step) {
-            super(realm, ANONYMOUS, 1);
-            this.generator = generator;
-            this.step = step;
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object value = getArgument(args, 0);
-            Callable nextF = new CallThrow(calleeContext.getRealm(), generator, value);
-            step.call(calleeContext, UNDEFINED, nextF);
+            Step(calleeContext, asyncState, action, value);
             return UNDEFINED;
         }
     }
