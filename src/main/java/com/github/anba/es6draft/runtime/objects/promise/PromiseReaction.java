@@ -18,12 +18,12 @@ import com.github.anba.es6draft.runtime.types.Callable;
  */
 public final class PromiseReaction {
     /** [[Capabilities]] */
-    private final PromiseCapability capabilities;
+    private final PromiseCapability<?> capabilities;
 
     /** [[Handler]] */
     private final Callable handler;
 
-    public PromiseReaction(PromiseCapability capabilities, Callable handler) {
+    public PromiseReaction(PromiseCapability<?> capabilities, Callable handler) {
         this.capabilities = capabilities;
         this.handler = handler;
     }
@@ -31,7 +31,7 @@ public final class PromiseReaction {
     /**
      * Returns the [[Capabilities]] field of this PromiseReaction record
      */
-    public PromiseCapability getCapabilities() {
+    public PromiseCapability<?> getCapabilities() {
         return capabilities;
     }
 

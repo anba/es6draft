@@ -172,7 +172,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* step 1 */
             Object c = thisValue;
             /* steps 2-3 */
-            PromiseCapability promiseCapability = NewPromiseCapability(cx, c);
+            PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
             /* step 4 */
             ScriptObject iterator;
             try {
@@ -241,7 +241,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* step 1 */
             Object c = thisValue;
             /* steps 2-3 */
-            PromiseCapability promiseCapability = NewPromiseCapability(cx, c);
+            PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
             /* step 4 */
             ScriptObject iterator;
             try {
@@ -295,7 +295,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* step 1 */
             Object c = thisValue;
             /* steps 2-3 */
-            PromiseCapability promiseCapability = NewPromiseCapability(cx, c);
+            PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
             /* steps 4-5 */
             promiseCapability.getReject().call(cx, UNDEFINED, r);
             /* step 6 */
@@ -317,7 +317,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
                 }
             }
             /* steps 3-4 */
-            PromiseCapability promiseCapability = NewPromiseCapability(cx, c);
+            PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
             /* steps 5-6 */
             promiseCapability.getResolve().call(cx, UNDEFINED, x);
             /* step 7 */
@@ -369,7 +369,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         private final ScriptObject values;
 
         /** [[Capabilities]] */
-        private final PromiseCapability capabilities;
+        private final PromiseCapability<?> capabilities;
 
         /** [[RemainingElements]] */
         private final AtomicInteger remainingElements;
@@ -378,7 +378,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         private final AtomicBoolean alreadyCalled;
 
         public PromiseAllResolveElementFunction(Realm realm, int index, ScriptObject values,
-                PromiseCapability capabilities, AtomicInteger remainingElements) {
+                PromiseCapability<?> capabilities, AtomicInteger remainingElements) {
             super(realm, ANONYMOUS, 1);
             this.index = index;
             this.values = values;
@@ -400,7 +400,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* step 4 */
             ScriptObject values = this.values;
             /* step 5 */
-            PromiseCapability promiseCapability = this.capabilities;
+            PromiseCapability<?> promiseCapability = this.capabilities;
             /* step 6 */
             AtomicInteger remainingElementsCount = this.remainingElements;
             /* step 7 */

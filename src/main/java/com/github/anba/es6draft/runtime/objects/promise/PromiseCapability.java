@@ -21,9 +21,9 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>25.4.1.1 PromiseCapability Records
  * </ul>
  */
-public final class PromiseCapability {
+public final class PromiseCapability<PROMISE extends ScriptObject> {
     /** [[Promise]] */
-    private final ScriptObject promise;// TODO: generify
+    private final PROMISE promise;
 
     /** [[Resolve]] */
     private final Callable resolve;
@@ -34,7 +34,7 @@ public final class PromiseCapability {
     /**
      * Creates a new PromiseCapability record
      */
-    public PromiseCapability(ScriptObject promise, Callable resolve, Callable reject) {
+    public PromiseCapability(PROMISE promise, Callable resolve, Callable reject) {
         assert promise != null && resolve != null && reject != null;
         this.promise = promise;
         this.resolve = resolve;
@@ -44,7 +44,7 @@ public final class PromiseCapability {
     /**
      * Returns the [[Promise]] field of this PromiseCapability record
      */
-    public ScriptObject getPromise() {
+    public PROMISE getPromise() {
         return promise;
     }
 
@@ -66,7 +66,7 @@ public final class PromiseCapability {
      * 25.4.1.1.1 IfAbruptRejectPromise (value, capability)
      */
     public static ScriptObject IfAbruptRejectPromise(ExecutionContext cx, ScriptException e,
-            PromiseCapability capability) {
+            PromiseCapability<?> capability) {
         /* steps 1.a-1.b */
         capability.getReject().call(cx, UNDEFINED, e.getValue());
         /* step 1.c */

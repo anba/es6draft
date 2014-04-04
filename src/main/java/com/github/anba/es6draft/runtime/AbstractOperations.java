@@ -1780,7 +1780,7 @@ public final class AbstractOperations {
     /**
      * 7.5.2 PromiseBuiltinCapability () Abstract Operation
      */
-    public static PromiseCapability PromiseBuiltinCapability(ExecutionContext cx) {
+    public static PromiseCapability<PromiseObject> PromiseBuiltinCapability(ExecutionContext cx) {
         /* step 1 */
         PromiseObject promise = AllocatePromise(cx, cx.getIntrinsic(Intrinsics.Promise));
         /* step 2 */
@@ -1791,9 +1791,9 @@ public final class AbstractOperations {
     /**
      * 7.5.3 PromiseOf (value) Abstract Operation
      */
-    public static ScriptObject PromiseOf(ExecutionContext cx, Object value) {
+    public static PromiseObject PromiseOf(ExecutionContext cx, Object value) {
         /* steps 1-2 */
-        PromiseCapability capability = PromiseBuiltinCapability(cx);
+        PromiseCapability<PromiseObject> capability = PromiseBuiltinCapability(cx);
         /* steps 3-4 */
         capability.getResolve().call(cx, UNDEFINED, value);
         /* step 5 */

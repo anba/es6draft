@@ -210,7 +210,7 @@ public final class PromiseAbstractOperations {
             ExecutionContext cx = realm.defaultContext();
             /* step 1 (not applicable) */
             /* step 2 */
-            PromiseCapability promiseCapability = reaction.getCapabilities();
+            PromiseCapability<?> promiseCapability = reaction.getCapabilities();
             /* step 3 */
             Callable handler = reaction.getHandler();
             /* steps 4-6 */
@@ -322,7 +322,7 @@ public final class PromiseAbstractOperations {
      * <p>
      * 25.4.1.5 NewPromiseCapability ( C )
      */
-    public static PromiseCapability NewPromiseCapability(ExecutionContext cx, Object c) {
+    public static PromiseCapability<ScriptObject> NewPromiseCapability(ExecutionContext cx, Object c) {
         /* step 1 */
         if (!IsConstructor(c)) {
             throw newTypeError(cx, Messages.Key.NotConstructor);
@@ -342,8 +342,8 @@ public final class PromiseAbstractOperations {
     /**
      * 25.4.1.5.1 CreatePromiseCapabilityRecord( promise, constructor ) Abstract Operation
      */
-    public static PromiseCapability CreatePromiseCapabilityRecord(ExecutionContext cx,
-            ScriptObject promise, Constructor constructor) {
+    public static <PROMISE extends ScriptObject> PromiseCapability<PROMISE> CreatePromiseCapabilityRecord(
+            ExecutionContext cx, PROMISE promise, Constructor constructor) {
         /* steps 2-3 */
         GetCapabilitiesExecutor executor = new GetCapabilitiesExecutor(cx.getRealm());
         /* steps 4-5 */
@@ -363,7 +363,7 @@ public final class PromiseAbstractOperations {
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         /* steps 1, 9 */
-        return new PromiseCapability(promise, (Callable) resolve, (Callable) reject);
+        return new PromiseCapability<>(promise, (Callable) resolve, (Callable) reject);
     }
 
     /**
@@ -442,7 +442,7 @@ public final class PromiseAbstractOperations {
      */
     @Deprecated
     public static Thenable UpdatePromiseFromPotentialThenable(ExecutionContext cx, Object x,
-            PromiseCapability promiseCapability) {
+            PromiseCapability<?> promiseCapability) {
         /* step 1 */
         if (!Type.isObject(x)) {
             return Thenable.NotThenable;
@@ -495,7 +495,7 @@ public final class PromiseAbstractOperations {
             ExecutionContext cx = realm.defaultContext();
             /* step 1 (not applicable) */
             /* step 2 */
-            PromiseCapability promiseCapability = reaction.getCapabilities();
+            PromiseCapability<?> promiseCapability = reaction.getCapabilities();
             /* step 3 */
             Callable handler = reaction.getHandler();
             /* steps 4-6 */

@@ -92,7 +92,7 @@ public final class PromisePrototype extends OrdinaryObject implements Initialisa
             /* steps 3-4 */
             Object c = Get(cx, promise, "constructor");
             /* steps 5-6 */
-            PromiseCapability promiseCapability = NewPromiseCapability(cx, c);
+            PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
             /* steps 7-8 */
             Callable fulfillmentHandler;
             if (IsCallable(onFulfilled)) {
@@ -149,7 +149,7 @@ public final class PromisePrototype extends OrdinaryObject implements Initialisa
             /* steps 3-4 */
             Object c = Get(cx, promise, "constructor");
             /* steps 5-6 */
-            PromiseCapability promiseCapability = NewPromiseCapability(cx, c);
+            PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
             /* steps 7-8 */
             Callable rejectionHandler;
             if (IsCallable(onRejected)) {
@@ -258,7 +258,7 @@ public final class PromisePrototype extends OrdinaryObject implements Initialisa
             /* step 5 */
             Constructor c = promise.getConstructor();
             /* steps 6-7 */
-            PromiseCapability promiseCapability = NewPromiseCapability(calleeContext, c);
+            PromiseCapability<?> promiseCapability = NewPromiseCapability(calleeContext, c);
             /* steps 8-9 */
             Thenable updateResult = UpdatePromiseFromPotentialThenable(calleeContext, x,
                     promiseCapability);
