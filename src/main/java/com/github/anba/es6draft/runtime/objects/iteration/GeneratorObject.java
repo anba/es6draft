@@ -101,7 +101,7 @@ public final class GeneratorObject extends OrdinaryObject {
     /**
      * @see GeneratorAbstractOperations#GeneratorResume(ExecutionContext, Object, Object)
      */
-    Object resume(ExecutionContext cx, Object value) {
+    ScriptObject resume(ExecutionContext cx, Object value) {
         GeneratorState state = this.state;
         if (state == null) {
             // uninitialised generator object
@@ -128,7 +128,7 @@ public final class GeneratorObject extends OrdinaryObject {
     /**
      * @see GeneratorPrototype.Properties#_throw(ExecutionContext, Object, Object)
      */
-    Object _throw(ExecutionContext cx, Object value) {
+    ScriptObject _throw(ExecutionContext cx, Object value) {
         GeneratorState state = this.state;
         if (state == null) {
             // uninitialised generator object

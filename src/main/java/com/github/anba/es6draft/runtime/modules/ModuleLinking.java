@@ -227,7 +227,7 @@ public final class ModuleLinking {
         /* step 2 */
         List<ExportDefinition> defs = new ArrayList<>();
         /* step 3 */
-        List<String> boundNames = module.getBoundNames();
+        Set<String> boundNames = module.getBoundNames();
         /* step 4 */
         for (ExportEntry entry : module.getKnownExportEntries()) {
             String modReq = entry.getModuleRequest();

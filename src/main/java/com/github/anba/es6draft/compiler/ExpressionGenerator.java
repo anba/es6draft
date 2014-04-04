@@ -523,7 +523,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.swap();
 
         if (directEval) {
-            directEvalCall(base, type, afterCall, mv);
+            directEvalCall(afterCall, mv);
         }
 
         /* steps 9-13 */
@@ -583,7 +583,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.swap();
 
         if (directEval) {
-            directEvalCall(base, type, afterCall, mv);
+            directEvalCall(afterCall, mv);
         }
 
         /* steps 9-13 */
@@ -598,9 +598,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     /**
      * [18.2.1.1] Direct Call to Eval
      */
-    private void directEvalCall(Identifier base, ValType type, Label afterCall, ExpressionVisitor mv) {
-        assert type == ValType.Reference;
-
+    private void directEvalCall(Label afterCall, ExpressionVisitor mv) {
         // test for possible direct-eval call
         Label notEval = new Label();
 

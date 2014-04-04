@@ -30,7 +30,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     private final GlobalObject globalObject;
     private final ObjectEnvironmentRecord objectEnv;
     private final DeclarativeEnvironmentRecord declEnv;
-    private final Set<String> varNames = new HashSet<>();
+    private final HashSet<String> varNames = new HashSet<>();
 
     public GlobalEnvironmentRecord(ExecutionContext cx, GlobalObject globalObject) {
         this.cx = cx;

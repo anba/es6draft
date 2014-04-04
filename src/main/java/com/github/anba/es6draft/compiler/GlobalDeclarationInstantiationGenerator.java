@@ -128,16 +128,16 @@ final class GlobalDeclarationInstantiationGenerator extends
         getEnvironmentRecord(lexEnv, mv);
         mv.store(lexEnvRec);
 
-        // Throughout this algorithm `env == lexEnv` holds for ScriptEvaluation, the `env /= lexEnv`
+        // Throughout this algorithm `env == lexEnv` holds for ScriptEvaluation, the `env != lexEnv`
         // case applies only to EvalScriptEvaluation, cf. runtime.objects.Eval.
 
         /* step 1 */
         @SuppressWarnings("unused")
         boolean strict = script.isStrict();
         /* step 2 */
-        Set<String> lexNames = LexicallyDeclaredNames(script);
+        Set<String> lexNames = LexicallyDeclaredNames(script); // note: unordered set!
         /* step 3 */
-        Set<String> varNames = VarDeclaredNames(script);
+        Set<String> varNames = VarDeclaredNames(script); // note: unordered set!
         /* step 4 */
         if (script.isGlobalScope()) {
             // Perform this step only for ScriptEvaluation, EvalScriptEvaluation places lexical

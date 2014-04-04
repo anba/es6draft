@@ -9,6 +9,7 @@ package com.github.anba.es6draft.compiler;
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
+import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyDeclaredNames;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
      * stack: [env] -> [env]
      */
     void generate(BlockStatement node, StatementVisitor mv) {
-        int declarations = node.getScope().lexicallyDeclaredNames().size();
+        int declarations = LexicallyDeclaredNames(node.getScope()).size();
         if (declarations > INLINE_LIMIT) {
             codegen.compile(node, mv, this);
 
@@ -54,7 +55,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
      * stack: [env] -> [env]
      */
     void generate(SwitchStatement node, StatementVisitor mv) {
-        int declarations = node.getScope().lexicallyDeclaredNames().size();
+        int declarations = LexicallyDeclaredNames(node.getScope()).size();
         if (declarations > INLINE_LIMIT) {
             codegen.compile(node, mv, this);
 

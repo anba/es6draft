@@ -208,7 +208,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             }
         }
         /* step 13 */
-        Set<String> varNames = VarDeclaredNames(function);
+        Set<String> varNames = VarDeclaredNames(function); // note: unordered set!
         /* step 14 */
         for (String varName : varNames) {
             boolean alreadyDeclared = bindings.contains(varName);

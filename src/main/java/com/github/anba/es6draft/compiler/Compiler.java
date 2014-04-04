@@ -241,6 +241,9 @@ public final class Compiler {
             case METHOD_DESCRIPTOR:
                 desc = getMethodDescriptor(desc);
                 break;
+            case HANDLE_DESCRIPTOR:
+                desc = getMethodDescriptor(desc);
+                break;
             }
             super.appendDescriptor(type, desc);
         }

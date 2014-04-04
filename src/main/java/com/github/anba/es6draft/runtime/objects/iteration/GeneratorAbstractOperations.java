@@ -39,7 +39,7 @@ public final class GeneratorAbstractOperations {
     /**
      * 25.3.3.2 GeneratorResume (generator, value)
      */
-    public static Object GeneratorResume(ExecutionContext cx, Object generator, Object value) {
+    public static ScriptObject GeneratorResume(ExecutionContext cx, Object generator, Object value) {
         /* step 1 */
         if (!Type.isObject(generator)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
@@ -67,7 +67,8 @@ public final class GeneratorAbstractOperations {
     /**
      * GeneratorThrow(generator, value)
      */
-    public static Object GeneratorThrow(ExecutionContext cx, Object generator, Object exception) {
+    public static ScriptObject GeneratorThrow(ExecutionContext cx, Object generator,
+            Object exception) {
         /* steps 1-2 */
         if (!Type.isObject(generator)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);

@@ -360,8 +360,8 @@ public final class StaticSemantics {
     /**
      * 15.2.0.2 Static Semantics: DeclaredNames
      */
-    public static List<String> DeclaredNames(Module node) {
-        List<String> names = new ArrayList<>();
+    public static Set<String> DeclaredNames(Module node) {
+        HashSet<String> names = new HashSet<>();
         names.addAll(LexicallyDeclaredNames(node));
         names.addAll(VarDeclaredNames(node));
         return names;
@@ -380,7 +380,7 @@ public final class StaticSemantics {
      * 15.2.2.3 Static Semantics: ExportEntries
      */
     public static List<ExportEntry> ExportEntries(Module node) {
-        List<ExportEntry> entries = new ArrayList<>();
+        ArrayList<ExportEntry> entries = new ArrayList<>();
         for (ModuleItem item : node.getStatements()) {
             if (item instanceof ExportDeclaration) {
                 ExportDeclaration exportDecl = (ExportDeclaration) item;
@@ -433,7 +433,7 @@ public final class StaticSemantics {
      * 15.2.0.5 Static Semantics: ImportedBindings
      */
     public static List<String> ImportedBindings(Module node) {
-        List<String> bindings = new ArrayList<>();
+        ArrayList<String> bindings = new ArrayList<>();
         for (ModuleItem item : node.getStatements()) {
             if (item instanceof ImportDeclaration) {
                 item.accept(BoundNames.INSTANCE, bindings);
@@ -447,7 +447,7 @@ public final class StaticSemantics {
      * 15.2.1.3 Static Semantics: ImportEntries
      */
     public static List<ImportEntry> ImportEntries(Module node) {
-        List<ImportEntry> entries = new ArrayList<>();
+        ArrayList<ImportEntry> entries = new ArrayList<>();
         for (ModuleItem item : node.getStatements()) {
             if (item instanceof ImportDeclaration) {
                 ImportDeclaration importDecl = (ImportDeclaration) item;
@@ -494,7 +494,7 @@ public final class StaticSemantics {
      * 15.2.0.8 Static Semantics: KnownExportEntries
      */
     public static List<ExportEntry> KnownExportEntries(Module node) {
-        List<ExportEntry> knownExports = new ArrayList<>();
+        ArrayList<ExportEntry> knownExports = new ArrayList<>();
         for (ExportEntry entry : ExportEntries(node)) {
             if (!"<all>".equals(entry.getImportName())) {
                 knownExports.add(entry);
@@ -531,7 +531,7 @@ public final class StaticSemantics {
      * 15.2.0.12 Static Semantics: UnknownExportEntries
      */
     public static List<ExportEntry> UnknownExportEntries(Module node) {
-        List<ExportEntry> unknownExports = new ArrayList<>();
+        ArrayList<ExportEntry> unknownExports = new ArrayList<>();
         for (ExportEntry entry : ExportEntries(node)) {
             if ("<all>".equals(entry.getImportName())) {
                 unknownExports.add(entry);
@@ -620,7 +620,7 @@ public final class StaticSemantics {
         List<Expression> elements = node.getElements();
         assert (elements.size() & 1) == 1;
         int numChars = ((elements.size() / 2) + 1);
-        List<TemplateCharacters> strings = new ArrayList<>(numChars);
+        ArrayList<TemplateCharacters> strings = new ArrayList<>(numChars);
         for (int i = 0, size = elements.size(); i < size; ++i) {
             if ((i & 1) == 1) {
                 assert !(elements.get(i) instanceof TemplateCharacters);
@@ -638,7 +638,7 @@ public final class StaticSemantics {
         List<Expression> elements = node.getElements();
         assert (elements.size() & 1) == 1;
         int numSubst = (elements.size() / 2);
-        List<Expression> substitutions = new ArrayList<>(numSubst);
+        ArrayList<Expression> substitutions = new ArrayList<>(numSubst);
         for (int i = 0, size = elements.size(); i < size; ++i) {
             if ((i & 1) == 0) {
                 assert (elements.get(i) instanceof TemplateCharacters);

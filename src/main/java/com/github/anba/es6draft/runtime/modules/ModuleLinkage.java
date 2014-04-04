@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
@@ -87,7 +88,7 @@ public final class ModuleLinkage {
     }
 
     /** [[BoundNames]] */
-    public List<String> getBoundNames() {
+    public Set<String> getBoundNames() {
         assert body != null;
         return DeclaredNames(body);
     }
