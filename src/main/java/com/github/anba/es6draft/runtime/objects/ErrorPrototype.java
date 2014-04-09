@@ -54,6 +54,10 @@ public final class ErrorPrototype extends OrdinaryObject implements Initialisabl
 
     /**
      * Package private accessor for {@link ErrorObject#toString()}
+     * 
+     * @param propertyKey
+     *            the property key
+     * @return the property record or {@code null} if none found
      */
     Property getOwnProperty(String propertyKey) {
         return ordinaryGetOwnProperty(propertyKey);
@@ -88,6 +92,12 @@ public final class ErrorPrototype extends OrdinaryObject implements Initialisabl
 
         /**
          * 19.5.3.4 Error.prototype.toString ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the string representation
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -119,6 +129,12 @@ public final class ErrorPrototype extends OrdinaryObject implements Initialisabl
 
         /**
          * Extension: Error.prototype.fileName
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the file name
          */
         @Accessor(name = "fileName", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -131,6 +147,14 @@ public final class ErrorPrototype extends OrdinaryObject implements Initialisabl
 
         /**
          * Extension: Error.prototype.fileName
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the new file name
+         * @return the undefined value
          */
         @Accessor(name = "fileName", type = Accessor.Type.Setter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -144,6 +168,12 @@ public final class ErrorPrototype extends OrdinaryObject implements Initialisabl
 
         /**
          * Extension: Error.prototype.lineNumber
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the line number
          */
         @Accessor(name = "lineNumber", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -156,6 +186,14 @@ public final class ErrorPrototype extends OrdinaryObject implements Initialisabl
 
         /**
          * Extension: Error.prototype.lineNumber
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the new line number
+         * @return the undefined value
          */
         @Accessor(name = "lineNumber", type = Accessor.Type.Setter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -169,6 +207,12 @@ public final class ErrorPrototype extends OrdinaryObject implements Initialisabl
 
         /**
          * Extension: Error.prototype.columnNumber
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the column number
          */
         @Accessor(name = "columnNumber", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -182,6 +226,14 @@ public final class ErrorPrototype extends OrdinaryObject implements Initialisabl
 
         /**
          * Extension: Error.prototype.columnNumber
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the new column number
+         * @return the undefined value
          */
         @Accessor(name = "columnNumber", type = Accessor.Type.Setter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -195,6 +247,12 @@ public final class ErrorPrototype extends OrdinaryObject implements Initialisabl
 
         /**
          * Extension: Error.prototype.stack
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the stack string
          */
         @Accessor(name = "stack", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -207,6 +265,14 @@ public final class ErrorPrototype extends OrdinaryObject implements Initialisabl
 
         /**
          * Extension: Error.prototype.stack
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the new stack string
+         * @return the undefined value
          */
         @Accessor(name = "stack", type = Accessor.Type.Setter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -220,6 +286,12 @@ public final class ErrorPrototype extends OrdinaryObject implements Initialisabl
 
         /**
          * Extension: Error.prototype.stacktrace
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return stack-trace object
          */
         @Accessor(name = "stacktrace", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -241,8 +313,11 @@ public final class ErrorPrototype extends OrdinaryObject implements Initialisabl
     private static String getStack(ErrorObject e) {
         StringBuilder sb = new StringBuilder();
         for (StackTraceElement element : new StackTraceElementIterable(e)) {
-            sb.append(getMethodName(element)).append('@').append(element.getFileName()).append(':')
-                    .append(element.getLineNumber()).append('\n');
+            String methodName = getMethodName(element);
+            String fileName = element.getFileName();
+            int lineNumber = element.getLineNumber();
+            sb.append(methodName).append('@').append(fileName).append(':').append(lineNumber)
+                    .append('\n');
         }
         return sb.toString();
     }

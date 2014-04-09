@@ -30,22 +30,38 @@ public final class ExportEntry {
         this.exportName = exportName;
     }
 
-    /** [[ModuleRequest]] */
+    /**
+     * [[ModuleRequest]]
+     * 
+     * @return the module request
+     */
     public String getModuleRequest() {
         return moduleRequest;
     }
 
-    /** [[ImportName]] */
+    /**
+     * [[ImportName]]
+     * 
+     * @return the import name
+     */
     public String getImportName() {
         return importName;
     }
 
-    /** [[LocalName]] */
+    /**
+     * [[LocalName]]
+     * 
+     * @return the local name
+     */
     public String getLocalName() {
         return localName;
     }
 
-    /** [[ExportName]] */
+    /**
+     * [[ExportName]]
+     * 
+     * @return the export name
+     */
     public String getExportName() {
         return exportName;
     }

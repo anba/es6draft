@@ -90,6 +90,14 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.2.5.2 RegExp.prototype.exec(string)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param string
+         *            the string
+         * @return the match result array
          */
         @Function(name = "exec", arity = 1, nativeId = NativeFunctionId.RegExpPrototypeExec)
         public static Object exec(ExecutionContext cx, Object thisValue, Object string) {
@@ -103,6 +111,12 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.2.5.3 get RegExp.prototype.global
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the global flag
          */
         @Accessor(name = "global", type = Accessor.Type.Getter)
         public static Object global(ExecutionContext cx, Object thisValue) {
@@ -114,6 +128,12 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.2.5.4 get RegExp.prototype.ignoreCase
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the ignoreCase flag
          */
         @Accessor(name = "ignoreCase", type = Accessor.Type.Getter)
         public static Object ignoreCase(ExecutionContext cx, Object thisValue) {
@@ -125,6 +145,12 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.2.5.6 get RegExp.prototype.multiline
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the multiline flag
          */
         @Accessor(name = "multiline", type = Accessor.Type.Getter)
         public static Object multiline(ExecutionContext cx, Object thisValue) {
@@ -136,6 +162,12 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.2.5.9 get RegExp.prototype.source
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the source property
          */
         @Accessor(name = "source", type = Accessor.Type.Getter)
         public static Object source(ExecutionContext cx, Object thisValue) {
@@ -147,6 +179,12 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.2.5.11 get RegExp.prototype.sticky
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the sticky flag
          */
         @Accessor(name = "sticky", type = Accessor.Type.Getter)
         public static Object sticky(ExecutionContext cx, Object thisValue) {
@@ -158,6 +196,14 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.2.5.12 RegExp.prototype.test(string)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param string
+         *            the string
+         * @return {@code true} if the string matches the pattern
          */
         @Function(name = "test", arity = 1)
         public static Object test(ExecutionContext cx, Object thisValue, Object string) {
@@ -193,6 +239,12 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.2.5.14 get RegExp.prototype.unicode
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the unicode flag
          */
         @Accessor(name = "unicode", type = Accessor.Type.Getter)
         public static Object unicode(ExecutionContext cx, Object thisValue) {
@@ -204,6 +256,12 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.2.5.13 RegExp.prototype.toString()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the string representation
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -242,6 +300,14 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.2.5.5 RegExp.prototype.match (string)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param string
+         *            the string
+         * @return the match result array
          */
         @Function(name = "match", arity = 1)
         public static Object match(ExecutionContext cx, Object thisValue, Object string) {
@@ -289,6 +355,16 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.2.5.7 RegExp.prototype.replace (S, replaceValue)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param s
+         *            the string
+         * @param replaceValue
+         *            the replace string or replacer function
+         * @return the new string
          */
         @Function(name = "replace", arity = 2)
         public static Object replace(ExecutionContext cx, Object thisValue, Object s,
@@ -384,6 +460,16 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * Runtime Semantics: GetReplaceSubstitution Abstract Operation
+         * 
+         * @param rx
+         *            the regular expression object
+         * @param matchResult
+         *            the match result
+         * @param replValue
+         *            the replace string
+         * @param string
+         *            the string
+         * @return the replacement string
          */
         private static String GetReplaceSubstitution(RegExpObject rx, MatchResult matchResult,
                 String replValue, String string) {
@@ -458,6 +544,14 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.2.5.8 RegExp.prototype.search (S)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param s
+         *            the string
+         * @return the string index of the first match
          */
         @Function(name = "search", arity = 1)
         public static Object search(ExecutionContext cx, Object thisValue, Object s) {
@@ -477,6 +571,16 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.2.5.10 RegExp.prototype.split (string, limit)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param string
+         *            the string
+         * @param limit
+         *            the optional split array limit
+         * @return the split array object
          */
         @Function(name = "split", arity = 2)
         public static Object split(ExecutionContext cx, Object thisValue, Object string,
@@ -572,6 +676,16 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.5.1 RegExp.prototype.compile (pattern, flags )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param pattern
+         *            the regular expression pattern
+         * @param flags
+         *            the regular expression flags
+         * @return the regular expression object
          */
         @Function(name = "compile", arity = 2)
         public static Object compile(ExecutionContext cx, Object thisValue, Object pattern,
@@ -623,6 +737,14 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
     /**
      * Runtime Semantics: RegExpExec Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param r
+     *            the regular expression object
+     * @param s
+     *            the string
+     * @return the match result object or null
      */
     public static Object RegExpExec(ExecutionContext cx, RegExpObject r, String s) {
         /* steps 1-15 */
@@ -637,6 +759,14 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
     /**
      * Runtime Semantics: RegExpExec Abstract Operation (1)
+     * 
+     * @param cx
+     *            the execution context
+     * @param r
+     *            the regular expression object
+     * @param s
+     *            the string
+     * @return the match result or {@code null}
      */
     private static MatchResult getMatcherOrNull(ExecutionContext cx, RegExpObject r, String s) {
         /* step 1 */
@@ -685,6 +815,16 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
     /**
      * Runtime Semantics: RegExpExec Abstract Operation (2)
+     * 
+     * @param cx
+     *            the execution context
+     * @param r
+     *            the regular expression object
+     * @param s
+     *            the string
+     * @param m
+     *            the match result
+     * @return the match result script object
      */
     private static ScriptObject toMatchResult(ExecutionContext cx, RegExpObject r, String s,
             MatchResult m) {
@@ -716,6 +856,12 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
 
     /**
      * Returns the filtered capturing groups of the {@link MatchResult} argument
+     * 
+     * @param r
+     *            the regular expression object
+     * @param m
+     *            the match result
+     * @return the match groups
      */
     public static String[] groups(RegExpObject r, MatchResult m) {
         assert r.isInitialised();

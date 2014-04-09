@@ -78,7 +78,9 @@ class ConstantPoolMethodVisitor extends MethodVisitor {
         }
 
         /**
-         * Returns this pool's integer constants
+         * Returns this pool's integer constants.
+         * 
+         * @return the integer constants
          */
         protected final Integer[] getIntegers() {
             Integer[] constants = new Integer[integers];
@@ -91,7 +93,9 @@ class ConstantPoolMethodVisitor extends MethodVisitor {
         }
 
         /**
-         * Returns this pool's long constants
+         * Returns this pool's long constants.
+         * 
+         * @return the long constants
          */
         protected final Long[] getLongs() {
             Long[] constants = new Long[longs];
@@ -104,7 +108,9 @@ class ConstantPoolMethodVisitor extends MethodVisitor {
         }
 
         /**
-         * Returns this pool's float constants
+         * Returns this pool's float constants.
+         * 
+         * @return the float constants
          */
         protected final Float[] getFloats() {
             Float[] constants = new Float[floats];
@@ -117,7 +123,9 @@ class ConstantPoolMethodVisitor extends MethodVisitor {
         }
 
         /**
-         * Returns this pool's double constants
+         * Returns this pool's double constants.
+         * 
+         * @return the double constants
          */
         protected final Double[] getDoubles() {
             Double[] constants = new Double[doubles];
@@ -130,7 +138,9 @@ class ConstantPoolMethodVisitor extends MethodVisitor {
         }
 
         /**
-         * Returns this pool's string constants
+         * Returns this pool's string constants.
+         * 
+         * @return the string constants
          */
         protected final String[] getStrings() {
             String[] constants = new String[strings];
@@ -225,32 +235,69 @@ class ConstantPoolMethodVisitor extends MethodVisitor {
         protected abstract void close();
 
         /**
-         * Create a new constant pool when this pool's limit has been exceeded
+         * Create a new constant pool when this pool's limit has been exceeded.
+         * 
+         * @return the new constant pool
          */
         protected abstract ConstantPool newConstantPool();
 
         /**
-         * Load the indexed integer constant {@code cst} for the given method
+         * Load the indexed integer constant {@code cst} for the given method.
+         * 
+         * @param mv
+         *            the method visitor
+         * @param cst
+         *            the integer constant
+         * @param index
+         *            the constant index
          */
         protected abstract void iconst(MethodVisitor mv, Integer cst, int index);
 
         /**
-         * Load the indexed long constant {@code cst} for the given method
+         * Load the indexed long constant {@code cst} for the given method.
+         * 
+         * @param mv
+         *            the method visitor
+         * @param cst
+         *            the long constant
+         * @param index
+         *            the constant index
          */
         protected abstract void lconst(MethodVisitor mv, Long cst, int index);
 
         /**
-         * Load the indexed float constant {@code cst} for the given method
+         * Load the indexed float constant {@code cst} for the given method.
+         * 
+         * @param mv
+         *            the method visitor
+         * @param cst
+         *            the float constant
+         * @param index
+         *            the constant index
          */
         protected abstract void fconst(MethodVisitor mv, Float cst, int index);
 
         /**
-         * Load the indexed double constant {@code cst} for the given method
+         * Load the indexed double constant {@code cst} for the given method.
+         * 
+         * @param mv
+         *            the method visitor
+         * @param cst
+         *            the double constant
+         * @param index
+         *            the constant index
          */
         protected abstract void dconst(MethodVisitor mv, Double cst, int index);
 
         /**
-         * Load the indexed string constant {@code cst} for the given method
+         * Load the indexed string constant {@code cst} for the given method.
+         * 
+         * @param mv
+         *            the method visitor
+         * @param cst
+         *            the string constant
+         * @param index
+         *            the constant index
          */
         protected abstract void aconst(MethodVisitor mv, String cst, int index);
     }

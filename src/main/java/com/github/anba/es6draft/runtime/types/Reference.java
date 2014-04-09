@@ -31,56 +31,89 @@ public abstract class Reference<BASE, NAME> {
 
     /**
      * GetBase(V)
+     * 
+     * @return the reference base
      */
     public abstract BASE getBase();
 
     /**
      * GetReferencedName(V)
+     * 
+     * @return the reference name
      */
     public abstract NAME getReferencedName();
 
     /**
      * IsStrictReference(V)
+     * 
+     * @return {@code true} if is strict mode reference
      */
     public abstract boolean isStrictReference();
 
     /**
      * HasPrimitiveBase(V)
+     * 
+     * @return {@code true} if the base is a primitive value
      */
     public abstract boolean hasPrimitiveBase();
 
     /**
      * IsPropertyReference(V)
+     * 
+     * @return {@code true} if this is a property reference
      */
     public abstract boolean isPropertyReference();
 
     /**
      * IsUnresolvableReference(V)
+     * 
+     * @return {@code true} if the reference is unresolvable
      */
     public abstract boolean isUnresolvableReference();
 
     /**
      * IsSuperReference(V)
+     * 
+     * @return {@code true} if this is a super reference
      */
     public abstract boolean isSuperReference();
 
     /**
      * [6.2.3.1] GetValue (V)
+     * 
+     * @param cx
+     *            the execution context
+     * @return the reference value
      */
     public abstract Object getValue(ExecutionContext cx);
 
     /**
      * [6.2.3.2] PutValue (V, W)
+     * 
+     * @param w
+     *            the new reference value
+     * @param cx
+     *            the execution context
      */
     public abstract void putValue(Object w, ExecutionContext cx);
 
     /**
      * [6.2.3.3] GetThisValue (V)
+     * 
+     * @param cx
+     *            the execution context
+     * @return the reference this value
      */
     public abstract Object getThisValue(ExecutionContext cx);
 
     /**
      * [6.2.3.1] GetValue (V)
+     * 
+     * @param v
+     *            the reference
+     * @param cx
+     *            the execution context
+     * @return the reference value
      */
     public static Object GetValue(Object v, ExecutionContext cx) {
         /* step 1 (not applicable) */
@@ -93,6 +126,13 @@ public abstract class Reference<BASE, NAME> {
 
     /**
      * [6.2.3.2] PutValue (V, W)
+     * 
+     * @param v
+     *            the reference
+     * @param w
+     *            the new reference value
+     * @param cx
+     *            the execution context
      */
     public static void PutValue(Object v, Object w, ExecutionContext cx) {
         /* steps 1-2 (not applicable) */
@@ -106,6 +146,12 @@ public abstract class Reference<BASE, NAME> {
 
     /**
      * [6.2.3.3] GetThisValue (V)
+     * 
+     * @param v
+     *            the reference
+     * @param cx
+     *            the execution context
+     * @return the reference this value
      */
     public static Object GetThisValue(ExecutionContext cx, Object v) {
         /* step 1 (not applicable) */

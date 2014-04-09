@@ -38,6 +38,10 @@ public final class NativeErrorPrototype extends OrdinaryObject implements Initia
 
     /**
      * Package private accessor for {@link ErrorObject#toString()}
+     * 
+     * @param propertyKey
+     *            the property key
+     * @return the property record or {@code null} if none found
      */
     Property getOwnProperty(String propertyKey) {
         return ordinaryGetOwnProperty(propertyKey);

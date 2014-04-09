@@ -35,7 +35,9 @@ public final class ScriptingGlobalObject extends GlobalObject {
     }
 
     /**
-     * Returns an object to allocate new instances of this class
+     * Returns an object to allocate new instances of this class.
+     * 
+     * @return the object allocator to construct new global object instances
      */
     public static ObjectAllocator<ScriptingGlobalObject> newGlobalObjectAllocator() {
         return new ObjectAllocator<ScriptingGlobalObject>() {
@@ -61,7 +63,12 @@ public final class ScriptingGlobalObject extends GlobalObject {
         }
     }
 
-    /** builtin-function: {@code print(message)} */
+    /**
+     * builtin-function: {@code print(message)}
+     *
+     * @param messages
+     *            the string to print
+     */
     @Function(name = "print", arity = 1)
     public void print(String... messages) {
         System.out.println(concat(messages));

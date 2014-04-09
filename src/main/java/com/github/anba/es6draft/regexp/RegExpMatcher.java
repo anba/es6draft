@@ -13,12 +13,18 @@ import java.util.BitSet;
  */
 public interface RegExpMatcher {
     /**
-     * Returns a {@link MatchState} object for {@code input}
+     * Returns a {@link MatchState} object for {@code input}.
+     * 
+     * @param input
+     *            the input string to match against
+     * @return the match state
      */
     MatchState matcher(String input);
 
     /**
-     * Returns an integer to boolean map
+     * Returns an integer to boolean map.
+     * 
+     * @return the bitset describing negative lookahead groups
      */
     BitSet getNegativeLookaheadGroups();
 }

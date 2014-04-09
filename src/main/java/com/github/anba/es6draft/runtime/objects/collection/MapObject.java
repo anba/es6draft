@@ -28,6 +28,8 @@ public final class MapObject extends OrdinaryObject {
 
     /**
      * [[MapData]]
+     * 
+     * @return the underlying map data
      */
     public LinkedMap<Object, Object> getMapData() {
         return mapData;

@@ -262,28 +262,52 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [] -> [value|reference]
+     * stack: [] {@literal ->} [value|reference]
+     * 
+     * @param node
+     *            the expression node
+     * @param mv
+     *            the expression visitor
+     * @return the value type returned by the expression
      */
     protected final ValType expression(Expression node, ExpressionVisitor mv) {
         return codegen.expression(node, mv);
     }
 
     /**
-     * stack: [] -> [value]
+     * stack: [] {@literal ->} [value]
+     * 
+     * @param node
+     *            the expression node
+     * @param mv
+     *            the expression visitor
+     * @return the value type returned by the expression
      */
     protected final ValType expressionValue(Expression node, ExpressionVisitor mv) {
         return codegen.expressionValue(node, mv);
     }
 
     /**
-     * stack: [] -> [boxed(value)]
+     * stack: [] {@literal ->} [boxed(value)]
+     * 
+     * @param node
+     *            the expression node
+     * @param mv
+     *            the expression visitor
+     * @return the value type returned by the expression
      */
     protected final ValType expressionBoxedValue(Expression node, ExpressionVisitor mv) {
         return codegen.expressionBoxedValue(node, mv);
     }
 
     /**
-     * stack: [] -> []
+     * stack: [] {@literal ->} []
+     * 
+     * @param node
+     *            the abrupt node
+     * @param mv
+     *            the statement visitor
+     * @return the variable holding the saved environment or {@code null}
      */
     protected final Variable<LexicalEnvironment<?>> saveEnvironment(AbruptNode node,
             StatementVisitor mv) {
@@ -295,7 +319,11 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [] -> []
+     * stack: [] {@literal ->} []
+     * 
+     * @param mv
+     *            the statement visitor
+     * @return the variable holding the saved environment
      */
     protected final Variable<LexicalEnvironment<?>> saveEnvironment(StatementVisitor mv) {
         Variable<LexicalEnvironment<?>> savedEnv = mv.newVariable("savedEnv",
@@ -305,7 +333,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [] -> []
+     * stack: [] {@literal ->} []
+     * 
+     * @param savedEnv
+     *            the variable to hold the saved environment
+     * @param mv
+     *            the statement visitor
      */
     protected final void saveEnvironment(Variable<LexicalEnvironment<?>> savedEnv,
             StatementVisitor mv) {
@@ -314,7 +347,16 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [] -> []
+     * stack: [] {@literal ->} []
+     * 
+     * @param node
+     *            the abrupt node
+     * @param abrupt
+     *            the abrupt completion type
+     * @param savedEnv
+     *            the variable which holds the saved environment
+     * @param mv
+     *            the statement visitor
      */
     protected final void restoreEnvironment(AbruptNode node, Abrupt abrupt,
             Variable<LexicalEnvironment<?>> savedEnv, StatementVisitor mv) {
@@ -324,7 +366,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [] -> []
+     * stack: [] {@literal ->} []
+     * 
+     * @param savedEnv
+     *            the variable which holds the saved environment
+     * @param mv
+     *            the statement visitor
      */
     protected final void restoreEnvironment(Variable<LexicalEnvironment<?>> savedEnv,
             StatementVisitor mv) {
@@ -334,7 +381,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [] -> []
+     * stack: [] {@literal ->} []
+     * 
+     * @param savedEnv
+     *            the variable which holds the saved environment
+     * @param mv
+     *            the statement visitor
      */
     protected final void replaceLexicalEnvironment(Variable<LexicalEnvironment<?>> savedEnv,
             StatementVisitor mv) {
@@ -344,7 +396,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [] -> [lexEnv]
+     * stack: [] {@literal ->} [lexEnv]
+     * 
+     * @param mv
+     *            the expression visitor
      */
     protected final void getLexicalEnvironment(ExpressionVisitor mv) {
         mv.loadExecutionContext();
@@ -352,7 +407,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [] -> [envRec]
+     * stack: [] {@literal ->} [envRec]
+     * 
+     * @param mv
+     *            the expression visitor
      */
     protected final void getEnvironmentRecord(ExpressionVisitor mv) {
         mv.loadExecutionContext();
@@ -361,7 +419,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [obj] -> [lexEnv]
+     * stack: [obj] {@literal ->} [lexEnv]
+     * 
+     * @param mv
+     *            the expression visitor
+     * @param withEnvironment
+     *            the withEnvironment flag
      */
     protected final void newObjectEnvironment(ExpressionVisitor mv, boolean withEnvironment) {
         mv.loadExecutionContext();
@@ -371,7 +434,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [] -> [lexEnv]
+     * stack: [] {@literal ->} [lexEnv]
+     * 
+     * @param mv
+     *            the expression visitor
      */
     protected final void newDeclarativeEnvironment(ExpressionVisitor mv) {
         mv.loadExecutionContext();
@@ -380,7 +446,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [] -> [lexEnv]
+     * stack: [] {@literal ->} [lexEnv]
+     * 
+     * @param mv
+     *            the expression visitor
      */
     protected final void cloneDeclarativeEnvironment(ExpressionVisitor mv) {
         mv.loadExecutionContext();
@@ -389,7 +458,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [lexEnv] -> []
+     * stack: [lexEnv] {@literal ->} []
+     * 
+     * @param mv
+     *            the expression visitor
      */
     protected final void pushLexicalEnvironment(ExpressionVisitor mv) {
         mv.loadExecutionContext();
@@ -398,7 +470,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [] -> []
+     * stack: [] {@literal ->} []
+     * 
+     * @param mv
+     *            the expression visitor
      */
     protected final void popLexicalEnvironment(ExpressionVisitor mv) {
         mv.loadExecutionContext();
@@ -406,7 +481,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [object] -> [boolean]
+     * stack: [object] {@literal ->} [boolean]
+     * 
+     * @param mv
+     *            the expression visitor
      */
     protected final void isUndefinedOrNull(ExpressionVisitor mv) {
         mv.invoke(Methods.Type_isUndefinedOrNull);
@@ -567,7 +645,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [Object] -> [boolean]
+     * stack: [Object] {@literal ->} [boolean]
+     * 
+     * @param from
+     *            the input value type
+     * @param mv
+     *            the expression visitor
+     * @return the returned value type
      */
     protected final ValType ToPrimitive(ValType from, ExpressionVisitor mv) {
         switch (from) {
@@ -590,7 +674,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [Object] -> [boolean]
+     * stack: [Object] {@literal ->} [boolean]
+     * 
+     * @param from
+     *            the input value type
+     * @param mv
+     *            the expression visitor
      */
     protected final void ToBoolean(ValType from, ExpressionVisitor mv) {
         switch (from) {
@@ -635,7 +724,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [Object] -> [double]
+     * stack: [Object] {@literal ->} [double]
+     * 
+     * @param from
+     *            the input value type
+     * @param mv
+     *            the expression visitor
      */
     protected final void ToNumber(ValType from, ExpressionVisitor mv) {
         switch (from) {
@@ -672,7 +766,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [Object] -> [int]
+     * stack: [Object] {@literal ->} [int]
+     * 
+     * @param from
+     *            the input value type
+     * @param mv
+     *            the expression visitor
      */
     protected final void ToInt32(ValType from, ExpressionVisitor mv) {
         switch (from) {
@@ -706,7 +805,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [Object] -> [long]
+     * stack: [Object] {@literal ->} [long]
+     * 
+     * @param from
+     *            the input value type
+     * @param mv
+     *            the expression visitor
      */
     protected final void ToUint32(ValType from, ExpressionVisitor mv) {
         switch (from) {
@@ -743,7 +847,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [Object] -> [CharSequence]
+     * stack: [Object] {@literal ->} [CharSequence]
+     * 
+     * @param from
+     *            the input value type
+     * @param mv
+     *            the expression visitor
      */
     protected final void ToString(ValType from, ExpressionVisitor mv) {
         switch (from) {
@@ -780,7 +889,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [Object] -> [String]
+     * stack: [Object] {@literal ->} [String]
+     * 
+     * @param from
+     *            the input value type
+     * @param mv
+     *            the expression visitor
      */
     protected final void ToFlatString(ValType from, ExpressionVisitor mv) {
         switch (from) {
@@ -818,7 +932,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [Object] -> [ScriptObject]
+     * stack: [Object] {@literal ->} [ScriptObject]
+     * 
+     * @param from
+     *            the input value type
+     * @param mv
+     *            the expression visitor
      */
     protected final void ToObject(ValType from, ExpressionVisitor mv) {
         switch (from) {
@@ -844,7 +963,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [Object] -> [String|ExoticSymbol]
+     * stack: [Object] {@literal ->} [String|ExoticSymbol]
+     * 
+     * @param from
+     *            the input value type
+     * @param mv
+     *            the expression visitor
      */
     protected static final void ToPropertyKey(ValType from, ExpressionVisitor mv) {
         switch (from) {
@@ -886,7 +1010,14 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [propertyKey, function] -> [propertyKey, function]
+     * stack: [propertyKey, function] {@literal ->} [propertyKey, function]
+     * 
+     * @param node
+     *            the function or class node
+     * @param propertyKeyType
+     *            the property key value type
+     * @param mv
+     *            the expression visitor
      */
     protected static void SetFunctionName(Node node, ValType propertyKeyType, ExpressionVisitor mv) {
         assert node instanceof ClassDefinition || node instanceof FunctionNode;
@@ -936,7 +1067,14 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [function] -> [function]
+     * stack: [function] {@literal ->} [function]
+     * 
+     * @param node
+     *            the function or class node
+     * @param name
+     *            the new function name
+     * @param mv
+     *            the expression visitor
      */
     protected static void SetFunctionName(Node node, String name, ExpressionVisitor mv) {
         assert node instanceof ClassDefinition || node instanceof FunctionNode;
@@ -979,21 +1117,36 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [value] -> []
+     * stack: [value] {@literal ->} []
+     * 
+     * @param node
+     *            the binding node
+     * @param mv
+     *            the expression visitor
      */
     protected final void BindingInitialisation(Binding node, ExpressionVisitor mv) {
         new BindingInitialisationGenerator(codegen).generate(node, mv);
     }
 
     /**
-     * stack: [envRec, value] -> []
+     * stack: [envRec, value] {@literal ->} []
+     * 
+     * @param node
+     *            the binding node
+     * @param mv
+     *            the expression visitor
      */
     protected final void BindingInitialisationWithEnvironment(Binding node, ExpressionVisitor mv) {
         new BindingInitialisationGenerator(codegen).generateWithEnvironment(node, mv);
     }
 
     /**
-     * stack: [value] -> []
+     * stack: [value] {@literal ->} []
+     * 
+     * @param node
+     *            the assignment pattern node
+     * @param mv
+     *            the expression visitor
      */
     protected final void DestructuringAssignment(AssignmentPattern node, ExpressionVisitor mv) {
         new DestructuringAssignmentGenerator(codegen).generate(node, mv);
@@ -1002,6 +1155,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * 14.5.1.2 Runtime Semantics<br>
      * Runtime Semantics: ClassDefinitionEvaluation
+     * 
+     * @param def
+     *            the class definition node
+     * @param className
+     *            the class name or {@code null} if not present
+     * @param mv
+     *            the expression visitor
      */
     protected final void ClassDefinitionEvaluation(ClassDefinition def, String className,
             ExpressionVisitor mv) {
@@ -1123,7 +1283,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * <li>YieldExpression : yield * AssignmentExpression
      * </ul>
      * <p>
-     * stack: [value] -> [value]
+     * stack: [value] {@literal ->} [value']
+     * 
+     * @param node
+     *            the expression node
+     * @param mv
+     *            the expression visitor
      */
     protected final void delegatedYield(Expression node, ExpressionVisitor mv) {
         mv.lineInfo(node);
@@ -1228,7 +1393,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * <li>YieldExpression : yield AssignmentExpression
      * </ul>
      * <p>
-     * stack: [value] -> [value]
+     * stack: [value] {@literal ->} [value]
+     * 
+     * @param node
+     *            the expression node
+     * @param mv
+     *            the expression visitor
      */
     protected final void yield(Expression node, ExpressionVisitor mv) {
         mv.lineInfo(node);

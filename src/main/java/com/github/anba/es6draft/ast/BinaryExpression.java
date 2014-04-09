@@ -16,9 +16,9 @@ package com.github.anba.es6draft.ast;
  * </ul>
  * <h2>12.7 Bitwise Shift Operators</h2>
  * <ul>
- * <li>12.7.1 The Left Shift Operator ( << )
- * <li>12.7.2 The Signed Right Shift Operator ( >> )
- * <li>12.7.3 The Unsigned Right Shift Operator ( >>> )
+ * <li>12.7.1 The Left Shift Operator ( {@literal <<} )
+ * <li>12.7.2 The Signed Right Shift Operator ( {@literal <<} )
+ * <li>12.7.3 The Unsigned Right Shift Operator ( {@literal >>>} )
  * </ul>
  * <h2>12.8 Relational Operators</h2><br>
  * <h2>12.9 Equality Operators</h2><br>

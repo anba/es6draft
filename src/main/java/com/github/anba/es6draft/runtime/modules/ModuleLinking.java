@@ -61,6 +61,13 @@ public final class ModuleLinking {
 
     /**
      * 15.2.5.4 Link ( start, loader )
+     * 
+     * @param cx
+     *            the execution context
+     * @param start
+     *            the list of initial load records
+     * @param loader
+     *            the loader record
      */
     public static void Link(ExecutionContext cx, List<Load> start, Loader loader) {
         // FIXME: module linking spec is incomplete
@@ -96,6 +103,13 @@ public final class ModuleLinking {
 
     /**
      * 15.2.5.5 LinkDeclarativeModules ( loads, loader )
+     * 
+     * @param cx
+     *            the execution context
+     * @param loads
+     *            the list of load records to link
+     * @param loader
+     *            the loader record
      */
     public static void LinkDeclarativeModules(ExecutionContext cx, List<Load> loads, Loader loader) {
         /* step 1 */
@@ -170,6 +184,11 @@ public final class ModuleLinking {
 
     /**
      * 15.2.5.5.1 LinkImports ( M )
+     * 
+     * @param cx
+     *            the execution context
+     * @param module
+     *            the module linkage record
      */
     public static void LinkImports(ExecutionContext cx, ModuleLinkage module) {
         /* step 1 */
@@ -199,6 +218,13 @@ public final class ModuleLinking {
 
     /**
      * 15.2.5.6 LinkDynamicModules ( loads, loader )
+     * 
+     * @param cx
+     *            the execution context
+     * @param loads
+     *            the list of load records to link
+     * @param loader
+     *            the loader record
      */
     public static void LinkDynamicModules(ExecutionContext cx, List<Load> loads, Loader loader) {
         /* step 1 */
@@ -217,6 +243,14 @@ public final class ModuleLinking {
 
     /**
      * 15.2.5.7 ResolveExportEntries ( M, visited )
+     * 
+     * @param cx
+     *            the execution context
+     * @param module
+     *            the module linkage record
+     * @param visited
+     *            the set of already visited modules
+     * @return the resolved export definitions
      */
     public static List<ExportDefinition> ResolveExportEntries(ExecutionContext cx,
             ModuleLinkage module, Set<ModuleLinkage> visited) {
@@ -271,6 +305,11 @@ public final class ModuleLinking {
 
     /**
      * 15.2.5.8 ResolveExports ( M )
+     * 
+     * @param cx
+     *            the execution context
+     * @param module
+     *            the module linkage record
      */
     public static void ResolveExports(ExecutionContext cx, ModuleLinkage module) {
         /* step 1 */
@@ -281,6 +320,15 @@ public final class ModuleLinking {
 
     /**
      * 15.2.5.9 ResolveExport ( M, exportName, visited )
+     * 
+     * @param cx
+     *            the execution context
+     * @param module
+     *            the module linkage record
+     * @param exportName
+     *            the export name
+     * @param visited
+     *            the mapping of already visited modules
      */
     public static void ResolveExport(ExecutionContext cx, ModuleLinkage module, String exportName,
             Map<ModuleLinkage, Set<String>> visited) {
@@ -350,6 +398,10 @@ public final class ModuleLinking {
 
     /**
      * 15.2.5.10 ResolveImportEntries ( M )
+     * 
+     * @param module
+     *            the module linkage record
+     * @return the list of import definitions
      */
     public static List<ImportDefinition> ResolveImportEntries(ModuleLinkage module) {
         /* step 1 */

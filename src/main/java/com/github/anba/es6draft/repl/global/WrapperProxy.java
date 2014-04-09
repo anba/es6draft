@@ -31,8 +31,8 @@ import com.github.anba.es6draft.runtime.types.Type;
 /**
  * Wrapper-Proxy for shell tests
  * 
- * @see MozShellGlobalObject#wrap(Object)
- * @see MozShellGlobalObject#wrapWithProto(Object, Object)
+ * @see MozShellGlobalObject#wrap(ExecutionContext, Object)
+ * @see MozShellGlobalObject#wrapWithProto(ExecutionContext, Object, Object)
  */
 class WrapperProxy implements ScriptObject {
     /** [[ProxyTarget]] */
@@ -76,6 +76,12 @@ class WrapperProxy implements ScriptObject {
 
     /**
      * Abstract Operation (extension): CreateWrapProxy
+     * 
+     * @param cx
+     *            the execution context
+     * @param target
+     *            the proxy target object
+     * @return the new wrapper proxy
      */
     public static WrapperProxy CreateWrapProxy(ExecutionContext cx, Object target) {
         if (!Type.isObject(target)) {
@@ -94,6 +100,14 @@ class WrapperProxy implements ScriptObject {
 
     /**
      * Abstract Operation (extension): CreateWrapProxy
+     * 
+     * @param cx
+     *            the execution context
+     * @param target
+     *            the proxy target object
+     * @param proto
+     *            the proxy protoype object
+     * @return the new wrapper proxy
      */
     public static WrapperProxy CreateWrapProxy(ExecutionContext cx, Object target, Object proto) {
         if (!Type.isObject(target)) {

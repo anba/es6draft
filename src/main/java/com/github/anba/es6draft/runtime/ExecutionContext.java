@@ -80,6 +80,9 @@ public final class ExecutionContext {
 
     /**
      * [Called from generated code]
+     * 
+     * @param lexEnv
+     *            the new lexical environment
      */
     public void pushLexicalEnvironment(LexicalEnvironment<?> lexEnv) {
         assert lexEnv.getOuter() == this.lexEnv;
@@ -95,6 +98,9 @@ public final class ExecutionContext {
 
     /**
      * [Called from generated code]
+     * 
+     * @param lexEnv
+     *            the new lexical environment
      */
     public void restoreLexicalEnvironment(LexicalEnvironment<?> lexEnv) {
         this.lexEnv = lexEnv;
@@ -102,6 +108,9 @@ public final class ExecutionContext {
 
     /**
      * [Called from generated code]
+     * 
+     * @param lexEnv
+     *            the new lexical environment
      */
     public void replaceLexicalEnvironment(LexicalEnvironment<?> lexEnv) {
         assert lexEnv.getOuter() == this.lexEnv.getOuter();
@@ -109,15 +118,23 @@ public final class ExecutionContext {
     }
 
     /**
-     * <div>
      * <ul>
      * <li>15 ECMAScript Language: Modules and Scripts
      * <ul>
      * <li>15.1 Script
      * <ul>
-     * <li>15.1.2 Runtime Semantics</div>
+     * <li>15.1.2 Runtime Semantics
+     * </ul>
+     * </ul>
+     * </ul>
      * <p>
      * Runtime Semantics: Script Evaluation
+     * 
+     * @param realm
+     *            the realm instance
+     * @param script
+     *            the script object
+     * @return the new script execution context
      */
     public static ExecutionContext newScriptExecutionContext(Realm realm, Script script) {
         /* steps 3-6 */
@@ -125,15 +142,23 @@ public final class ExecutionContext {
     }
 
     /**
-     * <div>
      * <ul>
      * <li>15 ECMAScript Language: Modules and Scripts
      * <ul>
      * <li>15.2 Modules
      * <ul>
-     * <li>15.2.6 Runtime Semantics: Module Evaluation</div>
+     * <li>15.2.6 Runtime Semantics: Module Evaluation
+     * </ul>
+     * </ul>
+     * </ul>
      * <p>
      * 15.2.6.2 EnsureEvaluated(mod, seen, loader) Abstract Operation
+     * 
+     * @param realm
+     *            the realm instance
+     * @param env
+     *            the current lexical environment
+     * @return the new module execution context
      */
     public static ExecutionContext newModuleExecutionContext(Realm realm,
             LexicalEnvironment<DeclarativeEnvironmentRecord> env) {
@@ -142,13 +167,22 @@ public final class ExecutionContext {
     }
 
     /**
-     * <div>
      * <ul>
      * <li>18 The Global Object
      * <ul>
-     * <li>18.2 Function Properties of the Global Object</div>
+     * <li>18.2 Function Properties of the Global Object
+     * </ul>
+     * </ul>
      * <p>
      * 18.2.1 eval (x)
+     * 
+     * @param callerContext
+     *            the caller execution context
+     * @param varEnv
+     *            the current variable environment
+     * @param lexEnv
+     *            the current lexical environment
+     * @return the new eval execution context
      */
     public static ExecutionContext newEvalExecutionContext(ExecutionContext callerContext,
             LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv) {
@@ -158,13 +192,22 @@ public final class ExecutionContext {
     }
 
     /**
-     * <div>
      * <ul>
      * <li>9 Ordinary and Exotic Objects Behaviours
      * <ul>
-     * <li>9.2 ECMAScript Function Objects</div>
+     * <li>9.2 ECMAScript Function Objects
+     * </ul>
+     * </ul>
      * <p>
      * 9.2.4 [[Call]] (thisArgument, argumentsList)
+     * 
+     * @param callerContext
+     *            the caller execution context
+     * @param f
+     *            the callee function object
+     * @param thisArgument
+     *            the this-argument for the function call
+     * @return the new function execution context
      */
     public static ExecutionContext newFunctionExecutionContext(ExecutionContext callerContext,
             FunctionObject f, Object thisArgument) {
@@ -205,7 +248,13 @@ public final class ExecutionContext {
 
     /**
      * Combined {@link #resolveBinding(String, boolean)} with
-     * {@link Reference#GetValue(Object, ExecutionContext)} internal method
+     * {@link Reference#GetValue(Object, ExecutionContext)} internal method.
+     * 
+     * @param name
+     *            the binding name
+     * @param strict
+     *            the strict mode flag
+     * @return the resolved reference value
      */
     public Object resolveBindingValue(String name, boolean strict) {
         return LexicalEnvironment.getIdentifierValueOrThrow(lexEnv, name, strict);
@@ -213,6 +262,12 @@ public final class ExecutionContext {
 
     /**
      * 8.3.1 ResolveBinding(name)
+     * 
+     * @param name
+     *            the binding name
+     * @param strict
+     *            the strict mode flag
+     * @return the resolved reference
      */
     public Reference<EnvironmentRecord, String> resolveBinding(String name, boolean strict) {
         /* steps 1-3 */
@@ -221,6 +276,8 @@ public final class ExecutionContext {
 
     /**
      * 8.3.2 GetThisEnvironment
+     * 
+     * @return the first environment record with a this-binding
      */
     public EnvironmentRecord getThisEnvironment() {
         /* step 1 */
@@ -238,6 +295,8 @@ public final class ExecutionContext {
 
     /**
      * 8.3.3 ResolveThisBinding
+     * 
+     * @return the this-binding object
      */
     public Object resolveThisBinding() {
         /* step 1 */
@@ -248,6 +307,8 @@ public final class ExecutionContext {
 
     /**
      * 8.3.4 GetGlobalObject
+     * 
+     * @return the global object instance
      */
     public GlobalObject getGlobalObject() {
         /* steps 1-2 */

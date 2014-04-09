@@ -24,12 +24,21 @@ public final class RealmObject extends OrdinaryObject {
         super(realm);
     }
 
-    /** [[Realm]] */
+    /**
+     * [[Realm]
+     *
+     * @return the realm instance
+     */
     public Realm getRealm() {
         return realm;
     }
 
-    /** [[Realm]] */
+    /**
+     * [[Realm]]
+     *
+     * @param realm
+     *            the new realm instance
+     */
     public void setRealm(Realm realm) {
         assert this.realm == null && realm != null;
         this.realm = realm;

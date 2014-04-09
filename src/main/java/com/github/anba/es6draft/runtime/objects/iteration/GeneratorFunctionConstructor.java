@@ -172,6 +172,12 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
 
         /**
          * 25.2.2.3 GeneratorFunction[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialsed generator function object
          */
         @Function(name = "[Symbol.create]", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

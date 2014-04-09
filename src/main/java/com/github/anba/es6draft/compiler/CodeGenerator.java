@@ -510,6 +510,11 @@ final class CodeGenerator {
 
     /**
      * [12.1.9.2.2] Runtime Semantics: GetTemplateCallSite
+     * 
+     * @param node
+     *            the template literal
+     * @param mv
+     *            the expression visitor
      */
     void GetTemplateCallSite(TemplateLiteral node, ExpressionVisitor mv) {
         assert isCompiled(node);

@@ -27,6 +27,14 @@ public final class GeneratorAbstractOperations {
 
     /**
      * 25.3.3.1 GeneratorStart (generator, generatorBody)
+     * 
+     * @param cx
+     *            the execution context
+     * @param generator
+     *            the generator object
+     * @param generatorBody
+     *            the runtime function code
+     * @return the generator object
      */
     public static GeneratorObject GeneratorStart(ExecutionContext cx, GeneratorObject generator,
             RuntimeInfo.Function generatorBody) {
@@ -38,6 +46,14 @@ public final class GeneratorAbstractOperations {
 
     /**
      * 25.3.3.2 GeneratorResume (generator, value)
+     * 
+     * @param cx
+     *            the execution context
+     * @param generator
+     *            the generator object
+     * @param value
+     *            the resumption value
+     * @return the iterator result object
      */
     public static ScriptObject GeneratorResume(ExecutionContext cx, Object generator, Object value) {
         /* step 1 */
@@ -54,6 +70,12 @@ public final class GeneratorAbstractOperations {
 
     /**
      * 25.3.3.3 GeneratorYield (iterNextObj)
+     * 
+     * @param genContext
+     *            the execution context
+     * @param iterNextObj
+     *            the iterator result object
+     * @return the yield value
      */
     public static Object GeneratorYield(ExecutionContext genContext, ScriptObject iterNextObj) {
         /* step 1 (?) */
@@ -66,6 +88,14 @@ public final class GeneratorAbstractOperations {
 
     /**
      * GeneratorThrow(generator, value)
+     * 
+     * @param cx
+     *            the execution context
+     * @param generator
+     *            the generator object
+     * @param exception
+     *            the exception value
+     * @return the iterator result object
      */
     public static ScriptObject GeneratorThrow(ExecutionContext cx, Object generator,
             Object exception) {

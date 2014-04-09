@@ -21,18 +21,34 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 public interface Constructor extends ScriptObject, Callable {
     /**
      * [[Construct]]
+     * 
+     * @param callerContext
+     *            the caller's execution context
+     * @param args
+     *            the constructor function arguments
+     * @return the new script object
      */
     ScriptObject construct(ExecutionContext callerContext, Object... args);
 
     /**
      * [[Construct]] in tail-call position
+     * 
+     * @param callerContext
+     *            the caller's execution context
+     * @param args
+     *            the constructor function arguments
+     * @return the new script object
+     * @throws Throwable
+     *             any error thrown by the underlying method implementation
      */
     Object tailConstruct(ExecutionContext callerContext, Object... args) throws Throwable;
 
     /**
      * [[Construct]] internal method is added dynamically to objects, but interfaces cannot be added
      * dynamically, therefore add an extra predicate to test whether the [[Construct]] method is
-     * already attached to the object
+     * already attached to the object.
+     * 
+     * @return {@code true} if the [[Construct]] internal method is attached
      */
     boolean isConstructor();
 }

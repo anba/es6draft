@@ -67,6 +67,12 @@ public final class StringIteratorPrototype extends OrdinaryObject implements Ini
 
     /**
      * 21.1.5.1 CreateStringIterator Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param string
+     *            the string value
+     * @return the new string iterator
      */
     public static OrdinaryObject CreateStringIterator(ExecutionContext cx, String string) {
         /* steps 1-2 (omitted) */
@@ -90,6 +96,12 @@ public final class StringIteratorPrototype extends OrdinaryObject implements Ini
 
         /**
          * 21.1.5.2.1 %StringIteratorPrototype%.next( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the next iterator result object
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
@@ -131,6 +143,12 @@ public final class StringIteratorPrototype extends OrdinaryObject implements Ini
 
         /**
          * 21.1.5.2.2 %StringIteratorPrototype% [@@iterator] ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the this-value
          */
         @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {

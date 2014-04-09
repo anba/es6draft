@@ -23,10 +23,20 @@ public final class YieldExpression extends Expression {
         this.expression = expression;
     }
 
+    /**
+     * Returns <code>true</code> if this yield expression represents a delegating yield expression.
+     * 
+     * @return <code>true</code> if a delegating yield expression
+     */
     public boolean isDelegatedYield() {
         return delegatedYield;
     }
 
+    /**
+     * Returns the expression of this yield expression or {@code null} if not present.
+     * 
+     * @return the expression
+     */
     public Expression getExpression() {
         return expression;
     }

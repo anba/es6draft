@@ -35,6 +35,12 @@ public final class AsyncAbstractOperations {
 
     /**
      * Spawn Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param functionObject
+     *            the async function object
+     * @return the new promise object
      */
     public static PromiseObject Spawn(ExecutionContext cx, OrdinaryAsyncFunction functionObject) {
         GeneratorObject generator = ObjectCreate(cx,
@@ -100,6 +106,15 @@ public final class AsyncAbstractOperations {
 
     /**
      * InitialStep Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param generator
+     *            the generator object
+     * @param resolve
+     *            the resolve callback
+     * @param reject
+     *            the reject callback
      */
     private static void InitialStep(ExecutionContext cx, GeneratorObject generator,
             Callable resolve, Callable reject) {
@@ -109,6 +124,15 @@ public final class AsyncAbstractOperations {
 
     /**
      * Step Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param asyncState
+     *            the asynchronous state
+     * @param action
+     *            the step action to be performed
+     * @param value
+     *            the value argument
      */
     private static void Step(ExecutionContext cx, AsyncState asyncState, StepAction action,
             Object value) {

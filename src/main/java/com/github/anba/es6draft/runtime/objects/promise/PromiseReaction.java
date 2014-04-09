@@ -29,14 +29,18 @@ public final class PromiseReaction {
     }
 
     /**
-     * Returns the [[Capabilities]] field of this PromiseReaction record
+     * Returns the [[Capabilities]] field of this PromiseReaction record.
+     * 
+     * @return the promise capability
      */
     public PromiseCapability<?> getCapabilities() {
         return capabilities;
     }
 
     /**
-     * Returns the [[Handler]] field of this PromiseReaction record
+     * Returns the [[Handler]] field of this PromiseReaction record.
+     * 
+     * @return the handler function
      */
     public Callable getHandler() {
         return handler;

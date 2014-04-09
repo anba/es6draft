@@ -46,7 +46,11 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     /**
      * Returns a new {@link InterpretedScript} if the supplied {@code script} can be interpreted,
-     * otherwise returns {@code null}
+     * otherwise returns {@code null}.
+     * 
+     * @param parsedScript
+     *            the script node
+     * @return the interpreted script or {@code null}
      */
     public static InterpretedScript script(Script parsedScript) {
         if (!parsedScript.accept(InterpreterTest.INSTANCE, null)) {
@@ -70,7 +74,13 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     /* ----------------------------------------------------------------------------------------- */
 
     /**
-     * 12.3.4 Postfix Increment Operator
+     * 12.3.4 Postfix Increment Operator.
+     * 
+     * @param lhs
+     *            the left-hand side expression
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Double postIncrement(Object lhs, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(lhs, cx));
@@ -81,6 +91,12 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.3.5 Postfix Decrement Operator
+     * 
+     * @param lhs
+     *            the left-hand side expression
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Double postDecrement(Object lhs, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(lhs, cx));
@@ -91,6 +107,12 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.4.4 The delete Operator
+     * 
+     * @param expr
+     *            the expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static boolean delete(Object expr, ExecutionContext cx) {
         if (!(expr instanceof Reference)) {
@@ -101,6 +123,12 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.4.5 The void Operator
+     * 
+     * @param value
+     *            the expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Undefined _void(Object value, ExecutionContext cx) {
         return UNDEFINED;
@@ -108,6 +136,12 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.4.7 Prefix Increment Operator
+     * 
+     * @param expr
+     *            the expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Double preIncrement(Object expr, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(expr, cx));
@@ -118,6 +152,12 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.4.8 Prefix Decrement Operator
+     * 
+     * @param expr
+     *            the expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Double preDecrement(Object expr, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(expr, cx));
@@ -128,6 +168,12 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.4.9 Unary + Operator
+     * 
+     * @param value
+     *            the expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Double pos(Object value, ExecutionContext cx) {
         return ToNumber(cx, value);
@@ -135,6 +181,12 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.4.10 Unary - Operator
+     * 
+     * @param value
+     *            the expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Double neg(Object value, ExecutionContext cx) {
         double oldValue = ToNumber(cx, value);
@@ -143,6 +195,12 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.4.11 Bitwise NOT Operator ( ~ )
+     * 
+     * @param value
+     *            the expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Integer bitnot(Object value, ExecutionContext cx) {
         int oldValue = ToInt32(cx, value);
@@ -151,6 +209,12 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.4.12 Logical NOT Operator ( ! )
+     * 
+     * @param value
+     *            the expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Boolean not(Object value, ExecutionContext cx) {
         boolean oldValue = ToBoolean(value);
@@ -159,6 +223,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.5 Multiplicative Operators
+     * 
+     * @param leftValue
+     *            the left-hand side expression value
+     * @param rightValue
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Double mul(Object leftValue, Object rightValue, ExecutionContext cx) {
         double lnum = ToNumber(cx, leftValue);
@@ -168,6 +240,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.5 Multiplicative Operators
+     * 
+     * @param leftValue
+     *            the left-hand side expression value
+     * @param rightValue
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Double div(Object leftValue, Object rightValue, ExecutionContext cx) {
         double lnum = ToNumber(cx, leftValue);
@@ -177,6 +257,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.5 Multiplicative Operators
+     * 
+     * @param leftValue
+     *            the left-hand side expression value
+     * @param rightValue
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Double mod(Object leftValue, Object rightValue, ExecutionContext cx) {
         double lnum = ToNumber(cx, leftValue);
@@ -186,6 +274,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.6.2 The Subtraction Operator ( - )
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Double sub(Object lval, Object rval, ExecutionContext cx) {
         double lnum = ToNumber(cx, lval);
@@ -194,7 +290,15 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.7.1 The Left Shift Operator ( << )
+     * 12.7.1 The Left Shift Operator ( {@literal <<} )
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Integer leftShift(Object lval, Object rval, ExecutionContext cx) {
         int lnum = ToInt32(cx, lval);
@@ -204,7 +308,15 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.7.2 The Signed Right Shift Operator ( >> )
+     * 12.7.2 The Signed Right Shift Operator ( {@literal >>} )
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Integer rightShift(Object lval, Object rval, ExecutionContext cx) {
         int lnum = ToInt32(cx, lval);
@@ -214,7 +326,15 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.7.3 The Unsigned Right Shift Operator ( >>> )
+     * 12.7.3 The Unsigned Right Shift Operator ( {@literal >>>} )
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Long unsignedRightShift(Object lval, Object rval, ExecutionContext cx) {
         long lnum = ToUint32(cx, lval);
@@ -225,6 +345,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.8 Relational Operators
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Boolean _instanceof(Object lval, Object rval, ExecutionContext cx) {
         return ScriptRuntime.InstanceofOperator(lval, rval, cx);
@@ -232,6 +360,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.8 Relational Operators
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Boolean lessThan(Object lval, Object rval, ExecutionContext cx) {
         int c = ScriptRuntime.relationalComparison(lval, rval, true, cx);
@@ -240,6 +376,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.8 Relational Operators
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Boolean lessThanEqual(Object lval, Object rval, ExecutionContext cx) {
         int c = ScriptRuntime.relationalComparison(rval, lval, false, cx);
@@ -248,6 +392,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.8 Relational Operators
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Boolean greaterThan(Object lval, Object rval, ExecutionContext cx) {
         int c = ScriptRuntime.relationalComparison(rval, lval, false, cx);
@@ -256,6 +408,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.8 Relational Operators
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Boolean greaterThanEqual(Object lval, Object rval, ExecutionContext cx) {
         int c = ScriptRuntime.relationalComparison(lval, rval, true, cx);
@@ -264,6 +424,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.9 Equality Operators
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Boolean equals(Object lval, Object rval, ExecutionContext cx) {
         return ScriptRuntime.equalityComparison(rval, lval, cx);
@@ -271,6 +439,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.9 Equality Operators
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Boolean notEquals(Object lval, Object rval, ExecutionContext cx) {
         return !ScriptRuntime.equalityComparison(rval, lval, cx);
@@ -278,6 +454,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.9 Equality Operators
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Boolean strictEquals(Object lval, Object rval, ExecutionContext cx) {
         return ScriptRuntime.strictEqualityComparison(rval, lval);
@@ -285,6 +469,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.9 Equality Operators
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Boolean strictNotEquals(Object lval, Object rval, ExecutionContext cx) {
         return !ScriptRuntime.strictEqualityComparison(rval, lval);
@@ -292,6 +484,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.10 Binary Bitwise Operators
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Integer bitand(Object lval, Object rval, ExecutionContext cx) {
         int lnum = ToInt32(cx, lval);
@@ -301,6 +501,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.10 Binary Bitwise Operators
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Integer bitxor(Object lval, Object rval, ExecutionContext cx) {
         int lnum = ToInt32(cx, lval);
@@ -310,6 +518,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.10 Binary Bitwise Operators
+     * 
+     * @param lval
+     *            the left-hand side expression value
+     * @param rval
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
      */
     private static Integer bitor(Object lval, Object rval, ExecutionContext cx) {
         int lnum = ToInt32(cx, lval);
@@ -626,6 +842,16 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     /**
      * 12.2.4.2 Runtime Semantics: EvaluateCall
+     * 
+     * @param ref
+     *            the call base reference
+     * @param arguments
+     *            the function call arguments
+     * @param directEval
+     *            the direct eval flag
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the call operation
      */
     private Object EvaluateCall(Object ref, List<Expression> arguments, boolean directEval,
             ExecutionContext cx) {

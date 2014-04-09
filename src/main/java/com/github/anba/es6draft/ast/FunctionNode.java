@@ -12,10 +12,17 @@ import java.util.List;
  * <h1>14 ECMAScript Language: Functions and Classes</h1>
  */
 public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNode {
+    /**
+     * Returns the function name.
+     * 
+     * @return the function name
+     */
     String getFunctionName();
 
     /**
      * Returns the formal parameter list for this function.
+     * 
+     * @return the parameters
      */
     FormalParameterList getParameters();
 
@@ -25,21 +32,30 @@ public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNod
 
     /**
      * Retrieves the strict-mode for this object.
+     * 
+     * @return the strict-mode
      */
     StrictMode getStrictMode();
 
     /**
      * Sets the strict-mode for this object.
+     * 
+     * @param strictMode
+     *            the new strict-mode
      */
     void setStrictMode(StrictMode strictMode);
 
     /**
      * Returns the source string representation for the function's header.
+     * 
+     * @return the header source string
      */
     String getHeaderSource();
 
     /**
      * Returns the source string representation for the function's body.
+     * 
+     * @return the body source string
      */
     String getBodySource();
 
@@ -54,16 +70,22 @@ public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNod
 
     /**
      * Returns <code>true</code> if this function is a generator function.
+     * 
+     * @return <code>true</code> if this node is a generator
      */
     boolean isGenerator();
 
     /**
      * Returns <code>true</code> if this function is an async function.
+     * 
+     * @return <code>true</code> if this node is an async function
      */
     boolean isAsync();
 
     /**
      * Returns <code>true</code> if the <code>"super"</code> keyword is used within this function.
+     * 
+     * @return <code>true</code> if <code>"super"</code> reference is present
      */
     boolean hasSuperReference();
 }

@@ -99,92 +99,162 @@ public final class Load {
         this.metadata = metadata;
     }
 
-    /** [[Status]] */
+    /**
+     * [[Status]]
+     * 
+     * @return the load status
+     */
     public Status getStatus() {
         return status;
     }
 
-    /** [[Name]] */
+    /**
+     * [[Name]]
+     * 
+     * @return the module name or {@code null} if anonymous
+     */
     public String getName() {
         return name;
     }
 
-    /** [[Name]] */
+    /**
+     * [[Name]]
+     * 
+     * @return the module name
+     */
     public Object getNameOrNull() {
         return name != null ? name : NULL;
     }
 
-    /** [[LinkSets]] */
+    /**
+     * [[LinkSets]]
+     * 
+     * @return the list of link sets
+     */
     public List<LinkSet> getLinkSets() {
         return linkSets;
     }
 
-    /** [[LinkSets]] */
+    /**
+     * [[LinkSets]]
+     * 
+     * @return the sorted list of link sets
+     */
     public List<LinkSet> getSortedLinkSets() {
         List<LinkSet> sorted = new ArrayList<>(linkSets);
         Collections.sort(sorted, LinkSet.comparator());
         return sorted;
     }
 
-    /** [[Metadata]] */
+    /**
+     * [[Metadata]]
+     * 
+     * @return the user metadata object
+     */
     public Object getMetadata() {
         return metadata;
     }
 
-    /** [[Address]] */
+    /**
+     * [[Address]]
+     * 
+     * @return the module address
+     */
     public Object getAddress() {
         return address;
     }
 
-    /** [[Address]] */
+    /**
+     * [[Address]]
+     * 
+     * @param address
+     *            the new module address
+     */
     public void setAddress(Object address) {
         assert this.address == null && address != null;
         this.address = address;
     }
 
-    /** [[Source]] */
+    /**
+     * [[Source]]
+     * 
+     * @return the module source string
+     */
     public String getSource() {
         return source;
     }
 
-    /** [[Source]] */
+    /**
+     * [[Source]]
+     * 
+     * @param source
+     *            the new module source string
+     */
     public void setSource(String source) {
         assert this.source == null && source != null;
         this.source = source;
     }
 
-    /** [[Kind]] */
+    /**
+     * [[Kind]]
+     * 
+     * @return the module kind
+     */
     public Kind getKind() {
         return kind;
     }
 
-    /** [[Body]] */
+    /**
+     * [[Body]]
+     * 
+     * @return the parsed module body node
+     */
     public Module getBody() {
         return body;
     }
 
-    /** [[Execute]] */
+    /**
+     * [[Execute]]
+     * 
+     * @return the execute callback
+     */
     public Callable getExecute() {
         return execute;
     }
 
-    /** [[Dependencies]] */
+    /**
+     * [[Dependencies]]
+     * 
+     * @return the list of module dependencies
+     */
     public List<Dependency> getDependencies() {
         return dependencies;
     }
 
-    /** [[Dependencies]] */
+    /**
+     * [[Dependencies]]
+     * 
+     * @param dependencies
+     *            the new list of module dependencies
+     */
     public void setDependencies(List<Dependency> dependencies) {
         this.dependencies = dependencies;
     }
 
-    /** [[Module]] */
+    /**
+     * [[Module]]
+     * 
+     * @return the module linkage
+     */
     public ModuleLinkage getModule() {
         return module;
     }
 
     /**
-     * Links this {@link Load} record to {@code module}
+     * Links this {@link Load} record to {@code module}.
+     * 
+     * @param module
+     *            new module linkage record
      */
     void link(ModuleLinkage module) {
         assert status != Status.Linked;
@@ -193,7 +263,7 @@ public final class Load {
     }
 
     /**
-     * Marks this {@link Load} as loaded
+     * Marks this {@link Load} as loaded.
      */
     void loaded() {
         assert status == Status.Loading;
@@ -201,7 +271,10 @@ public final class Load {
     }
 
     /**
-     * Marks this {@link Load} as failed
+     * Marks this {@link Load} as failed.
+     * 
+     * @param exception
+     *            the module load exception
      */
     void failed(Object exception) {
         assert status == Status.Loading;
@@ -210,7 +283,10 @@ public final class Load {
     }
 
     /**
-     * Changes this Load record to 'declarative'
+     * Changes this Load record to 'declarative'.
+     * 
+     * @param body
+     *            the parsed module body
      */
     void declarative(Module body) {
         assert kind == null;
@@ -219,7 +295,10 @@ public final class Load {
     }
 
     /**
-     * Changes this Load record to 'dynamic'
+     * Changes this Load record to 'dynamic'.
+     * 
+     * @param execute
+     *            the execute callback
      */
     void dynamic(Callable execute) {
         assert kind == null;
@@ -228,7 +307,12 @@ public final class Load {
     }
 
     /**
-     * Adds a new dependency to this Load record
+     * Adds a new dependency to this Load record.
+     * 
+     * @param moduleName
+     *            the dependency name
+     * @param normalisedModuleName
+     *            the normalised dependency name
      */
     void addDependency(String moduleName, String normalisedModuleName) {
         dependencies.add(new Dependency(moduleName, normalisedModuleName));
@@ -236,6 +320,12 @@ public final class Load {
 
     /**
      * 15.2.3.2.1 CreateLoad(name) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param name
+     *            the module name
+     * @return the new load record
      */
     public static Load CreateLoad(ExecutionContext cx, String name) {
         assert name != null : "expected non-anonymous module";
@@ -247,6 +337,14 @@ public final class Load {
 
     /**
      * 15.2.3.2.1 CreateLoad(name) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param name
+     *            the module name
+     * @param metadata
+     *            the user metadata object
+     * @return the new load record
      */
     public static Load CreateLoad(ExecutionContext cx, String name, Object metadata) {
         assert name != null : "expected non-anonymous module";
@@ -260,6 +358,12 @@ public final class Load {
      * 15.2.3.2.1 CreateLoad(name) Abstract Operation
      * <p>
      * CreateLoadFromAddress(address) [not in spec]
+     * 
+     * @param cx
+     *            the execution context
+     * @param address
+     *            the module address
+     * @return the new load record
      */
     public static Load CreateLoadFromAddress(ExecutionContext cx, Object address) {
         // NB: Only loads created by this methods are anonymous
@@ -270,6 +374,14 @@ public final class Load {
 
     /**
      * 15.2.3.2.2 CreateLoadRequestObject(name, metadata, address, source) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param name
+     *            the module name
+     * @param metadata
+     *            the user metadata object
+     * @return the new load request script object
      */
     public static ScriptObject CreateLoadRequestObject(ExecutionContext cx, Object name,
             Object metadata) {
@@ -278,6 +390,16 @@ public final class Load {
 
     /**
      * 15.2.3.2.2 CreateLoadRequestObject(name, metadata, address, source) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param name
+     *            the module name
+     * @param metadata
+     *            the user metadata object
+     * @param address
+     *            the module address
+     * @return the new load request script object
      */
     public static ScriptObject CreateLoadRequestObject(ExecutionContext cx, Object name,
             Object metadata, Object address) {
@@ -286,6 +408,18 @@ public final class Load {
 
     /**
      * 15.2.3.2.2 CreateLoadRequestObject(name, metadata, address, source) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param name
+     *            the module name
+     * @param metadata
+     *            the user metadata object
+     * @param address
+     *            the module address
+     * @param source
+     *            the module source
+     * @return the new load request script object
      */
     public static ScriptObject CreateLoadRequestObject(ExecutionContext cx, Object name,
             Object metadata, Object address, Object source) {

@@ -21,17 +21,37 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 public interface Callable extends ScriptObject {
     /**
      * [[Call]]
+     * 
+     * @param callerContext
+     *            the caller's execution context
+     * @param thisValue
+     *            the this-value
+     * @param args
+     *            the function arguments
+     * @return the function return value
      */
     Object call(ExecutionContext callerContext, Object thisValue, Object... args);
 
     /**
      * [[Call]] in tail-call position
+     * 
+     * @param callerContext
+     *            the caller's execution context
+     * @param thisValue
+     *            the this-value
+     * @param args
+     *            the function arguments
+     * @return the function return value
+     * @throws Throwable
+     *             any error thrown by the underlying method implementation
      */
     Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
             throws Throwable;
 
     /**
-     * Source representation of this callable
+     * Source representation of this callable.
+     * 
+     * @return the function source
      */
     String toSource();
 }

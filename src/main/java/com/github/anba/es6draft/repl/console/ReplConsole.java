@@ -14,22 +14,36 @@ import com.github.anba.es6draft.runtime.Realm;
  */
 public interface ReplConsole extends ShellConsole {
     /**
-     * Install completion support
+     * Install completion support.
+     * 
+     * @param realm
+     *            the realm object
      */
-    boolean addCompletion(Realm realm);
+    void addCompletion(Realm realm);
 
     /**
-     * Whether or not ANSI mode is supported
+     * Whether or not ANSI mode is supported.
+     * 
+     * @return {@code true} if ANSI mode is supported
      */
     boolean isAnsiSupported();
 
     /**
-     * Print the format string
+     * Print the format string.
+     * 
+     * @param format
+     *            the format string
+     * @param args
+     *            the format string arguments
      */
     void printf(String format, Object... args);
 
     /**
-     * Read the current line
+     * Read the current line.
+     * 
+     * @param prompt
+     *            the command line prompt
+     * @return the current line
      */
     String readLine(String prompt);
 }

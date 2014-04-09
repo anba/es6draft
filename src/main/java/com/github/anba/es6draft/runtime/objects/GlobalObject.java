@@ -50,7 +50,12 @@ public class GlobalObject extends OrdinaryObject {
     }
 
     /**
-     * Initialise {@code object} with the default properties of the Global Object
+     * Initialise {@code object} with the default properties of the Global Object.
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
      */
     public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
         createProperties(cx, object, ValueProperties.class);
@@ -62,7 +67,18 @@ public class GlobalObject extends OrdinaryObject {
     }
 
     /**
-     * Execute any initialisation scripts which should be run for this global instance
+     * Execute any initialisation scripts which should be run for this global instance.
+     * 
+     * @param object
+     *            the script object
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws URISyntaxException
+     *             the URL is not a valid URI
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public void initialise(OrdinaryObject object) throws IOException, URISyntaxException,
             ParserException, CompilationException {
@@ -70,7 +86,9 @@ public class GlobalObject extends OrdinaryObject {
     }
 
     /**
-     * Returns the {@link Realm} of this global object
+     * Returns the {@link Realm} of this global object.
+     * 
+     * @return the realm instance
      */
     public final Realm getRealm() {
         return realm;
@@ -112,6 +130,14 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * 18.2.1 eval (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param args
+         *            the arguments
+         * @return the evaluation result
          */
         @Function(name = "eval", arity = 1)
         public static Object eval(ExecutionContext cx, Object thisValue, Object... args) {
@@ -120,6 +146,10 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * 18.2.5 parseInt (string , radix)
+         * 
+         * @param cx
+         *            the execution context
+         * @return the parsed integer
          */
         @Value(name = "parseInt")
         public static Object parseInt(ExecutionContext cx) {
@@ -128,6 +158,10 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * 18.2.4 parseFloat (string)
+         * 
+         * @param cx
+         *            the execution context
+         * @return the parsed number
          */
         @Value(name = "parseFloat")
         public static Object parseFloat(ExecutionContext cx) {
@@ -136,6 +170,14 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * 18.2.3 isNaN (number)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param number
+         *            the number value
+         * @return {@code true} if the number is the NaN value
          */
         @Function(name = "isNaN", arity = 1)
         public static Object isNaN(ExecutionContext cx, Object thisValue, Object number) {
@@ -151,6 +193,14 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * 18.2.2 isFinite (number)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param number
+         *            the number value
+         * @return {@code true} if the argument is a finite number
          */
         @Function(name = "isFinite", arity = 1)
         public static Object isFinite(ExecutionContext cx, Object thisValue, Object number) {
@@ -173,6 +223,14 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * 18.3.1 decodeURI (encodedURI)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param encodedURI
+         *            the encoded URI
+         * @return the decoded URI
          */
         @Function(name = "decodeURI", arity = 1)
         public static Object decodeURI(ExecutionContext cx, Object thisValue, Object encodedURI) {
@@ -188,6 +246,14 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * 18.3.2 decodeURIComponent (encodedURIComponent)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param encodedURIComponent
+         *            the encoded URI component
+         * @return the decoded URI component
          */
         @Function(name = "decodeURIComponent", arity = 1)
         public static Object decodeURIComponent(ExecutionContext cx, Object thisValue,
@@ -204,6 +270,14 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * 18.3.3 encodeURI (uri)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param uri
+         *            the URI
+         * @return the encoded URI
          */
         @Function(name = "encodeURI", arity = 1)
         public static Object encodeURI(ExecutionContext cx, Object thisValue, Object uri) {
@@ -219,6 +293,14 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * 18.3.4 encodeURIComponent (uriComponent)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param uriComponent
+         *            the URI component
+         * @return the encoded URI component
          */
         @Function(name = "encodeURIComponent", arity = 1)
         public static Object encodeURIComponent(ExecutionContext cx, Object thisValue,
@@ -515,6 +597,14 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * B.2.1.1 escape (string)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param string
+         *            the string
+         * @return the escaped string
          */
         @Function(name = "escape", arity = 1)
         public static Object escape(ExecutionContext cx, Object thisValue, Object string) {
@@ -544,6 +634,14 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * B.2.1.2 unescape (string)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param string
+         *            the string
+         * @return the unescaped string
          */
         @Function(name = "unescape", arity = 1)
         public static Object unescape(ExecutionContext cx, Object thisValue, Object string) {
@@ -591,6 +689,10 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * 18.3.1 decodeURI (encodedURI)
+         * 
+         * @param encodedURI
+         *            the encoded URI
+         * @return the decoded URI
          */
         public static String decodeURI(String encodedURI) {
             return decode(encodedURI, RESERVED_LO | HASH, RESERVED_HI);
@@ -598,6 +700,10 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * 18.3.2 decodeURIComponent (encodedURIComponent)
+         * 
+         * @param encodedURIComponent
+         *            the encoded URI component
+         * @return the decoded URI component
          */
         public static String decodeURIComponent(String encodedURIComponent) {
             return decode(encodedURIComponent, 0, 0);
@@ -605,6 +711,10 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * 18.3.3 encodeURI (uri)
+         * 
+         * @param uri
+         *            the URI
+         * @return the encoded URI
          */
         public static String encodeURI(String uri) {
             return encode(uri, RESERVED_LO | UNESCAPED_LO | HASH, RESERVED_HI | UNESCAPED_HI);
@@ -612,6 +722,10 @@ public class GlobalObject extends OrdinaryObject {
 
         /**
          * 18.3.4 encodeURIComponent (uriComponent)
+         * 
+         * @param uriComponent
+         *            the URI component
+         * @return the encoded URI component
          */
         public static String encodeURIComponent(String uriComponent) {
             return encode(uriComponent, UNESCAPED_LO, UNESCAPED_HI);
@@ -682,6 +796,14 @@ public class GlobalObject extends OrdinaryObject {
          * Runtime Semantics: Encode Abstract Operation
          * <p>
          * Returns encoded string or {@code null} on error
+         * 
+         * @param s
+         *            the string
+         * @param low
+         *            the low bit set
+         * @param high
+         *            the high bit set
+         * @return the encoded string
          */
         private static String encode(String s, long low, long high) {
             int length = s.length();
@@ -737,6 +859,14 @@ public class GlobalObject extends OrdinaryObject {
          * Runtime Semantics: Decode Abstract Operation
          * <p>
          * Returns decoded string or {@code null} on error
+         * 
+         * @param s
+         *            the string
+         * @param low
+         *            the low bit set
+         * @param high
+         *            the high bit set
+         * @return the decoded string
          */
         private static String decode(String s, long low, long high) {
             int i = s.indexOf('%');

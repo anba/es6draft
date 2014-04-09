@@ -25,6 +25,10 @@ public final class ModuleLinkingGroups {
 
     /**
      * 15.2.5.3.1 LinkageGroups ( start )
+     * 
+     * @param start
+     *            the list of initial load records
+     * @return the list of linkage groups
      */
     public static List<List<Load>> LinkageGroups(List<Load> start) {
         // TODO: implement
@@ -53,6 +57,15 @@ public final class ModuleLinkingGroups {
 
     /**
      * 15.2.5.3.2 BuildLinkageGroups ( load, declarativeGroups, dynamicGroups, visited )
+     * 
+     * @param load
+     *            the load record
+     * @param declarativeGroups
+     *            ?
+     * @param dynamicGroups
+     *            ?
+     * @param visited
+     *            the set of already visited modules
      */
     public static void BuildLinkageGroups(Load load, Object declarativeGroups,
             Object dynamicGroups, Set<String> visited) {

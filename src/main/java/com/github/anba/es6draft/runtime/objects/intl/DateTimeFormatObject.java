@@ -85,72 +85,135 @@ public class DateTimeFormatObject extends OrdinaryObject {
         return dateFormat;
     }
 
-    /** [[initializedIntlObject]] */
+    /**
+     * [[initializedIntlObject]]
+     * 
+     * @return {@code true} if the Intl object is initialised
+     */
     public boolean isInitializedIntlObject() {
         return initializedIntlObject;
     }
 
-    /** [[initializedIntlObject]] */
+    /**
+     * [[initializedIntlObject]]
+     * 
+     * @param initializedIntlObject
+     *            the new initialisation state
+     */
     public void setInitializedIntlObject(boolean initializedIntlObject) {
         this.initializedIntlObject = initializedIntlObject;
     }
 
-    /** [[initializedDateTimeFormat]] */
+    /**
+     * [[initializedDateTimeFormat]]
+     * 
+     * @return {@code true} if the date format object is initialised
+     */
     public boolean isInitializedDateTimeFormat() {
         return initializedDateTimeFormat;
     }
 
-    /** [[initializedDateTimeFormat]] */
+    /**
+     * [[initializedDateTimeFormat]]
+     * 
+     * @param initializedDateTimeFormat
+     *            the new initialisation state
+     */
     public void setInitializedDateTimeFormat(boolean initializedDateTimeFormat) {
         this.initializedDateTimeFormat = initializedDateTimeFormat;
     }
 
-    /** [[locale]] */
+    /**
+     * [[locale]]
+     * 
+     * @return the locale
+     */
     public String getLocale() {
         return locale;
     }
 
-    /** [[locale]] */
+    /**
+     * [[locale]]
+     * 
+     * @param locale
+     *            the new locale
+     */
     public void setLocale(String locale) {
         this.locale = locale;
     }
 
-    /** [[calendar]] */
+    /**
+     * [[calendar]]
+     * 
+     * @return the calendar value
+     */
     public String getCalendar() {
         return calendar;
     }
 
-    /** [[calendar]] */
+    /**
+     * [[calendar]]
+     * 
+     * @param calendar
+     *            the new calendar value
+     */
     public void setCalendar(String calendar) {
         this.calendar = calendar;
     }
 
-    /** [[numberingSystem]] */
+    /**
+     * [[numberingSystem]]
+     * 
+     * @return the numbering system value
+     */
     public String getNumberingSystem() {
         return numberingSystem;
     }
 
-    /** [[numberingSystem]] */
+    /**
+     * [[numberingSystem]]
+     * 
+     * @param numberingSystem
+     *            the new numbering system
+     */
     public void setNumberingSystem(String numberingSystem) {
         this.numberingSystem = numberingSystem;
     }
 
-    /** [[timeZone]] */
+    /**
+     * [[timeZone]]
+     * 
+     * @return the time zone
+     */
     public String getTimeZone() {
         return timeZone;
     }
 
-    /** [[timeZone]] */
+    /**
+     * [[timeZone]]
+     * 
+     * @param timeZone
+     *            the new time zone
+     */
     public void setTimeZone(String timeZone) {
         this.timeZone = timeZone;
     }
 
-    /** [[boundFormat]] */
+    /**
+     * [[boundFormat]]
+     * 
+     * @return the bound format function
+     */
     public Callable getBoundFormat() {
         return boundFormat;
     }
 
-    /** [[boundFormat]] */
+    /**
+     * [[boundFormat]]
+     * 
+     * @param boundFormat
+     *            the bound format function
+     */
     public void setBoundFormat(Callable boundFormat) {
         this.boundFormat = boundFormat;
     }

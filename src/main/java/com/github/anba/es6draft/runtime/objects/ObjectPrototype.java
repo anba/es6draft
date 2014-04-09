@@ -79,6 +79,12 @@ public final class ObjectPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 19.1.3.6 Object.prototype.toString ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the string representation
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -153,6 +159,12 @@ public final class ObjectPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 19.1.3.5 Object.prototype.toLocaleString ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the locale specific string representation
          */
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue) {
@@ -162,6 +174,12 @@ public final class ObjectPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 19.1.3.7 Object.prototype.valueOf ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the object value
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
@@ -173,6 +191,14 @@ public final class ObjectPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 19.1.3.2 Object.prototype.hasOwnProperty (V)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param v
+         *            the property key
+         * @return {@code true} if the property is present
          */
         @Function(name = "hasOwnProperty", arity = 1)
         public static Object hasOwnProperty(ExecutionContext cx, Object thisValue, Object v) {
@@ -190,6 +216,14 @@ public final class ObjectPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 19.1.3.3 Object.prototype.isPrototypeOf (V)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param v
+         *            the script object
+         * @return {@code true} if the this-value was found in the prototype chain of <var>v</var>
          */
         @Function(name = "isPrototypeOf", arity = 1)
         public static Object isPrototypeOf(ExecutionContext cx, Object thisValue, Object v) {
@@ -214,6 +248,14 @@ public final class ObjectPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 19.1.3.4 Object.prototype.propertyIsEnumerable (V)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param v
+         *            the property key
+         * @return {@code true} if the property is enumerable
          */
         @Function(name = "propertyIsEnumerable", arity = 1)
         public static Object propertyIsEnumerable(ExecutionContext cx, Object thisValue, Object v) {
@@ -242,6 +284,12 @@ public final class ObjectPrototype extends OrdinaryObject implements Initialisab
         /**
          * B.2.2.1 Object.prototype.__proto__<br>
          * B.2.2.1.1 get Object.prototype.__proto__
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the prototype object
          */
         @Accessor(name = "__proto__", type = Accessor.Type.Getter)
         public static Object getPrototype(ExecutionContext cx, Object thisValue) {
@@ -255,6 +303,14 @@ public final class ObjectPrototype extends OrdinaryObject implements Initialisab
         /**
          * B.2.2.1 Object.prototype.__proto__<br>
          * B.2.2.1.2 set Object.prototype.__proto__
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param proto
+         *            the new prototype object
+         * @return the prototype object
          */
         @Accessor(name = "__proto__", type = Accessor.Type.Setter)
         public static Object setPrototype(ExecutionContext cx, Object thisValue, Object proto) {

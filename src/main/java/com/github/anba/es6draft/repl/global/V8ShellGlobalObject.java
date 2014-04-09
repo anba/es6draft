@@ -39,7 +39,17 @@ public final class V8ShellGlobalObject extends ShellGlobalObject {
     }
 
     /**
-     * Returns an object to allocate new instances of this class
+     * Returns an object to allocate new instances of this class.
+     * 
+     * @param console
+     *            the console object
+     * @param baseDir
+     *            the base directory
+     * @param script
+     *            the main script file
+     * @param scriptCache
+     *            the script cache
+     * @return the object allocator to construct new global object instances
      */
     public static ObjectAllocator<V8ShellGlobalObject> newGlobalObjectAllocator(
             final ShellConsole console, final Path baseDir, final Path script,
@@ -59,7 +69,12 @@ public final class V8ShellGlobalObject extends ShellGlobalObject {
         include(getScriptURL("v8legacy.js"));
     }
 
-    /** shell-function: {@code write(message)} */
+    /**
+     * shell-function: {@code write(message)}
+     *
+     * @param messages
+     *            the strings to write
+     */
     @Function(name = "write", arity = 1)
     public void write(String... messages) {
         console.putstr(concat(messages));
@@ -71,13 +86,25 @@ public final class V8ShellGlobalObject extends ShellGlobalObject {
         // empty
     }
 
-    /** shell-function: {@code getDefaultLocale()} */
+    /**
+     * shell-function: {@code getDefaultLocale()}
+     * 
+     * @param cx
+     *            the execution context
+     * @return the default locale
+     */
     @Function(name = "getDefaultLocale", arity = 0)
     public String getDefaultLocale(ExecutionContext cx) {
         return IntlAbstractOperations.DefaultLocale(cx.getRealm());
     }
 
-    /** shell-function: {@code getDefaultTimeZone()} */
+    /**
+     * shell-function: {@code getDefaultTimeZone()}
+     * 
+     * @param cx
+     *            the execution context
+     * @return the default timezone
+     */
     @Function(name = "getDefaultTimeZone", arity = 0)
     public String getDefaultTimeZone(ExecutionContext cx) {
         return IntlAbstractOperations.DefaultTimeZone(cx.getRealm());

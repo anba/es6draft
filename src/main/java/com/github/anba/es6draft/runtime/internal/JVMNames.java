@@ -16,7 +16,15 @@ public final class JVMNames {
 
     /**
      * Adds the given prefix/suffix pair to the bytecode name, neither prefix nor suffix may contain
-     * characters which require additional escapes
+     * characters which require additional escapes.
+     * 
+     * @param name
+     *            the bytecode name
+     * @param prefix
+     *            the new prefix
+     * @param suffix
+     *            the new suffix
+     * @return the concatenated string
      */
     public static String addPrefixSuffix(String name, String prefix, String suffix) {
         assert name.length() >= 2 : "expected bytecode name";
@@ -41,7 +49,11 @@ public final class JVMNames {
     }
 
     /**
-     * Returns the corresponding bytecode name of the input string
+     * Returns the corresponding bytecode name of the input string.
+     * 
+     * @param n
+     *            the unescaped input string
+     * @return the escaped bytecode name
      */
     public static String toBytecodeName(String n) {
         int length = n.length();
@@ -91,7 +103,11 @@ public final class JVMNames {
     }
 
     /**
-     * Returns the base name of the supplied bytecode name
+     * Returns the base name of the supplied bytecode name.
+     * 
+     * @param n
+     *            the bytecode name
+     * @return the unescaped base name
      */
     public static String fromBytecodeName(String n) {
         assert n.length() > 0;

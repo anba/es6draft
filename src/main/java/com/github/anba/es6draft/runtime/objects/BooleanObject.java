@@ -34,6 +34,8 @@ public final class BooleanObject extends OrdinaryObject {
 
     /**
      * [[BooleanData]]
+     * 
+     * @return the boolean value
      */
     public boolean getBooleanData() {
         assert this.initialised : "BooleanObject not initialised";
@@ -42,6 +44,9 @@ public final class BooleanObject extends OrdinaryObject {
 
     /**
      * [[BooleanData]]
+     * 
+     * @param booleanData
+     *            the new boolean value
      */
     public void setBooleanData(boolean booleanData) {
         assert !this.initialised : "BooleanObject already initialised";
@@ -51,6 +56,12 @@ public final class BooleanObject extends OrdinaryObject {
 
     /**
      * Custom helper function
+     * 
+     * @param cx
+     *            the execution context
+     * @param booleanData
+     *            the boolean value
+     * @return the new boolean object
      */
     public static BooleanObject BooleanCreate(ExecutionContext cx, boolean booleanData) {
         BooleanObject obj = new BooleanObject(cx.getRealm());

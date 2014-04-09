@@ -169,8 +169,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
         /* step 9 */
         for (StatementListItem item : reverse(varDeclarations)) {
-            if (item instanceof FunctionDeclaration || item instanceof GeneratorDeclaration
-                    || item instanceof AsyncFunctionDeclaration) {
+            if (isFunctionDeclaration(item)) {
                 Declaration d = (Declaration) item;
                 String fn = BoundName(d);
                 if ("arguments".equals(fn)) {
@@ -224,7 +223,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(function);
         /* step 16 */
         for (Declaration d : lexDeclarations) {
-            assert !(d instanceof GeneratorDeclaration);
+            assert !isFunctionDeclaration(d);
             for (String dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
                     createImmutableBinding(envRec, dn, mv);
@@ -237,13 +236,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         for (Declaration f : functionsToInitialise) {
             String fn = BoundName(f);
             // stack: [] -> [fo]
-            if (f instanceof GeneratorDeclaration) {
-                InstantiateGeneratorObject(context, env, (GeneratorDeclaration) f, mv);
-            } else if (f instanceof FunctionDeclaration) {
-                InstantiateFunctionObject(context, env, (FunctionDeclaration) f, mv);
-            } else {
-                InstantiateAsyncFunctionObject(context, env, (AsyncFunctionDeclaration) f, mv);
-            }
+            InstantiateFunctionObject(context, env, f, mv);
             // stack: [fo] -> []
             // setMutableBinding(envRec, fn, false, mv);
             initialiseBinding(envRec, fn, mv);

@@ -76,6 +76,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * Abstract operation thisStringValue(value)
+         * 
+         * @param cx
+         *            the execution context
+         * @param object
+         *            the object value
+         * @return the string value
          */
         private static CharSequence thisStringValue(ExecutionContext cx, Object object) {
             if (Type.isString(object)) {
@@ -102,6 +108,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.23 String.prototype.toString ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the string representation
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -110,6 +122,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.26 String.prototype.valueOf ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the string value
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
@@ -118,6 +136,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.1 String.prototype.charAt (pos)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param pos
+         *            the string index
+         * @return the character or the empty string
          */
         @Function(name = "charAt", arity = 1)
         public static Object charAt(ExecutionContext cx, Object thisValue, Object pos) {
@@ -139,6 +165,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.2 String.prototype.charCodeAt (pos)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param pos
+         *            the string index
+         * @return the character code unit
          */
         @Function(name = "charCodeAt", arity = 1)
         public static Object charCodeAt(ExecutionContext cx, Object thisValue, Object pos) {
@@ -160,6 +194,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.4 String.prototype.concat ( ...args )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param args
+         *            the additional strings
+         * @return the concatenated string
          */
         @Function(name = "concat", arity = 1)
         public static Object concat(ExecutionContext cx, Object thisValue, Object... args) {
@@ -183,6 +225,16 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.8 String.prototype.indexOf (searchString, position)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param searchString
+         *            the search string value
+         * @param position
+         *            the start position
+         * @return the result index
          */
         @Function(name = "indexOf", arity = 1)
         public static Object indexOf(ExecutionContext cx, Object thisValue, Object searchString,
@@ -205,6 +257,16 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.9 String.prototype.lastIndexOf (searchString, position)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param searchString
+         *            the search string value
+         * @param position
+         *            the start position
+         * @return the result index
          */
         @Function(name = "lastIndexOf", arity = 1)
         public static Object lastIndexOf(ExecutionContext cx, Object thisValue,
@@ -230,6 +292,18 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
         /**
          * 21.1.3.10 String.prototype.localeCompare (that, reserved1=undefined, reserved2=undefined)<br>
          * 13.1.1 String.prototype.localeCompare (that [, locales [, options]])
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param that
+         *            the other string
+         * @param locales
+         *            the optional locales array
+         * @param options
+         *            the optional options object
+         * @return the locale specific comparison result
          */
         @Function(name = "localeCompare", arity = 1)
         public static Object localeCompare(ExecutionContext cx, Object thisValue, Object that,
@@ -250,6 +324,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.11 String.prototype.match (regexp)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param regexp
+         *            the regular expression object
+         * @return the match result array
          */
         @Function(name = "match", arity = 1)
         public static Object match(ExecutionContext cx, Object thisValue, Object regexp) {
@@ -271,6 +353,16 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.14 String.prototype.replace (searchValue, replaceValue)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param searchValue
+         *            the search string
+         * @param replaceValue
+         *            the replace string or replacer function
+         * @return the new string
          */
         @Function(name = "replace", arity = 2)
         public static Object replace(ExecutionContext cx, Object thisValue, Object searchValue,
@@ -314,6 +406,16 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * Runtime Semantics: GetReplaceSubstitution Abstract Operation
+         * 
+         * @param matched
+         *            the matched substring
+         * @param replValue
+         *            the replacement value
+         * @param string
+         *            the string
+         * @param position
+         *            the string index
+         * @return the replacement string
          */
         private static String GetReplaceSubstitution(String matched, String replValue,
                 String string, int position) {
@@ -365,6 +467,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.15 String.prototype.search (regexp)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param regexp
+         *            the regular expression object
+         * @return the first match index
          */
         @Function(name = "search", arity = 1)
         public static Object search(ExecutionContext cx, Object thisValue, Object regexp) {
@@ -386,6 +496,16 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.16 String.prototype.slice (start, end)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param start
+         *            the start position
+         * @param end
+         *            the end position
+         * @return the substring
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
@@ -411,6 +531,16 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.17 String.prototype.split (separator, limit)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param separator
+         *            the string separator
+         * @param limit
+         *            the optional split array limit
+         * @return the split array
          */
         @Function(name = "split", arity = 2)
         public static Object split(ExecutionContext cx, Object thisValue, Object separator,
@@ -487,6 +617,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * Runtime Semantics: SplitMatch Abstract Operation
+         * 
+         * @param s
+         *            the string
+         * @param q
+         *            the start position
+         * @param r
+         *            the search string
+         * @return the index of the first match
          */
         public static int SplitMatch(String s, int q, String r) {
             // returns start instead of end position
@@ -495,6 +633,16 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.19 String.prototype.substring (start, end)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param start
+         *            the start position
+         * @param end
+         *            the end position
+         * @return the substring
          */
         @Function(name = "substring", arity = 2)
         public static Object substring(ExecutionContext cx, Object thisValue, Object start,
@@ -523,6 +671,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.22 String.prototype.toLowerCase ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the lower case string
          */
         @Function(name = "toLowerCase", arity = 0)
         public static Object toLowerCase(ExecutionContext cx, Object thisValue) {
@@ -537,6 +691,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
         /**
          * 21.1.3.20 String.prototype.toLocaleLowerCase ( )<br>
          * 13.1.2 String.prototype.toLocaleLowerCase ([locales])
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param locales
+         *            the optional locales array
+         * @return the lower case string
          */
         @Function(name = "toLocaleLowerCase", arity = 0)
         public static Object toLocaleLowerCase(ExecutionContext cx, Object thisValue, Object locales) {
@@ -561,6 +723,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.24 String.prototype.toUpperCase ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the upper case string
          */
         @Function(name = "toUpperCase", arity = 0)
         public static Object toUpperCase(ExecutionContext cx, Object thisValue) {
@@ -574,6 +742,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.21 String.prototype.toLocaleUpperCase ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param locales
+         *            the optional locales array
+         * @return the upper case string
          */
         @Function(name = "toLocaleUpperCase", arity = 0)
         public static Object toLocaleUpperCase(ExecutionContext cx, Object thisValue, Object locales) {
@@ -598,6 +774,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.25 String.prototype.trim ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the string with leading and trailing whitespace removed
          */
         @Function(name = "trim", arity = 0)
         public static Object trim(ExecutionContext cx, Object thisValue) {
@@ -611,6 +793,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.13 String.prototype.repeat (count)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param count
+         *            the repetition count
+         * @return the string repeated <var>count</var> times
          */
         @Function(name = "repeat", arity = 1)
         public static Object repeat(ExecutionContext cx, Object thisValue, Object count) {
@@ -644,6 +834,16 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.18 String.prototype.startsWith (searchString [, position ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param searchString
+         *            the search string
+         * @param position
+         *            the start position
+         * @return {@code true} if the string starts with <var>searchString</var>
          */
         @Function(name = "startsWith", arity = 1)
         public static Object startsWith(ExecutionContext cx, Object thisValue, Object searchString,
@@ -677,6 +877,16 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.7 String.prototype.endsWith (searchString [, endPosition] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param searchString
+         *            the search string
+         * @param endPosition
+         *            the end position
+         * @return {@code true} if the string ends with <var>searchString</var>
          */
         @Function(name = "endsWith", arity = 1)
         public static Object endsWith(ExecutionContext cx, Object thisValue, Object searchString,
@@ -712,6 +922,16 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.6 String.prototype.contains (searchString, position = 0 )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param searchString
+         *            the search string
+         * @param position
+         *            the start position
+         * @return {@code true} if the search string was found
          */
         @Function(name = "contains", arity = 1)
         public static Object contains(ExecutionContext cx, Object thisValue, Object searchString,
@@ -736,6 +956,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.3 String.prototype.codePointAt (pos)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param pos
+         *            the start position
+         * @return the code point
          */
         @Function(name = "codePointAt", arity = 1)
         public static Object codePointAt(ExecutionContext cx, Object thisValue, Object pos) {
@@ -757,6 +985,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.12 String.prototype.normalize ( form = "NFC" )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param form
+         *            the normalisation form
+         * @return the normalised string
          */
         @Function(name = "normalize", arity = 0)
         public static Object normalize(ExecutionContext cx, Object thisValue, Object form) {
@@ -786,6 +1022,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 21.1.3.27 String.prototype [ @@iterator ]( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the string iterator
          */
         @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
@@ -807,6 +1049,16 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.3.1 String.prototype.substr (start, length)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param start
+         *            the start position
+         * @param length
+         *            the substring length
+         * @return the substring
          */
         @Function(name = "substr", arity = 2)
         public static Object substr(ExecutionContext cx, Object thisValue, Object start,
@@ -839,6 +1091,18 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * Abstract operation CreateHTML
+         * 
+         * @param cx
+         *            the execution context
+         * @param string
+         *            the string
+         * @param tag
+         *            the html tag
+         * @param attribute
+         *            the html attribute name
+         * @param value
+         *            the html attribute value
+         * @return the html string
          */
         private static String CreateHTML(ExecutionContext cx, Object string, String tag,
                 String attribute, Object value) {
@@ -860,6 +1124,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.3.2 String.prototype.anchor ( name )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param name
+         *            the anchor name
+         * @return the html string
          */
         @Function(name = "anchor", arity = 1)
         public static Object anchor(ExecutionContext cx, Object thisValue, Object name) {
@@ -869,6 +1141,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.3.3 String.prototype.big ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the html string
          */
         @Function(name = "big", arity = 0)
         public static Object big(ExecutionContext cx, Object thisValue) {
@@ -878,6 +1156,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.3.4 String.prototype.blink ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the html string
          */
         @Function(name = "blink", arity = 0)
         public static Object blink(ExecutionContext cx, Object thisValue) {
@@ -887,6 +1171,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.3.5 String.prototype.bold ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the html string
          */
         @Function(name = "bold", arity = 0)
         public static Object bold(ExecutionContext cx, Object thisValue) {
@@ -896,6 +1186,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.3.6 String.prototype.fixed ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the html string
          */
         @Function(name = "fixed", arity = 0)
         public static Object fixed(ExecutionContext cx, Object thisValue) {
@@ -905,6 +1201,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.3.7 String.prototype.fontcolor ( color )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param color
+         *            the font color
+         * @return the html string
          */
         @Function(name = "fontcolor", arity = 1)
         public static Object fontcolor(ExecutionContext cx, Object thisValue, Object color) {
@@ -914,6 +1218,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.3.8 String.prototype.fontsize ( size )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param size
+         *            the font size
+         * @return the html string
          */
         @Function(name = "fontsize", arity = 1)
         public static Object fontsize(ExecutionContext cx, Object thisValue, Object size) {
@@ -923,6 +1235,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.3.9 String.prototype.italics ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the html string
          */
         @Function(name = "italics", arity = 0)
         public static Object italics(ExecutionContext cx, Object thisValue) {
@@ -932,6 +1250,14 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.3.10 String.prototype.link ( url )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param url
+         *            the url
+         * @return the html string
          */
         @Function(name = "link", arity = 1)
         public static Object link(ExecutionContext cx, Object thisValue, Object url) {
@@ -941,6 +1267,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.3.11 String.prototype.small ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the html string
          */
         @Function(name = "small", arity = 0)
         public static Object small(ExecutionContext cx, Object thisValue) {
@@ -950,6 +1282,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.3.12 String.prototype.strike ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the html string
          */
         @Function(name = "strike", arity = 0)
         public static Object strike(ExecutionContext cx, Object thisValue) {
@@ -959,6 +1297,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.3.13 String.prototype.sub ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the html string
          */
         @Function(name = "sub", arity = 0)
         public static Object sub(ExecutionContext cx, Object thisValue) {
@@ -968,6 +1312,12 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * B.2.3.14 String.prototype.sup ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the html string
          */
         @Function(name = "sup", arity = 0)
         public static Object sup(ExecutionContext cx, Object thisValue) {
@@ -979,6 +1329,10 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
     /**
      * SpecialCasing support for u+0130 (LATIN CAPITAL LETTER I WITH DOT ABOVE) was removed in
      * Java8: https://bugs.openjdk.java.net/browse/JDK-8020037
+     * 
+     * @param s
+     *            the string
+     * @return the string with u+0130 replaced
      */
     private static String replaceIWithDot(String s) {
         int index = s.indexOf('\u0130');

@@ -17,21 +17,25 @@ public abstract class Expression extends AstNode {
     }
 
     /**
-     * Returns {@code true} if this expression is enclosed in parentheses
+     * Returns {@code true} if this expression is enclosed in parentheses.
+     * 
+     * @return {@code true} if parenthesised
      */
     public boolean isParenthesised() {
         return parentheses != 0;
     }
 
     /**
-     * Adds one more layer of parentheses around this expression
+     * Adds one more layer of parentheses around this expression.
      */
     public void addParentheses() {
         parentheses += 1;
     }
 
     /**
-     * Returns the number of parentheses enclosing this expression
+     * Returns the number of parentheses enclosing this expression.
+     * 
+     * @return the number of parentheses
      */
     public int getParentheses() {
         return parentheses;
@@ -41,6 +45,8 @@ public abstract class Expression extends AstNode {
      * Returns a {@link Expression} instance representing this node as a value-expression, i.e. an
      * expression which will never yield Reference values. May throw an
      * {@link IllegalStateException} if the operation is not valid for the requested node.
+     * 
+     * @return the expression value node
      */
     public Expression asValue() {
         return this;

@@ -59,7 +59,9 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
     }
 
     /**
-     * Returns the number of maximal supported arguments in {@code Function.prototype.apply}
+     * Returns the number of maximal supported arguments in {@code Function.prototype.apply}.
+     * 
+     * @return the maximum number of supported arguments
      */
     public static final int getMaxArguments() {
         return MAX_ARGUMENTS;
@@ -98,6 +100,12 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
 
         /**
          * 19.2.3.6 Function.prototype.toString ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the string representation
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -109,6 +117,16 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
 
         /**
          * 19.2.3.1 Function.prototype.apply (thisArg, argArray)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param thisArg
+         *            the this-argument
+         * @param argArray
+         *            the arguments array
+         * @return the function invocation result
          */
         @TailCall
         @Function(name = "apply", arity = 2)
@@ -131,6 +149,16 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
 
         /**
          * 19.2.3.3 Function.prototype.call (thisArg [, arg1 [, arg2, ... ]])
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param thisArg
+         *            the this-argument
+         * @param args
+         *            the arguments array
+         * @return the function invocation result
          */
         @TailCall
         @Function(name = "call", arity = 1)
@@ -147,6 +175,16 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
 
         /**
          * 19.2.3.2 Function.prototype.bind (thisArg [, arg1 [, arg2, ... ]])
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param thisArg
+         *            the this-argument
+         * @param args
+         *            the arguments array
+         * @return the bound function object
          */
         @Function(name = "bind", arity = 1)
         public static Object bind(ExecutionContext cx, Object thisValue, Object thisArg,
@@ -178,6 +216,16 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
 
         /**
          * 19.2.3.5 Function.prototype.toMethod (superBinding, methodName = undefined)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param superBinding
+         *            the new super binding
+         * @param methodName
+         *            the new method name
+         * @return the new function object
          */
         @Function(name = "toMethod", arity = 1)
         public static Object toMethod(ExecutionContext cx, Object thisValue, Object superBinding,
@@ -210,6 +258,12 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
 
         /**
          * 19.2.4.7 Function.prototype[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new object
          */
         @Function(name = "[Symbol.create]", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -219,6 +273,14 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
 
         /**
          * 19.2.4.8 Function.prototype[@@hasInstance] (V)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param v
+         *            the value
+         * @return {@code true} if the value is an instance of this function
          */
         @Function(
                 name = "[Symbol.hasInstance]",

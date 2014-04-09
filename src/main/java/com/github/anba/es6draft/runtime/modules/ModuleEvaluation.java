@@ -64,6 +64,13 @@ public final class ModuleEvaluation {
 
     /**
      * 15.2.6.2 EnsureEvaluated(mod, seen, loader) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param mod
+     *            the module linkage record
+     * @param loader
+     *            the loader record
      */
     public static void EnsureEvaluated(ExecutionContext cx, ModuleLinkage mod, Loader loader) {
         EnsureEvaluated(cx, mod, new HashSet<ModuleLinkage>(), loader);
@@ -71,6 +78,15 @@ public final class ModuleEvaluation {
 
     /**
      * 15.2.6.2 EnsureEvaluated(mod, seen, loader) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param mod
+     *            the module linkage record
+     * @param seen
+     *            the set of already evaluated modules
+     * @param loader
+     *            the loader record
      */
     public static void EnsureEvaluated(ExecutionContext cx, ModuleLinkage mod,
             Set<ModuleLinkage> seen, Loader loader) {
@@ -106,6 +122,11 @@ public final class ModuleEvaluation {
 
     /**
      * 15.2.0.15 Runtime Semantics: ModuleDeclarationInstantiation
+     * 
+     * @param body
+     *            the parsed module node
+     * @param env
+     *            the module lexical environment
      */
     private static void ModuleDeclarationInstantiation(Module body,
             LexicalEnvironment<DeclarativeEnvironmentRecord> env) {

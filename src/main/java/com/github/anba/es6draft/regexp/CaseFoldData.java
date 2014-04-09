@@ -16,7 +16,11 @@ final class CaseFoldData {
     }
 
     /**
-     * Is {@code codePoint} a code point which is applicable for case folding
+     * Is {@code codePoint} a code point which is applicable for case folding.
+     * 
+     * @param codePoint
+     *            the code point to test
+     * @return {@code true} if the code point is applicable for case folding
      */
     public static final boolean caseFoldType(int codePoint) {
         switch (Character.getType(codePoint)) {
@@ -33,7 +37,15 @@ final class CaseFoldData {
     }
 
     /**
-     * Tests whether or not the case fold is applicable for non-unicode case fold per [21.2.2.8.2]
+     * Tests whether or not the case fold is applicable for non-unicode case fold per [21.2.2.8.2].
+     * 
+     * @param codePoint
+     *            the code point to test
+     * @param toUpper
+     *            the upper case conversion to test
+     * @param toLower
+     *            the lower case conversion to test
+     * @return {@code true} if the case fold is valid
      */
     public static final boolean isValidCaseFold(int codePoint, int toUpper, int toLower) {
         // 21.2.2.8.2: Canonicalize Abstract Operation
@@ -45,7 +57,11 @@ final class CaseFoldData {
     }
 
     /**
-     * Returns {@code true} if {@code ToUpper(codePoint) == ToUpper(ToLower(codePoint))}
+     * Returns {@code true} if {@code ToUpper(codePoint) == ToUpper(ToLower(codePoint))}.
+     * 
+     * @param codePoint
+     *            the code point to test
+     * @return {@code true} if the code point is valid for lower case conversion
      */
     public static final boolean isValidToLower(int codePoint) {
         switch (codePoint) {
@@ -61,6 +77,11 @@ final class CaseFoldData {
         }
     }
 
+    /**
+     * Returns the encoded array of all case fold code units.
+     * 
+     * @return the encoded array of code units
+     */
     public static final int[] allCaseFoldData() {
         /*
          * Format: (codeUnit:31:16) + (foldCodeUnit:0:15)

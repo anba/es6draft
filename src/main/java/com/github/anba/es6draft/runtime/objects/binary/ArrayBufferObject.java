@@ -31,6 +31,8 @@ public final class ArrayBufferObject extends OrdinaryObject {
 
     /**
      * [[ArrayBufferData]]
+     * 
+     * @return the underlying byte buffer
      */
     public ByteBuffer getData() {
         return data;
@@ -38,6 +40,9 @@ public final class ArrayBufferObject extends OrdinaryObject {
 
     /**
      * [[ArrayBufferData]]
+     * 
+     * @param data
+     *            the byte buffer
      */
     public void setData(ByteBuffer data) {
         assert data != null : "cannot initialise ArrayBuffer with null";
@@ -47,6 +52,8 @@ public final class ArrayBufferObject extends OrdinaryObject {
 
     /**
      * [[ArrayBufferByteLength]]
+     * 
+     * @return the array buffer length in bytes
      */
     public long getByteLength() {
         return byteLength;
@@ -54,6 +61,9 @@ public final class ArrayBufferObject extends OrdinaryObject {
 
     /**
      * [[ArrayBufferByteLength]]
+     * 
+     * @param byteLength
+     *            the new byte length
      */
     public void setByteLength(long byteLength) {
         assert byteLength >= 0 : "negative byte length: " + byteLength;

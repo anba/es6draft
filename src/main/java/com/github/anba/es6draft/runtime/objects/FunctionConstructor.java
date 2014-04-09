@@ -169,6 +169,12 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
 
         /**
          * 19.2.2.3 Function[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised function object
          */
         @Function(name = "[Symbol.create]", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

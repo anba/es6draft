@@ -58,6 +58,8 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
 
     /**
      * 8.1.1.3.4 GetSuperBase ()
+     * 
+     * @return the prototype of the home object or {@code null} if no super binding was set
      */
     public ScriptObject getSuperBase() {
         /* step 1 */
@@ -73,6 +75,8 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
 
     /**
      * 8.1.1.3.5 GetMethodName ()
+     * 
+     * @return the method name or {@code null} if not available
      */
     public Object getMethodName() {
         /* step 1 */

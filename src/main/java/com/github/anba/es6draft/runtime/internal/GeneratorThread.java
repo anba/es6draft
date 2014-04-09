@@ -24,14 +24,18 @@ public final class GeneratorThread extends Thread {
     }
 
     /**
-     * Returns the calling thread which instantiated this thread
+     * Returns the calling thread which instantiated this thread.
+     * 
+     * @return the parent thread
      */
     public Thread getParent() {
         return parent;
     }
 
     /**
-     * Creates a new {@link ThreadFactory} to create {@link GeneratorThread} objects
+     * Creates a new {@link ThreadFactory} to create {@link GeneratorThread} objects.
+     * 
+     * @return the new thread factory instance
      */
     public static ThreadFactory newGeneratorThreadFactory() {
         return new GeneratorThreadFactory();

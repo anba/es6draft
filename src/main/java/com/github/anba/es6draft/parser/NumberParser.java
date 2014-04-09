@@ -16,7 +16,13 @@ final class NumberParser {
     }
 
     /**
-     * Parse a decimal integer literal
+     * Parse a decimal integer literal.
+     * 
+     * @param cbuf
+     *            the characters to parse
+     * @param length
+     *            the length of the characters
+     * @return the parsed integer
      */
     static double parseInteger(char[] cbuf, int length) {
         if (length < 10) {
@@ -40,7 +46,13 @@ final class NumberParser {
     }
 
     /**
-     * Parse a decimal number literal
+     * Parse a decimal number literal.
+     * 
+     * @param cbuf
+     *            the characters to parse
+     * @param length
+     *            the length of the characters
+     * @return the parsed decimal
      */
     static double parseDecimal(char[] cbuf, int length) {
         String string = new String(cbuf, 0, length);
@@ -48,7 +60,13 @@ final class NumberParser {
     }
 
     /**
-     * Parse a binary integer literal
+     * Parse a binary integer literal.
+     * 
+     * @param cbuf
+     *            the characters to parse
+     * @param length
+     *            the length of the characters
+     * @return the binary integer
      */
     static double parseBinary(char[] cbuf, int length) {
         if (length < 32) {
@@ -73,7 +91,13 @@ final class NumberParser {
     }
 
     /**
-     * Parse an octal integer literal
+     * Parse an octal integer literal.
+     * 
+     * @param cbuf
+     *            the characters to parse
+     * @param length
+     *            the length of the characters
+     * @return the octal integer
      */
     static double parseOctal(char[] cbuf, int length) {
         if (length <= 10) {
@@ -98,7 +122,13 @@ final class NumberParser {
     }
 
     /**
-     * Parse a hexadecimal integer literal
+     * Parse a hexadecimal integer literal.
+     * 
+     * @param cbuf
+     *            the characters to parse
+     * @param length
+     *            the length of the characters
+     * @return the hexadecimal integer
      */
     static double parseHex(char[] cbuf, int length) {
         if (length < 8) {

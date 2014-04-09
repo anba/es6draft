@@ -61,7 +61,9 @@ public enum BuiltinSymbol {
     ;
 
     /**
-     * Returns a {@link Symbol} object for this {@link BuiltinSymbol}
+     * Returns a {@link Symbol} object for this {@link BuiltinSymbol}.
+     * 
+     * @return the built-in symbol
      */
     public final Symbol get() {
         assert this != NONE;

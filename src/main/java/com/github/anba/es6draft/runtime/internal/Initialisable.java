@@ -12,5 +12,12 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
  * Interface for objects with post-construction initialisation.
  */
 public interface Initialisable {
+
+    /**
+     * The initialisation method for this object.
+     * 
+     * @param cx
+     *            the execution context
+     */
     void initialise(ExecutionContext cx);
 }

@@ -40,6 +40,9 @@ public final class DataViewObject extends OrdinaryObject implements ArrayBufferV
 
     /**
      * [[ViewedArrayBuffer]]
+     * 
+     * @param buffer
+     *            the new array buffer object
      */
     public void setBuffer(ArrayBufferObject buffer) {
         assert buffer != null && buffer.getData() != null : "ArrayBufferObject not initialised";
@@ -56,6 +59,9 @@ public final class DataViewObject extends OrdinaryObject implements ArrayBufferV
 
     /**
      * [[ByteLength]]
+     * 
+     * @param byteLength
+     *            the new byte length
      */
     public void setByteLength(long byteLength) {
         assert byteLength >= 0 : "negative byte length: " + byteLength;
@@ -72,6 +78,9 @@ public final class DataViewObject extends OrdinaryObject implements ArrayBufferV
 
     /**
      * [[ByteOffset]]
+     * 
+     * @param byteOffset
+     *            the new byte offset
      */
     public void setByteOffset(long byteOffset) {
         assert byteOffset >= 0 : "negative byte offset: " + byteOffset;

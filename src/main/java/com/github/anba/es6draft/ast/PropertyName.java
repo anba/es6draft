@@ -16,7 +16,9 @@ package com.github.anba.es6draft.ast;
 public interface PropertyName extends Node {
     /**
      * Returns the string representation for this property name or <code>null</code> if no string
-     * representation is available
+     * representation is available.
+     * 
+     * @return the string representation or {@code null}
      */
     String getName();
 }

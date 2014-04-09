@@ -61,6 +61,14 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         /**
          * 26.1.6 Reflect.getPrototypeOf (target)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @return the prototype object
          */
         @Function(name = "getPrototypeOf", arity = 1)
         public static Object getPrototypeOf(ExecutionContext cx, Object thisValue, Object target) {
@@ -73,6 +81,16 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         /**
          * 26.1.13 Reflect.setPrototypeOf (target, proto)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @param proto
+         *            the new prototype object
+         * @return {@code true} on success
          */
         @Function(name = "setPrototypeOf", arity = 2)
         public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object target,
@@ -89,6 +107,14 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         /**
          * 26.1.9 Reflect.isExtensible (target)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @return {@code true} if the object is extensible
          */
         @Function(name = "isExtensible", arity = 1)
         public static Object isExtensible(ExecutionContext cx, Object thisValue, Object target) {
@@ -100,6 +126,14 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         /**
          * 26.1.11 Reflect.preventExtensions (target)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @return {@code true} on success
          */
         @Function(name = "preventExtensions", arity = 1)
         public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object target) {
@@ -111,6 +145,16 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         /**
          * 26.1.7 Reflect.has (target, propertyKey)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @param propertyKey
+         *            the property key
+         * @return {@code true} if the property was found
          */
         @Function(name = "has", arity = 2)
         public static Object has(ExecutionContext cx, Object thisValue, Object target,
@@ -130,6 +174,16 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         /**
          * 26.1.8 Reflect.hasOwn (target, propertyKey)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @param propertyKey
+         *            the property key
+         * @return {@code true} if the property was found
          */
         @Function(name = "hasOwn", arity = 2)
         public static Object hasOwn(ExecutionContext cx, Object thisValue, Object target,
@@ -150,6 +204,16 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         /**
          * 26.1.5 Reflect.getOwnPropertyDescriptor(target, propertyKey)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @param propertyKey
+         *            the property key
+         * @return the property descriptor object
          */
         @Function(name = "getOwnPropertyDescriptor", arity = 2)
         public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue,
@@ -172,6 +236,18 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         /**
          * 26.1.4 Reflect.get (target, propertyKey, receiver=target)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @param propertyKey
+         *            the property key
+         * @param receiver
+         *            the optional receiver object
+         * @return the property value
          */
         @Function(name = "get", arity = 3)
         public static Object get(ExecutionContext cx, Object thisValue, Object target,
@@ -195,6 +271,20 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         /**
          * 26.1.12 Reflect.set (target, propertyKey, V, receiver=target)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @param propertyKey
+         *            the property key
+         * @param value
+         *            the new property value
+         * @param receiver
+         *            the optional receiver object
+         * @return {@code true} on success
          */
         @Function(name = "set", arity = 4)
         public static Object set(ExecutionContext cx, Object thisValue, Object target,
@@ -218,6 +308,16 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         /**
          * 26.1.2 Reflect.deleteProperty (target, propertyKey)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @param propertyKey
+         *            the property key
+         * @return {@code true} on success
          */
         @Function(name = "deleteProperty", arity = 2)
         public static Object deleteProperty(ExecutionContext cx, Object thisValue, Object target,
@@ -237,6 +337,18 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         /**
          * 26.1.1 Reflect.defineProperty(target, propertyKey, attributes)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @param propertyKey
+         *            the property key
+         * @param attributes
+         *            the property descriptor object
+         * @return {@code true} on success
          */
         @Function(name = "defineProperty", arity = 3)
         public static Object defineProperty(ExecutionContext cx, Object thisValue, Object target,
@@ -258,6 +370,14 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         /**
          * 26.1.3 Reflect.enumerate (target)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @return the enumeration iterator object
          */
         @Function(name = "enumerate", arity = 1)
         public static Object enumerate(ExecutionContext cx, Object thisValue, Object target) {
@@ -269,6 +389,14 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         /**
          * 26.1.10 Reflect.ownKeys (target)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @return the properties iterator object
          */
         @Function(name = "ownKeys", arity = 1)
         public static Object ownKeys(ExecutionContext cx, Object thisValue, Object target) {
@@ -285,6 +413,16 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         /**
          * Reflect.parse(src[, options])
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param src
+         *            the source string
+         * @param options
+         *            the optional parse options
+         * @return the parsed AST object
          */
         @Function(name = "parse", arity = 1)
         public static Object parse(ExecutionContext cx, Object thisValue, Object src, Object options) {

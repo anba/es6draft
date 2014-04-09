@@ -18,6 +18,9 @@ public final class Strings {
     }
 
     /**
+     * @param c
+     *            the character to inspect
+     * @return {@code true} if the character is a line terminator
      * @see TokenStream#isLineTerminator(int)
      */
     public static boolean isLineTerminator(int c) {
@@ -28,6 +31,9 @@ public final class Strings {
     }
 
     /**
+     * @param c
+     *            the character to inspect
+     * @return {@code true} if the character is a whitespace
      * @see TokenStream#isWhitespace(int)
      */
     public static boolean isWhitespace(int c) {
@@ -35,6 +41,9 @@ public final class Strings {
     }
 
     /**
+     * @param c
+     *            the character to inspect
+     * @return {@code true} if the character is space separator
      * @see TokenStream#isSpaceSeparator(int)
      */
     private static boolean isSpaceSeparator(int c) {
@@ -43,7 +52,11 @@ public final class Strings {
     }
 
     /**
-     * Remove leading whitespace
+     * Removes leading whitespace.
+     * 
+     * @param s
+     *            the string
+     * @return the string with leading whitespace removed
      */
     public static String trimLeft(String s) {
         int start = 0, end = s.length();
@@ -62,7 +75,11 @@ public final class Strings {
     }
 
     /**
-     * Remove leading and trailing whitespace
+     * Removes leading and trailing whitespace.
+     * 
+     * @param s
+     *            the string
+     * @return the string with leading and trailing whitespace removed
      */
     public static String trim(String s) {
         int start = 0, end = s.length();
@@ -87,7 +104,13 @@ public final class Strings {
     }
 
     /**
-     * Repeat {@code c} {@code n}-times
+     * Repeat {@code c} {@code n}-times.
+     * 
+     * @param c
+     *            the character to repeat
+     * @param n
+     *            the repetition count
+     * @return the result string
      */
     public static String repeat(char c, int n) {
         assert n >= 0;
@@ -99,6 +122,10 @@ public final class Strings {
     /**
      * If {@code s} is an integer indexed property key less than {@code 0x7FFFFFF}, its integer
      * value is returned. Otherwise {@code -1} is returned.
+     * 
+     * @param s
+     *            the property key
+     * @return the integer index or {@code -1}
      */
     public static int toIndex(String s) {
         return (int) toIndex(s, 0x7FFF_FFFFL);
@@ -107,6 +134,10 @@ public final class Strings {
     /**
      * If {@code s} is an integer indexed property key less than {@code 0xFFFFFFF}, its integer
      * value is returned. Otherwise {@code -1} is returned.
+     * 
+     * @param s
+     *            the property key
+     * @return the array index or {@code -1}
      */
     public static long toArrayIndex(String s) {
         return toIndex(s, 0xFFFF_FFFFL);

@@ -53,6 +53,12 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
 
     /**
      * Returns the first {@link EnvironmentRecord} which has a binding for {@code name}.
+     * 
+     * @param lex
+     *            the lexical environment
+     * @param name
+     *            the identifier name
+     * @return the first environment record which has a binding for <var>name</var>
      */
     private static EnvironmentRecord getIdentifierRecord(LexicalEnvironment<?> lex, String name) {
         for (; lex != null; lex = lex.outer) {
@@ -67,6 +73,14 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     /**
      * Retrieves the binding value of the first {@link EnvironmentRecord} which has a binding for
      * {@code name}, if no such binding exists a ReferenceError is thrown.
+     * 
+     * @param lex
+     *            the lexical environment
+     * @param name
+     *            the identifier name
+     * @param strict
+     *            the strict mode flag
+     * @return the resolved identifier value
      */
     static Object getIdentifierValueOrThrow(LexicalEnvironment<?> lex, String name, boolean strict) {
         EnvironmentRecord envRec = getIdentifierRecord(lex, name);
@@ -80,17 +94,28 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      * Clones the given declarative {@link LexicalEnvironment}.
      * <p>
      * [Called from generated code]
+     * 
+     * @param e
+     *            the source lexical environment
+     * @return the cloned lexical environment
      */
     public static LexicalEnvironment<DeclarativeEnvironmentRecord> cloneDeclarativeEnvironment(
             LexicalEnvironment<DeclarativeEnvironmentRecord> e) {
         LexicalEnvironment<DeclarativeEnvironmentRecord> clone = newDeclarativeEnvironment(e.outer);
-        DeclarativeEnvironmentRecord envRec = clone.envRec;
-        e.envRec.copyBindings(envRec);
+        e.envRec.copyBindings(clone.envRec);
         return clone;
     }
 
     /**
      * 8.1.2.1 GetIdentifierReference (lex, name, strict)
+     * 
+     * @param lex
+     *            the lexical environment
+     * @param name
+     *            the identifier name
+     * @param strict
+     *            the strict mode flag
+     * @return the resolved identifier reference
      */
     public static Reference<EnvironmentRecord, String> getIdentifierReference(
             LexicalEnvironment<?> lex, String name, boolean strict) {
@@ -102,6 +127,10 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
 
     /**
      * 8.1.2.2 NewDeclarativeEnvironment (E)
+     * 
+     * @param e
+     *            the outer lexical environment
+     * @return the new declarative environment
      */
     public static LexicalEnvironment<DeclarativeEnvironmentRecord> newDeclarativeEnvironment(
             LexicalEnvironment<?> e) {
@@ -115,6 +144,12 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
 
     /**
      * 8.1.2.3 NewObjectEnvironment (O, E)
+     * 
+     * @param o
+     *            the script object
+     * @param e
+     *            the outer lexical environment
+     * @return the new object environment
      */
     public static LexicalEnvironment<ObjectEnvironmentRecord> newObjectEnvironment(ScriptObject o,
             LexicalEnvironment<?> e) {
@@ -123,6 +158,14 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
 
     /**
      * 8.1.2.3 NewObjectEnvironment (O, E)
+     * 
+     * @param o
+     *            the script object
+     * @param e
+     *            the outer lexical environment
+     * @param withEnvironment
+     *            the withEnvironment flag
+     * @return the new object environment
      */
     public static LexicalEnvironment<ObjectEnvironmentRecord> newObjectEnvironment(ScriptObject o,
             LexicalEnvironment<?> e, boolean withEnvironment) {
@@ -136,6 +179,14 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
 
     /**
      * 8.1.2.4 NewFunctionEnvironment (F, T)
+     * 
+     * @param callerContext
+     *            the caller execution context
+     * @param f
+     *            the function object
+     * @param t
+     *            the function this-binding
+     * @return the new function environment
      */
     public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(
             ExecutionContext callerContext, FunctionObject f, Object t) {
@@ -158,6 +209,10 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
 
     /**
      * 8.1.2.? NewModuleEnvironment (E)
+     * 
+     * @param e
+     *            the outer lexical environment
+     * @return the new module environment
      */
     public static LexicalEnvironment<DeclarativeEnvironmentRecord> newModuleEnvironment(
             LexicalEnvironment<?> e) {

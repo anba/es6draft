@@ -181,6 +181,11 @@ final class FunctionCodeGenerator {
      *   function.restoreLegacyProperties(oldCaller, oldArguments)
      * }
      * </pre>
+     * 
+     * @param node
+     *            the function node
+     * @param mv
+     *            the instruction visitor
      */
     private void generateLegacyFunction(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryFunction> function = mv.getParameter(FUNCTION, OrdinaryFunction.class);
@@ -246,6 +251,11 @@ final class FunctionCodeGenerator {
      * function_init(calleeContext, function, arguments)
      * return function_code(calleeContext)
      * </pre>
+     * 
+     * @param node
+     *            the function node
+     * @param mv
+     *            the instruction visitor
      */
     private void generateFunction(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryFunction> function = mv.getParameter(FUNCTION, OrdinaryFunction.class);
@@ -278,6 +288,11 @@ final class FunctionCodeGenerator {
      * function_init(calleeContext, function, arguments)
      * return EvaluateBody(calleeContext, generator)
      * </pre>
+     * 
+     * @param node
+     *            the function node
+     * @param mv
+     *            the instruction visitor
      */
     private void generateAsyncFunction(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryAsyncFunction> function = mv.getParameter(FUNCTION,
@@ -313,6 +328,11 @@ final class FunctionCodeGenerator {
      * function_init(calleeContext, generator, arguments)
      * return EvaluateBody(calleeContext, generator)
      * </pre>
+     * 
+     * @param node
+     *            the function node
+     * @param mv
+     *            the instruction visitor
      */
     private void generateGenerator(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryGenerator> generator = mv.getParameter(GENERATOR, OrdinaryGenerator.class);
@@ -347,6 +367,11 @@ final class FunctionCodeGenerator {
      * function_init(calleeContext, generator, arguments)
      * return EvaluateBodyComprehension(calleeContext, generator)
      * </pre>
+     * 
+     * @param node
+     *            the function node
+     * @param mv
+     *            the instruction visitor
      */
     private void generateGeneratorComprehension(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryGenerator> generator = mv.getParameter(GENERATOR, OrdinaryGenerator.class);
@@ -377,6 +402,17 @@ final class FunctionCodeGenerator {
      * <code>
      * calleeContext = newFunctionExecutionContext(callerContext, function, thisValue)
      * </code>
+     * 
+     * @param calleeContext
+     *            the variable which holds the callee context
+     * @param callerContext
+     *            the variable which holds the caller context
+     * @param function
+     *            the variable which holds the function object
+     * @param thisValue
+     *            the variable which holds the thisValue
+     * @param mv
+     *            the instruction visitor
      */
     private void newFunctionExecutionContext(Variable<ExecutionContext> calleeContext,
             Variable<ExecutionContext> callerContext, Variable<? extends FunctionObject> function,
@@ -392,6 +428,17 @@ final class FunctionCodeGenerator {
      * <code>
      * function_init(calleeContext, function, arguments)
      * </code>
+     * 
+     * @param node
+     *            the function node
+     * @param calleeContext
+     *            the variable which holds the callee context
+     * @param function
+     *            the variable which holds the function object
+     * @param arguments
+     *            the variable which holds the function arguments
+     * @param mv
+     *            the instruction visitor
      */
     private void functionDeclarationInstantiation(FunctionNode node,
             Variable<ExecutionContext> calleeContext, Variable<? extends FunctionObject> function,
@@ -406,6 +453,13 @@ final class FunctionCodeGenerator {
      * <code>
      * function_code(calleeContext)
      * </code>
+     * 
+     * @param node
+     *            the function node
+     * @param calleeContext
+     *            the variable which holds the callee context
+     * @param mv
+     *            the instruction visitor
      */
     private void evaluateBody(FunctionNode node, Variable<ExecutionContext> calleeContext,
             InstructionVisitor mv) {
@@ -417,6 +471,13 @@ final class FunctionCodeGenerator {
      * <code>
      * function.setLegacyCaller(callerContext.getCurrentFunction())
      * </code>
+     * 
+     * @param function
+     *            the variable which holds the function object
+     * @param callerContext
+     *            the variable which holds the caller context
+     * @param mv
+     *            the instruction visitor
      */
     private void setLegacyCaller(Variable<? extends FunctionObject> function,
             Variable<ExecutionContext> callerContext, InstructionVisitor mv) {
@@ -430,6 +491,15 @@ final class FunctionCodeGenerator {
      * <code>
      * function.restoreLegacyProperties(oldCaller, oldArguments)
      * </code>
+     * 
+     * @param function
+     *            the variable which holds the function object
+     * @param oldCaller
+     *            the variable which holds the old caller
+     * @param oldArguments
+     *            the variable which holds the old arguments
+     * @param mv
+     *            the instruction visitor
      */
     private void restoreLegacyProperties(Variable<? extends FunctionObject> function,
             Variable<Object> oldCaller, Variable<Object> oldArguments, InstructionVisitor mv) {

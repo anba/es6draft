@@ -35,6 +35,10 @@ final class ParameterMap {
     /**
      * Returns a non-negative integer if {@code p} is a valid argument index, otherwise
      * <code>-1</code>.
+     * 
+     * @param p
+     *            the property key
+     * @return the integer index or {@code -1}
      */
     static int toArgumentIndex(String p) {
         return Strings.toIndex(p);
@@ -43,6 +47,14 @@ final class ParameterMap {
     /**
      * Returns a new {@link ParameterMap} if there are any mapped arguments, otherwise
      * <code>null</code>.
+     * 
+     * @param len
+     *            the actual number of function arguments
+     * @param formals
+     *            the formal parameter names
+     * @param env
+     *            the current lexical environment
+     * @return a new parameter map if mapped parameters are present, otherwise {@code null}
      */
     static ParameterMap create(int len, String[] formals,
             LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
@@ -61,14 +73,25 @@ final class ParameterMap {
     }
 
     /**
-     * Makes {@code arguments[propertyKey]} a mapped argument
+     * Makes {@code arguments[propertyKey]} a mapped argument.
+     * 
+     * @param propertyKey
+     *            the property key
+     * @param name
+     *            the formal parameter name
      */
-    void defineOwnProperty(int propertyKey, String name) {
+    private void defineOwnProperty(int propertyKey, String name) {
         parameters[propertyKey] = name;
     }
 
     /**
-     * Tests whether {@code propertyKey} is an array index for a mapped argument
+     * Tests whether {@code propertyKey} is an array index for a mapped argument.
+     * 
+     * @param propertyKey
+     *            the property key
+     * @param isLegacy
+     *            flag for legacy arguments objects
+     * @return {@code true} if the property key is mapped
      */
     boolean hasOwnProperty(String propertyKey, boolean isLegacy) {
         int index = toArgumentIndex(propertyKey);
@@ -79,7 +102,11 @@ final class ParameterMap {
     }
 
     /**
-     * See MakeArgGetter abstract operation
+     * See MakeArgGetter abstract operation.
+     * 
+     * @param propertyKey
+     *            the property key
+     * @return the mapped argument
      */
     Object get(String propertyKey) {
         int index = toArgumentIndex(propertyKey);
@@ -89,7 +116,12 @@ final class ParameterMap {
     }
 
     /**
-     * See MakeArgSetter abstract operation
+     * See MakeArgSetter abstract operation.
+     * 
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new value for the mapped argument
      */
     void put(String propertyKey, Object value) {
         int index = toArgumentIndex(propertyKey);
@@ -100,13 +132,15 @@ final class ParameterMap {
     }
 
     /**
-     * Removes mapping for {@code arguments[propertyKey]}
+     * Removes mapping for {@code arguments[propertyKey]}.
+     * 
+     * @param propertyKey
+     *            the property key
      */
-    boolean delete(String propertyKey) {
+    void delete(String propertyKey) {
         int index = toArgumentIndex(propertyKey);
         assert (index >= 0 && index < length && parameters[index] != null);
         legacyUnmapped.set(index);
         parameters[index] = null;
-        return true;
     }
 }

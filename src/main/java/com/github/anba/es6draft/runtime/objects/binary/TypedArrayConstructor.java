@@ -39,7 +39,11 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
         this.elementType = elementType;
     }
 
-    /** [[ElementType]] */
+    /**
+     * [[ElementType]]
+     *
+     * @return the typed array constructor element type
+     */
     public ElementType getElementType() {
         return elementType;
     }

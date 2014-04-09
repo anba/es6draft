@@ -130,6 +130,9 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
 
     /**
      * Copies this record's bindings to {@code target}.
+     * 
+     * @param target
+     *            the target record
      */
     void copyBindings(DeclarativeEnvironmentRecord target) {
         assert target.bindings.isEmpty() : "target bindings not empty";

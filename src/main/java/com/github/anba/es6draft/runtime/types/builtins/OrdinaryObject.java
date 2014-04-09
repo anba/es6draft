@@ -63,48 +63,90 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * Internal hook for ExoticArray
+     * Internal hook for ExoticArray.
+     * 
+     * @param propertyKey
+     *            the property key
+     * @param property
+     *            the property record
      */
     final void addProperty(String propertyKey, Property property) {
         __put__(propertyKey, property);
     }
 
     /**
-     * Internal hook for FunctionObject
+     * Internal hook for FunctionObject.
+     * 
+     * @param source
+     *            the source script object
      */
     final void inheritProperties(OrdinaryObject source) {
         assert properties.isEmpty() : "properties not empty";
         properties.putAll(source.properties);
     }
 
-    /** [[Prototype]] */
+    /**
+     * [[Prototype]]
+     * 
+     * @return the prototype object
+     */
     public final ScriptObject getPrototype() {
         return prototype;
     }
 
-    /** [[Prototype]] */
+    /**
+     * [[Prototype]]
+     * 
+     * @param prototype
+     *            the new prototype object
+     */
     public final void setPrototype(ScriptObject prototype) {
         this.prototype = prototype;
     }
 
-    /** [[Extensible]] */
+    /**
+     * [[Extensible]]
+     * 
+     * @return {@code true} if this object is extensible
+     */
     protected final boolean isExtensible() {
         return extensible;
     }
 
-    /** [[Extensible]] */
+    /**
+     * [[Extensible]]
+     * 
+     * @param extensible
+     *            the new extensible mode
+     */
     protected final void setExtensible(boolean extensible) {
         assert this.extensible || !extensible;
         this.extensible = extensible;
     }
 
-    /** [[HasOwnProperty]] (P) */
+    /**
+     * [[HasOwnProperty]] (P)
+     *
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if an own property was found
+     */
     protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         // optimised: HasOwnProperty(cx, this, propertyKey)
         return __has__(propertyKey);
     }
 
-    /** [[HasOwnProperty]] (P) */
+    /**
+     * [[HasOwnProperty]] (P)
+     *
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if an own property was found
+     */
     protected boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey) {
         // optimised: HasOwnProperty(cx, this, propertyKey)
         return __has__(propertyKey);
@@ -203,6 +245,10 @@ public class OrdinaryObject implements ScriptObject {
 
     /**
      * 9.1.5.1 OrdinaryGetOwnProperty (O, P)
+     * 
+     * @param propertyKey
+     *            the property key
+     * @return the property record or {@code null} if none found
      */
     protected final Property ordinaryGetOwnProperty(String propertyKey) {
         /* step 1 (implicit) */
@@ -217,6 +263,10 @@ public class OrdinaryObject implements ScriptObject {
 
     /**
      * 9.1.5.1 OrdinaryGetOwnProperty (O, P)
+     * 
+     * @param propertyKey
+     *            the property key
+     * @return the property record or {@code null} if none found
      */
     protected final Property ordinaryGetOwnProperty(Symbol propertyKey) {
         /* step 1 (implicit) */
@@ -247,6 +297,12 @@ public class OrdinaryObject implements ScriptObject {
 
     /**
      * 9.1.6.1 OrdinaryDefineOwnProperty (O, P, Desc)
+     * 
+     * @param propertyKey
+     *            the property key
+     * @param desc
+     *            the property descriptor
+     * @return {@code true} on success
      */
     protected final boolean ordinaryDefineOwnProperty(String propertyKey, PropertyDescriptor desc) {
         /* step 1 */
@@ -259,6 +315,12 @@ public class OrdinaryObject implements ScriptObject {
 
     /**
      * 9.1.6.1 OrdinaryDefineOwnProperty (O, P, Desc)
+     * 
+     * @param propertyKey
+     *            the property key
+     * @param desc
+     *            the property descriptor
+     * @return {@code true} on success
      */
     protected final boolean ordinaryDefineOwnProperty(Symbol propertyKey, PropertyDescriptor desc) {
         /* step 1 */
@@ -271,6 +333,14 @@ public class OrdinaryObject implements ScriptObject {
 
     /**
      * 9.1.6.2 IsCompatiblePropertyDescriptor (Extensible, Desc, Current)
+     * 
+     * @param extensible
+     *            the extensible mode
+     * @param desc
+     *            the property descriptor
+     * @param current
+     *            the current property
+     * @return {@code true} if <var>desc</var> is compatible
      */
     protected static final boolean IsCompatiblePropertyDescriptor(boolean extensible,
             PropertyDescriptor desc, Property current) {
@@ -280,6 +350,18 @@ public class OrdinaryObject implements ScriptObject {
 
     /**
      * 9.1.6.3 ValidateAndApplyPropertyDescriptor (O, P, extensible, Desc, current)
+     * 
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param extensible
+     *            the extensible mode
+     * @param desc
+     *            the property descriptor
+     * @param current
+     *            the current property
+     * @return {@code true} on success
      */
     protected static final boolean ValidateAndApplyPropertyDescriptor(OrdinaryObject object,
             String propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
@@ -288,6 +370,18 @@ public class OrdinaryObject implements ScriptObject {
 
     /**
      * 9.1.6.3 ValidateAndApplyPropertyDescriptor (O, P, extensible, Desc, current)
+     * 
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param extensible
+     *            the extensible mode
+     * @param desc
+     *            the property descriptor
+     * @param current
+     *            the current property
+     * @return {@code true} on success
      */
     protected static final boolean ValidateAndApplyPropertyDescriptor(OrdinaryObject object,
             Symbol propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
@@ -296,6 +390,18 @@ public class OrdinaryObject implements ScriptObject {
 
     /**
      * 9.1.6.3 ValidateAndApplyPropertyDescriptor (O, P, extensible, Desc, current)
+     * 
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param extensible
+     *            the extensible mode
+     * @param desc
+     *            the property descriptor
+     * @param current
+     *            the current property
+     * @return {@code true} on success
      */
     private static final boolean __validateAndApplyPropertyDescriptor(OrdinaryObject object,
             Object propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
@@ -619,7 +725,13 @@ public class OrdinaryObject implements ScriptObject {
         return CreateListIterator(cx, new EnumKeysIterator(cx, this));
     }
 
-    /** 9.1.11 [[Enumerate]] () */
+    /**
+     * 9.1.11 [[Enumerate]] ()
+     *
+     * @param cx
+     *            the execution context
+     * @return the list of enumerable string valued property keys
+     */
     protected List<String> enumerateKeys(ExecutionContext cx) {
         List<String> propList = new ArrayList<>();
         for (Object key : __keys__()) {
@@ -631,10 +743,16 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * Subclasses need to override this method if they have virtual, enumerable properties
+     * Note: Subclasses need to override this method if they have virtual, enumerable properties.
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is enumerable
      */
-    protected boolean isEnumerableOwnProperty(ExecutionContext cx, String key) {
-        Property prop = ordinaryGetOwnProperty(key);
+    protected boolean isEnumerableOwnProperty(ExecutionContext cx, String propertyKey) {
+        Property prop = ordinaryGetOwnProperty(propertyKey);
         return (prop != null && prop.isEnumerable());
     }
 
@@ -702,7 +820,13 @@ public class OrdinaryObject implements ScriptObject {
         return CreateListIterator(cx, enumerateOwnKeys(cx));
     }
 
-    /** 9.1.12 [[OwnPropertyKeys]] ( ) */
+    /**
+     * 9.1.12 [[OwnPropertyKeys]] ( )
+     * 
+     * @param cx
+     *            the execution context
+     * @return the list of own property keys
+     */
     protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
         return new ArrayList<>(__keys__());
     }
@@ -716,22 +840,56 @@ public class OrdinaryObject implements ScriptObject {
         }
     }
 
-    /** 9.1.13 ObjectCreate Abstract Operation */
+    /**
+     * 9.1.13 ObjectCreate Abstract Operation
+     *
+     * @param cx
+     *            the execution context
+     * @return the new object
+     */
     public static final OrdinaryObject ObjectCreate(ExecutionContext cx) {
         return ObjectCreate(cx, Intrinsics.ObjectPrototype, DefaultAllocator.INSTANCE);
     }
 
-    /** 9.1.13 ObjectCreate Abstract Operation */
+    /**
+     * 9.1.13 ObjectCreate Abstract Operation
+     *
+     * @param cx
+     *            the execution context
+     * @param proto
+     *            the prototype object
+     * @return the new object
+     */
     public static final OrdinaryObject ObjectCreate(ExecutionContext cx, ScriptObject proto) {
         return ObjectCreate(cx, proto, DefaultAllocator.INSTANCE);
     }
 
-    /** 9.1.13 ObjectCreate Abstract Operation */
+    /**
+     * 9.1.13 ObjectCreate Abstract Operation
+     *
+     * @param cx
+     *            the execution context
+     * @param proto
+     *            the prototype object
+     * @return the new object
+     */
     public static final OrdinaryObject ObjectCreate(ExecutionContext cx, Intrinsics proto) {
         return ObjectCreate(cx, proto, DefaultAllocator.INSTANCE);
     }
 
-    /** 9.1.13 ObjectCreate Abstract Operation */
+    /**
+     * 9.1.13 ObjectCreate Abstract Operation
+     *
+     * @param <OBJECT>
+     *            the object type
+     * @param cx
+     *            the execution context
+     * @param proto
+     *            the prototype object
+     * @param allocator
+     *            the object allocator
+     * @return the new object
+     */
     public static final <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx,
             ScriptObject proto, ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(cx.getRealm());
@@ -739,7 +897,19 @@ public class OrdinaryObject implements ScriptObject {
         return obj;
     }
 
-    /** 9.1.13 ObjectCreate Abstract Operation */
+    /**
+     * 9.1.13 ObjectCreate Abstract Operation
+     *
+     * @param <OBJECT>
+     *            the object type
+     * @param cx
+     *            the execution context
+     * @param proto
+     *            the prototype object
+     * @param allocator
+     *            the object allocator
+     * @return the new object
+     */
     public static final <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx,
             Intrinsics proto, ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(cx.getRealm());
@@ -749,6 +919,14 @@ public class OrdinaryObject implements ScriptObject {
 
     /**
      * 9.1.14 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
+     * 
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor function
+     * @param intrinsicDefaultProto
+     *            the default prototype
+     * @return the new object
      */
     public static final OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx,
             Object constructor, Intrinsics intrinsicDefaultProto) {
@@ -761,6 +939,18 @@ public class OrdinaryObject implements ScriptObject {
 
     /**
      * 9.1.14 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
+     * 
+     * @param <OBJECT>
+     *            the object type
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor function
+     * @param intrinsicDefaultProto
+     *            the default prototype
+     * @param allocator
+     *            the object allocator
+     * @return the new object
      */
     public static final <OBJECT extends OrdinaryObject> OBJECT OrdinaryCreateFromConstructor(
             ExecutionContext cx, Object constructor, Intrinsics intrinsicDefaultProto,

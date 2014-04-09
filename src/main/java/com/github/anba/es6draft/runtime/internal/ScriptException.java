@@ -20,7 +20,10 @@ public final class ScriptException extends RuntimeException {
     private final Object value;
 
     /**
-     * Create a new {@link ScriptException} instance
+     * Create a new {@link ScriptException} instance.
+     * 
+     * @param value
+     *            the wrapped exception value
      */
     public ScriptException(Object value) {
         this.value = value;
@@ -28,7 +31,11 @@ public final class ScriptException extends RuntimeException {
 
     /**
      * Creates a new {@link ScriptException} instance, unless {@code value} is an instance of
-     * {@link ErrorObject}, in that case {@link ErrorObject#getException()} is returned
+     * {@link ErrorObject}, in that case {@link ErrorObject#getException()} is returned.
+     * 
+     * @param value
+     *            the wrapped exception value
+     * @return the script exception instance
      */
     public static ScriptException create(Object value) {
         if (value instanceof ErrorObject) {
@@ -38,7 +45,9 @@ public final class ScriptException extends RuntimeException {
     }
 
     /**
-     * Returns the wrapped value of this exception
+     * Returns the wrapped value of this exception.
+     * 
+     * @return the wrapped exception value
      */
     public Object getValue() {
         return value;
@@ -50,7 +59,11 @@ public final class ScriptException extends RuntimeException {
     }
 
     /**
-     * Returns the message string of this exception
+     * Returns the message string of this exception.
+     * 
+     * @param cx
+     *            the execution context
+     * @return the script exception error message
      */
     public String getMessage(ExecutionContext cx) {
         try {

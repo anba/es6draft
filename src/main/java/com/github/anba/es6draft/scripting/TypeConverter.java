@@ -18,7 +18,11 @@ final class TypeConverter {
     }
 
     /**
-     * Converts a script language value to a Java value
+     * Converts a script language value to a Java value.
+     * 
+     * @param value
+     *            the script value
+     * @return the java value
      */
     public static Object toJava(Object value) {
         switch (Type.of(value)) {
@@ -38,7 +42,11 @@ final class TypeConverter {
     }
 
     /**
-     * Converts script language values to a Java values
+     * Converts script language values to a Java values.
+     * 
+     * @param values
+     *            the script values
+     * @return the java values
      */
     public static Object[] toJava(Object... values) {
         Object[] converted = new Object[values.length];
@@ -49,7 +57,11 @@ final class TypeConverter {
     }
 
     /**
-     * Converts a Java value to a script language value
+     * Converts a Java value to a script language value.
+     * 
+     * @param value
+     *            the java value
+     * @return the script value
      */
     public static Object fromJava(Object value) {
         if (Type.isType(value)) {
@@ -59,7 +71,11 @@ final class TypeConverter {
     }
 
     /**
-     * Converts Java values to a script language values
+     * Converts Java values to a script language values.
+     * 
+     * @param values
+     *            the java values
+     * @return the script values
      */
     public static Object[] fromJava(Object... values) {
         Object[] converted = new Object[values.length];

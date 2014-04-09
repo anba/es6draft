@@ -43,8 +43,8 @@ public final class JLineConsole implements ReplConsole {
     }
 
     @Override
-    public boolean addCompletion(Realm realm) {
-        return console.addCompleter(new ShellCompleter(realm));
+    public void addCompletion(Realm realm) {
+        console.addCompleter(new ShellCompleter(realm));
     }
 
     @Override

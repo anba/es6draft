@@ -28,6 +28,8 @@ public final class SetObject extends OrdinaryObject {
 
     /**
      * [[SetData]]
+     * 
+     * @return the underlying set data
      */
     public LinkedMap<Object, Void> getSetData() {
         return setData;

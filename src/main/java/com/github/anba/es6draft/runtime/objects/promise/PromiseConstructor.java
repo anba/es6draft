@@ -107,6 +107,14 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
 
     /**
      * 25.4.3.1.1 InitialisePromise( promise, executor) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @param executor
+     *            the promise executor function
+     * @return the promise object
      */
     @Deprecated
     public static PromiseObject InitialisePromise(ExecutionContext cx, PromiseObject promise,
@@ -166,6 +174,14 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
 
         /**
          * 25.4.4.1 Promise.all ( iterable )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param iterable
+         *            the iterable
+         * @return the promise object
          */
         @Function(name = "all", arity = 1)
         public static Object all(ExecutionContext cx, Object thisValue, Object iterable) {
@@ -235,6 +251,14 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
 
         /**
          * 25.4.4.4 Promise.race ( iterable )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param iterable
+         *            the iterable
+         * @return the promise object
          */
         @Function(name = "race", arity = 1)
         public static Object race(ExecutionContext cx, Object thisValue, Object iterable) {
@@ -289,6 +313,14 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
 
         /**
          * 25.4.4.5 Promise.reject ( r )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param r
+         *            the rejected value
+         * @return the new promise object
          */
         @Function(name = "reject", arity = 1)
         public static Object reject(ExecutionContext cx, Object thisValue, Object r) {
@@ -304,6 +336,14 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
 
         /**
          * 25.4.4.6 Promise.resolve ( x )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the resolved value
+         * @return the new promise object
          */
         @Function(name = "resolve", arity = 1)
         public static Object resolve(ExecutionContext cx, Object thisValue, Object x) {
@@ -326,6 +366,12 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
 
         /**
          * 25.4.4.7 Promise [ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new promise object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -337,6 +383,12 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
 
     /**
      * 25.4.4.7.1 AllocatePromise( constructor ) Abstraction Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor function
+     * @return the new promise object
      */
     public static PromiseObject AllocatePromise(ExecutionContext cx, Object constructor) {
         /* step 1 */

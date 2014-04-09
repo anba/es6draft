@@ -167,21 +167,25 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     /**
-     * Returns the {@link TopLevelNode} for this statement visitor
+     * Returns the {@link TopLevelNode} for this statement visitor.
+     * 
+     * @return the top level node for this statement visitor
      */
     TopLevelNode<?> getTopLevelNode() {
         return topLevelNode;
     }
 
     /**
-     * Returns the {@link CodeType} for this statement visitor
+     * Returns the {@link CodeType} for this statement visitor.
+     * 
+     * @return the code type for this statement visitor
      */
     CodeType getCodeType() {
         return codeType;
     }
 
     /**
-     * Pushes the completion value onto the stack
+     * Pushes the completion value onto the stack.
      */
     void loadCompletionValue() {
         if (isScriptCode) {
@@ -192,7 +196,10 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     /**
-     * Pops the stack's top element and stores it into the completion value
+     * Pops the stack's top element and stores it into the completion value.
+     * 
+     * @param type
+     *            the value type of top stack value
      */
     void storeCompletionValue(ValType type) {
         if (isScriptCode && finallyDepth == 0) {
@@ -212,14 +219,18 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     /**
-     * Returns <code>true</code> when currently within a finally scoped block
+     * Returns <code>true</code> when currently within a finally scoped block.
+     * 
+     * @return <code>true</code> if currently in a finally block
      */
     private boolean isFinallyScoped() {
         return labels.parent != null;
     }
 
     /**
-     * Enter a finally scoped block
+     * Enter a finally scoped block.
+     * 
+     * @return the temporary completion object variable
      */
     Variable<Object> enterFinallyScoped() {
         assert labels != null;
@@ -235,7 +246,9 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     /**
-     * Exit a finally scoped block
+     * Exit a finally scoped block.
+     * 
+     * @return the list of generated labels
      */
     List<TempLabel> exitFinallyScoped() {
         List<TempLabel> tempLabels = labels.tempLabels;
@@ -245,42 +258,51 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     /**
-     * Returns <code>true</code> when currently within a wrapped block
+     * Returns <code>true</code> when currently within a wrapped block.
+     * 
+     * @return <code>true</code> if currently wrapped
      */
     private boolean isWrapped() {
         return wrapped != 0;
     }
 
     /**
-     * Enter a try-catch-finally wrapped block
+     * Enter a try-catch-finally wrapped block.
      */
     void enterWrapped() {
         ++wrapped;
     }
 
     /**
-     * Exit a try-catch-finally wrapped block
+     * Exit a try-catch-finally wrapped block.
      */
     void exitWrapped() {
         --wrapped;
     }
 
     /**
-     * Enter a finally block
+     * Enter a finally block.
      */
     void enterFinally() {
         ++finallyDepth;
     }
 
     /**
-     * Exit a finally block
+     * Exit a finally block.
      */
     void exitFinally() {
         --finallyDepth;
     }
 
     /**
-     * Start code generation for {@link IterationStatement} nodes
+     * Start code generation for {@link IterationStatement} nodes.
+     * 
+     * @param node
+     *            the iteration statement
+     * @param lblBreak
+     *            the break label for the statement
+     * @param lblContinue
+     *            the continue label for the statement
      */
     void enterIteration(IterationStatement node, BreakLabel lblBreak, ContinueLabel lblContinue) {
         boolean hasBreak = node.hasBreak();
@@ -301,7 +323,10 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     /**
-     * Stop code generation for {@link IterationStatement} nodes
+     * Stop code generation for {@link IterationStatement} nodes.
+     * 
+     * @param node
+     *            the iteration statement
      */
     void exitIteration(IterationStatement node) {
         boolean hasBreak = node.hasBreak();
@@ -322,7 +347,12 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     /**
-     * Start code generation for {@link BreakableStatement} nodes
+     * Start code generation for {@link BreakableStatement} nodes.
+     * 
+     * @param node
+     *            the breakable statement
+     * @param lblBreak
+     *            the break label for the statement
      */
     void enterBreakable(BreakableStatement node, BreakLabel lblBreak) {
         if (!node.hasBreak())
@@ -335,7 +365,10 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     /**
-     * Stop code generation for {@link BreakableStatement} nodes
+     * Stop code generation for {@link BreakableStatement} nodes.
+     * 
+     * @param node
+     *            the breakable statement
      */
     void exitBreakable(BreakableStatement node) {
         if (!node.hasBreak())
@@ -348,7 +381,12 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     /**
-     * Start code generation for {@link LabelledStatement} nodes
+     * Start code generation for {@link LabelledStatement} nodes.
+     * 
+     * @param node
+     *            the labelled statement
+     * @param lblBreak
+     *            the break label for the statement
      */
     void enterLabelled(LabelledStatement node, BreakLabel lblBreak) {
         if (!node.hasBreak())
@@ -360,7 +398,10 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     /**
-     * Stop code generation for {@link LabelledStatement} nodes
+     * Stop code generation for {@link LabelledStatement} nodes.
+     * 
+     * @param node
+     *            the labelled statement
      */
     void exitLabelled(LabelledStatement node) {
         if (!node.hasBreak())
@@ -373,20 +414,28 @@ abstract class StatementVisitor extends ExpressionVisitor {
 
     /**
      * Start code generation for {@link TryStatement} nodes with {@link GuardedCatchNode}
+     * 
+     * @param node
+     *            the try-statement node
+     * @param catchLabel
+     *            the catch label
      */
-    void enterCatchWithGuarded(TryStatement node, Label lblCatch) {
-        labels.catchLabels.push(lblCatch);
+    void enterCatchWithGuarded(TryStatement node, Label catchLabel) {
+        labels.catchLabels.push(catchLabel);
     }
 
     /**
-     * Stop code generation for {@link TryStatement} nodes with {@link GuardedCatchNode}
+     * Stop code generation for {@link TryStatement} nodes with {@link GuardedCatchNode}.
+     * 
+     * @param node
+     *            the try-statement node
      */
     void exitCatchWithGuarded(TryStatement node) {
         labels.catchLabels.pop();
     }
 
     /**
-     * Pops the stack's top element and emits a return instruction
+     * Pops the stack's top element and emits a return instruction.
      */
     void returnCompletion() {
         if (isFinallyScoped()) {
@@ -401,14 +450,20 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     /**
-     * Returns the current return-label
+     * Returns the current return-label.
+     * 
+     * @return the return label
      */
     private Label returnLabel() {
         return labels.returnLabel().mark();
     }
 
     /**
-     * Returns the break-label for the given {@link BreakStatement}
+     * Returns the break-label for the given {@link BreakStatement}.
+     * 
+     * @param node
+     *            the break statement
+     * @return the label to the target instruction
      */
     Label breakLabel(BreakStatement node) {
         String name = node.getLabel();
@@ -416,7 +471,11 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     /**
-     * Returns the continue-label for the given {@link ContinueStatement}
+     * Returns the continue-label for the given {@link ContinueStatement}.
+     * 
+     * @param node
+     *            the continue statement
+     * @return the label to the target instruction
      */
     Label continueLabel(ContinueStatement node) {
         String name = node.getLabel();
@@ -425,13 +484,21 @@ abstract class StatementVisitor extends ExpressionVisitor {
 
     /**
      * Returns the catch-label originally set in {@link #enterCatchWithGuarded(TryStatement, Label)}
+     * .
+     * 
+     * @return the guarded catch label
      */
     Label catchWithGuardedLabel() {
         return labels.catchLabels.peek();
     }
 
     /**
-     * Emit goto instruction to jump to {@code label}'s actual target
+     * Emit goto instruction to jump to {@code label}'s actual target.
+     * 
+     * @param label
+     *            the target instruction
+     * @param completion
+     *            the variable which holds the current completion value
      */
     void goTo(TempLabel label, Variable<Object> completion) {
         JumpLabel actual = label.getActual();

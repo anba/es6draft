@@ -17,6 +17,7 @@ import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.ast.LegacyGeneratorDeclaration;
+import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
@@ -89,7 +90,14 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link EnvironmentRecord#hasBinding(String)}
      * <p>
-     * stack: [] -> [boolean]
+     * stack: [] {@literal ->} [boolean]
+     * 
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the instruction visitor
      */
     protected void hasBinding(Variable<? extends EnvironmentRecord> envRec, String name,
             InstructionVisitor mv) {
@@ -100,7 +108,12 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link EnvironmentRecord#hasBinding(String)}
      * <p>
-     * stack: [envRec] -> [boolean]
+     * stack: [envRec] {@literal ->} [boolean]
+     * 
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the instruction visitor
      */
     protected void hasBinding(String name, InstructionVisitor mv) {
         mv.aconst(name);
@@ -110,7 +123,16 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link EnvironmentRecord#createMutableBinding(String, boolean)}
      * <p>
-     * stack: [] -> []
+     * stack: [] {@literal ->} []
+     * 
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param deletable
+     *            the deletable flag
+     * @param mv
+     *            the instruction visitor
      */
     protected void createMutableBinding(Variable<? extends EnvironmentRecord> envRec, String name,
             boolean deletable, InstructionVisitor mv) {
@@ -121,7 +143,14 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link EnvironmentRecord#createMutableBinding(String, boolean)}
      * <p>
-     * stack: [envRec] -> []
+     * stack: [envRec] {@literal ->} []
+     * 
+     * @param name
+     *            the binding name
+     * @param deletable
+     *            the deletable flag
+     * @param mv
+     *            the instruction visitor
      */
     protected void createMutableBinding(String name, boolean deletable, InstructionVisitor mv) {
         mv.aconst(name);
@@ -132,7 +161,16 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link EnvironmentRecord#createMutableBinding(String, boolean)}
      * <p>
-     * stack: [] -> []
+     * stack: [] {@literal ->} []
+     * 
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param deletable
+     *            the variable which holds the deletable flag
+     * @param mv
+     *            the instruction visitor
      */
     protected void createMutableBinding(Variable<? extends EnvironmentRecord> envRec, String name,
             Variable<Boolean> deletable, InstructionVisitor mv) {
@@ -145,7 +183,14 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link EnvironmentRecord#createImmutableBinding(String)}
      * <p>
-     * stack: [] -> []
+     * stack: [] {@literal ->} []
+     * 
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the instruction visitor
      */
     protected void createImmutableBinding(Variable<? extends EnvironmentRecord> envRec,
             String name, InstructionVisitor mv) {
@@ -156,7 +201,12 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link EnvironmentRecord#createImmutableBinding(String)}
      * <p>
-     * stack: [envRec] -> []
+     * stack: [envRec] {@literal ->} []
+     * 
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the instruction visitor
      */
     protected void createImmutableBinding(String name, InstructionVisitor mv) {
         mv.aconst(name);
@@ -166,7 +216,14 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link EnvironmentRecord#initialiseBinding(String, Object)}
      * <p>
-     * stack: [obj] -> []
+     * stack: [obj] {@literal ->} []
+     * 
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the instruction visitor
      */
     protected void initialiseBinding(Variable<? extends EnvironmentRecord> envRec, String name,
             InstructionVisitor mv) {
@@ -178,7 +235,12 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link EnvironmentRecord#initialiseBinding(String, Object)}
      * <p>
-     * stack: [envRec, obj] -> []
+     * stack: [envRec, obj] {@literal ->} []
+     * 
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the instruction visitor
      */
     protected void initialiseBinding(String name, InstructionVisitor mv) {
         mv.aconst(name);
@@ -189,7 +251,16 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link EnvironmentRecord#setMutableBinding(String, Object, boolean)}
      * <p>
-     * stack: [obj] -> []
+     * stack: [obj] {@literal ->} []
+     * 
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param strict
+     *            the strict-mode flag
+     * @param mv
+     *            the instruction visitor
      */
     protected void setMutableBinding(Variable<? extends EnvironmentRecord> envRec, String name,
             boolean strict, InstructionVisitor mv) {
@@ -201,7 +272,14 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link EnvironmentRecord#setMutableBinding(String, Object, boolean)}
      * <p>
-     * stack: [envRec, obj] -> []
+     * stack: [envRec, obj] {@literal ->} []
+     * 
+     * @param name
+     *            the binding name
+     * @param strict
+     *            the strict-mode flag
+     * @param mv
+     *            the instruction visitor
      */
     protected void setMutableBinding(String name, boolean strict, InstructionVisitor mv) {
         mv.aconst(name);
@@ -213,7 +291,12 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link LexicalEnvironment#getEnvRec()}
      * <p>
-     * stack: [] -> [envRec]
+     * stack: [] {@literal ->} [envRec]
+     * 
+     * @param env
+     *            the variable which holds the lexical environment
+     * @param mv
+     *            the instruction visitor
      */
     protected void getEnvironmentRecord(Variable<LexicalEnvironment<?>> env, InstructionVisitor mv) {
         mv.load(env);
@@ -223,19 +306,76 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link LexicalEnvironment#getEnvRec()}
      * <p>
-     * stack: [env] -> [envRec]
+     * stack: [env] {@literal ->} [envRec]
+     * 
+     * @param mv
+     *            the instruction visitor
      */
     protected void getEnvironmentRecord(InstructionVisitor mv) {
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
     }
 
     /**
+     * Emit runtime call to initialise the function object.
+     * <p>
+     * stack: [] {@literal ->} [fo]
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param env
+     *            the variable which holds the lexical environment
+     * @param f
+     *            the function declaration to instantiate
+     * @param mv
+     *            the instruction visitor
+     */
+    protected void InstantiateFunctionObject(Variable<ExecutionContext> context,
+            Variable<LexicalEnvironment<?>> env, Declaration f, InstructionVisitor mv) {
+        if (f instanceof FunctionDeclaration) {
+            InstantiateFunctionObject(context, env, (FunctionDeclaration) f, mv);
+        } else if (f instanceof GeneratorDeclaration) {
+            InstantiateGeneratorObject(context, env, (GeneratorDeclaration) f, mv);
+        } else {
+            InstantiateAsyncFunctionObject(context, env, (AsyncFunctionDeclaration) f, mv);
+        }
+    }
+
+    /**
+     * Emit runtime call to initialise the function object.
+     * <p>
+     * stack: [env, cx] {@literal ->} [fo]
+     * 
+     * @param f
+     *            the function declaration to instantiate
+     * @param mv
+     *            the instruction visitor
+     */
+    protected void InstantiateFunctionObject(Declaration f, InstructionVisitor mv) {
+        if (f instanceof FunctionDeclaration) {
+            InstantiateFunctionObject((FunctionDeclaration) f, mv);
+        } else if (f instanceof GeneratorDeclaration) {
+            InstantiateGeneratorObject((GeneratorDeclaration) f, mv);
+        } else {
+            InstantiateAsyncFunctionObject((AsyncFunctionDeclaration) f, mv);
+        }
+    }
+
+    /**
      * Emit function call for:
      * {@link ScriptRuntime#InstantiateAsyncFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
      * <p>
-     * stack: [] -> [fo]
+     * stack: [] {@literal ->} [fo]
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param env
+     *            the variable which holds the lexical environment
+     * @param f
+     *            the function declaration to instantiate
+     * @param mv
+     *            the instruction visitor
      */
-    protected void InstantiateAsyncFunctionObject(Variable<ExecutionContext> context,
+    private void InstantiateAsyncFunctionObject(Variable<ExecutionContext> context,
             Variable<LexicalEnvironment<?>> env, AsyncFunctionDeclaration f, InstructionVisitor mv) {
         mv.load(env);
         mv.load(context);
@@ -247,9 +387,14 @@ abstract class DeclarationBindingInstantiationGenerator {
      * Emit function call for:
      * {@link ScriptRuntime#InstantiateAsyncFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
      * <p>
-     * stack: [env, cx] -> [fo]
+     * stack: [env, cx] {@literal ->} [fo]
+     * 
+     * @param f
+     *            the function declaration to instantiate
+     * @param mv
+     *            the instruction visitor
      */
-    protected void InstantiateAsyncFunctionObject(AsyncFunctionDeclaration f, InstructionVisitor mv) {
+    private void InstantiateAsyncFunctionObject(AsyncFunctionDeclaration f, InstructionVisitor mv) {
         codegen.compile(f);
 
         mv.invoke(codegen.methodDesc(f, FunctionName.RTI));
@@ -260,9 +405,18 @@ abstract class DeclarationBindingInstantiationGenerator {
      * Emit function call for:
      * {@link ScriptRuntime#InstantiateFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
      * <p>
-     * stack: [] -> [fo]
+     * stack: [] {@literal ->} [fo]
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param env
+     *            the variable which holds the lexical environment
+     * @param f
+     *            the function declaration to instantiate
+     * @param mv
+     *            the instruction visitor
      */
-    protected void InstantiateFunctionObject(Variable<ExecutionContext> context,
+    private void InstantiateFunctionObject(Variable<ExecutionContext> context,
             Variable<LexicalEnvironment<?>> env, FunctionDeclaration f, InstructionVisitor mv) {
         mv.load(env);
         mv.load(context);
@@ -274,9 +428,14 @@ abstract class DeclarationBindingInstantiationGenerator {
      * Emit function call for:
      * {@link ScriptRuntime#InstantiateFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
      * <p>
-     * stack: [env, cx] -> [fo]
+     * stack: [env, cx] {@literal ->} [fo]
+     * 
+     * @param f
+     *            the function declaration to instantiate
+     * @param mv
+     *            the instruction visitor
      */
-    protected void InstantiateFunctionObject(FunctionDeclaration f, InstructionVisitor mv) {
+    private void InstantiateFunctionObject(FunctionDeclaration f, InstructionVisitor mv) {
         codegen.compile(f);
 
         mv.invoke(codegen.methodDesc(f, FunctionName.RTI));
@@ -287,9 +446,18 @@ abstract class DeclarationBindingInstantiationGenerator {
      * Emit function call for:
      * {@link ScriptRuntime#InstantiateGeneratorObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
      * <p>
-     * stack: [] -> [fo]
+     * stack: [] {@literal ->} [fo]
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param env
+     *            the variable which holds the lexical environment
+     * @param f
+     *            the generator declaration to instantiate
+     * @param mv
+     *            the instruction visitor
      */
-    protected void InstantiateGeneratorObject(Variable<ExecutionContext> context,
+    private void InstantiateGeneratorObject(Variable<ExecutionContext> context,
             Variable<LexicalEnvironment<?>> env, GeneratorDeclaration f, InstructionVisitor mv) {
         mv.load(env);
         mv.load(context);
@@ -301,9 +469,14 @@ abstract class DeclarationBindingInstantiationGenerator {
      * Emit function call for:
      * {@link ScriptRuntime#InstantiateGeneratorObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
      * <p>
-     * stack: [env, cx] -> [fo]
+     * stack: [env, cx] {@literal ->} [fo]
+     * 
+     * @param f
+     *            the generator declaration to instantiate
+     * @param mv
+     *            the instruction visitor
      */
-    protected void InstantiateGeneratorObject(GeneratorDeclaration f, InstructionVisitor mv) {
+    private void InstantiateGeneratorObject(GeneratorDeclaration f, InstructionVisitor mv) {
         codegen.compile(f);
 
         mv.invoke(codegen.methodDesc(f, FunctionName.RTI));
@@ -314,6 +487,15 @@ abstract class DeclarationBindingInstantiationGenerator {
         }
     }
 
+    /**
+     * Returns the bound name of the declaration {@code d}, which must be either a function,
+     * generator or async function declaration. The bound name of function declaration node is its
+     * function name.
+     * 
+     * @param d
+     *            the function declaration node
+     * @return the bound name of the function declaration
+     */
     protected static String BoundName(Declaration d) {
         if (d instanceof FunctionDeclaration) {
             return ((FunctionDeclaration) d).getIdentifier().getName();
@@ -323,6 +505,32 @@ abstract class DeclarationBindingInstantiationGenerator {
             assert d instanceof AsyncFunctionDeclaration;
             return ((AsyncFunctionDeclaration) d).getIdentifier().getName();
         }
+    }
+
+    /**
+     * Returns {@code true} if {@code d} is either a function, generator or async function
+     * declaration.
+     * 
+     * @param item
+     *            the statement list node
+     * @return {@code true} if the declaration is a function declaration
+     */
+    protected static boolean isFunctionDeclaration(StatementListItem item) {
+        return item instanceof FunctionDeclaration || item instanceof GeneratorDeclaration
+                || item instanceof AsyncFunctionDeclaration;
+    }
+
+    /**
+     * Returns {@code true} if {@code d} is either a function, generator or async function
+     * declaration.
+     * 
+     * @param d
+     *            the declaration node
+     * @return {@code true} if the declaration is a function declaration
+     */
+    protected static boolean isFunctionDeclaration(Declaration d) {
+        return d instanceof FunctionDeclaration || d instanceof GeneratorDeclaration
+                || d instanceof AsyncFunctionDeclaration;
     }
 
     protected static <T> Iterable<T> reverse(final List<T> list) {

@@ -51,12 +51,20 @@ public final class PromiseAbstractOperations {
             this.reject = reject;
         }
 
-        /** [[Resolve]] */
+        /**
+         * [[Resolve]]
+         *
+         * @return the resolve function
+         */
         public NewPromiseResolveFunction getResolve() {
             return resolve;
         }
 
-        /** [[Reject]] */
+        /**
+         * [[Reject]]
+         *
+         * @return the reject function
+         */
         public NewPromiseRejectFunction getReject() {
             return reject;
         }
@@ -64,6 +72,12 @@ public final class PromiseAbstractOperations {
 
     /**
      * CreateResolvingFunctions ( promise )
+     * 
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @return the resolving functions tuple
      */
     public static ResolvingFunctions CreateResolvingFunctions(ExecutionContext cx,
             PromiseObject promise) {
@@ -180,6 +194,13 @@ public final class PromiseAbstractOperations {
 
     /**
      * FulfillPromise ( promise, value )
+     * 
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @param value
+     *            the resolve value
      */
     public static void FulfillPromise(ExecutionContext cx, PromiseObject promise, Object value) {
         List<PromiseReaction> reactions = promise.resolve(value);
@@ -188,6 +209,13 @@ public final class PromiseAbstractOperations {
 
     /**
      * RejectPromise ( promise, reason )
+     * 
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @param reason
+     *            the rejection reason
      */
     public static void RejectPromise(ExecutionContext cx, PromiseObject promise, Object reason) {
         List<PromiseReaction> reactions = promise.reject(reason);
@@ -233,6 +261,12 @@ public final class PromiseAbstractOperations {
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
      * 25.4.1.3 CreateRejectFunction ( promise )
+     * 
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @return -
      */
     @Deprecated
     public static PromiseRejectFunction CreateRejectFunction(ExecutionContext cx,
@@ -277,6 +311,12 @@ public final class PromiseAbstractOperations {
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
      * 25.4.1.4 CreateResolveFunction ( promise )
+     * 
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @return -
      */
     @Deprecated
     public static PromiseResolveFunction CreateResolveFunction(ExecutionContext cx,
@@ -321,6 +361,12 @@ public final class PromiseAbstractOperations {
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
      * 25.4.1.5 NewPromiseCapability ( C )
+     * 
+     * @param cx
+     *            the execution context
+     * @param c
+     *            the promise constructor function
+     * @return the new promise capability record
      */
     public static PromiseCapability<ScriptObject> NewPromiseCapability(ExecutionContext cx, Object c) {
         /* step 1 */
@@ -341,6 +387,16 @@ public final class PromiseAbstractOperations {
 
     /**
      * 25.4.1.5.1 CreatePromiseCapabilityRecord( promise, constructor ) Abstract Operation
+     * 
+     * @param <PROMISE>
+     *            the promise type
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @param constructor
+     *            the promise constructor function
+     * @return the new promise capability record
      */
     public static <PROMISE extends ScriptObject> PromiseCapability<PROMISE> CreatePromiseCapabilityRecord(
             ExecutionContext cx, PROMISE promise, Constructor constructor) {
@@ -408,6 +464,10 @@ public final class PromiseAbstractOperations {
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
      * 25.4.1.6 IsPromise ( x )
+     * 
+     * @param x
+     *            the object
+     * @return {@code true} if <var>x</var> is an initialised promise object
      */
     public static boolean IsPromise(Object x) {
         /* steps 1-2 */
@@ -422,6 +482,13 @@ public final class PromiseAbstractOperations {
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
      * 25.4.1.7 TriggerPromiseReactions ( reactions, argument )
+     * 
+     * @param cx
+     *            the execution context
+     * @param reactions
+     *            the list of promise reactions
+     * @param argument
+     *            the reaction task argument
      */
     public static void TriggerPromiseReactions(ExecutionContext cx,
             List<PromiseReaction> reactions, Object argument) {
@@ -439,6 +506,14 @@ public final class PromiseAbstractOperations {
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
      * 25.4.1.8 UpdatePromiseFromPotentialThenable ( x, promiseCapability)
+     * 
+     * @param cx
+     *            the execution context
+     * @param x
+     *            the object
+     * @param promiseCapability
+     *            the promise capability record
+     * @return the thenable type
      */
     @Deprecated
     public static Thenable UpdatePromiseFromPotentialThenable(ExecutionContext cx, Object x,
@@ -531,6 +606,14 @@ public final class PromiseAbstractOperations {
      * <h2>Modules</h2>
      * <p>
      * PromiseThen ( promise, onFulfilled )
+     * 
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @param onFulfilled
+     *            the fulfillment handler
+     * @return the new promise object
      */
     public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
             Callable onFulfilled) {
@@ -544,6 +627,16 @@ public final class PromiseAbstractOperations {
      * <h2>Modules</h2>
      * <p>
      * PromiseThen ( promise, onFulfilled, onRejected )
+     * 
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @param onFulfilled
+     *            the fulfillment handler
+     * @param onRejected
+     *            the rejection handler
+     * @return the new promise object
      */
     public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
             Callable onFulfilled, Callable onRejected) {
@@ -557,6 +650,14 @@ public final class PromiseAbstractOperations {
      * <h2>Modules</h2>
      * <p>
      * PromiseCatch ( promise, onRejected )
+     * 
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @param onRejected
+     *            the rejection handler
+     * @return the new promise object
      */
     public static ScriptObject PromiseCatch(ExecutionContext cx, ScriptObject promise,
             Callable onRejected) {
@@ -570,6 +671,12 @@ public final class PromiseAbstractOperations {
      * <h2>Modules</h2>
      * <p>
      * PromiseAll ( x )
+     * 
+     * @param cx
+     *            the execution context
+     * @param list
+     *            the list of promise objects
+     * @return the new promise object
      */
     public static ScriptObject PromiseAll(ExecutionContext cx, List<ScriptObject> list) {
         // TODO: make safe

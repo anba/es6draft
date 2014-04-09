@@ -199,6 +199,10 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
 
     /**
      * 8.1.1.4.12 HasVarDeclaration (N)
+     * 
+     * @param name
+     *            the binding name
+     * @return {@code true} if the variable binding is present
      */
     public boolean hasVarDeclaration(String name) {
         /* steps 1-2 (omitted) */
@@ -208,6 +212,10 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
 
     /**
      * 8.1.1.4.13 HasLexicalDeclaration (N)
+     * 
+     * @param name
+     *            the binding name
+     * @return {@code true} if the lexical binding is present
      */
     public boolean hasLexicalDeclaration(String name) {
         /* steps 1-2 (omitted) */
@@ -217,6 +225,10 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
 
     /**
      * 8.1.1.4.14 CanDeclareGlobalVar (N)
+     * 
+     * @param name
+     *            the binding name
+     * @return {@code true} if the binding can be created
      */
     public boolean canDeclareGlobalVar(String name) {
         /* steps 1-2 (omitted) */
@@ -231,6 +243,10 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
 
     /**
      * 8.1.1.4.15 CanDeclareGlobalFunction (N)
+     * 
+     * @param name
+     *            the binding name
+     * @return {@code true} if the binding can be created
      */
     public boolean canDeclareGlobalFunction(String name) {
         /* steps 1-3 (omitted) */
@@ -261,6 +277,11 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
 
     /**
      * 8.1.1.4.16 CreateGlobalVarBinding (N, D)
+     * 
+     * @param name
+     *            the binding name
+     * @param deletable
+     *            the deletable for the binding
      */
     public void createGlobalVarBinding(String name, boolean deletable) {
         /* steps 1-2 (omitted) */
@@ -279,6 +300,13 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
 
     /**
      * 8.1.1.4.17 CreateGlobalFunctionBinding (N, V, D)
+     * 
+     * @param name
+     *            the binding name
+     * @param value
+     *            the function value
+     * @param deletable
+     *            the deletable for the binding
      */
     public void createGlobalFunctionBinding(String name, Object value, boolean deletable) {
         /* steps 1-3 (omitted) */

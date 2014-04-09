@@ -139,6 +139,12 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 26.3.2.2 %Loader% [ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised loader object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

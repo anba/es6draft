@@ -29,17 +29,27 @@ import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 class InstructionVisitor extends InstructionAdapter {
     static interface VariablesView {
         /**
-         * Returns the type information for the requested local variable
+         * Returns the type information for the requested local variable.
+         * 
+         * @param slot
+         *            the variable index slot
+         * @return the variable type
          */
         Type getVariable(int slot);
 
         /**
-         * Returns the next local variable slot after {@code slot}
+         * Returns the next local variable slot after {@code slot}.
+         * 
+         * @param slot
+         *            the variable index slot
+         * @return the next active slot
          */
         int getNextActiveSlot(int slot);
 
         /**
-         * Returns the number of variables
+         * Returns the number of variables.
+         * 
+         * @return the total variable count
          */
         int getVariableCount();
     }
@@ -136,7 +146,17 @@ class InstructionVisitor extends InstructionAdapter {
         }
 
         /**
-         * Adds a new entry to the variable map
+         * Adds a new entry to the variable map.
+         * 
+         * @param <T>
+         *            the variable class type
+         * @param name
+         *            the variable name
+         * @param type
+         *            the variable type
+         * @param slot
+         *            the variable slot
+         * @return the new variable object
          */
         <T> Variable<T> addVariable(String name, Type type, int slot) {
             assert variables.get(slot) && types[slot].equals(type);
@@ -144,7 +164,12 @@ class InstructionVisitor extends InstructionAdapter {
         }
 
         /**
-         * Sets the variable information for a fixed slot
+         * Sets the variable information for a fixed slot.
+         * 
+         * @param type
+         *            the variable type
+         * @param slot
+         *            the variable slot
          */
         void reserveSlot(Type type, int slot) {
             assert slot >= 0;
@@ -157,7 +182,17 @@ class InstructionVisitor extends InstructionAdapter {
         }
 
         /**
-         * Sets the variable information for a fixed slot and adds an entry to the variable map
+         * Sets the variable information for a fixed slot and adds an entry to the variable map.
+         * 
+         * @param <T>
+         *            the variable class type
+         * @param name
+         *            the variable name
+         * @param type
+         *            the variable type
+         * @param slot
+         *            the variable slot
+         * @return the variable object
          */
         <T> Variable<T> reserveSlot(String name, Type type, int slot) {
             reserveSlot(type, slot);
@@ -165,7 +200,15 @@ class InstructionVisitor extends InstructionAdapter {
         }
 
         /**
-         * Creates a new variable and adds it to the variable map
+         * Creates a new variable and adds it to the variable map.
+         * 
+         * @param <T>
+         *            the variable class type
+         * @param name
+         *            the variable name
+         * @param type
+         *            the variable type
+         * @return the new variable object
          */
         <T> Variable<T> newVariable(String name, Type type) {
             int slot = newVariable(type);
@@ -182,7 +225,10 @@ class InstructionVisitor extends InstructionAdapter {
         }
 
         /**
-         * Marks the given variable as no longer being used, only applicable for scratch variables
+         * Marks the given variable as no longer being used, only applicable for scratch variables.
+         * 
+         * @param variable
+         *            the variable to be freed
          */
         void freeVariable(Variable<?> variable) {
             int slot = variable.getSlot();
@@ -507,7 +553,15 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     /**
-     * Creates a new named variable
+     * Creates a new named variable.
+     * 
+     * @param <T>
+     *            the variable class type
+     * @param name
+     *            the variable name
+     * @param clazz
+     *            the variable class
+     * @return the new variable object
      */
     public <T> Variable<T> newVariable(String name, Class<T> clazz) {
         assert name != null;
@@ -515,7 +569,13 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     /**
-     * Creates a new unnamed variable
+     * Creates a new unnamed variable.
+     * 
+     * @param <T>
+     *            the variable class type
+     * @param clazz
+     *            the variable class
+     * @return the new variable object
      */
     public <T> Variable<T> newScratchVariable(Class<T> clazz) {
         return variables.newVariable(null, getType(clazz));
@@ -580,14 +640,22 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     /**
-     * Emit a <code>goto</code> instruction and update the stack state
+     * Emit a <code>goto</code> instruction and update the stack state.
+     * 
+     * @param target
+     *            the target instruction to jump to
      */
     public void goToAndSetStack(Label target) {
         goToAndSetStack(target, target);
     }
 
     /**
-     * Emit a <code>goto</code> instruction and update the stack state
+     * Emit a <code>goto</code> instruction and update the stack state.
+     * 
+     * @param target
+     *            the target instruction to jump to
+     * @param stackLabel
+     *            the label which holds the stack information to use
      */
     public void goToAndSetStack(Label target, Label stackLabel) {
         goTo(target);
@@ -614,6 +682,9 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * &#x2205; → value
+     * 
+     * @param b
+     *            the constant boolean to load on the stack
      */
     public void iconst(boolean b) {
         iconst(b ? 1 : 0);
@@ -621,6 +692,9 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * &#x2205; → value
+     * 
+     * @param cst
+     *            the constant string to load on the stack
      */
     public void aconst(String cst) {
         if (cst == null || cst.length() <= MAX_STRING_SIZE) {
@@ -659,6 +733,11 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * &#x2205; → array
+     * 
+     * @param length
+     *            the array length
+     * @param type
+     *            the array type
      */
     public void newarray(int length, Type type) {
         iconst(length);
@@ -667,6 +746,13 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * array → array
+     * 
+     * @param index
+     *            the array index
+     * @param element
+     *            the element to store
+     * @param type
+     *            the array type
      */
     public void astore(int index, Object element, Type type) {
         dup();
@@ -677,6 +763,11 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * array → array
+     * 
+     * @param index
+     *            the array index
+     * @param element
+     *            the string element to store
      */
     public void astore(int index, String element) {
         dup();
@@ -686,7 +777,12 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     /**
-     * array → value
+     * array → value.
+     * 
+     * @param index
+     *            the array index
+     * @param type
+     *            the array type
      */
     public void aload(int index, Type type) {
         iconst(index);
@@ -719,6 +815,9 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * value → value, value
+     * 
+     * @param type
+     *            the topmost stack value
      */
     public void dup(ValType type) {
         if (type.size() == 1) {
@@ -731,6 +830,9 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * value → []
+     * 
+     * @param type
+     *            the topmost stack value
      */
     public void pop(ValType type) {
         if (type.size() == 1) {
@@ -743,6 +845,11 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * lvalue, rvalue → rvalue, lvalue, rvalue
+     * 
+     * @param ltype
+     *            the second topmost stack value
+     * @param rtype
+     *            the topmost stack value
      */
     public void dupX(ValType ltype, ValType rtype) {
         int lsize = ltype.size(), rsize = rtype.size();
@@ -761,6 +868,11 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * lvalue, rvalue → rvalue, lvalue
+     * 
+     * @param ltype
+     *            the second topmost stack value
+     * @param rtype
+     *            the topmost stack value
      */
     public void swap(ValType ltype, ValType rtype) {
         int lsize = ltype.size(), rsize = rtype.size();
@@ -779,6 +891,9 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * &#x2205; → value
+     * 
+     * @param field
+     *            the field descriptor
      */
     public void get(FieldDesc field) {
         switch (field.type) {
@@ -795,6 +910,9 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * value → &#x2205;
+     * 
+     * @param field
+     *            the field descriptor
      */
     public void put(FieldDesc field) {
         switch (field.type) {
@@ -811,6 +929,9 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * parameters → value
+     * 
+     * @param method
+     *            the method descriptor for the invocation
      */
     public void invoke(MethodDesc method) {
         switch (method.type) {
@@ -842,14 +963,25 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * &#x2205; → handle
+     * 
+     * @param method
+     *            the method descriptor for the handle
      */
     public void handle(MethodDesc method) {
         hconst(new Handle(method.type.toTag(), method.owner, method.name, method.desc));
     }
 
     /**
-     * Defines a try-catch block for the error {@code type}
+     * Defines a try-catch block for the error {@code type}.
      * 
+     * @param start
+     *            the start label of the try-catch block
+     * @param end
+     *            the end label of the try-catch block
+     * @param handler
+     *            the catch handler label
+     * @param type
+     *            the exception type
      * @see MethodVisitor#visitTryCatchBlock(Label, Label, Label, String)
      */
     public void tryCatch(LocationLabel start, LocationLabel end, LocationLabel handler, Type type) {
@@ -857,8 +989,14 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     /**
-     * Defines a try-finally block
+     * Defines a try-finally block.
      * 
+     * @param start
+     *            the start label of the try-finally block
+     * @param end
+     *            the end label of the try-finally block
+     * @param handler
+     *            the finally handler label
      * @see MethodVisitor#visitTryCatchBlock(Label, Label, Label, String)
      */
     public void tryFinally(LocationLabel start, LocationLabel end, LocationLabel handler) {
@@ -866,8 +1004,12 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     /**
-     * Marks the start of a catch-handler
+     * Marks the start of a catch-handler.
      * 
+     * @param handler
+     *            the catch handler label
+     * @param exception
+     *            the exception type
      * @see #tryCatch(LocationLabel, LocationLabel, LocationLabel, Type)
      */
     public void catchHandler(LocationLabel handler, Type exception) {
@@ -878,8 +1020,10 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     /**
-     * Marks the start of a finally-handler
+     * Marks the start of a finally-handler.
      * 
+     * @param handler
+     *            the finally handler label
      * @see #tryFinally(LocationLabel, LocationLabel, LocationLabel)
      */
     public void finallyHandler(LocationLabel handler) {
@@ -888,6 +1032,9 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * value → boxed
+     * 
+     * @param type
+     *            the value type
      */
     public void toBoxed(ValType type) {
         toBoxed(type.toType());
@@ -895,6 +1042,9 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * value → boxed
+     * 
+     * @param type
+     *            the type kind
      */
     public void toBoxed(Type type) {
         switch (type.getSort()) {
@@ -933,6 +1083,9 @@ class InstructionVisitor extends InstructionAdapter {
 
     /**
      * boxed → value
+     * 
+     * @param type
+     *            the type kind
      */
     public void toUnboxed(Type type) {
         switch (type.getSort()) {
@@ -970,7 +1123,11 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     /**
-     * Returns the wrapper for {@code type}, or {@code type} if it does not represent a primitive
+     * Returns the wrapper for {@code type}, or {@code type} if it does not represent a primitive.
+     * 
+     * @param type
+     *            the type kind
+     * @return the type's wrapper
      */
     public Type getWrapper(Type type) {
         switch (type.getSort()) {

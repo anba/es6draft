@@ -32,7 +32,14 @@ public final class PromiseCapability<PROMISE extends ScriptObject> {
     private final Callable reject;
 
     /**
-     * Creates a new PromiseCapability record
+     * Creates a new PromiseCapability record.
+     * 
+     * @param promise
+     *            the promise object
+     * @param resolve
+     *            the resolve function
+     * @param reject
+     *            the reject function
      */
     public PromiseCapability(PROMISE promise, Callable resolve, Callable reject) {
         assert promise != null && resolve != null && reject != null;
@@ -42,21 +49,27 @@ public final class PromiseCapability<PROMISE extends ScriptObject> {
     }
 
     /**
-     * Returns the [[Promise]] field of this PromiseCapability record
+     * Returns the [[Promise]] field of this PromiseCapability record.
+     * 
+     * @return the promise object
      */
     public PROMISE getPromise() {
         return promise;
     }
 
     /**
-     * Returns the [[Resolve]] field of this PromiseCapability record
+     * Returns the [[Resolve]] field of this PromiseCapability record.
+     * 
+     * @return the resolve function
      */
     public Callable getResolve() {
         return resolve;
     }
 
     /**
-     * Returns the [[Reject]] field of this PromiseCapability record
+     * Returns the [[Reject]] field of this PromiseCapability record.
+     * 
+     * @return the reject function
      */
     public Callable getReject() {
         return reject;
@@ -64,6 +77,14 @@ public final class PromiseCapability<PROMISE extends ScriptObject> {
 
     /**
      * 25.4.1.1.1 IfAbruptRejectPromise (value, capability)
+     * 
+     * @param cx
+     *            the execution context
+     * @param e
+     *            the script exception
+     * @param capability
+     *            the promise capability record
+     * @return the promise capability
      */
     public static ScriptObject IfAbruptRejectPromise(ExecutionContext cx, ScriptException e,
             PromiseCapability<?> capability) {

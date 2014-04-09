@@ -22,21 +22,27 @@ public final class ResumptionPoint {
     }
 
     /**
-     * Returns the stored stack
+     * Returns the stored stack.
+     * 
+     * @return the stored stack
      */
     public Object[] getStack() {
         return stack;
     }
 
     /**
-     * Returns the stored locals
+     * Returns the stored locals.
+     * 
+     * @return the stored locals
      */
     public Object[] getLocals() {
         return locals;
     }
 
     /**
-     * Returns the stored offset
+     * Returns the stored offset.
+     * 
+     * @return the execution offset
      */
     public int getOffset() {
         return offset;

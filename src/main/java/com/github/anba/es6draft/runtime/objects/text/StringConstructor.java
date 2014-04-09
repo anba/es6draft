@@ -104,6 +104,14 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 21.1.2.1 String.fromCharCode ( ...codeUnits)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param codeUnits
+         *            the unicode character units
+         * @return the result string
          */
         @Function(name = "fromCharCode", arity = 1)
         public static Object fromCharCode(ExecutionContext cx, Object thisValue,
@@ -124,6 +132,14 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 21.1.2.2 String.fromCodePoint ( ...codePoints)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param codePoints
+         *            the unicode code points
+         * @return the result string
          */
         @Function(name = "fromCodePoint", arity = 0)
         public static Object fromCodePoint(ExecutionContext cx, Object thisValue,
@@ -150,6 +166,16 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 21.1.2.4 String.raw ( callSite, ...substitutions)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param callSite
+         *            the call site object
+         * @param substitutions
+         *            the string substitutions
+         * @return the interpolated string
          */
         @Function(name = "raw", arity = 1)
         public static Object raw(ExecutionContext cx, Object thisValue, Object callSite,
@@ -193,6 +219,12 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 21.1.2.5 String[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new string object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

@@ -351,6 +351,12 @@ public final class Repl {
 
     /**
      * REPL: Read
+     * 
+     * @param realm
+     *            the realm instance
+     * @param line
+     *            the current line
+     * @return the parsed script node
      */
     private com.github.anba.es6draft.ast.Script read(Realm realm, int line) {
         StringBuilder source = new StringBuilder();
@@ -373,6 +379,12 @@ public final class Repl {
 
     /**
      * REPL: Eval
+     * 
+     * @param realm
+     *            the realm instance
+     * @param parsedScript
+     *            the parsed script node
+     * @return the evaluated script result
      */
     private Object eval(Realm realm, com.github.anba.es6draft.ast.Script parsedScript) {
         String className = "typein_" + scriptCounter.incrementAndGet();
@@ -387,6 +399,11 @@ public final class Repl {
 
     /**
      * REPL: Print
+     * 
+     * @param realm
+     *            the realm instance
+     * @param result
+     *            the object to be printed
      */
     private void print(Realm realm, Object result) {
         if (result != UNDEFINED) {

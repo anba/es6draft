@@ -38,6 +38,14 @@ public final class ScriptLoader {
 
     /**
      * [15.2.7 Runtime Semantics: Script Evaluation]
+     * 
+     * @param script
+     *            the script object
+     * @param realm
+     *            the realm instance
+     * @param deletableBindings
+     *            the deletableBindings flag
+     * @return the script evaluation result
      */
     public static Object ScriptEvaluation(Script script, Realm realm, boolean deletableBindings) {
         /* steps 1-2 */
@@ -67,6 +75,14 @@ public final class ScriptLoader {
      * Returns an executable {@link Script} object for given
      * {@link com.github.anba.es6draft.ast.Script} AST-node. This may either be an
      * {@link InterpretedScript} or {@link CompiledScript} instance.
+     * 
+     * @param parsedScript
+     *            the script node
+     * @param className
+     *            the class name
+     * @param options
+     *            the compiler options
+     * @return the script object
      */
     public static Script load(com.github.anba.es6draft.ast.Script parsedScript, String className,
             EnumSet<Compiler.Option> options) throws CompilationException {
@@ -81,6 +97,16 @@ public final class ScriptLoader {
      * Returns an executable {@link Script} object for given
      * {@link com.github.anba.es6draft.ast.Script} AST-node. This may either be an
      * {@link InterpretedScript} or {@link CompiledScript} instance.
+     * 
+     * @param parsedScript
+     *            the script node
+     * @param className
+     *            the class name
+     * @param executor
+     *            the executor for parallel compilation
+     * @param options
+     *            the compiler options
+     * @return the script object
      */
     public static Script load(com.github.anba.es6draft.ast.Script parsedScript, String className,
             ExecutorService executor, EnumSet<Compiler.Option> options) throws CompilationException {
@@ -93,7 +119,15 @@ public final class ScriptLoader {
 
     /**
      * Compiles the given {@link com.github.anba.es6draft.ast.Script} to an executable
-     * {@link Script} object
+     * {@link Script} object.
+     * 
+     * @param parsedScript
+     *            the script node
+     * @param className
+     *            the class name
+     * @param options
+     *            the compiler options
+     * @return the script object
      */
     public static CompiledScript compile(com.github.anba.es6draft.ast.Script parsedScript,
             String className, EnumSet<Compiler.Option> options) throws CompilationException {
@@ -108,7 +142,17 @@ public final class ScriptLoader {
 
     /**
      * Compiles the given {@link com.github.anba.es6draft.ast.Script} to an executable
-     * {@link Script} object
+     * {@link Script} object.
+     * 
+     * @param parsedScript
+     *            the script node
+     * @param className
+     *            the class name
+     * @param executor
+     *            the executor for parallel compilation
+     * @param options
+     *            the compiler options
+     * @return the script object
      */
     public static CompiledScript compile(com.github.anba.es6draft.ast.Script parsedScript,
             String className, ExecutorService executor, EnumSet<Compiler.Option> options)
@@ -120,6 +164,12 @@ public final class ScriptLoader {
      * Returns an executable {@link Script} object for given
      * {@link com.github.anba.es6draft.ast.Script} AST-node. This may either be an
      * {@link InterpretedScript} or {@link CompiledScript} instance.
+     * 
+     * @param realm
+     *            the realm instance
+     * @param parsedScript
+     *            the script node
+     * @return the script object
      */
     public static Script load(Realm realm, com.github.anba.es6draft.ast.Script parsedScript)
             throws CompilationException {
@@ -135,6 +185,14 @@ public final class ScriptLoader {
      * Returns an executable {@link Script} object for given
      * {@link com.github.anba.es6draft.ast.Script} AST-node. This may either be an
      * {@link InterpretedScript} or {@link CompiledScript} instance.
+     * 
+     * @param realm
+     *            the realm instance
+     * @param parsedScript
+     *            the script node
+     * @param className
+     *            the class name
+     * @return the script object
      */
     public static Script load(Realm realm, com.github.anba.es6draft.ast.Script parsedScript,
             String className) throws CompilationException {
@@ -147,7 +205,15 @@ public final class ScriptLoader {
 
     /**
      * Compiles the given {@link com.github.anba.es6draft.ast.Script} to an executable
-     * {@link Script} object
+     * {@link Script} object.
+     * 
+     * @param realm
+     *            the realm instance
+     * @param parsedScript
+     *            the script node
+     * @param className
+     *            the class name
+     * @return the script object
      */
     public static CompiledScript compile(Realm realm,
             com.github.anba.es6draft.ast.Script parsedScript, String className)
@@ -158,7 +224,13 @@ public final class ScriptLoader {
 
     /**
      * Compiles the given {@link FunctionDefinition} to a
-     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.Function} object
+     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.Function} object.
+     * 
+     * @param realm
+     *            the realm instance
+     * @param function
+     *            the function node
+     * @return the compiled function runtime information
      */
     public static RuntimeInfo.Function compile(Realm realm, FunctionDefinition function)
             throws CompilationException {
@@ -169,7 +241,13 @@ public final class ScriptLoader {
 
     /**
      * Compiles the given {@link GeneratorDefinition} to a
-     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.Function} object
+     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.Function} object.
+     * 
+     * @param realm
+     *            the realm instance
+     * @param generator
+     *            the generator node
+     * @return the compiled function runtime information
      */
     public static RuntimeInfo.Function compile(Realm realm, GeneratorDefinition generator)
             throws CompilationException {
@@ -180,7 +258,17 @@ public final class ScriptLoader {
 
     /**
      * Try to compile the script with the given executor, unless it has been shutdown, in that case
-     * create a new executor for compilation
+     * create a new executor for compilation.
+     * 
+     * @param parsedScript
+     *            the script node
+     * @param className
+     *            the class name
+     * @param executor
+     *            the executor for parallel compilation
+     * @param options
+     *            the compiler options
+     * @return the compile script
      */
     private static CompiledScript tryCompile(com.github.anba.es6draft.ast.Script parsedScript,
             String className, ExecutorService executor, EnumSet<Compiler.Option> options) {
@@ -193,7 +281,17 @@ public final class ScriptLoader {
 
     /**
      * Try to compile the function with the given executor, unless it has been shutdown, in that
-     * case create a new executor for compilation
+     * case create a new executor for compilation.
+     * 
+     * @param function
+     *            the function node
+     * @param className
+     *            the class name
+     * @param executor
+     *            the executor for parallel compilation
+     * @param options
+     *            the compiler options
+     * @return the compile function
      */
     private static CompiledFunction tryCompile(FunctionDefinition function, String className,
             ExecutorService executor, EnumSet<Compiler.Option> options) {
@@ -217,7 +315,17 @@ public final class ScriptLoader {
 
     /**
      * Try to compile the generator with the given executor, unless it has been shutdown, in that
-     * case create a new executor for compilation
+     * case create a new executor for compilation.
+     * 
+     * @param generator
+     *            the generator node
+     * @param className
+     *            the class name
+     * @param executor
+     *            the executor for parallel compilation
+     * @param options
+     *            the compiler options
+     * @return the compile function
      */
     private static CompiledFunction tryCompile(GeneratorDefinition generator, String className,
             ExecutorService executor, EnumSet<Compiler.Option> options) {

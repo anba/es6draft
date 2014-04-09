@@ -80,6 +80,12 @@ public final class Eval {
 
     /**
      * 18.2.1 eval (x)
+     * 
+     * @param cx
+     *            the execution context
+     * @param arguments
+     *            the arguments
+     * @return the evaluation result
      */
     public static Object indirectEval(ExecutionContext cx, Object... arguments) {
         Object source;
@@ -94,6 +100,12 @@ public final class Eval {
 
     /**
      * 18.2.1 eval (x)
+     * 
+     * @param cx
+     *            the execution context
+     * @param source
+     *            the source string
+     * @return the evaluation result
      */
     public static Object indirectEval(ExecutionContext cx, Object source) {
         // TODO: let's assume for now that this is the no-hook entry point (probably rename method)
@@ -104,6 +116,14 @@ public final class Eval {
      * 18.2.1 eval (x)
      * <p>
      * [Called from generated code]
+     * 
+     * @param arguments
+     *            the arguments
+     * @param cx
+     *            the execution context
+     * @param flags
+     *            the eval flags
+     * @return the evaluation result
      */
     public static Object directEval(Object[] arguments, ExecutionContext cx, int flags) {
         Object source;
@@ -200,6 +220,14 @@ public final class Eval {
     /**
      * Slightly modified {@link ScriptLoader#ScriptEvaluation(Script, Realm, boolean)} method to
      * create a separate lexical environment for lexically declared variables
+     * 
+     * @param script
+     *            the script object
+     * @param cx
+     *            the execution context
+     * @param deletableBindings
+     *            the deletableBindings flag
+     * @return the script evaluation result
      */
     private static Object EvalScriptEvaluation(Script script, ExecutionContext cx,
             boolean deletableBindings) {

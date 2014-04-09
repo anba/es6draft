@@ -45,7 +45,17 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
     }
 
     /**
-     * Returns an object to allocate new instances of this class
+     * Returns an object to allocate new instances of this class.
+     * 
+     * @param console
+     *            the console object
+     * @param baseDir
+     *            the base directory
+     * @param script
+     *            the main script file
+     * @param scriptCache
+     *            the script cache
+     * @return the object allocator to construct new global object instances
      */
     public static ObjectAllocator<SimpleShellGlobalObject> newGlobalObjectAllocator(
             final ShellConsole console, final Path baseDir, final Path script,
@@ -58,7 +68,15 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
         };
     }
 
-    /** shell-function: {@code parseModule(source)} */
+    /**
+     * shell-function: {@code parseModule(source)}
+     *
+     * @param cx
+     *            the execution context
+     * @param source
+     *            the source string to compile
+     * @return the status message
+     */
     @Function(name = "parseModule", arity = 1)
     public String parseModule(ExecutionContext cx, String source) {
         Parser parser = new Parser("<module>", 1, cx.getRealm().getOptions());
@@ -70,7 +88,15 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
         return "success";
     }
 
-    /** shell-function: {@code parseScript(source)} */
+    /**
+     * shell-function: {@code parseScript(source)}
+     * 
+     * @param cx
+     *            the execution context
+     * @param source
+     *            the source string to compile
+     * @return the status message
+     */
     @Function(name = "parseScript", arity = 1)
     public String parseScript(ExecutionContext cx, String source) {
         Parser parser = new Parser("<script>", 1, cx.getRealm().getOptions());
@@ -82,7 +108,15 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
         return "success";
     }
 
-    /** shell-function: {@code compile(filename)} */
+    /**
+     * shell-function: {@code compile(filename)}
+     *
+     * @param cx
+     *            the execution context
+     * @param filename
+     *            the file to load
+     * @return the status message
+     */
     @Function(name = "compile", arity = 1)
     public String compile(ExecutionContext cx, String filename) {
         try {
@@ -94,13 +128,26 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
         return "success";
     }
 
-    /** shell-function: {@code loadRelativeToScript(filename)} */
+    /**
+     * shell-function: {@code loadRelativeToScript(filename)}
+     * 
+     * @param cx
+     *            the execution context
+     * @param filename
+     *            the file to load
+     * @return the result value
+     */
     @Function(name = "loadRelativeToScript", arity = 1)
     public Object loadRelativeToScript(ExecutionContext cx, String filename) {
         return load(cx, Paths.get(filename), relativePath(Paths.get(filename)));
     }
 
-    /** shell-function: {@code dump(object)} */
+    /**
+     * shell-function: {@code dump(object)}
+     * 
+     * @param object
+     *            the object to inspect
+     */
     @Function(name = "dump", arity = 1)
     public void dump(ScriptObject object) {
         String id = String.format("%s@%d", object.getClass().getSimpleName(),
@@ -108,13 +155,20 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
         console.print(id);
     }
 
-    /** shell-function: {@code error()} */
+    /**
+     * shell-function: {@code error()}
+     */
     @Function(name = "error", arity = 0)
     public void error() {
         throw new AssertionError();
     }
 
-    /** shell-function: {@code printStackTrace(object)} */
+    /**
+     * shell-function: {@code printStackTrace(object)}
+     * 
+     * @param object
+     *            the error object
+     */
     @Function(name = "printStackTrace", arity = 1)
     public void printStackTrace(ScriptObject object) {
         if (object instanceof ErrorObject) {
@@ -122,7 +176,14 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
         }
     }
 
-    /** shell-function: {@code nextTick(function)} */
+    /**
+     * shell-function: {@code nextTick(function)}
+     * 
+     * @param cx
+     *            the execution context
+     * @param function
+     *            the callback function
+     */
     @Function(name = "nextTick", arity = 1)
     public void nextTick(final ExecutionContext cx, final Callable function) {
         cx.getRealm().enqueuePromiseTask(new Task() {
@@ -133,7 +194,11 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
         });
     }
 
-    /** shell-function: {@code version()} */
+    /**
+     * shell-function: {@code version()}
+     *
+     * @return the version string
+     */
     @Function(name = "version", arity = 1)
     public String version() {
         return String.format("%s", getResourceInfo("/version", "<unknown version>"));

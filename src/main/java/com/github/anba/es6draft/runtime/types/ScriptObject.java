@@ -17,57 +17,207 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
  * </ul>
  */
 public interface ScriptObject {
-    /** [[GetPrototypeOf]] ( ) */
+    /**
+     * [[GetPrototypeOf]] ( )
+     * 
+     * @param cx
+     *            the execution context
+     * @return the prototype object or {@code null}
+     */
     ScriptObject getPrototypeOf(ExecutionContext cx);
 
-    /** [[SetPrototypeOf]] (V) */
+    /**
+     * [[SetPrototypeOf]] (V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param prototype
+     *            the new prototype object
+     * @return {@code true} if the prototype was successfully updated
+     */
     boolean setPrototypeOf(ExecutionContext cx, ScriptObject prototype);
 
-    /** [[IsExtensible]] () */
+    /**
+     * [[IsExtensible]] ()
+     * 
+     * @param cx
+     *            the execution context
+     * @return {@code true} if the object is extensible
+     */
     boolean isExtensible(ExecutionContext cx);
 
-    /** [[PreventExtensions]] () */
+    /**
+     * [[PreventExtensions]] ()
+     *
+     * @param cx
+     *            the execution context
+     * @return {@code true} on success
+     */
     boolean preventExtensions(ExecutionContext cx);
 
-    /** [[GetOwnProperty]] (P) */
+    /**
+     * [[GetOwnProperty]] (P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return the property or {@code null} if none found
+     */
     Property getOwnProperty(ExecutionContext cx, String propertyKey);
 
-    /** [[GetOwnProperty]] (P) */
+    /**
+     * [[GetOwnProperty]] (P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return the property or {@code null} if none found
+     */
     Property getOwnProperty(ExecutionContext cx, Symbol propertyKey);
 
-    /** [[HasProperty]](P) */
+    /**
+     * [[HasProperty]](P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property was found
+     */
     boolean hasProperty(ExecutionContext cx, String propertyKey);
 
-    /** [[HasProperty]](P) */
+    /**
+     * [[HasProperty]](P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property was found
+     */
     boolean hasProperty(ExecutionContext cx, Symbol propertyKey);
 
-    /** [[Get]] (P, Receiver) */
+    /**
+     * [[Get]] (P, Receiver)
+     *
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param receiver
+     *            the receiver object
+     * @return the property value
+     */
     Object get(ExecutionContext cx, String propertyKey, Object receiver);
 
-    /** [[Get]] (P, Receiver) */
+    /**
+     * [[Get]] (P, Receiver)
+     *
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param receiver
+     *            the receiver object
+     * @return the property value
+     */
     Object get(ExecutionContext cx, Symbol propertyKey, Object receiver);
 
-    /** [[Set] (P, V, Receiver) */
+    /**
+     * [[Set] (P, V, Receiver)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @param receiver
+     *            the receiver object
+     * @return {@code true} on success
+     */
     boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver);
 
-    /** [[Set] (P, V, Receiver) */
+    /**
+     * [[Set] (P, V, Receiver)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @param receiver
+     *            the receiver object
+     * @return {@code true} on success
+     */
     boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver);
 
-    /** [[Delete]] (P) */
+    /**
+     * [[Delete]] (P)
+     *
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property was successfully deleted
+     */
     boolean delete(ExecutionContext cx, String propertyKey);
 
-    /** [[Delete]] (P) */
+    /**
+     * [[Delete]] (P)
+     *
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property was successfully deleted
+     */
     boolean delete(ExecutionContext cx, Symbol propertyKey);
 
-    /** [[DefineOwnProperty]] (P, Desc) */
+    /**
+     * [[DefineOwnProperty]] (P, Desc)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param desc
+     *            the property descriptor
+     * @return {@code true} if the property was successfully defined
+     */
     boolean defineOwnProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc);
 
-    /** [[DefineOwnProperty]] (P, Desc) */
+    /**
+     * [[DefineOwnProperty]] (P, Desc)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param desc
+     *            the property descriptor
+     * @return {@code true} if the property was successfully defined
+     */
     boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey, PropertyDescriptor desc);
 
-    /** [[Enumerate]] () */
+    /**
+     * [[Enumerate]] ()
+     *
+     * @param cx
+     *            the execution context
+     * @return the enumeration iterator object
+     */
     ScriptObject enumerate(ExecutionContext cx);
 
-    /** [[OwnPropertyKeys]] ( ) */
+    /**
+     * [[OwnPropertyKeys]] ( )
+     *
+     * @param cx
+     *            the execution context
+     * @return the properties iterator object
+     */
     ScriptObject ownPropertyKeys(ExecutionContext cx);
 }

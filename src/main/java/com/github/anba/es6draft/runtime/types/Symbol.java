@@ -23,7 +23,11 @@ public final class Symbol {
         this.description = description;
     }
 
-    /** [[Description]] */
+    /**
+     * [[Description]]
+     *
+     * @return the symbol description
+     */
     public String getDescription() {
         return description;
     }

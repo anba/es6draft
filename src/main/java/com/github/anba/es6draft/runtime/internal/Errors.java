@@ -44,21 +44,41 @@ public final class Errors {
     }
 
     /**
-     * Returns a new {@code Error} instance
+     * Returns a new {@code Error} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param message
+     *            the error message
+     * @return the new script exception object
      */
     public static ScriptException newError(ExecutionContext cx, String message) {
         return newError(cx, Intrinsics.Error, message);
     }
 
     /**
-     * Returns a new {@code InternalError} instance
+     * Returns a new {@code InternalError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param key
+     *            the error message key
+     * @return the new script exception object
      */
     public static ScriptException newInternalError(ExecutionContext cx, Messages.Key key) {
         return newError(cx, Intrinsics.InternalError, key);
     }
 
     /**
-     * Returns a new {@code InternalError} instance
+     * Returns a new {@code InternalError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param key
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the new script exception object
      */
     public static ScriptException newInternalError(ExecutionContext cx, Messages.Key key,
             String... args) {
@@ -66,14 +86,28 @@ public final class Errors {
     }
 
     /**
-     * Returns a new {@code TypeError} instance
+     * Returns a new {@code TypeError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param key
+     *            the error message key
+     * @return the new script exception object
      */
     public static ScriptException newTypeError(ExecutionContext cx, Messages.Key key) {
         return newError(cx, Intrinsics.TypeError, key);
     }
 
     /**
-     * Returns a new {@code TypeError} instance
+     * Returns a new {@code TypeError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param key
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the new script exception object
      */
     public static ScriptException newTypeError(ExecutionContext cx, Messages.Key key,
             String... args) {
@@ -81,14 +115,28 @@ public final class Errors {
     }
 
     /**
-     * Returns a new {@code ReferenceError} instance
+     * Returns a new {@code ReferenceError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param key
+     *            the error message key
+     * @return the new script exception object
      */
     public static ScriptException newReferenceError(ExecutionContext cx, Messages.Key key) {
         return newError(cx, Intrinsics.ReferenceError, key);
     }
 
     /**
-     * Returns a new {@code ReferenceError} instance
+     * Returns a new {@code ReferenceError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param key
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the new script exception object
      */
     public static ScriptException newReferenceError(ExecutionContext cx, Messages.Key key,
             String... args) {
@@ -96,7 +144,19 @@ public final class Errors {
     }
 
     /**
-     * Returns a new {@code ReferenceError} instance
+     * Returns a new {@code ReferenceError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param message
+     *            the error message
+     * @param file
+     *            the file name
+     * @param line
+     *            the line number
+     * @param column
+     *            the column number
+     * @return the new script exception object
      */
     public static ScriptException newReferenceError(ExecutionContext cx, String message,
             String file, int line, int column) {
@@ -104,14 +164,28 @@ public final class Errors {
     }
 
     /**
-     * Returns a new {@code SyntaxError} instance
+     * Returns a new {@code SyntaxError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param key
+     *            the error message key
+     * @return the new script exception object
      */
     public static ScriptException newSyntaxError(ExecutionContext cx, Messages.Key key) {
         return newError(cx, Intrinsics.SyntaxError, key);
     }
 
     /**
-     * Returns a new {@code SyntaxError} instance
+     * Returns a new {@code SyntaxError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param key
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the new script exception object
      */
     public static ScriptException newSyntaxError(ExecutionContext cx, Messages.Key key,
             String... args) {
@@ -119,7 +193,19 @@ public final class Errors {
     }
 
     /**
-     * Returns a new {@code SyntaxError} instance
+     * Returns a new {@code SyntaxError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param message
+     *            the error message
+     * @param file
+     *            the file name
+     * @param line
+     *            the line number
+     * @param column
+     *            the column number
+     * @return the new script exception object
      */
     public static ScriptException newSyntaxError(ExecutionContext cx, String message, String file,
             int line, int column) {
@@ -127,14 +213,28 @@ public final class Errors {
     }
 
     /**
-     * Returns a new {@code RangeError} instance
+     * Returns a new {@code RangeError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param key
+     *            the error message key
+     * @return the new script exception object
      */
     public static ScriptException newRangeError(ExecutionContext cx, Messages.Key key) {
         return newError(cx, Intrinsics.RangeError, key);
     }
 
     /**
-     * Returns a new {@code RangeError} instance
+     * Returns a new {@code RangeError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param key
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the new script exception object
      */
     public static ScriptException newRangeError(ExecutionContext cx, Messages.Key key,
             String... args) {
@@ -142,14 +242,28 @@ public final class Errors {
     }
 
     /**
-     * Returns a new {@code URIError} instance
+     * Returns a new {@code URIError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param key
+     *            the error message key
+     * @return the new script exception object
      */
     public static ScriptException newURIError(ExecutionContext cx, Messages.Key key) {
         return newError(cx, Intrinsics.URIError, key);
     }
 
     /**
-     * Returns a new {@code URIError} instance
+     * Returns a new {@code URIError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param key
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the new script exception object
      */
     public static ScriptException newURIError(ExecutionContext cx, Messages.Key key, String... args) {
         return newError(cx, Intrinsics.URIError, key, args);

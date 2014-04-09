@@ -41,7 +41,7 @@ final class BoundNames extends DefaultNodeVisitor<List<String>, List<String>> {
 
     /**
      * <pre>
-     * LexicalBinding : BindingIdentifier Initialiser<sub>opt</sub>
+     * LexicalBinding : BindingIdentifier Initialiser<span><sub>opt</sub></span>
      * LexicalBinding: BindingPattern Initialiser
      * </pre>
      */
@@ -73,7 +73,7 @@ final class BoundNames extends DefaultNodeVisitor<List<String>, List<String>> {
 
     /**
      * <pre>
-     * VariableDeclaration : BindingIdentifier Initialiser<sub>opt</sub>
+     * VariableDeclaration : BindingIdentifier Initialiser<span><sub>opt</sub></span>
      * VariableDeclaration: BindingPattern Initialiser
      * </pre>
      */
@@ -84,12 +84,12 @@ final class BoundNames extends DefaultNodeVisitor<List<String>, List<String>> {
 
     /**
      * <pre>
-     * ArrayBindingPattern : [ Elision<sub>opt</sub> ]
-     * ArrayBindingPattern : [ Elision<sub>opt</sub> BindingRestElement ]
-     * ArrayBindingPattern : [ BindingElementList , Elision<sub>opt</sub> ]
-     * ArrayBindingPattern : [ BindingElementList , Elision<sub>opt</sub> BindingRestElement ]
-     * BindingElementList : Elision<sub>opt</sub> BindingElement
-     * BindingElementList : BindingElementList , Elision<sub>opt</sub> BindingElement
+     * ArrayBindingPattern : [ Elision<span><sub>opt</sub></span> ]
+     * ArrayBindingPattern : [ Elision<span><sub>opt</sub></span> BindingRestElement ]
+     * ArrayBindingPattern : [ BindingElementList , Elision<span><sub>opt</sub></span> ]
+     * ArrayBindingPattern : [ BindingElementList , Elision<span><sub>opt</sub></span> BindingRestElement ]
+     * BindingElementList : Elision<span><sub>opt</sub></span> BindingElement
+     * BindingElementList : BindingElementList , Elision<span><sub>opt</sub></span> BindingElement
      * </pre>
      */
     @Override
@@ -122,8 +122,8 @@ final class BoundNames extends DefaultNodeVisitor<List<String>, List<String>> {
     /**
      * <pre>
      * BindingElement : SingleNameBinding
-     * BindingElement : BindingPattern Initialiser<sub>opt</sub>
-     * SingleNameBinding : BindingIdentifier Initialiser<sub>opt</sub>
+     * BindingElement : BindingPattern Initialiser<span><sub>opt</sub></span>
+     * SingleNameBinding : BindingIdentifier Initialiser<span><sub>opt</sub></span>
      * </pre>
      */
     @Override

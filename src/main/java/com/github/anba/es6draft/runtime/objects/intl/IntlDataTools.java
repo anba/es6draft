@@ -53,6 +53,11 @@ final class IntlDataTools {
 
     /**
      * {@link LanguageSubtagRegistryData}
+     * 
+     * @param langSubtagReg
+     *            the language subtag registry file
+     * @throws IOException
+     *             if an I/O error occurs
      */
     static void languageSubtagRegistry(Path langSubtagReg) throws IOException {
         List<String> lines = Files.readAllLines(langSubtagReg, StandardCharsets.UTF_8);
@@ -275,6 +280,11 @@ final class IntlDataTools {
 
     /**
      * {@link IntlAbstractOperations#JDK_TIMEZONE_NAMES}
+     * 
+     * @param tzdataDir
+     *            the tzdata directory
+     * @throws IOException
+     *             if an I/O error occurs
      */
     static void jdkTimezoneNames(Path tzdataDir) throws IOException {
         Pattern pZone = Pattern.compile("Zone\\s+([a-zA-Z0-9_+\\-/]+)\\s+.*");
@@ -345,6 +355,11 @@ final class IntlDataTools {
 
     /**
      * {@link NumberFormatConstructor#CurrencyDigits(String)}
+     * 
+     * @param currencyFile
+     *            the currency xml-file
+     * @throws IOException
+     *             if an I/O error occurs
      */
     static void currencyDigits(Path currencyFile) throws IOException {
         try (Reader reader = Files.newBufferedReader(currencyFile, StandardCharsets.UTF_8)) {
@@ -392,6 +407,11 @@ final class IntlDataTools {
 
     /**
      * {@link IntlAbstractOperations#oldStyleLanguageTags}
+     * 
+     * @param cldrMainDir
+     *            the CLDR main directory
+     * @throws IOException
+     *             if an I/O error occurs
      */
     static void oldStyleLanguageTags(Path cldrMainDir) throws IOException {
         try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(cldrMainDir)) {

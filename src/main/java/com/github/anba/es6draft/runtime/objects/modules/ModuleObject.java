@@ -24,12 +24,21 @@ public final class ModuleObject extends OrdinaryObject {
     /** [[ModuleLinkage]] */
     private ModuleLinkage moduleLinkage;
 
-    /** [[ModuleLinkage]] */
+    /**
+     * [[ModuleLinkage]]
+     *
+     * @return the module linkage record
+     */
     public ModuleLinkage getModuleLinkage() {
         return moduleLinkage;
     }
 
-    /** [[ModuleLinkage]] */
+    /**
+     * [[ModuleLinkage]]
+     *
+     * @param moduleLinkage
+     *            the new module linkage record
+     */
     public void setModuleLinkage(ModuleLinkage moduleLinkage) {
         assert this.moduleLinkage == null && moduleLinkage != null : "ModuleObject already initialised";
         this.moduleLinkage = moduleLinkage;

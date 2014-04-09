@@ -68,8 +68,9 @@ final class LanguageTagParser {
         }
 
         /**
-         * Canonicalization for language tags
+         * Canonicalization for language tags.
          * 
+         * @return the canonicalized language tag
          * @see <a href="http://tools.ietf.org/html/rfc5646#section-4.5">RFC 5646</a>
          */
         public String canonicalize() {
@@ -153,8 +154,11 @@ final class LanguageTagParser {
         }
 
         /**
-         * Additional canonicalization for unicode extension sequences
+         * Additional canonicalization for unicode extension sequences.
          * 
+         * @param ext
+         *            the unicode extension
+         * @return the canonicalized unicode extension
          * @see <a href="http://tools.ietf.org/html/rfc6067#section-2.1.1">RFC 6067</a>
          */
         private String canonicalizeUnicodeExtension(String ext) {
@@ -320,6 +324,8 @@ final class LanguageTagParser {
      *                / privateuse          ; private use tag
      *                / grandfathered       ; grandfathered tags
      * </pre>
+     * 
+     * @return {@code true} if parsed successfully
      */
     private boolean languageTag() {
         return grandfathered() || privateuse() || langtag();
@@ -358,6 +364,8 @@ final class LanguageTagParser {
      *                / "zh-min-nan"        ; subtag or sequence of subtags
      *                / "zh-xiang"
      * </pre>
+     * 
+     * @return {@code true} if parsed successfully
      */
     private boolean grandfathered() {
         if (grandfathered.contains(input)) {
@@ -378,6 +386,8 @@ final class LanguageTagParser {
      *                  *("-" extension)
      *                  ["-" privateuse]
      * </pre>
+     * 
+     * @return {@code true} if parsed successfully
      */
     private boolean langtag() {
         if (language()) {
@@ -407,6 +417,8 @@ final class LanguageTagParser {
      *                / 4ALPHA              ; or reserved for future use
      *                / 5*8ALPHA            ; or registered language subtag
      * </pre>
+     * 
+     * @return {@code true} if parsed successfully
      */
     private boolean language() {
         if (token == ALPHA) {
@@ -427,6 +439,8 @@ final class LanguageTagParser {
      *  extlang       = 3ALPHA              ; selected ISO 639 codes
      *                  *2("-" 3ALPHA)      ; permanently reserved
      * </pre>
+     * 
+     * @return {@code true} if parsed successfully
      */
     private boolean extlang() {
         if (token == ALPHA && tokenLength == 3) {
@@ -446,6 +460,8 @@ final class LanguageTagParser {
      * <pre>
      *  script        = 4ALPHA              ; ISO 15924 code
      * </pre>
+     * 
+     * @return {@code true} if parsed successfully
      */
     private boolean script() {
         if (token == ALPHA && tokenLength == 4) {
@@ -460,6 +476,8 @@ final class LanguageTagParser {
      *  region        = 2ALPHA              ; ISO 3166-1 code
      *                / 3DIGIT              ; UN M.49 code
      * </pre>
+     * 
+     * @return {@code true} if parsed successfully
      */
     private boolean region() {
         if ((token == ALPHA && tokenLength == 2) || (token == DIGIT && tokenLength == 3)) {
@@ -474,6 +492,8 @@ final class LanguageTagParser {
      *  variant       = 5*8alphanum         ; registered variants
      *                / (DIGIT 3alphanum)
      * </pre>
+     * 
+     * @return {@code true} if parsed successfully
      */
     private boolean variant() {
         if (alphanum() && tokenLength >= 5 && tokenLength <= 8) {
@@ -499,6 +519,8 @@ final class LanguageTagParser {
      *                / %x61-77             ; a - w
      *                / %x79-7A             ; y - z
      * </pre>
+     * 
+     * @return {@code true} if parsed successfully
      */
     private boolean extension() {
         int saved = tokenStart;
@@ -525,6 +547,8 @@ final class LanguageTagParser {
      * <pre>
      *  privateuse    = "x" 1*("-" (1*8alphanum))
      * </pre>
+     * 
+     * @return {@code true} if parsed successfully
      */
     private boolean privateuse() {
         int saved = tokenStart;
@@ -549,6 +573,8 @@ final class LanguageTagParser {
      * <pre>
      *  alphanum      = (ALPHA / DIGIT)     ; letters and numbers
      * </pre>
+     * 
+     * @return {@code true} if the current token is an alphanumeric character
      */
     private boolean alphanum() {
         return (token & ALPHA_DIGIT) != NONE;

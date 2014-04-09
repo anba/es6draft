@@ -83,6 +83,12 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
 
         /**
          * 12.3.2 Intl.DateTimeFormat.prototype.format
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the bound format function
          */
         @Accessor(name = "format", type = Accessor.Type.Getter)
         public static Object format(ExecutionContext cx, Object thisValue) {
@@ -97,6 +103,12 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
 
         /**
          * 12.3.3 Intl.DateTimeFormat.prototype.resolvedOptions ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the resolved options object
          */
         @Function(name = "resolvedOptions", arity = 0)
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
@@ -130,6 +142,14 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
 
     /**
      * Abstract Operation: FormatDateTime
+     * 
+     * @param cx
+     *            the execution context
+     * @param dateTimeFormat
+     *            the date format object
+     * @param x
+     *            the number value
+     * @return the formatted date-time string
      */
     public static String FormatDateTime(ExecutionContext cx, DateTimeFormatObject dateTimeFormat,
             double x) {

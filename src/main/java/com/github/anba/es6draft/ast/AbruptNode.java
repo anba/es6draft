@@ -10,19 +10,26 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * Base interface for {@link Node} objects which contain abrupt completions
+ * Base interface for {@link Node} objects which contain abrupt completions.
  */
 public interface AbruptNode extends Node {
     /**
-     * Returns the label set for this node
+     * Returns the label set for this node.
+     * 
+     * @return the label set
      */
     Set<String> getLabelSet();
 
     /**
-     * Returns the set of abrupt completions for this node
+     * Returns the set of abrupt completions for this node.
+     * 
+     * @return the set of abrupt completions
      */
     EnumSet<Abrupt> getAbrupt();
 
+    /**
+     * Abrupt completions
+     */
     enum Abrupt {
         Break, Continue
     }

@@ -148,21 +148,27 @@ public final class RegExpParser {
     }
 
     /**
-     * Whether or not octal escapes are supported
+     * Whether or not octal escapes are supported.
+     * 
+     * @return {@code true} if octal escapes are supported
      */
     private boolean octalEscape() {
         return !joni;
     }
 
     /**
-     * Whether or not hexadecimal escapes need to be aligned to two bytes
+     * Whether or not hexadecimal escapes need to be aligned to two bytes.
+     * 
+     * @return {@code true} if hexadecimal escapes need be aligned
      */
     private boolean alignBytes() {
         return joni;
     }
 
     /**
-     * Whether or not empty character classes (i.e. `[]` and `[^]`) are supported
+     * Whether or not empty character classes (i.e. `[]` and `[^]`) are supported.
+     * 
+     * @return {@code true} if empty character classes are supported
      */
     private boolean emptyCharacterClass() {
         // works in Joni if OP2_OPTION_ECMASCRIPT is enabled, but that breaks nested repeats...
@@ -171,28 +177,36 @@ public final class RegExpParser {
     }
 
     /**
-     * Whether or not character property classes are used to represent character class escapes
+     * Whether or not character property classes are used to represent character class escapes.
+     * 
+     * @return {@code true} if character property classes are supported
      */
     private boolean characterProperty() {
         return joni;
     }
 
     /**
-     * Whether or not . character class is compliant
+     * Whether or not . character class is compliant.
+     * 
+     * @return {@code true} if the {@code .} character class is compliant
      */
     private boolean dotCharacterClass() {
         return joni;
     }
 
     /**
-     * Whether or not case insensitive patterns need to be rewritten
+     * Whether or not case insensitive patterns need to be rewritten.
+     * 
+     * @return {@code true} if case sensitive patterns are supported
      */
     private boolean caseInsensitive() {
         return joni;
     }
 
     /**
-     * Maximum supported repeat
+     * Maximum supported repeat.
+     * 
+     * @return the maximum number of repeats
      */
     private int repeatMaximum() {
         // clamp at max-int to avoid overflow in Java
@@ -256,6 +270,8 @@ public final class RegExpParser {
      *     DecimalDigit
      *     DecimalDigits DecimalDigit
      * </pre>
+     * 
+     * @return the parsed decimal integer value
      */
     private long decimal() {
         char c = peek(0);
@@ -371,32 +387,35 @@ public final class RegExpParser {
 
     /**
      * <pre>
-     * CharacterClass<sub>[U]</sub>  ::
-     *     [ [LA &#x2209; {<b>^</b>}] ClassRanges<sub>[?U]</sub> ]
-     *     [ <b>^</b> ClassRanges<sub>[?U]</sub> ]
-     * ClassRanges<sub>[U]</sub> ::
+     * CharacterClass<span><sub>[U]</sub></span>  ::
+     *     [ [LA &#x2209; {<b>^</b>}] ClassRanges<span><sub>[?U]</sub></span> ]
+     *     [ <b>^</b> ClassRanges<span><sub>[?U]</sub></span> ]
+     * ClassRanges<span><sub>[U]</sub></span> ::
      *     [empty]
-     *     NonemptyClassRanges<sub>[?U]</sub>
-     * NonemptyClassRanges<sub>[U]</sub> ::
-     *     ClassAtom<sub>[?U]</sub>
-     *     ClassAtom<sub>[?U]</sub> NonemptyClassRangesNoDash<sub>[?U]</sub>
-     *     ClassAtom<sub>[?U]</sub> <b>-</b> ClassAtom<sub>[?U]</sub> ClassRanges<sub>[?U]</sub>
-     * NonemptyClassRangesNoDash<sub>[U]</sub> ::
-     *     ClassAtom<sub>[?U]</sub>
-     *     ClassAtomNoDash<sub>[?U]</sub> NonemptyClassRangesNoDash<sub>[?U]</sub>
-     *     ClassAtomNoDash<sub>[?U]</sub> <b>-</b> ClassAtom<sub>[?U]</sub> ClassRanges<sub>[?U]</sub>
-     * ClassAtom<sub>[U]</sub> ::
+     *     NonemptyClassRanges<span><sub>[?U]</sub></span>
+     * NonemptyClassRanges<span><sub>[U]</sub></span> ::
+     *     ClassAtom<span><sub>[?U]</sub></span>
+     *     ClassAtom<span><sub>[?U]</sub></span> NonemptyClassRangesNoDash<span><sub>[?U]</sub></span>
+     *     ClassAtom<span><sub>[?U]</sub></span> <b>-</b> ClassAtom<span><sub>[?U]</sub></span> ClassRanges<span><sub>[?U]</sub></span>
+     * NonemptyClassRangesNoDash<span><sub>[U]</sub></span> ::
+     *     ClassAtom<span><sub>[?U]</sub></span>
+     *     ClassAtomNoDash<span><sub>[?U]</sub></span> NonemptyClassRangesNoDash<span><sub>[?U]</sub></span>
+     *     ClassAtomNoDash<span><sub>[?U]</sub></span> <b>-</b> ClassAtom<span><sub>[?U]</sub></span> ClassRanges<span><sub>[?U]</sub></span>
+     * ClassAtom<span><sub>[U]</sub></span> ::
      *     <b>-</b>
-     *     ClassAtomNoDash<sub>[?U]</sub>
-     * ClassAtomNoDash<sub>[U]</sub> ::
+     *     ClassAtomNoDash<span><sub>[?U]</sub></span>
+     * ClassAtomNoDash<span><sub>[U]</sub></span> ::
      *     SourceCharacter <b>but not one of \ or ] or -</b>
-     *     <b>\</b> ClassEscape<sub>[?U]</sub>
-     * ClassEscape<sub>[U]</sub> ::
+     *     <b>\</b> ClassEscape<span><sub>[?U]</sub></span>
+     * ClassEscape<span><sub>[U]</sub></span> ::
      *     DecimalEscape
      *     <b>b</b>
-     *     CharacterEscape<sub>[?U]</sub>
+     *     CharacterEscape<span><sub>[?U]</sub></span>
      *     CharacterClassEscape
      * </pre>
+     * 
+     * @param negation
+     *            flag to mark negative character classes
      */
     private void characterclass(boolean negation) {
         final boolean ignoreCase = isIgnoreCase();
@@ -618,62 +637,62 @@ public final class RegExpParser {
 
     /**
      * <pre>
-     * Pattern<sub>[U]</sub> ::
-     *     Disjunction<sub>[?U]</sub>
-     * Disjunction<sub>[U]</sub> ::
-     *     Alternative<sub>[?U]</sub>
-     *     Alternative<sub>[?U]</sub> <b>|</b> Disjunction<sub>[?U]</sub>
-     * Alternative<sub>[U]</sub> ::
+     * Pattern<span><sub>[U]</sub></span> ::
+     *     Disjunction<span><sub>[?U]</sub></span>
+     * Disjunction<span><sub>[U]</sub></span> ::
+     *     Alternative<span><sub>[?U]</sub></span>
+     *     Alternative<span><sub>[?U]</sub></span> <b>|</b> Disjunction<span><sub>[?U]</sub></span>
+     * Alternative<span><sub>[U]</sub></span> ::
      *     [empty]
-     *     Alternative<sub>[?U]</sub> Term<sub>[?U]</sub>
-     * Term<sub>[U]</sub> ::
-     *     Assertion<sub>[?U]</sub>
-     *     Atom<sub>[?U]</sub>
-     *     Atom<sub>[?U]</sub> Quantifier
-     * Assertio<sub>[U]</sub>n ::
+     *     Alternative<span><sub>[?U]</sub></span> Term<span><sub>[?U]</sub></span>
+     * Term<span><sub>[U]</sub></span> ::
+     *     Assertion<span><sub>[?U]</sub></span>
+     *     Atom<span><sub>[?U]</sub></span>
+     *     Atom<span><sub>[?U]</sub></span> Quantifier
+     * Assertio<span><sub>[U]</sub></span>n ::
      *     <b>^</b>
      *     <b>$</b>
      *     <b>\ b</b>
      *     <b>\ B</b>
-     *     <b>( ? =</b> Disjunction<sub>[?U]</sub> <b>)</b>
-     *     <b>( ? !</b> Disjunction<sub>[?U]</sub> <b>)</b>
-     * Atom<sub>[U]</sub> ::
+     *     <b>( ? =</b> Disjunction<span><sub>[?U]</sub></span> <b>)</b>
+     *     <b>( ? !</b> Disjunction<span><sub>[?U]</sub></span> <b>)</b>
+     * Atom<span><sub>[U]</sub></span> ::
      *     PatternCharacter
      *     <b>.</b>
-     *     <b>\</b> AtomEscape<sub>[?U]</sub>
-     *     CharacterClass<sub>[?U]</sub>
-     *     <b>(</b> Disjunction<sub>[?U]</sub> <b>)</b>
-     *     <b>( ? :</b> Disjunction<sub>[?U]</sub> <b>)</b>
+     *     <b>\</b> AtomEscape<span><sub>[?U]</sub></span>
+     *     CharacterClass<span><sub>[?U]</sub></span>
+     *     <b>(</b> Disjunction<span><sub>[?U]</sub></span> <b>)</b>
+     *     <b>( ? :</b> Disjunction<span><sub>[?U]</sub></span> <b>)</b>
      * PatternCharacter ::
      *     SourceCharacter but not one of <b>^ $ \ . * + ? ( ) [ ] { } |</b>
-     * AtomEscape<sub>[U]</sub> ::
+     * AtomEscape<span><sub>[U]</sub></span> ::
      *     DecimalEscape
-     *     CharacterEscape<sub>[?U]</sub>
+     *     CharacterEscape<span><sub>[?U]</sub></span>
      *     CharacterClassEscape
-     * CharacterEscape<sub>[U]</sub> ::
+     * CharacterEscape<span><sub>[U]</sub></span> ::
      *     ControlEscape
      *     <b>c</b> ControlLetter
      *     HexEscapeSequence
-     *     RegExpUnicodeEscapeSequence<sub>[?U]</sub>
-     *     IdentityEscape<sub>[?U]</sub>
+     *     RegExpUnicodeEscapeSequence<span><sub>[?U]</sub></span>
+     *     IdentityEscape<span><sub>[?U]</sub></span>
      * ControlEscape ::  one of
      *     <b>f n r t v</b>
      * ControlLetter :: one of
      *     <b>a b c d e f g h i j k l m n o p q r s t u v w x y z</b>
      *     <b>A B C D E F G H I J K L M N O P Q R S T U V W X Y Z</b>
-     * RegExpUnicodeEscapeSequence<sub>[U]</sub> ::
-     *     <sub>[+U]</sub> <b>u</b> LeadSurrogate <b>\\u</b> TrailSurrogate
+     * RegExpUnicodeEscapeSequence<span><sub>[U]</sub></span> ::
+     *     <span><sub>[+U]</sub></span> <b>u</b> LeadSurrogate <b>\\u</b> TrailSurrogate
      *     <b>u</b> Hex4Digits
-     *     <sub>[+U]</sub> <b>u {</b> HexDigits <b>} </b>
+     *     <span><sub>[+U]</sub></span> <b>u {</b> HexDigits <b>} </b>
      * LeadSurrogate ::
-     *     Hex4Digits <sub>[match only if the CV of Hex4Digits is in the inclusive range of 0xD800 and 0xDBFF]</sub>
+     *     Hex4Digits <span><sub>[match only if the CV of Hex4Digits is in the inclusive range of 0xD800 and 0xDBFF]</sub></span>
      * TrailSurrogate ::
-     *     Hex4Digits <sub>[match only if the CV of Hex4Digits is in the inclusive range of 0xDC00 and 0xDFFF]</sub>
-     * IdentityEscape<sub>[U]</sub> ::
-     *     <sub>[+U]</sub> SyntaxCharacter
-     *     <sub>[~U]</sub> SourceCharacter but not IdentifierPart
-     *     <sub>[~U]</sub> &lt;ZWJ&gt;
-     *     <sub>[~U]</sub> &lt;ZWNJ&gt;
+     *     Hex4Digits <span><sub>[match only if the CV of Hex4Digits is in the inclusive range of 0xDC00 and 0xDFFF]</sub></span>
+     * IdentityEscape<span><sub>[U]</sub></span> ::
+     *     <span><sub>[+U]</sub></span> SyntaxCharacter
+     *     <span><sub>[~U]</sub></span> SourceCharacter but not IdentifierPart
+     *     <span><sub>[~U]</sub></span> &lt;ZWJ&gt;
+     *     <span><sub>[~U]</sub></span> &lt;ZWNJ&gt;
      * DecimalEscape ::
      *     DecimalIntegerLiteral  [LA &#x2209; DecimalDigit]
      * CharacterClassEscape :: one of
@@ -1030,6 +1049,10 @@ public final class RegExpParser {
      *     <b>{</b> DecimalDigits <b>, }</b>
      *     <b>{</b> DecimalDigits <b>,</b> DecimalDigits <b>}</b>
      * </pre>
+     * 
+     * @param c
+     *            the start character of the quantifier
+     * @return {@code true} if the input could be parsed as a quantifier
      */
     private boolean quantifier(char c) {
         StringBuilder out = this.out;

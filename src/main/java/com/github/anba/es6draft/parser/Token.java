@@ -99,6 +99,11 @@ public enum Token {/* @formatter:off */
         this.name = name;
     }
 
+    /**
+     * Returns the token's name.
+     * 
+     * @return the token name
+     */
     public String getName() {
         return name;
     }
@@ -110,9 +115,13 @@ public enum Token {/* @formatter:off */
 
     /**
      * <strong>[11.6] Identifier Names and Identifiers</strong>
+     * 
+     * @param token
+     *            the token to inspect
+     * @return {@code true} if the token is a valid identifier name
      */
-    public static boolean isIdentifierName(Token tok) {
-        switch (tok) {
+    public static boolean isIdentifierName(Token token) {
+        switch (token) {
         case NAME:
         case ESCAPED_NAME:
         case ESCAPED_RESERVED_WORD:
@@ -178,6 +187,10 @@ public enum Token {/* @formatter:off */
 
     /**
      * <strong>[11.6.1] Reserved Words</strong>
+     * 
+     * @param token
+     *            the token to inspect
+     * @return {@code true} if the token is a reserved word
      */
     public static boolean isReservedWord(Token token) {
         switch (token) {
@@ -232,6 +245,10 @@ public enum Token {/* @formatter:off */
 
     /**
      * <strong>[11.6.1] Reserved Words</strong>
+     * 
+     * @param token
+     *            the token to inspect
+     * @return {@code true} if the token is a strict reserved word
      */
     public static boolean isStrictReservedWord(Token token) {
         switch (token) {
@@ -249,6 +266,13 @@ public enum Token {/* @formatter:off */
         }
     }
 
+    /**
+     * Returns the escaped token type for the input token.
+     * 
+     * @param token
+     *            the token to be escaped
+     * @return the escaped form of the token
+     */
     public static Token toEscapedNameToken(Token token) {
         if (token == Token.NAME) {
             return Token.ESCAPED_NAME;
@@ -268,6 +292,13 @@ public enum Token {/* @formatter:off */
         return Token.ESCAPED_STRICT_RESERVED_WORD;
     }
 
+    /**
+     * Returns {@code true} if the input token is a binary operator.
+     * 
+     * @param token
+     *            the token to inspect
+     * @return {@code true} if the token is a binary operator
+     */
     public static boolean isBinaryOperator(Token token) {
         switch (token) {
         case MUL:
@@ -306,6 +337,13 @@ public enum Token {/* @formatter:off */
         }
     }
 
+    /**
+     * Returns {@code true} if the input token is an assignment operator.
+     * 
+     * @param token
+     *            the token to inspect
+     * @return {@code true} if the token is an assignment operator
+     */
     public static boolean isAssignmentOperator(Token token) {
         switch (token) {
         case ASSIGN:

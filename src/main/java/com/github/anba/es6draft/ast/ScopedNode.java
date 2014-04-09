@@ -12,6 +12,8 @@ package com.github.anba.es6draft.ast;
 public interface ScopedNode extends Node {
     /**
      * Returns the scope object for this node.
+     * 
+     * @return the scope object
      */
     Scope getScope();
 }

@@ -17,6 +17,8 @@ public interface FunctionScope extends TopLevelScope {
 
     /**
      * Returns the set of parameter names.
+     * 
+     * @return the parameter names
      */
     Set<String> parameterNames();
 
@@ -25,6 +27,8 @@ public interface FunctionScope extends TopLevelScope {
      * <p>
      * A scope is considered dynamic if it can change during runtime, in other words that means it
      * contains a non-strict, direct-eval call.
+     * 
+     * @return <code>true</code> if a dynamic scope
      */
     boolean isDynamic();
 }

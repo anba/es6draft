@@ -69,7 +69,11 @@ public final class ModuleLinkage {
     /** [[ModuleObj]] */
     private final ModuleObject moduleObject;
 
-    /** [[ModuleObj]] */
+    /**
+     * [[ModuleObj]]
+     *
+     * @return the module script object
+     */
     public ModuleObject getModuleObject() {
         return moduleObject;
     }
@@ -82,102 +86,184 @@ public final class ModuleLinkage {
         this.linkErrors = new ArrayList<>();
     }
 
-    /** [[Body]] */
+    /**
+     * [[Body]]
+     * 
+     * @return the parsed module node
+     */
     public Module getBody() {
         return body;
     }
 
-    /** [[BoundNames]] */
+    /**
+     * [[BoundNames]]
+     * 
+     * @return the set of the module's bound names
+     */
     public Set<String> getBoundNames() {
         assert body != null;
         return DeclaredNames(body);
     }
 
-    /** [[KnownExportEntries]] */
+    /**
+     * [[KnownExportEntries]]
+     * 
+     * @return the list of known export entries for the module
+     */
     public List<ExportEntry> getKnownExportEntries() {
         assert body != null;
         return KnownExportEntries(body);
     }
 
-    /** [[UnknownExportEntries]] */
+    /**
+     * [[UnknownExportEntries]]
+     * 
+     * @return the list of unknown export entries for the module
+     */
     public List<ExportEntry> getUnknownExportEntries() {
         assert body != null;
         return UnknownExportEntries(body);
     }
 
-    /** [[ExportDefinitions]] */
+    /**
+     * [[ExportDefinitions]]
+     * 
+     * @return the list of export definitions
+     */
     public List<ExportDefinition> getExportDefinitions() {
         return exportDefinitions;
     }
 
-    /** [[ExportDefinitions]] */
+    /**
+     * [[ExportDefinitions]]
+     * 
+     * @param exportDefinitions
+     *            the new list of export definitions
+     */
     public void setExportDefinitions(List<ExportDefinition> exportDefinitions) {
         assert this.exportDefinitions == null && exportDefinitions != null;
         this.exportDefinitions = exportDefinitions;
     }
 
-    /** [[Exports]] */
+    /**
+     * [[Exports]]
+     * 
+     * @return the exports mapping
+     */
     public Map<String, ExportBinding> getExports() {
         return exports;
     }
 
-    /** [[Dependencies]] */
+    /**
+     * [[Dependencies]]
+     * 
+     * @return the dependencies mapping
+     */
     public LinkedHashMap<String, ModuleLinkage> getDependencies() {
         return dependencies;
     }
 
-    /** [[Dependencies]] */
+    /**
+     * [[Dependencies]]
+     * 
+     * @param dependencies
+     *            the new dependencies mapping
+     */
     public void setDependencies(LinkedHashMap<String, ModuleLinkage> dependencies) {
         this.dependencies = dependencies;
     }
 
-    /** [[UnlinkedDependencies]] */
+    /**
+     * [[UnlinkedDependencies]]
+     * 
+     * @return the list of unlinked dependencies
+     */
     public List<Load> getUnlinkedDependencies() {
         return unlinkedDependencies;
     }
 
-    /** [[UnlinkedDependencies]] */
+    /**
+     * [[UnlinkedDependencies]]
+     * 
+     * @param unlinkedDependencies
+     *            the new list of unlinked dependencies
+     */
     public void setUnlinkedDependencies(List<Load> unlinkedDependencies) {
         assert this.unlinkedDependencies == null && unlinkedDependencies != null;
         this.unlinkedDependencies = unlinkedDependencies;
     }
 
-    /** [[ImportEntries]] */
+    /**
+     * [[ImportEntries]]
+     * 
+     * @return the list of import entries
+     */
     public List<ImportEntry> getImportEntries() {
         return importEntries;
     }
 
-    /** [[ImportEntries]] */
+    /**
+     * [[ImportEntries]]
+     * 
+     * @param importEntries
+     *            the new list of import entries
+     */
     public void setImportEntries(List<ImportEntry> importEntries) {
         this.importEntries = importEntries;
     }
 
-    /** [[ImportDefinitions]] */
+    /**
+     * [[ImportDefinitions]]
+     * 
+     * @return the list of import definitions
+     */
     public List<ImportDefinition> getImportDefinitions() {
         return importDefinitions;
     }
 
-    /** [[ImportDefinitions]] */
+    /**
+     * [[ImportDefinitions]]
+     * 
+     * @param importDefinitions
+     *            the new list of import definitions
+     */
     public void setImportDefinitions(List<ImportDefinition> importDefinitions) {
         this.importDefinitions = importDefinitions;
     }
 
-    /** [[LinkErrors]] */
+    /**
+     * [[LinkErrors]]
+     * 
+     * @return the list of link script errors
+     */
     public List<ScriptException> getLinkErrors() {
         return linkErrors;
     }
 
-    /** [[Environment]] */
+    /**
+     * [[Environment]]
+     * 
+     * @return the module lexical environment
+     */
     public LexicalEnvironment<DeclarativeEnvironmentRecord> getEnvironment() {
         return this.environment;
     }
 
-    /** [[Evaluated]] */
+    /**
+     * [[Evaluated]]
+     * 
+     * @return {@code true} if the module was already evaluated once
+     */
     public boolean isEvaluated() {
         return evaluated;
     }
 
-    /** [[Evaluated]] */
+    /**
+     * [[Evaluated]]
+     * 
+     * @param evaluated
+     *            the new evaluated state
+     */
     public void setEvaluated(boolean evaluated) {
         assert !this.evaluated && evaluated;
         this.evaluated = evaluated;
@@ -195,6 +281,12 @@ public final class ModuleLinkage {
 
     /**
      * 15.2.5.1.1 CreateModuleLinkageRecord (loader, body) Abstract Operation
+     * 
+     * @param loader
+     *            the loader record
+     * @param body
+     *            the parsed module node
+     * @return the new module linkage record
      */
     public static ModuleLinkage CreateModuleLinkageRecord(Loader loader, Module body) {
         /* step 1 (not applicable) */
@@ -215,6 +307,12 @@ public final class ModuleLinkage {
 
     /**
      * 15.2.5.1.2 LookupExport ( M, exportName )
+     * 
+     * @param module
+     *            the module linkage record
+     * @param exportName
+     *            the export name
+     * @return the module name for the export or {@code null} if none found
      */
     public static ExportBinding LookupExport(ModuleLinkage module, String exportName) {
         assert module.getExports() != null;
@@ -228,6 +326,12 @@ public final class ModuleLinkage {
 
     /**
      * 15.2.5.1.3 LookupModuleDependency ( M, requestName )
+     * 
+     * @param module
+     *            the module linkage record
+     * @param requestName
+     *            the module dependency name
+     * @return the module dependency or {@code null} if none found
      */
     public static ModuleLinkage LookupModuleDependency(ModuleLinkage module, String requestName) {
         /* step 1 (not applicable) */

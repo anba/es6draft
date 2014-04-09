@@ -121,6 +121,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.1 Math.abs (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the absolute number value
          */
         @Function(name = "abs", arity = 1)
         public static Object abs(ExecutionContext cx, Object thisValue, Object x) {
@@ -129,6 +137,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.2 Math.acos (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the arc cosine of <var>x</var>
          */
         @Function(name = "acos", arity = 1)
         public static Object acos(ExecutionContext cx, Object thisValue, Object x) {
@@ -137,6 +153,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.4 Math.asin (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the arc sine of <var>x</var>
          */
         @Function(name = "asin", arity = 1)
         public static Object asin(ExecutionContext cx, Object thisValue, Object x) {
@@ -145,6 +169,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.6 Math.atan (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the arc tangent of <var>x</var>
          */
         @Function(name = "atan", arity = 1)
         public static Object atan(ExecutionContext cx, Object thisValue, Object x) {
@@ -153,6 +185,16 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.7 Math.atan2 (y, x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param y
+         *            the first argument number
+         * @param x
+         *            the second argument number
+         * @return the arc tangent of <var>y</var> and <var>x</var>
          */
         @Function(name = "atan2", arity = 2)
         public static Object atan2(ExecutionContext cx, Object thisValue, Object y, Object x) {
@@ -161,6 +203,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.10 Math.ceil (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the smallest integer number not less than <var>x</var>
          */
         @Function(name = "ceil", arity = 1)
         public static Object ceil(ExecutionContext cx, Object thisValue, Object x) {
@@ -169,6 +219,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.11 Math.cos (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the cosine of <var>x</var>
          */
         @Function(name = "cos", arity = 1)
         public static Object cos(ExecutionContext cx, Object thisValue, Object x) {
@@ -177,6 +235,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.13 Math.exp (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the value <i>e</i><span><sup><var>x</var></sup></span>
          */
         @Function(name = "exp", arity = 1)
         public static Object exp(ExecutionContext cx, Object thisValue, Object x) {
@@ -185,6 +251,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.15 Math.floor (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the largest integer number not greater than <var>x</var>
          */
         @Function(name = "floor", arity = 1)
         public static Object floor(ExecutionContext cx, Object thisValue, Object x) {
@@ -193,6 +267,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.19 Math.log (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the natural logarithm of <var>x</var>
          */
         @Function(name = "log", arity = 1)
         public static Object log(ExecutionContext cx, Object thisValue, Object x) {
@@ -201,6 +283,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.23 Math.max ( [ value1 [ , value2 [ , ... ] ] ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param values
+         *            the argument values
+         * @return the maximum number
          */
         @Function(name = "max", arity = 2)
         public static Object max(ExecutionContext cx, Object thisValue, Object... values) {
@@ -219,6 +309,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.24 Math.min ( [ value1 [ , value2 [ , ... ] ] ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param values
+         *            the argument values
+         * @return the minimum number
          */
         @Function(name = "min", arity = 2)
         public static Object min(ExecutionContext cx, Object thisValue, Object... values) {
@@ -237,6 +335,16 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.25 Math.pow (x, y)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the first argument number
+         * @param y
+         *            the second argument number
+         * @return <var>x</var> raised to the power <var>y</var>
          */
         @Function(name = "pow", arity = 2)
         public static Object pow(ExecutionContext cx, Object thisValue, Object x, Object y) {
@@ -245,6 +353,12 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.26 Math.random ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return a random number in the interval [0, 1)
          */
         @Function(name = "random", arity = 0)
         public static Object random(ExecutionContext cx, Object thisValue) {
@@ -253,6 +367,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.27 Math.round (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the nearest integer value to <var>x</var>
          */
         @Function(name = "round", arity = 1)
         public static Object round(ExecutionContext cx, Object thisValue, Object x) {
@@ -272,6 +394,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.29 Math.sin (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the sine of <var>x</var>
          */
         @Function(name = "sin", arity = 1)
         public static Object sin(ExecutionContext cx, Object thisValue, Object x) {
@@ -280,6 +410,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.31 Math.sqrt (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the square root of its argument
          */
         @Function(name = "sqrt", arity = 1)
         public static Object sqrt(ExecutionContext cx, Object thisValue, Object x) {
@@ -288,6 +426,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.32 Math.tan (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the tangent of <var>x</var>
          */
         @Function(name = "tan", arity = 1)
         public static Object tan(ExecutionContext cx, Object thisValue, Object x) {
@@ -296,6 +442,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.20 Math.log10 (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the decimal logarithm of <var>x</var>
          */
         @Function(name = "log10", arity = 1)
         public static Object log10(ExecutionContext cx, Object thisValue, Object x) {
@@ -304,6 +458,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.22 Math.log2 (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the binary logarithm of <var>x</var>
          */
         @Function(name = "log2", arity = 1)
         public static Object log2(ExecutionContext cx, Object thisValue, Object x) {
@@ -312,6 +474,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.21 Math.log1p (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the natural logarithm of <var>x</var> + 1
          */
         @Function(name = "log1p", arity = 1)
         public static Object log1p(ExecutionContext cx, Object thisValue, Object x) {
@@ -320,6 +490,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.14 Math.expm1 (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the value <i>e</i><span><sup><var>x</var></sup></span>-1
          */
         @Function(name = "expm1", arity = 1)
         public static Object expm1(ExecutionContext cx, Object thisValue, Object x) {
@@ -328,6 +506,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.12 Math.cosh(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the hyperbolic cosine of <var>x</var>
          */
         @Function(name = "cosh", arity = 1)
         public static Object cosh(ExecutionContext cx, Object thisValue, Object x) {
@@ -336,6 +522,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.30 Math.sinh(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the hyperbolic sine of <var>x</var>
          */
         @Function(name = "sinh", arity = 1)
         public static Object sinh(ExecutionContext cx, Object thisValue, Object x) {
@@ -344,6 +538,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.33 Math.tanh(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the hyperbolic tangent of <var>x</var>
          */
         @Function(name = "tanh", arity = 1)
         public static Object tanh(ExecutionContext cx, Object thisValue, Object x) {
@@ -352,6 +554,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.3 Math.acosh(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the hyperbolic arc cosine of <var>x</var>
          */
         @Function(name = "acosh", arity = 1)
         public static Object acosh(ExecutionContext cx, Object thisValue, Object x) {
@@ -371,6 +581,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.5 Math.asinh(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the hyperbolic arc sine of <var>x</var>
          */
         @Function(name = "asinh", arity = 1)
         public static Object asinh(ExecutionContext cx, Object thisValue, Object x) {
@@ -384,6 +602,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.8 Math.atanh(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the hyperbolic arc tangent of <var>x</var>
          */
         @Function(name = "atanh", arity = 1)
         public static Object atanh(ExecutionContext cx, Object thisValue, Object x) {
@@ -406,6 +632,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.17 Math.hypot([ value1 [ , value2 [ , ... ] ] ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param values
+         *            the argument values
+         * @return the square root of the sum of squares of its arguments
          */
         @Function(name = "hypot", arity = 2)
         public static Object hypot(ExecutionContext cx, Object thisValue, Object... values) {
@@ -451,6 +685,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.34 Math.trunc(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the integral part of <var>x</var>
          */
         @Function(name = "trunc", arity = 1)
         public static Object trunc(ExecutionContext cx, Object thisValue, Object x) {
@@ -460,6 +702,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.28 Math.sign(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the sign of <var>x</var>
          */
         @Function(name = "sign", arity = 1)
         public static Object sign(ExecutionContext cx, Object thisValue, Object x) {
@@ -468,6 +718,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.9 Math.cbrt(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the cubic root of its argument
          */
         @Function(name = "cbrt", arity = 1)
         public static Object cbrt(ExecutionContext cx, Object thisValue, Object x) {
@@ -476,6 +734,16 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.18 Math.imul(x, y)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the first argument number
+         * @param y
+         *            the second argument number
+         * @return the integer multiplication of its arguments
          */
         @Function(name = "imul", arity = 2)
         public static Object imul(ExecutionContext cx, Object thisValue, Object x, Object y) {
@@ -486,6 +754,14 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 20.2.2.16 Math.fround (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the value <i>float32</i>(<var>x</var>)
          */
         @Function(name = "fround", arity = 1)
         public static Object fround(ExecutionContext cx, Object thisValue, Object x) {

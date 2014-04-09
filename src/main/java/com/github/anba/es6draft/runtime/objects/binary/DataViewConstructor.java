@@ -65,6 +65,18 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
     /**
      * 24.2.1 Abstract Operations For DataView Objects <br>
      * 24.2.1.1 GetViewValue(view, requestIndex, isLittleEndian, type)
+     * 
+     * @param cx
+     *            the execution context
+     * @param view
+     *            the data view object
+     * @param requestIndex
+     *            the element index
+     * @param isLittleEndian
+     *            the little endian flag
+     * @param type
+     *            the element type
+     * @return the view element value
      */
     public static double GetViewValue(ExecutionContext cx, Object view, Object requestIndex,
             Object isLittleEndian, ElementType type) {
@@ -108,6 +120,19 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
     /**
      * 24.2.1 Abstract Operations For DataView Objects <br>
      * 24.2.1.2 SetViewValue(view, requestIndex, isLittleEndian, type, value)
+     * 
+     * @param cx
+     *            the execution context
+     * @param view
+     *            the data view object
+     * @param requestIndex
+     *            the element index
+     * @param isLittleEndian
+     *            the little endian flag
+     * @param type
+     *            the element type
+     * @param value
+     *            the new view element value
      */
     public static void SetViewValue(ExecutionContext cx, Object view, Object requestIndex,
             Object isLittleEndian, ElementType type, Object value) {
@@ -254,6 +279,12 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
 
         /**
          * 24.2.3.2 DataView [ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised data view object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

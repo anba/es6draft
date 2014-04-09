@@ -30,6 +30,12 @@ final class DateAbstractOperations {
 
     /**
      * 5.2 Algorithm Conventions
+     * 
+     * @param dividend
+     *            the dividend
+     * @param divisor
+     *            the divisor
+     * @return the modulo result
      */
     private static final double modulo(double dividend, double divisor) {
         assert divisor != 0 && isFinite(divisor);
@@ -45,6 +51,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.2 Day Number and Time within Day
+     * 
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the number of days since the epoch
      */
     public static double Day(double t) {
         return Math.floor(t / msPerDay);
@@ -52,6 +62,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.2 Day Number and Time within Day
+     * 
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the number of milli-seconds since midnight
      */
     public static double TimeWithinDay(double t) {
         return modulo(t, msPerDay);
@@ -59,6 +73,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.3 Year Number
+     * 
+     * @param y
+     *            the year
+     * @return the number of days
      */
     public static double DaysInYear(double y) {
         if (y % 4 != 0) {
@@ -75,6 +93,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.3 Year Number
+     * 
+     * @param y
+     *            the year
+     * @return the number of days since the epoch
      */
     public static double DayFromYear(double y) {
         return 365 * (y - 1970) + Math.floor((y - 1969) / 4) - Math.floor((y - 1901) / 100)
@@ -83,6 +105,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.3 Year Number
+     * 
+     * @param y
+     *            the year
+     * @return the number of milli-seconds since the epoch
      */
     public static double TimeFromYear(double y) {
         return msPerDay * DayFromYear(y);
@@ -90,6 +116,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.3 Year Number
+     * 
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the year
      */
     public static double YearFromTime(double t) {
         double y = 1970 + Math.floor(t / (365 * msPerDay));
@@ -107,6 +137,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.3 Year Number
+     * 
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return {@code true} if the year is a leap year
      */
     public static boolean InLeapYear(double t) {
         return DaysInYear(YearFromTime(t)) == 366;
@@ -114,6 +148,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.4 Month Number
+     * 
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the month
      */
     public static double MonthFromTime(double t) {
         double d = DayWithinYear(t);
@@ -160,6 +198,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.4 Month Number
+     * 
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the number of days since new year
      */
     public static double DayWithinYear(double t) {
         return Day(t) - DayFromYear(YearFromTime(t));
@@ -167,6 +209,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.5 Date Number
+     * 
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the number of days since the epoch
      */
     public static double DateFromTime(double t) {
         double m = MonthFromTime(t);
@@ -206,6 +252,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.6 Week Day
+     * 
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the week day
      */
     public static double WeekDay(double t) {
         return modulo(Day(t) + 4, 7);
@@ -213,6 +263,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.7 Local Time Zone Adjustment
+     * 
+     * @param realm
+     *            the realm instance
+     * @return the locale time zone offset
      */
     public static double LocalTZA(Realm realm) {
         return realm.getTimezone().getRawOffset();
@@ -220,6 +274,12 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.8 Daylight Saving Time Adjustment
+     * 
+     * @param realm
+     *            the realm instance
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the day light saving time in milli-seconds
      */
     public static double DaylightSavingTA(Realm realm, double t) {
         TimeZone tz = realm.getTimezone();
@@ -231,6 +291,12 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.9 Local Time
+     * 
+     * @param realm
+     *            the realm instance
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the local time value in milli-seconds
      */
     public static double LocalTime(Realm realm, double t) {
         return t + LocalTZA(realm) + DaylightSavingTA(realm, t);
@@ -238,6 +304,12 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.9 Local Time
+     * 
+     * @param realm
+     *            the realm instance
+     * @param t
+     *            the local time value in milli-seconds
+     * @return the date in milli-seconds since the epoch
      */
     public static double UTC(Realm realm, double t) {
         return t - LocalTZA(realm) - DaylightSavingTA(realm, t - LocalTZA(realm));
@@ -256,6 +328,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.10 Hours, Minutes, Second, and Milliseconds
+     * 
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the hours
      */
     public static double HourFromTime(double t) {
         return modulo(Math.floor(t / msPerHour), HoursPerDay);
@@ -263,6 +339,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.10 Hours, Minutes, Second, and Milliseconds
+     * 
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the minutes
      */
     public static double MinFromTime(double t) {
         return modulo(Math.floor(t / msPerMinute), MinutesPerHour);
@@ -270,6 +350,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.10 Hours, Minutes, Second, and Milliseconds
+     * 
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the seconds
      */
     public static double SecFromTime(double t) {
         return modulo(Math.floor(t / msPerSecond), SecondsPerMinute);
@@ -277,6 +361,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.10 Hours, Minutes, Second, and Milliseconds
+     * 
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the milli-seconds
      */
     public static double msFromTime(double t) {
         return modulo(t, msPerSecond);
@@ -288,6 +376,16 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.11 MakeTime (hour, min, sec, ms)
+     * 
+     * @param hour
+     *            the hour
+     * @param min
+     *            the minutes
+     * @param sec
+     *            the seconds
+     * @param ms
+     *            the milli-seconds
+     * @return the date in milli-seconds
      */
     public static double MakeTime(double hour, double min, double sec, double ms) {
         if (!isFinite(hour) || !isFinite(min) || !isFinite(sec) || !isFinite(ms)) {
@@ -303,6 +401,14 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.12 MakeDay (year, month, date)
+     * 
+     * @param year
+     *            the year
+     * @param month
+     *            the month
+     * @param date
+     *            the date
+     * @return the number of days
      */
     public static double MakeDay(double year, double month, double date) {
         if (!isFinite(year) || !isFinite(month) || !isFinite(date)) {
@@ -325,6 +431,12 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.13 MakeDate (day, time)
+     * 
+     * @param day
+     *            the days
+     * @param time
+     *            the time in milli-seconds
+     * @return the date in milli-seconds
      */
     public static double MakeDate(double day, double time) {
         if (!isFinite(day) || !isFinite(time)) {
@@ -335,6 +447,10 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.14 TimeClip (time)
+     * 
+     * @param time
+     *            the time in milli-seconds
+     * @return the clipped time in milli-seconds
      */
     public static double TimeClip(double time) {
         if (!isFinite(time)) {
@@ -355,11 +471,19 @@ final class DateAbstractOperations {
 
     /**
      * 20.3.1.15 Date Time String Format<br>
-     * Parse input string according to simplified ISO-8601 Extended Format:
+     * Parses the input string according to the simplified ISO-8601 Extended Format:
      * <ul>
      * <li><code>YYYY-MM-DD'T'HH:mm:ss.sss'Z'</code></li>
      * <li>or <code>YYYY-MM-DD'T'HH:mm:ss.sss[+-]hh:mm</code></li>
      * </ul>
+     * 
+     * @param realm
+     *            the realm instance
+     * @param s
+     *            the string
+     * @param lenient
+     *            the lenient flag
+     * @return the date in milli-seconds or {@code NaN} if not parsed successfully
      */
     public static double parseISOString(Realm realm, CharSequence s, boolean lenient) {
         // use a simple state machine to parse the input string
@@ -539,8 +663,14 @@ final class DateAbstractOperations {
     }
 
     /**
-     * Parse a date-time string in "EEE MMM dd yyyy HH:mm:ss 'GMT'Z (z)" format, returns
-     * {@link Double#NaN} on mismatch
+     * Parses a date-time string in "EEE MMM dd yyyy HH:mm:ss 'GMT'Z (z)" format, returns
+     * {@link Double#NaN} on mismatch.
+     * 
+     * @param realm
+     *            the realm instance
+     * @param s
+     *            the string
+     * @return the date in milli-seconds or {@code NaN} if not parsed successfully
      */
     public static double parseDateString(Realm realm, CharSequence s) {
         Matcher matcher = dateTimePattern.matcher(s);

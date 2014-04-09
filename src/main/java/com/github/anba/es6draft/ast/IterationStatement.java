@@ -22,7 +22,9 @@ public abstract class IterationStatement extends BreakableStatement {
     }
 
     /**
-     * Returns <code>true</code> if this node is the target of a ContinueStatement
+     * Returns <code>true</code> if this node is the target of a ContinueStatement.
+     * 
+     * @return <code>true</code> if this node is the target of a ContinueStatement
      */
     public final boolean hasContinue() {
         return getAbrupt().contains(Abrupt.Continue);

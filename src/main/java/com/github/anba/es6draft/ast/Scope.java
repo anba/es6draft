@@ -12,16 +12,24 @@ package com.github.anba.es6draft.ast;
 public interface Scope {
     /**
      * Returns the parent scope.
+     * 
+     * @return the parent scope
      */
     Scope getParent();
 
     /**
      * Returns the {@link ScopedNode} for this scope object.
+     * 
+     * @return the node
      */
     ScopedNode getNode();
 
     /**
      * Returns <code>true</code> if {@code name} is declared in this scope.
+     * 
+     * @param name
+     *            the variable name
+     * @return <code>true</code> if {@code name} is declared
      */
     boolean isDeclared(String name);
 }

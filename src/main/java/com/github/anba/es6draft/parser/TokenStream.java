@@ -97,7 +97,9 @@ public final class TokenStream {
     }
 
     /**
-     * Resets and returns the internal character buffer
+     * Resets and returns the internal character buffer.
+     * 
+     * @return the character buffer
      */
     private StringBuffer buffer() {
         StringBuffer buffer = this.buffer;
@@ -124,7 +126,7 @@ public final class TokenStream {
     }
 
     /**
-     * Sets the source position (line / column information) for the next token
+     * Sets the source position (line / column information) for the next token.
      */
     private void updateSourcePosition() {
         nextSourcePosition = ((long) (input.position() - linestart) << 32) | line;
@@ -133,6 +135,11 @@ public final class TokenStream {
     /**
      * Public constructor, token stream still needs to be initialised by calling the
      * {@link #initialise()} method.
+     * 
+     * @param parser
+     *            the parser instance
+     * @param input
+     *            the token stream instance
      */
     public TokenStream(Parser parser, TokenStreamInput input) {
         this.parser = parser;
@@ -143,6 +150,7 @@ public final class TokenStream {
      * Return the start position of current token, includes leading whitespace and comments. Also
      * needed to reset the token stream.
      * 
+     * @return the token start position
      * @see #reset(long, long)
      */
     public int position() {
@@ -151,6 +159,12 @@ public final class TokenStream {
 
     /**
      * Returns the raw source characters from the underlying input source.
+     * 
+     * @param from
+     *            the start position (inclusive)
+     * @param to
+     *            the end position (exclusive)
+     * @return the source characters in the given range
      */
     public String range(int from, int to) {
         return input.range(from, to);
@@ -159,6 +173,7 @@ public final class TokenStream {
     /**
      * Returns the encoded line information, needed to reset the token stream.
      * 
+     * @return the current line information
      * @see #reset(long, long)
      */
     public long lineinfo() {
@@ -167,6 +182,8 @@ public final class TokenStream {
 
     /**
      * Returns the encoded line/column information of the current source position.
+     * 
+     * @return the current line/column information
      */
     public long sourcePosition() {
         return sourcePosition;
@@ -174,6 +191,8 @@ public final class TokenStream {
 
     /**
      * Returns the encoded start line/column information for current token.
+     * 
+     * @return the begin line/column information
      */
     public long beginPosition() {
         return sourcePosition;
@@ -181,6 +200,8 @@ public final class TokenStream {
 
     /**
      * Returns the encoded end line/column information for current token.
+     * 
+     * @return the end line/column information
      */
     public long endPosition() {
         // add one to make columns 1-indexed
@@ -189,6 +210,8 @@ public final class TokenStream {
 
     /**
      * Initialises this token stream, needs to be called before fetching any tokens.
+     * 
+     * @return this token stream
      */
     public TokenStream initialise() {
         // set internal state to default values
@@ -207,6 +230,10 @@ public final class TokenStream {
     /**
      * Resets this token stream to the requested position.
      * 
+     * @param position
+     *            the new position
+     * @param lineinfo
+     *            the new line information
      * @see #position()
      * @see #lineinfo()
      */
@@ -228,6 +255,8 @@ public final class TokenStream {
 
     /**
      * Returns the string data of the current token.
+     * 
+     * @return the current string data
      */
     public String getString() {
         if (string == null) {
@@ -237,8 +266,10 @@ public final class TokenStream {
     }
 
     /**
-     * Returns <code>true</code> iff the current token is a string literal which contains an escape
+     * Returns <code>true</code> if the current token is a string literal which contains an escape
      * sequence.
+     * 
+     * @return {@code true} if the string literal contains an escape sequence
      */
     public boolean hasEscape() {
         return hasEscape;
@@ -246,6 +277,8 @@ public final class TokenStream {
 
     /**
      * Returns the number data of the current token.
+     * 
+     * @return the current number data
      */
     public double getNumber() {
         return number;
@@ -253,6 +286,8 @@ public final class TokenStream {
 
     /**
      * Returns the current line number.
+     * 
+     * @return the line number
      */
     public int getLine() {
         return line;
@@ -260,6 +295,8 @@ public final class TokenStream {
 
     /**
      * Returns the current column number.
+     * 
+     * @return the column number
      */
     public int getColumn() {
         return input.position() - linestart;
@@ -269,6 +306,8 @@ public final class TokenStream {
 
     /**
      * Advances the token stream to the next token.
+     * 
+     * @return the next token
      */
     public Token nextToken() {
         if (next == null) {
@@ -289,6 +328,8 @@ public final class TokenStream {
 
     /**
      * Returns the current token.
+     * 
+     * @return the current token
      */
     public Token currentToken() {
         return current;
@@ -296,6 +337,8 @@ public final class TokenStream {
 
     /**
      * Peeks the next token in this token stream.
+     * 
+     * @return the next token
      */
     public Token peekToken() {
         assert !(current == Token.DIV || current == Token.ASSIGN_DIV);
@@ -319,7 +362,9 @@ public final class TokenStream {
     }
 
     /**
-     * Returns <code>true</code> iff there is no line terminator before the current token.
+     * Returns <code>true</code> if there is a line terminator before the current token.
+     * 
+     * @return {@code true} if there is a line terminator
      */
     public boolean hasCurrentLineTerminator() {
         assert current != null;
@@ -327,7 +372,9 @@ public final class TokenStream {
     }
 
     /**
-     * Returns <code>true</code> iff there is no line terminator before the next token.
+     * Returns <code>true</code> if there is a line terminator before the next token.
+     * 
+     * @return {@code true} if there is a line terminator
      */
     public boolean hasNextLineTerminator() {
         assert next != null;
@@ -371,6 +418,11 @@ public final class TokenStream {
      *     [empty]
      *     RegularExpressionFlags IdentifierPart
      * </pre>
+     * 
+     * @param start
+     *            the start token of the regular expression literal, either {@link Token#DIV} or
+     *            {@link Token#ASSIGN_DIV}
+     * @return string tuple {pattern, flags} for the regular expression literal
      */
     public String[] readRegularExpression(Token start) {
         assert start == Token.DIV || start == Token.ASSIGN_DIV;
@@ -436,24 +488,29 @@ public final class TokenStream {
      *     NoSubstitutionTemplate 
      *     TemplateHead
      * NoSubstitutionTemplate ::
-     *     ` TemplateCharacters<sub>opt</sub>`
+     *     ` TemplateCharacters<span><sub>opt</sub></span>`
      * TemplateHead ::
-     *     ` TemplateCharacters<sub>opt</sub>${
+     *     ` TemplateCharacters<span><sub>opt</sub></span>${
      * TemplateSubstitutionTail ::
      *     TemplateMiddle 
      *     TemplateTail
      * TemplateMiddle ::
-     *     } TemplateCharacters<sub>opt</sub>${
+     *     } TemplateCharacters<span><sub>opt</sub></span>${
      * TemplateTail ::
-     *     } TemplateCharacters<sub>opt</sub>`
+     *     } TemplateCharacters<span><sub>opt</sub></span>`
      * TemplateCharacters ::
-     *     TemplateCharacter TemplateCharacters<sub>opt</sub>
+     *     TemplateCharacter TemplateCharacters<span><sub>opt</sub></span>
      * TemplateCharacter ::
      *     SourceCharacter but not one of ` or \ or $ 
      *     $ [LA &#x2209; { ]
      *     \ EscapeSequence
      *     LineContinuation
      * </pre>
+     * 
+     * @param start
+     *            the start token of the template literal, either {@link Token#TEMPLATE} or
+     *            {@link Token#RC}
+     * @return string tuple {cooked, raw} for the template literal
      */
     public String[] readTemplateLiteral(Token start) {
         assert start == Token.TEMPLATE || start == Token.RC;
@@ -597,6 +654,8 @@ public final class TokenStream {
      *     DivPunctuator
      *     TemplateSubstitutionTail
      * </pre>
+     * 
+     * @return the next token
      */
     private Token scanTokenNoComment() {
         Token tok;
@@ -617,6 +676,8 @@ public final class TokenStream {
      *     StringLiteral
      *     Template
      * </pre>
+     * 
+     * @return the next token
      */
     private Token scanToken() {
         TokenStreamInput input = this.input;
@@ -923,8 +984,12 @@ public final class TokenStream {
      *     _
      *     \ UnicodeEscapeSequence
      * UnicodeIDStart ::
-     *     any Unicode character with the Unicode property “ID_Start”.
+     *     any Unicode character with the Unicode property "ID_Start".
      * </pre>
+     * 
+     * @param c
+     *            the character to inspect
+     * @return {@code true} if the character is an identifier start character
      */
     private static boolean isIdentifierStart(int c) {
         if (c <= 127) {
@@ -972,8 +1037,12 @@ public final class TokenStream {
      *     &lt;ZWNJ&gt;
      *     &lt;ZWJ&gt;
      * UnicodeIDContinue ::
-     *     any Unicode character with the Unicode property “ID_Continue”
+     *     any Unicode character with the Unicode property "ID_Continue"
      * </pre>
+     * 
+     * @param c
+     *            the character to inspect
+     * @return {@code true} if the character is an identifier part character
      */
     private static boolean isIdentifierPart(int c) {
         if (c <= 127) {
@@ -1037,14 +1106,18 @@ public final class TokenStream {
      * 
      * <pre>
      * WhiteSpace ::
-     *     &lt;TAB>  (U+0009)
-     *     &lt;VT>   (U+000B)
-     *     &lt;FF>   (U+000C)
-     *     &lt;SP>   (U+0020)
-     *     &lt;NBSP> (U+00A0)
-     *     &lt;BOM>  (U+FEFF)
-     *     &lt;USP>  ("Zs")
+     *     {@literal <TAB>}  (U+0009)
+     *     {@literal <VT>}   (U+000B)
+     *     {@literal <FF>}   (U+000C)
+     *     {@literal <SP>}   (U+0020)
+     *     {@literal <NBSP>} (U+00A0)
+     *     {@literal <BOM>}  (U+FEFF)
+     *     {@literal <USP>}  ("Zs")
      * </pre>
+     * 
+     * @param c
+     *            the character to inspect
+     * @return {@code true} if the character is a whitespace
      */
     private static boolean isWhitespace(int c) {
         return (c == 0x09 || c == 0x0B || c == 0x0C || c == 0x20 || c == 0xA0 || c == 0xFEFF || isSpaceSeparator(c));
@@ -1052,6 +1125,10 @@ public final class TokenStream {
 
     /**
      * Unicode category "Zs" (space separator)
+     * 
+     * @param c
+     *            the character to inspect
+     * @return {@code true} if the character is space separator
      */
     private static boolean isSpaceSeparator(int c) {
         return (c == 0x20 || c == 0xA0 || c == 0x1680 || c == 0x180E
@@ -1063,11 +1140,15 @@ public final class TokenStream {
      * 
      * <pre>
      * LineTerminator ::
-     *     &lt;LF> (U+000A)
-     *     &lt;CR> (U+000D)
-     *     &lt;LS> (U+2028)
-     *     &lt;PS> (U+2029)
+     *     {@literal <LF>} (U+000A)
+     *     {@literal <CR>} (U+000D)
+     *     {@literal <LS>} (U+2028)
+     *     {@literal <PS>} (U+2029)
      * </pre>
+     * 
+     * @param c
+     *            the character to inspect
+     * @return {@code true} if the character is a line terminator
      */
     private static boolean isLineTerminator(int c) {
         if ((c & ~0b0010_0000_0010_1111) != 0) {
@@ -1081,12 +1162,14 @@ public final class TokenStream {
      * 
      * <pre>
      * SingleLineComment ::
-     *     // SingleLineCommentChars<sub>opt</sub>
+     *     // SingleLineCommentChars<span><sub>opt</sub></span>
      * SingleLineCommentChars ::
-     *     SingleLineCommentChar SingleLineCommentChars<sub>opt</sub>
+     *     SingleLineCommentChar SingleLineCommentChars<span><sub>opt</sub></span>
      * SingleLineCommentChar ::
      *     SourceCharacter but not LineTerminator
      * </pre>
+     * 
+     * @return the comment token
      */
     private Token readSingleLineComment() {
         final int EOF = TokenStreamInput.EOF;
@@ -1110,18 +1193,20 @@ public final class TokenStream {
      * 
      * <pre>
      * MultiLineComment ::
-     *     /* MultiLineCommentChars<sub>opt</sub> &#42;/
+     *     /* MultiLineCommentChars<span><sub>opt</sub></span> &#42;/
      * MultiLineCommentChars ::
-     *     MultiLineNotAsteriskChar MultiLineCommentChars<sub>opt</sub>
-     *     PostAsteriskCommentChars<sub>opt</sub>
+     *     MultiLineNotAsteriskChar MultiLineCommentChars<span><sub>opt</sub></span>
+     *     PostAsteriskCommentChars<span><sub>opt</sub></span>
      * PostAsteriskCommentChars ::
-     *     MultiLineNotForwardSlashOrAsteriskChar MultiLineCommentChars<sub>opt</sub>
-     *     PostAsteriskCommentChars<sub>opt</sub>
+     *     MultiLineNotForwardSlashOrAsteriskChar MultiLineCommentChars<span><sub>opt</sub></span>
+     *     PostAsteriskCommentChars<span><sub>opt</sub></span>
      * MultiLineNotAsteriskChar ::
      *     SourceCharacter but not *
      * MultiLineNotForwardSlashOrAsteriskChar ::
      *     SourceCharacter but not one of / or *
      * </pre>
+     * 
+     * @return the comment token
      */
     private Token readMultiLineComment() {
         final int EOF = TokenStreamInput.EOF;
@@ -1155,6 +1240,12 @@ public final class TokenStream {
      *     IdentifierStart
      *     IdentifierName IdentifierPart
      * </pre>
+     * 
+     * @param c
+     *            the start character of the identifier
+     * @param hasEscape
+     *            the flag for escaped identifiers
+     * @return the identifier token
      */
     private Token readIdentifier(int c, boolean hasEscape) {
         assert isIdentifierStart(c);
@@ -1195,6 +1286,8 @@ public final class TokenStream {
      *     u HexDigit HexDigit HexDigit HexDigit
      *     u{ HexDigits }
      * </pre>
+     * 
+     * @return the unicode escape sequence value
      */
     private int readUnicode() {
         TokenStreamInput input = this.input;
@@ -1278,6 +1371,10 @@ public final class TokenStream {
      *     true
      *     false
      * </pre>
+     * 
+     * @param buffer
+     *            the string buffer containing identifier
+     * @return the token type for the identifier
      */
     private static Token readReservedWord(StringBuffer buffer) {
         int length = buffer.length;
@@ -1426,12 +1523,12 @@ public final class TokenStream {
      * 
      * <pre>
      * StringLiteral ::
-     *     " DoubleStringCharacters<sub>opt</sub> "
-     *     ' SingleStringCharacters<sub>opt</sub> '
+     *     " DoubleStringCharacters<span><sub>opt</sub></span> "
+     *     ' SingleStringCharacters<span><sub>opt</sub></span> '
      * DoubleStringCharacters ::
-     *     DoubleStringCharacter DoubleStringCharacters<sub>opt</sub>
+     *     DoubleStringCharacter DoubleStringCharacters<span><sub>opt</sub></span>
      * SingleStringCharacters ::
-     *     SingleStringCharacter SingleStringCharacters<sub>opt</sub>
+     *     SingleStringCharacter SingleStringCharacters<span><sub>opt</sub></span>
      * DoubleStringCharacter ::
      *     SourceCharacter but not one of " or \ or LineTerminator
      *     \ EscapeSequence
@@ -1475,6 +1572,10 @@ public final class TokenStream {
      *     HexEscapeSequence
      *     UnicodeEscapeSequence
      * </pre>
+     * 
+     * @param quoteChar
+     *            the quotation character for the string literal
+     * @return the string literal value
      */
     private Token readString(int quoteChar) {
         assert quoteChar == '"' || quoteChar == '\'';
@@ -1596,6 +1697,10 @@ public final class TokenStream {
      * FourToSeven :: one of
      *     4 5 6 7
      * </pre>
+     * 
+     * @param c
+     *            the start character of the octal escape sequence
+     * @return the octal escape value
      */
     private int readOctalEscape(int c) {
         parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalEscapeSequence);
@@ -1629,6 +1734,10 @@ public final class TokenStream {
      *     OctalIntegerLiteral
      *     HexIntegerLiteral
      * </pre>
+     * 
+     * @param c
+     *            the start character of the decimal integer literal
+     * @return the number token
      */
     private Token readNumberLiteral(int c) {
         if (c == '0') {
@@ -1664,6 +1773,8 @@ public final class TokenStream {
      *     HexDigit
      *     HexDigits HexDigit
      * </pre>
+     * 
+     * @return the hexadecimal integer literal
      */
     private double readHexIntegerLiteral() {
         TokenStreamInput input = this.input;
@@ -1691,6 +1802,8 @@ public final class TokenStream {
      *     0B BinaryDigit
      *     BinaryIntegerLiteral BinaryDigit
      * </pre>
+     * 
+     * @return the binary integer literal
      */
     private double readBinaryIntegerLiteral() {
         TokenStreamInput input = this.input;
@@ -1718,6 +1831,8 @@ public final class TokenStream {
      *     0O OctalDigit
      *     OctalIntegerLiteral OctalDigit
      * </pre>
+     * 
+     * @return the octal integer literal
      */
     private double readOctalIntegerLiteral() {
         TokenStreamInput input = this.input;
@@ -1744,6 +1859,8 @@ public final class TokenStream {
      *     0 OctalDigit
      *     LegacyOctalIntegerLiteral OctalDigit
      * </pre>
+     * 
+     * @return the octal integer literal
      */
     private double readLegacyOctalIntegerLiteral() {
         TokenStreamInput input = this.input;
@@ -1773,12 +1890,12 @@ public final class TokenStream {
      * 
      * <pre>
      * DecimalLiteral ::
-     *     DecimalIntegerLiteral . DecimalDigits<sub>opt</sub> ExponentPart<sub>opt</sub>
-     *     . DecimalDigits ExponentPart<sub>opt</sub>
-     *     DecimalIntegerLiteral ExponentPart<sub>opt</sub>
+     *     DecimalIntegerLiteral . DecimalDigits<span><sub>opt</sub></span> ExponentPart<span><sub>opt</sub></span>
+     *     . DecimalDigits ExponentPart<span><sub>opt</sub></span>
+     *     DecimalIntegerLiteral ExponentPart<span><sub>opt</sub></span>
      * DecimalIntegerLiteral ::
      *     0
-     *     NonZeroDigit DecimalDigits<sub>opt</sub>
+     *     NonZeroDigit DecimalDigits<span><sub>opt</sub></span>
      * DecimalDigits ::
      *     DecimalDigit
      *     DecimalDigits DecimalDigit
@@ -1793,6 +1910,10 @@ public final class TokenStream {
      *     + DecimalDigits
      *     - DecimalDigits
      * </pre>
+     * 
+     * @param c
+     *            the start character of the decimal integer literal
+     * @return the decimal integer literal
      */
     private double readDecimalLiteral(int c) {
         return readDecimalLiteral(c, true);
@@ -1848,6 +1969,11 @@ public final class TokenStream {
     /**
      * Returns <code>true</code> if {@code c} is either a decimal digit or an identifier start
      * character.
+     * 
+     * @param c
+     *            the character to test
+     * @return {@code true} if the character is either a decimal digit or an identifier start
+     *         character
      */
     private boolean isDecimalDigitOrIdentifierStart(int c) {
         return isDecimalDigit(c) || isIdentifierStart(c);
@@ -1860,6 +1986,10 @@ public final class TokenStream {
      * DecimalDigit :: one of
      *     0 1 2 3 4 5 6 7 8 9
      * </pre>
+     * 
+     * @param c
+     *            the character to test
+     * @return {@code true} if the character is decimal digit
      */
     private static boolean isDecimalDigit(int c) {
         return (c >= '0' && c <= '9');
@@ -1872,6 +2002,10 @@ public final class TokenStream {
      * BinaryDigit :: one of
      *     0  1
      * </pre>
+     * 
+     * @param c
+     *            the character to test
+     * @return {@code true} if the character is a binary digit
      */
     private static boolean isBinaryDigit(int c) {
         return (c == '0' || c == '1');
@@ -1884,6 +2018,10 @@ public final class TokenStream {
      * OctalDigit :: one of
      *     0  1  2  3  4  5  6  7
      * </pre>
+     * 
+     * @param c
+     *            the character to test
+     * @return {@code true} if the character is an octal digit
      */
     private static boolean isOctalDigit(int c) {
         return (c >= '0' && c <= '7');
@@ -1896,6 +2034,10 @@ public final class TokenStream {
      * HexDigit :: one of
      *     0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F
      * </pre>
+     * 
+     * @param c
+     *            the character to test
+     * @return {@code true} if the character is a hexadecimal digit
      */
     private static boolean isHexDigit(int c) {
         return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
@@ -1908,6 +2050,10 @@ public final class TokenStream {
      * HexDigit :: one of
      *     0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F
      * </pre>
+     * 
+     * @param c
+     *            the character to convert
+     * @return the converted integer
      */
     private static int hexDigit(int c) {
         if (c >= '0' && c <= '9') {
@@ -1922,6 +2068,12 @@ public final class TokenStream {
 
     /**
      * Throws a {@link ParserException}.
+     * 
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the parser exception
      */
     private ParserException error(Messages.Key messageKey, String... args) {
         throw new ParserException(ExceptionType.SyntaxError, parser.getSourceFile(), getLine(),
@@ -1930,6 +2082,12 @@ public final class TokenStream {
 
     /**
      * Throws a {@link ParserEOFException}.
+     * 
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the parser exception
      */
     private ParserException eofError(Messages.Key messageKey, String... args) {
         throw new ParserEOFException(parser.getSourceFile(), getLine(), getColumn(), messageKey,
@@ -1939,6 +2097,10 @@ public final class TokenStream {
     /**
      * Returns <code>true</code> and advances the source position if the current character is
      * {@code c}. Otherwise returns <code>false</code> and does not advance the source position.
+     * 
+     * @param c
+     *            the character to test
+     * @return {@code true} if the current character matches
      */
     private boolean match(char c) {
         return input.match(c);
@@ -1947,6 +2109,9 @@ public final class TokenStream {
     /**
      * Advances the source position if the current character is {@code c}. Otherwise throws a parser
      * exception.
+     * 
+     * @param c
+     *            the character to test
      */
     private void mustMatch(char c) {
         if (input.getChar() != c) {

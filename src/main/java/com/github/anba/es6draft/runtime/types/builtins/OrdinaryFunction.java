@@ -96,6 +96,16 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.3 FunctionAllocate Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param functionPrototype
+     *            the function prototype
+     * @param strict
+     *            the strict mode flag
+     * @param kind
+     *            the function kind
+     * @return the new function object
      */
     public static OrdinaryFunction FunctionAllocate(ExecutionContext cx,
             ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
@@ -116,6 +126,20 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.5 FunctionInitialise Abstract Operation
+     * 
+     * @param <FUNCTION>
+     *            the function type
+     * @param cx
+     *            the execution context
+     * @param f
+     *            the function object
+     * @param kind
+     *            the function kind
+     * @param function
+     *            the function code
+     * @param scope
+     *            the lexical environment
+     * @return the function object
      */
     public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
@@ -138,6 +162,16 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.6 FunctionCreate Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param kind
+     *            the function kind
+     * @param function
+     *            the function code
+     * @param scope
+     *            the lexical environment
+     * @return the new function object
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
@@ -146,6 +180,18 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.6 FunctionCreate Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param kind
+     *            the function kind
+     * @param function
+     *            the function code
+     * @param scope
+     *            the lexical environment
+     * @param functionPrototype
+     *            the function prototype
+     * @return the new function object
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope,
@@ -163,6 +209,11 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.8 AddRestrictedFunctionProperties Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
      */
     public static void AddRestrictedFunctionProperties(ExecutionContext cx, ScriptObject obj) {
         // TODO: %ThrowTypeError% from current realm or function's realm? (current realm per spec)
@@ -178,6 +229,11 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.8 AddRestrictedFunctionProperties Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
      */
     private static void AddRestrictedFunctionProperties(ExecutionContext cx, FunctionObject obj) {
         // Modified AddRestrictedFunctionProperties() to bypass .caller and .arguments properties
@@ -218,6 +274,10 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.8 The %ThrowTypeError% Function Object
+     * 
+     * @param cx
+     *            the execution context
+     * @return the %ThrowTypeError% function object
      */
     public static Callable createThrowTypeError(ExecutionContext cx) {
         /* step 1 */
@@ -241,6 +301,11 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.9 MakeConstructor Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param f
+     *            the function object
      */
     public static void MakeConstructor(ExecutionContext cx, FunctionObject f) {
         /* step 3 */
@@ -253,6 +318,15 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.9 MakeConstructor Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param f
+     *            the function object
+     * @param writablePrototype
+     *            the writable flag for the .prototype property
+     * @param prototype
+     *            the prototype object
      */
     public static void MakeConstructor(ExecutionContext cx, FunctionObject f,
             boolean writablePrototype, ScriptObject prototype) {
@@ -263,6 +337,17 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.9 MakeConstructor Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param f
+     *            the function object
+     * @param writablePrototype
+     *            the writable flag for the .prototype property
+     * @param prototype
+     *            the prototype object
+     * @param installNeeded
+     *            the install flag
      */
     private static void MakeConstructor(ExecutionContext cx, FunctionObject f,
             boolean writablePrototype, ScriptObject prototype, boolean installNeeded) {
@@ -282,6 +367,13 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.10 MakeMethod ( F, methodName, homeObject ) Abstract Operation
+     * 
+     * @param f
+     *            the function object
+     * @param methodName
+     *            the method name
+     * @param homeObject
+     *            the home object
      */
     public static void MakeMethod(FunctionObject f, String methodName, ScriptObject homeObject) {
         /* steps 1-3 (not applicable) */
@@ -292,6 +384,13 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.10 MakeMethod ( F, methodName, homeObject ) Abstract Operation
+     * 
+     * @param f
+     *            the function object
+     * @param methodName
+     *            the method name
+     * @param homeObject
+     *            the home object
      */
     public static void MakeMethod(FunctionObject f, Symbol methodName, ScriptObject homeObject) {
         /* steps 1-3 (not applicable) */
@@ -302,6 +401,11 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.11 SetFunctionName Abstract Operation
+     * 
+     * @param f
+     *            the function object
+     * @param name
+     *            the function name
      */
     public static void SetFunctionName(FunctionObject f, String name) {
         SetFunctionName(f, name, null);
@@ -309,6 +413,13 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.11 SetFunctionName Abstract Operation
+     * 
+     * @param f
+     *            the function object
+     * @param name
+     *            the function name
+     * @param prefix
+     *            the function name prefix
      */
     public static void SetFunctionName(FunctionObject f, String name, String prefix) {
         /* step 1 */
@@ -330,6 +441,11 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.11 SetFunctionName Abstract Operation
+     * 
+     * @param f
+     *            the function object
+     * @param name
+     *            the function name
      */
     public static void SetFunctionName(FunctionObject f, Symbol name) {
         SetFunctionName(f, name, null);
@@ -337,6 +453,13 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.11 SetFunctionName Abstract Operation
+     * 
+     * @param f
+     *            the function object
+     * @param name
+     *            the function name
+     * @param prefix
+     *            the function name prefix
      */
     public static void SetFunctionName(FunctionObject f, Symbol name, String prefix) {
         /* step 3 */
@@ -348,6 +471,10 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.12 GetSuperBinding(obj) Abstract Operation
+     * 
+     * @param obj
+     *            the function object
+     * @return the super binding
      */
     public static ScriptObject GetSuperBinding(Object obj) {
         /* steps 1-2 */
@@ -364,6 +491,14 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.13 CloneMethod(function, newHome, newName) Abstract Operation
+     * 
+     * @param function
+     *            the function object
+     * @param newHome
+     *            the new home object
+     * @param newName
+     *            the new method name
+     * @return the cloned function object
      */
     public static FunctionObject CloneMethod(FunctionObject function, ScriptObject newHome,
             String newName) {
@@ -375,6 +510,14 @@ public class OrdinaryFunction extends FunctionObject {
 
     /**
      * 9.2.13 CloneMethod(function, newHome, newName) Abstract Operation
+     * 
+     * @param function
+     *            the function object
+     * @param newHome
+     *            the new home object
+     * @param newName
+     *            the new method name
+     * @return the cloned function object
      */
     public static FunctionObject CloneMethod(FunctionObject function, ScriptObject newHome,
             Symbol newName) {

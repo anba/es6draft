@@ -194,6 +194,12 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
 
         /**
          * 19.5.6.2.2 NativeError [ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -229,6 +235,12 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
 
         /**
          * 19.5.6.2.2 NativeError [ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -264,6 +276,12 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
 
         /**
          * 19.5.6.2.2 NativeError [ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -299,6 +317,12 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
 
         /**
          * 19.5.6.2.2 NativeError [ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -334,6 +358,12 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
 
         /**
          * 19.5.6.2.2 NativeError [ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -369,6 +399,12 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
 
         /**
          * 19.5.6.2.2 NativeError [ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -404,6 +440,12 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
 
         /**
          * 19.5.6.2.2 NativeError [ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

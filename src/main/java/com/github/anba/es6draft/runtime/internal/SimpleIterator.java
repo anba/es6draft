@@ -16,7 +16,9 @@ public abstract class SimpleIterator<E> implements Iterator<E> {
     private E next = null;
 
     /**
-     * Returns the next element or {@code null} if the iterator is drained
+     * Returns the next element or {@code null} if the iterator is drained.
+     * 
+     * @return the next element or {@code null}
      */
     protected abstract E tryNext();
 

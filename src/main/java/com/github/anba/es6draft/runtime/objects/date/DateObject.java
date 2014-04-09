@@ -32,6 +32,8 @@ public final class DateObject extends OrdinaryObject {
 
     /**
      * [[DateValue]]
+     * 
+     * @return the date value
      */
     public double getDateValue() {
         return dateValue;
@@ -39,6 +41,9 @@ public final class DateObject extends OrdinaryObject {
 
     /**
      * [[DateValue]]
+     * 
+     * @param dateValue
+     *            the new date value
      */
     public void setDateValue(double dateValue) {
         this.initialised = true;

@@ -83,6 +83,14 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
 
     /**
      * 23.2.5.1 CreateSetIterator Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the set object
+     * @param kind
+     *            the set iteration kind
+     * @return the new set iterator
      */
     public static OrdinaryObject CreateSetIterator(ExecutionContext cx, Object obj,
             SetIterationKind kind) {
@@ -118,6 +126,12 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
 
         /**
          * 23.2.5.2.1 %SetIteratorPrototype%.next( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the next iterator result object
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
@@ -165,6 +179,12 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
 
         /**
          * 23.2.5.2.2 %SetIteratorPrototype% [ @@iterator ]()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the this-value
          */
         @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {

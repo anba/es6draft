@@ -38,12 +38,21 @@ public final class ExoticArray extends OrdinaryObject {
         super(realm);
     }
 
-    /** [[ArrayInitialisationState]] */
+    /**
+     * [[ArrayInitialisationState]]
+     *
+     * @return {@code true} if the array is initialised
+     */
     public boolean getInitialisationState() {
         return initialisationState;
     }
 
-    /** [[ArrayInitialisationState]] */
+    /**
+     * [[ArrayInitialisationState]]
+     *
+     * @param initialisationState
+     *            the new initialisation state value
+     */
     public void setInitialisationState(boolean initialisationState) {
         assert initialisationState : "cannot de-initialise an array";
         assert !this.initialisationState : "array already initialised";
@@ -54,6 +63,10 @@ public final class ExoticArray extends OrdinaryObject {
      * 9.4.2 Array Exotic Objects
      * <p>
      * Introductory paragraph
+     * 
+     * @param p
+     *            the property key
+     * @return {@code true} if the property key is a valid array index
      */
     public static boolean isArrayIndex(String p) {
         return toArrayIndex(p) >= 0;
@@ -63,6 +76,10 @@ public final class ExoticArray extends OrdinaryObject {
      * 9.4.2 Array Exotic Objects
      * <p>
      * Introductory paragraph
+     * 
+     * @param p
+     *            the property key
+     * @return the array index or {@code -1}
      */
     public static long toArrayIndex(String p) {
         return Strings.toArrayIndex(p);
@@ -110,6 +127,12 @@ public final class ExoticArray extends OrdinaryObject {
 
     /**
      * 9.4.2.2 ArrayCreate(length) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param length
+     *            the array length
+     * @return the new array object
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length) {
         assert length >= 0;
@@ -118,6 +141,12 @@ public final class ExoticArray extends OrdinaryObject {
 
     /**
      * 9.4.2.2 ArrayCreate(length) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param proto
+     *            the prototype object
+     * @return the new array object
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, ScriptObject proto) {
         assert proto != null;
@@ -140,6 +169,14 @@ public final class ExoticArray extends OrdinaryObject {
 
     /**
      * 9.4.2.2 ArrayCreate(length) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param length
+     *            the array length
+     * @param proto
+     *            the prototype object
+     * @return the new array object
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length, ScriptObject proto) {
         assert proto != null && length >= 0;
@@ -168,6 +205,12 @@ public final class ExoticArray extends OrdinaryObject {
      * Helper method to create dense arrays
      * <p>
      * [Called from generated code]
+     * 
+     * @param cx
+     *            the execution context
+     * @param values
+     *            the element values
+     * @return the new array object
      */
     public static ExoticArray DenseArrayCreate(ExecutionContext cx, Object[] values) {
         ExoticArray array = ArrayCreate(cx, values.length);
@@ -181,6 +224,12 @@ public final class ExoticArray extends OrdinaryObject {
      * Helper method to create sparse arrays
      * <p>
      * [Called from generated code]
+     * 
+     * @param cx
+     *            the execution context
+     * @param values
+     *            the element values
+     * @return the new array object
      */
     public static ExoticArray SparseArrayCreate(ExecutionContext cx, Object[] values) {
         ExoticArray array = ArrayCreate(cx, values.length);
@@ -194,6 +243,14 @@ public final class ExoticArray extends OrdinaryObject {
 
     /**
      * 9.4.2.3 ArraySetLength(A, Desc) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param array
+     *            the array object
+     * @param desc
+     *            the property descriptor
+     * @return {@code true} on success
      */
     public static boolean ArraySetLength(ExecutionContext cx, ExoticArray array,
             PropertyDescriptor desc) {

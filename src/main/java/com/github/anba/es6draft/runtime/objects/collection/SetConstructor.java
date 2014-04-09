@@ -138,6 +138,12 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
 
         /**
          * 23.2.2.2 Set[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised set object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

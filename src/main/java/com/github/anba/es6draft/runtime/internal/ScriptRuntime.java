@@ -60,6 +60,13 @@ public final class ScriptRuntime {
 
     /**
      * 18.2.1.2 EvalDeclarationInstantiation
+     * 
+     * @param cx
+     *            the execution context
+     * @param envRec
+     *            the environment record
+     * @param name
+     *            the binding name
      */
     public static void bindingNotPresentOrThrow(ExecutionContext cx, EnvironmentRecord envRec,
             String name) {
@@ -70,6 +77,13 @@ public final class ScriptRuntime {
 
     /**
      * 15.1.8 Runtime Semantics: GlobalDeclarationInstantiation
+     * 
+     * @param cx
+     *            the execution context
+     * @param envRec
+     *            the environment record
+     * @param name
+     *            the binding name
      */
     public static void canDeclareLexicalScopedOrThrow(ExecutionContext cx,
             GlobalEnvironmentRecord envRec, String name) {
@@ -85,6 +99,13 @@ public final class ScriptRuntime {
 
     /**
      * 15.1.8 Runtime Semantics: GlobalDeclarationInstantiation
+     * 
+     * @param cx
+     *            the execution context
+     * @param envRec
+     *            the environment record
+     * @param name
+     *            the binding name
      */
     public static void canDeclareVarScopedOrThrow(ExecutionContext cx,
             GlobalEnvironmentRecord envRec, String name) {
@@ -96,6 +117,13 @@ public final class ScriptRuntime {
 
     /**
      * 15.1.8 Runtime Semantics: GlobalDeclarationInstantiation
+     * 
+     * @param cx
+     *            the execution context
+     * @param envRec
+     *            the environment record
+     * @param fn
+     *            the function name
      */
     public static void canDeclareGlobalFunctionOrThrow(ExecutionContext cx,
             GlobalEnvironmentRecord envRec, String fn) {
@@ -108,6 +136,13 @@ public final class ScriptRuntime {
 
     /**
      * 15.1.8 Runtime Semantics: GlobalDeclarationInstantiation
+     * 
+     * @param cx
+     *            the execution context
+     * @param envRec
+     *            the environment record
+     * @param vn
+     *            the variable name
      */
     public static void canDeclareGlobalVarOrThrow(ExecutionContext cx,
             GlobalEnvironmentRecord envRec, String vn) {
@@ -125,9 +160,18 @@ public final class ScriptRuntime {
      * <p>
      * 12.1.4.1.2 Runtime Semantics: Array Accumulation
      * <ul>
-     * <li>ElementList : Elision<sub>opt</opt> AssignmentExpression
-     * <li>ElementList : ElementList , Elision<sub>opt</opt> AssignmentExpression
+     * <li>ElementList : Elision<span><sub>opt</sub></span> AssignmentExpression
+     * <li>ElementList : ElementList , Elision<span><sub>opt</sub></span> AssignmentExpression
      * </ul>
+     * 
+     * @param array
+     *            the array object
+     * @param nextIndex
+     *            the array index
+     * @param value
+     *            the array element value
+     * @param cx
+     *            the execution context
      */
     public static void defineProperty(ScriptObject array, int nextIndex, Object value,
             ExecutionContext cx) {
@@ -145,6 +189,16 @@ public final class ScriptRuntime {
      * <ul>
      * <li>SpreadElement : ... AssignmentExpression
      * </ul>
+     * 
+     * @param array
+     *            the array object
+     * @param nextIndex
+     *            the array index
+     * @param spreadObj
+     *            the spread element
+     * @param cx
+     *            the execution context
+     * @return the next array index
      */
     public static int ArrayAccumulationSpreadElement(ScriptObject array, int nextIndex,
             Object spreadObj, ExecutionContext cx) {
@@ -172,6 +226,15 @@ public final class ScriptRuntime {
      * 12.1.5 Object Initialiser
      * <p>
      * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 
+     * @param object
+     *            the script object
+     * @param propertyName
+     *            the property name
+     * @param value
+     *            the property value
+     * @param cx
+     *            the execution context
      */
     public static void defineProperty(ScriptObject object, Object propertyName, Object value,
             ExecutionContext cx) {
@@ -183,6 +246,15 @@ public final class ScriptRuntime {
      * 12.1.5 Object Initialiser
      * <p>
      * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 
+     * @param object
+     *            the script object
+     * @param propertyName
+     *            the property name
+     * @param value
+     *            the property value
+     * @param cx
+     *            the execution context
      */
     public static void defineProperty(ScriptObject object, String propertyName, Object value,
             ExecutionContext cx) {
@@ -194,6 +266,13 @@ public final class ScriptRuntime {
      * 12.1.5 Object Initialiser
      * <p>
      * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 
+     * @param object
+     *            the new home object
+     * @param propertyName
+     *            the property name
+     * @param f
+     *            the function object
      */
     public static void updateMethod(ScriptObject object, Object propertyName, FunctionObject f) {
         f.updateMethod(propertyName, object);
@@ -203,6 +282,12 @@ public final class ScriptRuntime {
      * 12.1.7 Generator Comprehensions
      * <p>
      * 12.1.7.2 Runtime Semantics: Evaluation
+     * 
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     * @return the generator object
      */
     public static ScriptObject EvaluateGeneratorComprehension(RuntimeInfo.Function fd,
             ExecutionContext cx) {
@@ -226,6 +311,12 @@ public final class ScriptRuntime {
      * 12.1.7 Generator Comprehensions
      * <p>
      * Runtime Semantics: Evaluation
+     * 
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     * @return the generator object
      */
     public static ScriptObject EvaluateLegacyGeneratorComprehension(RuntimeInfo.Function fd,
             ExecutionContext cx) {
@@ -249,6 +340,14 @@ public final class ScriptRuntime {
      * 12.1.9 Template Literals
      * <p>
      * 12.1.9.2.2 Runtime Semantics: GetTemplateCallSite
+     * 
+     * @param key
+     *            the template literal key
+     * @param handle
+     *            the method handle for the template literal data
+     * @param cx
+     *            the execution context
+     * @return the template call site object
      */
     public static ScriptObject GetTemplateCallSite(String key, MethodHandle handle,
             ExecutionContext cx) {
@@ -304,6 +403,16 @@ public final class ScriptRuntime {
      * <li>MemberExpression : MemberExpression . IdentifierName
      * <li>CallExpression : CallExpression . IdentifierName
      * </ul>
+     * 
+     * @param baseValue
+     *            the base value
+     * @param propertyNameString
+     *            the property name
+     * @param cx
+     *            the execution context
+     * @param strict
+     *            the strict mode flag
+     * @return the property reference
      */
     public static Reference<Object, String> getProperty(Object baseValue,
             String propertyNameString, ExecutionContext cx, boolean strict) {
@@ -322,6 +431,16 @@ public final class ScriptRuntime {
      * <li>MemberExpression : MemberExpression . IdentifierName
      * <li>CallExpression : CallExpression . IdentifierName
      * </ul>
+     * 
+     * @param baseValue
+     *            the base value
+     * @param propertyNameString
+     *            the property name
+     * @param cx
+     *            the execution context
+     * @param strict
+     *            the strict mode flag
+     * @return the property value
      */
     public static Object getPropertyValue(Object baseValue, String propertyNameString,
             ExecutionContext cx, boolean strict) {
@@ -342,6 +461,16 @@ public final class ScriptRuntime {
      * <li>MemberExpression : MemberExpression [ Expression ]
      * <li>CallExpression : CallExpression [ Expression ]
      * </ul>
+     * 
+     * @param baseValue
+     *            the base value
+     * @param propertyNameValue
+     *            the property name
+     * @param cx
+     *            the execution context
+     * @param strict
+     *            the strict mode flag
+     * @return the property reference
      */
     public static Reference<Object, ?> getElement(Object baseValue, Object propertyNameValue,
             ExecutionContext cx, boolean strict) {
@@ -365,6 +494,16 @@ public final class ScriptRuntime {
      * <li>MemberExpression : MemberExpression [ Expression ]
      * <li>CallExpression : CallExpression [ Expression ]
      * </ul>
+     * 
+     * @param baseValue
+     *            the base value
+     * @param propertyNameValue
+     *            the property name
+     * @param cx
+     *            the execution context
+     * @param strict
+     *            the strict mode flag
+     * @return the property value
      */
     public static Object getElementValue(Object baseValue, Object propertyNameValue,
             ExecutionContext cx, boolean strict) {
@@ -392,8 +531,16 @@ public final class ScriptRuntime {
      * <ul>
      * <li>NewExpression : new NewExpression
      * <li>MemberExpression : new MemberExpression Arguments
-     * <li>MemberExpression : new super Arguments<sub>opt</sub>
+     * <li>MemberExpression : new super Arguments<span><sub>opt</sub></span>
      * </ul>
+     * 
+     * @param constructor
+     *            the constructor object
+     * @param args
+     *            the arguments for the new-call
+     * @param cx
+     *            the execution context
+     * @return the constructor call return value
      */
     public static Object EvaluateConstructorCall(Object constructor, Object[] args,
             ExecutionContext cx) {
@@ -414,8 +561,16 @@ public final class ScriptRuntime {
      * <ul>
      * <li>NewExpression : new NewExpression
      * <li>MemberExpression : new MemberExpression Arguments
-     * <li>MemberExpression : new super Arguments<sub>opt</sub>
+     * <li>MemberExpression : new super Arguments<span><sub>opt</sub></span>
      * </ul>
+     * 
+     * @param constructor
+     *            the constructor object
+     * @param args
+     *            the arguments for the new-call
+     * @param cx
+     *            the execution context
+     * @return the tail call trampoline object
      */
     public static Object EvaluateConstructorTailCall(Object constructor, Object[] args,
             ExecutionContext cx) {
@@ -432,8 +587,16 @@ public final class ScriptRuntime {
      * 12.2.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
+     * 
+     * @param func
+     *            the function object
+     * @param cx
+     *            the execution context
+     * @return the function object
+     * @throws ScriptException
+     *             if <var>func</var> is not a function
      */
-    public static Callable CheckCallable(Object func, ExecutionContext cx) {
+    public static Callable CheckCallable(Object func, ExecutionContext cx) throws ScriptException {
         /* step 5 */
         if (!Type.isObject(func)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
@@ -449,13 +612,21 @@ public final class ScriptRuntime {
      * 12.2.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
+     * 
+     * @param ref
+     *            the reference value
+     * @param f
+     *            the function object
+     * @param cx
+     *            the execution context
+     * @return {@code true} if <var>f</var> is the built-in eval function
      */
     public static boolean IsBuiltinEval(Object ref, Callable f, ExecutionContext cx) {
         if (ref instanceof Reference) {
             Reference<?, ?> r = (Reference<?, ?>) ref;
             if (!r.isPropertyReference()) {
                 assert !r.isUnresolvableReference() && r.getBase() instanceof EnvironmentRecord;
-                return (f == cx.getRealm().getBuiltinEval());
+                return f == cx.getRealm().getBuiltinEval();
             }
         }
         return false;
@@ -465,15 +636,25 @@ public final class ScriptRuntime {
      * 12.2.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
+     * 
+     * @param f
+     *            the function object
+     * @param cx
+     *            the execution context
+     * @return {@code true} if <var>f</var> is the built-in eval function
      */
     public static boolean IsBuiltinEval(Callable f, ExecutionContext cx) {
-        return (f == cx.getRealm().getBuiltinEval());
+        return f == cx.getRealm().getBuiltinEval();
     }
 
     /**
      * 12.2.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @return the direct eval fallback hook
      */
     public static Callable directEvalFallbackHook(ExecutionContext cx) {
         return cx.getRealm().getDirectEvalFallback();
@@ -483,6 +664,14 @@ public final class ScriptRuntime {
      * 12.2.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
+     * 
+     * @param args
+     *            the function call arguments
+     * @param thisValue
+     *            the function this-value
+     * @param callee
+     *            the function callee
+     * @return the direct eval fallback arguments
      */
     public static Object[] directEvalFallbackArguments(Object[] args, Object thisValue,
             Callable callee) {
@@ -497,6 +686,14 @@ public final class ScriptRuntime {
      * 12.2.5 The super Keyword
      * <p>
      * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param strict
+     *            the strict mode flag
+     * @return the super reference
      */
     public static Reference<ScriptObject, ?> MakeSuperReference(ExecutionContext cx,
             Object propertyKey, boolean strict) {
@@ -530,6 +727,14 @@ public final class ScriptRuntime {
      * 12.2.5 The super Keyword
      * <p>
      * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param strict
+     *            the strict mode flag
+     * @return the super reference
      */
     public static Reference<ScriptObject, String> MakeSuperReference(ExecutionContext cx,
             String propertyKey, boolean strict) {
@@ -552,6 +757,12 @@ public final class ScriptRuntime {
      * 12.2.6 Argument Lists
      * <p>
      * 12.2.6.1 Runtime Semantics: ArgumentListEvaluation
+     * 
+     * @param spreadObj
+     *            the spread object
+     * @param cx
+     *            the execution context
+     * @return the spread object elements
      */
     public static Object[] SpreadArray(Object spreadObj, ExecutionContext cx) {
         final int MAX_ARGS = FunctionPrototype.getMaxArguments();
@@ -581,6 +792,12 @@ public final class ScriptRuntime {
      * 12.2.6 Argument Lists
      * <p>
      * 12.2.6.1 Runtime Semantics: ArgumentListEvaluation
+     * 
+     * @param array
+     *            the array
+     * @param cx
+     *            the execution context
+     * @return the flattened array
      */
     public static Object[] toFlatArray(Object[] array, ExecutionContext cx) {
         final int MAX_ARGS = FunctionPrototype.getMaxArguments();
@@ -609,6 +826,12 @@ public final class ScriptRuntime {
     /**
      * 12.4 Unary Operators<br>
      * 12.4.4 The delete Operator
+     * 
+     * @param ref
+     *            the reference instance
+     * @param cx
+     *            the execution context
+     * @return {@code true} on success
      */
     public static boolean delete(Reference<?, ?> ref, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
@@ -622,6 +845,12 @@ public final class ScriptRuntime {
     /**
      * 12.4 Unary Operators<br>
      * 12.4.4 The delete Operator
+     * 
+     * @param ref
+     *            the reference instance
+     * @param cx
+     *            the execution context
+     * @return {@code true} on success
      */
     public static boolean deleteBinding(Reference<?, ?> ref, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
@@ -648,6 +877,12 @@ public final class ScriptRuntime {
     /**
      * 12.4 Unary Operators<br>
      * 12.4.4 The delete Operator
+     * 
+     * @param ref
+     *            the reference instance
+     * @param cx
+     *            the execution context
+     * @return {@code true} on success
      */
     public static boolean deleteProperty(Reference<?, ?> ref, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
@@ -675,6 +910,12 @@ public final class ScriptRuntime {
     /**
      * 12.4 Unary Operators<br>
      * 12.4.6 The typeof Operator
+     * 
+     * @param val
+     *            the value
+     * @param cx
+     *            the execution context
+     * @return the typeof descriptor string
      */
     public static String typeof(Object val, ExecutionContext cx) {
         /* step 1 (generated code) */
@@ -712,6 +953,14 @@ public final class ScriptRuntime {
     /**
      * 12.6 Additive Operators<br>
      * 12.6.3 The Addition operator ( + )
+     * 
+     * @param lval
+     *            the left-hand side operand
+     * @param rval
+     *            the right-hand side operand
+     * @param cx
+     *            the execution context
+     * @return the operation result
      */
     public static Object add(Object lval, Object rval, ExecutionContext cx) {
         /* steps 1-6 (generated code) */
@@ -732,6 +981,14 @@ public final class ScriptRuntime {
     /**
      * 12.6 Additive Operators<br>
      * 12.6.3 The Addition operator ( + )
+     * 
+     * @param lstr
+     *            the left-hand side operand
+     * @param rstr
+     *            the right-hand side operand
+     * @param cx
+     *            the execution context
+     * @return the concatenated string
      */
     public static CharSequence add(CharSequence lstr, CharSequence rstr, ExecutionContext cx) {
         int llen = lstr.length(), rlen = rstr.length();
@@ -754,6 +1011,16 @@ public final class ScriptRuntime {
     /**
      * 12.8 Relational Operators<br>
      * 12.8.3 Runtime Semantics: Evaluation
+     * 
+     * @param x
+     *            the left-hand side operand
+     * @param y
+     *            the right-hand side operand
+     * @param leftFirst
+     *            the operation order flag
+     * @param cx
+     *            the execution context
+     * @return the comparison result
      */
     public static int relationalComparison(Object x, Object y, boolean leftFirst,
             ExecutionContext cx) {
@@ -763,6 +1030,14 @@ public final class ScriptRuntime {
     /**
      * 12.8 Relational Operators<br>
      * 12.8.3 Runtime Semantics: Evaluation
+     * 
+     * @param lval
+     *            the left-hand side operand
+     * @param rval
+     *            the right-hand side operand
+     * @param cx
+     *            the execution context
+     * @return the operation result
      */
     public static boolean in(Object lval, Object rval, ExecutionContext cx) {
         /* steps 1-6 (generated code) */
@@ -777,6 +1052,14 @@ public final class ScriptRuntime {
     /**
      * 12.8 Relational Operators<br>
      * 12.8.4 Runtime Semantics: InstanceofOperator(O, C)
+     * 
+     * @param obj
+     *            the object
+     * @param constructor
+     *            the constructor function
+     * @param cx
+     *            the execution context
+     * @return the operation result
      */
     public static boolean InstanceofOperator(Object obj, Object constructor, ExecutionContext cx) {
         /* step 1 */
@@ -802,6 +1085,14 @@ public final class ScriptRuntime {
     /**
      * 12.9 Equality Operators<br>
      * 12.9.3 Runtime Semantics: Evaluation
+     * 
+     * @param x
+     *            the left-hand side operand
+     * @param y
+     *            the right-hand side operand
+     * @param cx
+     *            the execution context
+     * @return the operation result
      */
     public static boolean equalityComparison(Object x, Object y, ExecutionContext cx) {
         return EqualityComparison(cx, x, y);
@@ -810,6 +1101,12 @@ public final class ScriptRuntime {
     /**
      * 12.9 Equality Operators<br>
      * 12.9.3 Runtime Semantics: Evaluation
+     * 
+     * @param x
+     *            the left-hand side operand
+     * @param y
+     *            the right-hand side operand
+     * @return the operation result
      */
     public static boolean strictEqualityComparison(Object x, Object y) {
         return StrictEqualityComparison(x, y);
@@ -824,8 +1121,16 @@ public final class ScriptRuntime {
      * <p>
      * 13.2.2.2 Runtime Semantics<br>
      * Runtime Semantics: Evaluation
+     * 
+     * @param val
+     *            the value
+     * @param cx
+     *            the execution context
+     * @return <var>val</var> if it is a script object
+     * @throws ScriptException
+     *             if <var>val</var> is not a script object
      */
-    public static ScriptObject ensureObject(Object val, ExecutionContext cx) {
+    public static ScriptObject ensureObject(Object val, ExecutionContext cx) throws ScriptException {
         if (!Type.isObject(val)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
@@ -836,6 +1141,12 @@ public final class ScriptRuntime {
      * 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
      * <p>
      * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
+     * 
+     * @param iterator
+     *            the iterator
+     * @param cx
+     *            the execution context
+     * @return the array with the remaining elements from <var>iterator</var>
      */
     public static ScriptObject createRestArray(Iterator<?> iterator, ExecutionContext cx) {
         ScriptObject result = ArrayCreate(cx, 0);
@@ -850,6 +1161,12 @@ public final class ScriptRuntime {
      * 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
      * <p>
      * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
+     * 
+     * @param obj
+     *            the script object
+     * @param cx
+     *            the execution context
+     * @return the object iterator
      */
     public static Iterator<?> getIterator(ScriptObject obj, ExecutionContext cx) {
         return FromScriptIterator(cx, GetIterator(cx, obj));
@@ -859,6 +1176,9 @@ public final class ScriptRuntime {
      * 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
      * <p>
      * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
+     * 
+     * @param iterator
+     *            the iterator
      */
     public static void iteratorNextAndIgnore(Iterator<?> iterator) {
         if (iterator.hasNext()) {
@@ -870,6 +1190,10 @@ public final class ScriptRuntime {
      * 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
      * <p>
      * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
+     * 
+     * @param iterator
+     *            the iterator
+     * @return the next iterator result, or undefined it is already exhausted
      */
     public static Object iteratorNextOrUndefined(Iterator<?> iterator) {
         return iterator.hasNext() ? iterator.next() : UNDEFINED;
@@ -881,6 +1205,12 @@ public final class ScriptRuntime {
      * 13.6.4 The for-in and for-of Statements
      * <p>
      * 13.6.4.6 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * 
+     * @param o
+     *            the object to enumerate
+     * @param cx
+     *            the execution context
+     * @return the keys enumerator
      */
     public static Iterator<?> enumerate(Object o, ExecutionContext cx) {
         /* step 5 */
@@ -895,6 +1225,12 @@ public final class ScriptRuntime {
      * 13.6.4 The for-in and for-of Statements
      * <p>
      * 13.6.4.6 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * 
+     * @param o
+     *            the object to enumerate
+     * @param cx
+     *            the execution context
+     * @return the object iterator
      */
     public static Iterator<?> iterate(Object o, ExecutionContext cx) {
         /* step 5 */
@@ -910,6 +1246,12 @@ public final class ScriptRuntime {
      * Extension: 'for-each' statement
      * <p>
      * 13.6.4.6 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * 
+     * @param o
+     *            the object to enumerate
+     * @param cx
+     *            the execution context
+     * @return the values enumerator
      */
     public static Iterator<?> enumerateValues(Object o, ExecutionContext cx) {
         /* step 5 */
@@ -943,8 +1285,14 @@ public final class ScriptRuntime {
 
     /**
      * 13.14 The try Statement
+     * 
+     * @param e
+     *            the error cause
+     * @return if either <var>e</var> or its cause is a stack overflow error, that error object
+     * @throws Error
+     *             if neither the error nor its cause is a stack overflow error
      */
-    public static StackOverflowError getStackOverflowError(Error e) {
+    public static StackOverflowError getStackOverflowError(Error e) throws Error {
         if (e instanceof StackOverflowError) {
             return (StackOverflowError) e;
         }
@@ -957,6 +1305,12 @@ public final class ScriptRuntime {
 
     /**
      * 13.14 The try Statement
+     * 
+     * @param e
+     *            the error cause
+     * @param cx
+     *            the execution context
+     * @return the new script exception
      */
     public static ScriptException toInternalError(StackOverflowError e, ExecutionContext cx) {
         ScriptException exception = newInternalError(cx, Messages.Key.StackOverflow,
@@ -979,6 +1333,14 @@ public final class ScriptRuntime {
      * 14.1 Function Definitions
      * <p>
      * 14.1.14 Runtime Semantics: InstantiateFunctionObject
+     * 
+     * @param scope
+     *            the current lexical scope
+     * @param cx
+     *            the execution context
+     * @param fd
+     *            the function runtime info object
+     * @return the new function instance
      */
     public static OrdinaryFunction InstantiateFunctionObject(LexicalEnvironment<?> scope,
             ExecutionContext cx, RuntimeInfo.Function fd) {
@@ -1007,6 +1369,12 @@ public final class ScriptRuntime {
      * <li>FunctionExpression : function ( FormalParameters ) { FunctionBody }
      * <li>FunctionExpression : function BindingIdentifier ( FormalParameters ) { FunctionBody }
      * </ul>
+     * 
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     * @return the new function instance
      */
     public static OrdinaryFunction EvaluateFunctionExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
@@ -1057,8 +1425,14 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: Evaluation
      * <ul>
-     * <li>ArrowFunction : ArrowParameters => ConciseBody
+     * <li>ArrowFunction : ArrowParameters {@literal =>} ConciseBody
      * </ul>
+     * 
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     * @return the new function instance
      */
     public static OrdinaryFunction EvaluateArrowFunction(RuntimeInfo.Function fd,
             ExecutionContext cx) {
@@ -1076,6 +1450,16 @@ public final class ScriptRuntime {
      * <p>
      * 14.3.8 Runtime Semantics: DefineMethod<br>
      * 14.5.15 Runtime Semantics: ClassDefinitionEvaluation
+     * 
+     * @param constructorParent
+     *            the constructor prototype
+     * @param proto
+     *            the class prototype
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     * @return the new function instance
      */
     public static OrdinaryFunction EvaluateConstructorMethod(ScriptObject constructorParent,
             ScriptObject proto, RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1108,6 +1492,15 @@ public final class ScriptRuntime {
      * <ul>
      * <li>PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
      */
     public static void EvaluatePropertyDefinition(ScriptObject object, Object propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1125,6 +1518,15 @@ public final class ScriptRuntime {
      * <ul>
      * <li>PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
      */
     public static void EvaluatePropertyDefinition(ScriptObject object, String propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1153,6 +1555,15 @@ public final class ScriptRuntime {
      * <ul>
      * <li>PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
      */
     public static void EvaluatePropertyDefinition(ScriptObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1181,6 +1592,15 @@ public final class ScriptRuntime {
      * <ul>
      * <li>get PropertyName ( ) { FunctionBody }
      * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
      */
     public static void EvaluatePropertyDefinitionGetter(ScriptObject object, Object propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1198,6 +1618,15 @@ public final class ScriptRuntime {
      * <ul>
      * <li>get PropertyName ( ) { FunctionBody }
      * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
      */
     public static void EvaluatePropertyDefinitionGetter(ScriptObject object, String propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1228,6 +1657,15 @@ public final class ScriptRuntime {
      * <ul>
      * <li>get PropertyName ( ) { FunctionBody }
      * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
      */
     public static void EvaluatePropertyDefinitionGetter(ScriptObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1258,6 +1696,15 @@ public final class ScriptRuntime {
      * <ul>
      * <li>set PropertyName ( PropertySetParameterList ) { FunctionBody }
      * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
      */
     public static void EvaluatePropertyDefinitionSetter(ScriptObject object, Object propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1275,6 +1722,15 @@ public final class ScriptRuntime {
      * <ul>
      * <li>set PropertyName ( PropertySetParameterList ) { FunctionBody }
      * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
      */
     public static void EvaluatePropertyDefinitionSetter(ScriptObject object, String propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1305,6 +1761,15 @@ public final class ScriptRuntime {
      * <ul>
      * <li>set PropertyName ( PropertySetParameterList ) { FunctionBody }
      * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
      */
     public static void EvaluatePropertyDefinitionSetter(ScriptObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1332,6 +1797,14 @@ public final class ScriptRuntime {
      * 14.4 Generator Function Definitions
      * <p>
      * 14.4.12 Runtime Semantics: InstantiateFunctionObject
+     * 
+     * @param scope
+     *            the current lexical scope
+     * @param cx
+     *            the execution context
+     * @param fd
+     *            the function runtime info object
+     * @return the new generator function instance
      */
     public static OrdinaryGenerator InstantiateGeneratorObject(LexicalEnvironment<?> scope,
             ExecutionContext cx, RuntimeInfo.Function fd) {
@@ -1358,6 +1831,14 @@ public final class ScriptRuntime {
      * 14.4 Generator Function Definitions
      * <p>
      * 14.4.12 Runtime Semantics: InstantiateFunctionObject
+     * 
+     * @param scope
+     *            the current lexical scope
+     * @param cx
+     *            the execution context
+     * @param fd
+     *            the function runtime info object
+     * @return the new generator function instance
      */
     public static OrdinaryGenerator InstantiateLegacyGeneratorObject(LexicalEnvironment<?> scope,
             ExecutionContext cx, RuntimeInfo.Function fd) {
@@ -1387,6 +1868,15 @@ public final class ScriptRuntime {
      * <ul>
      * <li>GeneratorMethod : * PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
      */
     public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, Object propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1404,6 +1894,15 @@ public final class ScriptRuntime {
      * <ul>
      * <li>GeneratorMethod : * PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
      */
     public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, String propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1436,6 +1935,15 @@ public final class ScriptRuntime {
      * <ul>
      * <li>GeneratorMethod : * PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
      */
     public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1469,6 +1977,12 @@ public final class ScriptRuntime {
      * <li>GeneratorExpression: function* ( FormalParameters ) { FunctionBody }
      * <li>GeneratorExpression: function* BindingIdentifier ( FormalParameters ) { FunctionBody }
      * </ul>
+     * 
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     * @return the new generator function instance
      */
     public static OrdinaryGenerator EvaluateGeneratorExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
@@ -1526,6 +2040,12 @@ public final class ScriptRuntime {
      * <li>GeneratorExpression: function* ( FormalParameters ) { FunctionBody }
      * <li>GeneratorExpression: function* BindingIdentifier ( FormalParameters ) { FunctionBody }
      * </ul>
+     * 
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     * @return the new generator function instance
      */
     public static OrdinaryGenerator EvaluateLegacyGeneratorExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
@@ -1583,6 +2103,12 @@ public final class ScriptRuntime {
      * <li>YieldExpression : yield
      * <li>YieldExpression : yield AssignmentExpression
      * </ul>
+     * 
+     * @param value
+     *            the value to yield
+     * @param cx
+     *            the execution context
+     * @return the result value
      */
     public static Object yield(Object value, ExecutionContext cx) {
         return GeneratorYield(cx, CreateIterResultObject(cx, value, false));
@@ -1595,6 +2121,12 @@ public final class ScriptRuntime {
      * <ul>
      * <li>YieldExpression : yield * AssignmentExpression
      * </ul>
+     * 
+     * @param value
+     *            the value to yield
+     * @param cx
+     *            the execution context
+     * @return the result value
      */
     public static Object delegatedYield(Object value, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
@@ -1638,6 +2170,10 @@ public final class ScriptRuntime {
      * 14.5 Class Definitions
      * <p>
      * 14.5.15 Runtime Semantics: ClassDefinitionEvaluation
+     * 
+     * @param cx
+     *            the execution context
+     * @return the tuple (prototype, constructorParent)
      */
     public static ScriptObject[] getDefaultClassProto(ExecutionContext cx) {
         // step 1
@@ -1652,6 +2188,12 @@ public final class ScriptRuntime {
      * 14.5 Class Definitions
      * <p>
      * 14.5.15 Runtime Semantics: ClassDefinitionEvaluation
+     * 
+     * @param superClass
+     *            the super class object
+     * @param cx
+     *            the execution context
+     * @return the tuple (prototype, constructorParent)
      */
     public static ScriptObject[] getClassProto(Object superClass, ExecutionContext cx) {
         ScriptObject protoParent;
@@ -1679,6 +2221,8 @@ public final class ScriptRuntime {
      * 14.5 Class Definitions
      * <p>
      * 14.5.15 Runtime Semantics: ClassDefinitionEvaluation
+     * 
+     * @return the runtime info object for the default constructor
      */
     public static RuntimeInfo.Function CreateDefaultConstructor() {
         String functionName = "constructor";
@@ -1697,6 +2241,8 @@ public final class ScriptRuntime {
      * 14.5 Class Definitions
      * <p>
      * 14.5.15 Runtime Semantics: ClassDefinitionEvaluation
+     * 
+     * @return the runtime info object for the default constructor
      */
     public static RuntimeInfo.Function CreateDefaultEmptyConstructor() {
         String functionName = "constructor";
@@ -1808,6 +2354,14 @@ public final class ScriptRuntime {
 
     /**
      * Extension: Async Function Definitions
+     * 
+     * @param scope
+     *            the current lexical scope
+     * @param cx
+     *            the execution context
+     * @param fd
+     *            the function runtime info object
+     * @return the new async function instance
      */
     public static OrdinaryAsyncFunction InstantiateAsyncFunctionObject(LexicalEnvironment<?> scope,
             ExecutionContext cx, RuntimeInfo.Function fd) {
@@ -1832,6 +2386,12 @@ public final class ScriptRuntime {
 
     /**
      * Extension: Async Function Definitions
+     * 
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     * @return the new async function instance
      */
     public static OrdinaryAsyncFunction EvaluateAsyncFunctionExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
@@ -1883,6 +2443,15 @@ public final class ScriptRuntime {
 
     /**
      * Extension: Async Function Definitions
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param cx
+     *            the execution context
+     * @param fd
+     *            the function runtime info object
      */
     public static void EvaluatePropertyDefinitionAsync(ScriptObject object, Object propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1895,6 +2464,15 @@ public final class ScriptRuntime {
 
     /**
      * Extension: Async Function Definitions
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param cx
+     *            the execution context
+     * @param fd
+     *            the function runtime info object
      */
     public static void EvaluatePropertyDefinitionAsync(ScriptObject object, String propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1922,6 +2500,15 @@ public final class ScriptRuntime {
 
     /**
      * Extension: Async Function Definitions
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
      */
     public static void EvaluatePropertyDefinitionAsync(ScriptObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
@@ -1951,6 +2538,14 @@ public final class ScriptRuntime {
      * 14.6 Tail Position Calls
      * <p>
      * 14.6.1 Runtime Semantics: PrepareForTailCall
+     * 
+     * @param args
+     *            the function arguments
+     * @param thisValue
+     *            the function this-value
+     * @param function
+     *            the tail call function
+     * @return the tail call trampoline object
      */
     public static Object PrepareForTailCall(Object[] args, Object thisValue, Callable function) {
         return new TailCallInvocation(function, thisValue, args);
@@ -1960,6 +2555,13 @@ public final class ScriptRuntime {
 
     /**
      * B.3.1 __proto___ Property Names in Object Initialisers
+     * 
+     * @param object
+     *            the object instance
+     * @param value
+     *            the new prototype
+     * @param cx
+     *            the execution context
      */
     public static void defineProtoProperty(ScriptObject object, Object value, ExecutionContext cx) {
         // FIXME: function .name and __proto__ interaction unclear

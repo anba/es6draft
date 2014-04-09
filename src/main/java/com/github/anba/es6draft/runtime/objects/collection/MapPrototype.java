@@ -77,6 +77,12 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.1.3.1 Map.prototype.clear ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the undefined value
          */
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
@@ -92,6 +98,14 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.1.3.3 Map.prototype.delete ( key )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param key
+         *            the key
+         * @return {@code true} if the entry was deleted
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object key) {
@@ -105,6 +119,16 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.1.3.5 Map.prototype.forEach ( callbackfn , thisArg = undefined )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param callbackfn
+         *            the callback function
+         * @param thisArg
+         *            the optional this-argument
+         * @return the undefined value
          */
         @Function(name = "forEach", arity = 1)
         public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -131,6 +155,14 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.1.3.6 Map.prototype.get ( key )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param key
+         *            the key
+         * @return the mapped value or undefined
          */
         @Function(name = "get", arity = 1)
         public static Object get(ExecutionContext cx, Object thisValue, Object key) {
@@ -145,6 +177,14 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.1.3.7 Map.prototype.has ( key )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param key
+         *            the key
+         * @return {@code true} if the entry was found
          */
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object key) {
@@ -159,6 +199,12 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
         /**
          * 23.1.3.4 Map.prototype.entries ( )<br>
          * 23.1.3.12 Map.prototype[ @@iterator ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the entries iterator
          */
         @Function(name = "entries", arity = 0)
         @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
@@ -169,6 +215,12 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.1.3.8 Map.prototype.keys ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the keys iterator
          */
         @Function(name = "keys", arity = 0)
         public static Object keys(ExecutionContext cx, Object thisValue) {
@@ -178,6 +230,16 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.1.3.9 Map.prototype.set ( key , value )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param key
+         *            the key
+         * @param value
+         *            the value
+         * @return this map object
          */
         @Function(name = "set", arity = 2)
         public static Object set(ExecutionContext cx, Object thisValue, Object key, Object value) {
@@ -193,6 +255,12 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.1.3.10 get Map.prototype.size
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the number of entries
          */
         @Accessor(name = "size", type = Accessor.Type.Getter)
         public static Object size(ExecutionContext cx, Object thisValue) {
@@ -206,6 +274,12 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.1.3.11 Map.prototype.values ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the values iterator
          */
         @Function(name = "values", arity = 0)
         public static Object values(ExecutionContext cx, Object thisValue) {

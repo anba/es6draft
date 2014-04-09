@@ -80,29 +80,39 @@ public final class Properties {
     @Retention(RetentionPolicy.RUNTIME)
     public static @interface Function {
         /**
-         * Function name
+         * Returns the function name.
+         * 
+         * @return the function name
          */
         String name();
 
         /**
-         * Function symbol
+         * Returns the function symbol.
+         * 
+         * @return the function symbol
          */
         BuiltinSymbol symbol() default BuiltinSymbol.NONE;
 
         /**
-         * Function arity
+         * Returns the function arity.
+         * 
+         * @return the function arity
          */
         int arity();
 
         /**
-         * Function attributes, default to <code>{[[Writable]]: true, [[Enumerable]]:
-         * false, [[Configurable]]: true}</code>
+         * Returns the function attributes, default to <code>{[[Writable]]: true, [[Enumerable]]:
+         * false, [[Configurable]]: true}</code>.
+         * 
+         * @return the function attributes
          */
         Attributes attributes() default @Attributes(writable = true, enumerable = false,
                 configurable = true);
 
         /**
-         * Native function identifier
+         * Returns the optional native function identifier.
+         * 
+         * @return the native function identifier
          */
         NativeFunctionId nativeId() default NativeFunctionId.None;
     }
@@ -115,18 +125,24 @@ public final class Properties {
     @Retention(RetentionPolicy.RUNTIME)
     public static @interface Value {
         /**
-         * Value name
+         * Returns the value name.
+         * 
+         * @return the value name
          */
         String name();
 
         /**
-         * Value symbol
+         * Returns the value symbol.
+         * 
+         * @return the value symbol
          */
         BuiltinSymbol symbol() default BuiltinSymbol.NONE;
 
         /**
-         * Value attributes, default to <code>{[[Writable]]: true, [[Enumerable]]:
-         * false, [[Configurable]]: true}</code>
+         * Returns the value attributes, default to <code>{[[Writable]]: true, [[Enumerable]]:
+         * false, [[Configurable]]: true}</code>.
+         * 
+         * @return the value attributes
          */
         Attributes attributes() default @Attributes(writable = true, enumerable = false,
                 configurable = true);
@@ -140,12 +156,16 @@ public final class Properties {
     @Retention(RetentionPolicy.RUNTIME)
     public static @interface Accessor {
         /**
-         * Accessor name
+         * Returns the accessor name.
+         * 
+         * @return the accessor name
          */
         String name();
 
         /**
-         * Accessor symbol
+         * Returns the accessor symbol.
+         * 
+         * @return the accessor symbol
          */
         BuiltinSymbol symbol() default BuiltinSymbol.NONE;
 
@@ -154,13 +174,17 @@ public final class Properties {
         }
 
         /**
-         * Accessor type
+         * Returns the accessor type.
+         * 
+         * @return the accessor type
          */
         Type type();
 
         /**
-         * Accessor attributes, default to <code>{[[Enumerable]]:
-         * false, [[Configurable]]: true}</code>
+         * Returns the accessor attributes, default to <code>{[[Enumerable]]:
+         * false, [[Configurable]]: true}</code>.
+         * 
+         * @return the accessor attributes
          */
         Attributes attributes() default @Attributes(writable = false /*unused*/,
                 enumerable = false, configurable = true);
@@ -174,18 +198,24 @@ public final class Properties {
     @Retention(RetentionPolicy.RUNTIME)
     public static @interface AliasFunction {
         /**
-         * Function name
+         * Returns the function name.
+         * 
+         * @return the function name
          */
         String name();
 
         /**
-         * Function symbol
+         * Returns the function symbol.
+         * 
+         * @return the function symbol
          */
         BuiltinSymbol symbol() default BuiltinSymbol.NONE;
 
         /**
-         * Function attributes, default to <code>{[[Writable]]: true, [[Enumerable]]:
-         * false, [[Configurable]]: true}</code>
+         * Returns the function attributes, default to <code>{[[Writable]]: true, [[Enumerable]]:
+         * false, [[Configurable]]: true}</code>.
+         * 
+         * @return the function attributes
          */
         Attributes attributes() default @Attributes(writable = true, enumerable = false,
                 configurable = true);
@@ -226,22 +256,33 @@ public final class Properties {
     @Retention(RetentionPolicy.RUNTIME)
     public static @interface Optional {
         /**
-         * Default runtime type
+         * Returns the default runtime type.
+         * 
+         * @return the default type
          */
         Default value() default Default.Undefined;
 
         /**
-         * Default boolean value, only applicable if {@code value()} is {@link Default#Boolean}
+         * Returns the default boolean value, only applicable if {@code value()} is
+         * {@link Default#Boolean}.
+         * 
+         * @return the default boolean value
          */
         boolean booleanValue() default false;
 
         /**
-         * Default string value, only applicable if {@code value()} is {@link Default#String}
+         * Returns the default string value, only applicable if {@code value()} is
+         * {@link Default#String}.
+         * 
+         * @return the default string value
          */
         String stringValue() default "";
 
         /**
-         * Default number value, only applicable if {@code value()} is {@link Default#Number}
+         * Returns the default number value, only applicable if {@code value()} is
+         * {@link Default#Number}.
+         * 
+         * @return the default number value
          */
         double numberValue() default Double.NaN;
 
@@ -295,7 +336,14 @@ public final class Properties {
 
     /**
      * Sets the {@link Prototype} and creates own properties for {@link Value}, {@link Function} and
-     * {@link Accessor} fields
+     * {@link Accessor} fields.
+     * 
+     * @param cx
+     *            the execution context
+     * @param owner
+     *            the object instance
+     * @param holder
+     *            the class which holds the properties
      */
     public static void createProperties(ExecutionContext cx, OrdinaryObject owner, Class<?> holder) {
         assert holder.getName().startsWith(INTERNAL_PACKAGE);
@@ -304,7 +352,18 @@ public final class Properties {
 
     /**
      * Sets the {@link Prototype} and creates own properties for {@link Value}, {@link Function} and
-     * {@link Accessor} fields
+     * {@link Accessor} fields.
+     * 
+     * @param <OWNER>
+     *            the owner class type
+     * @param cx
+     *            the execution context
+     * @param target
+     *            the target object instance
+     * @param owner
+     *            the owner object instance
+     * @param holder
+     *            the class which holds the properties
      */
     public static <OWNER> void createProperties(ExecutionContext cx, ScriptObject target,
             OWNER owner, Class<OWNER> holder) {

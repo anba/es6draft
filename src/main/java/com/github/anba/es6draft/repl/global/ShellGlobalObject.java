@@ -18,7 +18,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Objects;
 
 import com.github.anba.es6draft.Script;
@@ -60,7 +59,13 @@ public abstract class ShellGlobalObject extends GlobalObject {
     }
 
     /**
-     * Returns the URL for the script {@code name} from the 'scripts' directory
+     * Returns the URL for the script {@code name} from the 'scripts' directory.
+     * 
+     * @param name
+     *            the script name
+     * @return the script's URL
+     * @throws IOException
+     *             if the resource could not be found
      */
     protected static final URL getScriptURL(String name) throws IOException {
         String sourceName = "/scripts/" + name;
@@ -110,16 +115,18 @@ public abstract class ShellGlobalObject extends GlobalObject {
     }
 
     /**
-     * Evaluates the input scripts
-     */
-    protected final void eval(List<Script> scripts) {
-        for (Script script : scripts) {
-            eval(script);
-        }
-    }
-
-    /**
-     * Parses, compiles and executes the javascript file
+     * Parses, compiles and executes the javascript file.
+     * 
+     * @param fileName
+     *            the file name for the script file
+     * @param file
+     *            the absolute path to the file
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public void eval(Path fileName, Path file) throws IOException, ParserException,
             CompilationException {
@@ -129,7 +136,10 @@ public abstract class ShellGlobalObject extends GlobalObject {
     }
 
     /**
-     * Executes the given script
+     * Executes the given script.
+     * 
+     * @param script
+     *            the script to evaluate
      */
     public void eval(Script script) {
         Realm realm = getRealm();
@@ -137,7 +147,16 @@ public abstract class ShellGlobalObject extends GlobalObject {
     }
 
     /**
-     * Parses, compiles and executes the javascript file (uses {@link #scriptCache})
+     * Parses, compiles and executes the javascript file (uses {@link #scriptCache}).
+     * 
+     * @param file
+     *            the path to the script file
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public void include(Path file) throws IOException, ParserException, CompilationException {
         Realm realm = getRealm();
@@ -147,6 +166,17 @@ public abstract class ShellGlobalObject extends GlobalObject {
 
     /**
      * Parses, compiles and executes the javascript file (uses {@link #scriptCache})
+     * 
+     * @param file
+     *            the URL to the file
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws URISyntaxException
+     *             the URL is not a valid URI
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public void include(URL file) throws IOException, URISyntaxException, ParserException,
             CompilationException {
@@ -185,31 +215,58 @@ public abstract class ShellGlobalObject extends GlobalObject {
         }
     }
 
-    /** shell-function: {@code readline()} */
+    /**
+     * shell-function: {@code readline()}
+     * 
+     * @return the read line from stdin
+     */
     @Function(name = "readline", arity = 0)
     public String readline() {
         return console.readLine();
     }
 
-    /** shell-function: {@code print(message)} */
+    /**
+     * shell-function: {@code print(message)}
+     * 
+     * @param messages
+     *            the string to print
+     */
     @Function(name = "print", arity = 1)
     public void print(String... messages) {
         console.print(concat(messages));
     }
 
-    /** shell-function: {@code load(filename)} */
+    /**
+     * shell-function: {@code load(filename)}
+     *
+     * @param cx
+     *            the execution context
+     * @param filename
+     *            the file to load
+     * @return the result value
+     */
     @Function(name = "load", arity = 1)
     public Object load(ExecutionContext cx, String filename) {
         return load(cx, Paths.get(filename), absolutePath(Paths.get(filename)));
     }
 
-    /** shell-function: {@code read(filename)} */
+    /**
+     * shell-function: {@code read(filename)}
+     * 
+     * @param cx
+     *            the execution context
+     * @param filename
+     *            the file to load
+     * @return the file content
+     */
     @Function(name = "read", arity = 1)
-    public Object read(ExecutionContext cx, String filename) {
+    public String read(ExecutionContext cx, String filename) {
         return read(cx, Paths.get(filename), absolutePath(Paths.get(filename)));
     }
 
-    /** shell-function: {@code quit()} */
+    /**
+     * shell-function: {@code quit()}
+     */
     @Function(name = "quit", arity = 0)
     public void quit() {
         throw new StopExecutionException(StopExecutionException.Reason.Quit);

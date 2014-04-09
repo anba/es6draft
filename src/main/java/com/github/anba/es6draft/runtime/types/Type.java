@@ -28,54 +28,62 @@ public enum Type {
     Undefined, Null, Boolean, String, Symbol, Number, Object;
 
     /**
-     * Returns the {@link Type} of the input parameter
+     * Returns the {@link Type} of the input parameter.
+     * 
+     * @param value
+     *            the value object
+     * @return the script type
      */
-    public static Type of(Object val) {
-        if (val == UNDEFINED) {
+    public static Type of(Object value) {
+        if (value == UNDEFINED) {
             return Undefined;
         }
-        if (val == NULL) {
+        if (value == NULL) {
             return Null;
         }
-        if (val instanceof Boolean) {
+        if (value instanceof Boolean) {
             return Boolean;
         }
-        if (val instanceof String || val instanceof ConsString) {
+        if (value instanceof String || value instanceof ConsString) {
             return String;
         }
-        if (val instanceof Symbol) {
+        if (value instanceof Symbol) {
             return Symbol;
         }
-        if (val instanceof Double || val instanceof Integer || val instanceof Long) {
+        if (value instanceof Double || value instanceof Integer || value instanceof Long) {
             return Number;
         }
-        assert val instanceof ScriptObject : (val != null ? val.getClass() : "<null>");
+        assert value instanceof ScriptObject : (value != null ? value.getClass() : "<null>");
         return Object;
     }
 
     /**
-     * Returns <code>true</code> if {@code value} is a valid language type
+     * Returns <code>true</code> if {@code value} is a valid language type.
+     * 
+     * @param value
+     *            the value object
+     * @return {@code true} if the value is a valid language type
      */
-    public static boolean isType(Object val) {
-        if (val == UNDEFINED) {
+    public static boolean isType(Object value) {
+        if (value == UNDEFINED) {
             return true;
         }
-        if (val == NULL) {
+        if (value == NULL) {
             return true;
         }
-        if (val instanceof Boolean) {
+        if (value instanceof Boolean) {
             return true;
         }
-        if (val instanceof String || val instanceof ConsString) {
+        if (value instanceof String || value instanceof ConsString) {
             return true;
         }
-        if (val instanceof Symbol) {
+        if (value instanceof Symbol) {
             return true;
         }
-        if (val instanceof Double || val instanceof Integer || val instanceof Long) {
+        if (value instanceof Double || value instanceof Integer || value instanceof Long) {
             return true;
         }
-        if (val instanceof ScriptObject) {
+        if (value instanceof ScriptObject) {
             return true;
         }
         return false;
@@ -83,121 +91,181 @@ public enum Type {
 
     /**
      * Short cut for:<br>
-     * <code>Type.of(val) == Type.Undefined</code>
+     * <code>Type.of(value) == Type.Undefined</code>
+     * 
+     * @param value
+     *            the value object
+     * @return {@code true} if the value is undefined
      */
-    public static boolean isUndefined(Object val) {
-        return val == UNDEFINED;
+    public static boolean isUndefined(Object value) {
+        return value == UNDEFINED;
     }
 
     /**
      * Short cut for:<br>
-     * <code>Type.of(val) == Type.Null</code>
+     * <code>Type.of(value) == Type.Null</code>
+     * 
+     * @param value
+     *            the value object
+     * @return {@code true} if the value is null
      */
-    public static boolean isNull(Object val) {
-        return val == NULL;
+    public static boolean isNull(Object value) {
+        return value == NULL;
     }
 
     /**
      * Short cut for:<br>
-     * <code>Type.of(val) == Type.Undefined || Type.of(val) == Type.Null</code>
+     * <code>Type.of(value) == Type.Undefined || Type.of(value) == Type.Null</code>
+     * 
+     * @param value
+     *            the value object
+     * @return {@code true} if the value is either undefined or null
      */
-    public static boolean isUndefinedOrNull(Object val) {
-        return val == UNDEFINED || val == NULL;
+    public static boolean isUndefinedOrNull(Object value) {
+        return value == UNDEFINED || value == NULL;
     }
 
     /**
      * Short cut for:<br>
-     * <code>Type.of(val) == Type.Boolean</code>
+     * <code>Type.of(value) == Type.Boolean</code>
+     * 
+     * @param value
+     *            the value object
+     * @return {@code true} if the value is a boolean
      */
-    public static boolean isBoolean(Object val) {
-        return val instanceof Boolean;
+    public static boolean isBoolean(Object value) {
+        return value instanceof Boolean;
     }
 
     /**
      * Short cut for:<br>
-     * <code>Type.of(val) == Type.String</code>
+     * <code>Type.of(value) == Type.String</code>
+     * 
+     * @param value
+     *            the value object
+     * @return {@code true} if the value is a string
      */
-    public static boolean isString(Object val) {
-        return val instanceof String || val instanceof ConsString;
+    public static boolean isString(Object value) {
+        return value instanceof String || value instanceof ConsString;
     }
 
     /**
      * Short cut for:<br>
-     * <code>Type.of(val) == Type.Symbol</code>
+     * <code>Type.of(value) == Type.Symbol</code>
+     * 
+     * @param value
+     *            the value object
+     * @return {@code true} if the value is a symbol
      */
-    public static boolean isSymbol(Object val) {
-        return val instanceof Symbol;
+    public static boolean isSymbol(Object value) {
+        return value instanceof Symbol;
     }
 
     /**
      * Short cut for:<br>
-     * <code>Type.of(val) == Type.Number</code>
+     * <code>Type.of(value) == Type.Number</code>
+     * 
+     * @param value
+     *            the value object
+     * @return {@code true} if the value is a number
      */
-    public static boolean isNumber(Object val) {
-        return val instanceof Double || val instanceof Integer || val instanceof Long;
+    public static boolean isNumber(Object value) {
+        return value instanceof Double || value instanceof Integer || value instanceof Long;
     }
 
     /**
      * Short cut for:<br>
-     * <code>Type.of(val) == Type.Object</code>
+     * <code>Type.of(value) == Type.Object</code>
+     * 
+     * @param value
+     *            the value object
+     * @return {@code true} if the value is an object
      */
-    public static boolean isObject(Object val) {
-        return val instanceof ScriptObject;
+    public static boolean isObject(Object value) {
+        return value instanceof ScriptObject;
     }
 
     /**
      * Short cut for:<br>
-     * <code>Type.of(val) == Type.Object || Type.of(val) == Type.Null</code>
+     * <code>Type.of(value) == Type.Object || Type.of(value) == Type.Null</code>
+     * 
+     * @param value
+     *            the value object
+     * @return {@code true} if the value is either an object or null
      */
-    public static boolean isObjectOrNull(Object val) {
-        return val == NULL || val instanceof ScriptObject;
+    public static boolean isObjectOrNull(Object value) {
+        return value == NULL || value instanceof ScriptObject;
     }
 
     /**
-     * If {@code val} is a Boolean type, its value is returned. Otherwise a
+     * If {@code value} is a Boolean type, its value is returned. Otherwise a
      * {@link ClassCastException} is thrown.
+     * 
+     * @param value
+     *            the value object
+     * @return the boolean value
      */
-    public static boolean booleanValue(Object val) {
-        return ((Boolean) val).booleanValue();
+    public static boolean booleanValue(Object value) {
+        return ((Boolean) value).booleanValue();
     }
 
     /**
-     * If {@code val} is a String type, its value is returned. Otherwise a
+     * If {@code value} is a String type, its value is returned. Otherwise a
      * {@link ClassCastException} is thrown.
+     * 
+     * @param value
+     *            the value object
+     * @return the string value
      */
-    public static CharSequence stringValue(Object val) {
-        return (CharSequence) val;
+    public static CharSequence stringValue(Object value) {
+        return (CharSequence) value;
     }
 
     /**
-     * If {@code val} is a Symbol type, its value is returned. Otherwise a
+     * If {@code value} is a Symbol type, its value is returned. Otherwise a
      * {@link ClassCastException} is thrown.
+     * 
+     * @param value
+     *            the value object
+     * @return the symbol value
      */
-    public static Symbol symbolValue(Object val) {
-        return (Symbol) val;
+    public static Symbol symbolValue(Object value) {
+        return (Symbol) value;
     }
 
     /**
-     * If {@code val} is a Number type, its value is returned. Otherwise a
+     * If {@code value} is a Number type, its value is returned. Otherwise a
      * {@link ClassCastException} is thrown.
+     * 
+     * @param value
+     *            the value object
+     * @return the number value
      */
-    public static double numberValue(Object val) {
-        return ((Number) val).doubleValue();
+    public static double numberValue(Object value) {
+        return ((Number) value).doubleValue();
     }
 
     /**
-     * If {@code val} is an Object type, its value is returned. Otherwise a
+     * If {@code value} is an Object type, its value is returned. Otherwise a
      * {@link ClassCastException} is thrown.
+     * 
+     * @param value
+     *            the value object
+     * @return the script object
      */
-    public static ScriptObject objectValue(Object val) {
-        return (ScriptObject) val;
+    public static ScriptObject objectValue(Object value) {
+        return (ScriptObject) value;
     }
 
     /**
-     * If {@code val} is an Object type, its value is returned. If {@code val} is a Null type,
+     * If {@code value} is an Object type, its value is returned. If {@code value} is a Null type,
      * <code>null</code> is returned. Otherwise a {@link ClassCastException} is thrown.
+     * 
+     * @param value
+     *            the value object
+     * @return the script object or {@code null}
      */
-    public static ScriptObject objectValueOrNull(Object val) {
-        return val == NULL ? null : (ScriptObject) val;
+    public static ScriptObject objectValueOrNull(Object value) {
+        return value == NULL ? null : (ScriptObject) value;
     }
 }

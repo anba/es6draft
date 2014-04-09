@@ -71,6 +71,14 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initialisa
 
         /**
          * 23.4.3.1 WeakSet.prototype.add ( value )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the new value
+         * @return this weak set object
          */
         @Function(name = "add", arity = 1)
         public static Object set(ExecutionContext cx, Object thisValue, Object value) {
@@ -90,6 +98,12 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initialisa
 
         /**
          * 23.4.3.2 WeakSet.prototype.clear ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the undefined value
          */
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
@@ -103,6 +117,14 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initialisa
 
         /**
          * 23.4.3.4 WeakSet.prototype.delete ( value )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the value
+         * @return {@code true} if the entry was deleted
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object value) {
@@ -120,6 +142,14 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initialisa
 
         /**
          * 23.4.3.5 WeakSet.prototype.has ( value )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the value
+         * @return {@code true} if the entry was found
          */
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object value) {

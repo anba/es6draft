@@ -51,6 +51,14 @@ public final class ListIterator<T> extends OrdinaryObject {
      * 7.4.7 CreateListIterator (list)
      * <p>
      * Returns a new {@link ListIterator} object for the internal list {@code iterator}
+     * 
+     * @param <T>
+     *            the iteration type
+     * @param cx
+     *            the execution context
+     * @param iter
+     *            the source iterator
+     * @return a new script object iterator
      */
     public static <T> ListIterator<T> CreateListIterator(ExecutionContext cx, Iterator<T> iter) {
         /* step 1 */
@@ -70,6 +78,14 @@ public final class ListIterator<T> extends OrdinaryObject {
     /**
      * Returns an {@link Iterator} for {@code iterator}. {@code iterator} is expected to comply to
      * the <code>"25.1.2 The Iterator Interface"</code>.
+     * 
+     * @param cx
+     *            the execution context
+     * @param holder
+     *            the iterator source
+     * @param iterator
+     *            the script iterator object
+     * @return the iterator object
      */
     public static Iterator<?> FromListIterator(ExecutionContext cx, ScriptObject holder,
             ScriptObject iterator) {
@@ -83,6 +99,12 @@ public final class ListIterator<T> extends OrdinaryObject {
     /**
      * Returns an {@link Iterator} for {@code iterator}. {@code iterator} is expected to comply to
      * the <code>"25.1.2 The Iterator Interface"</code>.
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the script iterator object
+     * @return the iterator object
      */
     public static Iterator<?> FromScriptIterator(ExecutionContext cx, ScriptObject iterator) {
         return new IteratorWrapper(cx, iterator);

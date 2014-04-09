@@ -34,6 +34,8 @@ public final class NumberObject extends OrdinaryObject {
 
     /**
      * [[NumberData]]
+     * 
+     * @return the number value
      */
     public double getNumberData() {
         return numberData;
@@ -41,6 +43,9 @@ public final class NumberObject extends OrdinaryObject {
 
     /**
      * [[NumberData]]
+     * 
+     * @param numberData
+     *            the new number value
      */
     public void setNumberData(double numberData) {
         assert !this.initialised : "NumberObject already initialised";
@@ -50,6 +55,12 @@ public final class NumberObject extends OrdinaryObject {
 
     /**
      * Custom helper function
+     * 
+     * @param cx
+     *            the execution context
+     * @param numberData
+     *            the number value
+     * @return the new number object
      */
     public static NumberObject NumberCreate(ExecutionContext cx, double numberData) {
         NumberObject obj = new NumberObject(cx.getRealm());

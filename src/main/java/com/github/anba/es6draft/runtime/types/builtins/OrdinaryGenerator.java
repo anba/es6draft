@@ -91,6 +91,12 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
      * <pre>
      * GeneratorBody : FunctionBody
      * </pre>
+     * 
+     * @param cx
+     *            the execution context
+     * @param functionObject
+     *            the generator function object
+     * @return the generator result value
      */
     public static GeneratorObject EvaluateBody(ExecutionContext cx, OrdinaryGenerator functionObject) {
         /* step 1 */
@@ -119,6 +125,12 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
      * <pre>
      * GeneratorBody : Comprehension
      * </pre>
+     * 
+     * @param cx
+     *            the execution context
+     * @param functionObject
+     *            the generator function object
+     * @return the generator result value
      */
     public static GeneratorObject EvaluateBodyComprehension(ExecutionContext cx,
             OrdinaryGenerator functionObject) {
@@ -146,6 +158,16 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
 
     /**
      * 9.2.4 FunctionAllocate Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param functionPrototype
+     *            the function prototype
+     * @param strict
+     *            the strict mode flag
+     * @param kind
+     *            the function kind
+     * @return the new generator function object
      */
     public static OrdinaryGenerator FunctionAllocate(ExecutionContext cx,
             ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
@@ -162,6 +184,16 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
 
     /**
      * 9.2.7 GeneratorFunctionCreate Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param kind
+     *            the function kind
+     * @param function
+     *            the function code
+     * @param scope
+     *            the lexical environment
+     * @return the new generator function object
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
@@ -170,6 +202,18 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
 
     /**
      * 9.2.7 GeneratorFunctionCreate Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param kind
+     *            the function kind
+     * @param function
+     *            the function code
+     * @param scope
+     *            the lexical environment
+     * @param functionPrototype
+     *            the function prototype
+     * @return the new generator function object
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope,

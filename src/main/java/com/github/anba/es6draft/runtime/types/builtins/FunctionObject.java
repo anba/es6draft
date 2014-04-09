@@ -50,7 +50,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
             mh = MethodHandles.dropArguments(mh, 1, Object.class, Object[].class);
             uninitialisedFunctionMH = MethodHandles.dropArguments(mh, 0, OrdinaryFunction.class);
             uninitialisedGeneratorMH = MethodHandles.dropArguments(mh, 0, OrdinaryGenerator.class);
-            uninitialisedAsyncFunctionMH = MethodHandles.dropArguments(mh, 0, OrdinaryAsyncFunction.class);
+            uninitialisedAsyncFunctionMH = MethodHandles.dropArguments(mh, 0,
+                    OrdinaryAsyncFunction.class);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new IllegalStateException(e);
         }
@@ -110,8 +111,10 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * Returns {@code true} iff legacy .caller and .arguments properties are available for this
-     * function object
+     * Returns {@code true} if legacy .caller and .arguments properties are available for this
+     * function object.
+     * 
+     * @return {@code true} if legacy properties are supported
      */
     private final boolean isLegacy() {
         // TODO: 'caller' and 'arguments' properties are never updated for generator functions
@@ -121,28 +124,37 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * Returns {@code true} iff the [[Construct]] method is attached to this function object
+     * Returns {@code true} if the [[Construct]] method is attached to this function object.
+     * 
+     * @return {@code true} if this function is a constructor
      */
     protected boolean isConstructor() {
         return isConstructor;
     }
 
     /**
-     * Sets the [[Construct]] flag for this function object
+     * Sets the [[Construct]] flag for this function object.
+     * 
+     * @param isConstructor
+     *            the new constructor flag
      */
     protected final void setConstructor(boolean isConstructor) {
         this.isConstructor = isConstructor;
     }
 
     /**
-     * Returns the {@link MethodHandle} for the function entry method
+     * Returns the {@link MethodHandle} for the function entry method.
+     * 
+     * @return the call method handle
      */
     public final MethodHandle getCallMethod() {
         return callMethod;
     }
 
     /**
-     * Returns the {@link MethodHandle} for the function tail-call entry method
+     * Returns the {@link MethodHandle} for the function tail-call entry method.
+     * 
+     * @return the tail-call method handle
      */
     public final MethodHandle getTailCallMethod() {
         return tailCallMethod;
@@ -150,6 +162,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [Called from generated code]
+     * 
+     * @return the legacy caller value
      */
     public final Object getLegacyCaller() {
         return caller.getValue();
@@ -157,6 +171,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [Called from generated code]
+     * 
+     * @return the legacy arguments value
      */
     public final Object getLegacyArguments() {
         return arguments.getValue();
@@ -164,6 +180,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [Called from generated code]
+     * 
+     * @param caller
+     *            the new caller value
      */
     public final void setLegacyCaller(FunctionObject caller) {
         if (caller == null || caller.isStrict()) {
@@ -175,6 +194,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [Called from generated code]
+     * 
+     * @param arguments
+     *            the new arguments value
      */
     public final void setLegacyArguments(ExoticLegacyArguments arguments) {
         this.arguments.applyValue(arguments);
@@ -182,6 +204,11 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [Called from generated code]
+     * 
+     * @param oldCaller
+     *            the old caller value
+     * @param oldArguments
+     *            the old arguments value
      */
     public final void restoreLegacyProperties(Object oldCaller, Object oldArguments) {
         this.caller.applyValue(oldCaller);
@@ -267,7 +294,13 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * Returns a copy of this function object with the [[HomeObject]] property set to
-     * {@code newHomeObject} and the [[MethodName]] property set to {@code newMethodName}
+     * {@code newHomeObject} and the [[MethodName]] property set to {@code newMethodName}.
+     * 
+     * @param newHomeObject
+     *            the new home object
+     * @param newMethodName
+     *            the new method name
+     * @return the new function object
      */
     protected final FunctionObject clone(ScriptObject newHomeObject, Object newMethodName) {
         FunctionObject clone = allocateNew();
@@ -289,12 +322,25 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * Allocates a new, uninitialised copy of this function object
+     * Allocates a new, uninitialised copy of this function object.
+     * 
+     * @return a new uninitialised function object
      */
     protected abstract FunctionObject allocateNew();
 
     /**
      * 9.2.3 FunctionAllocate Abstract Operation
+     * 
+     * @param realm
+     *            the realm instance
+     * @param functionPrototype
+     *            the prototype object
+     * @param strict
+     *            the strict mode flag
+     * @param kind
+     *            the function kind
+     * @param defaultCallMethod
+     *            the default call method handle
      */
     protected final void allocate(Realm realm, ScriptObject functionPrototype, boolean strict,
             FunctionKind kind, MethodHandle defaultCallMethod) {
@@ -315,6 +361,13 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * 9.2.5 FunctionInitialise Abstract Operation
+     * 
+     * @param kind
+     *            the function kind
+     * @param function
+     *            the function code
+     * @param scope
+     *            the function scope
      */
     protected final void initialise(FunctionKind kind, RuntimeInfo.Function function,
             LexicalEnvironment<?> scope) {
@@ -338,6 +391,11 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * 9.2.10 MakeMethod ( F, methodName, homeObject ) Abstract Operation
+     * 
+     * @param methodName
+     *            the new method name
+     * @param homeObject
+     *            the new home object
      */
     protected final void toMethod(Object methodName, ScriptObject homeObject) {
         assert isInitialised() : "uninitialised function object";
@@ -348,7 +406,12 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
+     * Updates the method name and home object fields.
      * 
+     * @param methodName
+     *            the method name
+     * @param homeObject
+     *            the home object
      */
     public final void updateMethod(Object methodName, ScriptObject homeObject) {
         assert isInitialised() : "uninitialised function object";
@@ -374,6 +437,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [[Environment]]
+     * 
+     * @return the environment field
      */
     public final LexicalEnvironment<?> getEnvironment() {
         return environment;
@@ -381,6 +446,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [[FunctionKind]]
+     * 
+     * @return the function kind field
      */
     public final FunctionKind getFunctionKind() {
         return functionKind;
@@ -388,6 +455,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [[Code]]
+     * 
+     * @return the function code field
      */
     public final RuntimeInfo.Function getCode() {
         return function;
@@ -395,6 +464,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [[Realm]]
+     * 
+     * @return the realm field
      */
     public final Realm getRealm() {
         return realm;
@@ -402,6 +473,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [[ThisMode]]
+     * 
+     * @return the this-mode field
      */
     public final ThisMode getThisMode() {
         return thisMode;
@@ -409,6 +482,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [[Strict]]
+     * 
+     * @return the strict mode field
      */
     public final boolean isStrict() {
         return strict;
@@ -416,6 +491,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [[Strict]]
+     * 
+     * @param strict
+     *            the new strict mode flag
      */
     public final void setStrict(boolean strict) {
         this.strict = strict;
@@ -423,6 +501,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [[NeedsSuper]]
+     * 
+     * @return the needs-super field
      */
     public final boolean isNeedsSuper() {
         return needsSuper;
@@ -430,6 +510,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [[HomeObject]]
+     * 
+     * @return the home object field
      */
     public final ScriptObject getHomeObject() {
         return homeObject;
@@ -437,6 +519,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * [[MethodName]]
+     * 
+     * @return the method name field
      */
     public final Object getMethodName() {
         return methodName;

@@ -97,6 +97,12 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
 
         /**
          * 19.3.2.2 Boolean[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised boolean object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

@@ -37,6 +37,11 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     /**
      * Creates a new built-in function, does <strong>not</strong> set the [[Prototype]] or any
      * properties.
+     * 
+     * @param realm
+     *            the realm instance
+     * @param name
+     *            the function name
      */
     public BuiltinFunction(Realm realm, String name) {
         super(realm);
@@ -48,6 +53,13 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
      * Creates a new built-in function, sets the [[Prototype]] property to
      * <code>%FunctionPrototype%</code> and defines the "name", "length" and other restricted
      * function properties.
+     * 
+     * @param realm
+     *            the realm instance
+     * @param name
+     *            the function name
+     * @param arity
+     *            the function arity
      */
     public BuiltinFunction(Realm realm, String name, int arity) {
         super(realm);
@@ -58,6 +70,12 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
 
     /**
      * Returns the i-th argument or {@code undefined} if the argument index is out of bounds.
+     * 
+     * @param arguments
+     *            the function arguments
+     * @param index
+     *            the argument index
+     * @return the requested argument or undefined if not present
      */
     protected static final Object getArgument(Object[] arguments, int index) {
         return arguments.length > index ? arguments[index] : UNDEFINED;
@@ -65,13 +83,23 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
 
     /**
      * Returns the i-th argument or {@code defaultValue} if the argument index is out of bounds.
+     * 
+     * @param arguments
+     *            the function arguments
+     * @param index
+     *            the argument index
+     * @param defaultValue
+     *            the default value for absent arguments
+     * @return the requested argument or <var>defaultValue</var> if not present
      */
     protected static final Object getArgument(Object[] arguments, int index, Object defaultValue) {
         return arguments.length > index ? arguments[index] : defaultValue;
     }
 
     /**
-     * Returns the callee execution context
+     * Returns the callee execution context.
+     * 
+     * @return the callee context
      */
     protected final ExecutionContext calleeContext() {
         return realm.defaultContext();
@@ -80,7 +108,12 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     /**
      * Creates the default function properties, i.e. 'name' and 'length', initialises the
      * [[Prototype]] to the <code>%FunctionPrototype%</code> object and calls
-     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, ScriptObject)}
+     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, ScriptObject)}.
+     * 
+     * @param name
+     *            the function name
+     * @param arity
+     *            the function arity
      */
     private final void createDefaultFunctionProperties(String name, int arity) {
         ExecutionContext cx = realm.defaultContext();
@@ -100,7 +133,9 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
-     * Returns the function's name
+     * Returns the function's name.
+     * 
+     * @return the function name
      */
     public final String getName() {
         return name;
@@ -108,6 +143,8 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
 
     /**
      * [[Realm]]
+     * 
+     * @return the bound realm
      */
     public final Realm getRealm() {
         return realm;

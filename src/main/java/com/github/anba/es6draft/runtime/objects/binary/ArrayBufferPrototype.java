@@ -74,6 +74,12 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
 
         /**
          * 24.1.4.1 get ArrayBuffer.prototype.byteLength
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the array buffer length in bytes
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
@@ -87,6 +93,16 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
 
         /**
          * 24.1.4.3 ArrayBuffer.prototype.slice (start, end)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param start
+         *            the start index
+         * @param end
+         *            the end index
+         * @return the new array buffer object
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {

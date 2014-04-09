@@ -38,6 +38,7 @@ import com.github.anba.es6draft.runtime.modules.ModuleEvaluation.EvaluateLoadedM
 import com.github.anba.es6draft.runtime.modules.ModuleLinkage;
 import com.github.anba.es6draft.runtime.modules.ModuleLoading.AsyncStartLoadPartwayThrough;
 import com.github.anba.es6draft.runtime.objects.modules.LoaderIteratorPrototype.LoaderIterationKind;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -73,6 +74,12 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * Abstract Operation: thisLoader(value)
+         * 
+         * @param cx
+         *            the execution context
+         * @param value
+         *            the argument value
+         * @return the loader object
          */
         private static LoaderObject thisLoader(ExecutionContext cx, Object value) {
             if (value instanceof LoaderObject) {
@@ -96,6 +103,12 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 26.3.3.14 get Loader.prototype.realm
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the realm object
          */
         @Accessor(name = "realm", type = Accessor.Type.Getter)
         public static Object realm(ExecutionContext cx, Object thisValue) {
@@ -109,6 +122,12 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 26.3.3.7 get Loader.prototype.global
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the global object
          */
         @Accessor(name = "global", type = Accessor.Type.Getter)
         public static Object global(ExecutionContext cx, Object thisValue) {
@@ -122,6 +141,18 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 26.3.3.2 %Loader%.prototype.define ( name, source, options = undefined )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param name
+         *            the module name
+         * @param source
+         *            the module source
+         * @param options
+         *            the options object
+         * @return a new promise object
          */
         @Function(name = "define", arity = 2)
         public static Object define(ExecutionContext cx, Object thisValue, Object name,
@@ -141,7 +172,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
                 metadata = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             }
             /* steps 11-12 */
-            ScriptObject p = PromiseOfStartLoadPartwayThrough(cx,
+            PromiseObject p = PromiseOfStartLoadPartwayThrough(cx,
                     AsyncStartLoadPartwayThrough.Step.Translate, loaderRecord, moduleName,
                     metadata, source, address);
             /* step 13 */
@@ -152,6 +183,16 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 26.3.3.11 Loader.prototype.load ( name, options = undefined )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param name
+         *            the module name
+         * @param options
+         *            the options object
+         * @return a new promise object
          */
         @Function(name = "load", arity = 1)
         public static Object load(ExecutionContext cx, Object thisValue, Object name, Object options) {
@@ -160,7 +201,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
             /* step 3 */
             Loader loaderRecord = loader.getLoader();
             /* steps 4-5 */
-            ScriptObject p = LoadModule(cx, loaderRecord, name, options);
+            PromiseObject p = LoadModule(cx, loaderRecord, name, options);
             /* step 5 */
             ReturnUndefined f = new ReturnUndefined(cx.getRealm());
             /* steps 6-7 */
@@ -170,6 +211,16 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         /**
          * 26.3.3.12 Loader.prototype.module ( source, options ) <br>
          * FIXME: spec bug - options not declared as optional (options = undefined)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param source
+         *            the module source
+         * @param options
+         *            the options object
+         * @return a new promise object
          */
         @Function(name = "module", arity = 1)
         public static Object module(ExecutionContext cx, Object thisValue, Object source,
@@ -190,7 +241,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
             /* step 11 */
             ScriptObject p = PromiseThen(cx, linkSet.getDone(), successCallback);
             /* step 12 */
-            ScriptObject sourcePromise = PromiseOf(cx, source);
+            PromiseObject sourcePromise = PromiseOf(cx, source);
             /* step 13 */
             ProceedToTranslate(cx, loaderRecord, load, sourcePromise);
             /* steps 14 */
@@ -199,6 +250,16 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 26.3.3.9 Loader.prototype.import ( name, options = undefined )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param name
+         *            the module name
+         * @param options
+         *            the options object
+         * @return a new promise object
          */
         @Function(name = "import", arity = 1)
         public static Object _import(ExecutionContext cx, Object thisValue, Object name,
@@ -208,7 +269,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
             /* step 3 */
             Loader loaderRecord = loader.getLoader();
             /* step 4-5 */
-            ScriptObject p = LoadModule(cx, loaderRecord, name, options);
+            PromiseObject p = LoadModule(cx, loaderRecord, name, options);
             /* steps 6-7 */
             EvaluateLoadedModule f = new EvaluateLoadedModule(cx.getRealm(), loaderRecord);
             /* steps 8-9 */
@@ -217,6 +278,14 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 26.3.3.13 newModule ( obj )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param obj
+         *            the module entries
+         * @return the new module object
          */
         @Function(name = "newModule", arity = 1)
         public static Object newModule(ExecutionContext cx, Object thisValue, Object obj) {
@@ -244,6 +313,14 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 26.3.3.5 Loader.prototype.eval ( source )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param source
+         *            the source string
+         * @return the evaluation result
          */
         @Function(name = "eval", arity = 1)
         public static Object eval(ExecutionContext cx, Object thisValue, Object source) {
@@ -257,6 +334,14 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 26.3.3.6 Loader.prototype.get ( name )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param name
+         *            the module name
+         * @return the module object or undefined
          */
         @Function(name = "get", arity = 1)
         public static Object get(ExecutionContext cx, Object thisValue, Object name) {
@@ -279,6 +364,14 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 26.3.3.8 Loader.prototype.has ( name )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param name
+         *            the module name
+         * @return {@code true} if the module was found in the module registry
          */
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object name) {
@@ -294,6 +387,16 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 26.3.3.15 Loader.prototype.set ( name, module )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param name
+         *            the module name
+         * @param module
+         *            the module object
+         * @return this loader object
          */
         @Function(name = "set", arity = 2)
         public static Object set(ExecutionContext cx, Object thisValue, Object name, Object module) {
@@ -317,6 +420,14 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 26.3.3.3 Loader.prototype.delete ( name )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param name
+         *            the module name
+         * @return {@code true} if the module was successfully deleted
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object name) {
@@ -333,6 +444,12 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         /**
          * 26.3.3.4 Loader.prototype.entries ( )<br>
          * 26.3.3.17 Loader.prototype[@@iterator] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the loader entries iterator
          */
         @Function(name = "entries", arity = 0)
         @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
@@ -345,6 +462,12 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 26.3.3.10 Loader.prototype.keys ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the loader keys iterator
          */
         @Function(name = "keys", arity = 0)
         public static Object keys(ExecutionContext cx, Object thisValue) {
@@ -356,6 +479,12 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 26.3.3.16 Loader.prototype.values ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the loader values iterator
          */
         @Function(name = "values", arity = 0)
         public static Object values(ExecutionContext cx, Object thisValue) {
@@ -369,6 +498,18 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
          * 26.3.3.18 Loader Pipeline Hook Properties
          * <p>
          * 26.3.3.18.1 Loader.prototype.normalize ( name, refererName, refererAddress )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param name
+         *            the module name
+         * @param refererName
+         *            the referer name
+         * @param refererAddress
+         *            the referer address
+         * @return the normalised module name
          */
         @Function(name = "normalize", arity = 3)
         public static Object normalize(ExecutionContext cx, Object thisValue, Object name,
@@ -381,6 +522,14 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
          * 26.3.3.18 Loader Pipeline Hook Properties
          * <p>
          * 26.3.3.18.2 Loader.prototype.locate (loadRequest)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param loadRequest
+         *            the load request object
+         * @return the resolved module name
          */
         @Function(name = "locate", arity = 1)
         public static Object locate(ExecutionContext cx, Object thisValue, Object loadRequest) {
@@ -396,6 +545,14 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
          * 26.3.3.18 Loader Pipeline Hook Properties
          * <p>
          * 26.3.3.18.3 Loader.prototype.fetch (loadRequest)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param loadRequest
+         *            the load request object
+         * @return the module source code
          */
         @Function(name = "fetch", arity = 1)
         public static Object fetch(ExecutionContext cx, Object thisValue, Object loadRequest) {
@@ -407,6 +564,14 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
          * 26.3.3.18 Loader Pipeline Hook Properties
          * <p>
          * 26.3.3.18.4 Loader.prototype.translate ( loadRequest )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param loadRequest
+         *            the load request object
+         * @return the translated module source code
          */
         @Function(name = "translate", arity = 1)
         public static Object translate(ExecutionContext cx, Object thisValue, Object loadRequest) {
@@ -422,6 +587,14 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
          * 26.3.3.18 Loader Pipeline Hook Properties
          * <p>
          * 26.3.3.18.5 Loader.prototype.instantiate (loadRequest)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param loadRequest
+         *            the load request object
+         * @return the instantiated module
          */
         @Function(name = "instantiate", arity = 1)
         public static Object instantiate(ExecutionContext cx, Object thisValue, Object loadRequest) {
@@ -464,6 +637,14 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
 
     /**
      * CreateConstantGetter(key, value) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param key
+     *            the getter key
+     * @param value
+     *            the getter value
+     * @return the new getter function
      */
     public static Callable CreateConstantGetter(ExecutionContext cx, String key, Object value) {
         /* steps 1-3 */

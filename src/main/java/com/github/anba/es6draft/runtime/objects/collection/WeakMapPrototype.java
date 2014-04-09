@@ -71,6 +71,12 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initialisa
 
         /**
          * 23.3.3.1 WeakMap.prototype.clear ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the undefined value
          */
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
@@ -84,6 +90,14 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initialisa
 
         /**
          * 23.3.3.3 WeakMap.prototype.delete ( key )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param key
+         *            the key
+         * @return {@code true} if the entry was deleted
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object key) {
@@ -101,6 +115,14 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initialisa
 
         /**
          * 23.3.3.4 WeakMap.prototype.get ( key )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param key
+         *            the key
+         * @return the mapped value or undefined
          */
         @Function(name = "get", arity = 1)
         public static Object get(ExecutionContext cx, Object thisValue, Object key) {
@@ -119,6 +141,14 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initialisa
 
         /**
          * 23.3.3.5 WeakMap.prototype.has ( key )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param key
+         *            the key
+         * @return {@code true} if the entry was found
          */
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object key) {
@@ -136,6 +166,16 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initialisa
 
         /**
          * 23.3.3.6 WeakMap.prototype.set ( key , value )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param key
+         *            the key
+         * @param value
+         *            the value
+         * @return this weak map object
          */
         @Function(name = "set", arity = 2)
         public static Object set(ExecutionContext cx, Object thisValue, Object key, Object value) {

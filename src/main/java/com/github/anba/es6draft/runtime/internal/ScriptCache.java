@@ -69,14 +69,30 @@ public final class ScriptCache {
     }
 
     /**
-     * Returns a new {@link Reader} for the {@code stream} parameter
+     * Returns a new {@link Reader} for the {@code stream} parameter.
+     * 
+     * @param stream
+     *            the input stream
+     * @return the buffered input stream reader
      */
-    private Reader newReader(InputStream stream) throws IOException {
+    private Reader newReader(InputStream stream) {
         return new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
     }
 
     /**
-     * Parses the javascript source
+     * Parses the javascript source.
+     * 
+     * @param sourceFile
+     *            the script source file
+     * @param sourceLine
+     *            the script start line
+     * @param reader
+     *            the source
+     * @return the parsed script node
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
      */
     private com.github.anba.es6draft.ast.Script parse(String sourceFile, int sourceLine,
             Reader reader) throws ParserException, IOException {
@@ -96,7 +112,21 @@ public final class ScriptCache {
     }
 
     /**
-     * Parses and compiles the javascript file
+     * Parses and compiles the javascript file.
+     * 
+     * @param sourceName
+     *            the source name
+     * @param sourceLine
+     *            the source start line number
+     * @param file
+     *            the script file path
+     * @return the compiled script
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public Script script(String sourceName, int sourceLine, Path file) throws IOException,
             ParserException, CompilationException {
@@ -105,7 +135,21 @@ public final class ScriptCache {
     }
 
     /**
-     * Parses and compiles the javascript file
+     * Parses and compiles the javascript file.
+     * 
+     * @param sourceName
+     *            the source name
+     * @param sourceLine
+     *            the source start line number
+     * @param file
+     *            the script file URL
+     * @return the compiled script
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public Script script(String sourceName, int sourceLine, URL file) throws IOException,
             ParserException, CompilationException {
@@ -113,7 +157,21 @@ public final class ScriptCache {
     }
 
     /**
-     * Parses and compiles the javascript file
+     * Parses and compiles the javascript file.
+     * 
+     * @param sourceName
+     *            the source name
+     * @param sourceLine
+     *            the source start line number
+     * @param stream
+     *            the source
+     * @return the compiled script
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public Script script(String sourceName, int sourceLine, InputStream stream) throws IOException,
             ParserException, CompilationException {
@@ -124,7 +182,21 @@ public final class ScriptCache {
     }
 
     /**
-     * Parses and compiles the javascript file
+     * Parses and compiles the javascript file.
+     * 
+     * @param sourceName
+     *            the source name
+     * @param sourceLine
+     *            the source start line number
+     * @param reader
+     *            the source
+     * @return the compiled script
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public Script script(String sourceName, int sourceLine, Reader reader) throws IOException,
             ParserException, CompilationException {
@@ -135,7 +207,17 @@ public final class ScriptCache {
     }
 
     /**
-     * Compiles {@code file} to a {@link Script} and caches the result
+     * Compiles {@code file} to a {@link Script} and caches the result.
+     * 
+     * @param file
+     *            the script file path
+     * @return the compiled script
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public Script get(Path file) throws IOException, ParserException, CompilationException {
         URI cacheKey = file.toUri();
@@ -150,7 +232,19 @@ public final class ScriptCache {
     }
 
     /**
-     * Compiles {@code file} to a {@link Script} and caches the result
+     * Compiles {@code file} to a {@link Script} and caches the result.
+     * 
+     * @param file
+     *            the script file URL
+     * @return the compiled script
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws URISyntaxException
+     *             if the URL is not a valid URI
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public Script get(URL file) throws IOException, URISyntaxException, ParserException,
             CompilationException {
@@ -166,7 +260,23 @@ public final class ScriptCache {
     }
 
     /**
-     * Parses and compiles the javascript file
+     * Parses and compiles the javascript file.
+     * 
+     * @param sourceName
+     *            the source name
+     * @param sourceLine
+     *            the source start line number
+     * @param file
+     *            the script file path
+     * @param executor
+     *            the executor for parallel compilation
+     * @return the compiled script
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public Script script(String sourceName, int sourceLine, Path file, ExecutorService executor)
             throws IOException, ParserException, CompilationException {
@@ -175,7 +285,23 @@ public final class ScriptCache {
     }
 
     /**
-     * Parses and compiles the javascript file
+     * Parses and compiles the javascript file.
+     * 
+     * @param sourceName
+     *            the source name
+     * @param sourceLine
+     *            the source start line number
+     * @param file
+     *            the script file URL
+     * @param executor
+     *            the executor for parallel compilation
+     * @return the compiled script
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public Script script(String sourceName, int sourceLine, URL file, ExecutorService executor)
             throws IOException, ParserException, CompilationException {
@@ -183,7 +309,23 @@ public final class ScriptCache {
     }
 
     /**
-     * Parses and compiles the javascript file
+     * Parses and compiles the javascript file.
+     * 
+     * @param sourceName
+     *            the source name
+     * @param sourceLine
+     *            the source start line number
+     * @param stream
+     *            the source
+     * @param executor
+     *            the executor for parallel compilation
+     * @return the compiled script
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public Script script(String sourceName, int sourceLine, InputStream stream,
             ExecutorService executor) throws IOException, ParserException, CompilationException {
@@ -194,7 +336,23 @@ public final class ScriptCache {
     }
 
     /**
-     * Parses and compiles the javascript file
+     * Parses and compiles the javascript file.
+     * 
+     * @param sourceName
+     *            the source name
+     * @param sourceLine
+     *            the source start line number
+     * @param reader
+     *            the source
+     * @param executor
+     *            the executor for parallel compilation
+     * @return the compiled script
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public Script script(String sourceName, int sourceLine, Reader reader, ExecutorService executor)
             throws IOException, ParserException, CompilationException {
@@ -205,7 +363,19 @@ public final class ScriptCache {
     }
 
     /**
-     * Compiles {@code file} to a {@link Script} and caches the result
+     * Compiles {@code file} to a {@link Script} and caches the result.
+     * 
+     * @param file
+     *            the script file path
+     * @param executor
+     *            the executor for parallel compilation
+     * @return the compiled script
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public Script get(Path file, ExecutorService executor) throws IOException, ParserException,
             CompilationException {
@@ -221,7 +391,21 @@ public final class ScriptCache {
     }
 
     /**
-     * Compiles {@code file} to a {@link Script} and caches the result
+     * Compiles {@code file} to a {@link Script} and caches the result.
+     * 
+     * @param file
+     *            the script file URL
+     * @param executor
+     *            the executor for parallel compilation
+     * @return the compiled script
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws URISyntaxException
+     *             if the URL is not a valid URI
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
     public Script get(URL file, ExecutorService executor) throws IOException, URISyntaxException,
             ParserException, CompilationException {

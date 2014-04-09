@@ -15,12 +15,24 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * Interface for {@link ScriptObject}s which hold an {@link ArrayBufferObject}
  */
 public interface ArrayBufferView extends ScriptObject {
-    /** [[ViewedArrayBuffer]] */
+    /**
+     * [[ViewedArrayBuffer]]
+     *
+     * @return the array buffer object
+     */
     ArrayBufferObject getBuffer();
 
-    /** [[ByteLength]] */
+    /**
+     * [[ByteLength]]
+     *
+     * @return the view length in bytes
+     */
     long getByteLength();
 
-    /** [[ByteOffset]] */
+    /**
+     * [[ByteOffset]]
+     *
+     * @return the byte offset
+     */
     long getByteOffset();
 }

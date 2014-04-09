@@ -84,6 +84,14 @@ public final class LoaderIteratorPrototype extends OrdinaryObject implements Ini
 
     /**
      * 26.3.5.1 CreateLoaderIterator Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param loader
+     *            the loader object
+     * @param kind
+     *            the loder iteration kind
+     * @return the new loader iterator
      */
     public static OrdinaryObject CreateLoaderIterator(ExecutionContext cx, LoaderObject loader,
             LoaderIterationKind kind) {
@@ -112,6 +120,12 @@ public final class LoaderIteratorPrototype extends OrdinaryObject implements Ini
 
         /**
          * 26.3.5.2.1 %LoaderIteratorPrototype%.next( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the next iterator result object
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
@@ -165,6 +179,12 @@ public final class LoaderIteratorPrototype extends OrdinaryObject implements Ini
 
         /**
          * 26.3.5.2.2 %LoaderIteratorPrototype% [ @@iterator ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the this-value
          */
         @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {

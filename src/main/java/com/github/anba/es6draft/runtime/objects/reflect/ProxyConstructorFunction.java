@@ -85,6 +85,16 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
 
         /**
          * 26.5.2.1 Proxy.revocable ( target, handler )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the proxy target object
+         * @param handler
+         *            the proxy handler object
+         * @return the revocable proxy
          */
         @Function(name = "revocable", arity = 2)
         public static Object revocable(ExecutionContext cx, Object thisValue, Object target,

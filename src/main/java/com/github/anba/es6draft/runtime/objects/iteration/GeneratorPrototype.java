@@ -56,6 +56,14 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
 
         /**
          * 25.3.1.2 Generator.prototype.next ( value )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the value object
+         * @return the iterator result object
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue, Object value) {
@@ -64,6 +72,14 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
 
         /**
          * 25.3.1.3 Generator.prototype.throw ( exception )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param exception
+         *            the exception object
+         * @return the iterator result object
          */
         @Function(name = "throw", arity = 1)
         public static Object _throw(ExecutionContext cx, Object thisValue, Object exception) {
@@ -72,6 +88,12 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
 
         /**
          * 25.3.1.4 Generator.prototype [ @@iterator ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the this-value
          */
         @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {

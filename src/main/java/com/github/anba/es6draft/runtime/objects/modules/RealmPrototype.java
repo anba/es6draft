@@ -48,6 +48,12 @@ public final class RealmPrototype extends OrdinaryObject implements Initialisabl
 
         /**
          * Abstract Operation: thisRealmObject(value)
+         * 
+         * @param cx
+         *            the execution context
+         * @param value
+         *            the argument value
+         * @return the realm object
          */
         private static RealmObject thisRealmObject(ExecutionContext cx, Object value) {
             if (value instanceof RealmObject) {
@@ -70,7 +76,15 @@ public final class RealmPrototype extends OrdinaryObject implements Initialisabl
         public static final Intrinsics constructor = Intrinsics.Realm;
 
         /**
-         * 26.2.3.2 %Realm%.prototype.eval (source )
+         * 26.2.3.2 %Realm%.prototype.eval (source)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param source
+         *            the source string
+         * @return the evaluation result
          */
         @Function(name = "eval", arity = 1)
         public static Object eval(ExecutionContext cx, Object thisValue, Object source) {
@@ -82,6 +96,12 @@ public final class RealmPrototype extends OrdinaryObject implements Initialisabl
 
         /**
          * 26.2.3.3 get Realm.prototype.global
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the global object instance
          */
         @Accessor(name = "global", type = Accessor.Type.Getter)
         public static Object global(ExecutionContext cx, Object thisValue) {

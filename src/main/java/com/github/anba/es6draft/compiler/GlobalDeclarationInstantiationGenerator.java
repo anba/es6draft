@@ -15,10 +15,7 @@ import java.util.Set;
 
 import org.objectweb.asm.Type;
 
-import com.github.anba.es6draft.ast.AsyncFunctionDeclaration;
 import com.github.anba.es6draft.ast.Declaration;
-import com.github.anba.es6draft.ast.FunctionDeclaration;
-import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
@@ -158,8 +155,7 @@ final class GlobalDeclarationInstantiationGenerator extends
         Set<String> declaredFunctionNames = new HashSet<>();
         /* step 9 */
         for (StatementListItem item : reverse(varDeclarations)) {
-            if (item instanceof FunctionDeclaration || item instanceof GeneratorDeclaration
-                    || item instanceof AsyncFunctionDeclaration) {
+            if (isFunctionDeclaration(item)) {
                 Declaration d = (Declaration) item;
                 String fn = BoundName(d);
                 if (!declaredFunctionNames.contains(fn)) {
@@ -188,13 +184,7 @@ final class GlobalDeclarationInstantiationGenerator extends
         for (Declaration f : functionsToInitialise) {
             String fn = BoundName(f);
             // stack: [] -> [fo]
-            if (f instanceof GeneratorDeclaration) {
-                InstantiateGeneratorObject(context, lexEnv, (GeneratorDeclaration) f, mv);
-            } else if (f instanceof FunctionDeclaration) {
-                InstantiateFunctionObject(context, lexEnv, (FunctionDeclaration) f, mv);
-            } else {
-                InstantiateAsyncFunctionObject(context, lexEnv, (AsyncFunctionDeclaration) f, mv);
-            }
+            InstantiateFunctionObject(context, lexEnv, f, mv);
             createGlobalFunctionBinding(envRec, fn, deletableBindings, mv);
         }
         /* step 14 */
@@ -205,7 +195,7 @@ final class GlobalDeclarationInstantiationGenerator extends
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(script);
         /* step 16 */
         for (Declaration d : lexDeclarations) {
-            assert !(d instanceof GeneratorDeclaration);
+            assert !isFunctionDeclaration(d);
             for (String dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
                     createImmutableBinding(lexEnvRec, dn, mv);
@@ -222,6 +212,15 @@ final class GlobalDeclarationInstantiationGenerator extends
      * <code>
      * ScriptRuntime.canDeclareLexicalScopedOrThrow(cx, envRec, name)
      * </code>
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the instruction visitor
      */
     private void canDeclareLexicalScopedOrThrow(Variable<ExecutionContext> context,
             Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
@@ -235,6 +234,15 @@ final class GlobalDeclarationInstantiationGenerator extends
      * <code>
      * ScriptRuntime.canDeclareVarScopedOrThrow(cx, envRec, name)
      * </code>
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the instruction visitor
      */
     private void canDeclareVarScopedOrThrow(Variable<ExecutionContext> context,
             Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
@@ -248,6 +256,15 @@ final class GlobalDeclarationInstantiationGenerator extends
      * <code>
      * ScriptRuntime.canDeclareGlobalFunctionOrThrow(cx, envRec, name)
      * </code>
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the instruction visitor
      */
     private void canDeclareGlobalFunctionOrThrow(Variable<ExecutionContext> context,
             Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
@@ -261,6 +278,15 @@ final class GlobalDeclarationInstantiationGenerator extends
      * <code>
      * ScriptRuntime.canDeclareGlobalVarOrThrow(cx, envRec, name)
      * </code>
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the instruction visitor
      */
     private void canDeclareGlobalVarOrThrow(Variable<ExecutionContext> context,
             Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
@@ -274,6 +300,15 @@ final class GlobalDeclarationInstantiationGenerator extends
      * <code>
      * envRec.createGlobalVarBinding(name, deletableBindings)
      * </code>
+     * 
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param deletableBindings
+     *            the variable which holds the deletable flag
+     * @param mv
+     *            the instruction visitor
      */
     private void createGlobalVarBinding(Variable<GlobalEnvironmentRecord> envRec, String name,
             Variable<Boolean> deletableBindings, InstructionVisitor mv) {
@@ -287,6 +322,15 @@ final class GlobalDeclarationInstantiationGenerator extends
      * <code>
      * envRec.createGlobalFunctionBinding(name, functionObject, deletableBindings)
      * </code>
+     * 
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param deletableBindings
+     *            the variable which holds the deletable flag
+     * @param mv
+     *            the instruction visitor
      */
     private void createGlobalFunctionBinding(Variable<GlobalEnvironmentRecord> envRec, String name,
             Variable<Boolean> deletableBindings, InstructionVisitor mv) {

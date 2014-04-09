@@ -96,14 +96,28 @@ public final class SourceBuilder {
     }
 
     /**
-     * Returns the simple mode, source representation for {@code val}
+     * Returns the simple mode, source representation for {@code val}.
+     * 
+     * @param cx
+     *            the execution context
+     * @param val
+     *            the value
+     * @return the source representation of the value
      */
     public static String ToSource(ExecutionContext cx, Object val) {
         return ToSource(Mode.Simple, cx, val);
     }
 
     /**
-     * Returns the source representation for {@code val}
+     * Returns the source representation for {@code val}.
+     * 
+     * @param mode
+     *            the source representation mode
+     * @param cx
+     *            the execution context
+     * @param val
+     *            the value
+     * @return the source representation of the value
      */
     public static String ToSource(Mode mode, ExecutionContext cx, Object val) {
         HashSet<ScriptObject> stack = new HashSet<>();

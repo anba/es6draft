@@ -23,6 +23,10 @@ public final class GlobalSymbolRegistry {
 
     /**
      * Returns the symbol which is mapped to {@code key}, or creates a new mapping.
+     * 
+     * @param key
+     *            the symbol string key
+     * @return the mapped symbol
      */
     public Symbol getSymbol(String key) {
         assert key != null : "key must not be null";
@@ -38,6 +42,10 @@ public final class GlobalSymbolRegistry {
     /**
      * Returns the key which is mapped to {@code symbol}, or returns <code>null</code> if there is
      * no mapping.
+     * 
+     * @param symbol
+     *            the global symbol
+     * @return the symbol string key or {@code null} if the symbol is not in the registry
      */
     public String getKey(Symbol symbol) {
         assert symbol != null : "symbol must not be null";

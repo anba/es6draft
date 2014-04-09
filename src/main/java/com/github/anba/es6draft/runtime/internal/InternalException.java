@@ -25,6 +25,8 @@ public abstract class InternalException extends RuntimeException {
     /**
      * InternalException constructor
      * 
+     * @param message
+     *            the error message
      * @see RuntimeException#RuntimeException(String)
      */
     public InternalException(String message) {
@@ -34,6 +36,10 @@ public abstract class InternalException extends RuntimeException {
     /**
      * InternalException constructor
      * 
+     * @param message
+     *            the error message
+     * @param cause
+     *            the exception cause
      * @see RuntimeException#RuntimeException(String, Throwable)
      */
     public InternalException(String message, Throwable cause) {
@@ -43,6 +49,8 @@ public abstract class InternalException extends RuntimeException {
     /**
      * InternalException constructor
      * 
+     * @param cause
+     *            the exception cause
      * @see RuntimeException#RuntimeException(Throwable)
      */
     public InternalException(Throwable cause) {
@@ -52,6 +60,14 @@ public abstract class InternalException extends RuntimeException {
     /**
      * InternalException constructor
      * 
+     * @param message
+     *            the error message
+     * @param cause
+     *            the exception cause
+     * @param enableSuppression
+     *            the enableSuppression flag
+     * @param writableStackTrace
+     *            the writableStackTrace flag
      * @see RuntimeException#RuntimeException(String, Throwable, boolean, boolean)
      */
     protected InternalException(String message, Throwable cause, boolean enableSuppression,
@@ -60,7 +76,11 @@ public abstract class InternalException extends RuntimeException {
     }
 
     /**
-     * Returns a {@link ScriptException} for this exception object
+     * Returns a {@link ScriptException} for this exception object.
+     * 
+     * @param cx
+     *            the execution context to construct the script exception
+     * @return the script exception for this exception.
      */
     public abstract ScriptException toScriptException(ExecutionContext cx);
 }

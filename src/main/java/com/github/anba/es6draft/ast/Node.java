@@ -11,37 +11,59 @@ package com.github.anba.es6draft.ast;
  */
 public interface Node {
     /**
-     * Returns the begin line position
+     * Returns the begin line position.
+     * 
+     * @return the begin line position
      */
     int getBeginLine();
 
     /**
-     * Returns the begin column position
+     * Returns the begin column position.
+     * 
+     * @return the begin column position
      */
     int getBeginColumn();
 
     /**
-     * Returns the begin position
+     * Returns the begin position.
+     * 
+     * @return the begin position
      */
     long getBeginPosition();
 
     /**
-     * Returns the end line position
+     * Returns the end line position.
+     * 
+     * @return the end line position
      */
     int getEndLine();
 
     /**
-     * Returns the end column position
+     * Returns the end column position.
+     * 
+     * @return the end column position
      */
     int getEndColumn();
 
     /**
-     * Returns the end position
+     * Returns the end position.
+     * 
+     * @return the end position
      */
     long getEndPosition();
 
     /**
-     * Visitor pattern {@code accept()} method
+     * Visitor pattern {@code accept()} method.
+     * 
+     * @param <R>
+     *            the return value type
+     * @param <V>
+     *            the value object type
+     * @param visitor
+     *            the visitor instance
+     * @param value
+     *            the value object
+     * @return the return value from the visitor
      */
     <R, V> R accept(NodeVisitor<R, V> visitor, V value);
 }

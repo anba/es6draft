@@ -165,6 +165,14 @@ public class ExoticProxy implements ScriptObject {
 
     /**
      * 9.5.15 ProxyCreate(target, handler) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param target
+     *            the proxy target object
+     * @param handler
+     *            the proxy handler object
+     * @return the new proxy object
      */
     public static ExoticProxy ProxyCreate(ExecutionContext cx, Object target, Object handler) {
         /* step 1 */
@@ -252,10 +260,14 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * Java {@code null} to {@link Null#NULL}
+     * Java {@code null} to {@link Null#NULL}.
+     * 
+     * @param value
+     *            the value
+     * @return either <var>value</var> or {@link Null#NULL}
      */
-    private static Object maskNull(Object val) {
-        return val != null ? val : NULL;
+    private static Object maskNull(Object value) {
+        return value != null ? value : NULL;
     }
 
     /**
@@ -408,6 +420,12 @@ public class ExoticProxy implements ScriptObject {
 
     /**
      * 9.5.5 [[GetOwnProperty]] (P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return the property or {@code null} if none found
      */
     private Property getOwnProperty(ExecutionContext cx, Object propertyKey) {
         /* step 1 (implicit) */
@@ -489,6 +507,14 @@ public class ExoticProxy implements ScriptObject {
 
     /**
      * 9.5.6 [[DefineOwnProperty]] (P, Desc)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param desc
+     *            the property descriptor
+     * @return {@code true} if the property was successfully defined
      */
     private boolean defineOwnProperty(ExecutionContext cx, Object propertyKey,
             PropertyDescriptor desc) {
@@ -561,6 +587,12 @@ public class ExoticProxy implements ScriptObject {
 
     /**
      * 9.5.7 [[HasProperty]] (P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property was found
      */
     private boolean hasProperty(ExecutionContext cx, Object propertyKey) {
         /* step 1 (implicit) */
@@ -613,6 +645,14 @@ public class ExoticProxy implements ScriptObject {
 
     /**
      * 9.5.8 [[Get]] (P, Receiver)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param receiver
+     *            the receiver object
+     * @return the property value
      */
     private Object get(ExecutionContext cx, Object propertyKey, Object receiver) {
         /* step 1 (implicit) */
@@ -667,6 +707,16 @@ public class ExoticProxy implements ScriptObject {
 
     /**
      * 9.5.9 [[Set]] ( P, V, Receiver)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @param receiver
+     *            the receiver object
+     * @return {@code true} on success
      */
     private boolean set(ExecutionContext cx, Object propertyKey, Object value, Object receiver) {
         /* step 1 (implicit) */
@@ -726,6 +776,12 @@ public class ExoticProxy implements ScriptObject {
 
     /**
      * 9.5.10 [[Delete]] (P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property was successfully deleted
      */
     private boolean delete(ExecutionContext cx, Object propertyKey) {
         /* step 1 (implicit) */

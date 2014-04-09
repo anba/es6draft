@@ -43,6 +43,10 @@ public final class IntlAbstractOperations {
 
     /**
      * 6.1 Case Sensitivity and Case Mapping
+     * 
+     * @param s
+     *            the string
+     * @return the upper case string
      */
     public static String ToUpperCase(String s) {
         char[] ca = s.toCharArray();
@@ -58,6 +62,10 @@ public final class IntlAbstractOperations {
 
     /**
      * 6.2.1 Unicode Locale Extension Sequences
+     * 
+     * @param languageTag
+     *            the canonicalized language tag
+     * @return the unicode extension sequences
      */
     private static String[] UnicodeLocaleExtSequence(String languageTag) {
         unicodeExt: {
@@ -101,6 +109,10 @@ public final class IntlAbstractOperations {
 
     /**
      * 6.2.2 IsStructurallyValidLanguageTag (locale)
+     * 
+     * @param locale
+     *            the locale string
+     * @return the parsed language tag
      */
     public static LanguageTag IsStructurallyValidLanguageTag(String locale) {
         return new LanguageTagParser(locale).parse();
@@ -108,6 +120,10 @@ public final class IntlAbstractOperations {
 
     /**
      * 6.2.3 CanonicalizeLanguageTag (locale)
+     * 
+     * @param locale
+     *            the language tag
+     * @return the canonicalized language tag
      */
     public static String CanonicalizeLanguageTag(LanguageTag locale) {
         return locale.canonicalize();
@@ -115,6 +131,10 @@ public final class IntlAbstractOperations {
 
     /**
      * 6.2.4 DefaultLocale ()
+     * 
+     * @param realm
+     *            the realm instance
+     * @return the default locale
      */
     public static String DefaultLocale(Realm realm) {
         return realm.getLocale().toLanguageTag();
@@ -122,6 +142,12 @@ public final class IntlAbstractOperations {
 
     /**
      * 6.3.1 IsWellFormedCurrencyCode (currency)
+     * 
+     * @param cx
+     *            the execution context
+     * @param currency
+     *            the currency string
+     * @return {@code true} if the currency string is well formed
      */
     public static boolean IsWellFormedCurrencyCode(ExecutionContext cx, Object currency) {
         String normalized = ToFlatString(cx, currency);
@@ -158,6 +184,10 @@ public final class IntlAbstractOperations {
 
     /**
      * 6.4.1 IsValidTimeZoneName (timeZone)
+     * 
+     * @param timeZone
+     *            the time zone name
+     * @return {@code true} if the time zone name is valid
      */
     public static boolean IsValidTimeZoneName(String timeZone) {
         return timezones.get().containsKey(ToUpperCase(timeZone));
@@ -165,6 +195,10 @@ public final class IntlAbstractOperations {
 
     /**
      * 6.4.2 CanonicalizeTimeZoneName (timeZone)
+     * 
+     * @param timeZone
+     *            the time zone name
+     * @return the canonicalized time zone name
      */
     public static String CanonicalizeTimeZoneName(String timeZone) {
         /* step 1 */
@@ -182,6 +216,10 @@ public final class IntlAbstractOperations {
 
     /**
      * 6.4.3 DefaultTimeZone ()
+     * 
+     * @param realm
+     *            the realm instance
+     * @return the default time zone
      */
     public static String DefaultTimeZone(Realm realm) {
         return realm.getTimezone().getID();
@@ -226,6 +264,10 @@ public final class IntlAbstractOperations {
 
     /**
      * 9.1 Internal Properties of Service Constructors
+     * 
+     * @param locales
+     *            the supported locales
+     * @return the set of available locales
      */
     public static Set<String> GetAvailableLocales(ULocale[] locales) {
         Map<String, String[]> oldTags = oldStyleLanguageTags;
@@ -332,18 +374,32 @@ public final class IntlAbstractOperations {
      */
     public interface LocaleDataInfo {
         /**
-         * Returns {@link #entries(IntlAbstractOperations.ExtensionKey)}.get(0)
+         * Returns {@link #entries(IntlAbstractOperations.ExtensionKey)}.get(0).
+         *
+         * @param extensionKey
+         *            the extension key
+         * @return the extension key default value
          */
         String defaultValue(ExtensionKey extensionKey);
 
         /**
-         * Returns [[sortLocaleData]], [[searchLocaleData]] or [[localeData]]
+         * Returns [[sortLocaleData]], [[searchLocaleData]] or [[localeData]].
+         * 
+         * @param extensionKey
+         *            the extension key
+         * @return the list of extension key entries
          */
         List<String> entries(ExtensionKey extensionKey);
     }
 
     /**
      * 9.2.1 CanonicalizeLocaleList (locales)
+     * 
+     * @param cx
+     *            the execution context
+     * @param locales
+     *            the locales array
+     * @return the set of canonicalized locales
      */
     public static Set<String> CanonicalizeLocaleList(ExecutionContext cx, Object locales) {
         if (Type.isUndefined(locales)) {
@@ -387,6 +443,12 @@ public final class IntlAbstractOperations {
 
     /**
      * 9.2.2 BestAvailableLocale (availableLocales, locale)
+     * 
+     * @param availableLocales
+     *            the set of available locales
+     * @param locale
+     *            the requested locale
+     * @return the best available locale
      */
     public static String BestAvailableLocale(Set<String> availableLocales, String locale) {
         String candidate = locale;
@@ -413,6 +475,14 @@ public final class IntlAbstractOperations {
 
     /**
      * 9.2.3 LookupMatcher (availableLocales, requestedLocales)
+     * 
+     * @param cx
+     *            the execution context
+     * @param availableLocales
+     *            the set of available locales
+     * @param requestedLocales
+     *            the set of requested locales
+     * @return the lookup matcher
      */
     public static LocaleMatch LookupMatcher(ExecutionContext cx,
             Lazy<Set<String>> availableLocales, Set<String> requestedLocales) {
@@ -440,6 +510,14 @@ public final class IntlAbstractOperations {
 
     /**
      * 9.2.4 BestFitMatcher (availableLocales, requestedLocales)
+     * 
+     * @param cx
+     *            the execution context
+     * @param availableLocales
+     *            the set of available locales
+     * @param requestedLocales
+     *            the set of requested locales
+     * @return the best-fit matcher
      */
     public static LocaleMatch BestFitMatcher(ExecutionContext cx,
             Lazy<Set<String>> availableLocales, Set<String> requestedLocales) {
@@ -591,6 +669,16 @@ public final class IntlAbstractOperations {
      * <li>[en-US; en_US, en_Latn_US]
      * </ul>
      * Obviously it's the latter result we're interested in.
+     * 
+     * @param canonicalized
+     *            the canonicalized locale
+     * @param maximized
+     *            the maximized locale
+     * @param oldMatch
+     *            the previous match
+     * @param newMatch
+     *            the new match
+     * @return {@code true} if the new match is better than the previous one
      */
     private static boolean isBetterMatch(ULocale canonicalized, ULocale maximized,
             Entry<ULocale, ULocale> oldMatch, Entry<ULocale, ULocale> newMatch) {
@@ -662,6 +750,20 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.5 ResolveLocale (availableLocales, requestedLocales, options, relevantExtensionKeys,
      * localeData)
+     * 
+     * @param cx
+     *            the execution context
+     * @param availableLocales
+     *            the set of available locales
+     * @param requestedLocales
+     *            the set of requested locales
+     * @param options
+     *            the options record
+     * @param relevantExtensionKeys
+     *            the list of relevant extension keys
+     * @param localeData
+     *            the locale data
+     * @return the resolved locale
      */
     public static ResolvedLocale ResolveLocale(ExecutionContext cx,
             Lazy<Set<String>> availableLocales, Set<String> requestedLocales,
@@ -756,6 +858,14 @@ public final class IntlAbstractOperations {
 
     /**
      * 9.2.6 LookupSupportedLocales (availableLocales, requestedLocales)
+     * 
+     * @param cx
+     *            the execution context
+     * @param availableLocales
+     *            the set of available locales
+     * @param requestedLocales
+     *            the set of requested locales
+     * @return the list of supported locales
      */
     public static List<String> LookupSupportedLocales(ExecutionContext cx,
             Set<String> availableLocales, Set<String> requestedLocales) {
@@ -772,6 +882,14 @@ public final class IntlAbstractOperations {
 
     /**
      * 9.2.7 BestFitSupportedLocales (availableLocales, requestedLocales)
+     * 
+     * @param cx
+     *            the execution context
+     * @param availableLocales
+     *            the set of available locales
+     * @param requestedLocales
+     *            the set of requested locales
+     * @return the list of best-fit supported locales
      */
     public static List<String> BestFitSupportedLocales(ExecutionContext cx,
             Set<String> availableLocales, Set<String> requestedLocales) {
@@ -791,6 +909,16 @@ public final class IntlAbstractOperations {
 
     /**
      * 9.2.8 SupportedLocales (availableLocales, requestedLocales, options)
+     * 
+     * @param cx
+     *            the execution context
+     * @param availableLocales
+     *            the set of available locales
+     * @param requestedLocales
+     *            the set of requested locales
+     * @param options
+     *            the options object
+     * @return the supported locales array
      */
     public static ScriptObject SupportedLocales(ExecutionContext cx, Set<String> availableLocales,
             Set<String> requestedLocales, Object options) {
@@ -822,6 +950,18 @@ public final class IntlAbstractOperations {
 
     /**
      * 9.2.9 GetOption (options, property, type, values, fallback)
+     * 
+     * @param cx
+     *            the execution context
+     * @param options
+     *            the options object
+     * @param property
+     *            the property name
+     * @param values
+     *            the optional set of allowed property values
+     * @param fallback
+     *            the fallback value
+     * @return the string option
      */
     public static String GetStringOption(ExecutionContext cx, ScriptObject options,
             String property, Set<String> values, String fallback) {
@@ -838,6 +978,16 @@ public final class IntlAbstractOperations {
 
     /**
      * 9.2.9 GetOption (options, property, type, values, fallback)
+     * 
+     * @param cx
+     *            the execution context
+     * @param options
+     *            the options object
+     * @param property
+     *            the property name
+     * @param fallback
+     *            the fallback value
+     * @return the boolean option
      */
     public static Boolean GetBooleanOption(ExecutionContext cx, ScriptObject options,
             String property, Boolean fallback) {
@@ -850,6 +1000,20 @@ public final class IntlAbstractOperations {
 
     /**
      * 9.2.10 GetNumberOption (options, property, minimum, maximum, fallback)
+     * 
+     * @param cx
+     *            the execution context
+     * @param options
+     *            the options object
+     * @param property
+     *            the property name
+     * @param minimum
+     *            the minimum value
+     * @param maximum
+     *            the maximum value
+     * @param fallback
+     *            the fallback value
+     * @return the number option
      */
     public static int GetNumberOption(ExecutionContext cx, ScriptObject options, String property,
             int minimum, int maximum, int fallback) {

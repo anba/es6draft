@@ -26,7 +26,10 @@ public class PropertiesReaderControl extends ResourceBundle.Control {
     private final Charset charset;
 
     /**
-     * Creates a new {@link PropertiesReaderControl} instance with the supplied character encoding
+     * Creates a new {@link PropertiesReaderControl} instance with the supplied character encoding.
+     * 
+     * @param charset
+     *            the requested character set
      */
     public PropertiesReaderControl(Charset charset) {
         this.charset = charset;

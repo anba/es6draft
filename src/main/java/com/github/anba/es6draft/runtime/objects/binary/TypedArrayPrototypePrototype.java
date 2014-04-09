@@ -93,6 +93,12 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.1 get %TypedArray%.prototype.buffer
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the array buffer object
          */
         @Accessor(name = "buffer", type = Accessor.Type.Getter)
         public static Object buffer(ExecutionContext cx, Object thisValue) {
@@ -101,6 +107,12 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.2 get %TypedArray%.prototype.byteLength
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the typed array length in bytes
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
@@ -109,6 +121,12 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.3 get %TypedArray%.prototype.byteOffset
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the byte offset
          */
         @Accessor(name = "byteOffset", type = Accessor.Type.Getter)
         public static Object byteOffset(ExecutionContext cx, Object thisValue) {
@@ -117,6 +135,12 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.17 get %TypedArray%.prototype.length
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the typed array length
          */
         @Accessor(name = "length", type = Accessor.Type.Getter)
         public static Object length(ExecutionContext cx, Object thisValue) {
@@ -130,6 +154,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         /**
          * 22.2.3.22 %TypedArray%.prototype.set(array, offset = 0 )<br>
          * 22.2.3.23 %TypedArray%.prototype.set(typedArray, offset = 0 )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param array
+         *            the source array
+         * @param offset
+         *            the target offset
+         * @return the undefined value
          */
         @Function(name = "set", arity = 2)
         public static Object set(ExecutionContext cx, Object thisValue, Object array, Object offset) {
@@ -256,6 +290,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.27 %TypedArray%.prototype.subarray(begin = 0, end = this.length )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param begin
+         *            the begin position
+         * @param end
+         *            the end position
+         * @return the new typed array
          */
         @Function(name = "subarray", arity = 2)
         public static Object subarray(ExecutionContext cx, Object thisValue, Object begin,
@@ -312,6 +356,10 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.29 %TypedArray%.prototype.toString ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @return the string representation
          */
         @Value(name = "toString")
         public static Object toString(ExecutionContext cx) {
@@ -320,6 +368,10 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.28 %TypedArray%.prototype.toLocaleString ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @return the locale specific string representation
          */
         @Value(name = "toLocaleString")
         public static Object toLocaleString(ExecutionContext cx) {
@@ -328,6 +380,14 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.14 %TypedArray%.prototype.join ( separator )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param separator
+         *            the separator string
+         * @return the result string
          */
         @Function(name = "join", arity = 1)
         public static Object join(ExecutionContext cx, Object thisValue, Object separator) {
@@ -338,6 +398,12 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.21 %TypedArray%.prototype.reverse ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return this typed array object
          */
         @Function(name = "reverse", arity = 0)
         public static Object reverse(ExecutionContext cx, Object thisValue) {
@@ -348,6 +414,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.24 %TypedArray%.prototype.slice ( start, end )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param start
+         *            the start position
+         * @param end
+         *            the end position
+         * @return the new typed array
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
@@ -425,6 +501,14 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.26 %TypedArray%.prototype.sort ( comparefn )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param comparefn
+         *            the comparator function
+         * @return this typed array object
          */
         @Function(name = "sort", arity = 1)
         public static Object sort(ExecutionContext cx, Object thisValue, Object comparefn) {
@@ -486,6 +570,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.13 %TypedArray%.prototype.indexOf (searchElement, fromIndex = 0 )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param searchElement
+         *            the search element
+         * @param fromIndex
+         *            the optional start index
+         * @return the result index
          */
         @Function(name = "indexOf", arity = 1)
         public static Object indexOf(ExecutionContext cx, Object thisValue, Object searchElement,
@@ -497,6 +591,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.16 %TypedArray%.prototype.lastIndexOf (searchElement, fromIndex=this.length-1)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param searchElement
+         *            the search element
+         * @param fromIndex
+         *            the optional start index
+         * @return the result index
          */
         @Function(name = "lastIndexOf", arity = 1)
         public static Object lastIndexOf(ExecutionContext cx, Object thisValue,
@@ -508,6 +612,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.7 %TypedArray%.prototype.every ( callbackfn, thisArg = undefined )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param callbackfn
+         *            the callback function
+         * @param thisArg
+         *            the optional this-argument for the callback function
+         * @return {@code true} if every element matches
          */
         @Function(name = "every", arity = 1)
         public static Object every(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -519,6 +633,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.25 %TypedArray%.prototype.some ( callbackfn, thisArg = undefined )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param callbackfn
+         *            the callback function
+         * @param thisArg
+         *            the optional this-argument for the callback function
+         * @return {@code true} if some elements match
          */
         @Function(name = "some", arity = 1)
         public static Object some(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -530,6 +654,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.12 %TypedArray%.prototype.forEach ( callbackfn, thisArg = undefined )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param callbackfn
+         *            the callback function
+         * @param thisArg
+         *            the optional this-argument for the callback function
+         * @return the undefined value
          */
         @Function(name = "forEach", arity = 1)
         public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -541,6 +675,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.18 %TypedArray%.prototype.map ( callbackfn, thisArg = undefined )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param callbackfn
+         *            the callback function
+         * @param thisArg
+         *            the optional this-argument for the callback function
+         * @return the mapped value
          */
         @Function(name = "map", arity = 1)
         public static Object map(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -575,6 +719,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.9 %TypedArray%.prototype.filter ( callbackfn, thisArg = undefined )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param callbackfn
+         *            the callback function
+         * @param thisArg
+         *            the optional this-argument for the callback function
+         * @return the filtered value
          */
         @Function(name = "filter", arity = 1)
         public static Object filter(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -619,6 +773,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.19 %TypedArray%.prototype.reduce ( callbackfn [, initialValue] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param callbackfn
+         *            the callback function
+         * @param initialValue
+         *            the initial value
+         * @return the reduced value
          */
         @Function(name = "reduce", arity = 1)
         public static Object reduce(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -630,6 +794,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.20 %TypedArray%.prototype.reduceRight ( callbackfn [, initialValue] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param callbackfn
+         *            the callback function
+         * @param initialValue
+         *            the initial value
+         * @return the reduced value
          */
         @Function(name = "reduceRight", arity = 1)
         public static Object reduceRight(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -641,6 +815,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.10 %TypedArray%.prototype.find (predicate, thisArg = undefined)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param predicate
+         *            the predicate function
+         * @param thisArg
+         *            the optional this-argument for the predicate function
+         * @return the result value
          */
         @Function(name = "find", arity = 1)
         public static Object find(ExecutionContext cx, Object thisValue, Object predicate,
@@ -652,6 +836,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.11 %TypedArray%.prototype.findIndex ( predicate, thisArg = undefined )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param predicate
+         *            the predicate function
+         * @param thisArg
+         *            the optional this-argument for the predicate function
+         * @return the result index
          */
         @Function(name = "findIndex", arity = 1)
         public static Object findIndex(ExecutionContext cx, Object thisValue, Object predicate,
@@ -663,6 +857,18 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.8 %TypedArray%.prototype.fill (value, start = 0, end = this.length )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the fill value
+         * @param start
+         *            the start index
+         * @param end
+         *            the end index
+         * @return this typed array object
          */
         @Function(name = "fill", arity = 1)
         public static Object fill(ExecutionContext cx, Object thisValue, Object value,
@@ -674,6 +880,18 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.5 %TypedArray%.prototype.copyWithin (target, start, end = this.length )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target index
+         * @param start
+         *            the start index
+         * @param end
+         *            the end index
+         * @return this typed array object
          */
         @Function(name = "copyWithin", arity = 2)
         public static Object copyWithin(ExecutionContext cx, Object thisValue, Object target,
@@ -685,6 +903,10 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.6 %TypedArray%.prototype.entries ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @return the entries iterator object
          */
         @Value(name = "entries")
         public static Object entries(ExecutionContext cx) {
@@ -693,6 +915,10 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.15 %TypedArray%.prototype.keys ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @return the keys iterator object
          */
         @Value(name = "keys")
         public static Object keys(ExecutionContext cx) {
@@ -701,6 +927,10 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.30 %TypedArray%.prototype.values ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @return the values iterator object
          */
         @Value(name = "values")
         public static Object values(ExecutionContext cx) {
@@ -709,6 +939,10 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.31 %TypedArray%.prototype [ @@iterator ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @return the iterator object
          */
         @Value(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
         public static Object iterator(ExecutionContext cx) {
@@ -718,6 +952,12 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         /**
          * 22.2.3.32 get %TypedArray%.prototype [ @@toStringTag ]
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the toString tag
          */
         @Accessor(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 type = Accessor.Type.Getter, attributes = @Attributes(writable = false,

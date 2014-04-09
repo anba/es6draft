@@ -14,11 +14,8 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyDeclar
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.anba.es6draft.ast.AsyncFunctionDeclaration;
 import com.github.anba.es6draft.ast.BlockStatement;
 import com.github.anba.es6draft.ast.Declaration;
-import com.github.anba.es6draft.ast.FunctionDeclaration;
-import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.ast.SwitchStatement;
 
 /**
@@ -36,7 +33,12 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
     }
 
     /**
-     * stack: [env] -> [env]
+     * stack: [env] {@literal ->} [env]
+     * 
+     * @param node
+     *            the block statement
+     * @param mv
+     *            the statement visitor
      */
     void generate(BlockStatement node, StatementVisitor mv) {
         int declarations = LexicallyDeclaredNames(node.getScope()).size();
@@ -52,7 +54,12 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
     }
 
     /**
-     * stack: [env] -> [env]
+     * stack: [env] {@literal ->} [env]
+     * 
+     * @param node
+     *            the switch statement
+     * @param mv
+     *            the statement visitor
      */
     void generate(SwitchStatement node, StatementVisitor mv) {
         int declarations = LexicallyDeclaredNames(node.getScope()).size();
@@ -68,7 +75,12 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
     }
 
     /**
-     * stack: [env] -> [env]
+     * stack: [env] {@literal ->} [env]
+     * 
+     * @param node
+     *            the block statement
+     * @param mv
+     *            the expression visitor
      */
     void generateMethod(BlockStatement node, ExpressionVisitor mv) {
         // TODO: split into multiple methods if there are still too many declarations
@@ -76,7 +88,12 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
     }
 
     /**
-     * stack: [env] -> [env]
+     * stack: [env] {@literal ->} [env]
+     * 
+     * @param node
+     *            the switch statement
+     * @param mv
+     *            the expression visitor
      */
     void generateMethod(SwitchStatement node, ExpressionVisitor mv) {
         // TODO: split into multiple methods if there are still too many declarations
@@ -84,7 +101,12 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
     }
 
     /**
-     * stack: [env] -> [env]
+     * stack: [env] {@literal ->} [env]
+     * 
+     * @param declarations
+     *            the block scoped declarations
+     * @param mv
+     *            the expression visitor
      */
     private void generateInline(List<Declaration> declarations, ExpressionVisitor mv) {
         /* steps 1-2 */
@@ -106,8 +128,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
                     createMutableBinding(dn, false, mv);
                 }
             }
-            if (d instanceof FunctionDeclaration || d instanceof GeneratorDeclaration
-                    || d instanceof AsyncFunctionDeclaration) {
+            if (isFunctionDeclaration(d)) {
                 functionsToInitialise.add(d);
             }
         }
@@ -125,13 +146,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
                 mv.loadExecutionContext();
 
                 // stack: [envRec, env, envRec, env, cx] -> [envRec, env, envRec, fo]
-                if (f instanceof FunctionDeclaration) {
-                    InstantiateFunctionObject((FunctionDeclaration) f, mv);
-                } else if (f instanceof GeneratorDeclaration) {
-                    InstantiateGeneratorObject((GeneratorDeclaration) f, mv);
-                } else {
-                    InstantiateAsyncFunctionObject((AsyncFunctionDeclaration) f, mv);
-                }
+                InstantiateFunctionObject(f, mv);
 
                 // stack: [envRec, env, envRec, fo] -> [envRec, env]
                 initialiseBinding(fn, mv);

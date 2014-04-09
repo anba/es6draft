@@ -143,6 +143,14 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
 
         /**
          * 22.1.2.2 Array.isArray ( arg )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param arg
+         *            the argument object
+         * @return {@code true} if the argument is an array object
          */
         @Function(name = "isArray", arity = 1)
         public static Object isArray(ExecutionContext cx, Object thisValue, Object arg) {
@@ -152,6 +160,14 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
 
         /**
          * 22.1.2.3 Array.of ( ...items )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param items
+         *            the element values
+         * @return the new array object
          */
         @Function(name = "of", arity = 0)
         public static Object of(ExecutionContext cx, Object thisValue, Object... items) {
@@ -180,6 +196,18 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
 
         /**
          * 22.1.2.1 Array.from ( arrayLike, mapfn=undefined, thisArg=undefined )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param arrayLike
+         *            the source object
+         * @param mapfn
+         *            the optional mapper function
+         * @param thisArg
+         *            the optional this-argument for the mapper
+         * @return the new array object
          */
         @Function(name = "from", arity = 1)
         public static Object from(ExecutionContext cx, Object thisValue, Object arrayLike,
@@ -266,6 +294,12 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
 
         /**
          * 22.1.2.5 Array[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised array object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

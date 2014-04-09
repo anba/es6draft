@@ -49,7 +49,10 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Creates a shallow copy of the supplied property descriptor
+     * Creates a shallow copy of the supplied property descriptor.
+     * 
+     * @param original
+     *            the original property descriptor
      */
     private PropertyDescriptor(PropertyDescriptor original) {
         present = original.present;
@@ -77,6 +80,9 @@ public final class PropertyDescriptor implements Cloneable {
     /**
      * Creates a new data property descriptor with an initial value:<br>
      * <code>{[[Value]]: ?}</code>
+     * 
+     * @param value
+     *            the property value
      */
     public PropertyDescriptor(Object value) {
         this.value = value;
@@ -87,6 +93,15 @@ public final class PropertyDescriptor implements Cloneable {
      * Creates a new data property descriptor with an initial value and initial attributes:<br>
      * <code>{[[Value]]: ?, [[Writable]]: ?, [[Enumerable]]: ?,
      * [[Configurable]]: ?}</code>
+     * 
+     * @param value
+     *            the property value
+     * @param writable
+     *            the enumerable flag
+     * @param enumerable
+     *            the writable flag
+     * @param configurable
+     *            the configurable flag
      */
     public PropertyDescriptor(Object value, boolean writable, boolean enumerable,
             boolean configurable) {
@@ -100,6 +115,11 @@ public final class PropertyDescriptor implements Cloneable {
     /**
      * Creates a new accessor property descriptor with initial getter and setter:<br>
      * <code>{[[Get]]: ?, [[Set]]: ?}</code>
+     * 
+     * @param getter
+     *            the accessor getter function
+     * @param setter
+     *            the accessor setter function
      */
     public PropertyDescriptor(Callable getter, Callable setter) {
         this.getter = getter;
@@ -112,6 +132,15 @@ public final class PropertyDescriptor implements Cloneable {
      * attributes:<br>
      * <code>{[[Get]]: ?, [[Set]]: ?, [[Enumerable]]: ?, [[Configurable]]: ?}
      * </code>
+     * 
+     * @param getter
+     *            the accessor getter function, may be {@code null}
+     * @param setter
+     *            the accessor setter function, may be {@code null}
+     * @param enumerable
+     *            the writable flag
+     * @param configurable
+     *            the configurable flag
      */
     public PropertyDescriptor(Callable getter, Callable setter, boolean enumerable,
             boolean configurable) {
@@ -123,7 +152,9 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Converts this property descriptor to a {@link Property} object
+     * Converts this property descriptor to a {@link Property} object.
+     * 
+     * @return the property record for this descriptor, excluding the origin field
      */
     public Property toPlainProperty() {
         // [[Origin]] field must not be copied in this constructor, otherwise we'd create a leak
@@ -131,7 +162,9 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Converts this property descriptor to a {@link Property} object
+     * Converts this property descriptor to a {@link Property} object.
+     * 
+     * @return the property record for this descriptor, including the origin field
      */
     public Property toProperty() {
         return new Property(this, origin);
@@ -144,6 +177,10 @@ public final class PropertyDescriptor implements Cloneable {
 
     /**
      * 6.2.4.1 IsAccessorDescriptor ( Desc )
+     * 
+     * @param desc
+     *            the property descriptor
+     * @return {@code true} if the descriptor is an accessor property
      */
     public static boolean IsAccessorDescriptor(PropertyDescriptor desc) {
         /* step 1 */
@@ -156,7 +193,9 @@ public final class PropertyDescriptor implements Cloneable {
 
     /**
      * 6.2.4.1 IsAccessorDescriptor ( Desc )<br>
-     * Returns {@code true} if this object is an accessor property descriptor
+     * Returns {@code true} if this object is an accessor property descriptor.
+     * 
+     * @return {@code true} if this descriptor is an accessor property
      */
     public final boolean isAccessorDescriptor() {
         return (present & (GET | SET)) != 0;
@@ -164,6 +203,10 @@ public final class PropertyDescriptor implements Cloneable {
 
     /**
      * 6.2.4.2 IsDataDescriptor ( Desc )
+     * 
+     * @param desc
+     *            the property descriptor
+     * @return {@code true} if the descriptor is a data property
      */
     public static boolean IsDataDescriptor(PropertyDescriptor desc) {
         /* step 1 */
@@ -176,7 +219,9 @@ public final class PropertyDescriptor implements Cloneable {
 
     /**
      * 6.2.4.2 IsDataDescriptor ( Desc )<br>
-     * Returns {@code true} if this object is a data property descriptor
+     * Returns {@code true} if this object is a data property descriptor.
+     * 
+     * @return {@code true} if this descriptor is a data property
      */
     public final boolean isDataDescriptor() {
         return (present & (VALUE | WRITABLE)) != 0;
@@ -184,6 +229,10 @@ public final class PropertyDescriptor implements Cloneable {
 
     /**
      * 6.2.4.3 IsGenericDescriptor ( Desc )
+     * 
+     * @param desc
+     *            the property descriptor
+     * @return {@code true} if the descriptor is a generic property
      */
     public static boolean IsGenericDescriptor(PropertyDescriptor desc) {
         /* step 1 */
@@ -196,7 +245,9 @@ public final class PropertyDescriptor implements Cloneable {
 
     /**
      * 6.2.4.3 IsGenericDescriptor ( Desc )<br>
-     * Returns {@code true} if this object is a generic property descriptor
+     * Returns {@code true} if this object is a generic property descriptor.
+     * 
+     * @return {@code true} if this descriptor is a generic property
      */
     public final boolean isGenericDescriptor() {
         return (present & (GET | SET | VALUE | WRITABLE)) == 0;
@@ -207,6 +258,12 @@ public final class PropertyDescriptor implements Cloneable {
      * <p>
      * Returns {@code undefined} if the input property descriptor is {@code null}, otherwise returns
      * a {@link ScriptObject} representing the fields of this property descriptor.
+     * 
+     * @param cx
+     *            the execution context
+     * @param desc
+     *            the property record
+     * @return a script object for the property, or undefined if <var>desc</var> is {@code null}
      */
     public static Object FromPropertyDescriptor(ExecutionContext cx, Property desc)
             throws IllegalArgumentException {
@@ -239,6 +296,12 @@ public final class PropertyDescriptor implements Cloneable {
      * <p>
      * Returns {@code undefined} if the input property descriptor is {@code null}, otherwise returns
      * a {@link ScriptObject} representing the fields of this property descriptor.
+     * 
+     * @param cx
+     *            the execution context
+     * @param desc
+     *            the property descriptor
+     * @return a script object for the property, or undefined if <var>desc</var> is {@code null}
      */
     public static Object FromPropertyDescriptor(ExecutionContext cx, PropertyDescriptor desc)
             throws IllegalArgumentException {
@@ -290,6 +353,12 @@ public final class PropertyDescriptor implements Cloneable {
      * <p>
      * Returns a new property descriptor from the input argument {@code object}, if {@code object}
      * is not an instance of {@link ScriptObject}, a TypeError is thrown.
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the property descriptor script object
+     * @return the property descriptor record
      */
     public static PropertyDescriptor ToPropertyDescriptor(ExecutionContext cx, Object object) {
         /* steps 1-2 */
@@ -348,6 +417,12 @@ public final class PropertyDescriptor implements Cloneable {
 
     /**
      * 6.2.4.6 CompletePropertyDescriptor ( Desc, LikeDesc )
+     * 
+     * @param desc
+     *            the property descriptor
+     * @param likeDesc
+     *            the property descriptor from which to retrieve absent fields
+     * @return the <var>desc</var> parameter
      */
     public static PropertyDescriptor CompletePropertyDescriptor(PropertyDescriptor desc,
             Property likeDesc) {
@@ -415,7 +490,9 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Returns {@code true} if every field of this property descriptor is absent
+     * Returns {@code true} if every field of this property descriptor is absent.
+     * 
+     * @return {@code true} if every field is absent
      */
     public final boolean isEmpty() {
         return present == 0;
@@ -425,6 +502,10 @@ public final class PropertyDescriptor implements Cloneable {
      * Returns {@code true} if every field of {@code desc} also occurs in this property descriptor
      * and every present field has the same value. That means {@code true} is returned iff
      * {@code desc} &#8838; {@code this} holds.
+     * 
+     * @param desc
+     *            the property descriptor
+     * @return {@code true} if <var>desc</var> if a subset of this property descriptor
      */
     public final boolean isSubset(PropertyDescriptor desc) {
         if (desc.hasValue() && !(hasValue() && SameValue(desc.value, value))) {
@@ -449,56 +530,73 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Returns {@code true} if the <tt>[[Value]]</tt> field is present
+     * Returns {@code true} if the <tt>[[Value]]</tt> field is present.
+     * 
+     * @return {@code true} if the value field is present
      */
     public final boolean hasValue() {
         return (present & VALUE) != 0;
     }
 
     /**
-     * Returns {@code true} if the <tt>[[Get]]</tt> field is present
+     * Returns {@code true} if the <tt>[[Get]]</tt> field is present.
+     * 
+     * @return {@code true} if the getter field is present
      */
     public final boolean hasGetter() {
         return (present & GET) != 0;
     }
 
     /**
-     * Returns {@code true} if the <tt>[[Set]]</tt> field is present
+     * Returns {@code true} if the <tt>[[Set]]</tt> field is present.
+     * 
+     * @return {@code true} if the setter field is present
      */
     public final boolean hasSetter() {
         return (present & SET) != 0;
     }
 
     /**
-     * Returns {@code true} if the <tt>[[Writable]]</tt> field is present
+     * Returns {@code true} if the <tt>[[Writable]]</tt> field is present.
+     * 
+     * @return {@code true} if the writable field is present
      */
     public final boolean hasWritable() {
         return (present & WRITABLE) != 0;
     }
 
     /**
-     * Returns {@code true} if the <tt>[[Enumerable]]</tt> field is present
+     * Returns {@code true} if the <tt>[[Enumerable]]</tt> field is present.
+     * 
+     * @return {@code true} if the enumerable field is present
      */
     public final boolean hasEnumerable() {
         return (present & ENUMERABLE) != 0;
     }
 
     /**
-     * Returns {@code true} if the <tt>[[Configurable]]</tt> field is present
+     * Returns {@code true} if the <tt>[[Configurable]]</tt> field is present.
+     * 
+     * @return {@code true} if the configurable field is present
      */
     public final boolean hasConfigurable() {
         return (present & CONFIGURABLE) != 0;
     }
 
     /**
-     * Returns the <tt>[[Value]]</tt> field or its default value
+     * Returns the <tt>[[Value]]</tt> field or its default value.
+     * 
+     * @return the value field
      */
     public final Object getValue() {
         return value;
     }
 
     /**
-     * Sets the <tt>[[Value]]</tt> field to the argument value
+     * Sets the <tt>[[Value]]</tt> field to the argument value.
+     * 
+     * @param value
+     *            the new value
      */
     public final void setValue(Object value) {
         present |= VALUE;
@@ -506,14 +604,19 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Returns the <tt>[[Get]]</tt> field or its default value
+     * Returns the <tt>[[Get]]</tt> field or its default value.
+     * 
+     * @return the getter accessor field
      */
     public final Callable getGetter() {
         return getter;
     }
 
     /**
-     * Sets the <tt>[[Get]]</tt> field to the argument value
+     * Sets the <tt>[[Get]]</tt> field to the argument value.
+     * 
+     * @param getter
+     *            the new getter function
      */
     public final void setGetter(Callable getter) {
         present |= GET;
@@ -521,14 +624,19 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Returns the <tt>[[Set]]</tt> field or its default value
+     * Returns the <tt>[[Set]]</tt> field or its default value.
+     * 
+     * @return the setter accessor field
      */
     public final Callable getSetter() {
         return setter;
     }
 
     /**
-     * Sets the <tt>[[Set]]</tt> field to the argument value
+     * Sets the <tt>[[Set]]</tt> field to the argument value.
+     * 
+     * @param setter
+     *            the new setter function
      */
     public final void setSetter(Callable setter) {
         present |= SET;
@@ -536,14 +644,19 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Returns the <tt>[[Writable]]</tt> field or its default value
+     * Returns the <tt>[[Writable]]</tt> field or its default value.
+     * 
+     * @return the writable field
      */
     public final boolean isWritable() {
         return writable;
     }
 
     /**
-     * Sets the <tt>[[Writable]]</tt> field to the argument value
+     * Sets the <tt>[[Writable]]</tt> field to the argument value.
+     * 
+     * @param writable
+     *            the new writable mode
      */
     public final void setWritable(boolean writable) {
         present |= WRITABLE;
@@ -551,14 +664,19 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Returns the <tt>[[Enumerable]]</tt> field or its default value
+     * Returns the <tt>[[Enumerable]]</tt> field or its default value.
+     * 
+     * @return the enumerable field
      */
     public final boolean isEnumerable() {
         return enumerable;
     }
 
     /**
-     * Sets the <tt>[[Enumerable]]</tt> field to the argument value
+     * Sets the <tt>[[Enumerable]]</tt> field to the argument value.
+     * 
+     * @param enumerable
+     *            the new enumerable mode
      */
     public final void setEnumerable(boolean enumerable) {
         present |= ENUMERABLE;
@@ -566,14 +684,19 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Returns the <tt>[[Configurable]]</tt> field or its default value
+     * Returns the <tt>[[Configurable]]</tt> field or its default value.
+     * 
+     * @return the configurable field
      */
     public final boolean isConfigurable() {
         return configurable;
     }
 
     /**
-     * Sets the <tt>[[Configurable]]</tt> field to the argument value
+     * Sets the <tt>[[Configurable]]</tt> field to the argument value.
+     * 
+     * @param configurable
+     *            the new configurable mode
      */
     public final void setConfigurable(boolean configurable) {
         present |= CONFIGURABLE;
@@ -581,7 +704,9 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Returns the <tt>[[Origin]]</tt> field
+     * Returns the <tt>[[Origin]]</tt> field.
+     * 
+     * @return the origin field
      */
     public ScriptObject getOrigin() {
         return origin;

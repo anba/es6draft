@@ -144,6 +144,12 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
 
         /**
          * 23.1.2.2 Map[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised map object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

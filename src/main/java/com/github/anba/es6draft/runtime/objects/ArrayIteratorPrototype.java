@@ -79,6 +79,14 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
 
     /**
      * 22.1.5.1 CreateArrayIterator Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param array
+     *            the array-like object
+     * @param kind
+     *            the array iteration kind
+     * @return the new array iterator
      */
     public static OrdinaryObject CreateArrayIterator(ExecutionContext cx, ScriptObject array,
             ArrayIterationKind kind) {
@@ -104,6 +112,12 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
 
         /**
          * 22.1.5.2.1 %ArrayIteratorPrototype%.next( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the next iterator result object
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
@@ -168,6 +182,12 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
 
         /**
          * 22.1.5.2.2 %ArrayIteratorPrototype% [ @@iterator ]()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the this-value
          */
         @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {

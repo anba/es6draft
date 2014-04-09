@@ -137,6 +137,15 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
 
     /**
      * 11.1.1.1 InitializeNumberFormat (numberFormat, locales, options)
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the number format object
+     * @param locales
+     *            the locales array
+     * @param opts
+     *            the options object
      */
     public static void InitializeNumberFormat(ExecutionContext cx, ScriptObject obj,
             Object locales, Object opts) {
@@ -244,6 +253,10 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
 
     /**
      * Abstract Operation: CurrencyDigits
+     * 
+     * @param c
+     *            the currency
+     * @return the number of currency digits
      */
     private static int CurrencyDigits(String c) {
         // http://www.currency-iso.org/dam/downloads/table_a1.xml
@@ -339,6 +352,16 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
 
         /**
          * 11.2.2 Intl.NumberFormat.supportedLocalesOf (locales [, options])
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param locales
+         *            the locales array
+         * @param options
+         *            the options object
+         * @return the array of supported locales
          */
         @Function(name = "supportedLocalesOf", arity = 1)
         public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue,
@@ -350,6 +373,12 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
 
         /**
          * Extension: Make subclassable for ES6 classes
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised number format object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

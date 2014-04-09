@@ -104,102 +104,192 @@ public class CollatorObject extends OrdinaryObject {
         return collator;
     }
 
-    /** [[initializedIntlObject]] */
+    /**
+     * [[initializedIntlObject]]
+     * 
+     * @return {@code true} if the Intl object is initialised
+     */
     public boolean isInitializedIntlObject() {
         return initializedIntlObject;
     }
 
-    /** [[initializedIntlObject]] */
-    public void setInitializedIntlObject(boolean initialized) {
-        this.initializedIntlObject = initialized;
+    /**
+     * [[initializedIntlObject]]
+     * 
+     * @param initializedIntlObject
+     *            the new initialisation state
+     */
+    public void setInitializedIntlObject(boolean initializedIntlObject) {
+        this.initializedIntlObject = initializedIntlObject;
     }
 
-    /** [[initializedCollator]] */
+    /**
+     * [[initializedCollator]]
+     * 
+     * @return {@code true} if the collator object is initialised
+     */
     public boolean isInitializedCollator() {
         return initializedCollator;
     }
 
-    /** [[initializedCollator]] */
+    /**
+     * [[initializedCollator]]
+     * 
+     * @param initializedCollator
+     *            the new initialisation state
+     */
     public void setInitializedCollator(boolean initializedCollator) {
         this.initializedCollator = initializedCollator;
     }
 
-    /** [[usage]] */
+    /**
+     * [[usage]]
+     * 
+     * @return the usage field
+     */
     public String getUsage() {
         return usage;
     }
 
-    /** [[usage]] */
+    /**
+     * [[usage]]
+     * 
+     * @param usage
+     *            the new usage value
+     */
     public void setUsage(String usage) {
         this.usage = usage;
     }
 
-    /** [[locale]] */
+    /**
+     * [[locale]]
+     * 
+     * @return the locale
+     */
     public String getLocale() {
         return locale;
     }
 
-    /** [[locale]] */
+    /**
+     * [[locale]]
+     * 
+     * @param locale
+     *            the new locale
+     */
     public void setLocale(String locale) {
         this.locale = locale;
     }
 
-    /** [[collation]] */
+    /**
+     * [[collation]]
+     * 
+     * @return the collation kind
+     */
     public String getCollation() {
         return collation;
     }
 
-    /** [[collation]] */
+    /**
+     * [[collation]]
+     * 
+     * @param collation
+     *            the new collation
+     */
     public void setCollation(String collation) {
         this.collation = collation;
     }
 
-    /** [[numeric]] */
+    /**
+     * [[numeric]]
+     * 
+     * @return {@code true} if numeric collation should be performed
+     */
     public boolean isNumeric() {
         return numeric;
     }
 
-    /** [[numeric]] */
+    /**
+     * [[numeric]]
+     * 
+     * @param numeric
+     *            the new numeric value
+     */
     public void setNumeric(boolean numeric) {
         this.numeric = numeric;
     }
 
-    /** [[caseFirst]] */
+    /**
+     * [[caseFirst]]
+     * 
+     * @return the case-first value
+     */
     public String getCaseFirst() {
         return caseFirst;
     }
 
-    /** [[caseFirst]] */
+    /**
+     * [[caseFirst]]
+     * 
+     * @param caseFirst
+     *            the new case-first value
+     */
     public void setCaseFirst(String caseFirst) {
         this.caseFirst = caseFirst;
     }
 
-    /** [[sensitivity]] */
+    /**
+     * [[sensitivity]]
+     * 
+     * @return the sensitivity value
+     */
     public String getSensitivity() {
         return sensitivity;
     }
 
-    /** [[sensitivity]] */
+    /**
+     * [[sensitivity]]
+     * 
+     * @param sensitivity
+     *            the new sensitivity value
+     */
     public void setSensitivity(String sensitivity) {
         this.sensitivity = sensitivity;
     }
 
-    /** [[ignorePunctuation]] */
+    /**
+     * [[ignorePunctuation]]
+     * 
+     * @return the ignorePunctuation flag
+     */
     public boolean isIgnorePunctuation() {
         return ignorePunctuation;
     }
 
-    /** [[ignorePunctuation]] */
+    /**
+     * [[ignorePunctuation]]
+     * 
+     * @param ignorePunctuation
+     *            the new ignorePunctuation flag
+     */
     public void setIgnorePunctuation(boolean ignorePunctuation) {
         this.ignorePunctuation = ignorePunctuation;
     }
 
-    /** [[boundCompare]] */
+    /**
+     * [[boundCompare]]
+     * 
+     * @return the bound compare function
+     */
     public Callable getBoundCompare() {
         return boundCompare;
     }
 
-    /** [[boundCompare]] */
+    /**
+     * [[boundCompare]]
+     * 
+     * @param boundCompare
+     *            the new bound compare function
+     */
     public void setBoundCompare(Callable boundCompare) {
         this.boundCompare = boundCompare;
     }

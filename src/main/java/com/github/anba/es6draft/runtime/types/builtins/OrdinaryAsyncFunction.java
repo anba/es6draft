@@ -80,6 +80,12 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
 
     /**
      * [Called from generated code]
+     * 
+     * @param cx
+     *            the execution context
+     * @param functionObject
+     *            the async function object
+     * @return the function promise result value
      */
     public static PromiseObject EvaluateBody(ExecutionContext cx,
             OrdinaryAsyncFunction functionObject) {
@@ -90,6 +96,16 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
 
     /**
      * 9.2.3 FunctionAllocate Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param functionPrototype
+     *            the function prototype
+     * @param strict
+     *            the strict mode flag
+     * @param kind
+     *            the function kind
+     * @return the new async function object
      */
     public static OrdinaryAsyncFunction FunctionAllocate(ExecutionContext cx,
             ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
@@ -106,6 +122,16 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
 
     /**
      * AsyncFunctionCreate Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param kind
+     *            the function kind
+     * @param function
+     *            the function code
+     * @param scope
+     *            the lexical environment
+     * @return the new async function object
      */
     public static OrdinaryAsyncFunction AsyncFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
@@ -114,6 +140,18 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
 
     /**
      * AsyncFunctionCreate Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param kind
+     *            the function kind
+     * @param function
+     *            the function code
+     * @param scope
+     *            the lexical environment
+     * @param functionPrototype
+     *            the function prototype
+     * @return the new async function object
      */
     public static OrdinaryAsyncFunction AsyncFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope,

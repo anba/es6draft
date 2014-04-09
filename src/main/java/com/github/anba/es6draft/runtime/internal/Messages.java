@@ -26,7 +26,11 @@ public final class Messages {
     }
 
     /**
-     * Creates a new instance of this class
+     * Creates a new instance of this class.
+     * 
+     * @param locale
+     *            the requested locale
+     * @return the new messages instance
      */
     public static Messages create(Locale locale) {
         ResourceBundle.Control control = UTF8_RESOURCE_CONTROL;
@@ -35,7 +39,11 @@ public final class Messages {
     }
 
     /**
-     * Returns the localised message for {@code key} from the resource bundle
+     * Returns the localised message for {@code key} from the resource bundle.
+     * 
+     * @param key
+     *            the message key
+     * @return the localised message string
      */
     public String getMessage(Key key) {
         try {
@@ -46,7 +54,13 @@ public final class Messages {
     }
 
     /**
-     * Returns the localised message for {@code key} from the resource bundle
+     * Returns the localised message for {@code key} from the resource bundle.
+     * 
+     * @param key
+     *            the message key
+     * @param args
+     *            the message arguments
+     * @return the localised message string
      */
     public String getMessage(Key key, String... args) {
         try {

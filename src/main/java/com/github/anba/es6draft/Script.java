@@ -18,12 +18,18 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 public interface Script {
     /**
      * Returns this script's
-     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.ScriptBody} object
+     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.ScriptBody} object.
+     * 
+     * @return the script body object
      */
     RuntimeInfo.ScriptBody getScriptBody();
 
     /**
-     * Evaluates this script in the given {@link ExecutionContext}
+     * Evaluates this script in the given {@link ExecutionContext}.
+     * 
+     * @param cx
+     *            the execution context
+     * @return the return value after evaluating this script
      */
     Object evaluate(ExecutionContext cx);
 }

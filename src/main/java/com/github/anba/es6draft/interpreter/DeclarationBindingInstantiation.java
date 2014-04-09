@@ -39,6 +39,17 @@ final class DeclarationBindingInstantiation {
 
     /**
      * [15.2.8 Runtime Semantics: GlobalDeclarationInstantiation]
+     * 
+     * @param cx
+     *            the execution context
+     * @param script
+     *            the global script to instantiate
+     * @param globalEnv
+     *            the global environment
+     * @param lexicalEnv
+     *            the current lexical environment
+     * @param deletableBindings
+     *            the deletable flag for bindings
      */
     public static void GlobalDeclarationInstantiation(ExecutionContext cx, Script script,
             LexicalEnvironment<GlobalEnvironmentRecord> globalEnv,
@@ -72,6 +83,17 @@ final class DeclarationBindingInstantiation {
 
     /**
      * [18.2.1.2 Eval Declaration Instantiation]
+     * 
+     * @param cx
+     *            the execution context
+     * @param script
+     *            the global script to instantiate
+     * @param varEnv
+     *            the current variable environment
+     * @param lexEnv
+     *            the current lexical environment
+     * @param deletableBindings
+     *            the deletable flag for bindings
      */
     public static void EvalDeclarationInstantiation(ExecutionContext cx, Script script,
             LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv, boolean deletableBindings) {

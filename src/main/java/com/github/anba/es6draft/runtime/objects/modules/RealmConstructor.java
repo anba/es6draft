@@ -61,6 +61,12 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
 
     /**
      * Abstract Operation: IndirectEval (realm, source)
+     * 
+     * @param realm
+     *            the realm instance
+     * @param source
+     *            the source string
+     * @return the evaluation result
      */
     public static Object IndirectEval(Realm realm, Object source) {
         // TODO: not yet specified
@@ -70,6 +76,11 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
 
     /**
      * Abstract Operation: DefineBuiltinProperties (realm, builtins)
+     * 
+     * @param realm
+     *            the realm instance
+     * @param builtins
+     *            the builtins script object
      */
     public static void DefineBuiltinProperties(Realm realm, OrdinaryObject builtins) {
         // TODO: not yet specified
@@ -186,6 +197,12 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
 
         /**
          * 26.2.2.2 %Realm% [ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised realm object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

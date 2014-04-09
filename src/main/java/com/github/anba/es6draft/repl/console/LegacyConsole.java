@@ -43,8 +43,7 @@ public final class LegacyConsole implements ReplConsole {
     }
 
     @Override
-    public boolean addCompletion(Realm realm) {
-        return false;
+    public void addCompletion(Realm realm) {
     }
 
     @Override

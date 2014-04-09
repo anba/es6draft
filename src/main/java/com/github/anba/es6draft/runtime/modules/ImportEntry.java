@@ -26,17 +26,29 @@ public final class ImportEntry {
         this.localName = localName;
     }
 
-    /** [[ModuleRequest]] */
+    /**
+     * [[ModuleRequest]]
+     * 
+     * @return the module request
+     */
     public String getModuleRequest() {
         return moduleRequest;
     }
 
-    /** [[ImportName]] */
+    /**
+     * [[ImportName]]
+     * 
+     * @return the import name
+     */
     public String getImportName() {
         return importName;
     }
 
-    /** [[LocalName]] */
+    /**
+     * [[LocalName]]
+     * 
+     * @return the local name
+     */
     public String getLocalName() {
         return localName;
     }

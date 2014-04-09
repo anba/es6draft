@@ -151,6 +151,14 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.4.2.2 Symbol.for (key)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param key
+         *            the symbol string key
+         * @return the mapped symbol
          */
         @Function(name = "for", arity = 1)
         public static Object _for(ExecutionContext cx, Object thisValue, Object key) {
@@ -162,6 +170,14 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.4.2.7 Symbol.keyFor (sym)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param sym
+         *            the global symbol
+         * @return the symbol string key or undefined if the symbol is not in the registry
          */
         @Function(name = "keyFor", arity = 1)
         public static Object keyFor(ExecutionContext cx, Object thisValue, Object sym) {
@@ -177,6 +193,12 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.4.2.12 Symbol[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return always throws a TypeError
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

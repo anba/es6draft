@@ -20,7 +20,11 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public interface ObjectAllocator<OBJECT extends OrdinaryObject> {
     /**
-     * Allocates a new instance of the requested class
+     * Allocates a new instance of the requested class.
+     * 
+     * @param realm
+     *            the realm instance
+     * @return the new instance
      */
     OBJECT newInstance(Realm realm);
 }

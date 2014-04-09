@@ -35,7 +35,9 @@ public final class ExoticString extends OrdinaryObject {
 
     /**
      * Returns the [[StringData]] internal data property, if the property is undefined, the empty
-     * string is returned
+     * string is returned.
+     * 
+     * @return the string data or the empty string
      */
     private CharSequence getStringDataOrEmpty() {
         return stringData != null ? stringData : "";
@@ -43,6 +45,8 @@ public final class ExoticString extends OrdinaryObject {
 
     /**
      * [[StringData]]
+     * 
+     * @return the string data
      */
     public CharSequence getStringData() {
         return stringData;
@@ -50,6 +54,9 @@ public final class ExoticString extends OrdinaryObject {
 
     /**
      * [[StringData]]
+     * 
+     * @param stringData
+     *            the new string value
      */
     public void setStringData(CharSequence stringData) {
         assert this.stringData == null;
@@ -145,6 +152,12 @@ public final class ExoticString extends OrdinaryObject {
 
     /**
      * 9.4.3.5 StringCreate Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param prototype
+     *            the prototype object
+     * @return the new string exotic object
      */
     public static ExoticString StringCreate(ExecutionContext cx, ScriptObject prototype) {
         // steps 1-7, 9 (implicit)
@@ -155,7 +168,13 @@ public final class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * Custom helper function
+     * Custom helper function.
+     * 
+     * @param cx
+     *            the execution context
+     * @param stringData
+     *            the string value
+     * @return the new string exotic object
      */
     public static ExoticString StringCreate(ExecutionContext cx, CharSequence stringData) {
         ExoticString obj = StringCreate(cx, cx.getIntrinsic(Intrinsics.StringPrototype));
@@ -166,7 +185,10 @@ public final class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * Append string indices to {@code keys} collection
+     * Append string indices to {@code keys} collection.
+     * 
+     * @param keys
+     *            the property keys
      */
     private void addStringIndices(List<? super String> keys) {
         // No longer possible to simply add string indices, cf.

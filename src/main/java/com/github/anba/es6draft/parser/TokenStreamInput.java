@@ -26,7 +26,9 @@ public final class TokenStreamInput {
 
     /**
      * Returns the current code point or {@link TokenStreamInput#EOF} when the end of the input has
-     * been reached
+     * been reached.
+     * 
+     * @return the current code point or {@link TokenStreamInput#EOF}
      */
     public int get() {
         if (cursor >= length)
@@ -38,7 +40,9 @@ public final class TokenStreamInput {
 
     /**
      * Returns the current character or {@link TokenStreamInput#EOF} when the end of the input has
-     * been reached
+     * been reached.
+     * 
+     * @return the current character or {@link TokenStreamInput#EOF}
      */
     public int getChar() {
         if (cursor >= length)
@@ -47,7 +51,10 @@ public final class TokenStreamInput {
     }
 
     /**
-     * Ungets the code point {@code c}
+     * Ungets the code point {@code c}.
+     * 
+     * @param c
+     *            the code point to read back
      */
     public void unget(int c) {
         assert c != EOF ? source.codePointAt(cursor - Character.charCount(c)) == c
@@ -57,7 +64,10 @@ public final class TokenStreamInput {
     }
 
     /**
-     * Ungets the character {@code c}
+     * Ungets the character {@code c}.
+     * 
+     * @param c
+     *            the character to read back
      */
     public void ungetChar(int c) {
         assert c != EOF ? source.charAt(cursor - 1) == c : cursor >= length;
@@ -66,7 +76,11 @@ public final class TokenStreamInput {
     }
 
     /**
-     * Advances the position if the current character is equal to {@code c}
+     * Advances the position if the current character is equal to {@code c}.
+     * 
+     * @param c
+     *            the current to test
+     * @return {@code true} if the current character matches
      */
     public boolean match(char c) {
         if (cursor >= length || source.charAt(cursor) != c)
@@ -76,39 +90,63 @@ public final class TokenStreamInput {
     }
 
     /**
-     * Returns the character at {@code position() + 1} without changing the actual position
+     * Returns the character at {@code position() + offset} without changing the actual position.
+     * 
+     * @param offset
+     *            the source position offset
+     * @return the character at {@code position() + offset} or {@link TokenStreamInput#EOF}
      */
-    public int peek(int i) {
-        assert i >= 0;
-        if (cursor + i >= length)
+    public int peek(int offset) {
+        assert offset >= 0;
+        if (cursor + offset >= length)
             return EOF;
-        return source.charAt(cursor + i);
+        return source.charAt(cursor + offset);
     }
 
     /**
-     * Returns the current position in the input
+     * Returns the current position in the input.
+     * 
+     * @return the current position
      */
     public int position() {
         return cursor;
     }
 
     /**
-     * Resets the position to {@code pos}
+     * Resets the position to {@code position}.
+     * 
+     * @param position
+     *            the new position
      */
-    public void reset(int pos) {
-        assert pos >= 0 && pos <= cursor;
-        cursor = pos;
+    public void reset(int position) {
+        assert position >= 0 && position <= cursor;
+        cursor = position;
     }
 
     /**
-     * Returns the source characters from position {@code from} to position {@code to} (exclusive)
+     * Returns the source characters from position {@code from} to position {@code to} (exclusive).
+     * 
+     * @param from
+     *            the start position (inclusive)
+     * @param to
+     *            the end position (exclusive)
+     * @return the source characters in the given range
      */
     public String range(int from, int to) {
         return source.substring(from, to);
     }
 
     /**
-     * Copies the source characters from position {@code from} to position {@code to} (exclusive)
+     * Copies the source characters from position {@code from} to position {@code to} (exclusive).
+     * 
+     * @param from
+     *            the start position (inclusive)
+     * @param to
+     *            the end position (exclusive)
+     * @param array
+     *            the destination array
+     * @param offset
+     *            the start offset in the array
      */
     public void chars(int from, int to, char[] array, int offset) {
         source.getChars(from, to, array, offset);

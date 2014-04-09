@@ -76,6 +76,14 @@ public final class SetPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.2.3.1 Set.prototype.add (value )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the new value
+         * @return this set object
          */
         @Function(name = "add", arity = 1)
         public static Object add(ExecutionContext cx, Object thisValue, Object value) {
@@ -91,6 +99,12 @@ public final class SetPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.2.3.2 Set.prototype.clear ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the undefined value
          */
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
@@ -106,6 +120,14 @@ public final class SetPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.2.3.4 Set.prototype.delete ( value )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the value
+         * @return {@code true} if the entry was deleted
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object value) {
@@ -119,6 +141,12 @@ public final class SetPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.2.3.5 Set.prototype.entries ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the entries iterator
          */
         @Function(name = "entries", arity = 0)
         public static Object entries(ExecutionContext cx, Object thisValue) {
@@ -128,6 +156,16 @@ public final class SetPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.2.3.6 Set.prototype.forEach ( callbackfn , thisArg = undefined )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param callbackfn
+         *            the callback function
+         * @param thisArg
+         *            the optional this-argument
+         * @return the undefined value
          */
         @Function(name = "forEach", arity = 1)
         public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -154,19 +192,33 @@ public final class SetPrototype extends OrdinaryObject implements Initialisable 
 
         /**
          * 23.2.3.7 Set.prototype.has ( value )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the value
+         * @return {@code true} if the entry was found
          */
         @Function(name = "has", arity = 1)
-        public static Object has(ExecutionContext cx, Object thisValue, Object key) {
+        public static Object has(ExecutionContext cx, Object thisValue, Object value) {
             /* steps 1-4 */
             SetObject s = thisSetValue(cx, thisValue);
             /* step 5 */
             LinkedMap<Object, Void> entries = s.getSetData();
             /* steps 6-9 */
-            return entries.has(key);
+            return entries.has(value);
         }
 
         /**
          * 23.2.3.9 get Set.prototype.size
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the number of entries
          */
         @Accessor(name = "size", type = Accessor.Type.Getter)
         public static Object size(ExecutionContext cx, Object thisValue) {
@@ -182,6 +234,12 @@ public final class SetPrototype extends OrdinaryObject implements Initialisable 
          * 23.2.3.8 Set.prototype.keys ( )<br>
          * 23.2.3.10 Set.prototype.values ( )<br>
          * 23.2.3.11 Set.prototype[ @@iterator ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the values iterator
          */
         @Function(name = "values", arity = 0)
         @AliasFunctions({ @AliasFunction(name = "keys"),

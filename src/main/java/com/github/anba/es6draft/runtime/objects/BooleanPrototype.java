@@ -45,6 +45,12 @@ public final class BooleanPrototype extends OrdinaryObject implements Initialisa
 
         /**
          * Abstract operation thisBooleanValue(value)
+         * 
+         * @param cx
+         *            the execution context
+         * @param object
+         *            the boolean object
+         * @return the boolean value
          */
         private static boolean thisBooleanValue(ExecutionContext cx, Object object) {
             if (Type.isBoolean(object)) {
@@ -71,6 +77,12 @@ public final class BooleanPrototype extends OrdinaryObject implements Initialisa
 
         /**
          * 19.3.3.2 Boolean.prototype.toString ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the string representation
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -79,6 +91,12 @@ public final class BooleanPrototype extends OrdinaryObject implements Initialisa
 
         /**
          * 19.3.3.3 Boolean.prototype.valueOf ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the boolean value
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {

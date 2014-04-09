@@ -594,6 +594,9 @@ public final class Parser {
      * <li>It is a Syntax Error if any element of the LexicallyDeclaredNames of StatementList also
      * occurs in the VarDeclaredNames of StatementList.
      * </ul>
+     * 
+     * @param binding
+     *            the binding to add to the variable scope
      */
     private void addVarDeclaredName(Binding binding) {
         if (binding instanceof BindingIdentifier) {
@@ -637,6 +640,9 @@ public final class Parser {
      * <li>It is a Syntax Error if any element of the LexicallyDeclaredNames of StatementList also
      * occurs in the VarDeclaredNames of StatementList.
      * </ul>
+     * 
+     * @param binding
+     *            the binding to add to the lexical scope
      */
     private void addLexDeclaredName(Binding binding) {
         if (binding instanceof BindingIdentifier) {
@@ -802,28 +808,48 @@ public final class Parser {
     }
 
     /**
-     * Report mismatched token error from tokenstream's current position
+     * Report mismatched token error from tokenstream's current position.
+     * 
+     * @param expected
+     *            the expected token
+     * @param actual
+     *            the actual token in the token stream
+     * @return the parser exception
      */
     private ParserException reportTokenMismatch(Token expected, Token actual) {
         throw reportTokenMismatch(expected.toString(), actual);
     }
 
     /**
-     * Report mismatched token error from tokenstream's current position
+     * Report mismatched token error from tokenstream's current position.
+     * 
+     * @param actual
+     *            the actual token in the token stream
+     * @return the parser exception
      */
     private ParserException reportTokenNotIdentifier(Token actual) {
         throw reportTokenMismatch("<identifier>", actual);
     }
 
     /**
-     * Report mismatched token error from tokenstream's current position
+     * Report mismatched token error from tokenstream's current position.
+     * 
+     * @param actual
+     *            the actual token in the token stream
+     * @return the parser exception
      */
     private ParserException reportTokenNotIdentifierName(Token actual) {
         throw reportTokenMismatch("<identifier-name>", actual);
     }
 
     /**
-     * Report mismatched token error from tokenstream's current position
+     * Report mismatched token error from tokenstream's current position.
+     * 
+     * @param expected
+     *            the expected token description
+     * @param actual
+     *            the actual token in the token stream
+     * @return the parser exception
      */
     private ParserException reportTokenMismatch(String expected, Token actual) {
         long sourcePosition = ts.sourcePosition();
@@ -837,7 +863,17 @@ public final class Parser {
     }
 
     /**
-     * Report parser error with the given type and position
+     * Report parser error with the given type and position.
+     * 
+     * @param type
+     *            the exception type for the error
+     * @param sourcePosition
+     *            the source position for the error
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the parser exception
      */
     private ParserException reportError(ExceptionType type, long sourcePosition,
             Messages.Key messageKey, String... args) {
@@ -846,7 +882,15 @@ public final class Parser {
     }
 
     /**
-     * Report syntax error from the given position
+     * Report syntax error from the given position.
+     * 
+     * @param sourcePosition
+     *            the source position for the error
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the parser exception
      */
     private ParserException reportSyntaxError(long sourcePosition, Messages.Key messageKey,
             String... args) {
@@ -854,21 +898,44 @@ public final class Parser {
     }
 
     /**
-     * Report syntax error from the node's begin source-position
+     * Report syntax error from the node's begin source-position.
+     * 
+     * @param node
+     *            the node which could not be parsed without errors
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the parser exception
      */
     private ParserException reportSyntaxError(Node node, Messages.Key messageKey, String... args) {
         throw reportSyntaxError(node.getBeginPosition(), messageKey, args);
     }
 
     /**
-     * Report syntax error from tokenstream's current position
+     * Report syntax error from tokenstream's current position.
+     * 
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the parser exception
      */
     private ParserException reportSyntaxError(Messages.Key messageKey, String... args) {
         throw reportSyntaxError(ts.sourcePosition(), messageKey, args);
     }
 
     /**
-     * Report (or store) strict-mode parser error with the given type and position
+     * Report (or store) strict-mode parser error with the given type and position.
+     * 
+     * @param type
+     *            the exception type for the error
+     * @param sourcePosition
+     *            the source position for the error
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
      */
     private void reportStrictModeError(ExceptionType type, long sourcePosition,
             Messages.Key messageKey, String... args) {
@@ -884,7 +951,14 @@ public final class Parser {
     }
 
     /**
-     * Report (or store) strict-mode syntax error from the given position
+     * Report (or store) strict-mode syntax error from the given position.
+     * 
+     * @param sourcePosition
+     *            the source position for the error
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
      */
     private void reportStrictModeSyntaxError(long sourcePosition, Messages.Key messageKey,
             String... args) {
@@ -892,42 +966,65 @@ public final class Parser {
     }
 
     /**
-     * Report (or store) strict-mode syntax error from the node's source-position
+     * Report (or store) strict-mode syntax error from the node's source-position.
+     * 
+     * @param node
+     *            the node which could not be parsed without errors
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
      */
     private void reportStrictModeSyntaxError(Node node, Messages.Key messageKey, String... args) {
         reportStrictModeSyntaxError(node.getBeginPosition(), messageKey, args);
     }
 
     /**
-     * Report (or store) strict-mode syntax error from tokenstream's current position
+     * Report (or store) strict-mode syntax error from tokenstream's current position.
+     * 
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
      */
     void reportStrictModeSyntaxError(Messages.Key messageKey, String... args) {
         reportStrictModeSyntaxError(ts.sourcePosition(), messageKey, args);
     }
 
     /**
-     * Peeks the next token in the token-stream
+     * Peeks the next token in the token-stream.
+     * 
+     * @return the next token
      */
     private Token peek() {
         return ts.peekToken();
     }
 
     /**
-     * Checks whether the next token in the token-stream is equal to the input token
+     * Checks whether the next token in the token-stream is equal to the input token.
+     *
+     * @param token
+     *            the token to test
+     * @return {@code true} if the next token matches
      */
     private boolean LOOKAHEAD(Token token) {
         return ts.peekToken() == token;
     }
 
     /**
-     * Returns the current token in the token-stream
+     * Returns the current token in the token-stream.
+     * 
+     * @return the current token
      */
     private Token token() {
         return ts.currentToken();
     }
 
     /**
-     * Consumes the current token in the token-stream and advances the stream to the next token
+     * Consumes the current token in the token-stream and advances the stream to the next token.
+     * 
+     * @param tok
+     *            the token to consume
      */
     private void consume(Token tok) {
         if (tok != token())
@@ -938,7 +1035,10 @@ public final class Parser {
     }
 
     /**
-     * Consumes the current token in the token-stream and advances the stream to the next token
+     * Consumes the current token in the token-stream and advances the stream to the next token.
+     * 
+     * @param name
+     *            the name string to consume
      */
     private void consume(String name) {
         long sourcePos = ts.sourcePosition();
@@ -948,6 +1048,15 @@ public final class Parser {
             reportSyntaxError(sourcePos, Messages.Key.UnexpectedName, string, name);
     }
 
+    /**
+     * Parses the input source as script code.
+     * 
+     * @param source
+     *            the source string to parse
+     * @return the parsed script
+     * @throws ParserException
+     *             if the input source could not be parsed successfully
+     */
     public Script parseScript(CharSequence source) throws ParserException {
         if (ts != null)
             throw new IllegalStateException();
@@ -955,6 +1064,15 @@ public final class Parser {
         return script();
     }
 
+    /**
+     * Parses the input source as module code.
+     * 
+     * @param source
+     *            the source string to parse
+     * @return the parsed module
+     * @throws ParserException
+     *             if the input source could not be parsed successfully
+     */
     public Module parseModule(CharSequence source) throws ParserException {
         if (ts != null)
             throw new IllegalStateException();
@@ -962,6 +1080,17 @@ public final class Parser {
         return module();
     }
 
+    /**
+     * Parses the input source as function code.
+     * 
+     * @param formals
+     *            the function formal parameters source
+     * @param bodyText
+     *            the function body source text
+     * @return the parsed function
+     * @throws ParserException
+     *             if the input source could not be parsed successfully
+     */
     public FunctionDefinition parseFunction(CharSequence formals, CharSequence bodyText)
             throws ParserException {
         if (ts != null)
@@ -1018,6 +1147,17 @@ public final class Parser {
         }
     }
 
+    /**
+     * Parses the input source as generator function code.
+     * 
+     * @param formals
+     *            the function formal parameters source
+     * @param bodyText
+     *            the function body source text
+     * @return the parsed function
+     * @throws ParserException
+     *             if the input source could not be parsed successfully
+     */
     public GeneratorDefinition parseGenerator(CharSequence formals, CharSequence bodyText)
             throws ParserException {
         if (ts != null)
@@ -1092,10 +1232,12 @@ public final class Parser {
      * 
      * <pre>
      * Script :
-     *     ScriptBody<sub>opt</sub>
+     *     ScriptBody<span><sub>opt</sub></span>
      * ScriptBody :
      *     StatementList
      * </pre>
+     * 
+     * @return the parsed script node
      */
     private Script script() {
         newContext(ContextKind.Script);
@@ -1123,10 +1265,12 @@ public final class Parser {
      * 
      * <pre>
      * Module :
-     *     ModuleBody<sub>opt</sub>
+     *     ModuleBody<span><sub>opt</sub></span>
      * ModuleBody :
      *     ModuleItemList
      * </pre>
+     * 
+     * @return the parsed module node
      */
     private Module module() {
         newContext(ContextKind.Module);
@@ -1159,6 +1303,8 @@ public final class Parser {
      *     ExportDeclaration
      *     StatementListItem
      * </pre>
+     * 
+     * @return the list of parsed module items
      */
     private List<ModuleItem> moduleItemList() {
         List<ModuleItem> moduleItemList = newList();
@@ -1185,6 +1331,8 @@ public final class Parser {
      *     import ImportClause FromClause ;
      *     import ModuleSpecifier ;
      * </pre>
+     * 
+     * @return the parsed import declaration
      */
     private ImportDeclaration importDeclaration() {
         long begin = ts.beginPosition();
@@ -1228,6 +1376,8 @@ public final class Parser {
      * ModuleImport :
      *     module [no <i>LineTerminator</i> here] ImportedBinding FromClause ;
      * </pre>
+     * 
+     * @return the parsed module import
      */
     private ModuleImport moduleImport() {
         long begin = ts.beginPosition();
@@ -1252,6 +1402,8 @@ public final class Parser {
      * FromClause :
      *     from ModuleSpecifier
      * </pre>
+     * 
+     * @return the parsed from-clause's module specifier
      */
     private String fromClause() {
         consume("from");
@@ -1267,6 +1419,8 @@ public final class Parser {
      *     ImportedBinding , NamedImports
      *     NamedImports
      * </pre>
+     * 
+     * @return the parsed import clause
      */
     private ImportClause importClause() {
         long begin = ts.beginPosition();
@@ -1298,6 +1452,8 @@ public final class Parser {
      *     ImportSpecifier
      *     ImportsList , ImportSpecifier
      * </pre>
+     * 
+     * @return the list of parsed named imports
      */
     private List<ImportSpecifier> namedImports() {
         List<ImportSpecifier> namedImports = newList();
@@ -1322,6 +1478,8 @@ public final class Parser {
      *     ImportedBinding
      *     IdentifierName as ImportedBinding
      * </pre>
+     * 
+     * @return the parsed import specifier
      */
     private ImportSpecifier importSpecifier() {
         long begin = ts.beginPosition();
@@ -1343,6 +1501,10 @@ public final class Parser {
 
     /**
      * Returns FOLLOW(ImportSpecifier): « <tt>,</tt> , <tt>}</tt> »
+     *
+     * @param token
+     *            the token to test
+     * @return {@code true} if token is in the follow-set
      */
     private boolean importSpecifierFollowSet(Token token) {
         switch (token) {
@@ -1361,6 +1523,8 @@ public final class Parser {
      * ModuleSpecifier :
      *     StringLiteral
      * </pre>
+     * 
+     * @return the parsed module specifier string
      */
     private String moduleSpecifier() {
         return stringLiteral();
@@ -1373,6 +1537,8 @@ public final class Parser {
      * ImportedBinding :
      *     BindingIdentifier
      * </pre>
+     * 
+     * @return the parsed imported binding node
      */
     private BindingIdentifier importedBinding() {
         return bindingIdentifier();
@@ -1384,12 +1550,14 @@ public final class Parser {
      * <pre>
      * ExportDeclaration :
      *     export * FromClause ;
-     *     export ExportsClause<sub>[NoReference]</sub> FromClause ;
+     *     export ExportsClause<span><sub>[NoReference]</sub></span> FromClause ;
      *     export ExportsClause ;
      *     export VariableStatement
-     *     export Declaration<sub>[Default]</sub>
+     *     export Declaration<span><sub>[Default]</sub></span>
      *     export default AssignmentExpression ;
      * </pre>
+     * 
+     * @return the parsed export declaration
      */
     private ExportDeclaration exportDeclaration() {
         long begin = ts.beginPosition();
@@ -1482,14 +1650,18 @@ public final class Parser {
      * <strong>[15.2.2] Exports</strong>
      * 
      * <pre>
-     * ExportsClause<sub>[NoReference]</sub> :
+     * ExportsClause<span><sub>[NoReference]</sub></span> :
      *     { } 
-     *     { ExportsList<sub>[?NoReference]</sub> }
-     *     { ExportsList<sub>[?NoReference]</sub> , }
-     * ExportsList<sub>[NoReference]</sub> :
-     *     ExportSpecifier<sub>[?NoReference]</sub>
-     *     ExportsList<sub>[?NoReference]</sub> , ExportSpecifier<sub>[?NoReference]</sub>
+     *     { ExportsList<span><sub>[?NoReference]</sub></span> }
+     *     { ExportsList<span><sub>[?NoReference]</sub></span> , }
+     * ExportsList<span><sub>[NoReference]</sub></span> :
+     *     ExportSpecifier<span><sub>[?NoReference]</sub></span>
+     *     ExportsList<span><sub>[?NoReference]</sub></span> , ExportSpecifier<span><sub>[?NoReference]</sub></span>
      * </pre>
+     * 
+     * @param noReference
+     *            the flag to allow/disallow references
+     * @return the parsed exports clause
      */
     private ExportsClause exportsClause(boolean noReference) {
         long begin = ts.beginPosition();
@@ -1511,12 +1683,16 @@ public final class Parser {
      * <strong>[15.2.2] Exports</strong>
      * 
      * <pre>
-     * ExportSpecifier<sub>[NoReference]</sub> :
-     *     <sub>[~NoReference]</sub>IdentifierReference
-     *     <sub>[~NoReference]</sub>IdentifierReference as IdentifierName
-     *     <sub>[+NoReference]</sub>IdentifierName
-     *     <sub>[+NoReference]</sub>IdentifierName as IdentifierName
+     * ExportSpecifier<span><sub>[NoReference]</sub></span> :
+     *     <span><sub>[~NoReference]</sub></span>IdentifierReference
+     *     <span><sub>[~NoReference]</sub></span>IdentifierReference as IdentifierName
+     *     <span><sub>[+NoReference]</sub></span>IdentifierName
+     *     <span><sub>[+NoReference]</sub></span>IdentifierName as IdentifierName
      * </pre>
+     * 
+     * @param noReference
+     *            the flag to allow/disallow references
+     * @return the parsed export specifier
      */
     private ExportSpecifier exportSpecifier(boolean noReference) {
         long begin = ts.beginPosition();
@@ -1550,11 +1726,13 @@ public final class Parser {
      * 
      * <pre>
      * DirectivePrologue :
-     *   Directive<sub>opt</sub>
+     *   Directive<span><sub>opt</sub></span>
      * Directive:
      *   StringLiteral ;
      *   Directive StringLiteral ;
      * </pre>
+     * 
+     * @return the parsed list of directives
      */
     private List<StatementListItem> directivePrologue() {
         List<StatementListItem> statements = newSmallList();
@@ -1658,9 +1836,13 @@ public final class Parser {
      * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
-     * FunctionDeclaration<sub>[Default]</sub> :
-     *     function BindingIdentifier<sub>[?Default]</sub> ( FormalParameters ) { FunctionBody }
+     * FunctionDeclaration<span><sub>[Default]</sub></span> :
+     *     function BindingIdentifier<span><sub>[?Default]</sub></span> ( FormalParameters ) { FunctionBody }
      * </pre>
+     * 
+     * @param allowDefault
+     *            the flag to select if 'default' is allowed as the function name
+     * @return the parsed function declaration
      */
     private FunctionDeclaration functionDeclaration(boolean allowDefault) {
         newContext(ContextKind.Function);
@@ -1713,8 +1895,10 @@ public final class Parser {
      * 
      * <pre>
      * FunctionExpression :
-     *     function BindingIdentifier<sub>opt</sub> ( FormalParameters ) { FunctionBody }
+     *     function BindingIdentifier<span><sub>opt</sub></span> ( FormalParameters ) { FunctionBody }
      * </pre>
+     * 
+     * @return the parsed function expression
      */
     private FunctionExpression functionExpression() {
         newContext(ContextKind.Function);
@@ -1770,6 +1954,10 @@ public final class Parser {
      * StrictFormalParameters :
      *     FormalParameters
      * </pre>
+     * 
+     * @param end
+     *            the end token
+     * @return the parsed formal parameters list
      */
     private FormalParameterList strictFormalParameters(Token end) {
         return formalParameters(end);
@@ -1783,6 +1971,10 @@ public final class Parser {
      *     [empty]
      *     FormalParameterList
      * </pre>
+     * 
+     * @param end
+     *            the end token
+     * @return the parsed formal parameters list
      */
     private FormalParameterList formalParameters(Token end) {
         if (token() == end) {
@@ -1808,6 +2000,8 @@ public final class Parser {
      * FormalParameter :
      *     BindingElement
      * </pre>
+     * 
+     * @return the parsed formal parameters list
      */
     private FormalParameterList formalParameterList() {
         long begin = ts.beginPosition();
@@ -1870,6 +2064,9 @@ public final class Parser {
 
     /**
      * 14.1.1 Static Semantics: Early Errors
+     * 
+     * @param function
+     *            the function definition to validate
      */
     private void function_EarlyErrors(FunctionDefinition function) {
         assert context.scopeContext == context.funContext;
@@ -1894,6 +2091,15 @@ public final class Parser {
 
     /**
      * 14.1.1 Static Semantics: Early Errors
+     * 
+     * @param node
+     *            the function definition to validate
+     * @param boundNames
+     *            the list of bound parameter names
+     * @param names
+     *            the set of names to validate
+     * @param simple
+     *            the flag to describe simple parameter lists
      */
     private void strictFormalParameters_EarlyErrors(FunctionNode node, List<String> boundNames,
             HashSet<String> names, boolean simple) {
@@ -1903,6 +2109,15 @@ public final class Parser {
 
     /**
      * 14.1.1 Static Semantics: Early Errors
+     * 
+     * @param node
+     *            the function definition to validate
+     * @param boundNames
+     *            the list of bound parameter names
+     * @param names
+     *            the set of names to validate
+     * @param simple
+     *            the flag to describe simple parameter lists
      */
     private void formalParameters_EarlyErrors(FunctionNode node, List<String> boundNames,
             HashSet<String> names, boolean simple) {
@@ -1915,11 +2130,15 @@ public final class Parser {
      * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
-     * FunctionBody<sub>[Yield]</sub> :
-     *     FunctionStatementList<sub>[?Yield]</sub>
-     * FunctionStatementList<sub>[Yield]</sub> :
-     *     StatementList<sub>[?Yield, Return]opt</sub>
+     * FunctionBody<span><sub>[Yield]</sub></span> :
+     *     FunctionStatementList<span><sub>[?Yield]</sub></span>
+     * FunctionStatementList<span><sub>[Yield]</sub></span> :
+     *     StatementList<span><sub>[?Yield, Return]opt</sub></span>
      * </pre>
+     * 
+     * @param end
+     *            the end token
+     * @return the list of parsed statement list items
      */
     private List<StatementListItem> functionBody(Token end) {
         // enable 'yield' if in generator
@@ -1936,9 +2155,11 @@ public final class Parser {
      * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
-     * ExpressionClosureBody<sub>[Yield]</sub> :
-     *     AssignmentExpression<sub>[In, ?Yield]</sub>
+     * ExpressionClosureBody<span><sub>[Yield]</sub></span> :
+     *     AssignmentExpression<span><sub>[In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the list of parsed statement list items
      */
     private List<StatementListItem> expressionClosureBody() {
         // need to call manually b/c directivePrologue() isn't used here
@@ -1953,13 +2174,13 @@ public final class Parser {
      * <strong>[14.2] Arrow Function Definitions</strong>
      * 
      * <pre>
-     * ArrowFunction<sub>[In]</sub> :
-     *     ArrowParameters => ConciseBody<sub>[?In]</sub>
+     * ArrowFunction<span><sub>[In]</sub></span> :
+     *     ArrowParameters {@literal =>} ConciseBody<span><sub>[?In]</sub></span>
      * ArrowParameters :
      *     BindingIdentifier
      *     CoverParenthesisedExpressionAndArrowParameterList
-     * ConciseBody<sub>[In]</sub> :
-     *     [LA &#x2209; { <b>{</b> }] AssignmentExpression<sub>[?In]</sub>
+     * ConciseBody<span><sub>[In]</sub></span> :
+     *     [LA &#x2209; { <b>{</b> }] AssignmentExpression<span><sub>[?In]</sub></span>
      *     { FunctionBody }
      * </pre>
      * 
@@ -1969,6 +2190,10 @@ public final class Parser {
      * ArrowFormalParameters :
      *     ( StrictFormalParameters )
      * </pre>
+     * 
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the parsed arrow function
      */
     private ArrowFunction arrowFunction(boolean allowIn) {
         newContext(ContextKind.ArrowFunction);
@@ -2044,6 +2269,9 @@ public final class Parser {
 
     /**
      * 14.2.1 Static Semantics: Early Errors
+     * 
+     * @param function
+     *            the arrow function node to validate
      */
     private void arrowFunction_EarlyErrors(ArrowFunction function) {
         assert context.scopeContext == context.funContext;
@@ -2069,6 +2297,8 @@ public final class Parser {
      *     get PropertyName ( ) { FunctionBody }
      *     set PropertyName ( PropertySetParameterList ) { FunctionBody }
      * </pre>
+     * 
+     * @return the parsed method definition
      */
     private MethodDefinition methodDefinition() {
         switch (methodType()) {
@@ -2093,6 +2323,8 @@ public final class Parser {
      * MethodDefinition :
      *     PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </pre>
+     * 
+     * @return the parsed method definition
      */
     private MethodDefinition normalMethod() {
         long begin = ts.beginPosition();
@@ -2137,6 +2369,8 @@ public final class Parser {
      * MethodDefinition :
      *     get PropertyName ( ) { FunctionBody }
      * </pre>
+     * 
+     * @return the parsed getter method definition
      */
     private MethodDefinition getterMethod() {
         long begin = ts.beginPosition();
@@ -2193,6 +2427,8 @@ public final class Parser {
      * MethodDefinition :
      *     set PropertyName ( PropertySetParameterList ) { FunctionBody }
      * </pre>
+     * 
+     * @return the parsed setter method definition
      */
     private MethodDefinition setterMethod() {
         long begin = ts.beginPosition();
@@ -2249,6 +2485,8 @@ public final class Parser {
      *     BindingIdentifier
      *     BindingPattern
      * </pre>
+     * 
+     * @return the parsed formal parameters list
      */
     private FormalParameterList propertySetParameterList() {
         long begin = ts.beginPosition();
@@ -2287,6 +2525,9 @@ public final class Parser {
 
     /**
      * 14.3.1 Static Semantics: Early Errors
+     * 
+     * @param method
+     *            the method definition node to validate
      */
     private void methodDefinition_EarlyErrors(MethodDefinition method) {
         assert context.scopeContext == context.funContext;
@@ -2322,6 +2563,15 @@ public final class Parser {
 
     /**
      * 14.3.1 Static Semantics: Early Errors
+     * 
+     * @param node
+     *            the function definition to validate
+     * @param boundNames
+     *            the list of bound parameter names
+     * @param names
+     *            the set of names to validate
+     * @param simple
+     *            the flag to describe simple parameter lists
      */
     private void propertySetParameterList_EarlyErrors(FunctionNode node, List<String> boundNames,
             HashSet<String> names, boolean simple) {
@@ -2336,9 +2586,11 @@ public final class Parser {
      * <strong>[14.4] Generator Function Definitions</strong>
      * 
      * <pre>
-     * GeneratorMethod<sub>[Yield]</sub> :
-     *     * PropertyName<sub>[?Yield]</sub> ( StrictFormalParameters<sub>[Yield, GeneratorParameter]</sub> ) { FunctionBody<sub>[Yield]</sub> }
+     * GeneratorMethod<span><sub>[Yield]</sub></span> :
+     *     * PropertyName<span><sub>[?Yield]</sub></span> ( StrictFormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { FunctionBody<span><sub>[Yield]</sub></span> }
      * </pre>
+     * 
+     * @return the parsed generator method definition
      */
     private MethodDefinition generatorMethod() {
         long begin = ts.beginPosition();
@@ -2379,9 +2631,15 @@ public final class Parser {
      * <strong>[14.4] Generator Function Definitions</strong>
      * 
      * <pre>
-     * GeneratorDeclaration<sub>[Default]</sub> :
-     *     function * BindingIdentifier<sub>[?Default]</sub> ( FormalParameters<sub>[Yield, GeneratorParameter]</sub> ) { FunctionBody<sub>[Yield]</sub> }
+     * GeneratorDeclaration<span><sub>[Default]</sub></span> :
+     *     function * BindingIdentifier<span><sub>[?Default]</sub></span> ( FormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { FunctionBody<span><sub>[Yield]</sub></span> }
      * </pre>
+     * 
+     * @param allowDefault
+     *            the flag to select if 'default' is allowed as the function name
+     * @param starless
+     *            the flag to mark this generator as a legacy, star-less generator
+     * @return the parsed generator declaration
      */
     private GeneratorDeclaration generatorDeclaration(boolean allowDefault, boolean starless) {
         newContext(ContextKind.Generator);
@@ -2432,8 +2690,12 @@ public final class Parser {
      * 
      * <pre>
      * GeneratorExpression :
-     *     function * BindingIdentifier<sub>[Yield]opt</sub> ( FormalParameters<sub>[Yield, GeneratorParameter]</sub> ) { FunctionBody<sub>[Yield]</sub> }
+     *     function * BindingIdentifier<span><sub>[Yield]opt</sub></span> ( FormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { FunctionBody<span><sub>[Yield]</sub></span> }
      * </pre>
+     * 
+     * @param starless
+     *            the flag to mark this generator as a legacy, star-less generator
+     * @return the parsed generator expression declaration
      */
     private GeneratorExpression generatorExpression(boolean starless) {
         newContext(ContextKind.Generator);
@@ -2482,6 +2744,9 @@ public final class Parser {
 
     /**
      * 14.4.1 Static Semantics: Early Errors
+     * 
+     * @param generator
+     *            the generator to validate
      */
     private void generator_EarlyErrors(GeneratorDefinition generator) {
         assert context.scopeContext == context.funContext;
@@ -2508,11 +2773,15 @@ public final class Parser {
      * <strong>[14.4] Generator Function Definitions</strong>
      * 
      * <pre>
-     * YieldExpression<sub>[In]</sub> :
+     * YieldExpression<span><sub>[In]</sub></span> :
      *     yield
-     *     yield [no <i>LineTerminator</i> here] <font size="-1">[Lexical goal <i>InputElementRegExp</i>]</font> AssignmentExpression<sub>[?In, Yield]</sub>
-     *     yield [no <i>LineTerminator</i> here] * <font size="-1">[Lexical goal <i>InputElementRegExp</i>]</font> AssignmentExpression<sub>[?In, Yield]</sub>
+     *     yield [no <i>LineTerminator</i> here] <span style="font-size:smaller">[Lexical goal <i>InputElementRegExp</i>]</span> AssignmentExpression<span><sub>[?In, Yield]</sub></span>
+     *     yield [no <i>LineTerminator</i> here] * <span style="font-size:smaller">[Lexical goal <i>InputElementRegExp</i>]</span> AssignmentExpression<span><sub>[?In, Yield]</sub></span>
      * </pre>
+     * 
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the parsed yield expression
      */
     private YieldExpression yieldExpression(boolean allowIn) {
         assert context.kind == ContextKind.Generator && context.yieldAllowed;
@@ -2628,13 +2897,17 @@ public final class Parser {
      * <strong>[14.5] Class Definitions</strong>
      * 
      * <pre>
-     * ClassDeclaration<sub>[Default]</sub> :
-     *     class BindingIdentifier<sub>[?Default]</sub> ClassTail
+     * ClassDeclaration<span><sub>[Default]</sub></span> :
+     *     class BindingIdentifier<span><sub>[?Default]</sub></span> ClassTail
      * ClassTail :
-     *     ClassHeritage<sub>opt</sub> { ClassBody<sub>opt</sub> }
+     *     ClassHeritage<span><sub>opt</sub></span> { ClassBody<span><sub>opt</sub></span> }
      * ClassHeritage :
      *     extends LeftHandSideExpression
      * </pre>
+     * 
+     * @param allowDefault
+     *            the flag to select if 'default' is allowed as the class name
+     * @return the parsed class declaration
      */
     private ClassDeclaration classDeclaration(boolean allowDefault) {
         StrictMode strictMode = context.strictMode;
@@ -2673,12 +2946,14 @@ public final class Parser {
      * 
      * <pre>
      * ClassExpression :
-     *     class BindingIdentifier<sub>opt</sub> ClassTail
+     *     class BindingIdentifier<span><sub>opt</sub></span> ClassTail
      * ClassTail :
-     *     ClassHeritage<sub>opt</sub> { ClassBody<sub>opt</sub> }
+     *     ClassHeritage<span><sub>opt</sub></span> { ClassBody<span><sub>opt</sub></span> }
      * ClassHeritage :
      *     extends LeftHandSideExpression
      * </pre>
+     * 
+     * @return the parsed class expression
      */
     private ClassExpression classExpression() {
         StrictMode strictMode = context.strictMode;
@@ -2734,6 +3009,13 @@ public final class Parser {
      *     static MethodDefinition
      *     ;
      * </pre>
+     * 
+     * @param className
+     *            the class' name if present, otherwise {@code null}
+     * @param staticMethods
+     *            the list to hold static methods
+     * @param prototypeMethods
+     *            the list to hold prototype methods
      */
     private void classBody(BindingIdentifier className, List<MethodDefinition> staticMethods,
             List<MethodDefinition> prototypeMethods) {
@@ -2754,6 +3036,13 @@ public final class Parser {
 
     /**
      * 14.5.1 Static Semantics: Early Errors
+     * 
+     * @param className
+     *            the class' name if present, otherwise {@code null}
+     * @param defs
+     *            the method definitions to validate
+     * @param isStatic
+     *            the flag to select whether to perform static or prototype method error detection
      */
     private void classBody_EarlyErrors(BindingIdentifier className, List<MethodDefinition> defs,
             boolean isStatic) {
@@ -2807,14 +3096,19 @@ public final class Parser {
      * <strong>[Extension] <code>async</code> Function Definitions</strong>
      * 
      * <pre>
-     * AsyncFunctionDeclaration<sub>[Default]</sub> :
-     *     async function BindingIdentifier<sub>[?Default]</sub> ( FormalParameters ) { FunctionBody }
+     * AsyncFunctionDeclaration<span><sub>[Default]</sub></span> :
+     *     async function BindingIdentifier<span><sub>[?Default]</sub></span> ( FormalParameters ) { FunctionBody }
      * </pre>
+     * 
+     * @param allowDefault
+     *            the flag to select if 'default' is allowed as the function name
+     * @return the parsed async function declaration
      */
     private AsyncFunctionDeclaration asyncFunctionDeclaration(boolean allowDefault) {
         newContext(ContextKind.AsyncFunction);
         try {
             long begin = ts.beginPosition();
+            // FIXME: start function position
             consume("async");
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
@@ -2853,13 +3147,16 @@ public final class Parser {
      * 
      * <pre>
      * AsyncFunctionExpression :
-     *     async function BindingIdentifier<sub>opt</sub> ( FormalParameters ) { FunctionBody }
+     *     async function BindingIdentifier<span><sub>opt</sub></span> ( FormalParameters ) { FunctionBody }
      * </pre>
+     * 
+     * @return the parsed async function expression
      */
     private AsyncFunctionExpression asyncFunctionExpression() {
         newContext(ContextKind.AsyncFunction);
         try {
             long begin = ts.beginPosition();
+            // FIXME: start function position
             consume("async");
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
@@ -2919,9 +3216,11 @@ public final class Parser {
      * <strong>[Extension] <code>async</code> Function Definitions</strong>
      * 
      * <pre>
-     * AsyncMethod<sub>[Yield]</sub> :
+     * AsyncMethod<span><sub>[Yield]</sub></span> :
      *     async PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </pre>
+     * 
+     * @return the parsed async method
      */
     private MethodDefinition asyncMethod() {
         long begin = ts.beginPosition();
@@ -2941,6 +3240,7 @@ public final class Parser {
             consume(Token.RC);
             int endFunction = ts.position() - 1;
 
+            // FIXME: function source
             String header = "function* " + ts.range(startFunction, startBody - 1);
             String body = ts.range(startBody, endFunction);
 
@@ -2965,6 +3265,8 @@ public final class Parser {
      * AwaitExpression :
      *     await UnaryExpression
      * </pre>
+     * 
+     * @return the parsed await expression
      */
     private AwaitExpression awaitExpression() {
         assert context.kind == ContextKind.AsyncFunction && context.awaitAllowed;
@@ -2980,26 +3282,28 @@ public final class Parser {
      * <strong>[13] ECMAScript Language: Statements and Declarations</strong>
      * 
      * <pre>
-     * Statement<sub>[Yield, Return]</sub> :
-     *     BlockStatement<sub>[?Yield, ?Return]</sub>
-     *     VariableStatement<sub>[?Yield]</sub>
+     * Statement<span><sub>[Yield, Return]</sub></span> :
+     *     BlockStatement<span><sub>[?Yield, ?Return]</sub></span>
+     *     VariableStatement<span><sub>[?Yield]</sub></span>
      *     EmptyStatement
-     *     ExpressionStatement<sub>[?Yield]</sub>
-     *     IfStatement<sub>[?Yield, ?Return]</sub>
-     *     BreakableStatement<sub>[?Yield, ?Return]</sub>
+     *     ExpressionStatement<span><sub>[?Yield]</sub></span>
+     *     IfStatement<span><sub>[?Yield, ?Return]</sub></span>
+     *     BreakableStatement<span><sub>[?Yield, ?Return]</sub></span>
      *     ContinueStatement
      *     BreakStatement
-     *     <sub>[+Return]</sub>ReturnStatement<sub>[?Yield]</sub>
-     *     WithStatement<sub>[?Yield, ?Return]</sub>
-     *     LabelledStatement<sub>[?Yield, ?Return]</sub>
-     *     ThrowStatement<sub>[?Yield]</sub>
-     *     TryStatement<sub>[?Yield, ?Return]</sub>
+     *     <span><sub>[+Return]</sub></span>ReturnStatement<span><sub>[?Yield]</sub></span>
+     *     WithStatement<span><sub>[?Yield, ?Return]</sub></span>
+     *     LabelledStatement<span><sub>[?Yield, ?Return]</sub></span>
+     *     ThrowStatement<span><sub>[?Yield]</sub></span>
+     *     TryStatement<span><sub>[?Yield, ?Return]</sub></span>
      *     DebuggerStatement
      * 
-     * BreakableStatement<sub>[Yield, Return]</sub> :
-     *     IterationStatement<sub>[?Yield, ?Return]</sub>
-     *     SwitchStatement<sub>[?Yield, ?Return]</sub>
+     * BreakableStatement<span><sub>[Yield, Return]</sub></span> :
+     *     IterationStatement<span><sub>[?Yield, ?Return]</sub></span>
+     *     SwitchStatement<span><sub>[?Yield, ?Return]</sub></span>
      * </pre>
+     * 
+     * @return the parsed statement node
      */
     private Statement statement() {
         switch (token()) {
@@ -3065,11 +3369,15 @@ public final class Parser {
      * <strong>[13.1] Block</strong>
      * 
      * <pre>
-     * BlockStatement<sub>[Yield, Return]</sub> :
-     *     Block<sub>[?Yield, ?Return]</sub>
-     * Block<sub>[Yield, Return]</sub> :
-     *     { StatementList<sub>[?Yield, ?Return]opt</sub> }
+     * BlockStatement<span><sub>[Yield, Return]</sub></span> :
+     *     Block<span><sub>[?Yield, ?Return]</sub></span>
+     * Block<span><sub>[Yield, Return]</sub></span> :
+     *     { StatementList<span><sub>[?Yield, ?Return]opt</sub></span> }
      * </pre>
+     * 
+     * @param inherited
+     *            the list of inherited lexical bindings
+     * @return the parsed block statement
      */
     private BlockStatement block(List<Binding> inherited) {
         long begin = ts.beginPosition();
@@ -3094,10 +3402,14 @@ public final class Parser {
      * <strong>[13.1] Block</strong>
      * 
      * <pre>
-     * StatementList<sub>[Yield, Return]</sub> :
-     *     StatementItem<sub>[?Yield, ?Return]</sub>
-     *     StatementList<sub>[?Yield, ?Return]</sub> StatementListItem<sub>[?Yield, ?Return]</sub>
+     * StatementList<span><sub>[Yield, Return]</sub></span> :
+     *     StatementItem<span><sub>[?Yield, ?Return]</sub></span>
+     *     StatementList<span><sub>[?Yield, ?Return]</sub></span> StatementListItem<span><sub>[?Yield, ?Return]</sub></span>
      * </pre>
+     * 
+     * @param end
+     *            the end marker token
+     * @return the list of parsed statement list items
      */
     private List<StatementListItem> statementList(Token end) {
         List<StatementListItem> list = newList();
@@ -3111,10 +3423,12 @@ public final class Parser {
      * <strong>[13.1] Block</strong>
      * 
      * <pre>
-     * StatementListItem<sub>[Yield, Return]</sub> :
-     *     Statement<sub>[?Yield, ?Return]</sub>
-     *     Declaration<sub>[?Yield]</sub>
+     * StatementListItem<span><sub>[Yield, Return]</sub></span> :
+     *     Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     Declaration<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the parsed statement list item
      */
     private StatementListItem statementListItem() {
         switch (token()) {
@@ -3143,12 +3457,16 @@ public final class Parser {
      * <strong>[13] ECMAScript Language: Statements and Declarations</strong>
      * 
      * <pre>
-     * Declaration<sub>[Yield, Default]</sub> :
-     *     FunctionDeclaration<sub>[?Default]</sub>
-     *     GeneratorDeclaration<sub>[?Default]</sub>
-     *     ClassDeclaration<sub>[?Default]</sub>
-     *     LexicalDeclaration<sub>[In, ?Yield]</sub>
+     * Declaration<span><sub>[Yield, Default]</sub></span> :
+     *     FunctionDeclaration<span><sub>[?Default]</sub></span>
+     *     GeneratorDeclaration<span><sub>[?Default]</sub></span>
+     *     ClassDeclaration<span><sub>[?Default]</sub></span>
+     *     LexicalDeclaration<span><sub>[In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @param allowDefault
+     *            the flag to select if 'default' is allowed as declaration name
+     * @return the parsed declaration node
      */
     private Declaration declaration(boolean allowDefault) {
         switch (token()) {
@@ -3186,12 +3504,16 @@ public final class Parser {
      * <strong>[13.2.1] Let and Const Declarations</strong>
      * 
      * <pre>
-     * LexicalDeclaration<sub>[In, Yield]</sub> :
-     *     LetOrConst BindingList<sub>[?In, ?Yield]</sub> ;
+     * LexicalDeclaration<span><sub>[In, Yield]</sub></span> :
+     *     LetOrConst BindingList<span><sub>[?In, ?Yield]</sub></span> ;
      * LetOrConst :
      *     let
      *     const
      * </pre>
+     * 
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the parsed lexical declaration
      */
     private LexicalDeclaration lexicalDeclaration(boolean allowIn) {
         long begin = ts.beginPosition();
@@ -3218,10 +3540,16 @@ public final class Parser {
      * <strong>[13.2.1] Let and Const Declarations</strong>
      * 
      * <pre>
-     * BindingList<sub>[In, Yield]</sub> :
-     *     LexicalBinding<sub>[?In, ?Yield]</sub>
-     *     BindingList<sub>[?In, ?Yield]</sub>, LexicalBinding<sub>[?In, ?Yield]</sub>
+     * BindingList<span><sub>[In, Yield]</sub></span> :
+     *     LexicalBinding<span><sub>[?In, ?Yield]</sub></span>
+     *     BindingList<span><sub>[?In, ?Yield]</sub></span>, LexicalBinding<span><sub>[?In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @param isConst
+     *            the flag for const lexical bindings
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the list of parsed lexical bindings
      */
     private List<LexicalBinding> bindingList(boolean isConst, boolean allowIn) {
         List<LexicalBinding> list = newSmallList();
@@ -3238,10 +3566,16 @@ public final class Parser {
      * <strong>[13.2.1] Let and Const Declarations</strong>
      * 
      * <pre>
-     * LexicalBinding<sub>[In, Yield]</sub> :
-     *     BindingIdentifier<sub>[?Yield]</sub> Initialiser<sub>[?In, ?Yield]opt</sub>
-     *     BindingPattern<sub>[?Yield]</sub> Initialiser<sub>[?In, ?Yield]</sub>
+     * LexicalBinding<span><sub>[In, Yield]</sub></span> :
+     *     BindingIdentifier<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[?In, ?Yield]opt</sub></span>
+     *     BindingPattern<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[?In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @param isConst
+     *            the flag for const lexical bindings
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the parsed lexical binding
      */
     private LexicalBinding lexicalBinding(boolean isConst, boolean allowIn) {
         long begin = ts.beginPosition();
@@ -3271,7 +3605,11 @@ public final class Parser {
     }
 
     /**
-     * Returns {@code true} iff {@code token} is in the first-set of LexicalBinding
+     * Returns {@code true} iff {@code token} is in the first-set of LexicalBinding.
+     * 
+     * @param token
+     *            the token to inspect
+     * @return {@code true} if the token is in the first-set
      */
     private boolean lexicalBindingFirstSet(Token token) {
         switch (token) {
@@ -3289,11 +3627,13 @@ public final class Parser {
      * <strong>[13.2.1] Let and Const Declarations</strong>
      * 
      * <pre>
-     * BindingIdentifier<sub>[Default, Yield]</sub> :
-     *     <sub>[+Default]</sub> default
-     *     <sub>[~Yield]</sub> yield
+     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
+     *     <span><sub>[+Default]</sub></span> default
+     *     <span><sub>[~Yield]</sub></span> yield
      *     Identifier
      * </pre>
+     * 
+     * @return the parsed binding identifier
      */
     private BindingIdentifier bindingIdentifier() {
         return bindingIdentifier(true);
@@ -3303,11 +3643,15 @@ public final class Parser {
      * <strong>[13.2.1] Let and Const Declarations</strong>
      * 
      * <pre>
-     * BindingIdentifier<sub>[Default, Yield]</sub> :
-     *     <sub>[+Default]</sub> default
-     *     <sub>[~Yield]</sub> yield
+     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
+     *     <span><sub>[+Default]</sub></span> default
+     *     <span><sub>[~Yield]</sub></span> yield
      *     Identifier
      * </pre>
+     * 
+     * @param allowLet
+     *            the flag to select if 'let' is allowed as a binding name
+     * @return the parsed binding identifier
      */
     private BindingIdentifier bindingIdentifier(boolean allowLet) {
         long begin = ts.beginPosition();
@@ -3333,11 +3677,15 @@ public final class Parser {
      * Neither "arguments" nor "eval" is allowed.
      * 
      * <pre>
-     * BindingIdentifier<sub>[Default, Yield]</sub> :
-     *     <sub>[+Default]</sub> default
-     *     <sub>[~Yield]</sub> yield
+     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
+     *     <span><sub>[+Default]</sub></span> default
+     *     <span><sub>[~Yield]</sub></span> yield
      *     Identifier
      * </pre>
+     * 
+     * @param allowDefault
+     *            the flag to select if 'default' is allowed as the class name
+     * @return the parsed binding identifier
      */
     private BindingIdentifier bindingIdentifierClassName(boolean allowDefault) {
         long begin = ts.beginPosition();
@@ -3359,11 +3707,15 @@ public final class Parser {
      * Special case for {@link Token#YIELD} as {@link BindingIdentifier} in functions and generators
      * 
      * <pre>
-     * BindingIdentifier<sub>[Default, Yield]</sub> :
-     *     <sub>[+Default]</sub> default
-     *     <sub>[~Yield]</sub> yield
+     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
+     *     <span><sub>[+Default]</sub></span> default
+     *     <span><sub>[~Yield]</sub></span> yield
      *     Identifier
      * </pre>
+     * 
+     * @param allowDefault
+     *            the flag to select if 'default' is allowed as the function name
+     * @return the parsed binding identifier
      */
     private BindingIdentifier bindingIdentifierFunctionName(boolean allowDefault) {
         // FIXME: Preliminary solution to provide SpiderMonkey/V8 compatibility
@@ -3392,9 +3744,13 @@ public final class Parser {
      * <strong>[12.1.5] Object Initialiser</strong>
      * 
      * <pre>
-     * Initialiser<sub>[In, Yield]</sub> :
-     *     = AssignmentExpression<sub>[?In, ?Yield]</sub>
+     * Initialiser<span><sub>[In, Yield]</sub></span> :
+     *     = AssignmentExpression<span><sub>[?In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the parsed initialiser expression
      */
     private Expression initialiser(boolean allowIn) {
         consume(Token.ASSIGN);
@@ -3405,9 +3761,11 @@ public final class Parser {
      * <strong>[13.2.2] Variable Statement</strong>
      * 
      * <pre>
-     * VariableStatement<sub>[Yield]</sub> :
-     *     var VariableDeclarationList<sub>[In, ?Yield]</sub> ;
+     * VariableStatement<span><sub>[Yield]</sub></span> :
+     *     var VariableDeclarationList<span><sub>[In, ?Yield]</sub></span> ;
      * </pre>
+     * 
+     * @return the parsed variable statement
      */
     private VariableStatement variableStatement() {
         long begin = ts.beginPosition();
@@ -3424,10 +3782,14 @@ public final class Parser {
      * <strong>[13.2.2] Variable Statement</strong>
      * 
      * <pre>
-     * VariableDeclarationList<sub>[In, Yield]</sub> :
-     *     VariableDeclaration<sub>[?In, ?Yield]</sub>
-     *     VariableDeclarationList<sub>[?In, ?Yield]</sub> , VariableDeclaration<sub>[?In, ?Yield]</sub>
+     * VariableDeclarationList<span><sub>[In, Yield]</sub></span> :
+     *     VariableDeclaration<span><sub>[?In, ?Yield]</sub></span>
+     *     VariableDeclarationList<span><sub>[?In, ?Yield]</sub></span> , VariableDeclaration<span><sub>[?In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the parsed list of variable declarations
      */
     private List<VariableDeclaration> variableDeclarationList(boolean allowIn) {
         List<VariableDeclaration> list = newSmallList();
@@ -3444,10 +3806,14 @@ public final class Parser {
      * <strong>[13.2.2] Variable Statement</strong>
      * 
      * <pre>
-     * VariableDeclaration<sub>[In, Yield]</sub> :
-     *     BindingIdentifier<sub>[?Yield]</sub> Initialiser<sub>[?In, ?Yield]opt</sub>
-     *     BindingPattern<sub>[Yield]</sub> Initialiser<sub>[?In, ?Yield]</sub>
+     * VariableDeclaration<span><sub>[In, Yield]</sub></span> :
+     *     BindingIdentifier<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[?In, ?Yield]opt</sub></span>
+     *     BindingPattern<span><sub>[Yield]</sub></span> Initialiser<span><sub>[?In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the parsed variable declaration
      */
     private VariableDeclaration variableDeclaration(boolean allowIn) {
         Binding binding;
@@ -3478,10 +3844,12 @@ public final class Parser {
      * <strong>[13.2.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * BindingPattern<sub>[Yield, GeneratorParameter]</sub> :
-     *     ObjectBindingPattern<sub>[?Yield, ?GeneratorParameter]</sub>
-     *     ArrayBindingPattern<sub>[?Yield, ?GeneratorParameter]</sub>
+     * BindingPattern<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     ObjectBindingPattern<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     *     ArrayBindingPattern<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
      * </pre>
+     * 
+     * @return the parsed binding pattern
      */
     private BindingPattern bindingPattern() {
         return bindingPattern(true);
@@ -3491,10 +3859,14 @@ public final class Parser {
      * <strong>[13.2.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * BindingPattern<sub>[Yield, GeneratorParameter]</sub> :
-     *     ObjectBindingPattern<sub>[?Yield, ?GeneratorParameter]</sub>
-     *     ArrayBindingPattern<sub>[?Yield, ?GeneratorParameter]</sub>
+     * BindingPattern<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     ObjectBindingPattern<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     *     ArrayBindingPattern<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
      * </pre>
+     * 
+     * @param allowLet
+     *            the flag to select if 'let' is allowed as a binding name
+     * @return the parsed binding pattern
      */
     private BindingPattern bindingPattern(boolean allowLet) {
         if (token() == Token.LC) {
@@ -3508,14 +3880,18 @@ public final class Parser {
      * <strong>[13.2.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * ObjectBindingPattern<sub>[Yield, GeneratorParameter]</sub> :
+     * ObjectBindingPattern<span><sub>[Yield, GeneratorParameter]</sub></span> :
      *     { }
-     *     { BindingPropertyList<sub>[?Yield, ?GeneratorParameter]</sub> }
-     *     { BindingPropertyList<sub>[?Yield, ?GeneratorParameter]</sub> , }
-     * BindingPropertyList<sub>[Yield, GeneratorParameter]</sub> :
-     *     BindingProperty<sub>[?Yield, ?GeneratorParameter]</sub>
-     *     BindingPropertyList<sub>[?Yield, ?GeneratorParameter]</sub> , BindingProperty<sub>[?Yield, ?GeneratorParameter]</sub>
+     *     { BindingPropertyList<span><sub>[?Yield, ?GeneratorParameter]</sub></span> }
+     *     { BindingPropertyList<span><sub>[?Yield, ?GeneratorParameter]</sub></span> , }
+     * BindingPropertyList<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     BindingProperty<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     *     BindingPropertyList<span><sub>[?Yield, ?GeneratorParameter]</sub></span> , BindingProperty<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
      * </pre>
+     * 
+     * @param allowLet
+     *            the flag to select if 'let' is allowed as a binding name
+     * @return the parsed object binding pattern
      */
     private ObjectBindingPattern objectBindingPattern(boolean allowLet) {
         long begin = ts.beginPosition();
@@ -3538,13 +3914,17 @@ public final class Parser {
      * <strong>[13.2.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * BindingProperty<sub>[Yield, GeneratorParameter]</sub> :
-     *     SingleNameBinding<sub>[?Yield, ?GeneratorParameter]</sub>
-     *     PropertyName<sub>[?Yield, ?GeneratorParameter]</sub> : BindingElement<sub>[?Yield, ?GeneratorParameter]</sub>
-     * SingleNameBinding<sub>[Yield, GeneratorParameter]</sub> :
-     *     <sub>[+GeneratorParameter]</sub>BindingIdentifier<sub>[Yield]</sub> Initialiser<sub>[In]opt</sub>
-     *     <sub>[~GeneratorParameter]</sub>BindingIdentifier<sub>[?Yield]</sub> Initialiser<sub>[In, ?Yield]opt</sub>
+     * BindingProperty<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     SingleNameBinding<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     *     PropertyName<span><sub>[?Yield, ?GeneratorParameter]</sub></span> : BindingElement<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     * SingleNameBinding<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     <span><sub>[+GeneratorParameter]</sub></span>BindingIdentifier<span><sub>[Yield]</sub></span> Initialiser<span><sub>[In]opt</sub></span>
+     *     <span><sub>[~GeneratorParameter]</sub></span>BindingIdentifier<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[In, ?Yield]opt</sub></span>
      * </pre>
+     * 
+     * @param allowLet
+     *            the flag to select if 'let' is allowed as a binding name
+     * @return the parsed binding property
      */
     private BindingProperty bindingProperty(boolean allowLet) {
         if (token() == Token.LB || LOOKAHEAD(Token.COLON)) {
@@ -3577,16 +3957,20 @@ public final class Parser {
      * <strong>[13.2.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * ArrayBindingPattern<sub>[Yield, GeneratorParameter]</sub> :
-     *     [ Elision<sub>opt</sub> BindingRestElement<sub>[?Yield, ?GeneratorParameter]opt</sub> ]
-     *     [ BindingElementList<sub>[?Yield, ?GeneratorParameter]</sub> ]
-     *     [ BindingElementList<sub>[?Yield, ?GeneratorParameter]</sub> , Elision<sub>opt</sub> BindingRestElement<sub>[?Yield, ?GeneratorParameter]opt</sub> ]
-     * BindingElementList<sub>[Yield, GeneratorParameter]</sub> :
-     *     BindingElisionElement<sub>[?Yield, ?GeneratorParameter]</sub>
-     *     BindingElementList<sub>[?Yield, ?GeneratorParameter]</sub> , BindingElisionElement<sub>[?Yield, ?GeneratorParameter]</sub>
-     * BindingElisionElement<sub>[Yield, GeneratorParameter]</sub>:
-     *     Elision<sub>opt</sub> BindingElement<sub>[?Yield, ?GeneratorParameter]</sub>
+     * ArrayBindingPattern<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     [ Elision<span><sub>opt</sub></span> BindingRestElement<span><sub>[?Yield, ?GeneratorParameter]opt</sub></span> ]
+     *     [ BindingElementList<span><sub>[?Yield, ?GeneratorParameter]</sub></span> ]
+     *     [ BindingElementList<span><sub>[?Yield, ?GeneratorParameter]</sub></span> , Elision<span><sub>opt</sub></span> BindingRestElement<span><sub>[?Yield, ?GeneratorParameter]opt</sub></span> ]
+     * BindingElementList<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     BindingElisionElement<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     *     BindingElementList<span><sub>[?Yield, ?GeneratorParameter]</sub></span> , BindingElisionElement<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     * BindingElisionElement<span><sub>[Yield, GeneratorParameter]</sub></span>:
+     *     Elision<span><sub>opt</sub></span> BindingElement<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
      * </pre>
+     * 
+     * @param allowLet
+     *            the flag to select if 'let' is allowed as a binding name
+     * @return the parsed array binding pattern
      */
     private ArrayBindingPattern arrayBindingPattern(boolean allowLet) {
         long begin = ts.beginPosition();
@@ -3616,10 +4000,12 @@ public final class Parser {
 
     /**
      * <pre>
-     * Binding<sub>[Yield, GeneratorParameter]</sub> :
-     *     BindingIdentifier<sub>[?Yield, ?GeneratorParameter]</sub>
-     *     BindingPattern<sub>[?Yield, ?GeneratorParameter]</sub>
+     * Binding<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     BindingIdentifier<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     *     BindingPattern<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
      * </pre>
+     * 
+     * @return the parsed binding node
      */
     private Binding binding() {
         return binding(true);
@@ -3627,10 +4013,14 @@ public final class Parser {
 
     /**
      * <pre>
-     * Binding<sub>[Yield, GeneratorParameter]</sub> :
-     *     BindingIdentifier<sub>[?Yield, ?GeneratorParameter]</sub>
-     *     BindingPattern<sub>[?Yield, ?GeneratorParameter]</sub>
+     * Binding<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     BindingIdentifier<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     *     BindingPattern<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
      * </pre>
+     * 
+     * @param allowLet
+     *            the flag to select if 'let' is allowed as a binding name
+     * @return the parsed binding node
      */
     private Binding binding(boolean allowLet) {
         switch (token()) {
@@ -3647,11 +4037,13 @@ public final class Parser {
      * <strong>[13.2.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * BindingElement<sub>[Yield, GeneratorParameter]</sub> :
-     *     SingleNameBinding<sub>[?Yield, ?GeneratorParameter]</sub>
-     *     <sub>[+GeneratorParameter]</sub>BindingPattern<sub>[?Yield, GeneratorParameter]</sub> Initialiser<sub>[In]opt</sub>
-     *     <sub>[~GeneratorParameter]</sub>BindingPattern<sub>[?Yield]</sub> Initialiser<sub>[In, ?Yield]opt</sub>
+     * BindingElement<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     SingleNameBinding<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     *     <span><sub>[+GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield, GeneratorParameter]</sub></span> Initialiser<span><sub>[In]opt</sub></span>
+     *     <span><sub>[~GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[In, ?Yield]opt</sub></span>
      * </pre>
+     * 
+     * @return the parsed binding element
      */
     private BindingElement bindingElement() {
         return bindingElement(true);
@@ -3661,11 +4053,15 @@ public final class Parser {
      * <strong>[13.2.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * BindingElement<sub>[Yield, GeneratorParameter]</sub> :
-     *     SingleNameBinding<sub>[?Yield, ?GeneratorParameter]</sub>
-     *     <sub>[+GeneratorParameter]</sub>BindingPattern<sub>[?Yield, GeneratorParameter]</sub> Initialiser<sub>[In]opt</sub>
-     *     <sub>[~GeneratorParameter]</sub>BindingPattern<sub>[?Yield]</sub> Initialiser<sub>[In, ?Yield]opt</sub>
+     * BindingElement<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     SingleNameBinding<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     *     <span><sub>[+GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield, GeneratorParameter]</sub></span> Initialiser<span><sub>[In]opt</sub></span>
+     *     <span><sub>[~GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[In, ?Yield]opt</sub></span>
      * </pre>
+     * 
+     * @param allowLet
+     *            the flag to select if 'let' is allowed as a binding name
+     * @return the parsed binding element
      */
     private BindingElement bindingElement(boolean allowLet) {
         long begin = ts.beginPosition();
@@ -3682,10 +4078,12 @@ public final class Parser {
      * <strong>[13.2.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * BindingRestElement<sub>[Yield, GeneratorParameter]</sub> :
-     *     <sub>[+GeneratorParameter]</sub>... BindingIdentifier<sub>[Yield]</sub>
-     *     <sub>[~GeneratorParameter]</sub>... BindingIdentifier<sub>[?Yield]</sub>
+     * BindingRestElement<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     <span><sub>[+GeneratorParameter]</sub></span>... BindingIdentifier<span><sub>[Yield]</sub></span>
+     *     <span><sub>[~GeneratorParameter]</sub></span>... BindingIdentifier<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the parsed binding rest element
      */
     private BindingRestElement bindingRestElement() {
         return bindingRestElement(true);
@@ -3695,10 +4093,14 @@ public final class Parser {
      * <strong>[13.2.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * BindingRestElement<sub>[Yield, GeneratorParameter]</sub> :
-     *     <sub>[+GeneratorParameter]</sub>... BindingIdentifier<sub>[Yield]</sub>
-     *     <sub>[~GeneratorParameter]</sub>... BindingIdentifier<sub>[?Yield]</sub>
+     * BindingRestElement<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     <span><sub>[+GeneratorParameter]</sub></span>... BindingIdentifier<span><sub>[Yield]</sub></span>
+     *     <span><sub>[~GeneratorParameter]</sub></span>... BindingIdentifier<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @param allowLet
+     *            the flag to select if 'let' is allowed as a binding name
+     * @return the parsed binding rest element
      */
     private BindingRestElement bindingRestElement(boolean allowLet) {
         long begin = ts.beginPosition();
@@ -3715,6 +4117,8 @@ public final class Parser {
      * EmptyStatement:
      * ;
      * </pre>
+     * 
+     * @return the parsed empty statement
      */
     private EmptyStatement emptyStatement() {
         long begin = ts.beginPosition();
@@ -3727,9 +4131,11 @@ public final class Parser {
      * <strong>[13.4] Expression Statement</strong>
      * 
      * <pre>
-     * ExpressionStatement<sub>[Yield]</sub> :
-     *     [LA &#x2209; { <b>{, function, class, let [</b> }] Expression<sub>[In, ?Yield]</sub> ;
+     * ExpressionStatement<span><sub>[Yield]</sub></span> :
+     *     [LA &#x2209; { <b>{, function, class, let [</b> }] Expression<span><sub>[In, ?Yield]</sub></span> ;
      * </pre>
+     * 
+     * @return the parsed expression statement
      */
     private ExpressionStatement expressionStatement() {
         switch (token()) {
@@ -3755,10 +4161,12 @@ public final class Parser {
      * <strong>[13.5] The <code>if</code> Statement</strong>
      * 
      * <pre>
-     * IfStatement<sub>[Yield, Return]</sub> :
-     *     if ( Expression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub> else Statement<sub>[?Yield, ?Return]</sub>
-     *     if ( Expression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
+     * IfStatement<span><sub>[Yield, Return]</sub></span> :
+     *     if ( Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span> else Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     if ( Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      * </pre>
+     * 
+     * @return the parsed if-statement
      */
     private IfStatement ifStatement() {
         long begin = ts.beginPosition();
@@ -3780,9 +4188,13 @@ public final class Parser {
      * <strong>[13.6.1] The <code>do-while</code> Statement</strong>
      * 
      * <pre>
-     * IterationStatement<sub>[Yield, Return]</sub> :
-     *     do Statement<sub>[?Yield, ?Return]</sub> while ( Expression<sub>[In, ?Yield]</sub> ) ;<sub>opt</sub>
+     * IterationStatement<span><sub>[Yield, Return]</sub></span> :
+     *     do Statement<span><sub>[?Yield, ?Return]</sub></span> while ( Expression<span><sub>[In, ?Yield]</sub></span> ) ;<span><sub>opt</sub></span>
      * </pre>
+     * 
+     * @param labelSet
+     *            the label set
+     * @return the parsed do-while statement
      */
     private DoWhileStatement doWhileStatement(Set<String> labelSet) {
         long begin = ts.beginPosition();
@@ -3808,9 +4220,13 @@ public final class Parser {
      * <strong>[13.6.2] The <code>while</code> Statement</strong>
      * 
      * <pre>
-     * IterationStatement<sub>[Yield, Return]</sub> :
-     *     while ( Expression<sub>[In, ?Yield]</sub> ) StatementStatement<sub>[?Yield, ?Return]</sub>
+     * IterationStatement<span><sub>[Yield, Return]</sub></span> :
+     *     while ( Expression<span><sub>[In, ?Yield]</sub></span> ) StatementStatement<span><sub>[?Yield, ?Return]</sub></span>
      * </pre>
+     * 
+     * @param labelSet
+     *            the label set
+     * @return the parsed while statement
      */
     private WhileStatement whileStatement(Set<String> labelSet) {
         long begin = ts.beginPosition();
@@ -3830,6 +4246,10 @@ public final class Parser {
     /**
      * <strong>[13.6.3] The <code>for</code> Statement</strong> <br>
      * <strong>[13.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
+     * 
+     * @param labelSet
+     *            the label set
+     * @return the parsed for-loop or for-in/of statement
      */
     private IterationStatement forStatementOrForInOfStatement(Set<String> labelSet) {
         long position = ts.position(), lineinfo = ts.lineinfo();
@@ -3846,11 +4266,15 @@ public final class Parser {
      * <strong>[13.6.3] The <code>for</code> Statement</strong> <br>
      * 
      * <pre>
-     * IterationStatement<sub>[Yield, Return]</sub> :
-     *     for ( Expression<sub>[?Yield]opt</sub> ; Expression<sub>[In, ?Yield]opt</sub> ; Expression<sub>[In, ?Yield]opt</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     *     for ( var VariableDeclarationList<sub>[?Yield]</sub> ; Expression<sub>[In, ?Yield]opt</sub> ; Expression<sub>[In, ?Yield]opt</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     *     for ( LexicalDeclaration<sub>[?Yield]</sub> Expression<sub>[In, ?Yield]opt</sub> ; Expression<sub>[In, ?Yield]opt</sub> ) Statement<sub>[?Yield, ?Return]</sub>
+     * IterationStatement<span><sub>[Yield, Return]</sub></span> :
+     *     for ( Expression<span><sub>[?Yield]opt</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( var VariableDeclarationList<span><sub>[?Yield]</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( LexicalDeclaration<span><sub>[?Yield]</sub></span> Expression<span><sub>[In, ?Yield]opt</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      * </pre>
+     * 
+     * @param labelSet
+     *            the label set
+     * @return the parsed for-loop statement
      */
     private ForStatement forStatement(Set<String> labelSet) {
         long begin = ts.beginPosition();
@@ -3956,6 +4380,9 @@ public final class Parser {
     /**
      * Parses the Expression or LeftHandSideExpression production in ForStatement.
      * 
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the parsed expression or left-hand side expression
      * @see #expression(boolean)
      * @see #leftHandSideExpression(boolean)
      */
@@ -3980,19 +4407,23 @@ public final class Parser {
      * <strong>[13.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
      * 
      * <pre>
-     * IterationStatement<sub>[Yield, Return]</sub> :
-     *     for ( LeftHandSideExpression<sub>[?Yield]</sub> in Expression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     *     for ( var ForBinding<sub>[?Yield]</sub> in Expression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     *     for ( ForDeclaration<sub>[?Yield]</sub> in Expression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     *     for ( LeftHandSideExpression<sub>[?Yield]</sub> of AssignmentExpression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     *     for ( var ForBinding<sub>[?Yield]</sub> of AssignmentExpression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     *     for ( ForDeclaration<sub>[?Yield]</sub> of AssignmentExpression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     * ForDeclaration<sub>[Yield]</sub> :
-     *     LetOrConst ForBinding<sub>[?Yield]</sub>
-     * ForBinding<sub>[Yield]</sub> :
-     *     BindingIdentifier<sub>[?Yield]</sub>
-     *     BindingPattern<sub>[?Yield]</sub>
+     * IterationStatement<span><sub>[Yield, Return]</sub></span> :
+     *     for ( LeftHandSideExpression<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( var ForBinding<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( ForDeclaration<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( LeftHandSideExpression<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( var ForBinding<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( ForDeclaration<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     * ForDeclaration<span><sub>[Yield]</sub></span> :
+     *     LetOrConst ForBinding<span><sub>[?Yield]</sub></span>
+     * ForBinding<span><sub>[Yield]</sub></span> :
+     *     BindingIdentifier<span><sub>[?Yield]</sub></span>
+     *     BindingPattern<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @param labelSet
+     *            the label set
+     * @return the parsed for-in/of statement
      */
     private IterationStatement forInOfStatement(Set<String> labelSet) {
         long begin = ts.beginPosition();
@@ -4095,9 +4526,11 @@ public final class Parser {
      * <strong>[13.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
      * 
      * <pre>
-     * ForDeclaration<sub>[Yield]</sub> :
-     *     LetOrConst ForBinding<sub>[?Yield]</sub>
+     * ForDeclaration<span><sub>[Yield]</sub></span> :
+     *     LetOrConst ForBinding<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the parsed for-declaration node
      */
     private LexicalDeclaration forDeclaration() {
         long begin = ts.beginPosition();
@@ -4118,8 +4551,10 @@ public final class Parser {
      * <strong>[13.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
      * 
      * <pre>
-     * var ForBinding<sub>[?Yield]</sub>
+     * var ForBinding<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the parsed for-loop variable declaration node
      */
     private VariableStatement forVarDeclaration() {
         long beginVar = ts.beginPosition();
@@ -4137,6 +4572,8 @@ public final class Parser {
      *     continue ;
      *     continue [no <i>LineTerminator</i> here] NonResolvedIdentifier ;
      * </pre>
+     * 
+     * @return the parsed continue statement
      */
     private ContinueStatement continueStatement() {
         long begin = ts.beginPosition();
@@ -4173,6 +4610,8 @@ public final class Parser {
      *     break ;
      *     break [no <i>LineTerminator</i> here] NonResolvedIdentifier ;
      * </pre>
+     * 
+     * @return the parsed break statement
      */
     private BreakStatement breakStatement() {
         long begin = ts.beginPosition();
@@ -4202,10 +4641,12 @@ public final class Parser {
      * <strong>[13.9] The <code>return</code> Statement</strong>
      * 
      * <pre>
-     * ReturnStatement<sub>[Yield]</sub> :
+     * ReturnStatement<span><sub>[Yield]</sub></span> :
      *     return ;
-     *     return [no <i>LineTerminator</i> here] Expression<sub>[In, ?Yield]</sub> ;
+     *     return [no <i>LineTerminator</i> here] Expression<span><sub>[In, ?Yield]</sub></span> ;
      * </pre>
+     * 
+     * @return the parsed return statement
      */
     private ReturnStatement returnStatement() {
         if (!context.returnAllowed) {
@@ -4228,9 +4669,11 @@ public final class Parser {
      * <strong>[13.10] The <code>with</code> Statement</strong>
      * 
      * <pre>
-     * WithStatement<sub>[Yield, Return]</sub> :
-     *     with ( Expression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
+     * WithStatement<span><sub>[Yield, Return]</sub></span> :
+     *     with ( Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      * </pre>
+     * 
+     * @return the parsed with statement
      */
     private WithStatement withStatement() {
         long begin = ts.beginPosition();
@@ -4254,19 +4697,23 @@ public final class Parser {
      * <strong>[13.11] The <code>switch</code> Statement</strong>
      * 
      * <pre>
-     * SwitchStatement<sub>[Yield, Return]</sub> :
-     *     switch ( Expression<sub>[In, ?Yield]</sub> ) CaseBlock<sub>[?Yield, ?Return]</sub>
-     * CaseBlock<sub>[Yield, Return]</sub> :
-     *     { CaseClauses<sub>[?Yield, ?Return]opt</sub> }
-     *     { CaseClauses<sub>[?Yield, ?Return]opt</sub> DefaultClause<sub>[?Yield, ?Return]</sub> CaseClauses<sub>[?Yield, ?Return]opt</sub> }
-     * CaseClauses<sub>[Yield, Return]</sub> :
-     *     CaseClause<sub>[?Yield, ?Return]</sub>
-     *     CaseClauses<sub>[?Yield, ?Return]</sub> CaseClause<sub>[?Yield, ?Return]</sub>
-     * CaseClause<sub>[Yield, Return]</sub> :
-     *     case Expression<sub>[In, ?Yield]</sub> : StatementList<sub>[?Yield, ?Return]opt</sub>
+     * SwitchStatement<span><sub>[Yield, Return]</sub></span> :
+     *     switch ( Expression<span><sub>[In, ?Yield]</sub></span> ) CaseBlock<span><sub>[?Yield, ?Return]</sub></span>
+     * CaseBlock<span><sub>[Yield, Return]</sub></span> :
+     *     { CaseClauses<span><sub>[?Yield, ?Return]opt</sub></span> }
+     *     { CaseClauses<span><sub>[?Yield, ?Return]opt</sub></span> DefaultClause<span><sub>[?Yield, ?Return]</sub></span> CaseClauses<span><sub>[?Yield, ?Return]opt</sub></span> }
+     * CaseClauses<span><sub>[Yield, Return]</sub></span> :
+     *     CaseClause<span><sub>[?Yield, ?Return]</sub></span>
+     *     CaseClauses<span><sub>[?Yield, ?Return]</sub></span> CaseClause<span><sub>[?Yield, ?Return]</sub></span>
+     * CaseClause<span><sub>[Yield, Return]</sub></span> :
+     *     case Expression<span><sub>[In, ?Yield]</sub></span> : StatementList<span><sub>[?Yield, ?Return]opt</sub></span>
      * DefaultClause :
-     *     default : StatementList<sub>[?Yield, ?Return]opt</sub>
+     *     default : StatementList<span><sub>[?Yield, ?Return]opt</sub></span>
      * </pre>
+     * 
+     * @param labelSet
+     *            the label set
+     * @return the parsed switch statement
      */
     private SwitchStatement switchStatement(Set<String> labelSet) {
         List<SwitchClause> clauses = newList();
@@ -4323,9 +4770,11 @@ public final class Parser {
      * <strong>[13.12] Labelled Statements</strong>
      * 
      * <pre>
-     * LabelledStatement<sub>[Yield, Return]</sub> :
-     *     NonResolvedIdentifier : Statement<sub>[?Yield, ?Return]</sub>
+     * LabelledStatement<span><sub>[Yield, Return]</sub></span> :
+     *     NonResolvedIdentifier : Statement<span><sub>[?Yield, ?Return]</sub></span>
      * </pre>
+     * 
+     * @return the parsed labelled statement
      */
     private Statement labelledStatement() {
         long begin = ts.beginPosition();
@@ -4399,9 +4848,11 @@ public final class Parser {
      * <strong>[13.13] The <code>throw</code> Statement</strong>
      * 
      * <pre>
-     * ThrowStatement<sub>[Yield]</sub> :
-     *     throw [no <i>LineTerminator</i> here] Expression<sub>[In, ?Yield]</sub> ;
+     * ThrowStatement<span><sub>[Yield]</sub></span> :
+     *     throw [no <i>LineTerminator</i> here] Expression<span><sub>[In, ?Yield]</sub></span> ;
      * </pre>
+     * 
+     * @return the parsed throw statement
      */
     private ThrowStatement throwStatement() {
         long begin = ts.beginPosition();
@@ -4419,18 +4870,20 @@ public final class Parser {
      * <strong>[13.14] The <code>try</code> Statement</strong>
      * 
      * <pre>
-     * TryStatement<sub>[Yield, Return]</sub> :
-     *     try Block<sub>[?Yield, ?Return]</sub> Catch<sub>[?Yield, ?Return]</sub>
-     *     try Block<sub>[?Yield, ?Return]</sub> Finally<sub>[?Yield, ?Return]</sub>
-     *     try Block<sub>[?Yield, ?Return]</sub> Catch<sub>[?Yield, ?Return]</sub> Finally<sub>[?Yield, ?Return]</sub>
-     * Catch<sub>[Yield, Return]</sub> :
-     *     catch ( CatchParameter<sub>[?Yield]</sub> ) Block<sub>[?Yield, ?Return]</sub>
-     * Finally<sub>[Yield, Return]</sub> :
-     *     finally Block<sub>[?Yield, ?Return]</sub>
-     * CatchParameter<sub>[Yield]</sub> :
-     *     BindingIdentifier<sub>[?Yield]</sub>
-     *     BindingPattern<sub>[?Yield]</sub>
+     * TryStatement<span><sub>[Yield, Return]</sub></span> :
+     *     try Block<span><sub>[?Yield, ?Return]</sub></span> Catch<span><sub>[?Yield, ?Return]</sub></span>
+     *     try Block<span><sub>[?Yield, ?Return]</sub></span> Finally<span><sub>[?Yield, ?Return]</sub></span>
+     *     try Block<span><sub>[?Yield, ?Return]</sub></span> Catch<span><sub>[?Yield, ?Return]</sub></span> Finally<span><sub>[?Yield, ?Return]</sub></span>
+     * Catch<span><sub>[Yield, Return]</sub></span> :
+     *     catch ( CatchParameter<span><sub>[?Yield]</sub></span> ) Block<span><sub>[?Yield, ?Return]</sub></span>
+     * Finally<span><sub>[Yield, Return]</sub></span> :
+     *     finally Block<span><sub>[?Yield, ?Return]</sub></span>
+     * CatchParameter<span><sub>[Yield]</sub></span> :
+     *     BindingIdentifier<span><sub>[?Yield]</sub></span>
+     *     BindingPattern<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the parsed try-statement node
      */
     private TryStatement tryStatement() {
         BlockStatement tryBlock, finallyBlock = null;
@@ -4518,6 +4971,8 @@ public final class Parser {
      * DebuggerStatement :
      *     debugger ;
      * </pre>
+     * 
+     * @return the parsed debugger statement
      */
     private DebuggerStatement debuggerStatement() {
         long begin = ts.beginPosition();
@@ -4531,9 +4986,11 @@ public final class Parser {
      * <strong>[Extension] The <code>let</code> Statement</strong>
      * 
      * <pre>
-     * LetStatement<sub>[Yield, Return]</sub> :
-     *     let ( BindingList<sub>[In, ?Yield]</sub> ) BlockStatement<sub>[?Yield, ?Return]</sub>
+     * LetStatement<span><sub>[Yield, Return]</sub></span> :
+     *     let ( BindingList<span><sub>[In, ?Yield]</sub></span> ) BlockStatement<span><sub>[?Yield, ?Return]</sub></span>
      * </pre>
+     * 
+     * @return the parsed let-statement
      */
     private Statement letStatement() {
         long begin = ts.beginPosition();
@@ -4609,19 +5066,19 @@ public final class Parser {
      * <strong>[12.1] Primary Expressions</strong>
      * 
      * <pre>
-     * PrimaryExpresion<sub>[Yield]</sub> :
+     * PrimaryExpresion<span><sub>[Yield]</sub></span> :
      *     this
-     *     IdentifierReference<sub>[?Yield]</sub>
+     *     IdentifierReference<span><sub>[?Yield]</sub></span>
      *     Literal
-     *     ArrayInitialiser<sub>[?Yield]</sub>
-     *     ObjectLiteral<sub>[?Yield]</sub>
+     *     ArrayInitialiser<span><sub>[?Yield]</sub></span>
+     *     ObjectLiteral<span><sub>[?Yield]</sub></span>
      *     FunctionExpression
      *     ClassExpression
      *     GeneratorExpression
-     *     GeneratorComprehension<sub>[?Yield]</sub>
+     *     GeneratorComprehension<span><sub>[?Yield]</sub></span>
      *     RegularExpressionLiteral
-     *     TemplateLiteral<sub>[?Yield]</sub>
-     *     CoverParenthesisedExpressionAndArrowParameterList<sub>[?Yield]</sub>
+     *     TemplateLiteral<span><sub>[?Yield]</sub></span>
+     *     CoverParenthesisedExpressionAndArrowParameterList<span><sub>[?Yield]</sub></span>
      * Literal :
      *     NullLiteral
      *     ValueLiteral
@@ -4630,6 +5087,8 @@ public final class Parser {
      *     NumericLiteral
      *     StringLiteral
      * </pre>
+     * 
+     * @return the parsed primary expression node
      */
     private Expression primaryExpression() {
         long begin = ts.beginPosition();
@@ -4710,12 +5169,14 @@ public final class Parser {
      * <strong>[12.1] Primary Expressions</strong>
      * 
      * <pre>
-     * CoverParenthesisedExpressionAndArrowParameterList<sub>[Yield]</sub> :
-     *     ( Expression<sub>[In, ?Yield]</sub> )
+     * CoverParenthesisedExpressionAndArrowParameterList<span><sub>[Yield]</sub></span> :
+     *     ( Expression<span><sub>[In, ?Yield]</sub></span> )
      *     ( )
-     *     ( ... BindingIdentifier<sub>[?Yield]</sub> )
-     *     ( Expression<sub>[In, ?Yield]</sub> , ... BindingIdentifier<sub>[?Yield]</sub>)
+     *     ( ... BindingIdentifier<span><sub>[?Yield]</sub></span> )
+     *     ( Expression<span><sub>[In, ?Yield]</sub></span> , ... BindingIdentifier<span><sub>[?Yield]</sub></span>)
      * </pre>
+     * 
+     * @return the parsed expression node
      */
     private Expression coverParenthesisedExpressionAndArrowParameterList() {
         long position = ts.position(), lineinfo = ts.lineinfo();
@@ -4780,9 +5241,11 @@ public final class Parser {
      * <strong>[12.1.2] Identifier Reference</strong>
      * 
      * <pre>
-     * IdentifierReference<sub>[Yield]</sub> :
-     *     NonResolvedIdentifier<sub>[?Yield]</sub>
+     * IdentifierReference<span><sub>[Yield]</sub></span> :
+     *     NonResolvedIdentifier<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the parsed identifier reference
      */
     private Identifier identifierReference() {
         long begin = ts.beginPosition();
@@ -4794,10 +5257,12 @@ public final class Parser {
      * <strong>[12.1.2] Identifier Reference</strong>
      * 
      * <pre>
-     * NonResolvedIdentifier<sub>[Yield]</sub> :
+     * NonResolvedIdentifier<span><sub>[Yield]</sub></span> :
      *     Identifier
-     *     <sub>[~Yield]</sub> yield
+     *     <span><sub>[~Yield]</sub></span> yield
      * </pre>
+     * 
+     * @return the parsed non-resolved identifier name
      */
     private String nonResolvedIdentifier() {
         Token tok = token();
@@ -4813,10 +5278,12 @@ public final class Parser {
      * <strong>[12.1.2] Identifier Reference</strong>
      * 
      * <pre>
-     * NonResolvedIdentifier<sub>[Yield]</sub> :
+     * NonResolvedIdentifier<span><sub>[Yield]</sub></span> :
      *     Identifier
-     *     <sub>[~Yield]</sub> yield
+     *     <span><sub>[~Yield]</sub></span> yield
      * </pre>
+     * 
+     * @return the parsed identifier name
      */
     private String identifier() {
         Token tok = token();
@@ -4832,10 +5299,12 @@ public final class Parser {
      * <strong>[12.1.2] Identifier Reference</strong>
      * 
      * <pre>
-     * NonResolvedIdentifier<sub>[Yield]</sub> :
+     * NonResolvedIdentifier<span><sub>[Yield]</sub></span> :
      *     Identifier
-     *     <sub>[~Yield]</sub> yield
+     *     <span><sub>[~Yield]</sub></span> yield
      * </pre>
+     * 
+     * @return the parsed strict-mode identifier name
      */
     private String strictIdentifier() {
         Token tok = token();
@@ -4849,6 +5318,10 @@ public final class Parser {
 
     /**
      * <strong>[12.1.2] Identifier Reference</strong>
+     * 
+     * @param tok
+     *            the token to inspect
+     * @return {@code true} if the token is valid identifier
      */
     private boolean isNonResolvedIdentifier(Token tok) {
         switch (tok) {
@@ -4880,6 +5353,10 @@ public final class Parser {
 
     /**
      * <strong>[12.1.2] Identifier Reference</strong>
+     * 
+     * @param tok
+     *            the token to inspect
+     * @return {@code true} if the token is valid identifier
      */
     private boolean isIdentifier(Token tok) {
         switch (tok) {
@@ -4912,6 +5389,10 @@ public final class Parser {
 
     /**
      * <strong>[12.1.2] Identifier Reference</strong>
+     * 
+     * @param tok
+     *            the token to inspect
+     * @return {@code true} if the token is valid strict identifier
      */
     private boolean isStrictIdentifier(Token tok) {
         switch (tok) {
@@ -4940,7 +5421,9 @@ public final class Parser {
 
     /**
      * Returns <code>true</code> if {@link Token#YIELD} should be treated as {@link Token#NAME} in
-     * the current context
+     * the current context.
+     * 
+     * @return {@code true} if 'yield' is a valid name in the current parse context
      */
     private boolean isYieldName() {
         return isYieldName(context);
@@ -4948,7 +5431,11 @@ public final class Parser {
 
     /**
      * Returns <code>true</code> if {@link Token#YIELD} should be treated as {@link Token#NAME} in
-     * the supplied context
+     * the supplied context.
+     * 
+     * @param context
+     *            the context to use
+     * @return {@code true} if 'yield' is a valid name in the parse context
      */
     private boolean isYieldName(ParseContext context) {
         // 'yield' is always a keyword in strict-mode and in generators
@@ -4968,10 +5455,12 @@ public final class Parser {
      * <strong>[12.1.4] Array Initialiser</strong>
      * 
      * <pre>
-     * ArrayInitialiser<sub>[Yield]</sub> :
-     *     ArrayLiteral<sub>[?Yield]</sub>
-     *     ArrayComprehension<sub>[?Yield]</sub>
+     * ArrayInitialiser<span><sub>[Yield]</sub></span> :
+     *     ArrayLiteral<span><sub>[?Yield]</sub></span>
+     *     ArrayComprehension<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the parsed array initialiser
      */
     private ArrayInitialiser arrayInitialiser() {
         if (LOOKAHEAD(Token.FOR)) {
@@ -5008,21 +5497,27 @@ public final class Parser {
      * <strong>[12.1.4] Array Initialiser</strong>
      * 
      * <pre>
-     * ArrayLiteral<sub>[Yield]</sub> :
-     *     [ Elision<sub>opt</sub> ]
-     *     [ ElementList<sub>[?Yield]</sub> ]
-     *     [ ElementList<sub>[?Yield]</sub> , Elision<sub>opt</sub> ]
-     * ElementList<sub>[Yield]</sub> :
-     *     Elision<sub>opt</sub> AssignmentExpression<sub>[In, ?Yield]</sub>
-     *     Elision<sub>opt</sub> SpreadElement<sub>[?Yield]</sub>
-     *     ElementList<sub>[?Yield]</sub> , Elision<sub>opt</sub> AssignmentExpression<sub>[In, ?Yield]</sub>
-     *     ElementList<sub>[?Yield]</sub> , Elision<sub>opt</sub> SpreadElement<sub>[?Yield]</sub>
+     * ArrayLiteral<span><sub>[Yield]</sub></span> :
+     *     [ Elision<span><sub>opt</sub></span> ]
+     *     [ ElementList<span><sub>[?Yield]</sub></span> ]
+     *     [ ElementList<span><sub>[?Yield]</sub></span> , Elision<span><sub>opt</sub></span> ]
+     * ElementList<span><sub>[Yield]</sub></span> :
+     *     Elision<span><sub>opt</sub></span> AssignmentExpression<span><sub>[In, ?Yield]</sub></span>
+     *     Elision<span><sub>opt</sub></span> SpreadElement<span><sub>[?Yield]</sub></span>
+     *     ElementList<span><sub>[?Yield]</sub></span> , Elision<span><sub>opt</sub></span> AssignmentExpression<span><sub>[In, ?Yield]</sub></span>
+     *     ElementList<span><sub>[?Yield]</sub></span> , Elision<span><sub>opt</sub></span> SpreadElement<span><sub>[?Yield]</sub></span>
      * Elision :
      *     ,
      *     Elision ,
-     * SpreadElement<sub>[Yield]</sub> :
-     *     ... AssignmentExpression<sub>[In, ?Yield]</sub>
+     * SpreadElement<span><sub>[Yield]</sub></span> :
+     *     ... AssignmentExpression<span><sub>[In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @param begin
+     *            the begin source position
+     * @param expr
+     *            the first array element or {@code null} if not yet parsed
+     * @return the parsed array literal
      */
     private ArrayLiteral arrayLiteral(long begin, Expression expr) {
         List<Expression> list = newList();
@@ -5060,9 +5555,11 @@ public final class Parser {
      * <strong>[12.1.4.2] Array Comprehension</strong>
      * 
      * <pre>
-     * ArrayComprehension<sub>[Yield]</sub> :
-     *     [ Comprehension<sub>[?Yield]</sub> ]
+     * ArrayComprehension<span><sub>[Yield]</sub></span> :
+     *     [ Comprehension<span><sub>[?Yield]</sub></span> ]
      * </pre>
+     * 
+     * @return the parsed array comprehension
      */
     private ArrayComprehension arrayComprehension() {
         long begin = ts.beginPosition();
@@ -5077,13 +5574,15 @@ public final class Parser {
      * <strong>[12.1.4.2] Array Comprehension</strong>
      * 
      * <pre>
-     * Comprehension<sub>[Yield]</sub> :
-     *     ComprehensionFor<sub>[?Yield]</sub> ComprehensionTail<sub>[?Yield]</sub>
-     * ComprehensionTail<sub>[Yield]</sub> :
-     *     AssignmentExpression<sub>[In, ?Yield]</sub>
-     *     ComprehensionFor<sub>[?Yield]</sub> ComprehensionTail<sub>[?Yield]</sub>
-     *     ComprehensionIf<sub>[?Yield]</sub> ComprehensionTail<sub>[?Yield]</sub>
+     * Comprehension<span><sub>[Yield]</sub></span> :
+     *     ComprehensionFor<span><sub>[?Yield]</sub></span> ComprehensionTail<span><sub>[?Yield]</sub></span>
+     * ComprehensionTail<span><sub>[Yield]</sub></span> :
+     *     AssignmentExpression<span><sub>[In, ?Yield]</sub></span>
+     *     ComprehensionFor<span><sub>[?Yield]</sub></span> ComprehensionTail<span><sub>[?Yield]</sub></span>
+     *     ComprehensionIf<span><sub>[?Yield]</sub></span> ComprehensionTail<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the parsed comprehension node
      */
     private Comprehension comprehension() {
         assert token() == Token.FOR;
@@ -5112,12 +5611,14 @@ public final class Parser {
      * <strong>[12.1.4.2] Array Comprehension</strong>
      * 
      * <pre>
-     * ComprehensionFor<sub>[Yield]</sub> :
-     *     for ( ForBinding<sub>[?Yield]</sub> of AssignmentExpression<sub>[In, ?Yield]</sub> )
-     * ForBinding<sub>[Yield]</sub> :
-     *     BindingIdentifier<sub>[?Yield]</sub>
-     *     BindingPattern<sub>[?Yield]</sub>
+     * ComprehensionFor<span><sub>[Yield]</sub></span> :
+     *     for ( ForBinding<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> )
+     * ForBinding<span><sub>[Yield]</sub></span> :
+     *     BindingIdentifier<span><sub>[?Yield]</sub></span>
+     *     BindingPattern<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the parsed comprehension-for node
      */
     private ComprehensionFor comprehensionFor() {
         long begin = ts.beginPosition();
@@ -5137,10 +5638,14 @@ public final class Parser {
      * <strong>[12.1.4.2] Array Comprehension</strong>
      * 
      * <pre>
-     * ForBinding<sub>[Yield]</sub> :
-     *     BindingIdentifier<sub>[?Yield]</sub>
-     *     BindingPattern<sub>[?Yield]</sub>
+     * ForBinding<span><sub>[Yield]</sub></span> :
+     *     BindingIdentifier<span><sub>[?Yield]</sub></span>
+     *     BindingPattern<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @param allowLet
+     *            the flag to select if 'let' is allowed as a binding name
+     * @return the parsed for-binding
      */
     private Binding forBinding(boolean allowLet) {
         return binding(allowLet);
@@ -5150,9 +5655,11 @@ public final class Parser {
      * <strong>[12.1.4.2] Array Comprehension</strong>
      * 
      * <pre>
-     * ComprehensionIf<sub>[Yield]</sub> :
-     *     if ( AssignmentExpression<sub>[In, ?Yield]</sub> )
+     * ComprehensionIf<span><sub>[Yield]</sub></span> :
+     *     if ( AssignmentExpression<span><sub>[In, ?Yield]</sub></span> )
      * </pre>
+     * 
+     * @return the parsed comprehension-if node
      */
     private ComprehensionIf comprehensionIf() {
         long begin = ts.beginPosition();
@@ -5167,9 +5674,11 @@ public final class Parser {
      * <strong>[12.1.4.2] Array Comprehension</strong>
      * 
      * <pre>
-     * LegacyArrayComprehension<sub>[Yield]</sub> :
-     *     [ LegacyComprehension<sub>[?Yield]</sub> ]
+     * LegacyArrayComprehension<span><sub>[Yield]</sub></span> :
+     *     [ LegacyComprehension<span><sub>[?Yield]</sub></span> ]
      * </pre>
+     * 
+     * @return the parsed legacy array comprehension
      */
     private ArrayComprehension legacyArrayComprehension() {
         long begin = ts.beginPosition();
@@ -5183,17 +5692,19 @@ public final class Parser {
      * <strong>[12.1.4.2] Array Comprehension</strong>
      * 
      * <pre>
-     * LegacyComprehension<sub>[Yield]</sub> :
-     *     AssignmentExpression<sub>[In, ?Yield]</sub> LegacyComprehensionForList<sub>[?Yield]</sub> LegacyComprehensionIf<sub>[?Yield]opt</sub>
-     * LegacyComprehensionForList<sub>[Yield]</sub> :
-     *     LegacyComprehensionFor<sub>[?Yield]</sub> LegacyComprehensionForList<sub>[?Yield]opt</sub>
-     * LegacyComprehensionFor<sub>[Yield]</sub> :
-     *     for ( ForBinding<sub>[?Yield]</sub> of Expression<sub>[In, ?Yield]</sub> )
-     *     for ( ForBinding<sub>[?Yield]</sub> in Expression<sub>[In, ?Yield]</sub> )
-     *     for each ( ForBinding<sub>[?Yield]</sub> in Expression<sub>[In, ?Yield]</sub> )
-     * LegacyComprehensionIf<sub>[Yield]</sub> :
-     *     if ( Expression<sub>[In, ?Yield]</sub> )
+     * LegacyComprehension<span><sub>[Yield]</sub></span> :
+     *     AssignmentExpression<span><sub>[In, ?Yield]</sub></span> LegacyComprehensionForList<span><sub>[?Yield]</sub></span> LegacyComprehensionIf<span><sub>[?Yield]opt</sub></span>
+     * LegacyComprehensionForList<span><sub>[Yield]</sub></span> :
+     *     LegacyComprehensionFor<span><sub>[?Yield]</sub></span> LegacyComprehensionForList<span><sub>[?Yield]opt</sub></span>
+     * LegacyComprehensionFor<span><sub>[Yield]</sub></span> :
+     *     for ( ForBinding<span><sub>[?Yield]</sub></span> of Expression<span><sub>[In, ?Yield]</sub></span> )
+     *     for ( ForBinding<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> )
+     *     for each ( ForBinding<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> )
+     * LegacyComprehensionIf<span><sub>[Yield]</sub></span> :
+     *     if ( Expression<span><sub>[In, ?Yield]</sub></span> )
      * </pre>
+     * 
+     * @return the parsed legacy comprehension
      */
     private LegacyComprehension legacyComprehension() {
         BlockContext scope = enterBlockContext();
@@ -5252,14 +5763,16 @@ public final class Parser {
      * <strong>[12.1.5] Object Initialiser</strong>
      * 
      * <pre>
-     * ObjectLiteral<sub>[Yield]</sub> :
+     * ObjectLiteral<span><sub>[Yield]</sub></span> :
      *     { }
-     *     { PropertyDefinitionList<sub>[?Yield]</sub> }
-     *     { PropertyDefinitionList<sub>[?Yield]</sub> , }
-     * PropertyDefinitionList<sub>[Yield]</sub> :
-     *     PropertyDefinition<sub>[?Yield]</sub>
-     *     PropertyDefinitionList<sub>[?Yield]</sub> , PropertyDefinition<sub>[?Yield]</sub>
+     *     { PropertyDefinitionList<span><sub>[?Yield]</sub></span> }
+     *     { PropertyDefinitionList<span><sub>[?Yield]</sub></span> , }
+     * PropertyDefinitionList<span><sub>[Yield]</sub></span> :
+     *     PropertyDefinition<span><sub>[?Yield]</sub></span>
+     *     PropertyDefinitionList<span><sub>[?Yield]</sub></span> , PropertyDefinition<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the parsed object literal
      */
     private ObjectLiteral objectLiteral() {
         long begin = ts.beginPosition();
@@ -5290,6 +5803,9 @@ public final class Parser {
 
     /**
      * 12.1.5.1 Static Semantics: Early Errors
+     * 
+     * @param oldCount
+     *            the previous count of object literals
      */
     private void objectLiteral_EarlyErrors(int oldCount) {
         ArrayDeque<ObjectLiteral> literals = context.objectLiterals;
@@ -5302,6 +5818,9 @@ public final class Parser {
 
     /**
      * 12.1.5.1 Static Semantics: Early Errors
+     * 
+     * @param object
+     *            the object literal to check for early errors
      */
     private void objectLiteral_EarlyErrors(ObjectLiteral object) {
         final int VALUE = 0, GETTER = 1, SETTER = 2, SPECIAL = 4;
@@ -5357,16 +5876,18 @@ public final class Parser {
      * <strong>[12.1.5] Object Initialiser</strong>
      * 
      * <pre>
-     * PropertyDefinition<sub>[Yield]</sub> :
-     *     IdentifierReference<sub>[?Yield]</sub>
-     *     CoverInitialisedName<sub>[?Yield]</sub>
-     *     PropertyName<sub>[?Yield]</sub> : AssignmentExpression<sub>[In, ?Yield]</sub>
-     *     MethodDefinition<sub>[?Yield]</sub>
-     * CoverInitialisedName<sub>[Yield]</sub> :
-     *     IdentifierReference Initialiser<sub>[In, ?Yield]</sub>
-     * Initialiser<sub>[In, Yield]</sub> :
-     *     = AssignmentExpression<sub>[?In, ?Yield]</sub>
+     * PropertyDefinition<span><sub>[Yield]</sub></span> :
+     *     IdentifierReference<span><sub>[?Yield]</sub></span>
+     *     CoverInitialisedName<span><sub>[?Yield]</sub></span>
+     *     PropertyName<span><sub>[?Yield]</sub></span> : AssignmentExpression<span><sub>[In, ?Yield]</sub></span>
+     *     MethodDefinition<span><sub>[?Yield]</sub></span>
+     * CoverInitialisedName<span><sub>[Yield]</sub></span> :
+     *     IdentifierReference Initialiser<span><sub>[In, ?Yield]</sub></span>
+     * Initialiser<span><sub>[In, Yield]</sub></span> :
+     *     = AssignmentExpression<span><sub>[?In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the parsed property definition
      */
     private PropertyDefinition propertyDefinition() {
         long begin = ts.beginPosition();
@@ -5406,11 +5927,13 @@ public final class Parser {
      * <strong>[12.1.5] Object Initialiser</strong>
      * 
      * <pre>
-     * PropertyName<sub>[Yield, GeneratorParameter]</sub> :
+     * PropertyName<span><sub>[Yield, GeneratorParameter]</sub></span> :
      *   LiteralPropertyName
-     *   <sub>[+GeneratorParameter]</sub>ComputedPropertyName
-     *   <sub>[~GeneratorParameter]</sub>ComputedPropertyName<sub>[?Yield]</sub>
+     *   <span><sub>[+GeneratorParameter]</sub></span>ComputedPropertyName
+     *   <span><sub>[~GeneratorParameter]</sub></span>ComputedPropertyName<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the parsed property name
      */
     private PropertyName propertyName() {
         if (token() != Token.LB) {
@@ -5429,6 +5952,8 @@ public final class Parser {
      *     StringLiteral
      *     NumericLiteral
      * </pre>
+     * 
+     * @return the parsed literal property name
      */
     private PropertyName literalPropertyName() {
         long begin = ts.beginPosition();
@@ -5449,9 +5974,11 @@ public final class Parser {
      * <strong>[12.1.5] Object Initialiser</strong>
      * 
      * <pre>
-     * ComputedPropertyName<sub>[Yield]</sub> :
-     *     [ AssignmentExpression<sub>[In, ?Yield]</sub> ]
+     * ComputedPropertyName<span><sub>[Yield]</sub></span> :
+     *     [ AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ]
      * </pre>
+     * 
+     * @return the parsed computed property name
      */
     private PropertyName computedPropertyName() {
         long begin = ts.beginPosition();
@@ -5466,9 +5993,11 @@ public final class Parser {
      * <strong>[12.1.7] Generator Comprehensions</strong>
      * 
      * <pre>
-     * GeneratorComprehension<sub>[Yield]</sub> :
-     *     ( Comprehension<sub>[?Yield]</sub> )
+     * GeneratorComprehension<span><sub>[Yield]</sub></span> :
+     *     ( Comprehension<span><sub>[?Yield]</sub></span> )
      * </pre>
+     * 
+     * @return the parsed generator comprehension
      */
     private GeneratorComprehension generatorComprehension() {
         boolean yieldAllowed = context.yieldAllowed;
@@ -5507,9 +6036,11 @@ public final class Parser {
      * <strong>[12.1.7] Generator Comprehensions</strong>
      * 
      * <pre>
-     * LegacyGeneratorComprehension<sub>[Yield]</sub> :
-     *     ( LegacyComprehension<sub>[?Yield]</sub> )
+     * LegacyGeneratorComprehension<span><sub>[Yield]</sub></span> :
+     *     ( LegacyComprehension<span><sub>[?Yield]</sub></span> )
      * </pre>
+     * 
+     * @return the parsed legacy generator comprehension
      */
     private GeneratorComprehension legacyGeneratorComprehension() {
         boolean yieldAllowed = context.yieldAllowed;
@@ -5551,6 +6082,11 @@ public final class Parser {
      * RegularExpressionLiteral ::
      *     / RegularExpressionBody / RegularExpressionFlags
      * </pre>
+     * 
+     * @param tok
+     *            the start token of the regular expression, must be either {@link Token#DIV} or
+     *            {@link Token#ASSIGN_DIV}
+     * @return the parsed regular expression literal
      */
     private Expression regularExpressionLiteral(Token tok) {
         long begin = ts.beginPosition();
@@ -5562,6 +6098,13 @@ public final class Parser {
 
     /**
      * 12.1.8.1 Static Semantics: Early Errors
+     * 
+     * @param sourcePos
+     *            the source position where the regular expression literal starts
+     * @param pattern
+     *            the regular expression literal's pattern part
+     * @param flags
+     *            the regular expression literal's flags part
      */
     private void regularExpressionLiteral_EarlyErrors(long sourcePos, String pattern, String flags) {
         // parse to validate regular expression, but ignore actual result
@@ -5572,16 +6115,20 @@ public final class Parser {
      * <strong>[12.1.9] Template Literals</strong>
      * 
      * <pre>
-     * TemplateLiteral<sub>[Yield]</sub> :
+     * TemplateLiteral<span><sub>[Yield]</sub></span> :
      *     NoSubstitutionTemplate
-     *     TemplateHead Expression<sub>[In, ?Yield]</sub> [Lexical goal <i>InputElementTemplateTail</i>] TemplateSpans<sub>[?Yield]</sub>
-     * TemplateSpans<sub>[Yield]</sub> :
+     *     TemplateHead Expression<span><sub>[In, ?Yield]</sub></span> [Lexical goal <i>InputElementTemplateTail</i>] TemplateSpans<span><sub>[?Yield]</sub></span>
+     * TemplateSpans<span><sub>[Yield]</sub></span> :
      *     TemplateTail
-     *     TemplateMiddleList<sub>[?Yield]</sub> [Lexical goal <i>InputElementTemplateTail</i>] TemplateTail
-     * TemplateMiddleList<sub>[Yield]</sub> :
-     *     TemplateMiddle Expression<sub>[In, ?Yield]</sub>
-     *     TemplateMiddleList<sub>[?Yield]</sub> [Lexical goal <i>InputElementTemplateTail</i>] TemplateMiddle Expression<sub>[In, ?Yield]</sub>
+     *     TemplateMiddleList<span><sub>[?Yield]</sub></span> [Lexical goal <i>InputElementTemplateTail</i>] TemplateTail
+     * TemplateMiddleList<span><sub>[Yield]</sub></span> :
+     *     TemplateMiddle Expression<span><sub>[In, ?Yield]</sub></span>
+     *     TemplateMiddleList<span><sub>[?Yield]</sub></span> [Lexical goal <i>InputElementTemplateTail</i>] TemplateMiddle Expression<span><sub>[In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @param tagged
+     *            the flag for tagged template literals
+     * @return the parsed template literal
      */
     private TemplateLiteral templateLiteral(boolean tagged) {
         List<Expression> elements = newList();
@@ -5612,9 +6159,11 @@ public final class Parser {
      * <strong>[Extension] The <code>let</code> Expression</strong>
      * 
      * <pre>
-     * LetExpression<sub>[Yield]</sub> :
-     *     let ( BindingList<sub>[In, ?Yield]</sub> ) AssignmentExpression<sub>[In, ?Yield]</sub>
+     * LetExpression<span><sub>[Yield]</sub></span> :
+     *     let ( BindingList<span><sub>[In, ?Yield]</sub></span> ) AssignmentExpression<span><sub>[In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the parsed let expression
      */
     private LetExpression letExpression() {
         long begin = ts.beginPosition();
@@ -5639,29 +6188,33 @@ public final class Parser {
      * <strong>[12.2] Left-Hand-Side Expressions</strong>
      * 
      * <pre>
-     * MemberExpression<sub>[Yield]</sub> :
-     *     [Lexical goal <i>InputElementRegExp</i>] PrimaryExpression<sub>[?Yield]</sub>
-     *     MemberExpression<sub>[?Yield]</sub> [ Expression<sub>[In, ?Yield]</sub> ]
-     *     MemberExpression<sub>[?Yield]</sub> . IdentifierName
-     *     MemberExpression<sub>[?Yield]</sub> TemplateLiteral<sub>[?Yield]</sub>
-     *     super [ Expression<sub>[In, ?Yield]</sub> ]
+     * MemberExpression<span><sub>[Yield]</sub></span> :
+     *     [Lexical goal <i>InputElementRegExp</i>] PrimaryExpression<span><sub>[?Yield]</sub></span>
+     *     MemberExpression<span><sub>[?Yield]</sub></span> [ Expression<span><sub>[In, ?Yield]</sub></span> ]
+     *     MemberExpression<span><sub>[?Yield]</sub></span> . IdentifierName
+     *     MemberExpression<span><sub>[?Yield]</sub></span> TemplateLiteral<span><sub>[?Yield]</sub></span>
+     *     super [ Expression<span><sub>[In, ?Yield]</sub></span> ]
      *     super . IdentifierName
-     *     new super Arguments<sub>[?Yield]opt</sub>
-     *     new MemberExpression<sub>[?Yield]</sub> Arguments<sub>[?Yield]</sub>
-     * NewExpression<sub>[Yield]</sub> :
-     *     MemberExpression<sub>[?Yield]</sub>
-     *     new NewExpression<sub>[?Yield]</sub>
-     * CallExpression<sub>[Yield]</sub> :
-     *     MemberExpression<sub>[?Yield]</sub> Arguments<sub>[?Yield]</sub>
-     *     super Arguments<sub>[?Yield]</sub>
-     *     CallExpression<sub>[?Yield]</sub> Arguments<sub>[?Yield]</sub>
-     *     CallExpression<sub>[?Yield]</sub> [ Expression<sub>[In, ?Yield]</sub> ]
-     *     CallExpression<sub>[?Yield]</sub> . IdentifierName
-     *     CallExpression<sub>[?Yield]</sub> TemplateLiteral<sub>[?Yield]</sub>
-     * LeftHandSideExpression<sub>[Yield]</sub> :
-     *     NewExpression<sub>[?Yield]</sub>
-     *     CallExpression<sub>[?Yield]</sub>
+     *     new super Arguments<span><sub>[?Yield]opt</sub></span>
+     *     new MemberExpression<span><sub>[?Yield]</sub></span> Arguments<span><sub>[?Yield]</sub></span>
+     * NewExpression<span><sub>[Yield]</sub></span> :
+     *     MemberExpression<span><sub>[?Yield]</sub></span>
+     *     new NewExpression<span><sub>[?Yield]</sub></span>
+     * CallExpression<span><sub>[Yield]</sub></span> :
+     *     MemberExpression<span><sub>[?Yield]</sub></span> Arguments<span><sub>[?Yield]</sub></span>
+     *     super Arguments<span><sub>[?Yield]</sub></span>
+     *     CallExpression<span><sub>[?Yield]</sub></span> Arguments<span><sub>[?Yield]</sub></span>
+     *     CallExpression<span><sub>[?Yield]</sub></span> [ Expression<span><sub>[In, ?Yield]</sub></span> ]
+     *     CallExpression<span><sub>[?Yield]</sub></span> . IdentifierName
+     *     CallExpression<span><sub>[?Yield]</sub></span> TemplateLiteral<span><sub>[?Yield]</sub></span>
+     * LeftHandSideExpression<span><sub>[Yield]</sub></span> :
+     *     NewExpression<span><sub>[?Yield]</sub></span>
+     *     CallExpression<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @param allowCall
+     *            the flag to select whether or not call expressions are allowed
+     * @return the parsed left-hand side expression
      */
     private Expression leftHandSideExpression(boolean allowCall) {
         long begin = ts.beginPosition();
@@ -5751,6 +6304,8 @@ public final class Parser {
     /**
      * Entry point for {@link #leftHandSideExpression(boolean)} which additionally performs object
      * literal early error checks.
+     * 
+     * @return the parsed left-hand side expression
      */
     private Expression leftHandSideExpressionWithValidation() {
         int count = context.countLiterals();
@@ -5763,15 +6318,17 @@ public final class Parser {
      * <strong>[12.2] Left-Hand-Side Expressions</strong>
      * 
      * <pre>
-     * Arguments<sub>[Yield]</sub> :
+     * Arguments<span><sub>[Yield]</sub></span> :
      *     ()
-     *     ( ArgumentList<sub>[?Yield]</sub> )
-     * ArgumentList<sub>[Yield]</sub> :
-     *     AssignmentExpression<sub>[In, ?Yield]</sub>
-     *     ... AssignmentExpression<sub>[In, ?Yield]</sub>
-     *     ArgumentList<sub>[?Yield]</sub> , AssignmentExpression<sub>[In, ?Yield]</sub>
-     *     ArgumentList<sub>[?Yield]</sub> , ... AssignmentExpression<sub>[In, ?Yield]</sub>
+     *     ( ArgumentList<span><sub>[?Yield]</sub></span> )
+     * ArgumentList<span><sub>[Yield]</sub></span> :
+     *     AssignmentExpression<span><sub>[In, ?Yield]</sub></span>
+     *     ... AssignmentExpression<span><sub>[In, ?Yield]</sub></span>
+     *     ArgumentList<span><sub>[?Yield]</sub></span> , AssignmentExpression<span><sub>[In, ?Yield]</sub></span>
+     *     ArgumentList<span><sub>[?Yield]</sub></span> , ... AssignmentExpression<span><sub>[In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the list of parsed function call arguments
      */
     private List<Expression> arguments() {
         List<Expression> args = newSmallList();
@@ -5826,22 +6383,24 @@ public final class Parser {
      * <strong>[12.4] Unary Operators</strong>
      * 
      * <pre>
-     * PostfixExpression<sub>[Yield]</sub> :
-     *     LeftHandSideExpression<sub>[?Yield]</sub>
-     *     LeftHandSideExpression<sub>[?Yield]</sub> [no <i>LineTerminator</i> here] ++
-     *     LeftHandSideExpression<sub>[?Yield]</sub> [no <i>LineTerminator</i> here] --
-     * UnaryExpression<sub>[Yield]</sub> :
-     *     PostfixExpression<sub>[?Yield]</sub>
-     *     delete UnaryExpression<sub>[?Yield]</sub>
-     *     void UnaryExpression<sub>[?Yield]</sub>
-     *     typeof UnaryExpression<sub>[?Yield]</sub>
-     *     ++ UnaryExpression<sub>[?Yield]</sub>
-     *     -- UnaryExpression<sub>[?Yield]</sub>
-     *     + UnaryExpression<sub>[?Yield]</sub>
-     *     - UnaryExpression<sub>[?Yield]</sub>
-     *     ~ UnaryExpression<sub>[?Yield]</sub>
-     *     ! UnaryExpression<sub>[?Yield]</sub>
+     * PostfixExpression<span><sub>[Yield]</sub></span> :
+     *     LeftHandSideExpression<span><sub>[?Yield]</sub></span>
+     *     LeftHandSideExpression<span><sub>[?Yield]</sub></span> [no <i>LineTerminator</i> here] ++
+     *     LeftHandSideExpression<span><sub>[?Yield]</sub></span> [no <i>LineTerminator</i> here] --
+     * UnaryExpression<span><sub>[Yield]</sub></span> :
+     *     PostfixExpression<span><sub>[?Yield]</sub></span>
+     *     delete UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     void UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     typeof UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     ++ UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     -- UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     + UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     - UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     ~ UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     ! UnaryExpression<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @return the parsed unary expression
      */
     private Expression unaryExpression() {
         long begin = ts.beginPosition();
@@ -5943,50 +6502,54 @@ public final class Parser {
      * <strong>[12.11] Binary Logical Operators</strong><br>
      * 
      * <pre>
-     * MultiplicativeExpression<sub>[Yield]</sub> :
-     *     UnaryExpression<sub>[?Yield]</sub>
-     *     MultiplicativeExpression<sub>[?Yield]</sub> * UnaryExpression<sub>[?Yield]</sub>
-     *     MultiplicativeExpression<sub>[?Yield]</sub> / UnaryExpression<sub>[?Yield]</sub>
-     *     MultiplicativeExpression<sub>[?Yield]</sub> % UnaryExpression<sub>[?Yield]</sub>
-     * AdditiveExpression<sub>[Yield]</sub> :
-     *     MultiplicativeExpression<sub>[?Yield]</sub>
-     *     AdditiveExpression<sub>[?Yield]</sub> + MultiplicativeExpression<sub>[?Yield]</sub>
-     *     AdditiveExpression<sub>[?Yield]</sub> - MultiplicativeExpression<sub>[?Yield]</sub>
-     * ShiftExpression<sub>[Yield]</sub> :
-     *     AdditiveExpression<sub>[?Yield]</sub>
-     *     ShiftExpression<sub>[?Yield]</sub> << AdditiveExpression<sub>[?Yield]</sub>
-     *     ShiftExpression<sub>[?Yield]</sub> >> AdditiveExpression<sub>[?Yield]</sub>
-     *     ShiftExpression<sub>[?Yield]</sub> >>> AdditiveExpression<sub>[?Yield]</sub>
-     * RelationalExpression<sub>[In, Yield]</sub> :
-     *     ShiftExpression<sub>[?Yield]</sub>
-     *     RelationalExpression<sub>[?in, ?Yield]</sub> < ShiftExpression<sub>[?Yield]</sub>
-     *     RelationalExpression<sub>[?in, ?Yield]</sub> > ShiftExpression<sub>[?Yield]</sub>
-     *     RelationalExpression<sub>[?in, ?Yield]</sub> <= ShiftExpression<sub>[?Yield]</sub>
-     *     RelationalExpression<sub>[?in, ?Yield]</sub> >= ShiftExpression<sub>[?Yield]</sub>
-     *     RelationalExpression<sub>[?in, ?Yield]</sub> instanceof ShiftExpression<sub>[?Yield]</sub>
-     *     <sub>[+In]</sub> RelationalExpression<sub>[In, ?Yield]</sub> in ShiftExpression<sub>[?Yield]</sub>
-     * EqualityExpression<sub>[In, Yield]</sub> :
-     *     RelationalExpression<sub>[?In, ?Yield]</sub>
-     *     EqualityExpression<sub>[?In, ?Yield]</sub> == RelationalExpression<sub>[?In, ?Yield]</sub>
-     *     EqualityExpression<sub>[?In, ?Yield]</sub> != RelationalExpression<sub>[?In, ?Yield]</sub>
-     *     EqualityExpression<sub>[?In, ?Yield]</sub> === RelationalExpression<sub>[?In, ?Yield]</sub>
-     *     EqualityExpression<sub>[?In, ?Yield]</sub> !== RelationalExpression<sub>[?In, ?Yield]</sub>
-     * BitwiseANDExpression<sub>[In, Yield]</sub> :
-     *     EqualityExpression<sub>[?In, ?Yield]</sub>
-     *     BitwiseANDExpression<sub>[?In, ?Yield]</sub> & EqualityExpression<sub>[?In, ?Yield]</sub>
-     * BitwiseXORExpression<sub>[In, Yield]</sub> :
-     *     EqualityExpression<sub>[?In, ?Yield]</sub>
-     *     BitwiseXORExpression<sub>[?In, ?Yield]</sub> ^ EqualityExpression<sub>[?In, ?Yield]</sub>
-     * BitwiseORExpression<sub>[In, Yield]</sub> :
-     *     EqualityExpression<sub>[?In, ?Yield]</sub>
-     *     BitwiseORExpression<sub>[?In, ?Yield]</sub> | EqualityExpression<sub>[?In, ?Yield]</sub>
-     * LogicalANDExpression<sub>[In, Yield]</sub> :
-     *     EqualityExpression<sub>[?In, ?Yield]</sub>
-     *     LogicalANDExpression<sub>[?In, ?Yield]</sub> && EqualityExpression<sub>[?In, ?Yield]</sub>
-     * LogicalORExpression<sub>[In, Yield]</sub> :
-     *     EqualityExpression<sub>[?In, ?Yield]</sub>
-     *     LogicalORExpression<sub>[?In, ?Yield]</sub> || EqualityExpression<sub>[?In, ?Yield]</sub>
+     * MultiplicativeExpression<span><sub>[Yield]</sub></span> :
+     *     UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     MultiplicativeExpression<span><sub>[?Yield]</sub></span> * UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     MultiplicativeExpression<span><sub>[?Yield]</sub></span> / UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     MultiplicativeExpression<span><sub>[?Yield]</sub></span> % UnaryExpression<span><sub>[?Yield]</sub></span>
+     * AdditiveExpression<span><sub>[Yield]</sub></span> :
+     *     MultiplicativeExpression<span><sub>[?Yield]</sub></span>
+     *     AdditiveExpression<span><sub>[?Yield]</sub></span> + MultiplicativeExpression<span><sub>[?Yield]</sub></span>
+     *     AdditiveExpression<span><sub>[?Yield]</sub></span> - MultiplicativeExpression<span><sub>[?Yield]</sub></span>
+     * ShiftExpression<span><sub>[Yield]</sub></span> :
+     *     AdditiveExpression<span><sub>[?Yield]</sub></span>
+     *     ShiftExpression<span><sub>[?Yield]</sub></span> {@literal <<} AdditiveExpression<span><sub>[?Yield]</sub></span>
+     *     ShiftExpression<span><sub>[?Yield]</sub></span> {@literal >>} AdditiveExpression<span><sub>[?Yield]</sub></span>
+     *     ShiftExpression<span><sub>[?Yield]</sub></span> {@literal >>>} AdditiveExpression<span><sub>[?Yield]</sub></span>
+     * RelationalExpression<span><sub>[In, Yield]</sub></span> :
+     *     ShiftExpression<span><sub>[?Yield]</sub></span>
+     *     RelationalExpression<span><sub>[?in, ?Yield]</sub></span> {@literal <} ShiftExpression<span><sub>[?Yield]</sub></span>
+     *     RelationalExpression<span><sub>[?in, ?Yield]</sub></span> {@literal >} ShiftExpression<span><sub>[?Yield]</sub></span>
+     *     RelationalExpression<span><sub>[?in, ?Yield]</sub></span> {@literal <=} ShiftExpression<span><sub>[?Yield]</sub></span>
+     *     RelationalExpression<span><sub>[?in, ?Yield]</sub></span> {@literal >=} ShiftExpression<span><sub>[?Yield]</sub></span>
+     *     RelationalExpression<span><sub>[?in, ?Yield]</sub></span> instanceof ShiftExpression<span><sub>[?Yield]</sub></span>
+     *     <span><sub>[+In]</sub></span> RelationalExpression<span><sub>[In, ?Yield]</sub></span> in ShiftExpression<span><sub>[?Yield]</sub></span>
+     * EqualityExpression<span><sub>[In, Yield]</sub></span> :
+     *     RelationalExpression<span><sub>[?In, ?Yield]</sub></span>
+     *     EqualityExpression<span><sub>[?In, ?Yield]</sub></span> == RelationalExpression<span><sub>[?In, ?Yield]</sub></span>
+     *     EqualityExpression<span><sub>[?In, ?Yield]</sub></span> != RelationalExpression<span><sub>[?In, ?Yield]</sub></span>
+     *     EqualityExpression<span><sub>[?In, ?Yield]</sub></span> === RelationalExpression<span><sub>[?In, ?Yield]</sub></span>
+     *     EqualityExpression<span><sub>[?In, ?Yield]</sub></span> !== RelationalExpression<span><sub>[?In, ?Yield]</sub></span>
+     * BitwiseANDExpression<span><sub>[In, Yield]</sub></span> :
+     *     EqualityExpression<span><sub>[?In, ?Yield]</sub></span>
+     *     BitwiseANDExpression<span><sub>[?In, ?Yield]</sub></span> {@literal &} EqualityExpression<span><sub>[?In, ?Yield]</sub></span>
+     * BitwiseXORExpression<span><sub>[In, Yield]</sub></span> :
+     *     EqualityExpression<span><sub>[?In, ?Yield]</sub></span>
+     *     BitwiseXORExpression<span><sub>[?In, ?Yield]</sub></span> ^ EqualityExpression<span><sub>[?In, ?Yield]</sub></span>
+     * BitwiseORExpression<span><sub>[In, Yield]</sub></span> :
+     *     EqualityExpression<span><sub>[?In, ?Yield]</sub></span>
+     *     BitwiseORExpression<span><sub>[?In, ?Yield]</sub></span> | EqualityExpression<span><sub>[?In, ?Yield]</sub></span>
+     * LogicalANDExpression<span><sub>[In, Yield]</sub></span> :
+     *     EqualityExpression<span><sub>[?In, ?Yield]</sub></span>
+     *     LogicalANDExpression<span><sub>[?In, ?Yield]</sub></span> {@literal &&} EqualityExpression<span><sub>[?In, ?Yield]</sub></span>
+     * LogicalORExpression<span><sub>[In, Yield]</sub></span> :
+     *     EqualityExpression<span><sub>[?In, ?Yield]</sub></span>
+     *     LogicalORExpression<span><sub>[?In, ?Yield]</sub></span> || EqualityExpression<span><sub>[?In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the parsed binary expression
      */
     private Expression binaryExpression(boolean allowIn) {
         Expression lhs = unaryExpression();
@@ -6080,16 +6643,20 @@ public final class Parser {
      * <strong>[12.13] Assignment Operators</strong>
      * 
      * <pre>
-     * ConditionalExpression<sub>[In, Yield]</sub> :
-     *     LogicalORExpression<sub>[?In, ?Yield]</sub>
-     *     LogicalORExpression<sub>[?In, ?Yield]</sub> ? AssignmentExpression<sub>[In, ?Yield]</sub> : AssignmentExpression<sub>[?In, ?Yield]</sub>
-     * AssignmentExpression<sub>[In, Yield]</sub> :
-     *     ConditionalExpression<sub>[?In, ?Yield]</sub>
-     *     <sub>[+Yield]</sub> YieldExpression<sub>[?In]</sub>
-     *     ArrowFunction<sub>[?In]</sub>
-     *     LeftHandSideExpression<sub>[?Yield]</sub> = AssignmentExpression<sub>[?In, ?Yield]</sub>
-     *     LeftHandSideExpression<sub>[?Yield]</sub> AssignmentOperator AssignmentExpression<sub>[?In, ?Yield]</sub>
+     * ConditionalExpression<span><sub>[In, Yield]</sub></span> :
+     *     LogicalORExpression<span><sub>[?In, ?Yield]</sub></span>
+     *     LogicalORExpression<span><sub>[?In, ?Yield]</sub></span> ? AssignmentExpression<span><sub>[In, ?Yield]</sub></span> : AssignmentExpression<span><sub>[?In, ?Yield]</sub></span>
+     * AssignmentExpression<span><sub>[In, Yield]</sub></span> :
+     *     ConditionalExpression<span><sub>[?In, ?Yield]</sub></span>
+     *     <span><sub>[+Yield]</sub></span> YieldExpression<span><sub>[?In]</sub></span>
+     *     ArrowFunction<span><sub>[?In]</sub></span>
+     *     LeftHandSideExpression<span><sub>[?Yield]</sub></span> = AssignmentExpression<span><sub>[?In, ?Yield]</sub></span>
+     *     LeftHandSideExpression<span><sub>[?Yield]</sub></span> AssignmentOperator AssignmentExpression<span><sub>[?In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the parsed assignment expression
      */
     private Expression assignmentExpression(boolean allowIn) {
         int count = context.countLiterals();
@@ -6102,6 +6669,10 @@ public final class Parser {
      * Same as {@link #assignmentExpression(boolean)} except object literal early errors are not
      * checked. This method needs to be used if the AssignmentExpression is in a possible
      * destructuring assignment position.
+     * 
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the parsed assignment expression
      */
     private Expression assignmentExpressionNoValidation(boolean allowIn) {
         return assignmentExpression(allowIn, context.countLiterals());
@@ -6190,8 +6761,12 @@ public final class Parser {
      * 
      * <pre>
      * AssignmentOperator : <b>one of</b>
-     *     *=  /=  %=  +=  -=  <<=  >>=  >>>=  &=  ^=  |=
+     *     {@literal *=  /=  %=  +=  -=  <<=  >>=  >>>=  &=  ^=  |=}
      * </pre>
+     * 
+     * @param tok
+     *            the token to inspect
+     * @return {@code true} if the token is a compound assignment token
      */
     private static boolean isAssignmentOperator(Token tok) {
         switch (tok) {
@@ -6231,6 +6806,14 @@ public final class Parser {
      * <li>12.13.3 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.14.2 Static Semantics: IsValidSimpleAssignmentTarget
      * </ul>
+     * 
+     * @param lhs
+     *            the left-hand side expression to validate
+     * @param type
+     *            the exception type for errors
+     * @param messageKey
+     *            the message key for errors
+     * @return the {@code lhs} parameter as a left-hand side expression node
      */
     private LeftHandSideExpression validateSimpleAssignment(Expression lhs, ExceptionType type,
             Messages.Key messageKey) {
@@ -6267,6 +6850,14 @@ public final class Parser {
      * <li>12.13.5.1 Static Semantics: Early Errors
      * <li>13.6.4.1 Static Semantics: Early Errors
      * </ul>
+     * 
+     * @param lhs
+     *            the left-hand side expression to validate
+     * @param type
+     *            the exception type for errors
+     * @param messageKey
+     *            the message key for errors
+     * @return the {@code lhs} parameter as a left-hand side expression node
      */
     private LeftHandSideExpression validateAssignment(Expression lhs, ExceptionType type,
             Messages.Key messageKey) {
@@ -6283,23 +6874,27 @@ public final class Parser {
      * <strong>[12.13.5] Destructuring Assignment</strong>
      * 
      * <pre>
-     * ObjectAssignmentPattern<sub>[Yield]</sub> :
+     * ObjectAssignmentPattern<span><sub>[Yield]</sub></span> :
      *     { }
-     *     { AssignmentPropertyList<sub>[?Yield]</sub> }
-     *     { AssignmentPropertyList<sub>[?Yield]</sub> , }
-     * AssignmentPropertyList<sub>[Yield]</sub> :
-     *     AssignmentProperty<sub>[?Yield]</sub>
-     *     AssignmentPropertyList<sub>[?Yield]</sub> , AssignmentProperty<sub>[?Yield]</sub>
-     * AssignmentProperty<sub>[Yield]</sub> :
-     *     IdentifierReference<sub>[?Yield]</sub> Initialiser<sub>[In, ?Yield]opt</sub>
-     *     PropertyName : AssignmentElement<sub>[?Yield]</sub>
-     * AssignmentElement<sub>[Yield]</sub> :
-     *     DestructuringAssignmentTarget<sub>[?Yield]</sub> Initialiser<sub>[In, ?Yield]opt</sub>
-     * AssignmentElement<sub>[Yield]</sub> :
-     *     DestructuringAssignmentTarget<sub>[?Yield]</sub> Initialiser<sub>[In, ?Yield]opt</sub>
-     * DestructuringAssignmentTarget<sub>[Yield]</sub> :
-     *     LeftHandSideExpression<sub>[?Yield]</sub>
+     *     { AssignmentPropertyList<span><sub>[?Yield]</sub></span> }
+     *     { AssignmentPropertyList<span><sub>[?Yield]</sub></span> , }
+     * AssignmentPropertyList<span><sub>[Yield]</sub></span> :
+     *     AssignmentProperty<span><sub>[?Yield]</sub></span>
+     *     AssignmentPropertyList<span><sub>[?Yield]</sub></span> , AssignmentProperty<span><sub>[?Yield]</sub></span>
+     * AssignmentProperty<span><sub>[Yield]</sub></span> :
+     *     IdentifierReference<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[In, ?Yield]opt</sub></span>
+     *     PropertyName : AssignmentElement<span><sub>[?Yield]</sub></span>
+     * AssignmentElement<span><sub>[Yield]</sub></span> :
+     *     DestructuringAssignmentTarget<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[In, ?Yield]opt</sub></span>
+     * AssignmentElement<span><sub>[Yield]</sub></span> :
+     *     DestructuringAssignmentTarget<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[In, ?Yield]opt</sub></span>
+     * DestructuringAssignmentTarget<span><sub>[Yield]</sub></span> :
+     *     LeftHandSideExpression<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @param object
+     *            the object literal to convert
+     * @return the object assignment pattern for the object literal
      */
     private ObjectAssignmentPattern toDestructuring(ObjectLiteral object) {
         List<AssignmentProperty> list = newSmallList();
@@ -6358,22 +6953,26 @@ public final class Parser {
      * <strong>[12.13.5] Destructuring Assignment</strong>
      * 
      * <pre>
-     * ArrayAssignmentPattern<sub>[Yield]</sub> :
-     *     [ Elision<sub>opt</sub> AssignmentRestElement<sub>[?Yield]opt</sub> ]
-     *     [ AssignmentElementList<sub>[?Yield]</sub>  ]
-     *     [ AssignmentElementList<sub>[?Yield]</sub> , Elision<sub>opt</sub> AssignmentRestElement<sub>[?Yield]opt</sub> ]
-     * AssignmentElementList<sub>[Yield]</sub> :
-     *     AssignmentElisionElement<sub>[?Yield]</sub>
-     *     AssignmentElementList<sub>[?Yield]</sub> , AssignmentElisionElement<sub>[?Yield]</sub>
-     * AssignmentElisionElement<sub>[Yield]</sub> :
-     *     Elision<sub>opt</sub>  AssignmentElement<sub>[?Yield]</sub>
-     * AssignmentElement<sub>[Yield]</sub> :
-     *     DestructuringAssignmentTarget<sub>[?Yield]</sub> Initialiser<sub>[In, ?Yield]opt</sub>
-     * AssignmentRestElement<sub>[Yield]</sub> : 
-     *     ... DestructuringAssignmentTarget<sub>[?Yield]</sub>
-     * DestructuringAssignmentTarget<sub>[Yield]</sub> :
-     *     LeftHandSideExpression<sub>[?Yield]</sub>
+     * ArrayAssignmentPattern<span><sub>[Yield]</sub></span> :
+     *     [ Elision<span><sub>opt</sub></span> AssignmentRestElement<span><sub>[?Yield]opt</sub></span> ]
+     *     [ AssignmentElementList<span><sub>[?Yield]</sub></span>  ]
+     *     [ AssignmentElementList<span><sub>[?Yield]</sub></span> , Elision<span><sub>opt</sub></span> AssignmentRestElement<span><sub>[?Yield]opt</sub></span> ]
+     * AssignmentElementList<span><sub>[Yield]</sub></span> :
+     *     AssignmentElisionElement<span><sub>[?Yield]</sub></span>
+     *     AssignmentElementList<span><sub>[?Yield]</sub></span> , AssignmentElisionElement<span><sub>[?Yield]</sub></span>
+     * AssignmentElisionElement<span><sub>[Yield]</sub></span> :
+     *     Elision<span><sub>opt</sub></span>  AssignmentElement<span><sub>[?Yield]</sub></span>
+     * AssignmentElement<span><sub>[Yield]</sub></span> :
+     *     DestructuringAssignmentTarget<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[In, ?Yield]opt</sub></span>
+     * AssignmentRestElement<span><sub>[Yield]</sub></span> : 
+     *     ... DestructuringAssignmentTarget<span><sub>[?Yield]</sub></span>
+     * DestructuringAssignmentTarget<span><sub>[Yield]</sub></span> :
+     *     LeftHandSideExpression<span><sub>[?Yield]</sub></span>
      * </pre>
+     * 
+     * @param array
+     *            the array literal to convert
+     * @return the array assignment pattern for the array literal
      */
     private ArrayAssignmentPattern toDestructuring(ArrayLiteral array) {
         List<AssignmentElementItem> list = newSmallList();
@@ -6424,6 +7023,10 @@ public final class Parser {
 
     /**
      * 12.13.5.1 Static Semantics: Early Errors
+     * 
+     * @param lhs
+     *            the left-hand side expression to check
+     * @return the {@code lhs} parameter as a left-hand side expression node
      */
     private LeftHandSideExpression destructuringAssignmentTarget_EarlyErrors(Expression lhs) {
         if (lhs instanceof ObjectAssignmentPattern) {
@@ -6436,6 +7039,10 @@ public final class Parser {
 
     /**
      * 12.13.5.1 Static Semantics: Early Errors
+     * 
+     * @param lhs
+     *            the left-hand side expression to check
+     * @return the {@code lhs} parameter as a left-hand side expression node
      */
     private LeftHandSideExpression assignmentRestElement_EarlyErrors(Expression lhs) {
         return validateSimpleAssignment(lhs, ExceptionType.SyntaxError,
@@ -6444,6 +7051,9 @@ public final class Parser {
 
     /**
      * 12.13.5.1 Static Semantics: Early Errors
+     * 
+     * @param identifier
+     *            the identifier to check
      */
     private void assignmentProperty_EarlyErrors(Identifier identifier) {
         validateSimpleAssignment(identifier, ExceptionType.SyntaxError,
@@ -6454,10 +7064,14 @@ public final class Parser {
      * <strong>[12.14] Comma Operator</strong>
      * 
      * <pre>
-     * Expression<sub>[In, Yield]</sub> :
-     *     AssignmentExpression<sub>[?In, ?Yield]</sub>
-     *     Expression<sub>[?In, ?Yield]</sub> , AssignmentExpression<sub>[?In, ?Yield]</sub>
+     * Expression<span><sub>[In, Yield]</sub></span> :
+     *     AssignmentExpression<span><sub>[?In, ?Yield]</sub></span>
+     *     Expression<span><sub>[?In, ?Yield]</sub></span> , AssignmentExpression<span><sub>[?In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the parsed expression
      */
     private Expression expression(boolean allowIn) {
         Expression expr = assignmentExpression(allowIn);
@@ -6471,10 +7085,16 @@ public final class Parser {
      * <strong>[12.14] Comma Operator</strong>
      * 
      * <pre>
-     * Expression<sub>[In, Yield]</sub> :
-     *     AssignmentExpression<sub>[?In, ?Yield]</sub>
-     *     Expression<sub>[?In, ?Yield]</sub> , AssignmentExpression<sub>[?In, ?Yield]</sub>
+     * Expression<span><sub>[In, Yield]</sub></span> :
+     *     AssignmentExpression<span><sub>[?In, ?Yield]</sub></span>
+     *     Expression<span><sub>[?In, ?Yield]</sub></span> , AssignmentExpression<span><sub>[?In, ?Yield]</sub></span>
      * </pre>
+     * 
+     * @param expr
+     *            the first expression
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the parsed comma expression
      */
     private CommaExpression commaExpression(Expression expr, boolean allowIn) {
         List<Expression> list = newList();
@@ -6491,9 +7111,6 @@ public final class Parser {
 
     /**
      * <strong>[11.9] Automatic Semicolon Insertion</strong>
-     * 
-     * <pre>
-     * </pre>
      */
     private void semicolon() {
         switch (token()) {
@@ -6512,7 +7129,9 @@ public final class Parser {
 
     /**
      * Returns {@code true} if the last and the current token are not separated from each other by a
-     * line-terminator
+     * line-terminator.
+     * 
+     * @return {@code true} if there is no line separator
      */
     private boolean noLineTerminator() {
         return !ts.hasCurrentLineTerminator();
@@ -6520,14 +7139,20 @@ public final class Parser {
 
     /**
      * Returns {@code true} if the current and the next token are not separated from each other by a
-     * line-terminator
+     * line-terminator.
+     * 
+     * @return {@code true} if there is no line separator
      */
     private boolean noNextLineTerminator() {
         return !ts.hasNextLineTerminator();
     }
 
     /**
-     * Returns true if the current token is of type {@link Token#NAME} and its name is {@code name}
+     * Returns true if the current token is of type {@link Token#NAME} and its name is {@code name}.
+     * 
+     * @param name
+     *            the name to test
+     * @return {@code true} if the current token is the requested name
      */
     private boolean isName(String name) {
         Token tok = token();
@@ -6535,7 +7160,11 @@ public final class Parser {
     }
 
     /**
-     * Returns the token's name
+     * Returns the token's name.
+     * 
+     * @param tok
+     *            the token to inspect
+     * @return the token name
      */
     private String getName(Token tok) {
         switch (tok) {
@@ -6553,6 +7182,8 @@ public final class Parser {
 
     /**
      * <strong>[11.6] Identifier Names and Identifiers</strong>
+     * 
+     * @return the parsed identifier name
      */
     private String identifierName() {
         Token tok = token();
@@ -6566,6 +7197,8 @@ public final class Parser {
 
     /**
      * <strong>[11.8.3] Numeric Literals</strong>
+     * 
+     * @return the parsed number literal
      */
     private double numericLiteral() {
         double number = ts.getNumber();
@@ -6575,6 +7208,8 @@ public final class Parser {
 
     /**
      * <strong>[11.8.4] String Literals</strong>
+     * 
+     * @return the parsed string literal
      */
     private String stringLiteral() {
         String string = ts.getString();

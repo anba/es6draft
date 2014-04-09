@@ -15,7 +15,17 @@ public interface ModuleScope extends TopLevelScope {
     @Override
     Module getNode();
 
+    /**
+     * Returns the ordered set of module requests for this module scope.
+     * 
+     * @return the module requests
+     */
     Set<String> getModuleRequests();
 
+    /**
+     * Returns an unordered set of exported bindings of this module scope
+     * 
+     * @return the exported bindings
+     */
     Set<String> getExportBindings();
 }

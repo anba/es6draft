@@ -49,6 +49,12 @@ public final class SymbolPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * Abstract operation thisSymbolValue(value)
+         * 
+         * @param cx
+         *            the execution context
+         * @param object
+         *            the symbol object
+         * @return the symbol value
          */
         private static Symbol thisSymbolValue(ExecutionContext cx, Object object) {
             if (object instanceof SymbolObject) {
@@ -68,6 +74,12 @@ public final class SymbolPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 19.4.3.2 Symbol.prototype.toString ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the string representation
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -81,6 +93,12 @@ public final class SymbolPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 19.4.3.3 Symbol.prototype.valueOf ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the symbol value
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
@@ -90,6 +108,14 @@ public final class SymbolPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 19.4.3.4 Symbol.prototype [ @@toPrimitive ] ( hint )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param hint
+         *            the ToPrimitive hint string
+         * @return always throws a TypeError
          */
         @Function(name = "[Symbol.toPrimitive]", symbol = BuiltinSymbol.toPrimitive, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

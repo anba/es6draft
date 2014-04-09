@@ -81,7 +81,15 @@ public final class ErrorObject extends OrdinaryObject {
     }
 
     /**
-     * Specialized property retrieval to prevent any script execution
+     * Specialized property retrieval to prevent any script execution.
+     * 
+     * @param error
+     *            the error object
+     * @param propertyName
+     *            the property key
+     * @param defaultValue
+     *            the default value
+     * @return property string value
      */
     private static String getErrorObjectProperty(ErrorObject error, String propertyName,
             String defaultValue) {

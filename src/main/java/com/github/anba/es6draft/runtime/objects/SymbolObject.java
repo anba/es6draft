@@ -29,6 +29,8 @@ public final class SymbolObject extends OrdinaryObject {
 
     /**
      * [[SymbolData]]
+     * 
+     * @return the symbol value
      */
     public Symbol getSymbolData() {
         assert symbolData != null : "SymbolData not initialised";
@@ -37,6 +39,9 @@ public final class SymbolObject extends OrdinaryObject {
 
     /**
      * [[SymbolData]]
+     * 
+     * @param symbolData
+     *            the new symbol value
      */
     public void setSymbolData(Symbol symbolData) {
         assert this.symbolData == null : "SymbolData already initialised";
@@ -45,6 +50,12 @@ public final class SymbolObject extends OrdinaryObject {
 
     /**
      * Custom helper function
+     * 
+     * @param cx
+     *            the execution context
+     * @param symbolData
+     *            the symbol value
+     * @return the new symbol object
      */
     public static SymbolObject SymbolCreate(ExecutionContext cx, Symbol symbolData) {
         SymbolObject obj = new SymbolObject(cx.getRealm());

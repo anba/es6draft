@@ -38,7 +38,11 @@ public final class ExoticArguments extends OrdinaryObject {
         super(realm);
     }
 
-    /** [[ParameterMap]] */
+    /**
+     * [[ParameterMap]]
+     *
+     * @return the parameter map
+     */
     ParameterMap getParameterMap() {
         return parameterMap;
     }
@@ -47,6 +51,18 @@ public final class ExoticArguments extends OrdinaryObject {
      * Creates a mapped {@link ExoticArguments} object
      * <p>
      * [Called from generated code]
+     * 
+     * @param cx
+     *            the execution context
+     * @param func
+     *            the function callee
+     * @param args
+     *            the function arguments
+     * @param formals
+     *            the formal parameter names
+     * @param env
+     *            the current lexical environment
+     * @return the mapped arguments object
      */
     public static ExoticArguments CreateMappedArgumentsObject(ExecutionContext cx,
             FunctionObject func, Object[] args, String[] formals,
@@ -60,6 +76,12 @@ public final class ExoticArguments extends OrdinaryObject {
      * Creates a strict {@link ExoticArguments} object
      * <p>
      * [Called from generated code]
+     * 
+     * @param cx
+     *            the execution context
+     * @param args
+     *            the function arguments
+     * @return the strict mode arguments object
      */
     public static ExoticArguments CreateStrictArgumentsObject(ExecutionContext cx, Object[] args) {
         ExoticArguments arguments = InstantiateArgumentsObject(cx, args);
@@ -69,6 +91,12 @@ public final class ExoticArguments extends OrdinaryObject {
 
     /**
      * [9.4.4.1 Arguments Object] InstantiateArgumentsObject
+     * 
+     * @param cx
+     *            the execution context
+     * @param args
+     *            the function arguments
+     * @return the new arguments object
      */
     public static ExoticArguments InstantiateArgumentsObject(ExecutionContext cx, Object[] args) {
         /* step 1 */
@@ -89,6 +117,11 @@ public final class ExoticArguments extends OrdinaryObject {
 
     /**
      * [9.4.4.1 Arguments Object] CompleteStrictArgumentsObject
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the arguments object
      */
     public static void CompleteStrictArgumentsObject(ExecutionContext cx, ExoticArguments obj) {
         /* steps 1-2 */
@@ -97,6 +130,11 @@ public final class ExoticArguments extends OrdinaryObject {
 
     /**
      * [9.4.4.1 Arguments Object] AddRestrictedArgumentsProperties
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the arguments object
      */
     private static void AddRestrictedArgumentsProperties(ExecutionContext cx, ExoticArguments obj) {
         /* step 1 */
@@ -110,6 +148,17 @@ public final class ExoticArguments extends OrdinaryObject {
 
     /**
      * [9.4.4.1 Arguments Object] CompleteMappedArgumentsObject
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the arguments object
+     * @param func
+     *            the function callee
+     * @param formals
+     *            the formal parameter names
+     * @param env
+     *            the current lexical environment
      */
     public static void CompleteMappedArgumentsObject(ExecutionContext cx, ExoticArguments obj,
             FunctionObject func, String[] formals,

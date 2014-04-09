@@ -122,142 +122,268 @@ public class NumberFormatObject extends OrdinaryObject {
         return numberFormat;
     }
 
-    /** [[initializedIntlObject]] */
+    /**
+     * [[initializedIntlObject]]
+     * 
+     * @return {@code true} if the Intl object is initialised
+     */
     public boolean isInitializedIntlObject() {
         return initializedIntlObject;
     }
 
-    /** [[initializedIntlObject]] */
+    /**
+     * [[initializedIntlObject]]
+     * 
+     * @param initializedIntlObject
+     *            the new initialisation state
+     */
     public void setInitializedIntlObject(boolean initializedIntlObject) {
         this.initializedIntlObject = initializedIntlObject;
     }
 
-    /** [[initializedNumberFormat]] */
+    /**
+     * [[initializedNumberFormat]]
+     * 
+     * @return {@code true} if the number format object is initialised
+     */
     public boolean isInitializedNumberFormat() {
         return initializedNumberFormat;
     }
 
-    /** [[initializedNumberFormat]] */
+    /**
+     * [[initializedNumberFormat]]
+     * 
+     * @param initializedNumberFormat
+     *            the new initialisation state
+     */
     public void setInitializedNumberFormat(boolean initializedNumberFormat) {
         this.initializedNumberFormat = initializedNumberFormat;
     }
 
-    /** [[locale]] */
+    /**
+     * [[locale]]
+     * 
+     * @return the locale
+     */
     public String getLocale() {
         return locale;
     }
 
-    /** [[locale]] */
+    /**
+     * [[locale]]
+     * 
+     * @param locale
+     *            the new locale
+     */
     public void setLocale(String locale) {
         this.locale = locale;
     }
 
-    /** [[numberingSystem]] */
+    /**
+     * [[numberingSystem]]
+     * 
+     * @return the numbering system
+     */
     public String getNumberingSystem() {
         return numberingSystem;
     }
 
-    /** [[numberingSystem]] */
+    /**
+     * [[numberingSystem]]
+     * 
+     * @param numberingSystem
+     *            the new numbering system
+     */
     public void setNumberingSystem(String numberingSystem) {
         this.numberingSystem = numberingSystem;
     }
 
-    /** [[style]] */
+    /**
+     * [[style]]
+     * 
+     * @return the number format style
+     */
     public String getStyle() {
         return style;
     }
 
-    /** [[style]] */
+    /**
+     * [[style]]
+     * 
+     * @param style
+     *            the new number format style
+     */
     public void setStyle(String style) {
         this.style = style;
     }
 
-    /** [[currency]] */
+    /**
+     * [[currency]]
+     * 
+     * @return the currency
+     */
     public String getCurrency() {
         return currency;
     }
 
-    /** [[currency]] */
+    /**
+     * [[currency]]
+     * 
+     * @param currency
+     *            the new currency
+     */
     public void setCurrency(String currency) {
         this.currency = currency;
     }
 
-    /** [[currencyDisplay]] */
+    /**
+     * [[currencyDisplay]]
+     * 
+     * @return the currency display value
+     */
     public String getCurrencyDisplay() {
         return currencyDisplay;
     }
 
-    /** [[currencyDisplay]] */
+    /**
+     * [[currencyDisplay]]
+     * 
+     * @param currencyDisplay
+     *            the new currency display value
+     */
     public void setCurrencyDisplay(String currencyDisplay) {
         this.currencyDisplay = currencyDisplay;
     }
 
-    /** [[minimumIntegerDigits]] */
+    /**
+     * [[minimumIntegerDigits]]
+     * 
+     * @return the minimum number of integer digits
+     */
     public int getMinimumIntegerDigits() {
         return minimumIntegerDigits;
     }
 
-    /** [[minimumIntegerDigits]] */
+    /**
+     * [[minimumIntegerDigits]]
+     * 
+     * @param minimumIntegerDigits
+     *            the new minimum number of integer digits
+     */
     public void setMinimumIntegerDigits(int minimumIntegerDigits) {
         this.minimumIntegerDigits = minimumIntegerDigits;
     }
 
-    /** [[minimumFractionDigits]] */
+    /**
+     * [[minimumFractionDigits]]
+     * 
+     * @return the minimum number of fraction digits
+     */
     public int getMinimumFractionDigits() {
         return minimumFractionDigits;
     }
 
-    /** [[minimumFractionDigits]] */
+    /**
+     * [[minimumFractionDigits]]
+     * 
+     * @param minimumFractionDigits
+     *            the new minimum number of fraction digits
+     */
     public void setMinimumFractionDigits(int minimumFractionDigits) {
         this.minimumFractionDigits = minimumFractionDigits;
     }
 
-    /** [[maximumFractionDigits]] */
+    /**
+     * [[maximumFractionDigits]]
+     * 
+     * @return the maximum number of fraction digits
+     */
     public int getMaximumFractionDigits() {
         return maximumFractionDigits;
     }
 
-    /** [[maximumFractionDigits]] */
+    /**
+     * [[maximumFractionDigits]]
+     * 
+     * @param maximumFractionDigits
+     *            the new maximum number of fraction digits
+     */
     public void setMaximumFractionDigits(int maximumFractionDigits) {
         this.maximumFractionDigits = maximumFractionDigits;
     }
 
-    /** [[minimumSignificantDigits]] */
+    /**
+     * [[minimumSignificantDigits]]
+     * 
+     * @return the minimum number of significant digits
+     */
     public int getMinimumSignificantDigits() {
         return minimumSignificantDigits;
     }
 
-    /** [[minimumSignificantDigits]] */
+    /**
+     * [[minimumSignificantDigits]]
+     * 
+     * @param minimumSignificantDigits
+     *            the new minimum number of significant digits
+     */
     public void setMinimumSignificantDigits(int minimumSignificantDigits) {
         this.minimumSignificantDigits = minimumSignificantDigits;
     }
 
-    /** [[maximumSignificantDigits]] */
+    /**
+     * [[maximumSignificantDigits]]
+     * 
+     * @return the maximum number of significant digits
+     */
     public int getMaximumSignificantDigits() {
         return maximumSignificantDigits;
     }
 
-    /** [[maximumSignificantDigits]] */
+    /**
+     * [[maximumSignificantDigits]]
+     * 
+     * @param maximumSignificantDigits
+     *            the new maximum number of significant digits
+     */
     public void setMaximumSignificantDigits(int maximumSignificantDigits) {
         this.maximumSignificantDigits = maximumSignificantDigits;
     }
 
-    /** [[useGrouping]] */
+    /**
+     * [[useGrouping]]
+     * 
+     * @return the grouping flag
+     */
     public boolean isUseGrouping() {
         return useGrouping;
     }
 
-    /** [[useGrouping]] */
+    /**
+     * [[useGrouping]]
+     * 
+     * @param useGrouping
+     *            the new grouping flag
+     */
     public void setUseGrouping(boolean useGrouping) {
         this.useGrouping = useGrouping;
     }
 
-    /** [[boundFormat]] */
+    /**
+     * [[boundFormat]]
+     * 
+     * @return the bound format function
+     */
     public Callable getBoundFormat() {
         return boundFormat;
     }
 
-    /** [[boundFormat]] */
+    /**
+     * [[boundFormat]]
+     * 
+     * @param boundFormat
+     *            the bound format function
+     */
     public void setBoundFormat(Callable boundFormat) {
         this.boundFormat = boundFormat;
     }

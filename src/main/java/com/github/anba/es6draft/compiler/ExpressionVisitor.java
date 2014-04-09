@@ -93,7 +93,10 @@ abstract class ExpressionVisitor extends InstructionVisitor {
 
     /**
      * Update additional state information after nested {@link ExpressionVisitor} has finished its
-     * pass
+     * pass.
+     * 
+     * @param nested
+     *            the nested expression visitor
      */
     void updateInfo(ExpressionVisitor nested) {
         hasTailCalls |= nested.hasTailCalls;
@@ -215,7 +218,9 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     private List<ExecutionState> states = null;
 
     /**
-     * Create a new object to save the current execution state
+     * Create a new object to save the current execution state.
+     * 
+     * @return the current execution state
      */
     private ExecutionState newExecutionState() {
         if (states == null) {
@@ -232,7 +237,11 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     }
 
     /**
-     * Generate prologue code for generator functions
+     * Generate prologue code for generator functions.
+     * 
+     * @param resume
+     *            the variable which holds the resumption point
+     * @return the generator state
      */
     GeneratorState prologue(Variable<ResumptionPoint> resume) {
         GeneratorState state = new GeneratorState();
@@ -243,7 +252,12 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     }
 
     /**
-     * Generate epilogue code for generator functions
+     * Generate epilogue code for generator functions.
+     * 
+     * @param resume
+     *            the variable which holds the resumption point
+     * @param state
+     *            the generator state
      */
     void epilogue(Variable<ResumptionPoint> resume, GeneratorState state) {
         mark(state.resumeSwitch);
@@ -268,7 +282,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     }
 
     /**
-     * Create a new resumption point at the current instruction offset
+     * Create a new resumption point at the current instruction offset.
      */
     void newResumptionPoint() {
         assert hasStack() && !hasSyntheticMethods();
@@ -280,7 +294,9 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     }
 
     /**
-     * Suspend: Saves the current stack and locals and emits a return instruction
+     * Suspend: Saves the current stack and locals and emits a return instruction.
+     * 
+     * @return the current execution state
      */
     private ExecutionState suspend() {
         ExecutionState state = newExecutionState();
@@ -335,7 +351,12 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     }
 
     /**
-     * Resume: Restores the locals and stack and jumps to the resumption point
+     * Resume: Restores the locals and stack and jumps to the resumption point.
+     * 
+     * @param resume
+     *            the variable which holds the resumption point
+     * @param state
+     *            the execution state
      */
     private void resume(Variable<ResumptionPoint> resume, ExecutionState state) {
         assert hasStack() && !hasSyntheticMethods();

@@ -80,6 +80,14 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
 
     /**
      * 22.2.1.1 %TypedArray% ( length )
+     * 
+     * @param cx
+     *            the execution context
+     * @param thisValue
+     *            the this-value
+     * @param length
+     *            the typed array length
+     * @return the typed array object
      */
     private TypedArrayObject callWithLength(ExecutionContext cx, Object thisValue, Object length) {
         /* step 1 */
@@ -132,6 +140,14 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
 
     /**
      * 22.2.1.2 %TypedArray% ( typedArray )
+     * 
+     * @param cx
+     *            the execution context
+     * @param thisValue
+     *            the this-value
+     * @param typedArray
+     *            the source typed array object
+     * @return the typed array object
      */
     private TypedArrayObject callWithTypedArray(ExecutionContext cx, Object thisValue,
             TypedArrayObject typedArray) {
@@ -210,6 +226,14 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
 
     /**
      * 22.2.1.3 %TypedArray% ( array )
+     * 
+     * @param cx
+     *            the execution context
+     * @param thisValue
+     *            the this-value
+     * @param _array
+     *            the source array object
+     * @return the typed array object
      */
     private TypedArrayObject callWithArray(ExecutionContext cx, Object thisValue,
             ScriptObject _array) {
@@ -268,6 +292,18 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
 
     /**
      * 22.2.1.4 %TypedArray% ( buffer, byteOffset=0, length=undefined )
+     * 
+     * @param cx
+     *            the execution context
+     * @param thisValue
+     *            the this-value
+     * @param buffer
+     *            the source array buffer object
+     * @param byteOffset
+     *            the source byte offset
+     * @param length
+     *            the array length
+     * @return the typed array object
      */
     private TypedArrayObject callWithArrayBuffer(ExecutionContext cx, Object thisValue,
             ArrayBufferObject buffer, Object byteOffset, Object length) {
@@ -369,6 +405,14 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
 
         /**
          * 22.2.2.2 %TypedArray%.of ( ...items )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param items
+         *            the element values
+         * @return the new typed array object
          */
         @Function(name = "of", arity = 0)
         public static Object of(ExecutionContext cx, Object thisValue, Object... items) {
@@ -394,6 +438,18 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
 
         /**
          * 22.2.2.1 %TypedArray%.from ( source, mapfn=undefined, thisArg=undefined )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param source
+         *            the source object
+         * @param mapfn
+         *            the optional mapper function
+         * @param thisArg
+         *            the optional this-argument for the mapper
+         * @return the new typed array object
          */
         @Function(name = "from", arity = 1)
         public static Object from(ExecutionContext cx, Object thisValue, Object source,
@@ -472,6 +528,12 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
 
         /**
          * 22.2.3.4 %TypedArray%[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised typed array object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

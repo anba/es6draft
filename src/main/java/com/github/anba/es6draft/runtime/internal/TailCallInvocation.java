@@ -65,7 +65,11 @@ public final class TailCallInvocation {
     }
 
     /**
-     * Converts this tail-call invocation into a construct tail-call invocation
+     * Converts this tail-call invocation into a construct tail-call invocation.
+     * 
+     * @param object
+     *            the constructor object
+     * @return the tail call trampoline object
      */
     public TailCallInvocation toConstructTailCall(ScriptObject object) {
         if (this.type == InvokeType.Construct) {
@@ -87,7 +91,9 @@ public final class TailCallInvocation {
     }
 
     /**
-     * (Object, ExecutionContext) -> Object
+     * (Object, ExecutionContext) {@literal ->} Object.
+     * 
+     * @return the tail call method handler
      */
     public static MethodHandle getTailCallHandler() {
         return tailCallTrampolineMH;

@@ -227,6 +227,13 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      * 12.1.1.1 InitializeDateTimeFormat (dateTimeFormat, locales, options)
      * 
      * @param cx
+     *            the execution context
+     * @param obj
+     *            the date format object
+     * @param locales
+     *            the locales array
+     * @param opts
+     *            the options object
      */
     public static void InitializeDateTimeFormat(ExecutionContext cx, ScriptObject obj,
             Object locales, Object opts) {
@@ -318,6 +325,16 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
 
     /**
      * Abstract Operation: ToDateTimeOptions
+     * 
+     * @param cx
+     *            the execution context
+     * @param opts
+     *            the options object
+     * @param required
+     *            the required date field
+     * @param defaults
+     *            the default date field
+     * @return the date-time options script object
      */
     public static ScriptObject ToDateTimeOptions(ExecutionContext cx, Object opts, String required,
             String defaults) {
@@ -416,6 +433,12 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
 
     /**
      * Abstract Operation: BasicFormatMatcher
+     * 
+     * @param opt
+     *            the format matcher
+     * @param dataLocale
+     *            the locale
+     * @return the basic format matcher
      */
     public static String BasicFormatMatcher(FormatMatcherRecord opt, String dataLocale) {
         // ICU4J only provides access to date or time-only skeletons, with the exception of the
@@ -529,11 +552,14 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     /**
      * Retrieve the default hour format character for the supplied locale.
      * 
+     * @param locale
+     *            the locale
+     * @return the hour format character
      * @see <a href="http://bugs.icu-project.org/trac/ticket/9997">ICU bug 9997</a>
      */
     private static char defaultHourFormat(ULocale locale) {
         // use short time format, just as ICU4J does internally
-        int style = DateFormat.SHORT;
+        final int style = DateFormat.SHORT;
         SimpleDateFormat df = (SimpleDateFormat) DateFormat.getTimeInstance(style, locale);
         String pattern = df.toPattern();
         boolean quote = false;
@@ -549,11 +575,15 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     /**
-     * Add canonical skeleton/pattern pairs which might have been omitted in
-     * {@link DateTimePatternGenerator#getSkeletons(Map)}
+     * Adds canonical skeleton/pattern pairs which might have been omitted in
+     * {@link DateTimePatternGenerator#getSkeletons(Map)}.
+     * 
+     * @param skeletons
+     *            the skeletons map
+     * @return the updated skeletons map
      */
     private static Map<String, String> addCanonicalSkeletons(Map<String, String> skeletons) {
-        String source = "GyQMwWEdDFHmsSv";
+        final String source = "GyQMwWEdDFHmsSv";
         for (int i = 0, len = source.length(); i < len; ++i) {
             String k = source.substring(i, i + 1);
             if (!skeletons.containsKey(k)) {
@@ -565,6 +595,12 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
 
     /**
      * Abstract Operation: BasicFormatMatcher (score computation)
+     * 
+     * @param opt
+     *            the format matcher
+     * @param skeleton
+     *            the pattern skeleton
+     * @return the computed score
      */
     private static int computeScore(FormatMatcherRecord opt, Skeleton skeleton) {
         /* step 11.b */
@@ -587,6 +623,14 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
 
     /**
      * Abstract Operation: BasicFormatMatcher (penalty computation)
+     * 
+     * @param field
+     *            the date field
+     * @param weight
+     *            the field weight
+     * @param skeleton
+     *            the pattern skeleton
+     * @return the computed penalty
      */
     private static int getPenalty(DateField field, String weight, Skeleton skeleton) {
         FieldWeight optionsProp = FieldWeight.forName(weight);
@@ -619,6 +663,12 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
 
     /**
      * Abstract Operation: BestFitFormatMatcher
+     * 
+     * @param opt
+     *            the format matcher
+     * @param dataLocale
+     *            the locale
+     * @return the best applicable pattern
      */
     public static String BestFitFormatMatcher(FormatMatcherRecord opt, String dataLocale) {
         // Let ICU4J compute the best applicable pattern for the requested input values
@@ -696,6 +746,16 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
 
         /**
          * 12.2.2 Intl.DateTimeFormat.supportedLocalesOf (locales [, options])
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param locales
+         *            the locales array
+         * @param options
+         *            the options object
+         * @return the array of supported locales
          */
         @Function(name = "supportedLocalesOf", arity = 1)
         public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue,
@@ -707,6 +767,12 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
 
         /**
          * Extension: Make subclassable for ES6 classes
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised date format object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

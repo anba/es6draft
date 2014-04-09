@@ -39,6 +39,18 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
      * Creates a legacy {@link ExoticArguments} object
      * <p>
      * [Called from generated code]
+     * 
+     * @param cx
+     *            the execution context
+     * @param func
+     *            the function callee
+     * @param args
+     *            the function arguments
+     * @param formals
+     *            the formal parameter names
+     * @param env
+     *            the current lexical environment
+     * @return the legacy arguments object
      */
     public static ExoticLegacyArguments CreateLegacyArgumentsObject(ExecutionContext cx,
             FunctionObject func, Object[] args, String[] formals,
@@ -51,6 +63,16 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
      * Creates a legacy {@link ExoticArguments} object
      * <p>
      * [Called from generated code]
+     * 
+     * @param cx
+     *            the execution context
+     * @param func
+     *            the function callee
+     * @param args
+     *            the function arguments
+     * @param arguments
+     *            the arguments object
+     * @return the legacy arguments object
      */
     public static ExoticLegacyArguments CreateLegacyArgumentsObject(ExecutionContext cx,
             FunctionObject func, Object[] args, ExoticArguments arguments) {
@@ -59,6 +81,16 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
 
     /**
      * Creates a legacy {@link ExoticArguments} object
+     * 
+     * @param cx
+     *            the execution context
+     * @param func
+     *            the function callee
+     * @param args
+     *            the function arguments
+     * @param map
+     *            the parameter map
+     * @return the legacy arguments object
      */
     private static ExoticLegacyArguments createLegacyArguments(ExecutionContext cx,
             FunctionObject func, Object[] args, ParameterMap map) {

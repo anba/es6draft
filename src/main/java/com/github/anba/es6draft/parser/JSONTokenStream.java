@@ -59,6 +59,8 @@ public final class JSONTokenStream {
 
     /**
      * Returns the string data of the current token.
+     * 
+     * @return the current string data
      */
     public String getString() {
         return buffer.toString();
@@ -66,6 +68,8 @@ public final class JSONTokenStream {
 
     /**
      * Returns the number data of the current token.
+     * 
+     * @return the current number data
      */
     public double getNumber() {
         return number;
@@ -75,6 +79,8 @@ public final class JSONTokenStream {
 
     /**
      * Advances the token stream to the next token.
+     * 
+     * @return the next token in the token stream
      */
     public Token nextToken() {
         return (current = scanToken());
@@ -82,6 +88,8 @@ public final class JSONTokenStream {
 
     /**
      * Returns the current token.
+     * 
+     * @return the current token
      */
     public Token currentToken() {
         return current;
@@ -148,6 +156,10 @@ public final class JSONTokenStream {
      * <pre>
      * JSONNullLiteral::NullLiteral
      * </pre>
+     * 
+     * @param c
+     *            the current character
+     * @return the null token or {@link Token#ERROR}
      */
     private Token readNullLiteral(int c) {
         TokenStreamInput input = this.input;
@@ -161,6 +173,10 @@ public final class JSONTokenStream {
      * <pre>
      * JSONBooleanLiteral::BooleanLiteral
      * </pre>
+     * 
+     * @param c
+     *            the current character
+     * @return the false token or {@link Token#ERROR}
      */
     private Token readFalseLiteral(int c) {
         TokenStreamInput input = this.input;
@@ -175,6 +191,10 @@ public final class JSONTokenStream {
      * <pre>
      * JSONBooleanLiteral::BooleanLiteral
      * </pre>
+     * 
+     * @param c
+     *            the current character
+     * @return the true token or {@link Token#ERROR}
      */
     private Token readTrueLiteral(int c) {
         TokenStreamInput input = this.input;
@@ -199,6 +219,10 @@ public final class JSONTokenStream {
      * JSONEscapeCharacter :: one of
      *     " / \ b f n r t
      * </pre>
+     * 
+     * @param quoteChar
+     *            the quote character
+     * @return the string token
      */
     private Token readString(int quoteChar) {
         assert quoteChar == '"';
@@ -272,6 +296,10 @@ public final class JSONTokenStream {
      * ExponentPart ::
      *      ExponentIndicator SignedInteger
      * </pre>
+     * 
+     * @param c
+     *            the current character
+     * @return the number token
      */
     private Token readNumber(int c) {
         number = readDecimalLiteral(c);
@@ -326,7 +354,9 @@ public final class JSONTokenStream {
     }
 
     /**
-     * Resets and returns the internal character buffer
+     * Resets and returns the internal character buffer.
+     * 
+     * @return the character buffer
      */
     private StringBuffer buffer() {
         StringBuffer buffer = this.buffer;
@@ -351,6 +381,12 @@ public final class JSONTokenStream {
 
     /**
      * Throws a {@link ParserException}.
+     * 
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the parser exception
      */
     private ParserException error(Messages.Key messageKey, String... args) {
         throw new ParserException(ExceptionType.SyntaxError, "<json>", 1, 1, messageKey, args);

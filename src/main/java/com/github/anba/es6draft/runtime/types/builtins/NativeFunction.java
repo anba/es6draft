@@ -40,14 +40,18 @@ public final class NativeFunction extends BuiltinFunction {
     }
 
     /**
-     * Returns `(Object, Object[]) -> Object` method-handle
+     * Returns `(Object, Object[]) {@literal ->} Object` method-handle.
+     * 
+     * @return the call method handle
      */
     public MethodHandle getCallMethod() {
         return mh;
     }
 
     /**
-     * Returns the id for this native function
+     * Returns the id for this native function.
+     * 
+     * @return the native function id
      */
     public final NativeFunctionId getId() {
         return id;

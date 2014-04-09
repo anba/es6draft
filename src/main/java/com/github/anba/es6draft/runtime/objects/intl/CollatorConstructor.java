@@ -227,6 +227,15 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
 
     /**
      * 10.1.1.1 InitializeCollator (collator, locales, options)
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the collator object
+     * @param locales
+     *            the locales array
+     * @param opts
+     *            the options object
      */
     public static void InitializeCollator(ExecutionContext cx, ScriptObject obj, Object locales,
             Object opts) {
@@ -364,6 +373,16 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
 
         /**
          * 10.2.2 Intl.Collator.supportedLocalesOf (locales [, options])
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param locales
+         *            the locales array
+         * @param options
+         *            the options object
+         * @return the array of supported locales
          */
         @Function(name = "supportedLocalesOf", arity = 1)
         public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue,
@@ -375,6 +394,12 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
 
         /**
          * Extension: Make subclassable for ES6 classes
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised collator object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

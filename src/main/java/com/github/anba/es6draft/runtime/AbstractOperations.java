@@ -83,6 +83,12 @@ public final class AbstractOperations {
 
     /**
      * 7.1.1 ToPrimitive
+     * 
+     * @param cx
+     *            the execution context
+     * @param argument
+     *            the argument value
+     * @return the primitive value
      */
     public static Object ToPrimitive(ExecutionContext cx, Object argument) {
         if (!Type.isObject(argument)) {
@@ -93,6 +99,14 @@ public final class AbstractOperations {
 
     /**
      * 7.1.1 ToPrimitive
+     * 
+     * @param cx
+     *            the execution context
+     * @param argument
+     *            the argument value
+     * @param preferredType
+     *            the preferred primitive type
+     * @return the primitive value
      */
     public static Object ToPrimitive(ExecutionContext cx, Object argument,
             ToPrimitiveHint preferredType) {
@@ -106,6 +120,14 @@ public final class AbstractOperations {
      * 7.1.1 ToPrimitive
      * <p>
      * ToPrimitive for the Object type
+     * 
+     * @param cx
+     *            the execution context
+     * @param argument
+     *            the argument value
+     * @param preferredType
+     *            the preferred primitive type
+     * @return the primitive value
      */
     private static Object ToPrimitive(ExecutionContext cx, ScriptObject argument,
             ToPrimitiveHint preferredType) {
@@ -135,6 +157,14 @@ public final class AbstractOperations {
      * 7.1.1 ToPrimitive
      * <p>
      * OrdinaryToPrimitive
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the argument object
+     * @param hint
+     *            the preferred primitive type
+     * @return the primitive value
      */
     public static Object OrdinaryToPrimitive(ExecutionContext cx, ScriptObject object,
             ToPrimitiveHint hint) {
@@ -171,20 +201,24 @@ public final class AbstractOperations {
 
     /**
      * 7.1.2 ToBoolean
+     * 
+     * @param value
+     *            the argument value
+     * @return the boolean result
      */
-    public static boolean ToBoolean(Object val) {
-        switch (Type.of(val)) {
+    public static boolean ToBoolean(Object value) {
+        switch (Type.of(value)) {
         case Undefined:
             return false;
         case Null:
             return false;
         case Boolean:
-            return Type.booleanValue(val);
+            return Type.booleanValue(value);
         case Number:
-            double d = Type.numberValue(val);
+            double d = Type.numberValue(value);
             return !(d == 0 || Double.isNaN(d));
         case String:
-            return Type.stringValue(val).length() != 0;
+            return Type.stringValue(value).length() != 0;
         case Symbol:
             return true;
         case Object:
@@ -195,48 +229,68 @@ public final class AbstractOperations {
 
     /**
      * 7.1.2 ToBoolean
+     * 
+     * @param value
+     *            the argument value
+     * @return the boolean result
      */
-    public static boolean ToBoolean(double d) {
-        return !(d == 0 || Double.isNaN(d));
+    public static boolean ToBoolean(double value) {
+        return !(value == 0 || Double.isNaN(value));
     }
 
     /**
      * 7.1.3 ToNumber
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the number result
      */
-    public static double ToNumber(ExecutionContext cx, Object val) {
-        switch (Type.of(val)) {
+    public static double ToNumber(ExecutionContext cx, Object value) {
+        switch (Type.of(value)) {
         case Undefined:
             return Double.NaN;
         case Null:
             return +0;
         case Boolean:
-            return Type.booleanValue(val) ? 1 : +0;
+            return Type.booleanValue(value) ? 1 : +0;
         case Number:
-            return Type.numberValue(val);
+            return Type.numberValue(value);
         case String:
-            return ToNumber(Type.stringValue(val));
+            return ToNumber(Type.stringValue(value));
         case Symbol:
             return Double.NaN;
         case Object:
         default:
-            Object primValue = ToPrimitive(cx, val, ToPrimitiveHint.Number);
+            Object primValue = ToPrimitive(cx, value, ToPrimitiveHint.Number);
             return ToNumber(cx, primValue);
         }
     }
 
     /**
      * 7.1.3.1 ToNumber Applied to the String Type
+     * 
+     * @param string
+     *            the argument value
+     * @return the number result
      */
-    public static double ToNumber(CharSequence s) {
-        return NumberParser.parse(s.toString());
+    public static double ToNumber(CharSequence string) {
+        return NumberParser.parse(string.toString());
     }
 
     /**
      * 7.1.4 ToInteger
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the integer result
      */
-    public static double ToInteger(ExecutionContext cx, Object val) {
+    public static double ToInteger(ExecutionContext cx, Object value) {
         /* steps 1-2 */
-        double number = ToNumber(cx, val);
+        double number = ToNumber(cx, value);
         /* step 3 */
         if (Double.isNaN(number))
             return +0.0;
@@ -249,6 +303,10 @@ public final class AbstractOperations {
 
     /**
      * 7.1.4 ToInteger
+     * 
+     * @param number
+     *            the argument value
+     * @return the integer result
      */
     public static double ToInteger(double number) {
         /* steps 1-2 (not applicable) */
@@ -264,16 +322,26 @@ public final class AbstractOperations {
 
     /**
      * 7.1.5 ToInt32: (Signed 32 Bit Integer)
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the integer result
      */
-    public static int ToInt32(ExecutionContext cx, Object val) {
+    public static int ToInt32(ExecutionContext cx, Object value) {
         /* steps 1-2 */
-        double number = ToNumber(cx, val);
+        double number = ToNumber(cx, value);
         /* steps 3-6 */
         return DoubleConversion.doubleToInt32(number);
     }
 
     /**
      * 7.1.5 ToInt32: (Signed 32 Bit Integer)
+     * 
+     * @param number
+     *            the argument value
+     * @return the integer result
      */
     public static int ToInt32(double number) {
         /* steps 1-2 (not applicable) */
@@ -283,16 +351,26 @@ public final class AbstractOperations {
 
     /**
      * 7.1.6 ToUint32: (Unsigned 32 Bit Integer)
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the integer result
      */
-    public static long ToUint32(ExecutionContext cx, Object val) {
+    public static long ToUint32(ExecutionContext cx, Object value) {
         /* steps 1-2 */
-        double number = ToNumber(cx, val);
+        double number = ToNumber(cx, value);
         /* steps 3-6 */
         return DoubleConversion.doubleToInt32(number) & 0xffffffffL;
     }
 
     /**
      * 7.1.6 ToUint32: (Unsigned 32 Bit Integer)
+     * 
+     * @param number
+     *            the argument value
+     * @return the integer result
      */
     public static long ToUint32(double number) {
         /* steps 1-2 (not applicable) */
@@ -302,16 +380,26 @@ public final class AbstractOperations {
 
     /**
      * 7.1.7 ToInt16: (Signed 16 Bit Integer)
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the integer result
      */
-    public static short ToInt16(ExecutionContext cx, Object val) {
+    public static short ToInt16(ExecutionContext cx, Object value) {
         /* steps 1-2 */
-        double number = ToNumber(cx, val);
+        double number = ToNumber(cx, value);
         /* steps 3-6 */
         return (short) DoubleConversion.doubleToInt32(number);
     }
 
     /**
      * 7.1.7 ToInt16: (Signed 16 Bit Integer)
+     * 
+     * @param number
+     *            the argument value
+     * @return the integer result
      */
     public static short ToInt16(double number) {
         /* steps 1-2 (not applicable) */
@@ -321,16 +409,26 @@ public final class AbstractOperations {
 
     /**
      * 7.1.8 ToUint16: (Unsigned 16 Bit Integer)
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the integer result
      */
-    public static char ToUint16(ExecutionContext cx, Object val) {
+    public static char ToUint16(ExecutionContext cx, Object value) {
         /* steps 1-2 */
-        double number = ToNumber(cx, val);
+        double number = ToNumber(cx, value);
         /* steps 3-6 */
         return (char) DoubleConversion.doubleToInt32(number);
     }
 
     /**
      * 7.1.8 ToUint16: (Unsigned 16 Bit Integer)
+     * 
+     * @param number
+     *            the argument value
+     * @return the integer result
      */
     public static char ToUint16(double number) {
         /* steps 1-2 (not applicable) */
@@ -340,16 +438,26 @@ public final class AbstractOperations {
 
     /**
      * 7.1.9 ToInt8: (Signed 8 Bit Integer)
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the integer result
      */
-    public static byte ToInt8(ExecutionContext cx, Object val) {
+    public static byte ToInt8(ExecutionContext cx, Object value) {
         /* steps 1-2 */
-        double number = ToNumber(cx, val);
+        double number = ToNumber(cx, value);
         /* steps 3-6 */
         return (byte) DoubleConversion.doubleToInt32(number);
     }
 
     /**
      * 7.1.9 ToInt8: (Signed 8 Bit Integer)
+     * 
+     * @param number
+     *            the argument value
+     * @return the integer result
      */
     public static byte ToInt8(double number) {
         /* steps 1-2 (not applicable) */
@@ -359,16 +467,26 @@ public final class AbstractOperations {
 
     /**
      * 7.1.10 ToUint8: (Unsigned 8 Bit Integer)
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the integer result
      */
-    public static int ToUint8(ExecutionContext cx, Object val) {
+    public static int ToUint8(ExecutionContext cx, Object value) {
         /* steps 1-2 */
-        double number = ToNumber(cx, val);
+        double number = ToNumber(cx, value);
         /* steps 3-6 */
         return DoubleConversion.doubleToInt32(number) & 0xFF;
     }
 
     /**
      * 7.1.10 ToUint8: (Unsigned 8 Bit Integer)
+     * 
+     * @param number
+     *            the argument value
+     * @return the integer result
      */
     public static int ToUint8(double number) {
         /* steps 1-2 (not applicable) */
@@ -378,16 +496,26 @@ public final class AbstractOperations {
 
     /**
      * 7.1.11 ToUint8Clamp: (Unsigned 8 Bit Integer, Clamped)
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the integer result
      */
-    public static int ToUint8Clamp(ExecutionContext cx, Object val) {
+    public static int ToUint8Clamp(ExecutionContext cx, Object value) {
         /* steps 1-2 */
-        double number = ToNumber(cx, val);
+        double number = ToNumber(cx, value);
         /* steps 3-8 */
         return number <= 0 ? +0 : number > 255 ? 255 : (int) Math.rint(number);
     }
 
     /**
      * 7.1.11 ToUint8Clamp: (Unsigned 8 Bit Integer, Clamped)
+     * 
+     * @param number
+     *            the argument value
+     * @return the integer result
      */
     public static int ToUint8Clamp(double number) {
         /* steps 1-2 (not applicable) */
@@ -397,119 +525,161 @@ public final class AbstractOperations {
 
     /**
      * 7.1.12 ToString
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the string result
      */
-    public static String ToFlatString(ExecutionContext cx, Object val) {
-        return ToString(cx, val).toString();
+    public static String ToFlatString(ExecutionContext cx, Object value) {
+        return ToString(cx, value).toString();
     }
 
     /**
      * 7.1.12 ToString
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the string result
      */
-    public static CharSequence ToString(ExecutionContext cx, Object val) {
-        switch (Type.of(val)) {
+    public static CharSequence ToString(ExecutionContext cx, Object value) {
+        switch (Type.of(value)) {
         case Undefined:
             return "undefined";
         case Null:
             return "null";
         case Boolean:
-            return Type.booleanValue(val) ? "true" : "false";
+            return Type.booleanValue(value) ? "true" : "false";
         case Number:
-            return ToString(Type.numberValue(val));
+            return ToString(Type.numberValue(value));
         case String:
-            return Type.stringValue(val);
+            return Type.stringValue(value);
         case Symbol:
             throw newTypeError(cx, Messages.Key.SymbolString);
         case Object:
         default:
-            Object primValue = ToPrimitive(cx, val, ToPrimitiveHint.String);
+            Object primValue = ToPrimitive(cx, value, ToPrimitiveHint.String);
             return ToString(cx, primValue);
         }
     }
 
     /**
      * 7.1.12.1 ToString Applied to the Number Type
+     * 
+     * @param value
+     *            the argument value
+     * @return the string result
      */
-    public static String ToString(int val) {
-        return Integer.toString(val);
+    public static String ToString(int value) {
+        return Integer.toString(value);
     }
 
     /**
      * 7.1.12.1 ToString Applied to the Number Type
+     * 
+     * @param value
+     *            the argument value
+     * @return the string result
      */
-    public static String ToString(long val) {
-        if ((int) val == val) {
-            return Integer.toString((int) val);
-        } else if (-0x1F_FFFF_FFFF_FFFFL <= val && val <= 0x1F_FFFF_FFFF_FFFFL) {
-            return Long.toString(val);
+    public static String ToString(long value) {
+        if ((int) value == value) {
+            return Integer.toString((int) value);
+        } else if (-0x1F_FFFF_FFFF_FFFFL <= value && value <= 0x1F_FFFF_FFFF_FFFFL) {
+            return Long.toString(value);
         }
-        return ToString((double) val);
+        return ToString((double) value);
     }
 
     /**
      * 7.1.12.1 ToString Applied to the Number Type
+     * 
+     * @param value
+     *            the argument value
+     * @return the string result
      */
-    public static String ToString(double val) {
+    public static String ToString(double value) {
         /* steps 1-4 (+ shortcut for integer values) */
-        if ((int) val == val) {
-            return Integer.toString((int) val);
-        } else if (val != val) {
+        if ((int) value == value) {
+            return Integer.toString((int) value);
+        } else if (value != value) {
             return "NaN";
-        } else if (val == Double.POSITIVE_INFINITY) {
+        } else if (value == Double.POSITIVE_INFINITY) {
             return "Infinity";
-        } else if (val == Double.NEGATIVE_INFINITY) {
+        } else if (value == Double.NEGATIVE_INFINITY) {
             return "-Infinity";
-        } else if (val == 0.0) {
+        } else if (value == 0.0) {
             return "0";
         }
 
         // call DToA for general number-to-string
-        String result = FastDtoa.numberToString(val);
+        String result = FastDtoa.numberToString(value);
         if (result != null) {
             return result;
         }
         StringBuilder buffer = new StringBuilder();
-        DToA.JS_dtostr(buffer, DToA.DTOSTR_STANDARD, 0, val);
+        DToA.JS_dtostr(buffer, DToA.DTOSTR_STANDARD, 0, value);
         return buffer.toString();
     }
 
     /**
      * 7.1.13 ToObject
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the object result
      */
-    public static ScriptObject ToObject(ExecutionContext cx, Object val) {
-        switch (Type.of(val)) {
+    public static ScriptObject ToObject(ExecutionContext cx, Object value) {
+        switch (Type.of(value)) {
         case Undefined:
         case Null:
             throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         case Boolean:
-            return BooleanCreate(cx, Type.booleanValue(val));
+            return BooleanCreate(cx, Type.booleanValue(value));
         case Number:
-            return NumberCreate(cx, Type.numberValue(val));
+            return NumberCreate(cx, Type.numberValue(value));
         case String:
-            return StringCreate(cx, Type.stringValue(val));
+            return StringCreate(cx, Type.stringValue(value));
         case Symbol:
-            return SymbolCreate(cx, Type.symbolValue(val));
+            return SymbolCreate(cx, Type.symbolValue(value));
         case Object:
         default:
-            return Type.objectValue(val);
+            return Type.objectValue(value);
         }
     }
 
     /**
      * 7.1.14 ToPropertyKey
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the property key
      */
-    public static Object ToPropertyKey(ExecutionContext cx, Object val) {
-        if (val instanceof Symbol) {
-            return val;
+    public static Object ToPropertyKey(ExecutionContext cx, Object value) {
+        if (value instanceof Symbol) {
+            return value;
         }
-        return ToFlatString(cx, val);
+        return ToFlatString(cx, value);
     }
 
     /**
      * 7.1.15 ToLength
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the length value
      */
-    public static long ToLength(ExecutionContext cx, Object val) {
+    public static long ToLength(ExecutionContext cx, Object value) {
         /* steps 1-2 */
-        double len = ToInteger(cx, val);
+        double len = ToInteger(cx, value);
         /* step 3 */
         if (len <= 0) {
             return 0;
@@ -520,36 +690,56 @@ public final class AbstractOperations {
 
     /**
      * 7.1.15 ToLength
+     * 
+     * @param value
+     *            the argument value
+     * @return the length value
      */
-    public static long ToLength(double len) {
+    public static long ToLength(double value) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
-        if (len <= 0) {
+        if (value <= 0) {
             return 0;
         }
         /* step 4 */
-        return (long) Math.min(len, 0x1F_FFFF_FFFF_FFFFL);
+        return (long) Math.min(value, 0x1F_FFFF_FFFF_FFFFL);
     }
 
     /**
      * 7.2.1 CheckObjectCoercible
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the input argument unless it is either <code>undefined</code> or <code>null</code>
      */
-    public static Object CheckObjectCoercible(ExecutionContext cx, Object val) {
-        if (Type.isUndefinedOrNull(val)) {
+    public static Object CheckObjectCoercible(ExecutionContext cx, Object value) {
+        if (Type.isUndefinedOrNull(value)) {
             throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         }
-        return val;
+        return value;
     }
 
     /**
      * 7.2.2 IsCallable
+     * 
+     * @param value
+     *            the argument value
+     * @return {@code true} if the value is a callable object
      */
-    public static boolean IsCallable(Object val) {
-        return val instanceof Callable;
+    public static boolean IsCallable(Object value) {
+        return value instanceof Callable;
     }
 
     /**
      * 7.2.3 SameValue(x, y)
+     * 
+     * @param x
+     *            the first operand
+     * @param y
+     *            the second operand
+     * @return {@code true} if both operands have the same value
      */
     public static boolean SameValue(Object x, Object y) {
         /* same reference shortcuts */
@@ -596,6 +786,12 @@ public final class AbstractOperations {
 
     /**
      * 7.2.3 SameValue(x, y)
+     * 
+     * @param x
+     *            the first operand
+     * @param y
+     *            the second operand
+     * @return {@code true} if both operands have the same value
      */
     public static boolean SameValue(double x, double y) {
         /* steps 1-5, 7-10 (not applicable) */
@@ -605,6 +801,12 @@ public final class AbstractOperations {
 
     /**
      * 7.2.3 SameValue(x, y)
+     * 
+     * @param x
+     *            the first operand
+     * @param y
+     *            the second operand
+     * @return {@code true} if both operands have the same value
      */
     public static boolean SameValue(ScriptObject x, ScriptObject y) {
         /* steps 1-9 (not applicable) */
@@ -614,6 +816,12 @@ public final class AbstractOperations {
 
     /**
      * 7.2.4 SameValueZero(x, y)
+     * 
+     * @param x
+     *            the first operand
+     * @param y
+     *            the second operand
+     * @return {@code true} if both operands have the same value
      */
     public static boolean SameValueZero(Object x, Object y) {
         /* same reference shortcuts */
@@ -663,6 +871,12 @@ public final class AbstractOperations {
 
     /**
      * 7.2.4 SameValueZero(x, y)
+     * 
+     * @param x
+     *            the first operand
+     * @param y
+     *            the second operand
+     * @return {@code true} if both operands have the same value
      */
     public static boolean SameValueZero(double x, double y) {
         /* steps 1-5 (not applicable) */
@@ -678,22 +892,36 @@ public final class AbstractOperations {
 
     /**
      * 7.2.5 IsConstructor
+     * 
+     * @param value
+     *            the argument value
+     * @return {@code true} if the value is a constructor object
      */
-    public static boolean IsConstructor(Object val) {
+    public static boolean IsConstructor(Object value) {
         /* steps 1-4 */
-        return val instanceof Constructor && ((Constructor) val).isConstructor();
+        return value instanceof Constructor && ((Constructor) value).isConstructor();
     }
 
     /**
      * 7.2.6 IsPropertyKey
+     * 
+     * @param value
+     *            the argument value
+     * @return {@code true} if the value is a property key
      */
-    public static boolean IsPropertyKey(Object val) {
+    public static boolean IsPropertyKey(Object value) {
         /* steps 1-4 */
-        return val instanceof String || val instanceof Symbol;
+        return value instanceof String || value instanceof Symbol;
     }
 
     /**
      * 7.2.7 IsExtensible (O)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @return {@code true} if the object is extensible
      */
     public static boolean IsExtensible(ExecutionContext cx, ScriptObject object) {
         /* steps 1-2 */
@@ -702,6 +930,16 @@ public final class AbstractOperations {
 
     /**
      * 7.2.8 Abstract Relational Comparison
+     * 
+     * @param cx
+     *            the execution context
+     * @param x
+     *            the first operand
+     * @param y
+     *            the second operand
+     * @param leftFirst
+     *            the operation order flag
+     * @return the comparison result
      */
     public static int RelationalComparison(ExecutionContext cx, Object x, Object y,
             boolean leftFirst) {
@@ -749,6 +987,14 @@ public final class AbstractOperations {
 
     /**
      * 7.2.9 Abstract Equality Comparison
+     * 
+     * @param cx
+     *            the execution context
+     * @param x
+     *            the first operand
+     * @param y
+     *            the second operand
+     * @return the comparison result
      */
     public static boolean EqualityComparison(ExecutionContext cx, Object x, Object y) {
         // fast path for same reference
@@ -804,6 +1050,12 @@ public final class AbstractOperations {
 
     /**
      * 7.2.10 Strict Equality Comparison
+     * 
+     * @param x
+     *            the first operand
+     * @param y
+     *            the second operand
+     * @return the comparison result
      */
     public static boolean StrictEqualityComparison(Object x, Object y) {
         // fast path for same reference
@@ -846,6 +1098,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.1 Get (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return the property value
      */
     public static Object Get(ExecutionContext cx, ScriptObject object, Object propertyKey) {
         /* steps 1-3 */
@@ -858,6 +1118,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.1 Get (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return the property value
      */
     public static Object Get(ExecutionContext cx, ScriptObject object, String propertyKey) {
         /* steps 1-3 */
@@ -866,6 +1134,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.1 Get (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return the property value
      */
     public static Object Get(ExecutionContext cx, ScriptObject object, Symbol propertyKey) {
         /* steps 1-3 */
@@ -874,6 +1150,17 @@ public final class AbstractOperations {
 
     /**
      * 7.3.2 Put (O, P, V, Throw)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @param _throw
+     *            the throw flag
      */
     public static void Put(ExecutionContext cx, ScriptObject object, Object propertyKey,
             Object value, boolean _throw) {
@@ -887,6 +1174,17 @@ public final class AbstractOperations {
 
     /**
      * 7.3.2 Put (O, P, V, Throw)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @param _throw
+     *            the throw flag
      */
     public static void Put(ExecutionContext cx, ScriptObject object, String propertyKey,
             Object value, boolean _throw) {
@@ -901,6 +1199,17 @@ public final class AbstractOperations {
 
     /**
      * 7.3.2 Put (O, P, V, Throw)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @param _throw
+     *            the throw flag
      */
     public static void Put(ExecutionContext cx, ScriptObject object, Symbol propertyKey,
             Object value, boolean _throw) {
@@ -915,6 +1224,16 @@ public final class AbstractOperations {
 
     /**
      * 7.3.3 CreateDataProperty (O, P, V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @return {@code true} on success
      */
     public static boolean CreateDataProperty(ExecutionContext cx, ScriptObject object,
             Object propertyKey, Object value) {
@@ -927,6 +1246,16 @@ public final class AbstractOperations {
 
     /**
      * 7.3.3 CreateDataProperty (O, P, V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @return {@code true} on success
      */
     public static boolean CreateDataProperty(ExecutionContext cx, ScriptObject object,
             String propertyKey, Object value) {
@@ -939,6 +1268,16 @@ public final class AbstractOperations {
 
     /**
      * 7.3.3 CreateDataProperty (O, P, V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @return {@code true} on success
      */
     public static boolean CreateDataProperty(ExecutionContext cx, ScriptObject object,
             Symbol propertyKey, Object value) {
@@ -951,6 +1290,15 @@ public final class AbstractOperations {
 
     /**
      * 7.3.4 CreateDataPropertyOrThrow (O, P, V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
      */
     public static void CreateDataPropertyOrThrow(ExecutionContext cx, ScriptObject object,
             Object propertyKey, Object value) {
@@ -963,6 +1311,15 @@ public final class AbstractOperations {
 
     /**
      * 7.3.4 CreateDataPropertyOrThrow (O, P, V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
      */
     public static void CreateDataPropertyOrThrow(ExecutionContext cx, ScriptObject object,
             String propertyKey, Object value) {
@@ -978,6 +1335,15 @@ public final class AbstractOperations {
 
     /**
      * 7.3.4 CreateDataPropertyOrThrow (O, P, V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
      */
     public static void CreateDataPropertyOrThrow(ExecutionContext cx, ScriptObject object,
             Symbol propertyKey, Object value) {
@@ -993,6 +1359,15 @@ public final class AbstractOperations {
 
     /**
      * 7.3.5 DefinePropertyOrThrow (O, P, desc)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param desc
+     *            the property descriptor
      */
     public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             Object propertyKey, PropertyDescriptor desc) {
@@ -1005,6 +1380,15 @@ public final class AbstractOperations {
 
     /**
      * 7.3.5 DefinePropertyOrThrow (O, P, desc)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param desc
+     *            the property descriptor
      */
     public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             String propertyKey, PropertyDescriptor desc) {
@@ -1019,6 +1403,15 @@ public final class AbstractOperations {
 
     /**
      * 7.3.5 DefinePropertyOrThrow (O, P, desc)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param desc
+     *            the property descriptor
      */
     public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             Symbol propertyKey, PropertyDescriptor desc) {
@@ -1033,6 +1426,13 @@ public final class AbstractOperations {
 
     /**
      * 7.3.6 DeletePropertyOrThrow (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
      */
     public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             Object propertyKey) {
@@ -1045,6 +1445,13 @@ public final class AbstractOperations {
 
     /**
      * 7.3.6 DeletePropertyOrThrow (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
      */
     public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             String propertyKey) {
@@ -1059,6 +1466,13 @@ public final class AbstractOperations {
 
     /**
      * 7.3.6 DeletePropertyOrThrow (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
      */
     public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             Symbol propertyKey) {
@@ -1073,6 +1487,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.7 HasProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
      */
     public static boolean HasProperty(ExecutionContext cx, ScriptObject object, Object propertyKey) {
         if (propertyKey instanceof String) {
@@ -1084,6 +1506,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.7 HasProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
      */
     public static boolean HasProperty(ExecutionContext cx, ScriptObject object, String propertyKey) {
         /* steps 1-3 */
@@ -1092,6 +1522,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.7 HasProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
      */
     public static boolean HasProperty(ExecutionContext cx, ScriptObject object, Symbol propertyKey) {
         /* steps 1-3 */
@@ -1100,6 +1538,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.8 HasOwnProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
      */
     public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
             Object propertyKey) {
@@ -1112,6 +1558,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.8 HasOwnProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
      */
     public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
             String propertyKey) {
@@ -1124,6 +1578,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.8 HasOwnProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
      */
     public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
             Symbol propertyKey) {
@@ -1136,6 +1598,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.9 GetMethod (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return the method or {@code null} if not present
      */
     public static Callable GetMethod(ExecutionContext cx, ScriptObject object, Object propertyKey) {
         if (propertyKey instanceof String) {
@@ -1147,6 +1617,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.9 GetMethod (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return the method or {@code null} if not present
      */
     public static Callable GetMethod(ExecutionContext cx, ScriptObject object, String propertyKey) {
         /* steps 1-4 */
@@ -1165,6 +1643,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.9 GetMethod (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return the method or {@code null} if not present
      */
     public static Callable GetMethod(ExecutionContext cx, ScriptObject object, Symbol propertyKey) {
         /* steps 1-4 */
@@ -1183,6 +1669,16 @@ public final class AbstractOperations {
 
     /**
      * 7.3.10 Invoke(O,P [,args])
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param args
+     *            the method call arguments
+     * @return the method return value
      */
     public static Object Invoke(ExecutionContext cx, Object object, Object propertyKey,
             Object... args) {
@@ -1195,6 +1691,16 @@ public final class AbstractOperations {
 
     /**
      * 7.3.10 Invoke(O,P [,args])
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param args
+     *            the method call arguments
+     * @return the method return value
      */
     public static Object Invoke(ExecutionContext cx, Object object, String propertyKey,
             Object... args) {
@@ -1213,6 +1719,16 @@ public final class AbstractOperations {
 
     /**
      * 7.3.10 Invoke(O,P [,args])
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param args
+     *            the method call arguments
+     * @return the method return value
      */
     public static Object Invoke(ExecutionContext cx, ScriptObject object, String propertyKey,
             Object... args) {
@@ -1229,6 +1745,16 @@ public final class AbstractOperations {
 
     /**
      * 7.3.10 Invoke(O,P [,args])
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param args
+     *            the method call arguments
+     * @return the method return value
      */
     public static Object Invoke(ExecutionContext cx, Object object, Symbol propertyKey,
             Object... args) {
@@ -1247,6 +1773,16 @@ public final class AbstractOperations {
 
     /**
      * 7.3.10 Invoke(O,P [,args])
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param args
+     *            the method call arguments
+     * @return the method return value
      */
     public static Object Invoke(ExecutionContext cx, ScriptObject object, Symbol propertyKey,
             Object... args) {
@@ -1263,6 +1799,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.11 SetIntegrityLevel (O, level)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param level
+     *            the new integrity level
+     * @return {@code true} on success
      */
     public static boolean SetIntegrityLevel(ExecutionContext cx, ScriptObject object,
             IntegrityLevel level) {
@@ -1341,6 +1885,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.12 TestIntegrityLevel (O, level)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param level
+     *            the integrity level to test
+     * @return {@code true} if the object conforms to the integrity level
      */
     public static boolean TestIntegrityLevel(ExecutionContext cx, ScriptObject object,
             IntegrityLevel level) {
@@ -1403,6 +1955,12 @@ public final class AbstractOperations {
 
     /**
      * 7.3.13 CreateArrayFromList (elements)
+     * 
+     * @param cx
+     *            the execution context
+     * @param elements
+     *            the array elements
+     * @return the array object
      */
     public static ScriptObject CreateArrayFromList(ExecutionContext cx, List<?> elements) {
         /* step 1 (not applicable) */
@@ -1422,6 +1980,12 @@ public final class AbstractOperations {
 
     /**
      * 7.3.14 CreateListFromArrayLike (obj)
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the array-like object
+     * @return the array elements
      */
     public static Object[] CreateListFromArrayLike(ExecutionContext cx, Object obj) {
         /* step 1 */
@@ -1452,6 +2016,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.15 OrdinaryHasInstance (C, O)
+     * 
+     * @param cx
+     *            the execution context
+     * @param c
+     *            the constructor object
+     * @param o
+     *            the instance object
+     * @return {@code true} on success
      */
     public static boolean OrdinaryHasInstance(ExecutionContext cx, Object c, Object o) {
         /* step 1 */
@@ -1486,6 +2058,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.16 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
+     * 
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor object
+     * @param intrinsicDefaultProto
+     *            the default prototype
+     * @return the prototype object
      */
     public static ScriptObject GetPrototypeFromConstructor(ExecutionContext cx, Object constructor,
             Intrinsics intrinsicDefaultProto) {
@@ -1514,6 +2094,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.17 CreateFromConstructor (F)
+     * 
+     * @param <FUNCTION>
+     *            the constructor function type
+     * @param cx
+     *            the execution context
+     * @param f
+     *            the constructor function
+     * @return the new allocated object
      */
     public static <FUNCTION extends ScriptObject & Callable & Constructor> ScriptObject CreateFromConstructor(
             ExecutionContext cx, FUNCTION f) {
@@ -1540,6 +2128,16 @@ public final class AbstractOperations {
 
     /**
      * 7.3.18 Construct (F, argumentsList)
+     * 
+     * @param <FUNCTION>
+     *            the constructor function type
+     * @param cx
+     *            the execution context
+     * @param f
+     *            the constructor function
+     * @param args
+     *            the constructor function arguments
+     * @return the new allocated and initialised object
      */
     public static <FUNCTION extends ScriptObject & Callable & Constructor> ScriptObject Construct(
             ExecutionContext cx, FUNCTION f, Object... args) {
@@ -1564,6 +2162,18 @@ public final class AbstractOperations {
 
     /**
      * 7.3.18 Construct (F, argumentsList)
+     * 
+     * @param <FUNCTION>
+     *            the constructor function type
+     * @param cx
+     *            the execution context
+     * @param f
+     *            the constructor function
+     * @param args
+     *            the constructor function arguments
+     * @return the new allocated and initialised object or a tail-call invocation object
+     * @throws Throwable
+     *             if the underlying method throws an error
      */
     public static <FUNCTION extends ScriptObject & Callable & Constructor> Object ConstructTailCall(
             ExecutionContext cx, FUNCTION f, Object... args) throws Throwable {
@@ -1594,6 +2204,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.19 GetOption (options, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param options
+     *            the options object
+     * @param propertyKey
+     *            the property key
+     * @return the option value
      */
     public static Object GetOption(ExecutionContext cx, Object options, Object propertyKey) {
         if (propertyKey instanceof String) {
@@ -1605,6 +2223,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.19 GetOption (options, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param options
+     *            the options object
+     * @param propertyKey
+     *            the property key
+     * @return the option value
      */
     public static Object GetOption(ExecutionContext cx, Object options, String propertyKey) {
         /* step 1 (not applicable) */
@@ -1622,6 +2248,14 @@ public final class AbstractOperations {
 
     /**
      * 7.3.19 GetOption (options, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param options
+     *            the options object
+     * @param propertyKey
+     *            the property key
+     * @return the option value
      */
     public static Object GetOption(ExecutionContext cx, Object options, Symbol propertyKey) {
         /* step 1 (not applicable) */
@@ -1639,6 +2273,12 @@ public final class AbstractOperations {
 
     /**
      * 7.4.1 GetIterator ( obj )
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
+     * @return the script iterator object
      */
     public static ScriptObject GetIterator(ExecutionContext cx, Object obj) {
         /* steps 1-2 */
@@ -1653,6 +2293,12 @@ public final class AbstractOperations {
 
     /**
      * 7.4.2 IteratorNext ( iterator, value )
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the script iterator object
+     * @return the next value from the iterator
      */
     public static ScriptObject IteratorNext(ExecutionContext cx, ScriptObject iterator) {
         /* steps 1-3 */
@@ -1667,6 +2313,14 @@ public final class AbstractOperations {
 
     /**
      * 7.4.2 IteratorNext ( iterator, value )
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the script iterator object
+     * @param value
+     *            the value to pass to the next() function
+     * @return the next value from the iterator
      */
     public static ScriptObject IteratorNext(ExecutionContext cx, ScriptObject iterator, Object value) {
         /* steps 1-3 */
@@ -1681,6 +2335,14 @@ public final class AbstractOperations {
 
     /**
      * 7.4.? IteratorThrow ( iterator, value )
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the script iterator object
+     * @param value
+     *            the value to pass to the throw() function
+     * @return the next value from the iterator
      */
     public static ScriptObject IteratorThrow(ExecutionContext cx, ScriptObject iterator,
             Object value) {
@@ -1693,6 +2355,12 @@ public final class AbstractOperations {
 
     /**
      * 7.4.3 IteratorComplete (iterResult)
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterResult
+     *            the iterator result object
+     * @return {@code true} if the iterator is completed
      */
     public static boolean IteratorComplete(ExecutionContext cx, ScriptObject iterResult) {
         /* step 1 (not applicable) */
@@ -1704,6 +2372,12 @@ public final class AbstractOperations {
 
     /**
      * 7.4.4 IteratorValue (iterResult)
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterResult
+     *            the iterator result object
+     * @return the iterator result value
      */
     public static Object IteratorValue(ExecutionContext cx, ScriptObject iterResult) {
         /* step 1 (not applicable) */
@@ -1713,6 +2387,12 @@ public final class AbstractOperations {
 
     /**
      * 7.4.5 IteratorStep ( iterator )
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the script iterator object
+     * @return the next value from the iterator or {@code null}
      */
     public static ScriptObject IteratorStep(ExecutionContext cx, ScriptObject iterator) {
         /* steps 1-2 */
@@ -1729,6 +2409,14 @@ public final class AbstractOperations {
 
     /**
      * 7.4.6 CreateIterResultObject (value, done)
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the iterator result value
+     * @param done
+     *            the iterator result state
+     * @return the new iterator result object
      */
     public static ScriptObject CreateIterResultObject(ExecutionContext cx, Object value,
             boolean done) {
@@ -1745,6 +2433,12 @@ public final class AbstractOperations {
 
     /**
      * 7.4.7 CreateListIterator (list)
+     * 
+     * @param cx
+     *            the execution context
+     * @param list
+     *            the source iterable
+     * @return a new script object iterator
      */
     public static ScriptObject CreateListIterator(ExecutionContext cx, Iterable<?> list) {
         return ListIterator.CreateListIterator(cx, list.iterator());
@@ -1752,6 +2446,12 @@ public final class AbstractOperations {
 
     /**
      * 7.4.7 CreateListIterator (list)
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the source iterator
+     * @return a new script object iterator
      */
     public static ScriptObject CreateListIterator(ExecutionContext cx, Iterator<?> iterator) {
         return ListIterator.CreateListIterator(cx, iterator);
@@ -1759,6 +2459,10 @@ public final class AbstractOperations {
 
     /**
      * 7.4.8 CreateEmptyIterator ( )
+     * 
+     * @param cx
+     *            the execution context
+     * @return a new script object iterator
      */
     public static ScriptObject CreateEmptyIterator(ExecutionContext cx) {
         /* step 1 */
@@ -1769,6 +2473,12 @@ public final class AbstractOperations {
 
     /**
      * 7.5.1 PromiseNew ( executor ) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param executor
+     *            the executor function
+     * @return the new promise object
      */
     public static PromiseObject PromiseNew(ExecutionContext cx, Callable executor) {
         /* step 1 */
@@ -1779,6 +2489,10 @@ public final class AbstractOperations {
 
     /**
      * 7.5.2 PromiseBuiltinCapability () Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @return the promise capability record
      */
     public static PromiseCapability<PromiseObject> PromiseBuiltinCapability(ExecutionContext cx) {
         /* step 1 */
@@ -1790,6 +2504,12 @@ public final class AbstractOperations {
 
     /**
      * 7.5.3 PromiseOf (value) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the resolved value
+     * @return the new promise object
      */
     public static PromiseObject PromiseOf(ExecutionContext cx, Object value) {
         /* steps 1-2 */
@@ -1802,6 +2522,12 @@ public final class AbstractOperations {
 
     /**
      * 7.5.4 PromiseAll (promiseList) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param promiseList
+     *            the list of promise objects
+     * @return the new promise object
      */
     public static ScriptObject PromiseAll(ExecutionContext cx, List<ScriptObject> promiseList) {
         return PromiseAbstractOperations.PromiseAll(cx, promiseList);
@@ -1809,6 +2535,14 @@ public final class AbstractOperations {
 
     /**
      * 7.5.5 PromiseCatch (promise, rejectedAction) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @param rejectedAction
+     *            the reject function
+     * @return the new promise object
      */
     public static ScriptObject PromiseCatch(ExecutionContext cx, ScriptObject promise,
             Callable rejectedAction) {
@@ -1817,6 +2551,14 @@ public final class AbstractOperations {
 
     /**
      * 7.5.6 PromiseThen (promise, resolvedAction, rejectedAction) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @param resolvedAction
+     *            the resolve function
+     * @return the new promise object
      */
     public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
             Callable resolvedAction) {
@@ -1825,6 +2567,16 @@ public final class AbstractOperations {
 
     /**
      * 7.5.6 PromiseThen (promise, resolvedAction, rejectedAction) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @param resolvedAction
+     *            the resolve function
+     * @param rejectedAction
+     *            the reject function
+     * @return the new promise object
      */
     public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
             Callable resolvedAction, Callable rejectedAction) {
@@ -1832,7 +2584,13 @@ public final class AbstractOperations {
     }
 
     /**
-     * Returns a list of all string-valued [[OwnPropertyKeys]] of {@code obj}
+     * Returns a list of all string-valued [[OwnPropertyKeys]] of {@code obj}.
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
+     * @return <var>obj</var>'s own string-valued property keys
      */
     public static List<String> GetOwnPropertyNames(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
@@ -1848,7 +2606,13 @@ public final class AbstractOperations {
     }
 
     /**
-     * Returns a list of all string-valued, enumerable [[OwnPropertyKeys]] of {@code obj}
+     * Returns a list of all string-valued, enumerable [[OwnPropertyKeys]] of {@code obj}.
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
+     * @return <var>obj</var>'s own enumerable string-valued property keys
      */
     public static List<String> GetOwnEnumerablePropertyNames(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
@@ -1868,7 +2632,13 @@ public final class AbstractOperations {
     }
 
     /**
-     * Returns a list of all enumerable [[OwnPropertyKeys]] of {@code obj}
+     * Returns a list of all enumerable [[OwnPropertyKeys]] of {@code obj}.
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
+     * @return <var>obj</var>'s own enumerable property keys
      */
     public static List<Object> GetOwnEnumerablePropertyKeys(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)

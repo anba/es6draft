@@ -16,7 +16,7 @@ package com.github.anba.es6draft.runtime;
  */
 public interface Task {
     /**
-     * Execute the action for this task
+     * Executes the action for this task.
      */
     void execute();
 }

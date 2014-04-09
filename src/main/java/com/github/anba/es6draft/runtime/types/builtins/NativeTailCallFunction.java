@@ -42,7 +42,9 @@ public final class NativeTailCallFunction extends BuiltinFunction {
     }
 
     /**
-     * Returns `(ExecutionContext, Object, Object[]) -> Object` method-handle
+     * Returns `(ExecutionContext, Object, Object[]) {@literal ->} Object` method-handle
+     * 
+     * @return the call method handle
      */
     public MethodHandle getCallMethod() {
         return mh;

@@ -219,6 +219,18 @@ final class SwitchStatementGenerator extends
 
     /**
      * 13.11.5 Runtime Semantics: CaseBlockEvaluation
+     * 
+     * @param node
+     *            the switch statement
+     * @param type
+     *            the switch statement type
+     * @param lblBreak
+     *            the break label
+     * @param switchValue
+     *            the variable which holds the switch value
+     * @param mv
+     *            the statement visitor
+     * @return the completion value
      */
     private Completion CaseBlockEvaluation(SwitchStatement node, SwitchType type,
             BreakLabel lblBreak, Variable<?> switchValue, StatementVisitor mv) {
@@ -301,6 +313,19 @@ final class SwitchStatementGenerator extends
      * 
      * goto :default
      * </pre>
+     * 
+     * @param clauses
+     *            the switch clauses
+     * @param labels
+     *            the labels for each switch clause
+     * @param defaultClause
+     *            the label for the default clause
+     * @param lblBreak
+     *            the break label
+     * @param switchValue
+     *            the variable which holds the switch value
+     * @param mv
+     *            the statement visitor
      */
     private void emitDefaultSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
             Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
@@ -326,6 +351,19 @@ final class SwitchStatementGenerator extends
      * L1: ...
      * L2: ...
      * </pre>
+     * 
+     * @param clauses
+     *            the switch clauses
+     * @param labels
+     *            the labels for each switch clause
+     * @param defaultClause
+     *            the label for the default clause
+     * @param lblBreak
+     *            the break label
+     * @param switchValue
+     *            the variable which holds the switch value
+     * @param mv
+     *            the statement visitor
      */
     private void emitGenericSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
             Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
@@ -366,6 +404,19 @@ final class SwitchStatementGenerator extends
      *   L2: if (equals($v, "key2")) ...
      * }
      * </pre>
+     * 
+     * @param clauses
+     *            the switch clauses
+     * @param labels
+     *            the labels for each switch clause
+     * @param defaultClause
+     *            the label for the default clause
+     * @param lblBreak
+     *            the break label
+     * @param switchValue
+     *            the variable which holds the switch value
+     * @param mv
+     *            the statement visitor
      */
     private void emitStringSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
             Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
@@ -442,7 +493,7 @@ final class SwitchStatementGenerator extends
      * }
      * 
      * var $v = v;
-     * if (typeof $v == 'string' && length($v) == 1) {
+     * if (typeof $v == 'string' {@literal &&} length($v) == 1) {
      *   tableswitch|lookupswitch(charCodeAt($v, 0)) {
      *     charCodeAt("a", 0): goto L1
      *     charCodeAt("b", 0): goto L2
@@ -451,6 +502,19 @@ final class SwitchStatementGenerator extends
      *   L2: ...
      * }
      * </pre>
+     * 
+     * @param clauses
+     *            the switch clauses
+     * @param labels
+     *            the labels for each switch clause
+     * @param defaultClause
+     *            the label for the default clause
+     * @param lblBreak
+     *            the break label
+     * @param switchValue
+     *            the variable which holds the switch value
+     * @param mv
+     *            the statement visitor
      */
     private void emitCharSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
             Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
@@ -508,7 +572,7 @@ final class SwitchStatementGenerator extends
      * }
      * 
      * var $v = v;
-     * if (typeof $v == 'number' && isInt($v)) {
+     * if (typeof $v == 'number' {@literal &&} isInt($v)) {
      *   tableswitch|lookupswitch(int($v)) {
      *     int(0): goto L1
      *     int(1): goto L2
@@ -517,6 +581,19 @@ final class SwitchStatementGenerator extends
      *   L2: ...
      * }
      * </pre>
+     * 
+     * @param clauses
+     *            the switch clauses
+     * @param labels
+     *            the labels for each switch clause
+     * @param defaultClause
+     *            the label for the default clause
+     * @param lblBreak
+     *            the break label
+     * @param switchValue
+     *            the variable which holds the switch value
+     * @param mv
+     *            the statement visitor
      */
     private void emitIntSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
             Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
@@ -578,7 +655,16 @@ final class SwitchStatementGenerator extends
     }
 
     /**
-     * Shared implementation for int- and char-switches
+     * Shared implementation for int- and char-switches.
+     * 
+     * @param switchDefault
+     *            the switch default instruction label
+     * @param labels
+     *            the switch labels
+     * @param entries
+     *            the switch entries, value-index pairs
+     * @param mv
+     *            the statement visitor
      */
     private static void switchInstruction(Label switchDefault, Label[] labels, long[] entries,
             StatementVisitor mv) {

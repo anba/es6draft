@@ -13,13 +13,17 @@ public abstract class Lazy<VALUE> {
     private VALUE value = null;
 
     /**
-     * Computes the actual value lazily
+     * Computes the actual value lazily.
+     * 
+     * @return the computed value
      */
     protected abstract VALUE computeValue();
 
     /**
      * Returns the value for this object, calls {@link #computeValue()} to retrieve the value
-     * initially
+     * initially.
+     * 
+     * @return the computed value
      */
     public VALUE get() {
         if (value == null) {

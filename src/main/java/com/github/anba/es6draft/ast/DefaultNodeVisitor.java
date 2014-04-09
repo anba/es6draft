@@ -17,11 +17,17 @@ import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
 
 /**
- * Default implementation for {@link NodeVisitor}
+ * Default implementation for {@link NodeVisitor}.
  */
 public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     /**
-     * Default visit() method to be provided by sub-classes
+     * Default visit() method to be provided by sub-classes.
+     * 
+     * @param node
+     *            the current node
+     * @param value
+     *            the value
+     * @return the return value
      */
     protected abstract R visit(Node node, V value);
 

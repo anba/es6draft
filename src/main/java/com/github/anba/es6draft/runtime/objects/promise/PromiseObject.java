@@ -59,40 +59,71 @@ public final class PromiseObject extends OrdinaryObject {
         rejectReactions = new ArrayList<>();
     }
 
-    /** [[PromiseStatus]] */
+    /**
+     * [[PromiseStatus]]
+     * 
+     * @return the promise status
+     */
     @Deprecated
     public Status getStatus() {
         return status;
     }
 
-    /** [[PromiseState]] */
+    /**
+     * [[PromiseState]]
+     * 
+     * @return the promise state
+     */
     public State getState() {
         return state;
     }
 
-    /** [[PromiseConstructor]] */
+    /**
+     * [[PromiseConstructor]]
+     * 
+     * @return the promise constructor function
+     */
     public Constructor getConstructor() {
         return constructor;
     }
 
-    /** [[PromiseConstructor]] */
+    /**
+     * [[PromiseConstructor]]
+     * 
+     * @param constructor
+     *            the promise constructor function
+     */
     public void setConstructor(Constructor constructor) {
         assert this.constructor == null && constructor != null;
         this.constructor = constructor;
     }
 
-    /** [[PromiseResult]] */
+    /**
+     * [[PromiseResult]]
+     * 
+     * @return the promise result value
+     */
     public Object getResult() {
         return result;
     }
 
-    /** [[PromiseResolveReactions]] */
+    /**
+     * [[PromiseResolveReactions]]
+     * 
+     * @param reaction
+     *            the resolve reaction
+     */
     public void addResolveReaction(PromiseReaction reaction) {
         assert state == State.Pending;
         resolveReactions.add(reaction);
     }
 
-    /** [[PromiseRejectReactions]] */
+    /**
+     * [[PromiseRejectReactions]]
+     * 
+     * @param reaction
+     *            the reject reaction
+     */
     public void addRejectReaction(PromiseReaction reaction) {
         assert state == State.Pending;
         rejectReactions.add(reaction);

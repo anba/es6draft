@@ -138,6 +138,12 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
 
         /**
          * 23.4.2.2 WeakSet[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised weak set object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

@@ -41,17 +41,28 @@ final class StatementGenerator extends
     enum Completion {
         Normal, Return, Throw, Break, Continue, Abrupt;
 
+        /**
+         * Returns {@code true} if this completion type is not {@link #Normal}.
+         * 
+         * @return {@code true} if not the normal completion type
+         */
         boolean isAbrupt() {
             return this != Normal;
         }
 
         /**
          * <pre>
+         * {@code
          * then :: Completion -> Completion -> Completion
          * then a b = case (a, b) of
          *              (Normal, _) -> b
          *              _ -> a
+         * }
          * </pre>
+         * 
+         * @param next
+         *            the next completion
+         * @return the statically computed completion type
          */
         Completion then(Completion next) {
             return this != Normal ? this : next;
@@ -59,13 +70,19 @@ final class StatementGenerator extends
 
         /**
          * <pre>
+         * {@code
          * select :: Completion -> Completion -> Completion
          * select a b = case (a, b) of
          *                (Normal, _) -> Normal
          *                (_, Normal) -> Normal
          *                _ | a == b -> a
          *                _ -> Abrupt
+         * }
          * </pre>
+         * 
+         * @param other
+         *            the other completion
+         * @return the statically computed completion type
          */
         Completion select(Completion other) {
             return this == Normal || other == Normal ? Normal : this == other ? this : Abrupt;
@@ -73,14 +90,20 @@ final class StatementGenerator extends
 
         /**
          * <pre>
+         * {@code
          * normal :: Completion -> Bool -> Completion
          * normal a b = case (a, b) of
          *                (_, True) -> Normal
          *                _ -> a
+         * }
          * </pre>
+         * 
+         * @param useNormal
+         *            the flag to select the normal completion type
+         * @return the statically computed completion type
          */
-        Completion normal(boolean b) {
-            return b ? Normal : this;
+        Completion normal(boolean useNormal) {
+            return useNormal ? Normal : this;
         }
     }
 
@@ -155,7 +178,14 @@ final class StatementGenerator extends
     /* ----------------------------------------------------------------------------------------- */
 
     /**
-     * stack: [Reference, Object] -> []
+     * stack: [Reference, Object] {@literal ->} []
+     * 
+     * @param node
+     *            the left-hand side expression node
+     * @param type
+     *            the value type, must be {@link ValType#Reference}
+     * @param mv
+     *            the statement visitor
      */
     private void PutValue(LeftHandSideExpression node, ValType type, StatementVisitor mv) {
         assert type == ValType.Reference : "lhs is not reference: " + type;
@@ -164,7 +194,12 @@ final class StatementGenerator extends
     }
 
     /**
-     * stack: [envRec] -> [envRec]
+     * stack: [envRec] {@literal ->} [envRec]
+     * 
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the statement visitor
      */
     private void createImmutableBinding(String name, StatementVisitor mv) {
         mv.dup();
@@ -173,7 +208,14 @@ final class StatementGenerator extends
     }
 
     /**
-     * stack: [envRec] -> [envRec]
+     * stack: [envRec] {@literal ->} [envRec]
+     * 
+     * @param name
+     *            the binding name
+     * @param deletable
+     *            the deletable flag
+     * @param mv
+     *            the statement visitor
      */
     private void createMutableBinding(String name, boolean deletable, StatementVisitor mv) {
         mv.dup();
@@ -183,7 +225,14 @@ final class StatementGenerator extends
     }
 
     /**
-     * stack: [value] -> [value]
+     * stack: [value] {@literal ->} [value]
+     * 
+     * @param pattern
+     *            the pattern node, either {@link AssignmentPattern} or {@link BindingPattern}
+     * @param type
+     *            the value type
+     * @param mv
+     *            the statement visitor
      */
     private void ensureObjectOrThrow(Node pattern, ValType type, StatementVisitor mv) {
         if (type != ValType.Object) {
@@ -413,6 +462,22 @@ final class StatementGenerator extends
 
     /**
      * 13.6.4.5 Runtime Semantics: LabelledEvaluation
+     * 
+     * @param <FORSTATEMENT>
+     *            the for-statement node type
+     * @param node
+     *            the for-statement node
+     * @param expr
+     *            the expression node
+     * @param lhs
+     *            the left-hand side node
+     * @param stmt
+     *            the statement node
+     * @param iterationKind
+     *            the for-statement's iteration kind
+     * @param mv
+     *            the statement visitor
+     * @return the completion value
      */
     private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion visitForInOfLoop(
             FORSTATEMENT node, Expression expr, Node lhs, Statement stmt,
@@ -434,7 +499,18 @@ final class StatementGenerator extends
     /**
      * 13.6.4.6 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
      * <p>
-     * stack: [] -> [Iterator]
+     * stack: [] {@literal ->} [Iterator]
+     * 
+     * 
+     * @param expr
+     *            the expression node
+     * @param iterationKind
+     *            the for-statement's iteration kind
+     * @param lblFail
+     *            the target instruction if expression node does not produce an object type
+     * @param mv
+     *            the statement visitor
+     * @return the value type of the expression
      */
     private ValType ForInOfExpressionEvaluation(Expression expr, IterationKind iterationKind,
             Label lblFail, StatementVisitor mv) {
@@ -490,7 +566,19 @@ final class StatementGenerator extends
     /**
      * 13.6.4.7 Runtime Semantics: ForIn/OfBodyEvaluation
      * <p>
-     * stack: [Iterator] -> []
+     * stack: [Iterator] {@literal ->} []
+     * 
+     * @param <FORSTATEMENT>
+     *            the for-statement node type
+     * @param node
+     *            the for-statement node
+     * @param lhs
+     *            the left-hand side node
+     * @param stmt
+     *            the statement node
+     * @param mv
+     *            the statement visitor
+     * @return the completion value
      */
     private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion ForInOfBodyEvaluation(
             FORSTATEMENT node, Node lhs, Statement stmt, StatementVisitor mv) {
@@ -733,6 +821,11 @@ final class StatementGenerator extends
 
     /**
      * 13.6.3.4 Runtime Semantics: CreatePerIterationEnvironment
+     * 
+     * @param savedEnv
+     *            the variable which holds the saved environment
+     * @param mv
+     *            the statement visitor
      */
     private void CreatePerIterationEnvironment(Variable<LexicalEnvironment<?>> savedEnv,
             StatementVisitor mv) {
@@ -1029,6 +1122,12 @@ final class StatementGenerator extends
      * 13.14.5 Runtime Semantics: Evaluation<br>
      * 
      * <code>try-catch-finally</code>
+     * 
+     * @param node
+     *            the try-statement
+     * @param mv
+     *            the statement visitor
+     * @return the completion value
      */
     private Completion visitTryCatchFinally(TryStatement node, StatementVisitor mv) {
         LocationLabel startCatchFinally = new LocationLabel();
@@ -1080,6 +1179,12 @@ final class StatementGenerator extends
      * 13.14.5 Runtime Semantics: Evaluation<br>
      * 
      * <code>try-catch</code>
+     * 
+     * @param node
+     *            the try-statement
+     * @param mv
+     *            the statement visitor
+     * @return the completion value
      */
     private Completion visitTryCatch(TryStatement node, StatementVisitor mv) {
         LocationLabel startCatch = new LocationLabel(), endCatch = new LocationLabel();
@@ -1118,6 +1223,12 @@ final class StatementGenerator extends
      * 13.14.5 Runtime Semantics: Evaluation<br>
      * 
      * <code>try-finally</code>
+     * 
+     * @param node
+     *            the try-statement
+     * @param mv
+     *            the statement visitor
+     * @return the completion value
      */
     private Completion visitTryFinally(TryStatement node, StatementVisitor mv) {
         LocationLabel startFinally = new LocationLabel(), endFinally = new LocationLabel();

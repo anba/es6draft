@@ -69,6 +69,12 @@ public final class GeneratorFunctionPrototype extends OrdinaryObject implements 
 
         /**
          * 25.2.3.4 GeneratorFunction.prototype [ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised generator object
          */
         @Function(name = "[Symbol.create]", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = true, enumerable = false, configurable = true))

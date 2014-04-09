@@ -144,6 +144,12 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
 
         /**
          * 23.3.2.2 WeakMap[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised weak map object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

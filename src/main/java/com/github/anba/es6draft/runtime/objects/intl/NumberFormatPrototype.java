@@ -74,6 +74,12 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
 
         /**
          * 11.3.2 Intl.NumberFormat.prototype.format
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the bound format function
          */
         @Accessor(name = "format", type = Accessor.Type.Getter)
         public static Object format(ExecutionContext cx, Object thisValue) {
@@ -88,6 +94,12 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
 
         /**
          * 11.3.3 Intl.NumberFormat.prototype.resolvedOptions ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the resolved options object
          */
         @Function(name = "resolvedOptions", arity = 0)
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
@@ -123,6 +135,14 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
 
     /**
      * Abstract Operation: FormatNumber
+     * 
+     * @param cx
+     *            the execution context
+     * @param numberFormat
+     *            the number format object
+     * @param x
+     *            the number value
+     * @return the formatted number string
      */
     public static String FormatNumber(ExecutionContext cx, NumberFormatObject numberFormat, double x) {
         if (x == -0.0) {

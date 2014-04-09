@@ -66,6 +66,16 @@ public final class JSONObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 24.3.1 JSON.parse ( text [ , reviver ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param text
+         *            the JSON text
+         * @param reviver
+         *            the optional reviver argument
+         * @return the parsed JSON value
          */
         @Function(name = "parse", arity = 2)
         public static Object parse(ExecutionContext cx, Object thisValue, Object text,
@@ -93,6 +103,18 @@ public final class JSONObject extends OrdinaryObject implements Initialisable {
 
         /**
          * 24.3.2 JSON.stringify ( value [ , replacer [ , space ] ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the value
+         * @param replacer
+         *            the optional replacer argument
+         * @param space
+         *            the optional space argument
+         * @return the JSON string
          */
         @Function(name = "stringify", arity = 3)
         public static Object stringify(ExecutionContext cx, Object thisValue, Object value,
@@ -175,6 +197,16 @@ public final class JSONObject extends OrdinaryObject implements Initialisable {
 
     /**
      * 24.3.1.1 Runtime Semantics: Walk Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param reviver
+     *            the reviver function
+     * @param holder
+     *            the script object
+     * @param name
+     *            the property key
+     * @return the result value
      */
     public static Object Walk(ExecutionContext cx, Callable reviver, ScriptObject holder,
             String name) {
@@ -215,6 +247,24 @@ public final class JSONObject extends OrdinaryObject implements Initialisable {
 
     /**
      * 24.3.2.1 Runtime Semantics: Str Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param stack
+     *            the current stack
+     * @param propertyList
+     *            the set of property keys to visit
+     * @param replacerFunction
+     *            the replacer function
+     * @param indent
+     *            the current indentation
+     * @param gap
+     *            the string gap
+     * @param key
+     *            the property key
+     * @param holder
+     *            the script object
+     * @return the JSON string
      */
     public static String Str(ExecutionContext cx, Set<ScriptObject> stack,
             Set<String> propertyList, Callable replacerFunction, String indent, String gap,
@@ -286,6 +336,10 @@ public final class JSONObject extends OrdinaryObject implements Initialisable {
 
     /**
      * 24.3.2.2 Runtime Semantics: Quote Abstract Operation
+     * 
+     * @param value
+     *            the string
+     * @return the quoted string
      */
     public static String Quote(CharSequence value) {
         StringBuilder product = new StringBuilder(value.length() + 2);
@@ -334,6 +388,22 @@ public final class JSONObject extends OrdinaryObject implements Initialisable {
 
     /**
      * 24.3.2.3 Runtime Semantics: JO Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param stack
+     *            the current stack
+     * @param propertyList
+     *            the set of property keys to visit
+     * @param replacerFunction
+     *            the replacer function
+     * @param indent
+     *            the current indentation
+     * @param gap
+     *            the string gap
+     * @param value
+     *            the script object
+     * @return the JSON string
      */
     public static String JO(ExecutionContext cx, Set<ScriptObject> stack, Set<String> propertyList,
             Callable replacerFunction, String indent, String gap, ScriptObject value) {
@@ -400,6 +470,22 @@ public final class JSONObject extends OrdinaryObject implements Initialisable {
 
     /**
      * 24.3.2.4 Runtime Semantics: JA Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param stack
+     *            the current stack
+     * @param propertyList
+     *            the set of property keys to visit
+     * @param replacerFunction
+     *            the replacer function
+     * @param indent
+     *            the current indentation
+     * @param gap
+     *            the string gap
+     * @param value
+     *            the script array object
+     * @return the JSON string
      */
     public static String JA(ExecutionContext cx, Set<ScriptObject> stack, Set<String> propertyList,
             Callable replacerFunction, String indent, String gap, ScriptObject value) {

@@ -157,6 +157,16 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 20.1.2.13 Number.parseInt (string, radix)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param string
+         *            the string
+         * @param radix
+         *            the radix value
+         * @return the parsed integer
          */
         @Function(name = "parseInt", arity = 2)
         public static Object parseInt(ExecutionContext cx, Object thisValue, Object string,
@@ -201,6 +211,14 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 20.1.2.12 Number.parseFloat (string)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param string
+         *            the string
+         * @return the parsed number
          */
         @Function(name = "parseFloat", arity = 1)
         public static Object parseFloat(ExecutionContext cx, Object thisValue, Object string) {
@@ -218,6 +236,14 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 20.1.2.4 Number.isNaN (number)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param number
+         *            the number value
+         * @return {@code true} if the number is the NaN value
          */
         @Function(name = "isNaN", arity = 1)
         public static Object isNaN(ExecutionContext cx, Object thisValue, Object number) {
@@ -231,6 +257,14 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 20.1.2.2 Number.isFinite (number)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param number
+         *            the number value
+         * @return {@code true} if the argument is a finite number
          */
         @Function(name = "isFinite", arity = 1)
         public static Object isFinite(ExecutionContext cx, Object thisValue, Object number) {
@@ -245,6 +279,14 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 20.1.2.3 Number.isInteger (number)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param number
+         *            the number value
+         * @return {@code true} if the argument is an integer
          */
         @Function(name = "isInteger", arity = 1)
         public static Object isInteger(ExecutionContext cx, Object thisValue, Object number) {
@@ -265,6 +307,14 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 20.1.2.5 Number.isSafeInteger (number)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param number
+         *            the number value
+         * @return {@code true} if the argument is a safe integer
          */
         @Function(name = "isSafeInteger", arity = 1)
         public static Object isSafeInteger(ExecutionContext cx, Object thisValue, Object number) {
@@ -289,6 +339,12 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 20.1.2.16 Number[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new number object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

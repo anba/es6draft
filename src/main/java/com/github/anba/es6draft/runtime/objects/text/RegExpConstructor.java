@@ -120,6 +120,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
     /**
      * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
      * 21.2.3.3.1 Runtime Semantics: RegExpAlloc Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor function
+     * @return the new regular expression object
      */
     public static RegExpObject RegExpAlloc(ExecutionContext cx, Object constructor) {
         /* step 1 */
@@ -135,6 +141,16 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
     /**
      * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
      * 21.2.3.3.2 Runtime Semantics: RegExpInitialise Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the RegExp object
+     * @param pattern
+     *            the regular expression pattern
+     * @param flags
+     *            the regular expression flags
+     * @return the RegExp object
      */
     public static RegExpObject RegExpInitialise(ExecutionContext cx, RegExpObject obj,
             Object pattern, Object flags) {
@@ -166,6 +182,14 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
     /**
      * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
      * 21.2.3.3.3 Runtime Semantics: RegExpCreate Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param pattern
+     *            the regular expression pattern
+     * @param flags
+     *            the regular expression flags
+     * @return the new RegExp object
      */
     public static RegExpObject RegExpCreate(ExecutionContext cx, Object pattern, Object flags) {
         /* steps 1-2 */
@@ -177,6 +201,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
     /**
      * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
      * 21.2.3.3.4 Runtime Semantics: EscapeRegExpPattern Abstract Operation
+     * 
+     * @param p
+     *            the regular expression pattern
+     * @param f
+     *            the regular expression flags
+     * @return the escaped regular expression pattern
      */
     public static String EscapeRegExpPattern(String p, String f) {
         StringBuilder sb = new StringBuilder(p.length());
@@ -260,6 +290,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 21.2.4.2 RegExp[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new RegExp object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -332,6 +368,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$*
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the RegExp.multiline value
          */
         @Accessor(name = "$*", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -341,6 +383,14 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$*
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the new multiline value
+         * @return the undefined value
          */
         @Accessor(name = "$*", type = Accessor.Type.Setter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -350,6 +400,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.multiline
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the RegExp.multiline value
          */
         @Accessor(name = "multiline", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -359,6 +415,14 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.multiline
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the new multiline value
+         * @return the undefined value
          */
         @Accessor(name = "multiline", type = Accessor.Type.Setter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -369,6 +433,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$_
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the RegExp.input value
          */
         @Accessor(name = "$_", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -378,6 +448,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.input
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the RegExp.input value
          */
         @Accessor(name = "input", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -386,7 +462,13 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * Extension: RegExp.$&
+         * Extension: RegExp.$&amp;
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the RegExp.lastMatch value
          */
         @Accessor(name = "$&", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -396,6 +478,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.lastMatch
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the RegExp.lastMatch value
          */
         @Accessor(name = "lastMatch", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -405,6 +493,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$+
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the RegExp.lastParen value
          */
         @Accessor(name = "$+", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -414,6 +508,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.lastParen
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the RegExp.lastParen value
          */
         @Accessor(name = "lastParen", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -425,6 +525,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$`
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the RegExp.leftContext value
          */
         @Accessor(name = "$`", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -434,6 +540,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.leftContext
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the RegExp.leftContext value
          */
         @Accessor(name = "leftContext", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -444,6 +556,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$'
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the RegExp.rightContext value
          */
         @Accessor(name = "$'", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
@@ -453,6 +571,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.rightContext
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the RegExp.rightContext value
          */
         @Accessor(name = "rightContext", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -463,6 +587,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$1
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the first matched group
          */
         @Accessor(name = "$1", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -472,6 +602,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$2
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the second matched group
          */
         @Accessor(name = "$2", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -481,6 +617,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$3
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the third matched group
          */
         @Accessor(name = "$3", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -490,6 +632,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$4
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the fourth matched group
          */
         @Accessor(name = "$4", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -499,6 +647,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$5
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the fifth matched group
          */
         @Accessor(name = "$5", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -508,6 +662,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$6
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the sixth matched group
          */
         @Accessor(name = "$6", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -517,6 +677,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$7
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the seventh matched group
          */
         @Accessor(name = "$7", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -526,6 +692,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$8
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the eighth matched group
          */
         @Accessor(name = "$8", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
@@ -535,6 +707,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /**
          * Extension: RegExp.$9
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the nineth matched group
          */
         @Accessor(name = "$9", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))

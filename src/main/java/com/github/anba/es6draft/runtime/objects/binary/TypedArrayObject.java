@@ -168,6 +168,9 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
 
     /**
      * [[ViewedArrayBuffer]]
+     * 
+     * @param buffer
+     *            the new array buffer object
      */
     public void setBuffer(ArrayBufferObject buffer) {
         assert buffer != null && buffer.getData() != null : "ArrayBufferObject not initialised";
@@ -177,6 +180,8 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
 
     /**
      * [[ElementType]]
+     * 
+     * @return the element type
      */
     public ElementType getElementType() {
         return elementType;
@@ -184,6 +189,9 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
 
     /**
      * [[ElementType]]
+     * 
+     * @param elementType
+     *            the new element type
      */
     public void setElementType(ElementType elementType) {
         assert elementType != null;
@@ -192,6 +200,8 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
 
     /**
      * [[TypedArrayName]]
+     * 
+     * @return the typed array name
      */
     public String getTypedArrayName() {
         return elementType.getConstructorName();
@@ -207,6 +217,9 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
 
     /**
      * [[ByteLength]]
+     * 
+     * @param byteLength
+     *            the new byte length
      */
     public void setByteLength(long byteLength) {
         assert byteLength >= 0 : "negative byte length: " + byteLength;
@@ -223,6 +236,9 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
 
     /**
      * [[ByteOffset]]
+     * 
+     * @param byteOffset
+     *            the new byte offset
      */
     public void setByteOffset(long byteOffset) {
         assert byteOffset >= 0 : "negative byte offset: " + byteOffset;
@@ -231,6 +247,8 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
 
     /**
      * [[ArrayLength]]
+     * 
+     * @return the array length
      */
     public long getArrayLength() {
         return arrayLength;
@@ -238,6 +256,9 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
 
     /**
      * [[ArrayLength]]
+     * 
+     * @param arrayLength
+     *            the new array length
      */
     public void setArrayLength(long arrayLength) {
         assert arrayLength >= 0 : "negative array length: " + arrayLength;

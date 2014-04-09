@@ -25,12 +25,21 @@ public class LoaderObject extends OrdinaryObject {
         super(realm);
     }
 
-    /** [[Loader]] */
+    /**
+     * [[Loader]]
+     *
+     * @return the loader record
+     */
     public Loader getLoader() {
         return loader;
     }
 
-    /** [[Loader]] */
+    /**
+     * [[Loader]]
+     *
+     * @param loader
+     *            the new loader record
+     */
     public void setLoader(Loader loader) {
         assert this.loader == null && loader != null : "LoaderObject already initialised";
         this.loader = loader;

@@ -83,6 +83,14 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
 
     /**
      * 23.1.5.1 CreateMapIterator Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the map object
+     * @param kind
+     *            the map iteration kind
+     * @return the new map iterator
      */
     public static OrdinaryObject CreateMapIterator(ExecutionContext cx, Object obj,
             MapIterationKind kind) {
@@ -118,6 +126,12 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
 
         /**
          * 23.1.5.2.1 %MapIteratorPrototype%.next( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the next iterator result object
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
@@ -171,6 +185,12 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
 
         /**
          * 23.1.5.2.2 %MapIteratorPrototype% [ @@iterator ]()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the this-value
          */
         @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {

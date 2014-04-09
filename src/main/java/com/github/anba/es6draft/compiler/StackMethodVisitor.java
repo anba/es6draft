@@ -41,21 +41,29 @@ final class StackMethodVisitor extends MethodVisitor {
     }
 
     /**
-     * Returns the underlying method visitor
+     * Returns the underlying method visitor.
+     * 
+     * @return the method visitor
      */
     public MethodVisitor getMethodVisitor() {
         return mv;
     }
 
     /**
-     * Provide access to variables type information
+     * Provide access to variables type information.
+     * 
+     * @param variables
+     *            the variable view to use
      */
     public void setVariables(VariablesView variables) {
         this.variables = variables;
     }
 
     /**
-     * Start exception handler for {@code exception}
+     * Start exception handler for {@code exception}.
+     * 
+     * @param exception
+     *            the exception type for the catch handler
      */
     public void catchHandler(Type exception) {
         if (stack == null) {
@@ -66,14 +74,19 @@ final class StackMethodVisitor extends MethodVisitor {
     }
 
     /**
-     * Return a copy of the current stack types
+     * Return a copy of the current stack types.
+     * 
+     * @return the current stack
      */
     public Type[] getStack() {
         return Arrays.copyOf(stack, sp);
     }
 
     /**
-     * Replace the stack type information with the supplied types
+     * Replace the stack type information with the supplied types.
+     * 
+     * @param stack
+     *            the new stack
      */
     public void setStack(Type[] stack) {
         assert stack != null;
@@ -82,7 +95,10 @@ final class StackMethodVisitor extends MethodVisitor {
     }
 
     /**
-     * Replace the stack type information with the information from {@code label}
+     * Replace the stack type information with the information from {@code label}.
+     * 
+     * @param label
+     *            the label which contains the new stack information
      */
     public void setStack(Label label) {
         LabelInfo info = getInfo(label);

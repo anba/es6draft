@@ -35,7 +35,10 @@ public final class CodeSizeAnalysis {
     }
 
     /**
-     * Start method
+     * Start method.
+     * 
+     * @param script
+     *            the script to be analyzed
      */
     public void submit(Script script) throws CodeSizeException {
         submitAndExec(script, script.getStatements());
@@ -43,7 +46,10 @@ public final class CodeSizeAnalysis {
     }
 
     /**
-     * Start method
+     * Start method.
+     * 
+     * @param function
+     *            the function node to be analyzed
      */
     public void submit(FunctionNode function) throws CodeSizeException {
         submitAndExec(function, function.getStatements());

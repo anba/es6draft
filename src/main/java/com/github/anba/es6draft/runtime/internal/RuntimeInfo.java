@@ -196,12 +196,16 @@ public final class RuntimeInfo {
         String source();
 
         /**
-         * (? extends FunctionObject, ExecutionContext, Object, Object[]) -> Object
+         * (? extends FunctionObject, ExecutionContext, Object, Object[]) {@literal ->} Object.
+         * 
+         * @return the method handle for normal calls
          */
         MethodHandle callMethod();
 
         /**
-         * (ExecutionContext, ...?) -> Object
+         * (ExecutionContext, ...?) {@literal ->} Object
+         * 
+         * @return the method handle for tail calls
          */
         MethodHandle handle();
     }

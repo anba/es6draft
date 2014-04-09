@@ -296,6 +296,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     /**
      * ref = `eval` {@code node}<br>
      * GetValue(ref)<br>
+     * 
+     * @param node
+     *            the expression node to evaluate
+     * @param mv
+     *            the expression visitor
      */
     private void evalAndGetBoxedValue(Expression node, ExpressionVisitor mv) {
         ValType type = evalAndGetValue(node, mv);
@@ -305,6 +310,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     /**
      * ref = `eval` {@code node}<br>
      * GetValue(ref)<br>
+     * 
+     * @param node
+     *            the expression node to evaluate
+     * @param mv
+     *            the expression visitor
+     * @return the value type of the expression
      */
     private ValType evalAndGetValue(Expression node, ExpressionVisitor mv) {
         Expression valueNode = node.asValue();
@@ -326,7 +337,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * stack: [envRec] -> [envRec]
+     * stack: [envRec] {@literal ->} [envRec].
+     * 
+     * @param name
+     *            the binding name
+     * @param deletable
+     *            the deletable flag
+     * @param mv
+     *            the expression visitor
      */
     private void createMutableBinding(String name, boolean deletable, ExpressionVisitor mv) {
         mv.dup();
@@ -394,6 +412,19 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
     /**
      * [12.2.3 EvaluateCall Abstract Operation]
+     * 
+     * @param call
+     *            the function call expression
+     * @param base
+     *            the call expression's base node
+     * @param type
+     *            the value type of the base node
+     * @param arguments
+     *            the list of function call arguments
+     * @param directEval
+     *            the strict-mode flag
+     * @param mv
+     *            the expression visitor
      */
     private void EvaluateCall(Expression call, Expression base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
@@ -417,6 +448,17 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
     /**
      * [12.2.4.2 Runtime Semantics: EvaluateCall]
+     * 
+     * @param call
+     *            the function call expression
+     * @param base
+     *            the call expression's base node
+     * @param type
+     *            the value type of the base node
+     * @param arguments
+     *            the list of function call arguments
+     * @param mv
+     *            the expression visitor
      */
     private void EvaluateCallPropRef(Expression call, LeftHandSideExpression base, ValType type,
             List<Expression> arguments, ExpressionVisitor mv) {
@@ -460,6 +502,17 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
     /**
      * [12.2.4.2 Runtime Semantics: EvaluateCall]
+     * 
+     * @param call
+     *            the function call expression
+     * @param base
+     *            the call expression's base node
+     * @param type
+     *            the value type of the base node
+     * @param arguments
+     *            the list of function call arguments
+     * @param mv
+     *            the expression visitor
      */
     private void EvaluateCallWithValue(Expression call, Expression base, ValType type,
             List<Expression> arguments, ExpressionVisitor mv) {
@@ -493,6 +546,19 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
     /**
      * [12.2.4.2 Runtime Semantics: EvaluateCall]
+     * 
+     * @param call
+     *            the function call expression
+     * @param base
+     *            the call expression's base node
+     * @param type
+     *            the value type of the base node
+     * @param arguments
+     *            the list of function call arguments
+     * @param directEval
+     *            the strict-mode flag
+     * @param mv
+     *            the expression visitor
      */
     private void EvaluateCallIdentRef(Expression call, Identifier base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
@@ -537,6 +603,19 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
     /**
      * [12.2.4.2 Runtime Semantics: EvaluateCall]
+     * 
+     * @param call
+     *            the function call expression
+     * @param base
+     *            the call expression's base node
+     * @param type
+     *            the value type of the base node
+     * @param arguments
+     *            the list of function call arguments
+     * @param directEval
+     *            the strict-mode flag
+     * @param mv
+     *            the expression visitor
      */
     private void EvaluateCallWithIdentRef(Expression call, Identifier base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
@@ -597,6 +676,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
     /**
      * [18.2.1.1] Direct Call to Eval
+     * 
+     * @param afterCall
+     *            the label after the call instruction
+     * @param mv
+     *            the expression visitor
      */
     private void directEvalCall(Label afterCall, ExpressionVisitor mv) {
         // test for possible direct-eval call
@@ -650,6 +734,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
     /**
      * [12.2.3 EvaluateCall Abstract Operation]
+     * 
+     * @param call
+     *            the function call expression
+     * @param mv
+     *            the expression visitor
      */
     private void standardCall(Expression call, ExpressionVisitor mv) {
         // stack: [args, thisValue, func(Callable)]
@@ -674,6 +763,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
     /**
      * [12.2.5.1 ArgumentListEvaluation]
+     * 
+     * @param arguments
+     *            the list of function call arguments
+     * @param mv
+     *            the expression visitor
      */
     private void ArgumentListEvaluation(List<Expression> arguments, ExpressionVisitor mv) {
         if (arguments.isEmpty()) {
@@ -831,6 +925,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     /**
      * 12.1.4.1.3 Runtime Semantics: Evaluation<br>
      * 12.1.4.1.2 Runtime Semantics: Array Accumulation
+     * 
+     * @param node
+     *            the array literal
+     * @param mv
+     *            the expresion visitor
      */
     private void arrayLiteralWithSpread(ArrayLiteral node, ExpressionVisitor mv) {
         // stack: [array, nextIndex]

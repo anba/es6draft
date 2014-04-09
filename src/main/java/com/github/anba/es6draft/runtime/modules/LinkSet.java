@@ -19,8 +19,8 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.modules.Load.Dependency;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>15 ECMAScript Language: Modules and Scripts</h1><br>
@@ -38,7 +38,7 @@ public final class LinkSet {
     private final List<Load> loads;
 
     /** [[Done]] */
-    private final ScriptObject done;
+    private final PromiseObject done;
 
     /** [[Resolve]] */
     private final Callable resolve;
@@ -49,7 +49,7 @@ public final class LinkSet {
     private static final AtomicLong idGen = new AtomicLong(Long.MIN_VALUE);
     private final long id = idGen.getAndIncrement();
 
-    private LinkSet(Loader loader, PromiseCapability promiseCapability) {
+    private LinkSet(Loader loader, PromiseCapability<PromiseObject> promiseCapability) {
         this.loader = loader;
         this.loads = new ArrayList<>();
         this.done = promiseCapability.getPromise();
@@ -57,8 +57,12 @@ public final class LinkSet {
         this.reject = promiseCapability.getReject();
     }
 
-    /** [[Done]] */
-    public ScriptObject getDone() {
+    /**
+     * [[Done]]
+     * 
+     * @return the promise object
+     */
+    public PromiseObject getDone() {
         return done;
     }
 
@@ -69,17 +73,30 @@ public final class LinkSet {
         }
     }
 
+    /**
+     * Returns the default comparator for linkset records.
+     * 
+     * @return the comparator
+     */
     static Comparator<LinkSet> comparator() {
         return new LinkSetComparator();
     }
 
     /**
      * 15.2.5.2.1 CreateLinkSet(loader, startingLoad) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param loader
+     *            the loader record
+     * @param startingLoad
+     *            the load record
+     * @return the new linkset record
      */
     public static LinkSet CreateLinkSet(ExecutionContext cx, Loader loader, Load startingLoad) {
         /* steps 1-2 (not applicable) */
         /* steps 3-4 */
-        PromiseCapability promiseCapability = PromiseBuiltinCapability(cx);
+        PromiseCapability<PromiseObject> promiseCapability = PromiseBuiltinCapability(cx);
         /* steps 5-10 */
         LinkSet linkSet = new LinkSet(loader, promiseCapability);
         /* step 6 */
@@ -90,6 +107,11 @@ public final class LinkSet {
 
     /**
      * 15.2.5.2.2 AddLoadToLinkSet(linkSet, load) Abstract Operation
+     * 
+     * @param linkSet
+     *            the linkset record
+     * @param load
+     *            the load record
      */
     public static void AddLoadToLinkSet(LinkSet linkSet, Load load) {
         /* step 1 */
@@ -119,6 +141,13 @@ public final class LinkSet {
 
     /**
      * 15.2.5.2.3 UpdateLinkSetOnLoad(linkSet, load) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param linkSet
+     *            the linkset record
+     * @param load
+     *            the load record
      */
     public static void UpdateLinkSetOnLoad(ExecutionContext cx, LinkSet linkSet, Load load) {
         /* step 1 */
@@ -155,6 +184,13 @@ public final class LinkSet {
 
     /**
      * 15.2.5.2.4 LinkSetFailed(linkSet, exc) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param linkSet
+     *            the linkset record
+     * @param exc
+     *            the exception object
      */
     public static void LinkSetFailed(ExecutionContext cx, LinkSet linkSet, Object exc) {
         /* step 1 */
@@ -187,6 +223,11 @@ public final class LinkSet {
 
     /**
      * 15.2.5.2.5 FinishLoad(loader, load) Abstract Operation
+     * 
+     * @param loader
+     *            the loader record
+     * @param load
+     *            the load record
      */
     public static void FinishLoad(Loader loader, Load load) {
         /* step 1 */

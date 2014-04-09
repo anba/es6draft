@@ -106,8 +106,6 @@ final class BindingInitialisationGenerator {
         node.accept(init, null);
     }
 
-
-
     private enum EnvironmentType {
         NoEnvironment, EnvironmentFromStack
     }

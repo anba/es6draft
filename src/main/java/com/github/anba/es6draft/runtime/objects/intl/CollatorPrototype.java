@@ -73,6 +73,12 @@ public final class CollatorPrototype extends CollatorObject implements Initialis
 
         /**
          * 10.3.2 Intl.Collator.prototype.compare
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the bound compare function
          */
         @Accessor(name = "compare", type = Accessor.Type.Getter)
         public static Object compare(ExecutionContext cx, Object thisValue) {
@@ -87,6 +93,12 @@ public final class CollatorPrototype extends CollatorObject implements Initialis
 
         /**
          * 10.3.3 Intl.Collator.prototype.resolvedOptions ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the resolved options object
          */
         @Function(name = "resolvedOptions", arity = 0)
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
@@ -105,6 +117,16 @@ public final class CollatorPrototype extends CollatorObject implements Initialis
 
     /**
      * Abstract Operation: CompareStrings
+     * 
+     * @param cx
+     *            the execution context
+     * @param collator
+     *            the collator object
+     * @param x
+     *            the first string
+     * @param y
+     *            the second string
+     * @return the locale specific string comparison result
      */
     public static int CompareStrings(ExecutionContext cx, CollatorObject collator, String x,
             String y) {

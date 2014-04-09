@@ -59,13 +59,17 @@ public final class GeneratorObject extends OrdinaryObject {
         super(realm);
     }
 
-    /** [[GeneratorState]] */
+    /**
+     * [[GeneratorState]]
+     *
+     * @return the generator state
+     */
     public GeneratorState getState() {
         return state;
     }
 
     /**
-     * Proceed to "suspendedYield" generator state
+     * Proceeds to the "suspendedYield" generator state.
      */
     private void suspend() {
         assert state == GeneratorState.Executing : "suspend from: " + state;
@@ -73,7 +77,7 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
-     * Proceed to "completed" generator state and release internal resources
+     * Proceeds to the "completed" generator state and releases internal resources.
      */
     private void close() {
         assert state == GeneratorState.Executing || state == GeneratorState.SuspendedStart : "close from: "
@@ -85,6 +89,10 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
+     * @param cx
+     *            the execution context
+     * @param code
+     *            the runtime function code
      * @see GeneratorAbstractOperations#GeneratorStart(ExecutionContext, GeneratorObject,
      *      RuntimeInfo.Function)
      */
@@ -99,6 +107,11 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the resumption value
+     * @return the iterator result object
      * @see GeneratorAbstractOperations#GeneratorResume(ExecutionContext, Object, Object)
      */
     ScriptObject resume(ExecutionContext cx, Object value) {
@@ -126,6 +139,11 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the exception value
+     * @return the iterator result object
      * @see GeneratorPrototype.Properties#_throw(ExecutionContext, Object, Object)
      */
     ScriptObject _throw(ExecutionContext cx, Object value) {
@@ -150,6 +168,9 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
+     * @param value
+     *            the iteration result object to yield
+     * @return the yield result
      * @see GeneratorAbstractOperations#GeneratorYield(ExecutionContext, ScriptObject)
      */
     Object yield(ScriptObject value) {
@@ -162,22 +183,42 @@ public final class GeneratorObject extends OrdinaryObject {
      */
     private interface Generator {
         /**
-         * Start generator execution
+         * Starts generator execution.
+         * 
+         * @param cx
+         *            the execution context
+         * @return the iterator result object
          */
         ScriptObject start(ExecutionContext cx);
 
         /**
-         * Resume generator execution
+         * Resumes generator execution.
+         * 
+         * @param cx
+         *            the execution context
+         * @param value
+         *            the resumption value
+         * @return the iterator result object
          */
         ScriptObject resume(ExecutionContext cx, Object value);
 
         /**
-         * Resume generator execution with an exception
+         * Resumes generator execution with an exception.
+         * 
+         * @param cx
+         *            the execution context
+         * @param exception
+         *            the exception object
+         * @return the iterator result object
          */
         ScriptObject _throw(ExecutionContext cx, ScriptException exception);
 
         /**
          * Yield support method (optional)
+         * 
+         * @param value
+         *            the iterator result object
+         * @return the yield value
          */
         Object yield(ScriptObject value);
     }
@@ -219,16 +260,6 @@ public final class GeneratorObject extends OrdinaryObject {
             throw new IllegalStateException();
         }
 
-        private Object evaluate(MethodHandle handle, ExecutionContext cx, ResumptionPoint point) {
-            try {
-                return handle.invokeExact(cx, point);
-            } catch (RuntimeException | Error e) {
-                throw e;
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
-        }
-
         private ResumptionPoint getResumptionPoint() {
             ResumptionPoint point = resumptionPoint;
             resumptionPoint = null;
@@ -253,6 +284,16 @@ public final class GeneratorObject extends OrdinaryObject {
             }
             genObject.close();
             return CreateIterResultObject(cx, result, true);
+        }
+
+        private Object evaluate(MethodHandle handle, ExecutionContext cx, ResumptionPoint point) {
+            try {
+                return handle.invokeExact(cx, point);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

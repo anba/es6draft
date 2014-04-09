@@ -139,6 +139,10 @@ public final class Realm {
 
     /**
      * [[intrinsics]]
+     * 
+     * @param id
+     *            the intrinsic identifier
+     * @return the intrinsic object
      */
     public ScriptObject getIntrinsic(Intrinsics id) {
         return intrinsics.get(id);
@@ -146,6 +150,8 @@ public final class Realm {
 
     /**
      * [[realmObject]]
+     * 
+     * @return the realm object
      */
     public RealmObject getRealmObject() {
         return realmObject;
@@ -153,6 +159,8 @@ public final class Realm {
 
     /**
      * [[globalThis]]
+     * 
+     * @return the global object
      */
     public GlobalObject getGlobalThis() {
         return globalThis;
@@ -160,6 +168,8 @@ public final class Realm {
 
     /**
      * [[globalEnv]]
+     * 
+     * @return the global environment
      */
     public LexicalEnvironment<GlobalEnvironmentRecord> getGlobalEnv() {
         return globalEnv;
@@ -167,6 +177,8 @@ public final class Realm {
 
     /**
      * [[ThrowTypeError]]
+     * 
+     * @return the global %ThrowTypeError% object
      */
     public Callable getThrowTypeError() {
         assert throwTypeError != null : "throwTypeError not yet initialised";
@@ -175,6 +187,8 @@ public final class Realm {
 
     /**
      * [[directEvalTranslate]]
+     * 
+     * @return the user hook for direct eval calls
      */
     public Callable getDirectEvalTranslate() {
         return directEvalTranslate;
@@ -182,6 +196,8 @@ public final class Realm {
 
     /**
      * [[directEvalFallback]]
+     * 
+     * @return the user hook for direct eval fallback calls
      */
     public Callable getDirectEvalFallback() {
         return directEvalFallback;
@@ -189,41 +205,54 @@ public final class Realm {
 
     /**
      * [[indirectEval]]
+     * 
+     * @return the user hook for indirect eval calls
      */
     public Callable getIndirectEval() {
         return indirectEval;
     }
 
     /**
-     * Returns the {@link Random} for this realm
+     * Returns the {@link Random} for this realm.
+     * 
+     * @return the random object
      */
     public Random getRandom() {
         return random;
     }
 
     /**
-     * Returns the {@link World} for this realm
+     * Returns the {@link World} for this realm.
+     * 
+     * @return the world instance
      */
     public World<? extends GlobalObject> getWorld() {
         return world;
     }
 
     /**
-     * Returns the default execution context for this realm
+     * Returns the default execution context for this realm.
+     * 
+     * @return the default execution context
      */
     public ExecutionContext defaultContext() {
         return defaultContext;
     }
 
     /**
-     * Returns the current script execution context for this realm
+     * Returns the current script execution context for this realm.
+     * 
+     * @return the current script execution context
      */
     public ExecutionContext getScriptContext() {
         return scriptContext;
     }
 
     /**
-     * Sets a new script execution context for this realm
+     * Sets a new script execution context for this realm.
+     * 
+     * @param scriptContext
+     *            the new script execution context
      */
     public void setScriptContext(ExecutionContext scriptContext) {
         this.scriptContext = scriptContext;
@@ -235,6 +264,7 @@ public final class Realm {
     /**
      * Next class name for eval scripts
      * 
+     * @return the next class name for eval scripts
      * @see Eval
      */
     public String nextEvalName() {
@@ -244,6 +274,7 @@ public final class Realm {
     /**
      * Next class name for functions
      * 
+     * @return the next class name for functions
      * @see FunctionConstructor
      * @see GeneratorFunctionConstructor
      */
@@ -252,70 +283,98 @@ public final class Realm {
     }
 
     /**
-     * Returns this realm's locale
+     * Returns this realm's locale.
+     * 
+     * @return the locale
      */
     public Locale getLocale() {
         return world.getLocale();
     }
 
     /**
-     * Returns this realm's timezone
+     * Returns this realm's timezone.
+     * 
+     * @return the timezone
      */
     public TimeZone getTimezone() {
         return world.getTimezone();
     }
 
     /**
-     * Returns the localised message for {@code key}
+     * Returns the localised message for {@code key}.
+     * 
+     * @param key
+     *            the message key
+     * @return the localised message
      */
     public String message(Messages.Key key) {
         return world.message(key);
     }
 
     /**
-     * Returns the localised message for {@code key}
+     * Returns the localised message for {@code key}.
+     * 
+     * @param key
+     *            the message key
+     * @param args
+     *            the message arguments
+     * @return the localised message
      */
     public String message(Messages.Key key, String... args) {
         return world.message(key, args);
     }
 
     /**
-     * Returns a reference to the built-in <code>eval</code> function
+     * Returns a reference to the built-in <code>eval</code> function.
+     * 
+     * @return the built-in eval function
      */
     public Callable getBuiltinEval() {
         return builtinEval;
     }
 
     /**
-     * Returns the shared runtime executor
+     * Returns the shared runtime executor.
+     * 
+     * @return the runtime executor
      */
     public ExecutorService getExecutor() {
         return world.getExecutor();
     }
 
     /**
-     * Returns the compatibility options for this realm instance
+     * Returns the compatibility options for this realm instance.
+     * 
+     * @return the compatibility options
      */
     public EnumSet<CompatibilityOption> getOptions() {
         return world.getOptions();
     }
 
     /**
-     * Tests whether the requested compatibility option is enabled in this code realm
+     * Tests whether the requested compatibility option is enabled in this code realm.
+     * 
+     * @param option
+     *            the compatibility option
+     * @return {@code true} if the compatibility option is enabled
      */
     public boolean isEnabled(CompatibilityOption option) {
         return world.isEnabled(option);
     }
 
     /**
-     * Returns the compiler options for this realm instance
+     * Returns the compiler options for this realm instance.
+     * 
+     * @return the compiler options
      */
     public EnumSet<Option> getCompilerOptions() {
         return world.getCompilerOptions();
     }
 
     /**
-     * Returns the global symbol registry
+     * Returns the global symbol registry.
+     * 
+     * @return the global symbol registry
      */
     public GlobalSymbolRegistry getSymbolRegistry() {
         return world.getSymbolRegistry();
@@ -324,7 +383,10 @@ public final class Realm {
     /**
      * 8.4.1 EnqueueTask ( queueName, task, arguments) Abstract Operation
      * <p>
-     * Enqueues {@code task} to the queue of pending loading-tasks
+     * Enqueues {@code task} to the queue of pending loading-tasks.
+     * 
+     * @param task
+     *            the new loading task
      */
     public void enqueueLoadingTask(Task task) {
         world.enqueueLoadingTask(task);
@@ -333,21 +395,33 @@ public final class Realm {
     /**
      * 8.4.1 EnqueueTask ( queueName, task, arguments) Abstract Operation
      * <p>
-     * Enqueues {@code task} to the queue of pending promise-tasks
+     * Enqueues {@code task} to the queue of pending promise-tasks.
+     * 
+     * @param task
+     *            the new promise task
      */
     public void enqueuePromiseTask(Task task) {
         world.enqueuePromiseTask(task);
     }
 
     /**
-     * Returns the template call-site object for {@code key}
+     * Returns the template call-site object for {@code key}.
+     * 
+     * @param key
+     *            the template literal key
+     * @return the call-site object
      */
     public ScriptObject getTemplateCallSite(String key) {
         return templateCallSites.get(key);
     }
 
     /**
-     * Stores the template call-site object
+     * Stores the template call-site object.
+     * 
+     * @param key
+     *            the template literal key
+     * @param callSite
+     *            the call-site object
      */
     public void addTemplateCallSite(String key, ScriptObject callSite) {
         templateCallSites.put(key, callSite);
@@ -357,6 +431,7 @@ public final class Realm {
      * Returns a {@link Collator} for this realm's locale
      * 
      * @deprecated No longer used
+     * @return the locale specific collator
      */
     @Deprecated
     public Collator getCollator() {
@@ -369,7 +444,9 @@ public final class Realm {
     }
 
     /**
-     * Returns the locale specific list separator
+     * Returns the locale specific list separator.
+     * 
+     * @return the locale specific list separator
      */
     public String getListSeparator() {
         DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance();
@@ -377,7 +454,14 @@ public final class Realm {
     }
 
     /**
-     * Initialises the custom extension points
+     * Initialises the custom extension points.
+     * 
+     * @param directEvalTranslate
+     *            the user hook for direct eval calls
+     * @param directEvalFallback
+     *            the user hook for direct eval fallback calls
+     * @param indirectEval
+     *            the user hook for indirect eval calls
      */
     public void setExtensionHooks(Callable directEvalTranslate, Callable directEvalFallback,
             Callable indirectEval) {
@@ -387,7 +471,10 @@ public final class Realm {
     }
 
     /**
-     * Defines the built-in objects as properties of the supplied object
+     * Defines the built-in objects as properties of the supplied object.
+     * 
+     * @param builtins
+     *            the target object to store the built-ins into
      */
     public void defineBuiltinProperties(OrdinaryObject builtins) {
         assert this.builtinEval == null : "built-ins already initialised";
@@ -402,20 +489,42 @@ public final class Realm {
 
     /**
      * 8.2.1 CreateRealm ( )
+     * 
+     * Creates a new {@link Realm} object.
+     * 
+     * @param cx
+     *            the execution context
+     * @param realmObject
+     *            the realm object
+     * @return the new realm instance
      */
     public static Realm CreateRealm(ExecutionContext cx, RealmObject realmObject) {
         return newRealm(cx.getRealm().getWorld(), realmObject);
     }
 
     /**
-     * Creates a new {@link Realm} object
+     * Creates a new {@link Realm} object.
+     * 
+     * @param <GLOBAL>
+     *            the global object type
+     * @param world
+     *            the world instance
+     * @return the new realm instance
      */
     static <GLOBAL extends GlobalObject> Realm newRealm(World<GLOBAL> world) {
         return newRealm(world, null);
     }
 
     /**
-     * Creates a new {@link Realm} object
+     * Creates a new {@link Realm} object.
+     * 
+     * @param <GLOBAL>
+     *            the global object type
+     * @param world
+     *            the world instance
+     * @param realmObject
+     *            the realm object
+     * @return the new realm instance
      */
     static <GLOBAL extends GlobalObject> Realm newRealm(World<GLOBAL> world, RealmObject realmObject) {
         Realm realm = new Realm(world);
@@ -469,6 +578,9 @@ public final class Realm {
      * <h1>19.1 Object Objects - 19.2 Function Objects</h1>
      * 
      * Fundamental built-in objects which must be initialised early
+     * 
+     * @param realm
+     *            the realm instance
      */
     private static void initialiseFundamentalObjects(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
@@ -504,6 +616,9 @@ public final class Realm {
      * <h1>19.3, 19.4, 19.5, 20, 21, 22.1, 24.3</h1>
      * 
      * Standard built-in objects
+     * 
+     * @param realm
+     *            the realm instance
      */
     private static void initialiseStandardObjects(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
@@ -580,6 +695,9 @@ public final class Realm {
      * <h1>19.4.5 Native Error Types Used in This Standard</h1>
      * 
      * Native Error built-in objects
+     * 
+     * @param realm
+     *            the realm instance
      */
     private static void initialiseNativeErrors(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
@@ -649,6 +767,9 @@ public final class Realm {
 
     /**
      * Additional internal built-in objects used in this implementation
+     * 
+     * @param realm
+     *            the realm instance
      */
     private static void initialiseInternalObjects(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
@@ -659,6 +780,9 @@ public final class Realm {
 
     /**
      * <h1>23 Keyed Collection</h1>
+     * 
+     * @param realm
+     *            the realm instance
      */
     private static void initialiseCollectionModule(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
@@ -703,6 +827,9 @@ public final class Realm {
 
     /**
      * <h1>26 The Reflect Module</h1>
+     * 
+     * @param realm
+     *            the realm instance
      */
     private static void initialiseReflectModule(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
@@ -723,6 +850,9 @@ public final class Realm {
 
     /**
      * <h1>25 The "std:iteration" Module</h1>
+     * 
+     * @param realm
+     *            the realm instance
      */
     private static void initialiseIterationModule(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
@@ -752,6 +882,9 @@ public final class Realm {
 
     /**
      * <h1>22.2 TypedArray Objects, 24.1 ArrayBuffer Objects, 24.2 DataView Objects</h1>
+     * 
+     * @param realm
+     *            the realm instance
      */
     private static void initialiseBinaryModule(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
@@ -853,6 +986,9 @@ public final class Realm {
 
     /**
      * <h1>Promise Objects</h1>
+     * 
+     * @param realm
+     *            the realm instance
      */
     private static void initialisePromiseObjects(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
@@ -873,6 +1009,9 @@ public final class Realm {
 
     /**
      * <h1>Loader, Module, Realm Objects</h1>
+     * 
+     * @param realm
+     *            the realm instance
      */
     private static void initialiseModuleModules(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
@@ -908,6 +1047,9 @@ public final class Realm {
      * <h2>8 The Intl Object - 12 DateTimeFormat Objects</h2>
      * 
      * Additional built-in objects from the Internationalisation API
+     * 
+     * @param realm
+     *            the realm instance
      */
     private static void initialiseInternationalisation(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;

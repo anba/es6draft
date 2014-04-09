@@ -43,14 +43,19 @@ public final class JSONParser {
     }
 
     /**
-     * Returns the current token in the token-stream
+     * Returns the current token in the token-stream.
+     * 
+     * @return the current token
      */
     private Token token() {
         return ts.currentToken();
     }
 
     /**
-     * Consumes the current token in the token-stream and advances the stream to the next token
+     * Consumes the current token in the token-stream and advances the stream to the next token.
+     * 
+     * @param tok
+     *            the token to consume
      */
     private void consume(Token tok) {
         if (tok != token())
@@ -60,6 +65,14 @@ public final class JSONParser {
             System.out.printf("consume(%s) -> %s\n", tok, next);
     }
 
+    /**
+     * Parses the input source string as a JSON text and returns its value. Throws a
+     * {@link ParserException} if the source string is not a valid JSON text.
+     * 
+     * @return the value of parsed JSON text
+     * @throws ParserException
+     *             if the input source is not a valid JSON text
+     */
     public Object parse() throws ParserException {
         if (parseCalled)
             throw new IllegalStateException();
@@ -74,6 +87,8 @@ public final class JSONParser {
      * JSONText :   
      *      JSONValue
      * </pre>
+     * 
+     * @return the value of JSON text
      */
     private Object jsonText() {
         Object value = jsonValue();
@@ -91,6 +106,8 @@ public final class JSONParser {
      *      JSONString
      *      JSONNumber
      * </pre>
+     * 
+     * @return the parsed JSON value
      */
     private Object jsonValue() {
         Token tok = token();
@@ -129,6 +146,8 @@ public final class JSONParser {
      *      JSONMember 
      *      JSONMemberList , JSONMember
      * </pre>
+     * 
+     * @return the script object represented by the JSON object
      */
     private ScriptObject jsonObject() {
         ScriptObject object = ObjectCreate(cx, Intrinsics.ObjectPrototype);
@@ -149,6 +168,9 @@ public final class JSONParser {
      * JSONMember :
      *      JSONString : JSONValue
      * </pre>
+     * 
+     * @param object
+     *            the script object to hold the JSON member value
      */
     private void jsonMember(ScriptObject object) {
         consume(Token.STRING);
@@ -167,8 +189,10 @@ public final class JSONParser {
      *      JSONValue
      *      JSONElementList , JSONValue
      * </pre>
+     * 
+     * @return the script object represented by the JSON array
      */
-    private Object jsonArray() {
+    private ScriptObject jsonArray() {
         ScriptObject array = ArrayCreate(cx, 0);
         consume(Token.LB);
         if (token() != Token.RB) {

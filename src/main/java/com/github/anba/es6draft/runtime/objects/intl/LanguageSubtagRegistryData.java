@@ -29,7 +29,11 @@ final class LanguageSubtagRegistryData {
     }
 
     /**
-     * Does not return input on mismatch
+     * Does not return input on mismatch.
+     * 
+     * @param languageTag
+     *            the language tag
+     * @return the canonicalized language tag or {@code null} if not applicable
      */
     static final String redundant(String languageTag) {
         String v = redundantData.get(languageTag);
@@ -40,7 +44,11 @@ final class LanguageSubtagRegistryData {
     }
 
     /**
-     * Return input on mismatch
+     * Returns input on mismatch.
+     * 
+     * @param language
+     *            the language
+     * @return the canonicalized language or the input if not applicable
      */
     static final String language(String language) {
         String v = languageData.get(language);
@@ -51,7 +59,13 @@ final class LanguageSubtagRegistryData {
     }
 
     /**
-     * Does not return input on mismatch
+     * Does not return input on mismatch.
+     * 
+     * @param prefix
+     *            the prefix string
+     * @param extlang
+     *            the extended language
+     * @return the canonicalized extended language or {@code null} if not applicable
      */
     static final String extlang(String prefix, String extlang) {
         String v = extlangData.get(extlang);
@@ -62,7 +76,11 @@ final class LanguageSubtagRegistryData {
     }
 
     /**
-     * Return input on mismatch
+     * Returns input on mismatch.
+     * 
+     * @param region
+     *            the region
+     * @return the canonicalized region or the input if not applicable
      */
     static final String region(String region) {
         String v = regionData.get(region);
@@ -73,7 +91,13 @@ final class LanguageSubtagRegistryData {
     }
 
     /**
-     * Does not return input on mismatch
+     * Does not return input on mismatch.
+     * 
+     * @param prefix
+     *            the prefix string
+     * @param variant
+     *            the variant
+     * @return the canonicalized variant or {@code null} if not applicable
      */
     static final String variant(StringBuilder prefix, String variant) {
         // handle this replacement manually

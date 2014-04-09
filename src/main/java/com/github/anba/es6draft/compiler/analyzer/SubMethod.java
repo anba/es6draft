@@ -33,7 +33,13 @@ abstract class SubMethod<NODE extends Node> {
     }
 
     /**
-     * Process {@code node} and return the new size
+     * Process {@code node} and return the new size.
+     * 
+     * @param node
+     *            the node
+     * @param oldSize
+     *            the previous estimated code size
+     * @return the new estimated code size
      */
     abstract int processNode(NODE node, int oldSize);
 

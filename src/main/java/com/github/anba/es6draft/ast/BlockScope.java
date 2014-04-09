@@ -15,11 +15,15 @@ import java.util.Set;
 public interface BlockScope extends Scope {
     /**
      * Returns the set of lexically declared names.
+     * 
+     * @return the lexically declared names
      */
     Set<String> lexicallyDeclaredNames();
 
     /**
      * Returns the list of lexically scoped declarations.
+     * 
+     * @return the lexically scoped declarations
      */
     List<Declaration> lexicallyScopedDeclarations();
 }

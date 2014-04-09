@@ -107,6 +107,14 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.9 Object.getPrototypeOf ( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return the prototype object
          */
         @Function(name = "getPrototypeOf", arity = 1)
         public static Object getPrototypeOf(ExecutionContext cx, Object thisValue, Object o) {
@@ -119,6 +127,16 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.6 Object.getOwnPropertyDescriptor ( O, P )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @param p
+         *            the property key
+         * @return the property descriptor object or undefined
          */
         @Function(name = "getOwnPropertyDescriptor", arity = 2)
         public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue,
@@ -140,6 +158,14 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.7 Object.getOwnPropertyNames ( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return the own string-valued property keys of <var>o</var>
          */
         @Function(name = "getOwnPropertyNames", arity = 1)
         public static Object getOwnPropertyNames(ExecutionContext cx, Object thisValue, Object o) {
@@ -149,6 +175,14 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.8 Object.getOwnPropertySymbols ( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return the own symbol-valued property keys of <var>o</var>
          */
         @Function(name = "getOwnPropertySymbols", arity = 1)
         public static Object getOwnPropertySymbols(ExecutionContext cx, Object thisValue, Object o) {
@@ -158,6 +192,16 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.2 Object.create ( O [, Properties] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @param properties
+         *            the properties object
+         * @return the new script object
          */
         @Function(name = "create", arity = 2)
         public static Object create(ExecutionContext cx, Object thisValue, Object o,
@@ -178,6 +222,18 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.4 Object.defineProperty ( O, P, Attributes )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @param p
+         *            the property key
+         * @param attributes
+         *            the property descriptor object
+         * @return the script object
          */
         @Function(name = "defineProperty", arity = 3)
         public static Object defineProperty(ExecutionContext cx, Object thisValue, Object o,
@@ -198,6 +254,16 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.3 Object.defineProperties ( O, Properties )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @param properties
+         *            the properties object
+         * @return the script object
          */
         @Function(name = "defineProperties", arity = 2)
         public static Object defineProperties(ExecutionContext cx, Object thisValue, Object o,
@@ -208,6 +274,14 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.17 Object.seal ( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return the script object
          */
         @Function(name = "seal", arity = 1)
         public static Object seal(ExecutionContext cx, Object thisValue, Object o) {
@@ -227,6 +301,14 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.5 Object.freeze ( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return the script object
          */
         @Function(name = "freeze", arity = 1)
         public static Object freeze(ExecutionContext cx, Object thisValue, Object o) {
@@ -246,6 +328,14 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.15 Object.preventExtensions ( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return the script object
          */
         @Function(name = "preventExtensions", arity = 1)
         public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object o) {
@@ -265,6 +355,14 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.13 Object.isSealed ( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return {@code true} if the object is sealed
          */
         @Function(name = "isSealed", arity = 1)
         public static Object isSealed(ExecutionContext cx, Object thisValue, Object o) {
@@ -278,6 +376,14 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.12 Object.isFrozen ( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return {@code true} if the object is frozen
          */
         @Function(name = "isFrozen", arity = 1)
         public static Object isFrozen(ExecutionContext cx, Object thisValue, Object o) {
@@ -291,6 +397,14 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.11 Object.isExtensible ( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return {@code true} if the object is extensible
          */
         @Function(name = "isExtensible", arity = 1)
         public static Object isExtensible(ExecutionContext cx, Object thisValue, Object o) {
@@ -304,6 +418,14 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.14 Object.keys ( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return the object keys array
          */
         @Function(name = "keys", arity = 1)
         public static Object keys(ExecutionContext cx, Object thisValue, Object o) {
@@ -317,6 +439,16 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.10 Object.is ( value1, value2 )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value1
+         *            the first value
+         * @param value2
+         *            the second value
+         * @return {@code true} if both operands have the same value
          */
         @Function(name = "is", arity = 2)
         public static Object is(ExecutionContext cx, Object thisValue, Object value1, Object value2) {
@@ -326,6 +458,16 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.1 Object.assign ( target, source )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @param source
+         *            the source object
+         * @return the target object
          */
         @Function(name = "assign", arity = 2)
         public static Object assign(ExecutionContext cx, Object thisValue, Object target,
@@ -370,6 +512,16 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
         /**
          * 19.1.2.18 Object.setPrototypeOf ( O, proto )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @param proto
+         *            the new prototype object
+         * @return the script object
          */
         @Function(name = "setPrototypeOf", arity = 2)
         public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object o,
@@ -405,6 +557,14 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
     /**
      * 19.1.2.3.1 Runtime Semantics: ObjectDefineProperties Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param o
+     *            the script object
+     * @param properties
+     *            the properties object
+     * @return the script object
      */
     public static ScriptObject ObjectDefineProperties(ExecutionContext cx, Object o,
             Object properties) {
@@ -449,6 +609,12 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
     /**
      * 19.1.2.8.1 GetOwnPropertyKey ( O, Type ) Abstract Operation, with Type = String
+     * 
+     * @param cx
+     *            the execution context
+     * @param o
+     *            the script object
+     * @return the own string-valued property keys of <var>o</var>
      */
     public static ScriptObject GetOwnPropertyNames(ExecutionContext cx, Object o) {
         /* steps 1-2 */
@@ -471,6 +637,12 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
     /**
      * 19.1.2.8.1 GetOwnPropertyKey ( O, Type ) Abstract Operation, with Type = Symbol
+     * 
+     * @param cx
+     *            the execution context
+     * @param o
+     *            the script object
+     * @return the own symbol-valued property keys of <var>o</var>
      */
     public static ScriptObject GetOwnPropertySymbols(ExecutionContext cx, Object o) {
         /* steps 1-2 */

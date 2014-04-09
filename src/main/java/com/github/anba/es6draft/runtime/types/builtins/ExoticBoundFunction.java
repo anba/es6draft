@@ -86,6 +86,8 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
 
     /**
      * [[BoundTargetFunction]]
+     * 
+     * @return the bound target function
      */
     public Callable getBoundTargetFunction() {
         return boundTargetFunction;
@@ -93,6 +95,8 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
 
     /**
      * [[BoundThis]]
+     * 
+     * @return the bound this-value
      */
     public Object getBoundThis() {
         return boundThis;
@@ -100,6 +104,8 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
 
     /**
      * [[BoundArguments]]
+     * 
+     * @return the bound function arguments
      */
     public Object[] getBoundArguments() {
         return boundArguments;
@@ -143,6 +149,16 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
 
     /**
      * 9.4.1.3 BoundFunctionCreate Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param targetFunction
+     *            the target function
+     * @param boundThis
+     *            the bound this-value
+     * @param boundArgs
+     *            the bound function arguments
+     * @return the new bound function object
      */
     public static ExoticBoundFunction BoundFunctionCreate(ExecutionContext cx,
             Callable targetFunction, Object boundThis, Object[] boundArgs) {

@@ -70,6 +70,14 @@ public final class PromisePrototype extends OrdinaryObject implements Initialisa
 
         /**
          * 25.4.5.1 Promise.prototype.catch ( onRejected )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param onRejected
+         *            the onRejected handler
+         * @return the new promise object
          */
         @Function(name = "catch", arity = 1)
         public static Object _catch(ExecutionContext cx, Object thisValue, Object onRejected) {
@@ -79,6 +87,19 @@ public final class PromisePrototype extends OrdinaryObject implements Initialisa
             return Invoke(cx, promise, "then", UNDEFINED, onRejected);
         }
 
+        /**
+         * 25.4.5.3 Promise.prototype.then ( onFulfilled , onRejected )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param onFulfilled
+         *            the onFulfilled handler
+         * @param onRejected
+         *            the onRejected handler
+         * @return the new promise object
+         */
         @Function(name = "then", arity = 2)
         public static Object newThen(ExecutionContext cx, Object thisValue, Object onFulfilled,
                 Object onRejected) {
@@ -134,6 +155,16 @@ public final class PromisePrototype extends OrdinaryObject implements Initialisa
 
         /**
          * 25.4.5.3 Promise.prototype.then ( onFulfilled , onRejected )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param onFulfilled
+         *            the onFulfilled handler
+         * @param onRejected
+         *            the onRejected handler
+         * @return the new promise object
          */
         // @Function(name = "then", arity = 2)
         @Deprecated

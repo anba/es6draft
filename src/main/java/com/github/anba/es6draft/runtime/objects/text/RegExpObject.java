@@ -43,6 +43,8 @@ public final class RegExpObject extends OrdinaryObject {
 
     /**
      * [[OriginalSource]]
+     * 
+     * @return the regular expression source
      */
     public String getOriginalSource() {
         assert originalSource != null;
@@ -51,6 +53,8 @@ public final class RegExpObject extends OrdinaryObject {
 
     /**
      * [[OriginalFlags]]
+     * 
+     * @return the regular expression flags
      */
     public String getOriginalFlags() {
         assert originalFlags != null;
@@ -59,6 +63,8 @@ public final class RegExpObject extends OrdinaryObject {
 
     /**
      * [[RegExpMatcher]]
+     * 
+     * @return the regular expression matcher object
      */
     public RegExpMatcher getRegExpMatcher() {
         assert regExpMatcher != null;

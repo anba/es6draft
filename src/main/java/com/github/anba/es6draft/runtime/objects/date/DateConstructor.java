@@ -115,6 +115,12 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
 
     /**
      * Abstract operation thisTimeValue(value)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the date object
+     * @return the date-time value
      */
     private static double thisTimeValue(ExecutionContext cx, Object object) {
         if (object instanceof DateObject) {
@@ -168,6 +174,14 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
 
         /**
          * 20.3.3.2 Date.parse (string)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param string
+         *            the date string
+         * @return the parsed date value
          */
         @Function(name = "parse", arity = 1)
         public static Object parse(ExecutionContext cx, Object thisValue, Object string) {
@@ -181,6 +195,26 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
 
         /**
          * 20.3.3.4 Date.UTC (year, month [, date [, hours [, minutes [, seconds [, ms ] ] ] ] ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param year
+         *            the year value
+         * @param month
+         *            the month value
+         * @param date
+         *            the date value
+         * @param hours
+         *            the hours value
+         * @param minutes
+         *            the minutes value
+         * @param seconds
+         *            the seconds value
+         * @param ms
+         *            the milli-seconds value
+         * @return the new date object
          */
         @Function(name = "UTC", arity = 7)
         public static Object UTC(ExecutionContext cx, Object thisValue, Object year, Object month,
@@ -213,6 +247,12 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
 
         /**
          * 20.3.3.1 Date.now ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the current date in milli-seconds since the epoch
          */
         @Function(name = "now", arity = 0)
         public static Object now(ExecutionContext cx, Object thisValue) {
@@ -221,6 +261,12 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
 
         /**
          * 20.3.3.5 Date[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised date object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

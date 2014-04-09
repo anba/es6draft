@@ -127,6 +127,12 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
 
         /**
          * 19.5.2.2 Error[ @@create ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

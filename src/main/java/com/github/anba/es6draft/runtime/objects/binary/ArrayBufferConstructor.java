@@ -70,6 +70,12 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
 
     /**
      * 6.2.6.1 CreateByteDataBlock(size)
+     * 
+     * @param cx
+     *            the execution context
+     * @param size
+     *            the byte buffer size in bytes
+     * @return the new byte buffer
      */
     public static ByteBuffer CreateByteDataBlock(ExecutionContext cx, long size) {
         /* step 1 */
@@ -89,6 +95,17 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
 
     /**
      * 6.2.6.2 CopyDataBlockBytes(toBlock, toIndex, fromBlock, fromIndex, count)
+     * 
+     * @param toBlock
+     *            the target byte buffer
+     * @param toIndex
+     *            the target offset
+     * @param fromBlock
+     *            the source byte buffer
+     * @param fromIndex
+     *            the source offset
+     * @param count
+     *            the number of bytes to copy
      */
     public static void CopyDataBlockBytes(ByteBuffer toBlock, long toIndex, ByteBuffer fromBlock,
             long fromIndex, long count) {
@@ -111,6 +128,12 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
 
     /**
      * 24.1.1.1 AllocateArrayBuffer (constructor)
+     * 
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor function
+     * @return the new array buffer object
      */
     public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Intrinsics constructor) {
         return AllocateArrayBuffer(cx, cx.getIntrinsic(constructor));
@@ -118,6 +141,12 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
 
     /**
      * 24.1.1.1 AllocateArrayBuffer (constructor)
+     * 
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor function
+     * @return the new array buffer object
      */
     public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Object constructor) {
         /* steps 1-2 */
@@ -131,6 +160,14 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
 
     /**
      * 24.1.1.2 SetArrayBufferData (arrayBuffer, bytes)
+     * 
+     * @param cx
+     *            the execution context
+     * @param arrayBuffer
+     *            the array buffer object
+     * @param bytes
+     *            the buffer size in bytes
+     * @return the array buffer object
      */
     public static ArrayBufferObject SetArrayBufferData(ExecutionContext cx,
             ArrayBufferObject arrayBuffer, long bytes) {
@@ -150,6 +187,14 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
 
     /**
      * 24.1.1.3 CloneArrayBuffer (srcBuffer, srcByteOffset)
+     * 
+     * @param cx
+     *            the execution context
+     * @param srcBuffer
+     *            the source buffer
+     * @param srcByteOffset
+     *            the source offset
+     * @return the new array buffer object
      */
     public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx,
             ArrayBufferObject srcBuffer, long srcByteOffset) {
@@ -186,6 +231,16 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
 
     /**
      * 24.1.1.4 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
+     * 
+     * @param cx
+     *            the execution context
+     * @param arrayBuffer
+     *            the array buffer object
+     * @param byteIndex
+     *            the byte index
+     * @param type
+     *            the element type
+     * @return the buffer value
      */
     public static double GetValueFromBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type) {
@@ -194,6 +249,18 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
 
     /**
      * 24.1.1.4 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
+     * 
+     * @param cx
+     *            the execution context
+     * @param arrayBuffer
+     *            the array buffer object
+     * @param byteIndex
+     *            the byte index
+     * @param type
+     *            the element type
+     * @param isLittleEndian
+     *            the little endian flag
+     * @return the buffer value
      */
     public static double GetValueFromBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type, boolean isLittleEndian) {
@@ -247,6 +314,17 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
 
     /**
      * 24.1.1.5 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
+     * 
+     * @param cx
+     *            the execution context
+     * @param arrayBuffer
+     *            the array buffer object
+     * @param byteIndex
+     *            the byte index
+     * @param type
+     *            the element type
+     * @param value
+     *            the new element value
      */
     public static void SetValueInBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type, double value) {
@@ -255,6 +333,19 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
 
     /**
      * 24.1.1.5 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
+     * 
+     * @param cx
+     *            the execution context
+     * @param arrayBuffer
+     *            the array buffer object
+     * @param byteIndex
+     *            the byte index
+     * @param type
+     *            the element type
+     * @param value
+     *            the new element value
+     * @param isLittleEndian
+     *            the little endian flag
      */
     public static void SetValueInBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type, double value, boolean isLittleEndian) {
@@ -382,6 +473,14 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
 
         /**
          * 24.1.3.1 ArrayBuffer.isView ( arg )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param arg
+         *            the argument object
+         * @return {@code true} if the argument is array buffer view object
          */
         @Function(name = "isView", arity = 1)
         public static Object isView(ExecutionContext cx, Object thisValue, Object arg) {
@@ -391,6 +490,12 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
 
         /**
          * 24.1.3.3 @@create ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the new uninitialised array buffer object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

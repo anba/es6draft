@@ -201,7 +201,10 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     }
 
     /**
-     * Append integer indices to {@code keys} collection
+     * Appends the integer indices to {@code keys} collection.
+     * 
+     * @param keys
+     *            the property keys
      */
     private void addIntegerIndices(List<? super String> keys) {
         for (long i = 0, length = getLength(); i < length; ++i) {
@@ -211,6 +214,12 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
 
     /**
      * 9.4.5.7 IntegerIndexedObjectCreate Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param prototype
+     *            the prototype object
+     * @return the new integer indexed object
      */
     public static ScriptObject IntegerIndexedObjectCreate(ExecutionContext cx,
             ScriptObject prototype) {
@@ -218,25 +227,49 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         throw new UnsupportedOperationException();
     }
 
-    /** Not in spec */
     protected abstract boolean getWritable();
 
-    /** Not in spec */
     protected abstract void setNonWritable();
 
-    /** Not in spec */
+    /**
+     * Not in spec
+     *
+     * @return the length property
+     */
     protected abstract long getLength();
 
-    /** Not in spec */
+    /**
+     * Not in spec
+     * 
+     * @param cx
+     *            the execution context
+     * @param index
+     *            the integer index
+     * @return {@code true} if the element is present
+     */
     protected abstract boolean elementHas(ExecutionContext cx, double index);
 
     /**
      * 9.4.5.8 IntegerIndexedElementGet (O, index) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param index
+     *            the integer index
+     * @return the element value
      */
     protected abstract Object elementGet(ExecutionContext cx, double index);
 
     /**
      * 9.4.5.9 IntegerIndexedElementSet (O, index, value) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param index
+     *            the integer index
+     * @param value
+     *            the new element value
+     * @return {@code true} on success
      */
     protected abstract boolean elementSet(ExecutionContext cx, double index, Object value);
 }

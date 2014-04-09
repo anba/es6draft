@@ -31,6 +31,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.objects.modules.LoaderObject;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -51,8 +52,18 @@ public final class ModuleLoading {
 
     /**
      * 15.2.4.1 LoadModule(loader, name, options) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param loader
+     *            the loader record
+     * @param name
+     *            the module name
+     * @param options
+     *            the options object
+     * @return a new promise object
      */
-    public static ScriptObject LoadModule(ExecutionContext cx, Loader loader, Object name,
+    public static PromiseObject LoadModule(ExecutionContext cx, Loader loader, Object name,
             Object options) {
         // FIXME: spec bug - source is undefined
         String source = null;
@@ -76,6 +87,18 @@ public final class ModuleLoading {
 
     /**
      * 15.2.4.2 RequestLoad(loader, request, refererName, refererAddress) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param loader
+     *            the loader record
+     * @param request
+     *            the request string
+     * @param refererName
+     *            the referer name
+     * @param refererAddress
+     *            the referer address
+     * @return a new promise object
      */
     public static ScriptObject RequestLoad(ExecutionContext cx, Loader loader, String request,
             Object refererName, Object refererAddress) {
@@ -192,6 +215,14 @@ public final class ModuleLoading {
 
     /**
      * 15.2.4.3 ProceedToLocate(loader, load, p) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param loader
+     *            the loader record
+     * @param load
+     *            the load record
+     * @return a new promise object
      */
     public static ScriptObject ProceedToLocate(ExecutionContext cx, Loader loader, Load load) {
         /* step 1 */
@@ -245,6 +276,16 @@ public final class ModuleLoading {
 
     /**
      * 15.2.4.4 ProceedToFetch(loader, load, p) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param loader
+     *            the loader record
+     * @param load
+     *            the load record
+     * @param p
+     *            the locate promise object
+     * @return a new promise object
      */
     public static ScriptObject ProceedToFetch(ExecutionContext cx, Loader loader, Load load,
             ScriptObject p) {
@@ -304,6 +345,16 @@ public final class ModuleLoading {
 
     /**
      * 15.2.4.5 ProceedToTranslate(loader, load, p) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param loader
+     *            the loader record
+     * @param load
+     *            the load record
+     * @param p
+     *            the fetch promise object
+     * @return a new promise object
      */
     public static ScriptObject ProceedToTranslate(ExecutionContext cx, Loader loader, Load load,
             ScriptObject p) {
@@ -513,6 +564,16 @@ public final class ModuleLoading {
 
     /**
      * 15.2.4.6 ProcessLoadDependencies(load, loader, depsList) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param loader
+     *            the loader record
+     * @param load
+     *            the load record
+     * @param depsList
+     *            the list of module dependencies
+     * @return a new promise object
      */
     public static ScriptObject ProcessLoadDependencies(ExecutionContext cx, Load load,
             Loader loader, Iterable<String> depsList) {
@@ -614,8 +675,24 @@ public final class ModuleLoading {
 
     /**
      * 15.2.4.7 PromiseOfStartLoadPartwayThrough (step, loader, name, metadata, source, address)
+     * 
+     * @param cx
+     *            the execution context
+     * @param step
+     *            the step kind
+     * @param loader
+     *            the loader record
+     * @param name
+     *            the module name
+     * @param metadata
+     *            the module load user metadata
+     * @param source
+     *            the module source
+     * @param address
+     *            the module address
+     * @return a new promise object
      */
-    public static ScriptObject PromiseOfStartLoadPartwayThrough(ExecutionContext cx,
+    public static PromiseObject PromiseOfStartLoadPartwayThrough(ExecutionContext cx,
             AsyncStartLoadPartwayThrough.Step step, Loader loader, String name, Object metadata,
             Object source, Object address) {
         /* step 1 */
@@ -699,13 +776,13 @@ public final class ModuleLoading {
                 return ProceedToLocate(calleeContext, loader, load);
             } else if (step == Step.Fetch) {
                 /* step 14 */
-                ScriptObject addressPromise = PromiseOf(calleeContext, moduleAddress);
+                PromiseObject addressPromise = PromiseOf(calleeContext, moduleAddress);
                 return ProceedToFetch(calleeContext, loader, load, addressPromise);
             } else {
                 /* step 15 */
                 assert step == Step.Translate;
                 load.setAddress(moduleAddress);
-                ScriptObject sourcePromise = PromiseOf(calleeContext, moduleSource);
+                PromiseObject sourcePromise = PromiseOf(calleeContext, moduleSource);
                 return ProceedToTranslate(calleeContext, loader, load, sourcePromise);
             }
         }

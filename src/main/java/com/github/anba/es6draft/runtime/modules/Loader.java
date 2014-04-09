@@ -40,28 +40,50 @@ public final class Loader {
         this.loaderObj = loaderObj;
     }
 
-    /** [[Realm]] */
+    /**
+     * [[Realm]]
+     *
+     * @return the realm instance
+     */
     public Realm getRealm() {
         return realm;
     }
 
-    /** [[Modules]] */
+    /**
+     * [[Modules]]
+     *
+     * @return the map from module names to module linkage records
+     */
     public LinkedMap<String, ModuleLinkage> getModules() {
         return modules;
     }
 
-    /** [[Loads]] */
+    /**
+     * [[Loads]]
+     *
+     * @return the map from module name to load records
+     */
     public LinkedHashMap<String, Load> getLoads() {
         return loads;
     }
 
-    /** [[LoaderObj]] */
+    /**
+     * [[LoaderObj]]
+     *
+     * @return the loader script object
+     */
     public LoaderObject getLoaderObj() {
         return loaderObj;
     }
 
     /**
      * 15.2.3.1.1 CreateLoaderRecord(realm, object) Abstract Operation
+     * 
+     * @param realm
+     *            the realm instance
+     * @param object
+     *            the loader script object
+     * @return the new loader record
      */
     public static Loader CreateLoader(Realm realm, LoaderObject object) {
         /* steps 1-6 */

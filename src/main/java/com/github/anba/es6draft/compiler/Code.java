@@ -68,14 +68,18 @@ final class Code {
     }
 
     /**
-     * Returns the list of generated {@link ClassCode} objects
+     * Returns the list of generated {@link ClassCode} objects.
+     * 
+     * @return the list of generated class code objects
      */
     List<ClassCode> getClasses() {
         return classes;
     }
 
     /**
-     * Returns the shared extern constant pool instance
+     * Returns the shared extern constant pool instance.
+     * 
+     * @return the extern constant pool
      */
     ConstantPool getExternConstantPool() {
         if (extern == null) {
@@ -85,7 +89,11 @@ final class Code {
     }
 
     /**
-     * Adds a new class
+     * Adds a new class.
+     * 
+     * @param constantPool
+     *            the constant pool instance to use
+     * @return the class code instance which represents the new class
      */
     ClassCode newClass(ConstantPool constantPool) {
         String className = mainClass.className + '~' + classes.size();
@@ -95,14 +103,32 @@ final class Code {
     }
 
     /**
-     * Add a new method to main class module
+     * Add a new method to main class module.
+     * 
+     * @param access
+     *            the access flag
+     * @param methodName
+     *            the name of the new method
+     * @param methodDescriptor
+     *            the internal method descriptor
+     * @return the method code instance which represents the new method
      */
     MethodCode newMainMethod(int access, String methodName, String methodDescriptor) {
         return mainClass.newMethod(access, methodName, methodDescriptor, null, null, false);
     }
 
     /**
-     * Add a new method to a class module
+     * Add a new method to a class module.
+     * 
+     * @param access
+     *            the access flag
+     * @param methodName
+     *            the name of the new method
+     * @param methodDescriptor
+     *            the internal method descriptor
+     * @param stack
+     *            the stack flag to enable/disable stack use tracking
+     * @return the method code instance which represents the new method
      */
     MethodCode newMethod(int access, String methodName, String methodDescriptor, boolean stack) {
         return requestClassForMethod().newMethod(access, methodName, methodDescriptor, null, null,

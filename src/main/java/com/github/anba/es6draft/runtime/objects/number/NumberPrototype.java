@@ -56,6 +56,12 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * Abstract operation thisNumberValue(value)
+         * 
+         * @param cx
+         *            the execution context
+         * @param object
+         *            the object
+         * @return the number value
          */
         private static double thisNumberValue(ExecutionContext cx, Object object) {
             if (Type.isNumber(object)) {
@@ -82,6 +88,14 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 20.1.3.7 Number.prototype.toString ( [ radix ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param radix
+         *            the optional radix value
+         * @return the string representation for this number
          */
         @Function(name = "toString", arity = 1)
         public static Object toString(ExecutionContext cx, Object thisValue, Object radix) {
@@ -114,6 +128,16 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
         /**
          * 20.1.3.5 Number.prototype.toLocaleString(reserved1=undefined, reserved2=undefined)<br>
          * 13.2.1 Number.prototype.toLocaleString ([locales [, options]])
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param locales
+         *            the optional locales array
+         * @param options
+         *            the optional options object
+         * @return the locale string representation for this number
          */
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,
@@ -132,6 +156,12 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 20.1.3.8 Number.prototype.valueOf ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the number value of this number object
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
@@ -140,6 +170,14 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 20.1.3.4 Number.prototype.toFixed (fractionDigits)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param fractionDigits
+         *            the number of fraction digits
+         * @return the decimal fixed-point notation of this number
          */
         @Function(name = "toFixed", arity = 1)
         public static Object toFixed(ExecutionContext cx, Object thisValue, Object fractionDigits) {
@@ -164,6 +202,14 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 20.1.3.3 Number.prototype.toExponential (fractionDigits)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param fractionDigits
+         *            the number of fraction digits
+         * @return the decimal exponential notation of this number
          */
         @Function(name = "toExponential", arity = 1)
         public static Object toExponential(ExecutionContext cx, Object thisValue,
@@ -198,6 +244,14 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 20.1.3.6 Number.prototype.toPrecision (precision)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param precision
+         *            the precision argument
+         * @return the decimal exponential notation of this number
          */
         @Function(name = "toPrecision", arity = 1)
         public static Object toPrecision(ExecutionContext cx, Object thisValue, Object precision) {
@@ -230,6 +284,12 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
 
         /**
          * 20.1.3.1 Number.prototype.clz ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the number of leading zeroes in the 32-bit integer representation of this number
          */
         @Function(name = "clz", arity = 0)
         public static Object clz(ExecutionContext cx, Object thisValue) {

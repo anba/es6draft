@@ -131,21 +131,27 @@ public enum CompatibilityOption {
     AsyncFunction;
 
     /**
-     * Returns a set of all options for strict-compatibility
+     * Returns a set of all options for strict-compatibility.
+     * 
+     * @return the options set for strict-compatibility
      */
     public static final Set<CompatibilityOption> StrictCompatibility() {
         return EnumSet.noneOf(CompatibilityOption.class);
     }
 
     /**
-     * Returns a set of all options for web-compatibility
+     * Returns a set of all options for web-compatibility.
+     * 
+     * @return the options set for web-compatibility
      */
     public static final Set<CompatibilityOption> WebCompatibility() {
         return EnumSet.range(LegacyOctalIntegerLiteral, BlockFunctionDeclaration);
     }
 
     /**
-     * Returns a set of all options for mozilla-compatibility
+     * Returns a set of all options for mozilla-compatibility.
+     * 
+     * @return the options set for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
         return EnumSet.range(LegacyOctalIntegerLiteral, ExtendedPrecision);
