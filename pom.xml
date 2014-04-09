@@ -187,6 +187,32 @@
         </plugins>
       </build>
     </profile>
+    <!-- Profile to run all external test suites -->
+    <profile>
+      <id>external</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>surefire-test</id>
+                <configuration>
+                  <includes>
+                    <include>**/moztest/*</include>
+                    <include>**/test262/*</include>
+                    <include>**/traceur/*</include>
+                    <include>**/v8test/*</include>
+                    <include>**/webkit/*</include>
+                  </includes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
     <!-- Profile to run the test262 test suite -->
     <profile>
       <id>test262</id>
