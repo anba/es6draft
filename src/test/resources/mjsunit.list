@@ -5,6 +5,9 @@
 # <https://github.com/anba/es6draft>
 #
 
+# rev23 update pending
+harmony/string-contains.js
+
 # Object.prototype.__proto__ not yet updated to return undefined
 proto-accessor.js
 

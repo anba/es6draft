@@ -259,6 +259,7 @@ tests/arrow-functions/arguments-1.js
 tests/arrow-functions/arguments-2.js
 tests/arrow-functions/arguments-3.js
 tests/arrow-functions/bug-885067-2.js
+tests/arrow-functions/bug889158.js
 
 # different toString() representation for arrow-functions
 tests/arrow-functions/associativity-3.js
