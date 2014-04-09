@@ -158,8 +158,12 @@
         </plugins>
       </reporting>
     </profile>
+    <!-- Profile to skip all external test suites -->
     <profile>
       <id>skip-external</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
       <build>
         <plugins>
           <plugin>
@@ -183,6 +187,7 @@
         </plugins>
       </build>
     </profile>
+    <!-- Profile to run the test262 test suite -->
     <profile>
       <id>test262</id>
       <build>
@@ -203,23 +208,6 @@
           </plugin>
         </plugins>
       </build>
-    </profile>
-    <profile>
-      <id>disable-doclint</id>
-      <activation>
-        <jdk>[1.8,</jdk>
-      </activation>
-      <reporting>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <configuration>
-              <additionalparam>-Xdoclint:none</additionalparam>
-            </configuration>
-          </plugin>
-        </plugins>
-      </reporting>
     </profile>
   </profiles>
 
