@@ -156,7 +156,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.1 Array.prototype.concat ( [ item1 [ , item2 [ , ... ] ] ] )
+         * 22.1.3.1 Array.prototype.concat ( ...arguments )
          * 
          * @param cx
          *            the execution context
@@ -348,7 +348,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.17 Array.prototype.push ( [ item1 [ , item2 [ , ... ] ] ] )
+         * 22.1.3.17 Array.prototype.push ( ...items )
          * 
          * @param cx
          *            the execution context
@@ -678,7 +678,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.25 Array.prototype.splice (start, deleteCount [ , item1 [ , item2 [ , ... ] ] ] )
+         * 22.1.3.25 Array.prototype.splice (start, deleteCount [ , ...items ] )
          * 
          * @param cx
          *            the execution context
@@ -791,7 +791,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.28 Array.prototype.unshift ( [ item1 [ , item2 [ , ... ] ] ] )
+         * 22.1.3.28 Array.prototype.unshift ( ...items )
          * 
          * @param cx
          *            the execution context
@@ -1004,7 +1004,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.5 Array.prototype.every ( callbackfn, thisArg = undefined )
+         * 22.1.3.5 Array.prototype.every ( callbackfn [ , thisArg] )
          * 
          * @param cx
          *            the execution context
@@ -1030,7 +1030,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.5 Array.prototype.every ( callbackfn, thisArg = undefined )
+         * 22.1.3.5 Array.prototype.every ( callbackfn [ , thisArg] )
          * 
          * @param cx
          *            the execution context
@@ -1073,7 +1073,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.23 Array.prototype.some ( callbackfn, thisArg = undefined )
+         * 22.1.3.23 Array.prototype.some ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -1099,7 +1099,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.23 Array.prototype.some ( callbackfn, thisArg = undefined )
+         * 22.1.3.23 Array.prototype.some ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -1142,7 +1142,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.10 Array.prototype.forEach ( callbackfn, thisArg = undefined )
+         * 22.1.3.10 Array.prototype.forEach ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -1168,7 +1168,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.10 Array.prototype.forEach ( callbackfn, thisArg = undefined )
+         * 22.1.3.10 Array.prototype.forEach ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -1208,7 +1208,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.15 Array.prototype.map ( callbackfn, thisArg = undefined )
+         * 22.1.3.15 Array.prototype.map ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -1263,7 +1263,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.7 Array.prototype.filter ( callbackfn, thisArg = undefined )
+         * 22.1.3.7 Array.prototype.filter ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -1497,7 +1497,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.8 Array.prototype.find ( predicate, thisArg = undefined )
+         * 22.1.3.8 Array.prototype.find ( predicate [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -1523,7 +1523,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.8 Array.prototype.find ( predicate, thisArg = undefined )
+         * 22.1.3.8 Array.prototype.find ( predicate [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -1715,7 +1715,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.6 Array.prototype.fill (value, start = 0, end = this.length)
+         * 22.1.3.6 Array.prototype.fill (value [ , start [ , end ] ] )
          * 
          * @param cx
          *            the execution context
@@ -1743,7 +1743,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.6 Array.prototype.fill (value, start = 0, end = this.length)
+         * 22.1.3.6 Array.prototype.fill (value [ , start [ , end ] ] )
          * 
          * @param cx
          *            the execution context
@@ -1793,7 +1793,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.3 Array.prototype.copyWithin (target, start, end = this.length)
+         * 22.1.3.3 Array.prototype.copyWithin (target, start [ , end ] )
          * 
          * @param cx
          *            the execution context
@@ -1821,7 +1821,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 22.1.3.3 Array.prototype.copyWithin (target, start, end = this.length)
+         * 22.1.3.3 Array.prototype.copyWithin (target, start [ , end ] )
          * 
          * @param cx
          *            the execution context

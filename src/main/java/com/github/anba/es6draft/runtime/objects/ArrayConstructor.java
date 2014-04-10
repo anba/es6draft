@@ -50,28 +50,23 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 22.1.1.1 Array ( [ item1 [ , item2 [ , ... ] ] ] )<br>
-     * 22.1.1.2 Array (len)
+     * 22.1.1.1 Array ( )<br>
+     * 22.1.1.2 Array (len)<br>
+     * 22.1.1.3 Array (...items )
      */
     @Override
     public ExoticArray call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         int numberOfArgs = args.length;
-        if (numberOfArgs != 1) {
+        if (numberOfArgs == 0) {
             // [22.1.1.1]
             /* steps 1-6 */
-            ExoticArray array = initOrCreateArray(calleeContext, thisValue, numberOfArgs);
-            /* steps 7-9 */
-            for (int k = 0; k < numberOfArgs; ++k) {
-                String pk = ToString(k);
-                Object itemK = args[k];
-                CreateDataPropertyOrThrow(calleeContext, array, pk, itemK);
-            }
-            /* steps 10-11 */
-            Put(calleeContext, array, "length", numberOfArgs, true);
-            /* step 12 */
+            ExoticArray array = initOrCreateArray(calleeContext, thisValue, 0);
+            /* steps 7-8 */
+            Put(calleeContext, array, "length", 0, true);
+            /* step 9 */
             return array;
-        } else {
+        } else if (numberOfArgs == 1) {
             // [22.1.1.2]
             /* steps 1-6 */
             ExoticArray array = initOrCreateArray(calleeContext, thisValue, 0);
@@ -92,12 +87,27 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             Put(calleeContext, array, "length", intLen, true);
             /* step 11 */
             return array;
+        } else {
+            // [22.1.1.3]
+            /* steps 1-6 */
+            ExoticArray array = initOrCreateArray(calleeContext, thisValue, numberOfArgs);
+            /* steps 7-9 */
+            for (int k = 0; k < numberOfArgs; ++k) {
+                String pk = ToString(k);
+                Object itemK = args[k];
+                CreateDataPropertyOrThrow(calleeContext, array, pk, itemK);
+            }
+            /* steps 10-11 */
+            Put(calleeContext, array, "length", numberOfArgs, true);
+            /* step 12 */
+            return array;
         }
     }
 
     private ExoticArray initOrCreateArray(ExecutionContext cx, Object thisValue, int length) {
         /* [22.1.1.1] steps 3-6 */
         /* [22.1.1.2] steps 3-6 */
+        /* [22.1.1.3] steps 3-6 */
         if (thisValue instanceof ExoticArray) {
             ExoticArray array = (ExoticArray) thisValue;
             if (!array.getInitialisationState()) {
@@ -195,7 +205,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         }
 
         /**
-         * 22.1.2.1 Array.from ( arrayLike, mapfn=undefined, thisArg=undefined )
+         * 22.1.2.1 Array.from ( arrayLike [ , mapfn [ , thisArg ] ] )
          * 
          * @param cx
          *            the execution context
@@ -274,17 +284,14 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             /* steps 16-17 */
             for (long k = 0; k < len; ++k) {
                 String pk = ToString(k);
-                boolean kPresent = HasProperty(cx, items, pk);
-                if (kPresent) {
-                    Object kValue = Get(cx, items, pk);
-                    Object mappedValue;
-                    if (mapping) {
-                        mappedValue = mapper.call(cx, thisArg, kValue, k, items);
-                    } else {
-                        mappedValue = kValue;
-                    }
-                    CreateDataPropertyOrThrow(cx, a, pk, mappedValue);
+                Object kValue = Get(cx, items, pk);
+                Object mappedValue;
+                if (mapping) {
+                    mappedValue = mapper.call(cx, thisArg, kValue, k, items);
+                } else {
+                    mappedValue = kValue;
                 }
+                CreateDataPropertyOrThrow(cx, a, pk, mappedValue);
             }
             /* steps 18-19 */
             Put(cx, a, "length", len, true);
