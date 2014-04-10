@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Symbol;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -57,6 +58,9 @@ public final class SymbolPrototype extends OrdinaryObject implements Initialisab
          * @return the symbol value
          */
         private static Symbol thisSymbolValue(ExecutionContext cx, Object object) {
+            if (Type.isSymbol(object)) {
+                return (Symbol) object;
+            }
             if (object instanceof SymbolObject) {
                 return ((SymbolObject) object).getSymbolData();
             }
@@ -102,7 +106,7 @@ public final class SymbolPrototype extends OrdinaryObject implements Initialisab
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
-            /* steps 1-3 */
+            /* steps 1-4 */
             return thisSymbolValue(cx, thisValue);
         }
 

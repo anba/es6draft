@@ -48,7 +48,7 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 19.4.1.1 Symbol ( description=undefined )
+     * 19.4.1.1 Symbol ( [ description ] )
      */
     @Override
     public Symbol call(ExecutionContext callerContext, Object thisValue, Object... args) {
