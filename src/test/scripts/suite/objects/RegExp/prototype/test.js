@@ -103,7 +103,7 @@ const {
         exec: foreignExec,
       }
     }
-  } = new Realm().global;
+  } = new Reflect.Realm().global;
 
   assertThrows(() => ({__proto__: RegExp.prototype, exec: foreignExec}).test(), foreignTypeError);
   assertThrows(() => Object.assign(RegExp[Symbol.create](), {exec: foreignExec}).test(), foreignTypeError);
@@ -118,7 +118,7 @@ const {
         exec: foreignExec,
       }
     }
-  } = new Realm().global;
+  } = new Reflect.Realm().global;
 
   const RegExp_prototype_exec = RegExp.prototype.exec;
   RegExp.prototype.exec = foreignExec;

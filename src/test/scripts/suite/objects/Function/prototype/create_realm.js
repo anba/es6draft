@@ -12,7 +12,7 @@ const {
 // 19.2.4.6 Function.prototype[ @@create ] ( )
 
 {
-  const foreignRealm = new Realm();
+  const foreignRealm = new Reflect.Realm();
   const create = Function.prototype[Symbol.create];
 
   // foreign constructor function whose .prototype is not an object

@@ -8,7 +8,7 @@
 (function Promises(global) {
 "use strict";
 
-const $Promise = new Realm().global.Promise;
+const $Promise = new Reflect.Realm().global.Promise;
 
 function reportFailure(reason) {
   let p = $Promise.reject(reason);

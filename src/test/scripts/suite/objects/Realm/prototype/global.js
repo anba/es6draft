@@ -10,9 +10,9 @@ const {
   assertThrows, assertBuiltinFunction,
 } = Assert;
 
-/* 26.2.3.3 get %Realm%.prototype.global */
+/* 26.2.3.3 get Reflect.Realm.prototype.global */
 
-const get_global = Object.getOwnPropertyDescriptor(Realm.prototype, "global").get;
+const get_global = Object.getOwnPropertyDescriptor(Reflect.Realm.prototype, "global").get;
 
 assertBuiltinFunction(get_global, "get global", 0);
 
@@ -34,12 +34,12 @@ assertBuiltinFunction(get_global, "get global", 0);
 
 // steps 3-4 - TypeError if thisValue is an uninitialised Realm object
 {
-  assertThrows(() => get_global.call(Realm[Symbol.create]()), TypeError);
+  assertThrows(() => get_global.call(Reflect.Realm[Symbol.create]()), TypeError);
 }
 
 // step 5 - Return the Realm's [[globalThis]] object
 {
-  let realmA = new Realm(), realmB = new Realm();
+  let realmA = new Reflect.Realm(), realmB = new Reflect.Realm();
 
   // Global object is an object type
   assertNotNull(get_global.call(realmA));

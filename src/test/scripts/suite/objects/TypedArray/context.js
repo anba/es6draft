@@ -11,7 +11,7 @@ const {
 
 // Indexed access on uninitialised typed array throws TypeError from currently active realm
 
-const foreignRealm = new Realm();
+const foreignRealm = new Reflect.Realm();
 foreignRealm.eval(`
   function indexedAccess(ta) {
     ta[0];

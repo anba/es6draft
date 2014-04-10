@@ -35,7 +35,7 @@ function assertSameArray(array1, array2) {
 
 // splice() with different realm constructor (1)
 {
-  const ForeignMyArray = new Realm().eval(`
+  const ForeignMyArray = new Reflect.Realm().eval(`
     class MyArray extends Array { }
     MyArray;
   `);
@@ -54,7 +54,7 @@ function assertSameArray(array1, array2) {
 // splice() with different realm constructor (2)
 {
   class MyArray extends Array { }
-  const ForeignArray = new Realm().eval("Array");
+  const ForeignArray = new Reflect.Realm().eval("Array");
   const obj1 = {}, obj2 = {};
   let array1 = new MyArray(obj1, obj2);
   let array2 = ForeignArray.prototype.splice.call(array1, 0);

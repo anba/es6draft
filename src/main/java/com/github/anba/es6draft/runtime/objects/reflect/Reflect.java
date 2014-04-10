@@ -25,6 +25,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtensi
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
+import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -58,6 +59,18 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
+
+        /**
+         * Loader ( . . . )
+         */
+        @Value(name = "Loader")
+        public static final Intrinsics Loader = Intrinsics.Loader;
+
+        /**
+         * Realm ( . . . )
+         */
+        @Value(name = "Realm")
+        public static final Intrinsics Realm = Intrinsics.Realm;
 
         /**
          * 26.1.6 Reflect.getPrototypeOf (target)
@@ -235,7 +248,7 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 26.1.4 Reflect.get (target, propertyKey, receiver=target)
+         * 26.1.4 Reflect.get (target, propertyKey [, receiver ])
          * 
          * @param cx
          *            the execution context
@@ -270,7 +283,7 @@ public final class Reflect extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 26.1.12 Reflect.set (target, propertyKey, V, receiver=target)
+         * 26.1.12 Reflect.set (target, propertyKey, V [, receiver ])
          * 
          * @param cx
          *            the execution context

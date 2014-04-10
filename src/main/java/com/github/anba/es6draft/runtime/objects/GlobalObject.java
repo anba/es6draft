@@ -517,18 +517,6 @@ public class GlobalObject extends OrdinaryObject {
          */
         @Value(name = "Promise")
         public static final Intrinsics Promise = Intrinsics.Promise;
-
-        /**
-         * Loader ( . . . )
-         */
-        @Value(name = "Loader")
-        public static final Intrinsics Loader = Intrinsics.Loader;
-
-        /**
-         * Realm ( . . . )
-         */
-        @Value(name = "Realm")
-        public static final Intrinsics Realm = Intrinsics.Realm;
     }
 
     /**

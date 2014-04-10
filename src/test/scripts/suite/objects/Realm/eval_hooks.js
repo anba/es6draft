@@ -16,7 +16,7 @@ const {
 // TODO: test with multiple arguments, different thisArgument
 {
   let called = false;
-  let realm = new Realm({
+  let realm = new Reflect.Realm({
     indirectEval() {
       assertFalse(called);
       called = true;
@@ -33,7 +33,7 @@ const {
 // TODO: test with multiple arguments, different thisArgument, 'fallback' present
 {
   let called = false;
-  let realm = new Realm({
+  let realm = new Reflect.Realm({
     directEval: {
       translate(source) {
         assertFalse(called);
@@ -55,7 +55,7 @@ const {
   function notEval() {
     return 123;
   }
-  let realm = new Realm({
+  let realm = new Reflect.Realm({
     directEval: {
       fallback(thisArgument, callee, ...args) {
         assertFalse(called);

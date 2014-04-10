@@ -14,7 +14,7 @@ const defaultIncludes = ["Assert"];
 
 // Default global created if "init" option not used
 {
-  let realm = new Realm({});
+  let realm = new Reflect.Realm({});
 
   // Default [[Prototype]] is %Object.prototype%
   assertSame(realm.global.Object.prototype, Object.getPrototypeOf(realm.global));
@@ -27,7 +27,7 @@ const defaultIncludes = ["Assert"];
 
 // Empty global created if "init" option used
 {
-  let realm = new Realm({ init(){} });
+  let realm = new Reflect.Realm({ init(){} });
 
   // [[Prototype]] is set to null
   assertSame(null, Object.getPrototypeOf(realm.global));
@@ -41,7 +41,7 @@ const defaultIncludes = ["Assert"];
 // Test arguments passed to "init" option: realm
 {
   let captured = {};
-  let realm = new Realm({
+  let realm = new Reflect.Realm({
     init(realm, builtins) {
       // proposal currently makes thisArgument == argumentsList[0] == realm object
       assertSame(this, realm);
@@ -57,7 +57,7 @@ const defaultIncludes = ["Assert"];
 // Test arguments passed to "init" option: builtins
 {
   const thisGlobal = this;
-  let realm = new Realm({
+  let realm = new Reflect.Realm({
     init(realm, builtins) {
       // Same keys resp. own property names as the global
       assertEquals(Object.keys(thisGlobal), Object.keys(builtins));

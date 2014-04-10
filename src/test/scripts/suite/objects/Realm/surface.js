@@ -35,20 +35,20 @@ function assertPrototypeProperty(object, name = "prototype", value = object[name
 
 /* Realm Objects */
 
-assertBuiltinConstructor(Realm, "Realm", 0);
-assertBuiltinPrototype(Realm.prototype);
-assertSame(Realm, Realm.prototype.constructor);
+assertBuiltinConstructor(Reflect.Realm, "Realm", 0);
+assertBuiltinPrototype(Reflect.Realm.prototype);
+assertSame(Reflect.Realm, Reflect.Realm.prototype.constructor);
 
 
 /* Properties of the Realm Constructor */
 
-assertPrototypeProperty(Realm);
-assertCreateFunctionProperty(Realm, Symbol.create);
+assertPrototypeProperty(Reflect.Realm);
+assertCreateFunctionProperty(Reflect.Realm, Symbol.create);
 
 
 /* Properties of the Realm Prototype Object */
 
-assertConstructorProperty(Realm.prototype);
-assertGetterProperty(Realm.prototype, "global");
-assertFunctionProperty(Realm.prototype, "eval");
-assertDataProperty(Realm.prototype, Symbol.toStringTag, {value: "Realm", writable: false, enumerable: false, configurable: true});
+assertConstructorProperty(Reflect.Realm.prototype);
+assertGetterProperty(Reflect.Realm.prototype, "global");
+assertFunctionProperty(Reflect.Realm.prototype, "eval");
+assertDataProperty(Reflect.Realm.prototype, Symbol.toStringTag, {value: "Reflect.Realm", writable: false, enumerable: false, configurable: true});

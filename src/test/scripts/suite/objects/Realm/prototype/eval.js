@@ -9,9 +9,9 @@ const {
   assertThrows, assertBuiltinFunction,
 } = Assert;
 
-/* 26.2.3.2 %Realm%.prototype.eval (source) */
+/* 26.2.3.2 Reflect.Realm.prototype.eval (source) */
 
-const evalFn = Realm.prototype.eval;
+const evalFn = Reflect.Realm.prototype.eval;
 
 assertBuiltinFunction(evalFn, "eval", 1);
 
@@ -33,7 +33,7 @@ assertBuiltinFunction(evalFn, "eval", 1);
 
 // steps 3-4 - TypeError if thisValue is an uninitialised Realm object
 {
-  assertThrows(() => evalFn.call(Realm[Symbol.create]()), TypeError);
+  assertThrows(() => evalFn.call(Reflect.Realm[Symbol.create]()), TypeError);
 }
 
 // step 5 - Evaluates an eval script in the given realm (TODO)

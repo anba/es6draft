@@ -178,7 +178,7 @@ const ToMethod = Function.prototype.toMethod.call.bind(Function.prototype.toMeth
 
 // Function.prototype.toMethod() copies internal slots ([[Realm]]) (1)
 {
-  const foreignRealm = new Realm();
+  const foreignRealm = new Reflect.Realm();
   assertNotSame(foreignRealm.global.TypeError, TypeError);
 
   class Source {
@@ -197,7 +197,7 @@ const ToMethod = Function.prototype.toMethod.call.bind(Function.prototype.toMeth
 
 // Function.prototype.toMethod() copies internal slots ([[Realm]]) (2)
 {
-  const foreignRealm = new Realm();
+  const foreignRealm = new Reflect.Realm();
   assertNotSame(foreignRealm.global.TypeError, TypeError);
 
   let Source = foreignRealm.eval(`
@@ -216,7 +216,7 @@ const ToMethod = Function.prototype.toMethod.call.bind(Function.prototype.toMeth
 
 // Function.prototype.toMethod() copies internal slots (%ThrowTypeError% in 'caller' and 'arguments') (1)
 {
-  const foreignRealm = new Realm();
+  const foreignRealm = new Reflect.Realm();
   const ThrowTypeError = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller").get;
 
   class Source {
@@ -238,7 +238,7 @@ const ToMethod = Function.prototype.toMethod.call.bind(Function.prototype.toMeth
 
 // Function.prototype.toMethod() copies internal slots (%ThrowTypeError% in 'caller' and 'arguments') (2)
 {
-  const foreignRealm = new Realm();
+  const foreignRealm = new Reflect.Realm();
   const ThrowTypeError = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller").get;
   const ForeignThrowTypeError = Object.getOwnPropertyDescriptor(foreignRealm.eval(`(function(){"use strict"})`), "caller").get;
 

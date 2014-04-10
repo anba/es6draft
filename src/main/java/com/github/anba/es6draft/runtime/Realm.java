@@ -552,6 +552,10 @@ public final class Realm {
         initialiseNativeErrors(realm);
         initialiseInternalObjects(realm);
 
+        // TODO: move to reflect
+        // intrinsics: Loader, Module, Realm Objects
+        initialiseModuleModules(realm);
+
         // intrinsics: 22.2, 23, 24.1, 24.2, 25
         initialiseBinaryModule(realm);
         initialiseCollectionModule(realm);
@@ -560,9 +564,6 @@ public final class Realm {
 
         // intrinsics: Promise Objects
         initialisePromiseObjects(realm);
-
-        // intrinsics: Loader, Module, Realm Objects
-        initialiseModuleModules(realm);
 
         // intrinsics: Internationalization API
         initialiseInternationalisation(realm);

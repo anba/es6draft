@@ -14,7 +14,7 @@ const {
 
 // Note: This behaviour is most likely not intended, but correct per rev22 spec
 
-let realm = new Realm();
+let realm = new Reflect.Realm();
 realm.eval(`
   function returnThis() {
     return this;

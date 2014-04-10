@@ -23,7 +23,7 @@ function assertThrowsTypeErrorFrom(realm, fn) {
 // 25.3.3.2 GeneratorResume
 // Test GeneratorResume uses the correct execution context
 {
-  let foreignRealm = new Realm();
+  let foreignRealm = new Reflect.Realm();
   foreignRealm.eval(`
     let TryCatch = f => { try { f() } catch (e) {} };
     let Step = g => (g = g(), g.next(), g);
@@ -47,7 +47,7 @@ function assertThrowsTypeErrorFrom(realm, fn) {
     Completed, CompletedAbrupt,
     Uninitialised, Invalid
   } = foreignRealm.global;
-  let nextRealm = new Realm();
+  let nextRealm = new Reflect.Realm();
   let nextF = nextRealm.eval(`(function*(){})().next`);
   let next = (g, ...args) => nextF.call(g, ...args);
   let Next = (g, ...args) => next(g(), ...args);

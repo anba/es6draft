@@ -128,4 +128,14 @@ public enum Intrinsics {/* @formatter:off */
     LegacyGeneratorPrototype,
 
     /* @formatter:on */
+    ;
+
+    /**
+     * Returns the intrinsic key.
+     * 
+     * @return the intrinsic key
+     */
+    public String getKey() {
+        return '%' + name() + '%';
+    }
 }

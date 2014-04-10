@@ -12,7 +12,7 @@ const {
 // Test cases from 'https://bugs.ecmascript.org/show_bug.cgi?id=1751'
 
 {
-  let realm = new Realm();
+  let realm = new Reflect.Realm();
   realm.eval(`
     var o1, o2;
     with (o1 = {set x(v) { throw "error"; }}) {
@@ -27,7 +27,7 @@ const {
 }
 
 {
-  let realm = new Realm();
+  let realm = new Reflect.Realm();
   let result = realm.eval(`
     var x = 1;
     (function() {
@@ -41,7 +41,7 @@ const {
 }
 
 {
-  let realm = new Realm();
+  let realm = new Reflect.Realm();
   realm.eval(`
     (function(global) {
       "use strict";
