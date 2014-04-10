@@ -142,7 +142,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initialis
         }
 
         /**
-         * 24.2.4.8 DataView.prototype.getInt16(byteOffset, littleEndian=false)
+         * 24.2.4.8 DataView.prototype.getInt16(byteOffset [, littleEndian ])
          * 
          * @param cx
          *            the execution context
@@ -161,7 +161,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initialis
         }
 
         /**
-         * 24.2.4.11 DataView.prototype.getUint16(byteOffset, littleEndian=false)
+         * 24.2.4.11 DataView.prototype.getUint16(byteOffset [, littleEndian ])
          * 
          * @param cx
          *            the execution context
@@ -180,7 +180,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initialis
         }
 
         /**
-         * 24.2.4.9 DataView.prototype.getInt32(byteOffset, littleEndian=false)
+         * 24.2.4.9 DataView.prototype.getInt32(byteOffset [, littleEndian ])
          * 
          * @param cx
          *            the execution context
@@ -199,7 +199,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initialis
         }
 
         /**
-         * 24.2.4.12 DataView.prototype.getUint32(byteOffset, littleEndian=false)
+         * 24.2.4.12 DataView.prototype.getUint32(byteOffset [, littleEndian ])
          * 
          * @param cx
          *            the execution context
@@ -218,7 +218,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initialis
         }
 
         /**
-         * 24.2.4.5 DataView.prototype.getFloat32(byteOffset, littleEndian=false)
+         * 24.2.4.5 DataView.prototype.getFloat32(byteOffset [, littleEndian ])
          * 
          * @param cx
          *            the execution context
@@ -237,7 +237,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initialis
         }
 
         /**
-         * 24.2.4.6 DataView.prototype.getFloat64(byteOffset, littleEndian=false)
+         * 24.2.4.6 DataView.prototype.getFloat64(byteOffset [, littleEndian ])
          * 
          * @param cx
          *            the execution context
@@ -296,7 +296,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initialis
         }
 
         /**
-         * 24.2.4.16 DataView.prototype.setInt16(byteOffset, value, littleEndian=false)
+         * 24.2.4.16 DataView.prototype.setInt16(byteOffset, value [, littleEndian ])
          * 
          * @param cx
          *            the execution context
@@ -318,7 +318,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initialis
         }
 
         /**
-         * 24.2.4.19 DataView.prototype.setUint16(byteOffset, value, littleEndian=false)
+         * 24.2.4.19 DataView.prototype.setUint16(byteOffset, value [, littleEndian ])
          * 
          * @param cx
          *            the execution context
@@ -340,7 +340,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initialis
         }
 
         /**
-         * 24.2.4.17 DataView.prototype.setInt32(byteOffset, value, littleEndian=false)
+         * 24.2.4.17 DataView.prototype.setInt32(byteOffset, value [, littleEndian ])
          * 
          * @param cx
          *            the execution context
@@ -362,7 +362,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initialis
         }
 
         /**
-         * 24.2.4.20 DataView.prototype.setUint32(byteOffset, value, littleEndian=false)
+         * 24.2.4.20 DataView.prototype.setUint32(byteOffset, value [, littleEndian ])
          * 
          * @param cx
          *            the execution context
@@ -384,7 +384,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initialis
         }
 
         /**
-         * 24.2.4.13 DataView.prototype.setFloat32(byteOffset, value, littleEndian=false)
+         * 24.2.4.13 DataView.prototype.setFloat32(byteOffset, value [, littleEndian ])
          * 
          * @param cx
          *            the execution context
@@ -406,7 +406,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initialis
         }
 
         /**
-         * 24.2.4.14 DataView.prototype.setFloat64(byteOffset, value, littleEndian=false)
+         * 24.2.4.14 DataView.prototype.setFloat64(byteOffset, value [, littleEndian ])
          * 
          * @param cx
          *            the execution context

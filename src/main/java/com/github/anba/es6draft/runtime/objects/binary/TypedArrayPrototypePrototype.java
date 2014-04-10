@@ -152,8 +152,8 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.22 %TypedArray%.prototype.set(array, offset = 0 )<br>
-         * 22.2.3.23 %TypedArray%.prototype.set(typedArray, offset = 0 )
+         * 22.2.3.22 %TypedArray%.prototype.set(array [ , offset ] ) <br>
+         * 22.2.3.23 %TypedArray%.prototype.set(typedArray [ offset ] )
          * 
          * @param cx
          *            the execution context
@@ -289,7 +289,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.27 %TypedArray%.prototype.subarray(begin = 0, end = this.length )
+         * 22.2.3.27 %TypedArray%.prototype.subarray( [ begin [ , end ] ] )
          * 
          * @param cx
          *            the execution context
@@ -569,7 +569,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.13 %TypedArray%.prototype.indexOf (searchElement, fromIndex = 0 )
+         * 22.2.3.13 %TypedArray%.prototype.indexOf (searchElement [ , fromIndex ] )
          * 
          * @param cx
          *            the execution context
@@ -590,7 +590,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.16 %TypedArray%.prototype.lastIndexOf (searchElement, fromIndex=this.length-1)
+         * 22.2.3.16 %TypedArray%.prototype.lastIndexOf ( searchElement [ , fromIndex ] )
          * 
          * @param cx
          *            the execution context
@@ -611,7 +611,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.7 %TypedArray%.prototype.every ( callbackfn, thisArg = undefined )
+         * 22.2.3.7 %TypedArray%.prototype.every ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -632,7 +632,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.25 %TypedArray%.prototype.some ( callbackfn, thisArg = undefined )
+         * 22.2.3.25 %TypedArray%.prototype.some ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -653,7 +653,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.12 %TypedArray%.prototype.forEach ( callbackfn, thisArg = undefined )
+         * 22.2.3.12 %TypedArray%.prototype.forEach ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -674,7 +674,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.18 %TypedArray%.prototype.map ( callbackfn, thisArg = undefined )
+         * 22.2.3.18 %TypedArray%.prototype.map ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -718,7 +718,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.9 %TypedArray%.prototype.filter ( callbackfn, thisArg = undefined )
+         * 22.2.3.9 %TypedArray%.prototype.filter ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -814,7 +814,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.10 %TypedArray%.prototype.find (predicate, thisArg = undefined)
+         * 22.2.3.10 %TypedArray%.prototype.find (predicate [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -835,7 +835,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.11 %TypedArray%.prototype.findIndex ( predicate, thisArg = undefined )
+         * 22.2.3.11 %TypedArray%.prototype.findIndex ( predicate [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -856,7 +856,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.8 %TypedArray%.prototype.fill (value, start = 0, end = this.length )
+         * 22.2.3.8 %TypedArray%.prototype.fill (value [ , start [ , end ] ] )
          * 
          * @param cx
          *            the execution context
@@ -959,18 +959,21 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          *            the function this-value
          * @return the toString tag
          */
-        @Accessor(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
+        @Accessor(name = "get [Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 type = Accessor.Type.Getter, attributes = @Attributes(writable = false,
                         enumerable = false, configurable = true))
         public static Object toStringTag(ExecutionContext cx, Object thisValue) {
+            /* steps 1-3 */
             if (!(thisValue instanceof TypedArrayObject)) {
                 throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
-            // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=2414
             TypedArrayObject array = (TypedArrayObject) thisValue;
+            /* steps 4-5 */
             if (array.getElementType() == null) {
                 throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
+            /* step 6 (not applicable) */
+            /* step 7 */
             return array.getTypedArrayName();
         }
     }

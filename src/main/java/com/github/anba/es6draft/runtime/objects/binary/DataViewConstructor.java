@@ -174,7 +174,7 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
     }
 
     /**
-     * 24.2.2.1 DataView (buffer, byteOffset=0, byteLength=undefined)
+     * 24.2.2.1 DataView (buffer [, byteOffset [, byteLength ] ])
      */
     @Override
     public DataViewObject call(ExecutionContext callerContext, Object thisValue, Object... args) {

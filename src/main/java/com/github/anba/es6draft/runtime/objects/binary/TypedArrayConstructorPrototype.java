@@ -56,7 +56,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
      * 22.2.1.1 %TypedArray% ( length )<br>
      * 22.2.1.2 %TypedArray% ( typedArray )<br>
      * 22.2.1.3 %TypedArray% ( array )<br>
-     * 22.2.1.4 %TypedArray% ( buffer, byteOffset=0, length=undefined )<br>
+     * 22.2.1.4 %TypedArray% ( buffer [ , byteOffset [ , length ] ] )<br>
      * 22.2.1.5 %TypedArray% ( all other argument combinations )<br>
      */
     @Override
@@ -291,7 +291,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
     }
 
     /**
-     * 22.2.1.4 %TypedArray% ( buffer, byteOffset=0, length=undefined )
+     * 22.2.1.4 %TypedArray% ( buffer [ , byteOffset [ , length ] ] )
      * 
      * @param cx
      *            the execution context
@@ -343,14 +343,10 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         }
         /* step 15 */
         long bufferByteLength = buffer.getByteLength();
-        /* step 16 */
-        // if (offset + elementSize >= bufferByteLength) {
-        // throwRangeError(cx, Messages.Key.InvalidBufferSize);
-        // }
-        /* steps 17-18 */
+        /* steps 16-17 */
         long newByteLength;
         if (Type.isUndefined(length)) {
-            /* step 17 */
+            /* step 16 */
             if (bufferByteLength % elementSize != 0) {
                 throw newRangeError(cx, Messages.Key.InvalidBufferSize);
             }
@@ -359,23 +355,23 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
                 throw newRangeError(cx, Messages.Key.InvalidBufferSize);
             }
         } else {
-            /* step 18 */
+            /* step 17 */
             long newLength = ToLength(cx, length);
             newByteLength = newLength * elementSize;
             if (offset + newByteLength > bufferByteLength) {
                 throw newRangeError(cx, Messages.Key.InvalidBufferSize);
             }
         }
-        /* step 19 */
+        /* step 18 */
         if (array.getBuffer() != null) {
             throw newTypeError(cx, Messages.Key.InitialisedObject);
         }
-        /* steps 20-23 */
+        /* steps 19-22 */
         array.setBuffer(buffer);
         array.setByteLength(newByteLength);
         array.setByteOffset((long) offset);
         array.setArrayLength(newByteLength / elementSize);
-        /* step 24 */
+        /* step 23 */
         return array;
     }
 
@@ -437,7 +433,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         }
 
         /**
-         * 22.2.2.1 %TypedArray%.from ( source, mapfn=undefined, thisArg=undefined )
+         * 22.2.2.1 %TypedArray%.from ( source [ , mapfn [ , thisArg ] ] )
          * 
          * @param cx
          *            the execution context
