@@ -97,7 +97,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         }
 
         /* step 6 */
-        return RegExpInitialise(calleeContext, obj, p, f);
+        return RegExpInitialize(calleeContext, obj, p, f);
     }
 
     /**
@@ -140,7 +140,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
     /**
      * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
-     * 21.2.3.3.2 Runtime Semantics: RegExpInitialise Abstract Operation
+     * 21.2.3.3.2 Runtime Semantics: RegExpInitialize Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -152,7 +152,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
      *            the regular expression flags
      * @return the RegExp object
      */
-    public static RegExpObject RegExpInitialise(ExecutionContext cx, RegExpObject obj,
+    public static RegExpObject RegExpInitialize(ExecutionContext cx, RegExpObject obj,
             Object pattern, Object flags) {
         /* steps 1-3 */
         String p = Type.isUndefined(pattern) ? "" : ToFlatString(cx, pattern);
@@ -195,7 +195,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         /* steps 1-2 */
         RegExpObject obj = RegExpAlloc(cx, cx.getIntrinsic(Intrinsics.RegExp));
         /* step 3 */
-        return RegExpInitialise(cx, obj, pattern, flags);
+        return RegExpInitialize(cx, obj, pattern, flags);
     }
 
     /**
