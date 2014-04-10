@@ -1039,7 +1039,8 @@ public final class Properties {
         Accessor.Type type = accessor.type();
         int arity = (type == Accessor.Type.Getter ? 0 : 1);
         Attributes attrs = accessor.attributes();
-        String functionName = (type == Accessor.Type.Getter ? "get " : "set ") + name;
+        String functionName = sym == BuiltinSymbol.NONE ? (type == Accessor.Type.Getter ? "get "
+                : "set ") + name : name;
 
         mh = MethodHandles.insertArguments(mh, 0, cx);
 
