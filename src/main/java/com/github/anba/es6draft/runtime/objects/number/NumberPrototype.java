@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.objects.number;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -81,13 +80,13 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 20.1.3.2 Number.prototype.constructor
+         * 20.1.3.1 Number.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Number;
 
         /**
-         * 20.1.3.7 Number.prototype.toString ( [ radix ] )
+         * 20.1.3.6 Number.prototype.toString ( [ radix ] )
          * 
          * @param cx
          *            the execution context
@@ -126,7 +125,7 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 20.1.3.5 Number.prototype.toLocaleString(reserved1=undefined, reserved2=undefined)<br>
+         * 20.1.3.4 Number.prototype.toLocaleString( [ reserved1 [ ., reserved2 ] ])<br>
          * 13.2.1 Number.prototype.toLocaleString ([locales [, options]])
          * 
          * @param cx
@@ -155,7 +154,7 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 20.1.3.8 Number.prototype.valueOf ( )
+         * 20.1.3.7 Number.prototype.valueOf ( )
          * 
          * @param cx
          *            the execution context
@@ -169,7 +168,7 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 20.1.3.4 Number.prototype.toFixed (fractionDigits)
+         * 20.1.3.3 Number.prototype.toFixed (fractionDigits)
          * 
          * @param cx
          *            the execution context
@@ -201,7 +200,7 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 20.1.3.3 Number.prototype.toExponential (fractionDigits)
+         * 20.1.3.2 Number.prototype.toExponential (fractionDigits)
          * 
          * @param cx
          *            the execution context
@@ -243,7 +242,7 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 20.1.3.6 Number.prototype.toPrecision (precision)
+         * 20.1.3.5 Number.prototype.toPrecision (precision)
          * 
          * @param cx
          *            the execution context
@@ -280,25 +279,6 @@ public final class NumberPrototype extends OrdinaryObject implements Initialisab
             StringBuilder sb = new StringBuilder();
             DToA.JS_dtostr(sb, DToA.DTOSTR_PRECISION, (int) p, x);
             return sb.toString();
-        }
-
-        /**
-         * 20.1.3.1 Number.prototype.clz ()
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the number of leading zeroes in the 32-bit integer representation of this number
-         */
-        @Function(name = "clz", arity = 0)
-        public static Object clz(ExecutionContext cx, Object thisValue) {
-            /* step 1 */
-            double x = thisNumberValue(cx, thisValue);
-            /* steps 2-3 */
-            long n = ToUint32(cx, x);
-            /* steps 4-5 */
-            return Integer.numberOfLeadingZeros((int) n);
         }
     }
 }
