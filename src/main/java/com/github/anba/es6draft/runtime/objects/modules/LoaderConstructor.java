@@ -37,8 +37,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <h1>26 Reflection</h1><br>
  * <h2>26.3 Loader Objects</h2>
  * <ul>
- * <li>26.3.1 The %Loader% Constructor
- * <li>26.3.2 Properties of the %Loader% Constructor
+ * <li>26.3.1 The Reflect.Loader Constructor
+ * <li>26.3.2 Properties of the Reflect.Loader Constructor
  * </ul>
  */
 public final class LoaderConstructor extends BuiltinConstructor implements Initialisable {
@@ -53,7 +53,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 26.3.1.1 %Loader% (options = { })
+     * 26.3.1.1 Reflect.Loader (options = { })
      */
     @Override
     public LoaderObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -106,7 +106,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 26.3.1.2 new %Loader% ( ... argumentsList )
+     * 26.3.1.2 new Reflect.Loader ( ... argumentsList )
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -114,7 +114,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 26.3.2 Properties of the %Loader% Constructor
+     * 26.3.2 Properties of the Reflect.Loader Constructor
      */
     public enum Properties {
         ;
@@ -131,14 +131,14 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
         public static final String name = "Loader";
 
         /**
-         * 26.3.2.1 %Loader%.prototype
+         * 26.3.2.1 Reflect.Loader.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.LoaderPrototype;
 
         /**
-         * 26.3.2.2 %Loader% [ @@create ] ( )
+         * 26.3.2.2 Reflect.Loader [ @@create ] ( )
          * 
          * @param cx
          *            the execution context

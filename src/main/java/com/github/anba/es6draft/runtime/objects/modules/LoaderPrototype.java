@@ -28,6 +28,7 @@ import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.AliasFunction;
+import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -53,7 +54,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>26 Reflection</h1><br>
  * <h2>26.3 Loader Objects</h2>
  * <ul>
- * <li>26.3.3 Properties of the %Loader% Prototype Object
+ * <li>26.3.3 Properties of the Reflect.Loader Prototype Object
  * </ul>
  */
 public final class LoaderPrototype extends OrdinaryObject implements Initialisable {
@@ -67,7 +68,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
     }
 
     /**
-     * 26.3.3 Properties of the %Loader% Prototype Object
+     * 26.3.3 Properties of the Reflect.Loader Prototype Object
      */
     public enum Properties {
         ;
@@ -96,13 +97,13 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 26.3.3.1 %Loader%.prototype.constructor
+         * 26.3.3.1 Reflect.Loader.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Loader;
 
         /**
-         * 26.3.3.14 get Loader.prototype.realm
+         * 26.3.3.14 get Reflect.Loader.prototype.realm
          * 
          * @param cx
          *            the execution context
@@ -121,7 +122,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 26.3.3.7 get Loader.prototype.global
+         * 26.3.3.7 get Reflect.Loader.prototype.global
          * 
          * @param cx
          *            the execution context
@@ -140,7 +141,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 26.3.3.2 %Loader%.prototype.define ( name, source, options = undefined )
+         * 26.3.3.2 Reflect.Loader.prototype.define ( name, source, options = undefined )
          * 
          * @param cx
          *            the execution context
@@ -182,7 +183,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 26.3.3.11 Loader.prototype.load ( name, options = undefined )
+         * 26.3.3.11 Reflect.Loader.prototype.load ( name, options = undefined )
          * 
          * @param cx
          *            the execution context
@@ -209,7 +210,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 26.3.3.12 Loader.prototype.module ( source, options ) <br>
+         * 26.3.3.12 Reflect.Loader.prototype.module ( source, options ) <br>
          * FIXME: spec bug - options not declared as optional (options = undefined)
          * 
          * @param cx
@@ -249,7 +250,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 26.3.3.9 Loader.prototype.import ( name, options = undefined )
+         * 26.3.3.9 Reflect.Loader.prototype.import ( name, options = undefined )
          * 
          * @param cx
          *            the execution context
@@ -312,7 +313,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 26.3.3.5 Loader.prototype.eval ( source )
+         * 26.3.3.5 Reflect.Loader.prototype.eval ( source )
          * 
          * @param cx
          *            the execution context
@@ -333,7 +334,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 26.3.3.6 Loader.prototype.get ( name )
+         * 26.3.3.6 Reflect.Loader.prototype.get ( name )
          * 
          * @param cx
          *            the execution context
@@ -363,7 +364,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 26.3.3.8 Loader.prototype.has ( name )
+         * 26.3.3.8 Reflect.Loader.prototype.has ( name )
          * 
          * @param cx
          *            the execution context
@@ -386,7 +387,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 26.3.3.15 Loader.prototype.set ( name, module )
+         * 26.3.3.15 Reflect.Loader.prototype.set ( name, module )
          * 
          * @param cx
          *            the execution context
@@ -419,7 +420,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 26.3.3.3 Loader.prototype.delete ( name )
+         * 26.3.3.3 Reflect.Loader.prototype.delete ( name )
          * 
          * @param cx
          *            the execution context
@@ -442,8 +443,8 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 26.3.3.4 Loader.prototype.entries ( )<br>
-         * 26.3.3.17 Loader.prototype[@@iterator] ( )
+         * 26.3.3.4 Reflect.Loader.prototype.entries ( )<br>
+         * 26.3.3.17 Reflect.Loader.prototype[@@iterator] ( )
          * 
          * @param cx
          *            the execution context
@@ -461,7 +462,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 26.3.3.10 Loader.prototype.keys ( )
+         * 26.3.3.10 Reflect.Loader.prototype.keys ( )
          * 
          * @param cx
          *            the execution context
@@ -478,7 +479,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 26.3.3.16 Loader.prototype.values ( )
+         * 26.3.3.16 Reflect.Loader.prototype.values ( )
          * 
          * @param cx
          *            the execution context
@@ -495,9 +496,16 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
+         * 26.3.3.17 Reflect.Loader.prototype [ @@toStringTag ]
+         */
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static final String toStringTag = "Reflect.Loader";
+
+        /**
          * 26.3.3.18 Loader Pipeline Hook Properties
          * <p>
-         * 26.3.3.18.1 Loader.prototype.normalize ( name, refererName, refererAddress )
+         * 26.3.3.18.1 Reflect.Loader.prototype.normalize ( name, refererName, refererAddress )
          * 
          * @param cx
          *            the execution context
@@ -521,7 +529,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         /**
          * 26.3.3.18 Loader Pipeline Hook Properties
          * <p>
-         * 26.3.3.18.2 Loader.prototype.locate (loadRequest)
+         * 26.3.3.18.2 Reflect.Loader.prototype.locate (loadRequest)
          * 
          * @param cx
          *            the execution context
@@ -544,7 +552,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         /**
          * 26.3.3.18 Loader Pipeline Hook Properties
          * <p>
-         * 26.3.3.18.3 Loader.prototype.fetch (loadRequest)
+         * 26.3.3.18.3 Reflect.Loader.prototype.fetch (loadRequest)
          * 
          * @param cx
          *            the execution context
@@ -563,7 +571,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         /**
          * 26.3.3.18 Loader Pipeline Hook Properties
          * <p>
-         * 26.3.3.18.4 Loader.prototype.translate ( loadRequest )
+         * 26.3.3.18.4 Reflect.Loader.prototype.translate ( loadRequest )
          * 
          * @param cx
          *            the execution context
@@ -586,7 +594,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         /**
          * 26.3.3.18 Loader Pipeline Hook Properties
          * <p>
-         * 26.3.3.18.5 Loader.prototype.instantiate (loadRequest)
+         * 26.3.3.18.5 Reflect.Loader.prototype.instantiate (loadRequest)
          * 
          * @param cx
          *            the execution context
