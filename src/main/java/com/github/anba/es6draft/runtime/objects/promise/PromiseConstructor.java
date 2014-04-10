@@ -10,7 +10,9 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.*;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.CreateResolvingFunctions;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.IsPromise;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.NewPromiseCapability;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseCapability.IfAbruptRejectPromise;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
@@ -29,8 +31,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseRejectFunction;
-import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseResolveFunction;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.ResolvingFunctions;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -66,25 +66,36 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
     public PromiseObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object executor = args.length > 0 ? args[0] : UNDEFINED;
-        /* step 2 */
-        if (!IsCallable(executor)) {
-            throw newTypeError(calleeContext, Messages.Key.NotCallable);
-        }
-        /* steps 3-4 */
+        /* steps 2-3 */
         if (!(thisValue instanceof PromiseObject)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         /* step 1 */
         PromiseObject promise = (PromiseObject) thisValue;
-        /* step 5 */
+        /* step 4 */
         if (promise.getState() != null) {
             throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
+        /* step 5 */
+        if (!IsCallable(executor)) {
+            throw newTypeError(calleeContext, Messages.Key.NotCallable);
+        }
         /* step 6 */
-        return NewInitialisePromise(calleeContext, promise, (Callable) executor);
+        return InitializePromise(calleeContext, promise, (Callable) executor);
     }
 
-    public static PromiseObject NewInitialisePromise(ExecutionContext cx, PromiseObject promise,
+    /**
+     * 25.4.3.1.1 InitializePromise ( promise, executor )
+     * 
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @param executor
+     *            the promise executor function
+     * @return the promise object
+     */
+    public static PromiseObject InitializePromise(ExecutionContext cx, PromiseObject promise,
             Callable executor) {
         /* step 1 */
         assert promise.getState() == null;
@@ -98,44 +109,10 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             executor.call(cx, UNDEFINED, resolvingFunctions.getResolve(),
                     resolvingFunctions.getReject());
         } catch (ScriptException e) {
-            /* step 9 */
+            /* step 8 */
             resolvingFunctions.getReject().call(cx, UNDEFINED, e.getValue());
         }
-        /* step 10 */
-        return promise;
-    }
-
-    /**
-     * 25.4.3.1.1 InitialisePromise( promise, executor) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param promise
-     *            the promise object
-     * @param executor
-     *            the promise executor function
-     * @return the promise object
-     */
-    @Deprecated
-    public static PromiseObject InitialisePromise(ExecutionContext cx, PromiseObject promise,
-            Callable executor) {
-        /* step 1 */
-        assert promise.getState() == null;
-        /* step 2 (not applicable) */
-        /* steps 3-5 */
-        promise.initialise();
-        /* step 6 */
-        PromiseResolveFunction resolve = CreateResolveFunction(cx, promise);
-        /* step 7 */
-        PromiseRejectFunction reject = CreateRejectFunction(cx, promise);
-        /* step 8 */
-        try {
-            executor.call(cx, UNDEFINED, resolve, reject);
-        } catch (ScriptException e) {
-            /* step 9 */
-            reject.call(cx, UNDEFINED, e.getValue());
-        }
-        /* step 10 */
+        /* step 9 */
         return promise;
     }
 
@@ -166,7 +143,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         public static final String name = "Promise";
 
         /**
-         * 25.4.4.3 Promise.prototype
+         * 25.4.4.2 Promise.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -250,7 +227,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         }
 
         /**
-         * 25.4.4.4 Promise.race ( iterable )
+         * 25.4.4.3 Promise.race ( iterable )
          * 
          * @param cx
          *            the execution context
@@ -312,7 +289,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         }
 
         /**
-         * 25.4.4.5 Promise.reject ( r )
+         * 25.4.4.4 Promise.reject ( r )
          * 
          * @param cx
          *            the execution context
@@ -335,7 +312,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         }
 
         /**
-         * 25.4.4.6 Promise.resolve ( x )
+         * 25.4.4.5 Promise.resolve ( x )
          * 
          * @param cx
          *            the execution context
@@ -365,7 +342,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         }
 
         /**
-         * 25.4.4.7 Promise [ @@create ] ( )
+         * 25.4.4.6 Promise [ @@create ] ( )
          * 
          * @param cx
          *            the execution context
@@ -382,7 +359,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
     }
 
     /**
-     * 25.4.4.7.1 AllocatePromise( constructor ) Abstraction Operation
+     * 25.4.4.6.1 AllocatePromise( constructor ) Abstraction Operation
      * 
      * @param cx
      *            the execution context

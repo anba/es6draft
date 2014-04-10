@@ -15,7 +15,7 @@ import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.Fro
 import static com.github.anba.es6draft.runtime.objects.number.NumberObject.NumberCreate;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.CreatePromiseCapabilityRecord;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor.AllocatePromise;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor.NewInitialisePromise;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor.InitializePromise;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
@@ -2484,7 +2484,7 @@ public final class AbstractOperations {
         /* step 1 */
         PromiseObject promise = AllocatePromise(cx, cx.getIntrinsic(Intrinsics.Promise));
         /* step 2 */
-        return NewInitialisePromise(cx, promise, executor);
+        return InitializePromise(cx, promise, executor);
     }
 
     /**

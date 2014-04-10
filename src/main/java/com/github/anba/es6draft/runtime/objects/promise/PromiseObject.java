@@ -21,16 +21,9 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class PromiseObject extends OrdinaryObject {
-    public enum Status {
-        Unresolved, HasResolution, HasRejection
-    }
-
     public enum State {
         Pending, Fulfilled, Rejected
     }
-
-    /** [[PromiseStatus]] */
-    private Status status;
 
     /** [[PromiseState]] */
     private State state;
@@ -41,8 +34,8 @@ public final class PromiseObject extends OrdinaryObject {
     /** [[PromiseResult]] */
     private Object result;
 
-    /** [[PromiseResolveReactions]] */
-    private List<PromiseReaction> resolveReactions;
+    /** [[PromiseFulfillReactions]] */
+    private List<PromiseReaction> fulfillReactions;
 
     /** [[PromiseRejectReactions]] */
     private List<PromiseReaction> rejectReactions;
@@ -52,21 +45,10 @@ public final class PromiseObject extends OrdinaryObject {
     }
 
     public void initialise() {
-        assert status == null && state == null;
-        status = PromiseObject.Status.Unresolved;
+        assert state == null;
         state = PromiseObject.State.Pending;
-        resolveReactions = new ArrayList<>();
+        fulfillReactions = new ArrayList<>();
         rejectReactions = new ArrayList<>();
-    }
-
-    /**
-     * [[PromiseStatus]]
-     * 
-     * @return the promise status
-     */
-    @Deprecated
-    public Status getStatus() {
-        return status;
     }
 
     /**
@@ -108,14 +90,14 @@ public final class PromiseObject extends OrdinaryObject {
     }
 
     /**
-     * [[PromiseResolveReactions]]
+     * [[PromiseFulfillReactions]]
      * 
      * @param reaction
-     *            the resolve reaction
+     *            the fulfill reaction
      */
-    public void addResolveReaction(PromiseReaction reaction) {
+    public void addFulfillReaction(PromiseReaction reaction) {
         assert state == State.Pending;
-        resolveReactions.add(reaction);
+        fulfillReactions.add(reaction);
     }
 
     /**
@@ -130,7 +112,7 @@ public final class PromiseObject extends OrdinaryObject {
     }
 
     public List<PromiseReaction> resolve(Object resolution) {
-        List<PromiseReaction> reactions = resolveReactions;
+        List<PromiseReaction> reactions = fulfillReactions;
         resolve(State.Fulfilled, resolution);
         return reactions;
     }
@@ -144,7 +126,7 @@ public final class PromiseObject extends OrdinaryObject {
     private void resolve(State state, Object result) {
         assert this.state == State.Pending;
         this.result = result;
-        this.resolveReactions = null;
+        this.fulfillReactions = null;
         this.rejectReactions = null;
         this.state = state;
     }

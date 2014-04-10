@@ -41,12 +41,12 @@ public final class PromiseAbstractOperations {
 
     public static final class ResolvingFunctions {
         /** [[Resolve]] */
-        private final NewPromiseResolveFunction resolve;
+        private final PromiseResolveFunction resolve;
 
         /** [[Reject]] */
-        private final NewPromiseRejectFunction reject;
+        private final PromiseRejectFunction reject;
 
-        ResolvingFunctions(NewPromiseResolveFunction resolve, NewPromiseRejectFunction reject) {
+        ResolvingFunctions(PromiseResolveFunction resolve, PromiseRejectFunction reject) {
             this.resolve = resolve;
             this.reject = reject;
         }
@@ -56,7 +56,7 @@ public final class PromiseAbstractOperations {
          *
          * @return the resolve function
          */
-        public NewPromiseResolveFunction getResolve() {
+        public PromiseResolveFunction getResolve() {
             return resolve;
         }
 
@@ -65,13 +65,15 @@ public final class PromiseAbstractOperations {
          *
          * @return the reject function
          */
-        public NewPromiseRejectFunction getReject() {
+        public PromiseRejectFunction getReject() {
             return reject;
         }
     }
 
     /**
-     * CreateResolvingFunctions ( promise )
+     * <h2>25.4.1 Promise Abstract Operations</h2>
+     * <p>
+     * 25.4.1.3 CreateResolvingFunctions ( promise )
      * 
      * @param cx
      *            the execution context
@@ -84,25 +86,25 @@ public final class PromiseAbstractOperations {
         /* step 1 */
         AtomicBoolean alreadyResolved = new AtomicBoolean(false);
         /* steps 2-4 */
-        NewPromiseResolveFunction resolve = new NewPromiseResolveFunction(cx.getRealm(), promise,
+        PromiseResolveFunction resolve = new PromiseResolveFunction(cx.getRealm(), promise,
                 alreadyResolved);
         /* steps 5-7 */
-        NewPromiseRejectFunction reject = new NewPromiseRejectFunction(cx.getRealm(), promise,
+        PromiseRejectFunction reject = new PromiseRejectFunction(cx.getRealm(), promise,
                 alreadyResolved);
         /* step 8 */
         return new ResolvingFunctions(resolve, reject);
     }
 
     /**
-     * Promise Reject Functions
+     * 25.4.1.3.1 Promise Reject Functions
      */
-    public static final class NewPromiseRejectFunction extends BuiltinFunction {
+    public static final class PromiseRejectFunction extends BuiltinFunction {
         /** [[Promise]] */
         private final PromiseObject promise;
         /** [[AlreadyResolved]] */
         private final AtomicBoolean alreadyResolved;
 
-        public NewPromiseRejectFunction(Realm realm, PromiseObject promise,
+        public PromiseRejectFunction(Realm realm, PromiseObject promise,
                 AtomicBoolean alreadyResolved) {
             super(realm, ANONYMOUS, 1);
             this.promise = promise;
@@ -127,15 +129,15 @@ public final class PromiseAbstractOperations {
     }
 
     /**
-     * Promise Resolve Functions
+     * 25.4.1.3.2 Promise Resolve Functions
      */
-    public static final class NewPromiseResolveFunction extends BuiltinFunction {
+    public static final class PromiseResolveFunction extends BuiltinFunction {
         /** [[Promise]] */
         private final PromiseObject promise;
         /** [[AlreadyResolved]] */
         private final AtomicBoolean alreadyResolved;
 
-        public NewPromiseResolveFunction(Realm realm, PromiseObject promise,
+        public PromiseResolveFunction(Realm realm, PromiseObject promise,
                 AtomicBoolean alreadyResolved) {
             super(realm, ANONYMOUS, 1);
             this.promise = promise;
@@ -188,12 +190,15 @@ public final class PromiseAbstractOperations {
             } catch (ScriptException e) {
                 return resolvingFunctions.getReject().call(calleeContext, UNDEFINED, e.getValue());
             }
+            /* step 15 */
             return UNDEFINED;
         }
     }
 
     /**
-     * FulfillPromise ( promise, value )
+     * <h2>25.4.1 Promise Abstract Operations</h2>
+     * <p>
+     * 25.4.1.4 FulfillPromise (promise, value)
      * 
      * @param cx
      *            the execution context
@@ -205,156 +210,6 @@ public final class PromiseAbstractOperations {
     public static void FulfillPromise(ExecutionContext cx, PromiseObject promise, Object value) {
         List<PromiseReaction> reactions = promise.resolve(value);
         TriggerPromiseReactions(cx, reactions, value);
-    }
-
-    /**
-     * RejectPromise ( promise, reason )
-     * 
-     * @param cx
-     *            the execution context
-     * @param promise
-     *            the promise object
-     * @param reason
-     *            the rejection reason
-     */
-    public static void RejectPromise(ExecutionContext cx, PromiseObject promise, Object reason) {
-        List<PromiseReaction> reactions = promise.reject(reason);
-        TriggerPromiseReactions(cx, reactions, reason);
-    }
-
-    public static final class NewPromiseReactionTask implements Task {
-        private final Realm realm;
-        private final PromiseReaction reaction;
-        private final Object argument;
-
-        public NewPromiseReactionTask(Realm realm, PromiseReaction reaction, Object argument) {
-            this.realm = realm;
-            this.reaction = reaction;
-            this.argument = argument;
-        }
-
-        @Override
-        public void execute() {
-            ExecutionContext cx = realm.defaultContext();
-            /* step 1 (not applicable) */
-            /* step 2 */
-            PromiseCapability<?> promiseCapability = reaction.getCapabilities();
-            /* step 3 */
-            Callable handler = reaction.getHandler();
-            /* steps 4-6 */
-            Object handlerResult;
-            try {
-                handlerResult = handler.call(cx, UNDEFINED, argument);
-            } catch (ScriptException e) {
-                /* step 5 */
-                promiseCapability.getReject().call(cx, UNDEFINED, e.getValue());
-                return;
-            }
-            /* steps 7-8 */
-            promiseCapability.getResolve().call(cx, UNDEFINED, handlerResult);
-        }
-    }
-
-    /* ***************************************************************************************** */
-
-    /**
-     * <h2>25.4.1 Promise Abstract Operations</h2>
-     * <p>
-     * 25.4.1.3 CreateRejectFunction ( promise )
-     * 
-     * @param cx
-     *            the execution context
-     * @param promise
-     *            the promise object
-     * @return -
-     */
-    @Deprecated
-    public static PromiseRejectFunction CreateRejectFunction(ExecutionContext cx,
-            PromiseObject promise) {
-        /* steps 1-3 */
-        return new PromiseRejectFunction(cx.getRealm(), promise);
-    }
-
-    /**
-     * 25.4.1.3.1 Promise Reject Functions
-     */
-    @Deprecated
-    public static final class PromiseRejectFunction extends BuiltinFunction {
-        /** [[Promise]] */
-        private final PromiseObject promise;
-
-        public PromiseRejectFunction(Realm realm, PromiseObject promise) {
-            super(realm, ANONYMOUS, 1);
-            this.promise = promise;
-        }
-
-        @Override
-        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object reason = args.length > 0 ? args[0] : UNDEFINED;
-            /* step 1 (not applicable) */
-            /* step 2 */
-            PromiseObject promise = this.promise;
-            /* step 3 */
-            if (promise.getStatus() != PromiseObject.Status.Unresolved) {
-                return UNDEFINED;
-            }
-            /* steps 4-8 */
-            List<PromiseReaction> reactions = promise.reject(reason);
-            /* step 9 */
-            TriggerPromiseReactions(calleeContext, reactions, reason);
-            return UNDEFINED;
-        }
-    }
-
-    /**
-     * <h2>25.4.1 Promise Abstract Operations</h2>
-     * <p>
-     * 25.4.1.4 CreateResolveFunction ( promise )
-     * 
-     * @param cx
-     *            the execution context
-     * @param promise
-     *            the promise object
-     * @return -
-     */
-    @Deprecated
-    public static PromiseResolveFunction CreateResolveFunction(ExecutionContext cx,
-            PromiseObject promise) {
-        /* steps 1-3 */
-        return new PromiseResolveFunction(cx.getRealm(), promise);
-    }
-
-    /**
-     * 25.4.1.4.1 Promise Resolve Functions
-     */
-    @Deprecated
-    public static final class PromiseResolveFunction extends BuiltinFunction {
-        /** [[Promise]] */
-        private final PromiseObject promise;
-
-        public PromiseResolveFunction(Realm realm, PromiseObject promise) {
-            super(realm, ANONYMOUS, 1);
-            this.promise = promise;
-        }
-
-        @Override
-        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object resolution = args.length > 0 ? args[0] : UNDEFINED;
-            /* step 1 (not applicable) */
-            /* step 2 */
-            PromiseObject promise = this.promise;
-            /* step 3 */
-            if (promise.getStatus() != PromiseObject.Status.Unresolved) {
-                return UNDEFINED;
-            }
-            /* steps 4-8 */
-            List<PromiseReaction> reactions = promise.resolve(resolution);
-            /* step 9 */
-            TriggerPromiseReactions(calleeContext, reactions, resolution);
-            return UNDEFINED;
-        }
     }
 
     /**
@@ -386,7 +241,7 @@ public final class PromiseAbstractOperations {
     }
 
     /**
-     * 25.4.1.5.1 CreatePromiseCapabilityRecord( promise, constructor ) Abstract Operation
+     * 25.4.1.5.1 CreatePromiseCapabilityRecord( promise, constructor )
      * 
      * @param <PROMISE>
      *            the promise type
@@ -400,6 +255,7 @@ public final class PromiseAbstractOperations {
      */
     public static <PROMISE extends ScriptObject> PromiseCapability<PROMISE> CreatePromiseCapabilityRecord(
             ExecutionContext cx, PROMISE promise, Constructor constructor) {
+        /* step 1 (not applicable) */
         /* steps 2-3 */
         GetCapabilitiesExecutor executor = new GetCapabilitiesExecutor(cx.getRealm());
         /* steps 4-5 */
@@ -481,7 +337,24 @@ public final class PromiseAbstractOperations {
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
-     * 25.4.1.7 TriggerPromiseReactions ( reactions, argument )
+     * 25.4.1.7 RejectPromise (promise, reason)
+     * 
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @param reason
+     *            the rejection reason
+     */
+    public static void RejectPromise(ExecutionContext cx, PromiseObject promise, Object reason) {
+        List<PromiseReaction> reactions = promise.reject(reason);
+        TriggerPromiseReactions(cx, reactions, reason);
+    }
+
+    /**
+     * <h2>25.4.1 Promise Abstract Operations</h2>
+     * <p>
+     * 25.4.1.8 TriggerPromiseReactions ( reactions, argument )
      * 
      * @param cx
      *            the execution context
@@ -498,62 +371,11 @@ public final class PromiseAbstractOperations {
         }
     }
 
-    public enum Thenable {
-        IsThenable, NotThenable
-    }
-
-    /**
-     * <h2>25.4.1 Promise Abstract Operations</h2>
-     * <p>
-     * 25.4.1.8 UpdatePromiseFromPotentialThenable ( x, promiseCapability)
-     * 
-     * @param cx
-     *            the execution context
-     * @param x
-     *            the object
-     * @param promiseCapability
-     *            the promise capability record
-     * @return the thenable type
-     */
-    @Deprecated
-    public static Thenable UpdatePromiseFromPotentialThenable(ExecutionContext cx, Object x,
-            PromiseCapability<?> promiseCapability) {
-        /* step 1 */
-        if (!Type.isObject(x)) {
-            return Thenable.NotThenable;
-        }
-        ScriptObject thenable = Type.objectValue(x);
-        /* steps 2-4 */
-        Object then;
-        try {
-            then = Get(cx, thenable, "then");
-        } catch (ScriptException e) {
-            /* step 3 */
-            promiseCapability.getReject().call(cx, UNDEFINED, e.getValue());
-            return Thenable.IsThenable;
-        }
-        /* step 5 */
-        if (!IsCallable(then)) {
-            return Thenable.NotThenable;
-        }
-        /* steps 6-7 */
-        try {
-            ((Callable) then).call(cx, thenable, promiseCapability.getResolve(),
-                    promiseCapability.getReject());
-        } catch (ScriptException e) {
-            /* step 7 */
-            promiseCapability.getReject().call(cx, UNDEFINED, e.getValue());
-        }
-        /* step 8 */
-        return Thenable.IsThenable;
-    }
-
     /**
      * <h2>25.4.2 Promise Tasks</h2>
      * <p>
      * 25.4.2.1 PromiseReactionTask( reaction, argument )
      */
-    @Deprecated
     public static final class PromiseReactionTask implements Task {
         private final Realm realm;
         private final PromiseReaction reaction;
@@ -582,21 +404,8 @@ public final class PromiseAbstractOperations {
                 promiseCapability.getReject().call(cx, UNDEFINED, e.getValue());
                 return;
             }
-            /* step 7 */
-            if (SameValue(handlerResult, promiseCapability.getPromise())) {
-                ScriptException selfResolutionError = newTypeError(cx,
-                        Messages.Key.PromiseSelfResolution);
-                promiseCapability.getReject().call(cx, UNDEFINED, selfResolutionError.getValue());
-                return;
-            }
-            /* steps 8-10 */
-            Thenable updateResult = UpdatePromiseFromPotentialThenable(cx, handlerResult,
-                    promiseCapability);
-            /* step 11 */
-            if (updateResult == Thenable.NotThenable) {
-                promiseCapability.getResolve().call(cx, UNDEFINED, handlerResult);
-            }
-            /* step 12 (return) */
+            /* steps 7-8 */
+            promiseCapability.getResolve().call(cx, UNDEFINED, handlerResult);
         }
     }
 
