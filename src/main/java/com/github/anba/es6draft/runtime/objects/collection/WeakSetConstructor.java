@@ -48,7 +48,7 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
     }
 
     /**
-     * 23.4.1.1 WeakSet (iterable = undefined)
+     * 23.4.1.1 WeakSet ([ iterable ])
      */
     @Override
     public WeakSetObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -81,19 +81,19 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
             adder = (Callable) _adder;
         }
 
-        // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=2397
+        /* steps 8-9 */
         if (set.isInitialised()) {
             throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
 
-        /* step 8 */
+        /* step 10 */
         set.initialise();
 
-        /* step 9 */
+        /* step 11 */
         if (iter == null) {
             return set;
         }
-        /* step 10 */
+        /* step 12 */
         for (;;) {
             ScriptObject next = IteratorStep(calleeContext, iter);
             if (next == null) {

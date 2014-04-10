@@ -35,8 +35,8 @@ public class LinkedMap<KEY, VALUE> {
         head.next = head;
     }
 
-    private void insert(KEY hashKey, KEY key, VALUE value) {
-        Entry<KEY, VALUE> entry = new Entry<>(key, value);
+    private void insert(KEY hashKey, VALUE value) {
+        Entry<KEY, VALUE> entry = new Entry<>(hashKey, value);
         map.put(hashKey, entry);
         entry.prev = head.prev;
         entry.next = head;
@@ -113,7 +113,7 @@ public class LinkedMap<KEY, VALUE> {
         if (entry != null) {
             entry.setValue(value);
         } else {
-            insert(hashKey, key, value);
+            insert(hashKey, value);
         }
     }
 

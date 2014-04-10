@@ -91,9 +91,9 @@ public final class SetPrototype extends OrdinaryObject implements Initialisable 
             SetObject s = thisSetValue(cx, thisValue);
             /* step 5 */
             LinkedMap<Object, Void> entries = s.getSetData();
-            /* steps 6-9 */
+            /* steps 6-8 */
             entries.set(value, null);
-            /* step 8.a.i, 10 */
+            /* step 6.a.i, 9 */
             return s;
         }
 
@@ -155,7 +155,7 @@ public final class SetPrototype extends OrdinaryObject implements Initialisable 
         }
 
         /**
-         * 23.2.3.6 Set.prototype.forEach ( callbackfn , thisArg = undefined )
+         * 23.2.3.6 Set.prototype.forEach ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context

@@ -48,7 +48,7 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
     }
 
     /**
-     * 23.3.1.1 WeakMap (iterable = undefined)
+     * 23.3.1.1 WeakMap ([ iterable ])
      */
     @Override
     public WeakMapObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -81,19 +81,19 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
             adder = (Callable) _adder;
         }
 
-        // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=2397
+        /* steps 8-9 */
         if (map.isInitialised()) {
             throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
 
-        /* step 8 */
+        /* step 10 */
         map.initialise();
 
-        /* step 9 */
+        /* step 11 */
         if (iter == null) {
             return map;
         }
-        /* step 10 */
+        /* step 12 */
         for (;;) {
             ScriptObject next = IteratorStep(calleeContext, iter);
             if (next == null) {

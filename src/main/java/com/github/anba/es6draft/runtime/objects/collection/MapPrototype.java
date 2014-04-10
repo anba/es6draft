@@ -118,7 +118,7 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
         }
 
         /**
-         * 23.1.3.5 Map.prototype.forEach ( callbackfn , thisArg = undefined )
+         * 23.1.3.5 Map.prototype.forEach ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -170,7 +170,7 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
             MapObject m = thisMapValue(cx, thisValue);
             /* step 5 */
             LinkedMap<Object, Object> entries = m.getMapData();
-            /* steps 6-9 */
+            /* steps 6-10 */
             Object value = entries.get(key);
             return value != null ? value : UNDEFINED;
         }
