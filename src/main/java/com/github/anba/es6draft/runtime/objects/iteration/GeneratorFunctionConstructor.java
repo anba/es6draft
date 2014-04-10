@@ -112,26 +112,27 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
             ((FunctionObject) f).setStrict(strict);
         }
         /* step 17 */
+        assert ((FunctionObject) f).isExtensible(calleeContext);
+        /* step 18 */
         if (!(f instanceof OrdinaryGenerator)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         OrdinaryGenerator fn = (OrdinaryGenerator) f;
-        /* steps 18-19 */
+        /* steps 19-20 */
         FunctionInitialise(calleeContext, fn, FunctionKind.Normal, function, scope);
-        /* step 20 */
-        ScriptObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
         /* step 21 */
+        ScriptObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
+        /* step 22 */
         if (function.hasSuperReference()) {
             MakeMethod(fn, (String) null, null);
         }
-        /* steps 22-23 */
+        /* steps 23-24 */
         MakeConstructor(calleeContext, fn, true, prototype);
-        /* step 24 */
-        // FIXME: if-test missing in spec https://bugs.ecmascript.org/show_bug.cgi?id=2335
+        /* steps 25-27 */
         if (!HasOwnProperty(calleeContext, fn, "name")) {
             SetFunctionName(fn, "anonymous");
         }
-        /* step 25 */
+        /* step 28 */
         return fn;
     }
 

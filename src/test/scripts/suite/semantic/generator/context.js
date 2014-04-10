@@ -69,9 +69,9 @@ function assertThrowsTypeErrorFrom(realm, fn) {
   assertObjectFrom(nextRealm, Next(Return, void 0));
 
   // GeneratorResume in "suspendedStart", argument is not undefined
-  assertThrowsTypeErrorFrom(nextRealm, () => Next(Empty, "not-undefined"));
-  assertThrowsTypeErrorFrom(nextRealm, () => Next(Yield, "not-undefined"));
-  assertThrowsTypeErrorFrom(nextRealm, () => Next(Return, "not-undefined"));
+  assertObjectFrom(nextRealm, Next(Empty, "not-undefined"));
+  assertObjectFrom(foreignRealm, Next(Yield, "not-undefined"));
+  assertObjectFrom(nextRealm, Next(Return, "not-undefined"));
 
   // GeneratorResume in "suspendedYield"
   assertObjectFrom(nextRealm, Next(SuspendedEmpty));

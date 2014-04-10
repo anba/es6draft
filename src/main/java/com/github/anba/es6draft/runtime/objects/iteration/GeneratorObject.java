@@ -126,9 +126,6 @@ public final class GeneratorObject extends OrdinaryObject {
         case Completed:
             return CreateIterResultObject(cx, UNDEFINED, true);
         case SuspendedStart:
-            if (value != UNDEFINED) {
-                throw newTypeError(cx, Messages.Key.GeneratorNewbornSend);
-            }
             this.state = GeneratorState.Executing;
             return generator.start(cx);
         case SuspendedYield:
