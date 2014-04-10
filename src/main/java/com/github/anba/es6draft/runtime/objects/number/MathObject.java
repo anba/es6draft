@@ -218,7 +218,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.11 Math.cos (x)
+         * 20.2.2.12 Math.cos (x)
          * 
          * @param cx
          *            the execution context
@@ -234,7 +234,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.13 Math.exp (x)
+         * 20.2.2.14 Math.exp (x)
          * 
          * @param cx
          *            the execution context
@@ -250,7 +250,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.15 Math.floor (x)
+         * 20.2.2.16 Math.floor (x)
          * 
          * @param cx
          *            the execution context
@@ -266,7 +266,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.19 Math.log (x)
+         * 20.2.2.20 Math.log (x)
          * 
          * @param cx
          *            the execution context
@@ -282,7 +282,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.23 Math.max ( [ value1 [ , value2 [ , ... ] ] ] )
+         * 20.2.2.24 Math.max ( value1, value2 [ , ...values ] )
          * 
          * @param cx
          *            the execution context
@@ -308,7 +308,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.24 Math.min ( [ value1 [ , value2 [ , ... ] ] ] )
+         * 20.2.2.25 Math.min ( value1, value2 [ , ...values ] )
          * 
          * @param cx
          *            the execution context
@@ -334,7 +334,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.25 Math.pow (x, y)
+         * 20.2.2.26 Math.pow (x, y)
          * 
          * @param cx
          *            the execution context
@@ -352,7 +352,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.26 Math.random ( )
+         * 20.2.2.27 Math.random ( )
          * 
          * @param cx
          *            the execution context
@@ -366,7 +366,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.27 Math.round (x)
+         * 20.2.2.28 Math.round (x)
          * 
          * @param cx
          *            the execution context
@@ -393,7 +393,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.29 Math.sin (x)
+         * 20.2.2.30 Math.sin (x)
          * 
          * @param cx
          *            the execution context
@@ -409,7 +409,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.31 Math.sqrt (x)
+         * 20.2.2.32 Math.sqrt (x)
          * 
          * @param cx
          *            the execution context
@@ -425,7 +425,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.32 Math.tan (x)
+         * 20.2.2.33 Math.tan (x)
          * 
          * @param cx
          *            the execution context
@@ -441,7 +441,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.20 Math.log10 (x)
+         * 20.2.2.21 Math.log10 (x)
          * 
          * @param cx
          *            the execution context
@@ -457,7 +457,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.22 Math.log2 (x)
+         * 20.2.2.23 Math.log2 (x)
          * 
          * @param cx
          *            the execution context
@@ -473,7 +473,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.21 Math.log1p (x)
+         * 20.2.2.22 Math.log1p (x)
          * 
          * @param cx
          *            the execution context
@@ -489,7 +489,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.14 Math.expm1 (x)
+         * 20.2.2.15 Math.expm1 (x)
          * 
          * @param cx
          *            the execution context
@@ -505,7 +505,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.12 Math.cosh(x)
+         * 20.2.2.13 Math.cosh(x)
          * 
          * @param cx
          *            the execution context
@@ -521,7 +521,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.30 Math.sinh(x)
+         * 20.2.2.31 Math.sinh(x)
          * 
          * @param cx
          *            the execution context
@@ -537,7 +537,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.33 Math.tanh(x)
+         * 20.2.2.34 Math.tanh(x)
          * 
          * @param cx
          *            the execution context
@@ -631,7 +631,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.17 Math.hypot([ value1 [ , value2 [ , ... ] ] ] )
+         * 20.2.2.18 Math.hypot ( value1 , value2 [ , ...values ] )
          * 
          * @param cx
          *            the execution context
@@ -684,7 +684,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.34 Math.trunc(x)
+         * 20.2.2.35 Math.trunc(x)
          * 
          * @param cx
          *            the execution context
@@ -701,7 +701,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.28 Math.sign(x)
+         * 20.2.2.29 Math.sign(x)
          * 
          * @param cx
          *            the execution context
@@ -733,7 +733,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.18 Math.imul(x, y)
+         * 20.2.2.19 Math.imul(x, y)
          * 
          * @param cx
          *            the execution context
@@ -753,7 +753,7 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.16 Math.fround (x)
+         * 20.2.2.17 Math.fround (x)
          * 
          * @param cx
          *            the execution context
@@ -775,6 +775,25 @@ public final class MathObject extends OrdinaryObject implements Initialisable {
             float x32 = (float) d;
             double x64 = (double) x32;
             return x64;
+        }
+
+        /**
+         * 20.2.2.11 Math.clz32 ( x )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the number of leading zeroes in the 32-bit integer representation of the number
+         */
+        @Function(name = "clz32", arity = 1)
+        public static Object clz32(ExecutionContext cx, Object thisValue, Object x) {
+            /* steps 1-2 */
+            long n = ToUint32(cx, x);
+            /* steps 3-4 */
+            return Integer.numberOfLeadingZeros((int) n);
         }
     }
 }
