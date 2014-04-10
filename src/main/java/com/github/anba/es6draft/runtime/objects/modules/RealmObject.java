@@ -13,11 +13,11 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>26 Reflection</h1><br>
  * <h2>26.2 Realm Objects</h2>
  * <ul>
- * <li>26.2.4 Properties of %Realm% Instances
+ * <li>26.2.4 Properties of Reflect.Realm Instances
  * </ul>
  */
 public final class RealmObject extends OrdinaryObject {
-    /** [[Realm]] */
+    /** [[RealmRecord]] */
     private Realm realm;
 
     public RealmObject(Realm realm) {
@@ -25,7 +25,7 @@ public final class RealmObject extends OrdinaryObject {
     }
 
     /**
-     * [[Realm]
+     * [[RealmRecord]
      *
      * @return the realm instance
      */
@@ -34,7 +34,7 @@ public final class RealmObject extends OrdinaryObject {
     }
 
     /**
-     * [[Realm]]
+     * [[RealmRecord]]
      *
      * @param realm
      *            the new realm instance

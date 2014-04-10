@@ -44,8 +44,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>26 Reflection</h1><br>
  * <h2>26.2 Realm Objects</h2>
  * <ul>
- * <li>26.2.1 The %Realm% Constructor
- * <li>26.2.2 Properties of the %Realm% Constructor
+ * <li>26.2.1 The Reflect.Realm Constructor
+ * <li>26.2.2 Properties of the Reflect.Realm Constructor
  * </ul>
  */
 public final class RealmConstructor extends BuiltinConstructor implements Initialisable {
@@ -108,7 +108,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 26.2.1.1 %Realm% (options = { }, initialiser = undefined)
+     * 26.2.1.1 Reflect.Realm ([ options [, initializer ] ])
      */
     @Override
     public RealmObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -164,7 +164,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 26.2.1.2 new %Realm% ( ... argumentsList )
+     * 26.2.1.2 new Reflect.Realm ( ... argumentsList )
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -172,7 +172,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 26.2.2 Properties of the %Realm% Constructor
+     * 26.2.2 Properties of the Reflect.Realm Constructor
      */
     public enum Properties {
         ;
@@ -189,14 +189,14 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         public static final String name = "Realm";
 
         /**
-         * 26.2.2.1 %Realm%.prototype
+         * 26.2.2.1 Reflect.Realm.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.RealmPrototype;
 
         /**
-         * 26.2.2.2 %Realm% [ @@create ] ( )
+         * 26.2.2.2 Reflect.Realm [ @@create ] ( )
          * 
          * @param cx
          *            the execution context
