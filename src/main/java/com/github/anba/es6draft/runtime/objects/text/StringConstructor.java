@@ -47,7 +47,7 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 21.1.1.1 String ( value = "" )
+     * 21.1.1.1 String ( value )
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -141,7 +141,7 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
          *            the unicode code points
          * @return the result string
          */
-        @Function(name = "fromCodePoint", arity = 0)
+        @Function(name = "fromCodePoint", arity = 1)
         public static Object fromCodePoint(ExecutionContext cx, Object thisValue,
                 Object... codePoints) {
             /* steps 1-2 */
@@ -165,7 +165,7 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 21.1.2.4 String.raw ( callSite, ...substitutions)
+         * 21.1.2.4 String.raw ( callSite [ , ...substitutions ] )
          * 
          * @param cx
          *            the execution context

@@ -224,7 +224,7 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 21.1.3.8 String.prototype.indexOf (searchString, position)
+         * 21.1.3.8 String.prototype.indexOf ( searchString [ , position ] )
          * 
          * @param cx
          *            the execution context
@@ -256,7 +256,7 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 21.1.3.9 String.prototype.lastIndexOf (searchString, position)
+         * 21.1.3.9 String.prototype.lastIndexOf ( searchString [ , position ] )
          * 
          * @param cx
          *            the execution context
@@ -290,7 +290,7 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 21.1.3.10 String.prototype.localeCompare (that, reserved1=undefined, reserved2=undefined)<br>
+         * 21.1.3.10 String.prototype.localeCompare ( that [, reserved1 [ , reserved2 ] ] )<br>
          * 13.1.1 String.prototype.localeCompare (that [, locales [, options]])
          * 
          * @param cx
@@ -409,7 +409,7 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
          * 
          * @param matched
          *            the matched substring
-         * @param replValue
+         * @param replaceValue
          *            the replacement value
          * @param string
          *            the string
@@ -417,7 +417,7 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
          *            the string index
          * @return the replacement string
          */
-        private static String GetReplaceSubstitution(String matched, String replValue,
+        private static String GetReplaceSubstitution(String matched, String replaceValue,
                 String string, int position) {
             /* step 1 (not applicable) */
             /* step 2 */
@@ -435,10 +435,10 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
 
             /* step 10 */
             StringBuilder result = new StringBuilder();
-            for (int cursor = 0, len = replValue.length(); cursor < len;) {
-                char c = replValue.charAt(cursor++);
+            for (int cursor = 0, len = replaceValue.length(); cursor < len;) {
+                char c = replaceValue.charAt(cursor++);
                 if (c == '$' && cursor < len) {
-                    c = replValue.charAt(cursor++);
+                    c = replaceValue.charAt(cursor++);
                     switch (c) {
                     case '&':
                         result.append(matched);
@@ -921,7 +921,7 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 21.1.3.6 String.prototype.contains (searchString, position = 0 )
+         * 21.1.3.6 String.prototype.contains ( searchString [ , position ] )
          * 
          * @param cx
          *            the execution context
@@ -940,17 +940,22 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
             Object obj = CheckObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-5 */
+            /* step 4 */
+            if (Type.isObject(searchString)
+                    && HasProperty(cx, Type.objectValue(searchString), BuiltinSymbol.isRegExp.get())) {
+                throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
+            }
+            /* steps 5-6 */
             String searchStr = ToFlatString(cx, searchString);
-            /* steps 6-7 */
+            /* steps 7-8 */
             double pos = ToInteger(cx, position);
-            /* step 8 */
-            int len = s.length();
             /* step 9 */
-            int start = (int) Math.min(Math.max(pos, 0), len);
+            int len = s.length();
             /* step 10 */
-            // int searchLen = searchStr.length();
+            int start = (int) Math.min(Math.max(pos, 0), len);
             /* step 11 */
+            // int searchLen = searchStr.length();
+            /* step 12 */
             return s.indexOf(searchStr, start) != -1;
         }
 
@@ -984,7 +989,7 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
         }
 
         /**
-         * 21.1.3.12 String.prototype.normalize ( form = "NFC" )
+         * 21.1.3.12 String.prototype.normalize ( [ form ] )
          * 
          * @param cx
          *            the execution context
