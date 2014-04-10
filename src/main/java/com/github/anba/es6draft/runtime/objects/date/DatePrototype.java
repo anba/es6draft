@@ -107,6 +107,55 @@ public final class DatePrototype extends OrdinaryObject implements Initialisable
         return !(Double.isNaN(d) || Double.isInfinite(d));
     }
 
+    public enum DateString {
+        Date, Time, DateTime
+    }
+
+    /**
+     * 20.3.4.41.1 Runtime Semantics: ToDateString(tv) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param tv
+     *            the date-time value
+     * @param dateString
+     *            the date string modifier
+     * @return the date-time string representation
+     */
+    public static String ToDateString(ExecutionContext cx, double tv, DateString dateString) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        if (Double.isNaN(tv)) {
+            return "Invalid Date";
+        }
+        Realm realm = cx.getRealm();
+        StringBuilder result = new StringBuilder();
+        if (dateString == DateString.DateTime || dateString == DateString.Date) {
+            DateFormatSymbols symbols = DateFormatSymbols.getInstance(Locale.US);
+            double t = LocalTime(realm, tv);
+
+            result.append(String.format("%s %s %02d %04d",
+                    symbols.getShortWeekdays()[1 + (int) WeekDay(t)],
+                    symbols.getShortMonths()[(int) MonthFromTime(t)], (int) DateFromTime(t),
+                    (int) YearFromTime(t)));
+        }
+        if (dateString == DateString.DateTime) {
+            result.append(' ');
+        }
+        if (dateString == DateString.DateTime || dateString == DateString.Time) {
+            TimeZone tz = realm.getTimezone();
+            int dstOffset = (int) DaylightSavingTA(realm, tv);
+            int tzOffset = (((int) LocalTZA(realm) + dstOffset) / 60000);
+            tzOffset = (tzOffset / 60) * 100 + tzOffset % 60;
+            double t = LocalTime(realm, tv);
+
+            result.append(String.format("%02d:%02d:%02d GMT%+05d (%s)", (int) HourFromTime(t),
+                    (int) MinFromTime(t), (int) SecFromTime(t), tzOffset,
+                    tz.getDisplayName(dstOffset != 0, TimeZone.SHORT, Locale.US)));
+        }
+        return result.toString();
+    }
+
     /**
      * 20.3.4 Properties of the Date Prototype Object
      */
@@ -153,24 +202,10 @@ public final class DatePrototype extends OrdinaryObject implements Initialisable
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
-            double t = thisTimeValue(cx, thisValue);
-            if (Double.isNaN(t)) {
-                return "Invalid Date";
-            }
-            Realm realm = cx.getRealm();
-            DateFormatSymbols symbols = DateFormatSymbols.getInstance(Locale.US);
-            TimeZone tz = realm.getTimezone();
-            int dstOffset = (int) DaylightSavingTA(realm, t);
-            int tzOffset = (((int) LocalTZA(realm) + dstOffset) / 60000);
-            tzOffset = (tzOffset / 60) * 100 + tzOffset % 60;
-            t = LocalTime(realm, t);
-
-            return String.format("%s %s %02d %04d %02d:%02d:%02d GMT%+05d (%s)",
-                    symbols.getShortWeekdays()[1 + (int) WeekDay(t)],
-                    symbols.getShortMonths()[(int) MonthFromTime(t)], (int) DateFromTime(t),
-                    (int) YearFromTime(t), (int) HourFromTime(t), (int) MinFromTime(t),
-                    (int) SecFromTime(t), tzOffset,
-                    tz.getDisplayName(dstOffset != 0, TimeZone.SHORT, Locale.US));
+            /* step 1 */
+            double tv = thisTimeValue(cx, thisValue);
+            /* step 2 */
+            return ToDateString(cx, tv, DateString.DateTime);
         }
 
         /**
@@ -184,18 +219,10 @@ public final class DatePrototype extends OrdinaryObject implements Initialisable
          */
         @Function(name = "toDateString", arity = 0)
         public static Object toDateString(ExecutionContext cx, Object thisValue) {
-            double t = thisTimeValue(cx, thisValue);
-            if (Double.isNaN(t)) {
-                return "Invalid Date";
-            }
-            Realm realm = cx.getRealm();
-            DateFormatSymbols symbols = DateFormatSymbols.getInstance(Locale.US);
-            t = LocalTime(realm, t);
-
-            return String.format("%s %s %02d %04d",
-                    symbols.getShortWeekdays()[1 + (int) WeekDay(t)],
-                    symbols.getShortMonths()[(int) MonthFromTime(t)], (int) DateFromTime(t),
-                    (int) YearFromTime(t));
+            /* step 1 */
+            double tv = thisTimeValue(cx, thisValue);
+            /* step 2 */
+            return ToDateString(cx, tv, DateString.Date);
         }
 
         /**
@@ -209,24 +236,14 @@ public final class DatePrototype extends OrdinaryObject implements Initialisable
          */
         @Function(name = "toTimeString", arity = 0)
         public static Object toTimeString(ExecutionContext cx, Object thisValue) {
-            double t = thisTimeValue(cx, thisValue);
-            if (Double.isNaN(t)) {
-                return "Invalid Date";
-            }
-            Realm realm = cx.getRealm();
-            TimeZone tz = realm.getTimezone();
-            int dstOffset = (int) DaylightSavingTA(realm, t);
-            int tzOffset = (((int) LocalTZA(realm) + dstOffset) / 60000);
-            tzOffset = (tzOffset / 60) * 100 + tzOffset % 60;
-            t = LocalTime(realm, t);
-
-            return String.format("%02d:%02d:%02d GMT%+05d (%s)", (int) HourFromTime(t),
-                    (int) MinFromTime(t), (int) SecFromTime(t), tzOffset,
-                    tz.getDisplayName(dstOffset != 0, TimeZone.SHORT, Locale.US));
+            /* step 1 */
+            double tv = thisTimeValue(cx, thisValue);
+            /* step 2 */
+            return ToDateString(cx, tv, DateString.Time);
         }
 
         /**
-         * 20.3.4.39 Date.prototype.toLocaleString (reserved1=undefined, reserved2=undefined)<br>
+         * 20.3.4.39 Date.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )<br>
          * 13.3.1 Date.prototype.toLocaleString ([locales [, options]])
          * 
          * @param cx
@@ -256,7 +273,7 @@ public final class DatePrototype extends OrdinaryObject implements Initialisable
         }
 
         /**
-         * 20.3.4.38 Date.prototype.toLocaleDateString (reserved1=undefined, reserved2=undefined)<br>
+         * 20.3.4.38 Date.prototype.toLocaleDateString ( [ reserved1 [ , reserved2 ] ] )<br>
          * 13.3.2 Date.prototype.toLocaleDateString ([locales [, options]])
          * 
          * @param cx
@@ -286,7 +303,7 @@ public final class DatePrototype extends OrdinaryObject implements Initialisable
         }
 
         /**
-         * 20.3.4.40 Date.prototype.toLocaleTimeString (reserved1=undefined, reserved2=undefined)<br>
+         * 20.3.4.40 Date.prototype.toLocaleTimeString ( [ reserved1 [ , reserved2 ] ] )<br>
          * 13.3.3 Date.prototype.toLocaleTimeString ([locales [, options]])
          * 
          * @param cx

@@ -23,6 +23,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional.Default;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.objects.date.DatePrototype.DateString;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -107,10 +108,7 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
         }
         /* step 5 */
         long now = System.currentTimeMillis();
-        DateObject obj = new DateObject(realm);
-        obj.setPrototype(realm.getIntrinsic(Intrinsics.DatePrototype));
-        obj.setDateValue(now);
-        return DatePrototype.Properties.toString(calleeContext, obj);
+        return DatePrototype.ToDateString(calleeContext, now, DateString.DateTime);
     }
 
     /**
