@@ -15,6 +15,10 @@ fast/regex/lastIndex.js
 fast/js/JSON-parse-reviver.js
 fast/js/toString-overrides.js
 
+# Promise.prototype.{catch,then} throw a TypeError if handlers are not undefined/null/callable
+fast/js/Promise-catch.js
+fast/js/Promise-then.js
+
 
 ###################
 # Misc issues     #

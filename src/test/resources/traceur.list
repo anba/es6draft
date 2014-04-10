@@ -29,6 +29,12 @@ feature/Classes/InheritanceFromNonclass.js
 # Object.mixin() removed in rev22
 feature/ObjectMixin.js
 
+# String.prototype.contains() throws when search argument is RegExp
+feature/StringExtras/Contains.js
+
+# String.fromCodePoint length changed to 1
+feature/StringExtras/FromCodePoint.js
+
 
 ############################################
 # Implementation specific differences      #

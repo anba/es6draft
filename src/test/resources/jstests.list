@@ -48,6 +48,9 @@ ecma_5/extensions/destructuring-__proto__-shorthand-assignment-before-var.js
 # Invalid test: destructuring source must be object
 ecma_5/extensions/destructuring-for-inof-__proto__.js
 
+# String.fromCodePoint length changed to 1
+ecma_6/String/fromCodePoint.js
+
 
 ####################################
 # Intl only partially supported    #
