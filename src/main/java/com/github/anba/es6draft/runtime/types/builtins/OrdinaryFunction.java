@@ -409,8 +409,8 @@ public class OrdinaryFunction extends FunctionObject {
             name = prefix + " " + name;
         }
         /* step 5 */
-        boolean success = f.ordinaryDefineOwnProperty("name", new PropertyDescriptor(name, false,
-                false, true));
+        boolean success = f.ordinaryDefineOwnProperty(f.getRealm().defaultContext(), "name",
+                new PropertyDescriptor(name, false, false, true));
         /* step 6 */
         assert success;
         /* step 7 (return) */

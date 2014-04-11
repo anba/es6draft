@@ -108,7 +108,7 @@ public final class ExoticArray extends OrdinaryObject {
                 return false;
             }
             /* steps 3.f-3.h */
-            boolean succeeded = ordinaryDefineOwnProperty(propertyKey, desc);
+            boolean succeeded = ordinaryDefineOwnProperty(cx, propertyKey, desc);
             if (!succeeded) {
                 return false;
             }
@@ -116,13 +116,13 @@ public final class ExoticArray extends OrdinaryObject {
             if (index >= oldLen) {
                 PropertyDescriptor lenDesc = oldLenDesc.toPropertyDescriptor();
                 lenDesc.setValue(index + 1);
-                ordinaryDefineOwnProperty("length", lenDesc);
+                ordinaryDefineOwnProperty(cx, "length", lenDesc);
             }
             /* step 3.j */
             return true;
         }
         /* step 4 */
-        return ordinaryDefineOwnProperty(propertyKey, desc);
+        return ordinaryDefineOwnProperty(cx, propertyKey, desc);
     }
 
     /**
@@ -161,8 +161,8 @@ public final class ExoticArray extends OrdinaryObject {
         long length = 0;
         /* step 9 (not applicable) */
         /* step 10 */
-        array.ordinaryDefineOwnProperty("length",
-                new PropertyDescriptor(length, true, false, false));
+        array.ordinaryDefineOwnProperty(cx, "length", new PropertyDescriptor(length, true, false,
+                false));
         /* step 11 */
         return array;
     }
@@ -195,8 +195,8 @@ public final class ExoticArray extends OrdinaryObject {
         /* step 8 (not applicable) */
         /* step 9 (see above) */
         /* step 10 */
-        array.ordinaryDefineOwnProperty("length",
-                new PropertyDescriptor(length, true, false, false));
+        array.ordinaryDefineOwnProperty(cx, "length", new PropertyDescriptor(length, true, false,
+                false));
         /* step 11 */
         return array;
     }
@@ -256,7 +256,7 @@ public final class ExoticArray extends OrdinaryObject {
             PropertyDescriptor desc) {
         /* step 1 */
         if (!desc.hasValue()) {
-            return array.ordinaryDefineOwnProperty("length", desc);
+            return array.ordinaryDefineOwnProperty(cx, "length", desc);
         }
         /* step 2 */
         PropertyDescriptor newLenDesc = desc.clone();
@@ -275,7 +275,7 @@ public final class ExoticArray extends OrdinaryObject {
         long oldLen = ToUint32(cx, oldLenDesc.getValue());
         /* step 8 */
         if (newLen >= oldLen) {
-            return array.ordinaryDefineOwnProperty("length", newLenDesc);
+            return array.ordinaryDefineOwnProperty(cx, "length", newLenDesc);
         }
         /* step 9 */
         if (!oldLenDesc.isWritable()) {
@@ -290,7 +290,7 @@ public final class ExoticArray extends OrdinaryObject {
             newLenDesc.setWritable(true);
         }
         /* steps 12-13 */
-        boolean succeeded = array.ordinaryDefineOwnProperty("length", newLenDesc);
+        boolean succeeded = array.ordinaryDefineOwnProperty(cx, "length", newLenDesc);
         /* step 14 */
         if (!succeeded) {
             return false;
@@ -307,14 +307,14 @@ public final class ExoticArray extends OrdinaryObject {
             if (!newWritable) {
                 newLenDesc.setWritable(false);
             }
-            array.ordinaryDefineOwnProperty("length", newLenDesc);
+            array.ordinaryDefineOwnProperty(cx, "length", newLenDesc);
             return false;
         }
         /* step 16 */
         if (!newWritable) {
             PropertyDescriptor nonWritable = new PropertyDescriptor();
             nonWritable.setWritable(false);
-            array.ordinaryDefineOwnProperty("length", nonWritable);
+            array.ordinaryDefineOwnProperty(cx, "length", nonWritable);
         }
         /* step 17 */
         return true;

@@ -111,18 +111,7 @@ public final class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 9.4.3.2 [[DefineOwnProperty]] (P, Desc)
-     */
-    @Override
-    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
-        Property current = getOwnProperty(cx, propertyKey);
-        boolean extensible = isExtensible();
-        return ValidateAndApplyPropertyDescriptor(this, propertyKey, extensible, desc, current);
-    }
-
-    /**
-     * 9.4.3.3 [[Enumerate]] ()
+     * 9.4.3.2 [[Enumerate]] ()
      */
     @Override
     protected List<String> enumerateKeys(ExecutionContext cx) {
@@ -132,7 +121,7 @@ public final class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 9.4.3.4 [[OwnPropertyKeys]] ()
+     * 9.4.3.3 [[OwnPropertyKeys]] ()
      */
     @Override
     protected List<Object> enumerateOwnKeys(ExecutionContext cx) {

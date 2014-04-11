@@ -238,14 +238,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
-        Property current = getOwnProperty(cx, propertyKey);
-        boolean extensible = isExtensible();
-        return ValidateAndApplyPropertyDescriptor(this, propertyKey, extensible, desc, current);
-    }
-
-    @Override
     protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         boolean has = super.hasOwnProperty(cx, propertyKey);
         if (has) {

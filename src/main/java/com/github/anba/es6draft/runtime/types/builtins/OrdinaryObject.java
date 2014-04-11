@@ -197,8 +197,18 @@ public class OrdinaryObject implements ScriptObject {
             }
         }
         /* step 7 */
-        this.prototype = prototype;
+        extensible = this.extensible;
         /* step 8 */
+        if (!extensible) {
+            ScriptObject current2 = this.prototype;
+            if (prototype == current2) {
+                return true;
+            }
+            return false;
+        }
+        /* step 9 */
+        this.prototype = prototype;
+        /* step 10 */
         return true;
     }
 
@@ -273,7 +283,7 @@ public class OrdinaryObject implements ScriptObject {
     public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
             PropertyDescriptor desc) {
         /* step 1 */
-        return ordinaryDefineOwnProperty(propertyKey, desc);
+        return ordinaryDefineOwnProperty(cx, propertyKey, desc);
     }
 
     /** 9.1.6 [[DefineOwnProperty]] (P, Desc) */
@@ -281,21 +291,24 @@ public class OrdinaryObject implements ScriptObject {
     public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
             PropertyDescriptor desc) {
         /* step 1 */
-        return ordinaryDefineOwnProperty(propertyKey, desc);
+        return ordinaryDefineOwnProperty(cx, propertyKey, desc);
     }
 
     /**
      * 9.1.6.1 OrdinaryDefineOwnProperty (O, P, Desc)
      * 
+     * @param cx
+     *            the execution context
      * @param propertyKey
      *            the property key
      * @param desc
      *            the property descriptor
      * @return {@code true} on success
      */
-    protected final boolean ordinaryDefineOwnProperty(String propertyKey, PropertyDescriptor desc) {
+    protected final boolean ordinaryDefineOwnProperty(ExecutionContext cx, String propertyKey,
+            PropertyDescriptor desc) {
         /* step 1 */
-        Property current = ordinaryGetOwnProperty(propertyKey);
+        Property current = getOwnProperty(cx, propertyKey);
         /* step 2 */
         boolean extensible = isExtensible();
         /* step 3 */
@@ -305,15 +318,18 @@ public class OrdinaryObject implements ScriptObject {
     /**
      * 9.1.6.1 OrdinaryDefineOwnProperty (O, P, Desc)
      * 
+     * @param cx
+     *            the execution context
      * @param propertyKey
      *            the property key
      * @param desc
      *            the property descriptor
      * @return {@code true} on success
      */
-    protected final boolean ordinaryDefineOwnProperty(Symbol propertyKey, PropertyDescriptor desc) {
+    protected final boolean ordinaryDefineOwnProperty(ExecutionContext cx, Symbol propertyKey,
+            PropertyDescriptor desc) {
         /* step 1 */
-        Property current = ordinaryGetOwnProperty(propertyKey);
+        Property current = getOwnProperty(cx, propertyKey);
         /* step 2 */
         boolean extensible = isExtensible();
         /* step 3 */
@@ -501,14 +517,17 @@ public class OrdinaryObject implements ScriptObject {
         /* steps 2-3 */
         boolean hasOwn = hasOwnProperty(cx, propertyKey);
         /* step 4 */
-        if (!hasOwn) {
-            ScriptObject parent = getPrototypeOf(cx);
-            if (parent != null) {
-                return parent.hasProperty(cx, propertyKey);
-            }
+        if (hasOwn) {
+            return true;
         }
-        /* step 5 */
-        return hasOwn;
+        /* steps 5-6 */
+        ScriptObject parent = getPrototypeOf(cx);
+        /* step 7 */
+        if (parent != null) {
+            return parent.hasProperty(cx, propertyKey);
+        }
+        /* step 8 */
+        return false;
     }
 
     /**
@@ -520,14 +539,17 @@ public class OrdinaryObject implements ScriptObject {
         /* steps 2-3 */
         boolean hasOwn = hasOwnProperty(cx, propertyKey);
         /* step 4 */
-        if (!hasOwn) {
-            ScriptObject parent = getPrototypeOf(cx);
-            if (parent != null) {
-                return parent.hasProperty(cx, propertyKey);
-            }
+        if (hasOwn) {
+            return true;
         }
-        /* step 5 */
-        return hasOwn;
+        /* steps 5-6 */
+        ScriptObject parent = getPrototypeOf(cx);
+        /* step 7 */
+        if (parent != null) {
+            return parent.hasProperty(cx, propertyKey);
+        }
+        /* step 8 */
+        return false;
     }
 
     /** 9.1.8 [[Get]] (P, Receiver) */
