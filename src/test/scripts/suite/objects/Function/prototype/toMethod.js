@@ -11,6 +11,7 @@ const {
   assertNotSame,
   assertThrows,
   assertFalse,
+  assertTrue,
 } = Assert;
 
 
@@ -18,7 +19,7 @@ const {
 
 assertBuiltinFunction(Function.prototype.toMethod, "toMethod", 1);
 
-const ToMethod = Function.prototype.toMethod.call.bind(Function.prototype.toMethod);
+const ToMethod = Function.prototype.call.bind(Function.prototype.toMethod);
 
 // Function.prototype.toMethod() overwrites .constructor with rebound .constructor from source (explicit constructor)
 {
@@ -160,7 +161,7 @@ const ToMethod = Function.prototype.toMethod.call.bind(Function.prototype.toMeth
   assertSame(Object.getPrototypeOf(Source.prototype.fn), Object.getPrototypeOf(Target.prototype.fn));
 }
 
-// Function.prototype.toMethod() copies internal slots ([[Extensible]])
+// Function.prototype.toMethod() copies internal slots (excluded: [[Extensible]])
 {
   class Source {
     fn() { super(); }
@@ -173,7 +174,7 @@ const ToMethod = Function.prototype.toMethod.call.bind(Function.prototype.toMeth
   Target.prototype.fn = ToMethod(Source.prototype.fn, Target.prototype);
 
   assertNotSame(Source.prototype.fn, Target.prototype.fn);
-  assertFalse(Object.isExtensible(Target.prototype.fn));
+  assertTrue(Object.isExtensible(Target.prototype.fn));
 }
 
 // Function.prototype.toMethod() copies internal slots ([[Realm]]) (1)
@@ -214,7 +215,7 @@ const ToMethod = Function.prototype.toMethod.call.bind(Function.prototype.toMeth
   assertThrows(() => (new Target).fn(), foreignRealm.global.TypeError);
 }
 
-// Function.prototype.toMethod() copies internal slots (%ThrowTypeError% in 'caller' and 'arguments') (1)
+// Function.prototype.toMethod() adds restricted properties (%ThrowTypeError% in 'caller' and 'arguments') (1)
 {
   const foreignRealm = new Reflect.Realm();
   const ThrowTypeError = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller").get;
@@ -236,7 +237,7 @@ const ToMethod = Function.prototype.toMethod.call.bind(Function.prototype.toMeth
   assertSame(ThrowTypeError, Object.getOwnPropertyDescriptor(Target.prototype.fn, "arguments").set);
 }
 
-// Function.prototype.toMethod() copies internal slots (%ThrowTypeError% in 'caller' and 'arguments') (2)
+// Function.prototype.toMethod() adds restricted properties (%ThrowTypeError% in 'caller' and 'arguments') (2)
 {
   const foreignRealm = new Reflect.Realm();
   const ThrowTypeError = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller").get;
@@ -255,8 +256,8 @@ const ToMethod = Function.prototype.toMethod.call.bind(Function.prototype.toMeth
   Target.prototype.fn = ToMethod(Source.prototype.fn, Target.prototype);
 
   // .caller and .arguments are copied like just like other properties
-  assertSame(ForeignThrowTypeError, Object.getOwnPropertyDescriptor(Target.prototype.fn, "caller").get);
-  assertSame(ForeignThrowTypeError, Object.getOwnPropertyDescriptor(Target.prototype.fn, "caller").set);
-  assertSame(ForeignThrowTypeError, Object.getOwnPropertyDescriptor(Target.prototype.fn, "arguments").get);
-  assertSame(ForeignThrowTypeError, Object.getOwnPropertyDescriptor(Target.prototype.fn, "arguments").set);
+  assertSame(ThrowTypeError, Object.getOwnPropertyDescriptor(Target.prototype.fn, "caller").get);
+  assertSame(ThrowTypeError, Object.getOwnPropertyDescriptor(Target.prototype.fn, "caller").set);
+  assertSame(ThrowTypeError, Object.getOwnPropertyDescriptor(Target.prototype.fn, "arguments").get);
+  assertSame(ThrowTypeError, Object.getOwnPropertyDescriptor(Target.prototype.fn, "arguments").set);
 }

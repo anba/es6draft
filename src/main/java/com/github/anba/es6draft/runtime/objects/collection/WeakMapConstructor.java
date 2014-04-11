@@ -47,6 +47,14 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public WeakMapConstructor clone(ExecutionContext cx) {
+        WeakMapConstructor f = new WeakMapConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 23.3.1.1 WeakMap ([ iterable ])
      */

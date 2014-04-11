@@ -47,6 +47,14 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public WeakSetConstructor clone(ExecutionContext cx) {
+        WeakSetConstructor f = new WeakSetConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 23.4.1.1 WeakSet ([ iterable ])
      */

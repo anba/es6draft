@@ -49,6 +49,14 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public DateConstructor clone(ExecutionContext cx) {
+        DateConstructor f = new DateConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 20.3.2.1 Date (year, month [, date [, hours [, minutes [, seconds [, ms ] ] ] ] ] )<br>
      * 20.3.2.2 Date (value)<br>

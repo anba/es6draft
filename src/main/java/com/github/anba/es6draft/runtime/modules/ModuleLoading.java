@@ -128,11 +128,26 @@ public final class ModuleLoading {
 
         public CallNormalize(Realm realm, Loader loader, String request, Object refererName,
                 Object refererAddress) {
-            super(realm, ANONYMOUS, 2);
+            this(realm, loader, request, refererName, refererAddress, null);
+            createDefaultFunctionProperties(ANONYMOUS, 2);
+        }
+
+        private CallNormalize(Realm realm, Loader loader, String request, Object refererName,
+                Object refererAddress, Void ignore) {
+            super(realm, ANONYMOUS);
             this.loader = loader;
             this.request = request;
             this.refererName = refererName;
             this.refererAddress = refererAddress;
+        }
+
+        @Override
+        public CallNormalize clone(ExecutionContext cx) {
+            CallNormalize f = new CallNormalize(getRealm(), loader, request, refererName,
+                    refererAddress, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -174,8 +189,21 @@ public final class ModuleLoading {
         private final Loader loader;
 
         public GetOrCreateLoad(Realm realm, Loader loader) {
-            super(realm, ANONYMOUS, 1);
+            this(realm, loader, null);
+            createDefaultFunctionProperties(ANONYMOUS, 1);
+        }
+
+        private GetOrCreateLoad(Realm realm, Loader loader, Void ignore) {
+            super(realm, ANONYMOUS);
             this.loader = loader;
+        }
+
+        @Override
+        public GetOrCreateLoad clone(ExecutionContext cx) {
+            GetOrCreateLoad f = new GetOrCreateLoad(getRealm(), loader, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -245,9 +273,22 @@ public final class ModuleLoading {
         private final Load load;
 
         public CallLocate(Realm realm, Loader loader, Load load) {
-            super(realm, ANONYMOUS, 0);
+            this(realm, loader, load, null);
+            createDefaultFunctionProperties(ANONYMOUS, 0);
+        }
+
+        private CallLocate(Realm realm, Loader loader, Load load, Void ignore) {
+            super(realm, ANONYMOUS);
             this.loader = loader;
             this.load = load;
+        }
+
+        @Override
+        public CallLocate clone(ExecutionContext cx) {
+            CallLocate f = new CallLocate(getRealm(), loader, load, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -307,9 +348,22 @@ public final class ModuleLoading {
         private final Load load;
 
         public CallFetch(Realm realm, Loader loader, Load load) {
-            super(realm, ANONYMOUS, 1);
+            this(realm, loader, load, null);
+            createDefaultFunctionProperties(ANONYMOUS, 1);
+        }
+
+        private CallFetch(Realm realm, Loader loader, Load load, Void ignore) {
+            super(realm, ANONYMOUS);
             this.loader = loader;
             this.load = load;
+        }
+
+        @Override
+        public CallFetch clone(ExecutionContext cx) {
+            CallFetch f = new CallFetch(getRealm(), loader, load, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -386,9 +440,22 @@ public final class ModuleLoading {
         private final Load load;
 
         public CallTranslate(Realm realm, Loader loader, Load load) {
-            super(realm, ANONYMOUS, 1);
+            this(realm, loader, load, null);
+            createDefaultFunctionProperties(ANONYMOUS, 1);
+        }
+
+        private CallTranslate(Realm realm, Loader loader, Load load, Void ignore) {
+            super(realm, ANONYMOUS);
             this.loader = loader;
             this.load = load;
+        }
+
+        @Override
+        public CallTranslate clone(ExecutionContext cx) {
+            CallTranslate f = new CallTranslate(getRealm(), loader, load, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -430,9 +497,22 @@ public final class ModuleLoading {
         private final Load load;
 
         public CallInstantiate(Realm realm, Loader loader, Load load) {
-            super(realm, ANONYMOUS, 1);
+            this(realm, loader, load, null);
+            createDefaultFunctionProperties(ANONYMOUS, 1);
+        }
+
+        private CallInstantiate(Realm realm, Loader loader, Load load, Void ignore) {
+            super(realm, ANONYMOUS);
             this.loader = loader;
             this.load = load;
+        }
+
+        @Override
+        public CallInstantiate clone(ExecutionContext cx) {
+            CallInstantiate f = new CallInstantiate(getRealm(), loader, load, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -477,9 +557,22 @@ public final class ModuleLoading {
         private final Load load;
 
         public InstantiateSucceeded(Realm realm, Loader loader, Load load) {
-            super(realm, ANONYMOUS, 1);
+            this(realm, loader, load, null);
+            createDefaultFunctionProperties(ANONYMOUS, 1);
+        }
+
+        private InstantiateSucceeded(Realm realm, Loader loader, Load load, Void ignore) {
+            super(realm, ANONYMOUS);
             this.loader = loader;
             this.load = load;
+        }
+
+        @Override
+        public InstantiateSucceeded clone(ExecutionContext cx) {
+            InstantiateSucceeded f = new InstantiateSucceeded(getRealm(), loader, load, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -539,8 +632,21 @@ public final class ModuleLoading {
         private final Load load;
 
         public LoadFailed(Realm realm, Load load) {
-            super(realm, ANONYMOUS, 1);
+            this(realm, load, null);
+            createDefaultFunctionProperties(ANONYMOUS, 1);
+        }
+
+        private LoadFailed(Realm realm, Load load, Void ignore) {
+            super(realm, ANONYMOUS);
             this.load = load;
+        }
+
+        @Override
+        public LoadFailed clone(ExecutionContext cx) {
+            LoadFailed f = new LoadFailed(getRealm(), load, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -612,9 +718,22 @@ public final class ModuleLoading {
         private final String request;
 
         public AddDependencyLoad(Realm realm, Load parentLoad, String request) {
-            super(realm, ANONYMOUS, 1);
+            this(realm, parentLoad, request, null);
+            createDefaultFunctionProperties(ANONYMOUS, 1);
+        }
+
+        private AddDependencyLoad(Realm realm, Load parentLoad, String request, Void ignore) {
+            super(realm, ANONYMOUS);
             this.parentLoad = parentLoad;
             this.request = request;
+        }
+
+        @Override
+        public AddDependencyLoad clone(ExecutionContext cx) {
+            AddDependencyLoad f = new AddDependencyLoad(getRealm(), parentLoad, request, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -654,8 +773,21 @@ public final class ModuleLoading {
         private final Load load;
 
         public LoadSucceeded(Realm realm, Load load) {
-            super(realm, ANONYMOUS, 0);
+            this(realm, load, null);
+            createDefaultFunctionProperties(ANONYMOUS, 0);
+        }
+
+        private LoadSucceeded(Realm realm, Load load, Void ignore) {
+            super(realm, ANONYMOUS);
             this.load = load;
+        }
+
+        @Override
+        public LoadSucceeded clone(ExecutionContext cx) {
+            LoadSucceeded f = new LoadSucceeded(getRealm(), load, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -725,7 +857,14 @@ public final class ModuleLoading {
 
         public AsyncStartLoadPartwayThrough(Realm realm, Step step, Loader loader,
                 String moduleName, Object moduleMetadata, Object moduleSource, Object moduleAddress) {
-            super(realm, ANONYMOUS, 2);
+            this(realm, step, loader, moduleName, moduleMetadata, moduleSource, moduleAddress, null);
+            createDefaultFunctionProperties(ANONYMOUS, 2);
+        }
+
+        private AsyncStartLoadPartwayThrough(Realm realm, Step step, Loader loader,
+                String moduleName, Object moduleMetadata, Object moduleSource,
+                Object moduleAddress, Void ignore) {
+            super(realm, ANONYMOUS);
             assert moduleName != null : "anonymous module in async-start-load";
             this.step = step;
             this.loader = loader;
@@ -733,6 +872,15 @@ public final class ModuleLoading {
             this.moduleMetadata = moduleMetadata;
             this.moduleSource = moduleSource;
             this.moduleAddress = moduleAddress;
+        }
+
+        @Override
+        public AsyncStartLoadPartwayThrough clone(ExecutionContext cx) {
+            AsyncStartLoadPartwayThrough f = new AsyncStartLoadPartwayThrough(getRealm(), step,
+                    loader, moduleName, moduleMetadata, moduleSource, moduleAddress, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override

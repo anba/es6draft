@@ -28,13 +28,17 @@ public final class NativeFunction extends BuiltinFunction {
     }
 
     public NativeFunction(Realm realm, String name, int arity, MethodHandle mh) {
-        super(realm, name, arity);
-        this.mh = mh;
-        this.id = NativeFunctionId.None;
+        this(realm, name, NativeFunctionId.None, mh);
+        createDefaultFunctionProperties(name, arity);
     }
 
     public NativeFunction(Realm realm, String name, int arity, NativeFunctionId id, MethodHandle mh) {
-        super(realm, name, arity);
+        this(realm, name, id, mh);
+        createDefaultFunctionProperties(name, arity);
+    }
+
+    private NativeFunction(Realm realm, String name, NativeFunctionId id, MethodHandle mh) {
+        super(realm, name);
         this.mh = mh;
         this.id = id;
     }
@@ -69,5 +73,13 @@ public final class NativeFunction extends BuiltinFunction {
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public NativeFunction clone(ExecutionContext cx) {
+        NativeFunction f = new NativeFunction(getRealm(), getName(), id, mh);
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
     }
 }

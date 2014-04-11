@@ -57,6 +57,14 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public FunctionConstructor clone(ExecutionContext cx) {
+        FunctionConstructor f = new FunctionConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 19.2.1.1 Function (p1, p2, ... , pn, body)
      */

@@ -292,32 +292,23 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         return null;
     }
 
-    /**
-     * Returns a copy of this function object with the [[HomeObject]] property set to
-     * {@code newHomeObject} and the [[MethodName]] property set to {@code newMethodName}.
-     * 
-     * @param newHomeObject
-     *            the new home object
-     * @param newMethodName
-     *            the new method name
-     * @return the new function object
-     */
-    protected final FunctionObject clone(ScriptObject newHomeObject, Object newMethodName) {
+    @Override
+    public FunctionObject clone(ExecutionContext cx) {
+        /* steps 1-3 (not applicable) */
+        /* steps 4-6 */
         FunctionObject clone = allocateNew();
         if (isInitialised()) {
             clone.initialise(getFunctionKind(), getCode(), getEnvironment());
         }
-        clone.inheritProperties(this);
-        clone.setExtensible(isExtensible());
         clone.setConstructor(isConstructor());
-        if (isNeedsSuper()) {
-            assert isInitialised() : "uninitialised function object with [[NeedsSuper]] = true";
-            if (newMethodName != null) {
-                clone.toMethod(newMethodName, newHomeObject);
-            } else {
-                clone.toMethod(getMethodName(), newHomeObject);
-            }
+        /* step 7 */
+        clone.setExtensible(true);
+        /* step 8 (not applicable) */
+        /* step 9 */
+        if (isStrict()) {
+            clone.addRestrictedFunctionProperties(cx);
         }
+        /* step 10 */
         return clone;
     }
 
@@ -386,6 +377,35 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
             this.thisMode = ThisMode.Strict;
         } else {
             this.thisMode = ThisMode.Global;
+        }
+    }
+
+    /**
+     * 9.2.8 AddRestrictedFunctionProperties Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     */
+    protected final void addRestrictedFunctionProperties(ExecutionContext cx) {
+        // Modified AddRestrictedFunctionProperties() to bypass .caller and .arguments properties
+        // from FunctionObject
+
+        // TODO: %ThrowTypeError% from current realm or function's realm? (current realm per spec)
+        /* step 1 */
+        Callable thrower = cx.getRealm().getThrowTypeError();
+        /* step 2 */
+        ordinaryDefinePropertyOrThrow(cx, "caller", new PropertyDescriptor(thrower, thrower, false,
+                false));
+        /* step 3 */
+        ordinaryDefinePropertyOrThrow(cx, "arguments", new PropertyDescriptor(thrower, thrower,
+                false, false));
+    }
+
+    private void ordinaryDefinePropertyOrThrow(ExecutionContext cx, String propertyKey,
+            PropertyDescriptor desc) {
+        boolean success = super.defineOwnProperty(cx, propertyKey, desc);
+        if (!success) {
+            throw newTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey);
         }
     }
 

@@ -49,6 +49,15 @@ public interface Callable extends ScriptObject {
             throws Throwable;
 
     /**
+     * Returns a copy of this function object with the same internal methods and internal slots.
+     * 
+     * @param cx
+     *            the execution context
+     * @return the new function object
+     */
+    Callable clone(ExecutionContext cx);
+
+    /**
      * Source representation of this callable.
      * 
      * @return the function source

@@ -66,8 +66,21 @@ public final class AsyncAbstractOperations {
         private final GeneratorObject generator;
 
         public SpawnExecutor(Realm realm, GeneratorObject generator) {
-            super(realm, ANONYMOUS, 2);
+            this(realm, generator, null);
+            createDefaultFunctionProperties(ANONYMOUS, 2);
+        }
+
+        private SpawnExecutor(Realm realm, GeneratorObject generator, Void ignore) {
+            super(realm, ANONYMOUS);
             this.generator = generator;
+        }
+
+        @Override
+        public SpawnExecutor clone(ExecutionContext cx) {
+            SpawnExecutor f = new SpawnExecutor(getRealm(), generator, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -164,9 +177,22 @@ public final class AsyncAbstractOperations {
         private final StepAction action;
 
         public CallStep(Realm realm, AsyncState asyncState, StepAction action) {
-            super(realm, ANONYMOUS, 1);
+            this(realm, asyncState, action, null);
+            createDefaultFunctionProperties(ANONYMOUS, 1);
+        }
+
+        private CallStep(Realm realm, AsyncState asyncState, StepAction action, Void ignore) {
+            super(realm, ANONYMOUS);
             this.asyncState = asyncState;
             this.action = action;
+        }
+
+        @Override
+        public CallStep clone(ExecutionContext cx) {
+            CallStep f = new CallStep(getRealm(), asyncState, action, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override

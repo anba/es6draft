@@ -43,6 +43,14 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public BooleanConstructor clone(ExecutionContext cx) {
+        BooleanConstructor f = new BooleanConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 19.3.1.1 Boolean (value)
      */

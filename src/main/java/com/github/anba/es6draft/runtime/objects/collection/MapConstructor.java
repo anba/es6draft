@@ -47,6 +47,14 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public MapConstructor clone(ExecutionContext cx) {
+        MapConstructor f = new MapConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 23.1.1.1 Map ([ iterable ])
      */

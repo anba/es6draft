@@ -135,7 +135,20 @@ public final class CollatorPrototype extends CollatorObject implements Initialis
 
     private static final class CompareFunction extends BuiltinFunction {
         public CompareFunction(Realm realm) {
-            super(realm, "compare", 2);
+            super(realm, "compare");
+            createDefaultFunctionProperties("compare", 2);
+        }
+
+        private CompareFunction(Realm realm, Void ignore) {
+            super(realm, "compare");
+        }
+
+        @Override
+        public CompareFunction clone(ExecutionContext cx) {
+            CompareFunction f = new CompareFunction(getRealm(), null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         /**

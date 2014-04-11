@@ -46,6 +46,14 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public NumberConstructor clone(ExecutionContext cx) {
+        NumberConstructor f = new NumberConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 20.1.1.1 Number ( [ value ] )
      */

@@ -47,6 +47,14 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public SymbolConstructor clone(ExecutionContext cx) {
+        SymbolConstructor f = new SymbolConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 19.4.1.1 Symbol ( [ description ] )
      */

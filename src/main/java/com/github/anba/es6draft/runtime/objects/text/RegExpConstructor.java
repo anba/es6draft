@@ -56,6 +56,14 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public RegExpConstructor clone(ExecutionContext cx) {
+        RegExpConstructor f = new RegExpConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 21.2.3.1 RegExp(pattern, flags)
      */

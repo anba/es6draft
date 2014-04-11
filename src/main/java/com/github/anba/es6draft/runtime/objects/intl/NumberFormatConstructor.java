@@ -130,6 +130,14 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public NumberFormatConstructor clone(ExecutionContext cx) {
+        NumberFormatConstructor f = new NumberFormatConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     @SafeVarargs
     private static <T> Set<T> set(T... elements) {
         return new HashSet<>(asList(elements));

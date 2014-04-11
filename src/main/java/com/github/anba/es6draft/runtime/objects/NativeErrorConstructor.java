@@ -112,6 +112,14 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public NativeErrorConstructor clone(ExecutionContext cx) {
+        NativeErrorConstructor f = new NativeErrorConstructor(getRealm(), type);
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 19.5.6.1.1 NativeError (message)
      * <p>

@@ -53,6 +53,14 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public DataViewConstructor clone(ExecutionContext cx) {
+        DataViewConstructor f = new DataViewConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     private static final class DataViewObjectAllocator implements ObjectAllocator<DataViewObject> {
         static final ObjectAllocator<DataViewObject> INSTANCE = new DataViewObjectAllocator();
 

@@ -46,6 +46,14 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public StringConstructor clone(ExecutionContext cx) {
+        StringConstructor f = new StringConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 21.1.1.1 String ( value )
      */

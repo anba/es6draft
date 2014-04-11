@@ -47,6 +47,14 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public ProxyConstructorFunction clone(ExecutionContext cx) {
+        ProxyConstructorFunction f = new ProxyConstructorFunction(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 26.5.1.1 Proxy (target, handler)
      */
@@ -122,8 +130,22 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
         private ExoticProxy revokableProxy;
 
         public ProxyRevocationFunction(Realm realm, ExoticProxy revokableProxy) {
-            super(realm, ANONYMOUS, 0);
+            this(realm, revokableProxy, null);
+            createDefaultFunctionProperties(ANONYMOUS, 0);
+        }
+
+        private ProxyRevocationFunction(Realm realm, ExoticProxy revokableProxy, Void ignore) {
+            super(realm, ANONYMOUS);
             this.revokableProxy = revokableProxy;
+        }
+
+        @Override
+        public ProxyRevocationFunction clone(ExecutionContext cx) {
+            ProxyRevocationFunction f = new ProxyRevocationFunction(getRealm(), revokableProxy,
+                    null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override

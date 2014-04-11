@@ -28,7 +28,20 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  */
 public final class ListIteratorNext extends BuiltinFunction {
     public ListIteratorNext(Realm realm) {
-        super(realm, "next", 0);
+        super(realm, "next");
+        createDefaultFunctionProperties("next", 0);
+    }
+
+    private ListIteratorNext(Realm realm, Void ignore) {
+        super(realm, "next");
+    }
+
+    @Override
+    public ListIteratorNext clone(ExecutionContext cx) {
+        ListIteratorNext f = new ListIteratorNext(getRealm(), null);
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
     }
 
     @Override

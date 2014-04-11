@@ -59,6 +59,14 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public RealmConstructor clone(ExecutionContext cx) {
+        RealmConstructor f = new RealmConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * Abstract Operation: IndirectEval (realm, source)
      * 

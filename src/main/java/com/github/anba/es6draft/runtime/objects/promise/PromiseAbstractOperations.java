@@ -106,9 +106,24 @@ public final class PromiseAbstractOperations {
 
         public PromiseRejectFunction(Realm realm, PromiseObject promise,
                 AtomicBoolean alreadyResolved) {
-            super(realm, ANONYMOUS, 1);
+            this(realm, promise, alreadyResolved, null);
+            createDefaultFunctionProperties(ANONYMOUS, 1);
+        }
+
+        private PromiseRejectFunction(Realm realm, PromiseObject promise,
+                AtomicBoolean alreadyResolved, Void ignore) {
+            super(realm, ANONYMOUS);
             this.promise = promise;
             this.alreadyResolved = alreadyResolved;
+        }
+
+        @Override
+        public PromiseRejectFunction clone(ExecutionContext cx) {
+            PromiseRejectFunction f = new PromiseRejectFunction(getRealm(), promise,
+                    alreadyResolved, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -139,9 +154,24 @@ public final class PromiseAbstractOperations {
 
         public PromiseResolveFunction(Realm realm, PromiseObject promise,
                 AtomicBoolean alreadyResolved) {
-            super(realm, ANONYMOUS, 1);
+            this(realm, promise, alreadyResolved, null);
+            createDefaultFunctionProperties(ANONYMOUS, 1);
+        }
+
+        private PromiseResolveFunction(Realm realm, PromiseObject promise,
+                AtomicBoolean alreadyResolved, Void ignore) {
+            super(realm, ANONYMOUS);
             this.promise = promise;
             this.alreadyResolved = alreadyResolved;
+        }
+
+        @Override
+        public PromiseResolveFunction clone(ExecutionContext cx) {
+            PromiseResolveFunction f = new PromiseResolveFunction(getRealm(), promise,
+                    alreadyResolved, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -289,7 +319,20 @@ public final class PromiseAbstractOperations {
         private Object reject = UNDEFINED;
 
         public GetCapabilitiesExecutor(Realm realm) {
-            super(realm, ANONYMOUS, 2);
+            super(realm, ANONYMOUS);
+            createDefaultFunctionProperties(ANONYMOUS, 2);
+        }
+
+        private GetCapabilitiesExecutor(Realm realm, Void ignore) {
+            super(realm, ANONYMOUS);
+        }
+
+        @Override
+        public GetCapabilitiesExecutor clone(ExecutionContext cx) {
+            GetCapabilitiesExecutor f = new GetCapabilitiesExecutor(getRealm(), null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -504,8 +547,21 @@ public final class PromiseAbstractOperations {
         private final VALUE constantValue;
 
         public ConstantFunction(Realm realm, VALUE constantValue) {
-            super(realm, ANONYMOUS, 0);
+            this(realm, constantValue, null);
+            createDefaultFunctionProperties(ANONYMOUS, 0);
+        }
+
+        private ConstantFunction(Realm realm, VALUE constantValue, Void ignore) {
+            super(realm, ANONYMOUS);
             this.constantValue = constantValue;
+        }
+
+        @Override
+        public ConstantFunction clone(ExecutionContext cx) {
+            ConstantFunction<VALUE> f = new ConstantFunction<>(getRealm(), constantValue, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override

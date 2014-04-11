@@ -45,6 +45,14 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public ErrorConstructor clone(ExecutionContext cx) {
+        ErrorConstructor f = new ErrorConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 19.5.1.1 Error (message)
      * <p>

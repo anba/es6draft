@@ -49,6 +49,14 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public ArrayConstructor clone(ExecutionContext cx) {
+        ArrayConstructor f = new ArrayConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 22.1.1.1 Array ( )<br>
      * 22.1.1.2 Array (len)<br>

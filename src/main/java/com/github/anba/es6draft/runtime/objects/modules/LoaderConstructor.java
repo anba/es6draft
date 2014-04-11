@@ -52,6 +52,14 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public LoaderConstructor clone(ExecutionContext cx) {
+        LoaderConstructor f = new LoaderConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 26.3.1.1 Reflect.Loader (options = { })
      */

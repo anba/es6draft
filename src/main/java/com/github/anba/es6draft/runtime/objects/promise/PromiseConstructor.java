@@ -59,6 +59,14 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public PromiseConstructor clone(ExecutionContext cx) {
+        PromiseConstructor f = new PromiseConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 25.4.3.1 Promise ( executor )
      */
@@ -210,7 +218,8 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
                 }
                 /* steps 9.h-9.m */
                 PromiseAllResolveElementFunction resolveElement = new PromiseAllResolveElementFunction(
-                        cx.getRealm(), index, values, promiseCapability, remainingElementsCount);
+                        cx.getRealm(), index, values, promiseCapability, remainingElementsCount,
+                        new AtomicBoolean(false));
                 /* step 9.n */
                 remainingElementsCount.incrementAndGet();
                 /* steps 9.o-9.p */
@@ -407,13 +416,30 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         private final AtomicBoolean alreadyCalled;
 
         public PromiseAllResolveElementFunction(Realm realm, int index, ScriptObject values,
-                PromiseCapability<?> capabilities, AtomicInteger remainingElements) {
-            super(realm, ANONYMOUS, 1);
+                PromiseCapability<?> capabilities, AtomicInteger remainingElements,
+                AtomicBoolean alreadyCalled) {
+            this(realm, index, values, capabilities, remainingElements, alreadyCalled, null);
+            createDefaultFunctionProperties(ANONYMOUS, 1);
+        }
+
+        private PromiseAllResolveElementFunction(Realm realm, int index, ScriptObject values,
+                PromiseCapability<?> capabilities, AtomicInteger remainingElements,
+                AtomicBoolean alreadyCalled, Void ignore) {
+            super(realm, ANONYMOUS);
             this.index = index;
             this.values = values;
             this.capabilities = capabilities;
             this.remainingElements = remainingElements;
-            this.alreadyCalled = new AtomicBoolean(false);
+            this.alreadyCalled = alreadyCalled;
+        }
+
+        @Override
+        public PromiseAllResolveElementFunction clone(ExecutionContext cx) {
+            PromiseAllResolveElementFunction f = new PromiseAllResolveElementFunction(getRealm(),
+                    index, values, capabilities, remainingElements, alreadyCalled, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override

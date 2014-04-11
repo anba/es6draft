@@ -616,7 +616,20 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
      */
     public static final class ReturnUndefined extends BuiltinFunction {
         public ReturnUndefined(Realm realm) {
-            super(realm, ANONYMOUS, 0);
+            super(realm, ANONYMOUS);
+            createDefaultFunctionProperties(ANONYMOUS, 0);
+        }
+
+        private ReturnUndefined(Realm realm, Void ignore) {
+            super(realm, ANONYMOUS);
+        }
+
+        @Override
+        public ReturnUndefined clone(ExecutionContext cx) {
+            ReturnUndefined f = new ReturnUndefined(getRealm(), null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -633,8 +646,22 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
         private final VALUE constantValue;
 
         public ConstantFunction(Realm realm, String name, VALUE constantValue) {
-            super(realm, name, 0);
+            this(realm, name, constantValue, null);
+            createDefaultFunctionProperties(name, 0);
+        }
+
+        private ConstantFunction(Realm realm, String name, VALUE constantValue, Void ignore) {
+            super(realm, name);
             this.constantValue = constantValue;
+        }
+
+        @Override
+        public ConstantFunction<VALUE> clone(ExecutionContext cx) {
+            ConstantFunction<VALUE> f = new ConstantFunction<>(getRealm(), getName(),
+                    constantValue, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override

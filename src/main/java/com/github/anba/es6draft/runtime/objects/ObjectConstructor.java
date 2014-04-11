@@ -58,6 +58,14 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public ObjectConstructor clone(ExecutionContext cx) {
+        ObjectConstructor f = new ObjectConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 19.1.1.1 Object ( [ value ] )
      */

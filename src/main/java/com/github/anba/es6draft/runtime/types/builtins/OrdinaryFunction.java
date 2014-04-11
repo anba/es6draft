@@ -152,7 +152,7 @@ public class OrdinaryFunction extends FunctionObject {
         DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, true));
         /* step 5 */
         if (strict) {
-            AddRestrictedFunctionProperties(cx, f);
+            f.addRestrictedFunctionProperties(cx);
         }
         /* steps 6-11 */
         f.initialise(kind, function, scope);
@@ -228,37 +228,6 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.8 AddRestrictedFunctionProperties Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param obj
-     *            the script object
-     */
-    private static void AddRestrictedFunctionProperties(ExecutionContext cx, FunctionObject obj) {
-        // Modified AddRestrictedFunctionProperties() to bypass .caller and .arguments properties
-        // from FunctionObject
-
-        // TODO: %ThrowTypeError% from current realm or function's realm? (current realm per spec)
-        /* step 1 */
-        Callable thrower = cx.getRealm().getThrowTypeError();
-        /* step 2 */
-        ordinaryDefinePropertyOrThrow(cx, obj, "caller", new PropertyDescriptor(thrower, thrower,
-                false, false));
-        /* step 3 */
-        ordinaryDefinePropertyOrThrow(cx, obj, "arguments", new PropertyDescriptor(thrower,
-                thrower, false, false));
-    }
-
-    private static void ordinaryDefinePropertyOrThrow(ExecutionContext cx, FunctionObject obj,
-            String propertyKey, PropertyDescriptor desc) {
-        boolean success = obj.ordinaryDefineOwnProperty(propertyKey, desc);
-        if (!success) {
-            throw newTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey);
-        }
-    }
-
-    /**
      * 9.2.8 The %ThrowTypeError% Function Object
      */
     private static final class TypeErrorThrower extends BuiltinFunction {
@@ -269,6 +238,14 @@ public class OrdinaryFunction extends FunctionObject {
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             throw newTypeError(calleeContext(), Messages.Key.StrictModePoisonPill);
+        }
+
+        @Override
+        public Callable clone(ExecutionContext cx) {
+            TypeErrorThrower f = new TypeErrorThrower(getRealm());
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
     }
 
@@ -492,6 +469,8 @@ public class OrdinaryFunction extends FunctionObject {
     /**
      * 9.2.13 CloneMethod(function, newHome, newName) Abstract Operation
      * 
+     * @param cx
+     *            the execution context
      * @param function
      *            the function object
      * @param newHome
@@ -500,17 +479,27 @@ public class OrdinaryFunction extends FunctionObject {
      *            the new method name
      * @return the cloned function object
      */
-    public static FunctionObject CloneMethod(FunctionObject function, ScriptObject newHome,
-            String newName) {
-        // FIXME: spec bug - Copy of properties not specified?!
-        /* steps 1-3 (not applicable) */
-        /* steps 4-6 */
-        return function.clone(newHome, newName);
+    public static FunctionObject CloneMethod(ExecutionContext cx, FunctionObject function,
+            ScriptObject newHome, String newName) {
+        /* steps 1-7, 9 */
+        FunctionObject clone = function.clone(cx);
+        /* step 8 */
+        if (function.isNeedsSuper()) {
+            if (newName != null) {
+                clone.toMethod(newName, newHome);
+            } else {
+                clone.toMethod(function.getMethodName(), newHome);
+            }
+        }
+        /* step 10 */
+        return clone;
     }
 
     /**
      * 9.2.13 CloneMethod(function, newHome, newName) Abstract Operation
      * 
+     * @param cx
+     *            the execution context
      * @param function
      *            the function object
      * @param newHome
@@ -519,11 +508,19 @@ public class OrdinaryFunction extends FunctionObject {
      *            the new method name
      * @return the cloned function object
      */
-    public static FunctionObject CloneMethod(FunctionObject function, ScriptObject newHome,
-            Symbol newName) {
-        // FIXME: spec bug - Copy of properties not specified?!
-        /* steps 1-3 (not applicable) */
-        /* steps 4-6 */
-        return function.clone(newHome, newName);
+    public static FunctionObject CloneMethod(ExecutionContext cx, FunctionObject function,
+            ScriptObject newHome, Symbol newName) {
+        /* steps 1-7, 9 */
+        FunctionObject clone = function.clone(cx);
+        /* step 8 */
+        if (function.isNeedsSuper()) {
+            if (newName != null) {
+                clone.toMethod(newName, newHome);
+            } else {
+                clone.toMethod(function.getMethodName(), newHome);
+            }
+        }
+        /* step 10 */
+        return clone;
     }
 }

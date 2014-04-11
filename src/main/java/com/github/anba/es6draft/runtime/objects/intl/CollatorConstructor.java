@@ -220,6 +220,14 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public CollatorConstructor clone(ExecutionContext cx) {
+        CollatorConstructor f = new CollatorConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     @SafeVarargs
     private static <T> Set<T> set(T... elements) {
         return new HashSet<>(asList(elements));

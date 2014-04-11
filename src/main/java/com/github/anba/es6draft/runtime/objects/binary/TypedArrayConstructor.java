@@ -84,6 +84,14 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public TypedArrayConstructor clone(ExecutionContext cx) {
+        TypedArrayConstructor f = new TypedArrayConstructor(getRealm(), elementType);
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 22.2.4.1 TypedArray (...args)
      */

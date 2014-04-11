@@ -47,6 +47,14 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public SetConstructor clone(ExecutionContext cx) {
+        SetConstructor f = new SetConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 23.2.1.1 Set ([ iterable ])
      */

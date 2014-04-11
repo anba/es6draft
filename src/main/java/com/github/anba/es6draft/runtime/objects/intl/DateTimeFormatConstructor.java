@@ -218,6 +218,14 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public DateTimeFormatConstructor clone(ExecutionContext cx) {
+        DateTimeFormatConstructor f = new DateTimeFormatConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     @SafeVarargs
     private static <T> Set<T> set(T... elements) {
         return new HashSet<>(asList(elements));

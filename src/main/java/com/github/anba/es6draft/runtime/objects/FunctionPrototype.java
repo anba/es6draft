@@ -58,6 +58,14 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public FunctionPrototype clone(ExecutionContext cx) {
+        FunctionPrototype f = new FunctionPrototype(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * Returns the number of maximal supported arguments in {@code Function.prototype.apply}.
      * 
@@ -215,45 +223,49 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
         }
 
         /**
-         * 19.2.3.5 Function.prototype.toMethod (superBinding, methodName = undefined)
+         * 19.2.3.5 Function.prototype.toMethod (newHome, methodName = undefined)
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param superBinding
-         *            the new super binding
+         * @param newHome
+         *            the new home object
          * @param methodName
          *            the new method name
          * @return the new function object
          */
         @Function(name = "toMethod", arity = 1)
-        public static Object toMethod(ExecutionContext cx, Object thisValue, Object superBinding,
+        public static Object toMethod(ExecutionContext cx, Object thisValue, Object newHome,
                 Object methodName) {
-            // TODO: def. for ECMAScript function object vs. built-in functions
-            /* step 1 */
-            if (!(thisValue instanceof FunctionObject)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            if (thisValue instanceof FunctionObject) {
+                /* step 1 */
+                FunctionObject function = (FunctionObject) thisValue;
+                /* step 1.a (not applicable) */
+                /* step 1.b */
+                if (!Type.isObject(newHome)) {
+                    throw newTypeError(cx, Messages.Key.NotObjectType);
+                }
+                ScriptObject newHomeObject = Type.objectValue(newHome);
+                /* step 1.c */
+                Object newName;
+                if (!Type.isUndefined(methodName)) {
+                    newName = ToPropertyKey(cx, methodName);
+                } else {
+                    newName = null;
+                }
+                /* step 1.d */
+                if (newName instanceof String) {
+                    return CloneMethod(cx, function, newHomeObject, (String) newName);
+                } else {
+                    return CloneMethod(cx, function, newHomeObject, (Symbol) newName);
+                }
+            } else if (thisValue instanceof Callable) {
+                /* steps 2-4 */
+                return ((Callable) thisValue).clone(cx);
             }
-            FunctionObject function = (FunctionObject) thisValue;
-            /* step 2 */
-            if (!Type.isObject(superBinding)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
-            ScriptObject newHome = Type.objectValue(superBinding);
-            /* step 3 */
-            Object newName;
-            if (!Type.isUndefined(methodName)) {
-                newName = ToPropertyKey(cx, methodName);
-            } else {
-                newName = null;
-            }
-            /* step 4 */
-            if (newName instanceof String) {
-                return CloneMethod(function, newHome, (String) newName);
-            } else {
-                return CloneMethod(function, newHome, (Symbol) newName);
-            }
+            /* step 5 */
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         /**

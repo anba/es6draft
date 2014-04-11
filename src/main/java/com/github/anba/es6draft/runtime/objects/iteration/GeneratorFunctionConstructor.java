@@ -58,6 +58,14 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public GeneratorFunctionConstructor clone(ExecutionContext cx) {
+        GeneratorFunctionConstructor f = new GeneratorFunctionConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     /**
      * 25.2.1.1 GeneratorFunction (p1, p2, ... , pn, body)
      */

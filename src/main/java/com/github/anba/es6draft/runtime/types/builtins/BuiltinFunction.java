@@ -35,8 +35,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     private final String name;
 
     /**
-     * Creates a new built-in function, does <strong>not</strong> set the [[Prototype]] or any
-     * properties.
+     * Creates a new built-in function.
      * 
      * @param realm
      *            the realm instance
@@ -47,25 +46,6 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         super(realm);
         this.realm = realm;
         this.name = name;
-    }
-
-    /**
-     * Creates a new built-in function, sets the [[Prototype]] property to
-     * <code>%FunctionPrototype%</code> and defines the "name", "length" and other restricted
-     * function properties.
-     * 
-     * @param realm
-     *            the realm instance
-     * @param name
-     *            the function name
-     * @param arity
-     *            the function arity
-     */
-    public BuiltinFunction(Realm realm, String name, int arity) {
-        super(realm);
-        this.realm = realm;
-        this.name = name;
-        createDefaultFunctionProperties(name, arity);
     }
 
     /**
@@ -115,7 +95,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
      * @param arity
      *            the function arity
      */
-    private final void createDefaultFunctionProperties(String name, int arity) {
+    protected final void createDefaultFunctionProperties(String name, int arity) {
         ExecutionContext cx = realm.defaultContext();
         setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
         if (!name.isEmpty()) {
@@ -124,6 +104,17 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         }
         defineOwnProperty(cx, "length", new PropertyDescriptor(arity, false, false, true));
         // 9.3.2 CreateBuiltinFunction Abstract Operation, step 2
+        AddRestrictedFunctionProperties(cx, this);
+    }
+
+    /**
+     * Calls
+     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, ScriptObject)}.
+     * 
+     * @param cx
+     *            the execution context
+     */
+    protected final void addRestrictedFunctionProperties(ExecutionContext cx) {
         AddRestrictedFunctionProperties(cx, this);
     }
 

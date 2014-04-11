@@ -160,7 +160,20 @@ public final class PromisePrototype extends OrdinaryObject implements Initialisa
      */
     public static final class IdentityFunction extends BuiltinFunction {
         public IdentityFunction(Realm realm) {
-            super(realm, ANONYMOUS, 1);
+            super(realm, ANONYMOUS);
+            createDefaultFunctionProperties(ANONYMOUS, 1);
+        }
+
+        private IdentityFunction(Realm realm, Void ignore) {
+            super(realm, ANONYMOUS);
+        }
+
+        @Override
+        public IdentityFunction clone(ExecutionContext cx) {
+            IdentityFunction f = new IdentityFunction(getRealm(), null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override
@@ -176,7 +189,20 @@ public final class PromisePrototype extends OrdinaryObject implements Initialisa
      */
     public static final class ThrowerFunction extends BuiltinFunction {
         public ThrowerFunction(Realm realm) {
-            super(realm, ANONYMOUS, 1);
+            super(realm, ANONYMOUS);
+            createDefaultFunctionProperties(ANONYMOUS, 1);
+        }
+
+        private ThrowerFunction(Realm realm, Void ignore) {
+            super(realm, ANONYMOUS);
+        }
+
+        @Override
+        public ThrowerFunction clone(ExecutionContext cx) {
+            ThrowerFunction f = new ThrowerFunction(getRealm(), null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override

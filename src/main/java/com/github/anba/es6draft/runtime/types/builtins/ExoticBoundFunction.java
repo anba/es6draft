@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -145,6 +146,11 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
     @Override
     public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args) {
         return call(callerContext, thisValue, args);
+    }
+
+    @Override
+    public Callable clone(ExecutionContext cx) {
+        throw newTypeError(cx, Messages.Key.FunctionNotCloneable);
     }
 
     /**

@@ -190,6 +190,7 @@ public final class Messages {
         SymbolCreate("type.symbol_create"),
         CyclicProto("type.cyclic_proto"),
         PropertyNotFound("type.property_not_found"),
+        FunctionNotCloneable("type.function_not_cloneable"),
 
         // 6.2.5 The Property Descriptor Specification Type
         InvalidGetter("propertydescriptor.invalid_getter"),

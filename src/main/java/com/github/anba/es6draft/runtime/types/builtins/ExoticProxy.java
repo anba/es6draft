@@ -114,6 +114,11 @@ public class ExoticProxy implements ScriptObject {
             }
             return ((Callable) getProxyTarget()).toSource();
         }
+
+        @Override
+        public Callable clone(ExecutionContext cx) {
+            throw newTypeError(cx, Messages.Key.FunctionNotCloneable);
+        }
     }
 
     private static class ConstructorExoticProxy extends CallabeExoticProxy implements Constructor {

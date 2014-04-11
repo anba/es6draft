@@ -58,6 +58,14 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    @Override
+    public ArrayBufferConstructor clone(ExecutionContext cx) {
+        ArrayBufferConstructor f = new ArrayBufferConstructor(getRealm());
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
     private static final class ArrayBufferObjectAllocator implements
             ObjectAllocator<ArrayBufferObject> {
         static final ObjectAllocator<ArrayBufferObject> INSTANCE = new ArrayBufferObjectAllocator();

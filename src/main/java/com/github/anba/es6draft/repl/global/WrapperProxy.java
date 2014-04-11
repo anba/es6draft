@@ -72,6 +72,11 @@ class WrapperProxy implements ScriptObject {
         public String toSource() {
             return ((Callable) proxyTarget).toSource();
         }
+
+        @Override
+        public CallabeWrapperProxy clone(ExecutionContext cx) {
+            throw newTypeError(cx, Messages.Key.FunctionNotCloneable);
+        }
     }
 
     /**

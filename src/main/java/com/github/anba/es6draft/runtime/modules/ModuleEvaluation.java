@@ -39,8 +39,21 @@ public final class ModuleEvaluation {
         private final Loader loader;
 
         public EvaluateLoadedModule(Realm realm, Loader loader) {
-            super(realm, ANONYMOUS, 0);
+            this(realm, loader, null);
+            createDefaultFunctionProperties(ANONYMOUS, 0);
+        }
+
+        private EvaluateLoadedModule(Realm realm, Loader loader, Void ignore) {
+            super(realm, ANONYMOUS);
             this.loader = loader;
+        }
+
+        @Override
+        public EvaluateLoadedModule clone(ExecutionContext cx) {
+            EvaluateLoadedModule f = new EvaluateLoadedModule(getRealm(), loader, null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         @Override

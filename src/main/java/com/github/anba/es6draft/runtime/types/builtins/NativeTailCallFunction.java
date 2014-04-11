@@ -27,9 +27,14 @@ public final class NativeTailCallFunction extends BuiltinFunction {
     private final MethodHandle tmh;
 
     public NativeTailCallFunction(Realm realm, String name, int arity, MethodHandle mh) {
-        super(realm, name, arity);
-        this.mh = tailCallAdapter(mh);
-        this.tmh = mh;
+        this(realm, name, tailCallAdapter(mh), mh);
+        createDefaultFunctionProperties(name, arity);
+    }
+
+    private NativeTailCallFunction(Realm realm, String name, MethodHandle mh, MethodHandle tmh) {
+        super(realm, name);
+        this.mh = mh;
+        this.tmh = tmh;
     }
 
     private static MethodHandle tailCallAdapter(MethodHandle mh) {
@@ -71,5 +76,13 @@ public final class NativeTailCallFunction extends BuiltinFunction {
     public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
             throws Throwable {
         return tmh.invokeExact(thisValue, args);
+    }
+
+    @Override
+    public NativeTailCallFunction clone(ExecutionContext cx) {
+        NativeTailCallFunction f = new NativeTailCallFunction(getRealm(), getName(), mh, tmh);
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
     }
 }

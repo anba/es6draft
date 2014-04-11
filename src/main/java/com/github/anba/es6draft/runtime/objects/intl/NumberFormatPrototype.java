@@ -155,7 +155,20 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
 
     private static final class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
-            super(realm, "format", 1);
+            super(realm, "format");
+            createDefaultFunctionProperties("format", 1);
+        }
+
+        private FormatFunction(Realm realm, Void ignore) {
+            super(realm, "format");
+        }
+
+        @Override
+        public FormatFunction clone(ExecutionContext cx) {
+            FormatFunction f = new FormatFunction(getRealm(), null);
+            f.setPrototype(getPrototype());
+            f.addRestrictedFunctionProperties(cx);
+            return f;
         }
 
         /**
