@@ -427,36 +427,41 @@ public final class PropertyDescriptor implements Cloneable {
     public static PropertyDescriptor CompletePropertyDescriptor(PropertyDescriptor desc,
             Property likeDesc) {
         /* steps 1-3 (implicit) */
-        /* step 4 */
+        /* steps 4-5 */
+        PropertyDescriptor like;
         if (likeDesc == null) {
-            likeDesc = new PropertyDescriptor().toProperty();
+            like = new PropertyDescriptor();
+        } else {
+            // TODO: create a test case to test this behaviour?
+            like = likeDesc.toPropertyDescriptor();
+            CompletePropertyDescriptor(like, null);
         }
         if (IsGenericDescriptor(desc) || IsDataDescriptor(desc)) {
-            /* step 5 */
+            /* step 6 */
             if (!desc.hasValue()) {
-                desc.setValue(likeDesc.getValue());
+                desc.setValue(like.getValue());
             }
             if (!desc.hasWritable()) {
-                desc.setWritable(likeDesc.isWritable());
+                desc.setWritable(like.isWritable());
             }
         } else {
-            /* step 6 */
+            /* step 7 */
             if (!desc.hasGetter()) {
-                desc.setGetter(likeDesc.getGetter());
+                desc.setGetter(like.getGetter());
             }
             if (!desc.hasSetter()) {
-                desc.setSetter(likeDesc.getSetter());
+                desc.setSetter(like.getSetter());
             }
         }
-        /* step 7 */
-        if (!desc.hasEnumerable()) {
-            desc.setEnumerable(likeDesc.isEnumerable());
-        }
         /* step 8 */
-        if (!desc.hasConfigurable()) {
-            desc.setConfigurable(likeDesc.isConfigurable());
+        if (!desc.hasEnumerable()) {
+            desc.setEnumerable(like.isEnumerable());
         }
         /* step 9 */
+        if (!desc.hasConfigurable()) {
+            desc.setConfigurable(like.isConfigurable());
+        }
+        /* step 10 */
         return desc;
     }
 
