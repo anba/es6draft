@@ -5245,7 +5245,7 @@ public final class Parser {
      *     GeneratorComprehension<span><sub>[?Yield]</sub></span>
      *     RegularExpressionLiteral
      *     TemplateLiteral<span><sub>[?Yield]</sub></span>
-     *     CoverParenthesisedExpressionAndArrowParameterList<span><sub>[?Yield]</sub></span>
+     *     CoverParenthesizedExpressionAndArrowParameterList<span><sub>[?Yield]</sub></span>
      * Literal :
      *     NullLiteral
      *     ValueLiteral
@@ -5281,7 +5281,7 @@ public final class Parser {
         case ASSIGN_DIV:
             return regularExpressionLiteral(tok);
         case LB:
-            return arrayInitialiser();
+            return arrayInitializer();
         case LC:
             return objectLiteral();
         case FUNCTION:
@@ -5292,7 +5292,7 @@ public final class Parser {
             if (LOOKAHEAD(Token.FOR)) {
                 return generatorComprehension();
             } else {
-                return coverParenthesisedExpressionAndArrowParameterList();
+                return coverParenthesizedExpressionAndArrowParameterList();
             }
         case TEMPLATE:
             return templateLiteral(false);
@@ -5333,10 +5333,10 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1] Primary Expressions</strong>
+     * <strong>[12.2] Primary Expression</strong>
      * 
      * <pre>
-     * CoverParenthesisedExpressionAndArrowParameterList<span><sub>[Yield]</sub></span> :
+     * CoverParenthesizedExpressionAndArrowParameterList<span><sub>[Yield]</sub></span> :
      *     ( Expression<span><sub>[In, ?Yield]</sub></span> )
      *     ( )
      *     ( ... BindingIdentifier<span><sub>[?Yield]</sub></span> )
@@ -5345,7 +5345,7 @@ public final class Parser {
      * 
      * @return the parsed expression node
      */
-    private Expression coverParenthesisedExpressionAndArrowParameterList() {
+    private Expression coverParenthesizedExpressionAndArrowParameterList() {
         long position = ts.position(), lineinfo = ts.lineinfo();
         consume(Token.LP);
         Expression expr;
