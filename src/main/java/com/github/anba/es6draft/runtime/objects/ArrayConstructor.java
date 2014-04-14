@@ -247,9 +247,9 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                 mapper = (Callable) mapfn;
             }
             /* steps 6-7 */
-            boolean usingIterator = HasProperty(cx, items, BuiltinSymbol.iterator.get());
+            Callable usingIterator = IsIterable(cx, items);
             /* step 8 */
-            if (usingIterator) {
+            if (usingIterator != null) {
                 /* steps 8a-8c */
                 ScriptObject a;
                 if (IsConstructor(c)) {
@@ -258,7 +258,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                     a = ArrayCreate(cx, 0);
                 }
                 /* steps 8d-8e */
-                ScriptObject iterator = GetIterator(cx, items);
+                ScriptObject iterator = GetIterator(cx, items, usingIterator);
                 /* steps 8f-8g */
                 for (int k = 0;; ++k) {
                     String pk = ToString(k);

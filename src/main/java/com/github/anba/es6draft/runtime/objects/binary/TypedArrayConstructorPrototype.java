@@ -479,10 +479,10 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
                 mapper = (Callable) mapfn;
             }
             /* steps 7-8 */
-            boolean usingIterator = HasProperty(cx, items, BuiltinSymbol.iterator.get());
+            Callable usingIterator = IsIterable(cx, items);
             /* step 9 */
-            if (usingIterator) {
-                ScriptObject iterator = GetIterator(cx, items);
+            if (usingIterator != null) {
+                ScriptObject iterator = GetIterator(cx, items, usingIterator);
                 List<Object> values = new ArrayList<>();
                 for (;;) {
                     ScriptObject next = IteratorStep(cx, iterator);
