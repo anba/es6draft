@@ -28,7 +28,7 @@ import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
  * <li>12 ECMAScript Language: Expressions
  * <li>13 ECMAScript Language: Statements and Declarations
  * <li>14 ECMAScript Language: Functions and Classes
- * <li>15 ECMAScript Language: Modules and Scripts
+ * <li>15 ECMAScript Language: Scripts and Modules
  * </ul>
  */
 public final class Parser {
@@ -1554,7 +1554,7 @@ public final class Parser {
      *     export ExportsClause ;
      *     export VariableStatement
      *     export Declaration<span><sub>[Default]</sub></span>
-     *     export default AssignmentExpression ;
+     *     export default AssignmentExpression<span><sub>[In]</sub></span> ;
      * </pre>
      * 
      * @return the parsed export declaration
@@ -1607,8 +1607,6 @@ public final class Parser {
             // export VariableStatement
             VariableStatement variableStatement = variableStatement();
 
-            // FIXME: spec bug - BoundNames(VariableStatement) also declared as lexical names
-
             addExportedBindings(begin, BoundNames(variableStatement));
 
             return new ExportDeclaration(begin, ts.endPosition(), variableStatement);
@@ -1629,7 +1627,7 @@ public final class Parser {
 
         case DEFAULT:
         default: {
-            // export default AssignmentExpression ;
+            // export default AssignmentExpression[In] ;
             consume(Token.DEFAULT);
             Expression expression = assignmentExpression(true);
             semicolon();
@@ -1836,8 +1834,8 @@ public final class Parser {
      * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
-     * FunctionDeclaration<span><sub>[Default]</sub></span> :
-     *     function BindingIdentifier<span><sub>[?Default]</sub></span> ( FormalParameters ) { FunctionBody }
+     * FunctionDeclaration<span><sub>[Yield, Default]</sub></span> :
+     *     function BindingIdentifier<span><sub>[?Yield, ?Default]</sub></span> ( FormalParameters ) { FunctionBody }
      * </pre>
      * 
      * @param allowDefault
@@ -1951,8 +1949,8 @@ public final class Parser {
      * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
-     * StrictFormalParameters :
-     *     FormalParameters
+     * StrictFormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     FormalParameters<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
      * </pre>
      * 
      * @param end
@@ -1967,9 +1965,9 @@ public final class Parser {
      * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
-     * FormalParameters :
+     * FormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> :
      *     [empty]
-     *     FormalParameterList
+     *     FormalParameterList<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
      * </pre>
      * 
      * @param end
@@ -1988,17 +1986,13 @@ public final class Parser {
      * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
-     * FormalParameterList :
-     *     FunctionRestParameter
-     *     FormalsList
-     *     FormalsList, FunctionRestParameter
-     * FormalsList :
-     *     FormalParameter
-     *     FormalsList, FormalParameter
-     * FunctionRestParameter :
-     *     BindingRestElement
-     * FormalParameter :
-     *     BindingElement
+     * FormalParameterList<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     FunctionRestParameter<span><sub>[?Yield]</sub></span>
+     *     FormalsList<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     *     FormalsList<span><sub>[?Yield, ?GeneratorParameter]</sub></span>, FunctionRestParameter<span><sub>[?Yield]</sub></span>
+     * FormalsList<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     FormalParameter<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     *     FormalsList<span><sub>[?Yield, ?GeneratorParameter]</sub></span>, FormalParameter<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
      * </pre>
      * 
      * @return the parsed formal parameters list
@@ -2008,10 +2002,10 @@ public final class Parser {
         List<FormalParameter> formals = newSmallList();
         for (;;) {
             if (token() == Token.TRIPLE_DOT) {
-                formals.add(bindingRestElement());
+                formals.add(functionRestParameter());
                 break;
             } else {
-                formals.add(bindingElement());
+                formals.add(formalParameter());
                 if (token() == Token.COMMA) {
                     consume(Token.COMMA);
                 } else {
@@ -2020,6 +2014,34 @@ public final class Parser {
             }
         }
         return new FormalParameterList(begin, ts.endPosition(), formals);
+    }
+
+    /**
+     * <strong>[14.1] Function Definitions</strong>
+     * 
+     * <pre>
+     * FunctionRestParameter<span><sub>[Yield]</sub></span> :
+     *     BindingRestElement<span><sub>[?Yield]</sub></span>
+     * </pre>
+     * 
+     * @return the parsed formal parameter
+     */
+    private FormalParameter functionRestParameter() {
+        return bindingRestElement();
+    }
+
+    /**
+     * <strong>[14.1] Function Definitions</strong>
+     * 
+     * <pre>
+     * FormalParameter<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     BindingElement<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     * </pre>
+     * 
+     * @return the parsed formal parameter
+     */
+    private FormalParameter formalParameter() {
+        return bindingElement();
     }
 
     private static String containsAny(HashSet<String> set, List<String> list) {
@@ -2174,11 +2196,11 @@ public final class Parser {
      * <strong>[14.2] Arrow Function Definitions</strong>
      * 
      * <pre>
-     * ArrowFunction<span><sub>[In]</sub></span> :
-     *     ArrowParameters {@literal =>} ConciseBody<span><sub>[?In]</sub></span>
-     * ArrowParameters :
-     *     BindingIdentifier
-     *     CoverParenthesisedExpressionAndArrowParameterList
+     * ArrowFunction<span><sub>[In, Yield]</sub></span> :
+     *     ArrowParameters<span><sub>[?Yield]</sub></span> {@literal =>} ConciseBody<span><sub>[?In]</sub></span>
+     * ArrowParameters<span><sub>[Yield]</sub></span> :
+     *     BindingIdentifier<span><sub>[?Yield]</sub></span>
+     *     CoverParenthesisedExpressionAndArrowParameterList<span><sub>[?Yield]</sub></span>
      * ConciseBody<span><sub>[In]</sub></span> :
      *     [LA &#x2209; { <b>{</b> }] AssignmentExpression<span><sub>[?In]</sub></span>
      *     { FunctionBody }
@@ -2187,8 +2209,8 @@ public final class Parser {
      * <h2>Supplemental Syntax</h2>
      * 
      * <pre>
-     * ArrowFormalParameters :
-     *     ( StrictFormalParameters )
+     * ArrowFormalParameters<span><sub>[Yield]</sub></span> :
+     *     ( StrictFormalParameters<span><sub>[?Yield]</sub></span> )
      * </pre>
      * 
      * @param allowIn
@@ -2291,11 +2313,11 @@ public final class Parser {
      * <strong>[14.3] Method Definitions</strong>
      * 
      * <pre>
-     * MethodDefinition :
-     *     PropertyName ( StrictFormalParameters ) { FunctionBody }
-     *     GeneratorMethod
-     *     get PropertyName ( ) { FunctionBody }
-     *     set PropertyName ( PropertySetParameterList ) { FunctionBody }
+     * MethodDefinition<span><sub>[Yield]</sub></span> :
+     *     PropertyName<span><sub>[?Yield]</sub></span> ( StrictFormalParameters ) { FunctionBody }
+     *     GeneratorMethod<span><sub>[?Yield]</sub></span>
+     *     get PropertyName<span><sub>[?Yield]</sub></span> ( ) { FunctionBody }
+     *     set PropertyName<span><sub>[?Yield]</sub></span> ( PropertySetParameterList ) { FunctionBody }
      * </pre>
      * 
      * @return the parsed method definition
@@ -2320,8 +2342,8 @@ public final class Parser {
      * <strong>[14.3] Method Definitions</strong>
      * 
      * <pre>
-     * MethodDefinition :
-     *     PropertyName ( StrictFormalParameters ) { FunctionBody }
+     * MethodDefinition<span><sub>[Yield]</sub></span> :
+     *     PropertyName<span><sub>[?Yield]</sub></span> ( StrictFormalParameters ) { FunctionBody }
      * </pre>
      * 
      * @return the parsed method definition
@@ -2366,8 +2388,8 @@ public final class Parser {
      * <strong>[14.3] Method Definitions</strong>
      * 
      * <pre>
-     * MethodDefinition :
-     *     get PropertyName ( ) { FunctionBody }
+     * MethodDefinition<span><sub>[Yield]</sub></span> :
+     *     get PropertyName<span><sub>[?Yield]</sub></span> ( ) { FunctionBody }
      * </pre>
      * 
      * @return the parsed getter method definition
@@ -2424,8 +2446,8 @@ public final class Parser {
      * <strong>[14.3] Method Definitions</strong>
      * 
      * <pre>
-     * MethodDefinition :
-     *     set PropertyName ( PropertySetParameterList ) { FunctionBody }
+     * MethodDefinition<span><sub>[Yield]</sub></span> :
+     *     set PropertyName<span><sub>[?Yield]</sub></span> ( PropertySetParameterList ) { FunctionBody }
      * </pre>
      * 
      * @return the parsed setter method definition
@@ -2631,8 +2653,8 @@ public final class Parser {
      * <strong>[14.4] Generator Function Definitions</strong>
      * 
      * <pre>
-     * GeneratorDeclaration<span><sub>[Default]</sub></span> :
-     *     function * BindingIdentifier<span><sub>[?Default]</sub></span> ( FormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { FunctionBody<span><sub>[Yield]</sub></span> }
+     * GeneratorDeclaration<span><sub>[Yield, Default]</sub></span> :
+     *     function * BindingIdentifier<span><sub>[?Yield, ?Default]</sub></span> ( FormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { FunctionBody<span><sub>[Yield]</sub></span> }
      * </pre>
      * 
      * @param allowDefault
@@ -2897,12 +2919,11 @@ public final class Parser {
      * <strong>[14.5] Class Definitions</strong>
      * 
      * <pre>
-     * ClassDeclaration<span><sub>[Default]</sub></span> :
-     *     class BindingIdentifier<span><sub>[?Default]</sub></span> ClassTail
-     * ClassTail :
-     *     ClassHeritage<span><sub>opt</sub></span> { ClassBody<span><sub>opt</sub></span> }
-     * ClassHeritage :
-     *     extends LeftHandSideExpression
+     * ClassDeclaration<span><sub>[Yield, Default]</sub></span> :
+     *     class BindingIdentifier<span><sub>[?Yield, ?Default]</sub></span> ClassTail<span><sub>[?Yield]</sub></span>
+     * ClassTail<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     [~GeneratorParameter] ClassHeritage<span><sub>[?Yield]opt</sub></span> { ClassBody<span><sub>[?Yield]opt</sub></span> }
+     *     [+GeneratorParameter] ClassHeritage<span><sub>opt</sub></span> { ClassBody<span><sub>opt</sub></span> }
      * </pre>
      * 
      * @param allowDefault
@@ -2919,8 +2940,7 @@ public final class Parser {
             BindingIdentifier name = bindingIdentifierClassName(allowDefault);
             Expression heritage = null;
             if (token() == Token.EXTENDS) {
-                consume(Token.EXTENDS);
-                heritage = leftHandSideExpressionWithValidation();
+                heritage = classHeritage();
             }
             consume(Token.LC);
             BlockContext scope = enterBlockContext(name);
@@ -2945,12 +2965,11 @@ public final class Parser {
      * <strong>[14.5] Class Definitions</strong>
      * 
      * <pre>
-     * ClassExpression :
-     *     class BindingIdentifier<span><sub>opt</sub></span> ClassTail
-     * ClassTail :
-     *     ClassHeritage<span><sub>opt</sub></span> { ClassBody<span><sub>opt</sub></span> }
-     * ClassHeritage :
-     *     extends LeftHandSideExpression
+     * ClassExpression<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     class BindingIdentifier<span><sub>[?Yield]opt</sub></span> ClassTail<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     * ClassTail<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     *     [~GeneratorParameter] ClassHeritage<span><sub>[?Yield]opt</sub></span> { ClassBody<span><sub>[?Yield]opt</sub></span> }
+     *     [+GeneratorParameter] ClassHeritage<span><sub>opt</sub></span> { ClassBody<span><sub>opt</sub></span> }
      * </pre>
      * 
      * @return the parsed class expression
@@ -2968,8 +2987,7 @@ public final class Parser {
             }
             Expression heritage = null;
             if (token() == Token.EXTENDS) {
-                consume(Token.EXTENDS);
-                heritage = leftHandSideExpressionWithValidation();
+                heritage = classHeritage();
             }
             consume(Token.LC);
             BlockContext scope = null;
@@ -2999,14 +3017,29 @@ public final class Parser {
      * <strong>[14.5] Class Definitions</strong>
      * 
      * <pre>
-     * ClassBody :
-     *     ClassElementList
-     * ClassElementList :
-     *     ClassElement
-     *     ClassElementList ClassElement
-     * ClassElement :
-     *     MethodDefinition
-     *     static MethodDefinition
+     * ClassHeritage<span><sub>[Yield]</sub></span> :
+     *     extends LeftHandSideExpression<span><sub>[?Yield]</sub></span>
+     * </pre>
+     * 
+     * @return the parsed class heritage expression
+     */
+    private Expression classHeritage() {
+        consume(Token.EXTENDS);
+        return leftHandSideExpressionWithValidation();
+    }
+
+    /**
+     * <strong>[14.5] Class Definitions</strong>
+     * 
+     * <pre>
+     * ClassBody<span><sub>[Yield]</sub></span> :
+     *     ClassElementList<span><sub>[?Yield]</sub></span>
+     * ClassElementList<span><sub>[Yield]</sub></span> :
+     *     ClassElement<span><sub>[?Yield]</sub></span>
+     *     ClassElementList<span><sub>[?Yield]</sub></span> ClassElement<span><sub>[?Yield]</sub></span>
+     * ClassElement<span><sub>[Yield]</sub></span> :
+     *     MethodDefinition<span><sub>[?Yield]</sub></span>
+     *     static MethodDefinition<span><sub>[?Yield]</sub></span>
      *     ;
      * </pre>
      * 
@@ -3289,8 +3322,8 @@ public final class Parser {
      *     ExpressionStatement<span><sub>[?Yield]</sub></span>
      *     IfStatement<span><sub>[?Yield, ?Return]</sub></span>
      *     BreakableStatement<span><sub>[?Yield, ?Return]</sub></span>
-     *     ContinueStatement
-     *     BreakStatement
+     *     ContinueStatement<span><sub>[?Yield]</sub></span>
+     *     BreakStatement<span><sub>[?Yield]</sub></span>
      *     <span><sub>[+Return]</sub></span>ReturnStatement<span><sub>[?Yield]</sub></span>
      *     WithStatement<span><sub>[?Yield, ?Return]</sub></span>
      *     LabelledStatement<span><sub>[?Yield, ?Return]</sub></span>
@@ -3458,9 +3491,9 @@ public final class Parser {
      * 
      * <pre>
      * Declaration<span><sub>[Yield, Default]</sub></span> :
-     *     FunctionDeclaration<span><sub>[?Default]</sub></span>
-     *     GeneratorDeclaration<span><sub>[?Default]</sub></span>
-     *     ClassDeclaration<span><sub>[?Default]</sub></span>
+     *     FunctionDeclaration<span><sub>[?Yield, ?Default]</sub></span>
+     *     GeneratorDeclaration<span><sub>[?Yield, ?Default]</sub></span>
+     *     ClassDeclaration<span><sub>[?Yield, ?Default]</sub></span>
      *     LexicalDeclaration<span><sub>[In, ?Yield]</sub></span>
      * </pre>
      * 
@@ -3567,8 +3600,8 @@ public final class Parser {
      * 
      * <pre>
      * LexicalBinding<span><sub>[In, Yield]</sub></span> :
-     *     BindingIdentifier<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[?In, ?Yield]opt</sub></span>
-     *     BindingPattern<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[?In, ?Yield]</sub></span>
+     *     BindingIdentifier<span><sub>[?Yield]</sub></span> Initializer<span><sub>[?In, ?Yield]opt</sub></span>
+     *     BindingPattern<span><sub>[?Yield]</sub></span> Initializer<span><sub>[?In, ?Yield]</sub></span>
      * </pre>
      * 
      * @param isConst
@@ -3580,20 +3613,20 @@ public final class Parser {
     private LexicalBinding lexicalBinding(boolean isConst, boolean allowIn) {
         long begin = ts.beginPosition();
         Binding binding;
-        Expression initialiser = null;
+        Expression initializer = null;
         if (token() == Token.LC || token() == Token.LB) {
             BindingPattern bindingPattern = bindingPattern(false);
             addLexDeclaredName(bindingPattern);
             if (token() == Token.ASSIGN || allowIn) {
-                // make initialiser optional if `allowIn == false`, cf. forStatement()
-                initialiser = initialiser(allowIn);
+                // make initializer optional if `allowIn == false`, cf. forStatement()
+                initializer = initializer(allowIn);
             }
             binding = bindingPattern;
         } else {
             BindingIdentifier bindingIdentifier = bindingIdentifier(false);
             addLexDeclaredName(bindingIdentifier);
             if (token() == Token.ASSIGN) {
-                initialiser = initialiser(allowIn);
+                initializer = initializer(allowIn);
             } else if (isConst && allowIn) {
                 // `allowIn == false` indicates for-loop, cf. forStatement()
                 reportSyntaxError(bindingIdentifier, Messages.Key.ConstMissingInitialiser);
@@ -3601,7 +3634,7 @@ public final class Parser {
             binding = bindingIdentifier;
         }
 
-        return new LexicalBinding(begin, ts.endPosition(), binding, initialiser);
+        return new LexicalBinding(begin, ts.endPosition(), binding, initializer);
     }
 
     /**
@@ -3744,15 +3777,15 @@ public final class Parser {
      * <strong>[12.1.5] Object Initialiser</strong>
      * 
      * <pre>
-     * Initialiser<span><sub>[In, Yield]</sub></span> :
+     * Initializer<span><sub>[In, Yield]</sub></span> :
      *     = AssignmentExpression<span><sub>[?In, ?Yield]</sub></span>
      * </pre>
      * 
      * @param allowIn
      *            the flag to select whether or not the in-operator is allowed
-     * @return the parsed initialiser expression
+     * @return the parsed initializer expression
      */
-    private Expression initialiser(boolean allowIn) {
+    private Expression initializer(boolean allowIn) {
         consume(Token.ASSIGN);
         return assignmentExpression(allowIn);
     }
@@ -3807,8 +3840,8 @@ public final class Parser {
      * 
      * <pre>
      * VariableDeclaration<span><sub>[In, Yield]</sub></span> :
-     *     BindingIdentifier<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[?In, ?Yield]opt</sub></span>
-     *     BindingPattern<span><sub>[Yield]</sub></span> Initialiser<span><sub>[?In, ?Yield]</sub></span>
+     *     BindingIdentifier<span><sub>[?Yield]</sub></span> Initializer<span><sub>[?In, ?Yield]opt</sub></span>
+     *     BindingPattern<span><sub>[Yield]</sub></span> Initializer<span><sub>[?In, ?Yield]</sub></span>
      * </pre>
      * 
      * @param allowIn
@@ -3817,27 +3850,27 @@ public final class Parser {
      */
     private VariableDeclaration variableDeclaration(boolean allowIn) {
         Binding binding;
-        Expression initialiser = null;
+        Expression initializer = null;
         if (token() == Token.LC || token() == Token.LB) {
             BindingPattern bindingPattern = bindingPattern();
             addVarDeclaredName(bindingPattern);
             if (allowIn) {
-                initialiser = initialiser(allowIn);
+                initializer = initializer(allowIn);
             } else if (token() == Token.ASSIGN) {
-                // make initialiser optional if `allowIn == false`, cf. forStatement()
-                initialiser = initialiser(allowIn);
+                // make initializer optional if `allowIn == false`, cf. forStatement()
+                initializer = initializer(allowIn);
             }
             binding = bindingPattern;
         } else {
             BindingIdentifier bindingIdentifier = bindingIdentifier();
             addVarDeclaredName(bindingIdentifier);
             if (token() == Token.ASSIGN) {
-                initialiser = initialiser(allowIn);
+                initializer = initializer(allowIn);
             }
             binding = bindingIdentifier;
         }
 
-        return new VariableDeclaration(binding, initialiser);
+        return new VariableDeclaration(binding, initializer);
     }
 
     /**
@@ -3918,8 +3951,8 @@ public final class Parser {
      *     SingleNameBinding<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
      *     PropertyName<span><sub>[?Yield, ?GeneratorParameter]</sub></span> : BindingElement<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
      * SingleNameBinding<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     <span><sub>[+GeneratorParameter]</sub></span>BindingIdentifier<span><sub>[Yield]</sub></span> Initialiser<span><sub>[In]opt</sub></span>
-     *     <span><sub>[~GeneratorParameter]</sub></span>BindingIdentifier<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[In, ?Yield]opt</sub></span>
+     *     <span><sub>[+GeneratorParameter]</sub></span>BindingIdentifier<span><sub>[Yield]</sub></span> Initializer<span><sub>[In]opt</sub></span>
+     *     <span><sub>[~GeneratorParameter]</sub></span>BindingIdentifier<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
      * </pre>
      * 
      * @param allowLet
@@ -3938,18 +3971,18 @@ public final class Parser {
             } else {
                 binding = bindingIdentifier(allowLet);
             }
-            Expression initialiser = null;
+            Expression initializer = null;
             if (token() == Token.ASSIGN) {
-                initialiser = initialiser(true);
+                initializer = initializer(true);
             }
-            return new BindingProperty(propertyName, binding, initialiser);
+            return new BindingProperty(propertyName, binding, initializer);
         } else {
             BindingIdentifier binding = bindingIdentifier(allowLet);
-            Expression initialiser = null;
+            Expression initializer = null;
             if (token() == Token.ASSIGN) {
-                initialiser = initialiser(true);
+                initializer = initializer(true);
             }
-            return new BindingProperty(binding, initialiser);
+            return new BindingProperty(binding, initializer);
         }
     }
 
@@ -4039,8 +4072,8 @@ public final class Parser {
      * <pre>
      * BindingElement<span><sub>[Yield, GeneratorParameter]</sub></span> :
      *     SingleNameBinding<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     *     <span><sub>[+GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield, GeneratorParameter]</sub></span> Initialiser<span><sub>[In]opt</sub></span>
-     *     <span><sub>[~GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[In, ?Yield]opt</sub></span>
+     *     <span><sub>[+GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield, GeneratorParameter]</sub></span> Initializer<span><sub>[In]opt</sub></span>
+     *     <span><sub>[~GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
      * </pre>
      * 
      * @return the parsed binding element
@@ -4055,8 +4088,8 @@ public final class Parser {
      * <pre>
      * BindingElement<span><sub>[Yield, GeneratorParameter]</sub></span> :
      *     SingleNameBinding<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     *     <span><sub>[+GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield, GeneratorParameter]</sub></span> Initialiser<span><sub>[In]opt</sub></span>
-     *     <span><sub>[~GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[In, ?Yield]opt</sub></span>
+     *     <span><sub>[+GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield, GeneratorParameter]</sub></span> Initializer<span><sub>[In]opt</sub></span>
+     *     <span><sub>[~GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
      * </pre>
      * 
      * @param allowLet
@@ -4066,12 +4099,12 @@ public final class Parser {
     private BindingElement bindingElement(boolean allowLet) {
         long begin = ts.beginPosition();
         Binding binding = binding(allowLet);
-        Expression initialiser = null;
+        Expression initializer = null;
         if (token() == Token.ASSIGN) {
-            initialiser = initialiser(true);
+            initializer = initializer(true);
         }
 
-        return new BindingElement(begin, ts.endPosition(), binding, initialiser);
+        return new BindingElement(begin, ts.endPosition(), binding, initializer);
     }
 
     /**
@@ -4267,7 +4300,7 @@ public final class Parser {
      * 
      * <pre>
      * IterationStatement<span><sub>[Yield, Return]</sub></span> :
-     *     for ( Expression<span><sub>[?Yield]opt</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( [LA &#x2209; { <b>let [</b> }] Expression<span><sub>[?Yield]opt</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      *     for ( var VariableDeclarationList<span><sub>[?Yield]</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      *     for ( LexicalDeclaration<span><sub>[?Yield]</sub></span> Expression<span><sub>[In, ?Yield]opt</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      * </pre>
@@ -4326,7 +4359,7 @@ public final class Parser {
         }
 
         if (head instanceof VariableStatement) {
-            // Enforce initialiser for BindingPattern
+            // Enforce initializer for BindingPattern
             VariableStatement varStmt = (VariableStatement) head;
             for (VariableDeclaration decl : varStmt.getElements()) {
                 if (decl.getBinding() instanceof BindingPattern && decl.getInitialiser() == null) {
@@ -4336,7 +4369,7 @@ public final class Parser {
             // Add variable statement after for-statement type is known
             addVarScopedDeclaration(varStmt);
         } else if (head instanceof LexicalDeclaration) {
-            // Enforce initialiser for BindingPattern and const declarations
+            // Enforce initializer for BindingPattern and const declarations
             LexicalDeclaration lexDecl = (LexicalDeclaration) head;
             boolean isConst = lexDecl.getType() == LexicalDeclaration.Type.Const;
             for (LexicalBinding decl : lexDecl.getElements()) {
@@ -4408,10 +4441,10 @@ public final class Parser {
      * 
      * <pre>
      * IterationStatement<span><sub>[Yield, Return]</sub></span> :
-     *     for ( LeftHandSideExpression<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( [LA &#x2209; { <b>let [</b> }] LeftHandSideExpression<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      *     for ( var ForBinding<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      *     for ( ForDeclaration<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
-     *     for ( LeftHandSideExpression<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( [LA &#x2209; { <b>let [</b> }] LeftHandSideExpression<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      *     for ( var ForBinding<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      *     for ( ForDeclaration<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      * ForDeclaration<span><sub>[Yield]</sub></span> :
@@ -4568,9 +4601,9 @@ public final class Parser {
      * <strong>[13.7] The <code>continue</code> Statement</strong>
      * 
      * <pre>
-     * ContinueStatement :
+     * ContinueStatement<span><sub>[Yield]</sub></span> :
      *     continue ;
-     *     continue [no <i>LineTerminator</i> here] NonResolvedIdentifier ;
+     *     continue [no <i>LineTerminator</i> here] LabelIdentifier<span><sub>[?Yield]</sub></span> ;
      * </pre>
      * 
      * @return the parsed continue statement
@@ -4606,9 +4639,9 @@ public final class Parser {
      * <strong>[13.8] The <code>break</code> Statement</strong>
      * 
      * <pre>
-     * BreakStatement :
+     * BreakStatement<span><sub>[Yield]</sub></span> :
      *     break ;
-     *     break [no <i>LineTerminator</i> here] NonResolvedIdentifier ;
+     *     break [no <i>LineTerminator</i> here] LabelIdentifier<span><sub>[?Yield]</sub></span> ;
      * </pre>
      * 
      * @return the parsed break statement
@@ -4771,7 +4804,7 @@ public final class Parser {
      * 
      * <pre>
      * LabelledStatement<span><sub>[Yield, Return]</sub></span> :
-     *     NonResolvedIdentifier : Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     LabelIdentifier<span><sub>[?Yield]</sub></span> : Statement<span><sub>[?Yield, ?Return]</sub></span>
      * </pre>
      * 
      * @return the parsed labelled statement
@@ -5038,18 +5071,18 @@ public final class Parser {
     private LexicalBinding letBinding() {
         long begin = ts.beginPosition();
         Binding binding;
-        Expression initialiser = null;
+        Expression initializer = null;
         if (token() == Token.LC || token() == Token.LB) {
             binding = bindingPattern(false);
-            initialiser = initialiser(true);
+            initializer = initializer(true);
         } else {
             binding = bindingIdentifier(false);
             if (token() == Token.ASSIGN) {
-                initialiser = initialiser(true);
+                initializer = initializer(true);
             }
         }
 
-        return new LexicalBinding(begin, ts.endPosition(), binding, initialiser);
+        return new LexicalBinding(begin, ts.endPosition(), binding, initializer);
     }
 
     private List<Binding> toBindings(List<LexicalBinding> lexicalBindings) {
@@ -5452,17 +5485,17 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.4] Array Initialiser</strong>
+     * <strong>[12.1.4] Array Initializer</strong>
      * 
      * <pre>
-     * ArrayInitialiser<span><sub>[Yield]</sub></span> :
+     * ArrayInitializer<span><sub>[Yield]</sub></span> :
      *     ArrayLiteral<span><sub>[?Yield]</sub></span>
      *     ArrayComprehension<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
-     * @return the parsed array initialiser
+     * @return the parsed array initializer
      */
-    private ArrayInitialiser arrayInitialiser() {
+    private ArrayInitialiser arrayInitializer() {
         if (LOOKAHEAD(Token.FOR)) {
             return arrayComprehension();
         } else {
@@ -5494,7 +5527,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.4] Array Initialiser</strong>
+     * <strong>[12.1.4] Array Initializer</strong>
      * 
      * <pre>
      * ArrayLiteral<span><sub>[Yield]</sub></span> :
@@ -5760,7 +5793,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.5] Object Initialiser</strong>
+     * <strong>[12.1.5] Object Initializer</strong>
      * 
      * <pre>
      * ObjectLiteral<span><sub>[Yield]</sub></span> :
@@ -5873,17 +5906,17 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.5] Object Initialiser</strong>
+     * <strong>[12.1.5] Object Initializer</strong>
      * 
      * <pre>
      * PropertyDefinition<span><sub>[Yield]</sub></span> :
      *     IdentifierReference<span><sub>[?Yield]</sub></span>
-     *     CoverInitialisedName<span><sub>[?Yield]</sub></span>
+     *     CoverInitializedName<span><sub>[?Yield]</sub></span>
      *     PropertyName<span><sub>[?Yield]</sub></span> : AssignmentExpression<span><sub>[In, ?Yield]</sub></span>
      *     MethodDefinition<span><sub>[?Yield]</sub></span>
-     * CoverInitialisedName<span><sub>[Yield]</sub></span> :
-     *     IdentifierReference Initialiser<span><sub>[In, ?Yield]</sub></span>
-     * Initialiser<span><sub>[In, Yield]</sub></span> :
+     * CoverInitializedName<span><sub>[Yield]</sub></span> :
+     *     IdentifierReference Initializer<span><sub>[In, ?Yield]</sub></span>
+     * Initializer<span><sub>[In, Yield]</sub></span> :
      *     = AssignmentExpression<span><sub>[?In, ?Yield]</sub></span>
      * </pre>
      * 
@@ -5917,14 +5950,14 @@ public final class Parser {
         if (LOOKAHEAD(Token.ASSIGN)) {
             Identifier identifier = identifierReference();
             consume(Token.ASSIGN);
-            Expression initialiser = assignmentExpression(true);
-            return new CoverInitialisedName(begin, ts.endPosition(), identifier, initialiser);
+            Expression initializer = assignmentExpression(true);
+            return new CoverInitialisedName(begin, ts.endPosition(), identifier, initializer);
         }
         return methodDefinition();
     }
 
     /**
-     * <strong>[12.1.5] Object Initialiser</strong>
+     * <strong>[12.1.5] Object Initializer</strong>
      * 
      * <pre>
      * PropertyName<span><sub>[Yield, GeneratorParameter]</sub></span> :
@@ -5944,7 +5977,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.5] Object Initialiser</strong>
+     * <strong>[12.1.5] Object Initializer</strong>
      * 
      * <pre>
      * LiteralPropertyName :
@@ -5971,7 +6004,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.5] Object Initialiser</strong>
+     * <strong>[12.1.5] Object Initializer</strong>
      * 
      * <pre>
      * ComputedPropertyName<span><sub>[Yield]</sub></span> :
@@ -6682,11 +6715,13 @@ public final class Parser {
         if (token() == Token.YIELD) {
             if (context.kind == ContextKind.Generator) {
                 if (!context.yieldAllowed) {
+                    // FIXME: maybe this is actually allowed and "yield" is parsed as identifier?!
                     // yield in default parameters
                     reportSyntaxError(Messages.Key.InvalidYieldExpression);
                 }
                 return yieldExpression(allowIn);
             } else if (context.kind == ContextKind.GeneratorComprehension && context.yieldAllowed) {
+                // 12.2.7.1 Static Semantics: Early Errors for GeneratorComprehension
                 // yield nested in generator comprehension, nested in generator
                 reportSyntaxError(Messages.Key.InvalidYieldExpression);
             } else if (context.kind == ContextKind.Function
@@ -6882,12 +6917,12 @@ public final class Parser {
      *     AssignmentProperty<span><sub>[?Yield]</sub></span>
      *     AssignmentPropertyList<span><sub>[?Yield]</sub></span> , AssignmentProperty<span><sub>[?Yield]</sub></span>
      * AssignmentProperty<span><sub>[Yield]</sub></span> :
-     *     IdentifierReference<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[In, ?Yield]opt</sub></span>
+     *     IdentifierReference<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
      *     PropertyName : AssignmentElement<span><sub>[?Yield]</sub></span>
      * AssignmentElement<span><sub>[Yield]</sub></span> :
-     *     DestructuringAssignmentTarget<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[In, ?Yield]opt</sub></span>
+     *     DestructuringAssignmentTarget<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
      * AssignmentElement<span><sub>[Yield]</sub></span> :
-     *     DestructuringAssignmentTarget<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[In, ?Yield]opt</sub></span>
+     *     DestructuringAssignmentTarget<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
      * DestructuringAssignmentTarget<span><sub>[Yield]</sub></span> :
      *     LeftHandSideExpression<span><sub>[?Yield]</sub></span>
      * </pre>
@@ -6906,22 +6941,22 @@ public final class Parser {
                 PropertyName propertyName = def.getPropertyName();
                 Expression propertyValue = def.getPropertyValue();
                 LeftHandSideExpression target;
-                Expression initialiser;
+                Expression initializer;
                 if (propertyValue instanceof AssignmentExpression) {
-                    // AssignmentElement : DestructuringAssignmentTarget Initialiser
+                    // AssignmentElement : DestructuringAssignmentTarget Initializer
                     AssignmentExpression assignment = (AssignmentExpression) propertyValue;
                     if (assignment.getOperator() != AssignmentExpression.Operator.ASSIGN) {
                         reportSyntaxError(p, Messages.Key.InvalidDestructuring);
                     }
                     target = destructuringAssignmentTarget_EarlyErrors(assignment.getLeft());
-                    initialiser = assignment.getRight();
+                    initializer = assignment.getRight();
                 } else {
                     // AssignmentElement : DestructuringAssignmentTarget
                     target = destructuringAssignmentTarget_EarlyErrors(propertyValue);
-                    initialiser = null;
+                    initializer = null;
                 }
                 property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
-                        propertyName, target, initialiser);
+                        propertyName, target, initializer);
             } else if (p instanceof PropertyNameDefinition) {
                 // AssignmentProperty : IdentifierReference
                 PropertyNameDefinition def = (PropertyNameDefinition) p;
@@ -6929,7 +6964,7 @@ public final class Parser {
                 property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
                         def.getPropertyName(), null);
             } else if (p instanceof CoverInitialisedName) {
-                // AssignmentProperty : IdentifierReference Initialiser
+                // AssignmentProperty : IdentifierReference Initializer
                 CoverInitialisedName def = (CoverInitialisedName) p;
                 assignmentProperty_EarlyErrors(def.getPropertyName());
                 property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
@@ -6963,7 +6998,7 @@ public final class Parser {
      * AssignmentElisionElement<span><sub>[Yield]</sub></span> :
      *     Elision<span><sub>opt</sub></span>  AssignmentElement<span><sub>[?Yield]</sub></span>
      * AssignmentElement<span><sub>[Yield]</sub></span> :
-     *     DestructuringAssignmentTarget<span><sub>[?Yield]</sub></span> Initialiser<span><sub>[In, ?Yield]opt</sub></span>
+     *     DestructuringAssignmentTarget<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
      * AssignmentRestElement<span><sub>[Yield]</sub></span> : 
      *     ... DestructuringAssignmentTarget<span><sub>[?Yield]</sub></span>
      * DestructuringAssignmentTarget<span><sub>[Yield]</sub></span> :
@@ -6998,22 +7033,22 @@ public final class Parser {
                 }
             } else {
                 LeftHandSideExpression target;
-                Expression initialiser;
+                Expression initializer;
                 if (e instanceof AssignmentExpression) {
-                    // AssignmentElement : DestructuringAssignmentTarget Initialiser
+                    // AssignmentElement : DestructuringAssignmentTarget Initializer
                     AssignmentExpression assignment = (AssignmentExpression) e;
                     if (assignment.getOperator() != AssignmentExpression.Operator.ASSIGN) {
                         reportSyntaxError(e, Messages.Key.InvalidDestructuring);
                     }
                     target = destructuringAssignmentTarget_EarlyErrors(assignment.getLeft());
-                    initialiser = assignment.getRight();
+                    initializer = assignment.getRight();
                 } else {
                     // AssignmentElement : DestructuringAssignmentTarget
                     target = destructuringAssignmentTarget_EarlyErrors(e);
-                    initialiser = null;
+                    initializer = null;
                 }
                 element = new AssignmentElement(e.getBeginPosition(), e.getEndPosition(), target,
-                        initialiser);
+                        initializer);
             }
             list.add(element);
         }
