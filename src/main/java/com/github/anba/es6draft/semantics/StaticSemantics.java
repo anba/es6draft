@@ -139,6 +139,89 @@ public final class StaticSemantics {
     }
 
     /**
+     * Static Semantics: ContainsExpression
+     * <ul>
+     * <li>14.1.5 Static Semantics: ContainsExpression
+     * <li>14.2.4 Static Semantics: ContainsExpression
+     * <li>13.2.3.2 Static Semantics: ContainsExpression
+     * </ul>
+     */
+    public static boolean ContainsExpression(FormalParameterList formals) {
+        for (FormalParameter formal : formals) {
+            if (formal instanceof BindingElement && ContainsExpression((BindingElement) formal)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Static Semantics: ContainsExpression
+     * <ul>
+     * <li>13.2.3.2 Static Semantics: ContainsExpression
+     * </ul>
+     */
+    private static boolean ContainsExpression(BindingElement element) {
+        if (element.getInitialiser() != null) {
+            return true;
+        }
+        return ContainsExpression(element.getBinding());
+    }
+
+    /**
+     * Static Semantics: ContainsExpression
+     * <ul>
+     * <li>13.2.3.2 Static Semantics: ContainsExpression
+     * </ul>
+     */
+    private static boolean ContainsExpression(Binding binding) {
+        if (binding instanceof ArrayBindingPattern) {
+            return ContainsExpression((ArrayBindingPattern) binding);
+        }
+        if (binding instanceof ObjectBindingPattern) {
+            return ContainsExpression((ObjectBindingPattern) binding);
+        }
+        assert binding instanceof BindingIdentifier;
+        return false;
+    }
+
+    /**
+     * Static Semantics: ContainsExpression
+     * <ul>
+     * <li>13.2.3.2 Static Semantics: ContainsExpression
+     * </ul>
+     */
+    private static boolean ContainsExpression(ArrayBindingPattern pattern) {
+        for (BindingElementItem item : pattern.getElements()) {
+            if (item instanceof BindingElement && ContainsExpression((BindingElement) item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Static Semantics: ContainsExpression
+     * <ul>
+     * <li>13.2.3.2 Static Semantics: ContainsExpression
+     * </ul>
+     */
+    private static boolean ContainsExpression(ObjectBindingPattern pattern) {
+        for (BindingProperty property : pattern.getProperties()) {
+            if (property.getPropertyName() instanceof ComputedPropertyName) {
+                return true;
+            }
+            if (property.getInitialiser() != null) {
+                return true;
+            }
+            if (ContainsExpression(property.getBinding())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Static Semantics: ExpectedArgumentCount
      * <ul>
      * <li>14.1.4 Static Semantics: ExpectedArgumentCount
@@ -383,6 +466,17 @@ public final class StaticSemantics {
      */
     public static Set<String> LexicallyDeclaredNames(BlockScope scope) {
         return emptyIfNull(scope.lexicallyDeclaredNames());
+    }
+
+    /**
+     * 14.1.15 Static Semantics: LexicallyDeclaredNames
+     * 
+     * @param node
+     *            the script node
+     * @return the set of lexically declared names
+     */
+    public static Set<String> LexicallyDeclaredNames(FunctionNode node) {
+        return emptyIfNull(node.getScope().lexicallyDeclaredNames());
     }
 
     /**
@@ -913,11 +1007,11 @@ public final class StaticSemantics {
     //
 
     private static <T> Set<T> emptyIfNull(Set<T> list) {
-        return (list != null ? list : Collections.<T> emptySet());
+        return list != null ? list : Collections.<T> emptySet();
     }
 
     private static <T> List<T> emptyIfNull(List<T> list) {
-        return (list != null ? list : Collections.<T> emptyList());
+        return list != null ? list : Collections.<T> emptyList();
     }
 
     private static <T> T last(List<T> list) {

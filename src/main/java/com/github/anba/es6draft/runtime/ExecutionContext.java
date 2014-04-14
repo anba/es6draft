@@ -29,7 +29,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
  */
 public final class ExecutionContext {
     private final Realm realm;
-    private final LexicalEnvironment<?> varEnv;
+    private LexicalEnvironment<?> varEnv;
     private LexicalEnvironment<?> lexEnv;
     private final Script script;
     private final FunctionObject function;
@@ -115,6 +115,19 @@ public final class ExecutionContext {
     public void replaceLexicalEnvironment(LexicalEnvironment<?> lexEnv) {
         assert lexEnv.getOuter() == this.lexEnv.getOuter();
         this.lexEnv = lexEnv;
+    }
+
+    /**
+     * [Called from generated code]
+     * 
+     * @param lexEnv
+     *            the new lexical environment
+     */
+    public void setEnvironment(LexicalEnvironment<?> env) {
+        assert env.getOuter() == this.lexEnv;
+        assert this.varEnv == this.lexEnv;
+        this.varEnv = env;
+        this.lexEnv = env;
     }
 
     /**

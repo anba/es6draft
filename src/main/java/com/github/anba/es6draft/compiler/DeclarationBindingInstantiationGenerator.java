@@ -216,6 +216,28 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link EnvironmentRecord#initialiseBinding(String, Object)}
      * <p>
+     * stack: [] {@literal ->} []
+     * 
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param value
+     *            the variable which holds the binding value
+     * @param mv
+     *            the instruction visitor
+     */
+    protected void initialiseBinding(Variable<? extends EnvironmentRecord> envRec, String name,
+            Variable<?> value, InstructionVisitor mv) {
+        mv.load(envRec);
+        mv.aconst(name);
+        mv.load(value);
+        mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
+    }
+
+    /**
+     * Emit function call for: {@link EnvironmentRecord#initialiseBinding(String, Object)}
+     * <p>
      * stack: [obj] {@literal ->} []
      * 
      * @param envRec
@@ -243,6 +265,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     protected void initialiseBinding(String name, InstructionVisitor mv) {
+        // TODO: rename initialise -> initialize
         mv.aconst(name);
         mv.swap();
         mv.invoke(Methods.EnvironmentRecord_initialiseBinding);

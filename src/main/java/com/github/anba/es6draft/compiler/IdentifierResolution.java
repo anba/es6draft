@@ -113,6 +113,7 @@ final class IdentifierResolution {
                     break;
                 }
             } else {
+                // FIXME: no longer correct with rev23 parameter environment changes
                 // Reached function scope
                 assert scope instanceof FunctionScope : scope.getClass().getSimpleName();
                 FunctionScope funScope = (FunctionScope) scope;

@@ -45,25 +45,30 @@ final class ParameterMap {
     }
 
     /**
+     * 9.4.4.7 CreateMappedArgumentsObject ( func, formals, argumentsList, env ) Abstract Operation
+     * <p>
      * Returns a new {@link ParameterMap} if there are any mapped arguments, otherwise
      * <code>null</code>.
      * 
      * @param len
      *            the actual number of function arguments
-     * @param formals
+     * @param parameterNames
      *            the formal parameter names
      * @param env
      *            the current lexical environment
      * @return a new parameter map if mapped parameters are present, otherwise {@code null}
      */
-    static ParameterMap create(int len, String[] formals,
+    static ParameterMap create(int len, String[] parameterNames,
             LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
         boolean hasMapped = false;
-        int numberOfNonRestFormals = formals.length;
+        /* step 13 */
+        int numberOfParameters = parameterNames.length;
+        /* step 17 */
         ParameterMap map = new ParameterMap(env, len);
-        // FIXME: spec bug duplicate arguments vs mapped arguments (bug 1240)
-        for (int index = numberOfNonRestFormals - 1; index >= 0; --index) {
-            String name = formals[index];
+        /* steps 18-20 */
+        for (int index = numberOfParameters - 1; index >= 0; --index) {
+            String name = parameterNames[index];
+            // FIXME: spec bug - mapped arguments (bug 2652)
             if (name != null && index < len) {
                 hasMapped = true;
                 map.defineOwnProperty(index, name);
@@ -102,7 +107,7 @@ final class ParameterMap {
     }
 
     /**
-     * See MakeArgGetter abstract operation.
+     * 9.4.4.7.1 MakeArgGetter (name, env) Abstract Operation
      * 
      * @param propertyKey
      *            the property key
@@ -112,11 +117,11 @@ final class ParameterMap {
         int index = toArgumentIndex(propertyKey);
         assert (index >= 0 && index < length && parameters[index] != null);
         String name = parameters[index];
-        return env.getEnvRec().getBindingValue(name, true);
+        return env.getEnvRec().getBindingValue(name, false);
     }
 
     /**
-     * See MakeArgSetter abstract operation.
+     * 9.4.4.7.2 MakeArgSetter (name, env) Abstract Operation
      * 
      * @param propertyKey
      *            the property key
@@ -128,7 +133,7 @@ final class ParameterMap {
         assert (index >= 0 && index < length && parameters[index] != null);
         legacyUnmapped.set(index);
         String name = parameters[index];
-        env.getEnvRec().setMutableBinding(name, value, true);
+        env.getEnvRec().setMutableBinding(name, value, false);
     }
 
     /**

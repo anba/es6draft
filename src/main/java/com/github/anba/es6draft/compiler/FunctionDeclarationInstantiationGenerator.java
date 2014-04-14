@@ -49,11 +49,15 @@ final class FunctionDeclarationInstantiationGenerator extends
                 MethodType.Virtual, Types.ExecutionContext, "getVariableEnvironment",
                 Type.getMethodType(Types.LexicalEnvironment));
 
+        static final MethodDesc ExecutionContext_setEnvironment = MethodDesc.create(
+                MethodType.Virtual, Types.ExecutionContext, "setEnvironment",
+                Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+
         // class: ExoticArguments
         static final MethodDesc ExoticArguments_CreateMappedArgumentsObject = MethodDesc.create(
                 MethodType.Static, Types.ExoticArguments, "CreateMappedArgumentsObject", Type
                         .getMethodType(Types.ExoticArguments, Types.ExecutionContext,
-                                Types.FunctionObject, Types.Object_, Types.String_,
+                                Types.FunctionObject, Types.String_, Types.Object_,
                                 Types.LexicalEnvironment));
 
         static final MethodDesc ExoticArguments_CreateStrictArgumentsObject = MethodDesc.create(
@@ -73,10 +77,21 @@ final class FunctionDeclarationInstantiationGenerator extends
                                 Types.ExoticLegacyArguments, Types.ExecutionContext,
                                 Types.FunctionObject, Types.Object_, Types.ExoticArguments));
 
+        static final MethodDesc ExoticLegacyArguments_CreateLegacyArgumentsObjectUnmapped = MethodDesc
+                .create(MethodType.Static, Types.ExoticLegacyArguments,
+                        "CreateLegacyArgumentsObject", Type.getMethodType(
+                                Types.ExoticLegacyArguments, Types.ExecutionContext,
+                                Types.FunctionObject, Types.Object_));
+
         // FunctionObject
         static final MethodDesc FunctionObject_setLegacyArguments = MethodDesc.create(
                 MethodType.Virtual, Types.FunctionObject, "setLegacyArguments",
                 Type.getMethodType(Type.VOID_TYPE, Types.ExoticLegacyArguments));
+
+        // class: LexicalEnvironment
+        static final MethodDesc LexicalEnvironment_newDeclarativeEnvironment = MethodDesc.create(
+                MethodType.Static, Types.LexicalEnvironment, "newDeclarativeEnvironment",
+                Type.getMethodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
         // class: List
         static final MethodDesc List_iterator = MethodDesc.create(MethodType.Interface, Types.List,
@@ -145,7 +160,9 @@ final class FunctionDeclarationInstantiationGenerator extends
             mv.store(iterator);
         }
 
-        Set<String> bindings = new HashSet<>();
+        // FIXME: spec bug - variable not defined
+        Set<String> lexicalNames = LexicallyDeclaredNames(function); // unordered set!
+
         /* step 1 */
         // RuntimeInfo.Function code = func.getCode();
         /* step 2 */
@@ -155,119 +172,196 @@ final class FunctionDeclarationInstantiationGenerator extends
         FormalParameterList formals = function.getParameters();
         /* step 4 */
         List<String> parameterNames = BoundNames(formals);
+        HashSet<String> parameterNamesSet = new HashSet<>(parameterNames);
         /* step 5 */
-        List<StatementListItem> varDeclarations = VarScopedDeclarations(function);
+        boolean hasDuplicates = parameterNames.size() != parameterNamesSet.size();
         /* step 6 */
-        List<Declaration> functionsToInitialise = new ArrayList<>();
-        /* steps 7-8 */
-        boolean argumentsObjectNeeded;
-        if (function instanceof ArrowFunction || function instanceof GeneratorComprehension) {
-            // => [[ThisMode]] of func is lexical
-            argumentsObjectNeeded = false;
-        } else {
-            argumentsObjectNeeded = true;
-        }
+        boolean needsParameterEnvironment = ContainsExpression(formals);
+        /* step 7 */
+        boolean simpleParameterList = IsSimpleParameterList(formals);
+        // invariant: hasDuplicates => simpleParameterList
+        assert !hasDuplicates || simpleParameterList;
+        // invariant: needsParameterEnvironment => !simpleParameterList
+        assert !needsParameterEnvironment || !simpleParameterList;
+        /* step 8 */
+        HashSet<String> varNames = new HashSet<>(VarDeclaredNames(function)); // unordered set!
         /* step 9 */
+        List<StatementListItem> varDeclarations = VarScopedDeclarations(function);
+        /* step 10 */
+        HashSet<String> functionNames = new HashSet<>();
+        /* step 11 */
+        List<Declaration> functionsToInitialise = new ArrayList<>();
+        /* step 12 */
         for (StatementListItem item : reverse(varDeclarations)) {
-            if (isFunctionDeclaration(item)) {
+            if (!(item instanceof VariableStatement)) {
+                assert isFunctionDeclaration(item);
                 Declaration d = (Declaration) item;
                 String fn = BoundName(d);
-                if ("arguments".equals(fn)) {
-                    argumentsObjectNeeded = false;
-                }
-                boolean alreadyDeclared = bindings.contains(fn);
-                if (!alreadyDeclared) {
-                    bindings.add(fn);
+                if (!functionNames.contains(fn)) {
+                    varNames.remove(fn);
+                    functionNames.add(fn);
                     functionsToInitialise.add(d);
-                    createMutableBinding(envRec, fn, false, mv);
                 }
             }
         }
-        /* step 10 */
-        for (String paramName : parameterNames) {
-            boolean alreadyDeclared = bindings.contains(paramName);
-            if (!alreadyDeclared) {
-                if ("arguments".equals(paramName)) {
-                    argumentsObjectNeeded = false;
-                }
-                bindings.add(paramName);
-                createMutableBinding(envRec, paramName, false, mv);
-                // stack: [undefined] -> []
-                mv.load(undef);
-                initialiseBinding(envRec, paramName, mv);
-            }
+        /* step 13 */
+        boolean needsArgumentsBinding = true;
+        /* step 14 */
+        boolean argumentsObjectNeeded = true;
+        /* step 15 */
+        if (function instanceof ArrowFunction || function instanceof GeneratorComprehension) {
+            // => [[ThisMode]] of func is lexical
+            needsArgumentsBinding = false;
         }
-        /* steps 11-12 */
-        if (argumentsObjectNeeded) {
-            bindings.add("arguments");
+        /* step 16 */
+        else if (parameterNamesSet.contains("arguments")) {
+            // FIXME: spec bug - `(function(arguments){})()` broken (Bug 2642)
+            // argumentsObjectNeeded = false;
+            needsArgumentsBinding = false;
+        }
+        /* step 17 */
+        else if (functionNames.contains("arguments")) {
+            argumentsObjectNeeded = false;
+        }
+        /* step 18 */
+        else if (lexicalNames.contains("arguments")) {
+            argumentsObjectNeeded = false;
+        }
+        /* step 19 */
+        if (needsArgumentsBinding) {
             if (strict) {
                 createImmutableBinding(envRec, "arguments", mv);
             } else {
                 createMutableBinding(envRec, "arguments", false, mv);
             }
-        }
-        /* step 13 */
-        Set<String> varNames = VarDeclaredNames(function); // note: unordered set!
-        /* step 14 */
-        for (String varName : varNames) {
-            boolean alreadyDeclared = bindings.contains(varName);
-            if (!alreadyDeclared) {
-                bindings.add(varName);
-                createMutableBinding(envRec, varName, false, mv);
-                // FIXME: spec bug (partially reported in Bug 1420)
-                mv.load(undef);
-                initialiseBinding(envRec, varName, mv);
+            Variable<?> argumentsValue;
+            if (!argumentsObjectNeeded) {
+                if (legacy) {
+                    if (!simpleParameterList) {
+                        CreateLegacyArguments(mv);
+                    } else {
+                        CreateLegacyArguments(env, formals, mv);
+                    }
+                }
+                argumentsValue = undef;
+            } else {
+                Variable<ExoticArguments> argumentsObj = mv.newVariable("argumentsObj",
+                        ExoticArguments.class);
+                if (strict || !simpleParameterList) {
+                    CreateStrictArgumentsObject(mv);
+                } else {
+                    CreateMappedArgumentsObject(env, formals, mv);
+                }
+                mv.store(argumentsObj);
+                if (legacy) {
+                    CreateLegacyArguments(argumentsObj, mv);
+                }
+                argumentsValue = argumentsObj;
+            }
+            initialiseBinding(envRec, "arguments", argumentsValue, mv);
+        } else if (legacy) {
+            if (!simpleParameterList) {
+                CreateLegacyArguments(mv);
+            } else {
+                CreateLegacyArguments(env, formals, mv);
             }
         }
-        /* step 15 */
+        /* step 20 */
+        HashSet<String> bindings = new HashSet<>();
+        if (needsArgumentsBinding) {
+            bindings.add("arguments");
+        }
+        for (String paramName : parameterNames) {
+            boolean alreadyDeclared = bindings.contains(paramName);
+            if (!alreadyDeclared) {
+                bindings.add(paramName);
+                createMutableBinding(envRec, paramName, false, mv);
+                if (hasDuplicates) {
+                    initialiseBinding(envRec, paramName, undef, mv);
+                }
+            }
+        }
+        /* steps 21-23 */
+        if (hasParameters) {
+            if (hasDuplicates) {
+                /* step 21 */
+                BindingInitialisation(function, iterator, mv);
+            } else {
+                /* step 22 */
+                BindingInitialisationWithEnv(envRec, function, iterator, mv);
+            }
+        }
+        /* step 24 */
+        Variable<LexicalEnvironment<?>> localEnv;
+        Variable<EnvironmentRecord> localEnvRec;
+        if (needsParameterEnvironment) {
+            localEnv = mv.newVariable("localEnv", LexicalEnvironment.class).uncheckedCast();
+            newDeclarativeEnvironment(env, mv);
+            mv.store(localEnv);
+
+            localEnvRec = mv.newVariable("localEnvRec", EnvironmentRecord.class);
+            getEnvironmentRecord(localEnv, mv);
+            mv.store(localEnvRec);
+
+            mv.loadExecutionContext();
+            mv.load(localEnv);
+            mv.invoke(Methods.ExecutionContext_setEnvironment);
+        } else {
+            localEnv = env;
+            localEnvRec = envRec;
+        }
+        /* step 25 */
+        for (String varName : varNames) {
+            // FIXME: spec bug - "arguments" not handled (Bug 2644)
+            if (needsArgumentsBinding && "arguments".equals(varName)) {
+                continue;
+            }
+            if (!parameterNames.contains(varName)) {
+                // FIXME: spec bug - duplicate varNames (Bug 2645)
+                createMutableBinding(localEnvRec, varName, false, mv);
+                initialiseBinding(localEnvRec, varName, undef, mv);
+            }
+        }
+        /* step 26 */
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(function);
-        /* step 16 */
+        /* step 27 */
         for (Declaration d : lexDeclarations) {
             assert !isFunctionDeclaration(d);
             for (String dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
-                    createImmutableBinding(envRec, dn, mv);
+                    createImmutableBinding(localEnvRec, dn, mv);
                 } else {
-                    createMutableBinding(envRec, dn, false, mv);
+                    createMutableBinding(localEnvRec, dn, false, mv);
                 }
             }
         }
-        /* step 17 */
+        // FIXME: spec bug - missing function bindings (Bug 2643)
+        /* step 28 */
         for (Declaration f : functionsToInitialise) {
             String fn = BoundName(f);
+
             // stack: [] -> [fo]
-            InstantiateFunctionObject(context, env, f, mv);
-            // stack: [fo] -> []
-            // setMutableBinding(envRec, fn, false, mv);
-            initialiseBinding(envRec, fn, mv);
-        }
-        /* steps 18-20 */
-        if (hasParameters) {
-            BindingInitialisation(function, iterator, mv);
-        }
-        /* step 21 */
-        if (argumentsObjectNeeded) {
-            // stack: [] -> [ao]
-            if (strict) {
-                CreateStrictArgumentsObject(mv);
+            InstantiateFunctionObject(context, localEnv, f, mv);
+
+            if (needsArgumentsBinding && "arguments".equals(fn) && !needsParameterEnvironment) {
+                // stack: [fo] -> []
+                setMutableBinding(localEnvRec, fn, strict, mv);
+            } else if (parameterNames.contains(fn) && !needsParameterEnvironment) {
+                // stack: [fo] -> []
+                setMutableBinding(localEnvRec, fn, strict, mv);
             } else {
-                CreateMappedArgumentsObject(env, formals, mv);
+                // stack: [fo] -> []
+                createMutableBinding(localEnvRec, fn, false, mv);
+                initialiseBinding(localEnvRec, fn, mv);
             }
-            if (legacy) {
-                Variable<ExoticArguments> argumentsObj = mv.newVariable("argumentsObj",
-                        ExoticArguments.class);
-                mv.store(argumentsObj);
-                CreateLegacyArguments(argumentsObj, mv);
-                mv.load(argumentsObj);
-            }
-            // stack: [ao] -> []
-            initialiseBinding(envRec, "arguments", mv);
-        } else if (legacy) {
-            // stack: [] -> []
-            CreateLegacyArguments(env, formals, mv);
         }
-        /* step 22 */
+        /* step 29 */
         mv.areturn();
+    }
+
+    private void newDeclarativeEnvironment(Variable<LexicalEnvironment<?>> env, ExpressionVisitor mv) {
+        mv.load(env);
+        mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
     }
 
     private void BindingInitialisation(FunctionNode node, Variable<Iterator<?>> iterator,
@@ -276,12 +370,19 @@ final class FunctionDeclarationInstantiationGenerator extends
         new BindingInitialisationGenerator(codegen).generate(node, iterator, mv);
     }
 
+    private void BindingInitialisationWithEnv(Variable<? extends EnvironmentRecord> envRec,
+            FunctionNode node, Variable<Iterator<?>> iterator, ExpressionVisitor mv) {
+        // stack: [] -> []
+        new BindingInitialisationGenerator(codegen).generateWithEnvironment(node, envRec, iterator,
+                mv);
+    }
+
     private void CreateMappedArgumentsObject(Variable<LexicalEnvironment<?>> env,
             FormalParameterList formals, ExpressionVisitor mv) {
         mv.loadExecutionContext();
         mv.loadParameter(FUNCTION, FunctionObject.class);
-        mv.loadParameter(ARGUMENTS, Object[].class);
         newStringArray(mv, mappedNames(formals));
+        mv.loadParameter(ARGUMENTS, Object[].class);
         mv.load(env);
         mv.invoke(Methods.ExoticArguments_CreateMappedArgumentsObject);
     }
@@ -290,6 +391,19 @@ final class FunctionDeclarationInstantiationGenerator extends
         mv.loadExecutionContext();
         mv.loadParameter(ARGUMENTS, Object[].class);
         mv.invoke(Methods.ExoticArguments_CreateStrictArgumentsObject);
+    }
+
+    private void CreateLegacyArguments(ExpressionVisitor mv) {
+        // function.setLegacyArguments(<legacy-arguments>)
+        mv.loadParameter(FUNCTION, FunctionObject.class);
+        {
+            // CreateLegacyArgumentsObject(cx, function, arguments)
+            mv.loadExecutionContext();
+            mv.loadParameter(FUNCTION, FunctionObject.class);
+            mv.loadParameter(ARGUMENTS, Object[].class);
+            mv.invoke(Methods.ExoticLegacyArguments_CreateLegacyArgumentsObjectUnmapped);
+        }
+        mv.invoke(Methods.FunctionObject_setLegacyArguments);
     }
 
     private void CreateLegacyArguments(Variable<LexicalEnvironment<?>> env,
@@ -324,12 +438,12 @@ final class FunctionDeclarationInstantiationGenerator extends
 
     private String[] mappedNames(FormalParameterList formals) {
         List<FormalParameter> list = formals.getFormals();
-        int numberOfNonRestFormals = NumberOfParameters(formals);
-        assert numberOfNonRestFormals <= list.size();
+        int numberOfParameters = NumberOfParameters(formals);
+        assert numberOfParameters <= list.size();
 
         Set<String> mappedNames = new HashSet<>();
-        String[] names = new String[numberOfNonRestFormals];
-        for (int index = numberOfNonRestFormals - 1; index >= 0; --index) {
+        String[] names = new String[numberOfParameters];
+        for (int index = numberOfParameters - 1; index >= 0; --index) {
             assert list.get(index) instanceof BindingElement;
             BindingElement formal = (BindingElement) list.get(index);
             if (formal.getBinding() instanceof BindingIdentifier) {
