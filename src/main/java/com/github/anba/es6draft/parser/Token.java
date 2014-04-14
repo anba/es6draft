@@ -186,7 +186,7 @@ public enum Token {/* @formatter:off */
     }
 
     /**
-     * <strong>[11.6.1] Reserved Words</strong>
+     * <strong>[11.6.2] Reserved Words</strong>
      * 
      * @param token
      *            the token to inspect
@@ -228,15 +228,13 @@ public enum Token {/* @formatter:off */
         case WITH:
         case YIELD:
             // 11.6.2.1 Keywords
-        case LET:
-            // Contextual Keywords
         case ENUM:
             // 11.6.2.2 Future Reserved Words
+        case NULL:
+            // 11.8.1 Null Literals
         case FALSE:
         case TRUE:
             // 11.8.2 Boolean Literals
-        case NULL:
-            // 11.8.1 Null Literals
             return true;
         default:
             return false;
@@ -244,7 +242,7 @@ public enum Token {/* @formatter:off */
     }
 
     /**
-     * <strong>[11.6.1] Reserved Words</strong>
+     * <strong>[11.6.2] Reserved Words</strong>
      * 
      * @param token
      *            the token to inspect
@@ -278,11 +276,9 @@ public enum Token {/* @formatter:off */
             return Token.ESCAPED_NAME;
         }
         if (token == Token.YIELD) {
-            // FIXME: spec bug https://bugs.ecmascript.org/show_bug.cgi?id=2519
             return Token.ESCAPED_YIELD;
         }
         if (token == Token.LET) {
-            // TODO: spec incomplete? - contextual keywords
             return Token.ESCAPED_LET;
         }
         if (Token.isReservedWord(token)) {

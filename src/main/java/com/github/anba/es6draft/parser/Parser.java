@@ -1332,6 +1332,7 @@ public final class Parser {
             } else if (token() == Token.IMPORT) {
                 moduleItemList.add(importDeclaration());
             } else if (isName("module") && isIdentifier(peek()) && noNextLineTerminator()) {
+                // FIXME: broken `module <linebreak> let a;`
                 moduleItemList.add(importDeclaration());
             } else {
                 moduleItemList.add(statementListItem());
@@ -1866,7 +1867,7 @@ public final class Parser {
             long begin = ts.beginPosition();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
-            BindingIdentifier identifier = bindingIdentifierFunctionName(allowDefault);
+            BindingIdentifier identifier = bindingIdentifierFunctionName(true, allowDefault);
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
@@ -1924,7 +1925,7 @@ public final class Parser {
             int startFunction = ts.position() - "function".length();
             BindingIdentifier identifier = null;
             if (token() != Token.LP) {
-                identifier = bindingIdentifierFunctionName(false);
+                identifier = bindingIdentifierFunctionName(false, false);
             }
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
@@ -2688,7 +2689,7 @@ public final class Parser {
             if (!starless) {
                 consume(Token.MUL);
             }
-            BindingIdentifier identifier = bindingIdentifierFunctionName(allowDefault);
+            BindingIdentifier identifier = bindingIdentifierFunctionName(true, allowDefault);
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
@@ -2746,7 +2747,7 @@ public final class Parser {
             }
             BindingIdentifier identifier = null;
             if (token() != Token.LP) {
-                identifier = bindingIdentifierFunctionName(false);
+                identifier = bindingIdentifierFunctionName(false, false);
             }
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
@@ -3161,7 +3162,7 @@ public final class Parser {
             consume("async");
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
-            BindingIdentifier identifier = bindingIdentifierFunctionName(allowDefault);
+            BindingIdentifier identifier = bindingIdentifierFunctionName(true, allowDefault);
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
@@ -3211,7 +3212,7 @@ public final class Parser {
             int startFunction = ts.position() - "function".length();
             BindingIdentifier identifier = null;
             if (token() != Token.LP) {
-                identifier = bindingIdentifierFunctionName(false);
+                identifier = bindingIdentifierFunctionName(false, false);
             }
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
@@ -3673,124 +3674,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.2.1] Let and Const Declarations</strong>
-     * 
-     * <pre>
-     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
-     *     <span><sub>[+Default]</sub></span> default
-     *     <span><sub>[~Yield]</sub></span> yield
-     *     Identifier
-     * </pre>
-     * 
-     * @return the parsed binding identifier
-     */
-    private BindingIdentifier bindingIdentifier() {
-        return bindingIdentifier(true);
-    }
-
-    /**
-     * <strong>[13.2.1] Let and Const Declarations</strong>
-     * 
-     * <pre>
-     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
-     *     <span><sub>[+Default]</sub></span> default
-     *     <span><sub>[~Yield]</sub></span> yield
-     *     Identifier
-     * </pre>
-     * 
-     * @param allowLet
-     *            the flag to select if 'let' is allowed as a binding name
-     * @return the parsed binding identifier
-     */
-    private BindingIdentifier bindingIdentifier(boolean allowLet) {
-        long begin = ts.beginPosition();
-        if (!allowLet) {
-            Token tok = token();
-            if (tok == Token.LET || tok == Token.ESCAPED_LET) {
-                reportTokenNotIdentifier(Token.LET);
-            }
-        }
-        String identifier = identifier();
-        if (context.strictMode != StrictMode.NonStrict) {
-            if ("arguments".equals(identifier) || "eval".equals(identifier)) {
-                reportStrictModeSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
-            }
-        }
-        return new BindingIdentifier(begin, ts.endPosition(), identifier);
-    }
-
-    /**
-     * <strong>[13.2.1] Let and Const Declarations</strong>
-     * <p>
-     * Difference when compared to {@link #bindingIdentifier()}:<br>
-     * Neither "arguments" nor "eval" is allowed.
-     * 
-     * <pre>
-     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
-     *     <span><sub>[+Default]</sub></span> default
-     *     <span><sub>[~Yield]</sub></span> yield
-     *     Identifier
-     * </pre>
-     * 
-     * @param allowDefault
-     *            the flag to select if 'default' is allowed as the class name
-     * @return the parsed binding identifier
-     */
-    private BindingIdentifier bindingIdentifierClassName(boolean allowDefault) {
-        long begin = ts.beginPosition();
-        if (allowDefault && token() == Token.DEFAULT) {
-            consume(Token.DEFAULT);
-            return new BindingIdentifier(begin, ts.endPosition(), getName(Token.DEFAULT));
-        }
-        // [10.2.1 Strict Mode Code]
-        String identifier = strictIdentifier();
-        if ("arguments".equals(identifier) || "eval".equals(identifier)) {
-            reportSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
-        }
-        return new BindingIdentifier(begin, ts.endPosition(), identifier);
-    }
-
-    /**
-     * <strong>[13.2.1] Let and Const Declarations</strong>
-     * <p>
-     * Special case for {@link Token#YIELD} as {@link BindingIdentifier} in functions and generators
-     * 
-     * <pre>
-     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
-     *     <span><sub>[+Default]</sub></span> default
-     *     <span><sub>[~Yield]</sub></span> yield
-     *     Identifier
-     * </pre>
-     * 
-     * @param allowDefault
-     *            the flag to select if 'default' is allowed as the function name
-     * @return the parsed binding identifier
-     */
-    private BindingIdentifier bindingIdentifierFunctionName(boolean allowDefault) {
-        // FIXME: Preliminary solution to provide SpiderMonkey/V8 compatibility
-        // 'yield' is always a keyword in strict-mode and in generators, but parse function name
-        // in the context of the surrounding environment
-        Token tok = token();
-        if (tok == Token.YIELD || tok == Token.ESCAPED_YIELD) {
-            long begin = ts.beginPosition();
-            if (isYieldName(context.parent)) {
-                consume(tok);
-                return new BindingIdentifier(begin, ts.endPosition(), getName(Token.YIELD));
-            }
-            reportStrictModeSyntaxError(begin, Messages.Key.StrictModeInvalidIdentifier,
-                    getName(Token.YIELD));
-            reportTokenNotIdentifier(Token.YIELD);
-        }
-        if (allowDefault && tok == Token.DEFAULT) {
-            long begin = ts.beginPosition();
-            consume(tok);
-            return new BindingIdentifier(begin, ts.endPosition(), getName(Token.DEFAULT));
-        }
-        return bindingIdentifier();
-    }
-
-    /**
-     * <strong>[12.1.5] Object Initialiser</strong>
+     * <strong>[12.1.5] Object Initializer</strong>
      * 
      * <pre>
      * Initializer<span><sub>[In, Yield]</sub></span> :
@@ -4628,8 +4512,8 @@ public final class Parser {
         long begin = ts.beginPosition();
         String label;
         consume(Token.CONTINUE);
-        if (noLineTerminator() && isNonResolvedIdentifier(token())) {
-            label = nonResolvedIdentifier();
+        if (noLineTerminator() && isIdentifier(token())) {
+            label = labelIdentifier();
         } else {
             label = null;
         }
@@ -4666,8 +4550,8 @@ public final class Parser {
         long begin = ts.beginPosition();
         String label;
         consume(Token.BREAK);
-        if (noLineTerminator() && isNonResolvedIdentifier(token())) {
-            label = nonResolvedIdentifier();
+        if (noLineTerminator() && isIdentifier(token())) {
+            label = labelIdentifier();
         } else {
             label = null;
         }
@@ -4876,7 +4760,7 @@ public final class Parser {
                 break labels;
             }
             long beginLabel = ts.beginPosition();
-            String name = nonResolvedIdentifier();
+            String name = labelIdentifier();
             consume(Token.COLON);
             if (!labelSet.add(name)) {
                 reportSyntaxError(beginLabel, Messages.Key.DuplicateLabel, name);
@@ -5112,14 +4996,248 @@ public final class Parser {
     /* ***************************************************************************************** */
 
     /**
-     * <strong>[12.1] Primary Expressions</strong>
+     * <strong>[12.1] Identifiers</strong>
+     * 
+     * <pre>
+     * IdentifierReference<span><sub>[Yield]</sub></span> :
+     *     Identifier
+     *     [~Yield] yield
+     * </pre>
+     * 
+     * @return the parsed identifier reference
+     */
+    private Identifier identifierReference() {
+        long begin = ts.beginPosition();
+        String identifier = identifier();
+        return new Identifier(begin, ts.endPosition(), identifier);
+    }
+
+    /**
+     * <strong>[12.1] Identifiers</strong>
+     * 
+     * <pre>
+     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
+     *     <span><sub>[+Default]</sub></span> default
+     *     <span><sub>[~Yield]</sub></span> yield
+     *     Identifier
+     * </pre>
+     * 
+     * @return the parsed binding identifier
+     */
+    private BindingIdentifier bindingIdentifier() {
+        return bindingIdentifier(true);
+    }
+
+    /**
+     * <strong>[12.1] Identifiers</strong>
+     * 
+     * <pre>
+     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
+     *     <span><sub>[+Default]</sub></span> default
+     *     <span><sub>[~Yield]</sub></span> yield
+     *     Identifier
+     * </pre>
+     * 
+     * @param allowLet
+     *            the flag to select if 'let' is allowed as a binding name
+     * @return the parsed binding identifier
+     */
+    private BindingIdentifier bindingIdentifier(boolean allowLet) {
+        long begin = ts.beginPosition();
+        if (!allowLet) {
+            Token tok = token();
+            if (tok == Token.LET || tok == Token.ESCAPED_LET) {
+                reportTokenNotIdentifier(Token.LET);
+            }
+        }
+        String identifier = identifier();
+        if (context.strictMode != StrictMode.NonStrict) {
+            if ("arguments".equals(identifier) || "eval".equals(identifier)) {
+                reportStrictModeSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
+            }
+        }
+        return new BindingIdentifier(begin, ts.endPosition(), identifier);
+    }
+
+    /**
+     * <strong>[12.1] Identifiers</strong>
+     * <p>
+     * Difference when compared to {@link #bindingIdentifier()}:<br>
+     * Neither "arguments" nor "eval" nor "let" is allowed.
+     * 
+     * <pre>
+     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
+     *     <span><sub>[+Default]</sub></span> default
+     *     <span><sub>[~Yield]</sub></span> yield
+     *     Identifier
+     * </pre>
+     * 
+     * @param allowDefault
+     *            the flag to select if 'default' is allowed as the class name
+     * @return the parsed binding identifier
+     */
+    private BindingIdentifier bindingIdentifierClassName(boolean allowDefault) {
+        long begin = ts.beginPosition();
+        Token tok = token();
+        if (allowDefault && tok == Token.DEFAULT) {
+            consume(Token.DEFAULT);
+            return new BindingIdentifier(begin, ts.endPosition(), getName(Token.DEFAULT));
+        }
+        if (tok == Token.LET || tok == Token.ESCAPED_LET) {
+            reportTokenNotIdentifier(Token.LET);
+        }
+        // [10.2.1 Strict Mode Code]
+        String identifier = identifier();
+        if ("arguments".equals(identifier) || "eval".equals(identifier)) {
+            reportSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
+        }
+        return new BindingIdentifier(begin, ts.endPosition(), identifier);
+    }
+
+    /**
+     * <strong>[12.1] Identifiers</strong>
+     * <p>
+     * Special case for {@link Token#YIELD} as {@link BindingIdentifier} in functions and generators
+     * 
+     * <pre>
+     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
+     *     <span><sub>[+Default]</sub></span> default
+     *     <span><sub>[~Yield]</sub></span> yield
+     *     Identifier
+     * </pre>
+     * 
+     * @param isDeclaration
+     *            {@code true} if the function is declaration node
+     * @param allowDefault
+     *            the flag to select if 'default' is allowed as the function name
+     * @return the parsed binding identifier
+     */
+    private BindingIdentifier bindingIdentifierFunctionName(boolean isDeclaration,
+            boolean allowDefault) {
+        Token tok = token();
+        if (tok == Token.YIELD || tok == Token.ESCAPED_YIELD) {
+            // function declarations inherit the yield mode from the parent context
+            long begin = ts.beginPosition();
+            if (isYieldName(isDeclaration ? context.parent : context)) {
+                consume(tok);
+                return new BindingIdentifier(begin, ts.endPosition(), getName(Token.YIELD));
+            }
+            reportStrictModeSyntaxError(begin, Messages.Key.StrictModeInvalidIdentifier,
+                    getName(Token.YIELD));
+            reportTokenNotIdentifier(Token.YIELD);
+        }
+        if (allowDefault && tok == Token.DEFAULT) {
+            long begin = ts.beginPosition();
+            consume(tok);
+            return new BindingIdentifier(begin, ts.endPosition(), getName(Token.DEFAULT));
+        }
+        return bindingIdentifier(true);
+    }
+
+    /**
+     * <strong>[12.1] Identifiers</strong>
+     * 
+     * <pre>
+     * LabelIdentifier<span><sub>[Yield]</sub></span> :
+     *     Identifier
+     *     <span><sub>[~Yield]</sub></span> yield
+     * </pre>
+     * 
+     * @return the parsed label identifier
+     */
+    private String labelIdentifier() {
+        return identifier();
+    }
+
+    /**
+     * <strong>[12.1] Identifiers</strong>
+     * 
+     * <pre>
+     * Identifier :
+     *     IdentifierName <strong>but not</strong> ReservedWord
+     * </pre>
+     * 
+     * @return the parsed identifier
+     */
+    private String identifier() {
+        Token tok = token();
+        if (!isIdentifier(tok)) {
+            reportTokenNotIdentifier(tok);
+        }
+        String name = getName(tok);
+        consume(tok);
+        return name;
+    }
+
+    /**
+     * <strong>[12.1] Identifiers</strong>
+     * 
+     * @param tok
+     *            the token to inspect
+     * @return {@code true} if the token is valid identifier
+     */
+    private boolean isIdentifier(Token tok) {
+        switch (tok) {
+        case NAME:
+        case ESCAPED_NAME:
+            return true;
+        case ESCAPED_RESERVED_WORD:
+            throw reportSyntaxError(Messages.Key.InvalidIdentifier, getName(tok));
+        case YIELD:
+        case ESCAPED_YIELD:
+            return isYieldName(context);
+        case LET:
+        case ESCAPED_LET:
+        case IMPLEMENTS:
+        case INTERFACE:
+        case PACKAGE:
+        case PRIVATE:
+        case PROTECTED:
+        case PUBLIC:
+        case STATIC:
+        case ESCAPED_STRICT_RESERVED_WORD:
+            if (context.strictMode != StrictMode.NonStrict) {
+                reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
+            }
+            return context.strictMode != StrictMode.Strict;
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * Returns <code>true</code> if {@link Token#YIELD} should be treated as {@link Token#NAME} in
+     * the supplied context.
+     * 
+     * @param context
+     *            the context to use
+     * @return {@code true} if 'yield' is a valid name in the parse context
+     */
+    private boolean isYieldName(ParseContext context) {
+        // TODO: make `function*g(){yield yiel\u0064}` a SyntaxError for invalid identifier
+
+        // 'yield' is always a keyword in strict-mode and in generators
+        if (context.strictMode == StrictMode.Strict || context.kind == ContextKind.Generator) {
+            return false;
+        }
+        // 'yield' nested in generator comprehension, nested in generator
+        if (context.kind == ContextKind.GeneratorComprehension && context.yieldAllowed) {
+            return false;
+        }
+        // proactively flag as syntax error if current strict mode is unknown
+        reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(Token.YIELD));
+        return true;
+    }
+
+    /**
+     * <strong>[12.2] Primary Expression</strong>
      * 
      * <pre>
      * PrimaryExpresion<span><sub>[Yield]</sub></span> :
      *     this
      *     IdentifierReference<span><sub>[?Yield]</sub></span>
      *     Literal
-     *     ArrayInitialiser<span><sub>[?Yield]</sub></span>
+     *     ArrayInitializer<span><sub>[?Yield]</sub></span>
      *     ObjectLiteral<span><sub>[?Yield]</sub></span>
      *     FunctionExpression
      *     ClassExpression
@@ -5284,220 +5402,6 @@ public final class Parser {
             reportSyntaxError(spread, Messages.Key.InvalidSpreadExpression);
         }
         return spread;
-    }
-
-    /**
-     * <strong>[12.1.2] Identifier Reference</strong>
-     * 
-     * <pre>
-     * IdentifierReference<span><sub>[Yield]</sub></span> :
-     *     NonResolvedIdentifier<span><sub>[?Yield]</sub></span>
-     * </pre>
-     * 
-     * @return the parsed identifier reference
-     */
-    private Identifier identifierReference() {
-        long begin = ts.beginPosition();
-        String identifier = identifier();
-        return new Identifier(begin, ts.endPosition(), identifier);
-    }
-
-    /**
-     * <strong>[12.1.2] Identifier Reference</strong>
-     * 
-     * <pre>
-     * NonResolvedIdentifier<span><sub>[Yield]</sub></span> :
-     *     Identifier
-     *     <span><sub>[~Yield]</sub></span> yield
-     * </pre>
-     * 
-     * @return the parsed non-resolved identifier name
-     */
-    private String nonResolvedIdentifier() {
-        Token tok = token();
-        if (!isNonResolvedIdentifier(tok)) {
-            reportTokenNotIdentifier(tok);
-        }
-        String name = getName(tok);
-        consume(tok);
-        return name;
-    }
-
-    /**
-     * <strong>[12.1.2] Identifier Reference</strong>
-     * 
-     * <pre>
-     * NonResolvedIdentifier<span><sub>[Yield]</sub></span> :
-     *     Identifier
-     *     <span><sub>[~Yield]</sub></span> yield
-     * </pre>
-     * 
-     * @return the parsed identifier name
-     */
-    private String identifier() {
-        Token tok = token();
-        if (!isIdentifier(tok)) {
-            reportTokenNotIdentifier(tok);
-        }
-        String name = getName(tok);
-        consume(tok);
-        return name;
-    }
-
-    /**
-     * <strong>[12.1.2] Identifier Reference</strong>
-     * 
-     * <pre>
-     * NonResolvedIdentifier<span><sub>[Yield]</sub></span> :
-     *     Identifier
-     *     <span><sub>[~Yield]</sub></span> yield
-     * </pre>
-     * 
-     * @return the parsed strict-mode identifier name
-     */
-    private String strictIdentifier() {
-        Token tok = token();
-        if (!isStrictIdentifier(tok)) {
-            reportTokenNotIdentifier(tok);
-        }
-        String name = getName(tok);
-        consume(tok);
-        return name;
-    }
-
-    /**
-     * <strong>[12.1.2] Identifier Reference</strong>
-     * 
-     * @param tok
-     *            the token to inspect
-     * @return {@code true} if the token is valid identifier
-     */
-    private boolean isNonResolvedIdentifier(Token tok) {
-        switch (tok) {
-        case NAME:
-        case ESCAPED_NAME:
-            return true;
-        case ESCAPED_RESERVED_WORD:
-            throw reportSyntaxError(Messages.Key.InvalidIdentifier, getName(tok));
-        case YIELD:
-        case ESCAPED_YIELD:
-        case LET:
-        case ESCAPED_LET:
-        case IMPLEMENTS:
-        case INTERFACE:
-        case PACKAGE:
-        case PRIVATE:
-        case PROTECTED:
-        case PUBLIC:
-        case STATIC:
-        case ESCAPED_STRICT_RESERVED_WORD:
-            if (context.strictMode != StrictMode.NonStrict) {
-                reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
-            }
-            return context.strictMode != StrictMode.Strict;
-        default:
-            return false;
-        }
-    }
-
-    /**
-     * <strong>[12.1.2] Identifier Reference</strong>
-     * 
-     * @param tok
-     *            the token to inspect
-     * @return {@code true} if the token is valid identifier
-     */
-    private boolean isIdentifier(Token tok) {
-        switch (tok) {
-        case NAME:
-        case ESCAPED_NAME:
-            return true;
-        case ESCAPED_RESERVED_WORD:
-            throw reportSyntaxError(Messages.Key.InvalidIdentifier, getName(tok));
-        case YIELD:
-        case ESCAPED_YIELD:
-            return isYieldName();
-        case LET:
-        case ESCAPED_LET:
-        case IMPLEMENTS:
-        case INTERFACE:
-        case PACKAGE:
-        case PRIVATE:
-        case PROTECTED:
-        case PUBLIC:
-        case STATIC:
-        case ESCAPED_STRICT_RESERVED_WORD:
-            if (context.strictMode != StrictMode.NonStrict) {
-                reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
-            }
-            return context.strictMode != StrictMode.Strict;
-        default:
-            return false;
-        }
-    }
-
-    /**
-     * <strong>[12.1.2] Identifier Reference</strong>
-     * 
-     * @param tok
-     *            the token to inspect
-     * @return {@code true} if the token is valid strict identifier
-     */
-    private boolean isStrictIdentifier(Token tok) {
-        switch (tok) {
-        case NAME:
-        case ESCAPED_NAME:
-            return true;
-        case ESCAPED_RESERVED_WORD:
-            throw reportSyntaxError(Messages.Key.InvalidIdentifier, getName(tok));
-        case YIELD:
-        case ESCAPED_YIELD:
-        case LET:
-        case ESCAPED_LET:
-        case IMPLEMENTS:
-        case INTERFACE:
-        case PACKAGE:
-        case PRIVATE:
-        case PROTECTED:
-        case PUBLIC:
-        case STATIC:
-        case ESCAPED_STRICT_RESERVED_WORD:
-            throw reportSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
-        default:
-            return false;
-        }
-    }
-
-    /**
-     * Returns <code>true</code> if {@link Token#YIELD} should be treated as {@link Token#NAME} in
-     * the current context.
-     * 
-     * @return {@code true} if 'yield' is a valid name in the current parse context
-     */
-    private boolean isYieldName() {
-        return isYieldName(context);
-    }
-
-    /**
-     * Returns <code>true</code> if {@link Token#YIELD} should be treated as {@link Token#NAME} in
-     * the supplied context.
-     * 
-     * @param context
-     *            the context to use
-     * @return {@code true} if 'yield' is a valid name in the parse context
-     */
-    private boolean isYieldName(ParseContext context) {
-        // 'yield' is always a keyword in strict-mode and in generators
-        if (context.strictMode == StrictMode.Strict || context.kind == ContextKind.Generator) {
-            return false;
-        }
-        // 'yield' nested in generator comprehension, nested in generator
-        if (context.kind == ContextKind.GeneratorComprehension && context.yieldAllowed) {
-            return false;
-        }
-        // proactively flag as syntax error if current strict mode is unknown
-        reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(Token.YIELD));
-        return true;
     }
 
     /**

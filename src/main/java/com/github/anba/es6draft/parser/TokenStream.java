@@ -1314,7 +1314,7 @@ public final class TokenStream {
     }
 
     /**
-     * <strong>[11.6.1] Reserved Words</strong>
+     * <strong>[11.6.2] Reserved Words</strong>
      * 
      * <pre>
      * ReservedWord ::
