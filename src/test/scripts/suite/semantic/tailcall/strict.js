@@ -31,9 +31,7 @@ function gauss(n) {
     }
   }
 
-  for (let v of [1, 10, 100, 1000, 10000, stackLimit * 10]) {
-    assertSame(gauss(v), new TailCall().sum(v, 0));
-  }
+  assertSame(gauss(stackLimit * 10), new TailCall().sum(stackLimit * 10, 0));
 }
 
 // Ensure tail-call works in implicit strict mode (class static method)
@@ -45,7 +43,5 @@ function gauss(n) {
     }
   }
 
-  for (let v of [1, 10, 100, 1000, 10000, stackLimit * 10]) {
-    assertSame(gauss(v), TailCall.sum(v, 0));
-  }
+  assertSame(gauss(stackLimit * 10), TailCall.sum(stackLimit * 10, 0));
 }

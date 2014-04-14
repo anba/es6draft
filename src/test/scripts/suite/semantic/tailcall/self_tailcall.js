@@ -29,6 +29,4 @@ function gauss(n) {
   return (n * n + n) / 2;
 }
 
-for (let v of [1, 10, 100, 1000, 10000, stackLimit * 10]) {
-  assertSame(gauss(v), sum(v, 0));
-}
+assertSame(gauss(stackLimit * 10), sum(stackLimit * 10, 0));

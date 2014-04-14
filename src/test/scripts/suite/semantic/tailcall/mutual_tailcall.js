@@ -30,10 +30,6 @@ function isEven(n) {
   return isOdd(n - 1);
 }
 
-for (let v of [0, 2, 4, 10, 100, 1000, 10000, stackLimit * 10]) {
-  assertTrue(isEven(v));
-}
+assertTrue(isEven(stackLimit * 10));
 
-for (let v of [1, 3, 5, 10 + 1, 100 + 1, 1000 + 1, 10000 + 1, stackLimit * 10 + 1]) {
-  assertTrue(isOdd(v));
-}
+assertTrue(isOdd(stackLimit * 10 + 1));
