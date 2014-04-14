@@ -160,7 +160,7 @@ public final class Repl {
 
     private enum Option {
         NoInterpreter, Debug, FullDebug, StackTrace, Strict, SimpleShell, MozillaShell, V8Shell,
-        NoJLine, NoColor, Async;
+        NoJLine, NoColor, Async, VerifyStack;
 
         static EnumSet<Option> fromArgs(String[] args) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
@@ -200,6 +200,9 @@ public final class Repl {
                     break;
                 case "--async":
                     options.add(Async);
+                    break;
+                case "--verify-stack":
+                    options.add(VerifyStack);
                     break;
                 case "--help":
                     System.out.print(getHelp());
@@ -485,6 +488,9 @@ public final class Repl {
         }
         if (options.contains(Option.FullDebug)) {
             compilerOptions.add(Compiler.Option.FullDebug);
+        }
+        if (options.contains(Option.VerifyStack)) {
+            compilerOptions.add(Compiler.Option.VerifyStack);
         }
         ScriptCache scriptCache = new ScriptCache(compatibilityOptions);
 
