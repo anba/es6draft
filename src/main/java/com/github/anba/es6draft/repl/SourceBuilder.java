@@ -9,16 +9,18 @@ package com.github.anba.es6draft.repl;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 
 import java.util.HashSet;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.date.DateObject;
 import com.github.anba.es6draft.runtime.objects.date.DatePrototype;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
 import com.github.anba.es6draft.runtime.objects.text.RegExpPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -278,20 +280,56 @@ public final class SourceBuilder {
         return format(mode, String.format("[%s]", description), Style.Symbol);
     }
 
+    private static Property getOwnProperty(ExecutionContext cx, ScriptObject object, Object key) {
+        try {
+            if (key instanceof String) {
+                return object.getOwnProperty(cx, (String) key);
+            } else {
+                return object.getOwnProperty(cx, (Symbol) key);
+            }
+        } catch (ScriptException e) {
+            return null;
+        }
+    }
+
+    private static String accessorToSource(Mode mode, Property accessor) {
+        String description;
+        if (accessor.getGetter() != null && accessor.getSetter() != null) {
+            description = "[Getter/Setter]";
+        } else if (accessor.getGetter() != null) {
+            description = "[Getter]";
+        } else if (accessor.getSetter() != null) {
+            description = "[Setter]";
+        } else {
+            description = "[]";
+        }
+        return format(mode, description, Style.Special);
+    }
+
     private static String objectToSource(Mode mode, ExecutionContext cx, Set<ScriptObject> stack,
-            ScriptObject value) {
-        List<Object> keys = GetOwnEnumerablePropertyKeys(cx, value);
-        if (keys.isEmpty()) {
+            ScriptObject object) {
+        Iterator<?> keys = GetOwnPropertyNamesIterator(cx, object);
+        if (!keys.hasNext()) {
             return "{}";
         }
-        List<Object> view = keys.subList(0, Math.min(keys.size(), MAX_OBJECT_PROPERTIES));
         StringBuilder properties = new StringBuilder();
-        for (Object k : view) {
+        for (int i = 0; keys.hasNext() && i < MAX_OBJECT_PROPERTIES;) {
+            Object k = keys.next();
             String key = propertyKeyToSource(mode, k);
-            String p = toSource(mode, cx, stack, Get(cx, value, k));
-            properties.append(", ").append(key).append(": ").append(p);
+            Property prop = getOwnProperty(cx, object, k);
+            if (prop == null || !prop.isEnumerable()) {
+                continue;
+            }
+            String value;
+            if (prop.isDataDescriptor()) {
+                value = toSource(mode, cx, stack, prop.getValue());
+            } else {
+                value = accessorToSource(mode, prop);
+            }
+            properties.append(", ").append(key).append(": ").append(value);
+            i += 1;
         }
-        if (view.size() < keys.size()) {
+        if (keys.hasNext()) {
             properties.append(", [...]");
         }
         properties.append(" }").setCharAt(0, '{');
@@ -299,16 +337,16 @@ public final class SourceBuilder {
     }
 
     private static String arrayToSource(Mode mode, ExecutionContext cx, Set<ScriptObject> stack,
-            ScriptObject value) {
-        long len = ToUint32(cx, Get(cx, value, "length"));
+            ScriptObject array) {
+        long len = ToUint32(cx, Get(cx, array, "length"));
         if (len <= 0) {
             return "[]";
         }
         int viewLen = (int) Math.min(len, MAX_ARRAY_PROPERTIES);
         StringBuilder properties = new StringBuilder();
         for (int index = 0; index < viewLen; ++index) {
-            String p = toSource(mode, cx, stack, Get(cx, value, ToString(index)));
-            properties.append(", ").append(p);
+            String value = toSource(mode, cx, stack, Get(cx, array, ToString(index)));
+            properties.append(", ").append(value);
         }
         if (viewLen < len) {
             properties.append(", [...]");

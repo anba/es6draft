@@ -2584,6 +2584,19 @@ public final class AbstractOperations {
     }
 
     /**
+     * Returns an iterator over all [[OwnPropertyKeys]] of {@code obj}.
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
+     * @return iterator over <var>obj</var>'s own property keys
+     */
+    public static Iterator<?> GetOwnPropertyNamesIterator(ExecutionContext cx, ScriptObject obj) {
+        return FromListIterator(cx, obj, obj.ownPropertyKeys(cx));
+    }
+
+    /**
      * Returns a list of all string-valued [[OwnPropertyKeys]] of {@code obj}.
      * 
      * @param cx
