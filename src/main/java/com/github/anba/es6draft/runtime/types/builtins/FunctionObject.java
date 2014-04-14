@@ -395,7 +395,13 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     private void ordinaryDefinePropertyOrThrow(ExecutionContext cx, String propertyKey,
             PropertyDescriptor desc) {
-        boolean success = super.defineOwnProperty(cx, propertyKey, desc);
+        /* step 1 */
+        Property current = ordinaryGetOwnProperty(propertyKey);
+        /* step 2 */
+        boolean extensible = isExtensible();
+        /* step 3 */
+        boolean success = ValidateAndApplyPropertyDescriptor(this, propertyKey, extensible, desc,
+                current);
         if (!success) {
             throw newTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey);
         }
