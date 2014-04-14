@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
@@ -40,9 +41,6 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
     /** [[ArrayLength]] */
     private long arrayLength;
 
-    // FIXME: spec incomplete
-    private boolean elementsWritable = true;
-
     public TypedArrayObject(Realm realm) {
         super(realm);
     }
@@ -59,23 +57,6 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
      * {@inheritDoc}
      */
     @Override
-    protected boolean getWritable() {
-        return elementsWritable;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void setNonWritable() {
-        assert elementsWritable;
-        elementsWritable = false;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     protected boolean elementHas(ExecutionContext cx, double index) {
         // Steps 1-6 of elementGet to support hasOwnProperty
         /* steps 1-2 (not applicable) */
@@ -86,8 +67,12 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
             throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 5 */
-        long length = getArrayLength();
+        if (!IsInteger(index)) {
+            return false;
+        }
         /* step 6 */
+        long length = getArrayLength();
+        /* step 7 */
         if (index < 0 || index >= length) {
             return false;
         }
@@ -107,20 +92,24 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
             throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 5 */
-        long length = getArrayLength();
+        if (!IsInteger(index)) {
+            return UNDEFINED;
+        }
         /* step 6 */
+        long length = getArrayLength();
+        /* step 7 */
         if (index < 0 || index >= length) {
             return UNDEFINED;
         }
-        /* step 7 */
+        /* step 8 */
         long offset = getByteOffset();
-        /* steps 8, 11 */
+        /* steps 9, 12 */
         ElementType elementType = getElementType();
-        /* step 9 */
-        int elementSize = elementType.size();
         /* step 10 */
+        int elementSize = elementType.size();
+        /* step 11 */
         long indexedPosition = (long) ((index * elementSize) + offset);
-        /* step 12 */
+        /* step 13 */
         return GetValueFromBuffer(cx, buffer, indexedPosition, elementType);
     }
 
@@ -137,24 +126,28 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
             throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 5 */
+        if (!IsInteger(index)) {
+            return false;
+        }
+        /* step 6 */
         long length = getArrayLength();
-        /* steps 6-7 */
+        /* steps 7-8 */
         double numValue = ToNumber(cx, value);
-        /* step 8 */
+        /* step 9 */
         if (index < 0 || index >= length) {
             return false;
         }
-        /* step 9 */
+        /* step 10 */
         long offset = getByteOffset();
-        /* steps 10, 13 */
+        /* steps 11, 14 */
         ElementType elementType = getElementType();
-        /* step 11 */
-        int elementSize = elementType.size();
         /* step 12 */
+        int elementSize = elementType.size();
+        /* step 13 */
         long indexedPosition = (long) ((index * elementSize) + offset);
-        /* steps 14-15 */
+        /* steps 15-16 */
         SetValueInBuffer(cx, buffer, indexedPosition, elementType, numValue);
-        /* step 16 */
+        /* step 17 */
         return true;
     }
 

@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 
 import java.util.List;
 
@@ -32,13 +29,9 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         super(realm);
     }
 
-    private static double toIntegerIndex(String propertyKey) {
+    private static boolean isCanonicalNumeric(double numericIndex) {
         // FIXME: spec issue https://bugs.ecmascript.org/show_bug.cgi?id=2049
-        double intIndex = ToInteger(ToNumber(propertyKey));
-        if (ToString(intIndex).equals(propertyKey)) {
-            return intIndex;
-        }
-        return Double.NaN;
+        return numericIndex != 0 || Double.compare(numericIndex, -0d) != 0;
     }
 
     /** [[HasOwnProperty]] (P) */
@@ -46,9 +39,9 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
-        double intIndex = toIntegerIndex(propertyKey);
-        if (!Double.isNaN(intIndex)) {
-            return elementHas(cx, intIndex);
+        double numericIndex = CanonicalNumericString(propertyKey);
+        if (isCanonicalNumeric(numericIndex)) {
+            return elementHas(cx, numericIndex);
         }
         /* step 4 */
         return super.hasOwnProperty(cx, propertyKey);
@@ -59,14 +52,13 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
-        double intIndex = toIntegerIndex(propertyKey);
-        if (!Double.isNaN(intIndex)) {
-            Object value = elementGet(cx, intIndex);
+        double numericIndex = CanonicalNumericString(propertyKey);
+        if (isCanonicalNumeric(numericIndex)) {
+            Object value = elementGet(cx, numericIndex);
             if (Type.isUndefined(value)) {
                 return null;
             }
-            boolean writable = getWritable();
-            return new Property(value, writable, true, false);
+            return new Property(value, true, true, false);
         }
         /* step 4 */
         return ordinaryGetOwnProperty(propertyKey);
@@ -78,68 +70,50 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
             PropertyDescriptor desc) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
-        double intIndex = toIntegerIndex(propertyKey);
-        if (!Double.isNaN(intIndex)) {
+        double numericIndex = CanonicalNumericString(propertyKey);
+        if (isCanonicalNumeric(numericIndex)) {
             /* step 3.c.i */
-            if (intIndex < 0) {
+            if (!IsInteger(numericIndex)) {
                 return false;
             }
             /* step 3.c.ii */
-            long length = getLength();
-            /* step 3.c.iii (not applicable) */
+            double intIndex = numericIndex;
+            /* step 3.c.iii */
+            if (intIndex < 0) {
+                return false;
+            }
             /* step 3.c.iv */
+            long length = getLength();
+            /* step 3.c.v */
             if (intIndex >= length) {
                 return false;
             }
-            /* step 3.c.v */
+            /* step 3.c.vi */
             if (desc.isAccessorDescriptor()) {
                 return false;
             }
-            /* step 3.c.vi */
+            /* step 3.c.vii */
             if (desc.hasConfigurable() && desc.isConfigurable()) {
                 return false;
             }
-            /* step 3.c.vii */
+            /* step 3.c.viii */
             if (desc.hasEnumerable() && !desc.isEnumerable()) {
                 return false;
             }
-            /* step 3.c.viii */
-            boolean writable = getWritable();
             /* step 3.c.ix */
-            boolean makeReadOnly = false;
-            /* step 3.c.x */
-            if (desc.hasWritable()) {
-                if (desc.isWritable() && !writable) {
-                    return false;
-                }
-                if (!desc.isWritable() && writable) {
-                    makeReadOnly = true;
-                }
+            if (desc.hasWritable() && !desc.isWritable()) {
+                return false;
             }
-            /* step 3.c.xi */
+            /* step 3.c.x */
             if (desc.hasValue()) {
                 Object value = desc.getValue();
-                if (!writable) {
-                    Object oldValue = elementGet(cx, intIndex);
-                    if (Type.isUndefined(value)) {
-                        return false;
-                    }
-                    if (!SameValue(value, oldValue)) {
-                        return false;
-                    }
-                } else {
-                    elementSet(cx, intIndex, value);
-                }
+                elementSet(cx, intIndex, value);
             }
-            /* step 3.c.xii */
-            if (makeReadOnly) {
-                setNonWritable();
-            }
-            /* step 3.c.xiii */
+            /* step 3.c.xi */
             return true;
         }
         /* step 4 */
-        return super.defineOwnProperty(cx, propertyKey, desc);
+        return ordinaryDefineOwnProperty(cx, propertyKey, desc);
     }
 
     /** 9.4.5.3 [[Get]] (P, Receiver) */
@@ -148,9 +122,9 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         /* step 1 (not applicable) */
         /* step 2 */
         if (this == receiver) { // SameValue(this, receiver)
-            double intIndex = toIntegerIndex(propertyKey);
-            if (!Double.isNaN(intIndex)) {
-                return elementGet(cx, intIndex);
+            double numericIndex = CanonicalNumericString(propertyKey);
+            if (isCanonicalNumeric(numericIndex)) {
+                return elementGet(cx, numericIndex);
             }
         }
         /* step 3 */
@@ -163,9 +137,9 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         /* step 1 (not applicable) */
         /* step 2 */
         if (this == receiver) { // SameValue(this, receiver)
-            double intIndex = toIntegerIndex(propertyKey);
-            if (!Double.isNaN(intIndex)) {
-                return elementSet(cx, intIndex, value);
+            double numericIndex = CanonicalNumericString(propertyKey);
+            if (isCanonicalNumeric(numericIndex)) {
+                return elementSet(cx, numericIndex, value);
             }
         }
         /* step 3 */
@@ -191,13 +165,13 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     }
 
     @Override
-    protected boolean isEnumerableOwnProperty(ExecutionContext cx, String key) {
-        double intIndex = toIntegerIndex(key);
-        if (!Double.isNaN(intIndex)) {
+    protected boolean isEnumerableOwnProperty(ExecutionContext cx, String propertyKey) {
+        double numericIndex = CanonicalNumericString(propertyKey);
+        if (isCanonicalNumeric(numericIndex)) {
             long length = getLength();
-            return 0 <= intIndex && intIndex < length;
+            return 0 <= numericIndex && numericIndex < length;
         }
-        return super.isEnumerableOwnProperty(cx, key);
+        return super.isEnumerableOwnProperty(cx, propertyKey);
     }
 
     /**
@@ -226,10 +200,6 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         // the operation is not supported in this implementation
         throw new UnsupportedOperationException();
     }
-
-    protected abstract boolean getWritable();
-
-    protected abstract void setNonWritable();
 
     /**
      * Not in spec
