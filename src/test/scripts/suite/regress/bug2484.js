@@ -24,8 +24,8 @@ realm.eval(`
   }
 `);
 
-// Wrapper created in caller's realm
-assertSame(Number.prototype, Object.getPrototypeOf(realm.global.returnThis.call(1)));
+// Wrapper created in callee's realm
+assertSame(realm.global.Number.prototype, Object.getPrototypeOf(realm.global.returnThis.call(1)));
 
 // ReferenceError created in caller's realm
 assertThrows(() => realm.global.noSuperBinding(), ReferenceError);

@@ -194,7 +194,6 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
         assert f.getThisMode() != ThisMode.Lexical;
         /* step 5 */
         if (f.isNeedsSuper() && f.getHomeObject() == null) {
-            // FIXME: spec bug like https://bugs.ecmascript.org/show_bug.cgi?id=2484 ?
             throw newReferenceError(callerContext, Messages.Key.MissingSuperBinding);
         }
         LexicalEnvironment<?> e = f.getEnvironment();

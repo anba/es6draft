@@ -132,7 +132,7 @@ public final class ExecutionContext {
 
     /**
      * <ul>
-     * <li>15 ECMAScript Language: Modules and Scripts
+     * <li>15 ECMAScript Language: Scripts and Modules
      * <ul>
      * <li>15.1 Script
      * <ul>
@@ -156,7 +156,7 @@ public final class ExecutionContext {
 
     /**
      * <ul>
-     * <li>15 ECMAScript Language: Modules and Scripts
+     * <li>15 ECMAScript Language: Scripts and Modules
      * <ul>
      * <li>15.2 Modules
      * <ul>
@@ -224,7 +224,7 @@ public final class ExecutionContext {
      */
     public static ExecutionContext newFunctionExecutionContext(ExecutionContext callerContext,
             FunctionObject f, Object thisArgument) {
-        /* 9.1.15.1, steps 4-12 */
+        /* 9.2.4, steps 4-12, 14 */
         Realm calleeRealm = f.getRealm();
         ThisMode thisMode = f.getThisMode();
         LexicalEnvironment<? extends DeclarativeEnvironmentRecord> localEnv;
@@ -235,23 +235,13 @@ public final class ExecutionContext {
             if (thisMode == ThisMode.Strict) {
                 thisValue = thisArgument;
             } else {
-                assert thisArgument != null;
-                switch (Type.of(thisArgument)) {
-                case Undefined:
-                case Null:
+                if (Type.isUndefinedOrNull(thisArgument)) {
                     thisValue = calleeRealm.getGlobalThis();
-                    break;
-                case Boolean:
-                case Number:
-                case String:
-                case Symbol:
-                    // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=2484
-                    thisValue = ToObject(callerContext, thisArgument);
-                    break;
-                case Object:
-                default:
+                } else if (Type.isObject(thisArgument)) {
                     thisValue = thisArgument;
-                    break;
+                } else {
+                    /*  step 14 */
+                    thisValue = ToObject(f.getRealm().defaultContext(), thisArgument);
                 }
             }
             localEnv = newFunctionEnvironment(callerContext, f, thisValue);
