@@ -825,7 +825,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(BindingProperty node, Void value) {
-        Object key = node.getPropertyName().accept(this, value);
+        // TODO: handle BindingProperty : SingleNameBinding
+        Object key = acceptOrNull(node.getPropertyName(), value);
         Object _value = node.getBinding().accept(this, value);
         Object initialiser = acceptOrNull(node.getInitialiser(), value);
         String kind = "init";
