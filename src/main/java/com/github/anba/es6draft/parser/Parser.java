@@ -2504,16 +2504,14 @@ public final class Parser {
      * 
      * <pre>
      * PropertySetParameterList :
-     *     BindingIdentifier
-     *     BindingPattern
+     *     FormalParameter
      * </pre>
      * 
      * @return the parsed formal parameters list
      */
     private FormalParameterList propertySetParameterList() {
         long begin = ts.beginPosition();
-        Binding binding = binding();
-        FormalParameter setParameter = new BindingElement(begin, ts.endPosition(), binding, null);
+        FormalParameter setParameter = formalParameter();
         return new FormalParameterList(begin, ts.endPosition(), singletonList(setParameter));
     }
 
@@ -4575,7 +4573,7 @@ public final class Parser {
             consume(Token.CONST);
             type = LexicalDeclaration.Type.Const;
         }
-        Binding binding = forBinding(true);
+        Binding binding = forBinding(false);
         LexicalBinding lexicalBinding = new LexicalBinding(begin, ts.endPosition(), binding, null);
         return new LexicalDeclaration(begin, ts.endPosition(), type, singletonList(lexicalBinding));
     }
