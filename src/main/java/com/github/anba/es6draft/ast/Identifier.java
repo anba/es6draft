@@ -9,10 +9,9 @@ package com.github.anba.es6draft.ast;
 import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
 
 /**
- * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.1 Primary Expressions</h2>
+ * <h1>12 ECMAScript Language: Expressions</h1>
  * <ul>
- * <li>12.1.2 Identifier Reference
+ * <li>12.1 Identifiers
  * </ul>
  */
 public class Identifier extends LeftHandSideExpression implements PropertyName {

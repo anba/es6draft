@@ -14,9 +14,9 @@ import com.github.anba.es6draft.ast.SuperExpression;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.2 Left-Hand-Side Expressions</h2>
+ * <h2>12.3 Left-Hand-Side Expressions</h2>
  * <ul>
- * <li>12.2.4 The super Keyword
+ * <li>12.3.4 The super Keyword
  * </ul>
  */
 public final class SuperExpressionValue extends SuperExpression {

@@ -3674,7 +3674,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.5] Object Initializer</strong>
+     * <strong>[12.2.5] Object Initializer</strong>
      * 
      * <pre>
      * Initializer<span><sub>[In, Yield]</sub></span> :
@@ -5405,7 +5405,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.4] Array Initializer</strong>
+     * <strong>[12.2.4] Array Initializer</strong>
      * 
      * <pre>
      * ArrayInitializer<span><sub>[Yield]</sub></span> :
@@ -5447,7 +5447,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.4] Array Initializer</strong>
+     * <strong>[12.2.4] Array Initializer</strong>
      * 
      * <pre>
      * ArrayLiteral<span><sub>[Yield]</sub></span> :
@@ -5505,7 +5505,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.4.2] Array Comprehension</strong>
+     * <strong>[12.2.4.2] Array Comprehension</strong>
      * 
      * <pre>
      * ArrayComprehension<span><sub>[Yield]</sub></span> :
@@ -5524,7 +5524,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.4.2] Array Comprehension</strong>
+     * <strong>[12.2.4.2] Array Comprehension</strong>
      * 
      * <pre>
      * Comprehension<span><sub>[Yield]</sub></span> :
@@ -5561,7 +5561,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.4.2] Array Comprehension</strong>
+     * <strong>[12.2.4.2] Array Comprehension</strong>
      * 
      * <pre>
      * ComprehensionFor<span><sub>[Yield]</sub></span> :
@@ -5588,7 +5588,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.4.2] Array Comprehension</strong>
+     * <strong>[12.2.4.2] Array Comprehension</strong>
      * 
      * <pre>
      * ForBinding<span><sub>[Yield]</sub></span> :
@@ -5605,7 +5605,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.4.2] Array Comprehension</strong>
+     * <strong>[12.2.4.2] Array Comprehension</strong>
      * 
      * <pre>
      * ComprehensionIf<span><sub>[Yield]</sub></span> :
@@ -5624,7 +5624,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.4.2] Array Comprehension</strong>
+     * <strong>[12.2.4.2] Array Comprehension</strong>
      * 
      * <pre>
      * LegacyArrayComprehension<span><sub>[Yield]</sub></span> :
@@ -5642,7 +5642,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.4.2] Array Comprehension</strong>
+     * <strong>[12.2.4.2] Array Comprehension</strong>
      * 
      * <pre>
      * LegacyComprehension<span><sub>[Yield]</sub></span> :
@@ -5713,7 +5713,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.5] Object Initializer</strong>
+     * <strong>[12.2.5] Object Initializer</strong>
      * 
      * <pre>
      * ObjectLiteral<span><sub>[Yield]</sub></span> :
@@ -5755,7 +5755,7 @@ public final class Parser {
     }
 
     /**
-     * 12.1.5.1 Static Semantics: Early Errors
+     * 12.2.5.1 Static Semantics: Early Errors
      * 
      * @param oldCount
      *            the previous count of object literals
@@ -5770,7 +5770,7 @@ public final class Parser {
     }
 
     /**
-     * 12.1.5.1 Static Semantics: Early Errors
+     * 12.2.5.1 Static Semantics: Early Errors
      * 
      * @param object
      *            the object literal to check for early errors
@@ -5826,7 +5826,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.5] Object Initializer</strong>
+     * <strong>[12.2.5] Object Initializer</strong>
      * 
      * <pre>
      * PropertyDefinition<span><sub>[Yield]</sub></span> :
@@ -5877,7 +5877,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.5] Object Initializer</strong>
+     * <strong>[12.2.5] Object Initializer</strong>
      * 
      * <pre>
      * PropertyName<span><sub>[Yield, GeneratorParameter]</sub></span> :
@@ -5897,7 +5897,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.5] Object Initializer</strong>
+     * <strong>[12.2.5] Object Initializer</strong>
      * 
      * <pre>
      * LiteralPropertyName :
@@ -5924,7 +5924,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.5] Object Initializer</strong>
+     * <strong>[12.2.5] Object Initializer</strong>
      * 
      * <pre>
      * ComputedPropertyName<span><sub>[Yield]</sub></span> :
@@ -5943,7 +5943,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.7] Generator Comprehensions</strong>
+     * <strong>[12.2.7] Generator Comprehensions</strong>
      * 
      * <pre>
      * GeneratorComprehension<span><sub>[Yield]</sub></span> :
@@ -5986,7 +5986,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.7] Generator Comprehensions</strong>
+     * <strong>[12.2.7] Generator Comprehensions</strong>
      * 
      * <pre>
      * LegacyGeneratorComprehension<span><sub>[Yield]</sub></span> :
@@ -6029,7 +6029,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.8] Regular Expression Literals</strong>
+     * <strong>[12.2.8] Regular Expression Literals</strong>
      * 
      * <pre>
      * RegularExpressionLiteral ::
@@ -6050,7 +6050,7 @@ public final class Parser {
     }
 
     /**
-     * 12.1.8.1 Static Semantics: Early Errors
+     * 12.2.8.1 Static Semantics: Early Errors
      * 
      * @param sourcePos
      *            the source position where the regular expression literal starts
@@ -6065,7 +6065,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.1.9] Template Literals</strong>
+     * <strong>[12.2.9] Template Literals</strong>
      * 
      * <pre>
      * TemplateLiteral<span><sub>[Yield]</sub></span> :
@@ -6138,7 +6138,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2] Left-Hand-Side Expressions</strong>
+     * <strong>[12.3] Left-Hand-Side Expressions</strong>
      * 
      * <pre>
      * MemberExpression<span><sub>[Yield]</sub></span> :
@@ -6268,7 +6268,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2] Left-Hand-Side Expressions</strong>
+     * <strong>[12.3] Left-Hand-Side Expressions</strong>
      * 
      * <pre>
      * Arguments<span><sub>[Yield]</sub></span> :
@@ -6332,8 +6332,8 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.3] Postfix Expressions</strong><br>
-     * <strong>[12.4] Unary Operators</strong>
+     * <strong>[12.4] Postfix Expressions</strong><br>
+     * <strong>[12.5] Unary Operators</strong>
      * 
      * <pre>
      * PostfixExpression<span><sub>[Yield]</sub></span> :
@@ -6373,12 +6373,12 @@ public final class Parser {
             UnaryExpression unary = new UnaryExpression(begin, ts.endPosition(),
                     unaryOp(tok, false), operand);
             if (tok == Token.INC || tok == Token.DEC) {
-                // 12.4.1 Static Semantics: Early Errors
+                // 12.5.1 Static Semantics: Early Errors
                 validateSimpleAssignment(operand, ExceptionType.ReferenceError,
                         Messages.Key.InvalidIncDecTarget);
             }
             if (tok == Token.DELETE) {
-                // 12.4.4.1 Static Semantics: Early Errors
+                // 12.5.4.1 Static Semantics: Early Errors
                 if (operand instanceof Identifier) {
                     reportStrictModeSyntaxError(unary, Messages.Key.StrictModeInvalidDeleteOperand);
                 }
@@ -6408,7 +6408,7 @@ public final class Parser {
             if (noLineTerminator()) {
                 tok = token();
                 if (tok == Token.INC || tok == Token.DEC) {
-                    // 12.3.1 Static Semantics: Early Errors
+                    // 12.4.1 Static Semantics: Early Errors
                     validateSimpleAssignment(lhs, ExceptionType.ReferenceError,
                             Messages.Key.InvalidIncDecTarget);
                     consume(tok);
@@ -6446,13 +6446,13 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.5] Multiplicative Operators</strong><br>
-     * <strong>[12.6] Additive Operators</strong><br>
-     * <strong>[12.7] Bitwise Shift Operators</strong><br>
-     * <strong>[12.8] Relational Operators</strong><br>
-     * <strong>[12.9] Equality Operators</strong><br>
-     * <strong>[12.10] Binary Bitwise Operators</strong><br>
-     * <strong>[12.11] Binary Logical Operators</strong><br>
+     * <strong>[12.6] Multiplicative Operators</strong><br>
+     * <strong>[12.7] Additive Operators</strong><br>
+     * <strong>[12.8] Bitwise Shift Operators</strong><br>
+     * <strong>[12.9] Relational Operators</strong><br>
+     * <strong>[12.10] Equality Operators</strong><br>
+     * <strong>[12.11] Binary Bitwise Operators</strong><br>
+     * <strong>[12.12] Binary Logical Operators</strong><br>
      * 
      * <pre>
      * MultiplicativeExpression<span><sub>[Yield]</sub></span> :
@@ -6592,8 +6592,8 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.12] Conditional Operator</strong><br>
-     * <strong>[12.13] Assignment Operators</strong>
+     * <strong>[12.13] Conditional Operator</strong><br>
+     * <strong>[12.14] Assignment Operators</strong>
      * 
      * <pre>
      * ConditionalExpression<span><sub>[In, Yield]</sub></span> :
@@ -6712,7 +6712,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.13] Assignment Operators</strong>
+     * <strong>[12.14] Assignment Operators</strong>
      * 
      * <pre>
      * AssignmentOperator : <b>one of</b>
@@ -6745,21 +6745,21 @@ public final class Parser {
     /**
      * Static Semantics: IsValidSimpleAssignmentTarget
      * <ul>
-     * <li>12.1.0.4 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.1.10.3 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.2.1.4 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.3.3 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.2.0.4 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.2.10.3 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.3.1.4 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.4.3 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.5.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.5.3 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.6.2 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.7.2 Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.8.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.7.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.8.2 Semantics: IsValidSimpleAssignmentTarget
      * <li>12.9.2 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.10.2 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.11.2 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.12.2 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.13.3 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.14.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.13.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.14.3 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.15.2 Static Semantics: IsValidSimpleAssignmentTarget
      * </ul>
      * 
      * @param lhs
@@ -6798,11 +6798,11 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.13.5] Destructuring Assignment</strong>
+     * <strong>[12.14.5] Destructuring Assignment</strong>
      * 
      * <ul>
-     * <li>12.13.1 Static Semantics: Early Errors
-     * <li>12.13.5.1 Static Semantics: Early Errors
+     * <li>12.14.1 Static Semantics: Early Errors
+     * <li>12.14.5.1 Static Semantics: Early Errors
      * <li>13.6.4.1 Static Semantics: Early Errors
      * </ul>
      * 
@@ -6826,7 +6826,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.13.5] Destructuring Assignment</strong>
+     * <strong>[12.14.5] Destructuring Assignment</strong>
      * 
      * <pre>
      * ObjectAssignmentPattern<span><sub>[Yield]</sub></span> :
@@ -6905,7 +6905,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.13.5] Destructuring Assignment</strong>
+     * <strong>[12.14.5] Destructuring Assignment</strong>
      * 
      * <pre>
      * ArrayAssignmentPattern<span><sub>[Yield]</sub></span> :
@@ -6981,7 +6981,7 @@ public final class Parser {
     }
 
     /**
-     * 12.13.5.1 Static Semantics: Early Errors
+     * 12.14.5.1 Static Semantics: Early Errors
      * 
      * @param lhs
      *            the left-hand side expression to check
@@ -6997,7 +6997,7 @@ public final class Parser {
     }
 
     /**
-     * 12.13.5.1 Static Semantics: Early Errors
+     * 12.14.5.1 Static Semantics: Early Errors
      * 
      * @param lhs
      *            the left-hand side expression to check
@@ -7009,7 +7009,7 @@ public final class Parser {
     }
 
     /**
-     * 12.13.5.1 Static Semantics: Early Errors
+     * 12.14.5.1 Static Semantics: Early Errors
      * 
      * @param identifier
      *            the identifier to check
@@ -7020,7 +7020,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.14] Comma Operator</strong>
+     * <strong>[12.15] Comma Operator</strong>
      * 
      * <pre>
      * Expression<span><sub>[In, Yield]</sub></span> :
@@ -7041,7 +7041,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.14] Comma Operator</strong>
+     * <strong>[12.15] Comma Operator</strong>
      * 
      * <pre>
      * Expression<span><sub>[In, Yield]</sub></span> :

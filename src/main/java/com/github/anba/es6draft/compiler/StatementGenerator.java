@@ -621,7 +621,7 @@ final class StatementGenerator extends
             /* step 3g */
             VariableDeclaration varDecl = ((VariableStatement) lhs).getElements().get(0);
             Binding binding = varDecl.getBinding();
-            // 12.1.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
+            // 12.2.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
             if (binding instanceof BindingPattern) {
                 ensureObjectOrThrow(lhs, ValType.Any, mv);
             }
@@ -654,7 +654,7 @@ final class StatementGenerator extends
                 }
                 mv.swap();
 
-                // 12.1.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
+                // 12.2.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
                 if (lexicalBinding.getBinding() instanceof BindingPattern) {
                     ensureObjectOrThrow(lexicalBinding, ValType.Any, mv);
                 }

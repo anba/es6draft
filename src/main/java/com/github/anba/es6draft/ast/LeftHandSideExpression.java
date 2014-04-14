@@ -9,7 +9,7 @@ package com.github.anba.es6draft.ast;
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <ul>
- * <li>12.2 Left-Hand-Side Expressions
+ * <li>12.3 Left-Hand-Side Expressions
  * </ul>
  */
 public abstract class LeftHandSideExpression extends Expression {

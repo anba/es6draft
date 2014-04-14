@@ -9,7 +9,7 @@ package com.github.anba.es6draft.ast;
 /**
  * <h1>12 ECMAScript Language: Expressions</h1>
  * <ul>
- * <li>12.12 Conditional Operator ( ? : )
+ * <li>12.13 Conditional Operator ( ? : )
  * </ul>
  */
 public final class ConditionalExpression extends Expression {

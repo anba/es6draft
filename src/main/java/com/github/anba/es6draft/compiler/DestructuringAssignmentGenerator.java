@@ -22,9 +22,9 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.13 Assignment Operators</h2>
+ * <h2>12.14 Assignment Operators</h2>
  * <ul>
- * <li>12.13.5 Destructuring Assignment
+ * <li>12.14.5 Destructuring Assignment
  * </ul>
  */
 final class DestructuringAssignmentGenerator {
@@ -133,7 +133,7 @@ final class DestructuringAssignmentGenerator {
     }
 
     /**
-     * 12.13.5.2 Runtime Semantics: DestructuringAssignmentEvaluation
+     * 12.14.5.2 Runtime Semantics: DestructuringAssignmentEvaluation
      */
     private static final class DestructuringAssignmentEvaluation extends
             RuntimeSemantics<Void, Void> {
@@ -191,7 +191,7 @@ final class DestructuringAssignmentGenerator {
     }
 
     /**
-     * 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
+     * 12.14.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
      */
     private static final class IteratorDestructuringAssignmentEvaluation extends
             RuntimeSemantics<Void, Variable<Iterator<?>>> {
@@ -273,7 +273,7 @@ final class DestructuringAssignmentGenerator {
     }
 
     /**
-     * 12.13.5.4 Runtime Semantics: KeyedDestructuringAssignmentEvaluation
+     * 12.14.5.4 Runtime Semantics: KeyedDestructuringAssignmentEvaluation
      */
     private static final class KeyedDestructuringAssignmentEvaluation extends
             RuntimeSemantics<Void, String> {
@@ -334,7 +334,7 @@ final class DestructuringAssignmentGenerator {
     }
 
     /**
-     * 12.13.5.4 Runtime Semantics: KeyedDestructuringAssignmentEvaluation
+     * 12.14.5.4 Runtime Semantics: KeyedDestructuringAssignmentEvaluation
      */
     private static final class ComputedKeyedDestructuringAssignmentEvaluation extends
             RuntimeSemantics<Void, ComputedPropertyName> {

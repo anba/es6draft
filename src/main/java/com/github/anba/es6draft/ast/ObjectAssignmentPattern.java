@@ -10,9 +10,9 @@ import java.util.List;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.13 Assignment Operators</h2>
+ * <h2>12.14 Assignment Operators</h2>
  * <ul>
- * <li>12.13.5 Destructuring Assignment
+ * <li>12.14.5 Destructuring Assignment
  * </ul>
  */
 public final class ObjectAssignmentPattern extends AssignmentPattern {

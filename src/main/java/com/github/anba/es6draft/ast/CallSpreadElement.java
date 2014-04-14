@@ -8,9 +8,9 @@ package com.github.anba.es6draft.ast;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.2 Left-Hand-Side Expressions</h2>
+ * <h2>12.3 Left-Hand-Side Expressions</h2>
  * <ul>
- * <li>12.2.5 Argument Lists
+ * <li>12.3.5 Argument Lists
  * </ul>
  */
 public final class CallSpreadElement extends Expression {

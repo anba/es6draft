@@ -10,9 +10,9 @@ import java.util.List;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.2 Left-Hand-Side Expressions</h2>
+ * <h2>12.3 Left-Hand-Side Expressions</h2>
  * <ul>
- * <li>12.2.3 Function Calls
+ * <li>12.3.3 Function Calls
  * </ul>
  */
 public final class CallExpression extends Expression {

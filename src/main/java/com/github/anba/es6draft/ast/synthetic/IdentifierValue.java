@@ -10,10 +10,9 @@ import com.github.anba.es6draft.ast.Identifier;
 import com.github.anba.es6draft.ast.NodeVisitor;
 
 /**
- * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.1 Primary Expressions</h2>
+ * <h1>12 ECMAScript Language: Expressions</h1>
  * <ul>
- * <li>12.1.2 Identifier Reference
+ * <li>12.1 Identifiers
  * </ul>
  */
 public final class IdentifierValue extends Identifier {

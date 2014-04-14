@@ -300,33 +300,33 @@ public enum Token {/* @formatter:off */
         case MUL:
         case MOD:
         case DIV:
-            // 12.5 Multiplicative Operators
+            // 12.6 Multiplicative Operators
         case ADD:
         case SUB:
-            // 12.6 Additive Operators
+            // 12.7 Additive Operators
         case SHL:
         case SHR:
         case USHR:
-            // 12.7 Bitwise Shift Operators
+            // 12.8 Bitwise Shift Operators
         case LT:
         case GT:
         case LE:
         case GE:
         case IN:
         case INSTANCEOF:
-            // 12.8 Relational Operators
+            // 12.9 Relational Operators
         case EQ:
         case NE:
         case SHEQ:
         case SHNE:
-            // 12.9 Equality Operators
+            // 12.10 Equality Operators
         case BITAND:
         case BITOR:
         case BITXOR:
-            // 12.10 Binary Bitwise Operators
+            // 12.11 Binary Bitwise Operators
         case AND:
         case OR:
-            // 12.11 Binary Logical Operators
+            // 12.12 Binary Logical Operators
             return true;
         default:
             return false;

@@ -18,9 +18,9 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.1 Primary Expressions</h2>
+ * <h2>12.2 Primary Expression</h2>
  * <ul>
- * <li>12.1.4.2 Array Comprehension
+ * <li>12.2.4.2 Array Comprehension
  * </ul>
  */
 final class ArrayComprehensionGenerator extends ComprehensionGenerator {
@@ -46,7 +46,7 @@ final class ArrayComprehensionGenerator extends ComprehensionGenerator {
     }
 
     /**
-     * 12.1.4.2.5 Runtime Semantics: Evaluation
+     * 12.2.4.2.5 Runtime Semantics: Evaluation
      */
     @Override
     public Void visit(ArrayComprehension node, ExpressionVisitor mv) {
@@ -76,7 +76,7 @@ final class ArrayComprehensionGenerator extends ComprehensionGenerator {
     }
 
     /**
-     * 12.1.4.2.3 Runtime Semantics: ComprehensionEvaluation
+     * 12.2.4.2.3 Runtime Semantics: ComprehensionEvaluation
      * <p>
      * ComprehensionTail : AssignmentExpression
      */

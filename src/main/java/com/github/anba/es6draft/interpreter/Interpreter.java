@@ -74,7 +74,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     /* ----------------------------------------------------------------------------------------- */
 
     /**
-     * 12.3.4 Postfix Increment Operator.
+     * 12.4.4 Postfix Increment Operator.
      * 
      * @param lhs
      *            the left-hand side expression
@@ -90,7 +90,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.3.5 Postfix Decrement Operator
+     * 12.4.5 Postfix Decrement Operator
      * 
      * @param lhs
      *            the left-hand side expression
@@ -106,7 +106,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.4.4 The delete Operator
+     * 12.5.4 The delete Operator
      * 
      * @param expr
      *            the expression value
@@ -122,7 +122,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.4.5 The void Operator
+     * 12.5.5 The void Operator
      * 
      * @param value
      *            the expression value
@@ -135,7 +135,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.4.7 Prefix Increment Operator
+     * 12.5.7 Prefix Increment Operator
      * 
      * @param expr
      *            the expression value
@@ -151,7 +151,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.4.8 Prefix Decrement Operator
+     * 12.5.8 Prefix Decrement Operator
      * 
      * @param expr
      *            the expression value
@@ -167,7 +167,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.4.9 Unary + Operator
+     * 12.5.9 Unary + Operator
      * 
      * @param value
      *            the expression value
@@ -180,7 +180,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.4.10 Unary - Operator
+     * 12.5.10 Unary - Operator
      * 
      * @param value
      *            the expression value
@@ -194,7 +194,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.4.11 Bitwise NOT Operator ( ~ )
+     * 12.5.11 Bitwise NOT Operator ( ~ )
      * 
      * @param value
      *            the expression value
@@ -208,7 +208,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.4.12 Logical NOT Operator ( ! )
+     * 12.5.12 Logical NOT Operator ( ! )
      * 
      * @param value
      *            the expression value
@@ -222,7 +222,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.5 Multiplicative Operators
+     * 12.6 Multiplicative Operators
      * 
      * @param leftValue
      *            the left-hand side expression value
@@ -239,7 +239,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.5 Multiplicative Operators
+     * 12.6 Multiplicative Operators
      * 
      * @param leftValue
      *            the left-hand side expression value
@@ -256,7 +256,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.5 Multiplicative Operators
+     * 12.6 Multiplicative Operators
      * 
      * @param leftValue
      *            the left-hand side expression value
@@ -273,7 +273,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.6.2 The Subtraction Operator ( - )
+     * 12.7.2 The Subtraction Operator ( - )
      * 
      * @param lval
      *            the left-hand side expression value
@@ -290,7 +290,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.7.1 The Left Shift Operator ( {@literal <<} )
+     * 12.8.1 The Left Shift Operator ( {@literal <<} )
      * 
      * @param lval
      *            the left-hand side expression value
@@ -308,7 +308,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.7.2 The Signed Right Shift Operator ( {@literal >>} )
+     * 12.8.2 The Signed Right Shift Operator ( {@literal >>} )
      * 
      * @param lval
      *            the left-hand side expression value
@@ -326,7 +326,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.7.3 The Unsigned Right Shift Operator ( {@literal >>>} )
+     * 12.8.3 The Unsigned Right Shift Operator ( {@literal >>>} )
      * 
      * @param lval
      *            the left-hand side expression value
@@ -344,7 +344,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.8 Relational Operators
+     * 12.9 Relational Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -359,7 +359,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.8 Relational Operators
+     * 12.9 Relational Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -375,7 +375,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.8 Relational Operators
+     * 12.9 Relational Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -391,7 +391,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.8 Relational Operators
+     * 12.9 Relational Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -407,7 +407,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.8 Relational Operators
+     * 12.9 Relational Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -423,7 +423,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.9 Equality Operators
+     * 12.10 Equality Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -438,7 +438,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.9 Equality Operators
+     * 12.10 Equality Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -453,7 +453,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.9 Equality Operators
+     * 12.10 Equality Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -468,7 +468,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.9 Equality Operators
+     * 12.10 Equality Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -483,7 +483,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.10 Binary Bitwise Operators
+     * 12.11 Binary Bitwise Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -500,7 +500,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.10 Binary Bitwise Operators
+     * 12.11 Binary Bitwise Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -517,7 +517,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.10 Binary Bitwise Operators
+     * 12.11 Binary Bitwise Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -841,7 +841,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.2.4.2 Runtime Semantics: EvaluateCall
+     * 12.3.4.2 Runtime Semantics: EvaluateCall
      * 
      * @param ref
      *            the call base reference

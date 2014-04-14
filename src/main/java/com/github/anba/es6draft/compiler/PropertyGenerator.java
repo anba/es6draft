@@ -20,7 +20,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 
 /**
- * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation<br>
+ * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation<br>
  * 14.3.9 Runtime Semantics: PropertyDefinitionEvaluation<br>
  * 14.4.13 Runtime Semantics: PropertyDefinitionEvaluation
  */
@@ -108,7 +108,7 @@ final class PropertyGenerator extends
     }
 
     /**
-     * 12.1.5.7 Runtime Semantics: Evaluation
+     * 12.2.5.7 Runtime Semantics: Evaluation
      * <p>
      * ComputedPropertyName : [ AssignmentExpression ]
      */
@@ -206,7 +206,7 @@ final class PropertyGenerator extends
     }
 
     /**
-     * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      * <p>
      * PropertyDefinition : IdentifierReference
      */
@@ -225,7 +225,7 @@ final class PropertyGenerator extends
     }
 
     /**
-     * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      * <p>
      * PropertyDefinition : PropertyName : AssignmentExpression
      */

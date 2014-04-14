@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * <h1>12 ECMAScript Language: Expressions</h1>
  * <ul>
- * <li>12.14 Comma Operator ( , )
+ * <li>12.15 Comma Operator ( , )
  * </ul>
  */
 public final class CommaExpression extends Expression {

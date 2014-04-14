@@ -156,9 +156,9 @@ public final class ScriptRuntime {
     /* ***************************************************************************************** */
 
     /**
-     * 12.1.4.1 Array Literal
+     * 12.2.4.1 Array Literal
      * <p>
-     * 12.1.4.1.2 Runtime Semantics: Array Accumulation
+     * 12.2.4.1.2 Runtime Semantics: Array Accumulation
      * <ul>
      * <li>ElementList : Elision<span><sub>opt</sub></span> AssignmentExpression
      * <li>ElementList : ElementList , Elision<span><sub>opt</sub></span> AssignmentExpression
@@ -183,9 +183,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.1.4.1 Array Literal
+     * 12.2.4.1 Array Literal
      * <p>
-     * 12.1.4.1.2 Runtime Semantics: Array Accumulation
+     * 12.2.4.1.2 Runtime Semantics: Array Accumulation
      * <ul>
      * <li>SpreadElement : ... AssignmentExpression
      * </ul>
@@ -223,9 +223,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.1.5 Object Initializer
+     * 12.2.5 Object Initializer
      * <p>
-     * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      * 
      * @param object
      *            the script object
@@ -243,9 +243,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.1.5 Object Initializer
+     * 12.2.5 Object Initializer
      * <p>
-     * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      * 
      * @param object
      *            the script object
@@ -263,9 +263,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.1.5 Object Initializer
+     * 12.2.5 Object Initializer
      * <p>
-     * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      * 
      * @param object
      *            the new home object
@@ -279,9 +279,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.1.7 Generator Comprehensions
+     * 12.2.7 Generator Comprehensions
      * <p>
-     * 12.1.7.2 Runtime Semantics: Evaluation
+     * 12.2.7.2 Runtime Semantics: Evaluation
      * 
      * @param fd
      *            the function runtime info object
@@ -308,7 +308,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.1.7 Generator Comprehensions
+     * 12.2.7 Generator Comprehensions
      * <p>
      * Runtime Semantics: Evaluation
      * 
@@ -337,9 +337,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.1.9 Template Literals
+     * 12.2.9 Template Literals
      * <p>
-     * 12.1.9.2.2 Runtime Semantics: GetTemplateCallSite
+     * 12.2.9.2.2 Runtime Semantics: GetTemplateCallSite
      * 
      * @param key
      *            the template literal key
@@ -396,9 +396,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.2 Property Accessors
+     * 12.3.2 Property Accessors
      * <p>
-     * 12.2.2.1 Runtime Semantics: Evaluation
+     * 12.3.2.1 Runtime Semantics: Evaluation
      * <ul>
      * <li>MemberExpression : MemberExpression . IdentifierName
      * <li>CallExpression : CallExpression . IdentifierName
@@ -424,9 +424,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.2 Property Accessors
+     * 12.3.2 Property Accessors
      * <p>
-     * 12.2.2.1 Runtime Semantics: Evaluation
+     * 12.3.2.1 Runtime Semantics: Evaluation
      * <ul>
      * <li>MemberExpression : MemberExpression . IdentifierName
      * <li>CallExpression : CallExpression . IdentifierName
@@ -454,9 +454,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.2 Property Accessors
+     * 12.3.2 Property Accessors
      * <p>
-     * 12.2.2.1 Runtime Semantics: Evaluation
+     * 12.3.2.1 Runtime Semantics: Evaluation
      * <ul>
      * <li>MemberExpression : MemberExpression [ Expression ]
      * <li>CallExpression : CallExpression [ Expression ]
@@ -487,9 +487,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.2 Property Accessors
+     * 12.3.2 Property Accessors
      * <p>
-     * 12.2.2.1 Runtime Semantics: Evaluation
+     * 12.3.2.1 Runtime Semantics: Evaluation
      * <ul>
      * <li>MemberExpression : MemberExpression [ Expression ]
      * <li>CallExpression : CallExpression [ Expression ]
@@ -524,10 +524,10 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.3 The new Operator
+     * 12.3.3 The new Operator
      * <p>
-     * 12.2.3.1 Runtime Semantics: Evaluation<br>
-     * 12.2.5.2 Runtime Semantics: Evaluation
+     * 12.3.3.1 Runtime Semantics: Evaluation<br>
+     * 12.3.5.2 Runtime Semantics: Evaluation
      * <ul>
      * <li>NewExpression : new NewExpression
      * <li>MemberExpression : new MemberExpression Arguments
@@ -554,10 +554,10 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.3 The new Operator
+     * 12.3.3 The new Operator
      * <p>
-     * 12.2.3.1 Runtime Semantics: Evaluation<br>
-     * 12.2.5.2 Runtime Semantics: Evaluation
+     * 12.3.3.1 Runtime Semantics: Evaluation<br>
+     * 12.3.5.2 Runtime Semantics: Evaluation
      * <ul>
      * <li>NewExpression : new NewExpression
      * <li>MemberExpression : new MemberExpression Arguments
@@ -584,7 +584,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.4 Function Calls
+     * 12.3.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
      * 
@@ -609,7 +609,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.4 Function Calls
+     * 12.3.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
      * 
@@ -633,7 +633,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.4 Function Calls
+     * 12.3.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
      * 
@@ -648,7 +648,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.4 Function Calls
+     * 12.3.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
      * 
@@ -661,7 +661,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.4 Function Calls
+     * 12.3.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
      * 
@@ -683,7 +683,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.5 The super Keyword
+     * 12.3.5 The super Keyword
      * <p>
      * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
      * 
@@ -724,7 +724,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.5 The super Keyword
+     * 12.3.5 The super Keyword
      * <p>
      * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
      * 
@@ -754,9 +754,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.6 Argument Lists
+     * 12.3.6 Argument Lists
      * <p>
-     * 12.2.6.1 Runtime Semantics: ArgumentListEvaluation
+     * 12.3.6.1 Runtime Semantics: ArgumentListEvaluation
      * 
      * @param spreadObj
      *            the spread object
@@ -789,9 +789,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.6 Argument Lists
+     * 12.3.6 Argument Lists
      * <p>
-     * 12.2.6.1 Runtime Semantics: ArgumentListEvaluation
+     * 12.3.6.1 Runtime Semantics: ArgumentListEvaluation
      * 
      * @param array
      *            the array
@@ -824,8 +824,8 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.4 Unary Operators<br>
-     * 12.4.4 The delete Operator
+     * 12.5 Unary Operators<br>
+     * 12.5.4 The delete Operator
      * 
      * @param ref
      *            the reference instance
@@ -843,8 +843,8 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.4 Unary Operators<br>
-     * 12.4.4 The delete Operator
+     * 12.5 Unary Operators<br>
+     * 12.5.4 The delete Operator
      * 
      * @param ref
      *            the reference instance
@@ -875,8 +875,8 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.4 Unary Operators<br>
-     * 12.4.4 The delete Operator
+     * 12.5 Unary Operators<br>
+     * 12.5.4 The delete Operator
      * 
      * @param ref
      *            the reference instance
@@ -908,8 +908,8 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.4 Unary Operators<br>
-     * 12.4.6 The typeof Operator
+     * 12.5 Unary Operators<br>
+     * 12.5.6 The typeof Operator
      * 
      * @param val
      *            the value
@@ -951,8 +951,8 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.6 Additive Operators<br>
-     * 12.6.3 The Addition operator ( + )
+     * 12.7 Additive Operators<br>
+     * 12.7.3 The Addition operator ( + )
      * 
      * @param lval
      *            the left-hand side operand
@@ -979,8 +979,8 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.6 Additive Operators<br>
-     * 12.6.3 The Addition operator ( + )
+     * 12.7 Additive Operators<br>
+     * 12.7.3 The Addition operator ( + )
      * 
      * @param lstr
      *            the left-hand side operand
@@ -1009,8 +1009,8 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.8 Relational Operators<br>
-     * 12.8.3 Runtime Semantics: Evaluation
+     * 12.9 Relational Operators<br>
+     * 12.9.3 Runtime Semantics: Evaluation
      * 
      * @param x
      *            the left-hand side operand
@@ -1028,8 +1028,8 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.8 Relational Operators<br>
-     * 12.8.3 Runtime Semantics: Evaluation
+     * 12.9 Relational Operators<br>
+     * 12.9.3 Runtime Semantics: Evaluation
      * 
      * @param lval
      *            the left-hand side operand
@@ -1050,8 +1050,8 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.8 Relational Operators<br>
-     * 12.8.4 Runtime Semantics: InstanceofOperator(O, C)
+     * 12.9 Relational Operators<br>
+     * 12.9.4 Runtime Semantics: InstanceofOperator(O, C)
      * 
      * @param obj
      *            the object
@@ -1083,8 +1083,8 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.9 Equality Operators<br>
-     * 12.9.3 Runtime Semantics: Evaluation
+     * 12.10 Equality Operators<br>
+     * 12.10.3 Runtime Semantics: Evaluation
      * 
      * @param x
      *            the left-hand side operand
@@ -1099,8 +1099,8 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.9 Equality Operators<br>
-     * 12.9.3 Runtime Semantics: Evaluation
+     * 12.10 Equality Operators<br>
+     * 12.10.3 Runtime Semantics: Evaluation
      * 
      * @param x
      *            the left-hand side operand
@@ -1113,7 +1113,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.13.2 Runtime Semantics<br>
+     * 12.14.2 Runtime Semantics<br>
      * Runtime Semantics: Evaluation
      * <p>
      * 13.2.1.2 Runtime Semantics<br>
@@ -1138,7 +1138,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
+     * 12.14.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
      * <p>
      * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
      * 
@@ -1158,7 +1158,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
+     * 12.14.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
      * <p>
      * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
      * 
@@ -1173,7 +1173,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
+     * 12.14.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
      * <p>
      * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
      * 
@@ -1187,7 +1187,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
+     * 12.14.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
      * <p>
      * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
      * 

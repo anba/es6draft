@@ -31,9 +31,9 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.1 Primary Expressions</h2>
+ * <h2>12.2 Primary Expression</h2>
  * <ul>
- * <li>12.1.4.2 Array Comprehension
+ * <li>12.2.4.2 Array Comprehension
  * </ul>
  */
 abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
@@ -91,7 +91,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     /**
-     * 12.1.4.2.3 Runtime Semantics: ComprehensionEvaluation
+     * 12.2.4.2.3 Runtime Semantics: ComprehensionEvaluation
      * <p>
      * ComprehensionTail : AssignmentExpression
      */
@@ -99,7 +99,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     protected abstract Void visit(Expression node, ExpressionVisitor mv);
 
     /**
-     * 12.1.4.2.3 Runtime Semantics: ComprehensionEvaluation
+     * 12.2.4.2.3 Runtime Semantics: ComprehensionEvaluation
      */
     @Override
     public Void visit(Comprehension node, ExpressionVisitor mv) {
@@ -125,7 +125,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     /**
-     * 12.1.4.2.3 Runtime Semantics: ComprehensionEvaluation
+     * 12.2.4.2.3 Runtime Semantics: ComprehensionEvaluation
      */
     @Override
     public Void visit(LegacyComprehension node, ExpressionVisitor mv) {
@@ -165,7 +165,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     /**
-     * 12.1.4.2.4 Runtime Semantics: ComprehensionComponentEvaluation
+     * 12.2.4.2.4 Runtime Semantics: ComprehensionComponentEvaluation
      * <p>
      * ComprehensionIf : if ( AssignmentExpression )
      */
@@ -188,7 +188,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     /**
-     * 12.1.4.2.4 Runtime Semantics: ComprehensionComponentEvaluation
+     * 12.2.4.2.4 Runtime Semantics: ComprehensionComponentEvaluation
      * <p>
      * ComprehensionFor : for ( ForBinding of AssignmentExpression )
      */
@@ -234,7 +234,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
             }
             mv.swap();
 
-            // 12.1.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
+            // 12.2.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
             if (node.getBinding() instanceof BindingPattern) {
                 mv.lineInfo(node.getBinding());
                 mv.loadExecutionContext();
@@ -266,7 +266,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     /**
-     * 12.1.4.2.4 Runtime Semantics: ComprehensionComponentEvaluation
+     * 12.2.4.2.4 Runtime Semantics: ComprehensionComponentEvaluation
      * <p>
      * ComprehensionFor : for ( ForBinding of AssignmentExpression )
      */

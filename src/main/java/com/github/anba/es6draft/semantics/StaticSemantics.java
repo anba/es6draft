@@ -260,12 +260,11 @@ public final class StaticSemantics {
     /**
      * Static Semantics: IsAnonymousFunctionDefinition
      * <ul>
-     * <li>12.1.0.2 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.1.10.2 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.2.1.2 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.3.2 Static Semantics: IsAnonymousFunctionDefinition
+     * <li>12.2.0.2 Static Semantics: IsAnonymousFunctionDefinition
+     * <li>12.2.10.2 Static Semantics: IsAnonymousFunctionDefinition
+     * <li>12.3.1.2 Static Semantics: IsAnonymousFunctionDefinition
      * <li>12.4.2 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.5.1 Static Semantics: IsAnonymousFunctionDefinition
+     * <li>12.5.2 Static Semantics: IsAnonymousFunctionDefinition
      * <li>12.6.1 Static Semantics: IsAnonymousFunctionDefinition
      * <li>12.7.1 Static Semantics: IsAnonymousFunctionDefinition
      * <li>12.8.1 Static Semantics: IsAnonymousFunctionDefinition
@@ -273,8 +272,9 @@ public final class StaticSemantics {
      * <li>12.10.1 Static Semantics: IsAnonymousFunctionDefinition
      * <li>12.11.1 Static Semantics: IsAnonymousFunctionDefinition
      * <li>12.12.1 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.13.2 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.14.1 Static Semantics: IsAnonymousFunctionDefinition
+     * <li>12.13.1 Static Semantics: IsAnonymousFunctionDefinition
+     * <li>12.14.2 Static Semantics: IsAnonymousFunctionDefinition
+     * <li>12.15.1 Static Semantics: IsAnonymousFunctionDefinition
      * <li>14.1.6 Static Semantics: IsAnonymousFunctionDefinition
      * <li>14.4.5 Static Semantics: IsAnonymousFunctionDefinition
      * <li>14.5.5 Static Semantics: IsAnonymousFunctionDefinition
@@ -370,8 +370,8 @@ public final class StaticSemantics {
     /**
      * Static Semantics: IsIdentifierRef
      * <ul>
-     * <li>12.1.0.3 Static Semantics: IsIdentifierRef
-     * <li>12.2.1.3 Static Semantics: IsIdentifierRef
+     * <li>12.2.0.3 Static Semantics: IsIdentifierRef
+     * <li>12.3.1.3 Static Semantics: IsIdentifierRef
      * </ul>
      * 
      * @param node
@@ -438,12 +438,11 @@ public final class StaticSemantics {
     /**
      * Static Semantics: IsValidSimpleAssignmentTarget
      * <ul>
-     * <li>12.1.0.4 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.1.10.3 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.2.1.4 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.3.3 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.2.0.4 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.2.10.3 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.3.1.4 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.4.3 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.5.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.5.3 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.6.2 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.7.2 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.8.2 Static Semantics: IsValidSimpleAssignmentTarget
@@ -451,8 +450,9 @@ public final class StaticSemantics {
      * <li>12.10.2 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.11.2 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.12.2 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.13.3 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.14.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.13.2 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.14.3 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.15.2 Static Semantics: IsValidSimpleAssignmentTarget
      * </ul>
      * 
      * @param lhs
@@ -912,7 +912,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 12.1.5.5 Static Semantics: PropName<br>
+     * 12.2.5.5 Static Semantics: PropName<br>
      * 14.3.5 Static Semantics: PropName
      * 
      * @param node
@@ -924,7 +924,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 12.1.5.5 Static Semantics: PropName
+     * 12.2.5.5 Static Semantics: PropName
      * 
      * @param node
      *            the property name node
@@ -955,7 +955,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 12.1.9.1.1 Static Semantics: TemplateStrings
+     * 12.2.9.1.1 Static Semantics: TemplateStrings
      * 
      * @param node
      *            the template literal

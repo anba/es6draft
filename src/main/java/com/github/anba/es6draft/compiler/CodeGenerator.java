@@ -509,7 +509,7 @@ final class CodeGenerator {
     /* ----------------------------------------------------------------------------------------- */
 
     /**
-     * [12.1.9.2.2] Runtime Semantics: GetTemplateCallSite
+     * [12.2.9.2.2] Runtime Semantics: GetTemplateCallSite
      * 
      * @param node
      *            the template literal

@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.1 Primary Expressions</h2>
+ * <h2>12.2 Primary Expression</h2>
  * <ul>
  * <li>Extension: 'let' expression
  * </ul>
