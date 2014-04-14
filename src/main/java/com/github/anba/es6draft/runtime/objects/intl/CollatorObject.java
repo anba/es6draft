@@ -107,7 +107,7 @@ public class CollatorObject extends OrdinaryObject {
     /**
      * [[initializedIntlObject]]
      * 
-     * @return {@code true} if the Intl object is initialised
+     * @return {@code true} if the Intl object is initialized
      */
     public boolean isInitializedIntlObject() {
         return initializedIntlObject;
@@ -126,7 +126,7 @@ public class CollatorObject extends OrdinaryObject {
     /**
      * [[initializedCollator]]
      * 
-     * @return {@code true} if the collator object is initialised
+     * @return {@code true} if the collator object is initialized
      */
     public boolean isInitializedCollator() {
         return initializedCollator;

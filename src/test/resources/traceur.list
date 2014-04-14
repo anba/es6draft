@@ -64,7 +64,7 @@ feature/Scope/Error_BlockBinding1.js
 # ES6 related syntax changes          #
 #######################################
 
-# initialiser no longer allowed in for-in loop
+# initializer no longer allowed in for-in loop
 feature/Scope/ForInWithInitializerVar.js
 feature/Scope/LetForInInitializers1.js
 

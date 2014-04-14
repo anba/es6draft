@@ -38,19 +38,19 @@ import com.github.anba.es6draft.runtime.types.Symbol;
 public abstract class FunctionObject extends OrdinaryObject implements Callable {
     private static final String SOURCE_NOT_AVAILABLE = "function F() { /* source not available */ }";
 
-    protected static final MethodHandle uninitialisedFunctionMH;
-    protected static final MethodHandle uninitialisedGeneratorMH;
-    protected static final MethodHandle uninitialisedAsyncFunctionMH;
+    protected static final MethodHandle uninitializedFunctionMH;
+    protected static final MethodHandle uninitializedGeneratorMH;
+    protected static final MethodHandle uninitializedAsyncFunctionMH;
     static {
         Lookup lookup = MethodHandles.lookup();
         try {
             MethodHandle mh = lookup.findStatic(FunctionObject.class,
-                    "uninitialisedFunctionObject",
+                    "uninitializedFunctionObject",
                     MethodType.methodType(Object.class, ExecutionContext.class));
             mh = MethodHandles.dropArguments(mh, 1, Object.class, Object[].class);
-            uninitialisedFunctionMH = MethodHandles.dropArguments(mh, 0, OrdinaryFunction.class);
-            uninitialisedGeneratorMH = MethodHandles.dropArguments(mh, 0, OrdinaryGenerator.class);
-            uninitialisedAsyncFunctionMH = MethodHandles.dropArguments(mh, 0,
+            uninitializedFunctionMH = MethodHandles.dropArguments(mh, 0, OrdinaryFunction.class);
+            uninitializedGeneratorMH = MethodHandles.dropArguments(mh, 0, OrdinaryGenerator.class);
+            uninitializedAsyncFunctionMH = MethodHandles.dropArguments(mh, 0,
                     OrdinaryAsyncFunction.class);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new IllegalStateException(e);
@@ -58,8 +58,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     @SuppressWarnings("unused")
-    private static final Object uninitialisedFunctionObject(ExecutionContext cx) {
-        throw newTypeError(cx, Messages.Key.UninitialisedObject);
+    private static final Object uninitializedFunctionObject(ExecutionContext cx) {
+        throw newTypeError(cx, Messages.Key.UninitializedObject);
     }
 
     /** [[Environment]] */
@@ -106,7 +106,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         return v instanceof FunctionObject && ((FunctionObject) v).isStrict();
     }
 
-    private final boolean isInitialised() {
+    private final boolean isInitialized() {
         return function != null;
     }
 
@@ -118,8 +118,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      */
     private final boolean isLegacy() {
         // TODO: 'caller' and 'arguments' properties are never updated for generator functions
-        // Uninitialised and non-strict functions have legacy support
-        return !(isInitialised() && strict)
+        // Uninitialized and non-strict functions have legacy support
+        return !(isInitialized() && strict)
                 && realm.isEnabled(CompatibilityOption.FunctionPrototype);
     }
 
@@ -217,7 +217,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     @Override
     public final String toSource() {
-        if (!isInitialised()) {
+        if (!isInitialized()) {
             return SOURCE_NOT_AVAILABLE;
         }
         String source = this.source;
@@ -289,8 +289,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         /* steps 1-3 (not applicable) */
         /* steps 4-6 */
         FunctionObject clone = allocateNew();
-        if (isInitialised()) {
-            clone.initialise(getFunctionKind(), getCode(), getEnvironment());
+        if (isInitialized()) {
+            clone.initialize(getFunctionKind(), getCode(), getEnvironment());
         }
         clone.setConstructor(isConstructor());
         /* step 7 */
@@ -305,9 +305,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * Allocates a new, uninitialised copy of this function object.
+     * Allocates a new, uninitialized copy of this function object.
      * 
-     * @return a new uninitialised function object
+     * @return a new uninitialized function object
      */
     protected abstract FunctionObject allocateNew();
 
@@ -343,7 +343,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 9.2.5 FunctionInitialise Abstract Operation
+     * 9.2.5 FunctionInitialize Abstract Operation
      * 
      * @param kind
      *            the function kind
@@ -352,9 +352,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * @param scope
      *            the function scope
      */
-    protected final void initialise(FunctionKind kind, RuntimeInfo.Function function,
+    protected final void initialize(FunctionKind kind, RuntimeInfo.Function function,
             LexicalEnvironment<?> scope) {
-        assert this.function == null && function != null : "function object already initialised";
+        assert this.function == null && function != null : "function object already initialized";
         assert this.functionKind == kind : String.format("%s != %s", functionKind, kind);
         /* step 6 */
         this.environment = scope;
@@ -416,7 +416,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      *            the new home object
      */
     protected final void toMethod(Object methodName, ScriptObject homeObject) {
-        assert isInitialised() : "uninitialised function object";
+        assert isInitialized() : "uninitialized function object";
         assert !needsSuper : "function object already method";
         this.needsSuper = true;
         this.methodName = methodName;
@@ -432,7 +432,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      *            the home object
      */
     public final void updateMethod(Object methodName, ScriptObject homeObject) {
-        assert isInitialised() : "uninitialised function object";
+        assert isInitialized() : "uninitialized function object";
         assert needsSuper : "function object not method";
         assert methodName != null && homeObject != null;
         assert methodName instanceof String || methodName instanceof Symbol;

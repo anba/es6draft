@@ -181,7 +181,7 @@ public final class Realm {
      * @return the global %ThrowTypeError% object
      */
     public Callable getThrowTypeError() {
-        assert throwTypeError != null : "throwTypeError not yet initialised";
+        assert throwTypeError != null : "throwTypeError not yet initialized";
         return throwTypeError;
     }
 
@@ -436,7 +436,7 @@ public final class Realm {
     @Deprecated
     public Collator getCollator() {
         Collator collator = Collator.getInstance(getLocale());
-        // Use Normalised Form D for comparison (cf. 21.1.3.10, Note 2)
+        // Use Normalized Form D for comparison (cf. 21.1.3.10, Note 2)
         collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
         // `"\u0001".localeCompare("\u0002") == -1` should yield true
         collator.setStrength(Collator.IDENTICAL);
@@ -454,7 +454,7 @@ public final class Realm {
     }
 
     /**
-     * Initialises the custom extension points.
+     * Initializes the custom extension points.
      * 
      * @param directEvalTranslate
      *            the user hook for direct eval calls
@@ -477,7 +477,7 @@ public final class Realm {
      *            the target object to store the built-ins into
      */
     public void defineBuiltinProperties(OrdinaryObject builtins) {
-        assert this.builtinEval == null : "built-ins already initialised";
+        assert this.builtinEval == null : "built-ins already initialized";
         ExecutionContext defaultContext = this.defaultContext;
 
         // define built-in properties
@@ -547,26 +547,26 @@ public final class Realm {
         realm.defaultContext = defaultContext;
 
         // intrinsics: 19, 20, 21, 22.1, 24.3
-        initialiseFundamentalObjects(realm);
-        initialiseStandardObjects(realm);
-        initialiseNativeErrors(realm);
-        initialiseInternalObjects(realm);
+        initializeFundamentalObjects(realm);
+        initializeStandardObjects(realm);
+        initializeNativeErrors(realm);
+        initializeInternalObjects(realm);
 
         // TODO: move to reflect
         // intrinsics: Loader, Module, Realm Objects
-        initialiseModuleModules(realm);
+        initializeModuleModules(realm);
 
         // intrinsics: 22.2, 23, 24.1, 24.2, 25
-        initialiseBinaryModule(realm);
-        initialiseCollectionModule(realm);
-        initialiseReflectModule(realm);
-        initialiseIterationModule(realm);
+        initializeBinaryModule(realm);
+        initializeCollectionModule(realm);
+        initializeReflectModule(realm);
+        initializeIterationModule(realm);
 
         // intrinsics: Promise Objects
-        initialisePromiseObjects(realm);
+        initializePromiseObjects(realm);
 
         // intrinsics: Internationalization API
-        initialiseInternationalisation(realm);
+        initializeInternationalisation(realm);
 
         if (defaultRealmObject) {
             realmObject.setPrototype(realm.getIntrinsic(Intrinsics.RealmPrototype));
@@ -578,12 +578,12 @@ public final class Realm {
     /**
      * <h1>19.1 Object Objects - 19.2 Function Objects</h1>
      * 
-     * Fundamental built-in objects which must be initialised early
+     * Fundamental built-in objects which must be initialized early
      * 
      * @param realm
      *            the realm instance
      */
-    private static void initialiseFundamentalObjects(Realm realm) {
+    private static void initializeFundamentalObjects(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
@@ -603,10 +603,10 @@ public final class Realm {
         realm.throwTypeError = OrdinaryFunction.createThrowTypeError(defaultContext);
 
         // initialisation phase
-        objectConstructor.initialise(defaultContext);
-        objectPrototype.initialise(defaultContext);
-        functionConstructor.initialise(defaultContext);
-        functionPrototype.initialise(defaultContext);
+        objectConstructor.initialize(defaultContext);
+        objectPrototype.initialize(defaultContext);
+        functionConstructor.initialize(defaultContext);
+        functionPrototype.initialize(defaultContext);
 
         // Object.prototype.toString is also an intrinsic
         Object objectPrototypeToString = Get(defaultContext, objectPrototype, "toString");
@@ -621,7 +621,7 @@ public final class Realm {
      * @param realm
      *            the realm instance
      */
-    private static void initialiseStandardObjects(Realm realm) {
+    private static void initializeStandardObjects(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
@@ -670,26 +670,26 @@ public final class Realm {
         intrinsics.put(Intrinsics.JSON, jsonObject);
 
         // initialisation phase
-        arrayConstructor.initialise(defaultContext);
-        arrayPrototype.initialise(defaultContext);
-        arrayIteratorPrototype.initialise(defaultContext);
-        stringConstructor.initialise(defaultContext);
-        stringPrototype.initialise(defaultContext);
-        stringIteratorPrototype.initialise(defaultContext);
-        symbolConstructor.initialise(defaultContext);
-        symbolPrototype.initialise(defaultContext);
-        booleanConstructor.initialise(defaultContext);
-        booleanPrototype.initialise(defaultContext);
-        numberConstructor.initialise(defaultContext);
-        numberPrototype.initialise(defaultContext);
-        mathObject.initialise(defaultContext);
-        dateConstructor.initialise(defaultContext);
-        datePrototype.initialise(defaultContext);
-        regExpConstructor.initialise(defaultContext);
-        regExpPrototype.initialise(defaultContext);
-        errorConstructor.initialise(defaultContext);
-        errorPrototype.initialise(defaultContext);
-        jsonObject.initialise(defaultContext);
+        arrayConstructor.initialize(defaultContext);
+        arrayPrototype.initialize(defaultContext);
+        arrayIteratorPrototype.initialize(defaultContext);
+        stringConstructor.initialize(defaultContext);
+        stringPrototype.initialize(defaultContext);
+        stringIteratorPrototype.initialize(defaultContext);
+        symbolConstructor.initialize(defaultContext);
+        symbolPrototype.initialize(defaultContext);
+        booleanConstructor.initialize(defaultContext);
+        booleanPrototype.initialize(defaultContext);
+        numberConstructor.initialize(defaultContext);
+        numberPrototype.initialize(defaultContext);
+        mathObject.initialize(defaultContext);
+        dateConstructor.initialize(defaultContext);
+        datePrototype.initialize(defaultContext);
+        regExpConstructor.initialize(defaultContext);
+        regExpPrototype.initialize(defaultContext);
+        errorConstructor.initialize(defaultContext);
+        errorPrototype.initialize(defaultContext);
+        jsonObject.initialize(defaultContext);
     }
 
     /**
@@ -700,7 +700,7 @@ public final class Realm {
      * @param realm
      *            the realm instance
      */
-    private static void initialiseNativeErrors(Realm realm) {
+    private static void initializeNativeErrors(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
@@ -750,20 +750,20 @@ public final class Realm {
         intrinsics.put(Intrinsics.InternalErrorPrototype, internalErrorPrototype);
 
         // initialisation phase
-        evalErrorConstructor.initialise(defaultContext);
-        evalErrorPrototype.initialise(defaultContext);
-        rangeErrorConstructor.initialise(defaultContext);
-        rangeErrorPrototype.initialise(defaultContext);
-        referenceErrorConstructor.initialise(defaultContext);
-        referenceErrorPrototype.initialise(defaultContext);
-        syntaxErrorConstructor.initialise(defaultContext);
-        syntaxErrorPrototype.initialise(defaultContext);
-        typeErrorConstructor.initialise(defaultContext);
-        typeErrorPrototype.initialise(defaultContext);
-        uriErrorConstructor.initialise(defaultContext);
-        uriErrorPrototype.initialise(defaultContext);
-        internalErrorConstructor.initialise(defaultContext);
-        internalErrorPrototype.initialise(defaultContext);
+        evalErrorConstructor.initialize(defaultContext);
+        evalErrorPrototype.initialize(defaultContext);
+        rangeErrorConstructor.initialize(defaultContext);
+        rangeErrorPrototype.initialize(defaultContext);
+        referenceErrorConstructor.initialize(defaultContext);
+        referenceErrorPrototype.initialize(defaultContext);
+        syntaxErrorConstructor.initialize(defaultContext);
+        syntaxErrorPrototype.initialize(defaultContext);
+        typeErrorConstructor.initialize(defaultContext);
+        typeErrorPrototype.initialize(defaultContext);
+        uriErrorConstructor.initialize(defaultContext);
+        uriErrorPrototype.initialize(defaultContext);
+        internalErrorConstructor.initialize(defaultContext);
+        internalErrorPrototype.initialize(defaultContext);
     }
 
     /**
@@ -772,7 +772,7 @@ public final class Realm {
      * @param realm
      *            the realm instance
      */
-    private static void initialiseInternalObjects(Realm realm) {
+    private static void initializeInternalObjects(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
 
         // intrinsic functions
@@ -785,7 +785,7 @@ public final class Realm {
      * @param realm
      *            the realm instance
      */
-    private static void initialiseCollectionModule(Realm realm) {
+    private static void initializeCollectionModule(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
@@ -814,16 +814,16 @@ public final class Realm {
         intrinsics.put(Intrinsics.WeakSetPrototype, weakSetPrototype);
 
         // initialisation phase
-        mapConstructor.initialise(defaultContext);
-        mapPrototype.initialise(defaultContext);
-        mapIteratorPrototype.initialise(defaultContext);
-        weakMapConstructor.initialise(defaultContext);
-        weakMapPrototype.initialise(defaultContext);
-        setConstructor.initialise(defaultContext);
-        setPrototype.initialise(defaultContext);
-        setIteratorPrototype.initialise(defaultContext);
-        weakSetConstructor.initialise(defaultContext);
-        weakSetPrototype.initialise(defaultContext);
+        mapConstructor.initialize(defaultContext);
+        mapPrototype.initialize(defaultContext);
+        mapIteratorPrototype.initialize(defaultContext);
+        weakMapConstructor.initialize(defaultContext);
+        weakMapPrototype.initialize(defaultContext);
+        setConstructor.initialize(defaultContext);
+        setPrototype.initialize(defaultContext);
+        setIteratorPrototype.initialize(defaultContext);
+        weakSetConstructor.initialize(defaultContext);
+        weakSetPrototype.initialize(defaultContext);
     }
 
     /**
@@ -832,7 +832,7 @@ public final class Realm {
      * @param realm
      *            the realm instance
      */
-    private static void initialiseReflectModule(Realm realm) {
+    private static void initializeReflectModule(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
@@ -845,8 +845,8 @@ public final class Realm {
         intrinsics.put(Intrinsics.Reflect, reflect);
 
         // initialisation phase
-        proxy.initialise(defaultContext);
-        reflect.initialise(defaultContext);
+        proxy.initialize(defaultContext);
+        reflect.initialize(defaultContext);
     }
 
     /**
@@ -855,7 +855,7 @@ public final class Realm {
      * @param realm
      *            the realm instance
      */
-    private static void initialiseIterationModule(Realm realm) {
+    private static void initializeIterationModule(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
@@ -871,9 +871,9 @@ public final class Realm {
         intrinsics.put(Intrinsics.Generator, generator);
 
         // initialisation phase
-        generatorFunctionConstructor.initialise(defaultContext);
-        generatorPrototype.initialise(defaultContext);
-        generator.initialise(defaultContext);
+        generatorFunctionConstructor.initialize(defaultContext);
+        generatorPrototype.initialize(defaultContext);
+        generator.initialize(defaultContext);
 
         if (realm.isEnabled(CompatibilityOption.LegacyGenerator)) {
             OrdinaryObject legacyGeneratorPrototype = OrdinaryObject.ObjectCreate(defaultContext);
@@ -887,7 +887,7 @@ public final class Realm {
      * @param realm
      *            the realm instance
      */
-    private static void initialiseBinaryModule(Realm realm) {
+    private static void initializeBinaryModule(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
@@ -959,30 +959,30 @@ public final class Realm {
         intrinsics.put(Intrinsics.DataViewPrototype, dataViewPrototype);
 
         // initialisation phase
-        arrayBufferConstructor.initialise(defaultContext);
-        arrayBufferPrototype.initialise(defaultContext);
-        typedArrayConstructor.initialise(defaultContext);
-        typedArrayPrototype.initialise(defaultContext);
-        int8ArrayConstructor.initialise(defaultContext);
-        int8ArrayPrototype.initialise(defaultContext);
-        uint8ArrayConstructor.initialise(defaultContext);
-        uint8ArrayPrototype.initialise(defaultContext);
-        uint8CArrayConstructor.initialise(defaultContext);
-        uint8CArrayPrototype.initialise(defaultContext);
-        int16ArrayConstructor.initialise(defaultContext);
-        int16ArrayPrototype.initialise(defaultContext);
-        uint16ArrayConstructor.initialise(defaultContext);
-        uint16ArrayPrototype.initialise(defaultContext);
-        int32ArrayConstructor.initialise(defaultContext);
-        int32ArrayPrototype.initialise(defaultContext);
-        uint32ArrayConstructor.initialise(defaultContext);
-        uint32ArrayPrototype.initialise(defaultContext);
-        float32ArrayConstructor.initialise(defaultContext);
-        float32ArrayPrototype.initialise(defaultContext);
-        float64ArrayConstructor.initialise(defaultContext);
-        float64ArrayPrototype.initialise(defaultContext);
-        dataViewConstructor.initialise(defaultContext);
-        dataViewPrototype.initialise(defaultContext);
+        arrayBufferConstructor.initialize(defaultContext);
+        arrayBufferPrototype.initialize(defaultContext);
+        typedArrayConstructor.initialize(defaultContext);
+        typedArrayPrototype.initialize(defaultContext);
+        int8ArrayConstructor.initialize(defaultContext);
+        int8ArrayPrototype.initialize(defaultContext);
+        uint8ArrayConstructor.initialize(defaultContext);
+        uint8ArrayPrototype.initialize(defaultContext);
+        uint8CArrayConstructor.initialize(defaultContext);
+        uint8CArrayPrototype.initialize(defaultContext);
+        int16ArrayConstructor.initialize(defaultContext);
+        int16ArrayPrototype.initialize(defaultContext);
+        uint16ArrayConstructor.initialize(defaultContext);
+        uint16ArrayPrototype.initialize(defaultContext);
+        int32ArrayConstructor.initialize(defaultContext);
+        int32ArrayPrototype.initialize(defaultContext);
+        uint32ArrayConstructor.initialize(defaultContext);
+        uint32ArrayPrototype.initialize(defaultContext);
+        float32ArrayConstructor.initialize(defaultContext);
+        float32ArrayPrototype.initialize(defaultContext);
+        float64ArrayConstructor.initialize(defaultContext);
+        float64ArrayPrototype.initialize(defaultContext);
+        dataViewConstructor.initialize(defaultContext);
+        dataViewPrototype.initialize(defaultContext);
     }
 
     /**
@@ -991,7 +991,7 @@ public final class Realm {
      * @param realm
      *            the realm instance
      */
-    private static void initialisePromiseObjects(Realm realm) {
+    private static void initializePromiseObjects(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
@@ -1004,8 +1004,8 @@ public final class Realm {
         intrinsics.put(Intrinsics.PromisePrototype, promisePrototype);
 
         // initialisation phase
-        promiseConstructor.initialise(defaultContext);
-        promisePrototype.initialise(defaultContext);
+        promiseConstructor.initialize(defaultContext);
+        promisePrototype.initialize(defaultContext);
     }
 
     /**
@@ -1014,7 +1014,7 @@ public final class Realm {
      * @param realm
      *            the realm instance
      */
-    private static void initialiseModuleModules(Realm realm) {
+    private static void initializeModuleModules(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
@@ -1035,12 +1035,12 @@ public final class Realm {
         intrinsics.put(Intrinsics.System, systemObject);
 
         // initialisation phase
-        loaderConstructor.initialise(defaultContext);
-        loaderPrototype.initialise(defaultContext);
-        loaderIteratorPrototype.initialise(defaultContext);
-        realmConstructor.initialise(defaultContext);
-        realmPrototype.initialise(defaultContext);
-        systemObject.initialise(defaultContext);
+        loaderConstructor.initialize(defaultContext);
+        loaderPrototype.initialize(defaultContext);
+        loaderIteratorPrototype.initialize(defaultContext);
+        realmConstructor.initialize(defaultContext);
+        realmPrototype.initialize(defaultContext);
+        systemObject.initialize(defaultContext);
     }
 
     /**
@@ -1052,7 +1052,7 @@ public final class Realm {
      * @param realm
      *            the realm instance
      */
-    private static void initialiseInternationalisation(Realm realm) {
+    private static void initializeInternationalisation(Realm realm) {
         EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
@@ -1075,12 +1075,12 @@ public final class Realm {
         intrinsics.put(Intrinsics.Intl_DateTimeFormatPrototype, dateTimeFormatPrototype);
 
         // initialisation phase
-        intlObject.initialise(defaultContext);
-        collatorConstructor.initialise(defaultContext);
-        collatorPrototype.initialise(defaultContext);
-        numberFormatConstructor.initialise(defaultContext);
-        numberFormatPrototype.initialise(defaultContext);
-        dateTimeFormatConstructor.initialise(defaultContext);
-        dateTimeFormatPrototype.initialise(defaultContext);
+        intlObject.initialize(defaultContext);
+        collatorConstructor.initialize(defaultContext);
+        collatorPrototype.initialize(defaultContext);
+        numberFormatConstructor.initialize(defaultContext);
+        numberFormatPrototype.initialize(defaultContext);
+        dateTimeFormatConstructor.initialize(defaultContext);
+        dateTimeFormatPrototype.initialize(defaultContext);
     }
 }

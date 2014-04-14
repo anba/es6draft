@@ -9,7 +9,7 @@ const {
   assertSyntaxError
 } = Assert;
 
-// CoverInitialisedName in ForStatement
+// CoverInitializedName in ForStatement
 
 function testSyntax() {
   for (;;) ;

@@ -13,7 +13,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -34,13 +34,13 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>19.5.2 Properties of the Error Constructor
  * </ul>
  */
-public final class ErrorConstructor extends BuiltinConstructor implements Initialisable {
+public final class ErrorConstructor extends BuiltinConstructor implements Initializable {
     public ErrorConstructor(Realm realm) {
         super(realm, "Error");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -66,7 +66,7 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
         /* step 1 (omitted) */
         /* steps 2-4 */
         ErrorObject obj;
-        if (!(thisValue instanceof ErrorObject) || ((ErrorObject) thisValue).isInitialised()) {
+        if (!(thisValue instanceof ErrorObject) || ((ErrorObject) thisValue).isInitialized()) {
             obj = OrdinaryCreateFromConstructor(calleeContext, this, Intrinsics.ErrorPrototype,
                     ErrorObjectAllocator.INSTANCE);
         } else {
@@ -74,7 +74,7 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
         }
 
         /* step 5 */
-        obj.initialise();
+        obj.initialize();
 
         /* step 6 */
         if (!Type.isUndefined(message)) {
@@ -140,7 +140,7 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised error object
+         * @return the new uninitialized error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

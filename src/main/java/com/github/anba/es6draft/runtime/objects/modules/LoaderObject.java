@@ -41,7 +41,7 @@ public class LoaderObject extends OrdinaryObject {
      *            the new loader record
      */
     public void setLoader(Loader loader) {
-        assert this.loader == null && loader != null : "LoaderObject already initialised";
+        assert this.loader == null && loader != null : "LoaderObject already initialized";
         this.loader = loader;
     }
 }

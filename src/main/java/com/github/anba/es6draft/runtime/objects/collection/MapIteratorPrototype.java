@@ -18,7 +18,7 @@ import java.util.Map.Entry;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -37,13 +37,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>23.1.5 Map Iterator Objects
  * </ul>
  */
-public final class MapIteratorPrototype extends OrdinaryObject implements Initialisable {
+public final class MapIteratorPrototype extends OrdinaryObject implements Initializable {
     public MapIteratorPrototype(Realm realm) {
         super(realm);
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
     }
 
@@ -100,8 +100,8 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
         }
         MapObject map = (MapObject) obj;
         /* step 3 */
-        if (!map.isInitialised()) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+        if (!map.isInitialized()) {
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 4 */
         MapIterator iterator = ObjectCreate(cx, Intrinsics.MapIteratorPrototype,

@@ -23,7 +23,7 @@ import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -48,13 +48,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>26.2.2 Properties of the Reflect.Realm Constructor
  * </ul>
  */
-public final class RealmConstructor extends BuiltinConstructor implements Initialisable {
+public final class RealmConstructor extends BuiltinConstructor implements Initializable {
     public RealmConstructor(Realm realm) {
         super(realm, "Realm");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -96,7 +96,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
 
         // Run any initialisation scripts, if required
         try {
-            realm.getGlobalThis().initialise(builtins);
+            realm.getGlobalThis().initialize(builtins);
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(realm.defaultContext());
         } catch (IOException | URISyntaxException e) {
@@ -130,7 +130,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         RealmObject realmObject = (RealmObject) thisValue;
         /* step 4 */
         if (realmObject.getRealm() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
         /* steps 5-6 (superseded by newer Realm API) */
         /* steps 7-8 */
@@ -146,7 +146,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         Callable initializer = getFunctionOption(calleeContext, options, "init");
         /* steps 21-22 */
         if (realmObject.getRealm() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
         /* step 23 */
         Realm realm = CreateRealm(calleeContext, realmObject);
@@ -210,7 +210,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised realm object
+         * @return the new uninitialized realm object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

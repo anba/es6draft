@@ -18,7 +18,7 @@ import java.nio.ByteOrder;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -40,7 +40,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>24.1.3 Properties of the ArrayBuffer Constructor
  * </ul>
  */
-public final class ArrayBufferConstructor extends BuiltinConstructor implements Initialisable {
+public final class ArrayBufferConstructor extends BuiltinConstructor implements Initializable {
     // set default byte-order to little-endian - implementation specific choice
     private static final ByteOrder DEFAULT_BYTE_ORDER = ByteOrder.LITTLE_ENDIAN;
     private static final boolean IS_LITTLE_ENDIAN = true;
@@ -53,7 +53,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -211,7 +211,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         ByteBuffer srcBlock = srcBuffer.getData();
         /* step 3 */
         if (srcBlock == null) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 4 */
         long srcLength = srcBuffer.getByteLength();
@@ -278,7 +278,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         ByteBuffer block = arrayBuffer.getData();
         /* step 4 */
         if (block == null) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* steps 7-8 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
@@ -363,7 +363,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         ByteBuffer block = arrayBuffer.getData();
         /* step 4 */
         if (block == null) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* steps 6-9 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
@@ -425,7 +425,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         }
         ArrayBufferObject buf = (ArrayBufferObject) thisValue;
         if (buf.getData() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
         // FIXME: spec issue? - undefined length is same as 0 for bwcompat?
         if (Type.isUndefined(length)) {
@@ -441,7 +441,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         }
         /* step 7 */
         if (buf.getData() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
         /* step 8 */
         return SetArrayBufferData(calleeContext, buf, byteLength);
@@ -503,7 +503,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised array buffer object
+         * @return the new uninitialized array buffer object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

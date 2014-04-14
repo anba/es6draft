@@ -100,16 +100,16 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 8.1.1.2.4 InitialiseBinding (N,V)
+     * 8.1.1.2.4 InitializeBinding (N,V)
      */
     @Override
-    public void initialiseBinding(String name, Object value) {
+    public void initializeBinding(String name, Object value) {
         assert value != null;
         /* step 1 (omitted) */
         /* step 2 */
-        // TODO: uninitialised binding in an object environment record?!
+        // TODO: uninitialized binding in an object environment record?!
         /* step 3 */
-        // TODO: record the binding has been initialised
+        // TODO: record the binding has been initialized
         /* step 4 */
         setMutableBinding(name, value, false);
     }

@@ -41,7 +41,7 @@ public final class ExoticArray extends OrdinaryObject {
     /**
      * [[ArrayInitialisationState]]
      *
-     * @return {@code true} if the array is initialised
+     * @return {@code true} if the array is initialized
      */
     public boolean getInitialisationState() {
         return initialisationState;
@@ -54,8 +54,8 @@ public final class ExoticArray extends OrdinaryObject {
      *            the new initialisation state value
      */
     public void setInitialisationState(boolean initialisationState) {
-        assert initialisationState : "cannot de-initialise an array";
-        assert !this.initialisationState : "array already initialised";
+        assert initialisationState : "cannot uninitialize an array";
+        assert !this.initialisationState : "array already initialized";
         this.initialisationState = initialisationState;
     }
 

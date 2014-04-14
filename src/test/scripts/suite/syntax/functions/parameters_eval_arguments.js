@@ -17,7 +17,7 @@ const {
   function f2(arguments) { }
 }
 
-// Non-strict, parameter list with initialiser
+// Non-strict, parameter list with initializer
 {
   function f1(a = 0, eval) { }
   function f2(a = 0, arguments) { }
@@ -47,7 +47,7 @@ const {
   assertSyntaxError(`"use strict"; function f2(arguments) { }`);
 }
 
-// Strict, parameter list with initialiser
+// Strict, parameter list with initializer
 {
   assertSyntaxError(`"use strict"; function f1(a = 0, eval) { }`);
   assertSyntaxError(`"use strict"; function f2(a = 0, arguments) { }`);

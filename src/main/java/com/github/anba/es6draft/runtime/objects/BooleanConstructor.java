@@ -13,7 +13,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -32,13 +32,13 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>19.3.2 Properties of the Boolean Constructor
  * </ul>
  */
-public final class BooleanConstructor extends BuiltinConstructor implements Initialisable {
+public final class BooleanConstructor extends BuiltinConstructor implements Initializable {
     public BooleanConstructor(Realm realm) {
         super(realm, "Boolean");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -62,7 +62,7 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
         /* step 3 */
         if (thisValue instanceof BooleanObject) {
             BooleanObject obj = (BooleanObject) thisValue;
-            if (!obj.isInitialised()) {
+            if (!obj.isInitialized()) {
                 obj.setBooleanData(b);
                 return obj;
             }
@@ -110,7 +110,7 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised boolean object
+         * @return the new uninitialized boolean object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

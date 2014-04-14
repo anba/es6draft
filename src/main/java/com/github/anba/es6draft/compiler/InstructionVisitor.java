@@ -487,7 +487,7 @@ class InstructionVisitor extends InstructionAdapter {
         return variables.view();
     }
 
-    private void initialiseParameters() {
+    private void initializeParameters() {
         int slot = 0;
         if (methodAllocation == MethodAllocation.Instance) {
             variables.reserveSlot("<this>", Types.Object, slot);
@@ -587,7 +587,7 @@ class InstructionVisitor extends InstructionAdapter {
 
     @Override
     public final void load(int var, Type type) {
-        assert variables.isActive(var) : "variable is not initialised";
+        assert variables.isActive(var) : "variable is not initialized";
         super.load(var, type);
     }
 
@@ -610,7 +610,7 @@ class InstructionVisitor extends InstructionAdapter {
     public void begin() {
         visitCode();
         enterVariableScope();
-        initialiseParameters();
+        initializeParameters();
     }
 
     public void end() {

@@ -183,7 +183,7 @@ public final class ModuleEvaluation {
         for (Declaration f : functionsToInitialize) {
             String fn = ((FunctionNode) f).getFunctionName();
             Object fo = InstantiateFunctionObject(f, env);
-            envRec.initialiseBinding(fn, fo);
+            envRec.initializeBinding(fn, fo);
         }
     }
 

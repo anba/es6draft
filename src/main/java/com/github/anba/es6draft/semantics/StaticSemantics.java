@@ -28,7 +28,7 @@ import com.github.anba.es6draft.runtime.modules.ImportEntry;
  * <li>ConstructorMethod</li>
  * <li>Elision Width</li>
  * <li>ExpectedArgumentCount</li>
- * <li>HasInitialiser</li>
+ * <li>HasInitializer</li>
  * <li>IsConstantDeclaration</li>
  * <li>IsInvalidAssignmentPattern</li>
  * <li>IsValidSimpleAssignmentTarget</li>
@@ -162,7 +162,7 @@ public final class StaticSemantics {
      * </ul>
      */
     private static boolean ContainsExpression(BindingElement element) {
-        if (element.getInitialiser() != null) {
+        if (element.getInitializer() != null) {
             return true;
         }
         return ContainsExpression(element.getBinding());
@@ -211,7 +211,7 @@ public final class StaticSemantics {
             if (property.getPropertyName() instanceof ComputedPropertyName) {
                 return true;
             }
-            if (property.getInitialiser() != null) {
+            if (property.getInitializer() != null) {
                 return true;
             }
             if (ContainsExpression(property.getBinding())) {
@@ -238,7 +238,7 @@ public final class StaticSemantics {
         for (FormalParameter formal : formals) {
             if (formal instanceof BindingRestElement) {
                 break;
-            } else if (HasInitialiser((BindingElement) formal)) {
+            } else if (HasInitializer((BindingElement) formal)) {
                 break;
             }
             count += 1;
@@ -247,14 +247,14 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.2.3.3 Static Semantics: HasInitialiser
+     * 13.2.3.3 Static Semantics: HasInitializer
      * 
      * @param node
      *            the binding element
-     * @return {@code true} if the binding element has an initialiser
+     * @return {@code true} if the binding element has an initializer
      */
-    private static boolean HasInitialiser(BindingElement node) {
-        return node.getInitialiser() != null;
+    private static boolean HasInitializer(BindingElement node) {
+        return node.getInitializer() != null;
     }
 
     /**
@@ -379,7 +379,7 @@ public final class StaticSemantics {
      * @return {@code true} if node is an identifier
      */
     public static boolean IsIdentifierRef(LeftHandSideExpression node) {
-        return node instanceof Identifier && !node.isParenthesised();
+        return node instanceof Identifier && !node.isParenthesized();
     }
 
     /**
@@ -393,7 +393,7 @@ public final class StaticSemantics {
         for (FormalParameter formal : formals) {
             if (formal instanceof BindingRestElement) {
                 return false;
-            } else if (HasInitialiser((BindingElement) formal)) {
+            } else if (HasInitializer((BindingElement) formal)) {
                 return false;
             } else if (((BindingElement) formal).getBinding() instanceof BindingPattern) {
                 return false;

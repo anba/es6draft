@@ -604,7 +604,7 @@ function testVarPatternCombinations(makePattSrc, makePattPatt) {
 //        assertLocalDecl("let " + pattSrcs[i].join(",") + ";", varDecl(pattPatts[i]));
         assertBlockDecl("let " + pattSrcs[i].join(",") + ";", letDecl(pattPatts[i]));
 
-// #disable: Const declaration requires initialiser
+// #disable: Const declaration requires initializer
 //        assertDecl("const " + pattSrcs[i].join(",") + ";", constDecl(pattPatts[i]));
 
         // variable declarations in for-loop heads
@@ -613,7 +613,7 @@ function testVarPatternCombinations(makePattSrc, makePattPatt) {
 // #disable: quirky SpiderMonkey...
 //        assertStmt("for (let " + pattSrcs[i].join(",") + "; foo; bar);",
 //                   letStmt(pattPatts[i], forStmt(null, ident("foo"), ident("bar"), emptyStmt)));
-// #disable: Const declaration requires initialiser
+// #disable: Const declaration requires initializer
 //        assertStmt("for (const " + pattSrcs[i].join(",") + "; foo; bar);",
 //                   forStmt(constDecl(pattPatts[i]), ident("foo"), ident("bar"), emptyStmt));
     }
@@ -694,7 +694,7 @@ assertStmt("for each ([x,y,z] in foo);", forEachInStmt(xyz, ident("foo"), emptyS
 
 // destructuring in for-in and for-each-in loop heads with initializers
 
-// #disable: initialiser not allowed in for-in/of statement
+// #disable: initializer not allowed in for-in/of statement
 // assertStmt("for (var {a:x,b:y,c:z} = 22 in foo);", forInStmt(varDecl([{ id: axbycz, init: lit(22) }]), ident("foo"), emptyStmt));
 // assertStmt("for (var [x,y,z] = 22 in foo);", forInStmt(varDecl([{ id: xyz, init: lit(22) }]), ident("foo"), emptyStmt));
 // assertStmt("for each (var {a:x,b:y,c:z} = 22 in foo);", forEachInStmt(varDecl([{ id: axbycz, init: lit(22) }]), ident("foo"), emptyStmt));
@@ -956,7 +956,7 @@ assertGlobalStmt("for (;;) continue", forStmt(null, null, null, 15), { continueS
 
 assertBlockDecl("var x", "var", { variableDeclaration: function(kind) kind });
 assertBlockDecl("let x", "let", { variableDeclaration: function(kind) kind });
-// #disable: const declaration requires initialiser
+// #disable: const declaration requires initializer
 // assertBlockDecl("const x", "const", { variableDeclaration: function(kind) kind });
 assertBlockDecl("function f() { }", "function", { functionDeclaration: function() "function" });
 
@@ -1003,7 +1003,7 @@ if (!thrown)
     throw new Error("builder exception not propagated");
 
 // Missing property RHS's in an object literal should throw.
-// #disable: shorthand object initialiser
+// #disable: shorthand object initializer
 // try {
 //     Reflect.parse("({foo})");
 //     throw new Error("object literal missing property RHS didn't throw");

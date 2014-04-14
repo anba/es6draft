@@ -10,18 +10,18 @@ package com.github.anba.es6draft.ast;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.1 Primary Expressions</h2>
  * <ul>
- * <li>12.1.5 Object Initialiser
+ * <li>12.1.5 Object Initializer
  * </ul>
  */
-public final class CoverInitialisedName extends PropertyDefinition {
+public final class CoverInitializedName extends PropertyDefinition {
     private final Identifier identifier;
-    private final Expression initialiser;
+    private final Expression initializer;
 
-    public CoverInitialisedName(long beginPosition, long endPosition, Identifier identifier,
-            Expression initialiser) {
+    public CoverInitializedName(long beginPosition, long endPosition, Identifier identifier,
+            Expression initializer) {
         super(beginPosition, endPosition);
         this.identifier = identifier;
-        this.initialiser = initialiser;
+        this.initializer = initializer;
     }
 
     @Override
@@ -29,8 +29,8 @@ public final class CoverInitialisedName extends PropertyDefinition {
         return identifier;
     }
 
-    public Expression getInitialiser() {
-        return initialiser;
+    public Expression getInitializer() {
+        return initializer;
     }
 
     @Override

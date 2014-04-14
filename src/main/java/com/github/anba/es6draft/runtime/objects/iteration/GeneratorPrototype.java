@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstra
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -28,13 +28,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>25.3.1 Properties of Generator Prototype
  * </ul>
  */
-public final class GeneratorPrototype extends OrdinaryObject implements Initialisable {
+public final class GeneratorPrototype extends OrdinaryObject implements Initializable {
     public GeneratorPrototype(Realm realm) {
         super(realm);
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
     }
 

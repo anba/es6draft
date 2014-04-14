@@ -13,7 +13,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -38,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  * </ul>
  */
-public final class NativeErrorConstructor extends BuiltinConstructor implements Initialisable {
+public final class NativeErrorConstructor extends BuiltinConstructor implements Initializable {
     /**
      * 19.5.5 Native Error Types Used in This Standard
      * <ul>
@@ -83,7 +83,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         switch (type) {
         case EvalError:
             createProperties(cx, this, EvalErrorConstructorProperties.class);
@@ -133,7 +133,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         /* step 1 (omitted) */
         /* steps 2-4 */
         ErrorObject obj;
-        if (!(thisValue instanceof ErrorObject) || ((ErrorObject) thisValue).isInitialised()) {
+        if (!(thisValue instanceof ErrorObject) || ((ErrorObject) thisValue).isInitialized()) {
             obj = OrdinaryCreateFromConstructor(calleeContext, this, type.prototype(),
                     NativeErrorObjectAllocator.INSTANCE);
         } else {
@@ -141,7 +141,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         }
 
         /* step 5 */
-        obj.initialise();
+        obj.initialize();
 
         /* step 6 */
         if (!Type.isUndefined(message)) {
@@ -207,7 +207,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised error object
+         * @return the new uninitialized error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -248,7 +248,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised error object
+         * @return the new uninitialized error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -289,7 +289,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised error object
+         * @return the new uninitialized error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -330,7 +330,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised error object
+         * @return the new uninitialized error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -371,7 +371,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised error object
+         * @return the new uninitialized error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -412,7 +412,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised error object
+         * @return the new uninitialized error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -453,7 +453,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised error object
+         * @return the new uninitialized error object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

@@ -19,9 +19,9 @@ public abstract class Expression extends AstNode {
     /**
      * Returns {@code true} if this expression is enclosed in parentheses.
      * 
-     * @return {@code true} if parenthesised
+     * @return {@code true} if parenthesized
      */
-    public boolean isParenthesised() {
+    public boolean isParenthesized() {
         return parentheses != 0;
     }
 

@@ -46,8 +46,8 @@ abstract class DeclarationBindingInstantiationGenerator {
                 MethodType.Interface, Types.EnvironmentRecord, "createImmutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String));
 
-        static final MethodDesc EnvironmentRecord_initialiseBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "initialiseBinding",
+        static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
 
         static final MethodDesc EnvironmentRecord_setMutableBinding = MethodDesc.create(
@@ -214,7 +214,7 @@ abstract class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * Emit function call for: {@link EnvironmentRecord#initialiseBinding(String, Object)}
+     * Emit function call for: {@link EnvironmentRecord#initializeBinding(String, Object)}
      * <p>
      * stack: [] {@literal ->} []
      * 
@@ -227,16 +227,16 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void initialiseBinding(Variable<? extends EnvironmentRecord> envRec, String name,
+    protected void initializeBinding(Variable<? extends EnvironmentRecord> envRec, String name,
             Variable<?> value, InstructionVisitor mv) {
         mv.load(envRec);
         mv.aconst(name);
         mv.load(value);
-        mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
+        mv.invoke(Methods.EnvironmentRecord_initializeBinding);
     }
 
     /**
-     * Emit function call for: {@link EnvironmentRecord#initialiseBinding(String, Object)}
+     * Emit function call for: {@link EnvironmentRecord#initializeBinding(String, Object)}
      * <p>
      * stack: [obj] {@literal ->} []
      * 
@@ -247,15 +247,15 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void initialiseBinding(Variable<? extends EnvironmentRecord> envRec, String name,
+    protected void initializeBinding(Variable<? extends EnvironmentRecord> envRec, String name,
             InstructionVisitor mv) {
         mv.load(envRec);
         mv.swap();
-        initialiseBinding(name, mv);
+        initializeBinding(name, mv);
     }
 
     /**
-     * Emit function call for: {@link EnvironmentRecord#initialiseBinding(String, Object)}
+     * Emit function call for: {@link EnvironmentRecord#initializeBinding(String, Object)}
      * <p>
      * stack: [envRec, obj] {@literal ->} []
      * 
@@ -264,11 +264,10 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void initialiseBinding(String name, InstructionVisitor mv) {
-        // TODO: rename initialise -> initialize
+    protected void initializeBinding(String name, InstructionVisitor mv) {
         mv.aconst(name);
         mv.swap();
-        mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
+        mv.invoke(Methods.EnvironmentRecord_initializeBinding);
     }
 
     /**
@@ -339,7 +338,7 @@ abstract class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * Emit runtime call to initialise the function object.
+     * Emit runtime call to initialize the function object.
      * <p>
      * stack: [] {@literal ->} [fo]
      * 
@@ -364,7 +363,7 @@ abstract class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * Emit runtime call to initialise the function object.
+     * Emit runtime call to initialize the function object.
      * <p>
      * stack: [env, cx] {@literal ->} [fo]
      * 

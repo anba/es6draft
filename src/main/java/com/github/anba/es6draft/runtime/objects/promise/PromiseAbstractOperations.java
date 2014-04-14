@@ -366,7 +366,7 @@ public final class PromiseAbstractOperations {
      * 
      * @param x
      *            the object
-     * @return {@code true} if <var>x</var> is an initialised promise object
+     * @return {@code true} if <var>x</var> is an initialized promise object
      */
     public static boolean IsPromise(Object x) {
         /* steps 1-2 */

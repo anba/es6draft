@@ -15,7 +15,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -36,13 +36,13 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>19.4.2 Properties of the Symbol Constructor
  * </ul>
  */
-public final class SymbolConstructor extends BuiltinConstructor implements Initialisable {
+public final class SymbolConstructor extends BuiltinConstructor implements Initializable {
     public SymbolConstructor(Realm realm) {
         super(realm, "Symbol");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }

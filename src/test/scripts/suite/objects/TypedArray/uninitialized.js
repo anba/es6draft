@@ -10,7 +10,7 @@ const {
   assertSame, assertThrows,
 } = Assert;
 
-// MOP access on uninitialised typed arrays
+// MOP access on uninitialized typed arrays
 
 const integerIndexedProperties = [
   -0, +0, "0",

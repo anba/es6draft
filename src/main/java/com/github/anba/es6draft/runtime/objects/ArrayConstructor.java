@@ -15,7 +15,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -38,13 +38,13 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
  * <li>22.1.2 Properties of the Array Constructor
  * </ul>
  */
-public final class ArrayConstructor extends BuiltinConstructor implements Initialisable {
+public final class ArrayConstructor extends BuiltinConstructor implements Initializable {
     public ArrayConstructor(Realm realm) {
         super(realm, "Array");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -314,7 +314,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised array object
+         * @return the new uninitialized array object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

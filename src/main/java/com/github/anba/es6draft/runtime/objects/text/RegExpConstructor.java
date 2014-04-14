@@ -44,13 +44,13 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>21.2.4 Properties of the RegExp Constructor
  * </ul>
  */
-public final class RegExpConstructor extends BuiltinConstructor implements Initialisable {
+public final class RegExpConstructor extends BuiltinConstructor implements Initializable {
     public RegExpConstructor(Realm realm) {
         super(realm, "RegExp");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         createProperties(cx, this, RegExpStatics.class);
         AddRestrictedFunctionProperties(cx, this);
@@ -75,7 +75,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /* steps 1-2 (omitted) */
         RegExpObject obj;
-        if (!(thisValue instanceof RegExpObject) || ((RegExpObject) thisValue).isInitialised()) {
+        if (!(thisValue instanceof RegExpObject) || ((RegExpObject) thisValue).isInitialized()) {
             /* step 3 */
             if (pattern instanceof RegExpObject && Type.isUndefined(flags)) {
                 return (RegExpObject) pattern;
@@ -90,8 +90,8 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         if (pattern instanceof RegExpObject) {
             /* step 4 */
             RegExpObject regexp = (RegExpObject) pattern;
-            if (!regexp.isInitialised()) {
-                throw newTypeError(calleeContext, Messages.Key.UninitialisedObject);
+            if (!regexp.isInitialized()) {
+                throw newTypeError(calleeContext, Messages.Key.UninitializedObject);
             }
             if (!Type.isUndefined(flags)) {
                 throw newTypeError(calleeContext, Messages.Key.NotUndefined);
@@ -180,7 +180,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
             throw e.toScriptException(cx);
         }
         /* steps 9-11 */
-        obj.initialise(p, f, matcher);
+        obj.initialize(p, f, matcher);
         /* steps 12-13 */
         Put(cx, obj, "lastIndex", 0, true);
         /* step 14 */

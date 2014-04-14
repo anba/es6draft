@@ -35,12 +35,12 @@ public final class MapObject extends OrdinaryObject {
         return mapData;
     }
 
-    public void initialise() {
-        assert this.mapData == null : "Map already initialised";
+    public void initialize() {
+        assert this.mapData == null : "Map already initialized";
         this.mapData = new LinkedMapImpl<Object>();
     }
 
-    public boolean isInitialised() {
-        return (mapData != null);
+    public boolean isInitialized() {
+        return mapData != null;
     }
 }

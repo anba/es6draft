@@ -14,7 +14,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -36,13 +36,13 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>23.3.2 Properties of the WeakMap Constructor
  * </ul>
  */
-public final class WeakMapConstructor extends BuiltinConstructor implements Initialisable {
+public final class WeakMapConstructor extends BuiltinConstructor implements Initializable {
     public WeakMapConstructor(Realm realm) {
         super(realm, "WeakMap");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -71,8 +71,8 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         WeakMapObject map = (WeakMapObject) thisValue;
-        if (map.isInitialised()) {
-            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
+        if (map.isInitialized()) {
+            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
 
         /* steps 5-7 */
@@ -90,12 +90,12 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
         }
 
         /* steps 8-9 */
-        if (map.isInitialised()) {
-            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
+        if (map.isInitialized()) {
+            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
 
         /* step 10 */
-        map.initialise();
+        map.initialize();
 
         /* step 11 */
         if (iter == null) {
@@ -157,7 +157,7 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised weak map object
+         * @return the new uninitialized weak map object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

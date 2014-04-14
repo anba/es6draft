@@ -13,7 +13,7 @@ function assertAnonymousFunction(f) {
   return assertFalse(f.hasOwnProperty("name"));
 }
 
-// B.3.1  __proto___ Property Names in Object Initialisers
+// B.3.1  __proto___ Property Names in Object Initializers
 // Anonymous function as __proto__ [[Prototype]] won't be named "__proto__"
 {
   let o1 = {

@@ -9,7 +9,7 @@ const {
   assertThrows
 } = Assert;
 
-// Indexed access on uninitialised typed array throws TypeError from currently active realm
+// Indexed access on uninitialized typed array throws TypeError from currently active realm
 
 const foreignRealm = new Reflect.Realm();
 foreignRealm.eval(`

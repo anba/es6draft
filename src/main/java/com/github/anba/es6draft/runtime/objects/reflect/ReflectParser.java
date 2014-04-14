@@ -410,11 +410,11 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         List<Expression> defaults = new ArrayList<>();
         for (FormalParameter formalParameter : formals) {
             if (formalParameter instanceof BindingElement) {
-                Expression initialiser = ((BindingElement) formalParameter).getInitialiser();
-                hasDefault |= initialiser != null;
-                // defaults.add(initialiser != null ? initialiser : noDefault);
-                if (initialiser != null) {
-                    defaults.add(initialiser);
+                Expression initializer = ((BindingElement) formalParameter).getInitializer();
+                hasDefault |= initializer != null;
+                // defaults.add(initializer != null ? initializer : noDefault);
+                if (initializer != null) {
+                    defaults.add(initializer);
                 }
             }
         }
@@ -446,9 +446,9 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
             if (item instanceof BindingElision) {
                 defaults.add(noDefault);
             } else if (item instanceof BindingElement) {
-                Expression initialiser = ((BindingElement) item).getInitialiser();
-                hasDefault |= initialiser != null;
-                defaults.add(initialiser != null ? initialiser : noDefault);
+                Expression initializer = ((BindingElement) item).getInitializer();
+                hasDefault |= initializer != null;
+                defaults.add(initializer != null ? initializer : noDefault);
             }
         }
         return hasDefault ? defaults : Collections.<Expression> emptyList();
@@ -479,9 +479,9 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
             if (item instanceof Elision) {
                 defaults.add(noDefault);
             } else if (item instanceof AssignmentElement) {
-                Expression initialiser = ((AssignmentElement) item).getInitialiser();
-                hasDefault |= initialiser != null;
-                defaults.add(initialiser != null ? initialiser : noDefault);
+                Expression initializer = ((AssignmentElement) item).getInitializer();
+                hasDefault |= initializer != null;
+                defaults.add(initializer != null ? initializer : noDefault);
             }
         }
         return hasDefault ? defaults : Collections.<Expression> emptyList();
@@ -695,7 +695,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     public Object visit(AssignmentProperty node, Void value) {
         Object key = node.getPropertyName().accept(this, value);
         Object _value = node.getTarget().accept(this, value);
-        Object initialiser = acceptOrNull(node.getInitialiser(), value);
+        Object initializer = acceptOrNull(node.getInitializer(), value);
         String kind = "init";
         boolean method = false;
         boolean shorthand = false;
@@ -705,7 +705,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         ScriptObject property = createNode(node, Type.Property); // not PropertyPattern!
         addProperty(property, "key", key);
         addProperty(property, "value", _value);
-        addProperty(property, "default", initialiser);
+        addProperty(property, "default", initializer);
         addProperty(property, "kind", kind);
         addProperty(property, "method", method);
         addProperty(property, "shorthand", shorthand);
@@ -828,7 +828,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         // TODO: handle BindingProperty : SingleNameBinding
         Object key = acceptOrNull(node.getPropertyName(), value);
         Object _value = node.getBinding().accept(this, value);
-        Object initialiser = acceptOrNull(node.getInitialiser(), value);
+        Object initializer = acceptOrNull(node.getInitializer(), value);
         String kind = "init";
         boolean method = false;
         boolean shorthand = false;
@@ -838,7 +838,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         ScriptObject property = createNode(node, Type.Property); // not PropertyPattern!
         addProperty(property, "key", key);
         addProperty(property, "value", _value);
-        addProperty(property, "default", initialiser);
+        addProperty(property, "default", initializer);
         addProperty(property, "kind", kind);
         addProperty(property, "method", method);
         addProperty(property, "shorthand", shorthand);
@@ -1529,7 +1529,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(LexicalBinding node, Void value) {
         Object id = node.getBinding().accept(this, value);
-        Object init = acceptOrNull(node.getInitialiser(), value);
+        Object init = acceptOrNull(node.getInitializer(), value);
         if (hasBuilder(Type.VariableDeclarator)) {
             return call(Type.VariableDeclarator, node, id, init);
         }
@@ -1927,7 +1927,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(VariableDeclaration node, Void value) {
         Object id = node.getBinding().accept(this, value);
-        Object init = acceptOrNull(node.getInitialiser(), value);
+        Object init = acceptOrNull(node.getInitializer(), value);
         if (hasBuilder(Type.VariableDeclarator)) {
             return call(Type.VariableDeclarator, node, id, init);
         }

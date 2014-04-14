@@ -33,7 +33,7 @@ public final class SymbolObject extends OrdinaryObject {
      * @return the symbol value
      */
     public Symbol getSymbolData() {
-        assert symbolData != null : "SymbolData not initialised";
+        assert symbolData != null : "SymbolData not initialized";
         return symbolData;
     }
 
@@ -44,7 +44,7 @@ public final class SymbolObject extends OrdinaryObject {
      *            the new symbol value
      */
     public void setSymbolData(Symbol symbolData) {
-        assert this.symbolData == null : "SymbolData already initialised";
+        assert this.symbolData == null : "SymbolData already initialized";
         this.symbolData = symbolData;
     }
 

@@ -15,21 +15,21 @@ package com.github.anba.es6draft.ast;
  */
 public final class BindingElement extends FormalParameter implements BindingElementItem {
     private final Binding binding;
-    private final Expression initialiser;
+    private final Expression initializer;
 
     public BindingElement(long beginPosition, long endPosition, Binding binding,
-            Expression initialiser) {
+            Expression initializer) {
         super(beginPosition, endPosition);
         this.binding = binding;
-        this.initialiser = initialiser;
+        this.initializer = initializer;
     }
 
     public Binding getBinding() {
         return binding;
     }
 
-    public Expression getInitialiser() {
-        return initialiser;
+    public Expression getInitializer() {
+        return initializer;
     }
 
     @Override

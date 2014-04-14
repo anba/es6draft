@@ -190,7 +190,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         /* step 10 */
         HashSet<String> functionNames = new HashSet<>();
         /* step 11 */
-        List<Declaration> functionsToInitialise = new ArrayList<>();
+        List<Declaration> functionsToInitialize = new ArrayList<>();
         /* step 12 */
         for (StatementListItem item : reverse(varDeclarations)) {
             if (!(item instanceof VariableStatement)) {
@@ -200,7 +200,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                 if (!functionNames.contains(fn)) {
                     varNames.remove(fn);
                     functionNames.add(fn);
-                    functionsToInitialise.add(d);
+                    functionsToInitialize.add(d);
                 }
             }
         }
@@ -258,7 +258,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                 }
                 argumentsValue = argumentsObj;
             }
-            initialiseBinding(envRec, "arguments", argumentsValue, mv);
+            initializeBinding(envRec, "arguments", argumentsValue, mv);
         } else if (legacy) {
             if (!simpleParameterList) {
                 CreateLegacyArguments(mv);
@@ -277,7 +277,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                 bindings.add(paramName);
                 createMutableBinding(envRec, paramName, false, mv);
                 if (hasDuplicates) {
-                    initialiseBinding(envRec, paramName, undef, mv);
+                    initializeBinding(envRec, paramName, undef, mv);
                 }
             }
         }
@@ -319,7 +319,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             if (!parameterNames.contains(varName)) {
                 // FIXME: spec bug - duplicate varNames (Bug 2645)
                 createMutableBinding(localEnvRec, varName, false, mv);
-                initialiseBinding(localEnvRec, varName, undef, mv);
+                initializeBinding(localEnvRec, varName, undef, mv);
             }
         }
         /* step 26 */
@@ -337,7 +337,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
         // FIXME: spec bug - missing function bindings (Bug 2643)
         /* step 28 */
-        for (Declaration f : functionsToInitialise) {
+        for (Declaration f : functionsToInitialize) {
             String fn = BoundName(f);
 
             // stack: [] -> [fo]
@@ -352,7 +352,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             } else {
                 // stack: [fo] -> []
                 createMutableBinding(localEnvRec, fn, false, mv);
-                initialiseBinding(localEnvRec, fn, mv);
+                initializeBinding(localEnvRec, fn, mv);
             }
         }
         /* step 29 */

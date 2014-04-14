@@ -14,7 +14,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -32,16 +32,16 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>10.3 Properties of the Intl.Collator Prototype Object
  * </ul>
  */
-public final class CollatorPrototype extends CollatorObject implements Initialisable {
+public final class CollatorPrototype extends CollatorObject implements Initializable {
     public CollatorPrototype(Realm realm) {
         super(realm);
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
 
-        // initialise Intl.Collator.prototype's internal state
+        // initialize Intl.Collator.prototype's internal state
         CollatorConstructor.InitializeCollator(cx, this, UNDEFINED, UNDEFINED);
     }
 
@@ -57,7 +57,7 @@ public final class CollatorPrototype extends CollatorObject implements Initialis
                 if (collator.isInitializedCollator()) {
                     return collator;
                 }
-                throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                throw newTypeError(cx, Messages.Key.UninitializedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

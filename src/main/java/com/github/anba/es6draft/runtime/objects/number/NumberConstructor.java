@@ -14,7 +14,7 @@ import org.mozilla.javascript.StringToNumber;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -35,13 +35,13 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>20.1.2 Properties of the Number Constructor
  * </ul>
  */
-public final class NumberConstructor extends BuiltinConstructor implements Initialisable {
+public final class NumberConstructor extends BuiltinConstructor implements Initializable {
     public NumberConstructor(Realm realm) {
         super(realm, "Number");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -66,7 +66,7 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
         /* step 5 */
         if (thisValue instanceof NumberObject) {
             NumberObject obj = (NumberObject) thisValue;
-            if (!obj.isInitialised()) {
+            if (!obj.isInitialized()) {
                 obj.setNumberData(n);
                 return obj;
             }

@@ -25,7 +25,7 @@ import com.github.anba.es6draft.regexp.RegExpMatcher;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -50,13 +50,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>21.2.6 Properties of RegExp Instances
  * </ul>
  */
-public final class RegExpPrototype extends OrdinaryObject implements Initialisable {
+public final class RegExpPrototype extends OrdinaryObject implements Initializable {
     public RegExpPrototype(Realm realm) {
         super(realm);
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         createProperties(cx, this, AdditionalProperties.class);
     }
@@ -70,10 +70,10 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
         private static RegExpObject thisRegExpValue(ExecutionContext cx, Object object) {
             if (object instanceof RegExpObject) {
                 RegExpObject obj = (RegExpObject) object;
-                if (obj.isInitialised()) {
+                if (obj.isInitialized()) {
                     return obj;
                 }
-                throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                throw newTypeError(cx, Messages.Key.UninitializedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -737,8 +737,8 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
             if (pattern instanceof RegExpObject) {
                 /* step 5 */
                 RegExpObject rx = (RegExpObject) pattern;
-                if (!rx.isInitialised()) {
-                    throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                if (!rx.isInitialized()) {
+                    throw newTypeError(cx, Messages.Key.UninitializedObject);
                 }
                 if (!Type.isUndefined(flags)) {
                     throw newTypeError(cx, Messages.Key.NotUndefined);
@@ -827,7 +827,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
     private static MatchResult getMatcherOrNull(ExecutionContext cx, RegExpObject r, String s,
             boolean ignore) {
         /* step 1 */
-        assert r.isInitialised();
+        assert r.isInitialized();
         /* step 2 (not applicable) */
         /* steps 3-4 (not applicable) */
         /* step 6 */
@@ -904,7 +904,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
      */
     private static ScriptObject toMatchResult(ExecutionContext cx, RegExpObject r, String s,
             MatchResult m) {
-        assert r.isInitialised();
+        assert r.isInitialized();
         /* steps 17-18 */
         int e = m.end();
         /* step 20 */
@@ -940,7 +940,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initialisab
      * @return the match groups
      */
     public static String[] groups(RegExpObject r, MatchResult m) {
-        assert r.isInitialised();
+        assert r.isInitialized();
         GroupIterator iterator = new GroupIterator(r, m);
         int c = m.groupCount();
         String[] groups = new String[c + 1];

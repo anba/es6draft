@@ -140,7 +140,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                 Label funcAlreadyDeclared = new Label(), after = new Label();
                 mv.ifne(funcAlreadyDeclared);
                 createMutableBinding(envRec, fn, deletableBindings, mv);
-                initialiseBinding(envRec, fn, mv);
+                initializeBinding(envRec, fn, mv);
                 mv.goTo(after);
                 mv.mark(funcAlreadyDeclared);
                 setMutableBinding(envRec, fn, strict, mv);
@@ -159,7 +159,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                     createMutableBinding(envRec, dn, deletableBindings, mv);
                     mv.loadUndefined();
                     // setMutableBinding(envRec, dn, strict, mv);
-                    initialiseBinding(envRec, dn, mv);
+                    initializeBinding(envRec, dn, mv);
                     mv.mark(varAlreadyDeclared);
                 }
             }

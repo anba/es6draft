@@ -960,9 +960,9 @@ final class StatementGenerator extends
                     createMutableBinding(name, false, mv);
                 }
 
-                Expression initialiser = binding.getInitialiser();
-                if (initialiser != null) {
-                    ValType type = expressionBoxedValue(initialiser, mv);
+                Expression initializer = binding.getInitializer();
+                if (initializer != null) {
+                    ValType type = expressionBoxedValue(initializer, mv);
                     if (binding.getBinding() instanceof BindingPattern) {
                         ToObject(type, mv);
                     }
@@ -997,8 +997,8 @@ final class StatementGenerator extends
     @Override
     public Completion visit(LexicalBinding node, StatementVisitor mv) {
         Binding binding = node.getBinding();
-        Expression initialiser = node.getInitialiser();
-        if (initialiser == null) {
+        Expression initializer = node.getInitializer();
+        if (initializer == null) {
             // LexicalBinding : BindingIdentifier
             assert binding instanceof BindingIdentifier;
             /* step 1 */
@@ -1009,18 +1009,18 @@ final class StatementGenerator extends
             return Completion.Normal;
         }
         if (binding instanceof BindingIdentifier) {
-            // LexicalBinding : BindingIdentifier Initialiser
+            // LexicalBinding : BindingIdentifier Initializer
             /* steps 1-3 */
-            expressionBoxedValue(initialiser, mv);
+            expressionBoxedValue(initializer, mv);
             /* step 4 */
-            if (IsAnonymousFunctionDefinition(initialiser)) {
-                SetFunctionName(initialiser, ((BindingIdentifier) binding).getName(), mv);
+            if (IsAnonymousFunctionDefinition(initializer)) {
+                SetFunctionName(initializer, ((BindingIdentifier) binding).getName(), mv);
             }
         } else {
-            // LexicalBinding : BindingPattern Initialiser
+            // LexicalBinding : BindingPattern Initializer
             assert binding instanceof BindingPattern;
             /* steps 1-3 */
-            ValType type = expressionBoxedValue(initialiser, mv);
+            ValType type = expressionBoxedValue(initializer, mv);
             /* step 4 */
             ensureObjectOrThrow(binding, type, mv);
         }
@@ -1520,26 +1520,26 @@ final class StatementGenerator extends
     @Override
     public Completion visit(VariableDeclaration node, StatementVisitor mv) {
         Binding binding = node.getBinding();
-        Expression initialiser = node.getInitialiser();
-        if (initialiser == null) {
+        Expression initializer = node.getInitializer();
+        if (initializer == null) {
             // VariableDeclaration : BindingIdentifier
             assert binding instanceof BindingIdentifier;
             /* step 1 */
             return Completion.Normal;
         }
         if (binding instanceof BindingIdentifier) {
-            // VariableDeclaration : BindingIdentifier Initialiser
+            // VariableDeclaration : BindingIdentifier Initializer
             /* steps 1-3 */
-            expressionBoxedValue(initialiser, mv);
+            expressionBoxedValue(initializer, mv);
             /* step 4 */
-            if (IsAnonymousFunctionDefinition(initialiser)) {
-                SetFunctionName(initialiser, ((BindingIdentifier) binding).getName(), mv);
+            if (IsAnonymousFunctionDefinition(initializer)) {
+                SetFunctionName(initializer, ((BindingIdentifier) binding).getName(), mv);
             }
         } else {
-            // VariableDeclaration : BindingPattern Initialiser
+            // VariableDeclaration : BindingPattern Initializer
             assert binding instanceof BindingPattern;
             /* steps 1-3 */
-            ValType type = expressionBoxedValue(initialiser, mv);
+            ValType type = expressionBoxedValue(initializer, mv);
             /* step 4 */
             ensureObjectOrThrow(binding, type, mv);
         }

@@ -209,7 +209,7 @@ public final class ScriptRuntime {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         /* steps 5-6 */
-        ScriptObject iterator = GetIterator(cx, spreadObj);
+        ScriptObject iterator = GetIterator(cx, Type.objectValue(spreadObj));
         /* step 7 */
         for (;;) {
             ScriptObject next = IteratorStep(cx, iterator);
@@ -223,7 +223,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.1.5 Object Initialiser
+     * 12.1.5 Object Initializer
      * <p>
      * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      * 
@@ -243,7 +243,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.1.5 Object Initialiser
+     * 12.1.5 Object Initializer
      * <p>
      * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      * 
@@ -263,7 +263,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.1.5 Object Initialiser
+     * 12.1.5 Object Initializer
      * <p>
      * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      * 
@@ -775,7 +775,7 @@ public final class ScriptRuntime {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         /* steps 6-7 */
-        ScriptObject iterator = GetIterator(cx, spreadObj);
+        ScriptObject iterator = GetIterator(cx, Type.objectValue(spreadObj));
         /* step 8 */
         for (int n = 0; n <= MAX_ARGS; ++n) {
             ScriptObject next = IteratorStep(cx, iterator);
@@ -1414,7 +1414,7 @@ public final class ScriptRuntime {
             /* step 9 */
             SetFunctionName(closure, name);
             /* step 10 */
-            envRec.initialiseBinding(name, closure);
+            envRec.initializeBinding(name, closure);
         }
         /* step 6/11 */
         return closure;
@@ -2026,7 +2026,7 @@ public final class ScriptRuntime {
             // TODO: missing in spec
             SetFunctionName(closure, name);
             /* step 11 */
-            envRec.initialiseBinding(name, closure);
+            envRec.initializeBinding(name, closure);
         }
         /* step 8/12 */
         return closure;
@@ -2089,7 +2089,7 @@ public final class ScriptRuntime {
             // TODO: missing in spec
             SetFunctionName(closure, name);
             /* step 11 */
-            envRec.initialiseBinding(name, closure);
+            envRec.initializeBinding(name, closure);
         }
         /* step 8/12 */
         return closure;
@@ -2280,12 +2280,12 @@ public final class ScriptRuntime {
         EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
 
         envRec.createMutableBinding("args", false);
-        envRec.initialiseBinding("args", UNDEFINED);
+        envRec.initializeBinding("args", UNDEFINED);
         envRec.createImmutableBinding("arguments");
 
         cx.resolveBinding("args", true).putValue(createRestArray(asList(args).iterator(), cx), cx);
 
-        envRec.initialiseBinding("arguments", CreateStrictArgumentsObject(cx, args));
+        envRec.initializeBinding("arguments", CreateStrictArgumentsObject(cx, args));
     }
 
     public static Object DefaultConstructor(ExecutionContext cx) {
@@ -2337,7 +2337,7 @@ public final class ScriptRuntime {
         EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
 
         envRec.createImmutableBinding("arguments");
-        envRec.initialiseBinding("arguments", CreateStrictArgumentsObject(cx, args));
+        envRec.initializeBinding("arguments", CreateStrictArgumentsObject(cx, args));
     }
 
     public static Object DefaultEmptyConstructor(ExecutionContext cx) {
@@ -2435,7 +2435,7 @@ public final class ScriptRuntime {
             // TODO: missing in spec
             SetFunctionName(closure, name);
             /* step 11 */
-            envRec.initialiseBinding(name, closure);
+            envRec.initializeBinding(name, closure);
         }
         /* step 8/12 */
         return closure;
@@ -2554,7 +2554,7 @@ public final class ScriptRuntime {
     /* ***************************************************************************************** */
 
     /**
-     * B.3.1 __proto___ Property Names in Object Initialisers
+     * B.3.1 __proto___ Property Names in Object Initializers
      * 
      * @param object
      *            the object instance

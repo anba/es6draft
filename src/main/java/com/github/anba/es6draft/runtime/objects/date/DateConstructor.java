@@ -14,7 +14,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -38,13 +38,13 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>20.3.3 Properties of the Date Constructor
  * </ul>
  */
-public final class DateConstructor extends BuiltinConstructor implements Initialisable {
+public final class DateConstructor extends BuiltinConstructor implements Initializable {
     public DateConstructor(Realm realm) {
         super(realm, "Date");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -71,7 +71,7 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
         /* steps 3-4 */
         if (numberOfArgs >= 2) {
             // [20.3.2.1]
-            if (isUninitialisedDateObject(thisValue)) {
+            if (isUninitializedDateObject(thisValue)) {
                 DateObject obj = (DateObject) thisValue;
                 double year = ToNumber(calleeContext, args[0]);
                 double month = ToNumber(calleeContext, args[1]);
@@ -90,7 +90,7 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
             }
         } else if (numberOfArgs == 1) {
             // [20.3.2.2]
-            if (isUninitialisedDateObject(thisValue)) {
+            if (isUninitializedDateObject(thisValue)) {
                 DateObject obj = (DateObject) thisValue;
                 double tv;
                 if (args[0] instanceof DateObject) {
@@ -108,7 +108,7 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
             }
         } else {
             // [20.3.2.3]
-            if (isUninitialisedDateObject(thisValue)) {
+            if (isUninitializedDateObject(thisValue)) {
                 DateObject obj = (DateObject) thisValue;
                 obj.setDateValue(System.currentTimeMillis());
                 return obj;
@@ -131,17 +131,17 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
     private static double thisTimeValue(ExecutionContext cx, Object object) {
         if (object instanceof DateObject) {
             DateObject obj = (DateObject) object;
-            if (obj.isInitialised()) {
+            if (obj.isInitialized()) {
                 return obj.getDateValue();
             }
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         throw newTypeError(cx, Messages.Key.IncompatibleObject);
     }
 
-    private static boolean isUninitialisedDateObject(Object thisValue) {
+    private static boolean isUninitializedDateObject(Object thisValue) {
         if (thisValue instanceof DateObject) {
-            return !((DateObject) thisValue).isInitialised();
+            return !((DateObject) thisValue).isInitialized();
         }
         return false;
     }
@@ -272,7 +272,7 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised date object
+         * @return the new uninitialized date object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

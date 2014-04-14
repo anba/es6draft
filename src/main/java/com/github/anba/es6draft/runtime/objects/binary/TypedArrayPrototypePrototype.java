@@ -23,7 +23,7 @@ import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -47,13 +47,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>22.2.3 Properties of the %TypedArrayPrototype% Object
  * </ul>
  */
-public final class TypedArrayPrototypePrototype extends OrdinaryObject implements Initialisable {
+public final class TypedArrayPrototypePrototype extends OrdinaryObject implements Initializable {
     public TypedArrayPrototypePrototype(Realm realm) {
         super(realm);
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
     }
 
@@ -69,7 +69,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 if (view.getBuffer() != null) {
                     return view;
                 }
-                throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                throw newTypeError(cx, Messages.Key.UninitializedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -146,7 +146,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         public static Object length(ExecutionContext cx, Object thisValue) {
             TypedArrayObject typedArray = thisTypedArrayObject(cx, thisValue);
             if (typedArray.getBuffer() == null) {
-                throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                throw newTypeError(cx, Messages.Key.UninitializedObject);
             }
             return typedArray.getArrayLength();
         }
@@ -175,7 +175,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 ArrayBufferObject targetBuffer = target.getBuffer();
                 /* step 7 */
                 if (targetBuffer == null) {
-                    throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                    throw newTypeError(cx, Messages.Key.UninitializedObject);
                 }
                 /* step 8 */
                 long targetLength = target.getArrayLength();
@@ -230,13 +230,13 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 ArrayBufferObject targetBuffer = target.getBuffer();
                 /* step 7 */
                 if (targetBuffer == null) {
-                    throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                    throw newTypeError(cx, Messages.Key.UninitializedObject);
                 }
                 /* step 8 */
                 ArrayBufferObject srcBuffer = typedArray.getBuffer();
                 /* step 9 */
                 if (srcBuffer == null) {
-                    throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                    throw newTypeError(cx, Messages.Key.UninitializedObject);
                 }
                 /* step 10 */
                 long targetLength = target.getArrayLength();
@@ -310,7 +310,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             ArrayBufferObject buffer = array.getBuffer();
             /* step 6 */
             if (buffer == null) {
-                throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                throw newTypeError(cx, Messages.Key.UninitializedObject);
             }
             /* step 7 */
             long srcLength = array.getArrayLength();
@@ -970,7 +970,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             TypedArrayObject array = (TypedArrayObject) thisValue;
             /* steps 4-5 */
             if (array.getElementType() == null) {
-                throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                throw newTypeError(cx, Messages.Key.UninitializedObject);
             }
             /* step 6 (not applicable) */
             /* step 7 */

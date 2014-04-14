@@ -1121,7 +1121,7 @@ public final class Parser {
             FunctionExpression function;
             newContext(ContextKind.Function);
             try {
-                ts = new TokenStream(this, new TokenStreamInput(formals)).initialise();
+                ts = new TokenStream(this, new TokenStreamInput(formals)).initialize();
                 FormalParameterList parameters = formalParameters(Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
@@ -1132,7 +1132,7 @@ public final class Parser {
                     formals = "\n" + formals + "\n";
                 }
 
-                ts = new TokenStream(this, new TokenStreamInput(bodyText)).initialise();
+                ts = new TokenStream(this, new TokenStreamInput(bodyText)).initialize();
                 List<StatementListItem> statements = functionBody(Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);
@@ -1188,7 +1188,7 @@ public final class Parser {
             GeneratorExpression generator;
             newContext(ContextKind.Generator);
             try {
-                ts = new TokenStream(this, new TokenStreamInput(formals)).initialise();
+                ts = new TokenStream(this, new TokenStreamInput(formals)).initialize();
                 FormalParameterList parameters = formalParameters(Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
@@ -1199,7 +1199,7 @@ public final class Parser {
                     formals = "\n" + formals + "\n";
                 }
 
-                ts = new TokenStream(this, new TokenStreamInput(bodyText)).initialise();
+                ts = new TokenStream(this, new TokenStreamInput(bodyText)).initialize();
                 List<StatementListItem> statements = functionBody(Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);
@@ -1260,7 +1260,7 @@ public final class Parser {
     private Script script() {
         newContext(ContextKind.Script);
         try {
-            ts.initialise();
+            ts.initialize();
             List<StatementListItem> prologue = directivePrologue();
             List<StatementListItem> body = statementList(Token.EOF);
             List<StatementListItem> statements = merge(prologue, body);
@@ -1294,7 +1294,7 @@ public final class Parser {
         newContext(ContextKind.Module);
         context.strictMode = StrictMode.Strict;
         try {
-            ts.initialise();
+            ts.initialize();
             List<ModuleItem> statements = moduleItemList();
             assert context.assertLiteralsUnchecked(0);
 
@@ -2219,7 +2219,7 @@ public final class Parser {
      *     ArrowParameters<span><sub>[?Yield]</sub></span> {@literal =>} ConciseBody<span><sub>[?In]</sub></span>
      * ArrowParameters<span><sub>[Yield]</sub></span> :
      *     BindingIdentifier<span><sub>[?Yield]</sub></span>
-     *     CoverParenthesisedExpressionAndArrowParameterList<span><sub>[?Yield]</sub></span>
+     *     CoverParenthesizedExpressionAndArrowParameterList<span><sub>[?Yield]</sub></span>
      * ConciseBody<span><sub>[In]</sub></span> :
      *     [LA &#x2209; { <b>{</b> }] AssignmentExpression<span><sub>[?In]</sub></span>
      *     { FunctionBody }
@@ -3646,7 +3646,7 @@ public final class Parser {
                 initializer = initializer(allowIn);
             } else if (isConst && allowIn) {
                 // `allowIn == false` indicates for-loop, cf. forStatement()
-                reportSyntaxError(bindingIdentifier, Messages.Key.ConstMissingInitialiser);
+                reportSyntaxError(bindingIdentifier, Messages.Key.ConstMissingInitializer);
             }
             binding = bindingIdentifier;
         }
@@ -4262,8 +4262,8 @@ public final class Parser {
             // Enforce initializer for BindingPattern
             VariableStatement varStmt = (VariableStatement) head;
             for (VariableDeclaration decl : varStmt.getElements()) {
-                if (decl.getBinding() instanceof BindingPattern && decl.getInitialiser() == null) {
-                    reportSyntaxError(varStmt, Messages.Key.DestructuringMissingInitialiser);
+                if (decl.getBinding() instanceof BindingPattern && decl.getInitializer() == null) {
+                    reportSyntaxError(varStmt, Messages.Key.DestructuringMissingInitializer);
                 }
             }
             // Add variable statement after for-statement type is known
@@ -4273,11 +4273,11 @@ public final class Parser {
             LexicalDeclaration lexDecl = (LexicalDeclaration) head;
             boolean isConst = lexDecl.getType() == LexicalDeclaration.Type.Const;
             for (LexicalBinding decl : lexDecl.getElements()) {
-                if (decl.getBinding() instanceof BindingPattern && decl.getInitialiser() == null) {
-                    reportSyntaxError(lexDecl, Messages.Key.DestructuringMissingInitialiser);
+                if (decl.getBinding() instanceof BindingPattern && decl.getInitializer() == null) {
+                    reportSyntaxError(lexDecl, Messages.Key.DestructuringMissingInitializer);
                 }
-                if (isConst && decl.getInitialiser() == null) {
-                    reportSyntaxError(lexDecl, Messages.Key.ConstMissingInitialiser);
+                if (isConst && decl.getInitializer() == null) {
+                    reportSyntaxError(lexDecl, Messages.Key.ConstMissingInitializer);
                 }
             }
         }
@@ -4375,7 +4375,7 @@ public final class Parser {
         case VAR:
             VariableStatement varStmt = forVarDeclaration();
             assert varStmt.getElements().size() == 1;
-            assert varStmt.getElements().get(0).getInitialiser() == null;
+            assert varStmt.getElements().get(0).getInitializer() == null;
             addVarDeclaredName(varStmt.getElements().get(0).getBinding());
             addVarScopedDeclaration(varStmt);
             head = varStmt;
@@ -4418,7 +4418,7 @@ public final class Parser {
             lexBlockContext = enterBlockContext();
             LexicalDeclaration lexDecl = (LexicalDeclaration) head;
             assert lexDecl.getElements().size() == 1;
-            assert lexDecl.getElements().get(0).getInitialiser() == null;
+            assert lexDecl.getElements().get(0).getInitializer() == null;
             addLexDeclaredName(lexDecl.getElements().get(0).getBinding());
             addLexScopedDeclaration(lexDecl);
         }
@@ -5387,7 +5387,7 @@ public final class Parser {
 
     private EmptyExpression arrowFunctionEmptyParameters() {
         if (!(token() == Token.RP && LOOKAHEAD(Token.ARROW))) {
-            reportSyntaxError(Messages.Key.EmptyParenthesisedExpression);
+            reportSyntaxError(Messages.Key.EmptyParenthesizedExpression);
         }
         return new EmptyExpression(0, 0);
     }
@@ -5415,7 +5415,7 @@ public final class Parser {
      * 
      * @return the parsed array initializer
      */
-    private ArrayInitialiser arrayInitializer() {
+    private ArrayInitializer arrayInitializer() {
         if (LOOKAHEAD(Token.FOR)) {
             return arrayComprehension();
         } else {
@@ -5795,7 +5795,7 @@ public final class Parser {
                 kind = type == MethodType.Getter ? GETTER : type == MethodType.Setter ? SETTER
                         : SPECIAL;
             } else {
-                assert def instanceof CoverInitialisedName;
+                assert def instanceof CoverInitializedName;
                 // Always throw a Syntax Error if this production is present
                 throw reportSyntaxError(def, Messages.Key.MissingColonAfterPropertyId, key);
             }
@@ -5871,7 +5871,7 @@ public final class Parser {
             Identifier identifier = identifierReference();
             consume(Token.ASSIGN);
             Expression initializer = assignmentExpression(true);
-            return new CoverInitialisedName(begin, ts.endPosition(), identifier, initializer);
+            return new CoverInitializedName(begin, ts.endPosition(), identifier, initializer);
         }
         return methodDefinition();
     }
@@ -6883,12 +6883,12 @@ public final class Parser {
                 assignmentProperty_EarlyErrors(def.getPropertyName());
                 property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
                         def.getPropertyName(), null);
-            } else if (p instanceof CoverInitialisedName) {
+            } else if (p instanceof CoverInitializedName) {
                 // AssignmentProperty : IdentifierReference Initializer
-                CoverInitialisedName def = (CoverInitialisedName) p;
+                CoverInitializedName def = (CoverInitializedName) p;
                 assignmentProperty_EarlyErrors(def.getPropertyName());
                 property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
-                        def.getPropertyName(), def.getInitialiser());
+                        def.getPropertyName(), def.getInitializer());
             } else {
                 assert p instanceof MethodDefinition;
                 throw reportSyntaxError(p, Messages.Key.InvalidDestructuring);
@@ -6898,7 +6898,7 @@ public final class Parser {
         context.removeLiteral(object);
         ObjectAssignmentPattern pattern = new ObjectAssignmentPattern(object.getBeginPosition(),
                 object.getEndPosition(), list);
-        if (object.isParenthesised()) {
+        if (object.isParenthesized()) {
             pattern.addParentheses();
         }
         return pattern;
@@ -6974,7 +6974,7 @@ public final class Parser {
         }
         ArrayAssignmentPattern pattern = new ArrayAssignmentPattern(array.getBeginPosition(),
                 array.getEndPosition(), list);
-        if (array.isParenthesised()) {
+        if (array.isParenthesized()) {
             pattern.addParentheses();
         }
         return pattern;

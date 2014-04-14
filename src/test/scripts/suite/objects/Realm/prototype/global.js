@@ -32,7 +32,7 @@ assertBuiltinFunction(get_global, "get global", 0);
   }
 }
 
-// steps 3-4 - TypeError if thisValue is an uninitialised Realm object
+// steps 3-4 - TypeError if thisValue is an uninitialized Realm object
 {
   assertThrows(() => get_global.call(Reflect.Realm[Symbol.create]()), TypeError);
 }

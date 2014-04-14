@@ -825,7 +825,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         }
 
         if (!hasSpread) {
-            // Try to initialise array with faster {Dense, Sparse}ArrayCreate methods
+            // Try to initialize array with faster {Dense, Sparse}ArrayCreate methods
             int length = node.getElements().size();
             float density = (float) (length - elision) / length;
             if ((density >= 0.25f && length < 0x10) || (density >= 0.75f && length < 0x1000)) {
@@ -855,7 +855,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         if (!hasSpread) {
             int length = node.getElements().size();
             mv.loadExecutionContext();
-            mv.lconst(length); // initialise with correct "length"
+            mv.lconst(length); // initialize with correct "length"
             mv.invoke(Methods.ExoticArray_ArrayCreate);
 
             int nextIndex = 0;
@@ -872,7 +872,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 nextIndex += 1;
             }
             assert nextIndex == length;
-            // omit call Put(array, "length", nextIndex false), array is initialised with length
+            // omit call Put(array, "length", nextIndex false), array is initialized with length
         } else {
             mv.loadExecutionContext();
             mv.lconst(0);
@@ -2041,9 +2041,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                     createMutableBinding(name, false, mv);
                 }
 
-                Expression initialiser = binding.getInitialiser();
-                if (initialiser != null) {
-                    ValType type = expressionBoxedValue(initialiser, mv);
+                Expression initializer = binding.getInitializer();
+                if (initializer != null) {
+                    ValType type = expressionBoxedValue(initializer, mv);
                     if (binding.getBinding() instanceof BindingPattern) {
                         ToObject(type, mv);
                     }

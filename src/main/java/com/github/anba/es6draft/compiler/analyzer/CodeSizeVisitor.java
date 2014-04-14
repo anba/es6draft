@@ -189,7 +189,7 @@ final class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(AssignmentElement node, CodeSizeHandler value) {
-        return analyze(node, node.getTarget(), node.getInitialiser(), 25, value);
+        return analyze(node, node.getTarget(), node.getInitializer(), 25, value);
     }
 
     @Override
@@ -199,7 +199,7 @@ final class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(AssignmentProperty node, CodeSizeHandler value) {
-        return analyze(node, node.getTarget(), node.getInitialiser(), 25, value);
+        return analyze(node, node.getTarget(), node.getInitializer(), 25, value);
     }
 
     @Override
@@ -231,7 +231,7 @@ final class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(BindingElement node, CodeSizeHandler value) {
-        return analyze(node, node.getBinding(), node.getInitialiser(), 25, value);
+        return analyze(node, node.getBinding(), node.getInitializer(), 25, value);
     }
 
     @Override
@@ -246,7 +246,7 @@ final class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(BindingProperty node, CodeSizeHandler value) {
-        return analyze(node, node.getBinding(), node.getInitialiser(), 25, value);
+        return analyze(node, node.getBinding(), node.getInitializer(), 25, value);
     }
 
     @Override
@@ -515,7 +515,7 @@ final class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(LexicalBinding node, CodeSizeHandler value) {
-        return analyze(node, node.getInitialiser(), 20, value);
+        return analyze(node, node.getInitializer(), 20, value);
     }
 
     @Override
@@ -706,7 +706,7 @@ final class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(VariableDeclaration node, CodeSizeHandler value) {
-        return analyze(node, node.getInitialiser(), 15, value);
+        return analyze(node, node.getInitializer(), 15, value);
     }
 
     @Override

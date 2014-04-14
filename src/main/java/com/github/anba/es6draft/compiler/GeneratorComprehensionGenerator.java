@@ -17,7 +17,7 @@ import com.github.anba.es6draft.ast.GeneratorComprehension;
  * </ul>
  */
 final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
-    private boolean initialised = false;
+    private boolean initialized = false;
 
     GeneratorComprehensionGenerator(CodeGenerator codegen) {
         super(codegen);
@@ -28,11 +28,11 @@ final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
      */
     @Override
     public Void visit(GeneratorComprehension node, ExpressionVisitor mv) {
-        if (initialised) {
+        if (initialized) {
             // nested generator comprehension
             return visit((Expression) node, mv);
         }
-        this.initialised = true;
+        this.initialized = true;
 
         node.getComprehension().accept(this, mv);
 
@@ -46,7 +46,7 @@ final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
      */
     @Override
     protected Void visit(Expression node, ExpressionVisitor mv) {
-        assert initialised : "generator-comprehension generator not initialised";
+        assert initialized : "generator-comprehension generator not initialized";
 
         /* steps 1-3 */
         expressionBoxedValue(node, mv);

@@ -19,20 +19,20 @@ package com.github.anba.es6draft.ast;
 public final class BindingProperty extends AstNode {
     private final PropertyName propertyName;
     private final Binding binding;
-    private final Expression initialiser;
+    private final Expression initializer;
 
-    public BindingProperty(PropertyName propertyName, Binding binding, Expression initialiser) {
-        super(propertyName.getBeginPosition(), eitherOr(initialiser, binding).getEndPosition());
+    public BindingProperty(PropertyName propertyName, Binding binding, Expression initializer) {
+        super(propertyName.getBeginPosition(), eitherOr(initializer, binding).getEndPosition());
         this.propertyName = propertyName;
         this.binding = binding;
-        this.initialiser = initialiser;
+        this.initializer = initializer;
     }
 
-    public BindingProperty(BindingIdentifier binding, Expression initialiser) {
-        super(binding.getBeginPosition(), eitherOr(initialiser, binding).getEndPosition());
+    public BindingProperty(BindingIdentifier binding, Expression initializer) {
+        super(binding.getBeginPosition(), eitherOr(initializer, binding).getEndPosition());
         this.propertyName = null;
         this.binding = binding;
-        this.initialiser = initialiser;
+        this.initializer = initializer;
     }
 
     public PropertyName getPropertyName() {
@@ -43,8 +43,8 @@ public final class BindingProperty extends AstNode {
         return binding;
     }
 
-    public Expression getInitialiser() {
-        return initialiser;
+    public Expression getInitializer() {
+        return initializer;
     }
 
     @Override

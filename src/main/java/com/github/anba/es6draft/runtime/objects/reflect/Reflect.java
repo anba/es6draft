@@ -19,7 +19,7 @@ import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToProper
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -40,13 +40,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>26.1 The Reflect Object
  * </ul>
  */
-public final class Reflect extends OrdinaryObject implements Initialisable {
+public final class Reflect extends OrdinaryObject implements Initializable {
     public Reflect(Realm realm) {
         super(realm);
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         createProperties(cx, this, AdditionalProperties.class);
     }

@@ -17,7 +17,7 @@ import java.util.Date;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -41,16 +41,16 @@ import com.ibm.icu.text.DateTimePatternGenerator;
  * <li>12.3 Properties of the Intl.DateTimeFormat Prototype Object
  * </ul>
  */
-public final class DateTimeFormatPrototype extends DateTimeFormatObject implements Initialisable {
+public final class DateTimeFormatPrototype extends DateTimeFormatObject implements Initializable {
     public DateTimeFormatPrototype(Realm realm) {
         super(realm);
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
 
-        // initialise Intl.DateTimeFormat.prototype's internal state
+        // initialize Intl.DateTimeFormat.prototype's internal state
         DateTimeFormatConstructor.InitializeDateTimeFormat(cx, this, UNDEFINED, UNDEFINED);
     }
 
@@ -67,7 +67,7 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
                 if (dateTimeFormat.isInitializedDateTimeFormat()) {
                     return dateTimeFormat;
                 }
-                throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                throw newTypeError(cx, Messages.Key.UninitializedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

@@ -8,7 +8,7 @@
 const {
 } = Assert;
 
-// CoverInitialisedName in ForOfStatement
+// CoverInitializedName in ForOfStatement
 
 function testSyntax() {
   for ({} of {}) ;

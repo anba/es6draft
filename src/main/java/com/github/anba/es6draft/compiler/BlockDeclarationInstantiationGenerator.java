@@ -110,7 +110,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
      */
     private void generateInline(List<Declaration> declarations, ExpressionVisitor mv) {
         /* steps 1-2 */
-        List<Declaration> functionsToInitialise = new ArrayList<>();
+        List<Declaration> functionsToInitialize = new ArrayList<>();
 
         // stack: [env] -> [env, envRec]
         mv.dup();
@@ -129,16 +129,16 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
                 }
             }
             if (isFunctionDeclaration(d)) {
-                functionsToInitialise.add(d);
+                functionsToInitialize.add(d);
             }
         }
 
-        if (!functionsToInitialise.isEmpty()) {
+        if (!functionsToInitialize.isEmpty()) {
             // stack: [env, envRec] -> [envRec, env]
             mv.swap();
 
             /* step 4 */
-            for (Declaration f : functionsToInitialise) {
+            for (Declaration f : functionsToInitialize) {
                 String fn = BoundName(f);
 
                 // stack: [envRec, env] -> [envRec, env, envRec, env, cx]
@@ -149,7 +149,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
                 InstantiateFunctionObject(f, mv);
 
                 // stack: [envRec, env, envRec, fo] -> [envRec, env]
-                initialiseBinding(fn, mv);
+                initializeBinding(fn, mv);
             }
 
             // stack: [envRec, env] -> [env, envRec]

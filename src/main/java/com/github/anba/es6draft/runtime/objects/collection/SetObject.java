@@ -35,12 +35,12 @@ public final class SetObject extends OrdinaryObject {
         return setData;
     }
 
-    public void initialise() {
-        assert this.setData == null : "Set already initialised";
+    public void initialize() {
+        assert this.setData == null : "Set already initialized";
         this.setData = new LinkedMapImpl<Void>();
     }
 
-    public boolean isInitialised() {
-        return (setData != null);
+    public boolean isInitialized() {
+        return setData != null;
     }
 }

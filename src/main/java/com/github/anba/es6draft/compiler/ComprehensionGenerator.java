@@ -43,8 +43,8 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
                 MethodType.Interface, Types.EnvironmentRecord, "createMutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc EnvironmentRecord_initialiseBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "initialiseBinding",
+        static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
 
         // class: Iterator
@@ -147,7 +147,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
                 mv.dup();
                 mv.aconst(name);
                 mv.loadUndefined();
-                mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
+                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
             }
             mv.pop();
         }

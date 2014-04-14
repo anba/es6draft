@@ -31,13 +31,13 @@ public final class RegExpObject extends OrdinaryObject {
         super(realm);
     }
 
-    protected void initialise(String originalSource, String originalFlags, RegExpMatcher matcher) {
+    protected void initialize(String originalSource, String originalFlags, RegExpMatcher matcher) {
         this.originalSource = originalSource;
         this.originalFlags = originalFlags;
         this.regExpMatcher = matcher;
     }
 
-    protected boolean isInitialised() {
+    protected boolean isInitialized() {
         return regExpMatcher != null;
     }
 

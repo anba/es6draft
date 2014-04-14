@@ -13,7 +13,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -30,7 +30,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>22.2.5 Properties of the TypedArray Constructors
  * </ul>
  */
-public final class TypedArrayConstructor extends BuiltinConstructor implements Initialisable {
+public final class TypedArrayConstructor extends BuiltinConstructor implements Initializable {
     /** [[ElementType]] */
     private final ElementType elementType;
 
@@ -49,7 +49,7 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         switch (elementType) {
         case Int8:
             createProperties(cx, this, Properties_Int8Array.class);
@@ -107,7 +107,7 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
         TypedArrayObject array = (TypedArrayObject) obj;
         /* step 4 */
         if (array.getElementType() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
         /* step 5 */
         array.setElementType(getElementType());

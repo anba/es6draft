@@ -52,7 +52,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
                     deletable);
         }
 
-        public void initialise(Object value) {
+        public void initialize(Object value) {
             assert this.value == null && value != null;
             this.value = value;
         }
@@ -74,7 +74,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         public void setValue(ExecutionContext cx, String name, Object value, boolean strict) {
             assert value != null;
             if (this.value == null) {
-                throw newReferenceError(cx, Messages.Key.UninitialisedBinding, name);
+                throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
             } else if (mutable) {
                 this.value = value;
             } else if (strict) {
@@ -87,7 +87,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
                 if (!strict) {
                     return UNDEFINED;
                 }
-                throw newReferenceError(cx, Messages.Key.UninitialisedBinding, name);
+                throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
             }
             return value;
         }
@@ -184,10 +184,10 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 8.1.1.1.4 InitialiseBinding (N,V)
+     * 8.1.1.1.4 InitializeBinding (N,V)
      */
     @Override
-    public void initialiseBinding(String name, Object value) {
+    public void initializeBinding(String name, Object value) {
         assert value != null;
         Binding b = bindings.get(name);
         /* step 1 (omitted) */
@@ -209,7 +209,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         assert b != null; // FIXME: spec bug (bug 159)
         /* steps 3-6 */
         if (b.value == null) {
-            throw newReferenceError(cx, Messages.Key.UninitialisedBinding, name);
+            throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
         } else if (b.mutable) {
             b.value = value;
         } else if (strict) {
@@ -231,7 +231,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
             if (!strict) {
                 return UNDEFINED;
             }
-            throw newReferenceError(cx, Messages.Key.UninitialisedBinding, name);
+            throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
         }
         /* step 4 */
         return b.value;

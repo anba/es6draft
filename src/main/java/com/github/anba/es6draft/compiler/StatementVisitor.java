@@ -237,7 +237,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
         Variable<Object> completion = labels.completion;
         if (completion == null) {
             completion = newVariable("completion", Object.class);
-            // TODO: correct live variable analysis, initialised with null for now
+            // TODO: correct live variable analysis, initialized with null for now
             aconst(null);
             store(completion);
         }

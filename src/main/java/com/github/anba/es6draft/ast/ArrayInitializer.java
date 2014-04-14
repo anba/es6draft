@@ -10,11 +10,11 @@ package com.github.anba.es6draft.ast;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.1 Primary Expressions</h2>
  * <ul>
- * <li>12.1.4 Array Initialiser
+ * <li>12.1.4 Array Initializer
  * </ul>
  */
-public abstract class ArrayInitialiser extends Expression {
-    protected ArrayInitialiser(long beginPosition, long endPosition) {
+public abstract class ArrayInitializer extends Expression {
+    protected ArrayInitializer(long beginPosition, long endPosition) {
         super(beginPosition, endPosition);
     }
 }

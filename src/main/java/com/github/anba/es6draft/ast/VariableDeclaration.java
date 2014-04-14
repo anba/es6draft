@@ -15,20 +15,20 @@ package com.github.anba.es6draft.ast;
  */
 public final class VariableDeclaration extends AstNode {
     private final Binding binding;
-    private final Expression initialiser;
+    private final Expression initializer;
 
-    public VariableDeclaration(Binding binding, Expression initialiser) {
-        super(binding.getBeginPosition(), eitherOr(initialiser, binding).getEndPosition());
+    public VariableDeclaration(Binding binding, Expression initializer) {
+        super(binding.getBeginPosition(), eitherOr(initializer, binding).getEndPosition());
         this.binding = binding;
-        this.initialiser = initialiser;
+        this.initializer = initializer;
     }
 
     public Binding getBinding() {
         return binding;
     }
 
-    public Expression getInitialiser() {
-        return initialiser;
+    public Expression getInitializer() {
+        return initializer;
     }
 
     @Override

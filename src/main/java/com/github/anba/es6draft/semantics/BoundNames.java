@@ -41,8 +41,8 @@ final class BoundNames extends DefaultNodeVisitor<List<String>, List<String>> {
 
     /**
      * <pre>
-     * LexicalBinding : BindingIdentifier Initialiser<span><sub>opt</sub></span>
-     * LexicalBinding: BindingPattern Initialiser
+     * LexicalBinding : BindingIdentifier Initializer<span><sub>opt</sub></span>
+     * LexicalBinding: BindingPattern Initializer
      * </pre>
      */
     @Override
@@ -73,8 +73,8 @@ final class BoundNames extends DefaultNodeVisitor<List<String>, List<String>> {
 
     /**
      * <pre>
-     * VariableDeclaration : BindingIdentifier Initialiser<span><sub>opt</sub></span>
-     * VariableDeclaration: BindingPattern Initialiser
+     * VariableDeclaration : BindingIdentifier Initializer<span><sub>opt</sub></span>
+     * VariableDeclaration: BindingPattern Initializer
      * </pre>
      */
     @Override
@@ -122,8 +122,8 @@ final class BoundNames extends DefaultNodeVisitor<List<String>, List<String>> {
     /**
      * <pre>
      * BindingElement : SingleNameBinding
-     * BindingElement : BindingPattern Initialiser<span><sub>opt</sub></span>
-     * SingleNameBinding : BindingIdentifier Initialiser<span><sub>opt</sub></span>
+     * BindingElement : BindingPattern Initializer<span><sub>opt</sub></span>
+     * SingleNameBinding : BindingIdentifier Initializer<span><sub>opt</sub></span>
      * </pre>
      */
     @Override

@@ -22,14 +22,14 @@ public final class BooleanObject extends OrdinaryObject {
     /** [[BooleanData]] */
     private boolean booleanData;
 
-    private boolean initialised = false;
+    private boolean initialized = false;
 
     public BooleanObject(Realm realm) {
         super(realm);
     }
 
-    public boolean isInitialised() {
-        return initialised;
+    public boolean isInitialized() {
+        return initialized;
     }
 
     /**
@@ -38,7 +38,7 @@ public final class BooleanObject extends OrdinaryObject {
      * @return the boolean value
      */
     public boolean getBooleanData() {
-        assert this.initialised : "BooleanObject not initialised";
+        assert this.initialized : "BooleanObject not initialized";
         return booleanData;
     }
 
@@ -49,8 +49,8 @@ public final class BooleanObject extends OrdinaryObject {
      *            the new boolean value
      */
     public void setBooleanData(boolean booleanData) {
-        assert !this.initialised : "BooleanObject already initialised";
-        this.initialised = true;
+        assert !this.initialized : "BooleanObject already initialized";
+        this.initialized = true;
         this.booleanData = booleanData;
     }
 

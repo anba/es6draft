@@ -21,7 +21,7 @@ function assertClassName(c, name) {
 // anonymous function/generator/arrow/class expression
 (function() {
   // 13.2.2.3 Runtime Semantics: Evaluation
-  // - VariableDeclaration : BindingIdentifier Initialiser
+  // - VariableDeclaration : BindingIdentifier Initializer
   var f1 = function (){};
   assertFunctionName(f1, "f1");
 
@@ -38,7 +38,7 @@ function assertClassName(c, name) {
   assertClassName(d1, "<class-name>");
 
   // 13.2.1.6 Runtime Semantics: Evaluation
-  // - LexicalBinding : BindingIdentifier Initialiser
+  // - LexicalBinding : BindingIdentifier Initializer
   let f2 = function (){};
   assertFunctionName(f2, "f2");
 

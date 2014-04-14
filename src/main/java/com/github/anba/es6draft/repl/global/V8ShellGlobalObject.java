@@ -63,7 +63,7 @@ public final class V8ShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    public void initialise(OrdinaryObject object) throws IOException, URISyntaxException,
+    public void initialize(OrdinaryObject object) throws IOException, URISyntaxException,
             ParserException, CompilationException {
         assert object == this : "not yet supported";
         include(getScriptURL("v8legacy.js"));

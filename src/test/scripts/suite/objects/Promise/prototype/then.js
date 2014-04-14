@@ -23,7 +23,7 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
 
 // .then() called with value where IsPromise(value) = false, value is a Promise Object
 {
-  // IsPromise() returns false if the argument is an uninitialised promise object
+  // IsPromise() returns false if the argument is an uninitialized promise object
   let uninitPromise = Promise[Symbol.create]();
   let onFulfilled = () => {};
   let onRejected = () => {};

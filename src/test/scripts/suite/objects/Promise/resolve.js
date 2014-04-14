@@ -25,22 +25,22 @@ assertBuiltinFunction(Promise.resolve, "resolve", 1);
     assertNotSame(v, Promise.resolve(v));
   }
 
-  // uninitialised Promise object
+  // uninitialized Promise object
   let uninitPromise = Promise[Symbol.create]();
   assertNotSame(uninitPromise, Promise.resolve(uninitPromise));
 
-  // initialised Promise object
+  // initialized Promise object
   let initPromise = new Promise(() => {});
   assertSame(initPromise, Promise.resolve(initPromise));
 
   function Ctor(r) {
     r(() => {}, () => {});
   }
-  // initialised Promise object, non-native constructor
+  // initialized Promise object, non-native constructor
   let initPromiseCtor = Promise.call(Promise[Symbol.create].call(Ctor), () => {});
   assertSame(initPromiseCtor, Promise.resolve.call(Ctor, initPromiseCtor));
 
-  // initialised Promise object, mismatch for [[PromiseConstructor]]
+  // initialized Promise object, mismatch for [[PromiseConstructor]]
   let initPromiseOtherCtor = Promise.call(Promise[Symbol.create].call(Ctor), () => {});
   assertNotSame(initPromiseOtherCtor, Promise.resolve(initPromiseOtherCtor));
   let initPromiseOtherCtor2 = new Promise(() => {});

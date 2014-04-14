@@ -30,7 +30,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class ErrorObject extends OrdinaryObject {
-    private boolean initialised = false;
+    private boolean initialized = false;
     private ScriptException exception = null;
     private List<StackTraceElement[]> stackTraces;
 
@@ -50,13 +50,13 @@ public final class ErrorObject extends OrdinaryObject {
         return stackTraces;
     }
 
-    public boolean isInitialised() {
-        return initialised;
+    public boolean isInitialized() {
+        return initialized;
     }
 
-    public void initialise() {
-        assert !this.initialised : "ErrorObject already initialised";
-        this.initialised = true;
+    public void initialize() {
+        assert !this.initialized : "ErrorObject already initialized";
+        this.initialized = true;
     }
 
     public ScriptException getException() {

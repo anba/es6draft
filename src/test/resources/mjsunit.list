@@ -273,7 +273,7 @@ regress/regress-3138.js
 regress/regress-641.js
 regress/regress-88591.js
 
-# const without initialiser
+# const without initializer
 global-const-var-conflicts.js
 property-load-across-eval.js
 regress/regress-1130.js
@@ -291,7 +291,7 @@ invalid-lhs.js
 # Static Semantics: Early Error for invalid RegExp flags (unicode escaped)
 regress/regress-136048.js
 
-# for-in with initialiser
+# for-in with initializer
 for-in.js
 
 # var-declaration on global only calls setter when executed

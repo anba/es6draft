@@ -22,7 +22,7 @@ function assertClassName(c, name) {
 // anonymous function/generator/arrow/class expression
 (function() {
   // 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
-  // - SingleNameBinding : BindingIdentifier Initialiser
+  // - SingleNameBinding : BindingIdentifier Initializer
   var [f4 = function (){}] = [];
   assertFunctionName(f4, "f4");
 

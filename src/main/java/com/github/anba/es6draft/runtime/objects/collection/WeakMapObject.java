@@ -31,13 +31,13 @@ public final class WeakMapObject extends OrdinaryObject {
         return weakMapData;
     }
 
-    public void initialise() {
-        assert this.weakMapData == null : "WeakMap already initialised";
+    public void initialize() {
+        assert this.weakMapData == null : "WeakMap already initialized";
         // no ephemeron tables in java :(
         this.weakMapData = new WeakHashMap<>();
     }
 
-    public boolean isInitialised() {
-        return (weakMapData != null);
+    public boolean isInitialized() {
+        return weakMapData != null;
     }
 }

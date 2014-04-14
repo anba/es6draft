@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.objects.async.AsyncAbstractOperations.Spawn;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialise;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -115,7 +115,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
         /* steps 4-8 */
         OrdinaryAsyncFunction f = new OrdinaryAsyncFunction(realm);
         /* steps 9-13 */
-        f.allocate(realm, functionPrototype, strict, kind, uninitialisedAsyncFunctionMH);
+        f.allocate(realm, functionPrototype, strict, kind, uninitializedAsyncFunctionMH);
         /* step 14 */
         return f;
     }
@@ -165,6 +165,6 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
         /* step 2 */
         OrdinaryAsyncFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
-        return FunctionInitialise(cx, f, kind, function, scope);
+        return FunctionInitialize(cx, f, kind, function, scope);
     }
 }

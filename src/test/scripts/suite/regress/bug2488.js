@@ -12,7 +12,7 @@ const {
 // 6.1.7.3, 9.4.3: String exotic objects can violate [[GetOwnProperty]] invariant
 // https://bugs.ecmascript.org/show_bug.cgi?id=2488
 
-// Create uninitialised string object and define its "length" property
+// Create uninitialized string object and define its "length" property
 let str = String[Symbol.create]();
 Reflect.defineProperty(str, "length", {value: 1, writable: false, enumerable: false, configurable: false});
 
@@ -21,6 +21,6 @@ Reflect.preventExtensions(str);
 assertFalse(Reflect.isExtensible(str));
 assertUndefined(Reflect.getOwnPropertyDescriptor(str, "0"));
 
-// Initialise string object and retrieve "0" property
+// Initialize string object and retrieve "0" property
 String.call(str, "A");
 assertDataProperty(str, "0", {value: "A", writable: false, enumerable: true, configurable: false});

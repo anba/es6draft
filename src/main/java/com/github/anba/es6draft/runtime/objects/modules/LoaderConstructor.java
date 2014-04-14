@@ -19,7 +19,7 @@ import static java.util.Arrays.asList;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -41,13 +41,13 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>26.3.2 Properties of the Reflect.Loader Constructor
  * </ul>
  */
-public final class LoaderConstructor extends BuiltinConstructor implements Initialisable {
+public final class LoaderConstructor extends BuiltinConstructor implements Initializable {
     public LoaderConstructor(Realm realm) {
         super(realm, "Loader");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -75,7 +75,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
         LoaderObject loader = (LoaderObject) thisValue;
         /* step 4 */
         if (loader.getLoader() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
         /* steps 5-6 */
         Object realmObject = GetOption(calleeContext, options, "realm");
@@ -88,7 +88,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
         } else {
             realm = ((RealmObject) realmObject).getRealm();
             if (realm == null) {
-                throw newTypeError(calleeContext, Messages.Key.UninitialisedObject);
+                throw newTypeError(calleeContext, Messages.Key.UninitializedObject);
             }
         }
         /* step 9 */
@@ -103,7 +103,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
         }
         /* steps 10-11 */
         if (loader.getLoader() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
         /* step 12 */
         Loader loaderRecord = CreateLoader(realm, loader);
@@ -152,7 +152,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised loader object
+         * @return the new uninitialized loader object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

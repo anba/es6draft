@@ -18,7 +18,7 @@ import java.util.Map.Entry;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -37,13 +37,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>23.2.5 Set Iterator Objects
  * </ul>
  */
-public final class SetIteratorPrototype extends OrdinaryObject implements Initialisable {
+public final class SetIteratorPrototype extends OrdinaryObject implements Initializable {
     public SetIteratorPrototype(Realm realm) {
         super(realm);
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
     }
 
@@ -100,8 +100,8 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
         }
         SetObject set = (SetObject) obj;
         /* step 3 */
-        if (!set.isInitialised()) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+        if (!set.isInitialized()) {
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 4 */
         SetIterator iterator = ObjectCreate(cx, Intrinsics.SetIteratorPrototype,

@@ -76,7 +76,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
     @Override
     public GlobalBindings createBindings() {
         ScriptingGlobalObject global = world.newGlobal();
-        global.initialise(global);
+        global.initialize(global);
         return new GlobalBindings(global);
     }
 

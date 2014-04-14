@@ -83,7 +83,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    public void initialise(OrdinaryObject object) throws IOException, URISyntaxException,
+    public void initialize(OrdinaryObject object) throws IOException, URISyntaxException,
             ParserException, CompilationException {
         assert object == this : "not yet supported";
         include(getScriptURL("mozlegacy.js"));
@@ -464,7 +464,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     public GlobalObject newGlobal(ExecutionContext cx) {
         MozShellGlobalObject global = (MozShellGlobalObject) cx.getRealm().getWorld().newGlobal();
         try {
-            global.initialise(global);
+            global.initialize(global);
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         } catch (IOException | URISyntaxException e) {

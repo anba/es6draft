@@ -19,7 +19,7 @@ import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -41,13 +41,13 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>22.2.2 Properties of the %TypedArray% Intrinsic Object
  * </ul>
  */
-public final class TypedArrayConstructorPrototype extends BuiltinFunction implements Initialisable {
+public final class TypedArrayConstructorPrototype extends BuiltinFunction implements Initializable {
     public TypedArrayConstructorPrototype(Realm realm) {
         super(realm, "TypedArray");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -109,11 +109,11 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         TypedArrayObject array = (TypedArrayObject) obj;
         /* step 5 */
         if (array.getElementType() == null) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* steps 6-7 */
         if (array.getBuffer() != null) {
-            throw newTypeError(cx, Messages.Key.InitialisedObject);
+            throw newTypeError(cx, Messages.Key.InitializedObject);
         }
         /* steps 8-9 */
         ElementType elementType = array.getElementType();
@@ -171,15 +171,15 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         TypedArrayObject array = (TypedArrayObject) obj;
         /* step 5 */
         if (array.getElementType() == null) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* steps 6-7 */
         if (array.getBuffer() != null) {
-            throw newTypeError(cx, Messages.Key.InitialisedObject);
+            throw newTypeError(cx, Messages.Key.InitializedObject);
         }
         /* step 8 */
         if (srcArray.getBuffer() == null) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* steps 9-10 */
         ElementType elementType = array.getElementType();
@@ -221,7 +221,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         }
         /* steps 21-22 */
         if (array.getBuffer() != null) {
-            throw newTypeError(cx, Messages.Key.InitialisedObject);
+            throw newTypeError(cx, Messages.Key.InitializedObject);
         }
         /* steps 23-26 */
         array.setBuffer(data);
@@ -258,11 +258,11 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         TypedArrayObject array = (TypedArrayObject) obj;
         /* step 5 */
         if (array.getElementType() == null) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* steps 6-7 */
         if (array.getBuffer() != null) {
-            throw newTypeError(cx, Messages.Key.InitialisedObject);
+            throw newTypeError(cx, Messages.Key.InitializedObject);
         }
         /* steps 8-9 */
         ElementType elementType = array.getElementType();
@@ -287,7 +287,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         }
         /* steps 21-22 */
         if (array.getBuffer() != null) {
-            throw newTypeError(cx, Messages.Key.InitialisedObject);
+            throw newTypeError(cx, Messages.Key.InitializedObject);
         }
         /* steps 23-26 */
         array.setBuffer(data);
@@ -320,7 +320,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         Object obj = thisValue;
         /* step 3 */
         if (buffer.getData() == null) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 4 */
         if (!(obj instanceof TypedArrayObject)) {
@@ -329,11 +329,11 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         TypedArrayObject array = (TypedArrayObject) obj;
         /* step 5 */
         if (array.getElementType() == null) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* steps 6-7 */
         if (array.getBuffer() != null) {
-            throw newTypeError(cx, Messages.Key.InitialisedObject);
+            throw newTypeError(cx, Messages.Key.InitializedObject);
         }
         /* steps 8-9 */
         ElementType elementType = array.getElementType();
@@ -372,7 +372,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         }
         /* step 18 */
         if (array.getBuffer() != null) {
-            throw newTypeError(cx, Messages.Key.InitialisedObject);
+            throw newTypeError(cx, Messages.Key.InitializedObject);
         }
         /* steps 19-22 */
         array.setBuffer(buffer);
@@ -537,7 +537,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised typed array object
+         * @return the new uninitialized typed array object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

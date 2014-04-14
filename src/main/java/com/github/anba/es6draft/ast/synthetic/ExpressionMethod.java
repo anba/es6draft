@@ -35,8 +35,8 @@ public final class ExpressionMethod extends Expression {
     }
 
     @Override
-    public boolean isParenthesised() {
-        return expression.isParenthesised();
+    public boolean isParenthesized() {
+        return expression.isParenthesized();
     }
 
     @Override

@@ -19,7 +19,7 @@ function strictMode() {
   ({x: a, x: b} = {}) => {};
 }
 
-// CoverInitialisedName in CoverParenthesisedExpressionAndArrowParameterList for ArrowParameters
+// CoverInitializedName in CoverParenthesizedExpressionAndArrowParameterList for ArrowParameters
 ({x = 0}) => {};
 ({x = 0}, {y = 0}) => {};
 ({x = 0} = {}) => {};

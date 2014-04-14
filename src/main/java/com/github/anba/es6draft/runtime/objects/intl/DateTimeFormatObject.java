@@ -88,7 +88,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     /**
      * [[initializedIntlObject]]
      * 
-     * @return {@code true} if the Intl object is initialised
+     * @return {@code true} if the Intl object is initialized
      */
     public boolean isInitializedIntlObject() {
         return initializedIntlObject;
@@ -107,7 +107,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     /**
      * [[initializedDateTimeFormat]]
      * 
-     * @return {@code true} if the date format object is initialised
+     * @return {@code true} if the date format object is initialized
      */
     public boolean isInitializedDateTimeFormat() {
         return initializedDateTimeFormat;

@@ -23,7 +23,7 @@ import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Lazy;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -52,7 +52,7 @@ import com.ibm.icu.util.ULocale;
  * <li>11.2 Properties of the Intl.NumberFormat Constructor
  * </ul>
  */
-public final class NumberFormatConstructor extends BuiltinConstructor implements Initialisable {
+public final class NumberFormatConstructor extends BuiltinConstructor implements Initializable {
     /** [[availableLocales]] */
     private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
@@ -125,7 +125,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -164,7 +164,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         /* steps 1-2 */
         NumberFormatObject numberFormat = (NumberFormatObject) obj;
         if (numberFormat.isInitializedIntlObject()) {
-            throw newTypeError(cx, Messages.Key.InitialisedObject);
+            throw newTypeError(cx, Messages.Key.InitializedObject);
         }
         numberFormat.setInitializedIntlObject(true);
         /* step 3 */
@@ -386,7 +386,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised number format object
+         * @return the new uninitialized number format object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

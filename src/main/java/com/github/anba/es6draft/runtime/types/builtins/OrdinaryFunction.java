@@ -119,13 +119,13 @@ public class OrdinaryFunction extends FunctionObject {
             f = new OrdinaryFunction(realm);
         }
         /* steps 9-13 */
-        f.allocate(realm, functionPrototype, strict, kind, uninitialisedFunctionMH);
+        f.allocate(realm, functionPrototype, strict, kind, uninitializedFunctionMH);
         /* step 14 */
         return f;
     }
 
     /**
-     * 9.2.5 FunctionInitialise Abstract Operation
+     * 9.2.5 FunctionInitialize Abstract Operation
      * 
      * @param <FUNCTION>
      *            the function type
@@ -141,7 +141,7 @@ public class OrdinaryFunction extends FunctionObject {
      *            the lexical environment
      * @return the function object
      */
-    public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
+    public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialize(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
             LexicalEnvironment<?> scope) {
         /* step 1 */
@@ -155,7 +155,7 @@ public class OrdinaryFunction extends FunctionObject {
             f.addRestrictedFunctionProperties(cx);
         }
         /* steps 6-11 */
-        f.initialise(kind, function, scope);
+        f.initialize(kind, function, scope);
         /* step 12 */
         return f;
     }
@@ -204,7 +204,7 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 2 */
         OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
-        return FunctionInitialise(cx, f, kind, function, scope);
+        return FunctionInitialize(cx, f, kind, function, scope);
     }
 
     /**
@@ -265,7 +265,7 @@ public class OrdinaryFunction extends FunctionObject {
         // inlined FunctionAllocate()
         TypeErrorThrower f = new TypeErrorThrower(cx.getRealm());
         f.setPrototype(functionPrototype);
-        // inlined FunctionInitialise()
+        // inlined FunctionInitialize()
         DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(0, false, false, true));
         // inlined AddRestrictedFunctionProperties()
         DefinePropertyOrThrow(cx, f, "caller", new PropertyDescriptor(f, f, false, false));

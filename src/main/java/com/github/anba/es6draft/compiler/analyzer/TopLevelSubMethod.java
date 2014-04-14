@@ -9,7 +9,11 @@ package com.github.anba.es6draft.compiler.analyzer;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.ArrowFunction;
+import com.github.anba.es6draft.ast.FunctionNode;
+import com.github.anba.es6draft.ast.Script;
+import com.github.anba.es6draft.ast.StatementListItem;
+import com.github.anba.es6draft.ast.TopLevelNode;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 
 /**

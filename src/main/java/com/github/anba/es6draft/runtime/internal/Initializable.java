@@ -9,15 +9,15 @@ package com.github.anba.es6draft.runtime.internal;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 
 /**
- * Interface for objects with post-construction initialisation.
+ * Interface for objects with post-construction initialization.
  */
-public interface Initialisable {
+public interface Initializable {
 
     /**
-     * The initialisation method for this object.
+     * The initialization method for this object.
      * 
      * @param cx
      *            the execution context
      */
-    void initialise(ExecutionContext cx);
+    void initialize(ExecutionContext cx);
 }

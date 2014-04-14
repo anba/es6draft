@@ -125,7 +125,7 @@ public class NumberFormatObject extends OrdinaryObject {
     /**
      * [[initializedIntlObject]]
      * 
-     * @return {@code true} if the Intl object is initialised
+     * @return {@code true} if the Intl object is initialized
      */
     public boolean isInitializedIntlObject() {
         return initializedIntlObject;
@@ -144,7 +144,7 @@ public class NumberFormatObject extends OrdinaryObject {
     /**
      * [[initializedNumberFormat]]
      * 
-     * @return {@code true} if the number format object is initialised
+     * @return {@code true} if the number format object is initialized
      */
     public boolean isInitializedNumberFormat() {
         return initializedNumberFormat;

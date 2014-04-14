@@ -22,7 +22,7 @@ import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Lazy;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -50,7 +50,7 @@ import com.ibm.icu.util.ULocale;
  * <li>10.2 Properties of the Intl.Collator Constructor
  * </ul>
  */
-public final class CollatorConstructor extends BuiltinConstructor implements Initialisable {
+public final class CollatorConstructor extends BuiltinConstructor implements Initializable {
     /** [[availableLocales]] */
     private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
@@ -215,7 +215,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -254,7 +254,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         /* steps 1-2 */
         CollatorObject collator = (CollatorObject) obj;
         if (collator.isInitializedIntlObject()) {
-            throw newTypeError(cx, Messages.Key.InitialisedObject);
+            throw newTypeError(cx, Messages.Key.InitializedObject);
         }
         collator.setInitializedIntlObject(true);
         /* step 3 */
@@ -407,7 +407,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised collator object
+         * @return the new uninitialized collator object
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

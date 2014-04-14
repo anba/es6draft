@@ -16,7 +16,7 @@ const {
 assertSame(10, new Int8Array(10, 0).length);
 assertSame(10, new Int8Array("10").length);
 
-// Throw error when attempting to initialise with uninitialised object
+// Throw error when attempting to initialize with uninitialized object
 assertThrows(() => new Int8Array(Int8Array[Symbol.create]()), TypeError);
 
 // Copied typed array starts from byteOffset, copy contains same content
@@ -55,7 +55,7 @@ assertSame(0, new Int8Array({length: -1}).length);
 // Copies content from array-like
 assertSame(4, new Int8Array({length: 1, 0: 4})[0]);
 
-// Throw error when attempting to initialise with uninitialised object
+// Throw error when attempting to initialize with uninitialized object
 assertThrows(() => new Int8Array(ArrayBuffer[Symbol.create]()), TypeError);
 
 // Throw RangeError when (byteLength - byteOffset) < 0

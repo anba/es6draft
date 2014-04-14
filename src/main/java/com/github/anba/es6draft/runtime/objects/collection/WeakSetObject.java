@@ -31,13 +31,13 @@ public final class WeakSetObject extends OrdinaryObject {
         return weakSetData;
     }
 
-    public void initialise() {
-        assert this.weakSetData == null : "WeakSet already initialised";
+    public void initialize() {
+        assert this.weakSetData == null : "WeakSet already initialized";
         // no ephemeron tables in java :(
         this.weakSetData = new WeakHashMap<>();
     }
 
-    public boolean isInitialised() {
-        return (weakSetData != null);
+    public boolean isInitialized() {
+        return weakSetData != null;
     }
 }

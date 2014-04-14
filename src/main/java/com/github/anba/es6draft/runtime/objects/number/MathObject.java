@@ -14,7 +14,7 @@ import org.mozilla.javascript.MathImpl;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -30,13 +30,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>20.2.2 Function Properties of the Math Object
  * </ul>
  */
-public final class MathObject extends OrdinaryObject implements Initialisable {
+public final class MathObject extends OrdinaryObject implements Initializable {
     public MathObject(Realm realm) {
         super(realm);
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
 
         createProperties(cx, this, ValueProperties.class);

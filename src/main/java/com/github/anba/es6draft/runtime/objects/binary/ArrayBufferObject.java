@@ -45,8 +45,8 @@ public final class ArrayBufferObject extends OrdinaryObject {
      *            the byte buffer
      */
     public void setData(ByteBuffer data) {
-        assert data != null : "cannot initialise ArrayBuffer with null";
-        assert this.data == null : "ArrayBuffer already initialised";
+        assert data != null : "cannot initialize ArrayBuffer with null";
+        assert this.data == null : "ArrayBuffer already initialized";
         this.data = data;
     }
 

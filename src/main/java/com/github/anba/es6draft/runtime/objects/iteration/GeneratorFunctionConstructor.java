@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -47,13 +47,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
  * <li>25.2.2 Properties of the GeneratorFunction Constructor
  * </ul>
  */
-public final class GeneratorFunctionConstructor extends BuiltinConstructor implements Initialisable {
+public final class GeneratorFunctionConstructor extends BuiltinConstructor implements Initializable {
     public GeneratorFunctionConstructor(Realm realm) {
         super(realm, "GeneratorFunction");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -116,7 +116,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
                     Intrinsics.Generator);
             f = FunctionAllocate(calleeContext, proto, strict, FunctionKind.Normal);
         } else {
-            // FIXME: this also updates uninitialised function (not generator!)
+            // FIXME: this also updates uninitialized function (not generator!)
             ((FunctionObject) f).setStrict(strict);
         }
         /* step 17 */
@@ -127,7 +127,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         }
         OrdinaryGenerator fn = (OrdinaryGenerator) f;
         /* steps 19-20 */
-        FunctionInitialise(calleeContext, fn, FunctionKind.Normal, function, scope);
+        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, function, scope);
         /* step 21 */
         ScriptObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
         /* step 22 */

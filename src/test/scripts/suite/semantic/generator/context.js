@@ -38,14 +38,14 @@ function assertThrowsTypeErrorFrom(realm, fn) {
     function SuspendedExecuting(f) { return Step(function*(){ yield; f() }) }
     function Completed() { return Step(function*(){ }) }
     function CompletedAbrupt() { return StepTryCatch(function*(){ throw 2 }) }
-    function Uninitialised() { return (function*(){})[Symbol.create]() }
+    function Uninitialized() { return (function*(){})[Symbol.create]() }
     function Invalid() { return {} }
   `);
   let {
     Empty, Yield, Return, Executing,
     SuspendedEmpty, SuspendedYield, SuspendedReturn, SuspendedExecuting,
     Completed, CompletedAbrupt,
-    Uninitialised, Invalid
+    Uninitialized, Invalid
   } = foreignRealm.global;
   let nextRealm = new Reflect.Realm();
   let nextF = nextRealm.eval(`(function*(){})().next`);
@@ -55,8 +55,8 @@ function assertThrowsTypeErrorFrom(realm, fn) {
   // GeneratorResume for non-generator
   assertThrowsTypeErrorFrom(nextRealm, () => Next(Invalid));
 
-  // GeneratorResume for uninitialised generator
-  assertThrowsTypeErrorFrom(nextRealm, () => Next(Uninitialised));
+  // GeneratorResume for uninitialized generator
+  assertThrowsTypeErrorFrom(nextRealm, () => Next(Uninitialized));
 
   // GeneratorResume in "suspendedStart", no arguments
   assertObjectFrom(nextRealm, Next(Empty));

@@ -10,7 +10,7 @@ package com.github.anba.es6draft.ast;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.1 Primary Expressions</h2>
  * <ul>
- * <li>12.1.5 Object Initialiser
+ * <li>12.1.5 Object Initializer
  * </ul>
  */
 public final class PropertyNameDefinition extends PropertyDefinition {

@@ -18,7 +18,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.C
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -45,7 +45,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * <li>19.2.4 Properties of Function Instances
  * </ul>
  */
-public final class FunctionPrototype extends BuiltinFunction implements Initialisable {
+public final class FunctionPrototype extends BuiltinFunction implements Initializable {
     private static final int MAX_ARGUMENTS = 0x10000;
 
     public FunctionPrototype(Realm realm) {
@@ -53,7 +53,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }

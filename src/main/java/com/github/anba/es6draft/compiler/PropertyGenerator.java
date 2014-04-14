@@ -283,7 +283,7 @@ final class PropertyGenerator extends
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProperty);
         } else if ("__proto__".equals(propName)
-                && codegen.isEnabled(CompatibilityOption.ProtoInitialiser)) {
+                && codegen.isEnabled(CompatibilityOption.ProtoInitializer)) {
             expressionBoxedValue(propertyValue, mv);
             // TODO: SetFunctionName() ?
             mv.loadExecutionContext();

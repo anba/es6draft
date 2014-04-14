@@ -22,14 +22,14 @@ public final class NumberObject extends OrdinaryObject {
     /** [[NumberData]] */
     private double numberData;
 
-    private boolean initialised = false;
+    private boolean initialized = false;
 
     public NumberObject(Realm realm) {
         super(realm);
     }
 
-    public boolean isInitialised() {
-        return initialised;
+    public boolean isInitialized() {
+        return initialized;
     }
 
     /**
@@ -48,8 +48,8 @@ public final class NumberObject extends OrdinaryObject {
      *            the new number value
      */
     public void setNumberData(double numberData) {
-        assert !this.initialised : "NumberObject already initialised";
-        this.initialised = true;
+        assert !this.initialized : "NumberObject already initialized";
+        this.initialized = true;
         this.numberData = numberData;
     }
 

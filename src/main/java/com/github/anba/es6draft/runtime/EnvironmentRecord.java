@@ -53,14 +53,14 @@ public interface EnvironmentRecord {
     void createImmutableBinding(String name);
 
     /**
-     * InitialiseBinding(N,V)
+     * InitializeBinding(N,V)
      * 
      * @param name
      *            the binding name
      * @param value
      *            the new binding value
      */
-    void initialiseBinding(String name, Object value);
+    void initializeBinding(String name, Object value);
 
     /**
      * SetMutableBinding(N,V,S)

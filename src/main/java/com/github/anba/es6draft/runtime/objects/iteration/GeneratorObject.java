@@ -117,8 +117,8 @@ public final class GeneratorObject extends OrdinaryObject {
     ScriptObject resume(ExecutionContext cx, Object value) {
         GeneratorState state = this.state;
         if (state == null) {
-            // uninitialised generator object
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            // uninitialized generator object
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         switch (state) {
         case Executing:
@@ -146,8 +146,8 @@ public final class GeneratorObject extends OrdinaryObject {
     ScriptObject _throw(ExecutionContext cx, Object value) {
         GeneratorState state = this.state;
         if (state == null) {
-            // uninitialised generator object
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            // uninitialized generator object
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         switch (state) {
         case Executing:

@@ -46,8 +46,8 @@ final class BindingInitialisationGenerator {
                         Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.String));
 
         // class: EnvironmentRecord
-        static final MethodDesc EnvironmentRecord_initialiseBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "initialiseBinding",
+        static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
 
         // class: Reference
@@ -186,7 +186,7 @@ final class BindingInitialisationGenerator {
         mv.aconst(((BindingIdentifier) node).getName());
         mv.swap();
         // stack: [envRec, id, value] -> []
-        mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
+        mv.invoke(Methods.EnvironmentRecord_initializeBinding);
     }
 
     /**
@@ -365,10 +365,10 @@ final class BindingInitialisationGenerator {
         public Void visit(BindingIdentifier node, Void value) {
             if (environment == EnvironmentType.EnvironmentFromLocal) {
                 // stack: [envRec, id, value] -> []
-                mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
+                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
             } else if (environment == EnvironmentType.EnvironmentFromStack) {
                 // stack: [envRec, id, value] -> []
-                mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
+                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
             } else {
                 assert environment == EnvironmentType.NoEnvironment;
                 // stack: [value] -> []
@@ -425,11 +425,11 @@ final class BindingInitialisationGenerator {
         @Override
         public Void visit(BindingElement node, Variable<Iterator<?>> iterator) {
             Binding binding = node.getBinding();
-            Expression initialiser = node.getInitialiser();
+            Expression initializer = node.getInitializer();
 
             if (binding instanceof BindingIdentifier) {
                 // BindingElement : SingleNameBinding
-                // SingleNameBinding : BindingIdentifier Initialiser{opt}
+                // SingleNameBinding : BindingIdentifier Initializer{opt}
 
                 // stack: [(env)] -> [(env), (env)]
                 dupEnv();
@@ -443,16 +443,16 @@ final class BindingInitialisationGenerator {
 
                 // step 5
                 // stack: [(env), (env), v] -> [(env), (env), v']
-                if (initialiser != null) {
+                if (initializer != null) {
                     Label undef = new Label();
                     mv.dup();
                     mv.invoke(Methods.Type_isUndefined);
                     mv.ifeq(undef);
                     {
                         mv.pop();
-                        expressionBoxedValue(initialiser, mv);
-                        if (IsAnonymousFunctionDefinition(initialiser)) {
-                            SetFunctionName(initialiser, ((BindingIdentifier) binding).getName(),
+                        expressionBoxedValue(initializer, mv);
+                        if (IsAnonymousFunctionDefinition(initializer)) {
+                            SetFunctionName(initializer, ((BindingIdentifier) binding).getName(),
                                     mv);
                         }
                     }
@@ -463,7 +463,7 @@ final class BindingInitialisationGenerator {
                 // stack: [(env), (env), v'] -> [(env)]
                 BindingInitialisation(binding);
             } else {
-                // BindingElement : BindingPattern Initialiser{opt}
+                // BindingElement : BindingPattern Initializer{opt}
                 assert binding instanceof BindingPattern;
 
                 // stack: [(env)] -> [(env), (env)]
@@ -475,14 +475,14 @@ final class BindingInitialisationGenerator {
 
                 // step 5
                 // stack: [(env), (env), v] -> [(env), (env), v']
-                if (initialiser != null) {
+                if (initializer != null) {
                     Label undef = new Label();
                     mv.dup();
                     mv.invoke(Methods.Type_isUndefined);
                     mv.ifeq(undef);
                     {
                         mv.pop();
-                        expressionBoxedValue(initialiser, mv);
+                        expressionBoxedValue(initializer, mv);
                     }
                     mv.mark(undef);
                 }
@@ -537,7 +537,7 @@ final class BindingInitialisationGenerator {
         @Override
         public Void visit(BindingProperty node, String propertyName) {
             Binding binding = node.getBinding();
-            Expression initialiser = node.getInitialiser();
+            Expression initializer = node.getInitializer();
 
             // stack: [(env)] -> [(env), (env)]
             dupEnv();
@@ -558,17 +558,17 @@ final class BindingInitialisationGenerator {
 
             // step 3
             // stack: [(env), (env), v] -> [(env), (env), v']
-            if (initialiser != null) {
+            if (initializer != null) {
                 Label undef = new Label();
                 mv.dup();
                 mv.invoke(Methods.Type_isUndefined);
                 mv.ifeq(undef);
                 {
                     mv.pop();
-                    expressionBoxedValue(initialiser, mv);
+                    expressionBoxedValue(initializer, mv);
                     if (binding instanceof BindingIdentifier
-                            && IsAnonymousFunctionDefinition(initialiser)) {
-                        SetFunctionName(initialiser, ((BindingIdentifier) binding).getName(), mv);
+                            && IsAnonymousFunctionDefinition(initializer)) {
+                        SetFunctionName(initializer, ((BindingIdentifier) binding).getName(), mv);
                     }
                 }
                 mv.mark(undef);
@@ -607,7 +607,7 @@ final class BindingInitialisationGenerator {
         @Override
         public Void visit(BindingProperty node, ComputedPropertyName propertyName) {
             Binding binding = node.getBinding();
-            Expression initialiser = node.getInitialiser();
+            Expression initializer = node.getInitializer();
 
             // stack: [(env)] -> [(env), (env)]
             dupEnv();
@@ -633,17 +633,17 @@ final class BindingInitialisationGenerator {
 
             // step 3
             // stack: [(env), (env), v] -> [(env), (env), v']
-            if (initialiser != null) {
+            if (initializer != null) {
                 Label undef = new Label();
                 mv.dup();
                 mv.invoke(Methods.Type_isUndefined);
                 mv.ifeq(undef);
                 {
                     mv.pop();
-                    expressionBoxedValue(initialiser, mv);
+                    expressionBoxedValue(initializer, mv);
                     if (binding instanceof BindingIdentifier
-                            && IsAnonymousFunctionDefinition(initialiser)) {
-                        SetFunctionName(initialiser, ((BindingIdentifier) binding).getName(), mv);
+                            && IsAnonymousFunctionDefinition(initializer)) {
+                        SetFunctionName(initializer, ((BindingIdentifier) binding).getName(), mv);
                     }
                 }
                 mv.mark(undef);

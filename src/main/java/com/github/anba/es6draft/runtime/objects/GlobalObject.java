@@ -50,7 +50,7 @@ public class GlobalObject extends OrdinaryObject {
     }
 
     /**
-     * Initialise {@code object} with the default properties of the Global Object.
+     * Initialize {@code object} with the default properties of the Global Object.
      * 
      * @param cx
      *            the execution context
@@ -67,7 +67,7 @@ public class GlobalObject extends OrdinaryObject {
     }
 
     /**
-     * Execute any initialisation scripts which should be run for this global instance.
+     * Execute any initialization scripts which should be run for this global instance.
      * 
      * @param object
      *            the script object
@@ -80,7 +80,7 @@ public class GlobalObject extends OrdinaryObject {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public void initialise(OrdinaryObject object) throws IOException, URISyntaxException,
+    public void initialize(OrdinaryObject object) throws IOException, URISyntaxException,
             ParserException, CompilationException {
         /* empty */
     }

@@ -17,7 +17,7 @@ function assertAnonymousFunction(f) {
 // anonymous function/generator/arrow/class expression in array destructuring assignment are not renamed
 (function() {
   // 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
-  // - AssignmentElement[Yield] : DestructuringAssignmentTarget Initialiser{opt}
+  // - AssignmentElement[Yield] : DestructuringAssignmentTarget Initializer{opt}
   var f4, g4, a4, c4, d4;
 
   [f4 = function (){}] = [];

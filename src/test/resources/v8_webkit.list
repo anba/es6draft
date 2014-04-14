@@ -138,7 +138,7 @@ fast/js/Object-getOwnPropertyNames.js
 # ES6 related syntax changes          #
 #######################################
 
-# for-in with initialiser
+# for-in with initializer
 toString-for-var-decl.js
 fast/js/parser-syntax-check.js
 
@@ -167,7 +167,7 @@ function-declaration-statement.js
 # function declaration redeclaration at block-level not allowed
 function-declarations-in-switch-statement.js
 
-# const without initialiser
+# const without initializer
 const-without-initializer.js
 constant-count.js
 fast/js/arguments.js

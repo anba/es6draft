@@ -75,7 +75,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         ObjectAllocator<GLOBAL> allocator = newAllocator(console, test, scriptCache);
         World<GLOBAL> world = new World<>(allocator, getOptions(), getCompilerOptions());
         GLOBAL global = world.newGlobal();
-        global.initialise(global);
+        global.initialize(global);
         // Evaluate additional initialisation scripts
         for (Script script : scripts) {
             global.eval(script);

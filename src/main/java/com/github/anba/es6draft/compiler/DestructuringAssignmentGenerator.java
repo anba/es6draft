@@ -166,7 +166,7 @@ final class DestructuringAssignmentGenerator {
                 mv.dup();
                 // stack: [obj, obj] -> [obj]
                 if (property.getPropertyName() == null) {
-                    // AssignmentProperty : IdentifierReference Initialiser{opt}
+                    // AssignmentProperty : IdentifierReference Initializer{opt}
                     assert property.getTarget() instanceof Identifier;
                     String name = ((Identifier) property.getTarget()).getName();
                     KeyedDestructuringAssignmentEvaluation(property, name);
@@ -212,7 +212,7 @@ final class DestructuringAssignmentGenerator {
         @Override
         public Void visit(AssignmentElement node, Variable<Iterator<?>> iterator) {
             LeftHandSideExpression target = node.getTarget();
-            Expression initialiser = node.getInitialiser();
+            Expression initializer = node.getInitializer();
 
             ValType refType = null;
             if (!(target instanceof AssignmentPattern)) {
@@ -225,14 +225,14 @@ final class DestructuringAssignmentGenerator {
             mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
 
             // stack: [(lref), v] -> [(lref), v']
-            if (initialiser != null) {
+            if (initializer != null) {
                 Label undef = new Label();
                 mv.dup();
                 mv.invoke(Methods.Type_isUndefined);
                 mv.ifeq(undef);
                 {
                     mv.pop();
-                    expressionBoxedValue(initialiser, mv);
+                    expressionBoxedValue(initializer, mv);
                 }
                 mv.mark(undef);
             }
@@ -284,7 +284,7 @@ final class DestructuringAssignmentGenerator {
         @Override
         public Void visit(AssignmentProperty node, String propertyName) {
             LeftHandSideExpression target = node.getTarget();
-            Expression initialiser = node.getInitialiser();
+            Expression initializer = node.getInitializer();
 
             // stack: [obj] -> [cx, obj]
             mv.loadExecutionContext();
@@ -299,14 +299,14 @@ final class DestructuringAssignmentGenerator {
 
             // step 3
             // stack: [v] -> [v']
-            if (initialiser != null) {
+            if (initializer != null) {
                 Label undef = new Label();
                 mv.dup();
                 mv.invoke(Methods.Type_isUndefined);
                 mv.ifeq(undef);
                 {
                     mv.pop();
-                    expressionBoxedValue(initialiser, mv);
+                    expressionBoxedValue(initializer, mv);
                 }
                 mv.mark(undef);
             }
@@ -346,7 +346,7 @@ final class DestructuringAssignmentGenerator {
         @Override
         public Void visit(AssignmentProperty node, ComputedPropertyName propertyName) {
             LeftHandSideExpression target = node.getTarget();
-            Expression initialiser = node.getInitialiser();
+            Expression initializer = node.getInitializer();
 
             // stack: [obj] -> [cx, obj]
             mv.loadExecutionContext();
@@ -364,14 +364,14 @@ final class DestructuringAssignmentGenerator {
 
             // step 3
             // stack: [v] -> [v']
-            if (initialiser != null) {
+            if (initializer != null) {
                 Label undef = new Label();
                 mv.dup();
                 mv.invoke(Methods.Type_isUndefined);
                 mv.ifeq(undef);
                 {
                     mv.pop();
-                    expressionBoxedValue(initialiser, mv);
+                    expressionBoxedValue(initializer, mv);
                 }
                 mv.mark(undef);
             }

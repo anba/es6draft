@@ -15,21 +15,21 @@ package com.github.anba.es6draft.ast;
  */
 public final class AssignmentElement extends AstNode implements AssignmentElementItem {
     private final LeftHandSideExpression target;
-    private final Expression initialiser;
+    private final Expression initializer;
 
     public AssignmentElement(long beginPosition, long endPosition, LeftHandSideExpression target,
-            Expression initialiser) {
+            Expression initializer) {
         super(beginPosition, endPosition);
         this.target = target;
-        this.initialiser = initialiser;
+        this.initializer = initializer;
     }
 
     public LeftHandSideExpression getTarget() {
         return target;
     }
 
-    public Expression getInitialiser() {
-        return initialiser;
+    public Expression getInitializer() {
+        return initializer;
     }
 
     @Override

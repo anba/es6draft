@@ -53,7 +53,7 @@ final class ScriptContextEnvironmentRecord implements EnvironmentRecord {
     }
 
     @Override
-    public void initialiseBinding(String name, Object value) {
+    public void initializeBinding(String name, Object value) {
         setMutableBinding(name, value, false);
     }
 

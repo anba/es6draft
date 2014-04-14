@@ -200,7 +200,7 @@ public final class ModuleLinking {
             if (def.importName.equals("module")) {
                 /* step 3a */
                 envRec.createImmutableBinding(def.localName);
-                envRec.initialiseBinding(def.localName, def.module);
+                envRec.initializeBinding(def.localName, def.module);
             } else {
                 /* step 3b */
                 // FIXME: spec bug - LookupExport instead of ResolveExport

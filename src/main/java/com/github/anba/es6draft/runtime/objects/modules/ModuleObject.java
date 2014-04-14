@@ -40,7 +40,7 @@ public final class ModuleObject extends OrdinaryObject {
      *            the new module linkage record
      */
     public void setModuleLinkage(ModuleLinkage moduleLinkage) {
-        assert this.moduleLinkage == null && moduleLinkage != null : "ModuleObject already initialised";
+        assert this.moduleLinkage == null && moduleLinkage != null : "ModuleObject already initialized";
         this.moduleLinkage = moduleLinkage;
     }
 

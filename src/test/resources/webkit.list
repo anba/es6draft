@@ -165,7 +165,7 @@ js/script-tests/function-declaration-statement.js
 # function declaration redeclaration at block-level not allowed
 js/script-tests/function-declarations-in-switch-statement.js
 
-# const without initialiser
+# const without initializer
 js/script-tests/const-without-initializer.js
 js/script-tests/constant-count.js
 js/script-tests/arguments.js

@@ -2200,7 +2200,7 @@ public final class AbstractOperations {
      *            the constructor function
      * @param args
      *            the constructor function arguments
-     * @return the new allocated and initialised object
+     * @return the new allocated and initialized object
      */
     public static <FUNCTION extends ScriptObject & Callable & Constructor> ScriptObject Construct(
             ExecutionContext cx, FUNCTION f, Object... args) {
@@ -2232,7 +2232,7 @@ public final class AbstractOperations {
      *            the constructor function
      * @param args
      *            the constructor function arguments
-     * @return the new allocated and initialised object or a tail-call invocation object
+     * @return the new allocated and initialized object or a tail-call invocation object
      * @throws Throwable
      *             if the underlying method throws an error
      */

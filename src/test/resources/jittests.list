@@ -327,7 +327,7 @@ tests/basic/testBug775807.js
 # ES6-change: let-block scope even in global scope
 tests/basic/bug646968-3.js
 
-# missing const initialiser
+# missing const initializer
 tests/auto-regress/bug487570.js
 tests/auto-regress/bug495843.js
 
@@ -354,7 +354,7 @@ tests/basic/testWeirdThingsInFunctionConstructor.js
 tests/auto-regress/bug701248.js
 tests/basic/bug738841.js
 
-# Initialiser in for-in
+# Initializer in for-in
 tests/auto-regress/bug590772.js
 tests/auto-regress/bug596817.js
 tests/closures/bug540136.js

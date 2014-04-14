@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorStart;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialise;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -178,7 +178,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         /* steps 4-8 */
         OrdinaryGenerator f = new OrdinaryGenerator(realm);
         /* steps 9-13 */
-        f.allocate(realm, functionPrototype, strict, kind, uninitialisedGeneratorMH);
+        f.allocate(realm, functionPrototype, strict, kind, uninitializedGeneratorMH);
         /* step 14 */
         return f;
     }
@@ -227,6 +227,6 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         /* step 2 */
         OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
-        return FunctionInitialise(cx, f, kind, function, scope);
+        return FunctionInitialize(cx, f, kind, function, scope);
     }
 }

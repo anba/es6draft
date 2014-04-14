@@ -133,8 +133,8 @@ public final class TokenStream {
     }
 
     /**
-     * Public constructor, token stream still needs to be initialised by calling the
-     * {@link #initialise()} method.
+     * Public constructor, token stream still needs to be initialized by calling the
+     * {@link #initialize()} method.
      * 
      * @param parser
      *            the parser instance
@@ -209,11 +209,11 @@ public final class TokenStream {
     }
 
     /**
-     * Initialises this token stream, needs to be called before fetching any tokens.
+     * Initializes this token stream, needs to be called before fetching any tokens.
      * 
      * @return this token stream
      */
-    public TokenStream initialise() {
+    public TokenStream initialize() {
         // set internal state to default values
         this.hasLineTerminator = true;
         this.hasCurrentLineTerminator = true;
@@ -541,7 +541,7 @@ public final class TokenStream {
                 if (isLineTerminator(c)) {
                     // line terminator sequence
                     if (c == '\r') {
-                        // normalise \r and \r\n to \n
+                        // normalize \r and \r\n to \n
                         raw.append(input.range(pos, input.position() - 1)).append('\n');
                         match('\n');
                         pos = input.position();
@@ -564,7 +564,7 @@ public final class TokenStream {
             if (isLineTerminator(c)) {
                 // line continuation
                 if (c == '\r') {
-                    // normalise \r and \r\n to \n
+                    // normalize \r and \r\n to \n
                     raw.append(input.range(pos, input.position() - 1)).append('\n');
                     match('\n');
                     pos = input.position();

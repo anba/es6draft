@@ -14,7 +14,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -33,16 +33,16 @@ import com.ibm.icu.text.NumberFormat;
  * <li>11.3 Properties of the Intl.NumberFormat Prototype Object
  * </ul>
  */
-public final class NumberFormatPrototype extends NumberFormatObject implements Initialisable {
+public final class NumberFormatPrototype extends NumberFormatObject implements Initializable {
     public NumberFormatPrototype(Realm realm) {
         super(realm);
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
 
-        // initialise Intl.NumberFormat.prototype's internal state
+        // initialize Intl.NumberFormat.prototype's internal state
         NumberFormatConstructor.InitializeNumberFormat(cx, this, UNDEFINED, UNDEFINED);
     }
 
@@ -58,7 +58,7 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
                 if (numberFormat.isInitializedNumberFormat()) {
                     return numberFormat;
                 }
-                throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                throw newTypeError(cx, Messages.Key.UninitializedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

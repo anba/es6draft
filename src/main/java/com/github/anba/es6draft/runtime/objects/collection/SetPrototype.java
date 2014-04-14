@@ -38,13 +38,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>23.2.3 Properties of the Set Prototype Object
  * </ul>
  */
-public final class SetPrototype extends OrdinaryObject implements Initialisable {
+public final class SetPrototype extends OrdinaryObject implements Initializable {
     public SetPrototype(Realm realm) {
         super(realm);
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
     }
 
@@ -57,10 +57,10 @@ public final class SetPrototype extends OrdinaryObject implements Initialisable 
         private static SetObject thisSetValue(ExecutionContext cx, Object obj) {
             if (obj instanceof SetObject) {
                 SetObject set = (SetObject) obj;
-                if (set.isInitialised()) {
+                if (set.isInitialized()) {
                     return set;
                 }
-                throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                throw newTypeError(cx, Messages.Key.UninitializedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

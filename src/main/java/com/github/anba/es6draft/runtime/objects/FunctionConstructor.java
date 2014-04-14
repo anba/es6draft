@@ -23,7 +23,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -46,13 +46,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
  * <li>19.2.2 Properties of the Function Constructor
  * </ul>
  */
-public final class FunctionConstructor extends BuiltinConstructor implements Initialisable {
+public final class FunctionConstructor extends BuiltinConstructor implements Initializable {
     public FunctionConstructor(Realm realm) {
         super(realm, "Function");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -115,7 +115,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
                     Intrinsics.FunctionPrototype);
             f = FunctionAllocate(calleeContext, proto, strict, FunctionKind.Normal);
         } else {
-            // FIXME: this also updates uninitialised generator (not function!)
+            // FIXME: this also updates uninitialized generator (not function!)
             ((FunctionObject) f).setStrict(strict);
         }
         /* step 17 */
@@ -124,7 +124,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         }
         OrdinaryFunction fn = (OrdinaryFunction) f;
         /* step 18 */
-        FunctionInitialise(calleeContext, fn, FunctionKind.Normal, function, scope);
+        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, function, scope);
         /* step 19 */
         if (function.hasSuperReference()) {
             MakeMethod(fn, (String) null, null);
@@ -182,7 +182,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the new uninitialised function object
+         * @return the new uninitialized function object
          */
         @Function(name = "[Symbol.create]", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

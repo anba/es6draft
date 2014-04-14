@@ -20,7 +20,7 @@ import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.JVMNames;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
@@ -42,13 +42,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>19.5.3 Properties of the Error Prototype Object
  * </ul>
  */
-public final class ErrorPrototype extends OrdinaryObject implements Initialisable {
+public final class ErrorPrototype extends OrdinaryObject implements Initializable {
     public ErrorPrototype(Realm realm) {
         super(realm);
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
     }
 

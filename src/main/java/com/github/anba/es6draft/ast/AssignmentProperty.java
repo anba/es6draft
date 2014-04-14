@@ -16,22 +16,22 @@ package com.github.anba.es6draft.ast;
 public final class AssignmentProperty extends AstNode {
     private final PropertyName propertyName;
     private final LeftHandSideExpression target;
-    private final Expression initialiser;
+    private final Expression initializer;
 
     public AssignmentProperty(long beginPosition, long endPosition, PropertyName propertyName,
-            LeftHandSideExpression target, Expression initialiser) {
+            LeftHandSideExpression target, Expression initializer) {
         super(beginPosition, endPosition);
         this.propertyName = propertyName;
         this.target = target;
-        this.initialiser = initialiser;
+        this.initializer = initializer;
     }
 
     public AssignmentProperty(long beginPosition, long endPosition, Identifier identifier,
-            Expression initialiser) {
+            Expression initializer) {
         super(beginPosition, endPosition);
         this.propertyName = null;
         this.target = identifier;
-        this.initialiser = initialiser;
+        this.initializer = initializer;
     }
 
     public PropertyName getPropertyName() {
@@ -42,8 +42,8 @@ public final class AssignmentProperty extends AstNode {
         return target;
     }
 
-    public Expression getInitialiser() {
-        return initialiser;
+    public Expression getInitializer() {
+        return initializer;
     }
 
     @Override

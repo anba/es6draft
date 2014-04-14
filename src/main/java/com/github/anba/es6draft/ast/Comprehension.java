@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.1 Primary Expressions</h2><br>
- * <h3>12.1.4 Array Initialiser</h3>
+ * <h3>12.1.4 Array Initializer</h3>
  * <ul>
  * <li>12.1.4.2 Array Comprehension
  * </ul>

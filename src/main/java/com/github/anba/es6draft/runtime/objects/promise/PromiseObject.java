@@ -44,7 +44,7 @@ public final class PromiseObject extends OrdinaryObject {
         super(realm);
     }
 
-    public void initialise() {
+    public void initialize() {
         assert state == null;
         state = PromiseObject.State.Pending;
         fulfillReactions = new ArrayList<>();

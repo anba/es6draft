@@ -29,7 +29,7 @@ import java.util.Set;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -57,13 +57,13 @@ import com.ibm.icu.util.ULocale;
  * <li>21.1.4 Properties of String Instances
  * </ul>
  */
-public final class StringPrototype extends OrdinaryObject implements Initialisable {
+public final class StringPrototype extends OrdinaryObject implements Initializable {
     public StringPrototype(Realm realm) {
         super(realm);
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         createProperties(cx, this, AdditionalProperties.class);
     }
@@ -92,7 +92,7 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
                 if (s != null) {
                     return s;
                 }
-                throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                throw newTypeError(cx, Messages.Key.UninitializedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -997,7 +997,7 @@ public final class StringPrototype extends OrdinaryObject implements Initialisab
          *            the function this-value
          * @param form
          *            the normalisation form
-         * @return the normalised string
+         * @return the normalized string
          */
         @Function(name = "normalize", arity = 0)
         public static Object normalize(ExecutionContext cx, Object thisValue, Object form) {

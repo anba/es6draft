@@ -158,8 +158,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 MethodType.Interface, Types.EnvironmentRecord, "createImmutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String));
 
-        static final MethodDesc EnvironmentRecord_initialiseBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "initialiseBinding",
+        static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
 
         // class: ExecutionContext
@@ -1248,7 +1248,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.swap();
 
             // stack: [F, envRec, name, F] -> [F]
-            mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
+            mv.invoke(Methods.EnvironmentRecord_initializeBinding);
         }
 
         // step 18

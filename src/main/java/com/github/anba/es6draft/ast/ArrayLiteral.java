@@ -11,12 +11,12 @@ import java.util.List;
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.1 Primary Expressions</h2><br>
- * <h3>12.1.4 Array Initialiser</h3>
+ * <h3>12.1.4 Array Initializer</h3>
  * <ul>
  * <li>12.1.4.1 Array Literal
  * </ul>
  */
-public class ArrayLiteral extends ArrayInitialiser {
+public class ArrayLiteral extends ArrayInitializer {
     private List<Expression> elements;
     private final boolean trailingComma;
 

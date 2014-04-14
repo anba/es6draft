@@ -525,7 +525,7 @@ public final class Repl {
             @Override
             public void execute() {
                 try {
-                    global.initialise(global);
+                    global.initialize(global);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 } catch (URISyntaxException e) {

@@ -64,7 +64,7 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
         ArrayBufferObject buffer = getBuffer();
         /* step 4 */
         if (buffer == null) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 5 */
         if (!IsInteger(index)) {
@@ -89,7 +89,7 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
         ArrayBufferObject buffer = getBuffer();
         /* step 4 */
         if (buffer == null) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 5 */
         if (!IsInteger(index)) {
@@ -123,7 +123,7 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
         ArrayBufferObject buffer = getBuffer();
         /* step 4 */
         if (buffer == null) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 5 */
         if (!IsInteger(index)) {
@@ -166,8 +166,8 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
      *            the new array buffer object
      */
     public void setBuffer(ArrayBufferObject buffer) {
-        assert buffer != null && buffer.getData() != null : "ArrayBufferObject not initialised";
-        assert this.buffer == null : "TypedArrayObject already initialised";
+        assert buffer != null && buffer.getData() != null : "ArrayBufferObject not initialized";
+        assert this.buffer == null : "TypedArrayObject already initialized";
         this.buffer = buffer;
     }
 

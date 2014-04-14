@@ -386,7 +386,7 @@ js1_7/extensions/regress-591450.js
 # ES6: duplicate formal-parameter + lexical declaration
 js1_8_1/extensions/regress-353214-02.js
 
-# ES6-change: for-in no longer accepts initialiser in VarDeclaration
+# ES6-change: for-in no longer accepts initializer in VarDeclaration
 js1_5/extensions/regress-226078.js
 js1_5/Regress/regress-252892.js
 js1_8/regress/regress-459185.js
@@ -403,7 +403,7 @@ js1_5/Regress/regress-350253.js
 js1_5/Regress/regress-462292.js
 js1_8_5/regress/regress-609617.js
 
-# ES6: const declaration requires initialiser
+# ES6: const declaration requires initializer
 ecma_5/Object/freeze-global-eval-const.js
 js1_5/extensions/regress-452565.js
 js1_5/Regress/regress-360969-03.js
@@ -443,7 +443,7 @@ js1_8_5/regress/regress-383902.js
 # script code, but not global scope(!), eval() does not add lexical declarations to global object
 js1_5/Regress/regress-103602.js
 
-# object initialiser shorthand not supported in SpiderMonkey
+# object initializer shorthand not supported in SpiderMonkey
 js1_8_5/extensions/regress-696109.js
 
 
@@ -594,7 +594,7 @@ ecma_3/extensions/regress-368516.js
 js1_8_1/regress/regress-452498-117.js
 js1_7/lexical/regress-351515.js
 
-# any parenthesised expression can degenerate into a generator comprehension
+# any parenthesized expression can degenerate into a generator comprehension
 js1_8_1/regress/regress-452498-099-a.js
 
 

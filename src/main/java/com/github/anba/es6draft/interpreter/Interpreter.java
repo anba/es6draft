@@ -563,9 +563,9 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     @Override
     public Object visit(VariableDeclaration node, ExecutionContext cx) {
         BindingIdentifier binding = (BindingIdentifier) node.getBinding();
-        Expression initialiser = node.getInitialiser();
-        if (initialiser != null) {
-            Object val = initialiser.accept(this, cx);
+        Expression initializer = node.getInitializer();
+        if (initializer != null) {
+            Object val = initializer.accept(this, cx);
             val = GetValue(val, cx);
             cx.resolveBinding(binding.getName(), strict).putValue(val, cx);
         }
@@ -807,7 +807,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             value = GetValue(value, cx);
 
             if ("__proto__".equals(propName)
-                    && cx.getRealm().isEnabled(CompatibilityOption.ProtoInitialiser)) {
+                    && cx.getRealm().isEnabled(CompatibilityOption.ProtoInitializer)) {
                 ScriptRuntime.defineProtoProperty(obj, value, cx);
             } else {
                 ScriptRuntime.defineProperty(obj, propName, value, cx);
@@ -1029,8 +1029,8 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             if (!(binding instanceof BindingIdentifier)) {
                 return false;
             }
-            Expression initialiser = node.getInitialiser();
-            return initialiser == null || initialiser.accept(this, value);
+            Expression initializer = node.getInitializer();
+            return initializer == null || initializer.accept(this, value);
         }
 
         @Override

@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -48,13 +48,13 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>25.4.4 Properties of the Promise Constructor
  * </ul>
  */
-public final class PromiseConstructor extends BuiltinConstructor implements Initialisable {
+public final class PromiseConstructor extends BuiltinConstructor implements Initializable {
     public PromiseConstructor(Realm realm) {
         super(realm, "Promise");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }
@@ -82,7 +82,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         PromiseObject promise = (PromiseObject) thisValue;
         /* step 4 */
         if (promise.getState() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
         /* step 5 */
         if (!IsCallable(executor)) {
@@ -109,7 +109,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         assert promise.getState() == null;
         /* step 2 (not applicable) */
         /* steps 3-5 */
-        promise.initialise();
+        promise.initialize();
         /* step 6 */
         ResolvingFunctions resolvingFunctions = CreateResolvingFunctions(cx, promise);
         /* step 7 */

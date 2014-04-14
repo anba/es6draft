@@ -20,14 +20,14 @@ public final class DateObject extends OrdinaryObject {
     /** [[DateValue]] */
     private double dateValue;
 
-    private boolean initialised = false;
+    private boolean initialized = false;
 
     public DateObject(Realm realm) {
         super(realm);
     }
 
-    public boolean isInitialised() {
-        return initialised;
+    public boolean isInitialized() {
+        return initialized;
     }
 
     /**
@@ -46,7 +46,7 @@ public final class DateObject extends OrdinaryObject {
      *            the new date value
      */
     public void setDateValue(double dateValue) {
-        this.initialised = true;
+        this.initialized = true;
         this.dateValue = dateValue;
     }
 }

@@ -15,7 +15,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -36,13 +36,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>26.5.2 Properties of the Proxy Constructor Function
  * </ul>
  */
-public final class ProxyConstructorFunction extends BuiltinConstructor implements Initialisable {
+public final class ProxyConstructorFunction extends BuiltinConstructor implements Initializable {
     public ProxyConstructorFunction(Realm realm) {
         super(realm, "Proxy");
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
     }

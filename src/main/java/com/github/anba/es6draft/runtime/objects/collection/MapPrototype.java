@@ -17,7 +17,7 @@ import java.util.Map.Entry;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
@@ -39,13 +39,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>23.1.3 Properties of the Map Prototype Object
  * </ul>
  */
-public final class MapPrototype extends OrdinaryObject implements Initialisable {
+public final class MapPrototype extends OrdinaryObject implements Initializable {
     public MapPrototype(Realm realm) {
         super(realm);
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
     }
 
@@ -58,10 +58,10 @@ public final class MapPrototype extends OrdinaryObject implements Initialisable 
         private static MapObject thisMapValue(ExecutionContext cx, Object obj) {
             if (obj instanceof MapObject) {
                 MapObject map = (MapObject) obj;
-                if (map.isInitialised()) {
+                if (map.isInitialized()) {
                     return map;
                 }
-                throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                throw newTypeError(cx, Messages.Key.UninitializedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

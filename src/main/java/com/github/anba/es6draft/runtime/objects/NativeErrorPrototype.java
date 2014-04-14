@@ -10,7 +10,7 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
@@ -28,7 +28,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  * </ul>
  */
-public final class NativeErrorPrototype extends OrdinaryObject implements Initialisable {
+public final class NativeErrorPrototype extends OrdinaryObject implements Initializable {
     private final ErrorType type;
 
     public NativeErrorPrototype(Realm realm, ErrorType type) {
@@ -48,7 +48,7 @@ public final class NativeErrorPrototype extends OrdinaryObject implements Initia
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
+    public void initialize(ExecutionContext cx) {
         switch (type) {
         case EvalError:
             createProperties(cx, this, EvalErrorPrototypeProperties.class);

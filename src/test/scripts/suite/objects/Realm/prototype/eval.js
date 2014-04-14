@@ -31,7 +31,7 @@ assertBuiltinFunction(evalFn, "eval", 1);
   }
 }
 
-// steps 3-4 - TypeError if thisValue is an uninitialised Realm object
+// steps 3-4 - TypeError if thisValue is an uninitialized Realm object
 {
   assertThrows(() => evalFn.call(Reflect.Realm[Symbol.create]()), TypeError);
 }

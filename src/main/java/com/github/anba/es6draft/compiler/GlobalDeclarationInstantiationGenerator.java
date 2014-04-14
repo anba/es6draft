@@ -30,7 +30,7 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
- * <h1>15 ECMAScript Language: Modules and Scripts</h1><br>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Scripts</h2>
  * <ul>
  * <li>15.2.8 Runtime Semantics: GlobalDeclarationInstantiation
@@ -150,7 +150,7 @@ final class GlobalDeclarationInstantiationGenerator extends
         /* step 6 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
         /* step 7 */
-        List<Declaration> functionsToInitialise = new ArrayList<>();
+        List<Declaration> functionsToInitialize = new ArrayList<>();
         /* step 8 */
         Set<String> declaredFunctionNames = new HashSet<>();
         /* step 9 */
@@ -161,7 +161,7 @@ final class GlobalDeclarationInstantiationGenerator extends
                 if (!declaredFunctionNames.contains(fn)) {
                     canDeclareGlobalFunctionOrThrow(context, envRec, fn, mv);
                     declaredFunctionNames.add(fn);
-                    functionsToInitialise.add(d);
+                    functionsToInitialize.add(d);
                 }
             }
         }
@@ -181,7 +181,7 @@ final class GlobalDeclarationInstantiationGenerator extends
             }
         }
         /* steps 12-13 */
-        for (Declaration f : functionsToInitialise) {
+        for (Declaration f : functionsToInitialize) {
             String fn = BoundName(f);
             // stack: [] -> [fo]
             InstantiateFunctionObject(context, lexEnv, f, mv);

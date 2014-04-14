@@ -69,9 +69,9 @@ public enum CompatibilityOption {
     FunctionPrototype,
 
     /**
-     * B.3.1 __proto___ Property Names in Object Initialisers
+     * B.3.1 __proto___ Property Names in Object Initializers
      */
-    ProtoInitialiser,
+    ProtoInitializer,
 
     /**
      * B.3.2 Web Legacy Compatibility for Block-Level Function Declarations

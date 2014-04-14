@@ -67,7 +67,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
         return visit((Expression) node, value);
     }
 
-    protected R visit(ArrayInitialiser node, V value) {
+    protected R visit(ArrayInitializer node, V value) {
         return visit((Expression) node, value);
     }
 
@@ -101,12 +101,12 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(ArrayComprehension node, V value) {
-        return visit((ArrayInitialiser) node, value);
+        return visit((ArrayInitializer) node, value);
     }
 
     @Override
     public R visit(ArrayLiteral node, V value) {
-        return visit((ArrayInitialiser) node, value);
+        return visit((ArrayInitializer) node, value);
     }
 
     @Override
