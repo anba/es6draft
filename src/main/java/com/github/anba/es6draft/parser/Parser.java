@@ -828,6 +828,9 @@ public final class Parser {
      * @return the parser exception
      */
     private ParserException reportTokenNotIdentifier(Token actual) {
+        if (Token.isIdentifierName(actual)) {
+            throw reportSyntaxError(Messages.Key.InvalidIdentifier, getName(actual));
+        }
         throw reportTokenMismatch("<identifier>", actual);
     }
 
@@ -852,14 +855,29 @@ public final class Parser {
      * @return the parser exception
      */
     private ParserException reportTokenMismatch(String expected, Token actual) {
-        long sourcePosition = ts.sourcePosition();
-        int line = toLine(sourcePosition), col = toColumn(sourcePosition);
         if (actual == Token.EOF) {
-            throw new ParserEOFException(sourceFile, line, col, Messages.Key.UnexpectedToken,
+            throw reportEofError(ts.sourcePosition(), Messages.Key.UnexpectedToken,
                     actual.toString(), expected);
         }
-        throw new ParserException(ExceptionType.SyntaxError, sourceFile, line, col,
+        throw reportError(ExceptionType.SyntaxError, ts.sourcePosition(),
                 Messages.Key.UnexpectedToken, actual.toString(), expected);
+    }
+
+    /**
+     * Report parser eof-error with the given position.
+     * 
+     * @param sourcePosition
+     *            the source position for the error
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the parser exception
+     */
+    private ParserEOFException reportEofError(long sourcePosition, Messages.Key messageKey,
+            String... args) {
+        int line = toLine(sourcePosition), column = toColumn(sourcePosition);
+        throw new ParserEOFException(sourceFile, line, column, messageKey, args);
     }
 
     /**
@@ -976,7 +994,7 @@ public final class Parser {
      *            the error message arguments
      */
     private void reportStrictModeSyntaxError(Node node, Messages.Key messageKey, String... args) {
-        reportStrictModeSyntaxError(node.getBeginPosition(), messageKey, args);
+        reportStrictModeError(ExceptionType.SyntaxError, node.getBeginPosition(), messageKey, args);
     }
 
     /**
@@ -988,7 +1006,7 @@ public final class Parser {
      *            the error message arguments
      */
     void reportStrictModeSyntaxError(Messages.Key messageKey, String... args) {
-        reportStrictModeSyntaxError(ts.sourcePosition(), messageKey, args);
+        reportStrictModeError(ExceptionType.SyntaxError, ts.sourcePosition(), messageKey, args);
     }
 
     /**
