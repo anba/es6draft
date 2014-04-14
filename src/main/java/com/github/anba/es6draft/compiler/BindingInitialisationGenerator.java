@@ -22,6 +22,8 @@ import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.runtime.EnvironmentRecord;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>14 ECMAScript Language: Functions and Classes</h1><br>
@@ -79,65 +81,176 @@ final class BindingInitialisationGenerator {
                 Types._Type, "isUndefined", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
+    private static final IdentifierResolution identifierResolution = new IdentifierResolution();
     private final CodeGenerator codegen;
 
     BindingInitialisationGenerator(CodeGenerator codegen) {
         this.codegen = codegen;
     }
 
+    /**
+     * stack: [] {@literal ->} []
+     * 
+     * @param node
+     *            the function node
+     * @param iterator
+     *            the arguments iterator
+     * @param mv
+     *            the expression visitor
+     */
     void generate(FunctionNode node, Variable<Iterator<?>> iterator, ExpressionVisitor mv) {
         IteratorBindingInitialisation init = new IteratorBindingInitialisation(codegen, mv,
-                EnvironmentType.NoEnvironment);
-
+                EnvironmentType.NoEnvironment, null);
         node.getParameters().accept(init, iterator);
     }
 
-    void generate(Binding node, ExpressionVisitor mv) {
-        // stack: [value] -> []
-        BindingInitialisation init = new BindingInitialisation(codegen, mv,
-                EnvironmentType.NoEnvironment);
-        node.accept(init, null);
+    /**
+     * stack: [] {@literal ->} []
+     * 
+     * @param node
+     *            the function node
+     * @param iterator
+     *            the arguments iterator
+     * @param mv
+     *            the expression visitor
+     */
+    void generateWithEnvironment(FunctionNode node, Variable<? extends EnvironmentRecord> envRec,
+            Variable<Iterator<?>> iterator, ExpressionVisitor mv) {
+        IteratorBindingInitialisation init = new IteratorBindingInitialisation(codegen, mv,
+                EnvironmentType.EnvironmentFromLocal, envRec);
+        node.getParameters().accept(init, iterator);
     }
 
+    /**
+     * stack: [value] {@literal ->} []
+     * 
+     * @param node
+     *            the binding node
+     * @param mv
+     *            the expression visitor
+     */
+    void generate(Binding node, ExpressionVisitor mv) {
+        if (node instanceof BindingIdentifier) {
+            generate((BindingIdentifier) node, mv);
+        } else {
+            BindingInitialisation init = new BindingInitialisation(codegen, mv,
+                    EnvironmentType.NoEnvironment, null);
+            node.accept(init, null);
+        }
+    }
+
+    /**
+     * stack: [value] {@literal ->} []
+     * 
+     * @param node
+     *            the binding node
+     * @param mv
+     *            the expression visitor
+     */
+    private void generate(BindingIdentifier node, ExpressionVisitor mv) {
+        // stack: [value] -> []
+        ResolveBinding(node, mv);
+        mv.swap();
+        PutValue(mv);
+    }
+
+    /**
+     * stack: [envRec, value] {@literal ->} []
+     * 
+     * @param node
+     *            the binding node
+     * @param mv
+     *            the expression visitor
+     */
     void generateWithEnvironment(Binding node, ExpressionVisitor mv) {
-        // stack: [env, value] -> []
-        BindingInitialisation init = new BindingInitialisation(codegen, mv,
-                EnvironmentType.EnvironmentFromStack);
-        node.accept(init, null);
+        if (node instanceof BindingIdentifier) {
+            generateWithEnvironment((BindingIdentifier) node, mv);
+        } else {
+            // stack: [env, value] -> []
+            BindingInitialisation init = new BindingInitialisation(codegen, mv,
+                    EnvironmentType.EnvironmentFromStack, null);
+            node.accept(init, null);
+        }
+    }
+
+    /**
+     * stack: [envRec, value] {@literal ->} []
+     * 
+     * @param node
+     *            the binding node
+     * @param mv
+     *            the expression visitor
+     */
+    private void generateWithEnvironment(BindingIdentifier node, ExpressionVisitor mv) {
+        // stack: [envRec, value] -> [envRec, id, value]
+        mv.aconst(((BindingIdentifier) node).getName());
+        mv.swap();
+        // stack: [envRec, id, value] -> []
+        mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
+    }
+
+    /**
+     * stack: [] {@literal ->} [Reference]
+     * 
+     * @param node
+     *            the binding identifier node
+     * @param mv
+     *            the expression visitor
+     */
+    private static void ResolveBinding(BindingIdentifier node, ExpressionVisitor mv) {
+        identifierResolution.resolve(node, mv);
+    }
+
+    /**
+     * stack: [Reference, Object] {@literal ->} []
+     * 
+     * @param mv
+     *            the expression visitor
+     */
+    private static void PutValue(ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        mv.invoke(Methods.Reference_putValue);
     }
 
     private enum EnvironmentType {
-        NoEnvironment, EnvironmentFromStack
+        NoEnvironment, EnvironmentFromStack, EnvironmentFromLocal
     }
 
     private abstract static class RuntimeSemantics<R, V> extends DefaultNodeVisitor<R, V> {
         protected final CodeGenerator codegen;
         protected final ExpressionVisitor mv;
         protected final EnvironmentType environment;
+        protected final Variable<? extends EnvironmentRecord> envRec;
 
         protected RuntimeSemantics(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment) {
+                EnvironmentType environment, Variable<? extends EnvironmentRecord> envRec) {
             this.codegen = codegen;
             this.mv = mv;
             this.environment = environment;
+            this.envRec = envRec;
+            assert (environment == EnvironmentType.EnvironmentFromLocal) == (envRec != null);
         }
 
         protected final void BindingInitialisation(Binding node) {
-            node.accept(new BindingInitialisation(codegen, mv, environment), null);
+            node.accept(new BindingInitialisation(codegen, mv, environment, envRec), null);
         }
 
         protected final void IteratorBindingInitialisation(ArrayBindingPattern node,
                 Variable<Iterator<?>> iterator) {
-            node.accept(new IteratorBindingInitialisation(codegen, mv, environment), iterator);
+            node.accept(new IteratorBindingInitialisation(codegen, mv, environment, envRec),
+                    iterator);
         }
 
-        protected final void KeyedBindingInitialisation(BindingProperty node, String key) {
-            node.accept(new KeyedBindingInitialisation(codegen, mv, environment), key);
+        protected final void KeyedBindingInitialisation(BindingProperty node,
+                Variable<ScriptObject> object, String key) {
+            node.accept(new KeyedBindingInitialisation(codegen, mv, environment, envRec, object),
+                    key);
         }
 
         protected final void ComputedKeyedBindingInitialisation(BindingProperty node,
-                ComputedPropertyName key) {
-            node.accept(new ComputedKeyedBindingInitialisation(codegen, mv, environment), key);
+                Variable<ScriptObject> object, ComputedPropertyName key) {
+            node.accept(new ComputedKeyedBindingInitialisation(codegen, mv, environment, envRec,
+                    object), key);
         }
 
         @Override
@@ -153,22 +266,6 @@ final class BindingInitialisationGenerator {
             return codegen.expressionBoxedValue(node, mv);
         }
 
-        protected final void dupArgs() {
-            if (environment == EnvironmentType.EnvironmentFromStack) {
-                mv.dup2();
-            } else {
-                mv.dup();
-            }
-        }
-
-        protected final void popArgs() {
-            if (environment == EnvironmentType.EnvironmentFromStack) {
-                mv.pop2();
-            } else {
-                mv.pop();
-            }
-        }
-
         protected final void dupEnv() {
             if (environment == EnvironmentType.EnvironmentFromStack) {
                 mv.dup();
@@ -180,14 +277,26 @@ final class BindingInitialisationGenerator {
                 mv.pop();
             }
         }
+
+        protected final void prepareBindingIdentifier(BindingIdentifier identifier) {
+            // Load environment record and binding identifier on stack to avoid swap instructions
+            if (environment == EnvironmentType.EnvironmentFromLocal) {
+                // stack: [] -> [envRec, id]
+                mv.load(envRec);
+                mv.aconst(identifier.getName());
+            } else if (environment == EnvironmentType.EnvironmentFromStack) {
+                // stack: [envRec] -> [envRec, id]
+                mv.aconst(identifier.getName());
+            } else {
+                assert environment == EnvironmentType.NoEnvironment;
+            }
+        }
     }
 
     private static final class BindingInitialisation extends RuntimeSemantics<Void, Void> {
-        private static IdentifierResolution identifierResolution = new IdentifierResolution();
-
         protected BindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment) {
-            super(codegen, mv, environment);
+                EnvironmentType environment, Variable<? extends EnvironmentRecord> envRec) {
+            super(codegen, mv, environment, envRec);
         }
 
         @Override
@@ -217,30 +326,34 @@ final class BindingInitialisationGenerator {
         public Void visit(ObjectBindingPattern node, Void value) {
             // step 1: Assert: Type(value) is Object
 
+            // stack: [(env), value] -> [(env)]
+            Variable<ScriptObject> object = mv.newScratchVariable(ScriptObject.class);
+            mv.store(object);
+
             // step 2: [...]
             for (BindingProperty property : node.getProperties()) {
-                // stack: [(env), value] -> [(env), value, (env), value]
-                dupArgs();
-                // stack: [(env), value, (env), value] -> [(env), value]
                 if (property.getPropertyName() == null) {
                     // BindingProperty : SingleNameBinding
                     String name = BoundNames(property.getBinding()).get(0);
-                    KeyedBindingInitialisation(property, name);
+                    KeyedBindingInitialisation(property, object, name);
                 } else {
                     // BindingProperty : PropertyName : BindingElement
                     String name = PropName(property.getPropertyName());
                     if (name != null) {
-                        KeyedBindingInitialisation(property, name);
+                        KeyedBindingInitialisation(property, object, name);
                     } else {
                         PropertyName propertyName = property.getPropertyName();
                         assert propertyName instanceof ComputedPropertyName;
-                        ComputedKeyedBindingInitialisation(property,
+                        ComputedKeyedBindingInitialisation(property, object,
                                 (ComputedPropertyName) propertyName);
                     }
                 }
             }
-            // stack: [(env), value] -> []
-            popArgs();
+
+            mv.freeVariable(object);
+
+            // stack: [(env)] -> []
+            popEnv();
 
             return null;
         }
@@ -250,21 +363,18 @@ final class BindingInitialisationGenerator {
          */
         @Override
         public Void visit(BindingIdentifier node, Void value) {
-            if (environment == EnvironmentType.EnvironmentFromStack) {
-                // stack: [envRec, value] -> [envRec, id, value]
-                mv.aconst(node.getName());
-                mv.swap();
-
+            if (environment == EnvironmentType.EnvironmentFromLocal) {
+                // stack: [envRec, id, value] -> []
+                mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
+            } else if (environment == EnvironmentType.EnvironmentFromStack) {
                 // stack: [envRec, id, value] -> []
                 mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
             } else {
                 assert environment == EnvironmentType.NoEnvironment;
-                // stack: [value] -> [ref, value]
-                identifierResolution.resolve(node, mv);
+                // stack: [value] -> []
+                ResolveBinding(node, mv);
                 mv.swap();
-                // stack: [ref, value] -> []
-                mv.loadExecutionContext();
-                mv.invoke(Methods.Reference_putValue);
+                PutValue(mv);
             }
 
             return null;
@@ -279,15 +389,13 @@ final class BindingInitialisationGenerator {
     private static final class IteratorBindingInitialisation extends
             RuntimeSemantics<Void, Variable<Iterator<?>>> {
         protected IteratorBindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment) {
-            super(codegen, mv, environment);
+                EnvironmentType environment, Variable<? extends EnvironmentRecord> envRec) {
+            super(codegen, mv, environment, envRec);
         }
 
         @Override
         public Void visit(FormalParameterList node, Variable<Iterator<?>> iterator) {
-            assert environment != EnvironmentType.EnvironmentFromStack;
-
-            // stack: [] -> []
+            // stack: [(env)] -> [(env)]
             for (FormalParameter formal : node) {
                 formal.accept(this, iterator);
             }
@@ -299,7 +407,6 @@ final class BindingInitialisationGenerator {
         public Void visit(ArrayBindingPattern node, Variable<Iterator<?>> iterator) {
             // stack: [(env)] -> [(env)]
             for (BindingElementItem element : node.getElements()) {
-                dupEnv();
                 element.accept(this, iterator);
             }
 
@@ -308,10 +415,9 @@ final class BindingInitialisationGenerator {
 
         @Override
         public Void visit(BindingElision node, Variable<Iterator<?>> iterator) {
-            // stack: [(env)] -> []
+            // stack: [(env)] -> [(env)]
             mv.load(iterator);
             mv.invoke(Methods.ScriptRuntime_iteratorNextAndIgnore);
-            popEnv();
 
             return null;
         }
@@ -325,12 +431,18 @@ final class BindingInitialisationGenerator {
                 // BindingElement : SingleNameBinding
                 // SingleNameBinding : BindingIdentifier Initialiser{opt}
 
+                // stack: [(env)] -> [(env), (env)]
+                dupEnv();
+
+                // stack: [(env)] -> [(env), (env, id)]
+                prepareBindingIdentifier((BindingIdentifier) binding);
+
                 // steps 1-4
                 mv.load(iterator);
                 mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
 
                 // step 5
-                // stack: [(env), v] -> [(env), v']
+                // stack: [(env), (env), v] -> [(env), (env), v']
                 if (initialiser != null) {
                     Label undef = new Label();
                     mv.dup();
@@ -348,18 +460,21 @@ final class BindingInitialisationGenerator {
                 }
 
                 // step 6
-                // stack: [(env), v'] -> []
+                // stack: [(env), (env), v'] -> [(env)]
                 BindingInitialisation(binding);
             } else {
                 // BindingElement : BindingPattern Initialiser{opt}
                 assert binding instanceof BindingPattern;
+
+                // stack: [(env)] -> [(env), (env)]
+                dupEnv();
 
                 // steps 1-4
                 mv.load(iterator);
                 mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
 
                 // step 5
-                // stack: [(env), v] -> [(env), v']
+                // stack: [(env), (env), v] -> [(env), (env), v']
                 if (initialiser != null) {
                     Label undef = new Label();
                     mv.dup();
@@ -373,13 +488,13 @@ final class BindingInitialisationGenerator {
                 }
 
                 // step 7
-                // stack: [(env), v'] -> [(env), v']
+                // stack: [(env), (env), v'] -> [(env), (env), v']
                 mv.lineInfo(binding);
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
 
                 // step 8
-                // stack: [(env), v'] -> []
+                // stack: [(env), (env), v'] -> [(env)]
                 BindingInitialisation(binding);
             }
 
@@ -388,12 +503,18 @@ final class BindingInitialisationGenerator {
 
         @Override
         public Void visit(BindingRestElement node, Variable<Iterator<?>> iterator) {
+            // stack: [(env)] -> [(env), (env)]
+            dupEnv();
+
+            // stack: [(env)] -> [(env), (env, id)]
+            prepareBindingIdentifier(node.getBindingIdentifier());
+
             mv.load(iterator);
             mv.loadExecutionContext();
-            // stack: [(env), array, iterator, cx] -> [(env), rest]
+            // stack: [(env), (env), iterator, cx] -> [(env), (env), rest]
             mv.invoke(Methods.ScriptRuntime_createRestArray);
 
-            // stack: [(env), rest] -> []
+            // stack: [(env), (env), rest] -> [(env)]
             BindingInitialisation(node.getBindingIdentifier());
 
             return null;
@@ -404,9 +525,13 @@ final class BindingInitialisationGenerator {
      * 13.2.3.6 Runtime Semantics: KeyedBindingInitialisation
      */
     private static final class KeyedBindingInitialisation extends RuntimeSemantics<Void, String> {
+        private final Variable<ScriptObject> object;
+
         protected KeyedBindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment) {
-            super(codegen, mv, environment);
+                EnvironmentType environment, Variable<? extends EnvironmentRecord> envRec,
+                Variable<ScriptObject> object) {
+            super(codegen, mv, environment, envRec);
+            this.object = object;
         }
 
         @Override
@@ -414,19 +539,25 @@ final class BindingInitialisationGenerator {
             Binding binding = node.getBinding();
             Expression initialiser = node.getInitialiser();
 
-            // stack: [(env), obj] -> [(env), cx, obj]
-            mv.loadExecutionContext();
-            mv.swap();
+            // stack: [(env)] -> [(env), (env)]
+            dupEnv();
 
-            // stack: [(env), cx, obj] -> [(env), cx, obj, propertyName]
+            if (binding instanceof BindingIdentifier) {
+                // stack: [(env)] -> [(env), (env, id)]
+                prepareBindingIdentifier((BindingIdentifier) binding);
+            }
+
+            // stack: [(env), (env)] -> [(env), (env), cx, obj, propertyName]
+            mv.loadExecutionContext();
+            mv.load(object);
             mv.aconst(propertyName);
 
             // steps 1-2
-            // stack: [(env), cx, obj, propertyName] -> [(env), v]
+            // stack: [(env), (env), cx, obj, propertyName] -> [(env), (env), v]
             mv.invoke(Methods.AbstractOperations_Get_String);
 
             // step 3
-            // stack: [(env), v] -> [(env), v']
+            // stack: [(env), (env), v] -> [(env), (env), v']
             if (initialiser != null) {
                 Label undef = new Label();
                 mv.dup();
@@ -445,14 +576,14 @@ final class BindingInitialisationGenerator {
 
             if (binding instanceof BindingPattern) {
                 // step 4
-                // stack: [(env), v'] -> [(env), v']
+                // stack: [(env), (env), v'] -> [(env), (env), v']
                 mv.lineInfo(binding);
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
             }
 
             // step 5
-            // stack: [(env), v'] -> []
+            // stack: [(env), (env), v'] -> [(env)]
             BindingInitialisation(binding);
 
             return null;
@@ -464,9 +595,13 @@ final class BindingInitialisationGenerator {
      */
     private static final class ComputedKeyedBindingInitialisation extends
             RuntimeSemantics<Void, ComputedPropertyName> {
+        private final Variable<ScriptObject> object;
+
         protected ComputedKeyedBindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment) {
-            super(codegen, mv, environment);
+                EnvironmentType environment, Variable<? extends EnvironmentRecord> envRec,
+                Variable<ScriptObject> object) {
+            super(codegen, mv, environment, envRec);
+            this.object = object;
         }
 
         @Override
@@ -474,22 +609,30 @@ final class BindingInitialisationGenerator {
             Binding binding = node.getBinding();
             Expression initialiser = node.getInitialiser();
 
-            // stack: [(env), obj] -> [(env), cx, obj]
-            mv.loadExecutionContext();
-            mv.swap();
+            // stack: [(env)] -> [(env), (env)]
+            dupEnv();
 
-            // stack: [(env), cx, obj] -> [(env), cx, obj, propertyName]
+            if (binding instanceof BindingIdentifier) {
+                // stack: [(env)] -> [(env), (env, id)]
+                prepareBindingIdentifier((BindingIdentifier) binding);
+            }
+
+            // stack: [(env), (env), obj] -> [(env), (env), cx, obj]
+            mv.loadExecutionContext();
+            mv.load(object);
+
+            // stack: [(env), (env), cx, obj] -> [(env), (env), cx, obj, propertyName]
             // Runtime Semantics: Evaluation
             // ComputedPropertyName : [ AssignmentExpression ]
             ValType propType = expressionValue(propertyName.getExpression(), mv);
             ToPropertyKey(propType, mv);
 
             // steps 1-2
-            // stack: [(env), cx, obj, propertyName] -> [(env), v]
+            // stack: [(env), (env), cx, obj, propertyName] -> [(env), (env), v]
             mv.invoke(Methods.AbstractOperations_Get);
 
             // step 3
-            // stack: [(env), v] -> [(env), v']
+            // stack: [(env), (env), v] -> [(env), (env), v']
             if (initialiser != null) {
                 Label undef = new Label();
                 mv.dup();
@@ -508,14 +651,14 @@ final class BindingInitialisationGenerator {
 
             if (binding instanceof BindingPattern) {
                 // step 4
-                // stack: [(env), v'] -> [(env), v']
+                // stack: [(env), (env), v'] -> [(env), (env), v']
                 mv.lineInfo(binding);
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
             }
 
             // step 5
-            // stack: [(env), v'] -> []
+            // stack: [(env), (env), v'] -> [(env)]
             BindingInitialisation(binding);
 
             return null;
