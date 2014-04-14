@@ -20,6 +20,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.OrdinaryCreateFromConstructor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -134,12 +135,10 @@ public final class AbstractOperations {
         /* steps 1-3 */
         String hint = preferredType.toString();
         /* steps 4-5 */
-        Object exoticToPrim = Get(cx, argument, BuiltinSymbol.toPrimitive.get());
+        Callable exoticToPrim = GetMethod(cx, argument, BuiltinSymbol.toPrimitive.get());
         /* step 6 */
-        if (!Type.isUndefined(exoticToPrim)) {
-            if (!IsCallable(exoticToPrim))
-                throw newTypeError(cx, Messages.Key.NotCallable);
-            Object result = ((Callable) exoticToPrim).call(cx, argument, hint);
+        if (exoticToPrim != null) {
+            Object result = exoticToPrim.call(cx, argument, hint);
             if (!Type.isObject(result)) {
                 return result;
             }
@@ -706,6 +705,29 @@ public final class AbstractOperations {
     }
 
     /**
+     * 7.1.16 CanonicalNumericString(argument)
+     * 
+     * @param value
+     *            the argument value
+     * @return the canonical number or {@code -0d} if not canonical
+     */
+    public static double CanonicalNumericString(String value) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        double n = ToNumber(value);
+        /* step 3 */
+        if (n == 0 && Double.compare(n, -0d) == 0) {
+            return +0d;
+        }
+        /* step 4 */
+        if (!value.equals(ToString(n))) {
+            return -0d;
+        }
+        /* step 5 */
+        return n;
+    }
+
+    /**
      * 7.2.1 CheckObjectCoercible
      * 
      * @param cx
@@ -929,7 +951,53 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.8 Abstract Relational Comparison
+     * 7.2.8 IsInteger
+     * 
+     * @param value
+     *            the argument value
+     * @return {@code true} if the value is a finite integer
+     */
+    public static boolean IsInteger(Object value) {
+        /* steps 1-2 */
+        if (!Type.isNumber(value)) {
+            return false;
+        }
+        double d = Type.numberValue(value);
+        /* step 2 */
+        if (Double.isNaN(d) || Double.isInfinite(d)) {
+            return false;
+        }
+        /* step 3 */
+        if (Math.floor(Math.abs(d)) != Math.abs(d)) {
+            return false;
+        }
+        /* step 4 */
+        return true;
+    }
+
+    /**
+     * 7.2.8 IsInteger
+     * 
+     * @param value
+     *            the argument value
+     * @return {@code true} if the value is a finite integer
+     */
+    public static boolean IsInteger(double value) {
+        double d = value;
+        /* step 2 */
+        if (Double.isNaN(d) || Double.isInfinite(d)) {
+            return false;
+        }
+        /* step 3 */
+        if (Math.floor(Math.abs(d)) != Math.abs(d)) {
+            return false;
+        }
+        /* step 4 */
+        return true;
+    }
+
+    /**
+     * 7.2.9 Abstract Relational Comparison
      * 
      * @param cx
      *            the execution context
@@ -986,7 +1054,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.9 Abstract Equality Comparison
+     * 7.2.10 Abstract Equality Comparison
      * 
      * @param cx
      *            the execution context
@@ -1049,7 +1117,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.10 Strict Equality Comparison
+     * 7.2.11 Strict Equality Comparison
      * 
      * @param x
      *            the first operand
@@ -2105,24 +2173,19 @@ public final class AbstractOperations {
      */
     public static <FUNCTION extends ScriptObject & Callable & Constructor> ScriptObject CreateFromConstructor(
             ExecutionContext cx, FUNCTION f) {
-        // TODO: Use GetMethod() to reduce code duplication?
         /* steps 1-2 */
-        Object creator = Get(cx, f, BuiltinSymbol.create.get());
+        Callable creator = GetMethod(cx, f, BuiltinSymbol.create.get());
         /* step 3 */
-        if (Type.isUndefined(creator)) {
+        if (creator == null) {
             return null;
         }
-        /* step 4 */
-        if (!IsCallable(creator)) {
-            throw newTypeError(cx, Messages.Key.NotCallable);
-        }
-        /* steps 5-6 */
-        Object obj = ((Callable) creator).call(cx, f);
-        /* step 7 */
+        /* steps 4-5 */
+        Object obj = creator.call(cx, f);
+        /* step 6 */
         if (!Type.isObject(obj)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
-        /* step 8 */
+        /* step 7 */
         return Type.objectValue(obj);
     }
 
@@ -2146,9 +2209,7 @@ public final class AbstractOperations {
         ScriptObject obj = CreateFromConstructor(cx, f);
         /* step 4 */
         if (obj == null) {
-            obj = OrdinaryObject.OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
-            // FIXME: spec bug - change if-test to assertion, OrdinaryCreateFromConstructor always
-            // returns object type
+            obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
         }
         /* steps 5-6 */
         Object result = f.call(cx, obj, args);
@@ -2182,9 +2243,7 @@ public final class AbstractOperations {
         ScriptObject obj = CreateFromConstructor(cx, f);
         /* step 4 */
         if (obj == null) {
-            obj = OrdinaryObject.OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
-            // FIXME: spec bug - change if-test to assertion, OrdinaryCreateFromConstructor always
-            // returns object type
+            obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
         }
         /* steps 5-6 */
         // Invoke 'tailCall()' instead of 'call()' to get TailCallInvocation objects
@@ -2278,21 +2337,100 @@ public final class AbstractOperations {
      *            the execution context
      * @param obj
      *            the script object
+     * @method the iterator method
      * @return the script iterator object
      */
     public static ScriptObject GetIterator(ExecutionContext cx, Object obj) {
-        /* steps 1-2 */
-        Object iterator = Invoke(cx, obj, BuiltinSymbol.iterator.get());
-        /* step 3 */
+        /* step 1 */
+        Callable method = IsIterable(cx, obj);
+        if (method == null) {
+            throw newTypeError(cx, Messages.Key.IncompatibleObject); // TODO: change error message
+        }
+        /* steps 2-5 */
+        return GetIterator(cx, obj, method);
+    }
+
+    /**
+     * 7.4.1 GetIterator ( obj )
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
+     * @method the iterator method
+     * @return the script iterator object
+     */
+    public static ScriptObject GetIterator(ExecutionContext cx, ScriptObject obj) {
+        /* step 1 */
+        Callable method = IsIterable(cx, obj);
+        if (method == null) {
+            throw newTypeError(cx, Messages.Key.IncompatibleObject); // TODO: change error message
+        }
+        /* steps 2-5 */
+        return GetIterator(cx, obj, method);
+    }
+
+    /**
+     * 7.4.1 GetIterator ( obj )
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
+     * @param method
+     *            the iterator method
+     * @return the script iterator object
+     */
+    public static ScriptObject GetIterator(ExecutionContext cx, Object obj, Callable method) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        Object iterator = method.call(cx, obj);
+        /* step 4 */
         if (!Type.isObject(iterator)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
-        /* step 4 */
+        /* step 5 */
         return Type.objectValue(iterator);
     }
 
     /**
-     * 7.4.2 IteratorNext ( iterator, value )
+     * 7.4.2 IsIterable ( obj )
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
+     * @return the iterator method
+     */
+    public static Callable IsIterable(ExecutionContext cx, Object obj) {
+        // TODO: Check behaviour change - no longer ToObject() implicit conversion!
+        /* step 1 */
+        if (!Type.isObject(obj)) {
+            return null;
+        }
+        /* steps 2-3 */
+        // FIXME: spec bug - missing callable type check in some callers
+        return GetMethod(cx, Type.objectValue(obj), BuiltinSymbol.iterator.get());
+    }
+
+    /**
+     * 7.4.2 IsIterable ( obj )
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
+     * @return the iterator method
+     */
+    public static Callable IsIterable(ExecutionContext cx, ScriptObject obj) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        // FIXME: spec bug - missing callable type check in some callers
+        return GetMethod(cx, Type.objectValue(obj), BuiltinSymbol.iterator.get());
+    }
+
+    /**
+     * 7.4.3 IteratorNext ( iterator, value )
      * 
      * @param cx
      *            the execution context
@@ -2312,7 +2450,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.2 IteratorNext ( iterator, value )
+     * 7.4.3 IteratorNext ( iterator, value )
      * 
      * @param cx
      *            the execution context
@@ -2354,7 +2492,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.3 IteratorComplete (iterResult)
+     * 7.4.4 IteratorComplete (iterResult)
      * 
      * @param cx
      *            the execution context
@@ -2371,7 +2509,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.4 IteratorValue (iterResult)
+     * 7.4.5 IteratorValue (iterResult)
      * 
      * @param cx
      *            the execution context
@@ -2386,7 +2524,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.5 IteratorStep ( iterator )
+     * 7.4.6 IteratorStep ( iterator )
      * 
      * @param cx
      *            the execution context
@@ -2408,7 +2546,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.6 CreateIterResultObject (value, done)
+     * 7.4.7 CreateIterResultObject (value, done)
      * 
      * @param cx
      *            the execution context
@@ -2432,7 +2570,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.7 CreateListIterator (list)
+     * 7.4.8 CreateListIterator (list)
      * 
      * @param cx
      *            the execution context
@@ -2445,7 +2583,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.7 CreateListIterator (list)
+     * 7.4.8 CreateListIterator (list)
      * 
      * @param cx
      *            the execution context
@@ -2458,7 +2596,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.8 CreateEmptyIterator ( )
+     * 7.4.9 CreateEmptyIterator ( )
      * 
      * @param cx
      *            the execution context
