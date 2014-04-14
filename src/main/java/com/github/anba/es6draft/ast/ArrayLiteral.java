@@ -18,10 +18,13 @@ import java.util.List;
  */
 public class ArrayLiteral extends ArrayInitialiser {
     private List<Expression> elements;
+    private final boolean trailingComma;
 
-    public ArrayLiteral(long beginPosition, long endPosition, List<Expression> elements) {
+    public ArrayLiteral(long beginPosition, long endPosition, List<Expression> elements,
+            boolean trailingComma) {
         super(beginPosition, endPosition);
         this.elements = elements;
+        this.trailingComma = trailingComma;
     }
 
     public List<Expression> getElements() {
@@ -30,6 +33,10 @@ public class ArrayLiteral extends ArrayInitialiser {
 
     public void setElements(List<Expression> elements) {
         this.elements = elements;
+    }
+
+    public boolean hasTrailingComma() {
+        return trailingComma;
     }
 
     @Override

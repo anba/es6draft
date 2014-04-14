@@ -5548,7 +5548,7 @@ public final class Parser {
         }
         consume(Token.RB);
 
-        return new ArrayLiteral(begin, ts.endPosition(), list);
+        return new ArrayLiteral(begin, ts.endPosition(), list, !needComma && !list.isEmpty());
     }
 
     /**
@@ -6991,6 +6991,10 @@ public final class Parser {
                 // no further elements after AssignmentRestElement allowed
                 if (iterator.hasNext()) {
                     reportSyntaxError(iterator.next(), Messages.Key.InvalidDestructuring);
+                }
+                // no trailing comma allowed
+                if (array.hasTrailingComma()) {
+                    reportSyntaxError(expression, Messages.Key.InvalidDestructuring);
                 }
             } else {
                 LeftHandSideExpression target;
