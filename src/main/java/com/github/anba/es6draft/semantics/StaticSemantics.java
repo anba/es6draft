@@ -285,6 +285,7 @@ public final class StaticSemantics {
      * @return {@code true} if the node is an anonymous function definition
      */
     public static boolean IsAnonymousFunctionDefinition(Expression node) {
+        // TODO: re-define!
         if (node instanceof ArrowFunction) {
             return true;
         }
@@ -318,6 +319,52 @@ public final class StaticSemantics {
      */
     public static boolean IsConstantDeclaration(Declaration node) {
         return node.isConstDeclaration();
+    }
+
+    /**
+     * Static Semantics: IsFunctionDefinition
+     * <ul>
+     * <li>12.2.0.2 Static Semantics: IsFunctionDefinition
+     * <li>12.2.10.2 Static Semantics: IsFunctionDefinition
+     * <li>12.3.1.2 Static Semantics: IsFunctionDefinition
+     * <li>12.4.2 Static Semantics: IsFunctionDefinition
+     * <li>12.5.2 Static Semantics: IsFunctionDefinition
+     * <li>12.6.1 Static Semantics: IsFunctionDefinition
+     * <li>12.7.1 Static Semantics: IsFunctionDefinition
+     * <li>12.8.1 Static Semantics: IsFunctionDefinition
+     * <li>12.9.1 Static Semantics: IsFunctionDefinition
+     * <li>12.10.1 Static Semantics: IsFunctionDefinition
+     * <li>12.11.1 Static Semantics: IsFunctionDefinition
+     * <li>12.12.1 Static Semantics: IsFunctionDefinition
+     * <li>12.13.1 Static Semantics: IsFunctionDefinition
+     * <li>12.14.2 Static Semantics: IsFunctionDefinition
+     * <li>12.15.1 Static Semantics: IsFunctionDefinition
+     * <li>14.1.11 Static Semantics: IsFunctionDefinition
+     * <li>14.4.8 Static Semantics: IsFunctionDefinition
+     * <li>14.5.8 Static Semantics: IsFunctionDefinition
+     * </ul>
+     * 
+     * @param node
+     *            the expression node
+     * @return {@code true} if the node is a function definition
+     */
+    public static boolean IsFunctionDefinition(Expression node) {
+        if (node instanceof ArrowFunction) {
+            return true;
+        }
+        if (node instanceof FunctionExpression) {
+            return true;
+        }
+        if (node instanceof GeneratorExpression) {
+            return true;
+        }
+        if (node instanceof ClassExpression) {
+            return true;
+        }
+        if (node instanceof AsyncFunctionExpression) {
+            return true;
+        }
+        return false;
     }
 
     /**
