@@ -397,13 +397,14 @@ public class ExoticProxy implements ScriptObject {
         Object trapResult = trap.call(cx, handler, target);
         /* steps 8-9 */
         boolean booleanTrapResult = ToBoolean(trapResult);
-        /* steps 10-11 */
-        boolean targetIsExtensible = target.isExtensible(cx);
-        /* step 12 */
-        if (booleanTrapResult && targetIsExtensible) {
-            throw newTypeError(cx, Messages.Key.ProxyExtensible);
+        /* step 10 */
+        if (booleanTrapResult) {
+            boolean targetIsExtensible = target.isExtensible(cx);
+            if (targetIsExtensible) {
+                throw newTypeError(cx, Messages.Key.ProxyExtensible);
+            }
         }
-        /* step 13 */
+        /* step 11 */
         return booleanTrapResult;
     }
 
@@ -475,6 +476,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 16-17 */
         PropertyDescriptor resultDesc = ToPropertyDescriptor(cx, trapResultObj);
         /* step 18 */
+        // TODO: pass 'targetDesc'?
         CompletePropertyDescriptor(resultDesc, targetDesc);
         /* step 19 */
         boolean valid = IsCompatiblePropertyDescriptor(extensibleTarget, resultDesc, targetDesc);
