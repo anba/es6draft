@@ -99,8 +99,9 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
      * @return the generator result value
      */
     public static GeneratorObject EvaluateBody(ExecutionContext cx, OrdinaryGenerator functionObject) {
+        // FIXME: spec bug - (function*(a=0){})() (Bug 2640)
         /* step 1 */
-        assert cx.getLexicalEnvironment().getEnvRec() instanceof FunctionEnvironmentRecord;
+        // assert cx.getLexicalEnvironment().getEnvRec() instanceof FunctionEnvironmentRecord;
         /* step 2 */
         EnvironmentRecord env = cx.getThisEnvironment();
         /* step 3 */
