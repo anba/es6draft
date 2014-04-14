@@ -154,11 +154,9 @@ public abstract class Reference<BASE, NAME> {
      * @return the reference this value
      */
     public static Object GetThisValue(ExecutionContext cx, Object v) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        if (!(v instanceof Reference))
-            return v;
-        /* steps 3-5 */
+        /* step 1 */
+        assert v instanceof Reference && ((Reference<?, ?>) v).isPropertyReference();
+        /* steps 2-3 */
         return ((Reference<?, ?>) v).getThisValue(cx);
     }
 
@@ -222,7 +220,7 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public Object getThisValue(ExecutionContext cx) {
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -306,13 +304,7 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public EnvironmentRecord getThisValue(ExecutionContext cx) {
-            /* step 3 */
-            if (isUnresolvableReference()) {
-                throw newReferenceError(cx, Messages.Key.UnresolvableReference, getReferencedName());
-            }
-            /* step 4 (not applicable) */
-            /* step 5 */
-            return getBase();
+            throw new AssertionError();
         }
     }
 
@@ -361,8 +353,8 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public final Object getThisValue(ExecutionContext cx) {
-            /* steps 3-4 (not applicable) */
-            /* step 5 */
+            /* steps 1-2 (not applicable) */
+            /* step 3 */
             return getBase();
         }
 
@@ -525,8 +517,8 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public final Object getThisValue(ExecutionContext cx) {
-            /* steps 3, 5 (not applicable) */
-            /* step 4 */
+            /* steps 1, 3 (not applicable) */
+            /* step 2 */
             return thisValue;
         }
     }
