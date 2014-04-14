@@ -21,7 +21,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>15 ECMAScript Language: Modules and Scripts</h1><br>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Modules</h2><br>
  * <h3>15.2.3 Runtime Semantics: Loader State</h3>
  * <ul>
@@ -39,19 +39,19 @@ public final class Load {
 
     public static final class Dependency {
         private final String moduleName;
-        private final String normalisedModuleName;
+        private final String normalizedModuleName;
 
-        public Dependency(String moduleName, String normalisedModuleName) {
+        public Dependency(String moduleName, String normalizedModuleName) {
             this.moduleName = moduleName;
-            this.normalisedModuleName = normalisedModuleName;
+            this.normalizedModuleName = normalizedModuleName;
         }
 
         public String getModuleName() {
             return moduleName;
         }
 
-        public String getNormalisedModuleName() {
-            return normalisedModuleName;
+        public String getNormalizedModuleName() {
+            return normalizedModuleName;
         }
     }
 
@@ -311,11 +311,11 @@ public final class Load {
      * 
      * @param moduleName
      *            the dependency name
-     * @param normalisedModuleName
-     *            the normalised dependency name
+     * @param normalizedModuleName
+     *            the normalized dependency name
      */
-    void addDependency(String moduleName, String normalisedModuleName) {
-        dependencies.add(new Dependency(moduleName, normalisedModuleName));
+    void addDependency(String moduleName, String normalizedModuleName) {
+        dependencies.add(new Dependency(moduleName, normalizedModuleName));
     }
 
     /**

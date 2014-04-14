@@ -40,7 +40,7 @@ import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
- * <h1>15 ECMAScript Language: Modules and Scripts</h1><br>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Modules</h2>
  * <ul>
  * <li>15.2.4 Runtime Semantics: Module Loading

@@ -26,7 +26,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.modules.ModuleObject;
 
 /**
- * <h1>15 ECMAScript Language: Modules and Scripts</h1><br>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Modules</h2><br>
  * <h3>15.2.5 Runtime Semantics: Module Linking</h3>
  * <ul>

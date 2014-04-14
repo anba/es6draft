@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 
 /**
- * <h1>15 ECMAScript Language: Modules and Scripts</h1>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1>
  * <ul>
  * <li>15.2 Script
  * </ul>

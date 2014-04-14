@@ -13,7 +13,7 @@ import com.github.anba.es6draft.runtime.internal.LinkedMap;
 import com.github.anba.es6draft.runtime.objects.modules.LoaderObject;
 
 /**
- * <h1>15 ECMAScript Language: Modules and Scripts</h1><br>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Modules</h2><br>
  * <h3>15.2.3 Runtime Semantics: Loader State</h3>
  * <ul>

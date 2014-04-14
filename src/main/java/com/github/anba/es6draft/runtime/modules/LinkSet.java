@@ -23,7 +23,7 @@ import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 
 /**
- * <h1>15 ECMAScript Language: Modules and Scripts</h1><br>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Modules</h2><br>
  * <h3>15.2.5 Runtime Semantics: Module Linking</h3>
  * <ul>
@@ -127,7 +127,7 @@ public final class LinkSet {
             /* step 3c */
             if (load.getStatus() == Load.Status.Loaded) {
                 for (Dependency dependency : load.getDependencies()) {
-                    String name = dependency.getModuleName(); // TODO: or normalised name?
+                    String name = dependency.getModuleName(); // TODO: or normalized name?
                     if (!loader.getModules().containsKey(name)) {
                         if (loader.getLoads().containsKey(name)) {
                             Load depLoad = loader.getLoads().get(name);

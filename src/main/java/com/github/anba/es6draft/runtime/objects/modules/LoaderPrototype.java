@@ -517,7 +517,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initialisab
          *            the referer name
          * @param refererAddress
          *            the referer address
-         * @return the normalised module name
+         * @return the normalized module name
          */
         @Function(name = "normalize", arity = 3)
         public static Object normalize(ExecutionContext cx, Object thisValue, Object name,

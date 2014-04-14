@@ -35,7 +35,7 @@ import com.github.anba.es6draft.runtime.objects.modules.ModuleObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 
 /**
- * <h1>15 ECMAScript Language: Modules and Scripts</h1><br>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Modules</h2>
  * <ul>
  * <li>15.2.5 Runtime Semantics: Module Linking
@@ -130,7 +130,7 @@ public final class ModuleLinking {
             List<Load> unlinkedDeps = new ArrayList<>();
             for (Dependency dep : pair.getKey().getDependencies()) {
                 String requestName = dep.getModuleName();
-                String normalizedName = dep.getNormalisedModuleName();
+                String normalizedName = dep.getNormalizedModuleName();
                 Load load = loadMap.get(normalizedName);
                 if (load != null) {
                     if (load.getStatus() == Load.Status.Linked) {

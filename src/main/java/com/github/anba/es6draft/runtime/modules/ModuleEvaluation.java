@@ -7,11 +7,18 @@
 package com.github.anba.es6draft.runtime.modules;
 
 import static com.github.anba.es6draft.runtime.ExecutionContext.newModuleExecutionContext;
+import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
+import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
+import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.github.anba.es6draft.ast.Declaration;
+import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -21,7 +28,7 @@ import com.github.anba.es6draft.runtime.objects.modules.ModuleObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
- * <h1>15 ECMAScript Language: Modules and Scripts</h1><br>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Modules</h2>
  * <ul>
  * <li>15.2.6 Runtime Semantics: Module Evaluation
@@ -104,33 +111,43 @@ public final class ModuleEvaluation {
     public static void EnsureEvaluated(ExecutionContext cx, ModuleLinkage mod,
             Set<ModuleLinkage> seen, Loader loader) {
         /* step 1 */
-        seen.add(mod);
+        if (mod.isEvaluated()) {
+            return;
+        }
         /* step 2 */
-        Map<String, ModuleLinkage> deps = mod.getDependencies();
+        seen.add(mod);
         /* step 3 */
+        CreateModuleEnvironment(mod);
+        /* step 4 */
+        Map<String, ModuleLinkage> deps = mod.getDependencies();
+        /* step 5 */
         for (Map.Entry<String, ModuleLinkage> pair : deps.entrySet()) {
             ModuleLinkage dep = pair.getValue();
             if (!seen.contains(dep)) {
                 EnsureEvaluated(cx, dep, seen, loader);
             }
         }
-        /* step 4 */
+        /* step 6 */
         if (mod.isEvaluated()) {
             return;
         }
-        /* step 5 */
+        /* step 7 */
         mod.setEvaluated(true);
-        /* step 6 */
+        /* step 8 */
         if (mod.getBody() == null) {
             return;
         }
-        /* step 7 */
+        /* step 9 */
         ModuleDeclarationInstantiation(mod.getBody(), mod.getEnvironment());
-        /* steps 8-11 */
+        /* steps 10-13 */
         ExecutionContext initContext = newModuleExecutionContext(loader.getRealm(),
                 mod.getEnvironment());
-        /* steps 12-17 */
+        /* steps 14-19 */
         evaluateModule(initContext, mod);
+    }
+
+    private static void CreateModuleEnvironment(ModuleLinkage mod) {
+        // TODO: implement
     }
 
     /**
@@ -144,6 +161,36 @@ public final class ModuleEvaluation {
     private static void ModuleDeclarationInstantiation(Module body,
             LexicalEnvironment<DeclarativeEnvironmentRecord> env) {
         // TODO: implement
+        DeclarativeEnvironmentRecord envRec = env.getEnvRec();
+        /* step 1 */
+        List<Declaration> declarations = LexicalDeclarations(body);
+        /* step 2 */
+        List<Declaration> functionsToInitialize = new ArrayList<>();
+        /* step 3 */
+        for (Declaration d : declarations) {
+            for (String dn : BoundNames(d)) {
+                if (IsConstantDeclaration(d)) {
+                    envRec.createImmutableBinding(dn);
+                } else {
+                    envRec.createMutableBinding(dn, false);
+                }
+            }
+            if (d instanceof FunctionNode) {
+                functionsToInitialize.add(d);
+            }
+        }
+        /* step 4 */
+        for (Declaration f : functionsToInitialize) {
+            String fn = ((FunctionNode) f).getFunctionName();
+            Object fo = InstantiateFunctionObject(f, env);
+            envRec.initialiseBinding(fn, fo);
+        }
+    }
+
+    private static Object InstantiateFunctionObject(Declaration f,
+            LexicalEnvironment<DeclarativeEnvironmentRecord> env) {
+        // TODO: implement
+        return null;
     }
 
     private static void evaluateModule(ExecutionContext cx, ModuleLinkage module) {

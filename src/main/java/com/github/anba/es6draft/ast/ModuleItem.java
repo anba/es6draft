@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>15 ECMAScript Language: Modules and Scripts</h1>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1>
  * <ul>
  * <li>15.1 Modules
  * </ul>
