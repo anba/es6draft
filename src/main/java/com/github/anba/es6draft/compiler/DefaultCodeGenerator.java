@@ -61,10 +61,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                         .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
                                 Types.ScriptObject, Types.String));
 
-        static final MethodDesc AbstractOperations_IsExtensible = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "IsExtensible",
-                Type.getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Types.ScriptObject));
-
         static final MethodDesc AbstractOperations_IteratorComplete = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "IteratorComplete",
                 Type.getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Types.ScriptObject));
@@ -1083,18 +1079,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         if (node instanceof ClassDefinition) {
             hasOwnName = new Label();
 
-            // FIXME: workaround for https://bugs.ecmascript.org/show_bug.cgi?id=2578
-            if (((ClassDefinition) node).getName() != null) {
-                // Call to SetFunctionName for non-anonymous class definition
-                // stack: [function] -> [function, cx, function]
-                mv.dup();
-                mv.loadExecutionContext();
-                mv.swap();
-                // stack: [function, cx, function] -> [function]
-                mv.invoke(Methods.AbstractOperations_IsExtensible);
-                mv.ifeq(hasOwnName);
-            }
-
             // stack: [function] -> [function, cx, function, "name"]
             mv.dup();
             mv.loadExecutionContext();
@@ -1177,6 +1161,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.ScriptRuntime_getClassProto);
         }
 
+        // TODO: re-order instructions
+
         // stack: [<proto,ctor>] -> [ctor, proto]
         mv.dup();
         mv.iconst(1);
@@ -1185,24 +1171,24 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.iconst(0);
         mv.aload(Types.ScriptObject_);
 
+        // stack: [ctor, proto] -> [proto, ctor, proto]
+        mv.dupX1();
+
         // steps 4-5
         if (className != null) {
-            // stack: [ctor, proto] -> [ctor, proto, scope]
+            // stack: [proto, ctor, proto] -> [proto, ctor, proto, scope]
             newDeclarativeEnvironment(mv);
 
-            // stack: [ctor, proto, scope] -> [ctor, proto, scope]
+            // stack: [proto, ctor, proto, scope] -> [proto, ctor, proto, scope]
             mv.dup();
             mv.invoke(Methods.LexicalEnvironment_getEnvRec);
             mv.aconst(className);
             mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
 
-            // stack: [ctor, proto, scope] -> [ctor, proto]
+            // stack: [proto, ctor, proto, scope] -> [proto, ctor, proto]
             pushLexicalEnvironment(mv);
             mv.enterScope(def);
         }
-
-        // stack: [ctor, proto] -> [proto, ctor, proto]
-        mv.dupX1();
 
         // step 6
         MethodDefinition constructor = ConstructorMethod(def);
@@ -1221,31 +1207,15 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         }
 
         // step 8 (empty)
-        // steps 9-11, steps 13-14
+        // steps 9-13
         // stack: [proto, ctor, proto, <rti>] -> [proto, F]
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
 
-        // step 12
-        if (className != null) {
-            // stack: [proto, F] -> [proto, F, F, envRec]
-            mv.dup();
-            getLexicalEnvironment(mv);
-            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
-
-            // stack: [proto, F, F, envRec] -> [proto, F, envRec, name, F]
-            mv.swap();
-            mv.aconst(className);
-            mv.swap();
-
-            // stack: [proto, F, envRec, name, F] -> [proto, F]
-            mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
-        }
-
         // stack: [proto, F] -> [F, proto]
         mv.swap();
 
-        // steps 15-16
+        // steps 14-15
         List<MethodDefinition> protoMethods = PrototypeMethodDefinitions(def);
         for (MethodDefinition method : protoMethods) {
             if (method == constructor) {
@@ -1258,7 +1228,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // stack: [F, proto] -> [F]
         mv.pop();
 
-        // steps 17-18
+        // steps 16-17
         List<MethodDefinition> staticMethods = StaticMethodDefinitions(def);
         for (MethodDefinition method : staticMethods) {
             mv.dup();
@@ -1267,11 +1237,28 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         // step 19
         if (className != null) {
+            // stack: [F] -> [F, F, envRec]
+            mv.dup();
+            getLexicalEnvironment(mv);
+            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+
+            // stack: [F, F, envRec] -> [F, envRec, name, F]
+            mv.swap();
+            mv.aconst(className);
+            mv.swap();
+
+            // stack: [F, envRec, name, F] -> [F]
+            mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
+        }
+
+        // step 18
+        if (className != null) {
             mv.exitScope();
             // restore previous lexical environment
             popLexicalEnvironment(mv);
         }
-        // step 20 (empty)
+
+        // step 20 (return F)
         mv.exitClassDefinition();
     }
 
