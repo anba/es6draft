@@ -591,7 +591,7 @@ public final class ModuleLoading {
             Iterable<String> depsList;
             if (Type.isUndefined(instantiateResult)) {
                 /* step 4 */
-                Parser parser = new Parser("", 1, calleeContext.getRealm().getOptions());
+                Parser parser = new Parser("<module>", 1, calleeContext.getRealm().getOptions());
                 Module body;
                 try {
                     body = parser.parseModule(load.getSource());

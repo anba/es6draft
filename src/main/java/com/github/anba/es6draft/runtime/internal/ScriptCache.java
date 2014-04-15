@@ -82,8 +82,8 @@ public final class ScriptCache {
     /**
      * Parses the javascript source.
      * 
-     * @param sourceFile
-     *            the script source file
+     * @param sourceName
+     *            the script source name
      * @param sourceLine
      *            the script start line
      * @param reader
@@ -94,10 +94,35 @@ public final class ScriptCache {
      * @throws ParserException
      *             if the source contains any syntax errors
      */
-    private com.github.anba.es6draft.ast.Script parse(String sourceFile, int sourceLine,
+    private com.github.anba.es6draft.ast.Script parse(String sourceName, int sourceLine,
             Reader reader) throws ParserException, IOException {
         String source = readFully(reader);
-        Parser parser = new Parser(sourceFile, sourceLine, options, parserOptions);
+        Parser parser = new Parser(sourceName, sourceLine, options, parserOptions);
+        com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(source);
+        return parsedScript;
+    }
+
+    /**
+     * Parses the javascript source.
+     * 
+     * @param sourceFile
+     *            the script source file
+     * @param sourceName
+     *            the script source name
+     * @param sourceLine
+     *            the script start line
+     * @param reader
+     *            the source
+     * @return the parsed script node
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     */
+    private com.github.anba.es6draft.ast.Script parse(Path sourceFile, String sourceName,
+            int sourceLine, Reader reader) throws ParserException, IOException {
+        String source = readFully(reader);
+        Parser parser = new Parser(sourceFile, sourceName, sourceLine, options, parserOptions);
         com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(source);
         return parsedScript;
     }
@@ -281,7 +306,12 @@ public final class ScriptCache {
     public Script script(String sourceName, int sourceLine, Path file, ExecutorService executor)
             throws IOException, ParserException, CompilationException {
         assert file.isAbsolute() : String.format("'%s' is not an absolute path", file);
-        return script(sourceName, sourceLine, Files.newInputStream(file), executor);
+        // return script(sourceName, sourceLine, Files.newInputStream(file), executor);
+        try (Reader r = newReader(Files.newInputStream(file))) {
+            com.github.anba.es6draft.ast.Script parsedScript = parse(file, sourceName, sourceLine,
+                    r);
+            return ScriptLoader.load(parsedScript, nextScriptName(), executor, compilerOptions);
+        }
     }
 
     /**

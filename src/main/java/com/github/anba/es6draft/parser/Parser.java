@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
+import java.nio.file.Path;
 import java.util.*;
 
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
@@ -38,7 +39,8 @@ public final class Parser {
     private static final List<Binding> NO_INHERITED_BINDING = Collections.emptyList();
     private static final Set<String> EMPTY_LABEL_SET = Collections.emptySet();
 
-    private final String sourceFile;
+    private final Path sourceFile;
+    private final String sourceName;
     private final int sourceLine;
     private final EnumSet<CompatibilityOption> options;
     private final EnumSet<Option> parserOptions;
@@ -451,13 +453,24 @@ public final class Parser {
         Strict, FunctionCode, LocalScope, DirectEval, EvalScript, EnclosedByWithStatement
     }
 
-    public Parser(String sourceFile, int sourceLine, Set<CompatibilityOption> options) {
-        this(sourceFile, sourceLine, options, EnumSet.noneOf(Option.class));
+    public Parser(String sourceName, int sourceLine, Set<CompatibilityOption> compatOptions) {
+        this(null, sourceName, sourceLine, compatOptions, EnumSet.noneOf(Option.class));
     }
 
-    public Parser(String sourceFile, int sourceLine, Set<CompatibilityOption> compatOptions,
+    public Parser(Path sourceFile, String sourceName, int sourceLine,
+            Set<CompatibilityOption> compatOptions) {
+        this(sourceFile, sourceName, sourceLine, compatOptions, EnumSet.noneOf(Option.class));
+    }
+
+    public Parser(String sourceName, int sourceLine, Set<CompatibilityOption> compatOptions,
             EnumSet<Option> options) {
+        this(null, sourceName, sourceLine, compatOptions, options);
+    }
+
+    public Parser(Path sourceFile, String sourceName, int sourceLine,
+            Set<CompatibilityOption> compatOptions, EnumSet<Option> options) {
         this.sourceFile = sourceFile;
+        this.sourceName = sourceName;
         this.sourceLine = sourceLine;
         this.options = EnumSet.copyOf(compatOptions);
         this.parserOptions = EnumSet.copyOf(options);
@@ -466,8 +479,8 @@ public final class Parser {
                 : StrictMode.NonStrict;
     }
 
-    String getSourceFile() {
-        return sourceFile;
+    String getSourceName() {
+        return sourceName;
     }
 
     int getSourceLine() {
@@ -877,7 +890,7 @@ public final class Parser {
     private ParserEOFException reportEofError(long sourcePosition, Messages.Key messageKey,
             String... args) {
         int line = toLine(sourcePosition), column = toColumn(sourcePosition);
-        throw new ParserEOFException(sourceFile, line, column, messageKey, args);
+        throw new ParserEOFException(sourceName, line, column, messageKey, args);
     }
 
     /**
@@ -896,7 +909,7 @@ public final class Parser {
     private ParserException reportError(ExceptionType type, long sourcePosition,
             Messages.Key messageKey, String... args) {
         int line = toLine(sourcePosition), column = toColumn(sourcePosition);
-        throw new ParserException(type, sourceFile, line, column, messageKey, args);
+        throw new ParserException(type, sourceName, line, column, messageKey, args);
     }
 
     /**
@@ -960,7 +973,7 @@ public final class Parser {
         if (context.strictMode == StrictMode.Unknown) {
             if (context.strictError == null) {
                 int line = toLine(sourcePosition), column = toColumn(sourcePosition);
-                context.strictError = new ParserException(type, sourceFile, line, column,
+                context.strictError = new ParserException(type, sourceName, line, column,
                         messageKey, args);
             }
         } else if (context.strictMode == StrictMode.Strict) {
@@ -1236,8 +1249,8 @@ public final class Parser {
         boolean strict = (context.strictMode == StrictMode.Strict);
 
         ScriptContext scope = context.scriptContext;
-        Script script = new Script(beginSource(), ts.endPosition(), sourceFile, scope, statements,
-                options, parserOptions, strict);
+        Script script = new Script(beginSource(), ts.endPosition(), sourceFile, sourceName, scope,
+                statements, options, parserOptions, strict);
         scope.node = script;
 
         return script;
@@ -1268,8 +1281,8 @@ public final class Parser {
             boolean strict = (context.strictMode == StrictMode.Strict);
 
             ScriptContext scope = context.scriptContext;
-            Script script = new Script(beginSource(), ts.endPosition(), sourceFile, scope,
-                    statements, options, parserOptions, strict);
+            Script script = new Script(beginSource(), ts.endPosition(), sourceFile, sourceName,
+                    scope, statements, options, parserOptions, strict);
             scope.node = script;
 
             return script;
@@ -1299,7 +1312,7 @@ public final class Parser {
             assert context.assertLiteralsUnchecked(0);
 
             ModuleContext scope = context.modContext;
-            Module module = new Module(beginSource(), ts.endPosition(), sourceFile, scope,
+            Module module = new Module(beginSource(), ts.endPosition(), sourceName, scope,
                     statements, options, parserOptions);
             scope.node = module;
 
@@ -6061,7 +6074,7 @@ public final class Parser {
      */
     private void regularExpressionLiteral_EarlyErrors(long sourcePos, String pattern, String flags) {
         // parse to validate regular expression, but ignore actual result
-        RegExpParser.parse(pattern, flags, sourceFile, toLine(sourcePos), toColumn(sourcePos));
+        RegExpParser.parse(pattern, flags, sourceName, toLine(sourcePos), toColumn(sourcePos));
     }
 
     /**

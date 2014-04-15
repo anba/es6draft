@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.compiler;
 
 import java.io.PrintWriter;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
@@ -62,8 +61,9 @@ public final class Compiler {
         // set-up
         // prepend '#' to mark generated classes, cf. ErrorPrototype
         String clazzName = "#" + className;
+
         String superClassName = Types.CompiledScript.getInternalName();
-        Code code = new Code(clazzName, superClassName, script.getSourceFile(), sourceMap(script));
+        Code code = new Code(clazzName, superClassName, sourceName(script), sourceMap(script));
 
         // generate code
         CodeGenerator codegen = new CodeGenerator(code, executor, script.getOptions(),
@@ -249,26 +249,27 @@ public final class Compiler {
         }
     }
 
+    private static String sourceName(Script script) {
+        return script.getSourceName();
+    }
+
     private String sourceMap(Script script) {
         if (!compilerOptions.contains(Option.SourceMap)) {
             return null;
         }
-        String sourceFile = script.getSourceFile();
-        Path path;
-        try {
-            path = Paths.get(sourceFile);
-        } catch (InvalidPathException e) {
-            // return here if 'sourceFile' is not a valid path
+        Path sourceFile = script.getSourceFile();
+        if (sourceFile == null) {
+            // return if 'sourceFile' is not available
             return null;
         }
-        // line numbers are limited to uint16 in bytecode, valid line count not needed for smap
-        final int maxLineCount = 0xffff;
+        Path relativePath = Paths.get("").toAbsolutePath().relativize(sourceFile);
+
         try (Formatter smap = new Formatter(Locale.ROOT)) {
             // Header
             // - ID
             smap.format("SMAP%n");
             // - OutputFileName
-            smap.format("%s%n", script.getSourceFile());
+            smap.format("%s%n", sourceName(script));
             // - DefaultStratumId
             smap.format("Script%n");
             // Section
@@ -277,11 +278,12 @@ public final class Compiler {
             // - FileSection
             smap.format("*F%n");
             // -- FileInfo
-            smap.format("+ 1 %s%n%s%n", path.getFileName(), path);
+            smap.format("+ 1 %s%n%s%n", sourceFile.getFileName(), relativePath);
             // - LineSection
             smap.format("*L%n");
             // -- LineInfo
-            smap.format("%d#1,%d:%d%n", script.getBeginLine(), maxLineCount, script.getBeginLine());
+            smap.format("%d#1,%d:%d%n", script.getBeginLine(), script.getEndLine(),
+                    script.getBeginLine());
             // EndSection
             smap.format("*E%n");
 

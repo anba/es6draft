@@ -121,7 +121,7 @@ final class RuntimeInfoGenerator {
         InstructionVisitor mv = new InstructionVisitor(codegen.newMethod(node, ScriptName.RTI));
         mv.begin();
 
-        mv.aconst(node.getSourceFile());
+        mv.aconst(node.getSourceName());
         mv.iconst(IsStrict(node));
         mv.handle(codegen.methodDesc(node, ScriptName.Init));
         mv.handle(codegen.methodDesc(node, ScriptName.EvalInit));

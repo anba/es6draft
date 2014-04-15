@@ -964,7 +964,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
         @Override
         public String sourceFile() {
-            return parsedScript.getSourceFile();
+            return parsedScript.getSourceName();
         }
 
         @Override

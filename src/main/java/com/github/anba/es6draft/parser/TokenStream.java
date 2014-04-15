@@ -2076,7 +2076,7 @@ public final class TokenStream {
      * @return the parser exception
      */
     private ParserException error(Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, parser.getSourceFile(), getLine(),
+        throw new ParserException(ExceptionType.SyntaxError, parser.getSourceName(), getLine(),
                 getColumn(), messageKey, args);
     }
 
@@ -2090,7 +2090,7 @@ public final class TokenStream {
      * @return the parser exception
      */
     private ParserException eofError(Messages.Key messageKey, String... args) {
-        throw new ParserEOFException(parser.getSourceFile(), getLine(), getColumn(), messageKey,
+        throw new ParserEOFException(parser.getSourceName(), getLine(), getColumn(), messageKey,
                 args);
     }
 

@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.ast;
 
+import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -19,7 +20,8 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
  * </ul>
  */
 public final class Script extends AstNode implements TopLevelNode<StatementListItem>, ScopedNode {
-    private final String sourceFile;
+    private final Path sourceFile;
+    private final String sourceName;
     private final ScriptScope scope;
     private List<StatementListItem> statements;
     private final EnumSet<CompatibilityOption> options;
@@ -27,11 +29,13 @@ public final class Script extends AstNode implements TopLevelNode<StatementListI
     private final boolean strict;
     private boolean syntheticNodes;
 
-    public Script(long beginPosition, long endPosition, String sourceFile, ScriptScope scope,
-            List<StatementListItem> statements, EnumSet<CompatibilityOption> options,
-            EnumSet<Parser.Option> parserOptions, boolean strict) {
+    public Script(long beginPosition, long endPosition, Path sourceFile, String sourceName,
+            ScriptScope scope, List<StatementListItem> statements,
+            EnumSet<CompatibilityOption> options, EnumSet<Parser.Option> parserOptions,
+            boolean strict) {
         super(beginPosition, endPosition);
         this.sourceFile = sourceFile;
+        this.sourceName = sourceName;
         this.scope = scope;
         this.statements = statements;
         this.options = options;
@@ -39,8 +43,12 @@ public final class Script extends AstNode implements TopLevelNode<StatementListI
         this.strict = strict;
     }
 
-    public String getSourceFile() {
+    public Path getSourceFile() {
         return sourceFile;
+    }
+
+    public String getSourceName() {
+        return sourceName;
     }
 
     @Override
