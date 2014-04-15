@@ -35,6 +35,9 @@ feature/StringExtras/Contains.js
 # String.fromCodePoint length changed to 1
 feature/StringExtras/FromCodePoint.js
 
+# Default parameter allowed in set accessor
+feature/DefaultParameters/Error_SetAccessor.js
+
 
 ############################################
 # Implementation specific differences      #

@@ -54,6 +54,9 @@ tests/basic/typed-array-sealed-frozen.js
 # ES6: invalid destructuring is SyntaxError
 tests/basic/spread-call-setcall.js
 
+# ES6: 'yield' allowed as identifier reference in generator default parameters
+tests/generators/es6-syntax.js
+
 
 ###################
 # Misc issues     #
