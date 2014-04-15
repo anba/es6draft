@@ -2926,7 +2926,7 @@ public final class Parser {
         case ESCAPED_YIELD:
         case ESCAPED_LET:
             // FIRST(Identifier)
-            return isIdentifier(token);
+            return isIdentifierReference(token);
         default:
             return false;
         }
@@ -3677,13 +3677,13 @@ public final class Parser {
      */
     private boolean lexicalBindingFirstSet(Token token) {
         switch (token) {
-        default:
-            if (!isIdentifier(token)) {
-                return false;
-            }
         case LB:
         case LC:
             return true;
+        case YIELD:
+            return !context.yieldAllowed;
+        default:
+            return isBindingIdentifier(token);
         }
     }
 
@@ -4526,7 +4526,7 @@ public final class Parser {
         long begin = ts.beginPosition();
         String label;
         consume(Token.CONTINUE);
-        if (noLineTerminator() && isIdentifier(token())) {
+        if (noLineTerminator() && isLabelIdentifier(token())) {
             label = labelIdentifier();
         } else {
             label = null;
@@ -4564,7 +4564,7 @@ public final class Parser {
         long begin = ts.beginPosition();
         String label;
         consume(Token.BREAK);
-        if (noLineTerminator() && isIdentifier(token())) {
+        if (noLineTerminator() && isLabelIdentifier(token())) {
             label = labelIdentifier();
         } else {
             label = null;
@@ -5022,7 +5022,7 @@ public final class Parser {
      */
     private Identifier identifierReference() {
         long begin = ts.beginPosition();
-        String identifier = identifier();
+        String identifier = identifier(true);
         return new Identifier(begin, ts.endPosition(), identifier);
     }
 
@@ -5064,7 +5064,7 @@ public final class Parser {
                 reportTokenNotIdentifier(Token.LET);
             }
         }
-        String identifier = identifier();
+        String identifier = identifier(false);
         if (context.strictMode != StrictMode.NonStrict) {
             if ("arguments".equals(identifier) || "eval".equals(identifier)) {
                 reportStrictModeSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
@@ -5091,21 +5091,13 @@ public final class Parser {
      * @return the parsed binding identifier
      */
     private BindingIdentifier bindingIdentifierClassName(boolean allowDefault) {
-        long begin = ts.beginPosition();
-        Token tok = token();
-        if (allowDefault && tok == Token.DEFAULT) {
+        assert context.strictMode == StrictMode.Strict;
+        if (allowDefault && token() == Token.DEFAULT) {
+            long begin = ts.beginPosition();
             consume(Token.DEFAULT);
             return new BindingIdentifier(begin, ts.endPosition(), getName(Token.DEFAULT));
         }
-        if (tok == Token.LET || tok == Token.ESCAPED_LET) {
-            reportTokenNotIdentifier(Token.LET);
-        }
-        // [10.2.1 Strict Mode Code]
-        String identifier = identifier();
-        if ("arguments".equals(identifier) || "eval".equals(identifier)) {
-            reportSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
-        }
-        return new BindingIdentifier(begin, ts.endPosition(), identifier);
+        return bindingIdentifier(true);
     }
 
     /**
@@ -5132,13 +5124,11 @@ public final class Parser {
         if (tok == Token.YIELD || tok == Token.ESCAPED_YIELD) {
             // function declarations inherit the yield mode from the parent context
             long begin = ts.beginPosition();
-            if (isYieldName(isDeclaration ? context.parent : context)) {
-                consume(tok);
-                return new BindingIdentifier(begin, ts.endPosition(), getName(Token.YIELD));
+            if (!isYieldName(isDeclaration ? context.parent : context, false)) {
+                reportTokenNotIdentifier(Token.YIELD);
             }
-            reportStrictModeSyntaxError(begin, Messages.Key.StrictModeInvalidIdentifier,
-                    getName(Token.YIELD));
-            reportTokenNotIdentifier(Token.YIELD);
+            consume(tok);
+            return new BindingIdentifier(begin, ts.endPosition(), getName(Token.YIELD));
         }
         if (allowDefault && tok == Token.DEFAULT) {
             long begin = ts.beginPosition();
@@ -5160,7 +5150,7 @@ public final class Parser {
      * @return the parsed label identifier
      */
     private String labelIdentifier() {
-        return identifier();
+        return identifier(false);
     }
 
     /**
@@ -5171,11 +5161,13 @@ public final class Parser {
      *     IdentifierName <strong>but not</strong> ReservedWord
      * </pre>
      * 
+     * @param isReference
+     *            {@code true} if in identifier reference context
      * @return the parsed identifier
      */
-    private String identifier() {
+    private String identifier(boolean isReference) {
         Token tok = token();
-        if (!isIdentifier(tok)) {
+        if (!isIdentifier(tok, isReference)) {
             reportTokenNotIdentifier(tok);
         }
         String name = getName(tok);
@@ -5185,12 +5177,55 @@ public final class Parser {
 
     /**
      * <strong>[12.1] Identifiers</strong>
+     * <p>
+     * 12.1.1 Static Semantics: Early Errors
      * 
      * @param tok
      *            the token to inspect
+     * @return {@code true} if the token is valid binding identifier
+     */
+    private boolean isBindingIdentifier(Token tok) {
+        return isIdentifier(tok, false);
+    }
+
+    /**
+     * <strong>[12.1] Identifiers</strong>
+     * <p>
+     * 12.1.1 Static Semantics: Early Errors
+     * 
+     * @param tok
+     *            the token to inspect
+     * @return {@code true} if the token is valid label identifier
+     */
+    private boolean isLabelIdentifier(Token tok) {
+        return isIdentifier(tok, false);
+    }
+
+    /**
+     * <strong>[12.1] Identifiers</strong>
+     * <p>
+     * 12.1.1 Static Semantics: Early Errors
+     * 
+     * @param tok
+     *            the token to inspect
+     * @return {@code true} if the token is valid identifier reference
+     */
+    private boolean isIdentifierReference(Token tok) {
+        return isIdentifier(tok, true);
+    }
+
+    /**
+     * <strong>[12.1] Identifiers</strong>
+     * <p>
+     * 12.1.1 Static Semantics: Early Errors
+     * 
+     * @param tok
+     *            the token to inspect
+     * @param isReference
+     *            {@code true} if in identifier reference context
      * @return {@code true} if the token is valid identifier
      */
-    private boolean isIdentifier(Token tok) {
+    private boolean isIdentifier(Token tok, boolean isReference) {
         switch (tok) {
         case NAME:
         case ESCAPED_NAME:
@@ -5199,7 +5234,7 @@ public final class Parser {
             throw reportSyntaxError(Messages.Key.InvalidIdentifier, getName(tok));
         case YIELD:
         case ESCAPED_YIELD:
-            return isYieldName(context);
+            return isYieldName(context, isReference);
         case LET:
         case ESCAPED_LET:
         case IMPLEMENTS:
@@ -5210,10 +5245,11 @@ public final class Parser {
         case PUBLIC:
         case STATIC:
         case ESCAPED_STRICT_RESERVED_WORD:
+            // Strict mode reserved words
             if (context.strictMode != StrictMode.NonStrict) {
                 reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
             }
-            return context.strictMode != StrictMode.Strict;
+            return true;
         default:
             return false;
         }
@@ -5223,23 +5259,29 @@ public final class Parser {
      * Returns <code>true</code> if {@link Token#YIELD} should be treated as {@link Token#NAME} in
      * the supplied context.
      * 
-     * @param context
+     * @param yieldContext
      *            the context to use
+     * @param isReference
+     *            {@code true} if in identifier reference context
      * @return {@code true} if 'yield' is a valid name in the parse context
      */
-    private boolean isYieldName(ParseContext context) {
-        // TODO: make `function*g(){yield yiel\u0064}` a SyntaxError for invalid identifier
-
-        // 'yield' is always a keyword in strict-mode and in generators
-        if (context.strictMode == StrictMode.Strict || context.kind == ContextKind.Generator) {
-            return false;
+    private boolean isYieldName(ParseContext yieldContext, boolean isReference) {
+        if (yieldContext.kind == ContextKind.Generator
+                && (yieldContext.yieldAllowed || !isReference)) {
+            // 'yield' in generator, but not in default parameter initializer expression
+            reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
         }
-        // 'yield' nested in generator comprehension, nested in generator
-        if (context.kind == ContextKind.GeneratorComprehension && context.yieldAllowed) {
-            return false;
+        if (yieldContext.kind == ContextKind.GeneratorComprehension && yieldContext.yieldAllowed) {
+            // 'yield' nested in generator comprehension, nested in generator
+            reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
         }
-        // proactively flag as syntax error if current strict mode is unknown
-        reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(Token.YIELD));
+        assert !yieldContext.yieldAllowed : String.format(
+                "unexpected context kind '%s' with yield allowed", yieldContext.kind);
+        // 'yield' is always a keyword in strict-mode (independent of `yieldContext`!)
+        if (context.strictMode != StrictMode.NonStrict) {
+            reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier,
+                    getName(Token.YIELD));
+        }
         return true;
     }
 
@@ -6646,12 +6688,8 @@ public final class Parser {
 
     private Expression assignmentExpression(boolean allowIn, int oldCount) {
         if (token() == Token.YIELD) {
-            if (context.kind == ContextKind.Generator) {
-                if (!context.yieldAllowed) {
-                    // FIXME: maybe this is actually allowed and "yield" is parsed as identifier?!
-                    // yield in default parameters
-                    reportSyntaxError(Messages.Key.InvalidYieldExpression);
-                }
+            if (context.kind == ContextKind.Generator && context.yieldAllowed) {
+                // yield in default parameters expressions is parsed as identifier
                 return yieldExpression(allowIn);
             } else if (context.kind == ContextKind.GeneratorComprehension && context.yieldAllowed) {
                 // 12.2.7.1 Static Semantics: Early Errors for GeneratorComprehension
