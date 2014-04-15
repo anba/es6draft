@@ -21,7 +21,7 @@ assertSyntaxError(`function f(){"use strict"; function* yield(){} }`);
 function f(){ (function yield(){}); }
 assertSyntaxError(`function f(){"use strict"; (function yield(){}); }`);
 // -> generator expression
-function f(){ (function* yield(){}); }
+assertSyntaxError(`function f(){ (function* yield(){}); }`);
 assertSyntaxError(`function f(){"use strict"; (function* yield(){}); }`);
 // -> class declaration
 assertSyntaxError(`function f(){ class yield{} }`);
@@ -41,7 +41,7 @@ assertSyntaxError(`(function f(){"use strict"; function* yield(){} });`);
 (function f(){ (function yield(){}); });
 assertSyntaxError(`(function f(){"use strict"; (function yield(){}); });`);
 // -> generator expression
-(function f(){ (function* yield(){}); });
+assertSyntaxError(`(function f(){ (function* yield(){}); });`);
 assertSyntaxError(`(function f(){"use strict"; (function* yield(){}); });`);
 // -> class declaration
 assertSyntaxError(`(function f(){ class yield{} });`);
@@ -58,7 +58,7 @@ assertSyntaxError(`function* g(){"use strict"; function yield(){} }`);
 assertSyntaxError(`function* g(){ function* yield(){} }`);
 assertSyntaxError(`function* g(){"use strict"; function* yield(){} }`);
 // -> function expression
-assertSyntaxError(`function* g(){ (function yield(){}); }`);
+function* g(){ (function yield(){}); }
 assertSyntaxError(`function* g(){"use strict"; (function yield(){}); }`);
 // -> generator expression
 assertSyntaxError(`function* g(){ (function* yield(){}); }`);
@@ -78,7 +78,7 @@ assertSyntaxError(`(function* g(){"use strict"; function yield(){} });`);
 assertSyntaxError(`(function* g(){ function* yield(){} });`);
 assertSyntaxError(`(function* g(){"use strict"; function* yield(){} });`);
 // -> function expression
-assertSyntaxError(`(function* g(){ (function yield(){}); });`);
+(function* g(){ (function yield(){}); });
 assertSyntaxError(`(function* g(){"use strict"; (function yield(){}); });`);
 // -> generator expression
 assertSyntaxError(`(function* g(){ (function* yield(){}); });`);
@@ -98,7 +98,7 @@ assertSyntaxError(`(function* g(){"use strict"; (class yield{}); });`);
 
 // function + function name
 function f(x = function yield(){}) {}
-function f(x = function* yield(){}) {}
+assertSyntaxError(`function f(x = function* yield(){}) {}`);
 assertSyntaxError(`function f(x = function yield(){}) {"use strict";}`);
 assertSyntaxError(`function f(x = function* yield(){}) {"use strict";}`);
 
@@ -109,7 +109,7 @@ assertSyntaxError(`function f(x = function (yield){}) {"use strict";}`);
 assertSyntaxError(`function f(x = function* (yield){}) {"use strict";}`);
 
 // generator + function name
-assertSyntaxError(`function* g0(x = function yield(){}) {}`);
+function* g0(x = function yield(){}) {}
 assertSyntaxError(`function* g1(x = function* yield(){}) {}`);
 assertSyntaxError(`function* g(x = function yield(){}) {"use strict";}`);
 assertSyntaxError(`function* g(x = function* yield(){}) {"use strict";}`);
@@ -465,12 +465,12 @@ assertSyntaxError(`function* g(){const yield = 0}`);
 assertSyntaxError(`function* g(){yield = 0}`);
 assertSyntaxError(`function* g(){++yield}`);
 assertSyntaxError(`function* g(){yield + yield}`);
-function* g0(){yield: 0}
-function* g1(){a: yield: 0}
-function* g2(){yield: a: 0}
-function* g3(){yield: break yield}
-function* g4(){yield: do break yield; while(false)}
-function* g5(){yield: do continue yield; while(false)}
+assertSyntaxError(`function* g0(){yield: 0}`);
+assertSyntaxError(`function* g1(){a: yield: 0}`);
+assertSyntaxError(`function* g2(){yield: a: 0}`);
+assertSyntaxError(`function* g3(){yield: break yield}`);
+assertSyntaxError(`function* g4(){yield: do break yield; while(false)}`);
+assertSyntaxError(`function* g5(){yield: do continue yield; while(false)}`);
 // yield statement/expression
 function* g6(){yield + 2}
 function* g7(){yield 0}
@@ -525,7 +525,7 @@ assertSyntaxError(`function* g(){ (for(a of b) yield d) }`);
 (function() {
 
 // function name
-(function* yield(){});
+assertSyntaxError(`(function* yield(){});`);
 // parameter name
 assertSyntaxError(`(function* (yield){});`);
 assertSyntaxError(`(function* (yield, yield){});`);
@@ -544,12 +544,12 @@ assertSyntaxError(`(function* (){const yield = 0});`);
 assertSyntaxError(`(function* (){yield = 0});`);
 assertSyntaxError(`(function* (){++yield});`);
 assertSyntaxError(`(function* (){yield + yield});`);
-(function* (){yield: 0});
-(function* (){a: yield: 0});
-(function* (){yield: a: 0});
-(function* (){yield: break yield});
-(function* (){yield: do break yield; while(false)});
-(function* (){yield: do continue yield; while(false)});
+assertSyntaxError(`(function* (){yield: 0});`);
+assertSyntaxError(`(function* (){a: yield: 0});`);
+assertSyntaxError(`(function* (){yield: a: 0});`);
+assertSyntaxError(`(function* (){yield: break yield});`);
+assertSyntaxError(`(function* (){yield: do break yield; while(false)});`);
+assertSyntaxError(`(function* (){yield: do continue yield; while(false)});`);
 // yield statement/expression
 (function* (){yield + 2});
 (function* (){yield 0});
@@ -956,12 +956,12 @@ assertSyntaxError(`({ * g(){const yield = 0} });`);
 assertSyntaxError(`({ * g(){yield = 0} });`);
 assertSyntaxError(`({ * g(){++yield} });`);
 assertSyntaxError(`({ * g(){yield + yield} });`);
-({ * g(){yield: 0} });
-({ * g(){a: yield: 0} });
-({ * g(){yield: a: 0} });
-({ * g(){yield: break yield} });
-({ * g(){yield: do break yield; while(false) } });
-({ * g(){yield: do continue yield; while(false) } });
+assertSyntaxError(`({ * g(){yield: 0} });`);
+assertSyntaxError(`({ * g(){a: yield: 0} });`);
+assertSyntaxError(`({ * g(){yield: a: 0} });`);
+assertSyntaxError(`({ * g(){yield: break yield} });`);
+assertSyntaxError(`({ * g(){yield: do break yield; while(false) } });`);
+assertSyntaxError(`({ * g(){yield: do continue yield; while(false) } });`);
 // yield statement/expression
 ({ * g(){yield + 2} });
 ({ * g(){yield 0} });

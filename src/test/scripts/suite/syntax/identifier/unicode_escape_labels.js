@@ -101,14 +101,14 @@ for (let t of transformer) {
 // non-strict generator code
 for (let t of transformer) {
   // Keywords, except for 'yield', and Future Reserved Words are not allowed as labels
-  for (let w of [...KeywordsWithoutYield, ...FutureReservedWords, ...Literals]) {
+  for (let w of [...Keywords, ...FutureReservedWords, ...Literals]) {
     w = t(w);
     assertSyntaxError(`function* f() { ${w}: ; }`);
     assertSyntaxError(`function* f() { L1: ${w}: ; }`);
   }
 
   // 'yield' and Future Reserved Words (Strict Mode) are allowed as labels
-  for (let w of ["yield", ...FutureReservedWordsStrict]) {
+  for (let w of [...FutureReservedWordsStrict]) {
     w = t(w);
     Function(`
       function* f1() { ${w}: ; }

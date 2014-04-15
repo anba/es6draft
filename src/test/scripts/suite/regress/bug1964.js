@@ -13,7 +13,6 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=1964
 
 function f() { yield: ; }
-function* g() { yield: ; }
-
+assertSyntaxError(`function* g() { yield: ; }`);
 assertSyntaxError(`"use strict"; function f() { yield: ; }`);
 assertSyntaxError(`"use strict"; function* g() { yield: ; }`);

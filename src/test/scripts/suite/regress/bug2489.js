@@ -6,7 +6,7 @@
  */
 
 const {
-  assertNotSame, assertTrue, assertFalse, 
+  assertSame, assertTrue, assertFalse,
 } = Assert;
 
 // 6.1.7.3, 9.1.2: Interleaved Proxy handler calls can violate [[SetPrototypeOf]] invariant
@@ -33,5 +33,5 @@ assertFalse(Reflect.isExtensible(obj));
 
 // Inspect current [[Prototype]] of `obj`
 let currentProto = Reflect.getPrototypeOf(obj);
-assertNotSame(observedProto, currentProto);
-assertTrue(setProtoResult);
+assertSame(observedProto, currentProto);
+assertFalse(setProtoResult);

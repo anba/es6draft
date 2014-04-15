@@ -40,14 +40,14 @@ function outerFunction() {
 }
 
 // Generator -> FunctionExpression
-assertSyntaxError(`function* outerGenerator() {
+function* outerGenerator() {
   (function yield(){});
-}`);
+}
 
 // Function -> GeneratorExpression
-function outerFunction() {
+assertSyntaxError(`function outerFunction() {
   (function* yield(){});
-}
+}`);
 
 // Generator -> GeneratorExpression
 assertSyntaxError(`function* outerGenerator() {

@@ -12,4 +12,4 @@ const {
 // 15.16.5.2.2: step 9.d.ii does not return iteration-result-object
 // https://bugs.ecmascript.org/show_bug.cgi?id=1779
 
-assertEquals({value: "a", done: false}, new Set("a").keys().next());
+assertEquals({value: "a", done: false}, new Set(new String("a")).keys().next());

@@ -32,7 +32,7 @@ for (let t of transformer) {
   Function(`function f(){ function ${name}(){} }`);
   Function(`function f(){ (function ${name}(){}) }`);
   Function(`function f(){ function* ${name}(){} }`);
-  Function(`function f(){ (function* ${name}(){}) }`);
+  assertSyntaxError(`function f(){ (function* ${name}(){}) }`);
 }
 
 // strict function code
@@ -48,7 +48,7 @@ for (let t of transformer) {
 for (let t of transformer) {
   let name = t("yield");
   assertSyntaxError(`function* f(){ function ${name}(){} }`);
-  assertSyntaxError(`function* f(){ (function ${name}(){}) }`);
+  Function(`function* f(){ (function ${name}(){}) }`);
   assertSyntaxError(`function* f(){ function* ${name}(){} }`);
   assertSyntaxError(`function* f(){ (function* ${name}(){}) }`);
 }

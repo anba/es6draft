@@ -66,13 +66,13 @@ interface   package  protected  static
 // non-strict generator code
 {
   // Keywords, except for 'yield', and Future Reserved Words are not allowed as labels
-  for (let w of [...KeywordsWithoutYield, ...FutureReservedWords]) {
+  for (let w of [...Keywords, ...FutureReservedWords]) {
     assertSyntaxError(`function* f() { ${w}: ; }`);
     assertSyntaxError(`function* f() { L1: ${w}: ; }`);
   }
 
   // 'yield' and Future Reserved Words (Strict Mode) are allowed as labels
-  for (let w of ["yield", ...FutureReservedWordsStrict]) {
+  for (let w of [...FutureReservedWordsStrict]) {
     Function(`function* f() { ${w}: ; }`);
     Function(`function* f() { L1: ${w}: ; }`);
   }

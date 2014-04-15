@@ -13,16 +13,17 @@ const {
 // MOP access on uninitialized typed arrays
 
 const integerIndexedProperties = [
-  -0, +0, "0",
+  -0, +0, "-0", "0",
   -1, +1, "-1", "1",
+  -1.5, 1.5,
   "9999999999999998",
+  0 / 0,
   -Infinity, +Infinity, "-Infinity",
 ];
 
 const notIntegerIndexedProperties = [
   "blub",
-  0 / 0, -1.5, 1.5,
-  "0.", "0.0", "-0", "+0",
+  "0.", "0.0", "+0",
   "1.", "1.0", "+1",
   "9999999999999999",
   "+Infinity",

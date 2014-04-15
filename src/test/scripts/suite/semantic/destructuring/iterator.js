@@ -65,6 +65,16 @@ function countIter(iterable) {
   assertSame(void 0, b);
 }
 
+// Destructuring multiple elements, too few source elements
+{
+  let {iter, count, countIterator} = countIter([]);
+  let [a, b] = iter;
+  assertSame(2, count());
+  assertSame(1, countIterator());
+  assertSame(void 0, a);
+  assertSame(void 0, b);
+}
+
 // Destructuring with elision in front
 {
   let {iter, count, countIterator} = countIter([0, 1, 2]);
@@ -81,4 +91,24 @@ function countIter(iterable) {
   assertSame(2, count());
   assertSame(1, countIterator());
   assertSame(0, a);
+}
+
+// Destructuring does not use value from termination result
+{
+  let {iter, count, countIterator} = countIter(function*(){ yield 0; return 1; }());
+  let [a, b] = iter;
+  assertSame(2, count());
+  assertSame(1, countIterator());
+  assertSame(0, a);
+  assertSame(void 0, b);
+}
+
+// Destructuring does not use value from termination result
+{
+  let {iter, count, countIterator} = countIter(function*(){ return 0; }());
+  let [a, b] = iter;
+  assertSame(2, count());
+  assertSame(1, countIterator());
+  assertSame(void 0, a);
+  assertSame(void 0, b);
 }

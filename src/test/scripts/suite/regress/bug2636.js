@@ -12,13 +12,14 @@ const {
   assertFalse, assertTrue,
 } = Assert;
 
-loadRelativeToScript("../../lib/promises.js");
+loadRelativeToScript("../lib/promises.js");
 
 const {
   reportFailure
 } = Promises;
 
-/* Promise.all ( iterable ) */
+// 25.4.4.1.1 Promise.all: Change [[AlreadyCalled]] to record type
+// https://bugs.ecmascript.org/show_bug.cgi?id=2636
 
 function tamper(p) {
   return Object.assign(p, {

@@ -28,7 +28,7 @@ const {
 
 {
   let calledOnce = false;
-  let s = new Set("abc");
+  let s = new Set(new String("abc"));
   assertSame(3, s.size);
   s.forEach(v => {
     assertFalse(calledOnce);

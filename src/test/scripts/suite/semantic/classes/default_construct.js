@@ -6,7 +6,7 @@
  */
 
 const {
-  assertFalse, assertTrue
+  assertTrue
 } = Assert;
 
 // function as base class, .constructor not updated
@@ -17,7 +17,7 @@ const {
   class C extends F {}
 
   let c = new C;
-  assertFalse(c instanceof C);
+  assertTrue(c instanceof C);
 }
 
 // function as base class, .constructor updated

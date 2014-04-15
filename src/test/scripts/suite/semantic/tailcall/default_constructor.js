@@ -6,10 +6,10 @@
  */
 
 const {
-  assertSame
+  assertUndefined
 } = Assert;
 
-// Default constructor is in tail-call position
+// Default constructor is not in tail-call position and returns `undefined`
 
 function returnCaller() {
   return returnCaller.caller;
@@ -19,7 +19,7 @@ class tailCall extends returnCaller { }
 
 function test() {
   let caller = tailCall();
-  assertSame(test, caller);
+  assertUndefined(caller);
 }
 
 test();
