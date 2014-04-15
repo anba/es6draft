@@ -59,6 +59,11 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
 
     @Override
     protected void before() throws Throwable {
+        if (!Resources.isEnabled(configuration)) {
+            // skip initialisation if test suite not enabled
+            return;
+        }
+
         // read options ...
         options = compatibilityOptions(configuration.getString("mode", ""));
         scriptCache = new ScriptCache(getOptions(), getParserOptions(), getCompilerOptions());

@@ -21,6 +21,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
@@ -147,17 +148,23 @@ public final class Resources {
     }
 
     /**
+     * Returns {@code true} if the test suite is enabled.
+     */
+    public static boolean isEnabled(Configuration configuration) {
+        return !configuration.getBoolean("skip", false);
+    }
+
+    /**
      * Returns the test suite's base path
      */
     public static Path getTestSuitePath(Configuration configuration) {
-        String testSuite;
         try {
-            testSuite = configuration.getString("");
-        } catch (NoSuchElementException e) {
+            String testSuite = configuration.getString("");
+            return Paths.get(testSuite).toAbsolutePath();
+        } catch (InvalidPathException | NoSuchElementException e) {
             System.err.println(e.getMessage());
             return null;
         }
-        return Paths.get(testSuite).toAbsolutePath();
     }
 
     /**
@@ -172,6 +179,9 @@ public final class Resources {
      */
     public static Iterable<TestInfo[]> loadTests(Configuration config,
             BiFunction<Path, Path, TestInfo> fn) throws IOException {
+        if (!isEnabled(config)) {
+            return emptyList();
+        }
         Path basedir = getTestSuitePath(config);
         if (basedir == null) {
             return emptyList();
@@ -184,6 +194,9 @@ public final class Resources {
      */
     public static Iterable<TestInfo[]> loadTests(Configuration config,
             Function<Path, BiFunction<Path, Iterator<String>, TestInfo>> fn) throws IOException {
+        if (!isEnabled(config)) {
+            return emptyList();
+        }
         Path basedir = getTestSuitePath(config);
         if (basedir == null) {
             return emptyList();
