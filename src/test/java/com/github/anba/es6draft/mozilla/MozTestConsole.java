@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.v8test;
+package com.github.anba.es6draft.mozilla;
 
 import org.junit.rules.ErrorCollector;
 
@@ -13,10 +13,10 @@ import com.github.anba.es6draft.repl.console.ShellConsole;
 /**
  *
  */
-class V8TestConsole implements ShellConsole {
+class MozTestConsole implements ShellConsole {
     private final ErrorCollector collector;
 
-    V8TestConsole(ErrorCollector collector) {
+    MozTestConsole(ErrorCollector collector) {
         this.collector = collector;
     }
 
@@ -31,7 +31,7 @@ class V8TestConsole implements ShellConsole {
 
     @Override
     public void print(String s) {
-        if (s.startsWith("FAIL ")) {
+        if (s.startsWith(" FAILED! ")) {
             // collect all failures instead of calling fail() directly
             collector.addError(new AssertionError(s));
         }

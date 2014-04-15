@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.v8test;
+package com.github.anba.es6draft.v8;
 
 import static com.github.anba.es6draft.repl.global.V8ShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;

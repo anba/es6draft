@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.moztest;
+package com.github.anba.es6draft.mozilla;
 
 import static com.github.anba.es6draft.repl.global.MozShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
