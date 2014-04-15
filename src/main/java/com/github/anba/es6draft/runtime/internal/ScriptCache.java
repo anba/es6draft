@@ -56,16 +56,11 @@ public final class ScriptCache {
         return "Script_" + scriptCounter.incrementAndGet();
     }
 
-    public ScriptCache(Set<CompatibilityOption> options) {
-        this.options = EnumSet.copyOf(options);
-        this.parserOptions = EnumSet.noneOf(Parser.Option.class);
-        this.compilerOptions = EnumSet.noneOf(Compiler.Option.class);
-    }
-
-    public ScriptCache(Set<CompatibilityOption> options, Set<Parser.Option> parserOptions) {
+    public ScriptCache(Set<CompatibilityOption> options, Set<Parser.Option> parserOptions,
+            Set<Compiler.Option> compilerOptions) {
         this.options = EnumSet.copyOf(options);
         this.parserOptions = EnumSet.copyOf(parserOptions);
-        this.compilerOptions = EnumSet.noneOf(Compiler.Option.class);
+        this.compilerOptions = EnumSet.copyOf(compilerOptions);
     }
 
     /**

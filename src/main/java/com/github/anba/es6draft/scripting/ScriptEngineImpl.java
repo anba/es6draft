@@ -59,7 +59,8 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         Set<CompatibilityOption> compatibilityOptions = CompatibilityOption.WebCompatibility();
         Set<Parser.Option> parserOptions = EnumSet.of(Parser.Option.EvalScript);
         Set<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
-        ScriptCache scriptCache = new ScriptCache(compatibilityOptions, parserOptions);
+        ScriptCache scriptCache = new ScriptCache(compatibilityOptions, parserOptions,
+                compilerOptions);
         this.scriptCache = scriptCache;
 
         ObjectAllocator<ScriptingGlobalObject> allocator = ScriptingGlobalObject

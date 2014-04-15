@@ -482,6 +482,7 @@ public final class Repl {
         if (options.contains(Option.Async)) {
             compatibilityOptions.add(CompatibilityOption.AsyncFunction);
         }
+        Set<Parser.Option> parserOptions = EnumSet.noneOf(Parser.Option.class);
         Set<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
         if (options.contains(Option.Debug)) {
             compilerOptions.add(Compiler.Option.Debug);
@@ -492,7 +493,8 @@ public final class Repl {
         if (options.contains(Option.VerifyStack)) {
             compilerOptions.add(Compiler.Option.VerifyStack);
         }
-        ScriptCache scriptCache = new ScriptCache(compatibilityOptions);
+        ScriptCache scriptCache = new ScriptCache(compatibilityOptions, parserOptions,
+                compilerOptions);
 
         ObjectAllocator<? extends ShellGlobalObject> allocator;
         if (options.contains(Option.MozillaShell)) {

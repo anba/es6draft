@@ -22,6 +22,7 @@ import org.junit.rules.ExternalResource;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.Compiler;
+import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.World;
@@ -48,6 +49,10 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         return options;
     }
 
+    protected Set<Parser.Option> getParserOptions() {
+        return EnumSet.noneOf(Parser.Option.class);
+    }
+
     protected Set<Compiler.Option> getCompilerOptions() {
         return EnumSet.noneOf(Compiler.Option.class);
     }
@@ -56,7 +61,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
     protected void before() throws Throwable {
         // read options ...
         options = compatibilityOptions(configuration.getString("mode", ""));
-        scriptCache = new ScriptCache(getOptions());
+        scriptCache = new ScriptCache(getOptions(), getParserOptions(), getCompilerOptions());
 
         // pre-compile initialisation scripts
         Path basedir = Resources.getTestSuitePath(configuration);
