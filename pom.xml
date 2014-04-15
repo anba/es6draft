@@ -174,10 +174,10 @@
                 <id>surefire-test</id>
                 <configuration>
                   <excludes>
-                    <exclude>**/moztest/*</exclude>
+                    <exclude>**/mozilla/*</exclude>
                     <exclude>**/test262/*</exclude>
                     <exclude>**/traceur/*</exclude>
-                    <exclude>**/v8test/*</exclude>
+                    <exclude>**/v8/*</exclude>
                     <exclude>**/webkit/*</exclude>
                   </excludes>
                 </configuration>
@@ -187,7 +187,7 @@
         </plugins>
       </build>
     </profile>
-    <!-- Profile to run all external test suites -->
+    <!-- Profile to run external test suites except for test262 -->
     <profile>
       <id>external</id>
       <build>
@@ -200,10 +200,9 @@
                 <id>surefire-test</id>
                 <configuration>
                   <includes>
-                    <include>**/moztest/*</include>
-                    <include>**/test262/*</include>
+                    <include>**/mozilla/*</include>
                     <include>**/traceur/*</include>
-                    <include>**/v8test/*</include>
+                    <include>**/v8/*</include>
                     <include>**/webkit/*</include>
                   </includes>
                 </configuration>
