@@ -1341,14 +1341,23 @@ public final class Parser {
     private List<ModuleItem> moduleItemList() {
         List<ModuleItem> moduleItemList = newList();
         while (token() != Token.EOF) {
-            if (token() == Token.EXPORT) {
+            switch (token()) {
+            case EXPORT:
                 moduleItemList.add(exportDeclaration());
-            } else if (token() == Token.IMPORT) {
+                break;
+            case IMPORT:
                 moduleItemList.add(importDeclaration());
-            } else if (isName("module") && isIdentifier(peek()) && noNextLineTerminator()) {
-                // FIXME: broken `module <linebreak> let a;`
-                moduleItemList.add(importDeclaration());
-            } else {
+                break;
+            case NAME:
+                if (isName("module")) {
+                    Token next = peek();
+                    if (noNextLineTerminator() && isBindingIdentifier(next)) {
+                        moduleItemList.add(importDeclaration());
+                        break;
+                    }
+                }
+                // fall-through
+            default:
                 moduleItemList.add(statementListItem());
             }
         }
