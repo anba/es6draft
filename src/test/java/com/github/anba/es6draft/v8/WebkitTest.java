@@ -6,9 +6,9 @@
  */
 package com.github.anba.es6draft.v8;
 
-import static com.github.anba.es6draft.repl.global.V8ShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
+import static com.github.anba.es6draft.v8.V8TestGlobalObject.newTestGlobalObjectAllocator;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
@@ -29,7 +29,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
@@ -53,12 +52,12 @@ public class WebkitTest {
     }
 
     @ClassRule
-    public static TestGlobals<V8ShellGlobalObject, TestInfo> globals = new TestGlobals<V8ShellGlobalObject, TestInfo>(
+    public static TestGlobals<V8TestGlobalObject, TestInfo> globals = new TestGlobals<V8TestGlobalObject, TestInfo>(
             configuration) {
         @Override
-        protected ObjectAllocator<V8ShellGlobalObject> newAllocator(ShellConsole console,
+        protected ObjectAllocator<V8TestGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
+            return newTestGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
                     scriptCache);
         }
     };
@@ -78,7 +77,7 @@ public class WebkitTest {
     @Parameter(0)
     public TestInfo test;
 
-    private V8ShellGlobalObject global;
+    private V8TestGlobalObject global;
 
     @Before
     public void setUp() throws IOException, URISyntaxException {

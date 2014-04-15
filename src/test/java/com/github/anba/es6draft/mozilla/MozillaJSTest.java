@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.mozilla;
 
-import static com.github.anba.es6draft.repl.global.MozShellGlobalObject.newGlobalObjectAllocator;
+import static com.github.anba.es6draft.mozilla.MozTestGlobalObject.newTestGlobalObjectAllocator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
@@ -42,7 +42,6 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.model.MultipleFailureException;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -75,12 +74,12 @@ public class MozillaJSTest {
     }
 
     @ClassRule
-    public static TestGlobals<MozShellGlobalObject, TestInfo> globals = new TestGlobals<MozShellGlobalObject, TestInfo>(
+    public static TestGlobals<MozTestGlobalObject, TestInfo> globals = new TestGlobals<MozTestGlobalObject, TestInfo>(
             configuration) {
         @Override
-        protected ObjectAllocator<MozShellGlobalObject> newAllocator(ShellConsole console,
+        protected ObjectAllocator<MozTestGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
+            return newTestGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
                     scriptCache);
         }
     };
@@ -127,7 +126,7 @@ public class MozillaJSTest {
         FailsIf, SkipIf, RandomIf
     }
 
-    private MozShellGlobalObject global;
+    private MozTestGlobalObject global;
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
@@ -193,7 +192,7 @@ public class MozillaJSTest {
         return files;
     }
 
-    private void scriptConditions(ExecutionContext cx, MozShellGlobalObject global) {
+    private void scriptConditions(ExecutionContext cx, MozTestGlobalObject global) {
         for (Entry<Condition, String> entry : moztest.conditions) {
             String code = condition(entry.getValue());
             boolean value = ToBoolean(global.evaluate(cx, code, Undefined.UNDEFINED));

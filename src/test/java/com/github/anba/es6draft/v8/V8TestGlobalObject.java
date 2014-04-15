@@ -4,29 +4,25 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.repl.global;
+package com.github.anba.es6draft.v8;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 
-import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
+import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * Global object class with support for some v8-shell functions
+ * 
  */
-public class V8ShellGlobalObject extends ShellGlobalObject {
-    public V8ShellGlobalObject(Realm realm, ShellConsole console, Path baseDir, Path script,
+public final class V8TestGlobalObject extends V8ShellGlobalObject {
+    protected V8TestGlobalObject(Realm realm, ShellConsole console, Path baseDir, Path script,
             ScriptCache scriptCache) {
         super(realm, console, baseDir, script, scriptCache);
     }
@@ -34,7 +30,7 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
     @Override
     public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
         super.defineBuiltinProperties(cx, object);
-        createProperties(cx, object, this, V8ShellGlobalObject.class);
+        createProperties(cx, object, new TestingFunctions(), TestingFunctions.class);
     }
 
     /**
@@ -50,32 +46,14 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
      *            the script cache
      * @return the object allocator to construct new global object instances
      */
-    public static ObjectAllocator<V8ShellGlobalObject> newGlobalObjectAllocator(
+    public static ObjectAllocator<V8TestGlobalObject> newTestGlobalObjectAllocator(
             final ShellConsole console, final Path baseDir, final Path script,
             final ScriptCache scriptCache) {
-        return new ObjectAllocator<V8ShellGlobalObject>() {
+        return new ObjectAllocator<V8TestGlobalObject>() {
             @Override
-            public V8ShellGlobalObject newInstance(Realm realm) {
-                return new V8ShellGlobalObject(realm, console, baseDir, script, scriptCache);
+            public V8TestGlobalObject newInstance(Realm realm) {
+                return new V8TestGlobalObject(realm, console, baseDir, script, scriptCache);
             }
         };
-    }
-
-    @Override
-    public void initialize(OrdinaryObject object) throws IOException, URISyntaxException,
-            ParserException, CompilationException {
-        assert object == this : "not yet supported";
-        include(getScriptURL("v8legacy.js"));
-    }
-
-    /**
-     * shell-function: {@code write(message)}
-     *
-     * @param messages
-     *            the strings to write
-     */
-    @Function(name = "write", arity = 1)
-    public void write(String... messages) {
-        console.putstr(concat(messages));
     }
 }

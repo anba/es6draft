@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.mozilla;
 
-import static com.github.anba.es6draft.repl.global.MozShellGlobalObject.newGlobalObjectAllocator;
+import static com.github.anba.es6draft.mozilla.MozTestGlobalObject.newTestGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.ErrorMessageMatcher.hasErrorMessage;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
@@ -36,7 +36,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -72,12 +71,12 @@ public class MozillaJitTest {
     }
 
     @ClassRule
-    public static TestGlobals<MozShellGlobalObject, MozTest> globals = new TestGlobals<MozShellGlobalObject, MozTest>(
+    public static TestGlobals<MozTestGlobalObject, MozTest> globals = new TestGlobals<MozTestGlobalObject, MozTest>(
             configuration) {
         @Override
-        protected ObjectAllocator<MozShellGlobalObject> newAllocator(ShellConsole console,
+        protected ObjectAllocator<MozTestGlobalObject> newAllocator(ShellConsole console,
                 MozTest test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
+            return newTestGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
                     scriptCache);
         }
     };
@@ -111,7 +110,7 @@ public class MozillaJitTest {
         }
     }
 
-    private MozShellGlobalObject global;
+    private MozTestGlobalObject global;
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
