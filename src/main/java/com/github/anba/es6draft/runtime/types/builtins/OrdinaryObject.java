@@ -852,7 +852,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.13 ObjectCreate Abstract Operation
+     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
      *
      * @param cx
      *            the execution context
@@ -863,7 +863,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.13 ObjectCreate Abstract Operation
+     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
      *
      * @param cx
      *            the execution context
@@ -876,7 +876,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.13 ObjectCreate Abstract Operation
+     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
      *
      * @param cx
      *            the execution context
@@ -889,7 +889,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.13 ObjectCreate Abstract Operation
+     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
      *
      * @param <OBJECT>
      *            the object type
@@ -909,7 +909,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.13 ObjectCreate Abstract Operation
+     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
      *
      * @param <OBJECT>
      *            the object type
@@ -929,7 +929,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.14 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
+     * 9.1.14 OrdinaryCreateFromConstructor (constructor, intrinsicDefaultProto, internalSlotsList)
      * 
      * @param cx
      *            the execution context
@@ -949,7 +949,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.14 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
+     * 9.1.14 OrdinaryCreateFromConstructor (constructor, intrinsicDefaultProto, internalSlotsList)
      * 
      * @param <OBJECT>
      *            the object type

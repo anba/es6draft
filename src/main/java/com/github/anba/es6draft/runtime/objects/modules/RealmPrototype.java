@@ -144,6 +144,7 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             return table;
         }
 
+        // TODO: move to Intrinsics enum class?
         private static final EnumSet<Intrinsics> internalIntrinsics;
         static {
             internalIntrinsics = EnumSet.of(Intrinsics.ListIteratorNext, Intrinsics.InternalError,

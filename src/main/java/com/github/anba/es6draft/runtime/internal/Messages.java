@@ -119,6 +119,7 @@ public final class Messages {
         DuplicatePropertyDefinition("parser.duplicate_property_definition"),
         InvalidReturnStatement("parser.invalid_return_statement"),
         InvalidYieldExpression("parser.invalid_yield_expression"),
+        InvalidAwaitExpression("parser.invalid_await_expression"),
         DuplicateLabel("parser.duplicate_label"),
         LabelTargetNotFound("parser.label_target_not_found"),
         InvalidBreakTarget("parser.invalid_break_target"),

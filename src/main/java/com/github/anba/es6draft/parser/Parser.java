@@ -93,9 +93,10 @@ public final class Parser {
         boolean awaitAllowed = false;
         boolean returnAllowed = false;
         boolean noDivAfterYield = false;
+        boolean legacyGenerator = false;
+        boolean explicitStrict = false;
 
         StrictMode strictMode = StrictMode.Unknown;
-        boolean explicitStrict = false;
         ParserException strictError = null;
         List<FunctionNode> deferred = null;
         ArrayDeque<ObjectLiteral> objectLiterals = null;
@@ -2689,17 +2690,19 @@ public final class Parser {
      * 
      * @param allowDefault
      *            the flag to select if 'default' is allowed as the function name
-     * @param starless
+     * @param isLegacy
      *            the flag to mark this generator as a legacy, star-less generator
      * @return the parsed generator declaration
      */
-    private GeneratorDeclaration generatorDeclaration(boolean allowDefault, boolean starless) {
+    private GeneratorDeclaration generatorDeclaration(boolean allowDefault, boolean isLegacy) {
         newContext(ContextKind.Generator);
         try {
+            context.legacyGenerator = isLegacy;
+
             long begin = ts.beginPosition();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
-            if (!starless) {
+            if (!isLegacy) {
                 consume(Token.MUL);
             }
             BindingIdentifier identifier = bindingIdentifierFunctionName(true, allowDefault);
@@ -2717,7 +2720,7 @@ public final class Parser {
 
             FunctionContext scope = context.funContext;
             GeneratorDeclaration generator;
-            if (!starless) {
+            if (!isLegacy) {
                 generator = new GeneratorDeclaration(begin, ts.endPosition(), scope, identifier,
                         parameters, statements, context.hasSuperReference(), header, body);
             } else {
@@ -2745,17 +2748,19 @@ public final class Parser {
      *     function * BindingIdentifier<span><sub>[Yield]opt</sub></span> ( FormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { FunctionBody<span><sub>[Yield]</sub></span> }
      * </pre>
      * 
-     * @param starless
+     * @param isLegacy
      *            the flag to mark this generator as a legacy, star-less generator
      * @return the parsed generator expression declaration
      */
-    private GeneratorExpression generatorExpression(boolean starless) {
+    private GeneratorExpression generatorExpression(boolean isLegacy) {
         newContext(ContextKind.Generator);
         try {
+            context.legacyGenerator = isLegacy;
+
             long begin = ts.beginPosition();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
-            if (!starless) {
+            if (!isLegacy) {
                 consume(Token.MUL);
             }
             BindingIdentifier identifier = null;
@@ -2776,7 +2781,7 @@ public final class Parser {
 
             FunctionContext scope = context.funContext;
             GeneratorExpression generator;
-            if (!starless) {
+            if (!isLegacy) {
                 generator = new GeneratorExpression(begin, ts.endPosition(), scope, identifier,
                         parameters, statements, context.hasSuperReference(), header, body);
             } else {
@@ -2850,8 +2855,7 @@ public final class Parser {
         Expression expr;
         if (delegatedYield) {
             expr = assignmentExpression(allowIn);
-        } else if (!isEnabled(CompatibilityOption.LegacyGenerator)) {
-            // FIXME: take this path based on the actual generator type, not based on options
+        } else if (!context.legacyGenerator) {
             if (noLineTerminator() && assignmentExpressionFirstSet(token())) {
                 expr = assignmentExpression(allowIn);
             } else {
@@ -3171,10 +3175,9 @@ public final class Parser {
         newContext(ContextKind.AsyncFunction);
         try {
             long begin = ts.beginPosition();
-            // FIXME: start function position
             consume("async");
+            int startFunction = ts.position() - "async".length();
             consume(Token.FUNCTION);
-            int startFunction = ts.position() - "function".length();
             BindingIdentifier identifier = bindingIdentifierFunctionName(true, allowDefault);
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
@@ -3219,10 +3222,9 @@ public final class Parser {
         newContext(ContextKind.AsyncFunction);
         try {
             long begin = ts.beginPosition();
-            // FIXME: start function position
             consume("async");
+            int startFunction = ts.position() - "async".length();
             consume(Token.FUNCTION);
-            int startFunction = ts.position() - "function".length();
             BindingIdentifier identifier = null;
             if (token() != Token.LP) {
                 identifier = bindingIdentifierFunctionName(false, false);
@@ -3303,8 +3305,7 @@ public final class Parser {
             consume(Token.RC);
             int endFunction = ts.position() - 1;
 
-            // FIXME: function source
-            String header = "function* " + ts.range(startFunction, startBody - 1);
+            String header = "async function " + ts.range(startFunction, startBody - 1);
             String body = ts.range(startBody, endFunction);
 
             FunctionContext scope = context.funContext;
@@ -6402,16 +6403,15 @@ public final class Parser {
             if (isEnabled(CompatibilityOption.AsyncFunction)
                     && (context.awaitAllowed || context.kind == ContextKind.AsyncFunction)
                     && isName("await")) {
-                // TODO: error messages
                 if (context.kind == ContextKind.AsyncFunction) {
                     if (!context.awaitAllowed) {
                         // await in default parameters
-                        reportSyntaxError(Messages.Key.InvalidYieldExpression);
+                        reportSyntaxError(Messages.Key.InvalidAwaitExpression);
                     }
                     return awaitExpression();
                 } else if (context.kind == ContextKind.GeneratorComprehension) {
                     // await nested in generator comprehension, nested in generator
-                    reportSyntaxError(Messages.Key.InvalidYieldExpression);
+                    reportSyntaxError(Messages.Key.InvalidAwaitExpression);
                 }
                 assert false : "unexpected context-kind: " + context.kind;
             }
