@@ -779,7 +779,7 @@ final class StatementGenerator extends
             restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
         }
 
-        if (perIterationsLets) {
+        if (perIterationsLets && (!result.isAbrupt() || lblContinue.isUsed())) {
             CreatePerIterationEnvironment(savedEnv, mv);
         }
 
