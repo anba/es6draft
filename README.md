@@ -3,37 +3,91 @@ es6draft
 
 ECMAScript 6 compiler and runtime written in Java.
 
-### Project Scope ###
+[![Build Status](https://secure.travis-ci.org/anba/es6draft.png)](http://travis-ci.org/anba/es6draft)
+
+## Implementation Status ##
+
+Full support of [ECMAScript 6 draft rev. 22] [es6drafts].
+
+[ECMAScript Internationalization API 2.0, draft 2013-02-28] [intldrafts]:
+* Basic support using the [ICU4J] [icu] library
+* Sub-classing intentionally restricted to ES6 classes
+
+
+## Project Scope ##
 
 Goals:
-* Provide a test environment for the most recent ES6 drafts
+* Provide a test environment for the most recent ECMAScript 6 drafts
 
 Non-Goals:
 * Fast, optimized ECMAScript 6 runtime or Java interoperability
 
 
-### Implementation Status ###
+## Build Instructions and Shell ##
 
-[ECMAScript 6 draft rev. 22] [es6drafts].
+### Prerequisites ###
 
-[ECMAScript Internationalization API 2.0, draft 2013-02-28] [intldrafts]:
-* basic support using the [ICU4J] [icu] library
-* subclassing intentionally restricted to ES6 classes
+* Download and install [JDK 7 or later] [java]
+* Download and install [Apache Maven 3 or later] [maven]
+* Set-up the `JAVA_HOME` environment variable to point to the JDK installation directory
+
+### Build Instructions ###
+
+* Clone this repository `git clone https://github.com/anba/es6draft.git && cd es6draft`
+* Create the executable with `mvn package`
+
+### Shell ###
+
+* Start the shell using either `./bin/es6draft` or `.\bin\es6draft.bat` on Windows&reg;.
+* `./bin/es6draft --help` prints the available options.
 
 
-### Build Instructions and Shell ###
+## Test Suites ##
 
-The following environment variables need to be set to run the test cases:
-* `TEST262_PATH`: test262 main directory
+### Built-in Test Suite ###
+
+The built-in test suite is run when no other Maven profile was selected. In other words, it is run
+when the command `mvn test` is used.
+
+
+### Test262 Test Suite ###
+
+To start the [Test262] [test262] test runner select the `test262` Maven profile and set the
+`TEST262_PATH` environment variable or use the `-Dtest262.path` parameter.
+
+```
+export TEST262_PATH = <test262 main directory>
+mvn -P test262
+
+or:
+mvn -P test262 -Dtest262.path=<test262 main directory>
+```
+
+### External Tests ###
+
+Additional test suites are available to run tests from [Mozilla] [mozilla], [Traceur] [traceur],
+[V8] [v8] and [WebKit] [webkit] using the `external` Maven profile.
+
+The following environment variables need to be set to run these tests:
 * `MOZILLA_PATH`: mozilla-central main directory
-* `V8_PATH`: v8 main directory
 * `TRACEUR_PATH`: traceur main directory
-    
-Alternatively skip the tests with `mvn -DskipTests=true package`. 
+* `V8_PATH`: v8 main directory
+* `WEBKIT_PATH`: webkit main directory
 
-To start the shell, use `./bin/es6draft` (or `.\bin\es6draft.bat` on Windows&reg;).
+Alternatively, the `-Dmozilla.path=...`, `-Dtraceur.path=...`, `-Dv8.path=...` and `-Dwebkit.path=...` parameters can be used.
 
+To skip an external test, use `-D<name>.skip=true`. For example to run only the Traceur feature tests, use:
+```
+mvn test -P external -Dtraceur.path=<...> -Dmozilla.skip=true -Dv8.skip=true -Dwebkit.skip=true
+```
 
 [es6drafts]: http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts "Draft Specification for ES.next"
 [intldrafts]: http://wiki.ecmascript.org/doku.php?id=globalization:specification_drafts "Specification Drafts for ECMAScript Internationalization API"
 [icu]: http://site.icu-project.org/
+[java]: http://java.sun.com/
+[maven]: https://maven.apache.org/download.cgi
+[test262]: https://github.com/tc39/test262/
+[mozilla]: https://github.com/mozilla/gecko-dev/
+[traceur]: https://github.com/google/traceur-compiler/
+[v8]: https://github.com/v8/v8/
+[webkit]: https://www.webkit.org/building/checkout.html
