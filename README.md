@@ -69,10 +69,10 @@ Additional test suites are available to run tests from [Mozilla] [mozilla], [Tra
 [V8] [v8] and [WebKit] [webkit] using the `external` Maven profile.
 
 The following environment variables need to be set to run these tests:
-* `MOZILLA_PATH`: mozilla-central main directory
-* `TRACEUR_PATH`: traceur main directory
-* `V8_PATH`: v8 main directory
-* `WEBKIT_PATH`: webkit main directory
+* `MOZILLA_PATH`: Mozilla-Central main directory
+* `TRACEUR_PATH`: Traceur main directory
+* `V8_PATH`: V8 main directory
+* `WEBKIT_PATH`: WebKit main directory
 
 Alternatively, the `-Dmozilla.path=...`, `-Dtraceur.path=...`, `-Dv8.path=...` and `-Dwebkit.path=...` parameters can be used.
 

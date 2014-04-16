@@ -15,6 +15,7 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -24,7 +25,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Formatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -34,6 +37,18 @@ import jline.TerminalFactory;
 import jline.TerminalSupport;
 import jline.UnsupportedTerminal;
 import jline.console.ConsoleReader;
+
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.OptionDef;
+import org.kohsuke.args4j.OptionHandlerFilter;
+import org.kohsuke.args4j.spi.OptionHandler;
+import org.kohsuke.args4j.spi.Parameters;
+import org.kohsuke.args4j.spi.RestOfArgumentsHandler;
+import org.kohsuke.args4j.spi.Setter;
+import org.kohsuke.args4j.spi.StopOptionHandler;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
@@ -73,25 +88,29 @@ public final class Repl {
 
     public static void main(String[] args) throws Throwable {
         try {
-            EnumSet<Option> options = Option.fromArgs(args);
-            StartScript startScript = StartScript.fromArgs(args);
-            ReplConsole console;
-            if (!options.contains(Option.NoJLine)) {
-                configureTerminalFlavors();
-                ConsoleReader consoleReader = new ConsoleReader(PROGRAM_NAME, new FileInputStream(
-                        FileDescriptor.in), System.out, TerminalFactory.get(), getDefaultEncoding());
-                consoleReader.setExpandEvents(false);
-                console = new JLineConsole(consoleReader);
-            } else if (System.console() != null) {
-                console = new NativeConsole(System.console());
-            } else {
-                console = new LegacyConsole(System.out, System.in);
-            }
-            new Repl(options, startScript, console).loop();
+            Options options = readOptions(args);
+            ReplConsole console = createConsole(options);
+            new Repl(console, options).loop();
         } catch (Throwable e) {
             printStackTrace(e);
             System.exit(1);
         }
+    }
+
+    private static ReplConsole createConsole(Options options) throws IOException {
+        ReplConsole console;
+        if (!options.noJLine) {
+            configureTerminalFlavors();
+            ConsoleReader consoleReader = new ConsoleReader(PROGRAM_NAME, new FileInputStream(
+                    FileDescriptor.in), System.out, TerminalFactory.get(), getDefaultEncoding());
+            consoleReader.setExpandEvents(false);
+            console = new JLineConsole(consoleReader);
+        } else if (System.console() != null) {
+            console = new NativeConsole(System.console());
+        } else {
+            console = new LegacyConsole(System.out, System.in);
+        }
+        return console;
     }
 
     private static void configureTerminalFlavors() {
@@ -158,84 +177,206 @@ public final class Repl {
         e.printStackTrace();
     }
 
-    private enum Option {
-        NoInterpreter, Debug, FullDebug, StackTrace, Strict, SimpleShell, MozillaShell, V8Shell,
-        NoJLine, NoColor, Async, VerifyStack;
+    private static Options readOptions(String[] args) {
+        Options options = new Options();
+        CmdLineParser parser = new CmdLineParser(options);
+        parser.setUsageWidth(120);
+        try {
+            parser.parseArgument(args);
+        } catch (CmdLineException e) {
+            System.err.println(e.getMessage());
+            System.err.println(getUsageString(parser));
+            System.exit(1);
+        }
+        if (options.showVersion) {
+            System.out.println(getVersionString());
+            System.exit(0);
+        }
+        if (options.showHelp) {
+            System.out.println(getUsageString(parser));
+            System.exit(0);
+        }
+        if (options.debug || options.fullDebug) {
+            // Disable interpreter when bytecode is requested
+            options.noInterpreter = true;
+        }
+        if (options.fileName != null) {
+            // Execute as last script
+            options.evalScripts.add(new EvalPath(options.fileName));
+        }
+        if (options.evalScripts.isEmpty()) {
+            // Default to interactive mode when no files or expressions were set
+            options.interactive = true;
+        }
+        return options;
+    }
 
-        static EnumSet<Option> fromArgs(String[] args) {
-            EnumSet<Option> options = EnumSet.noneOf(Option.class);
-            for (String arg : args) {
-                switch (arg) {
-                case "--compile-only":
-                case "--no-interpreter":
-                    options.add(NoInterpreter);
-                    break;
-                case "--full-debug":
-                    options.add(FullDebug);
-                    // fall-thru
-                case "--debug":
-                    options.add(NoInterpreter);
-                    options.add(Debug);
-                    break;
-                case "--stacktrace":
-                    options.add(StackTrace);
-                    break;
-                case "--strict":
-                    options.add(Strict);
-                    break;
-                case "--shell=simple":
-                    options.add(SimpleShell);
-                    break;
-                case "--shell=mozilla":
-                    options.add(MozillaShell);
-                    break;
-                case "--shell=v8":
-                    options.add(V8Shell);
-                    break;
-                case "--no-jline":
-                    options.add(NoJLine);
-                    break;
-                case "--no-color":
-                    options.add(NoColor);
-                    break;
-                case "--async":
-                    options.add(Async);
-                    break;
-                case "--verify-stack":
-                    options.add(VerifyStack);
-                    break;
-                case "--help":
-                    System.out.print(getHelp());
-                    System.exit(0);
-                    break;
-                default:
-                    if (arg.length() > 1 && arg.charAt(0) == '-') {
-                        System.err.printf("invalid option '%s'\n\n", arg);
-                        System.out.print(getHelp());
-                        System.exit(0);
-                    }
-                    break;
-                }
-            }
-            return options;
+    private static interface EvalScript {
+        String getSourceName();
+
+        String getSource() throws IOException;
+    }
+
+    private static final class EvalString implements EvalScript {
+        private final String source;
+
+        EvalString(String source) {
+            this.source = source;
+        }
+
+        @Override
+        public String getSourceName() {
+            return "<eval>";
+        }
+
+        @Override
+        public String getSource() {
+            return source;
         }
     }
 
-    private static String getHelp() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format("%s\n\n", getResourceInfo("/version", PROGRAM_NAME)));
-        sb.append("Options: \n");
-        sb.append("  --shell=[mode]    Set default shell emulation [simple, mozilla, v8] (default = simple)\n");
-        sb.append("  --strict          Strict semantics without web compatibility\n");
-        sb.append("  --async           Enable experimental support for async functions\n");
-        sb.append("  --no-interpreter  Disable interpreter\n");
-        sb.append("  --no-color        Disable colored output\n");
-        sb.append("  --no-jline        Disable JLine support\n");
-        sb.append("  --stacktrace      Print stack-trace on error\n");
-        sb.append("  --debug           Print generated Java bytecode\n");
-        sb.append("  --full-debug      Print generated Java bytecode (full type descriptors)\n");
-        sb.append("  --help            Print this help\n");
-        return sb.toString();
+    private static final class EvalPath implements EvalScript {
+        private final Path path;
+
+        EvalPath(Path path) {
+            this.path = path;
+        }
+
+        @Override
+        public String getSourceName() {
+            return path.toString();
+        }
+
+        @Override
+        public String getSource() throws IOException {
+            Path filePath = path.toAbsolutePath();
+            if (!Files.exists(filePath)) {
+                System.err.printf("File '%s' not found!%n", filePath);
+                return null;
+            }
+            byte[] content = Files.readAllBytes(filePath);
+            String source = new String(content, StandardCharsets.UTF_8);
+            return source;
+        }
+    }
+
+    public enum ShellMode {
+        Simple, Mozilla, V8;
+
+        @Override
+        public String toString() {
+            return name().toLowerCase(Locale.ROOT);
+        }
+    }
+
+    public static final class Options {
+        List<EvalScript> evalScripts = new ArrayList<>();
+
+        @Option(name = "-v", aliases = { "--version" },
+                usage = "Print version information and exit")
+        boolean showVersion;
+
+        @Option(name = "-h", aliases = { "--help" }, usage = "Print this help")
+        boolean showHelp;
+
+        @Option(name = "-e", aliases = { "--eval", "--execute" }, metaVar = "STRING",
+                usage = "Script code to evaluate")
+        void setEvalExpression(String expression) {
+            evalScripts.add(new EvalString(expression));
+        }
+
+        @Option(name = "-f", aliases = { "--file" }, metaVar = "FILE",
+                usage = "Script file to evaluate")
+        void setFile(Path path) {
+            evalScripts.add(new EvalPath(path));
+        }
+
+        @Option(name = "-i", aliases = { "--interactive" }, usage = "Start interactive mode")
+        boolean interactive;
+
+        @Option(name = "--strict", usage = "Strict semantics without web compatibility")
+        boolean strict;
+
+        @Option(name = "--shell", usage = "Set default shell emulation (default = simple)")
+        ShellMode shellMode = ShellMode.Simple;
+
+        @Option(name = "--async", usage = "Enable experimental support for async functions")
+        boolean asyncFunctions;
+
+        @Option(name = "--no-jline", usage = "Disable JLine support")
+        boolean noJLine;
+
+        @Option(name = "--no-color", usage = "Disable colored output")
+        boolean noColor;
+
+        @Option(name = "--no-interpreter", aliases = { "--compile-only" },
+                usage = "Disable interpreter")
+        boolean noInterpreter;
+
+        @Option(name = "--stacktrace", usage = "Print stack-trace on error")
+        boolean stacktrace;
+
+        @Option(name = "--debug", usage = "Print generated Java bytecode")
+        boolean debug;
+
+        @Option(name = "--full-debug", hidden = true,
+                usage = "Print generated Java bytecode (full type descriptors)")
+        boolean fullDebug;
+
+        @Option(name = "--verify-stack", hidden = true,
+                usage = "Enable stack usage tracking during compilation")
+        boolean verifyStack;
+
+        @Argument(index = 0, multiValued = false, metaVar = "FILE",
+                usage = "Script file to execute")
+        Path fileName = null;
+
+        @Option(name = "--", handler = StopOptionAndConsumeRestHandler.class)
+        @Argument(index = 1, multiValued = true, metaVar = "ARGUMENTS", usage = "Script arguments",
+                handler = RestOfArgumentsHandler.class)
+        List<String> arguments = new ArrayList<>();
+    }
+
+    public static final class StopOptionAndConsumeRestHandler extends OptionHandler<String> {
+        private final StopOptionHandler stopOptionHandler;
+        private final RestOfArgumentsHandler restOfArgumentsHandler;
+
+        public StopOptionAndConsumeRestHandler(CmdLineParser parser, OptionDef option,
+                Setter<String> setter) {
+            super(parser, option, setter);
+            this.stopOptionHandler = new StopOptionHandler(parser, option, setter);
+            this.restOfArgumentsHandler = new RestOfArgumentsHandler(parser, option, setter);
+        }
+
+        @Override
+        public int parseArguments(Parameters params) throws CmdLineException {
+            return stopOptionHandler.parseArguments(params)
+                    + restOfArgumentsHandler.parseArguments(params);
+        }
+
+        @Override
+        public String getDefaultMetaVariable() {
+            return "ARGUMENTS";
+        }
+    }
+
+    private static String getVersionString() {
+        return getResourceInfo("/version", PROGRAM_NAME);
+    }
+
+    private static String getUsageString(CmdLineParser parser) {
+        try (Formatter formatter = new Formatter()) {
+            formatter.format("%s%n%n", getVersionString());
+            formatter.format("Usage:%n");
+            formatter.format("%s [options] [FILE [ARGUMENTS]]%n%n", PROGRAM_NAME);
+            formatter.format("Options:%n");
+            StringWriter writer = new StringWriter();
+            parser.printUsage(writer, null, OptionHandlerFilter.PUBLIC);
+            formatter.out().append(writer.toString());
+            return formatter.toString();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private static String getResourceInfo(String resourceName, String defaultValue) {
@@ -244,29 +385,6 @@ public final class Repl {
             return reader.readLine();
         } catch (IOException e) {
             return defaultValue;
-        }
-    }
-
-    private static final class StartScript {
-        private Path script = Paths.get("-");
-        private List<String> arguments = new ArrayList<>();
-
-        static StartScript fromArgs(String[] args) {
-            StartScript startScript = new StartScript();
-            boolean inOptions = true;
-            for (String arg : args) {
-                if (inOptions && arg.length() > 1 && arg.charAt(0) == '-') {
-                    // skip options
-                    continue;
-                }
-                if (inOptions) {
-                    inOptions = false;
-                    startScript.script = Paths.get(arg);
-                } else if (!arg.isEmpty()) {
-                    startScript.arguments.add(arg);
-                }
-            }
-            return startScript;
         }
     }
 
@@ -289,28 +407,26 @@ public final class Repl {
         }
     }
 
-    private final EnumSet<Option> options;
-    private final StartScript startScript;
     private final ReplConsole console;
+    private final Options options;
     private AtomicInteger scriptCounter = new AtomicInteger(0);
 
-    private Repl(EnumSet<Option> options, StartScript startScript, ReplConsole console) {
-        this.options = options;
-        this.startScript = startScript;
+    private Repl(ReplConsole console, Options options) {
         this.console = console;
+        this.options = options;
     }
 
     private void handleException(Throwable e) {
         String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
         console.printf("%s%n", message);
-        if (options.contains(Option.StackTrace)) {
+        if (options.stacktrace) {
             printStackTrace(e);
         }
     }
 
     private void handleException(Realm realm, ScriptException e) {
         console.printf("uncaught exception: %s%n", e.getMessage(realm.defaultContext()));
-        if (options.contains(Option.StackTrace)) {
+        if (options.stacktrace) {
             printStackTrace(e);
         }
     }
@@ -328,7 +444,7 @@ public final class Repl {
         console.printf("%s %s: %s%n", sourceInfo, e.getType(), e.getFormattedMessage());
         console.printf("%s %s%n", sourceInfo, offendingLine);
         console.printf("%s %s%n", sourceInfo, marker);
-        if (options.contains(Option.StackTrace)) {
+        if (options.stacktrace) {
             printStackTrace(e);
         }
     }
@@ -352,6 +468,12 @@ public final class Repl {
         return index;
     }
 
+    private static com.github.anba.es6draft.ast.Script parse(Realm realm, String sourceName,
+            String source, int line) {
+        Parser parser = new Parser(sourceName, line, realm.getOptions());
+        return parser.parseScript(source);
+    }
+
     /**
      * REPL: Read
      * 
@@ -370,8 +492,7 @@ public final class Repl {
             }
             source.append(s).append('\n');
             try {
-                Parser parser = new Parser("typein", line, realm.getOptions());
-                return parser.parseScript(source);
+                return parse(realm, "typein", source.toString(), line);
             } catch (ParserEOFException e) {
                 continue;
             } catch (ParserException e) {
@@ -392,7 +513,7 @@ public final class Repl {
     private Object eval(Realm realm, com.github.anba.es6draft.ast.Script parsedScript) {
         String className = "typein_" + scriptCounter.incrementAndGet();
         Script script;
-        if (options.contains(Option.NoInterpreter)) {
+        if (options.noInterpreter) {
             script = ScriptLoader.compile(realm, parsedScript, className);
         } else {
             script = ScriptLoader.load(realm, parsedScript, className);
@@ -410,7 +531,7 @@ public final class Repl {
      */
     private void print(Realm realm, Object result) {
         if (result != UNDEFINED) {
-            boolean color = console.isAnsiSupported() && !options.contains(Option.NoColor);
+            boolean color = console.isAnsiSupported() && !options.noColor;
             SourceBuilder.Mode mode = color ? SourceBuilder.Mode.Color : SourceBuilder.Mode.Simple;
             console.printf("%s%n", ToSource(mode, realm.defaultContext(), result));
         }
@@ -423,6 +544,9 @@ public final class Repl {
         Realm realm = newRealm();
         for (int line = 1;; line += 1) {
             drainTaskQueue(realm);
+            if (!options.interactive) {
+                break;
+            }
             try {
                 com.github.anba.es6draft.ast.Script parsedScript = read(realm, line);
                 if (parsedScript.getStatements().isEmpty()) {
@@ -472,35 +596,35 @@ public final class Repl {
         Path baseDir = Paths.get("").toAbsolutePath();
         Path script = Paths.get("./.");
         Set<CompatibilityOption> compatibilityOptions;
-        if (options.contains(Option.Strict)) {
+        if (options.strict) {
             compatibilityOptions = CompatibilityOption.StrictCompatibility();
-        } else if (options.contains(Option.MozillaShell)) {
+        } else if (options.shellMode == ShellMode.Mozilla) {
             compatibilityOptions = CompatibilityOption.MozCompatibility();
         } else {
             compatibilityOptions = CompatibilityOption.WebCompatibility();
         }
-        if (options.contains(Option.Async)) {
+        if (options.asyncFunctions) {
             compatibilityOptions.add(CompatibilityOption.AsyncFunction);
         }
         Set<Parser.Option> parserOptions = EnumSet.noneOf(Parser.Option.class);
         Set<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
-        if (options.contains(Option.Debug)) {
+        if (options.debug) {
             compilerOptions.add(Compiler.Option.Debug);
         }
-        if (options.contains(Option.FullDebug)) {
+        if (options.fullDebug) {
             compilerOptions.add(Compiler.Option.FullDebug);
         }
-        if (options.contains(Option.VerifyStack)) {
+        if (options.verifyStack) {
             compilerOptions.add(Compiler.Option.VerifyStack);
         }
         ScriptCache scriptCache = new ScriptCache(compatibilityOptions, parserOptions,
                 compilerOptions);
 
         ObjectAllocator<? extends ShellGlobalObject> allocator;
-        if (options.contains(Option.MozillaShell)) {
+        if (options.shellMode == ShellMode.Mozilla) {
             allocator = MozShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
                     scriptCache);
-        } else if (options.contains(Option.V8Shell)) {
+        } else if (options.shellMode == ShellMode.V8) {
             allocator = V8ShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
                     scriptCache);
         } else {
@@ -518,7 +642,7 @@ public final class Repl {
         console.addCompletion(realm);
 
         // Add global "arguments" property
-        ScriptObject arguments = CreateArrayFromList(cx, startScript.arguments);
+        ScriptObject arguments = CreateArrayFromList(cx, options.arguments);
         global.defineOwnProperty(cx, "arguments", new PropertyDescriptor(arguments, true, false,
                 true));
 
@@ -536,19 +660,21 @@ public final class Repl {
             }
         });
 
-        // Run start script, if defined
-        if (!startScript.script.toString().equals("-")) {
-            final Path startScriptName = startScript.script.getFileName();
-            final Path startScriptPath = baseDir.resolve(startScript.script);
+        // Run eval expressions and files
+        for (final EvalScript evalScript : options.evalScripts) {
             realm.enqueueLoadingTask(new Task() {
                 @Override
                 public void execute() {
                     try {
+                        String sourceName = evalScript.getSourceName();
+                        String source = evalScript.getSource();
+                        if (source == null) {
+                            // Return if source not available
+                            return;
+                        }
                         try {
-                            global.eval(startScriptName, startScriptPath);
+                            eval(realm, parse(realm, sourceName, source, 1));
                         } catch (ParserException e) {
-                            byte[] content = Files.readAllBytes(startScriptPath);
-                            String source = new String(content, StandardCharsets.UTF_8);
                             throw new ParserExceptionWithSource(e, source);
                         }
                     } catch (IOException e) {
