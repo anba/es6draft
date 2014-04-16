@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -318,11 +319,11 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             Object o = CheckObjectCoercible(cx, thisValue);
             /* step 3 */
             if (!Type.isObjectOrNull(proto)) {
-                return proto;
+                return UNDEFINED;
             }
             /* step 4 */
             if (!Type.isObject(o)) {
-                return proto;
+                return UNDEFINED;
             }
             /* steps 5-6 */
             ScriptObject obj = Type.objectValue(o);
@@ -339,7 +340,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
                 throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             /* step 8 */
-            return proto;
+            return UNDEFINED;
         }
     }
 }
