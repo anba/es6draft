@@ -23,6 +23,7 @@ public final class FunctionDeclaration extends Declaration implements FunctionDe
     private final boolean superReference;
     private final String headerSource, bodySource;
     private boolean syntheticNodes;
+    private boolean legacyBlockScoped;
 
     public FunctionDeclaration(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
@@ -116,6 +117,14 @@ public final class FunctionDeclaration extends Declaration implements FunctionDe
     @Override
     public void setSyntheticNodes(boolean syntheticNodes) {
         this.syntheticNodes = syntheticNodes;
+    }
+
+    public boolean isLegacyBlockScoped() {
+        return legacyBlockScoped;
+    }
+
+    public void setLegacyBlockScoped(boolean legacyBlockScoped) {
+        this.legacyBlockScoped = legacyBlockScoped;
     }
 
     @Override

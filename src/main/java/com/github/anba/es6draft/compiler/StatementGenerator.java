@@ -162,6 +162,10 @@ final class StatementGenerator extends
                 MethodType.Static, Types.ScriptRuntime, "getStackOverflowError",
                 Type.getMethodType(Types.StackOverflowError, Types.Error));
 
+        static final MethodDesc ScriptRuntime_initializeFunctionBlockBinding = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "initializeFunctionBlockBinding",
+                Type.getMethodType(Type.VOID_TYPE, Types.String, Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "iterate",
                 Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
@@ -841,6 +845,14 @@ final class StatementGenerator extends
     @Override
     public Completion visit(FunctionDeclaration node, StatementVisitor mv) {
         codegen.compile(node);
+
+        /* B.3.2  Web Legacy Compatibility for Block-Level Function Declarations */
+        if (node.isLegacyBlockScoped()) {
+            mv.aconst(node.getIdentifier().getName());
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_initializeFunctionBlockBinding);
+        }
+
         /* step 1 */
         return Completion.Normal;
     }

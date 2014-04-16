@@ -2569,4 +2569,26 @@ public final class ScriptRuntime {
             object.setPrototypeOf(cx, Type.objectValueOrNull(value));
         }
     }
+
+    /**
+     * B.3.2 Web Legacy Compatibility for Block-Level Function Declarations
+     * 
+     * @param name
+     *            the binding name
+     * @param cx
+     *            the execution context
+     */
+    @SuppressWarnings("unchecked")
+    public static void initializeFunctionBlockBinding(String name, ExecutionContext cx) {
+        assert cx.getVariableEnvironment().getEnvRec() instanceof DeclarativeEnvironmentRecord;
+        assert cx.getLexicalEnvironment().getEnvRec() instanceof DeclarativeEnvironmentRecord;
+        LexicalEnvironment<DeclarativeEnvironmentRecord> fenv = (LexicalEnvironment<DeclarativeEnvironmentRecord>) cx
+                .getVariableEnvironment();
+        LexicalEnvironment<DeclarativeEnvironmentRecord> benv = (LexicalEnvironment<DeclarativeEnvironmentRecord>) cx
+                .getLexicalEnvironment();
+        Object fobj = benv.getEnvRec().getBindingValue(name, false);
+        if (!fenv.getEnvRec().isInitialized(name)) {
+            fenv.getEnvRec().initializeBinding(name, fobj);
+        }
+    }
 }

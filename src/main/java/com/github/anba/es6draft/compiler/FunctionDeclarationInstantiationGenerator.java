@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.compiler.FunctionDeclarationCollector.functionDeclarations;
 import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.util.ArrayList;
@@ -168,6 +169,8 @@ final class FunctionDeclarationInstantiationGenerator extends
         /* step 2 */
         boolean strict = IsStrict(function);
         boolean legacy = !strict && codegen.isEnabled(CompatibilityOption.FunctionPrototype);
+        boolean block = !strict && codegen.isEnabled(CompatibilityOption.BlockFunctionDeclaration)
+                && (function instanceof FunctionDefinition); // Arrow or generator functions?
         /* step 3 */
         FormalParameterList formals = function.getParameters();
         /* step 4 */
@@ -316,12 +319,63 @@ final class FunctionDeclarationInstantiationGenerator extends
             if (needsArgumentsBinding && "arguments".equals(varName)) {
                 continue;
             }
-            if (!parameterNames.contains(varName)) {
+            if (!parameterNamesSet.contains(varName)) {
                 // FIXME: spec bug - duplicate varNames (Bug 2645)
                 createMutableBinding(localEnvRec, varName, false, mv);
                 initializeBinding(localEnvRec, varName, undef, mv);
             }
         }
+
+        /* B.3.2  Web Legacy Compatibility for Block-Level Function Declarations */
+        BLOCK: if (block) {
+            assert function instanceof FunctionDefinition;
+            // Find all function declarations
+            List<FunctionDeclaration> functions = functionDeclarations((FunctionDefinition) function);
+            if (functions.isEmpty()) {
+                break BLOCK;
+            }
+
+            // parameters, var-names and implicit "arguments"
+            HashSet<String> envBindings = new HashSet<>();
+            if (needsParameterEnvironment) {
+                // only bindings from step 25
+                envBindings.addAll(varNames);
+                if (needsArgumentsBinding) {
+                    envBindings.remove("arguments");
+                }
+                envBindings.removeAll(parameterNames);
+            } else {
+                // bindings from step 19, 20, 25
+                envBindings.addAll(parameterNames);
+                envBindings.addAll(varNames);
+                if (needsArgumentsBinding) {
+                    envBindings.add("arguments");
+                }
+            }
+
+            for (FunctionDeclaration f : functions) {
+                String fname = f.getIdentifier().getName();
+                if (lexicalNames.contains(fname)) {
+                    continue;
+                }
+                if (!simpleParameterList && parameterNamesSet.contains(fname)) {
+                    continue;
+                }
+                // TODO: spec clear enough to omit function declarations?
+                // TODO: may change when function binding is properly specified!
+                // TODO: add test case!
+                if (functionNames.contains(fname)) {
+                    continue;
+                }
+                boolean alreadyDeclared = envBindings.contains(fname);
+                if (!alreadyDeclared) {
+                    envBindings.add(fname);
+                    createMutableBinding(localEnvRec, fname, false, mv);
+                    f.setLegacyBlockScoped(true);
+                }
+            }
+        }
+
         /* step 26 */
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(function);
         /* step 27 */
@@ -346,7 +400,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             if (needsArgumentsBinding && "arguments".equals(fn) && !needsParameterEnvironment) {
                 // stack: [fo] -> []
                 setMutableBinding(localEnvRec, fn, strict, mv);
-            } else if (parameterNames.contains(fn) && !needsParameterEnvironment) {
+            } else if (parameterNamesSet.contains(fn) && !needsParameterEnvironment) {
                 // stack: [fo] -> []
                 setMutableBinding(localEnvRec, fn, strict, mv);
             } else {

@@ -139,9 +139,22 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         for (Map.Entry<String, Binding> entry : bindings.entrySet()) {
             String name = entry.getKey();
             Binding binding = entry.getValue();
-            assert binding.value != null;
+            assert binding.value != null : "binding already initialized: " + name;
             target.bindings.put(name, binding.clone());
         }
+    }
+
+    /**
+     * Tests if an existing binding is already initialized.
+     * 
+     * @param name
+     *            the binding name
+     * @return {@code true} if the binding is initialized
+     */
+    public boolean isInitialized(String name) {
+        Binding b = bindings.get(name);
+        assert b != null : "binding not found: " + name;
+        return b.value != null;
     }
 
     @Override
@@ -166,7 +179,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     public void createMutableBinding(String name, boolean deletable) {
         /* step 1 (omitted) */
         /* step 2 */
-        assert !bindings.containsKey(name);
+        assert !bindings.containsKey(name) : "binding redeclaration: " + name;
         /* steps 3-4 */
         bindings.put(name, new Binding(true, deletable));
     }
@@ -178,7 +191,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     public void createImmutableBinding(String name) {
         /* step 1 (omitted) */
         /* step 2 */
-        assert !bindings.containsKey(name);
+        assert !bindings.containsKey(name) : "binding redeclaration: " + name;
         /* step 3 */
         bindings.put(name, new Binding(false, false));
     }
@@ -192,7 +205,8 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         Binding b = bindings.get(name);
         /* step 1 (omitted) */
         /* step 2 */
-        assert b != null && b.value == null;
+        assert b != null : "binding not found: " + name;
+        assert b.value == null : "binding already initialized: " + name;
         /* steps 3-4 */
         b.value = value;
     }
@@ -206,7 +220,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         Binding b = bindings.get(name);
         /* step 1 (omitted) */
         /* step 2 */
-        assert b != null; // FIXME: spec bug (bug 159)
+        assert b != null : "binding not found: " + name; // FIXME: spec bug (bug 159)
         /* steps 3-6 */
         if (b.value == null) {
             throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
@@ -225,7 +239,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         Binding b = bindings.get(name);
         /* step 1 (omitted) */
         /* step 2 */
-        assert b != null;
+        assert b != null : "binding not found: " + name;
         /* step 3 */
         if (b.value == null) {
             if (!strict) {
