@@ -88,7 +88,15 @@ public class MozillaJSTest {
     public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
 
     @Rule
-    public ErrorCollector collector = new ErrorCollector();
+    public ErrorCollector collector = new ErrorCollector() {
+        @Override
+        protected void verify() throws Throwable {
+            // Ignore collected errors if test is marked as random
+            if (!moztest.random) {
+                super.verify();
+            }
+        }
+    };
 
     @Rule
     public StandardErrorHandler errorHandler = StandardErrorHandler.none();
