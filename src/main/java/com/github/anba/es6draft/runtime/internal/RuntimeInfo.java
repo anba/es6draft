@@ -26,8 +26,8 @@ public final class RuntimeInfo {
     }
 
     public static ScriptBody newScriptBody(String sourceFile, boolean isStrict,
-            MethodHandle initialisation, MethodHandle evalinitialisation, MethodHandle handle) {
-        return new CompiledScriptBody(sourceFile, isStrict, initialisation, evalinitialisation,
+            MethodHandle initialization, MethodHandle evalinitialization, MethodHandle handle) {
+        return new CompiledScriptBody(sourceFile, isStrict, initialization, evalinitialization,
                 handle);
     }
 
@@ -52,16 +52,16 @@ public final class RuntimeInfo {
     private static final class CompiledScriptBody implements ScriptBody {
         private final String sourceFile;
         private final boolean isStrict;
-        private final MethodHandle initialisation;
-        private final MethodHandle evalinitialisation;
+        private final MethodHandle initialization;
+        private final MethodHandle evalinitialization;
         private final MethodHandle handle;
 
-        CompiledScriptBody(String sourceFile, boolean isStrict, MethodHandle initialisation,
-                MethodHandle evalinitialisation, MethodHandle handle) {
+        CompiledScriptBody(String sourceFile, boolean isStrict, MethodHandle initialization,
+                MethodHandle evalinitialization, MethodHandle handle) {
             this.sourceFile = sourceFile;
             this.isStrict = isStrict;
-            this.initialisation = initialisation;
-            this.evalinitialisation = evalinitialisation;
+            this.initialization = initialization;
+            this.evalinitialization = evalinitialization;
             this.handle = handle;
         }
 
@@ -80,7 +80,7 @@ public final class RuntimeInfo {
                 LexicalEnvironment<GlobalEnvironmentRecord> globalEnv,
                 LexicalEnvironment<?> lexicalEnv, boolean deletableBindings) {
             try {
-                initialisation.invokeExact(cx, globalEnv, lexicalEnv, deletableBindings);
+                initialization.invokeExact(cx, globalEnv, lexicalEnv, deletableBindings);
             } catch (RuntimeException | Error e) {
                 throw e;
             } catch (Throwable e) {
@@ -93,7 +93,7 @@ public final class RuntimeInfo {
                 LexicalEnvironment<?> variableEnv, LexicalEnvironment<?> lexicalEnv,
                 boolean deletableBindings) {
             try {
-                evalinitialisation.invokeExact(cx, variableEnv, lexicalEnv, deletableBindings);
+                evalinitialization.invokeExact(cx, variableEnv, lexicalEnv, deletableBindings);
             } catch (RuntimeException | Error e) {
                 throw e;
             } catch (Throwable e) {

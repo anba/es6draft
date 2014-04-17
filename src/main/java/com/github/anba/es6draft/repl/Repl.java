@@ -646,7 +646,7 @@ public final class Repl {
         global.defineOwnProperty(cx, "arguments", new PropertyDescriptor(arguments, true, false,
                 true));
 
-        // Execute any global specific initialisation scripts
+        // Execute any global specific initialization scripts
         realm.enqueueLoadingTask(new Task() {
             @Override
             public void execute() {

@@ -13,7 +13,7 @@ import java.util.Set;
  * <h1>Annex B - Additional ECMAScript Features for Web Browsers</h1>
  * <ul>
  * <li>B.1 Additional Syntax
- * <li>B.2 Additional Properties
+ * <li>B.2 Additional Built-in Properties
  * <li>B.3 Other Additional Features
  * </ul>
  */

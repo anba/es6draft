@@ -31,7 +31,7 @@ public final class ScriptingGlobalObject extends GlobalObject {
 
     @Override
     public void initialize(OrdinaryObject object) {
-        /* no initialisation required */
+        /* no initialization required */
     }
 
     /**

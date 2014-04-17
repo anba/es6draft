@@ -739,7 +739,7 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
          */
         @Function(name = "setTime", arity = 1)
         public static Object setTime(ExecutionContext cx, Object thisValue, Object time) {
-            // just to trigger type and initialisation test
+            // just to trigger type and initialization test
             thisTimeValue(cx, thisValue);
             /* steps 1-2 */
             double v = TimeClip(ToNumber(cx, time));

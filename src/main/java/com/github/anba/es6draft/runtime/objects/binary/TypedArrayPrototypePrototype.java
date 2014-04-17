@@ -76,7 +76,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         private static TypedArrayObject thisTypedArrayObject(ExecutionContext cx, Object thisValue) {
             if (thisValue instanceof TypedArrayObject) {
-                // initialisation status intentionally not checked here!
+                // initialization status intentionally not checked here!
                 return (TypedArrayObject) thisValue;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);

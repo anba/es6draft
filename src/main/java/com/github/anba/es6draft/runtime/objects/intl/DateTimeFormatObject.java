@@ -98,7 +98,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
      * [[initializedIntlObject]]
      * 
      * @param initializedIntlObject
-     *            the new initialisation state
+     *            the new initialization state
      */
     public void setInitializedIntlObject(boolean initializedIntlObject) {
         this.initializedIntlObject = initializedIntlObject;
@@ -117,7 +117,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
      * [[initializedDateTimeFormat]]
      * 
      * @param initializedDateTimeFormat
-     *            the new initialisation state
+     *            the new initialization state
      */
     public void setInitializedDateTimeFormat(boolean initializedDateTimeFormat) {
         this.initializedDateTimeFormat = initializedDateTimeFormat;

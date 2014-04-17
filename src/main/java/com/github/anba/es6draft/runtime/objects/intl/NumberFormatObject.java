@@ -135,7 +135,7 @@ public class NumberFormatObject extends OrdinaryObject {
      * [[initializedIntlObject]]
      * 
      * @param initializedIntlObject
-     *            the new initialisation state
+     *            the new initialization state
      */
     public void setInitializedIntlObject(boolean initializedIntlObject) {
         this.initializedIntlObject = initializedIntlObject;
@@ -154,7 +154,7 @@ public class NumberFormatObject extends OrdinaryObject {
      * [[initializedNumberFormat]]
      * 
      * @param initializedNumberFormat
-     *            the new initialisation state
+     *            the new initialization state
      */
     public void setInitializedNumberFormat(boolean initializedNumberFormat) {
         this.initializedNumberFormat = initializedNumberFormat;

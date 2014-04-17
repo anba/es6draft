@@ -51,7 +51,7 @@ public final class ExoticArray extends OrdinaryObject {
      * [[ArrayInitialisationState]]
      *
      * @param initialisationState
-     *            the new initialisation state value
+     *            the new initialization state value
      */
     public void setInitialisationState(boolean initialisationState) {
         assert initialisationState : "cannot uninitialize an array";

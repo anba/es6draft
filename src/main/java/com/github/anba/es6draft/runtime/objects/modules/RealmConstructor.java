@@ -94,7 +94,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         // TODO: not yet specified
         realm.defineBuiltinProperties(builtins);
 
-        // Run any initialisation scripts, if required
+        // Run any initialization scripts, if required
         try {
             realm.getGlobalThis().initialize(builtins);
         } catch (ParserException | CompilationException e) {

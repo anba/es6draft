@@ -602,7 +602,7 @@ public final class Realm {
         // create [[ThrowTypeError]] unique function (needs to be done before init'ing intrinsics)
         realm.throwTypeError = OrdinaryFunction.createThrowTypeError(defaultContext);
 
-        // initialisation phase
+        // initialization phase
         objectConstructor.initialize(defaultContext);
         objectPrototype.initialize(defaultContext);
         functionConstructor.initialize(defaultContext);
@@ -669,7 +669,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.ErrorPrototype, errorPrototype);
         intrinsics.put(Intrinsics.JSON, jsonObject);
 
-        // initialisation phase
+        // initialization phase
         arrayConstructor.initialize(defaultContext);
         arrayPrototype.initialize(defaultContext);
         arrayIteratorPrototype.initialize(defaultContext);
@@ -749,7 +749,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.InternalError, internalErrorConstructor);
         intrinsics.put(Intrinsics.InternalErrorPrototype, internalErrorPrototype);
 
-        // initialisation phase
+        // initialization phase
         evalErrorConstructor.initialize(defaultContext);
         evalErrorPrototype.initialize(defaultContext);
         rangeErrorConstructor.initialize(defaultContext);
@@ -813,7 +813,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.WeakSet, weakSetConstructor);
         intrinsics.put(Intrinsics.WeakSetPrototype, weakSetPrototype);
 
-        // initialisation phase
+        // initialization phase
         mapConstructor.initialize(defaultContext);
         mapPrototype.initialize(defaultContext);
         mapIteratorPrototype.initialize(defaultContext);
@@ -844,7 +844,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.Proxy, proxy);
         intrinsics.put(Intrinsics.Reflect, reflect);
 
-        // initialisation phase
+        // initialization phase
         proxy.initialize(defaultContext);
         reflect.initialize(defaultContext);
     }
@@ -870,7 +870,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.GeneratorPrototype, generatorPrototype);
         intrinsics.put(Intrinsics.Generator, generator);
 
-        // initialisation phase
+        // initialization phase
         generatorFunctionConstructor.initialize(defaultContext);
         generatorPrototype.initialize(defaultContext);
         generator.initialize(defaultContext);
@@ -958,7 +958,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.DataView, dataViewConstructor);
         intrinsics.put(Intrinsics.DataViewPrototype, dataViewPrototype);
 
-        // initialisation phase
+        // initialization phase
         arrayBufferConstructor.initialize(defaultContext);
         arrayBufferPrototype.initialize(defaultContext);
         typedArrayConstructor.initialize(defaultContext);
@@ -1003,7 +1003,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.Promise, promiseConstructor);
         intrinsics.put(Intrinsics.PromisePrototype, promisePrototype);
 
-        // initialisation phase
+        // initialization phase
         promiseConstructor.initialize(defaultContext);
         promisePrototype.initialize(defaultContext);
     }
@@ -1034,7 +1034,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.RealmPrototype, realmPrototype);
         intrinsics.put(Intrinsics.System, systemObject);
 
-        // initialisation phase
+        // initialization phase
         loaderConstructor.initialize(defaultContext);
         loaderPrototype.initialize(defaultContext);
         loaderIteratorPrototype.initialize(defaultContext);
@@ -1074,7 +1074,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.Intl_DateTimeFormat, dateTimeFormatConstructor);
         intrinsics.put(Intrinsics.Intl_DateTimeFormatPrototype, dateTimeFormatPrototype);
 
-        // initialisation phase
+        // initialization phase
         intlObject.initialize(defaultContext);
         collatorConstructor.initialize(defaultContext);
         collatorPrototype.initialize(defaultContext);

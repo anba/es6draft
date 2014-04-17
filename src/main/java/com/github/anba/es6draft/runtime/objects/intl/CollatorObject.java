@@ -117,7 +117,7 @@ public class CollatorObject extends OrdinaryObject {
      * [[initializedIntlObject]]
      * 
      * @param initializedIntlObject
-     *            the new initialisation state
+     *            the new initialization state
      */
     public void setInitializedIntlObject(boolean initializedIntlObject) {
         this.initializedIntlObject = initializedIntlObject;
@@ -136,7 +136,7 @@ public class CollatorObject extends OrdinaryObject {
      * [[initializedCollator]]
      * 
      * @param initializedCollator
-     *            the new initialisation state
+     *            the new initialization state
      */
     public void setInitializedCollator(boolean initializedCollator) {
         this.initializedCollator = initializedCollator;
