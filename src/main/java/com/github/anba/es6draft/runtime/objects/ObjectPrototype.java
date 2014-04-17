@@ -261,11 +261,16 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
         @Function(name = "propertyIsEnumerable", arity = 1)
         public static Object propertyIsEnumerable(ExecutionContext cx, Object thisValue, Object v) {
             /* steps 1-2 */
-            String p = ToFlatString(cx, v);
+            Object p = ToPropertyKey(cx, v);
             /* steps 3-4 */
             ScriptObject o = ToObject(cx, thisValue);
             /* step 5 */
-            Property desc = o.getOwnProperty(cx, p);
+            Property desc;
+            if (p instanceof String) {
+                desc = o.getOwnProperty(cx, (String) p);
+            } else {
+                desc = o.getOwnProperty(cx, (Symbol) p);
+            }
             /* step 6 */
             if (desc == null) {
                 return false;

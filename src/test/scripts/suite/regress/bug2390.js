@@ -6,7 +6,7 @@
  */
 
 const {
-  assertDataProperty, assertThrows
+  assertDataProperty, assertTrue
 } = Assert;
 
 // 19.1.3.4: Object.prototype.propertyIsEnumerable() should accept symbols
@@ -18,4 +18,4 @@ let obj = {
 };
 
 assertDataProperty(obj, sym, {value: 0, writable: true, enumerable: true, configurable: true});
-assertThrows(() => obj.isPropertyEnumerable(sym), TypeError);
+assertTrue(obj.propertyIsEnumerable(sym));
