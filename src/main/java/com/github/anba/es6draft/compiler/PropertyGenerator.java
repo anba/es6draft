@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMethod;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
@@ -117,9 +116,7 @@ final class PropertyGenerator extends
         /* steps 1-3 */
         ValType type = expressionValue(node.getExpression(), mv);
         /* step 4 */
-        ToPropertyKey(type, mv);
-
-        return type != ValType.Any ? ValType.String : ValType.Any;
+        return ToPropertyKey(type, mv);
     }
 
     @Override
@@ -238,19 +235,13 @@ final class PropertyGenerator extends
         Expression propertyValue = node.getPropertyValue();
 
         boolean isAnonymousFunctionDefinition = IsAnonymousFunctionDefinition(propertyValue);
-        boolean updateMethodFields = false;
-        if (isAnonymousFunctionDefinition && !(propertyValue instanceof ArrowFunction)) {
-            if (propertyValue instanceof ClassExpression) {
-                ClassExpression classExpr = (ClassExpression) propertyValue;
-                // FIXME: spec bug - not useful to update class constructor methods
-                // Broken test case with this: `new ({c: class extends Object {}}).c`
-                MethodDefinition constructorMethod = ConstructorMethod(classExpr);
-                if (constructorMethod != null) {
-                    updateMethodFields = constructorMethod.hasSuperReference();
-                } else {
-                    updateMethodFields = classExpr.getHeritage() != null;
-                }
-                // Disable for now:
+        boolean updateMethodFields;
+        if (isAnonymousFunctionDefinition) {
+            if (propertyValue instanceof ArrowFunction) {
+                // [[ThisMode]] is 'lexical'
+                updateMethodFields = false;
+            } else if (propertyValue instanceof ClassExpression) {
+                // [[HomeObject]] is never undefined if [[NeedsSuper]] is true in class constructors
                 updateMethodFields = false;
             } else {
                 assert propertyValue instanceof FunctionExpression
@@ -258,6 +249,8 @@ final class PropertyGenerator extends
                         || propertyValue instanceof AsyncFunctionExpression;
                 updateMethodFields = ((FunctionNode) propertyValue).hasSuperReference();
             }
+        } else {
+            updateMethodFields = false;
         }
 
         String propName = PropName(propertyName);
