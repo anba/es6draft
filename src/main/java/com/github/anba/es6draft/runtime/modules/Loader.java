@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
-import com.github.anba.es6draft.runtime.objects.modules.LoaderObject;
+import com.github.anba.es6draft.runtime.objects.reflect.LoaderObject;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>

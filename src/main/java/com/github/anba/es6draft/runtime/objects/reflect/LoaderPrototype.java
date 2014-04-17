@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.runtime.objects.modules;
+package com.github.anba.es6draft.runtime.objects.reflect;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
@@ -16,8 +16,8 @@ import static com.github.anba.es6draft.runtime.modules.ModuleLinkage.CreateLinke
 import static com.github.anba.es6draft.runtime.modules.ModuleLoading.LoadModule;
 import static com.github.anba.es6draft.runtime.modules.ModuleLoading.ProceedToTranslate;
 import static com.github.anba.es6draft.runtime.modules.ModuleLoading.PromiseOfStartLoadPartwayThrough;
-import static com.github.anba.es6draft.runtime.objects.modules.LoaderIteratorPrototype.CreateLoaderIterator;
-import static com.github.anba.es6draft.runtime.objects.modules.RealmConstructor.IndirectEval;
+import static com.github.anba.es6draft.runtime.objects.reflect.LoaderIteratorPrototype.CreateLoaderIterator;
+import static com.github.anba.es6draft.runtime.objects.reflect.RealmConstructor.IndirectEval;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.List;
@@ -38,8 +38,8 @@ import com.github.anba.es6draft.runtime.modules.Loader;
 import com.github.anba.es6draft.runtime.modules.ModuleEvaluation.EvaluateLoadedModule;
 import com.github.anba.es6draft.runtime.modules.ModuleLinkage;
 import com.github.anba.es6draft.runtime.modules.ModuleLoading.AsyncStartLoadPartwayThrough;
-import com.github.anba.es6draft.runtime.objects.modules.LoaderIteratorPrototype.LoaderIterationKind;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
+import com.github.anba.es6draft.runtime.objects.reflect.LoaderIteratorPrototype.LoaderIterationKind;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;

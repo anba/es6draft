@@ -49,20 +49,20 @@ import com.github.anba.es6draft.runtime.objects.intl.NumberFormatPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionConstructor;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorPrototype;
-import com.github.anba.es6draft.runtime.objects.modules.LoaderConstructor;
-import com.github.anba.es6draft.runtime.objects.modules.LoaderIteratorPrototype;
-import com.github.anba.es6draft.runtime.objects.modules.LoaderPrototype;
-import com.github.anba.es6draft.runtime.objects.modules.RealmConstructor;
-import com.github.anba.es6draft.runtime.objects.modules.RealmObject;
-import com.github.anba.es6draft.runtime.objects.modules.RealmPrototype;
-import com.github.anba.es6draft.runtime.objects.modules.SystemObject;
 import com.github.anba.es6draft.runtime.objects.number.MathObject;
 import com.github.anba.es6draft.runtime.objects.number.NumberConstructor;
 import com.github.anba.es6draft.runtime.objects.number.NumberPrototype;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor;
 import com.github.anba.es6draft.runtime.objects.promise.PromisePrototype;
+import com.github.anba.es6draft.runtime.objects.reflect.LoaderConstructor;
+import com.github.anba.es6draft.runtime.objects.reflect.LoaderIteratorPrototype;
+import com.github.anba.es6draft.runtime.objects.reflect.LoaderPrototype;
 import com.github.anba.es6draft.runtime.objects.reflect.ProxyConstructorFunction;
+import com.github.anba.es6draft.runtime.objects.reflect.RealmConstructor;
+import com.github.anba.es6draft.runtime.objects.reflect.RealmObject;
+import com.github.anba.es6draft.runtime.objects.reflect.RealmPrototype;
 import com.github.anba.es6draft.runtime.objects.reflect.Reflect;
+import com.github.anba.es6draft.runtime.objects.reflect.SystemObject;
 import com.github.anba.es6draft.runtime.objects.text.RegExpConstructor;
 import com.github.anba.es6draft.runtime.objects.text.RegExpPrototype;
 import com.github.anba.es6draft.runtime.objects.text.StringConstructor;
@@ -552,17 +552,11 @@ public final class Realm {
         initializeNativeErrors(realm);
         initializeInternalObjects(realm);
 
-        // TODO: move to reflect
-        // intrinsics: Loader, Module, Realm Objects
-        initializeModuleModules(realm);
-
         // intrinsics: 22.2, 23, 24.1, 24.2, 25
         initializeBinaryModule(realm);
         initializeCollectionModule(realm);
         initializeReflectModule(realm);
         initializeIterationModule(realm);
-
-        // intrinsics: Promise Objects
         initializePromiseObjects(realm);
 
         // intrinsics: Internationalization API
@@ -827,7 +821,7 @@ public final class Realm {
     }
 
     /**
-     * <h1>26 The Reflect Module</h1>
+     * <h1>26 Reflection</h1>
      * 
      * @param realm
      *            the realm instance
@@ -839,18 +833,36 @@ public final class Realm {
         // allocation phase
         ProxyConstructorFunction proxy = new ProxyConstructorFunction(realm);
         Reflect reflect = new Reflect(realm);
+        LoaderConstructor loaderConstructor = new LoaderConstructor(realm);
+        LoaderPrototype loaderPrototype = new LoaderPrototype(realm);
+        LoaderIteratorPrototype loaderIteratorPrototype = new LoaderIteratorPrototype(realm);
+        RealmConstructor realmConstructor = new RealmConstructor(realm);
+        RealmPrototype realmPrototype = new RealmPrototype(realm);
+        SystemObject systemObject = new SystemObject(realm);
 
         // registration phase
         intrinsics.put(Intrinsics.Proxy, proxy);
         intrinsics.put(Intrinsics.Reflect, reflect);
+        intrinsics.put(Intrinsics.Loader, loaderConstructor);
+        intrinsics.put(Intrinsics.LoaderPrototype, loaderPrototype);
+        intrinsics.put(Intrinsics.LoaderIteratorPrototype, loaderIteratorPrototype);
+        intrinsics.put(Intrinsics.Realm, realmConstructor);
+        intrinsics.put(Intrinsics.RealmPrototype, realmPrototype);
+        intrinsics.put(Intrinsics.System, systemObject);
 
         // initialization phase
         proxy.initialize(defaultContext);
         reflect.initialize(defaultContext);
+        loaderConstructor.initialize(defaultContext);
+        loaderPrototype.initialize(defaultContext);
+        loaderIteratorPrototype.initialize(defaultContext);
+        realmConstructor.initialize(defaultContext);
+        realmPrototype.initialize(defaultContext);
+        systemObject.initialize(defaultContext);
     }
 
     /**
-     * <h1>25 The "std:iteration" Module</h1>
+     * <h1>25 Control Abstraction Objects</h1>
      * 
      * @param realm
      *            the realm instance
@@ -986,7 +998,8 @@ public final class Realm {
     }
 
     /**
-     * <h1>Promise Objects</h1>
+     * <h1>25 Control Abstraction Objects</h1><br>
+     * <h2>25.4 Promise Objects</h2>
      * 
      * @param realm
      *            the realm instance
@@ -1006,41 +1019,6 @@ public final class Realm {
         // initialization phase
         promiseConstructor.initialize(defaultContext);
         promisePrototype.initialize(defaultContext);
-    }
-
-    /**
-     * <h1>Loader, Module, Realm Objects</h1>
-     * 
-     * @param realm
-     *            the realm instance
-     */
-    private static void initializeModuleModules(Realm realm) {
-        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
-        ExecutionContext defaultContext = realm.defaultContext;
-
-        // allocation phase
-        LoaderConstructor loaderConstructor = new LoaderConstructor(realm);
-        LoaderPrototype loaderPrototype = new LoaderPrototype(realm);
-        LoaderIteratorPrototype loaderIteratorPrototype = new LoaderIteratorPrototype(realm);
-        RealmConstructor realmConstructor = new RealmConstructor(realm);
-        RealmPrototype realmPrototype = new RealmPrototype(realm);
-        SystemObject systemObject = new SystemObject(realm);
-
-        // registration phase
-        intrinsics.put(Intrinsics.Loader, loaderConstructor);
-        intrinsics.put(Intrinsics.LoaderPrototype, loaderPrototype);
-        intrinsics.put(Intrinsics.LoaderIteratorPrototype, loaderIteratorPrototype);
-        intrinsics.put(Intrinsics.Realm, realmConstructor);
-        intrinsics.put(Intrinsics.RealmPrototype, realmPrototype);
-        intrinsics.put(Intrinsics.System, systemObject);
-
-        // initialization phase
-        loaderConstructor.initialize(defaultContext);
-        loaderPrototype.initialize(defaultContext);
-        loaderIteratorPrototype.initialize(defaultContext);
-        realmConstructor.initialize(defaultContext);
-        realmPrototype.initialize(defaultContext);
-        systemObject.initialize(defaultContext);
     }
 
     /**

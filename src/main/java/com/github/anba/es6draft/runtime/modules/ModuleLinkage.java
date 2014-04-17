@@ -23,7 +23,7 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.objects.modules.ModuleObject;
+import com.github.anba.es6draft.runtime.objects.reflect.ModuleObject;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>

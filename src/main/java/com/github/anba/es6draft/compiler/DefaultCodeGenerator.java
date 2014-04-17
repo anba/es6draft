@@ -1161,8 +1161,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.ScriptRuntime_getClassProto);
         }
 
-        // TODO: re-order instructions
-
         // stack: [<proto,ctor>] -> [ctor, proto]
         mv.dup();
         mv.iconst(1);

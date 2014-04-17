@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.objects.modules.ModuleObject;
+import com.github.anba.es6draft.runtime.objects.reflect.ModuleObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**

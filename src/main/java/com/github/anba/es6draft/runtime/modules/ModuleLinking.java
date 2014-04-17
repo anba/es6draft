@@ -31,7 +31,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.modules.Load.Dependency;
-import com.github.anba.es6draft.runtime.objects.modules.ModuleObject;
+import com.github.anba.es6draft.runtime.objects.reflect.ModuleObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 
 /**
