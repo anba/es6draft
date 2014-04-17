@@ -966,42 +966,42 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @param mv
      *            the expression visitor
      */
-    protected static final void ToPropertyKey(ValType from, ExpressionVisitor mv) {
+    protected static final ValType ToPropertyKey(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToString_double);
-            return;
+            return ValType.String;
         case Number_int:
             mv.invoke(Methods.AbstractOperations_ToString_int);
-            return;
+            return ValType.String;
         case Number_uint:
             mv.invoke(Methods.AbstractOperations_ToString_long);
-            return;
+            return ValType.String;
         case Undefined:
             mv.pop();
             mv.aconst("undefined");
-            return;
+            return ValType.String;
         case Null:
             mv.pop();
             mv.aconst("null");
-            return;
+            return ValType.String;
         case Boolean:
             mv.invoke(Methods.Boolean_toString);
-            return;
+            return ValType.String;
         case String:
             mv.invoke(Methods.CharSequence_toString);
-            return;
+            return ValType.String;
         case Object:
             mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToFlatString);
-            return;
+            return ValType.String;
         case Any:
         default:
             mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToPropertyKey);
-            return;
+            return ValType.Any;
         }
     }
 
@@ -1108,8 +1108,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @param mv
      *            the expression visitor
      */
-    protected final void BindingInitialisation(Binding node, ExpressionVisitor mv) {
-        new BindingInitialisationGenerator(codegen).generate(node, mv);
+    protected final void BindingInitialization(Binding node, ExpressionVisitor mv) {
+        new BindingInitializationGenerator(codegen).generate(node, mv);
     }
 
     /**
@@ -1120,8 +1120,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @param mv
      *            the expression visitor
      */
-    protected final void BindingInitialisationWithEnvironment(Binding node, ExpressionVisitor mv) {
-        new BindingInitialisationGenerator(codegen).generateWithEnvironment(node, mv);
+    protected final void BindingInitializationWithEnvironment(Binding node, ExpressionVisitor mv) {
+        new BindingInitializationGenerator(codegen).generateWithEnvironment(node, mv);
     }
 
     /**

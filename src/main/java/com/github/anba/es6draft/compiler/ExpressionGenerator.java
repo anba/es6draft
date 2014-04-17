@@ -2053,7 +2053,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 }
 
                 // stack: [env, envRec, envRec, value] -> [env, envRec]
-                BindingInitialisationWithEnvironment(binding.getBinding(), mv);
+                BindingInitializationWithEnvironment(binding.getBinding(), mv);
             }
             mv.pop();
         }

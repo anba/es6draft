@@ -288,10 +288,10 @@ final class FunctionDeclarationInstantiationGenerator extends
         if (hasParameters) {
             if (hasDuplicates) {
                 /* step 21 */
-                BindingInitialisation(function, iterator, mv);
+                BindingInitialization(function, iterator, mv);
             } else {
                 /* step 22 */
-                BindingInitialisationWithEnv(envRec, function, iterator, mv);
+                BindingInitializationWithEnv(envRec, function, iterator, mv);
             }
         }
         /* step 24 */
@@ -418,16 +418,16 @@ final class FunctionDeclarationInstantiationGenerator extends
         mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
     }
 
-    private void BindingInitialisation(FunctionNode node, Variable<Iterator<?>> iterator,
+    private void BindingInitialization(FunctionNode node, Variable<Iterator<?>> iterator,
             ExpressionVisitor mv) {
         // stack: [] -> []
-        new BindingInitialisationGenerator(codegen).generate(node, iterator, mv);
+        new BindingInitializationGenerator(codegen).generate(node, iterator, mv);
     }
 
-    private void BindingInitialisationWithEnv(Variable<? extends EnvironmentRecord> envRec,
+    private void BindingInitializationWithEnv(Variable<? extends EnvironmentRecord> envRec,
             FunctionNode node, Variable<Iterator<?>> iterator, ExpressionVisitor mv) {
         // stack: [] -> []
-        new BindingInitialisationGenerator(codegen).generateWithEnvironment(node, envRec, iterator,
+        new BindingInitializationGenerator(codegen).generateWithEnvironment(node, envRec, iterator,
                 mv);
     }
 

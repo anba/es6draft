@@ -547,7 +547,7 @@ final class CodeGenerator {
     }
 
     void compile(Script node) {
-        // initialisation methods
+        // initialization methods
         new GlobalDeclarationInstantiationGenerator(this).generate(node);
         new EvalDeclarationInstantiationGenerator(this).generate(node);
 
@@ -642,7 +642,7 @@ final class CodeGenerator {
         if (!isCompiled(node)) {
             Future<String> source = getSource(node);
 
-            // initialisation method
+            // initialization method
             new FunctionDeclarationInstantiationGenerator(this).generate(node);
 
             // runtime method

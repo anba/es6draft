@@ -234,7 +234,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
             }
             mv.swap();
 
-            // 12.2.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
+            // 12.2.4.2.2 Runtime Semantics: BindingInitialization :: ForBinding
             if (node.getBinding() instanceof BindingPattern) {
                 mv.lineInfo(node.getBinding());
                 mv.loadExecutionContext();
@@ -242,7 +242,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
             }
 
             // stack: [forEnv, envRec, nextValue] -> [forEnv]
-            BindingInitialisationWithEnvironment(node.getBinding(), mv);
+            BindingInitializationWithEnvironment(node.getBinding(), mv);
         }
         // stack: [forEnv] -> []
         pushLexicalEnvironment(mv);
@@ -326,7 +326,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         }
 
         // stack: [nextValue] -> []
-        BindingInitialisation(node.getBinding(), mv);
+        BindingInitialization(node.getBinding(), mv);
 
         elements.next().accept(this, mv);
 

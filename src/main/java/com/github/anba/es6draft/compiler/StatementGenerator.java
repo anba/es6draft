@@ -330,7 +330,7 @@ final class StatementGenerator extends
         getEnvironmentRecord(mv);
         mv.swap();
         // stack: [envRec, value] -> []
-        BindingInitialisationWithEnvironment(node.getName(), mv);
+        BindingInitializationWithEnvironment(node.getName(), mv);
 
         /* step 10 */
         return Completion.Normal;
@@ -625,11 +625,11 @@ final class StatementGenerator extends
             /* step 3g */
             VariableDeclaration varDecl = ((VariableStatement) lhs).getElements().get(0);
             Binding binding = varDecl.getBinding();
-            // 12.2.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
+            // 12.2.4.2.2 Runtime Semantics: BindingInitialization :: ForBinding
             if (binding instanceof BindingPattern) {
                 ensureObjectOrThrow(lhs, ValType.Any, mv);
             }
-            BindingInitialisation(binding, mv);
+            BindingInitialization(binding, mv);
         } else {
             /* step 3h */
             assert lhs instanceof LexicalDeclaration;
@@ -658,13 +658,13 @@ final class StatementGenerator extends
                 }
                 mv.swap();
 
-                // 12.2.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
+                // 12.2.4.2.2 Runtime Semantics: BindingInitialization :: ForBinding
                 if (lexicalBinding.getBinding() instanceof BindingPattern) {
                     ensureObjectOrThrow(lexicalBinding, ValType.Any, mv);
                 }
 
                 // stack: [iterEnv, envRec, nextValue] -> [iterEnv]
-                BindingInitialisationWithEnvironment(lexicalBinding.getBinding(), mv);
+                BindingInitializationWithEnvironment(lexicalBinding.getBinding(), mv);
             }
             // stack: [iterEnv] -> []
             pushLexicalEnvironment(mv);
@@ -729,8 +729,9 @@ final class StatementGenerator extends
         } else {
             assert head instanceof LexicalDeclaration;
             LexicalDeclaration lexDecl = (LexicalDeclaration) head;
+            List<String> boundNames = BoundNames(lexDecl);
             boolean isConst = IsConstantDeclaration(lexDecl);
-            perIterationsLets = !isConst;
+            perIterationsLets = !isConst && !boundNames.isEmpty();
 
             newDeclarativeEnvironment(mv);
             {
@@ -738,7 +739,7 @@ final class StatementGenerator extends
                 mv.dup();
                 mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
-                for (String dn : BoundNames(lexDecl)) {
+                for (String dn : boundNames) {
                     if (isConst) {
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `loopEnv`)
                         createImmutableBinding(dn, mv);
@@ -984,7 +985,7 @@ final class StatementGenerator extends
                 }
 
                 // stack: [env, envRec, envRec, value] -> [env, envRec]
-                BindingInitialisationWithEnvironment(binding.getBinding(), mv);
+                BindingInitializationWithEnvironment(binding.getBinding(), mv);
             }
             mv.pop();
         }
@@ -1017,7 +1018,7 @@ final class StatementGenerator extends
             getEnvironmentRecord(mv);
             /* step 2 */
             mv.loadUndefined();
-            BindingInitialisationWithEnvironment(binding, mv);
+            BindingInitializationWithEnvironment(binding, mv);
             return Completion.Normal;
         }
         if (binding instanceof BindingIdentifier) {
@@ -1040,7 +1041,7 @@ final class StatementGenerator extends
         getEnvironmentRecord(mv);
         mv.swap();
         /* step 6 */
-        BindingInitialisationWithEnvironment(binding, mv);
+        BindingInitializationWithEnvironment(binding, mv);
         return Completion.Normal;
     }
 
@@ -1433,12 +1434,12 @@ final class StatementGenerator extends
             mv.swap();
 
             /* steps 4-5 */
-            // 13.14.3 Runtime Semantics: BindingInitialisation :: CatchParameter
+            // 13.14.3 Runtime Semantics: BindingInitialization :: CatchParameter
             if (catchParameter instanceof BindingPattern) {
                 ensureObjectOrThrow(catchParameter, ValType.Any, mv);
             }
             // stack: [catchEnv, envRec, ex] -> [catchEnv]
-            BindingInitialisationWithEnvironment(catchParameter, mv);
+            BindingInitializationWithEnvironment(catchParameter, mv);
         }
         /* step 6 */
         // stack: [catchEnv] -> []
@@ -1490,12 +1491,12 @@ final class StatementGenerator extends
             mv.swap();
 
             /* steps 4-5 */
-            // 13.14.3 Runtime Semantics: BindingInitialisation :: CatchParameter
+            // 13.14.3 Runtime Semantics: BindingInitialization :: CatchParameter
             if (catchParameter instanceof BindingPattern) {
                 ensureObjectOrThrow(catchParameter, ValType.Any, mv);
             }
             // stack: [catchEnv, envRec, ex] -> [catchEnv]
-            BindingInitialisationWithEnvironment(catchParameter, mv);
+            BindingInitializationWithEnvironment(catchParameter, mv);
         }
         /* step 6 */
         // stack: [catchEnv] -> []
@@ -1556,7 +1557,7 @@ final class StatementGenerator extends
             ensureObjectOrThrow(binding, type, mv);
         }
         /* step 5 */
-        BindingInitialisation(binding, mv);
+        BindingInitialization(binding, mv);
         return Completion.Normal;
     }
 
