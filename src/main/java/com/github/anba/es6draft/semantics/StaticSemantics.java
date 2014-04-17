@@ -8,6 +8,7 @@ package com.github.anba.es6draft.semantics;
 
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -26,19 +27,33 @@ import com.github.anba.es6draft.runtime.modules.ImportEntry;
  * <ul>
  * <li>BoundNames</li>
  * <li>ConstructorMethod</li>
- * <li>Elision Width</li>
+ * <li>ContainsExpression</li>
+ * <li>DeclaredNames</li>
  * <li>ExpectedArgumentCount</li>
+ * <li>ExportedBindings</li>
+ * <li>ExportEntries</li>
  * <li>HasInitializer</li>
+ * <li>HasName</li>
+ * <li>ImportedBindings</li>
+ * <li>ImportEntries</li>
+ * <li>IsAnonymousFunctionDefinition</li>
  * <li>IsConstantDeclaration</li>
- * <li>IsInvalidAssignmentPattern</li>
+ * <li>IsFunctionDefinition</li>
+ * <li>IsIdentifierRef</li>
+ * <li>IsSimpleParameterList</li>
+ * <li>IsStrict</li>
  * <li>IsValidSimpleAssignmentTarget</li>
  * <li>LexicalDeclarations</li>
  * <li>LexicallyDeclaredNames</li>
- * <li>MethodDefinitions</li>
+ * <li>LexicallyScopedDeclarations</li>
+ * <li>ModuleRequests</li>
  * <li>PropName</li>
- * <li>PropNameList</li>
+ * <li>PrototypeMethodDefinitions</li>
  * <li>SpecialMethod</li>
+ * <li>StaticMethodDefinitions</li>
+ * <li>UnknownExportEntries</li>
  * <li>VarDeclaredNames</li>
+ * <li>VarScopedDeclarations</li>
  * </ul>
  */
 public final class StaticSemantics {
@@ -47,28 +62,46 @@ public final class StaticSemantics {
 
     /**
      * Static Semantics: BoundNames
+     * <ul>
+     * <li>12.1.3 Static Semantics: BoundNames
+     * <li>13.2.3.1 Static Semantics: BoundNames
+     * </ul>
      * 
      * @param node
      *            the binding node
      * @return the bound names
      */
     public static List<String> BoundNames(Binding node) {
+        if (node instanceof BindingIdentifier) {
+            return singletonList(((BindingIdentifier) node).getName());
+        }
+        assert node instanceof BindingPattern;
         return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
     }
 
     /**
      * Static Semantics: BoundNames
+     * <ul>
+     * <li>14.1.3 Static Semantics: BoundNames
+     * <li>14.2.2 Static Semantics: BoundNames
+     * </ul>
      * 
      * @param node
-     *            the formal parameter
+     *            the formal parameters list
      * @return the bound names
      */
-    public static List<String> BoundNames(FormalParameter node) {
+    public static List<String> BoundNames(FormalParameterList node) {
         return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
     }
 
     /**
      * Static Semantics: BoundNames
+     * <ul>
+     * <li>13.2.1.2 Static Semantics: BoundNames
+     * <li>14.1.3 Static Semantics: BoundNames
+     * <li>14.4.2 Static Semantics: BoundNames
+     * <li>14.5.2 Static Semantics: BoundNames
+     * </ul>
      * 
      * @param node
      *            the declaration node
@@ -86,17 +119,6 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<String> BoundNames(VariableStatement node) {
-        return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
-    }
-
-    /**
-     * 14.1.2 Static Semantics: BoundNames
-     * 
-     * @param node
-     *            the formal parameters list
-     * @return the bound names
-     */
-    public static List<String> BoundNames(FormalParameterList node) {
         return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
     }
 
@@ -141,9 +163,9 @@ public final class StaticSemantics {
     /**
      * Static Semantics: ContainsExpression
      * <ul>
+     * <li>13.2.3.2 Static Semantics: ContainsExpression
      * <li>14.1.5 Static Semantics: ContainsExpression
      * <li>14.2.4 Static Semantics: ContainsExpression
-     * <li>13.2.3.2 Static Semantics: ContainsExpression
      * </ul>
      */
     public static boolean ContainsExpression(FormalParameterList formals) {
@@ -156,10 +178,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * Static Semantics: ContainsExpression
-     * <ul>
-     * <li>13.2.3.2 Static Semantics: ContainsExpression
-     * </ul>
+     * 13.2.3.2 Static Semantics: ContainsExpression
      */
     private static boolean ContainsExpression(BindingElement element) {
         if (element.getInitializer() != null) {
@@ -169,10 +188,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * Static Semantics: ContainsExpression
-     * <ul>
-     * <li>13.2.3.2 Static Semantics: ContainsExpression
-     * </ul>
+     * 13.2.3.2 Static Semantics: ContainsExpression
      */
     private static boolean ContainsExpression(Binding binding) {
         if (binding instanceof ArrayBindingPattern) {
@@ -186,10 +202,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * Static Semantics: ContainsExpression
-     * <ul>
-     * <li>13.2.3.2 Static Semantics: ContainsExpression
-     * </ul>
+     * 13.2.3.2 Static Semantics: ContainsExpression
      */
     private static boolean ContainsExpression(ArrayBindingPattern pattern) {
         for (BindingElementItem item : pattern.getElements()) {
@@ -224,9 +237,9 @@ public final class StaticSemantics {
     /**
      * Static Semantics: ExpectedArgumentCount
      * <ul>
-     * <li>14.1.4 Static Semantics: ExpectedArgumentCount
-     * <li>14.2.5 Static Semantics: ExpectedArgumentCount
-     * <li>14.3.2 Static Semantics: ExpectedArgumentCount
+     * <li>14.1.6 Static Semantics: ExpectedArgumentCount
+     * <li>14.2.6 Static Semantics: ExpectedArgumentCount
+     * <li>14.3.3 Static Semantics: ExpectedArgumentCount
      * </ul>
      * 
      * @param formals
@@ -258,59 +271,96 @@ public final class StaticSemantics {
     }
 
     /**
-     * Static Semantics: IsAnonymousFunctionDefinition
-     * <ul>
-     * <li>12.2.0.2 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.2.10.2 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.3.1.2 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.4.2 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.5.2 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.6.1 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.7.1 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.8.1 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.9.1 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.10.1 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.11.1 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.12.1 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.13.1 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.14.2 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>12.15.1 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>14.1.6 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>14.4.5 Static Semantics: IsAnonymousFunctionDefinition
-     * <li>14.5.5 Static Semantics: IsAnonymousFunctionDefinition
-     * </ul>
+     * 14.1.9 Static Semantics: IsAnonymousFunctionDefinition (production) Abstract Operation
      * 
      * @param node
      *            the expression node
      * @return {@code true} if the node is an anonymous function definition
      */
     public static boolean IsAnonymousFunctionDefinition(Expression node) {
-        // TODO: re-define!
+        if (!IsFunctionDefinition(node)) {
+            return false;
+        }
         if (node instanceof ArrowFunction) {
-            return true;
+            return !HasName((ArrowFunction) node);
         }
         if (node instanceof FunctionExpression) {
-            return ((FunctionExpression) node).getIdentifier() == null;
+            return !HasName((FunctionExpression) node);
         }
         if (node instanceof GeneratorExpression) {
-            return ((GeneratorExpression) node).getIdentifier() == null;
+            return !HasName((GeneratorExpression) node);
         }
         if (node instanceof ClassExpression) {
-            return ((ClassExpression) node).getName() == null;
+            return !HasName((ClassExpression) node);
         }
         if (node instanceof AsyncFunctionExpression) {
-            return ((AsyncFunctionExpression) node).getIdentifier() == null;
+            return !HasName((AsyncFunctionExpression) node);
         }
+        throw new AssertionError();
+    }
+
+    /**
+     * 14.1.8 Static Semantics: HasName
+     * 
+     * @param node
+     *            the function node
+     * @return {@code true} if the function has a binding name
+     */
+    public static boolean HasName(FunctionExpression node) {
+        return node.getIdentifier() != null;
+    }
+
+    /**
+     * 14.2.9 Static Semantics: HasName
+     * 
+     * @param node
+     *            the function node
+     * @return {@code true} if the function has a binding name
+     */
+    public static boolean HasName(ArrowFunction node) {
         return false;
+    }
+
+    /**
+     * 14.4.6 Static Semantics: HasName
+     * 
+     * @param node
+     *            the function node
+     * @return {@code true} if the function has a binding name
+     */
+    public static boolean HasName(GeneratorExpression node) {
+        return node.getIdentifier() != null;
+    }
+
+    /**
+     * 14.5.6 Static Semantics: HasName
+     * 
+     * @param node
+     *            the function node
+     * @return {@code true} if the function has a binding name
+     */
+    public static boolean HasName(ClassExpression node) {
+        return node.getName() != null;
+    }
+
+    /**
+     * Static Semantics: HasName
+     * 
+     * @param node
+     *            the function node
+     * @return {@code true} if the function has a binding name
+     */
+    public static boolean HasName(AsyncFunctionExpression node) {
+        return node.getIdentifier() != null;
     }
 
     /**
      * Static Semantics: IsConstantDeclaration
      * <ul>
      * <li>13.2.1.3 Static Semantics: IsConstantDeclaration
-     * <li>14.1.7 Static Semantics: IsConstantDeclaration
-     * <li>14.4.6 Static Semantics: IsConstantDeclaration
-     * <li>14.5.6 Static Semantics: IsConstantDeclaration
+     * <li>14.1.10 Static Semantics: IsConstantDeclaration
+     * <li>14.4.7 Static Semantics: IsConstantDeclaration
+     * <li>14.5.7 Static Semantics: IsConstantDeclaration
      * </ul>
      * 
      * @param node
@@ -383,7 +433,11 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.1.8 Static Semantics: IsSimpleParameterList
+     * Static Semantics: IsSimpleParameterList
+     * <ul>
+     * <li>14.1.12 Static Semantics: IsSimpleParameterList
+     * <li>14.2.10 Static Semantics: IsSimpleParameterList
+     * </ul>
      * 
      * @param formals
      *            the formal parameters list
@@ -425,7 +479,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.1.9 Static Semantics: IsStrict
+     * 14.1.13 Static Semantics: IsStrict
      * 
      * @param node
      *            the function node
@@ -440,7 +494,7 @@ public final class StaticSemantics {
      * <ul>
      * <li>12.2.0.4 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.2.10.3 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.3.1.4 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.3.1.3 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.4.3 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.5.3 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.6.2 Static Semantics: IsValidSimpleAssignmentTarget
@@ -505,53 +559,22 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.1.3 Static Semantics: LexicallyDeclaredNames
-     * 
-     * @param scope
-     *            the block scope
-     * @return the set of lexically declared names
-     */
-    public static Set<String> LexicallyDeclaredNames(BlockScope scope) {
-        return emptyIfNull(scope.lexicallyDeclaredNames());
-    }
-
-    /**
-     * 14.1.15 Static Semantics: LexicallyDeclaredNames
-     * 
-     * @param node
-     *            the script node
-     * @return the set of lexically declared names
-     */
-    public static Set<String> LexicallyDeclaredNames(FunctionNode node) {
-        return emptyIfNull(node.getScope().lexicallyDeclaredNames());
-    }
-
-    /**
-     * 15.2.3 Static Semantics: LexicallyDeclaredNames
-     * 
-     * @param node
-     *            the script node
-     * @return the set of lexically declared names
-     */
-    public static Set<String> LexicallyDeclaredNames(Script node) {
-        return emptyIfNull(node.getScope().lexicallyDeclaredNames());
-    }
-
-    /**
-     * 14.1 Function Definitions
-     * <p>
-     * Static Semantics: LexicallyScopedDeclarations (FIXME: missing in spec!)
+     * Static Semantics: LexicalDeclarations
+     * <ul>
+     * <li>14.1.14 Static Semantics: LexicalDeclarations
+     * <li>14.2.11 Static Semantics: LexicalDeclarations
+     * </ul>
      * 
      * @param node
      *            the function node
      * @return the list of lexically scoped declarations
      */
-    public static List<Declaration> LexicallyScopedDeclarations(FunctionNode node) {
+    public static List<Declaration> LexicalDeclarations(FunctionNode node) {
         return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
     }
 
     /**
-     * 15.2.4 Static Semantics: LexicallyScopedDeclarations
+     * 15.1.4 Static Semantics: LexicallyScopedDeclarations
      * 
      * @param node
      *            the script node
@@ -562,7 +585,70 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.1.11 Static Semantics: VarDeclaredNames
+     * 13.1.3 Static Semantics: LexicallyDeclaredNames
+     * 
+     * @param node
+     *            the block statement node
+     * @return the set of lexically declared names
+     */
+    public static Set<String> LexicallyDeclaredNames(BlockStatement node) {
+        return emptyIfNull(node.getScope().lexicallyDeclaredNames());
+    }
+
+    /**
+     * 13.11.3 Static Semantics: LexicalDeclarations
+     * 
+     * @param node
+     *            the switch statement node
+     * @return the list of lexically scoped declarations
+     */
+    public static Set<String> LexicallyDeclaredNames(SwitchStatement node) {
+        return emptyIfNull(node.getScope().lexicallyDeclaredNames());
+    }
+
+    /**
+     * Static Semantics: LexicallyDeclaredNames
+     * 
+     * @param scope
+     *            the block scope
+     * @return the set of lexically declared names
+     */
+    public static Set<String> LexicallyDeclaredNames(BlockScope scope) {
+        return emptyIfNull(scope.lexicallyDeclaredNames());
+    }
+
+    /**
+     * Static Semantics: LexicallyDeclaredNames
+     * <ul>
+     * <li>14.1.15 Static Semantics: LexicallyDeclaredNames
+     * <li>14.2.12 Static Semantics: LexicallyDeclaredNames
+     * </ul>
+     * 
+     * @param node
+     *            the script node
+     * @return the set of lexically declared names
+     */
+    public static Set<String> LexicallyDeclaredNames(FunctionNode node) {
+        return emptyIfNull(node.getScope().lexicallyDeclaredNames());
+    }
+
+    /**
+     * 15.1.3 Static Semantics: LexicallyDeclaredNames
+     * 
+     * @param node
+     *            the script node
+     * @return the set of lexically declared names
+     */
+    public static Set<String> LexicallyDeclaredNames(Script node) {
+        return emptyIfNull(node.getScope().lexicallyDeclaredNames());
+    }
+
+    /**
+     * Static Semantics: VarDeclaredNames
+     * <ul>
+     * <li>14.1.17 Static Semantics: VarDeclaredNames
+     * <li>14.2.14 Static Semantics: VarDeclaredNames
+     * </ul>
      * 
      * <pre>
      * FunctionStatementList :
@@ -578,7 +664,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.5 Static Semantics: VarDeclaredNames
+     * 15.1.5 Static Semantics: VarDeclaredNames
      * 
      * @param node
      *            the script node
@@ -589,9 +675,11 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.1 Function Definitions
-     * <p>
-     * Static Semantics: VarScopedDeclarations (FIXME: missing in spec!)
+     * Static Semantics: VarScopedDeclarations
+     * <ul>
+     * <li>14.1.18 Static Semantics: VarScopedDeclarations
+     * <li>14.2.15 Static Semantics: VarScopedDeclarations
+     * </ul>
      * 
      * @param node
      *            the function node
@@ -602,7 +690,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.6 Static Semantics: VarScopedDeclarations
+     * 15.1.6 Static Semantics: VarScopedDeclarations
      * 
      * @param node
      *            the script node
@@ -828,7 +916,7 @@ public final class StaticSemantics {
      * @return the list of lexically scoped declarations
      */
     public static List<Declaration> LexicalDeclarations(Module node) {
-        // TODO: does not include ImportDeclaration nodes
+        // FIXME: Does not include ImportDeclaration nodes! May need to change class structure...
         return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
     }
 
@@ -872,7 +960,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.5.9 Static Semantics: PrototypeMethodDefinitions
+     * 14.5.11 Static Semantics: PrototypeMethodDefinitions
      * 
      * @param node
      *            the class definition
@@ -883,7 +971,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.5.13 Static Semantics: StaticMethodDefinitions
+     * 14.5.15 Static Semantics: StaticMethodDefinitions
      * 
      * @param node
      *            the class definition
@@ -894,25 +982,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * Static Semantics: NumberOfParameters (FIXME: not yet defined in spec!)
-     * 
-     * @param formals
-     *            the formal parameters
-     * @return the number of parameters
-     */
-    public static int NumberOfParameters(FormalParameterList formals) {
-        int count = 0;
-        for (FormalParameter formal : formals) {
-            if (formal instanceof BindingRestElement) {
-                break;
-            }
-            count += 1;
-        }
-        return count;
-    }
-
-    /**
-     * 12.2.5.5 Static Semantics: PropName<br>
+     * 12.2.5.6 Static Semantics: PropName<br>
      * 14.3.5 Static Semantics: PropName
      * 
      * @param node
@@ -924,7 +994,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 12.2.5.5 Static Semantics: PropName
+     * 12.2.5.6 Static Semantics: PropName
      * 
      * @param node
      *            the property name node

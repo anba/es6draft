@@ -377,7 +377,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
 
         /* step 26 */
-        List<Declaration> lexDeclarations = LexicallyScopedDeclarations(function);
+        List<Declaration> lexDeclarations = LexicalDeclarations(function);
         /* step 27 */
         for (Declaration d : lexDeclarations) {
             assert !isFunctionDeclaration(d);
@@ -491,21 +491,19 @@ final class FunctionDeclarationInstantiationGenerator extends
     }
 
     private String[] mappedNames(FormalParameterList formals) {
+        assert IsSimpleParameterList(formals);
         List<FormalParameter> list = formals.getFormals();
-        int numberOfParameters = NumberOfParameters(formals);
-        assert numberOfParameters <= list.size();
-
+        int numberOfParameters = list.size();
         Set<String> mappedNames = new HashSet<>();
         String[] names = new String[numberOfParameters];
         for (int index = numberOfParameters - 1; index >= 0; --index) {
             assert list.get(index) instanceof BindingElement;
             BindingElement formal = (BindingElement) list.get(index);
-            if (formal.getBinding() instanceof BindingIdentifier) {
-                String name = ((BindingIdentifier) formal.getBinding()).getName();
-                if (!mappedNames.contains(name)) {
-                    mappedNames.add(name);
-                    names[index] = name;
-                }
+            assert formal.getBinding() instanceof BindingIdentifier;
+            String name = ((BindingIdentifier) formal.getBinding()).getName();
+            if (!mappedNames.contains(name)) {
+                mappedNames.add(name);
+                names[index] = name;
             }
         }
         return names;

@@ -41,7 +41,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
      *            the statement visitor
      */
     void generate(BlockStatement node, StatementVisitor mv) {
-        int declarations = LexicallyDeclaredNames(node.getScope()).size();
+        int declarations = LexicallyDeclaredNames(node).size();
         if (declarations > INLINE_LIMIT) {
             codegen.compile(node, mv, this);
 
@@ -62,7 +62,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
      *            the statement visitor
      */
     void generate(SwitchStatement node, StatementVisitor mv) {
-        int declarations = LexicallyDeclaredNames(node.getScope()).size();
+        int declarations = LexicallyDeclaredNames(node).size();
         if (declarations > INLINE_LIMIT) {
             codegen.compile(node, mv, this);
 
