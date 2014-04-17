@@ -130,6 +130,9 @@ js1_7/extensions/regress-354945-01.js
 js1_7/extensions/regress-354945-02.js
 js1_8/genexps/regress-380237-01.js
 
+# assertDeepEq() considers `{a: 1, b: 2}` and `{b: 2, a: 1}` as different objects...
+ecma_6/Array/fill.js
+
 
 ############################################
 # Implementation specific differences      #
@@ -651,6 +654,9 @@ ecma/Date/15.9.5.10-2.js
 ecma/Date/15.9.5.11-2.js
 ecma/Date/15.9.5.12-2.js
 ecma_3/Array/regress-322135-02.js
+ecma_6/String/normalize-generateddata.js
+ecma_6/String/normalize-generateddata-input.js
+js1_5/extensions/regress-311161.js
 js1_5/GC/regress-203278-2.js
 js1_5/Regress/regress-203278-1.js
 js1_5/Regress/regress-280769-1.js
