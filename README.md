@@ -7,7 +7,7 @@ ECMAScript 6 compiler and runtime written in Java.
 
 ## Implementation Status ##
 
-Full support of [ECMAScript 6 draft rev. 22] [es6drafts].
+Full support of [ECMAScript 6 draft rev. 23] [es6drafts].
 
 [ECMAScript Internationalization API 2.0, draft 2013-02-28] [intldrafts]:
 * Basic support using the [ICU4J] [icu] library

@@ -52,7 +52,7 @@
     <build.timestamp>${maven.build.timestamp}</build.timestamp>
     <currentYear>2014</currentYear>
     <owner>André Bargull</owner>
-    <spec.version>rev22</spec.version>
+    <spec.version>rev23</spec.version>
     <test.user.language>en</test.user.language>
     <test.user.country>US</test.user.country>
     <test.user.timezone>America/Los_Angeles</test.user.timezone>
