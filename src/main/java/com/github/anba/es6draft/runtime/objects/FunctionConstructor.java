@@ -124,19 +124,20 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         }
         OrdinaryFunction fn = (OrdinaryFunction) f;
         /* step 18 */
-        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, function, scope);
+        assert fn.isExtensible(calleeContext);
         /* step 19 */
+        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, function, scope);
+        /* step 20 */
         if (function.hasSuperReference()) {
             MakeMethod(fn, (String) null, null);
         }
-        /* steps 20-21 */
+        /* steps 21-22 */
         MakeConstructor(calleeContext, fn);
-        /* step 22 */
-        // FIXME: if-test missing in spec https://bugs.ecmascript.org/show_bug.cgi?id=2335
+        /* steps 23-25 */
         if (!HasOwnProperty(calleeContext, fn, "name")) {
             SetFunctionName(fn, "anonymous");
         }
-        /* step 23 */
+        /* step 26 */
         return fn;
     }
 
