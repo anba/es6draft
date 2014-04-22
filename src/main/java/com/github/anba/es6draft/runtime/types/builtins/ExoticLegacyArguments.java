@@ -90,8 +90,6 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
      *            the function callee
      * @param args
      *            the function arguments
-     * @param arguments
-     *            the arguments object
      * @return the legacy arguments object
      */
     public static ExoticLegacyArguments CreateLegacyArgumentsObject(ExecutionContext cx,

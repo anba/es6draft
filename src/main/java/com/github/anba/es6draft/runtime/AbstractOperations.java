@@ -2337,7 +2337,6 @@ public final class AbstractOperations {
      *            the execution context
      * @param obj
      *            the script object
-     * @method the iterator method
      * @return the script iterator object
      */
     public static ScriptObject GetIterator(ExecutionContext cx, Object obj) {
@@ -2357,7 +2356,6 @@ public final class AbstractOperations {
      *            the execution context
      * @param obj
      *            the script object
-     * @method the iterator method
      * @return the script iterator object
      */
     public static ScriptObject GetIterator(ExecutionContext cx, ScriptObject obj) {

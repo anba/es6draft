@@ -7,8 +7,7 @@
 package com.github.anba.es6draft.repl.global;
 
 /**
- * Exception class to propagate {@link MozShellGlobalObject#quit()} and
- * {@link MozShellGlobalObject#terminate()}
+ * Exception class to propagate {@link MozShellGlobalObject#quit()}.
  */
 @SuppressWarnings("serial")
 public final class StopExecutionException extends RuntimeException {

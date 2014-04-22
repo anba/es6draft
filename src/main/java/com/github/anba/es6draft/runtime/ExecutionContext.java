@@ -120,7 +120,7 @@ public final class ExecutionContext {
     /**
      * [Called from generated code]
      * 
-     * @param lexEnv
+     * @param env
      *            the new lexical environment
      */
     public void setEnvironment(LexicalEnvironment<?> env) {

@@ -167,6 +167,10 @@ public final class StaticSemantics {
      * <li>14.1.5 Static Semantics: ContainsExpression
      * <li>14.2.4 Static Semantics: ContainsExpression
      * </ul>
+     * 
+     * @param formals
+     *            the formal parameters
+     * @return {@code true} if an expression was found
      */
     public static boolean ContainsExpression(FormalParameterList formals) {
         for (FormalParameter formal : formals) {
@@ -179,6 +183,10 @@ public final class StaticSemantics {
 
     /**
      * 13.2.3.2 Static Semantics: ContainsExpression
+     * 
+     * @param element
+     *            the binding element node
+     * @return {@code true} if an expression was found
      */
     private static boolean ContainsExpression(BindingElement element) {
         if (element.getInitializer() != null) {
@@ -189,6 +197,10 @@ public final class StaticSemantics {
 
     /**
      * 13.2.3.2 Static Semantics: ContainsExpression
+     * 
+     * @param binding
+     *            the binding node
+     * @return {@code true} if an expression was found
      */
     private static boolean ContainsExpression(Binding binding) {
         if (binding instanceof ArrayBindingPattern) {
@@ -203,6 +215,10 @@ public final class StaticSemantics {
 
     /**
      * 13.2.3.2 Static Semantics: ContainsExpression
+     * 
+     * @param pattern
+     *            the array binding pattern node
+     * @return {@code true} if an expression was found
      */
     private static boolean ContainsExpression(ArrayBindingPattern pattern) {
         for (BindingElementItem item : pattern.getElements()) {
@@ -214,10 +230,11 @@ public final class StaticSemantics {
     }
 
     /**
-     * Static Semantics: ContainsExpression
-     * <ul>
-     * <li>13.2.3.2 Static Semantics: ContainsExpression
-     * </ul>
+     * 13.2.3.2 Static Semantics: ContainsExpression
+     * 
+     * @param pattern
+     *            the object binding pattern node
+     * @return {@code true} if an expression was found
      */
     private static boolean ContainsExpression(ObjectBindingPattern pattern) {
         for (BindingProperty property : pattern.getProperties()) {

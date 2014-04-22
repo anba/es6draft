@@ -557,7 +557,7 @@ public final class PromiseAbstractOperations {
         }
 
         @Override
-        public ConstantFunction clone(ExecutionContext cx) {
+        public ConstantFunction<VALUE> clone(ExecutionContext cx) {
             ConstantFunction<VALUE> f = new ConstantFunction<>(getRealm(), constantValue, null);
             f.setPrototype(getPrototype());
             f.addRestrictedFunctionProperties(cx);
