@@ -12,6 +12,9 @@ collator/default-locale.js
 # 'Etc/GMT+0' is a valid timezone identifier
 date-format/timezone.js
 
+# Different collation rules in ICU53.1
+collator/de-sort.js
+
 # disable v8 specific test which only ensures caching for the default locale
 overrides/caching.js
 
