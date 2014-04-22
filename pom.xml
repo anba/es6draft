@@ -67,7 +67,7 @@
     <dependency>
       <groupId>com.ibm.icu</groupId>
       <artifactId>icu4j</artifactId>
-      <version>52.1</version>
+      <version>53.1</version>
     </dependency>
     <dependency>
       <groupId>org.jruby.joni</groupId>

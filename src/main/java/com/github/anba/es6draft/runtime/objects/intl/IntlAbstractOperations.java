@@ -528,27 +528,24 @@ public final class IntlAbstractOperations {
         }
 
         LocaleMatcher matcher = CreateDefaultMatcher();
-        Map<String, Entry<ULocale, ULocale>> map = GetMaximizedLocales(matcher,
-                availableLocales.get());
+        Map<String, LocaleEntry> map = GetMaximizedLocales(matcher, availableLocales.get());
 
-        final String defaultLocale = DefaultLocale(cx.getRealm());
-        // `BEST_FIT_MIN_MATCH - epsilon` to ensure match is at least BEST_FIT_MIN_MATCH to be
-        // considered 'best-fit'
-        final double initialWeight = BEST_FIT_MIN_MATCH - Double.MIN_VALUE;
-
-        // search for best match, start with default locale and initial weight
-        String bestMatchCandidate = defaultLocale;
-        Entry<String, Double> bestMatch = new SimpleEntry<>(defaultLocale, initialWeight);
+        // search for best fit match
+        String bestMatchCandidate = null;
+        Entry<String, Double> bestMatch = null;
         for (String locale : requestedLocales) {
             String[] unicodeExt = UnicodeLocaleExtSequence(locale);
             String noExtensionsLocale = unicodeExt[0];
             Entry<String, Double> match = BestFitAvailableLocale(matcher, map, noExtensionsLocale);
-            if (match.getValue() > bestMatch.getValue()) {
+            if (bestMatch == null || match.getValue() > bestMatch.getValue()) {
                 bestMatch = match;
                 bestMatchCandidate = locale;
             }
         }
-
+        // If no best fit match was found, fall back to lookup matcher algorithm
+        if (bestMatch == null) {
+            return LookupMatcher(cx, availableLocales, requestedLocales);
+        }
         return BestFitMatch(bestMatch.getKey(), bestMatchCandidate);
     }
 
@@ -571,63 +568,42 @@ public final class IntlAbstractOperations {
 
     private static LocaleMatcher CreateDefaultMatcher() {
         LocalePriorityList priorityList = LocalePriorityList.add(ULocale.ROOT).build();
-        @SuppressWarnings("deprecation")
-        LocaleMatcher matcher = new LocaleMatcher(priorityList, languageMatchData);
+        LocaleMatcher matcher = new LocaleMatcher(priorityList);
         return matcher;
     }
 
     /**
-     * language matcher data shipped with current ICU4J is outdated, use data from CLDR 23 instead
-     * 
-     * TODO: remove when ICU4J is updated
-     */
-    @SuppressWarnings("deprecation")
-    private static final LocaleMatcher.LanguageMatcherData languageMatchData = new LocaleMatcher.LanguageMatcherData()
-    /* @formatter:off */
-    .addDistance("no", "nb", 100, false)
-    .addDistance("nn", "nb", 96, false)
-    .addDistance("nn", "no", 96, false)
-    .addDistance("da", "no", 90, false)
-    .addDistance("da", "nb", 90, false)
-    .addDistance("hr", "bs", 96, false)
-    .addDistance("sh", "bs", 96, false)
-    .addDistance("sr", "bs", 96, false)
-    .addDistance("sh", "hr", 96, false)
-    .addDistance("sr", "hr", 96, false)
-    .addDistance("sh", "sr", 96, false)
-    .addDistance("ms", "id", 90, false)
-    .addDistance("ssy", "aa", 96, false)
-    .addDistance("sr-Latn", "sr-Cyrl", 90, false)
-    .addDistance("*-Hans", "*-Hant", 85, true)
-    .addDistance("*-Hant", "*-Hans", 75, true)
-    .addDistance("gsw-*-*", "de-*-CH", 85, true) // changed from "desired=gsw, supported=de-CH"
-    .addDistance("gsw", "de", 80, true)
-    .addDistance("en-*-US", "en-*-CA", 98, false)
-    .addDistance("en-*-US", "en-*-*", 97, false)
-    .addDistance("en-*-CA", "en-*-*", 98, false)
-    .addDistance("en-*-*", "en-*-*", 99, false)
-    .addDistance("es-*-ES", "es-*-ES", 100, false)
-    .addDistance("es-*-ES", "es-*-*", 93, false)
-    .addDistance("*", "*", 1, false)
-    .addDistance("*-*", "*-*", 20, false)
-    .addDistance("*-*-*", "*-*-*", 96, false)
-    .freeze();
-    /* @formatter:on */
-
-    /**
      * Hard cache for this entries to reduce time required to finish intl-tests
      */
-    private static final Map<String, Entry<ULocale, ULocale>> maximizedLocales = new ConcurrentHashMap<>();
+    private static final Map<String, LocaleEntry> maximizedLocales = new ConcurrentHashMap<>();
 
-    private static Map<String, Entry<ULocale, ULocale>> GetMaximizedLocales(LocaleMatcher matcher,
+    private static final class LocaleEntry {
+        private final ULocale canonicalized;
+        private final ULocale maximized;
+
+        public LocaleEntry(ULocale canonicalized, ULocale maximized) {
+            this.canonicalized = canonicalized;
+            this.maximized = maximized;
+        }
+
+        ULocale getCanonicalized() {
+            return canonicalized;
+        }
+
+        ULocale getMaximized() {
+            return maximized;
+        }
+    }
+
+    private static Map<String, LocaleEntry> GetMaximizedLocales(LocaleMatcher matcher,
             Set<String> availableLocales) {
-        Map<String, Entry<ULocale, ULocale>> map = new LinkedHashMap<>();
+        Map<String, LocaleEntry> map = new LinkedHashMap<>();
         for (String available : availableLocales) {
-            Entry<ULocale, ULocale> entry = maximizedLocales.get(available);
+            LocaleEntry entry = maximizedLocales.get(available);
             if (entry == null) {
                 ULocale canonicalized = matcher.canonicalize(ULocale.forLanguageTag(available));
                 ULocale maximized = addLikelySubtagsWithDefaults(canonicalized);
-                entry = new SimpleEntry<>(canonicalized, maximized);
+                entry = new LocaleEntry(canonicalized, maximized);
                 maximizedLocales.put(available, entry);
             }
             map.put(available, entry);
@@ -636,20 +612,20 @@ public final class IntlAbstractOperations {
     }
 
     private static Entry<String, Double> BestFitAvailableLocale(LocaleMatcher matcher,
-            Map<String, Entry<ULocale, ULocale>> availableLocales, String requestedLocale) {
+            Map<String, LocaleEntry> availableLocales, String requestedLocale) {
         ULocale canonicalized = matcher.canonicalize(ULocale.forLanguageTag(requestedLocale));
         ULocale maximized = addLikelySubtagsWithDefaults(canonicalized);
         String bestMatchLocale = null;
-        Entry<ULocale, ULocale> bestMatchEntry = null;
+        LocaleEntry bestMatchEntry = null;
         double bestMatch = Double.NEGATIVE_INFINITY;
-        for (Entry<String, Entry<ULocale, ULocale>> available : availableLocales.entrySet()) {
-            Entry<ULocale, ULocale> entry = available.getValue();
-            double match = matcher
-                    .match(canonicalized, maximized, entry.getKey(), entry.getValue());
-            // if (match > 0.90) {
+        for (Entry<String, LocaleEntry> available : availableLocales.entrySet()) {
+            LocaleEntry entry = available.getValue();
+            double match = matcher.match(canonicalized, maximized, entry.getCanonicalized(),
+                    entry.getMaximized());
+            // if (match > 0.10) {
             // System.out.printf("[%s; %s, %s] -> [%s; %s, %s]  => %f%n", requestedLocale,
-            // canonicalized, maximized, available.getKey(), entry.getKey(), entry.getValue(),
-            // match);
+            // canonicalized, maximized, available.getKey(), entry.getCanonicalized(),
+            // entry.getMaximized(), match);
             // }
             if (match > bestMatch
                     || (match == bestMatch && isBetterMatch(canonicalized, maximized,
@@ -681,10 +657,10 @@ public final class IntlAbstractOperations {
      * @return {@code true} if the new match is better than the previous one
      */
     private static boolean isBetterMatch(ULocale canonicalized, ULocale maximized,
-            Entry<ULocale, ULocale> oldMatch, Entry<ULocale, ULocale> newMatch) {
+            LocaleEntry oldMatch, LocaleEntry newMatch) {
         // prefer more detailled information over less
-        ULocale oldCanonicalized = oldMatch.getKey();
-        ULocale newCanonicalized = newMatch.getKey();
+        ULocale oldCanonicalized = oldMatch.getCanonicalized();
+        ULocale newCanonicalized = newMatch.getCanonicalized();
         String language = canonicalized.getLanguage();
         if (newCanonicalized.getLanguage().equals(language)
                 && !oldCanonicalized.getLanguage().equals(language)) {
@@ -894,14 +870,20 @@ public final class IntlAbstractOperations {
     public static List<String> BestFitSupportedLocales(ExecutionContext cx,
             Set<String> availableLocales, Set<String> requestedLocales) {
         LocaleMatcher matcher = CreateDefaultMatcher();
-        Map<String, Entry<ULocale, ULocale>> map = GetMaximizedLocales(matcher, availableLocales);
+        Map<String, LocaleEntry> map = GetMaximizedLocales(matcher, availableLocales);
         List<String> subset = new ArrayList<>();
         for (String locale : requestedLocales) {
             String noExtensionsLocale = UnicodeLocaleExtSequence(locale)[0];
-            Entry<String, Double> availableLocale = BestFitAvailableLocale(matcher, map,
+            Entry<String, Double> availableLocaleMatch = BestFitAvailableLocale(matcher, map,
                     noExtensionsLocale);
-            if (availableLocale.getValue() >= BEST_FIT_MIN_MATCH) {
+            if (availableLocaleMatch.getValue() >= BEST_FIT_MIN_MATCH) {
                 subset.add(locale);
+            } else {
+                // If no best fit match was found, fall back to lookup matcher algorithm
+                String availableLocale = BestAvailableLocale(availableLocales, noExtensionsLocale);
+                if (availableLocale != null) {
+                    subset.add(locale);
+                }
             }
         }
         return subset;

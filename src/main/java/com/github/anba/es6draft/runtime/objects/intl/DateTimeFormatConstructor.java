@@ -85,7 +85,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             ExtensionKey.nu);
 
     /**
-     * Calendar algorithm keys (BCP 47; CLDR, version 24)
+     * Calendar algorithm keys (BCP 47; CLDR, version 25)
      */
     private enum CalendarAlgorithm {/* @formatter:off */
         buddhist("buddhist"),
@@ -189,7 +189,12 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             String[] values = Calendar.getKeywordValuesForLocale("calendar", locale, false);
             List<String> result = new ArrayList<>(values.length);
             for (int i = 0, len = values.length; i < len; ++i) {
-                CalendarAlgorithm algorithm = CalendarAlgorithm.forName(values[i]);
+                String calendarName = values[i];
+                // Ignore "unknown" calendar entry in result set
+                if ("unknown".equals(calendarName)) {
+                    continue;
+                }
+                CalendarAlgorithm algorithm = CalendarAlgorithm.forName(calendarName);
                 result.add(algorithm.getName());
                 if (algorithm.getAlias() != null) {
                     result.add(algorithm.getAlias());

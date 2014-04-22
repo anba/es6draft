@@ -74,7 +74,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
             ExtensionKey.kn, ExtensionKey.kf);
 
     /**
-     * Collation type keys (BCP 47; CLDR, version 24)
+     * Collation type keys (BCP 47; CLDR, version 25)
      */
     private enum CollationType {/* @formatter:off */
         big5han("big5han"),
