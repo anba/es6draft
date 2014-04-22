@@ -16,6 +16,10 @@ import com.github.anba.es6draft.runtime.Realm;
 public final class NativeConsole implements ReplConsole {
     private final Console console;
 
+    public NativeConsole() {
+        this(System.console());
+    }
+
     public NativeConsole(Console console) {
         this.console = console;
     }
@@ -40,6 +44,7 @@ public final class NativeConsole implements ReplConsole {
     @Override
     public void printf(String format, Object... args) {
         console.printf(format, args);
+        console.flush();
     }
 
     @Override
@@ -50,11 +55,13 @@ public final class NativeConsole implements ReplConsole {
     @Override
     public void putstr(String s) {
         console.writer().print(s);
+        console.flush();
     }
 
     @Override
     public void print(String s) {
         console.writer().println(s);
+        console.flush();
     }
 
     @Override

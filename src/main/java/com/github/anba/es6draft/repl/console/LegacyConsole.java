@@ -28,6 +28,10 @@ public final class LegacyConsole implements ReplConsole {
     private final BufferedReader reader;
     private final Formatter formatter;
 
+    public LegacyConsole() {
+        this(System.out, System.in);
+    }
+
     public LegacyConsole(PrintStream out, InputStream in) {
         this(new PrintWriter(out), new InputStreamReader(in, Charset.defaultCharset()));
     }
@@ -76,11 +80,13 @@ public final class LegacyConsole implements ReplConsole {
     @Override
     public void putstr(String s) {
         out.print(s);
+        out.flush();
     }
 
     @Override
     public void print(String s) {
         out.println(s);
+        out.flush();
     }
 
     @Override
