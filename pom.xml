@@ -362,6 +362,11 @@
           <version>1.2</version>
         </plugin>
         <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <version>1.6</version>
+        </plugin>
+        <plugin>
           <groupId>com.googlecode.maven-download-plugin</groupId>
           <artifactId>maven-download-plugin</artifactId>
           <version>1.1.0</version>
@@ -611,6 +616,27 @@
       </plugin>
 
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>add-third-party</goal>
+              <!-- <goal>download-licenses</goal> -->
+            </goals>
+            <configuration>
+              <thirdPartyFilename>THIRD-PARTY</thirdPartyFilename>
+              <outputDirectory>${project.build.directory}/generated-resources</outputDirectory>
+              <fileTemplate>${project.basedir}/src/etc/third-party.ftl</fileTemplate>
+              <failIfWarning>true</failIfWarning>
+              <excludedScopes>test</excludedScopes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <executions>
@@ -638,6 +664,7 @@
           <useDefaultExcludes>true</useDefaultExcludes>
           <useDefaultMapping>true</useDefaultMapping>
           <excludes>
+            <exclude>src/licenses/**</exclude>
             <exclude>src/main/third_party/**</exclude>
             <exclude>src/main/resources/build-date</exclude>
             <exclude>src/main/resources/version</exclude>
@@ -731,6 +758,19 @@
               <report>dependencies</report>
               <report>plugins</report>
               <report>plugin-management</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>1.6</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>third-party-report</report>
             </reports>
           </reportSet>
         </reportSets>
