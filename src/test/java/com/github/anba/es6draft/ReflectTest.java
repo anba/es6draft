@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.mozilla;
+package com.github.anba.es6draft;
 
 import static com.github.anba.es6draft.repl.global.MozShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
@@ -13,6 +13,7 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -21,12 +22,12 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ErrorCollector;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -42,7 +43,7 @@ import com.github.anba.es6draft.util.TestInfo;
  * Test suite for the Reflect API tests.
  */
 @RunWith(Parallelized.class)
-@TestConfiguration(name = "mozilla.test.reflect", file = "resource:/test-configuration.properties")
+@TestConfiguration(name = "reflect.test", file = "resource:/test-configuration.properties")
 public class ReflectTest {
     private static final Configuration configuration = loadConfiguration(ReflectTest.class);
 
@@ -60,13 +61,15 @@ public class ReflectTest {
             return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
                     scriptCache);
         }
+
+        @Override
+        protected EnumSet<Compiler.Option> getCompilerOptions() {
+            return EnumSet.of(Compiler.Option.VerifyStack);
+        }
     };
 
     @Rule
     public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
-
-    @Rule
-    public ErrorCollector collector = new ErrorCollector();
 
     @Rule
     public StandardErrorHandler errorHandler = new StandardErrorHandler();
@@ -84,7 +87,7 @@ public class ReflectTest {
         // filter disabled tests
         assumeTrue(test.isEnabled());
 
-        global = globals.newGlobal(new MozTestConsole(collector), test);
+        global = globals.newGlobal(new ScriptTestConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
     }
 
