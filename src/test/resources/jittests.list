@@ -9,34 +9,20 @@
 # invalid test, missing TypeError in SpiderMonkey
 tests/proxy/bug897403.js
 
-# ES6-bug: declaration binding
-tests/arguments/defaults-bound-to-function.js
-tests/arguments/defaults-scoping.js
-tests/arguments/defaults-with-rest.js
-tests/arguments/rest-alias-function.js
-
+# https://bugzilla.mozilla.org/show_bug.cgi?id=997973
 # ES6 spec change: TypedArrays must be called with explicit `new`
-tests/auto-regress/bug601070.js
 tests/basic/bug578041.js
-tests/basic/bug618577.js
-tests/basic/bug623859.js
-tests/basic/bug648773.js
-tests/basic/bug652054.js
 tests/basic/bug836601.js
 tests/basic/bug984766.js
+tests/basic/testBug606138.js
+tests/basic/testSlowNativeWithNullThis.js
+tests/basic/testTypedArrayInit.js
+tests/for-of/typedarrays-6.js
+
+# ES6 spec issue? spread on primitive string
 tests/basic/spread-array.js
 tests/basic/spread-call.js
 tests/basic/spread-call-length.js
-tests/basic/testBug606138.js
-tests/basic/testDoubleZeroInSwitch2.js
-tests/basic/testOverRecursed5.js
-tests/basic/testSlowNativeWithNullThis.js
-tests/basic/testTypedArrayInit.js
-tests/basic/typed-array-offsets.js
-tests/for-of/typedarrays-1.js
-tests/for-of/typedarrays-2.js
-tests/for-of/typedarrays-3.js
-tests/for-of/typedarrays-6.js
 
 # ES6 spec incomplete: integer indices beyond 2^53-1
 tests/basic/typed-array-index-out-of-range.js
@@ -44,7 +30,7 @@ tests/basic/typed-array-index-out-of-range.js
 # potential ES6 spec bug? for-of over undefined
 tests/for-of/non-iterable.js
 
-# ES6 spec bug wrt destructuring
+# ES6 spec change: destructuring requires objects, does not work with primitives
 tests/basic/bug719750.js
 
 # ES6 spec incomplete for [[OwnPropertyKeys]] on indexed exotic objects
@@ -316,6 +302,9 @@ tests/for-of/next-arity.js
 # Object.getPrototypeOf() works with primitives
 tests/basic/setPrototypeOf.js
 
+# formal parameter initializers are evaluated in extra scope
+tests/arguments/defaults-scoping.js
+
 
 #######################################
 # ES6 related syntax changes          #
@@ -334,10 +323,13 @@ tests/basic/bug646968-3.js
 tests/auto-regress/bug487570.js
 tests/auto-regress/bug495843.js
 
-# let variable must no be redeclared
+# let variable must not be redeclared
 tests/basic/bug778268.js
 
 # ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
+tests/arguments/defaults-bound-to-function.js
+tests/arguments/defaults-with-rest.js
+tests/arguments/rest-alias-function.js
 tests/auto-regress/bug765055.js
 tests/auto-regress/bug785305.js
 
@@ -468,6 +460,7 @@ tests/basic/shell-principals.js
 # Unsupported 'Testing' functions
 # gcparam
 tests/bug793385.js
+tests/basic/bug623859.js
 tests/basic/bug720675.js
 tests/basic/bug858097.js
 tests/basic/testBug756919.js

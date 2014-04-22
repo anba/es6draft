@@ -12,13 +12,9 @@ ecma_6/Generators/delegating-yield-3.js
 ecma_6/Generators/delegating-yield-5.js
 ecma_6/Generators/delegating-yield-7.js
 
-# ES6 spec bugs
-js1_7/geniter/regress-347593.js
-js1_7/regress/regress-410649.js
-js1_8/regress/regress-469625-03.js
-ecma/ExecutionContexts/10.1.3-2.js
-
-# ES6 spec bug or Spidermonkey derivation?
+# ES6 spec bug? bug 78, bug 152: `var toString; toString` -> own property on global or not?
+ecma_5/extensions/destructuring-__proto__-shorthand-assignment.js
+ecma_5/extensions/destructuring-__proto__-shorthand-assignment-before-var.js
 ecma_5/misc/regress-bug632003.js
 
 # Invalid test: Number.NaN.to{Exponential,Precision}(-3) should _not_ throw a RangeError
@@ -38,15 +34,11 @@ js1_8_5/extensions/dataview.js
 # ArrayBuffer constructor requires `new`
 ecma_6/Proxy/regress-bug950407.js
 
-# lexical declarations must not be duplicated in same scope
+# Various issues:
+# - yield without rhs not supported in SpiderMonkey
+# - `function*g(){ (function yield(){}) }` SyntaxError in SpiderMonkey
+# - need to implement version() function...
 ecma_6/Generators/syntax.js
-
-# Invalid tests: "var __proto__ = {};" in global scope alters [[Prototype]] of global object
-ecma_5/extensions/destructuring-__proto__-shorthand-assignment.js
-ecma_5/extensions/destructuring-__proto__-shorthand-assignment-before-var.js
-
-# Invalid test: destructuring source must be object
-ecma_5/extensions/destructuring-for-inof-__proto__.js
 
 # String.fromCodePoint length changed to 1
 ecma_6/String/fromCodePoint.js
@@ -144,6 +136,7 @@ js1_8_5/extensions/typedarray.js
 
 # SpecialCasings.txt not supported in SpiderMonkey (https://bugzilla.mozilla.org/show_bug.cgi?id=672042)
 ecma/String/15.5.4.12-5.js
+ecma_5/String/string-upper-lower-mapping.js
 
 # different function source representation
 ecma_5/extensions/strict-function-toSource.js
@@ -238,6 +231,7 @@ js1_8/extensions/regress-469625.js
 js1_8/genexps/regress-634472.js
 js1_8/regress/regress-455981-01.js
 js1_8/regress/regress-455981-02.js
+js1_8/regress/regress-469625-03.js
 js1_8_1/regress/regress-420399.js
 js1_8_1/regress/regress-452498-092.js
 js1_8_1/regress/regress-452498-185.js
@@ -330,6 +324,7 @@ ecma_5/strict/15.3.5.1.js
 ecma_5/strict/function-name.js
 
 # No implicit ToObject() in destructuring
+ecma_5/extensions/destructuring-for-inof-__proto__.js
 js1_5/extensions/regress-469625.js
 js1_7/extensions/regress-355410.js
 js1_8_1/extensions/regress-477158.js
@@ -385,6 +380,7 @@ js1_7/block/regress-343765.js
 
 # ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
 js1_7/extensions/regress-591450.js
+js1_7/regress/regress-410649.js
 
 # ES6: duplicate formal-parameter + lexical declaration
 js1_8_1/extensions/regress-353214-02.js
@@ -600,13 +596,13 @@ js1_7/lexical/regress-351515.js
 # any parenthesized expression can degenerate into a generator comprehension
 js1_8_1/regress/regress-452498-099-a.js
 
+# SpiderMonkey `for (destructuring in ...)` extension
+js1_7/geniter/regress-347593.js
+
 
 #######################################
 # Compilation or runtime issues       #
 #######################################
-
-# causes EXCEPTION_ACCESS_VIOLATION...
-ecma_5/String/string-upper-lower-mapping.js
 
 # Method code too large
 # too many arguments
@@ -657,6 +653,7 @@ ecma_3/Array/regress-322135-02.js
 ecma_6/String/normalize-generateddata.js
 ecma_6/String/normalize-generateddata-input.js
 js1_5/extensions/regress-311161.js
+js1_5/extensions/regress-363988.js
 js1_5/GC/regress-203278-2.js
 js1_5/Regress/regress-203278-1.js
 js1_5/Regress/regress-280769-1.js

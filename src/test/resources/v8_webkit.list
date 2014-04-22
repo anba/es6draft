@@ -112,23 +112,23 @@ fast/js/array-functions-non-arrays.js
 
 
 ###############################################################
-# ES6 (rev14) <Object>.prototype no longer instance of <Type> #
+# ES6 <Object>.prototype no longer instance of <Type>         #
 ###############################################################
 
 # (String|Number|Boolean).prototype no longer instanceof (String|Number|Boolean)
 prototypes.js
 fast/js/kde/prototype_length.js
 
-
-#######################################
-# ES6 related runtime changes         #
-#######################################
-
 # Error.prototype no longer instanceof Error
 fast/js/native-error-prototype.js
 
 # RegExp.prototype no longer instanceof RegExp
 fast/js/kde/RegExp.js
+
+
+#######################################
+# ES6 related runtime changes         #
+#######################################
 
 # various new built-in properties
 fast/js/Object-getOwnPropertyNames.js
@@ -158,7 +158,7 @@ for-in-cached.js
 object-literal-direct-put.js
 object-literal-syntax.js
 
-# function declaration are block scoped
+# block-scoped function declaration activated at definition
 fast/js/kde/func-decl.js
 
 # function declaration not in block

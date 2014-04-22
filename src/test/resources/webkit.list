@@ -38,7 +38,7 @@ js/script-tests/typedarray-set-overlapping-elements-of-same-size.js
 # Misc issues     #
 ###################
 
-# RegExp differences Java<->JavaScript (resp. V8)
+# RegExp differences Java<->JavaScript
 js/script-tests/regexp-zero-length-alternatives.js
 
 
@@ -114,19 +114,19 @@ js/script-tests/static-put-in-prototype-chain.js
 
 
 ###############################################################
-# ES6 (rev14) <Object>.prototype no longer instance of <Type> #
+# ES6 <Object>.prototype no longer instance of <Type>         #
 ###############################################################
 
 # (String|Number|Boolean).prototype no longer instanceof (String|Number|Boolean)
 js/kde/script-tests/prototype_length.js
 
+# RegExp.prototype no longer instanceof RegExp
+js/kde/script-tests/RegExp.js
+
 
 #######################################
 # ES6 related runtime changes         #
 #######################################
-
-# RegExp.prototype no longer instanceof RegExp
-js/kde/script-tests/RegExp.js
 
 # various new built-in properties
 js/script-tests/Object-getOwnPropertyNames.js
@@ -156,7 +156,7 @@ js/script-tests/for-in-cached.js
 js/script-tests/object-literal-direct-put.js
 js/script-tests/object-literal-syntax.js
 
-# function declaration are block scoped
+# block-scoped function declaration activated at definition
 js/kde/script-tests/func-decl.js
 
 # function declaration not in block
