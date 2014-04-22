@@ -22,6 +22,11 @@
   <description>ECMAScript 6 compiler and runtime</description>
   <inceptionYear>2012</inceptionYear>
 
+  <organization>
+    <name>André Bargull</name>
+    <url>https://github.com/anba</url>
+  </organization>
+
   <licenses>
     <license>
       <name>The MIT License (MIT)</name>
@@ -33,12 +38,12 @@
   <scm>
     <connection>scm:git:git://github.com/anba/es6draft.git</connection>
     <developerConnection>scm:git:git@github.com:anba/es6draft.git</developerConnection>
-    <url>http://github.com/anba/es6draft</url>
+    <url>https://github.com/anba/es6draft</url>
   </scm>
 
   <issueManagement>
     <system>github</system>
-    <url>http://github.com/anba/es6draft/issues</url>
+    <url>https://github.com/anba/es6draft/issues</url>
   </issueManagement>
 
   <prerequisites>
@@ -51,7 +56,6 @@
     <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss</maven.build.timestamp.format>
     <build.timestamp>${maven.build.timestamp}</build.timestamp>
     <currentYear>2014</currentYear>
-    <owner>André Bargull</owner>
     <spec.version>rev23</spec.version>
     <test.user.language>en</test.user.language>
     <test.user.country>US</test.user.country>
@@ -117,7 +121,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.3.1</version>
+      <version>3.3.2</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -151,7 +155,7 @@
               <minimumTokens>100</minimumTokens>
               <targetJdk>1.7</targetJdk>
               <rulesets>
-                <ruleset>${basedir}/src/etc/pmd-ruleset.xml</ruleset>
+                <ruleset>${project.basedir}/src/etc/pmd-ruleset.xml</ruleset>
               </rulesets>
             </configuration>
           </plugin>
@@ -464,8 +468,8 @@
             </goals>
             <configuration>
               <sources>
-                <source>${basedir}/src/main/third_party/mozilla</source>
-                <source>${basedir}/src/main/third_party/google</source>
+                <source>${project.basedir}/src/main/third_party/mozilla</source>
+                <source>${project.basedir}/src/main/third_party/google</source>
               </sources>
             </configuration>
           </execution>
@@ -598,7 +602,7 @@
             </goals>
             <configuration>
               <url>https://raw.github.com/chaijs/chai/1.6.0/chai.js</url>
-              <outputDirectory>${project.build.outputDirectory}/scripts/</outputDirectory>
+              <outputDirectory>${project.build.testOutputDirectory}/scripts/</outputDirectory>
               <sha1>b6325b2c35dda7f7a793cbba09ef18a9e025a1ca</sha1>
               <md5>ba5d0cf12d9dccb6be4187202e8208a1</md5>
             </configuration>
@@ -627,9 +631,9 @@
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
         <configuration>
-          <header>${basedir}/src/etc/header.txt</header>
+          <header>${project.basedir}/src/etc/header.txt</header>
           <encoding>${project.build.sourceEncoding}</encoding>
-          <basedir>${basedir}</basedir>
+          <basedir>${project.basedir}</basedir>
           <strictCheck>true</strictCheck>
           <useDefaultExcludes>true</useDefaultExcludes>
           <useDefaultMapping>true</useDefaultMapping>
@@ -648,7 +652,7 @@
           </mapping>
           <properties>
             <year>${project.inceptionYear}-${currentYear}</year>
-            <name>${owner}</name>
+            <name>${project.organization.name}</name>
             <url>${project.url}</url>
           </properties>
         </configuration>
