@@ -3,7 +3,7 @@ es6draft
 
 ECMAScript 6 compiler and runtime written in Java.
 
-[![Build Status](https://secure.travis-ci.org/anba/es6draft.png)](http://travis-ci.org/anba/es6draft)
+[![Build Status](https://travis-ci.org/anba/es6draft.png?branch=master)](https://travis-ci.org/anba/es6draft)
 
 ## Implementation Status ##
 
@@ -57,10 +57,10 @@ To start the [Test262] [test262] test runner select the `test262` Maven profile 
 
 ```
 export TEST262_PATH = <test262 main directory>
-mvn -P test262
+mvn test -P test262
 
 or:
-mvn -P test262 -Dtest262.path=<test262 main directory>
+mvn test -P test262 -Dtest262.path=<test262 main directory>
 ```
 
 ### External Tests ###
