@@ -56,6 +56,9 @@
     <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss</maven.build.timestamp.format>
     <build.timestamp>${maven.build.timestamp}</build.timestamp>
     <currentYear>2014</currentYear>
+    <mainClass>${project.groupId}.${project.artifactId}.repl.Repl</mainClass>
+    <distribution.name>${project.artifactId}</distribution.name>
+    <shaded.name>${project.artifactId}</shaded.name>
     <spec.version>rev23</spec.version>
     <test.user.language>en</test.user.language>
     <test.user.country>US</test.user.country>
@@ -575,6 +578,42 @@
             </configuration>
           </execution>
           <execution>
+            <id>antrunt-create-binaries</id>
+            <phase>package</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <copy todir="${project.basedir}/bin">
+                  <fileset dir="${project.basedir}/src/main/bin" />
+                  <regexpmapper from="(es6draft)(.*)" to="\1-dev\2" />
+                  <filterset>
+                    <filter token="exec.mode" value="development" />
+                    <filter token="exec.name" value="${distribution.name}" />
+                    <filter token="mainClass" value="${mainClass}" />
+                  </filterset>
+                </copy>
+                <copy todir="${project.basedir}/bin">
+                  <fileset dir="${project.basedir}/src/main/bin" />
+                  <filterset>
+                    <filter token="exec.mode" value="shaded" />
+                    <filter token="exec.name" value="${shaded.name}" />
+                    <filter token="mainClass" value="${mainClass}" />
+                  </filterset>
+                </copy>
+                <copy todir="${project.build.directory}/generated-resources/bin">
+                  <fileset dir="${project.basedir}/src/main/bin" />
+                  <filterset>
+                    <filter token="exec.mode" value="distribution" />
+                    <filter token="exec.name" value="${distribution.name}" />
+                    <filter token="mainClass" value="${mainClass}" />
+                  </filterset>
+                </copy>
+              </target>
+            </configuration>
+          </execution>
+          <execution>
             <id>antrun-test-prepare</id>
             <phase>test</phase>
             <goals>
@@ -665,6 +704,7 @@
           <useDefaultMapping>true</useDefaultMapping>
           <excludes>
             <exclude>src/licenses/**</exclude>
+            <exclude>src/main/bin/**</exclude>
             <exclude>src/main/third_party/**</exclude>
             <exclude>src/main/resources/build-date</exclude>
             <exclude>src/main/resources/version</exclude>

@@ -16,18 +16,6 @@ case "`uname`" in
   "CYGWIN"*) IS_CYGWIN=true ;;
 esac
 
-# Base directory and class information
-REL_PATH="$( dirname "$0" )"
-BUILD_DIR="${REL_PATH}/../../../target"
-CLASSES="${BUILD_DIR}/classes"
-DEP_DIR="${BUILD_DIR}/dependencies"
-DEPENDENCIES=`ls -1 "${DEP_DIR}" | sed 's,^,'"${DEP_DIR}"'/&,' | sed ':a;{N; s/\n/:/; ta}'`
-CLASSPATH="${CLASSES}:${DEPENDENCIES}"
-if $IS_CYGWIN ; then
-  CLASSPATH=`cygpath -wp "${CLASSPATH}"`
-fi
-MAINCLASS="com.github.anba.es6draft.repl.Repl"
-
 # Determine Java start command
 if [[ -z "$JAVA_HOME" ]] ; then
   JAVA_CMD="java"
@@ -42,10 +30,54 @@ fi
 JAVA_OPTS="${JAVA_OPTS:-""}"
 JAVA_OPTS="${JAVA_OPTS} -ea -server -XX:+TieredCompilation"
 
-# Adjust classpath based on current Java version
+# Invokedynamic implementation is buggy prior to Java 1.7.0_45
+USE_BOOTCP=false
 JAVA_VERSION=`${JAVA_CMD} -version 2>&1 | sed 's/java version "\([0-9._]*\).*"/\1/; 1q'`
 if [[ "$JAVA_VERSION" < "1.7.0_45" ]] ; then
   JAVA_OPTS="${JAVA_OPTS} -esa"
+  USE_BOOTCP=true
+fi
+
+# Fully qualified name to main class
+MAINCLASS="@mainClass@"
+
+# distribution, shaded, development
+EXEC_MODE="@exec.mode@"
+
+# Determine base directory and compute classpath
+REL_PATH="$( dirname "$0" )"
+case "$EXEC_MODE" in
+  distribution)
+    BASE_DIR="${REL_PATH}/.."
+    CLASSPATH="${BASE_DIR}/@exec.name@.jar"
+  ;;
+  shaded)
+    BASE_DIR="${REL_PATH}/../target"
+    CLASSPATH="${BASE_DIR}/@exec.name@.jar"
+  ;;
+  development)
+    BASE_DIR="${REL_PATH}/../target"
+    CLASSES="${BASE_DIR}/classes"
+    if $USE_BOOTCP ; then
+      DEP_DIR="${BASE_DIR}/dependencies"
+      DEPENDENCIES=`ls -1 "${DEP_DIR}" | sed 's,^,'"${DEP_DIR}"'/&,' | sed ':a;{N; s/\n/:/; ta}'`
+    else
+      DEPENDENCIES="${BASE_DIR}/dependencies/*"
+    fi
+    CLASSPATH="${CLASSES}:${DEPENDENCIES}"
+  ;;
+  *)
+    echo "Unsupported execution mode: ${EXEC_MODE}"
+    exit 1
+  ;;
+esac
+
+if $IS_CYGWIN ; then
+  CLASSPATH=`cygpath -wp "${CLASSPATH}"`
+fi
+
+# Adjust classpath based on current Java version
+if $USE_BOOTCP ; then
   JAVA_CLASSPATH="-Xbootclasspath/a:${CLASSPATH}"
 else
   JAVA_CLASSPATH="-cp ${CLASSPATH}"
