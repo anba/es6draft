@@ -5,6 +5,8 @@ ECMAScript 6 compiler and runtime written in Java.
 
 [![Build Status](https://travis-ci.org/anba/es6draft.png?branch=master)](https://travis-ci.org/anba/es6draft)
 
+[![Build Status](https://buildhive.cloudbees.com/job/anba/job/es6draft/badge/icon)](https://buildhive.cloudbees.com/job/anba/job/es6draft/)
+
 ## Implementation Status ##
 
 Full support of [ECMAScript 6 draft rev. 23] [es6drafts].
