@@ -11,8 +11,11 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.GetOwnProperty
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
 import java.io.IOError;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.LinkedHashSet;
@@ -22,6 +25,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jline.TerminalFactory;
+import jline.TerminalSupport;
+import jline.UnsupportedTerminal;
 import jline.console.ConsoleReader;
 import jline.console.completer.Completer;
 
@@ -37,9 +43,73 @@ public final class JLineConsole implements ReplConsole {
     private final ConsoleReader console;
     private final Formatter formatter;
 
+    public JLineConsole(String programName) throws IOException {
+        this(newConsoleReader(programName));
+    }
+
     public JLineConsole(ConsoleReader console) {
         this.console = console;
         this.formatter = new Formatter(console.getOutput());
+    }
+
+    private static ConsoleReader newConsoleReader(String programName) throws IOException {
+        configureTerminalFlavors();
+        ConsoleReader consoleReader = new ConsoleReader(programName, new FileInputStream(
+                FileDescriptor.in), System.out, TerminalFactory.get(), getDefaultEncoding());
+        consoleReader.setExpandEvents(false);
+        return consoleReader;
+    }
+
+    private static void configureTerminalFlavors() {
+        final boolean isWindows = isWindows();
+        final String type = System.getProperty(TerminalFactory.JLINE_TERMINAL);
+        if (isWindows && type == null) {
+            TerminalFactory.registerFlavor(TerminalFactory.Flavor.WINDOWS,
+                    UnsupportedTerminal.class);
+        } else if (isWindows && type.equalsIgnoreCase(TerminalFactory.UNIX)) {
+            TerminalFactory.registerFlavor(TerminalFactory.Flavor.UNIX, CygwinTerminal.class);
+        }
+    }
+
+    private static boolean isWindows() {
+        return System.getProperty("os.name").startsWith("Windows");
+    }
+
+    private static String getDefaultEncoding() {
+        return Charset.defaultCharset().name();
+    }
+
+    public static final class CygwinTerminal extends TerminalSupport {
+        private final int width, height;
+
+        public CygwinTerminal() {
+            super(true);
+            String settings = System.getProperty(TerminalFactory.JLINE_TERMINAL + ".settings", "");
+            width = getProperty(settings, "columns", DEFAULT_WIDTH);
+            height = getProperty(settings, "rows", DEFAULT_HEIGHT);
+        }
+
+        private static int getProperty(String settings, String name, int defaultValue) {
+            Matcher m = Pattern.compile(name + "\\s+(\\d{1,4})").matcher(settings);
+            return m.find() ? Integer.parseInt(m.group(1)) : defaultValue;
+        }
+
+        @Override
+        public void init() throws Exception {
+            super.init();
+            setEchoEnabled(false);
+            setAnsiSupported(true);
+        }
+
+        @Override
+        public int getWidth() {
+            return width;
+        }
+
+        @Override
+        public int getHeight() {
+            return height;
+        }
     }
 
     @Override
