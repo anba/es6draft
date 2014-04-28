@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
-import static com.github.anba.es6draft.runtime.AbstractOperations.GetPrototypeFromConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
@@ -120,21 +117,23 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         OrdinaryFunction fn = (OrdinaryFunction) f;
-        /* step 18 */
-        assert fn.isExtensible(calleeContext);
-        /* step 19 */
+        /* steps 18-20 */
+        if (!IsExtensible(calleeContext, fn)) {
+            throw newTypeError(calleeContext, Messages.Key.NotExtensible);
+        }
+        /* step 21 */
         FunctionInitialize(calleeContext, fn, FunctionKind.Normal, function, scope);
-        /* step 20 */
+        /* step 22 */
         if (function.hasSuperReference()) {
             MakeMethod(fn, (String) null, null);
         }
-        /* steps 21-22 */
+        /* steps 23-24 */
         MakeConstructor(calleeContext, fn);
-        /* steps 23-25 */
+        /* steps 25-27 */
         if (!HasOwnProperty(calleeContext, fn, "name")) {
             SetFunctionName(fn, "anonymous");
         }
-        /* step 26 */
+        /* step 28 */
         return fn;
     }
 
