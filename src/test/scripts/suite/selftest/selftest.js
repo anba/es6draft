@@ -5,34 +5,34 @@
  * <https://github.com/anba/es6draft>
  */
 
-const exports = {
-  AssertionError, fail,
-  assertSame, assertNotSame,
-  assertThrows, assertSyntaxError,
-  assertTrue, assertFalse,
-  assertUndefined, assertNotUndefined,
-  assertNull, assertNotNull,
-  assertInstanceOf,
-  assertCallable, assertNotCallable,
-  assertConstructor, assertNotConstructor,
-  assertDataProperty, assertAccessorProperty,
-  assertBuiltinFunction, assertBuiltinConstructor, assertBuiltinPrototype,
-  assertNativeFunction,
-  assertEquals,
-};
+const exports = [
+  "AssertionError", "fail",
+  "assertSame", "assertNotSame",
+  "assertThrows", "assertSyntaxError",
+  "assertTrue", "assertFalse",
+  "assertUndefined", "assertNotUndefined",
+  "assertNull", "assertNotNull",
+  "assertInstanceOf",
+  "assertCallable", "assertNotCallable",
+  "assertConstructor", "assertNotConstructor",
+  "assertDataProperty", "assertAccessorProperty",
+  "assertBuiltinFunction", "assertBuiltinConstructor", "assertBuiltinPrototype",
+  "assertNativeFunction",
+  "assertEquals",
+];
 
 if (typeof Assert === "undefined") {
   throw "Assert not defined";
 }
 
-for (let name in exports) {
+for (let name of exports) {
   if (!Assert.hasOwnProperty(name)) {
     throw `Assert.${name} not exported`;
   }
 }
 
 for (let name in Assert) {
-  if (!exports.hasOwnProperty(name)) {
+  if (exports.indexOf(name) === -1) {
     throw `Unknown export: Assert.${name}`;
   }
 }

@@ -242,9 +242,6 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         assert b != null : "binding not found: " + name;
         /* step 3 */
         if (b.value == null) {
-            if (!strict) {
-                return UNDEFINED;
-            }
             throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
         }
         /* step 4 */

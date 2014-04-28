@@ -13,7 +13,7 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=2177
 
 let source = new Int8Array(new ArrayBuffer(0));
-let target = new Int8Array(target);
+let target = new Int8Array(source);
 
 assertSame(source.length, target.length);
 assertSame(source.byteLength, target.byteLength);

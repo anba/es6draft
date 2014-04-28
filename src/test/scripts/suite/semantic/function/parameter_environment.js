@@ -54,11 +54,7 @@ const {
   }
   f7();
 
-  function f8(a = b, b = 0) {
-    assertSame(void 0, a);
-    assertSame(0, b);
-  }
-  f8();
+  assertThrows(function f8(a = b, b = 0) { }, ReferenceError);
 
   assertThrows(function f9(a = b, b = 0) { "use strict" }, ReferenceError);
 

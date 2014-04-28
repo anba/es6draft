@@ -35,23 +35,23 @@ assertEquals([1], testCatchWithArrayComprehension());
 
 
 // Lexical environment of ForStatement is created before loop-entry, any reference
-// within destructuring default values returns undefined in non-strict mode
+// within destructuring default values triggers a ReferenceError in non-strict mode
 function testForLoop() {
   let x = 0;
   for (let {x = x} = {};;) return x;
 }
-assertUndefined(testForLoop());
+assertThrows(strictTestForLoop, ReferenceError);
 
 // Test with nested lexical environment introduced by ArrayComprehension
 function testForLoopWithArrayComprehension() {
   let x = [0];
   for (let {x = [for (x of x) x + 1]} = {};;) return x;
 }
-assertThrows(testForLoopWithArrayComprehension, TypeError);
+assertThrows(testForLoopWithArrayComprehension, ReferenceError);
 
 
 // Lexical environment of ForStatement is created before loop-entry, any reference
-// within destructuring default values trigger a ReferenceError in strict mode
+// within destructuring default values triggers a ReferenceError in strict mode
 function strictTestForLoop() {
   "use strict";
   let x = 0;
