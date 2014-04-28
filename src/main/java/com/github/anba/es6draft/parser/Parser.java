@@ -4392,7 +4392,7 @@ public final class Parser {
         }
         consume(Token.LP);
 
-        boolean lexicalBinding = false;
+        boolean lexicalBinding = false, isLetIdentifier = false;
         Node head;
         switch (token()) {
         case VAR:
@@ -4413,7 +4413,8 @@ public final class Parser {
                 head = forDeclaration();
                 break;
             }
-            // 'let' as identifier, e.g. `for (let in "") {}`
+            // 'let' as identifier, e.g. `for (let in "") {}` or `for (let.prop in "") {}`
+            isLetIdentifier = true;
             // fall-through
         default:
             int count = context.countLiterals();
@@ -4426,7 +4427,7 @@ public final class Parser {
         }
 
         Expression expr;
-        if (forEach || token() == Token.IN) {
+        if (forEach || isLetIdentifier || token() == Token.IN) {
             consume(Token.IN);
             expr = expression(true);
         } else {
