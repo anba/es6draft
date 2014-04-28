@@ -476,8 +476,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 16-17 */
         PropertyDescriptor resultDesc = ToPropertyDescriptor(cx, trapResultObj);
         /* step 18 */
-        // TODO: pass 'targetDesc'?
-        CompletePropertyDescriptor(resultDesc, targetDesc);
+        CompletePropertyDescriptor(resultDesc, null);
         /* step 19 */
         boolean valid = IsCompatiblePropertyDescriptor(extensibleTarget, resultDesc, targetDesc);
         /* step 20 */
