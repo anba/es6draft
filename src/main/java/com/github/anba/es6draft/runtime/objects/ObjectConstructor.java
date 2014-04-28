@@ -471,47 +471,54 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
          * @param target
          *            the target object
          * @param source
-         *            the source object
+         *            the source objects
          * @return the target object
          */
         @Function(name = "assign", arity = 2)
         public static Object assign(ExecutionContext cx, Object thisValue, Object target,
-                Object source) {
+                Object... source) {
             /* steps 1-2 */
             ScriptObject to = ToObject(cx, target);
-            /* steps 3-4 */
-            ScriptObject from = ToObject(cx, source);
-            /* steps 5-6 */
-            Iterator<?> keys = FromListIterator(cx, from, from.ownPropertyKeys(cx));
-            /* step 7 (omitted) */
-            /* step 8 */
-            ScriptException pendingException = null;
-            /* step 9 */
-            while (keys.hasNext()) {
-                // FIXME: missing ToPropertyKey() call in specification
-                Object nextKey = ToPropertyKey(cx, keys.next());
-                try {
-                    Property desc;
-                    if (nextKey instanceof String) {
-                        desc = from.getOwnProperty(cx, (String) nextKey);
-                    } else {
-                        desc = from.getOwnProperty(cx, (Symbol) nextKey);
-                    }
-                    if (desc != null && desc.isEnumerable()) {
-                        Object propValue = Get(cx, from, nextKey);
-                        Put(cx, to, nextKey, propValue, true);
-                    }
-                } catch (ScriptException e) {
-                    if (pendingException == null) {
-                        pendingException = e;
+            /* step 3 */
+            if (source.length == 0) {
+                return to;
+            }
+            /* steps 4-5 */
+            for (Object nextSource : source) {
+                /* steps 5.a-5.b */
+                ScriptObject from = ToObject(cx, nextSource);
+                /* steps 5.c-5.h */
+                Iterator<?> keys = FromListIterator(cx, from, from.ownPropertyKeys(cx));
+                /* step 5.i (omitted) */
+                /* step 5.j */
+                ScriptException pendingException = null;
+                /* step 5.k */
+                while (keys.hasNext()) {
+                    // FIXME: missing ToPropertyKey() call in specification
+                    Object nextKey = ToPropertyKey(cx, keys.next());
+                    try {
+                        Property desc;
+                        if (nextKey instanceof String) {
+                            desc = from.getOwnProperty(cx, (String) nextKey);
+                        } else {
+                            desc = from.getOwnProperty(cx, (Symbol) nextKey);
+                        }
+                        if (desc != null && desc.isEnumerable()) {
+                            Object propValue = Get(cx, from, nextKey);
+                            Put(cx, to, nextKey, propValue, true);
+                        }
+                    } catch (ScriptException e) {
+                        if (pendingException == null) {
+                            pendingException = e;
+                        }
                     }
                 }
+                /* step 5.l */
+                if (pendingException != null) {
+                    throw pendingException;
+                }
             }
-            /* step 10 */
-            if (pendingException != null) {
-                throw pendingException;
-            }
-            /* step 11 */
+            /* step 6 */
             return to;
         }
 
