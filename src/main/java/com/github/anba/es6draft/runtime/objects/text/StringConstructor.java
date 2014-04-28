@@ -47,11 +47,8 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
     }
 
     @Override
-    public StringConstructor clone(ExecutionContext cx) {
-        StringConstructor f = new StringConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public StringConstructor clone() {
+        return new StringConstructor(getRealm());
     }
 
     /**

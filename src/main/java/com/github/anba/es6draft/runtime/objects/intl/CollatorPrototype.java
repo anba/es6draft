@@ -144,11 +144,8 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
         }
 
         @Override
-        public CompareFunction clone(ExecutionContext cx) {
-            CompareFunction f = new CompareFunction(getRealm(), null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public CompareFunction clone() {
+            return new CompareFunction(getRealm(), null);
         }
 
         /**

@@ -48,11 +48,8 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
     }
 
     @Override
-    public ProxyConstructorFunction clone(ExecutionContext cx) {
-        ProxyConstructorFunction f = new ProxyConstructorFunction(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public ProxyConstructorFunction clone() {
+        return new ProxyConstructorFunction(getRealm());
     }
 
     /**
@@ -140,12 +137,8 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
         }
 
         @Override
-        public ProxyRevocationFunction clone(ExecutionContext cx) {
-            ProxyRevocationFunction f = new ProxyRevocationFunction(getRealm(), revokableProxy,
-                    null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public ProxyRevocationFunction clone() {
+            return new ProxyRevocationFunction(getRealm(), revokableProxy, null);
         }
 
         @Override

@@ -50,11 +50,8 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
     }
 
     @Override
-    public DateConstructor clone(ExecutionContext cx) {
-        DateConstructor f = new DateConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public DateConstructor clone() {
+        return new DateConstructor(getRealm());
     }
 
     /**

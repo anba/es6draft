@@ -113,11 +113,8 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
     }
 
     @Override
-    public NativeErrorConstructor clone(ExecutionContext cx) {
-        NativeErrorConstructor f = new NativeErrorConstructor(getRealm(), type);
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public NativeErrorConstructor clone() {
+        return new NativeErrorConstructor(getRealm(), type);
     }
 
     /**

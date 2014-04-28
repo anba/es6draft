@@ -48,11 +48,8 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
     }
 
     @Override
-    public MapConstructor clone(ExecutionContext cx) {
-        MapConstructor f = new MapConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public MapConstructor clone() {
+        return new MapConstructor(getRealm());
     }
 
     /**

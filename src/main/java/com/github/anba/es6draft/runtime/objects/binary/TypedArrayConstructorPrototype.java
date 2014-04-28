@@ -53,11 +53,8 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
     }
 
     @Override
-    public TypedArrayConstructorPrototype clone(ExecutionContext cx) {
-        TypedArrayConstructorPrototype f = new TypedArrayConstructorPrototype(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public TypedArrayConstructorPrototype clone() {
+        return new TypedArrayConstructorPrototype(getRealm());
     }
 
     /**

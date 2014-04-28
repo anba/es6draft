@@ -85,11 +85,8 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
     }
 
     @Override
-    public TypedArrayConstructor clone(ExecutionContext cx) {
-        TypedArrayConstructor f = new TypedArrayConstructor(getRealm(), elementType);
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public TypedArrayConstructor clone() {
+        return new TypedArrayConstructor(getRealm(), elementType);
     }
 
     /**

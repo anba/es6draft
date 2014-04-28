@@ -54,11 +54,8 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
     }
 
     @Override
-    public DataViewConstructor clone(ExecutionContext cx) {
-        DataViewConstructor f = new DataViewConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public DataViewConstructor clone() {
+        return new DataViewConstructor(getRealm());
     }
 
     private static final class DataViewObjectAllocator implements ObjectAllocator<DataViewObject> {

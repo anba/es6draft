@@ -59,11 +59,8 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
     }
 
     @Override
-    public FunctionPrototype clone(ExecutionContext cx) {
-        FunctionPrototype f = new FunctionPrototype(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public FunctionPrototype clone() {
+        return new FunctionPrototype(getRealm());
     }
 
     /**

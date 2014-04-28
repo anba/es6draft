@@ -164,11 +164,8 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
         }
 
         @Override
-        public FormatFunction clone(ExecutionContext cx) {
-            FormatFunction f = new FormatFunction(getRealm(), null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public FormatFunction clone() {
+            return new FormatFunction(getRealm(), null);
         }
 
         /**

@@ -56,11 +56,8 @@ public final class ModuleEvaluation {
         }
 
         @Override
-        public EvaluateLoadedModule clone(ExecutionContext cx) {
-            EvaluateLoadedModule f = new EvaluateLoadedModule(getRealm(), loader, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public EvaluateLoadedModule clone() {
+            return new EvaluateLoadedModule(getRealm(), loader, null);
         }
 
         @Override

@@ -169,11 +169,8 @@ public final class PromisePrototype extends OrdinaryObject implements Initializa
         }
 
         @Override
-        public IdentityFunction clone(ExecutionContext cx) {
-            IdentityFunction f = new IdentityFunction(getRealm(), null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public IdentityFunction clone() {
+            return new IdentityFunction(getRealm(), null);
         }
 
         @Override
@@ -198,11 +195,8 @@ public final class PromisePrototype extends OrdinaryObject implements Initializa
         }
 
         @Override
-        public ThrowerFunction clone(ExecutionContext cx) {
-            ThrowerFunction f = new ThrowerFunction(getRealm(), null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public ThrowerFunction clone() {
+            return new ThrowerFunction(getRealm(), null);
         }
 
         @Override

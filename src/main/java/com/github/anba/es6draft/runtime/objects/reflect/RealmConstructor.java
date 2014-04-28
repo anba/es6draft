@@ -60,11 +60,8 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
     }
 
     @Override
-    public RealmConstructor clone(ExecutionContext cx) {
-        RealmConstructor f = new RealmConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public RealmConstructor clone() {
+        return new RealmConstructor(getRealm());
     }
 
     /**

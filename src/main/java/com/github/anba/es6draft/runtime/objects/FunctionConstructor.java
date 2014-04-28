@@ -58,11 +58,8 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
     }
 
     @Override
-    public FunctionConstructor clone(ExecutionContext cx) {
-        FunctionConstructor f = new FunctionConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public FunctionConstructor clone() {
+        return new FunctionConstructor(getRealm());
     }
 
     /**

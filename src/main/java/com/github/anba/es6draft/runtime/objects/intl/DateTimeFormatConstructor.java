@@ -224,11 +224,8 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     @Override
-    public DateTimeFormatConstructor clone(ExecutionContext cx) {
-        DateTimeFormatConstructor f = new DateTimeFormatConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public DateTimeFormatConstructor clone() {
+        return new DateTimeFormatConstructor(getRealm());
     }
 
     @SafeVarargs

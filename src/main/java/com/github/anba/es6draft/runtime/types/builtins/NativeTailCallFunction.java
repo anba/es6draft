@@ -79,10 +79,7 @@ public final class NativeTailCallFunction extends BuiltinFunction {
     }
 
     @Override
-    public NativeTailCallFunction clone(ExecutionContext cx) {
-        NativeTailCallFunction f = new NativeTailCallFunction(getRealm(), getName(), mh, tmh);
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public NativeTailCallFunction clone() {
+        return new NativeTailCallFunction(getRealm(), getName(), mh, tmh);
     }
 }

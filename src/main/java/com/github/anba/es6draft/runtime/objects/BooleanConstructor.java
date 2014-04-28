@@ -44,11 +44,8 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
     }
 
     @Override
-    public BooleanConstructor clone(ExecutionContext cx) {
-        BooleanConstructor f = new BooleanConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public BooleanConstructor clone() {
+        return new BooleanConstructor(getRealm());
     }
 
     /**

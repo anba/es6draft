@@ -119,6 +119,17 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     @Override
+    protected abstract BuiltinFunction clone();
+
+    @Override
+    public final BuiltinFunction clone(ExecutionContext cx) {
+        BuiltinFunction f = clone();
+        f.setPrototype(getPrototype());
+        f.addRestrictedFunctionProperties(cx);
+        return f;
+    }
+
+    @Override
     public final String toSource() {
         return String.format("function %s() { /* native code */ }", name);
     }

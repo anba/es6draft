@@ -46,11 +46,8 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
     }
 
     @Override
-    public ErrorConstructor clone(ExecutionContext cx) {
-        ErrorConstructor f = new ErrorConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public ErrorConstructor clone() {
+        return new ErrorConstructor(getRealm());
     }
 
     /**

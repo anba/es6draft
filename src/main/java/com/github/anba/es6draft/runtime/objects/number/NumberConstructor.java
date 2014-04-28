@@ -47,11 +47,8 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
     }
 
     @Override
-    public NumberConstructor clone(ExecutionContext cx) {
-        NumberConstructor f = new NumberConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public NumberConstructor clone() {
+        return new NumberConstructor(getRealm());
     }
 
     /**

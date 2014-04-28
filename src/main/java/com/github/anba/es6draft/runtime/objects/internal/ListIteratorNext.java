@@ -37,11 +37,8 @@ public final class ListIteratorNext extends BuiltinFunction {
     }
 
     @Override
-    public ListIteratorNext clone(ExecutionContext cx) {
-        ListIteratorNext f = new ListIteratorNext(getRealm(), null);
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public ListIteratorNext clone() {
+        return new ListIteratorNext(getRealm(), null);
     }
 
     @Override

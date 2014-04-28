@@ -625,11 +625,8 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         @Override
-        public ReturnUndefined clone(ExecutionContext cx) {
-            ReturnUndefined f = new ReturnUndefined(getRealm(), null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public ReturnUndefined clone() {
+            return new ReturnUndefined(getRealm(), null);
         }
 
         @Override
@@ -656,12 +653,8 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         @Override
-        public ConstantFunction<VALUE> clone(ExecutionContext cx) {
-            ConstantFunction<VALUE> f = new ConstantFunction<>(getRealm(), getName(),
-                    constantValue, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public ConstantFunction<VALUE> clone() {
+            return new ConstantFunction<>(getRealm(), getName(), constantValue, null);
         }
 
         @Override

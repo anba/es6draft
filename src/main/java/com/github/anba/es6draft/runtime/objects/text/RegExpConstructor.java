@@ -57,11 +57,8 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
     }
 
     @Override
-    public RegExpConstructor clone(ExecutionContext cx) {
-        RegExpConstructor f = new RegExpConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public RegExpConstructor clone() {
+        return new RegExpConstructor(getRealm());
     }
 
     /**

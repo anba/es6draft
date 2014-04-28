@@ -48,11 +48,8 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
     }
 
     @Override
-    public WeakMapConstructor clone(ExecutionContext cx) {
-        WeakMapConstructor f = new WeakMapConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public WeakMapConstructor clone() {
+        return new WeakMapConstructor(getRealm());
     }
 
     /**

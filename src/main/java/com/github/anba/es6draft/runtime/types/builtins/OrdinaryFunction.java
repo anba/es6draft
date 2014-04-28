@@ -241,11 +241,8 @@ public class OrdinaryFunction extends FunctionObject {
         }
 
         @Override
-        public Callable clone(ExecutionContext cx) {
-            TypeErrorThrower f = new TypeErrorThrower(getRealm());
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public TypeErrorThrower clone() {
+            return new TypeErrorThrower(getRealm());
         }
     }
 

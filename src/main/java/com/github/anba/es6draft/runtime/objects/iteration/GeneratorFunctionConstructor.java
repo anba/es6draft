@@ -59,11 +59,8 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
     }
 
     @Override
-    public GeneratorFunctionConstructor clone(ExecutionContext cx) {
-        GeneratorFunctionConstructor f = new GeneratorFunctionConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public GeneratorFunctionConstructor clone() {
+        return new GeneratorFunctionConstructor(getRealm());
     }
 
     /**

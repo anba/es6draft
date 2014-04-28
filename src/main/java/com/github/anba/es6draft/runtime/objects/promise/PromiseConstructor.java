@@ -60,11 +60,8 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
     }
 
     @Override
-    public PromiseConstructor clone(ExecutionContext cx) {
-        PromiseConstructor f = new PromiseConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public PromiseConstructor clone() {
+        return new PromiseConstructor(getRealm());
     }
 
     /**
@@ -434,12 +431,9 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         }
 
         @Override
-        public PromiseAllResolveElementFunction clone(ExecutionContext cx) {
-            PromiseAllResolveElementFunction f = new PromiseAllResolveElementFunction(getRealm(),
-                    index, values, capabilities, remainingElements, alreadyCalled, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public PromiseAllResolveElementFunction clone() {
+            return new PromiseAllResolveElementFunction(getRealm(), index, values, capabilities,
+                    remainingElements, alreadyCalled, null);
         }
 
         @Override

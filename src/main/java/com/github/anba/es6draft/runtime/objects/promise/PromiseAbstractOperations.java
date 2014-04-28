@@ -118,12 +118,8 @@ public final class PromiseAbstractOperations {
         }
 
         @Override
-        public PromiseRejectFunction clone(ExecutionContext cx) {
-            PromiseRejectFunction f = new PromiseRejectFunction(getRealm(), promise,
-                    alreadyResolved, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public PromiseRejectFunction clone() {
+            return new PromiseRejectFunction(getRealm(), promise, alreadyResolved, null);
         }
 
         @Override
@@ -166,12 +162,8 @@ public final class PromiseAbstractOperations {
         }
 
         @Override
-        public PromiseResolveFunction clone(ExecutionContext cx) {
-            PromiseResolveFunction f = new PromiseResolveFunction(getRealm(), promise,
-                    alreadyResolved, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public PromiseResolveFunction clone() {
+            return new PromiseResolveFunction(getRealm(), promise, alreadyResolved, null);
         }
 
         @Override
@@ -328,11 +320,8 @@ public final class PromiseAbstractOperations {
         }
 
         @Override
-        public GetCapabilitiesExecutor clone(ExecutionContext cx) {
-            GetCapabilitiesExecutor f = new GetCapabilitiesExecutor(getRealm(), null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public GetCapabilitiesExecutor clone() {
+            return new GetCapabilitiesExecutor(getRealm(), null);
         }
 
         @Override
@@ -557,11 +546,8 @@ public final class PromiseAbstractOperations {
         }
 
         @Override
-        public ConstantFunction<VALUE> clone(ExecutionContext cx) {
-            ConstantFunction<VALUE> f = new ConstantFunction<>(getRealm(), constantValue, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public ConstantFunction<VALUE> clone() {
+            return new ConstantFunction<>(getRealm(), constantValue, null);
         }
 
         @Override

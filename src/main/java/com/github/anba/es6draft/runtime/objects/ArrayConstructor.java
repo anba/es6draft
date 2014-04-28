@@ -50,11 +50,8 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
     }
 
     @Override
-    public ArrayConstructor clone(ExecutionContext cx) {
-        ArrayConstructor f = new ArrayConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public ArrayConstructor clone() {
+        return new ArrayConstructor(getRealm());
     }
 
     /**

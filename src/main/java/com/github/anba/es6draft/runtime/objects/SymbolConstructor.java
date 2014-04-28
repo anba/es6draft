@@ -48,11 +48,8 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
     }
 
     @Override
-    public SymbolConstructor clone(ExecutionContext cx) {
-        SymbolConstructor f = new SymbolConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public SymbolConstructor clone() {
+        return new SymbolConstructor(getRealm());
     }
 
     /**

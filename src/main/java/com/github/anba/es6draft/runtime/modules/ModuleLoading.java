@@ -142,12 +142,8 @@ public final class ModuleLoading {
         }
 
         @Override
-        public CallNormalize clone(ExecutionContext cx) {
-            CallNormalize f = new CallNormalize(getRealm(), loader, request, refererName,
-                    refererAddress, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public CallNormalize clone() {
+            return new CallNormalize(getRealm(), loader, request, refererName, refererAddress, null);
         }
 
         @Override
@@ -199,11 +195,8 @@ public final class ModuleLoading {
         }
 
         @Override
-        public GetOrCreateLoad clone(ExecutionContext cx) {
-            GetOrCreateLoad f = new GetOrCreateLoad(getRealm(), loader, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public GetOrCreateLoad clone() {
+            return new GetOrCreateLoad(getRealm(), loader, null);
         }
 
         @Override
@@ -284,11 +277,8 @@ public final class ModuleLoading {
         }
 
         @Override
-        public CallLocate clone(ExecutionContext cx) {
-            CallLocate f = new CallLocate(getRealm(), loader, load, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public CallLocate clone() {
+            return new CallLocate(getRealm(), loader, load, null);
         }
 
         @Override
@@ -359,11 +349,8 @@ public final class ModuleLoading {
         }
 
         @Override
-        public CallFetch clone(ExecutionContext cx) {
-            CallFetch f = new CallFetch(getRealm(), loader, load, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public CallFetch clone() {
+            return new CallFetch(getRealm(), loader, load, null);
         }
 
         @Override
@@ -451,11 +438,8 @@ public final class ModuleLoading {
         }
 
         @Override
-        public CallTranslate clone(ExecutionContext cx) {
-            CallTranslate f = new CallTranslate(getRealm(), loader, load, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public CallTranslate clone() {
+            return new CallTranslate(getRealm(), loader, load, null);
         }
 
         @Override
@@ -508,11 +492,8 @@ public final class ModuleLoading {
         }
 
         @Override
-        public CallInstantiate clone(ExecutionContext cx) {
-            CallInstantiate f = new CallInstantiate(getRealm(), loader, load, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public CallInstantiate clone() {
+            return new CallInstantiate(getRealm(), loader, load, null);
         }
 
         @Override
@@ -568,11 +549,8 @@ public final class ModuleLoading {
         }
 
         @Override
-        public InstantiateSucceeded clone(ExecutionContext cx) {
-            InstantiateSucceeded f = new InstantiateSucceeded(getRealm(), loader, load, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public InstantiateSucceeded clone() {
+            return new InstantiateSucceeded(getRealm(), loader, load, null);
         }
 
         @Override
@@ -642,11 +620,8 @@ public final class ModuleLoading {
         }
 
         @Override
-        public LoadFailed clone(ExecutionContext cx) {
-            LoadFailed f = new LoadFailed(getRealm(), load, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public LoadFailed clone() {
+            return new LoadFailed(getRealm(), load, null);
         }
 
         @Override
@@ -729,11 +704,8 @@ public final class ModuleLoading {
         }
 
         @Override
-        public AddDependencyLoad clone(ExecutionContext cx) {
-            AddDependencyLoad f = new AddDependencyLoad(getRealm(), parentLoad, request, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public AddDependencyLoad clone() {
+            return new AddDependencyLoad(getRealm(), parentLoad, request, null);
         }
 
         @Override
@@ -783,11 +755,8 @@ public final class ModuleLoading {
         }
 
         @Override
-        public LoadSucceeded clone(ExecutionContext cx) {
-            LoadSucceeded f = new LoadSucceeded(getRealm(), load, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public LoadSucceeded clone() {
+            return new LoadSucceeded(getRealm(), load, null);
         }
 
         @Override
@@ -875,12 +844,9 @@ public final class ModuleLoading {
         }
 
         @Override
-        public AsyncStartLoadPartwayThrough clone(ExecutionContext cx) {
-            AsyncStartLoadPartwayThrough f = new AsyncStartLoadPartwayThrough(getRealm(), step,
-                    loader, moduleName, moduleMetadata, moduleSource, moduleAddress, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public AsyncStartLoadPartwayThrough clone() {
+            return new AsyncStartLoadPartwayThrough(getRealm(), step, loader, moduleName,
+                    moduleMetadata, moduleSource, moduleAddress, null);
         }
 
         @Override

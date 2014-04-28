@@ -48,11 +48,8 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
     }
 
     @Override
-    public SetConstructor clone(ExecutionContext cx) {
-        SetConstructor f = new SetConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public SetConstructor clone() {
+        return new SetConstructor(getRealm());
     }
 
     /**

@@ -59,11 +59,8 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     @Override
-    public ArrayBufferConstructor clone(ExecutionContext cx) {
-        ArrayBufferConstructor f = new ArrayBufferConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public ArrayBufferConstructor clone() {
+        return new ArrayBufferConstructor(getRealm());
     }
 
     private static final class ArrayBufferObjectAllocator implements

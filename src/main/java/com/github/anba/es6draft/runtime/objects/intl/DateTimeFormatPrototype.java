@@ -170,11 +170,8 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
         }
 
         @Override
-        public FormatFunction clone(ExecutionContext cx) {
-            FormatFunction f = new FormatFunction(getRealm(), null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public FormatFunction clone() {
+            return new FormatFunction(getRealm(), null);
         }
 
         /**

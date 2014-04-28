@@ -238,7 +238,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     @Override
-    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+    protected final boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         boolean has = super.hasOwnProperty(cx, propertyKey);
         if (has) {
             return true;
@@ -250,7 +250,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     @Override
-    protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
+    protected final List<Object> enumerateOwnKeys(ExecutionContext cx) {
         List<Object> ownKeys = super.enumerateOwnKeys(cx);
         if (isLegacy()) {
             if (!super.hasOwnProperty(cx, "caller")) {
@@ -267,7 +267,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * 9.2.2 [[GetOwnProperty]] (P)
      */
     @Override
-    public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
+    public final Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         Property desc = super.getOwnProperty(cx, propertyKey);
         if (desc != null) {
             return desc;
@@ -285,7 +285,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     @Override
-    public FunctionObject clone(ExecutionContext cx) {
+    public final FunctionObject clone(ExecutionContext cx) {
         /* steps 1-3 (not applicable) */
         /* steps 4-6 */
         FunctionObject clone = allocateNew();

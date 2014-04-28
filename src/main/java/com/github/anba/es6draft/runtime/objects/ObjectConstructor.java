@@ -59,11 +59,8 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     }
 
     @Override
-    public ObjectConstructor clone(ExecutionContext cx) {
-        ObjectConstructor f = new ObjectConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public ObjectConstructor clone() {
+        return new ObjectConstructor(getRealm());
     }
 
     /**

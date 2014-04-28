@@ -131,11 +131,8 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
     }
 
     @Override
-    public NumberFormatConstructor clone(ExecutionContext cx) {
-        NumberFormatConstructor f = new NumberFormatConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public NumberFormatConstructor clone() {
+        return new NumberFormatConstructor(getRealm());
     }
 
     @SafeVarargs

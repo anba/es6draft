@@ -76,11 +76,8 @@ public final class AsyncAbstractOperations {
         }
 
         @Override
-        public SpawnExecutor clone(ExecutionContext cx) {
-            SpawnExecutor f = new SpawnExecutor(getRealm(), generator, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public SpawnExecutor clone() {
+            return new SpawnExecutor(getRealm(), generator, null);
         }
 
         @Override
@@ -188,11 +185,8 @@ public final class AsyncAbstractOperations {
         }
 
         @Override
-        public CallStep clone(ExecutionContext cx) {
-            CallStep f = new CallStep(getRealm(), asyncState, action, null);
-            f.setPrototype(getPrototype());
-            f.addRestrictedFunctionProperties(cx);
-            return f;
+        public CallStep clone() {
+            return new CallStep(getRealm(), asyncState, action, null);
         }
 
         @Override

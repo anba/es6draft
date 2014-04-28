@@ -53,11 +53,8 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
     }
 
     @Override
-    public LoaderConstructor clone(ExecutionContext cx) {
-        LoaderConstructor f = new LoaderConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public LoaderConstructor clone() {
+        return new LoaderConstructor(getRealm());
     }
 
     /**

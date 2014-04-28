@@ -221,11 +221,8 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
     }
 
     @Override
-    public CollatorConstructor clone(ExecutionContext cx) {
-        CollatorConstructor f = new CollatorConstructor(getRealm());
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public CollatorConstructor clone() {
+        return new CollatorConstructor(getRealm());
     }
 
     @SafeVarargs

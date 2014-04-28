@@ -76,10 +76,7 @@ public final class NativeFunction extends BuiltinFunction {
     }
 
     @Override
-    public NativeFunction clone(ExecutionContext cx) {
-        NativeFunction f = new NativeFunction(getRealm(), getName(), id, mh);
-        f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
-        return f;
+    public NativeFunction clone() {
+        return new NativeFunction(getRealm(), getName(), id, mh);
     }
 }
