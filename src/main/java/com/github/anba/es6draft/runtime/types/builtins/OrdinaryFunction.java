@@ -476,48 +476,35 @@ public class OrdinaryFunction extends FunctionObject {
      *            the new method name
      * @return the cloned function object
      */
-    public static FunctionObject CloneMethod(ExecutionContext cx, FunctionObject function,
-            ScriptObject newHome, String newName) {
-        /* steps 1-7, 9 */
-        FunctionObject clone = function.clone(cx);
-        /* step 8 */
-        if (function.isNeedsSuper()) {
-            if (newName != null) {
-                clone.toMethod(newName, newHome);
-            } else {
-                clone.toMethod(function.getMethodName(), newHome);
+    public static Callable CloneMethod(ExecutionContext cx, Callable function,
+            ScriptObject newHome, Object newName) {
+        /* step 1 */
+        assert function instanceof FunctionObject || function instanceof BuiltinFunction;
+        /* step 2 (not applicable) */
+        /* step 3 */
+        assert newName instanceof String || newName instanceof Symbol;
+        /* steps 4-10 */
+        if (function instanceof FunctionObject) {
+            FunctionObject fn = (FunctionObject) function;
+            /* steps 4-7, 9 */
+            FunctionObject clone = fn.clone(cx);
+            /* step 8 */
+            if (fn.isNeedsSuper()) {
+                if (newName != null) {
+                    clone.toMethod(newName, newHome);
+                } else {
+                    clone.toMethod(fn.getMethodName(), newHome);
+                }
             }
+            /* step 10 */
+            return clone;
+        } else {
+            BuiltinFunction fn = (BuiltinFunction) function;
+            /* steps 4-7, 9 */
+            BuiltinFunction clone = fn.clone(cx);
+            /* step 8 (not applicable) */
+            /* step 10 */
+            return clone;
         }
-        /* step 10 */
-        return clone;
-    }
-
-    /**
-     * 9.2.13 CloneMethod(function, newHome, newName) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param function
-     *            the function object
-     * @param newHome
-     *            the new home object
-     * @param newName
-     *            the new method name
-     * @return the cloned function object
-     */
-    public static FunctionObject CloneMethod(ExecutionContext cx, FunctionObject function,
-            ScriptObject newHome, Symbol newName) {
-        /* steps 1-7, 9 */
-        FunctionObject clone = function.clone(cx);
-        /* step 8 */
-        if (function.isNeedsSuper()) {
-            if (newName != null) {
-                clone.toMethod(newName, newHome);
-            } else {
-                clone.toMethod(function.getMethodName(), newHome);
-            }
-        }
-        /* step 10 */
-        return clone;
     }
 }

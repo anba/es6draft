@@ -29,8 +29,6 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
@@ -235,33 +233,25 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
         @Function(name = "toMethod", arity = 1)
         public static Object toMethod(ExecutionContext cx, Object thisValue, Object newHome,
                 Object methodName) {
-            if (thisValue instanceof FunctionObject) {
-                /* step 1 */
-                FunctionObject function = (FunctionObject) thisValue;
-                /* step 1.a (not applicable) */
-                /* step 1.b */
+            if (thisValue instanceof FunctionObject || thisValue instanceof BuiltinFunction) {
+                /* step 1.a */
                 if (!Type.isObject(newHome)) {
                     throw newTypeError(cx, Messages.Key.NotObjectType);
                 }
-                ScriptObject newHomeObject = Type.objectValue(newHome);
-                /* step 1.c */
+                /* step 1.b */
                 Object newName;
                 if (!Type.isUndefined(methodName)) {
                     newName = ToPropertyKey(cx, methodName);
                 } else {
                     newName = null;
                 }
-                /* step 1.d */
-                if (newName instanceof String) {
-                    return CloneMethod(cx, function, newHomeObject, (String) newName);
-                } else {
-                    return CloneMethod(cx, function, newHomeObject, (Symbol) newName);
-                }
+                /* step 1.c */
+                return CloneMethod(cx, (Callable) thisValue, Type.objectValue(newHome), newName);
             } else if (thisValue instanceof Callable) {
-                /* steps 2-4 */
+                /* steps 2-3 */
                 return ((Callable) thisValue).clone(cx);
             }
-            /* step 5 */
+            /* step 4 */
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
