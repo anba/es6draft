@@ -21,11 +21,13 @@ const unicode60Supported = (() => {
 
 function test(start, end) {
   if (!unicode60Supported) return;
-  let source = "";
-  for (let cp = start; cp <= end; ++cp) {
-    source += `obj.${String.fromCodePoint(cp)};\n`;
+  for (let cp = start; cp <= end;) {
+    let source = "";
+    for (let i = 0; cp <= end && i < 1000; ++cp, ++i) {
+      source += `obj.A${String.fromCodePoint(cp)};\n`;
+    }
+    Function(source);
   }
-  Function(source);
 }
 
 // test(0x0041, 0x005a);
