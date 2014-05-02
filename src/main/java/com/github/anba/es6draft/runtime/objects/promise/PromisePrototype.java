@@ -23,13 +23,10 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseReactionTask;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -97,7 +94,7 @@ public final class PromisePrototype extends OrdinaryObject implements Initializa
          * @return the new promise object
          */
         @Function(name = "then", arity = 2)
-        public static Object newThen(ExecutionContext cx, Object thisValue, Object onFulfilled,
+        public static Object then(ExecutionContext cx, Object thisValue, Object onFulfilled,
                 Object onRejected) {
             Realm realm = cx.getRealm();
             /* step 2 */
@@ -107,43 +104,43 @@ public final class PromisePrototype extends OrdinaryObject implements Initializa
             /* step 1 */
             PromiseObject promise = (PromiseObject) thisValue;
             /* step 3 */
-            if (Type.isUndefinedOrNull(onFulfilled)) {
-                onFulfilled = new IdentityFunction(cx.getRealm());
+            PromiseReaction.Type fulfillType = PromiseReaction.Type.Function;
+            if (!IsCallable(onFulfilled)) {
+                fulfillType = PromiseReaction.Type.Identity;
+                onFulfilled = null;
             }
             /* step 4 */
-            if (Type.isUndefinedOrNull(onRejected)) {
-                onRejected = new ThrowerFunction(cx.getRealm());
+            PromiseReaction.Type rejectType = PromiseReaction.Type.Function;
+            if (!IsCallable(onRejected)) {
+                rejectType = PromiseReaction.Type.Thrower;
+                onRejected = null;
             }
-            /* step 5 */
-            if (!IsCallable(onFulfilled) || !IsCallable(onRejected)) {
-                throw newTypeError(cx, Messages.Key.NotCallable);
-            }
-            /* steps 6-7 */
+            /* steps 5-6 */
             Object c = Get(cx, promise, "constructor");
-            /* steps 8-9 */
+            /* steps 7-8 */
             PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
-            /* step 10 */
+            /* step 9 */
             PromiseReaction fulfillReaction = new PromiseReaction(promiseCapability,
-                    (Callable) onFulfilled);
-            /* step 11 */
+                    (Callable) onFulfilled, fulfillType);
+            /* step 10 */
             PromiseReaction rejectReaction = new PromiseReaction(promiseCapability,
-                    (Callable) onRejected);
-            /* step 12 */
+                    (Callable) onRejected, rejectType);
+            /* step 11 */
             if (promise.getState() == PromiseObject.State.Pending) {
                 promise.addFulfillReaction(fulfillReaction);
                 promise.addRejectReaction(rejectReaction);
             }
-            /* step 13 */
+            /* step 12 */
             else if (promise.getState() == PromiseObject.State.Fulfilled) {
                 Object value = promise.getResult();
                 realm.enqueuePromiseTask(new PromiseReactionTask(realm, fulfillReaction, value));
             }
-            /* step 14 */
+            /* step 13 */
             else if (promise.getState() == PromiseObject.State.Rejected) {
                 Object reason = promise.getResult();
                 realm.enqueuePromiseTask(new PromiseReactionTask(realm, rejectReaction, reason));
             }
-            /* step 15 */
+            /* step 14 */
             return promiseCapability.getPromise();
         }
 
@@ -153,57 +150,5 @@ public final class PromisePrototype extends OrdinaryObject implements Initializa
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "Promise";
-    }
-
-    /**
-     * 25.4.5.3.1 Identity Functions
-     */
-    public static final class IdentityFunction extends BuiltinFunction {
-        public IdentityFunction(Realm realm) {
-            super(realm, ANONYMOUS);
-            createDefaultFunctionProperties(ANONYMOUS, 1);
-        }
-
-        private IdentityFunction(Realm realm, Void ignore) {
-            super(realm, ANONYMOUS);
-        }
-
-        @Override
-        public IdentityFunction clone() {
-            return new IdentityFunction(getRealm(), null);
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            Object x = args.length > 0 ? args[0] : UNDEFINED;
-            /* step 1 */
-            return x;
-        }
-    }
-
-    /**
-     * 25.4.5.3.3 Thrower Functions
-     */
-    public static final class ThrowerFunction extends BuiltinFunction {
-        public ThrowerFunction(Realm realm) {
-            super(realm, ANONYMOUS);
-            createDefaultFunctionProperties(ANONYMOUS, 1);
-        }
-
-        private ThrowerFunction(Realm realm, Void ignore) {
-            super(realm, ANONYMOUS);
-        }
-
-        @Override
-        public ThrowerFunction clone() {
-            return new ThrowerFunction(getRealm(), null);
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            Object e = args.length > 0 ? args[0] : UNDEFINED;
-            /* step 1 */
-            throw ScriptException.create(e);
-        }
     }
 }

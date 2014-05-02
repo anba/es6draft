@@ -111,9 +111,9 @@ public final class PromiseObject extends OrdinaryObject {
         rejectReactions.add(reaction);
     }
 
-    public List<PromiseReaction> resolve(Object resolution) {
+    public List<PromiseReaction> resolve(Object value) {
         List<PromiseReaction> reactions = fulfillReactions;
-        resolve(State.Fulfilled, resolution);
+        resolve(State.Fulfilled, value);
         return reactions;
     }
 

@@ -23,9 +23,16 @@ public final class PromiseReaction {
     /** [[Handler]] */
     private final Callable handler;
 
-    public PromiseReaction(PromiseCapability<?> capabilities, Callable handler) {
+    private final Type type;
+
+    public enum Type {
+        Identity, Thrower, Function
+    }
+
+    public PromiseReaction(PromiseCapability<?> capabilities, Callable handler, Type type) {
         this.capabilities = capabilities;
         this.handler = handler;
+        this.type = type;
     }
 
     /**
@@ -44,5 +51,14 @@ public final class PromiseReaction {
      */
     public Callable getHandler() {
         return handler;
+    }
+
+    /**
+     * Returns the promise reaction's type.
+     * 
+     * @return the promise reaction type
+     */
+    public Type getType() {
+        return type;
     }
 }

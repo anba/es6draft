@@ -254,11 +254,11 @@ public final class PromiseAbstractOperations {
         /* step 2 (not applicable) */
         /* steps 3-4 */
         ScriptObject promise = CreateFromConstructor(cx, constructor);
-        // FIXME: spec bug -> throw TypeError if Type(promise)=Undefined
+        /* step 5 */
         if (promise == null) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
-        /* step 5 */
+        /* step 6 */
         return CreatePromiseCapabilityRecord(cx, promise, constructor);
     }
 
@@ -425,18 +425,28 @@ public final class PromiseAbstractOperations {
             /* step 1 (not applicable) */
             /* step 2 */
             PromiseCapability<?> promiseCapability = reaction.getCapabilities();
-            /* step 3 */
-            Callable handler = reaction.getHandler();
-            /* steps 4-6 */
+            /* steps 3-8 */
             Object handlerResult;
-            try {
-                handlerResult = handler.call(cx, UNDEFINED, argument);
-            } catch (ScriptException e) {
-                /* step 5 */
-                promiseCapability.getReject().call(cx, UNDEFINED, e.getValue());
+            if (reaction.getType() == PromiseReaction.Type.Identity) {
+                /* steps 4, 8 */
+                handlerResult = argument;
+            } else if (reaction.getType() == PromiseReaction.Type.Thrower) {
+                /* steps 5, 7 */
+                promiseCapability.getReject().call(cx, UNDEFINED, argument);
                 return;
+            } else {
+                /* step 3 */
+                Callable handler = reaction.getHandler();
+                /* steps 6-8 */
+                try {
+                    handlerResult = handler.call(cx, UNDEFINED, argument);
+                } catch (ScriptException e) {
+                    /* step 7 */
+                    promiseCapability.getReject().call(cx, UNDEFINED, e.getValue());
+                    return;
+                }
             }
-            /* steps 7-8 */
+            /* steps 9-10 */
             promiseCapability.getResolve().call(cx, UNDEFINED, handlerResult);
         }
     }
@@ -459,7 +469,7 @@ public final class PromiseAbstractOperations {
     public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
             Callable onFulfilled) {
         // TODO: make safe
-        Object p = PromisePrototype.Properties.newThen(cx, promise, onFulfilled, UNDEFINED);
+        Object p = PromisePrototype.Properties.then(cx, promise, onFulfilled, UNDEFINED);
         assert p instanceof ScriptObject;
         return (ScriptObject) p;
     }
@@ -482,7 +492,7 @@ public final class PromiseAbstractOperations {
     public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
             Callable onFulfilled, Callable onRejected) {
         // TODO: make safe
-        Object p = PromisePrototype.Properties.newThen(cx, promise, onFulfilled, onRejected);
+        Object p = PromisePrototype.Properties.then(cx, promise, onFulfilled, onRejected);
         assert p instanceof ScriptObject;
         return (ScriptObject) p;
     }
