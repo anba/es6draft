@@ -2194,9 +2194,6 @@ public final class Parser {
 
         boolean strict = (context.strictMode != StrictMode.NonStrict);
         boolean simple = IsSimpleParameterList(parameters);
-        if (!simple) {
-            checkFormalParameterRedeclaration(function, boundNames, scope.varDeclaredNames);
-        }
         checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
         if (strict) {
             strictFormalParameters_EarlyErrors(function, boundNames, scope.parameterNames, simple);
@@ -2398,7 +2395,6 @@ public final class Parser {
         scope.parameterNames = new HashSet<>(boundNames);
 
         boolean simple = IsSimpleParameterList(parameters);
-        checkFormalParameterRedeclaration(function, boundNames, scope.varDeclaredNames);
         checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
         strictFormalParameters_EarlyErrors(function, boundNames, scope.parameterNames, simple);
     }
@@ -2656,17 +2652,13 @@ public final class Parser {
         case AsyncFunction:
         case Function:
         case Generator: {
-            checkFormalParameterRedeclaration(method, boundNames, scope.varDeclaredNames);
             checkFormalParameterRedeclaration(method, boundNames, scope.lexDeclaredNames);
             strictFormalParameters_EarlyErrors(method, boundNames, scope.parameterNames, simple);
             return;
         }
         case Setter: {
-            if (!simple) {
-                checkFormalParameterRedeclaration(method, boundNames, scope.varDeclaredNames);
-            }
             checkFormalParameterRedeclaration(method, boundNames, scope.lexDeclaredNames);
-            propertySetParameterList_EarlyErrors(method, boundNames, scope.parameterNames, simple);
+            propertySetParameterList_EarlyErrors(method, boundNames, scope.parameterNames);
             return;
         }
         case Getter:
@@ -2684,15 +2676,9 @@ public final class Parser {
      *            the list of bound parameter names
      * @param names
      *            the set of names to validate
-     * @param simple
-     *            the flag to describe simple parameter lists
      */
     private void propertySetParameterList_EarlyErrors(FunctionNode node, List<String> boundNames,
-            HashSet<String> names, boolean simple) {
-        boolean hasEvalOrArguments = (names.contains("eval") || names.contains("arguments"));
-        if (!simple && hasEvalOrArguments) {
-            reportSyntaxError(node, Messages.Key.StrictModeRestrictedIdentifier);
-        }
+            HashSet<String> names) {
         checkFormalParameterDuplication(node, boundNames, names);
     }
 
@@ -2876,9 +2862,6 @@ public final class Parser {
 
         boolean strict = (context.strictMode != StrictMode.NonStrict);
         boolean simple = IsSimpleParameterList(parameters);
-        if (!simple) {
-            checkFormalParameterRedeclaration(generator, boundNames, scope.varDeclaredNames);
-        }
         checkFormalParameterRedeclaration(generator, boundNames, scope.lexDeclaredNames);
         if (strict) {
             strictFormalParameters_EarlyErrors(generator, boundNames, scope.parameterNames, simple);
@@ -3327,9 +3310,6 @@ public final class Parser {
 
         boolean strict = (context.strictMode != StrictMode.NonStrict);
         boolean simple = IsSimpleParameterList(parameters);
-        if (!simple) {
-            checkFormalParameterRedeclaration(function, boundNames, scope.varDeclaredNames);
-        }
         checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
         if (strict) {
             strictFormalParameters_EarlyErrors(function, boundNames, scope.parameterNames, simple);
