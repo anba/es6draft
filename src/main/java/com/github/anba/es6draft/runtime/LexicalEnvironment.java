@@ -207,6 +207,25 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
+     * 8.1.2.5 NewGlobalEnvironment ( G )
+     * 
+     * @param cx
+     *            the default execution context
+     * @param g
+     *            the global object
+     * @return the new global environment
+     */
+    public static LexicalEnvironment<GlobalEnvironmentRecord> newGlobalEnvironment(
+            ExecutionContext cx, ScriptObject g) {
+        /* steps 2-8 */
+        GlobalEnvironmentRecord globalRec = new GlobalEnvironmentRecord(cx, g);
+        /* steps 1, 9-10 */
+        LexicalEnvironment<GlobalEnvironmentRecord> env = new LexicalEnvironment<>(cx, globalRec);
+        /* step 11 */
+        return env;
+    }
+
+    /**
      * 8.1.2.? NewModuleEnvironment (E)
      * 
      * @param e

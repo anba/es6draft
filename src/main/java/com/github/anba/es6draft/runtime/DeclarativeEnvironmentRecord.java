@@ -84,9 +84,6 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
 
         public Object getValue(ExecutionContext cx, String name, boolean strict) {
             if (value == null) {
-                if (!strict) {
-                    return UNDEFINED;
-                }
                 throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
             }
             return value;
@@ -241,10 +238,18 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         /* step 2 */
         assert b != null : "binding not found: " + name;
         /* step 3 */
+        // FIXME: spec bug - assertion already handles this case
+        if (b == null) {
+            if (!strict) {
+                return UNDEFINED;
+            }
+            throw newReferenceError(cx, Messages.Key.InvalidReference, name);
+        }
+        /* step 4 */
         if (b.value == null) {
             throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
         }
-        /* step 4 */
+        /* step 5 */
         return b.value;
     }
 
