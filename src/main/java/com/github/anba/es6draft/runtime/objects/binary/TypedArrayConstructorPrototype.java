@@ -476,9 +476,9 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
                 mapper = (Callable) mapfn;
             }
             /* steps 7-8 */
-            Callable usingIterator = IsIterable(cx, items);
+            Object usingIterator = CheckIterable(cx, items);
             /* step 9 */
-            if (usingIterator != null) {
+            if (!Type.isUndefined(usingIterator)) {
                 ScriptObject iterator = GetIterator(cx, items, usingIterator);
                 List<Object> values = new ArrayList<>();
                 for (;;) {

@@ -2331,7 +2331,41 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.1 GetIterator ( obj )
+     * 7.4.1 CheckIterable ( obj )
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
+     * @return the iterator method
+     */
+    public static Object CheckIterable(ExecutionContext cx, Object obj) {
+        // TODO: Check behaviour change - no longer ToObject() implicit conversion!
+        /* step 1 */
+        if (!Type.isObject(obj)) {
+            return UNDEFINED;
+        }
+        /* steps 2-3 */
+        return Get(cx, Type.objectValue(obj), BuiltinSymbol.iterator.get());
+    }
+
+    /**
+     * 7.4.1 CheckIterable ( obj )
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
+     * @return the iterator method
+     */
+    public static Object CheckIterable(ExecutionContext cx, ScriptObject obj) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        return Get(cx, Type.objectValue(obj), BuiltinSymbol.iterator.get());
+    }
+
+    /**
+     * 7.4.2 GetIterator ( obj )
      * 
      * @param cx
      *            the execution context
@@ -2341,16 +2375,13 @@ public final class AbstractOperations {
      */
     public static ScriptObject GetIterator(ExecutionContext cx, Object obj) {
         /* step 1 */
-        Callable method = IsIterable(cx, obj);
-        if (method == null) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject); // TODO: change error message
-        }
-        /* steps 2-5 */
+        Object method = CheckIterable(cx, obj);
+        /* steps 2-6 */
         return GetIterator(cx, obj, method);
     }
 
     /**
-     * 7.4.1 GetIterator ( obj )
+     * 7.4.2 GetIterator ( obj )
      * 
      * @param cx
      *            the execution context
@@ -2360,16 +2391,13 @@ public final class AbstractOperations {
      */
     public static ScriptObject GetIterator(ExecutionContext cx, ScriptObject obj) {
         /* step 1 */
-        Callable method = IsIterable(cx, obj);
-        if (method == null) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject); // TODO: change error message
-        }
-        /* steps 2-5 */
+        Object method = CheckIterable(cx, obj);
+        /* steps 2-6 */
         return GetIterator(cx, obj, method);
     }
 
     /**
-     * 7.4.1 GetIterator ( obj )
+     * 7.4.2 GetIterator ( obj )
      * 
      * @param cx
      *            the execution context
@@ -2379,52 +2407,20 @@ public final class AbstractOperations {
      *            the iterator method
      * @return the script iterator object
      */
-    public static ScriptObject GetIterator(ExecutionContext cx, Object obj, Callable method) {
+    public static ScriptObject GetIterator(ExecutionContext cx, Object obj, Object method) {
         /* step 1 (not applicable) */
-        /* steps 2-3 */
-        Object iterator = method.call(cx, obj);
-        /* step 4 */
+        /* step 2 */
+        if (!IsCallable(method)) {
+            throw newTypeError(cx, Messages.Key.NotCallable);
+        }
+        /* steps 3-4 */
+        Object iterator = ((Callable) method).call(cx, obj);
+        /* step 5 */
         if (!Type.isObject(iterator)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
-        /* step 5 */
+        /* step 6 */
         return Type.objectValue(iterator);
-    }
-
-    /**
-     * 7.4.2 IsIterable ( obj )
-     * 
-     * @param cx
-     *            the execution context
-     * @param obj
-     *            the script object
-     * @return the iterator method
-     */
-    public static Callable IsIterable(ExecutionContext cx, Object obj) {
-        // TODO: Check behaviour change - no longer ToObject() implicit conversion!
-        /* step 1 */
-        if (!Type.isObject(obj)) {
-            return null;
-        }
-        /* steps 2-3 */
-        // FIXME: spec bug - missing callable type check in some callers
-        return GetMethod(cx, Type.objectValue(obj), BuiltinSymbol.iterator.get());
-    }
-
-    /**
-     * 7.4.2 IsIterable ( obj )
-     * 
-     * @param cx
-     *            the execution context
-     * @param obj
-     *            the script object
-     * @return the iterator method
-     */
-    public static Callable IsIterable(ExecutionContext cx, ScriptObject obj) {
-        /* step 1 (not applicable) */
-        /* steps 2-3 */
-        // FIXME: spec bug - missing callable type check in some callers
-        return GetMethod(cx, Type.objectValue(obj), BuiltinSymbol.iterator.get());
     }
 
     /**

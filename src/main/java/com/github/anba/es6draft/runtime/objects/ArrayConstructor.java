@@ -243,9 +243,9 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                 mapper = (Callable) mapfn;
             }
             /* steps 6-7 */
-            Callable usingIterator = IsIterable(cx, items);
+            Object usingIterator = CheckIterable(cx, items);
             /* step 8 */
-            if (usingIterator != null) {
+            if (!Type.isUndefined(usingIterator)) {
                 /* steps 8a-8c */
                 ScriptObject a;
                 if (IsConstructor(c)) {
