@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.regexp;
 
-import java.util.BitSet;
-
 /**
  * Common interface for regular expression matcher objects
  */
@@ -20,11 +18,4 @@ public interface RegExpMatcher {
      * @return the match state
      */
     MatchState matcher(String input);
-
-    /**
-     * Returns an integer to boolean map.
-     * 
-     * @return the bitset describing negative lookahead groups
-     */
-    BitSet getNegativeLookaheadGroups();
 }
