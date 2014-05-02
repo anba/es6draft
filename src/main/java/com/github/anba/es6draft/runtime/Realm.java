@@ -112,9 +112,9 @@ public final class Realm {
     private Callable directEvalTranslate;
 
     /**
-     * [[directEvalFallback]]
+     * [[nonEvalFallback]]
      */
-    private Callable directEvalFallback;
+    private Callable nonEvalFallback;
 
     /**
      * [[indirectEval]]
@@ -195,12 +195,12 @@ public final class Realm {
     }
 
     /**
-     * [[directEvalFallback]]
+     * [[nonEvalFallback]]
      * 
      * @return the user hook for direct eval fallback calls
      */
-    public Callable getDirectEvalFallback() {
-        return directEvalFallback;
+    public Callable getNonEvalFallback() {
+        return nonEvalFallback;
     }
 
     /**
@@ -458,15 +458,15 @@ public final class Realm {
      * 
      * @param directEvalTranslate
      *            the user hook for direct eval calls
-     * @param directEvalFallback
+     * @param nonEvalFallback
      *            the user hook for direct eval fallback calls
      * @param indirectEval
      *            the user hook for indirect eval calls
      */
-    public void setExtensionHooks(Callable directEvalTranslate, Callable directEvalFallback,
+    public void setExtensionHooks(Callable directEvalTranslate, Callable nonEvalFallback,
             Callable indirectEval) {
         this.directEvalTranslate = directEvalTranslate;
-        this.directEvalFallback = directEvalFallback;
+        this.nonEvalFallback = nonEvalFallback;
         this.indirectEval = indirectEval;
     }
 

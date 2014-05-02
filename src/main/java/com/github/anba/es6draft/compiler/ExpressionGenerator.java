@@ -158,8 +158,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                         Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_directEvalFallbackArguments = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "directEvalFallbackArguments",
-                Type.getMethodType(Types.Object_, Types.Object_, Types.Object, Types.Callable));
+                MethodType.Static, Types.ScriptRuntime, "directEvalFallbackArguments", Type
+                        .getMethodType(Types.Object_, Types.Object_, Types.Object, Types.Callable,
+                                Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_directEvalFallbackThisArgument = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "directEvalFallbackThisArgument",
+                Type.getMethodType(Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_directEvalFallbackHook = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "directEvalFallbackHook",
@@ -723,11 +728,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.ifnull(noEvalHook);
         {
             // stack: [args, thisValue, func(Callable)] -> [args']
+            mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_directEvalFallbackArguments);
-            mv.loadUndefined(); // FIXME: unspecified
+            // stack: [args'] -> [args', thisValue']
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_directEvalFallbackThisArgument);
+            // stack: [args', thisValue'] -> [args', thisValue', fallback(Callable)]
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_directEvalFallbackHook);
-            // stack: [args', undefined, fallback(Callable)]
         }
         mv.mark(noEvalHook);
     }

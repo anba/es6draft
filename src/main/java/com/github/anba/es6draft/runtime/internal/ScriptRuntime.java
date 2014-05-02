@@ -28,6 +28,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import org.mozilla.javascript.ConsString;
@@ -657,7 +658,7 @@ public final class ScriptRuntime {
      * @return the direct eval fallback hook
      */
     public static Callable directEvalFallbackHook(ExecutionContext cx) {
-        return cx.getRealm().getDirectEvalFallback();
+        return cx.getRealm().getNonEvalFallback();
     }
 
     /**
@@ -671,15 +672,30 @@ public final class ScriptRuntime {
      *            the function this-value
      * @param callee
      *            the function callee
+     * @param cx
+     *            the execution context
      * @return the direct eval fallback arguments
      */
     public static Object[] directEvalFallbackArguments(Object[] args, Object thisValue,
-            Callable callee) {
-        Object[] fallbackArgs = new Object[2 + args.length];
-        fallbackArgs[0] = thisValue;
-        fallbackArgs[1] = callee;
-        System.arraycopy(args, 0, fallbackArgs, 2, args.length);
+            Callable callee, ExecutionContext cx) {
+        Object[] fallbackArgs = new Object[3];
+        fallbackArgs[0] = callee;
+        fallbackArgs[1] = thisValue;
+        fallbackArgs[2] = CreateArrayFromList(cx, Arrays.asList(args));
         return fallbackArgs;
+    }
+
+    /**
+     * 12.3.4 Function Calls
+     * <p>
+     * Runtime Semantics: EvaluateCall Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @return the direct eval fallback this-argument
+     */
+    public static Object directEvalFallbackThisArgument(ExecutionContext cx) {
+        return cx.getRealm().getRealmObject();
     }
 
     /**

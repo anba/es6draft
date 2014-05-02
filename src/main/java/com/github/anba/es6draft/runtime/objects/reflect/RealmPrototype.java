@@ -7,8 +7,11 @@
 package com.github.anba.es6draft.runtime.objects.reflect;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListFromArrayLike;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareForTailCall;
 import static com.github.anba.es6draft.runtime.objects.reflect.RealmConstructor.IndirectEval;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -22,8 +25,10 @@ import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
+import com.github.anba.es6draft.runtime.internal.Properties.TailCall;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -197,9 +202,10 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         @Function(name = "directEval", arity = 1)
         public static Object directEval(ExecutionContext cx, Object thisValue, Object source) {
             /* steps 1-4 */
+            @SuppressWarnings("unused")
             RealmObject realmObject = thisRealmObject(cx, thisValue);
             /* step 5 */
-            return IndirectEval(realmObject.getRealm(), source);
+            return source;
         }
 
         /**
@@ -241,6 +247,38 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             RealmObject realmObject = thisRealmObject(cx, thisValue);
             /* step 5 */
             return UNDEFINED;
+        }
+
+        /**
+         * 26.2.3.7 Realm Subclass Extension Properties
+         * <p>
+         * 26.2.3.7.4 Reflect.Realm.prototype.nonEval (function, thisValue, argumentsList )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param source
+         *            the source string
+         * @return the evaluation result
+         */
+        @TailCall
+        @Function(name = "nonEval", arity = 3)
+        public static Object nonEval(ExecutionContext cx, Object thisValue, Object function,
+                Object thisArgument, Object argumentsList) {
+            /* steps 1-4 */
+            @SuppressWarnings("unused")
+            RealmObject realmObject = thisRealmObject(cx, thisValue);
+            /* steps 5-6 */
+            // FIXME: spec bug - invalid steps
+            /* step 7 */
+            if (!IsCallable(function)) {
+                throw newTypeError(cx, Messages.Key.NotCallable);
+            }
+            /* steps 8-9 */
+            Object[] args = CreateListFromArrayLike(cx, argumentsList);
+            /* steps 10-11 */
+            return PrepareForTailCall(args, thisArgument, (Callable) function);
         }
     }
 }

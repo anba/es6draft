@@ -894,8 +894,8 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             return Eval.directEval(argList, cx, evalFlags);
         }
         if (directEval && ScriptRuntime.directEvalFallbackHook(cx) != null) {
-            argList = ScriptRuntime.directEvalFallbackArguments(argList, thisValue, f);
-            thisValue = UNDEFINED; // FIXME: unspecified
+            argList = ScriptRuntime.directEvalFallbackArguments(argList, thisValue, f, cx);
+            thisValue = ScriptRuntime.directEvalFallbackThisArgument(cx);
             f = ScriptRuntime.directEvalFallbackHook(cx);
         }
         /* steps 9, 11, 12 (not applicable) */
