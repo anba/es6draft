@@ -68,7 +68,6 @@ final class ParameterMap {
         /* steps 18-20 */
         for (int index = numberOfParameters - 1; index >= 0; --index) {
             String name = parameterNames[index];
-            // FIXME: spec bug - mapped arguments (bug 2652)
             if (name != null && index < len) {
                 hasMapped = true;
                 map.defineOwnProperty(index, name);

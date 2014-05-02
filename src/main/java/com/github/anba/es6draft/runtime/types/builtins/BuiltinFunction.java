@@ -96,26 +96,33 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
      *            the function arity
      */
     protected final void createDefaultFunctionProperties(String name, int arity) {
-        ExecutionContext cx = realm.defaultContext();
-        setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
-        if (!name.isEmpty()) {
-            // anonymous functions do not have an own "name" property, cf. 19.2.4.1
-            defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, true));
-        }
-        defineOwnProperty(cx, "length", new PropertyDescriptor(arity, false, false, true));
-        // 9.3.2 CreateBuiltinFunction Abstract Operation, step 2
-        AddRestrictedFunctionProperties(cx, this);
+        createDefaultFunctionProperties(name, arity, realm.getThrowTypeError());
     }
 
     /**
-     * Calls
+     * Creates the default function properties, i.e. 'name' and 'length', initializes the
+     * [[Prototype]] to the <code>%FunctionPrototype%</code> object and calls
      * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, ScriptObject)}.
      * 
-     * @param cx
-     *            the execution context
+     * @param name
+     *            the function name
+     * @param arity
+     *            the function arity
+     * @param thrower
+     *            the thrower function object
      */
-    protected final void addRestrictedFunctionProperties(ExecutionContext cx) {
-        AddRestrictedFunctionProperties(cx, this);
+    protected final void createDefaultFunctionProperties(String name, int arity, Callable thrower) {
+        ExecutionContext cx = realm.defaultContext();
+        // Function.prototype is the [[Prototype]] for built-in functions, cf. 17
+        setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
+        // "length" property of function objects, cf. 19.2.4.1
+        defineOwnProperty(cx, "length", new PropertyDescriptor(arity, false, false, true));
+        // anonymous functions do not have an own "name" property, cf. 19.2.4.2
+        if (!name.isEmpty()) {
+            defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, true));
+        }
+        // 9.3.2 CreateBuiltinFunction Abstract Operation, step 5
+        AddRestrictedFunctionProperties(cx, this, thrower);
     }
 
     @Override
@@ -125,7 +132,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     public final BuiltinFunction clone(ExecutionContext cx) {
         BuiltinFunction f = clone();
         f.setPrototype(getPrototype());
-        f.addRestrictedFunctionProperties(cx);
+        AddRestrictedFunctionProperties(cx, f);
         return f;
     }
 

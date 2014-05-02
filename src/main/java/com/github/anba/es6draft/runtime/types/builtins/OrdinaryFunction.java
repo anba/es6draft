@@ -210,15 +210,37 @@ public class OrdinaryFunction extends FunctionObject {
     /**
      * 9.2.8 AddRestrictedFunctionProperties Abstract Operation
      * 
+     * @param <FUNCTION>
+     *            the function type
      * @param cx
      *            the execution context
      * @param obj
      *            the script object
      */
-    public static void AddRestrictedFunctionProperties(ExecutionContext cx, ScriptObject obj) {
+    public static <FUNCTION extends ScriptObject & Callable> void AddRestrictedFunctionProperties(
+            ExecutionContext cx, FUNCTION obj) {
         // TODO: %ThrowTypeError% from current realm or function's realm? (current realm per spec)
         /* step 1 */
         Callable thrower = cx.getRealm().getThrowTypeError();
+        /* steps 2-3 */
+        AddRestrictedFunctionProperties(cx, obj, thrower);
+    }
+
+    /**
+     * 9.2.8 AddRestrictedFunctionProperties Abstract Operation
+     * 
+     * @param <FUNCTION>
+     *            the function type
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
+     * @param thrower
+     *            the thrower function object
+     */
+    public static <FUNCTION extends ScriptObject & Callable> void AddRestrictedFunctionProperties(
+            ExecutionContext cx, FUNCTION obj, Callable thrower) {
+        /* step 1 (not applicable) */
         /* step 2 */
         DefinePropertyOrThrow(cx, obj, "caller", new PropertyDescriptor(thrower, thrower, false,
                 false));
@@ -228,11 +250,18 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.8 The %ThrowTypeError% Function Object
+     * 9.2.8.1 %ThrowTypeError% ( )
      */
     private static final class TypeErrorThrower extends BuiltinFunction {
         TypeErrorThrower(Realm realm) {
-            super(realm, "ThrowTypeError");
+            super(realm, ANONYMOUS);
+            createDefaultFunctionProperties(ANONYMOUS, 0, this);
+            // [[Extensible]] slot is false
+            setExtensible(false);
+        }
+
+        private TypeErrorThrower(Realm realm, Void ignore) {
+            super(realm, ANONYMOUS);
         }
 
         @Override
@@ -242,35 +271,20 @@ public class OrdinaryFunction extends FunctionObject {
 
         @Override
         public TypeErrorThrower clone() {
-            return new TypeErrorThrower(getRealm());
+            return new TypeErrorThrower(getRealm(), null);
         }
     }
 
     /**
-     * 9.2.8 The %ThrowTypeError% Function Object
+     * 9.2.8.1 %ThrowTypeError% ( )
      * 
      * @param cx
      *            the execution context
      * @return the %ThrowTypeError% function object
      */
     public static Callable createThrowTypeError(ExecutionContext cx) {
-        /* step 1 */
-        assert cx.getIntrinsic(Intrinsics.FunctionPrototype) != null;
-        /* step 2 */
-        ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
-        /* steps 3-8 (implicit) */
-        // inlined FunctionAllocate()
-        TypeErrorThrower f = new TypeErrorThrower(cx.getRealm());
-        f.setPrototype(functionPrototype);
-        // inlined FunctionInitialize()
-        DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(0, false, false, true));
-        // inlined AddRestrictedFunctionProperties()
-        DefinePropertyOrThrow(cx, f, "caller", new PropertyDescriptor(f, f, false, false));
-        DefinePropertyOrThrow(cx, f, "arguments", new PropertyDescriptor(f, f, false, false));
-        /* step 9 */
-        f.preventExtensions(cx);
-        /* step 10 */
-        return f;
+        assert cx.getIntrinsic(Intrinsics.FunctionPrototype) != null : "%FunctionPrototype% not initialized";
+        return new TypeErrorThrower(cx.getRealm());
     }
 
     /**
@@ -482,7 +496,7 @@ public class OrdinaryFunction extends FunctionObject {
         assert function instanceof FunctionObject || function instanceof BuiltinFunction;
         /* step 2 (not applicable) */
         /* step 3 */
-        assert newName instanceof String || newName instanceof Symbol;
+        assert newName == null || newName instanceof String || newName instanceof Symbol;
         /* steps 4-10 */
         if (function instanceof FunctionObject) {
             FunctionObject fn = (FunctionObject) function;
