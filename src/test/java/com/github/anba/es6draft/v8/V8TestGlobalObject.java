@@ -16,7 +16,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * 
@@ -28,9 +27,9 @@ public final class V8TestGlobalObject extends V8ShellGlobalObject {
     }
 
     @Override
-    public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
-        super.defineBuiltinProperties(cx, object);
-        createProperties(cx, object, new TestingFunctions(), TestingFunctions.class);
+    public void initialize(ExecutionContext cx) {
+        super.initialize(cx);
+        createProperties(cx, this, new TestingFunctions(), TestingFunctions.class);
     }
 
     /**

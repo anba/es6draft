@@ -40,6 +40,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.Functional.BiFunction;
@@ -116,8 +117,9 @@ public class WebKitTest {
         ExecutionContext cx = global.getRealm().defaultContext();
         exceptionHandler.setExecutionContext(cx);
 
-        createProperties(cx, global, new WebKitNatives(), WebKitNatives.class);
-        global.set(cx, "window", global, global);
+        ScriptObject globalThis = global.getRealm().getGlobalThis();
+        createProperties(cx, globalThis, new WebKitNatives(), WebKitNatives.class);
+        globalThis.set(cx, "window", globalThis, globalThis);
 
         if (test.expect) {
             errorHandler.match(StandardErrorHandler.defaultMatcher());

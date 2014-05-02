@@ -571,6 +571,7 @@ public final class Repl {
                 compilerOptions);
         final ShellGlobalObject global = world.newGlobal();
         final Realm realm = global.getRealm();
+        final ScriptObject globalThis = realm.getGlobalThis();
         ExecutionContext cx = realm.defaultContext();
 
         // Add completion to console
@@ -578,15 +579,15 @@ public final class Repl {
 
         // Add global "arguments" property
         ScriptObject arguments = CreateArrayFromList(cx, options.arguments);
-        global.defineOwnProperty(cx, "arguments", new PropertyDescriptor(arguments, true, false,
-                true));
+        globalThis.defineOwnProperty(cx, "arguments", new PropertyDescriptor(arguments, true,
+                false, true));
 
         // Execute any global specific initialization scripts
         realm.enqueueScriptTask(new Task() {
             @Override
             public void execute() {
                 try {
-                    global.initialize(global);
+                    global.initialize();
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 } catch (URISyntaxException e) {

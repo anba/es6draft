@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.runtime.LexicalEnvironment.newFunctionEnv
 import static java.util.Objects.requireNonNull;
 
 import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Reference;
@@ -313,7 +312,7 @@ public final class ExecutionContext {
      * 
      * @return the global object instance
      */
-    public GlobalObject getGlobalObject() {
+    public ScriptObject getGlobalObject() {
         /* steps 1-2 */
         Realm currentRealm = realm;
         /* step 3 */

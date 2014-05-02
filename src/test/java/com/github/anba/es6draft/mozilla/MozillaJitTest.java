@@ -40,6 +40,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
@@ -142,9 +143,10 @@ public class MozillaJitTest {
     public void runTest() throws Throwable {
         // set required global variables
         ExecutionContext cx = global.getRealm().defaultContext();
-        global.set(cx, "libdir", "lib/", global);
-        global.set(cx, "environment", OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype),
-                global);
+        ScriptObject globalThis = global.getRealm().getGlobalThis();
+        globalThis.set(cx, "libdir", "lib/", globalThis);
+        globalThis.set(cx, "environment",
+                OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype), globalThis);
 
         // evaluate actual test-script
         global.eval(moztest.getScript(), moztest.toFile());

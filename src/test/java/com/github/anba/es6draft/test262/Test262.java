@@ -37,6 +37,7 @@ import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.Functional.BiFunction;
@@ -128,7 +129,8 @@ public final class Test262 {
     public void runTest() throws Throwable {
         // Install test hooks
         ExecutionContext cx = global.getRealm().defaultContext();
-        createProperties(cx, global, global, Test262GlobalObject.class);
+        ScriptObject globalThis = global.getRealm().getGlobalThis();
+        createProperties(cx, globalThis, global, Test262GlobalObject.class);
 
         // evaluate actual test-script
         global.eval(test.getScript(), test.toFile());

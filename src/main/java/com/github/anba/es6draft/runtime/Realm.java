@@ -8,6 +8,8 @@ package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecutionContext;
+import static com.github.anba.es6draft.runtime.LexicalEnvironment.newGlobalEnvironment;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import java.security.SecureRandom;
 import java.text.Collator;
@@ -89,17 +91,17 @@ public final class Realm {
     /**
      * [[realmObject]]
      */
-    private RealmObject realmObject;
+    private final RealmObject realmObject;
 
     /**
      * [[globalThis]]
      */
-    private GlobalObject globalThis;
+    private final ScriptObject globalThis;
 
     /**
      * [[globalEnv]]
      */
-    private LexicalEnvironment<GlobalEnvironmentRecord> globalEnv;
+    private final LexicalEnvironment<GlobalEnvironmentRecord> globalEnv;
 
     /**
      * [[ThrowTypeError]]
@@ -121,20 +123,88 @@ public final class Realm {
      */
     private Callable indirectEval;
 
-    private Callable builtinEval;
+    private final Callable builtinEval;
 
-    private ExecutionContext defaultContext;
     private ExecutionContext scriptContext;
 
     private final World<? extends GlobalObject> world;
 
+    private final ExecutionContext defaultContext;
+
+    private final GlobalObject globalObject;
+
     private final SecureRandom random = new SecureRandom();
 
     // TODO: move into function source object
-    private HashMap<String, ScriptObject> templateCallSites = new HashMap<>();
+    private final HashMap<String, ScriptObject> templateCallSites = new HashMap<>();
 
     private Realm(World<? extends GlobalObject> world) {
         this.world = world;
+        this.defaultContext = newScriptExecutionContext(this, null);
+        this.globalObject = world.getAllocator().newInstance(this);
+        this.globalThis = world.getAllocator().newInstance(this); // TODO: yuk...
+        this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
+        RealmObject realmObject = new RealmObject(this);
+        realmObject.setRealm(this);
+        this.realmObject = realmObject;
+
+        // Create all built-in intrinsics
+        createIntrinsics(this);
+
+        // Set [[Prototype]] after intrinsics are initialized
+        realmObject.setPrototype(getIntrinsic(Intrinsics.RealmPrototype));
+
+        // Initialize global object
+        globalObject.initialize(defaultContext);
+
+        // [[Prototype]] for default global is implementation defined
+        globalThis.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
+
+        // Define built-in properties on global this
+        globalObject.defineBuiltinProperties(defaultContext, globalThis);
+
+        // Store reference to built-in eval
+        this.builtinEval = (Callable) Get(defaultContext, globalObject, "eval");
+    }
+
+    private Realm(World<? extends GlobalObject> world, RealmObject realmObject) {
+        this.world = world;
+        this.defaultContext = newScriptExecutionContext(this, null);
+        this.globalObject = world.getAllocator().newInstance(this);
+        this.globalThis = ObjectCreate(defaultContext, (ScriptObject) null);
+        this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
+        this.realmObject = realmObject;
+
+        // Create all built-in intrinsics
+        createIntrinsics(this);
+
+        // Initialize global object
+        globalObject.initialize(defaultContext);
+
+        // Set prototype to %ObjectPrototype%, cf. Reflect.Realm.[[Call]]
+        globalThis.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
+
+        // Store reference to built-in eval
+        this.builtinEval = (Callable) Get(defaultContext, globalObject, "eval");
+    }
+
+    private Realm(World<? extends GlobalObject> world, RealmObject realmObject,
+            ScriptObject globalThis) {
+        this.world = world;
+        this.defaultContext = newScriptExecutionContext(this, null);
+        this.globalObject = world.getAllocator().newInstance(this);
+        this.globalThis = globalThis;
+        this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
+        this.realmObject = realmObject;
+
+        // Create all built-in intrinsics
+        createIntrinsics(this);
+
+        // Initialize global object
+        globalObject.initialize(defaultContext);
+
+        // Store reference to built-in eval
+        this.builtinEval = (Callable) Get(defaultContext, globalObject, "eval");
     }
 
     /**
@@ -162,7 +232,7 @@ public final class Realm {
      * 
      * @return the global object
      */
-    public GlobalObject getGlobalThis() {
+    public ScriptObject getGlobalThis() {
         return globalThis;
     }
 
@@ -231,6 +301,15 @@ public final class Realm {
     }
 
     /**
+     * Returns the {@link GlobalObject} for this realm.
+     * 
+     * @return the global object instance
+     */
+    public GlobalObject getGlobalObject() {
+        return globalObject;
+    }
+
+    /**
      * Returns the default execution context for this realm.
      * 
      * @return the default execution context
@@ -258,8 +337,8 @@ public final class Realm {
         this.scriptContext = scriptContext;
     }
 
-    private AtomicInteger evalCounter = new AtomicInteger(0);
-    private AtomicInteger functionCounter = new AtomicInteger(0);
+    private final AtomicInteger evalCounter = new AtomicInteger(0);
+    private final AtomicInteger functionCounter = new AtomicInteger(0);
 
     /**
      * Next class name for eval scripts
@@ -471,23 +550,6 @@ public final class Realm {
     }
 
     /**
-     * Defines the built-in objects as properties of the supplied object.
-     * 
-     * @param builtins
-     *            the target object to store the built-ins into
-     */
-    public void defineBuiltinProperties(OrdinaryObject builtins) {
-        assert this.builtinEval == null : "built-ins already initialized";
-        ExecutionContext defaultContext = this.defaultContext;
-
-        // define built-in properties
-        globalThis.defineBuiltinProperties(defaultContext, builtins);
-
-        // store reference to built-in eval
-        this.builtinEval = (Callable) Get(defaultContext, builtins, "eval");
-    }
-
-    /**
      * 8.2.1 CreateRealm ( )
      * 
      * Creates a new {@link Realm} object.
@@ -496,10 +558,18 @@ public final class Realm {
      *            the execution context
      * @param realmObject
      *            the realm object
+     * @param globalThis
+     *            the global this object or {@code null}
      * @return the new realm instance
      */
-    public static Realm CreateRealm(ExecutionContext cx, RealmObject realmObject) {
-        return newRealm(cx.getRealm().getWorld(), realmObject);
+    public static Realm CreateRealm(ExecutionContext cx, RealmObject realmObject,
+            ScriptObject globalThis) {
+        World<? extends GlobalObject> world = cx.getRealm().getWorld();
+        if (globalThis == null) {
+            return new Realm(world, realmObject);
+        } else {
+            return new Realm(world, realmObject, globalThis);
+        }
     }
 
     /**
@@ -512,40 +582,10 @@ public final class Realm {
      * @return the new realm instance
      */
     static <GLOBAL extends GlobalObject> Realm newRealm(World<GLOBAL> world) {
-        return newRealm(world, null);
+        return new Realm(world);
     }
 
-    /**
-     * Creates a new {@link Realm} object.
-     * 
-     * @param <GLOBAL>
-     *            the global object type
-     * @param world
-     *            the world instance
-     * @param realmObject
-     *            the realm object
-     * @return the new realm instance
-     */
-    static <GLOBAL extends GlobalObject> Realm newRealm(World<GLOBAL> world, RealmObject realmObject) {
-        Realm realm = new Realm(world);
-        GlobalObject globalThis = world.getAllocator().newInstance(realm);
-        ExecutionContext defaultContext = newScriptExecutionContext(realm, null);
-        GlobalEnvironmentRecord envRec = new GlobalEnvironmentRecord(defaultContext, globalThis);
-        LexicalEnvironment<GlobalEnvironmentRecord> globalEnv = new LexicalEnvironment<>(
-                defaultContext, envRec);
-
-        boolean defaultRealmObject = realmObject == null;
-        if (defaultRealmObject) {
-            realmObject = new RealmObject(realm);
-            realmObject.setRealm(realm);
-        }
-
-        //
-        realm.realmObject = realmObject;
-        realm.globalThis = globalThis;
-        realm.globalEnv = globalEnv;
-        realm.defaultContext = defaultContext;
-
+    private static void createIntrinsics(Realm realm) {
         // intrinsics: 19, 20, 21, 22.1, 24.3
         initializeFundamentalObjects(realm);
         initializeStandardObjects(realm);
@@ -561,12 +601,6 @@ public final class Realm {
 
         // intrinsics: Internationalization API
         initializeInternationalisation(realm);
-
-        if (defaultRealmObject) {
-            realmObject.setPrototype(realm.getIntrinsic(Intrinsics.RealmPrototype));
-        }
-
-        return realm;
     }
 
     /**

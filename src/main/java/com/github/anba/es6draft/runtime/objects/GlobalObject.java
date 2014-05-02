@@ -6,28 +6,33 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newURIError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.Eval.indirectEval;
+import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Iterator;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -41,7 +46,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>18.5 Other Properties of the Global Object
  * </ul>
  */
-public class GlobalObject extends OrdinaryObject {
+public class GlobalObject extends OrdinaryObject implements Initializable {
     private final Realm realm;
 
     public GlobalObject(Realm realm) {
@@ -49,28 +54,79 @@ public class GlobalObject extends OrdinaryObject {
         this.realm = realm;
     }
 
+    @Override
+    public void initialize(ExecutionContext cx) {
+        createProperties(cx, this, ValueProperties.class);
+        createProperties(cx, this, FunctionProperties.class);
+        createProperties(cx, this, URIHandlingFunctions.class);
+        createProperties(cx, this, ConstructorProperties.class);
+        createProperties(cx, this, OtherProperties.class);
+        createProperties(cx, this, AdditionalProperties.class);
+    }
+
     /**
-     * Initialize {@code object} with the default properties of the Global Object.
+     * Initializes {@code object} with the default properties of the Global Object.
      * 
      * @param cx
      *            the execution context
      * @param object
      *            the script object
      */
-    public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
-        createProperties(cx, object, ValueProperties.class);
-        createProperties(cx, object, FunctionProperties.class);
-        createProperties(cx, object, URIHandlingFunctions.class);
-        createProperties(cx, object, ConstructorProperties.class);
-        createProperties(cx, object, OtherProperties.class);
-        createProperties(cx, object, AdditionalProperties.class);
+    public final void defineBuiltinProperties(ExecutionContext cx, ScriptObject object) {
+        // FIXME: spec issue - copy non-standard properties?
+        Iterator<?> keys = GetOwnPropertyNamesIterator(cx, this);
+        while (keys.hasNext()) {
+            Object key = ToPropertyKey(cx, keys.next());
+            if (key instanceof String) {
+                String propertyKey = (String) key;
+                Property prop = getOwnProperty(cx, propertyKey);
+                if (prop != null) {
+                    PropertyDescriptor desc = prop.toPropertyDescriptor();
+                    DefinePropertyOrThrow(cx, object, propertyKey, desc);
+                }
+            } else {
+                Symbol propertyKey = (Symbol) key;
+                Property prop = getOwnProperty(cx, propertyKey);
+                if (prop != null) {
+                    PropertyDescriptor desc = prop.toPropertyDescriptor();
+                    DefinePropertyOrThrow(cx, object, propertyKey, desc);
+                }
+            }
+        }
+    }
+
+    /**
+     * Retrieves the default properties of the Global Object.
+     * 
+     * @param cx
+     *            the execution context
+     * @return the built-in properties of the Global Object
+     */
+    public final ScriptObject getBuiltinProperties(ExecutionContext cx) {
+        ScriptObject props = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        // FIXME: spec issue - copy non-standard properties?
+        Iterator<?> keys = GetOwnPropertyNamesIterator(cx, this);
+        while (keys.hasNext()) {
+            Object key = ToPropertyKey(cx, keys.next());
+            if (key instanceof String) {
+                String propertyKey = (String) key;
+                // TODO: skip if 'prop' is null?
+                Property prop = getOwnProperty(cx, propertyKey);
+                Object desc = FromPropertyDescriptor(cx, prop);
+                CreateDataPropertyOrThrow(cx, props, propertyKey, desc);
+            } else {
+                Symbol propertyKey = (Symbol) key;
+                Property prop = getOwnProperty(cx, propertyKey);
+                Object desc = FromPropertyDescriptor(cx, prop);
+                CreateDataPropertyOrThrow(cx, props, propertyKey, desc);
+            }
+        }
+        return props;
     }
 
     /**
      * Execute any initialization scripts which should be run for this global instance.
      * 
-     * @param object
-     *            the script object
      * @throws IOException
      *             if there was any I/O error
      * @throws URISyntaxException
@@ -80,8 +136,8 @@ public class GlobalObject extends OrdinaryObject {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public void initialize(OrdinaryObject object) throws IOException, URISyntaxException,
-            ParserException, CompilationException {
+    public void initialize() throws IOException, URISyntaxException, ParserException,
+            CompilationException {
         /* empty */
     }
 

@@ -38,7 +38,6 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * Global object class with support for some moz-shell functions
@@ -53,9 +52,9 @@ public class MozShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
-        super.defineBuiltinProperties(cx, object);
-        createProperties(cx, object, this, MozShellGlobalObject.class);
+    public void initialize(ExecutionContext cx) {
+        super.initialize(cx);
+        createProperties(cx, this, this, MozShellGlobalObject.class);
     }
 
     /**
@@ -83,9 +82,8 @@ public class MozShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    public void initialize(OrdinaryObject object) throws IOException, URISyntaxException,
-            ParserException, CompilationException {
-        assert object == this : "not yet supported";
+    public void initialize() throws IOException, URISyntaxException, ParserException,
+            CompilationException {
         include(getScriptURL("mozlegacy.js"));
     }
 
@@ -139,7 +137,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
         int sourceLine = 1;
         boolean noScriptRval = false;
         boolean catchTermination = false;
-        GlobalObject global = cx.getRealm().getGlobalThis();
+        GlobalObject global = cx.getRealm().getGlobalObject();
         if (Type.isObject(options)) {
             ScriptObject opts = Type.objectValue(options);
 
@@ -441,16 +439,16 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @return a new global object instance
      **/
     @Function(name = "newGlobal", arity = 0)
-    public GlobalObject newGlobal(ExecutionContext cx) {
+    public ScriptObject newGlobal(ExecutionContext cx) {
         MozShellGlobalObject global = (MozShellGlobalObject) cx.getRealm().getWorld().newGlobal();
         try {
-            global.initialize(global);
+            global.initialize();
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         } catch (IOException | URISyntaxException e) {
             throw newError(cx, e.getMessage());
         }
-        return global;
+        return global.getRealm().getGlobalThis();
     }
 
     /**

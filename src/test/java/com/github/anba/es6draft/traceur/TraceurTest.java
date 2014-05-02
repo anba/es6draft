@@ -45,6 +45,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.Functional.BiFunction;
@@ -148,8 +149,9 @@ public class TraceurTest {
         WindowTimers timers = new WindowTimers();
         if (test.async) {
             ExecutionContext cx = global.getRealm().defaultContext();
-            Properties.createProperties(cx, global, async, AsyncHelper.class);
-            Properties.createProperties(cx, global, timers, WindowTimers.class);
+            ScriptObject globalThis = global.getRealm().getGlobalThis();
+            Properties.createProperties(cx, globalThis, async, AsyncHelper.class);
+            Properties.createProperties(cx, globalThis, timers, WindowTimers.class);
         }
 
         // evaluate actual test-script

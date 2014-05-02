@@ -13,7 +13,6 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * 
@@ -24,13 +23,13 @@ public final class ScriptingGlobalObject extends GlobalObject {
     }
 
     @Override
-    public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
-        super.defineBuiltinProperties(cx, object);
-        createProperties(cx, object, this, ScriptingGlobalObject.class);
+    public void initialize(ExecutionContext cx) {
+        super.initialize(cx);
+        createProperties(cx, this, this, ScriptingGlobalObject.class);
     }
 
     @Override
-    public void initialize(OrdinaryObject object) {
+    public void initialize() {
         /* no initialization required */
     }
 

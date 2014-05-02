@@ -24,7 +24,6 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
-import com.github.anba.es6draft.runtime.types.Intrinsics;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1>
@@ -316,10 +315,7 @@ public final class World<GLOBAL extends GlobalObject> {
     public GLOBAL newGlobal() {
         Realm realm = Realm.newRealm(this);
         @SuppressWarnings("unchecked")
-        GLOBAL global = (GLOBAL) realm.getGlobalThis();
-        // implementation defined behaviour
-        global.setPrototype(realm.getIntrinsic(Intrinsics.ObjectPrototype));
-        realm.defineBuiltinProperties(global);
+        GLOBAL global = (GLOBAL) realm.getGlobalObject();
         return global;
     }
 }

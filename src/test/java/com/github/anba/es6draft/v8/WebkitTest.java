@@ -86,7 +86,6 @@ public class WebkitTest {
 
         global = globals.newGlobal(new V8TestConsole(collector), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
-
     }
 
     @After

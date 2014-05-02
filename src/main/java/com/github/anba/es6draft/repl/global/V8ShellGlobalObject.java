@@ -20,7 +20,6 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * Global object class with support for some v8-shell functions
@@ -32,9 +31,9 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    public void defineBuiltinProperties(ExecutionContext cx, OrdinaryObject object) {
-        super.defineBuiltinProperties(cx, object);
-        createProperties(cx, object, this, V8ShellGlobalObject.class);
+    public void initialize(ExecutionContext cx) {
+        super.initialize(cx);
+        createProperties(cx, this, this, V8ShellGlobalObject.class);
     }
 
     /**
@@ -62,9 +61,8 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    public void initialize(OrdinaryObject object) throws IOException, URISyntaxException,
-            ParserException, CompilationException {
-        assert object == this : "not yet supported";
+    public void initialize() throws IOException, URISyntaxException, ParserException,
+            CompilationException {
         include(getScriptURL("v8legacy.js"));
     }
 
