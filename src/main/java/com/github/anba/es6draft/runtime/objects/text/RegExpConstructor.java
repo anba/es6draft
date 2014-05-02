@@ -325,7 +325,6 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
     }
 
     private boolean defaultMultiline = false;
-    private RegExpObject lastRegExpObject;
     private CharSequence lastInput = "";
     private MatchResult lastMatchResult = EMPTY_MATCH_RESULT;
 
@@ -337,10 +336,6 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         this.defaultMultiline = defaultMultiline;
     }
 
-    public RegExpObject getLastRegExpObject() {
-        return lastRegExpObject;
-    }
-
     public CharSequence getLastInput() {
         return lastInput;
     }
@@ -349,10 +344,9 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         return lastMatchResult;
     }
 
-    public static void storeLastMatchResult(ExecutionContext cx, RegExpObject rx,
-            CharSequence input, MatchResult matchResult) {
+    public static void storeLastMatchResult(ExecutionContext cx, CharSequence input,
+            MatchResult matchResult) {
         RegExpConstructor re = getRegExp(cx);
-        re.lastRegExpObject = rx;
         re.lastInput = input;
         re.lastMatchResult = matchResult;
     }
@@ -361,14 +355,14 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
     public enum RegExpStatics {
         ;
 
-        private static String group(RegExpConstructor re, int group) {
-            assert group > 0;
-            if (group > re.getLastMatchResult().groupCount()) {
+        private static String group(RegExpConstructor re, int groupIndex) {
+            assert groupIndex >= 0;
+            if (groupIndex == 0 || groupIndex > re.getLastMatchResult().groupCount()) {
                 return "";
             }
-            String[] groups = RegExpPrototype.groups(re.getLastRegExpObject(),
-                    re.getLastMatchResult());
-            return (groups[group] != null ? groups[group] : "");
+            String[] groups = RegExpPrototype.groups(re.getLastMatchResult());
+            String group = groups[groupIndex - 1];
+            return group != null ? group : "";
         }
 
         /**
@@ -524,8 +518,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
                 writable = false, enumerable = true, configurable = true))
         public static Object lastParen(ExecutionContext cx, Object thisValue) {
             RegExpConstructor re = getRegExp(cx);
-            int groups = re.getLastMatchResult().groupCount();
-            return (groups > 0 ? group(re, groups) : "");
+            return group(re, re.getLastMatchResult().groupCount());
         }
 
         /**
