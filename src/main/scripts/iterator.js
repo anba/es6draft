@@ -31,7 +31,9 @@ const mozIteratorSym = "@@iterator";
 
 // map from Symbol.iterator to pseudo-symbol "@@iterator"
 Object.defineProperty(Object.prototype, iteratorSym, {
-  get() { return () => this[mozIteratorSym]() },
+  get() {
+    return this[mozIteratorSym];
+  },
   set(iter) {
     Object_defineProperty(this, iteratorSym, {
       __proto__: null,

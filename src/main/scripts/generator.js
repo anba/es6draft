@@ -40,7 +40,11 @@ Object.defineProperty(Generator, Symbol.hasInstance, {
 });
 
 Object.defineProperty(Object.prototype, Symbol.iterator, {
-  get() { return () => ({__proto__: null, next: () => Object(this.next())}) },
+  get() {
+    if (typeof this.next === "function") {
+      return () => ({__proto__: null, next: () => Object(this.next())})
+    }
+  },
   enumerable: false, configurable: true
 });
 
