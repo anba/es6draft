@@ -80,7 +80,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             return callWithArrayBuffer(calleeContext, thisValue, (ArrayBufferObject) arg0,
                     byteOffset, length);
         }
-        return callWithArray(calleeContext, thisValue, (ScriptObject) arg0);
+        return callWithObject(calleeContext, thisValue, (ScriptObject) arg0);
     }
 
     /**
@@ -230,24 +230,24 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
     }
 
     /**
-     * 22.2.1.3 %TypedArray% ( array )
+     * 22.2.1.3 %TypedArray% ( object )
      * 
      * @param cx
      *            the execution context
      * @param thisValue
      *            the this-value
-     * @param _array
-     *            the source array object
+     * @param object
+     *            the source object
      * @return the typed array object
      */
-    private TypedArrayObject callWithArray(ExecutionContext cx, Object thisValue,
-            ScriptObject _array) {
+    private TypedArrayObject callWithObject(ExecutionContext cx, Object thisValue,
+            ScriptObject object) {
         /* step 1 */
-        assert !(_array instanceof TypedArrayObject || _array instanceof ArrayBufferObject);
+        assert !(object instanceof TypedArrayObject || object instanceof ArrayBufferObject);
         /* step 2 */
         Object obj = thisValue;
         /* step 3 */
-        ScriptObject srcArray = _array;
+        // Constructor constructor = null;
         /* step 4 */
         if (!(obj instanceof TypedArrayObject)) {
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
@@ -261,38 +261,8 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         if (array.getBuffer() != null) {
             throw newTypeError(cx, Messages.Key.InitializedObject);
         }
-        /* steps 8-9 */
-        ElementType elementType = array.getElementType();
-        /* step 10 */
-        Object arrayLength = Get(cx, srcArray, "length");
-        /* steps 11-12 */
-        long elementLength = ToLength(cx, arrayLength);
-        /* steps 13-14 */
-        ArrayBufferObject data = AllocateArrayBuffer(cx, Intrinsics.ArrayBuffer);
-        /* step 15 */
-        int elementSize = elementType.size();
-        /* step 16 */
-        long byteLength = elementSize * elementLength;
-        /* steps 17-18 */
-        SetArrayBufferData(cx, data, byteLength);
-        /* steps 19-20 */
-        for (long k = 0; k < elementLength; ++k) {
-            String pk = ToString(k);
-            Object kValue = Get(cx, srcArray, pk);
-            double kNumber = ToNumber(cx, kValue);
-            SetValueInBuffer(cx, data, k * elementSize, elementType, kNumber);
-        }
-        /* steps 21-22 */
-        if (array.getBuffer() != null) {
-            throw newTypeError(cx, Messages.Key.InitializedObject);
-        }
-        /* steps 23-26 */
-        array.setBuffer(data);
-        array.setByteLength(byteLength);
-        array.setByteOffset(0);
-        array.setArrayLength(elementLength);
-        /* step 27 */
-        return array;
+        /* steps 8-10 */
+        return (TypedArrayObject) TypedArrayFrom(cx, null, array, object, null, null);
     }
 
     /**
@@ -463,68 +433,15 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             }
             /* steps 3-4 */
             ScriptObject items = ToObject(cx, source);
-            /* steps 5-6 */
+            /* steps 5-7 */
             Callable mapper = null;
-            boolean mapping;
-            if (Type.isUndefined(mapfn)) {
-                mapping = false;
-            } else {
+            if (!Type.isUndefined(mapfn)) {
                 if (!IsCallable(mapfn)) {
                     throw newTypeError(cx, Messages.Key.NotCallable);
                 }
-                mapping = true;
                 mapper = (Callable) mapfn;
             }
-            /* steps 7-8 */
-            Object usingIterator = CheckIterable(cx, items);
-            /* step 9 */
-            if (!Type.isUndefined(usingIterator)) {
-                ScriptObject iterator = GetIterator(cx, items, usingIterator);
-                List<Object> values = new ArrayList<>();
-                for (;;) {
-                    ScriptObject next = IteratorStep(cx, iterator);
-                    if (next == null) {
-                        break;
-                    }
-                    Object nextValue = IteratorValue(cx, next);
-                    values.add(nextValue);
-                }
-                int len = values.size();
-                ScriptObject newObj = ((Constructor) c).construct(cx, len);
-                for (int k = 0; k < len; ++k) {
-                    String pk = ToString(k);
-                    Object kValue = values.get(k);
-                    Object mappedValue;
-                    if (mapping) {
-                        mappedValue = mapper.call(cx, thisArg, kValue);
-                    } else {
-                        mappedValue = kValue;
-                    }
-                    Put(cx, newObj, pk, mappedValue, true);
-                }
-                return newObj;
-            }
-            /* step 10 (?) */
-            /* step 11 */
-            Object lenValue = Get(cx, items, "length");
-            /* steps 12-13 */
-            long len = ToLength(cx, lenValue);
-            /* steps 14-15 */
-            ScriptObject newObj = ((Constructor) c).construct(cx, len);
-            /* steps 16-17 */
-            for (long k = 0; k < len; ++k) {
-                String pk = ToString(k);
-                Object kValue = Get(cx, items, pk);
-                Object mappedValue;
-                if (mapping) {
-                    mappedValue = mapper.call(cx, thisArg, kValue, k, items);
-                } else {
-                    mappedValue = kValue;
-                }
-                Put(cx, newObj, pk, mappedValue, true);
-            }
-            /* step 18 */
-            return newObj;
+            return TypedArrayFrom(cx, (Constructor) c, null, items, mapper, thisArg);
         }
 
         /**
@@ -560,5 +477,198 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             /* step 11 */
             return obj;
         }
+    }
+
+    /**
+     * TODO: remove method
+     * 
+     * @param cx
+     *            the execution context
+     * @param target
+     *            the typed array object or {@code null}
+     * @param items
+     *            the source object
+     * @return the new typed array object
+     */
+    @SuppressWarnings("unused")
+    private static TypedArrayObject TypedArrayFrom(ExecutionContext cx, TypedArrayObject array,
+            ScriptObject items) {
+        /* step 3 */
+        ScriptObject srcArray = items;
+        /* steps 8-9 */
+        ElementType elementType = array.getElementType();
+        /* step 10 */
+        Object arrayLength = Get(cx, srcArray, "length");
+        /* steps 11-12 */
+        long elementLength = ToLength(cx, arrayLength);
+        /* steps 13-14 */
+        ArrayBufferObject data = AllocateArrayBuffer(cx, Intrinsics.ArrayBuffer);
+        /* step 15 */
+        int elementSize = elementType.size();
+        /* step 16 */
+        long byteLength = elementSize * elementLength;
+        /* steps 17-18 */
+        SetArrayBufferData(cx, data, byteLength);
+        /* steps 19-20 */
+        for (long k = 0; k < elementLength; ++k) {
+            String pk = ToString(k);
+            Object kValue = Get(cx, srcArray, pk);
+            double kNumber = ToNumber(cx, kValue);
+            SetValueInBuffer(cx, data, k * elementSize, elementType, kNumber);
+        }
+        /* steps 21-22 */
+        if (array.getBuffer() != null) {
+            throw newTypeError(cx, Messages.Key.InitializedObject);
+        }
+        /* steps 23-26 */
+        array.setBuffer(data);
+        array.setByteLength(byteLength);
+        array.setByteOffset(0);
+        array.setArrayLength(elementLength);
+        /* step 27 */
+        return array;
+    }
+
+    /**
+     * 22.2.2.1.1 Runtime Semantics: TypedArrayFrom( constructor, target, items, mapfn, thisArg )
+     * 
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor function or {@code null}
+     * @param target
+     *            the typed array object or {@code null}
+     * @param items
+     *            the source object
+     * @param mapfn
+     *            the mapping function or {@code null}
+     * @param thisArg
+     *            the this-argument for the mapping function or {@code null}
+     * @return the new typed array object
+     */
+    public static ScriptObject TypedArrayFrom(ExecutionContext cx, Constructor constructor,
+            TypedArrayObject target, ScriptObject items, Callable mapfn, Object thisArg) {
+        /* step 1 (omitted) */
+        /* step 2 (not applicable) */
+        // FIXME: spec bug - %TypedArray% is not a constructor
+        assert constructor != null ^ target != null;
+        /* step 3 */
+        assert target == null || (target.getElementType() != null && target.getBuffer() == null);
+        /* step 4 (not applicable) */
+        /* step 5 (not applicable) */
+        /* steps 6-7 (Type check moved to caller) */
+        boolean mapping = mapfn != null;
+        /* steps 8-9 */
+        Object usingIterator = CheckIterable(cx, items);
+        /* step 10 */
+        if (!Type.isUndefined(usingIterator)) {
+            /* steps 10.a-10.b */
+            ScriptObject iterator = GetIterator(cx, items, usingIterator);
+            /* steps 10.c-10.f */
+            List<Object> values = new ArrayList<>();
+            for (;;) {
+                ScriptObject next = IteratorStep(cx, iterator);
+                if (next == null) {
+                    break;
+                }
+                Object nextValue = IteratorValue(cx, next);
+                values.add(nextValue);
+            }
+            /* step 10.g */
+            int len = values.size();
+            /* steps 10.h-10.i */
+            ScriptObject targetObj;
+            if (target == null) {
+                /* step 10.h */
+                targetObj = constructor.construct(cx, len);
+            } else {
+                /* step 10.i */
+                // FIXME: spec bug - assert is invalid, side-effects may have init'ed target
+                // assert target.getElementType() != null && target.getBuffer() == null;
+                targetObj = initializeTypedArray(cx, target, len);
+            }
+            /* steps 10.j-10.l */
+            for (int k = 0; k < len; ++k) {
+                String pk = ToString(k);
+                Object kValue = values.get(k);
+                Object mappedValue;
+                if (mapping) {
+                    mappedValue = mapfn.call(cx, thisArg, kValue, k);
+                } else {
+                    mappedValue = kValue;
+                }
+                Put(cx, targetObj, pk, mappedValue, true);
+            }
+            /* step 10.m */
+            return targetObj;
+        }
+        /* step 11 (?) */
+        /* step 12 */
+        Object lenValue = Get(cx, items, "length");
+        /* steps 13-14 */
+        long len = ToLength(cx, lenValue);
+        /* steps 15-16 */
+        // FIXME: spec bug - target is not initialized for this path
+        // ScriptObject newObj = constructor.construct(cx, len);
+        ScriptObject newObj;
+        if (target == null) {
+            newObj = constructor.construct(cx, len);
+        } else {
+            newObj = initializeTypedArray(cx, target, len);
+        }
+        /* steps 17-18 */
+        for (long k = 0; k < len; ++k) {
+            String pk = ToString(k);
+            Object kValue = Get(cx, items, pk);
+            Object mappedValue;
+            if (mapping) {
+                mappedValue = mapfn.call(cx, thisArg, kValue, k);
+            } else {
+                mappedValue = kValue;
+            }
+            Put(cx, newObj, pk, mappedValue, true);
+        }
+        /* step 19 */
+        return newObj;
+    }
+
+    /**
+     * Initializes the typed array object. (Not in spec)
+     * 
+     * @param cx
+     *            the execution context
+     * @param array
+     *            the typed array object
+     * @param length
+     *            the typed array object length
+     * @return the typed array object
+     */
+    private static TypedArrayObject initializeTypedArray(ExecutionContext cx,
+            TypedArrayObject array, long length) {
+        /* step 1 */
+        if (array.getBuffer() != null) {
+            throw newTypeError(cx, Messages.Key.InitializedObject);
+        }
+        /* steps 2-3 */
+        ElementType elementType = array.getElementType();
+        /* step 4 */
+        long elementLength = length;
+        /* steps 5-6 */
+        ArrayBufferObject data = AllocateArrayBuffer(cx, Intrinsics.ArrayBuffer);
+        /* step 7 */
+        int elementSize = elementType.size();
+        /* step 8 */
+        long byteLength = elementSize * elementLength;
+        /* steps 9-10 */
+        SetArrayBufferData(cx, data, byteLength);
+        /* step 11 */
+        assert array.getBuffer() == null;
+        /* steps 12-15 */
+        array.setBuffer(data);
+        array.setByteLength(byteLength);
+        array.setByteOffset(0);
+        array.setArrayLength(elementLength);
+        /* step 16 */
+        return array;
     }
 }
