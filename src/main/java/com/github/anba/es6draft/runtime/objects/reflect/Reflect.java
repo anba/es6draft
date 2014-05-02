@@ -246,36 +246,6 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 26.1.8 Reflect.hasOwn (target, propertyKey)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param target
-         *            the target object
-         * @param propertyKey
-         *            the property key
-         * @return {@code true} if the property was found
-         */
-        @Function(name = "hasOwn", arity = 2)
-        public static Object hasOwn(ExecutionContext cx, Object thisValue, Object target,
-                Object propertyKey) {
-            // TODO function still relevant after [[HasOwn]] removal from MOP?
-            /* steps 1-2 */
-            ScriptObject obj = ToObject(cx, target);
-            /* steps 3-4 */
-            Object key = ToPropertyKey(cx, propertyKey);
-            /* step 5 */
-            if (key instanceof String) {
-                return HasOwnProperty(cx, obj, (String) key);
-            } else {
-                assert key instanceof Symbol;
-                return HasOwnProperty(cx, obj, (Symbol) key);
-            }
-        }
-
-        /**
          * 26.1.7 Reflect.getOwnPropertyDescriptor(target, propertyKey)
          * 
          * @param cx
