@@ -266,7 +266,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                     Object nextValue = IteratorValue(cx, next);
                     Object mappedValue;
                     if (mapping) {
-                        mappedValue = mapper.call(cx, thisArg, nextValue);
+                        mappedValue = mapper.call(cx, thisArg, nextValue, k);
                     } else {
                         mappedValue = nextValue;
                     }
@@ -291,7 +291,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                 Object kValue = Get(cx, items, pk);
                 Object mappedValue;
                 if (mapping) {
-                    mappedValue = mapper.call(cx, thisArg, kValue, k, items);
+                    mappedValue = mapper.call(cx, thisArg, kValue, k);
                 } else {
                     mappedValue = kValue;
                 }
