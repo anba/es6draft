@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.iteration;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
-import static com.github.anba.es6draft.runtime.AbstractOperations.GetPrototypeFromConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
@@ -116,28 +113,30 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
             // FIXME: this also updates uninitialized function (not generator!)
             ((FunctionObject) f).setStrict(strict);
         }
-        /* step 17 */
-        assert ((FunctionObject) f).isExtensible(calleeContext);
-        /* step 18 */
+        /* steps 17-19 */
+        if (!IsExtensible(calleeContext, (FunctionObject) f)) {
+            throw newTypeError(calleeContext, Messages.Key.NotExtensible);
+        }
+        /* step 20 */
         if (!(f instanceof OrdinaryGenerator)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         OrdinaryGenerator fn = (OrdinaryGenerator) f;
-        /* steps 19-20 */
+        /* steps 21-22 */
         FunctionInitialize(calleeContext, fn, FunctionKind.Normal, function, scope);
-        /* step 21 */
+        /* step 23 */
         ScriptObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
-        /* step 22 */
+        /* step 24 */
         if (function.hasSuperReference()) {
             MakeMethod(fn, (String) null, null);
         }
-        /* steps 23-24 */
+        /* steps 25-26 */
         MakeConstructor(calleeContext, fn, true, prototype);
-        /* steps 25-27 */
+        /* steps 27-29 */
         if (!HasOwnProperty(calleeContext, fn, "name")) {
             SetFunctionName(fn, "anonymous");
         }
-        /* step 28 */
+        /* step 30 */
         return fn;
     }
 
