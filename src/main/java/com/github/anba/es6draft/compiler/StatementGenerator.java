@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunc
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -488,8 +489,19 @@ final class StatementGenerator extends
             IterationKind iterationKind, StatementVisitor mv) {
         Label lblFail = new Label();
 
+        List<String> tdzNames;
+        if (lhs instanceof Expression || lhs instanceof VariableStatement) {
+            tdzNames = Collections.emptyList();
+        } else {
+            assert lhs instanceof LexicalDeclaration;
+            LexicalDeclaration lexDecl = (LexicalDeclaration) lhs;
+            assert lexDecl.getElements().size() == 1;
+            LexicalBinding lexicalBinding = lexDecl.getElements().get(0);
+            tdzNames = BoundNames(lexicalBinding.getBinding());
+        }
+
         /* steps 1-2 */
-        ValType type = ForInOfExpressionEvaluation(expr, iterationKind, lblFail, mv);
+        ValType type = ForInOfExpressionEvaluation(node, tdzNames, expr, iterationKind, lblFail, mv);
 
         /* step 3 */
         Completion result = ForInOfBodyEvaluation(node, lhs, stmt, mv);
@@ -505,7 +517,12 @@ final class StatementGenerator extends
      * <p>
      * stack: [] {@literal ->} [Iterator]
      * 
-     * 
+     * @param <FORSTATEMENT>
+     *            the for-statement node type
+     * @param node
+     *            the for-statement node
+     * @param tdzNames
+     *            list of temporary dead zones names
      * @param expr
      *            the expression node
      * @param iterationKind
@@ -516,12 +533,42 @@ final class StatementGenerator extends
      *            the statement visitor
      * @return the value type of the expression
      */
-    private ValType ForInOfExpressionEvaluation(Expression expr, IterationKind iterationKind,
+    private <FORSTATEMENT extends IterationStatement & ScopedNode> ValType ForInOfExpressionEvaluation(
+            FORSTATEMENT node, List<String> tdzNames, Expression expr, IterationKind iterationKind,
             Label lblFail, StatementVisitor mv) {
-        /* steps 1-3 */
+        /* steps 1-2 */
+        if (!tdzNames.isEmpty()) {
+            // create new declarative lexical environment
+            // stack: [] -> [TDZ]
+            newDeclarativeEnvironment(mv);
+            {
+                // stack: [TDZ] -> [TDZ, TDZRec]
+                mv.dup();
+                mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+
+                // stack: [TDZ, TDZRec] -> [TDZ]
+                for (String name : tdzNames) {
+                    // FIXME: spec bug (CreateMutableBinding concrete method of `TDZ`)
+                    createMutableBinding(name, false, mv);
+                }
+                mv.pop();
+            }
+            // stack: [TDZ] -> []
+            pushLexicalEnvironment(mv);
+            mv.enterScope(node);
+        }
+
+        /* steps 3, 5-6 */
         ValType type = expressionValue(expr, mv);
 
         /* step 4 */
+        if (!tdzNames.isEmpty()) {
+            mv.exitScope();
+            // restore previous lexical environment
+            popLexicalEnvironment(mv);
+        }
+
+        /* step 7 */
         if (type != ValType.Object) {
             mv.toBoxed(type);
             Label loopstart = new Label();
@@ -533,7 +580,7 @@ final class StatementGenerator extends
             mv.mark(loopstart);
         }
 
-        /* steps 5-9 */
+        /* steps 8-12 */
         if ((iterationKind == IterationKind.Enumerate || iterationKind == IterationKind.EnumerateValues)
                 && codegen.isEnabled(CompatibilityOption.LegacyGenerator)) {
             // legacy generator mode, both, for-in and for-each, perform Iterate on generators

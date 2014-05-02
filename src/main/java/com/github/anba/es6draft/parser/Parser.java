@@ -4412,7 +4412,7 @@ public final class Parser {
      *     for ( [LA &#x2209; { <b>let [</b> }] LeftHandSideExpression<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      *     for ( var ForBinding<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      *     for ( ForDeclaration<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
-     *     for ( [LA &#x2209; { <b>let [</b> }] LeftHandSideExpression<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( [LA &#x2209; { <b>let</b> }] LeftHandSideExpression<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      *     for ( var ForBinding<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      *     for ( ForDeclaration<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      * ForDeclaration<span><sub>[Yield]</sub></span> :
@@ -4438,6 +4438,7 @@ public final class Parser {
         consume(Token.LP);
 
         boolean lexicalBinding = false, isLetIdentifier = false;
+        BlockContext lexBlockContext = null;
         Node head;
         switch (token()) {
         case VAR:
@@ -4451,11 +4452,13 @@ public final class Parser {
         case CONST:
             lexicalBinding = true;
             head = forDeclaration();
+            lexBlockContext = enterBlockContext();
             break;
         case LET:
             if (lexicalBindingFirstSet(peek())) {
                 lexicalBinding = true;
                 head = forDeclaration();
+                lexBlockContext = enterBlockContext();
                 break;
             }
             // 'let' as identifier, e.g. `for (let in "") {}` or `for (let.prop in "") {}`
@@ -4482,9 +4485,14 @@ public final class Parser {
         }
         consume(Token.RP);
 
-        BlockContext lexBlockContext = null;
+        if (forOf && head instanceof VariableStatement) {
+            VariableStatement varStmt = (VariableStatement) head;
+            assert varStmt.getElements().size() == 1;
+            assert varStmt.getElements().get(0).getInitializer() == null;
+            checkVarDeclaredName(varStmt.getElements().get(0).getBinding());
+        }
+
         if (lexicalBinding) {
-            lexBlockContext = enterBlockContext();
             LexicalDeclaration lexDecl = (LexicalDeclaration) head;
             assert lexDecl.getElements().size() == 1;
             assert lexDecl.getElements().get(0).getInitializer() == null;
