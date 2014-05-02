@@ -182,10 +182,10 @@ assertSyntaxError(`function f(yield, yield = 0){}`);
 assertSyntaxError(`function f(yield = 0, yield = 0){}`);
 assertSyntaxError(`function f(yield, ...yield){}`);
 assertSyntaxError(`function f(yield = 0, ...yield){}`);
-assertSyntaxError(`function f(yield = 0){var yield}`);
+function f(yield = 0){var yield}
 assertSyntaxError(`function f(yield = 0){let yield}`);
 assertSyntaxError(`function f(yield = 0){const yield = 0}`);
-assertSyntaxError(`function f(yield = 0){function yield(){}}`);
+function f(yield = 0){function yield(){}}
 assertSyntaxError(`function f(){yield: yield: 0}`);
 
 // generator comprehensions
@@ -260,10 +260,10 @@ assertSyntaxError(`(function (yield, yield = 0){});`);
 assertSyntaxError(`(function (yield = 0, yield = 0){});`);
 assertSyntaxError(`(function (yield, ...yield){});`);
 assertSyntaxError(`(function (yield = 0, ...yield){});`);
-assertSyntaxError(`(function (yield = 0){var yield});`);
+(function (yield = 0){var yield});
 assertSyntaxError(`(function (yield = 0){let yield});`);
 assertSyntaxError(`(function (yield = 0){const yield = 0});`);
-assertSyntaxError(`(function (yield = 0){function yield(){}});`);
+(function (yield = 0){function yield(){}});
 assertSyntaxError(`(function (){yield: yield: 0});`);
 
 // generator comprehensions
@@ -814,7 +814,7 @@ assertSyntaxError(`({ f(){yield (yield 0)} });`);
 } });
 
 // try some combinations
-assertSyntaxError(`({ yield(yield){var yield} });`);
+({ yield(yield){var yield} });
 ({ yield(){let yield} });
 ({ yield(){const yield = 0} });
 ({ yield(yield = 0){} });
@@ -827,10 +827,10 @@ assertSyntaxError(`({ f(yield, yield = 0){} });`);
 assertSyntaxError(`({ f(yield = 0, yield = 0){} });`);
 assertSyntaxError(`({ f(yield, ...yield){} });`);
 assertSyntaxError(`({ f(yield = 0, ...yield){} });`);
-assertSyntaxError(`({ f(yield = 0){var yield} });`);
+({ f(yield = 0){var yield} });
 assertSyntaxError(`({ f(yield = 0){let yield} });`);
 assertSyntaxError(`({ f(yield = 0){const yield = 0} });`);
-assertSyntaxError(`({ f(yield = 0){function yield(){}} });`);
+({ f(yield = 0){function yield(){}} });
 assertSyntaxError(`({ f(){yield: yield: 0} });`);
 
 // generator comprehensions
@@ -1309,7 +1309,7 @@ assertSyntaxError(`() => {yield (yield 0)}`);
 });
 
 // try some combinations
-assertSyntaxError(`((yield) => {var yield});`);
+((yield) => {var yield});
 
 // test syntax errors are still detected
 assertSyntaxError(`((yield) => {let yield});`);
@@ -1318,10 +1318,10 @@ assertSyntaxError(`((yield, yield = 0) => {});`);
 assertSyntaxError(`((yield = 0, yield = 0) => {});`);
 assertSyntaxError(`((yield, ...yield) => {});`);
 assertSyntaxError(`((yield = 0, ...yield) => {});`);
-assertSyntaxError(`((yield = 0) => {var yield});`);
+((yield = 0) => {var yield});
 assertSyntaxError(`((yield = 0) => {let yield});`);
 assertSyntaxError(`((yield = 0) => {const yield = 0});`);
-assertSyntaxError(`((yield = 0) => {function yield(){}});`);
+((yield = 0) => {function yield(){}});
 assertSyntaxError(`(() => {yield: yield: 0});`);
 
 // generator comprehensions

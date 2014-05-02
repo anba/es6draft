@@ -12,9 +12,9 @@ const {
 // lib/assert.js installs "Assert" as a property on the global object
 const defaultIncludes = ["Assert"];
 
-// Default global created if "init" option not used
+// Default global created if no arguments given
 {
-  let realm = new Reflect.Realm({});
+  let realm = new Reflect.Realm();
 
   // Default [[Prototype]] is %Object.prototype%
   assertSame(realm.global.Object.prototype, Object.getPrototypeOf(realm.global));
@@ -25,12 +25,14 @@ const defaultIncludes = ["Assert"];
   assertEquals(Object.getOwnPropertySymbols(this), Object.getOwnPropertySymbols(realm.global));
 }
 
-// Empty global created if "init" option used
+// Empty global created if "initGlobal" is overridden
 {
-  let realm = new Reflect.Realm({ init(){} });
+  let realm = new class extends Reflect.Realm {
+    initGlobal() { }
+  };
 
-  // [[Prototype]] is set to null
-  assertSame(null, Object.getPrototypeOf(realm.global));
+  // [[Prototype]] is set to %ObjectPrototype%
+  assertSame(realm.stdlib.Object.value.prototype, Object.getPrototypeOf(realm.global));
 
   // No own property names present
   assertSame(0, Object.keys(realm.global).length);
@@ -38,31 +40,14 @@ const defaultIncludes = ["Assert"];
   assertSame(0, Object.getOwnPropertySymbols(realm.global).length);
 }
 
-// Test arguments passed to "init" option: realm
+// Test arguments passed to "initGlobal" method
 {
-  let captured = {};
-  let realm = new Reflect.Realm({
-    init(realm, builtins) {
-      // proposal currently makes thisArgument == argumentsList[0] == realm object
-      assertSame(this, realm);
-      Object.assign(captured, {realm, global: realm.global});
+  let thisValue;
+  let realm = new class extends Reflect.Realm {
+    initGlobal(...args) {
+      thisValue = this;
+      assertSame(0, args.length);
     }
-  });
-
-  // Test that realm in "init" function is the newly created realm
-  assertSame(realm, captured.realm);
-  assertSame(realm.global, captured.global);
-}
-
-// Test arguments passed to "init" option: builtins
-{
-  const thisGlobal = this;
-  let realm = new Reflect.Realm({
-    init(realm, builtins) {
-      // Same keys resp. own property names as the global
-      assertEquals(Object.keys(thisGlobal), Object.keys(builtins));
-      assertEquals(Object.getOwnPropertyNames(thisGlobal), Object.getOwnPropertyNames(builtins).concat(defaultIncludes));
-      assertEquals(Object.getOwnPropertySymbols(thisGlobal), Object.getOwnPropertySymbols(builtins));
-    }
-  });
+  };
+  assertSame(realm, thisValue);
 }

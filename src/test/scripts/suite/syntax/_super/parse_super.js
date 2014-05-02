@@ -9,7 +9,6 @@ const {
   assertSyntaxError
 } = Assert;
 
-// FIXME: https://bugs.ecmascript.org/show_bug.cgi?id=2338
 
 // 'super' is allowed in object literals
 {
@@ -39,6 +38,7 @@ const {
   (class {m(){super["x"]()}});
   (class {m(){super.x()}});
   (class {m(){super.if()}});
+  (class {m(){new super()()}});
 }
 
 // MemberExpression: 'super' '[' Expression ']'
@@ -71,17 +71,11 @@ const {
   (class {m(){super.if``}});
 }
 
-// MemberExpression: 'new' 'super' Arguments{opt}
+// MemberExpression: 'new' 'super' Arguments
 // MemberExpression: MemberExpression '[' Expression ']'
 // MemberExpression: MemberExpression '.' IdentifierName
 // MemberExpression: MemberExpression TemplateLiteral
 {
-  (class {m(){new super}});
-  (class {m(){new super["x"]}}); // <- shift/reduce conflict
-  (class {m(){new super.x}});
-  (class {m(){new super.if}});
-  (class {m(){new super``}});
-
   (class {m(){new super()}});
   (class {m(){new super()["x"]}});
   (class {m(){new super().x}});
@@ -89,16 +83,26 @@ const {
   (class {m(){new super()``}});
 }
 
+// NewExpression: 'new' 'super'
 // NewExpression: 'new' NewExpression
 // NewExpression: MemberExpression
 {
-  (class {m(){new super["x"]}}); // <- shift/reduce conflict
+  (class {m(){new super}});
+  (class {m(){new new super}});
+  (class {m(){new super["x"]}});
   (class {m(){new super.x}});
   (class {m(){new super.if}});
 }
 
 // 'super' TemplateLiteral is not allowed
 {
-  assertSyntaxError("(class {m(){super``}});");
+  assertSyntaxError("(class {m(){super ``}});");
+  assertSyntaxError("(class {m(){new super ``}});");
 }
 
+// 'super' TemplateLiteral is not allowed, ASI
+{
+  assertSyntaxError("(class {m(){super \n ``}});");
+  assertSyntaxError("(class {m(){new \n super ``}});");
+  Function("(class {m(){new super \n ``}});");
+}

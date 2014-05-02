@@ -103,10 +103,10 @@ for (let constructor of [MyConstructor, Int8Array]) {
   // - Throw TypeError for integer indexed properties
   // - No TypeError if property is not integer indexed
   for (let p of integerIndexedProperties) {
-    assertThrows(() => Reflect.hasOwn(create(), p), TypeError);
+    assertThrows(() => create().hasOwnProperty(p), TypeError);
   }
   for (let p of notIntegerIndexedProperties) {
-    assertFalse(Reflect.hasOwn(create(), p));
+    assertFalse(create().hasOwnProperty(p));
   }
 
   // [[Enumerate]]

@@ -13,14 +13,12 @@ const {
 // - direct eval fallback and 'wrong' eval function have both tail calls enabled
 // - chaining them should preserve the tail call property
 
-let realm = new Reflect.Realm({
-  directEval: {
-    fallback(thisArgument, callee, ...args) {
-      "use strict";
-      return callee(...args);
-    }
+let realm = new class extends Reflect.Realm {
+  nonEval(callee, thisArgument, ...args) {
+    "use strict";
+    return callee(...args);
   }
-});
+};
 realm.eval(`
   function returnCaller() {
     return returnCaller.caller;

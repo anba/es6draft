@@ -6,14 +6,16 @@
  */
 
 const {
-  assertThrows
+  assertThrows, assertUndefined
 } = Assert;
 
 // 26.1.8, Reflect.hasOwn(): unusual evaluation order
 // https://bugs.ecmascript.org/show_bug.cgi?id=1972
 
-class MyError extends Error {}
+// class MyError extends Error {}
+// 
+// assertThrows(() => Reflect.hasOwn(void 0, {toString(){ throw new MyError }}), TypeError);
+// assertThrows(() => Reflect.hasOwn(null, {toString(){ throw new MyError }}), TypeError);
+// assertThrows(() => Reflect.hasOwn("", {toString(){ throw new MyError }}), MyError);
 
-assertThrows(() => Reflect.hasOwn(void 0, {toString(){ throw new MyError }}), TypeError);
-assertThrows(() => Reflect.hasOwn(null, {toString(){ throw new MyError }}), TypeError);
-assertThrows(() => Reflect.hasOwn("", {toString(){ throw new MyError }}), MyError);
+assertUndefined(Reflect.hasOwn);
