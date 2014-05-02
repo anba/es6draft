@@ -98,30 +98,34 @@ public final class NumberPrototype extends OrdinaryObject implements Initializab
          */
         @Function(name = "toString", arity = 1)
         public static Object toString(ExecutionContext cx, Object thisValue, Object radix) {
-            double r = 10;
+            /* steps 1-2 */
+            double x = thisNumberValue(cx, thisValue);
+            /* steps 3-6 */
+            double radixNumber = 10;
             if (!Type.isUndefined(radix)) {
-                r = ToInteger(cx, radix);
+                radixNumber = ToInteger(cx, radix);
             }
-            if (r < 2 || r > 36) {
+            /* step 7 */
+            if (radixNumber < 2 || radixNumber > 36) {
                 throw newRangeError(cx, Messages.Key.InvalidRadix);
             }
-            if (r == 10) {
-                return ToString(thisNumberValue(cx, thisValue));
+            /* step 8 */
+            if (radixNumber == 10) {
+                return ToString(x);
             }
-            double val = thisNumberValue(cx, thisValue);
-
-            // 9.1.8.1 ToString Applied to the Number Type
+            /* step 9 */
+            // 7.1.12.1 ToString Applied to the Number Type
             // steps 1-4
-            if (val != val) {
+            if (x != x) {
                 return "NaN";
-            } else if (val == Double.POSITIVE_INFINITY) {
+            } else if (x == Double.POSITIVE_INFINITY) {
                 return "Infinity";
-            } else if (val == Double.NEGATIVE_INFINITY) {
+            } else if (x == Double.NEGATIVE_INFINITY) {
                 return "-Infinity";
-            } else if (val == 0.0) {
+            } else if (x == 0.0) {
                 return "0";
             }
-            return DToA.JS_dtobasestr((int) r, val);
+            return DToA.JS_dtobasestr((int) radixNumber, x);
         }
 
         /**
