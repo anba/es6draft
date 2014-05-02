@@ -2288,7 +2288,7 @@ public final class Parser {
      * 
      * <pre>
      * ArrowFunction<span><sub>[In, Yield]</sub></span> :
-     *     ArrowParameters<span><sub>[?Yield]</sub></span> {@literal =>} ConciseBody<span><sub>[?In]</sub></span>
+     *     ArrowParameters<span><sub>[?Yield]</sub></span> [no <i>LineTerminator</i> here] {@literal =>} ConciseBody<span><sub>[?In]</sub></span>
      * ArrowParameters<span><sub>[Yield]</sub></span> :
      *     BindingIdentifier<span><sub>[?Yield]</sub></span>
      *     CoverParenthesizedExpressionAndArrowParameterList<span><sub>[?Yield]</sub></span>
@@ -2334,6 +2334,9 @@ public final class Parser {
                         singletonList(parameter));
 
                 source.append('(').append(identifier.getName()).append(')');
+            }
+            if (!noLineTerminator()) {
+                reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
             }
             consume(Token.ARROW);
             if (token() == Token.LC) {
