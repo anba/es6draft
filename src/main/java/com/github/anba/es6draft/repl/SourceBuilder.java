@@ -314,7 +314,7 @@ public final class SourceBuilder {
         }
         StringBuilder properties = new StringBuilder();
         for (int i = 0; keys.hasNext() && i < MAX_OBJECT_PROPERTIES;) {
-            Object k = keys.next();
+            Object k = ToPropertyKey(cx, keys.next());
             String key = propertyKeyToSource(mode, k);
             Property prop = getOwnProperty(cx, object, k);
             if (prop == null || !prop.isEnumerable()) {
