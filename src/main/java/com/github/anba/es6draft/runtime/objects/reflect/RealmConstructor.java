@@ -7,13 +7,12 @@
 package com.github.anba.es6draft.runtime.objects.reflect;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
-import static com.github.anba.es6draft.runtime.AbstractOperations.GetOption;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
+import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
 import static com.github.anba.es6draft.runtime.Realm.CreateRealm;
 import static com.github.anba.es6draft.runtime.internal.Errors.newError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticProxy.ProxyCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import java.io.IOException;
@@ -36,9 +35,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>26 Reflection</h1><br>
@@ -75,50 +72,15 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
      */
     public static Object IndirectEval(Realm realm, Object source) {
         // TODO: not yet specified
-        // TODO: also subject to indirect-eval hook customisation?
         return Eval.indirectEval(realm.defaultContext(), source);
     }
 
     /**
-     * Abstract Operation: DefineBuiltinProperties (realm, builtins)
-     * 
-     * @param realm
-     *            the realm instance
-     * @param builtins
-     *            the builtins script object
-     */
-    public static void DefineBuiltinProperties(Realm realm, OrdinaryObject builtins) {
-        // TODO: not yet specified
-        realm.defineBuiltinProperties(builtins);
-
-        // Run any initialization scripts, if required
-        try {
-            realm.getGlobalThis().initialize(builtins);
-        } catch (ParserException | CompilationException e) {
-            throw e.toScriptException(realm.defaultContext());
-        } catch (IOException | URISyntaxException e) {
-            throw newError(realm.defaultContext(), e.getMessage());
-        }
-    }
-
-    private static Callable getFunctionOption(ExecutionContext cx, Object options, String name) {
-        Object option = GetOption(cx, options, name);
-        if (Type.isUndefined(option)) {
-            return null;
-        }
-        if (!IsCallable(option)) {
-            throw newTypeError(cx, Messages.Key.NotCallable);
-        }
-        return (Callable) option;
-    }
-
-    /**
-     * 26.2.1.1 Reflect.Realm ([ options [, initializer ] ])
+     * 26.2.1.1 Reflect.Realm ( [ target , handler ] )
      */
     @Override
     public RealmObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object options = args.length > 0 ? args[0] : UNDEFINED;
         /* steps 2-3 */
         if (!(thisValue instanceof RealmObject)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
@@ -129,40 +91,68 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         if (realmObject.getRealm() != null) {
             throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
-        /* steps 5-6 (superseded by newer Realm API) */
-        /* steps 7-8 */
-        Object directEval = GetOption(calleeContext, options, "directEval");
-        /* steps 9-11 */
-        Callable translate = getFunctionOption(calleeContext, directEval, "translate");
-        /* steps 12-14 */
-        Callable fallback = getFunctionOption(calleeContext, directEval, "fallback");
-        /* steps 15-17 */
-        Callable indirectEval = getFunctionOption(calleeContext, options, "indirectEval");
-        /* steps 18-20 (superseded by newer Realm API) */
-        /* step ? */
-        Callable initializer = getFunctionOption(calleeContext, options, "init");
-        /* steps 21-22 */
+
+        /* steps 5-6 */
+        // FIXME: spec bug - invalid steps
+
+        /* steps 8-10 (moved) */
+        ScriptObject newGlobal;
+        if (args.length != 0) {
+            Object target = getArgument(args, 0);
+            Object handler = getArgument(args, 1);
+            newGlobal = ProxyCreate(calleeContext, target, handler);
+        } else {
+            // Note: created in CreateRealm()
+            newGlobal = null;
+        }
+
+        /* steps 7, 11-13 */
+        Realm realm = CreateRealm(calleeContext, realmObject, newGlobal);
+
+        /* steps 14-15 */
+        Callable translate = GetMethod(calleeContext, realmObject, "directEval");
+
+        /* steps 16-17 */
+        Callable fallback = GetMethod(calleeContext, realmObject, "nonEval");
+
+        /* steps 18-19 */
+        Callable indirectEval = GetMethod(calleeContext, realmObject, "indirectEval");
+
+        /* steps 20-22 */
+        realm.setExtensionHooks(translate, fallback, indirectEval);
+
+        /* steps 23-24 */
         if (realmObject.getRealm() != null) {
             throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
-        /* step 23 */
-        Realm realm = CreateRealm(calleeContext, realmObject);
-        /* steps 24-27 */
-        realm.setExtensionHooks(translate, fallback, indirectEval);
-        /* step 28 */
+
+        /* step 25 */
         realmObject.setRealm(realm);
-        /* step 29 */
-        if (initializer != null) {
-            OrdinaryObject builtins = ObjectCreate(realm.defaultContext(),
-                    Intrinsics.ObjectPrototype);
-            DefineBuiltinProperties(realm, builtins);
-            // TODO: spec bug? necessary to provide realm object as thisArgument and 1st parameter?
-            initializer.call(calleeContext, realmObject, realmObject, builtins);
+
+        /* steps 26-27 */
+        Callable initGlobal = GetMethod(calleeContext, realmObject, "initGlobal");
+
+        /* steps 28-29 */
+        if (initGlobal != null) {
+            /* step 28 */
+            initGlobal.call(calleeContext, realmObject);
         } else {
-            // default global object environment
-            GlobalObject globalObject = realm.getGlobalThis();
-            globalObject.setPrototype(realm.getIntrinsic(Intrinsics.ObjectPrototype));
-            DefineBuiltinProperties(realm, globalObject);
+            /* step 29 */
+            ScriptObject globalThis = realm.getGlobalThis();
+            GlobalObject globalObject = realm.getGlobalObject();
+            assert globalThis != null && globalObject != null;
+
+            // Define the built-in properties
+            globalObject.defineBuiltinProperties(calleeContext, globalThis);
+
+            // Run any initialization scripts, if required
+            try {
+                globalObject.initialize();
+            } catch (ParserException | CompilationException e) {
+                throw e.toScriptException(realm.defaultContext());
+            } catch (IOException | URISyntaxException e) {
+                throw newError(realm.defaultContext(), e.getMessage());
+            }
         }
         /* step 30 */
         return realmObject;

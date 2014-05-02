@@ -170,11 +170,9 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             /* steps 1-4 */
             RealmObject realmObject = thisRealmObject(cx, thisValue);
             Realm realm = realmObject.getRealm();
-            /* step 5 */
-            OrdinaryObject props = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-            /* step 6 */
-            // FIXME: spec unclear, need feedback
-            realm.getGlobalThis().defineBuiltinProperties(cx, props);
+            /* steps 5-6 */
+            // FIXME: spec bug - props not applicable for Object.defineProperties
+            ScriptObject props = realm.getGlobalObject().getBuiltinProperties(cx);
             /* step 7 */
             return props;
         }
@@ -243,9 +241,12 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         @Function(name = "initGlobal", arity = 0)
         public static Object initGlobal(ExecutionContext cx, Object thisValue) {
             /* steps 1-4 */
-            @SuppressWarnings("unused")
             RealmObject realmObject = thisRealmObject(cx, thisValue);
             /* step 5 */
+            ScriptObject globalThis = realmObject.getRealm().getGlobalThis();
+            /* step 6 */
+            realmObject.getRealm().getGlobalObject().defineBuiltinProperties(cx, globalThis);
+            /* step 7 */
             return UNDEFINED;
         }
 
