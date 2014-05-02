@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.regexp;
 
+import java.util.BitSet;
+import java.util.Iterator;
 import java.util.regex.MatchResult;
 
 import org.joni.Matcher;
@@ -16,20 +18,23 @@ import org.joni.Region;
 /**
  * {@link MatchState} implementation for Joni {@link Regex} regular expressions
  */
-final class JoniMatchState implements MatchState {
+final class JoniMatchState implements MatchState, IterableMatchResult {
     private final Matcher matcher;
     private final String string;
+    private final BitSet negativeLAGroups;
     private int begin = -1, end = 0;
     private Region region;
 
-    public JoniMatchState(Matcher matcher, String string) {
+    public JoniMatchState(Matcher matcher, String string, BitSet negativeLAGroups) {
         this.matcher = matcher;
         this.string = string;
+        this.negativeLAGroups = negativeLAGroups;
     }
 
-    private JoniMatchState(String string, int begin, int end, Region region) {
+    private JoniMatchState(String string, BitSet negativeLAGroups, int begin, int end, Region region) {
         this.matcher = null;
         this.string = string;
+        this.negativeLAGroups = negativeLAGroups;
         this.begin = begin;
         this.end = end;
         this.region = region;
@@ -74,8 +79,14 @@ final class JoniMatchState implements MatchState {
     }
 
     @Override
+    public Iterator<String> iterator() {
+        return new GroupIterator(this, negativeLAGroups);
+    }
+
+    @Override
     public MatchResult toMatchResult() {
-        return new JoniMatchState(string, begin, end, region != null ? region.clone() : null);
+        return new JoniMatchState(string, negativeLAGroups, begin, end,
+                region != null ? region.clone() : null);
     }
 
     @Override

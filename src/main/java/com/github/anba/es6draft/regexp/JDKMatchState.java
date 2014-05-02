@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.regexp;
 
+import java.util.BitSet;
+import java.util.Iterator;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -13,16 +15,25 @@ import java.util.regex.Pattern;
 /**
  * {@link MatchState} implementation for standard JDK {@link Pattern} regular expressions
  */
-final class JDKMatchState implements MatchState {
-    private Matcher matcher;
+final class JDKMatchState implements MatchState, IterableMatchResult {
+    private final Matcher matcher;
+    private final BitSet negativeLAGroups;
 
-    public JDKMatchState(Matcher matcher) {
+    public JDKMatchState(Matcher matcher, BitSet negativeLAGroups) {
         this.matcher = matcher;
+        this.negativeLAGroups = negativeLAGroups;
+    }
+
+    @Override
+    public Iterator<String> iterator() {
+        return new GroupIterator(this, negativeLAGroups);
     }
 
     @Override
     public MatchResult toMatchResult() {
-        return matcher.toMatchResult();
+        MatchResult matchResult = matcher.toMatchResult();
+        assert matchResult instanceof Matcher;
+        return new JDKMatchState((Matcher) matchResult, negativeLAGroups);
     }
 
     @Override

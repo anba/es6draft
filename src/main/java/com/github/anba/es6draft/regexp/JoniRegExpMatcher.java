@@ -60,7 +60,7 @@ final class JoniRegExpMatcher implements RegExpMatcher {
         }
         // -2 to account for null-terminating bytes in c-string
         Matcher matcher = getPattern().matcher(lastInputBytes, 0, lastInputBytes.length - 2);
-        return new JoniMatchState(matcher, s);
+        return new JoniMatchState(matcher, s, negativeLAGroups);
     }
 
     @Override
