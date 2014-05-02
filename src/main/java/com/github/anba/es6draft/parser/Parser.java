@@ -6259,11 +6259,12 @@ public final class Parser {
      *     MemberExpression<span><sub>[?Yield]</sub></span> TemplateLiteral<span><sub>[?Yield]</sub></span>
      *     super [ Expression<span><sub>[In, ?Yield]</sub></span> ]
      *     super . IdentifierName
-     *     new super Arguments<span><sub>[?Yield]opt</sub></span>
+     *     new super Arguments<span><sub>[?Yield]</sub></span>
      *     new MemberExpression<span><sub>[?Yield]</sub></span> Arguments<span><sub>[?Yield]</sub></span>
      * NewExpression<span><sub>[Yield]</sub></span> :
      *     MemberExpression<span><sub>[?Yield]</sub></span>
      *     new NewExpression<span><sub>[?Yield]</sub></span>
+     *     new super
      * CallExpression<span><sub>[Yield]</sub></span> :
      *     MemberExpression<span><sub>[?Yield]</sub></span> Arguments<span><sub>[?Yield]</sub></span>
      *     super Arguments<span><sub>[?Yield]</sub></span>
@@ -6286,13 +6287,12 @@ public final class Parser {
         if (token() == Token.NEW) {
             consume(Token.NEW);
             Expression expr = leftHandSideExpression(false);
-            List<Expression> args = null;
             if (token() == Token.LP) {
-                args = arguments();
+                lhs = new NewExpression(begin, ts.endPosition(), expr, arguments());
             } else {
-                args = emptyList();
+                return new NewExpression(begin, ts.endPosition(), expr,
+                        Collections.<Expression> emptyList());
             }
-            lhs = new NewExpression(begin, ts.endPosition(), expr, args);
         } else if (token() == Token.SUPER) {
             ParseContext cx = context.findSuperContext();
             if (cx.kind == ContextKind.Script && !isEnabled(Option.FunctionCode)
