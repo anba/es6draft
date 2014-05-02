@@ -383,13 +383,13 @@ public final class Realm {
     /**
      * 8.4.1 EnqueueTask ( queueName, task, arguments) Abstract Operation
      * <p>
-     * Enqueues {@code task} to the queue of pending loading-tasks.
+     * Enqueues {@code task} to the queue of pending script-tasks.
      * 
      * @param task
-     *            the new loading task
+     *            the new script task
      */
-    public void enqueueLoadingTask(Task task) {
-        world.enqueueLoadingTask(task);
+    public void enqueueScriptTask(Task task) {
+        world.enqueueScriptTask(task);
     }
 
     /**

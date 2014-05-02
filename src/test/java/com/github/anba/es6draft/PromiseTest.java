@@ -116,7 +116,7 @@ public class PromiseTest {
             if (task == null) {
                 break;
             }
-            global.getRealm().enqueueLoadingTask(task);
+            global.getRealm().enqueueScriptTask(task);
         }
         assertTrue(async.doneCalled);
     }

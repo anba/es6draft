@@ -47,7 +47,7 @@ public final class World<GLOBAL extends GlobalObject> {
     private final Messages messages = Messages.create(locale);
 
     // TODO: move to custom class
-    private final ArrayDeque<Task> loadingTasks = new ArrayDeque<>();
+    private final ArrayDeque<Task> scriptTasks = new ArrayDeque<>();
     private final ArrayDeque<Task> promiseTasks = new ArrayDeque<>();
 
     private final GlobalSymbolRegistry symbolRegistry = new GlobalSymbolRegistry();
@@ -169,19 +169,19 @@ public final class World<GLOBAL extends GlobalObject> {
      * @return {@code true} if there are any pending tasks
      */
     public boolean hasPendingTasks() {
-        return !(loadingTasks.isEmpty() && promiseTasks.isEmpty());
+        return !(scriptTasks.isEmpty() && promiseTasks.isEmpty());
     }
 
     /**
      * 8.4.1 EnqueueTask ( queueName, task, arguments) Abstract Operation
      * <p>
-     * Enqueues {@code task} to the queue of pending loading-tasks.
+     * Enqueues {@code task} to the queue of pending script-tasks.
      * 
      * @param task
-     *            the new loading task
+     *            the new script task
      */
-    public void enqueueLoadingTask(Task task) {
-        loadingTasks.offer(task);
+    public void enqueueScriptTask(Task task) {
+        scriptTasks.offer(task);
     }
 
     /**
@@ -201,7 +201,7 @@ public final class World<GLOBAL extends GlobalObject> {
      */
     public void executeTasks() {
         while (hasPendingTasks()) {
-            executeTasks(loadingTasks);
+            executeTasks(scriptTasks);
             executeTasks(promiseTasks);
         }
     }

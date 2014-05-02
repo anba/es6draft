@@ -164,7 +164,7 @@ public class TraceurTest {
                 if (task == null) {
                     break;
                 }
-                global.getRealm().enqueueLoadingTask(task);
+                global.getRealm().enqueueScriptTask(task);
             }
             assertTrue(async.doneCalled);
         }

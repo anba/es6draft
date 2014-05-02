@@ -582,7 +582,7 @@ public final class Repl {
                 true));
 
         // Execute any global specific initialization scripts
-        realm.enqueueLoadingTask(new Task() {
+        realm.enqueueScriptTask(new Task() {
             @Override
             public void execute() {
                 try {
@@ -597,7 +597,7 @@ public final class Repl {
 
         // Run eval expressions and files
         for (final EvalScript evalScript : options.evalScripts) {
-            realm.enqueueLoadingTask(new Task() {
+            realm.enqueueScriptTask(new Task() {
                 @Override
                 public void execute() {
                     try {
