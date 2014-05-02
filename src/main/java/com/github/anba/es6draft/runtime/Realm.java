@@ -684,6 +684,10 @@ public final class Realm {
         errorConstructor.initialize(defaultContext);
         errorPrototype.initialize(defaultContext);
         jsonObject.initialize(defaultContext);
+
+        // Array.prototype.values is also an intrinsic
+        Object arrayPrototypeValues = Get(defaultContext, arrayPrototype, "values");
+        intrinsics.put(Intrinsics.ArrayProto_values, (ScriptObject) arrayPrototypeValues);
     }
 
     /**

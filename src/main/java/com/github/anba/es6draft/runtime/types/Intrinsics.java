@@ -22,6 +22,7 @@ public enum Intrinsics {/* @formatter:off */
     FunctionPrototype,
     Array,
     ArrayPrototype,
+    ArrayProto_values,
     ArrayIteratorPrototype,
     String,
     StringPrototype,
