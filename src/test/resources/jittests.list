@@ -310,6 +310,13 @@ tests/arguments/defaults-scoping.js
 # ES6 related syntax changes          #
 #######################################
 
+# ES6: let-var temporary dead zone
+tests/arguments/defaults-evaluation-order.js
+
+# ES6: temporary dead zone in for-in/of
+tests/basic/bug646968-4.js
+tests/basic/bug678087.js
+
 # throws early ReferenceError instead of SyntaxError
 tests/basic/function-tosource-exprbody-bug777834.js
 

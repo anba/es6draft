@@ -57,6 +57,9 @@ regress/regress-2419.js
 # spec issue/invalid test, GetViewValue() throws RangeError instead of TypeError for invalid indices
 harmony/dataview-accessors.js
 
+# invalid test, ToDateTimeOptions does not alter input options object
+regress/regress-builtinbust-7.js
+
 
 ###################
 # Misc issues     #

@@ -33,6 +33,9 @@ js/script-tests/JSON-parse-reviver.js
 js/script-tests/number-clz.js
 js/script-tests/typedarray-set-overlapping-elements-of-same-size.js
 
+# invalid test, `(new Array(1)).findIndex(function(){return true})` is -1
+js/script-tests/array-findIndex.js
+
 
 ###################
 # Misc issues     #
@@ -76,6 +79,7 @@ js/script-tests/date-proto-generic-invocation.js
 js/script-tests/exception-expression-offset.js
 js/script-tests/function-constructor-error.js
 js/script-tests/reserved-words-strict.js
+js/script-tests/array-find.js
 
 # Date.parse incompatibility
 js/script-tests/date-constructor.js

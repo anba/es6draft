@@ -347,6 +347,7 @@ js1_5/extensions/scope-001.js
 
 # ES6: let-var temporary dead zone
 js1_7/block/order-of-operation.js
+js1_7/block/regress-411279.js
 js1_8_1/regress/regress-452498-103.js
 
 # const is block-scoped
@@ -550,6 +551,9 @@ js1_8_5/extensions/sps-generators.js
 
 # objectEmulatingUndefined() not supported
 Intl/extensions/options-value-emulates-undefined.js
+
+# createMappedArrayBuffer()
+js1_8_5/extensions/file-mapped-arraybuffers.js
 
 
 #######################################

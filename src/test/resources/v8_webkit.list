@@ -19,6 +19,9 @@ fast/js/toString-overrides.js
 fast/js/Promise-catch.js
 fast/js/Promise-then.js
 
+# invalid test, `JSON.stringify(Object.assign(new Boolean(true), {valueOf(){ return 2 }}))` is "true"
+run-json-stringify.js
+
 
 ###################
 # Misc issues     #
