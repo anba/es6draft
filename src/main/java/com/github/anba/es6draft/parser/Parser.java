@@ -374,6 +374,7 @@ public final class Parser {
         HashSet<String> varDeclaredNames = null;
         HashSet<String> lexDeclaredNames = null;
         List<Declaration> lexScopedDeclarations = null;
+        HashSet<String> forbiddenLexNames = null;
 
         ScopeContext(ScopeContext parent) {
             this.parent = parent;
@@ -397,6 +398,10 @@ public final class Parser {
             return lexDeclaredNames == null || !lexDeclaredNames.contains(name);
         }
 
+        boolean isForbiddenLexName(String name) {
+            return forbiddenLexNames != null && forbiddenLexNames.contains(name);
+        }
+
         void addVarDeclaredNames(HashSet<String> names) {
             if (varDeclaredNames == null) {
                 varDeclaredNames = names;
@@ -418,7 +423,8 @@ public final class Parser {
                 lexDeclaredNames = new HashSet<>();
             }
             return lexDeclaredNames.add(name)
-                    && (varDeclaredNames == null || !varDeclaredNames.contains(name));
+                    && (varDeclaredNames == null || !varDeclaredNames.contains(name))
+                    && (forbiddenLexNames == null || !forbiddenLexNames.contains(name));
         }
 
         void addLexScopedDeclaration(Declaration decl) {
@@ -637,7 +643,40 @@ public final class Parser {
         if (!scope.addVarDeclaredName(name)) {
             reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
         }
-        for (ScopeContext parent = scope.parent; parent != null; parent = parent.parent) {
+        for (ScopeContext parent; (parent = scope.parent) != null; scope = parent) {
+            if (!parent.allowVarDeclaredName(name)) {
+                if (isEnabled(CompatibilityOption.CatchVarStatement)
+                        && scope.isForbiddenLexName(name)) {
+                    continue;
+                }
+                reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
+            }
+        }
+    }
+
+    private void checkVarDeclaredName(Binding binding) {
+        if (binding instanceof BindingIdentifier) {
+            checkVarDeclaredName((BindingIdentifier) binding);
+        } else {
+            assert binding instanceof BindingPattern;
+            checkVarDeclaredName((BindingPattern) binding);
+        }
+    }
+
+    private void checkVarDeclaredName(BindingIdentifier bindingIdentifier) {
+        String name = BoundName(bindingIdentifier);
+        checkVarDeclaredName(bindingIdentifier, name);
+    }
+
+    private void checkVarDeclaredName(BindingPattern bindingPattern) {
+        for (String name : BoundNames(bindingPattern)) {
+            checkVarDeclaredName(bindingPattern, name);
+        }
+    }
+
+    private void checkVarDeclaredName(Binding binding, String name) {
+        ScopeContext scope = context.scopeContext;
+        for (ScopeContext parent; (parent = scope.parent) != null; scope = parent) {
             if (!parent.allowVarDeclaredName(name)) {
                 reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
             }
@@ -689,6 +728,19 @@ public final class Parser {
         for (Binding binding : bindings) {
             addLexDeclaredName(binding);
         }
+    }
+
+    private HashSet<String> lexicalNames(List<Binding> bindings) {
+        HashSet<String> names = new HashSet<>();
+        for (Binding binding : bindings) {
+            if (binding instanceof BindingIdentifier) {
+                names.add(BoundName((BindingIdentifier) binding));
+            } else {
+                assert binding instanceof BindingPattern;
+                names.addAll(BoundNames((BindingPattern) binding));
+            }
+        }
+        return names;
     }
 
     private void removeLexDeclaredNames(List<Binding> bindings) {
@@ -3381,7 +3433,7 @@ public final class Parser {
     private Statement statement() {
         switch (token()) {
         case LC:
-            return block(NO_INHERITED_BINDING);
+            return block(NO_INHERITED_BINDING, false);
         case VAR:
             return variableStatement();
         case SEMI:
@@ -3450,18 +3502,28 @@ public final class Parser {
      * 
      * @param inherited
      *            the list of inherited lexical bindings
+     * @param catchBlock
+     *            {@code true} if parsing a catch-node block statement
      * @return the parsed block statement
      */
-    private BlockStatement block(List<Binding> inherited) {
+    private BlockStatement block(List<Binding> inherited, boolean catchBlock) {
         long begin = ts.beginPosition();
         consume(Token.LC);
         BlockContext scope = enterBlockContext();
         if (!inherited.isEmpty()) {
-            addLexDeclaredNames(inherited);
+            if (catchBlock) {
+                scope.forbiddenLexNames = lexicalNames(inherited);
+            } else {
+                addLexDeclaredNames(inherited);
+            }
         }
         List<StatementListItem> list = statementList(Token.RC);
         if (!inherited.isEmpty()) {
-            removeLexDeclaredNames(inherited);
+            if (catchBlock) {
+                scope.forbiddenLexNames = null;
+            } else {
+                removeLexDeclaredNames(inherited);
+            }
         }
         exitBlockContext();
         consume(Token.RC);
@@ -4848,7 +4910,7 @@ public final class Parser {
         List<GuardedCatchNode> guardedCatchNodes = emptyList();
         long begin = ts.beginPosition();
         consume(Token.TRY);
-        tryBlock = block(NO_INHERITED_BINDING);
+        tryBlock = block(NO_INHERITED_BINDING, false);
         Token tok = token();
         if (tok == Token.CATCH) {
             if (isEnabled(CompatibilityOption.GuardedCatch)) {
@@ -4874,7 +4936,7 @@ public final class Parser {
                     // fulfill the early error restriction that the BoundNames of CatchParameter
                     // must not also occur in either the LexicallyDeclaredNames or the
                     // VarDeclaredNames of CatchBlock
-                    BlockStatement catchBlock = block(singletonList(catchParameter));
+                    BlockStatement catchBlock = block(singletonList(catchParameter), true);
 
                     exitBlockContext();
                     if (guard != null) {
@@ -4900,7 +4962,7 @@ public final class Parser {
                 // fulfill the early error restriction that the BoundNames of CatchParameter
                 // must not also occur in either the LexicallyDeclaredNames or the
                 // VarDeclaredNames of CatchBlock
-                BlockStatement catchBlock = block(singletonList(catchParameter));
+                BlockStatement catchBlock = block(singletonList(catchParameter), true);
 
                 exitBlockContext();
                 catchNode = new CatchNode(beginCatch, ts.endPosition(), catchScope, catchParameter,
@@ -4910,11 +4972,11 @@ public final class Parser {
 
             if (token() == Token.FINALLY) {
                 consume(Token.FINALLY);
-                finallyBlock = block(NO_INHERITED_BINDING);
+                finallyBlock = block(NO_INHERITED_BINDING, false);
             }
         } else {
             consume(Token.FINALLY);
-            finallyBlock = block(NO_INHERITED_BINDING);
+            finallyBlock = block(NO_INHERITED_BINDING, false);
         }
 
         return new TryStatement(begin, ts.endPosition(), tryBlock, catchNode, guardedCatchNodes,
@@ -4972,7 +5034,7 @@ public final class Parser {
             return new ExpressionStatement(begin, ts.endPosition(), letExpression);
         } else {
             BlockContext scope = enterBlockContext(bindings);
-            BlockStatement letBlock = block(bindings);
+            BlockStatement letBlock = block(bindings, false);
             exitBlockContext();
 
             LetStatement block = new LetStatement(begin, ts.endPosition(), scope, lexicalBindings,

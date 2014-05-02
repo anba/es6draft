@@ -79,6 +79,11 @@ public enum CompatibilityOption {
     BlockFunctionDeclaration,
 
     /**
+     * B.3.3 var statements in Catch blocks
+     */
+    CatchVarStatement,
+
+    /**
      * Moz-Extension: for-each statement
      */
     ForEachStatement,
@@ -143,7 +148,7 @@ public enum CompatibilityOption {
      * @return the options set for web-compatibility
      */
     public static final Set<CompatibilityOption> WebCompatibility() {
-        return EnumSet.range(LegacyOctalIntegerLiteral, BlockFunctionDeclaration);
+        return EnumSet.range(LegacyOctalIntegerLiteral, CatchVarStatement);
     }
 
     /**
