@@ -115,8 +115,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         /* [22.1.1.3] steps 3-6 */
         if (thisValue instanceof ExoticArray) {
             ExoticArray array = (ExoticArray) thisValue;
-            if (!array.getInitialisationState()) {
-                array.setInitialisationState(true);
+            if (array.initialize()) {
                 return array;
             }
         }

@@ -31,32 +31,24 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public final class ExoticArray extends OrdinaryObject {
-    /** [[ArrayInitialisationState]] */
-    private boolean initialisationState = false;
+    /** [[ArrayInitializationState]] */
+    private boolean initialized = false;
 
     public ExoticArray(Realm realm) {
         super(realm);
     }
 
     /**
-     * [[ArrayInitialisationState]]
+     * [[ArrayInitializationState]]
      *
-     * @return {@code true} if the array is initialized
+     * @return {@code true} if the array was successfully initialized
      */
-    public boolean getInitialisationState() {
-        return initialisationState;
-    }
-
-    /**
-     * [[ArrayInitialisationState]]
-     *
-     * @param initialisationState
-     *            the new initialization state value
-     */
-    public void setInitialisationState(boolean initialisationState) {
-        assert initialisationState : "cannot uninitialize an array";
-        assert !this.initialisationState : "array already initialized";
-        this.initialisationState = initialisationState;
+    public boolean initialize() {
+        if (initialized) {
+            return false;
+        }
+        initialized = true;
+        return true;
     }
 
     /**
@@ -157,7 +149,6 @@ public final class ExoticArray extends OrdinaryObject {
         array.setPrototype(proto);
         /* step 7 (not applicable) */
         /* step 8 */
-        array.initialisationState = false;
         long length = 0;
         /* step 9 (not applicable) */
         /* step 10 */
@@ -191,7 +182,7 @@ public final class ExoticArray extends OrdinaryObject {
         /* step 5 */
         array.setPrototype(proto);
         /* step 7 */
-        array.initialisationState = true;
+        array.initialized = true;
         /* step 8 (not applicable) */
         /* step 9 (see above) */
         /* step 10 */
