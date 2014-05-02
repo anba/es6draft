@@ -420,10 +420,10 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 long upper = len - lower - 1;
                 String upperP = ToString(upper);
                 String lowerP = ToString(lower);
-                Object lowerValue = Get(cx, o, lowerP);
-                Object upperValue = Get(cx, o, upperP);
                 boolean lowerExists = HasProperty(cx, o, lowerP);
+                Object lowerValue = lowerExists ? Get(cx, o, lowerP) : null;
                 boolean upperExists = HasProperty(cx, o, upperP);
+                Object upperValue = upperExists ? Get(cx, o, upperP) : null;
                 if (lowerExists && upperExists) {
                     Put(cx, o, lowerP, upperValue, true);
                     Put(cx, o, upperP, lowerValue, true);
@@ -811,26 +811,29 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             long len = ToLength(cx, lenVal);
             /* step 6 */
             int argCount = items.length;
-            /* steps 7-8 */
-            for (long k = len; k > 0; --k) {
-                String from = ToString(k - 1);
-                String to = ToString(k + argCount - 1);
-                boolean fromPresent = HasProperty(cx, o, from);
-                if (fromPresent) {
-                    Object fromValue = Get(cx, o, from);
-                    Put(cx, o, to, fromValue, true);
-                } else {
-                    DeletePropertyOrThrow(cx, o, to);
+            /* step 7 */
+            if (argCount > 0) {
+                /* steps 7.a-7.b */
+                for (long k = len; k > 0; --k) {
+                    String from = ToString(k - 1);
+                    String to = ToString(k + argCount - 1);
+                    boolean fromPresent = HasProperty(cx, o, from);
+                    if (fromPresent) {
+                        Object fromValue = Get(cx, o, from);
+                        Put(cx, o, to, fromValue, true);
+                    } else {
+                        DeletePropertyOrThrow(cx, o, to);
+                    }
+                }
+                /* steps 7.c-7.e */
+                for (int j = 0; j < items.length; ++j) {
+                    Object e = items[j];
+                    Put(cx, o, ToString(j), e, true);
                 }
             }
-            /* steps 9-11 */
-            for (int j = 0; j < items.length; ++j) {
-                Object e = items[j];
-                Put(cx, o, ToString(j), e, true);
-            }
-            /* steps 12-13 */
+            /* steps 8-9 */
             Put(cx, o, "length", len + argCount, true);
-            /* step 14 */
+            /* step 10 */
             return len + argCount;
         }
 
