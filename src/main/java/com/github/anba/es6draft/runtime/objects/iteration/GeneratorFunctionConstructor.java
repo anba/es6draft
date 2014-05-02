@@ -35,6 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>25 Control Abstraction Objects</h1><br>
@@ -125,7 +126,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         /* steps 21-22 */
         FunctionInitialize(calleeContext, fn, FunctionKind.Normal, function, scope);
         /* step 23 */
-        ScriptObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
+        OrdinaryObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
         /* step 24 */
         if (function.hasSuperReference()) {
             MakeMethod(fn, (String) null, null);

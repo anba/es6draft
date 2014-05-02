@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.Obj
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>6 ECMAScript Data Types and Values</h1><br>
@@ -276,7 +277,7 @@ public final class PropertyDescriptor implements Cloneable {
             return desc.getOrigin();
         }
         /* steps 3-4 */
-        ScriptObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        OrdinaryObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         /* steps 5-10 */
         if (desc.isDataDescriptor()) {
             obj.defineOwnProperty(cx, "value", _p(desc.getValue()));
@@ -316,7 +317,7 @@ public final class PropertyDescriptor implements Cloneable {
             return desc.origin;
         }
         /* steps 3-4 */
-        ScriptObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        OrdinaryObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         /* steps 5-10 */
         if (desc.hasValue()) {
             obj.defineOwnProperty(cx, "value", _p(desc.getValue()));

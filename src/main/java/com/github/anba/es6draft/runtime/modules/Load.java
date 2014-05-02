@@ -18,7 +18,7 @@ import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
@@ -383,7 +383,7 @@ public final class Load {
      *            the user metadata object
      * @return the new load request script object
      */
-    public static ScriptObject CreateLoadRequestObject(ExecutionContext cx, Object name,
+    public static OrdinaryObject CreateLoadRequestObject(ExecutionContext cx, Object name,
             Object metadata) {
         return CreateLoadRequestObject(cx, name, metadata, null, null);
     }
@@ -401,7 +401,7 @@ public final class Load {
      *            the module address
      * @return the new load request script object
      */
-    public static ScriptObject CreateLoadRequestObject(ExecutionContext cx, Object name,
+    public static OrdinaryObject CreateLoadRequestObject(ExecutionContext cx, Object name,
             Object metadata, Object address) {
         return CreateLoadRequestObject(cx, name, metadata, address, null);
     }
@@ -421,11 +421,11 @@ public final class Load {
      *            the module source
      * @return the new load request script object
      */
-    public static ScriptObject CreateLoadRequestObject(ExecutionContext cx, Object name,
+    public static OrdinaryObject CreateLoadRequestObject(ExecutionContext cx, Object name,
             Object metadata, Object address, Object source) {
         assert name != null && metadata != null;
         /* steps 1-2 */
-        ScriptObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        OrdinaryObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         /* step 3 */
         CreateDataProperty(cx, obj, "name", name);
         /* step 4 */

@@ -839,6 +839,7 @@ public class OrdinaryObject implements ScriptObject {
      * @return the list of own property keys
      */
     protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
+        // TODO: sort property keys
         return new ArrayList<>(__keys__());
     }
 

@@ -38,6 +38,7 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction.NativeFunctionId;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -105,7 +106,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* steps 5-6 */
             String s = ToFlatString(cx, string);
             /* step 7 */
-            ScriptObject result = RegExpBuiltinExec(cx, r, s);
+            ExoticArray result = RegExpBuiltinExec(cx, r, s);
             return result != null ? result : NULL;
         }
 
@@ -313,7 +314,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 /* steps 8.a-8.b */
                 Put(cx, rx, "lastIndex", 0, true);
                 /* step 8.c */
-                ScriptObject array = ArrayCreate(cx, 0);
+                ExoticArray array = ArrayCreate(cx, 0);
                 /* step 8.d */
                 // double previousLastIndex = 0;
                 /* steps 8.e-8.f */
@@ -610,6 +611,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             }
             /* step 14 */
             if (result instanceof ScriptObjectMatchResult) {
+                // Extract wrapped script object to ensure no ToInteger conversion takes place
                 ScriptObject object = ((ScriptObjectMatchResult) result).object;
                 return Get(cx, object, "index");
             }
@@ -638,7 +640,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* steps 6-7 */
             String s = ToFlatString(cx, string);
             /* steps 8-9 */
-            ScriptObject a = ArrayCreate(cx, 0);
+            ExoticArray a = ArrayCreate(cx, 0);
             /* step 10 */
             int lengthA = 0;
             /* step 11 */
@@ -870,7 +872,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      *            the string
      * @return the match result object or null
      */
-    private static ScriptObject RegExpBuiltinExec(ExecutionContext cx, RegExpObject r, String s) {
+    private static ExoticArray RegExpBuiltinExec(ExecutionContext cx, RegExpObject r, String s) {
         /* steps 1-19 */
         MatchResult m = getMatcherOrNull(cx, r, s);
         if (m == null) {
@@ -953,13 +955,13 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      *            the match result
      * @return the match result script object
      */
-    private static ScriptObject toMatchResult(ExecutionContext cx, String s, MatchResult m) {
+    private static ExoticArray toMatchResult(ExecutionContext cx, String s, MatchResult m) {
         /* steps 17-18 */
         int e = m.end();
         /* step 20 */
         int n = m.groupCount();
         /* step 21 */
-        ScriptObject array = ArrayCreate(cx, n + 1);
+        ExoticArray array = ArrayCreate(cx, n + 1);
         /* step 22 (omitted) */
         /* step 23 */
         int matchIndex = m.start();

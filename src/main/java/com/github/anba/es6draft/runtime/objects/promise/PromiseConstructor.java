@@ -39,6 +39,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
 /**
  * <h1>25 Control Abstraction Objects</h1><br>
@@ -180,7 +181,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
                 return IfAbruptRejectPromise(cx, e, promiseCapability);
             }
             /* step 6 */
-            ScriptObject values = ArrayCreate(cx, 0);
+            ExoticArray values = ArrayCreate(cx, 0);
             /* step 7 */
             AtomicInteger remainingElementsCount = new AtomicInteger(1);
             /* steps 8-9 */
@@ -401,7 +402,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         private final int index;
 
         /** [[Values]] */
-        private final ScriptObject values;
+        private final ExoticArray values;
 
         /** [[Capabilities]] */
         private final PromiseCapability<?> capabilities;
@@ -412,14 +413,14 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         /** [[AlreadyCalled]] */
         private final AtomicBoolean alreadyCalled;
 
-        public PromiseAllResolveElementFunction(Realm realm, int index, ScriptObject values,
+        public PromiseAllResolveElementFunction(Realm realm, int index, ExoticArray values,
                 PromiseCapability<?> capabilities, AtomicInteger remainingElements,
                 AtomicBoolean alreadyCalled) {
             this(realm, index, values, capabilities, remainingElements, alreadyCalled, null);
             createDefaultFunctionProperties(ANONYMOUS, 1);
         }
 
-        private PromiseAllResolveElementFunction(Realm realm, int index, ScriptObject values,
+        private PromiseAllResolveElementFunction(Realm realm, int index, ExoticArray values,
                 PromiseCapability<?> capabilities, AtomicInteger remainingElements,
                 AtomicBoolean alreadyCalled, Void ignore) {
             super(realm, ANONYMOUS);
@@ -447,7 +448,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* step 3 */
             int index = this.index;
             /* step 4 */
-            ScriptObject values = this.values;
+            ExoticArray values = this.values;
             /* step 5 */
             PromiseCapability<?> promiseCapability = this.capabilities;
             /* step 6 */

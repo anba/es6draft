@@ -44,7 +44,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_CreateIterResultObject = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "CreateIterResultObject", Type
-                        .getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object,
+                        .getMethodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Object,
                                 Type.BOOLEAN_TYPE));
 
         static final MethodDesc AbstractOperations_GetIterator = MethodDesc.create(
@@ -230,7 +230,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         static final MethodDesc ScriptRuntime_EvaluateConstructorMethod = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateConstructorMethod", Type
                         .getMethodType(Types.OrdinaryFunction, Types.ScriptObject,
-                                Types.ScriptObject, Types.RuntimeInfo$Function,
+                                Types.OrdinaryObject, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_getClassProto = MethodDesc.create(MethodType.Static,
@@ -1168,6 +1168,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.swap();
         mv.iconst(0);
         mv.aload(Types.ScriptObject_);
+        mv.checkcast(Types.OrdinaryObject);
 
         // stack: [ctor, proto] -> [proto, ctor, proto]
         mv.dupX1();
@@ -1277,7 +1278,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      */
     protected final void delegatedYield(Expression node, ExpressionVisitor mv) {
         mv.lineInfo(node);
-        if (!mv.hasSyntheticMethods() && mv.hasStack()) {
+        if (!mv.hasSyntheticMethods()) {
+            assert mv.hasStack();
             Label iteratorNext = new Label(), iteratorThrow = new Label(), iteratorComplete = new Label();
             Label done = new Label();
 
@@ -1387,7 +1389,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      */
     protected final void yield(Expression node, ExpressionVisitor mv) {
         mv.lineInfo(node);
-        if (!mv.hasSyntheticMethods() && mv.hasStack()) {
+        if (!mv.hasSyntheticMethods()) {
+            assert mv.hasStack();
             mv.loadExecutionContext();
             mv.swap();
             mv.iconst(false);

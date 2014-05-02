@@ -16,7 +16,8 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>24 Structured Data</h1><br>
@@ -149,8 +150,8 @@ public final class JSONParser {
      * 
      * @return the script object represented by the JSON object
      */
-    private ScriptObject jsonObject() {
-        ScriptObject object = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+    private OrdinaryObject jsonObject() {
+        OrdinaryObject object = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         consume(Token.LC);
         if (token() != Token.RC) {
             jsonMember(object);
@@ -172,7 +173,7 @@ public final class JSONParser {
      * @param object
      *            the script object to hold the JSON member value
      */
-    private void jsonMember(ScriptObject object) {
+    private void jsonMember(OrdinaryObject object) {
         consume(Token.STRING);
         String name = ts.getString();
         consume(Token.COLON);
@@ -192,8 +193,8 @@ public final class JSONParser {
      * 
      * @return the script object represented by the JSON array
      */
-    private ScriptObject jsonArray() {
-        ScriptObject array = ArrayCreate(cx, 0);
+    private ExoticArray jsonArray() {
+        ExoticArray array = ArrayCreate(cx, 0);
         consume(Token.LB);
         if (token() != Token.RB) {
             long index = 0;

@@ -24,6 +24,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -163,7 +164,7 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
                     || itemKind == ArrayIterationKind.SparseKeyValue) {
                 /* step 14 */
                 assert elementValue != null;
-                ScriptObject result = ArrayCreate(cx, 2);
+                ExoticArray result = ArrayCreate(cx, 2);
                 CreateDataProperty(cx, result, "0", index);
                 CreateDataProperty(cx, result, "1", elementValue);
                 return CreateIterResultObject(cx, result, false);

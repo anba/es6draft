@@ -33,6 +33,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -322,8 +323,8 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
         return sb.toString();
     }
 
-    private static ScriptObject getStackTrace(ExecutionContext cx, ErrorObject e) {
-        List<ScriptObject> list = new ArrayList<>();
+    private static ExoticArray getStackTrace(ExecutionContext cx, ErrorObject e) {
+        List<OrdinaryObject> list = new ArrayList<>();
         for (StackTraceElement element : new StackTraceElementIterable(e)) {
             OrdinaryObject elem = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             CreateDataProperty(cx, elem, "methodName", getMethodName(element));

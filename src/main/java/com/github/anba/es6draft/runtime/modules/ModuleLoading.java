@@ -38,6 +38,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
@@ -80,7 +81,7 @@ public final class ModuleLoading {
             step = AsyncStartLoadPartwayThrough.Step.Fetch;
         }
         /* step 8 */
-        ScriptObject metadata = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        OrdinaryObject metadata = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         /* step 9 */
         return PromiseOfStartLoadPartwayThrough(cx, step, loader, sname, metadata, source, address);
     }
@@ -297,7 +298,7 @@ public final class ModuleLoading {
                 throw newTypeError(calleeContext, Messages.Key.NotCallable);
             }
             /* step 7 */
-            ScriptObject obj = CreateLoadRequestObject(calleeContext, load.getNameOrNull(),
+            OrdinaryObject obj = CreateLoadRequestObject(calleeContext, load.getNameOrNull(),
                     load.getMetadata());
             /* step 8 */
             // FIXME: spec bug - missing 'loader as thisArgument'
@@ -376,7 +377,7 @@ public final class ModuleLoading {
                 throw newTypeError(calleeContext, Messages.Key.NotCallable);
             }
             /* step 9 */
-            ScriptObject obj = CreateLoadRequestObject(calleeContext, load.getNameOrNull(),
+            OrdinaryObject obj = CreateLoadRequestObject(calleeContext, load.getNameOrNull(),
                     load.getMetadata(), address);
             /* step 10 */
             // FIXME: spec bug - missing 'loader as thisArgument'
@@ -463,7 +464,7 @@ public final class ModuleLoading {
                 throw newTypeError(calleeContext, Messages.Key.NotCallable);
             }
             /* step 7 */
-            ScriptObject obj = CreateLoadRequestObject(calleeContext, load.getNameOrNull(),
+            OrdinaryObject obj = CreateLoadRequestObject(calleeContext, load.getNameOrNull(),
                     load.getMetadata(), load.getAddress(), source);
             /* step 8 */
             // FIXME: spec bug - missing 'loader as thisArgument'
@@ -520,7 +521,7 @@ public final class ModuleLoading {
                 throw newTypeError(calleeContext, Messages.Key.NotCallable);
             }
             /* step 9 */
-            ScriptObject obj = CreateLoadRequestObject(calleeContext, load.getNameOrNull(),
+            OrdinaryObject obj = CreateLoadRequestObject(calleeContext, load.getNameOrNull(),
                     load.getMetadata(), load.getAddress(), ssource);
             /* step 10 */
             // FIXME: spec bug - missing 'loader as thisArgument'

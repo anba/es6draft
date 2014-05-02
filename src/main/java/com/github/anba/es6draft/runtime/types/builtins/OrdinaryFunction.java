@@ -298,7 +298,7 @@ public class OrdinaryFunction extends FunctionObject {
     public static void MakeConstructor(ExecutionContext cx, FunctionObject f) {
         /* step 3 */
         boolean installNeeded = true;
-        ScriptObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         /* step 4 */
         boolean writablePrototype = true;
         MakeConstructor(cx, f, writablePrototype, prototype, installNeeded);

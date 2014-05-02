@@ -15,8 +15,8 @@ import java.util.Iterator;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>7 Abstract Operations</h1><br>
@@ -42,7 +42,7 @@ public final class ListIteratorNext extends BuiltinFunction {
     }
 
     @Override
-    public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public OrdinaryObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* step 1 (omitted) */
         /* step 2 */

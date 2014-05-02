@@ -94,7 +94,7 @@ public class ExoticProxy implements ScriptObject {
                 return ((Callable) target).call(callerContext, thisValue, args);
             }
             /* step 7 */
-            ScriptObject argArray = CreateArrayFromList(callerContext, Arrays.asList(args));
+            ExoticArray argArray = CreateArrayFromList(callerContext, Arrays.asList(args));
             /* step 8 */
             return trap.call(callerContext, handler, target, thisValue, argArray);
         }
@@ -148,7 +148,7 @@ public class ExoticProxy implements ScriptObject {
                 return ((Constructor) target).construct(callerContext, args);
             }
             /* step 7 */
-            ScriptObject argArray = CreateArrayFromList(callerContext, Arrays.asList(args));
+            ExoticArray argArray = CreateArrayFromList(callerContext, Arrays.asList(args));
             /* steps 8-9 */
             Object newObj = trap.call(callerContext, handler, target, argArray);
             /* step 10 */

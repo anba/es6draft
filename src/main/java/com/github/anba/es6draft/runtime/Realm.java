@@ -73,6 +73,7 @@ import com.github.anba.es6draft.runtime.objects.text.StringPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -86,7 +87,7 @@ public final class Realm {
     /**
      * [[intrinsics]]
      */
-    private final EnumMap<Intrinsics, ScriptObject> intrinsics = new EnumMap<>(Intrinsics.class);
+    private final EnumMap<Intrinsics, OrdinaryObject> intrinsics = new EnumMap<>(Intrinsics.class);
 
     /**
      * [[realmObject]]
@@ -136,7 +137,7 @@ public final class Realm {
     private final SecureRandom random = new SecureRandom();
 
     // TODO: move into function source object
-    private final HashMap<String, ScriptObject> templateCallSites = new HashMap<>();
+    private final HashMap<String, ExoticArray> templateCallSites = new HashMap<>();
 
     private Realm(World<? extends GlobalObject> world) {
         this.world = world;
@@ -214,7 +215,7 @@ public final class Realm {
      *            the intrinsic identifier
      * @return the intrinsic object
      */
-    public ScriptObject getIntrinsic(Intrinsics id) {
+    public OrdinaryObject getIntrinsic(Intrinsics id) {
         return intrinsics.get(id);
     }
 
@@ -490,7 +491,7 @@ public final class Realm {
      *            the template literal key
      * @return the call-site object
      */
-    public ScriptObject getTemplateCallSite(String key) {
+    public ExoticArray getTemplateCallSite(String key) {
         return templateCallSites.get(key);
     }
 
@@ -502,7 +503,7 @@ public final class Realm {
      * @param callSite
      *            the call-site object
      */
-    public void addTemplateCallSite(String key, ScriptObject callSite) {
+    public void addTemplateCallSite(String key, ExoticArray callSite) {
         templateCallSites.put(key, callSite);
     }
 
@@ -612,7 +613,7 @@ public final class Realm {
      *            the realm instance
      */
     private static void initializeFundamentalObjects(Realm realm) {
-        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -638,7 +639,7 @@ public final class Realm {
 
         // Object.prototype.toString is also an intrinsic
         Object objectPrototypeToString = Get(defaultContext, objectPrototype, "toString");
-        intrinsics.put(Intrinsics.ObjProto_toString, (ScriptObject) objectPrototypeToString);
+        intrinsics.put(Intrinsics.ObjProto_toString, (OrdinaryObject) objectPrototypeToString);
     }
 
     /**
@@ -650,7 +651,7 @@ public final class Realm {
      *            the realm instance
      */
     private static void initializeStandardObjects(Realm realm) {
-        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -721,7 +722,7 @@ public final class Realm {
 
         // Array.prototype.values is also an intrinsic
         Object arrayPrototypeValues = Get(defaultContext, arrayPrototype, "values");
-        intrinsics.put(Intrinsics.ArrayProto_values, (ScriptObject) arrayPrototypeValues);
+        intrinsics.put(Intrinsics.ArrayProto_values, (OrdinaryObject) arrayPrototypeValues);
     }
 
     /**
@@ -733,7 +734,7 @@ public final class Realm {
      *            the realm instance
      */
     private static void initializeNativeErrors(Realm realm) {
-        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -805,7 +806,7 @@ public final class Realm {
      *            the realm instance
      */
     private static void initializeInternalObjects(Realm realm) {
-        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
 
         // intrinsic functions
         intrinsics.put(Intrinsics.ListIteratorNext, new ListIteratorNext(realm));
@@ -818,7 +819,7 @@ public final class Realm {
      *            the realm instance
      */
     private static void initializeCollectionModule(Realm realm) {
-        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -865,7 +866,7 @@ public final class Realm {
      *            the realm instance
      */
     private static void initializeReflectModule(Realm realm) {
-        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -906,7 +907,7 @@ public final class Realm {
      *            the realm instance
      */
     private static void initializeIterationModule(Realm realm) {
-        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -938,7 +939,7 @@ public final class Realm {
      *            the realm instance
      */
     private static void initializeBinaryModule(Realm realm) {
-        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -1043,7 +1044,7 @@ public final class Realm {
      *            the realm instance
      */
     private static void initializePromiseObjects(Realm realm) {
-        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
@@ -1069,7 +1070,7 @@ public final class Realm {
      *            the realm instance
      */
     private static void initializeInternationalisation(Realm realm) {
-        EnumMap<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase

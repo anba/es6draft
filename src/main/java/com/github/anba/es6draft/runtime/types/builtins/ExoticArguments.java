@@ -6,7 +6,9 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
 

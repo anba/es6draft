@@ -72,7 +72,7 @@ final class BindingInitializationGenerator {
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_createRestArray = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "createRestArray",
-                Type.getMethodType(Types.ScriptObject, Types.Iterator, Types.ExecutionContext));
+                Type.getMethodType(Types.ExoticArray, Types.Iterator, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "ensureObject",

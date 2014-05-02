@@ -145,7 +145,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         static final MethodDesc ScriptRuntime_ArrayAccumulationSpreadElement = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "ArrayAccumulationSpreadElement", Type
-                        .getMethodType(Type.INT_TYPE, Types.ScriptObject, Type.INT_TYPE,
+                        .getMethodType(Type.INT_TYPE, Types.ExoticArray, Type.INT_TYPE,
                                 Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_CheckCallable = MethodDesc.create(MethodType.Static,
@@ -154,7 +154,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         static final MethodDesc ScriptRuntime_defineProperty__int = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "defineProperty", Type.getMethodType(
-                        Type.VOID_TYPE, Types.ScriptObject, Type.INT_TYPE, Types.Object,
+                        Type.VOID_TYPE, Types.ExoticArray, Type.INT_TYPE, Types.Object,
                         Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_directEvalFallbackArguments = MethodDesc.create(
@@ -201,13 +201,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         static final MethodDesc ScriptRuntime_EvaluateGeneratorComprehension = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateGeneratorComprehension", Type
-                        .getMethodType(Types.ScriptObject, Types.RuntimeInfo$Function,
+                        .getMethodType(Types.GeneratorObject, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateLegacyGeneratorComprehension = MethodDesc
                 .create(MethodType.Static, Types.ScriptRuntime,
                         "EvaluateLegacyGeneratorComprehension", Type.getMethodType(
-                                Types.ScriptObject, Types.RuntimeInfo$Function,
+                                Types.GeneratorObject, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateGeneratorExpression = MethodDesc.create(

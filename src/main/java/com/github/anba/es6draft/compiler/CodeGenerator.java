@@ -45,7 +45,7 @@ import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
 import com.github.anba.es6draft.runtime.internal.JVMNames;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * 
@@ -79,9 +79,9 @@ final class CodeGenerator {
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_GetTemplateCallSite = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "GetTemplateCallSite", Type.getMethodType(
-                        Types.ScriptObject, Types.String, Types.MethodHandle,
-                        Types.ExecutionContext));
+                MethodType.Static, Types.ScriptRuntime, "GetTemplateCallSite", Type
+                        .getMethodType(Types.ExoticArray, Types.String, Types.MethodHandle,
+                                Types.ExecutionContext));
     }
 
     private static final class MethodDescriptors {
@@ -94,7 +94,7 @@ final class CodeGenerator {
                 Types.ExecutionContext, Types.ExoticArray, Type.INT_TYPE);
 
         static final String PropertyDefinitionsMethod = Type.getMethodDescriptor(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.ScriptObject);
+                Types.ExecutionContext, Types.OrdinaryObject);
 
         static final String ExpressionMethod = Type.getMethodDescriptor(Types.Object,
                 Types.ExecutionContext);
@@ -860,7 +860,7 @@ final class CodeGenerator {
             body.begin();
 
             body.setScope(mv.getScope());
-            Variable<ScriptObject> object = body.getParameter(1, ScriptObject.class);
+            Variable<OrdinaryObject> object = body.getParameter(1, OrdinaryObject.class);
             for (PropertyDefinition property : node.getProperties()) {
                 body.load(object);
                 propertyDefinition(property, body);
@@ -1079,7 +1079,7 @@ final class CodeGenerator {
         public void begin() {
             super.begin();
             setParameterName("cx", 0, Types.ExecutionContext);
-            setParameterName("object", 1, Types.ScriptObject);
+            setParameterName("object", 1, Types.OrdinaryObject);
         }
     }
 

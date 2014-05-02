@@ -42,6 +42,7 @@ import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -2030,10 +2031,10 @@ public final class AbstractOperations {
      *            the array elements
      * @return the array object
      */
-    public static ScriptObject CreateArrayFromList(ExecutionContext cx, List<?> elements) {
+    public static ExoticArray CreateArrayFromList(ExecutionContext cx, List<?> elements) {
         /* step 1 (not applicable) */
         /* step 2 */
-        ScriptObject array = ArrayCreate(cx, 0);
+        ExoticArray array = ArrayCreate(cx, 0);
         /* step 3 */
         int n = 0;
         /* step 4 */
@@ -2550,7 +2551,7 @@ public final class AbstractOperations {
      *            the iterator result state
      * @return the new iterator result object
      */
-    public static ScriptObject CreateIterResultObject(ExecutionContext cx, Object value,
+    public static OrdinaryObject CreateIterResultObject(ExecutionContext cx, Object value,
             boolean done) {
         /* step 1 (not applicable) */
         /* step 2 */

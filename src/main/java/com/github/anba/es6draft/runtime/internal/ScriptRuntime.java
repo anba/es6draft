@@ -43,6 +43,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
@@ -174,7 +175,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void defineProperty(ScriptObject array, int nextIndex, Object value,
+    public static void defineProperty(ExoticArray array, int nextIndex, Object value,
             ExecutionContext cx) {
         // String propertyName = ToString(ToUint32(nextIndex));
         String propertyName = ToString(nextIndex);
@@ -201,7 +202,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the next array index
      */
-    public static int ArrayAccumulationSpreadElement(ScriptObject array, int nextIndex,
+    public static int ArrayAccumulationSpreadElement(ExoticArray array, int nextIndex,
             Object spreadObj, ExecutionContext cx) {
         /* steps 1-3 (cf. generated code) */
         /* step 4 */
@@ -237,7 +238,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void defineProperty(ScriptObject object, Object propertyName, Object value,
+    public static void defineProperty(OrdinaryObject object, Object propertyName, Object value,
             ExecutionContext cx) {
         DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
                 true));
@@ -257,7 +258,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void defineProperty(ScriptObject object, String propertyName, Object value,
+    public static void defineProperty(OrdinaryObject object, String propertyName, Object value,
             ExecutionContext cx) {
         DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
                 true));
@@ -275,7 +276,7 @@ public final class ScriptRuntime {
      * @param f
      *            the function object
      */
-    public static void updateMethod(ScriptObject object, Object propertyName, FunctionObject f) {
+    public static void updateMethod(OrdinaryObject object, Object propertyName, FunctionObject f) {
         f.updateMethod(propertyName, object);
     }
 
@@ -290,7 +291,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the generator object
      */
-    public static ScriptObject EvaluateGeneratorComprehension(RuntimeInfo.Function fd,
+    public static GeneratorObject EvaluateGeneratorComprehension(RuntimeInfo.Function fd,
             ExecutionContext cx) {
         /* step 1 (omitted) */
         /* step 2 */
@@ -319,7 +320,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the generator object
      */
-    public static ScriptObject EvaluateLegacyGeneratorComprehension(RuntimeInfo.Function fd,
+    public static GeneratorObject EvaluateLegacyGeneratorComprehension(RuntimeInfo.Function fd,
             ExecutionContext cx) {
         /* step 1 (omitted) */
         /* step 2 */
@@ -350,11 +351,11 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the template call site object
      */
-    public static ScriptObject GetTemplateCallSite(String key, MethodHandle handle,
+    public static ExoticArray GetTemplateCallSite(String key, MethodHandle handle,
             ExecutionContext cx) {
         Realm realm = cx.getRealm();
         /* step 1 */
-        ScriptObject callSite = realm.getTemplateCallSite(key);
+        ExoticArray callSite = realm.getTemplateCallSite(key);
         if (callSite != null) {
             return callSite;
         }
@@ -364,8 +365,8 @@ public final class ScriptRuntime {
         /* step 4 */
         int count = strings.length >>> 1;
         /* steps 5-6 */
-        ScriptObject siteObj = ArrayCreate(cx, count);
-        ScriptObject rawObj = ArrayCreate(cx, count);
+        ExoticArray siteObj = ArrayCreate(cx, count);
+        ExoticArray rawObj = ArrayCreate(cx, count);
         /* steps 7-8 */
         for (int i = 0, n = strings.length; i < n; i += 2) {
             int index = i >>> 1;
@@ -1161,8 +1162,8 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the array with the remaining elements from <var>iterator</var>
      */
-    public static ScriptObject createRestArray(Iterator<?> iterator, ExecutionContext cx) {
-        ScriptObject result = ArrayCreate(cx, 0);
+    public static ExoticArray createRestArray(Iterator<?> iterator, ExecutionContext cx) {
+        ExoticArray result = ArrayCreate(cx, 0);
         for (int n = 0; iterator.hasNext(); ++n) {
             Object nextValue = iterator.next();
             CreateDataPropertyOrThrow(cx, result, ToString(n), nextValue);
@@ -1476,7 +1477,7 @@ public final class ScriptRuntime {
      * @return the new function instance
      */
     public static OrdinaryFunction EvaluateConstructorMethod(ScriptObject constructorParent,
-            ScriptObject proto, RuntimeInfo.Function fd, ExecutionContext cx) {
+            OrdinaryObject proto, RuntimeInfo.Function fd, ExecutionContext cx) {
         // ClassDefinitionEvaluation - steps 9-10
         // -> calls DefineMethod
         String propKey = "constructor";
@@ -1516,7 +1517,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinition(ScriptObject object, Object propKey,
+    public static void EvaluatePropertyDefinition(OrdinaryObject object, Object propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
             EvaluatePropertyDefinition(object, (String) propKey, fd, cx);
@@ -1542,7 +1543,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinition(ScriptObject object, String propKey,
+    public static void EvaluatePropertyDefinition(OrdinaryObject object, String propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (DefineMethod) */
         /* DefineMethod: steps 1-3 (generated code) */
@@ -1579,7 +1580,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinition(ScriptObject object, Symbol propKey,
+    public static void EvaluatePropertyDefinition(OrdinaryObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (DefineMethod) */
         /* DefineMethod: steps 1-3 (generated code) */
@@ -1616,7 +1617,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionGetter(ScriptObject object, Object propKey,
+    public static void EvaluatePropertyDefinitionGetter(OrdinaryObject object, Object propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
             EvaluatePropertyDefinitionGetter(object, (String) propKey, fd, cx);
@@ -1642,7 +1643,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionGetter(ScriptObject object, String propKey,
+    public static void EvaluatePropertyDefinitionGetter(OrdinaryObject object, String propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
@@ -1681,7 +1682,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionGetter(ScriptObject object, Symbol propKey,
+    public static void EvaluatePropertyDefinitionGetter(OrdinaryObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
@@ -1720,7 +1721,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionSetter(ScriptObject object, Object propKey,
+    public static void EvaluatePropertyDefinitionSetter(OrdinaryObject object, Object propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
             EvaluatePropertyDefinitionSetter(object, (String) propKey, fd, cx);
@@ -1746,7 +1747,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionSetter(ScriptObject object, String propKey,
+    public static void EvaluatePropertyDefinitionSetter(OrdinaryObject object, String propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
@@ -1785,7 +1786,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionSetter(ScriptObject object, Symbol propKey,
+    public static void EvaluatePropertyDefinitionSetter(OrdinaryObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
@@ -1892,7 +1893,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, Object propKey,
+    public static void EvaluatePropertyDefinitionGenerator(OrdinaryObject object, Object propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
             EvaluatePropertyDefinitionGenerator(object, (String) propKey, fd, cx);
@@ -1918,7 +1919,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, String propKey,
+    public static void EvaluatePropertyDefinitionGenerator(OrdinaryObject object, String propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (bytecode) */
         /* step 3 (not applicable) */
@@ -1960,7 +1961,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, Symbol propKey,
+    public static void EvaluatePropertyDefinitionGenerator(OrdinaryObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (bytecode) */
         /* step 3 (not applicable) */
@@ -2198,7 +2199,7 @@ public final class ScriptRuntime {
         ScriptObject protoParent = cx.getIntrinsic(Intrinsics.ObjectPrototype);
         ScriptObject constructorParent = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         // step 3
-        ScriptObject proto = ObjectCreate(cx, protoParent);
+        OrdinaryObject proto = ObjectCreate(cx, protoParent);
         return new ScriptObject[] { proto, constructorParent };
     }
 
@@ -2231,7 +2232,7 @@ public final class ScriptRuntime {
             constructorParent = Type.objectValue(superClass);
         }
         // step 3
-        ScriptObject proto = ObjectCreate(cx, protoParent);
+        OrdinaryObject proto = ObjectCreate(cx, protoParent);
         return new ScriptObject[] { proto, constructorParent };
     }
 
@@ -2472,7 +2473,7 @@ public final class ScriptRuntime {
      * @param fd
      *            the function runtime info object
      */
-    public static void EvaluatePropertyDefinitionAsync(ScriptObject object, Object propKey,
+    public static void EvaluatePropertyDefinitionAsync(OrdinaryObject object, Object propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
             EvaluatePropertyDefinitionAsync(object, (String) propKey, fd, cx);
@@ -2493,7 +2494,7 @@ public final class ScriptRuntime {
      * @param fd
      *            the function runtime info object
      */
-    public static void EvaluatePropertyDefinitionAsync(ScriptObject object, String propKey,
+    public static void EvaluatePropertyDefinitionAsync(OrdinaryObject object, String propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (bytecode) */
         /* step 3 (not applicable) */
@@ -2529,7 +2530,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionAsync(ScriptObject object, Symbol propKey,
+    public static void EvaluatePropertyDefinitionAsync(OrdinaryObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (bytecode) */
         /* step 3 (not applicable) */
@@ -2582,7 +2583,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void defineProtoProperty(ScriptObject object, Object value, ExecutionContext cx) {
+    public static void defineProtoProperty(OrdinaryObject object, Object value, ExecutionContext cx) {
         // FIXME: function .name and __proto__ interaction unclear
         if (Type.isObjectOrNull(value)) {
             object.setPrototypeOf(cx, Type.objectValueOrNull(value));

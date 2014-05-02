@@ -37,6 +37,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -216,7 +217,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                 throw newTypeError(cx, Messages.Key.NotObjectOrNull);
             }
             /* step 2 */
-            ScriptObject obj = ObjectCreate(cx, Type.objectValueOrNull(o));
+            OrdinaryObject obj = ObjectCreate(cx, Type.objectValueOrNull(o));
             /* step 3 */
             if (!Type.isUndefined(properties)) {
                 return ObjectDefineProperties(cx, obj, properties);
@@ -628,7 +629,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
      *            the script object
      * @return the own string-valued property keys of <var>o</var>
      */
-    public static ScriptObject GetOwnPropertyNames(ExecutionContext cx, Object o) {
+    public static ExoticArray GetOwnPropertyNames(ExecutionContext cx, Object o) {
         /* steps 1-2 */
         ScriptObject obj = ToObject(cx, o);
         /* steps 3-4 */
@@ -656,7 +657,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
      *            the script object
      * @return the own symbol-valued property keys of <var>o</var>
      */
-    public static ScriptObject GetOwnPropertySymbols(ExecutionContext cx, Object o) {
+    public static ExoticArray GetOwnPropertySymbols(ExecutionContext cx, Object o) {
         /* steps 1-2 */
         ScriptObject obj = ToObject(cx, o);
         /* steps 3-4 */

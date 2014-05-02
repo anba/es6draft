@@ -27,8 +27,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.modules.ModuleLinkage;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -164,7 +164,7 @@ public final class LoaderIteratorPrototype extends OrdinaryObject implements Ini
                 } else {
                     // FIXME: spec bug? need to protect against returning half-init modules?
                     assert itemKind == LoaderIterationKind.KeyValue;
-                    ScriptObject array = ArrayCreate(cx, 2);
+                    ExoticArray array = ArrayCreate(cx, 2);
                     CreateDataProperty(cx, array, "0", e.getKey());
                     CreateDataProperty(cx, array, "1", e.getValue().getModuleObject());
                     result = array;

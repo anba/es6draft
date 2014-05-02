@@ -39,6 +39,7 @@ import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * Simple interpreter to speed-up `eval` evaluation
@@ -794,7 +795,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     @Override
     public Object visit(ObjectLiteral node, ExecutionContext cx) {
-        ScriptObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        OrdinaryObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         for (PropertyDefinition propertyDefinition : node.getProperties()) {
             assert propertyDefinition instanceof PropertyValueDefinition;
             PropertyValueDefinition propValDef = (PropertyValueDefinition) propertyDefinition;

@@ -136,7 +136,7 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             RealmObject realmObject = thisRealmObject(cx, thisValue);
             Realm realm = realmObject.getRealm();
             /* step 5 */
-            ScriptObject table = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            OrdinaryObject table = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             /* step 6 */
             for (Intrinsics intrinsic : Intrinsics.values()) {
                 if (internalIntrinsics.contains(intrinsic)) {
@@ -172,7 +172,7 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             Realm realm = realmObject.getRealm();
             /* steps 5-6 */
             // FIXME: spec bug - props not applicable for Object.defineProperties
-            ScriptObject props = realm.getGlobalObject().getBuiltinProperties(cx);
+            OrdinaryObject props = realm.getGlobalObject().getBuiltinProperties(cx);
             /* step 7 */
             return props;
         }

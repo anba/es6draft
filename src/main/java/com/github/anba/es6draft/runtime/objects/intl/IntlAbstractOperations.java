@@ -27,6 +27,7 @@ import com.github.anba.es6draft.runtime.objects.intl.LanguageTagParser.LanguageT
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.ibm.icu.util.LocaleMatcher;
 import com.ibm.icu.util.LocalePriorityList;
 import com.ibm.icu.util.TimeZone;
@@ -917,7 +918,7 @@ public final class IntlAbstractOperations {
         } else {
             subset = LookupSupportedLocales(cx, availableLocales, requestedLocales);
         }
-        ScriptObject array = ArrayCreate(cx, subset.size());
+        ExoticArray array = ArrayCreate(cx, subset.size());
         for (int i = 0, size = subset.size(); i < size; ++i) {
             String key = Integer.toString(i);
             Object value = subset.get(i);

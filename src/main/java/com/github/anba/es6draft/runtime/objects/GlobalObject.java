@@ -102,8 +102,8 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
      *            the execution context
      * @return the built-in properties of the Global Object
      */
-    public final ScriptObject getBuiltinProperties(ExecutionContext cx) {
-        ScriptObject props = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+    public final OrdinaryObject getBuiltinProperties(ExecutionContext cx) {
+        OrdinaryObject props = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         // FIXME: spec issue - copy non-standard properties?
         Iterator<?> keys = GetOwnPropertyNamesIterator(cx, this);
         while (keys.hasNext()) {

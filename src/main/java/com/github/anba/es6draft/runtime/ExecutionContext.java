@@ -19,6 +19,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1>
@@ -55,7 +56,7 @@ public final class ExecutionContext {
         return varEnv;
     }
 
-    public ScriptObject getIntrinsic(Intrinsics id) {
+    public OrdinaryObject getIntrinsic(Intrinsics id) {
         return realm.getIntrinsic(id);
     }
 

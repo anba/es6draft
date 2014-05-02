@@ -43,6 +43,7 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.ibm.icu.lang.UCharacter;
@@ -556,7 +557,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* steps 4-5 */
             String s = ToFlatString(cx, obj);
             /* step 6 */
-            ScriptObject a = ArrayCreate(cx, 0);
+            ExoticArray a = ArrayCreate(cx, 0);
             /* step 7 */
             int lengthA = 0;
             /* step 8 */

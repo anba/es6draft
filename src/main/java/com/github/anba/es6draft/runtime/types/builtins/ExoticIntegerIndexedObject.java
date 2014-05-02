@@ -6,7 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CanonicalNumericString;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsInteger;
 
 import java.util.List;
 

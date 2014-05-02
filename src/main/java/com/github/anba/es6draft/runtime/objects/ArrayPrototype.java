@@ -1701,7 +1701,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object unscopables(ExecutionContext cx) {
             /* step 1 */
-            ScriptObject blackList = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            OrdinaryObject blackList = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             /* steps 2-8 */
             boolean status = true;
             status &= CreateDataProperty(cx, blackList, "find", true);
