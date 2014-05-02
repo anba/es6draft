@@ -6,12 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.objects.reflect;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToPropertyKey;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareForTailCall;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
@@ -25,7 +23,10 @@ import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtensi
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
+import com.github.anba.es6draft.runtime.internal.Properties.TailCall;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -73,7 +74,66 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         public static final Intrinsics Realm = Intrinsics.Realm;
 
         /**
-         * 26.1.6 Reflect.getPrototypeOf (target)
+         * 26.1.1 Reflect.apply ( target, thisArgument, argumentsList )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @param thisArgument
+         *            the this-binding for the [[Call]] invocation
+         * @param argumentsList
+         *            the function arguments
+         * @return the function call result
+         */
+        @TailCall
+        @Function(name = "apply", arity = 3)
+        public static Object apply(ExecutionContext cx, Object thisValue, Object target,
+                Object thisArgument, Object argumentsList) {
+            /* steps 1-2 */
+            ScriptObject obj = ToObject(cx, target);
+            /* step 3 */
+            if (!IsCallable(obj)) {
+                throw newTypeError(cx, Messages.Key.NotCallable);
+            }
+            /* steps 4-5 */
+            Object[] args = CreateListFromArrayLike(cx, argumentsList);
+            /* steps 6-7 */
+            return PrepareForTailCall(args, thisArgument, (Callable) obj);
+        }
+
+        /**
+         * 26.1.2 Reflect.construct ( target, argumentsList )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @param argumentsList
+         *            the function arguments
+         * @return the new script object
+         */
+        @Function(name = "construct", arity = 2)
+        public static Object construct(ExecutionContext cx, Object thisValue, Object target,
+                Object argumentsList) {
+            /* steps 1-2 */
+            ScriptObject obj = ToObject(cx, target);
+            /* step 3 */
+            if (!IsConstructor(obj)) {
+                throw newTypeError(cx, Messages.Key.NotConstructor);
+            }
+            /* steps 4-5 */
+            Object[] args = CreateListFromArrayLike(cx, argumentsList);
+            /* steps 6-7 */
+            return ((Constructor) obj).construct(cx, args);
+        }
+
+        /**
+         * 26.1.8 Reflect.getPrototypeOf (target)
          * 
          * @param cx
          *            the execution context
@@ -93,7 +153,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 26.1.13 Reflect.setPrototypeOf (target, proto)
+         * 26.1.14 Reflect.setPrototypeOf (target, proto)
          * 
          * @param cx
          *            the execution context
@@ -119,7 +179,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 26.1.9 Reflect.isExtensible (target)
+         * 26.1.10 Reflect.isExtensible (target)
          * 
          * @param cx
          *            the execution context
@@ -138,7 +198,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 26.1.11 Reflect.preventExtensions (target)
+         * 26.1.12 Reflect.preventExtensions (target)
          * 
          * @param cx
          *            the execution context
@@ -157,7 +217,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 26.1.7 Reflect.has (target, propertyKey)
+         * 26.1.9 Reflect.has (target, propertyKey)
          * 
          * @param cx
          *            the execution context
@@ -216,7 +276,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 26.1.5 Reflect.getOwnPropertyDescriptor(target, propertyKey)
+         * 26.1.7 Reflect.getOwnPropertyDescriptor(target, propertyKey)
          * 
          * @param cx
          *            the execution context
@@ -248,7 +308,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 26.1.4 Reflect.get (target, propertyKey [, receiver ])
+         * 26.1.6 Reflect.get (target, propertyKey [, receiver ])
          * 
          * @param cx
          *            the execution context
@@ -283,7 +343,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 26.1.12 Reflect.set (target, propertyKey, V [, receiver ])
+         * 26.1.13 Reflect.set (target, propertyKey, V [, receiver ])
          * 
          * @param cx
          *            the execution context
@@ -320,7 +380,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 26.1.2 Reflect.deleteProperty (target, propertyKey)
+         * 26.1.4 Reflect.deleteProperty (target, propertyKey)
          * 
          * @param cx
          *            the execution context
@@ -349,7 +409,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 26.1.1 Reflect.defineProperty(target, propertyKey, attributes)
+         * 26.1.3 Reflect.defineProperty(target, propertyKey, attributes)
          * 
          * @param cx
          *            the execution context
@@ -382,7 +442,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 26.1.3 Reflect.enumerate (target)
+         * 26.1.5 Reflect.enumerate (target)
          * 
          * @param cx
          *            the execution context
@@ -401,7 +461,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 26.1.10 Reflect.ownKeys (target)
+         * 26.1.11 Reflect.ownKeys (target)
          * 
          * @param cx
          *            the execution context
