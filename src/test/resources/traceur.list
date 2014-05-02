@@ -82,6 +82,7 @@ feature/Destructuring/ForInLoop.js
 
 # Array destructuring without @@iterator
 # (https://github.com/google/traceur-compiler/issues/840)
+feature/Destructuring/Empty.js
 feature/Destructuring/Rest.js
 
 # ... spread call without @@iterator, no implicit ToObject
