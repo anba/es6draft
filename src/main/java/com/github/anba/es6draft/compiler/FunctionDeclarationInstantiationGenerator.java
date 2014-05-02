@@ -97,11 +97,17 @@ final class FunctionDeclarationInstantiationGenerator extends
         // class: List
         static final MethodDesc List_iterator = MethodDesc.create(MethodType.Interface, Types.List,
                 "iterator", Type.getMethodType(Types.Iterator));
+
+        // class: Reference
+        static final MethodDesc Reference_putValue = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "putValue",
+                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
     }
 
     private static final int EXECUTION_CONTEXT = 0;
     private static final int FUNCTION = 1;
     private static final int ARGUMENTS = 2;
+    private static final IdentifierResolution identifierResolution = new IdentifierResolution();
 
     private static final class FunctionDeclInitMethodGenerator extends ExpressionVisitor {
         FunctionDeclInitMethodGenerator(MethodCode method, FunctionNode node) {
@@ -161,9 +167,6 @@ final class FunctionDeclarationInstantiationGenerator extends
             mv.store(iterator);
         }
 
-        // FIXME: spec bug - variable not defined
-        Set<String> lexicalNames = LexicallyDeclaredNames(function); // unordered set!
-
         /* step 1 */
         // RuntimeInfo.Function code = func.getCode();
         /* step 2 */
@@ -187,93 +190,78 @@ final class FunctionDeclarationInstantiationGenerator extends
         // invariant: needsParameterEnvironment => !simpleParameterList
         assert !needsParameterEnvironment || !simpleParameterList;
         /* step 8 */
-        HashSet<String> varNames = new HashSet<>(VarDeclaredNames(function)); // unordered set!
+        Set<String> varNames = VarDeclaredNames(function); // unordered set!
         /* step 9 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(function);
         /* step 10 */
-        HashSet<String> functionNames = new HashSet<>();
+        Set<String> lexicalNames = LexicallyDeclaredNames(function); // unordered set!
         /* step 11 */
-        List<Declaration> functionsToInitialize = new ArrayList<>();
+        HashSet<String> functionNames = new HashSet<>();
         /* step 12 */
+        List<Declaration> functionsToInitialize = new ArrayList<>();
+        /* step 13 */
         for (StatementListItem item : reverse(varDeclarations)) {
             if (!(item instanceof VariableStatement)) {
                 assert isFunctionDeclaration(item);
                 Declaration d = (Declaration) item;
                 String fn = BoundName(d);
                 if (!functionNames.contains(fn)) {
-                    varNames.remove(fn);
                     functionNames.add(fn);
                     functionsToInitialize.add(d);
                 }
             }
         }
-        /* step 13 */
-        boolean needsArgumentsBinding = true;
         /* step 14 */
-        boolean argumentsObjectNeeded = true;
+        boolean needsSpecialArgumentsBinding = true;
         /* step 15 */
+        boolean argumentsObjectNeeded = true;
+        /* step 16 */
         if (function instanceof ArrowFunction || function instanceof GeneratorComprehension) {
             // => [[ThisMode]] of func is lexical
-            needsArgumentsBinding = false;
-        }
-        /* step 16 */
-        else if (parameterNamesSet.contains("arguments")) {
-            // FIXME: spec bug - `(function(arguments){})()` broken (Bug 2642)
-            // argumentsObjectNeeded = false;
-            needsArgumentsBinding = false;
+            needsSpecialArgumentsBinding = false;
+            argumentsObjectNeeded = false;
         }
         /* step 17 */
-        else if (functionNames.contains("arguments")) {
+        else if (parameterNamesSet.contains("arguments")) {
+            // FIXME: spec bug - `(function(arguments){})()` broken (Bug 2642)
+            needsSpecialArgumentsBinding = false;
             argumentsObjectNeeded = false;
         }
         /* step 18 */
-        else if (lexicalNames.contains("arguments")) {
-            argumentsObjectNeeded = false;
-        }
-        /* step 19 */
-        if (needsArgumentsBinding) {
-            if (strict) {
-                createImmutableBinding(envRec, "arguments", mv);
-            } else {
-                createMutableBinding(envRec, "arguments", false, mv);
+        else {
+            if (functionNames.contains("arguments")) {
+                argumentsObjectNeeded = false;
+            } else if (lexicalNames.contains("arguments")) {
+                argumentsObjectNeeded = false;
             }
-            Variable<?> argumentsValue;
-            if (!argumentsObjectNeeded) {
-                if (legacy) {
-                    if (!simpleParameterList) {
-                        CreateLegacyArguments(mv);
-                    } else {
-                        CreateLegacyArguments(env, formals, mv);
-                    }
-                }
-                argumentsValue = undef;
-            } else {
-                Variable<ExoticArguments> argumentsObj = mv.newVariable("argumentsObj",
-                        ExoticArguments.class);
-                if (strict || !simpleParameterList) {
-                    CreateStrictArgumentsObject(mv);
+        }
+        /* steps 19-20 */
+        Variable<?> argumentsValue;
+        if (!argumentsObjectNeeded) {
+            if (legacy) {
+                if (!simpleParameterList) {
+                    CreateLegacyArguments(mv);
                 } else {
-                    CreateMappedArgumentsObject(env, formals, mv);
+                    CreateLegacyArguments(env, formals, mv);
                 }
-                mv.store(argumentsObj);
-                if (legacy) {
-                    CreateLegacyArguments(argumentsObj, mv);
-                }
-                argumentsValue = argumentsObj;
             }
-            initializeBinding(envRec, "arguments", argumentsValue, mv);
-        } else if (legacy) {
-            if (!simpleParameterList) {
-                CreateLegacyArguments(mv);
+            argumentsValue = undef;
+        } else {
+            Variable<ExoticArguments> argumentsObj = mv.newVariable("argumentsObj",
+                    ExoticArguments.class);
+            if (strict || !simpleParameterList) {
+                CreateUnmappedArgumentsObject(mv);
             } else {
-                CreateLegacyArguments(env, formals, mv);
+                CreateMappedArgumentsObject(env, formals, mv);
             }
+            mv.store(argumentsObj);
+            if (legacy) {
+                CreateLegacyArguments(argumentsObj, mv);
+            }
+            argumentsValue = argumentsObj;
         }
-        /* step 20 */
+        /* step 21 */
         HashSet<String> bindings = new HashSet<>();
-        if (needsArgumentsBinding) {
-            bindings.add("arguments");
-        }
         for (String paramName : parameterNames) {
             boolean alreadyDeclared = bindings.contains(paramName);
             if (!alreadyDeclared) {
@@ -284,17 +272,40 @@ final class FunctionDeclarationInstantiationGenerator extends
                 }
             }
         }
-        /* steps 21-23 */
+        /* step 22 */
+        HashSet<String> instantiatedVarNames = new HashSet<>(parameterNames);
+        /* step 23 */
+        if (needsSpecialArgumentsBinding) {
+            if (strict) {
+                createImmutableBinding(envRec, "arguments", mv);
+            } else {
+                createMutableBinding(envRec, "arguments", false, mv);
+            }
+            if (argumentsObjectNeeded) {
+                initializeBinding(envRec, "arguments", argumentsValue, mv);
+                instantiatedVarNames.add("arguments");
+            }
+            // FIXME: spec bug - "arguments" as function not handled
+            else if (!needsParameterEnvironment) {
+                assert argumentsValue == undef;
+                initializeBinding(envRec, "arguments", argumentsValue, mv);
+                instantiatedVarNames.add("arguments");
+            } else {
+                assert argumentsValue == undef;
+                initializeBinding(envRec, "arguments", argumentsValue, mv);
+            }
+        }
+        /* steps 24-26 */
         if (hasParameters) {
             if (hasDuplicates) {
-                /* step 21 */
+                /* step 24 */
                 BindingInitialization(function, iterator, mv);
             } else {
-                /* step 22 */
+                /* step 25 */
                 BindingInitializationWithEnv(envRec, function, iterator, mv);
             }
         }
-        /* step 24 */
+        /* step 27 */
         Variable<LexicalEnvironment<?>> localEnv;
         Variable<EnvironmentRecord> localEnvRec;
         if (needsParameterEnvironment) {
@@ -313,14 +324,12 @@ final class FunctionDeclarationInstantiationGenerator extends
             localEnv = env;
             localEnvRec = envRec;
         }
-        /* step 25 */
+        /* step 28 */
         for (String varName : varNames) {
             // FIXME: spec bug - "arguments" not handled (Bug 2644)
-            if (needsArgumentsBinding && "arguments".equals(varName)) {
-                continue;
-            }
-            if (!parameterNamesSet.contains(varName)) {
-                // FIXME: spec bug - duplicate varNames (Bug 2645)
+            // FIXME: spec bug - duplicate varNames (Bug 2645)
+            if (!instantiatedVarNames.contains(varName)) {
+                instantiatedVarNames.add(varName);
                 createMutableBinding(localEnvRec, varName, false, mv);
                 initializeBinding(localEnvRec, varName, undef, mv);
             }
@@ -338,19 +347,20 @@ final class FunctionDeclarationInstantiationGenerator extends
             // parameters, var-names and implicit "arguments"
             HashSet<String> envBindings = new HashSet<>();
             if (needsParameterEnvironment) {
-                // only bindings from step 25
+                // only bindings from step 28
                 envBindings.addAll(varNames);
-                if (needsArgumentsBinding) {
+                if (needsSpecialArgumentsBinding) {
                     envBindings.remove("arguments");
                 }
                 envBindings.removeAll(parameterNames);
             } else {
-                // bindings from step 19, 20, 25
+                // bindings from step 21, 23, 28
                 envBindings.addAll(parameterNames);
                 envBindings.addAll(varNames);
-                if (needsArgumentsBinding) {
+                if (needsSpecialArgumentsBinding) {
                     envBindings.add("arguments");
                 }
+                assert instantiatedVarNames.size() == envBindings.size();
             }
 
             for (FunctionDeclaration f : functions) {
@@ -376,9 +386,9 @@ final class FunctionDeclarationInstantiationGenerator extends
             }
         }
 
-        /* step 26 */
+        /* step 29 */
         List<Declaration> lexDeclarations = LexicalDeclarations(function);
-        /* step 27 */
+        /* step 30 */
         for (Declaration d : lexDeclarations) {
             assert !isFunctionDeclaration(d);
             for (String dn : BoundNames(d)) {
@@ -390,26 +400,21 @@ final class FunctionDeclarationInstantiationGenerator extends
             }
         }
         // FIXME: spec bug - missing function bindings (Bug 2643)
-        /* step 28 */
+        /* step 31 */
         for (Declaration f : functionsToInitialize) {
-            String fn = BoundName(f);
+            // String fn = BoundName(f);
+            BindingIdentifier fn = getFunctionName(f);
 
-            // stack: [] -> [fo]
+            // stack: [] -> [ref]
+            ResolveBinding(fn, mv);
+
+            // stack: [ref] -> [ref, fo]
             InstantiateFunctionObject(context, localEnv, f, mv);
 
-            if (needsArgumentsBinding && "arguments".equals(fn) && !needsParameterEnvironment) {
-                // stack: [fo] -> []
-                setMutableBinding(localEnvRec, fn, strict, mv);
-            } else if (parameterNamesSet.contains(fn) && !needsParameterEnvironment) {
-                // stack: [fo] -> []
-                setMutableBinding(localEnvRec, fn, strict, mv);
-            } else {
-                // stack: [fo] -> []
-                createMutableBinding(localEnvRec, fn, false, mv);
-                initializeBinding(localEnvRec, fn, mv);
-            }
+            // stack: [ref, fo] -> []
+            PutValue(mv);
         }
-        /* step 29 */
+        /* step 32 */
         mv.areturn();
     }
 
@@ -441,7 +446,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         mv.invoke(Methods.ExoticArguments_CreateMappedArgumentsObject);
     }
 
-    private void CreateStrictArgumentsObject(ExpressionVisitor mv) {
+    private void CreateUnmappedArgumentsObject(ExpressionVisitor mv) {
         mv.loadExecutionContext();
         mv.loadParameter(ARGUMENTS, Object[].class);
         mv.invoke(Methods.ExoticArguments_CreateUnmappedArgumentsObject);
@@ -488,6 +493,29 @@ final class FunctionDeclarationInstantiationGenerator extends
             mv.invoke(Methods.ExoticLegacyArguments_CreateLegacyArgumentsObjectFrom);
         }
         mv.invoke(Methods.FunctionObject_setLegacyArguments);
+    }
+
+    /**
+     * stack: [] {@literal ->} [Reference]
+     * 
+     * @param node
+     *            the binding identifier node
+     * @param mv
+     *            the expression visitor
+     */
+    private static void ResolveBinding(BindingIdentifier node, ExpressionVisitor mv) {
+        identifierResolution.resolve(node, mv);
+    }
+
+    /**
+     * stack: [Reference, Object] {@literal ->} []
+     * 
+     * @param mv
+     *            the expression visitor
+     */
+    private static void PutValue(ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        mv.invoke(Methods.Reference_putValue);
     }
 
     private String[] mappedNames(FormalParameterList formals) {

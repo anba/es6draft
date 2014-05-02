@@ -13,6 +13,7 @@ import java.util.ListIterator;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.AsyncFunctionDeclaration;
+import com.github.anba.es6draft.ast.BindingIdentifier;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
@@ -519,13 +520,25 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @return the bound name of the function declaration
      */
     protected static String BoundName(Declaration d) {
+        return getFunctionName(d).getName();
+    }
+
+    /**
+     * Returns the function name of the declaration {@code d}, which must be either a function,
+     * generator or async function declaration.
+     * 
+     * @param d
+     *            the function declaration node
+     * @return the function name of the function declaration
+     */
+    protected static BindingIdentifier getFunctionName(Declaration d) {
         if (d instanceof FunctionDeclaration) {
-            return ((FunctionDeclaration) d).getIdentifier().getName();
+            return ((FunctionDeclaration) d).getIdentifier();
         } else if (d instanceof GeneratorDeclaration) {
-            return ((GeneratorDeclaration) d).getIdentifier().getName();
+            return ((GeneratorDeclaration) d).getIdentifier();
         } else {
             assert d instanceof AsyncFunctionDeclaration;
-            return ((AsyncFunctionDeclaration) d).getIdentifier().getName();
+            return ((AsyncFunctionDeclaration) d).getIdentifier();
         }
     }
 
