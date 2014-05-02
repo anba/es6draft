@@ -16,6 +16,7 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -121,7 +122,6 @@ public final class ExoticArguments extends OrdinaryObject {
         /* steps 5-7 */
         Object v;
         if (!isMapped) {
-            // FIXME: spec bug - receiver argument not handled (Bug 2646)
             /* step 5 */
             v = super.get(cx, propertyKey, receiver);
         } else {
@@ -142,20 +142,23 @@ public final class ExoticArguments extends OrdinaryObject {
      */
     @Override
     public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
-        /* steps 1-2 */
+        /* steps 1, 3.a */
         ParameterMap map = this.parameterMap;
-        // FIXME: spec bug - receiver argument not handled (Bug 2641)
+        /* steps 2-3 */
+        boolean isMapped;
         if (this != receiver) {
-            return super.set(cx, propertyKey, value, receiver);
+            /* step 2 */
+            isMapped = false;
+        } else {
+            /* step 3 */
+            isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
         }
-        /* steps 3-4 */
-        boolean isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
-        /* steps 5-6 */
+        /* steps 4-5 */
         if (!isMapped) {
-            /* step 5 */
+            /* step 4 */
             return super.set(cx, propertyKey, value, receiver);
         } else {
-            /* step 6 */
+            /* step 5 */
             map.put(propertyKey, value);
             return true;
         }
@@ -181,7 +184,7 @@ public final class ExoticArguments extends OrdinaryObject {
     }
 
     /**
-     * 9.4.4.6 CreateStrictArgumentsObject(formals, argumentsList) Abstract Operation
+     * 9.4.4.6 CreateUnmappedArgumentsObject(argumentsList) Abstract Operation
      * <p>
      * [Called from generated code]
      * 
@@ -191,7 +194,7 @@ public final class ExoticArguments extends OrdinaryObject {
      *            the function arguments
      * @return the strict mode arguments object
      */
-    public static ExoticArguments CreateStrictArgumentsObject(ExecutionContext cx,
+    public static ExoticArguments CreateUnmappedArgumentsObject(ExecutionContext cx,
             Object[] argumentsList) {
         /* step 1 */
         int len = argumentsList.length;
@@ -207,13 +210,17 @@ public final class ExoticArguments extends OrdinaryObject {
         }
         Callable thrower = cx.getRealm().getThrowTypeError();
         /* step 6 */
+        DefinePropertyOrThrow(cx, obj, BuiltinSymbol.iterator.get(),
+                new PropertyDescriptor(cx.getIntrinsic(Intrinsics.ArrayProto_values), true, false,
+                        true));
+        /* step 7 */
         DefinePropertyOrThrow(cx, obj, "caller", new PropertyDescriptor(thrower, thrower, false,
                 false));
-        /* step 7 */
+        /* step 8 */
         DefinePropertyOrThrow(cx, obj, "callee", new PropertyDescriptor(thrower, thrower, false,
                 false));
-        /* step 8 (not applicable) */
-        /* step 9 */
+        /* step 9 (not applicable) */
+        /* step 10 */
         return obj;
     }
 
@@ -255,9 +262,13 @@ public final class ExoticArguments extends OrdinaryObject {
         ParameterMap map = ParameterMap.create(len, formals, env);
         /* step 21 */
         obj.parameterMap = map;
-        /* steps 22-23 */
+        /* step 22 */
+        DefinePropertyOrThrow(cx, obj, BuiltinSymbol.iterator.get(),
+                new PropertyDescriptor(cx.getIntrinsic(Intrinsics.ArrayProto_values), true, false,
+                        true));
+        /* steps 23-24 */
         DefinePropertyOrThrow(cx, obj, "callee", new PropertyDescriptor(func, true, false, true));
-        /* step 24 */
+        /* step 25 */
         return obj;
     }
 }

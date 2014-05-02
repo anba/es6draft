@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.Fro
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorYield;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CreateStrictArgumentsObject;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CreateUnmappedArgumentsObject;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction.AsyncFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
@@ -2303,7 +2303,7 @@ public final class ScriptRuntime {
 
         cx.resolveBinding("args", true).putValue(createRestArray(asList(args).iterator(), cx), cx);
 
-        envRec.initializeBinding("arguments", CreateStrictArgumentsObject(cx, args));
+        envRec.initializeBinding("arguments", CreateUnmappedArgumentsObject(cx, args));
     }
 
     public static Object DefaultConstructor(ExecutionContext cx) {
@@ -2355,7 +2355,7 @@ public final class ScriptRuntime {
         EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
 
         envRec.createImmutableBinding("arguments");
-        envRec.initializeBinding("arguments", CreateStrictArgumentsObject(cx, args));
+        envRec.initializeBinding("arguments", CreateUnmappedArgumentsObject(cx, args));
     }
 
     public static Object DefaultEmptyConstructor(ExecutionContext cx) {

@@ -61,8 +61,8 @@ final class FunctionDeclarationInstantiationGenerator extends
                                 Types.FunctionObject, Types.String_, Types.Object_,
                                 Types.LexicalEnvironment));
 
-        static final MethodDesc ExoticArguments_CreateStrictArgumentsObject = MethodDesc.create(
-                MethodType.Static, Types.ExoticArguments, "CreateStrictArgumentsObject",
+        static final MethodDesc ExoticArguments_CreateUnmappedArgumentsObject = MethodDesc.create(
+                MethodType.Static, Types.ExoticArguments, "CreateUnmappedArgumentsObject",
                 Type.getMethodType(Types.ExoticArguments, Types.ExecutionContext, Types.Object_));
 
         static final MethodDesc ExoticLegacyArguments_CreateLegacyArgumentsObject = MethodDesc
@@ -444,7 +444,7 @@ final class FunctionDeclarationInstantiationGenerator extends
     private void CreateStrictArgumentsObject(ExpressionVisitor mv) {
         mv.loadExecutionContext();
         mv.loadParameter(ARGUMENTS, Object[].class);
-        mv.invoke(Methods.ExoticArguments_CreateStrictArgumentsObject);
+        mv.invoke(Methods.ExoticArguments_CreateUnmappedArgumentsObject);
     }
 
     private void CreateLegacyArguments(ExpressionVisitor mv) {
