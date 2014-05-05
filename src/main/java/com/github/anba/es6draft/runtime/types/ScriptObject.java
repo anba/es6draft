@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.types;
 
+import java.util.Iterator;
+
 import com.github.anba.es6draft.runtime.ExecutionContext;
 
 /**
@@ -217,7 +219,16 @@ public interface ScriptObject {
      *
      * @param cx
      *            the execution context
-     * @return the properties iterator object
+     * @return the properties array object
      */
     ScriptObject ownPropertyKeys(ExecutionContext cx);
+
+    /**
+     * [[OwnPropertyKeys]] ( )
+     *
+     * @param cx
+     *            the execution context
+     * @return the properties iterator object
+     */
+    Iterator<?> ownKeys(ExecutionContext cx);
 }

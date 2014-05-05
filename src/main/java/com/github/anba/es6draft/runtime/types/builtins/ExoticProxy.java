@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.CompletePropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
@@ -16,6 +17,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.IsCompatiblePropertyDescriptor;
 
 import java.util.Arrays;
+import java.util.Iterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -871,5 +873,13 @@ public class ExoticProxy implements ScriptObject {
         }
         /* steps 10-11 */
         return Type.objectValue(trapResult);
+    }
+
+    /**
+     * 9.5.12 [[OwnPropertyKeys]] ()
+     */
+    @Override
+    public Iterator<?> ownKeys(ExecutionContext cx) {
+        return FromScriptIterator(cx, ownPropertyKeys(cx));
     }
 }

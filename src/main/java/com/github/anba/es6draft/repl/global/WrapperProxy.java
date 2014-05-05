@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static java.util.Collections.emptyIterator;
 
@@ -405,7 +406,7 @@ class WrapperProxy implements ScriptObject {
         AppendIterator(ExecutionContext cx, ScriptObject proxyTarget, ScriptObject proto) {
             this.cx = cx;
             this.proxyTarget = proxyTarget;
-            this.targetKeys = FromListIterator(cx, proxyTarget, proxyTarget.ownPropertyKeys(cx));
+            this.targetKeys = proxyTarget.ownKeys(cx);
             this.protoKeys = proto != null ? FromListIterator(cx, proto, proto.enumerate(cx))
                     : emptyIterator();
         }
@@ -438,5 +439,13 @@ class WrapperProxy implements ScriptObject {
     @Override
     public ScriptObject ownPropertyKeys(ExecutionContext cx) {
         return proxyTarget.ownPropertyKeys(cx);
+    }
+
+    /**
+     * [[OwnPropertyKeys]] ()
+     */
+    @Override
+    public Iterator<?> ownKeys(ExecutionContext cx) {
+        return FromScriptIterator(cx, ownPropertyKeys(cx));
     }
 }

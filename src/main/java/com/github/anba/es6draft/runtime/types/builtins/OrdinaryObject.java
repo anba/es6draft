@@ -791,7 +791,14 @@ public class OrdinaryObject implements ScriptObject {
     /** 9.1.12 [[OwnPropertyKeys]] ( ) */
     @Override
     public final ScriptObject ownPropertyKeys(ExecutionContext cx) {
+        // FIXME: array
         return CreateListIterator(cx, enumerateOwnKeys(cx));
+    }
+
+    /** 9.1.12 [[OwnPropertyKeys]] ( ) */
+    @Override
+    public Iterator<?> ownKeys(ExecutionContext cx) {
+        return enumerateOwnKeys(cx).iterator();
     }
 
     /**

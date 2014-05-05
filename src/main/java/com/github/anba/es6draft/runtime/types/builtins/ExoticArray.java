@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -336,7 +336,7 @@ public final class ExoticArray extends OrdinaryObject {
     }
 
     private long[] indices(ExecutionContext cx, long minIndex) {
-        Collection<String> keys = enumerateKeys(cx);
+        List<String> keys = enumerateKeys(cx);
         long[] indices = new long[keys.size()];
         int i = 0;
         for (String key : keys) {

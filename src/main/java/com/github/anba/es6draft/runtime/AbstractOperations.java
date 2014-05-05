@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.InstanceofOperator;
 import static com.github.anba.es6draft.runtime.objects.BooleanObject.BooleanCreate;
 import static com.github.anba.es6draft.runtime.objects.SymbolObject.SymbolCreate;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.objects.number.NumberObject.NumberCreate;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.CreatePromiseCapabilityRecord;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor.AllocatePromise;
@@ -2214,7 +2213,7 @@ public final class AbstractOperations {
         /* steps 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
         /* steps 3-4 */
-        Iterator<?> keys = FromListIterator(cx, object, object.ownPropertyKeys(cx));
+        Iterator<?> keys = object.ownKeys(cx);
         /* step 5 */
         ScriptException pendingException = null;
         if (level == IntegrityLevel.Sealed) {
@@ -2306,7 +2305,7 @@ public final class AbstractOperations {
             return false;
         }
         /* steps 7-8 */
-        Iterator<?> keys = FromListIterator(cx, object, object.ownPropertyKeys(cx));
+        Iterator<?> keys = object.ownKeys(cx);
         /* step 9 */
         ScriptException pendingException = null;
         /* step 10 */
@@ -3058,7 +3057,7 @@ public final class AbstractOperations {
      * @return iterator over <var>obj</var>'s own property keys
      */
     public static Iterator<?> GetOwnPropertyNamesIterator(ExecutionContext cx, ScriptObject obj) {
-        return FromListIterator(cx, obj, obj.ownPropertyKeys(cx));
+        return obj.ownKeys(cx);
     }
 
     /**
@@ -3072,7 +3071,7 @@ public final class AbstractOperations {
      */
     public static List<String> GetOwnPropertyNames(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
-        Iterator<?> keys = FromListIterator(cx, obj, obj.ownPropertyKeys(cx));
+        Iterator<?> keys = obj.ownKeys(cx);
         List<String> nameList = new ArrayList<>();
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());
@@ -3094,7 +3093,7 @@ public final class AbstractOperations {
      */
     public static List<String> GetOwnEnumerablePropertyNames(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
-        Iterator<?> keys = FromListIterator(cx, obj, obj.ownPropertyKeys(cx));
+        Iterator<?> keys = obj.ownKeys(cx);
         List<String> nameList = new ArrayList<>();
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());
@@ -3120,7 +3119,7 @@ public final class AbstractOperations {
      */
     public static List<Object> GetOwnEnumerablePropertyKeys(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
-        Iterator<?> keys = FromListIterator(cx, obj, obj.ownPropertyKeys(cx));
+        Iterator<?> keys = obj.ownKeys(cx);
         List<Object> nameList = new ArrayList<>();
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());

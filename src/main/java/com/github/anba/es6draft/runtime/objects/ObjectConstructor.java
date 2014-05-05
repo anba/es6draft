@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
@@ -489,7 +488,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                 /* steps 5.a-5.b */
                 ScriptObject from = ToObject(cx, nextSource);
                 /* steps 5.c-5.h */
-                Iterator<?> keys = FromListIterator(cx, from, from.ownPropertyKeys(cx));
+                Iterator<?> keys = from.ownKeys(cx);
                 /* step 5.i (omitted) */
                 /* step 5.j */
                 ScriptException pendingException = null;
@@ -633,7 +632,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         /* steps 1-2 */
         ScriptObject obj = ToObject(cx, o);
         /* steps 3-4 */
-        Iterator<?> keys = FromListIterator(cx, obj, obj.ownPropertyKeys(cx));
+        Iterator<?> keys = obj.ownKeys(cx);
         /* step 5 */
         List<String> nameList = new ArrayList<>();
         /* step 6 (omitted) */
@@ -661,7 +660,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         /* steps 1-2 */
         ScriptObject obj = ToObject(cx, o);
         /* steps 3-4 */
-        Iterator<?> keys = FromListIterator(cx, obj, obj.ownPropertyKeys(cx));
+        Iterator<?> keys = obj.ownKeys(cx);
         /* step 5 */
         List<Symbol> nameList = new ArrayList<>();
         /* step 6 (omitted) */
