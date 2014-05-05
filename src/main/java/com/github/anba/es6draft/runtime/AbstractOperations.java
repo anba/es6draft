@@ -1196,6 +1196,38 @@ public final class AbstractOperations {
      *            the property key
      * @return the property value
      */
+    public static Object Get(ExecutionContext cx, ScriptObject object, int propertyKey) {
+        /* steps 1-3 */
+        return object.get(cx, ToString(propertyKey), object);
+    }
+
+    /**
+     * 7.3.1 Get (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return the property value
+     */
+    public static Object Get(ExecutionContext cx, ScriptObject object, long propertyKey) {
+        /* steps 1-3 */
+        return object.get(cx, ToString(propertyKey), object);
+    }
+
+    /**
+     * 7.3.1 Get (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return the property value
+     */
     public static Object Get(ExecutionContext cx, ScriptObject object, String propertyKey) {
         /* steps 1-3 */
         return object.get(cx, propertyKey, object);
@@ -1239,6 +1271,56 @@ public final class AbstractOperations {
         } else {
             Put(cx, object, (Symbol) propertyKey, value, _throw);
         }
+    }
+
+    /**
+     * 7.3.2 Put (O, P, V, Throw)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @param _throw
+     *            the throw flag
+     */
+    public static void Put(ExecutionContext cx, ScriptObject object, int propertyKey, Object value,
+            boolean _throw) {
+        /* steps 1-5 */
+        boolean success = object.set(cx, ToString(propertyKey), value, object);
+        /* step 6 */
+        if (!success && _throw) {
+            throw newTypeError(cx, Messages.Key.PropertyNotModifiable, ToString(propertyKey));
+        }
+        /* step 7 (not applicable) */
+    }
+
+    /**
+     * 7.3.2 Put (O, P, V, Throw)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @param _throw
+     *            the throw flag
+     */
+    public static void Put(ExecutionContext cx, ScriptObject object, long propertyKey,
+            Object value, boolean _throw) {
+        /* steps 1-5 */
+        boolean success = object.set(cx, ToString(propertyKey), value, object);
+        /* step 6 */
+        if (!success && _throw) {
+            throw newTypeError(cx, Messages.Key.PropertyNotModifiable, ToString(propertyKey));
+        }
+        /* step 7 (not applicable) */
     }
 
     /**
@@ -1327,6 +1409,50 @@ public final class AbstractOperations {
      * @return {@code true} on success
      */
     public static boolean CreateDataProperty(ExecutionContext cx, ScriptObject object,
+            int propertyKey, Object value) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
+        /* step 4 */
+        return object.defineOwnProperty(cx, ToString(propertyKey), newDesc);
+    }
+
+    /**
+     * 7.3.3 CreateDataProperty (O, P, V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @return {@code true} on success
+     */
+    public static boolean CreateDataProperty(ExecutionContext cx, ScriptObject object,
+            long propertyKey, Object value) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
+        /* step 4 */
+        return object.defineOwnProperty(cx, ToString(propertyKey), newDesc);
+    }
+
+    /**
+     * 7.3.3 CreateDataProperty (O, P, V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @return {@code true} on success
+     */
+    public static boolean CreateDataProperty(ExecutionContext cx, ScriptObject object,
             String propertyKey, Object value) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
@@ -1376,6 +1502,54 @@ public final class AbstractOperations {
         } else {
             CreateDataPropertyOrThrow(cx, object, (Symbol) propertyKey, value);
         }
+    }
+
+    /**
+     * 7.3.4 CreateDataPropertyOrThrow (O, P, V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     */
+    public static void CreateDataPropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            int propertyKey, Object value) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        boolean success = CreateDataProperty(cx, object, propertyKey, value);
+        /* step 5 */
+        if (!success) {
+            throw newTypeError(cx, Messages.Key.PropertyNotCreatable, ToString(propertyKey));
+        }
+        /* step 6 */
+    }
+
+    /**
+     * 7.3.4 CreateDataPropertyOrThrow (O, P, V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     */
+    public static void CreateDataPropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            long propertyKey, Object value) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        boolean success = CreateDataProperty(cx, object, propertyKey, value);
+        /* step 5 */
+        if (!success) {
+            throw newTypeError(cx, Messages.Key.PropertyNotCreatable, ToString(propertyKey));
+        }
+        /* step 6 */
     }
 
     /**
@@ -1460,6 +1634,52 @@ public final class AbstractOperations {
      *            the property descriptor
      */
     public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            int propertyKey, PropertyDescriptor desc) {
+        /* steps 1-4 */
+        boolean success = object.defineOwnProperty(cx, ToString(propertyKey), desc);
+        /* step 5 */
+        if (!success) {
+            throw newTypeError(cx, Messages.Key.PropertyNotCreatable, ToString(propertyKey));
+        }
+        /* step 6 (not applicable) */
+    }
+
+    /**
+     * 7.3.5 DefinePropertyOrThrow (O, P, desc)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param desc
+     *            the property descriptor
+     */
+    public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            long propertyKey, PropertyDescriptor desc) {
+        /* steps 1-4 */
+        boolean success = object.defineOwnProperty(cx, ToString(propertyKey), desc);
+        /* step 5 */
+        if (!success) {
+            throw newTypeError(cx, Messages.Key.PropertyNotCreatable, ToString(propertyKey));
+        }
+        /* step 6 (not applicable) */
+    }
+
+    /**
+     * 7.3.5 DefinePropertyOrThrow (O, P, desc)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param desc
+     *            the property descriptor
+     */
+    public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             String propertyKey, PropertyDescriptor desc) {
         /* steps 1-4 */
         boolean success = object.defineOwnProperty(cx, propertyKey, desc);
@@ -1510,6 +1730,48 @@ public final class AbstractOperations {
         } else {
             DeletePropertyOrThrow(cx, object, (Symbol) propertyKey);
         }
+    }
+
+    /**
+     * 7.3.6 DeletePropertyOrThrow (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     */
+    public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            int propertyKey) {
+        /* steps 1-4 */
+        boolean success = object.delete(cx, ToString(propertyKey));
+        /* step 5 */
+        if (!success) {
+            throw newTypeError(cx, Messages.Key.PropertyNotDeletable, ToString(propertyKey));
+        }
+        /* step 6 (not applicable) */
+    }
+
+    /**
+     * 7.3.6 DeletePropertyOrThrow (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     */
+    public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            long propertyKey) {
+        /* steps 1-4 */
+        boolean success = object.delete(cx, ToString(propertyKey));
+        /* step 5 */
+        if (!success) {
+            throw newTypeError(cx, Messages.Key.PropertyNotDeletable, ToString(propertyKey));
+        }
+        /* step 6 (not applicable) */
     }
 
     /**
@@ -1584,6 +1846,38 @@ public final class AbstractOperations {
      *            the property key
      * @return {@code true} if the property is present
      */
+    public static boolean HasProperty(ExecutionContext cx, ScriptObject object, int propertyKey) {
+        /* steps 1-3 */
+        return object.hasProperty(cx, ToString(propertyKey));
+    }
+
+    /**
+     * 7.3.7 HasProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
+     */
+    public static boolean HasProperty(ExecutionContext cx, ScriptObject object, long propertyKey) {
+        /* steps 1-3 */
+        return object.hasProperty(cx, ToString(propertyKey));
+    }
+
+    /**
+     * 7.3.7 HasProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
+     */
     public static boolean HasProperty(ExecutionContext cx, ScriptObject object, String propertyKey) {
         /* steps 1-3 */
         return object.hasProperty(cx, propertyKey);
@@ -1623,6 +1917,44 @@ public final class AbstractOperations {
         } else {
             return HasOwnProperty(cx, object, (Symbol) propertyKey);
         }
+    }
+
+    /**
+     * 7.3.8 HasOwnProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
+     */
+    public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object, int propertyKey) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        Property desc = object.getOwnProperty(cx, ToString(propertyKey));
+        /* steps 5-6 */
+        return desc != null;
+    }
+
+    /**
+     * 7.3.8 HasOwnProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
+     */
+    public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object, long propertyKey) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        Property desc = object.getOwnProperty(cx, ToString(propertyKey));
+        /* steps 5-6 */
+        return desc != null;
     }
 
     /**
