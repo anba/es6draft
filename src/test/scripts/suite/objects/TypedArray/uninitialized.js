@@ -110,12 +110,8 @@ for (let constructor of [MyConstructor, Int8Array]) {
   }
 
   // [[Enumerate]]
-  for (let p of [...integerIndexedProperties, ...notIntegerIndexedProperties]) {
-    assertTrue(Reflect.enumerate(create()).next().done);
-  }
+  assertThrows(() => Reflect.enumerate(create()), TypeError);
 
   // [[OwnPropertyKeys]]
-  for (let p of [...integerIndexedProperties, ...notIntegerIndexedProperties]) {
-    assertTrue(Reflect.ownKeys(create()).next().done);
-  }
+  assertThrows(() => Reflect.ownKeys(create()), TypeError);
 }

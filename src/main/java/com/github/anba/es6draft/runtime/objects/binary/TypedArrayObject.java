@@ -57,6 +57,18 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
      * {@inheritDoc}
      */
     @Override
+    protected long getLength(ExecutionContext cx) {
+        ArrayBufferObject buffer = getBuffer();
+        if (buffer == null) {
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
+        }
+        return getArrayLength();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     protected boolean elementHas(ExecutionContext cx, double index) {
         // Steps 1-6 of elementGet to support hasOwnProperty
         /* steps 1-2 (not applicable) */

@@ -152,7 +152,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     protected List<String> enumerateKeys(ExecutionContext cx) {
         // FIXME: spec incomplete
         List<String> keys = super.enumerateKeys(cx);
-        addIntegerIndices(keys);
+        addIntegerIndices(cx, keys);
         return keys;
     }
 
@@ -161,7 +161,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
         // FIXME: spec incomplete
         List<Object> keys = super.enumerateOwnKeys(cx);
-        addIntegerIndices(keys);
+        addIntegerIndices(cx, keys);
         return keys;
     }
 
@@ -178,11 +178,13 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     /**
      * Appends the integer indices to {@code keys} collection.
      * 
+     * @param cx
+     *            the execution context
      * @param keys
      *            the property keys
      */
-    private void addIntegerIndices(List<? super String> keys) {
-        for (long i = 0, length = getLength(); i < length; ++i) {
+    private void addIntegerIndices(ExecutionContext cx, List<? super String> keys) {
+        for (long i = 0, length = getLength(cx); i < length; ++i) {
             keys.add(Long.toString(i));
         }
     }
@@ -208,6 +210,15 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
      * @return the length property
      */
     protected abstract long getLength();
+
+    /**
+     * Not in spec
+     *
+     * @param cx
+     *            the execution context
+     * @return the length property or a TypeError if not initialized
+     */
+    protected abstract long getLength(ExecutionContext cx);
 
     /**
      * Not in spec
