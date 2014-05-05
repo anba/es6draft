@@ -18,7 +18,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -39,8 +38,8 @@ import com.github.anba.es6draft.runtime.types.Type;
  * </ul>
  */
 public class OrdinaryObject implements ScriptObject {
-    // Map<String|Symbol, Property> properties
-    private final LinkedHashMap<Object, Property> properties;
+    private final LinkedHashMap<String, Property> properties;
+    private final LinkedHashMap<Symbol, Property> symbolProperties;
 
     /** [[Realm]] */
     @SuppressWarnings("unused")
@@ -55,11 +54,13 @@ public class OrdinaryObject implements ScriptObject {
     public OrdinaryObject(Realm realm) {
         this.realm = realm;
         this.properties = new LinkedHashMap<>();
+        this.symbolProperties = new LinkedHashMap<>(4);
     }
 
-    protected OrdinaryObject(Realm realm, LinkedHashMap<Object, Property> properties) {
+    /* package */OrdinaryObject(Realm realm, Void empty) {
         this.realm = realm;
-        this.properties = properties;
+        this.properties = null;
+        this.symbolProperties = null;
     }
 
     /**
@@ -70,8 +71,8 @@ public class OrdinaryObject implements ScriptObject {
      * @param property
      *            the property record
      */
-    final void addProperty(String propertyKey, Property property) {
-        __put__(propertyKey, property);
+    final void addProperty(int propertyKey, Property property) {
+        properties.put(Integer.toString(propertyKey), property);
     }
 
     /**
@@ -124,7 +125,7 @@ public class OrdinaryObject implements ScriptObject {
      */
     protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         // optimised: HasOwnProperty(cx, this, propertyKey)
-        return __has__(propertyKey);
+        return properties.containsKey(propertyKey);
     }
 
     /**
@@ -138,31 +139,7 @@ public class OrdinaryObject implements ScriptObject {
      */
     protected boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey) {
         // optimised: HasOwnProperty(cx, this, propertyKey)
-        return __has__(propertyKey);
-    }
-
-    private void __put__(Object propertyKey, Property property) {
-        assert propertyKey instanceof String || propertyKey instanceof Symbol;
-        properties.put(propertyKey, property);
-    }
-
-    private boolean __has__(Object propertyKey) {
-        assert propertyKey instanceof String || propertyKey instanceof Symbol;
-        return properties.containsKey(propertyKey);
-    }
-
-    private Property __get__(Object propertyKey) {
-        assert propertyKey instanceof String || propertyKey instanceof Symbol;
-        return properties.get(propertyKey);
-    }
-
-    private void __delete__(Object propertyKey) {
-        assert propertyKey instanceof String || propertyKey instanceof Symbol;
-        properties.remove(propertyKey);
-    }
-
-    private Set<Object> __keys__() {
-        return properties.keySet();
+        return symbolProperties.containsKey(propertyKey);
     }
 
     /** 9.1.1 [[GetPrototypeOf]] ( ) */
@@ -251,7 +228,7 @@ public class OrdinaryObject implements ScriptObject {
      */
     protected final Property ordinaryGetOwnProperty(String propertyKey) {
         /* step 1 (implicit) */
-        Property desc = __get__(propertyKey);
+        Property desc = properties.get(propertyKey);
         /* step 2 */
         if (desc == null) {
             return null;
@@ -269,7 +246,7 @@ public class OrdinaryObject implements ScriptObject {
      */
     protected final Property ordinaryGetOwnProperty(Symbol propertyKey) {
         /* step 1 (implicit) */
-        Property desc = __get__(propertyKey);
+        Property desc = symbolProperties.get(propertyKey);
         /* step 2 */
         if (desc == null) {
             return null;
@@ -312,7 +289,8 @@ public class OrdinaryObject implements ScriptObject {
         /* step 2 */
         boolean extensible = isExtensible();
         /* step 3 */
-        return __validateAndApplyPropertyDescriptor(this, propertyKey, extensible, desc, current);
+        return __validateAndApplyPropertyDescriptor(this.properties, propertyKey, extensible, desc,
+                current);
     }
 
     /**
@@ -333,7 +311,8 @@ public class OrdinaryObject implements ScriptObject {
         /* step 2 */
         boolean extensible = isExtensible();
         /* step 3 */
-        return __validateAndApplyPropertyDescriptor(this, propertyKey, extensible, desc, current);
+        return __validateAndApplyPropertyDescriptor(this.symbolProperties, propertyKey, extensible,
+                desc, current);
     }
 
     /**
@@ -370,7 +349,8 @@ public class OrdinaryObject implements ScriptObject {
      */
     protected static final boolean ValidateAndApplyPropertyDescriptor(OrdinaryObject object,
             String propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
-        return __validateAndApplyPropertyDescriptor(object, propertyKey, extensible, desc, current);
+        return __validateAndApplyPropertyDescriptor(object.properties, propertyKey, extensible,
+                desc, current);
     }
 
     /**
@@ -390,7 +370,8 @@ public class OrdinaryObject implements ScriptObject {
      */
     protected static final boolean ValidateAndApplyPropertyDescriptor(OrdinaryObject object,
             Symbol propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
-        return __validateAndApplyPropertyDescriptor(object, propertyKey, extensible, desc, current);
+        return __validateAndApplyPropertyDescriptor(object.symbolProperties, propertyKey,
+                extensible, desc, current);
     }
 
     /**
@@ -408,104 +389,92 @@ public class OrdinaryObject implements ScriptObject {
      *            the current property
      * @return {@code true} on success
      */
-    private static final boolean __validateAndApplyPropertyDescriptor(OrdinaryObject object,
-            Object propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
-        @SuppressWarnings("unused")
-        String reason;
-        reject: {
-            /* step 1 */
-            assert (object == null || propertyKey != null);
-            /* step 2 */
-            if (current == null) {
-                if (!extensible) {
-                    reason = "not extensible";
-                    break reject;
-                }
-                if (desc.isGenericDescriptor() || desc.isDataDescriptor()) {
-                    if (object != null) {
-                        object.__put__(propertyKey, desc.toPlainProperty());
-                    }
-                } else {
-                    assert desc.isAccessorDescriptor();
-                    if (object != null) {
-                        object.__put__(propertyKey, desc.toPlainProperty());
-                    }
-                }
-                return true;
+    private static final <KEY> boolean __validateAndApplyPropertyDescriptor(
+            LinkedHashMap<KEY, Property> object, KEY propertyKey, boolean extensible,
+            PropertyDescriptor desc, Property current) {
+        /* step 1 */
+        assert (object == null || propertyKey != null);
+        /* step 2 */
+        if (current == null) {
+            if (!extensible) {
+                return false;
             }
-            /* step 3 */
-            if (desc.isEmpty()) {
-                return true;
-            }
-            /* step 4 */
-            if (current.isSubset(desc)) {
-                return true;
-            }
-            /* step 5 */
-            if (!current.isConfigurable()) {
-                if (desc.isConfigurable()) {
-                    reason = "changing configurable";
-                    break reject;
-                }
-                if (desc.hasEnumerable() && desc.isEnumerable() != current.isEnumerable()) {
-                    reason = "changing enumerable";
-                    break reject;
-                }
-            }
-            if (desc.isGenericDescriptor()) {
-                /* step 6 */
-                // no further validation required, proceed below...
-            } else if (desc.isDataDescriptor() != current.isDataDescriptor()) {
-                /* step 7 */
-                if (!current.isConfigurable()) {
-                    reason = "changing data/accessor";
-                    break reject;
-                }
-                if (current.isDataDescriptor()) {
-                    if (object != null) {
-                        object.__get__(propertyKey).toAccessorProperty();
-                    }
-                } else {
-                    if (object != null) {
-                        object.__get__(propertyKey).toDataProperty();
-                    }
-                }
-            } else if (desc.isDataDescriptor() && current.isDataDescriptor()) {
-                /* step 8 */
-                if (!current.isConfigurable()) {
-                    if (!current.isWritable() && desc.isWritable()) {
-                        reason = "changing writable";
-                        break reject;
-                    }
-                    if (!current.isWritable()) {
-                        if (desc.hasValue() && !SameValue(desc.getValue(), current.getValue())) {
-                            reason = "changing value";
-                            break reject;
-                        }
-                    }
+            if (desc.isGenericDescriptor() || desc.isDataDescriptor()) {
+                if (object != null) {
+                    object.put(propertyKey, desc.toPlainProperty());
                 }
             } else {
-                /* step 9 */
-                assert desc.isAccessorDescriptor() && current.isAccessorDescriptor();
-                if (!current.isConfigurable()) {
-                    if (desc.hasSetter() && !SameValue(desc.getSetter(), current.getSetter())) {
-                        reason = "changing setter";
-                        break reject;
-                    }
-                    if (desc.hasGetter() && !SameValue(desc.getGetter(), current.getGetter())) {
-                        reason = "changing getter";
-                        break reject;
+                assert desc.isAccessorDescriptor();
+                if (object != null) {
+                    object.put(propertyKey, desc.toPlainProperty());
+                }
+            }
+            return true;
+        }
+        /* step 3 */
+        if (desc.isEmpty()) {
+            return true;
+        }
+        /* step 4 */
+        if (current.isSubset(desc)) {
+            return true;
+        }
+        /* step 5 */
+        if (!current.isConfigurable()) {
+            if (desc.isConfigurable()) {
+                return false;
+            }
+            if (desc.hasEnumerable() && desc.isEnumerable() != current.isEnumerable()) {
+                return false;
+            }
+        }
+        if (desc.isGenericDescriptor()) {
+            /* step 6 */
+            // no further validation required, proceed below...
+        } else if (desc.isDataDescriptor() != current.isDataDescriptor()) {
+            /* step 7 */
+            if (!current.isConfigurable()) {
+                return false;
+            }
+            if (current.isDataDescriptor()) {
+                if (object != null) {
+                    object.get(propertyKey).toAccessorProperty();
+                }
+            } else {
+                if (object != null) {
+                    object.get(propertyKey).toDataProperty();
+                }
+            }
+        } else if (desc.isDataDescriptor() && current.isDataDescriptor()) {
+            /* step 8 */
+            if (!current.isConfigurable()) {
+                if (!current.isWritable() && desc.isWritable()) {
+                    return false;
+                }
+                if (!current.isWritable()) {
+                    if (desc.hasValue() && !SameValue(desc.getValue(), current.getValue())) {
+                        return false;
                     }
                 }
             }
-            /* step 10 */
-            if (object != null) {
-                object.__get__(propertyKey).apply(desc);
+        } else {
+            /* step 9 */
+            assert desc.isAccessorDescriptor() && current.isAccessorDescriptor();
+            if (!current.isConfigurable()) {
+                if (desc.hasSetter() && !SameValue(desc.getSetter(), current.getSetter())) {
+                    return false;
+                }
+                if (desc.hasGetter() && !SameValue(desc.getGetter(), current.getGetter())) {
+                    return false;
+                }
             }
-            /* step 11 */
-            return true;
         }
-        return false;
+        /* step 10 */
+        if (object != null) {
+            object.get(propertyKey).apply(desc);
+        }
+        /* step 11 */
+        return true;
     }
 
     /**
@@ -705,7 +674,7 @@ public class OrdinaryObject implements ScriptObject {
         }
         /* step 4 */
         if (desc.isConfigurable()) {
-            __delete__(propertyKey);
+            properties.remove(propertyKey);
             return true;
         }
         /* step 5 */
@@ -723,7 +692,7 @@ public class OrdinaryObject implements ScriptObject {
         }
         /* step 4 */
         if (desc.isConfigurable()) {
-            __delete__(propertyKey);
+            symbolProperties.remove(propertyKey);
             return true;
         }
         /* step 5 */
@@ -744,13 +713,7 @@ public class OrdinaryObject implements ScriptObject {
      * @return the list of enumerable string valued property keys
      */
     protected List<String> enumerateKeys(ExecutionContext cx) {
-        List<String> propList = new ArrayList<>();
-        for (Object key : __keys__()) {
-            if (key instanceof String) {
-                propList.add((String) key);
-            }
-        }
-        return propList;
+        return new ArrayList<>(properties.keySet());
     }
 
     /**
@@ -839,8 +802,12 @@ public class OrdinaryObject implements ScriptObject {
      * @return the list of own property keys
      */
     protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
-        // TODO: sort property keys
-        return new ArrayList<>(__keys__());
+        // TODO: sort indexed property keys
+        ArrayList<Object> ownKeys = new ArrayList<>(properties.keySet());
+        if (!symbolProperties.isEmpty()) {
+            ownKeys.addAll(symbolProperties.keySet());
+        }
+        return ownKeys;
     }
 
     private static final class DefaultAllocator implements ObjectAllocator<OrdinaryObject> {

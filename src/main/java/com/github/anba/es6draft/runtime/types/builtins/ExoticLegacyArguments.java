@@ -29,7 +29,7 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
 
     public ExoticLegacyArguments(Realm realm, FunctionObject callee, Object[] arguments,
             ParameterMap map) {
-        super(realm, null);
+        super(realm, (Void) null);
         this.callee = callee;
         this.arguments = arguments;
         this.parameterMap = map;

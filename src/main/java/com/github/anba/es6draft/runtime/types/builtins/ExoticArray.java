@@ -206,7 +206,7 @@ public final class ExoticArray extends OrdinaryObject {
     public static ExoticArray DenseArrayCreate(ExecutionContext cx, Object[] values) {
         ExoticArray array = ArrayCreate(cx, values.length);
         for (int i = 0, len = values.length; i < len; ++i) {
-            array.addProperty(Integer.toString(i), new Property(values[i], true, true, true));
+            array.addProperty(i, new Property(values[i], true, true, true));
         }
         return array;
     }
@@ -226,7 +226,7 @@ public final class ExoticArray extends OrdinaryObject {
         ExoticArray array = ArrayCreate(cx, values.length);
         for (int i = 0, len = values.length; i < len; ++i) {
             if (values[i] != null) {
-                array.addProperty(Integer.toString(i), new Property(values[i], true, true, true));
+                array.addProperty(i, new Property(values[i], true, true, true));
             }
         }
         return array;
