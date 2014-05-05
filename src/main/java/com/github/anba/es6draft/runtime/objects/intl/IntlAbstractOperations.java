@@ -425,7 +425,7 @@ public final class IntlAbstractOperations {
             boolean kPresent = HasProperty(cx, o, pk);
             if (kPresent) {
                 Object kValue = Get(cx, o, pk);
-                if (!(Type.isString(kValue) || Type.isObject(pk))) {
+                if (!(Type.isString(kValue) || Type.isObject(kValue))) {
                     throw newTypeError(cx, Messages.Key.IncompatibleObject);
                 }
                 String tag = ToFlatString(cx, kValue);
