@@ -198,5 +198,8 @@ js/script-tests/dfg-min-max.js
 js/script-tests/sort-with-side-effecting-comparisons.js
 js/script-tests/typedarray-zero-size.js
 
+# StackOverflowError during compilation
+js/script-tests/function-apply-many-args.js
+
 # OutOfMemory
 js/script-tests/function-apply-aliased.js
