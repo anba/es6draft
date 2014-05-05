@@ -741,15 +741,13 @@ public class OrdinaryObject implements ScriptObject {
     /**
      * Note: Subclasses need to override this method if they have virtual, enumerable properties.
      * 
-     * @param cx
-     *            the execution context
      * @param propertyKey
      *            the property key
      * @return {@code true} if the property is enumerable
      */
-    protected boolean isEnumerableOwnProperty(ExecutionContext cx, String propertyKey) {
+    protected boolean isEnumerableOwnProperty(String propertyKey) {
         Property prop = ordinaryGetOwnProperty(propertyKey);
-        return (prop != null && prop.isEnumerable());
+        return prop != null && prop.isEnumerable();
     }
 
     private static final class EnumKeysIterator extends SimpleIterator<Object> {
@@ -773,7 +771,7 @@ public class OrdinaryObject implements ScriptObject {
                 assert protoKeys == null;
                 while (keys.hasNext()) {
                     String key = keys.next();
-                    if (visitedKeys.add(key) && obj.isEnumerableOwnProperty(cx, key)) {
+                    if (visitedKeys.add(key) && obj.isEnumerableOwnProperty(key)) {
                         return key;
                     }
                 }

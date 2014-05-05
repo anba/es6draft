@@ -166,13 +166,13 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     }
 
     @Override
-    protected boolean isEnumerableOwnProperty(ExecutionContext cx, String propertyKey) {
+    protected boolean isEnumerableOwnProperty(String propertyKey) {
         double numericIndex = CanonicalNumericString(propertyKey);
         if (isCanonicalNumeric(numericIndex)) {
             long length = getLength();
             return 0 <= numericIndex && numericIndex < length;
         }
-        return super.isEnumerableOwnProperty(cx, propertyKey);
+        return super.isEnumerableOwnProperty(propertyKey);
     }
 
     /**

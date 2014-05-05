@@ -171,7 +171,7 @@ public final class ExoticModule extends OrdinaryObject {
     }
 
     @Override
-    protected boolean isEnumerableOwnProperty(ExecutionContext cx, String propertyKey) {
+    protected boolean isEnumerableOwnProperty(String propertyKey) {
         assert exports.contains(propertyKey) : String.format("'%s' is not an exported binding",
                 propertyKey);
         return true;

@@ -150,7 +150,7 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
     }
 
     @Override
-    protected boolean isEnumerableOwnProperty(ExecutionContext cx, String key) {
+    protected boolean isEnumerableOwnProperty(String key) {
         int index = ParameterMap.toArgumentIndex(key);
         return index >= 0 && index < arguments.length;
     }
