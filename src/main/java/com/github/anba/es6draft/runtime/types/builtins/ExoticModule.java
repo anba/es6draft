@@ -166,7 +166,7 @@ public final class ExoticModule extends OrdinaryObject {
 
     /** 9.4.6.11 [[Enumerate]] () */
     @Override
-    protected List<String> enumerateKeys(ExecutionContext cx) {
+    protected List<String> getEnumerableKeys(ExecutionContext cx) {
         return exports;
     }
 
@@ -180,7 +180,7 @@ public final class ExoticModule extends OrdinaryObject {
     /** 9.4.6.12 [[OwnPropertyKeys]] ( ) */
     @Override
     @SuppressWarnings("unchecked")
-    protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
+    protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
         return (List<Object>) (List<?>) exports;
     }
 

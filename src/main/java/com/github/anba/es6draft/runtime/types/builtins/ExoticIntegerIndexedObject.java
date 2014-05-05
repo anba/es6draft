@@ -149,18 +149,18 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
 
     /** 9.4.5.5 [[Enumerate]] () */
     @Override
-    protected List<String> enumerateKeys(ExecutionContext cx) {
+    protected List<String> getEnumerableKeys(ExecutionContext cx) {
         // FIXME: spec incomplete
-        List<String> keys = super.enumerateKeys(cx);
+        List<String> keys = super.getEnumerableKeys(cx);
         addIntegerIndices(cx, keys);
         return keys;
     }
 
     /** 9.4.5.6 [[OwnPropertyKeys]] () */
     @Override
-    protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
+    protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
         // FIXME: spec incomplete
-        List<Object> keys = super.enumerateOwnKeys(cx);
+        List<Object> keys = super.getOwnPropertyKeys(cx);
         addIntegerIndices(cx, keys);
         return keys;
     }

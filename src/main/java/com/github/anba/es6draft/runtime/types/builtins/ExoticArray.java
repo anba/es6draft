@@ -336,7 +336,7 @@ public final class ExoticArray extends OrdinaryObject {
     }
 
     private long[] indices(ExecutionContext cx, long minIndex) {
-        List<String> keys = enumerateKeys(cx);
+        List<String> keys = getEnumerableKeys(cx);
         long[] indices = new long[keys.size()];
         int i = 0;
         for (String key : keys) {

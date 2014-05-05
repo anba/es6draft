@@ -114,8 +114,8 @@ public final class ExoticString extends OrdinaryObject {
      * 9.4.3.2 [[Enumerate]] ()
      */
     @Override
-    protected List<String> enumerateKeys(ExecutionContext cx) {
-        List<String> keys = super.enumerateKeys(cx);
+    protected List<String> getEnumerableKeys(ExecutionContext cx) {
+        List<String> keys = super.getEnumerableKeys(cx);
         addStringIndices(keys);
         return keys;
     }
@@ -124,8 +124,8 @@ public final class ExoticString extends OrdinaryObject {
      * 9.4.3.3 [[OwnPropertyKeys]] ()
      */
     @Override
-    protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
-        List<Object> keys = super.enumerateOwnKeys(cx);
+    protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
+        List<Object> keys = super.getOwnPropertyKeys(cx);
         addStringIndices(keys);
         return keys;
     }

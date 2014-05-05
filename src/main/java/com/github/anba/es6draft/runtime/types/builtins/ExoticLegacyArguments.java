@@ -136,14 +136,14 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
     }
 
     @Override
-    protected List<String> enumerateKeys(ExecutionContext cx) {
+    protected List<String> getEnumerableKeys(ExecutionContext cx) {
         ArrayList<String> keys = new ArrayList<>();
         addArgumentIndices(keys);
         return keys;
     }
 
     @Override
-    protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
+    protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
         ArrayList<Object> keys = new ArrayList<>();
         addArgumentIndices(keys);
         return keys;

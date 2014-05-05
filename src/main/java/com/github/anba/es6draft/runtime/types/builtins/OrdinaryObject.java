@@ -734,7 +734,7 @@ public class OrdinaryObject implements ScriptObject {
      *            the execution context
      * @return the list of enumerable string valued property keys
      */
-    protected List<String> enumerateKeys(ExecutionContext cx) {
+    protected List<String> getEnumerableKeys(ExecutionContext cx) {
         return new ArrayList<>(properties.keySet());
     }
 
@@ -760,7 +760,7 @@ public class OrdinaryObject implements ScriptObject {
         EnumKeysIterator(ExecutionContext cx, OrdinaryObject obj) {
             this.cx = cx;
             this.obj = obj;
-            this.keys = obj.enumerateKeys(cx).iterator();
+            this.keys = obj.getEnumerableKeys(cx).iterator();
         }
 
         @Override
@@ -780,7 +780,7 @@ public class OrdinaryObject implements ScriptObject {
                 if (proto != null) {
                     if (proto instanceof OrdinaryObject) {
                         this.obj = ((OrdinaryObject) proto);
-                        this.keys = ((OrdinaryObject) proto).enumerateKeys(cx).iterator();
+                        this.keys = ((OrdinaryObject) proto).getEnumerableKeys(cx).iterator();
                         return tryNext();
                     } else {
                         this.obj = null;
@@ -812,13 +812,13 @@ public class OrdinaryObject implements ScriptObject {
     @Override
     public final ScriptObject ownPropertyKeys(ExecutionContext cx) {
         // FIXME: array
-        return CreateListIterator(cx, enumerateOwnKeys(cx));
+        return CreateListIterator(cx, getOwnPropertyKeys(cx));
     }
 
     /** 9.1.12 [[OwnPropertyKeys]] ( ) */
     @Override
-    public Iterator<?> ownKeys(ExecutionContext cx) {
-        return enumerateOwnKeys(cx).iterator();
+    public final Iterator<?> ownKeys(ExecutionContext cx) {
+        return getOwnPropertyKeys(cx).iterator();
     }
 
     /**
@@ -828,7 +828,7 @@ public class OrdinaryObject implements ScriptObject {
      *            the execution context
      * @return the list of own property keys
      */
-    protected List<Object> enumerateOwnKeys(ExecutionContext cx) {
+    protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
         // TODO: sort indexed property keys
         ArrayList<Object> ownKeys = new ArrayList<>(properties.keySet());
         if (!symbolProperties.isEmpty()) {
