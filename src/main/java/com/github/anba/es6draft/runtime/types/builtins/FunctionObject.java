@@ -253,10 +253,10 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     protected final List<Object> enumerateOwnKeys(ExecutionContext cx) {
         List<Object> ownKeys = super.enumerateOwnKeys(cx);
         if (isLegacy()) {
-            if (!super.hasOwnProperty(cx, "caller")) {
+            if (!ordinaryHasOwnProperty("caller")) {
                 ownKeys.add("caller");
             }
-            if (!super.hasOwnProperty(cx, "arguments")) {
+            if (!ordinaryHasOwnProperty("arguments")) {
                 ownKeys.add("arguments");
             }
         }

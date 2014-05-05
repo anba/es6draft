@@ -133,7 +133,7 @@ public final class ExoticString extends OrdinaryObject {
     @Override
     protected boolean isEnumerableOwnProperty(ExecutionContext cx, String key) {
         int index = toStringIndex(key);
-        if (index >= 0 && index < getStringDataOrEmpty().length() && !super.hasOwnProperty(cx, key)) {
+        if (index >= 0 && index < getStringDataOrEmpty().length() && !ordinaryHasOwnProperty(key)) {
             return true;
         }
         return super.isEnumerableOwnProperty(cx, key);

@@ -124,8 +124,7 @@ public class OrdinaryObject implements ScriptObject {
      * @return {@code true} if an own property was found
      */
     protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
-        // optimised: HasOwnProperty(cx, this, propertyKey)
-        return properties.containsKey(propertyKey);
+        return ordinaryHasOwnProperty(propertyKey);
     }
 
     /**
@@ -138,7 +137,30 @@ public class OrdinaryObject implements ScriptObject {
      * @return {@code true} if an own property was found
      */
     protected boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey) {
-        // optimised: HasOwnProperty(cx, this, propertyKey)
+        return ordinaryHasOwnProperty(propertyKey);
+    }
+
+    /**
+     * OrdinaryHasOwnProperty (P) (not in spec)
+     * 
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if an own property was found
+     */
+    protected final boolean ordinaryHasOwnProperty(String propertyKey) {
+        // optimized: HasOwnProperty(cx, this, propertyKey)
+        return properties.containsKey(propertyKey);
+    }
+
+    /**
+     * OrdinaryHasOwnProperty (P) (not in spec)
+     * 
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if an own property was found
+     */
+    protected final boolean ordinaryHasOwnProperty(Symbol propertyKey) {
+        // optimized: HasOwnProperty(cx, this, propertyKey)
         return symbolProperties.containsKey(propertyKey);
     }
 
