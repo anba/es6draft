@@ -29,7 +29,7 @@ Non-Goals:
 
 ### Prerequisites ###
 
-* Download and install [JDK 7 or later] [java]
+* Download and install [JDK 8 or later] [java]
 * Download and install [Apache Maven 3 or later] [maven]
 * Set-up the `JAVA_HOME` environment variable to point to the JDK installation directory
 
