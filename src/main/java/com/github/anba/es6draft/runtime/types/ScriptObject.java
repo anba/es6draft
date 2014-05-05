@@ -215,6 +215,15 @@ public interface ScriptObject {
     ScriptObject enumerate(ExecutionContext cx);
 
     /**
+     * [[Enumerate]] ()
+     *
+     * @param cx
+     *            the execution context
+     * @return the enumeration iterator object
+     */
+    Iterator<?> enumerateKeys(ExecutionContext cx);
+
+    /**
      * [[OwnPropertyKeys]] ( )
      *
      * @param cx

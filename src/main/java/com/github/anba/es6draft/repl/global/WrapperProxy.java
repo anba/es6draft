@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListIter
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static java.util.Collections.emptyIterator;
@@ -396,6 +395,14 @@ class WrapperProxy implements ScriptObject {
         return CreateListIterator(cx, new AppendIterator(cx, proxyTarget, getProto(cx)));
     }
 
+    /**
+     * [[Enumerate]] ()
+     */
+    @Override
+    public Iterator<?> enumerateKeys(ExecutionContext cx) {
+        return FromScriptIterator(cx, enumerate(cx));
+    }
+
     private static final class AppendIterator extends SimpleIterator<Object> {
         private final ExecutionContext cx;
         private final ScriptObject proxyTarget;
@@ -407,8 +414,7 @@ class WrapperProxy implements ScriptObject {
             this.cx = cx;
             this.proxyTarget = proxyTarget;
             this.targetKeys = proxyTarget.ownKeys(cx);
-            this.protoKeys = proto != null ? FromListIterator(cx, proto, proto.enumerate(cx))
-                    : emptyIterator();
+            this.protoKeys = proto != null ? proto.enumerateKeys(cx) : emptyIterator();
         }
 
         @Override

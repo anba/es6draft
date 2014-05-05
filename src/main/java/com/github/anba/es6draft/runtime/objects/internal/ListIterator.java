@@ -81,27 +81,6 @@ public final class ListIterator<T> extends OrdinaryObject {
      * 
      * @param cx
      *            the execution context
-     * @param holder
-     *            the iterator source
-     * @param iterator
-     *            the script iterator object
-     * @return the iterator object
-     */
-    public static Iterator<?> FromListIterator(ExecutionContext cx, ScriptObject holder,
-            ScriptObject iterator) {
-        // only access internal iterator when it's safe to do, i.e. created by OrdinaryObject
-        if (holder instanceof OrdinaryObject && iterator instanceof ListIterator) {
-            return ((ListIterator<?>) iterator).getIterator();
-        }
-        return FromScriptIterator(cx, iterator);
-    }
-
-    /**
-     * Returns an {@link Iterator} for {@code iterator}. {@code iterator} is expected to comply to
-     * the <code>"25.1.2 The Iterator Interface"</code>.
-     * 
-     * @param cx
-     *            the execution context
      * @param iterator
      *            the script iterator object
      * @return the iterator object

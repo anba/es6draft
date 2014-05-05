@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.HashSet;
@@ -49,7 +48,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
     @Override
     public Set<String> bindingNames() {
         HashSet<String> names = new HashSet<>();
-        Iterator<?> keys = FromListIterator(cx, bindings, bindings.enumerate(cx));
+        Iterator<?> keys = bindings.enumerateKeys(cx);
         while (keys.hasNext()) {
             Object key = keys.next();
             Object propertyKey = ToPropertyKey(cx, key);

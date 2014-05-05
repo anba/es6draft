@@ -851,6 +851,14 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
+     * 9.5.11 [[Enumerate]] ()
+     */
+    @Override
+    public Iterator<?> enumerateKeys(ExecutionContext cx) {
+        return FromScriptIterator(cx, enumerate(cx));
+    }
+
+    /**
      * 9.5.12 [[OwnPropertyKeys]] ()
      */
     @Override

@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.internal;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.*;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorYield;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -1218,7 +1217,7 @@ public final class ScriptRuntime {
     /**
      * 13.6.4 The for-in and for-of Statements
      * <p>
-     * 13.6.4.6 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * 13.6.4.7 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
      * 
      * @param o
      *            the object to enumerate
@@ -1227,18 +1226,18 @@ public final class ScriptRuntime {
      * @return the keys enumerator
      */
     public static Iterator<?> enumerate(Object o, ExecutionContext cx) {
-        /* step 5 */
+        /* step 8 */
         ScriptObject obj = ToObject(cx, o);
-        /* step 6, step 8 */
-        ScriptObject keys = obj.enumerate(cx);
-        /* step 9 */
-        return FromListIterator(cx, obj, keys);
+        /* step 9-11 */
+        Iterator<?> keys = obj.enumerateKeys(cx);
+        /* step 12 */
+        return keys;
     }
 
     /**
      * 13.6.4 The for-in and for-of Statements
      * <p>
-     * 13.6.4.6 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * 13.6.4.7 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
      * 
      * @param o
      *            the object to enumerate
@@ -1247,11 +1246,11 @@ public final class ScriptRuntime {
      * @return the object iterator
      */
     public static Iterator<?> iterate(Object o, ExecutionContext cx) {
-        /* step 5 */
+        /* step 8 */
         ScriptObject obj = ToObject(cx, o);
-        /* step 7, step 8 */
+        /* step 9-11 */
         ScriptObject keys = GetIterator(cx, obj);
-        /* step 9 */
+        /* step 12 */
         return FromScriptIterator(cx, keys);
     }
 
@@ -1259,7 +1258,7 @@ public final class ScriptRuntime {
      * 13.6.4 The for-in and for-of Statements<br>
      * Extension: 'for-each' statement
      * <p>
-     * 13.6.4.6 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * 13.6.4.7 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
      * 
      * @param o
      *            the object to enumerate
@@ -1268,12 +1267,12 @@ public final class ScriptRuntime {
      * @return the values enumerator
      */
     public static Iterator<?> enumerateValues(Object o, ExecutionContext cx) {
-        /* step 5 */
+        /* step 8 */
         ScriptObject obj = ToObject(cx, o);
-        /* step 6, step 8 */
-        ScriptObject keys = obj.enumerate(cx);
-        /* step 9 */
-        return new ValuesIterator(cx, obj, FromListIterator(cx, obj, keys));
+        /* step 9-11 */
+        Iterator<?> keys = new ValuesIterator(cx, obj, obj.enumerateKeys(cx));
+        /* step 12 */
+        return keys;
     }
 
     private static final class ValuesIterator extends SimpleIterator<Object> {
