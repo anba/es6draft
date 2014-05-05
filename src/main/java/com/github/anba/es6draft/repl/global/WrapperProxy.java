@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListIter
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptArray;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static java.util.Collections.emptyIterator;
@@ -452,6 +453,6 @@ class WrapperProxy implements ScriptObject {
      */
     @Override
     public Iterator<?> ownKeys(ExecutionContext cx) {
-        return FromScriptIterator(cx, ownPropertyKeys(cx));
+        return FromScriptArray(cx, ownPropertyKeys(cx));
     }
 }

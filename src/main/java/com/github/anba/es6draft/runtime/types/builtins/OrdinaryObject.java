@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListIterator;
-import static com.github.anba.es6draft.runtime.AbstractOperations.GetPrototypeFromConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
@@ -816,8 +813,7 @@ public class OrdinaryObject implements ScriptObject {
     /** 9.1.12 [[OwnPropertyKeys]] ( ) */
     @Override
     public final ScriptObject ownPropertyKeys(ExecutionContext cx) {
-        // FIXME: array
-        return CreateListIterator(cx, getOwnPropertyKeys(cx));
+        return CreateArrayFromList(cx, getOwnPropertyKeys(cx));
     }
 
     /** 9.1.12 [[OwnPropertyKeys]] ( ) */

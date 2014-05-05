@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptArray;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.CompletePropertyDescriptor;
@@ -888,6 +889,6 @@ public class ExoticProxy implements ScriptObject {
      */
     @Override
     public Iterator<?> ownKeys(ExecutionContext cx) {
-        return FromScriptIterator(cx, ownPropertyKeys(cx));
+        return FromScriptArray(cx, ownPropertyKeys(cx));
     }
 }

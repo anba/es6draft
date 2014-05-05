@@ -6,8 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.objects.internal;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorStep;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorValue;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
 
 import java.util.Iterator;
 
@@ -86,14 +88,27 @@ public final class ListIterator<T> extends OrdinaryObject {
      * @return the iterator object
      */
     public static Iterator<?> FromScriptIterator(ExecutionContext cx, ScriptObject iterator) {
-        return new IteratorWrapper(cx, iterator);
+        return new ScriptIterator(cx, iterator);
     }
 
-    private static final class IteratorWrapper extends SimpleIterator<Object> {
+    /**
+     * Returns an {@link Iterator} for {@code arrayLike}.
+     * 
+     * @param cx
+     *            the execution context
+     * @param arrayLike
+     *            the array-like script object
+     * @return the iterator object
+     */
+    public static Iterator<?> FromScriptArray(ExecutionContext cx, ScriptObject arrayLike) {
+        return new ArrayIterator(cx, arrayLike);
+    }
+
+    private static final class ScriptIterator extends SimpleIterator<Object> {
         private final ExecutionContext cx;
         private final ScriptObject object;
 
-        IteratorWrapper(ExecutionContext cx, ScriptObject object) {
+        ScriptIterator(ExecutionContext cx, ScriptObject object) {
             this.cx = cx;
             this.object = object;
         }
@@ -105,6 +120,27 @@ public final class ListIterator<T> extends OrdinaryObject {
                 return null;
             }
             return IteratorValue(cx, next);
+        }
+    }
+
+    private static final class ArrayIterator extends SimpleIterator<Object> {
+        private final ExecutionContext cx;
+        private final ScriptObject arrayLike;
+        private final long length;
+        private long index = 0;
+
+        ArrayIterator(ExecutionContext cx, ScriptObject arrayLike) {
+            this.cx = cx;
+            this.arrayLike = arrayLike;
+            this.length = ToLength(cx, Get(cx, arrayLike, "length"));
+        }
+
+        @Override
+        protected Object tryNext() {
+            if (index >= length) {
+                return null;
+            }
+            return Get(cx, arrayLike, index++);
         }
     }
 }
