@@ -67,7 +67,7 @@ assertBuiltinFunction(Object.defineProperties, "defineProperties", 2);
   let value = 0;
   let props = new Proxy({a: -1}, {
     get: () => ({value: value++}),
-    ownKeys: () => ["a", "a", "a"].values()
+    ownKeys: () => ["a", "a", "a"]
   });
   let o = {};
   assertThrows(() => Object.defineProperties(o, props), TypeError);
@@ -83,7 +83,7 @@ assertBuiltinFunction(Object.defineProperties, "defineProperties", 2);
     a: {value: 1},
     b: {value: 1},
   }, {
-    ownKeys: () => ["a", "b"].values()
+    ownKeys: () => ["a", "b"]
   });
   assertThrows(() => Object.defineProperties(o, props), TypeError);
   assertDataProperty(o, "a", {value: 0, writable: false, enumerable: true, configurable: false});

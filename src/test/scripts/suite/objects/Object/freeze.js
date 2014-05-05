@@ -71,7 +71,7 @@ assertBuiltinFunction(Object.freeze, "freeze", 1);
     },
     ownKeys() {
       log += ",";
-      return ["a", "b"].values();
+      return ["a", "b"];
     },
   }, {
     get(t, pk, r) {
@@ -99,7 +99,7 @@ assertBuiltinFunction(Object.freeze, "freeze", 1);
       }
       return Object.defineProperty(t, pk, d);
     },
-    ownKeys: () => ["a", "b"].values()
+    ownKeys: () => ["a", "b"]
   });
   assertThrows(() => Object.freeze(o), MyError);
   assertSame(2, count);
@@ -127,7 +127,7 @@ assertBuiltinFunction(Object.freeze, "freeze", 1);
       }
       return Object.getOwnPropertyDescriptor(t, pk);
     },
-    ownKeys: () => ["a", "b"].values()
+    ownKeys: () => ["a", "b"]
   });
   assertThrows(() => Object.freeze(o), MyError);
   assertSame(1, count);

@@ -13,4 +13,3 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=2096
 
 assertThrows(() => Reflect.enumerate({}).next.call({}), TypeError);
-assertThrows(() => Reflect.ownKeys({}).next.call({}), TypeError);

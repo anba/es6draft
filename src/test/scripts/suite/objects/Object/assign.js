@@ -44,7 +44,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
   Object.assign({}, new Proxy({}, {
     ownKeys() {
       ownKeysCalled = true;
-      return [].values();
+      return [];
     }
   }));
   assertTrue(ownKeysCalled);
@@ -54,7 +54,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
 {
   let log = "";
   let source = new Proxy({a: 1, b: 2}, {
-    ownKeys: () => ["b", "c", "a"].values(),
+    ownKeys: () => ["b", "c", "a"],
     getOwnPropertyDescriptor(t, pk) {
       log += "#" + pk;
       return Reflect.getOwnPropertyDescriptor(t, pk);
@@ -86,7 +86,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
     get a() { getterCalled = true },
     get b() { Object.defineProperty(this, "a", {enumerable: false}) },
   }, {
-    ownKeys: () => ["b", "a"].values()
+    ownKeys: () => ["b", "a"]
   });
   Object.assign({}, source);
   assertFalse(getterCalled);
@@ -99,7 +99,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
     get a() { getterCalled = true },
     get b() { Object.defineProperty(this, "a", {enumerable: true}) },
   }, {
-    ownKeys: () => ["b", "a"].values()
+    ownKeys: () => ["b", "a"]
   });
   Object.defineProperty(source, "a", {enumerable: false});
   Object.assign({}, source);
@@ -168,11 +168,11 @@ assertBuiltinFunction(Object.assign, "assign", 2);
   let source = new Proxy({
     get a() { hasB = "b" in this },
   }, {
-    ownKeys: () => function*() {
-      yield "a";
-      source.b = 2;
-      yield "b";
-    }()
+    ownKeys: () => ({
+      length: 2,
+      get 0() { return "a" },
+      get 1() { source.b = 2; return "b" },
+    })
   });
   let target = Object.assign({}, source);
   assertTrue("a" in target);
@@ -186,7 +186,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
     get a() { delete this.b },
     b: 2,
   }, {
-    ownKeys: () => ["a", "b"].values()
+    ownKeys: () => ["a", "b"]
   });
   let target = Object.assign({}, source);
   assertTrue("a" in target);
@@ -200,7 +200,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
     get b() { this.c = 4 },
     c: 3,
   }, {
-    ownKeys: () => ["a", "b", "c"].values()
+    ownKeys: () => ["a", "b", "c"]
   });
   let target = Object.assign({}, source);
   assertTrue("a" in target);
@@ -216,7 +216,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
     get b() { this.c = 4 },
     c: 3,
   }, {
-    ownKeys: () => ["a", "c", "b"].values()
+    ownKeys: () => ["a", "c", "b"]
   });
   let target = Object.assign({}, source);
   assertTrue("a" in target);
@@ -243,7 +243,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
       log += pk;
       throw new (pk === "a" ? ErrorA : ErrorB);
     },
-    ownKeys: () => ["b", "a"].values()
+    ownKeys: () => ["b", "a"]
   });
   assertThrows(() => Object.assign({}, source), ErrorB);
   assertSame("ba", log);
@@ -258,7 +258,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
     get a() { log += "a"; throw new ErrorA },
     get b() { log += "b"; throw new ErrorB },
   }, {
-    ownKeys: () => ["b", "a"].values()
+    ownKeys: () => ["b", "a"]
   });
   assertThrows(() => Object.assign({}, source), ErrorB);
   assertSame("ba", log);
@@ -270,7 +270,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
   class ErrorB extends Error {}
   let log = "";
   let source = new Proxy({a: 1, b: 2}, {
-    ownKeys: () => ["b", "a"].values()
+    ownKeys: () => ["b", "a"]
   });
   let target = {
     set a(v) { log += "a"; throw new ErrorA },
@@ -300,55 +300,68 @@ assertBuiltinFunction(Object.assign, "assign", 2);
 
 // Exceptions in Iterator directly stop property traversal (1)
 {
-  class ErrorNext extends Error {}
-  let getterCalled = false;
-  let source = new Proxy({
-    get a() { getterCalled = true }
-  }, {
-    ownKeys: () => ({next() { throw new ErrorNext }})
+  class ErrorLength extends Error {}
+  let source = new Proxy({}, {
+    ownKeys: () => ({
+      get length() { throw new ErrorLength }
+    })
   });
-  assertThrows(() => Object.assign({}, source), ErrorNext);
-  assertFalse(getterCalled);
+  assertThrows(() => Object.assign({}, source), ErrorLength);
 }
 
 // Exceptions in Iterator directly stop property traversal (2)
 {
-  class ErrorDone extends Error {}
-  class ErrorValue extends Error {}
-  let getterCalled = false;
-  let source = new Proxy({
-    get a() { getterCalled = true }
-  }, {
+  class ErrorZero extends Error {}
+  let source = new Proxy({}, {
     ownKeys: () => ({
-      next() {
-        return {
-          get done() { throw new ErrorDone },
-          get value() { throw new ErrorValue },
-        };
-      }
+      length: 1,
+      get 0() { throw new ErrorZero },
     })
   });
-  assertThrows(() => Object.assign({}, source), ErrorDone);
-  assertFalse(getterCalled);
+  assertThrows(() => Object.assign({}, source), ErrorZero);
 }
 
 // Exceptions in Iterator directly stop property traversal (3)
 {
-  class ErrorDone extends Error {}
-  class ErrorValue extends Error {}
+  class ErrorLength extends Error {}
+  class ErrorZero extends Error {}
+  let source = new Proxy({}, {
+    ownKeys: () => ({
+      get length() { throw new ErrorLength },
+      get 0() { throw new ErrorZero },
+    })
+  });
+  assertThrows(() => Object.assign({}, source), ErrorLength);
+}
+
+// Exceptions in Iterator directly stop property traversal (4)
+{
+  class ErrorZero extends Error {}
+  class ErrorOne extends Error {}
+  let source = new Proxy({}, {
+    ownKeys: () => ({
+      length: 2,
+      get 0() { throw new ErrorZero },
+      get 1() { throw new ErrorOne },
+    })
+  });
+  assertThrows(() => Object.assign({}, source), ErrorZero);
+}
+
+// Exceptions in Iterator directly stop property traversal (5)
+{
+  class ErrorZero extends Error {}
+  class ErrorOne extends Error {}
   let getterCalled = false;
   let source = new Proxy({
     get a() { getterCalled = true }
   }, {
     ownKeys: () => ({
-      next() {
-        return {
-          get done() { return false },
-          get value() { throw new ErrorValue },
-        };
-      }
+      length: 2,
+      get 0() { return "a" },
+      get 1() { throw new ErrorOne },
     })
   });
-  assertThrows(() => Object.assign({}, source), ErrorValue);
-  assertFalse(getterCalled);
+  assertThrows(() => Object.assign({}, source), ErrorOne);
+  assertTrue(getterCalled);
 }
