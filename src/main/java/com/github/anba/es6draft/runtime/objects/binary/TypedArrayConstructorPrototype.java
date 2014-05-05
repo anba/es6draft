@@ -399,7 +399,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             ScriptObject newObj = ((Constructor) c).construct(cx, len);
             /* steps 6-7 */
             for (int k = 0; k < len; ++k) {
-                String pk = ToString(k);
+                int pk = k;
                 Object value = items[k];
                 Put(cx, newObj, pk, value, true);
             }
@@ -511,7 +511,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         SetArrayBufferData(cx, data, byteLength);
         /* steps 19-20 */
         for (long k = 0; k < elementLength; ++k) {
-            String pk = ToString(k);
+            long pk = k;
             Object kValue = Get(cx, srcArray, pk);
             double kNumber = ToNumber(cx, kValue);
             SetValueInBuffer(cx, data, k * elementSize, elementType, kNumber);
@@ -589,7 +589,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             }
             /* steps 10.j-10.l */
             for (int k = 0; k < len; ++k) {
-                String pk = ToString(k);
+                long pk = k;
                 Object kValue = values.get(k);
                 Object mappedValue;
                 if (mapping) {
@@ -618,7 +618,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         }
         /* steps 17-18 */
         for (long k = 0; k < len; ++k) {
-            String pk = ToString(k);
+            long pk = k;
             Object kValue = Get(cx, items, pk);
             Object mappedValue;
             if (mapping) {

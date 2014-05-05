@@ -204,7 +204,7 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
             long substlength = substitutions.length;
             /* steps 12-13 */
             for (long nextIndex = 0;; ++nextIndex) {
-                String nextKey = ToString(nextIndex);
+                long nextKey = nextIndex;
                 Object next = Get(cx, raw, nextKey);
                 CharSequence nextSeg = ToString(cx, next);
                 stringElements.append(nextSeg);

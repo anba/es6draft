@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
 
@@ -208,7 +207,7 @@ public final class ExoticArguments extends OrdinaryObject {
         /* steps 4-5 */
         for (int index = 0; index < len; ++index) {
             Object val = argumentsList[index];
-            CreateDataProperty(cx, obj, ToString(index), val);
+            CreateDataProperty(cx, obj, index, val);
         }
         Callable thrower = cx.getRealm().getThrowTypeError();
         /* step 6 */
@@ -256,7 +255,7 @@ public final class ExoticArguments extends OrdinaryObject {
         /* steps 14-15 */
         for (int index = 0; index < len; ++index) {
             Object val = argumentsList[index];
-            CreateDataProperty(cx, obj, ToString(index), val);
+            CreateDataProperty(cx, obj, index, val);
         }
         /* step 16 */
         DefinePropertyOrThrow(cx, obj, "length", new PropertyDescriptor(len, true, false, true));

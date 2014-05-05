@@ -171,8 +171,8 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
                 } else {
                     assert itemKind == MapIterationKind.KeyValue;
                     ExoticArray array = ArrayCreate(cx, 2);
-                    CreateDataProperty(cx, array, "0", e.getKey());
-                    CreateDataProperty(cx, array, "1", e.getValue());
+                    CreateDataProperty(cx, array, 0, e.getKey());
+                    CreateDataProperty(cx, array, 1, e.getValue());
                     result = array;
                 }
                 return CreateIterResultObject(cx, result, false);

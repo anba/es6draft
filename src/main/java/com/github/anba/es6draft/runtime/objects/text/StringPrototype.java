@@ -574,7 +574,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             }
             /* step 14 */
             if (Type.isUndefined(separator)) {
-                CreateDataProperty(cx, a, "0", s);
+                CreateDataProperty(cx, a, 0, s);
                 return a;
             }
             /* step 15 */
@@ -582,7 +582,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
                 if (r.length() == 0) {
                     return a;
                 }
-                CreateDataProperty(cx, a, "0", s);
+                CreateDataProperty(cx, a, 0, s);
                 return a;
             }
             /* step 16 */
@@ -598,7 +598,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
                         q = q + 1;
                     } else {
                         String t = s.substring(p, z);
-                        CreateDataProperty(cx, a, ToString(lengthA), t);
+                        CreateDataProperty(cx, a, lengthA, t);
                         lengthA += 1;
                         if (lengthA == lim) {
                             return a;
@@ -611,7 +611,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* step 18 */
             String t = s.substring(p, size);
             /* steps 19-20 */
-            CreateDataProperty(cx, a, ToString(lengthA), t);
+            CreateDataProperty(cx, a, lengthA, t);
             /* step 21 */
             return a;
         }

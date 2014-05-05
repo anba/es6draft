@@ -338,7 +338,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                         double thisIndex = ToInteger(cx, Get(cx, rx, "lastIndex"));
                         Put(cx, rx, "lastIndex", thisIndex + 1, true);
                     }
-                    CreateDataPropertyOrThrow(cx, array, ToString(n), matchStr);
+                    CreateDataPropertyOrThrow(cx, array, n, matchStr);
                     n += 1;
                 }
             }
@@ -661,7 +661,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                     RegExpConstructor.storeLastMatchResult(cx, s, matcher.toMatchResult());
                     return a;
                 }
-                CreateDataProperty(cx, a, "0", s);
+                CreateDataProperty(cx, a, 0, s);
                 return a;
             }
             /* step 16 */
@@ -678,7 +678,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                     q = q + 1;
                 } else {
                     String t = s.substring(p, lastStart = matcher.start());
-                    CreateDataProperty(cx, a, ToString(lengthA), t);
+                    CreateDataProperty(cx, a, lengthA, t);
                     lengthA += 1;
                     if (lengthA == lim) {
                         return a;
@@ -687,7 +687,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                     Iterator<String> iterator = groupIterator(matcher, matcher.groupCount());
                     while (iterator.hasNext()) {
                         String cap = iterator.next();
-                        CreateDataProperty(cx, a, ToString(lengthA), cap != null ? cap : UNDEFINED);
+                        CreateDataProperty(cx, a, lengthA, cap != null ? cap : UNDEFINED);
                         lengthA += 1;
                         if (lengthA == lim) {
                             return a;
@@ -702,7 +702,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* step 18 */
             String t = s.substring(p, size);
             /* steps 19-20 */
-            CreateDataProperty(cx, a, ToString(lengthA), t);
+            CreateDataProperty(cx, a, lengthA, t);
             /* step 21 */
             return a;
         }
@@ -971,12 +971,12 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         /* step 27 */
         String matchedSubstr = s.substring(matchIndex, e);
         /* step 28 */
-        CreateDataProperty(cx, array, "0", matchedSubstr);
+        CreateDataProperty(cx, array, 0, matchedSubstr);
         /* step 29 */
         Iterator<String> iterator = groupIterator(m, n);
         for (int i = 1; iterator.hasNext(); ++i) {
             String capture = iterator.next();
-            CreateDataProperty(cx, array, ToString(i), (capture != null ? capture : UNDEFINED));
+            CreateDataProperty(cx, array, i, (capture != null ? capture : UNDEFINED));
         }
         /* step 30 */
         return array;
@@ -1072,7 +1072,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
 
         @Override
         public String group(int group) {
-            Object captured = Get(cx, object, ToString(group));
+            Object captured = Get(cx, object, group);
             if (Type.isUndefined(captured)) {
                 return null;
             }

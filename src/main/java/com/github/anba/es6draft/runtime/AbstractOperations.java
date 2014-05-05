@@ -2371,7 +2371,7 @@ public final class AbstractOperations {
         int n = 0;
         /* step 4 */
         for (Object e : elements) {
-            boolean status = CreateDataProperty(cx, array, ToString(n), e);
+            boolean status = CreateDataProperty(cx, array, n, e);
             assert status;
             n += 1;
         }
@@ -2407,7 +2407,7 @@ public final class AbstractOperations {
         Object[] list = new Object[length];
         /* steps 6-7 */
         for (int index = 0; index < length; ++index) {
-            String indexName = ToString(index);
+            int indexName = index;
             Object next = Get(cx, object, indexName);
             list[index] = next;
         }

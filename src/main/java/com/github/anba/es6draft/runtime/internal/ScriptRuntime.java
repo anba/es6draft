@@ -1166,7 +1166,7 @@ public final class ScriptRuntime {
         ExoticArray result = ArrayCreate(cx, 0);
         for (int n = 0; iterator.hasNext(); ++n) {
             Object nextValue = iterator.next();
-            CreateDataPropertyOrThrow(cx, result, ToString(n), nextValue);
+            CreateDataPropertyOrThrow(cx, result, n, nextValue);
         }
         return result;
     }

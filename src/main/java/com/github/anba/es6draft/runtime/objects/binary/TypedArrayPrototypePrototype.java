@@ -214,7 +214,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                         * Math.min(srcLength, targetLength - targetOffset));
                 /* steps 25, 27 */
                 for (long k = 0; targetByteIndex < limit; ++k, targetByteIndex += targetElementSize) {
-                    String pk = ToString(k);
+                    long pk = k;
                     Object kValue = Get(cx, src, pk);
                     double kNumber = ToNumber(cx, kValue);
                     SetValueInBuffer(cx, targetBuffer, targetByteIndex, targetType, kNumber);
@@ -464,11 +464,10 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             }
             ScriptObject a = ((Constructor) c).construct(cx, count);
             /* steps 16-17 */
-            long n = 0;
-            for (; k < finall; ++k, ++n) {
-                String pk = ToString(k);
+            for (long n = 0; k < finall; ++k, ++n) {
+                long pk = k;
                 Object kvalue = Get(cx, o, pk);
-                Put(cx, a, ToString(n), kvalue, true);
+                Put(cx, a, n, kvalue, true);
             }
             /* step 18 */
             return a;
@@ -536,7 +535,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
             double[] elements = new double[length];
             for (int i = 0; i < length; ++i) {
-                String index = ToString(i);
+                int index = i;
                 Object e = Get(cx, obj, index);
                 assert Type.isNumber(e);
                 elements[i] = Type.numberValue(e);
@@ -561,7 +560,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             }
 
             for (int i = 0; i < length; ++i) {
-                String p = ToString(i);
+                int p = i;
                 Put(cx, obj, p, array[i], true);
             }
 
@@ -708,7 +707,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             ScriptObject a = ((Constructor) c).construct(cx, len);
             /* steps 11-12 */
             for (long k = 0; k < len; ++k) {
-                String pk = ToString(k);
+                long pk = k;
                 Object kvalue = Get(cx, o, pk);
                 Object mappedValue = callback.call(cx, thisArg, kvalue, k, o);
                 Put(cx, a, pk, mappedValue, true);
@@ -753,7 +752,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             List<Object> kept = new ArrayList<>();
             /* steps 11, 13 */
             for (long k = 0; k < len; ++k) {
-                String pk = ToString(k);
+                long pk = k;
                 Object kvalue = Get(cx, o, pk);
                 Object selected = callback.call(cx, thisArg, kvalue, k, o);
                 if (ToBoolean(selected)) {
@@ -765,7 +764,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             /* steps 16-17 */
             for (int n = 0; n < kept.size(); ++n) {
                 Object e = kept.get(n);
-                Put(cx, a, ToString(n), e, true);
+                Put(cx, a, n, e, true);
             }
             /* step 18 */
             return a;

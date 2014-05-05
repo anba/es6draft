@@ -137,7 +137,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                     long len = ToLength(cx, Get(cx, objReplacer, "length"));
                     for (long i = 0; i < len; ++i) {
                         String item = null;
-                        Object v = Get(cx, objReplacer, ToString(i));
+                        Object v = Get(cx, objReplacer, i);
                         if (Type.isString(v)) {
                             item = Type.stringValue(v).toString();
                         } else if (Type.isNumber(v)) {

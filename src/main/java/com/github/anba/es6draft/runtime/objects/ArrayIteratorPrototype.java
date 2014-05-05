@@ -6,7 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResultObject;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -157,7 +160,7 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
             if (itemKind == ArrayIterationKind.Value || itemKind == ArrayIterationKind.KeyValue
                     || itemKind == ArrayIterationKind.SparseValue
                     || itemKind == ArrayIterationKind.SparseKeyValue) {
-                String elementKey = ToString(index);
+                long elementKey = index;
                 elementValue = Get(cx, array, elementKey);
             }
             if (itemKind == ArrayIterationKind.KeyValue
@@ -165,8 +168,9 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
                 /* step 14 */
                 assert elementValue != null;
                 ExoticArray result = ArrayCreate(cx, 2);
-                CreateDataProperty(cx, result, "0", index);
-                CreateDataProperty(cx, result, "1", elementValue);
+                // TODO: explicit cast to workaround eclipse compiler bug
+                CreateDataProperty(cx, result, 0, (Long) index);
+                CreateDataProperty(cx, result, 1, elementValue);
                 return CreateIterResultObject(cx, result, false);
             } else if (itemKind == ArrayIterationKind.Key
                     || itemKind == ArrayIterationKind.SparseKey) {

@@ -345,7 +345,7 @@ public final class SourceBuilder {
         int viewLen = (int) Math.min(len, MAX_ARRAY_PROPERTIES);
         StringBuilder properties = new StringBuilder();
         for (int index = 0; index < viewLen; ++index) {
-            String value = toSource(mode, cx, stack, Get(cx, array, ToString(index)));
+            String value = toSource(mode, cx, stack, Get(cx, array, index));
             properties.append(", ").append(value);
         }
         if (viewLen < len) {

@@ -455,7 +455,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             AtomicInteger remainingElementsCount = this.remainingElements;
             /* step 7 */
             try {
-                CreateDataProperty(calleeContext, values, ToString(index), x);
+                CreateDataProperty(calleeContext, values, index, x);
             } catch (ScriptException e) {
                 /* step 8 */
                 return IfAbruptRejectPromise(calleeContext, e, promiseCapability);

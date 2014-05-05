@@ -165,8 +165,8 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
                 assert e != null;
                 if (itemKind == SetIterationKind.KeyValue) {
                     ExoticArray result = ArrayCreate(cx, 2);
-                    CreateDataProperty(cx, result, "0", e.getKey());
-                    CreateDataProperty(cx, result, "1", e.getKey());
+                    CreateDataProperty(cx, result, 0, e.getKey());
+                    CreateDataProperty(cx, result, 1, e.getKey());
                     return CreateIterResultObject(cx, result, false);
                 }
                 return CreateIterResultObject(cx, e.getKey(), false);

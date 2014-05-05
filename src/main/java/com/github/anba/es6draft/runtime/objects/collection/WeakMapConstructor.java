@@ -109,8 +109,8 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
                 throw newTypeError(calleeContext, Messages.Key.NotObjectType);
             }
             ScriptObject entry = Type.objectValue(nextValue);
-            Object k = Get(calleeContext, entry, "0");
-            Object v = Get(calleeContext, entry, "1");
+            Object k = Get(calleeContext, entry, 0);
+            Object v = Get(calleeContext, entry, 1);
             adder.call(calleeContext, map, k, v);
         }
     }

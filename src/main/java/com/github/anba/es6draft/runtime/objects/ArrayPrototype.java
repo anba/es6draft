@@ -143,7 +143,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* steps 12-13 */
             for (long k = 1; k < len; ++k) {
-                Object nextElement = Get(cx, array, ToString(k));
+                Object nextElement = Get(cx, array, k);
                 if (Type.isUndefinedOrNull(nextElement)) {
                     r.append(separator).append("");
                 } else {
@@ -197,15 +197,15 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     Object lenVal = Get(cx, e, "length");
                     long len = ToLength(cx, lenVal);
                     for (long k = 0; k < len; ++k, ++n) {
-                        String p = ToString(k);
+                        long p = k;
                         boolean exists = HasProperty(cx, e, p);
                         if (exists) {
                             Object subElement = Get(cx, e, p);
-                            CreateDataPropertyOrThrow(cx, a, ToString(n), subElement);
+                            CreateDataPropertyOrThrow(cx, a, n, subElement);
                         }
                     }
                 } else {
-                    CreateDataPropertyOrThrow(cx, a, ToString(n++), item);
+                    CreateDataPropertyOrThrow(cx, a, n++, item);
                 }
             }
             /* steps 10-11 */
@@ -293,7 +293,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 return "";
             }
             /* step 9 */
-            Object element0 = Get(cx, o, "0");
+            Object element0 = Get(cx, o, 0);
             /* steps 10-11 */
             StringBuilder r = new StringBuilder();
             if (Type.isUndefinedOrNull(element0)) {
@@ -303,7 +303,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* steps 12-13 */
             for (long k = 1; k < len; ++k) {
-                Object element = Get(cx, o, ToString(k));
+                Object element = Get(cx, o, k);
                 if (Type.isUndefinedOrNull(element)) {
                     r.append(sep).append("");
                 } else {
@@ -339,7 +339,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 /* step 7 */
                 assert len > 0;
                 long newLen = len - 1;
-                String index = ToString(newLen);
+                long index = newLen;
                 Object element = Get(cx, o, index);
                 DeletePropertyOrThrow(cx, o, index);
                 Put(cx, o, "length", newLen, true);
@@ -368,7 +368,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             long n = ToLength(cx, lenVal);
             /* steps 6-7 */
             for (Object e : items) {
-                Put(cx, o, ToString(n), e, true);
+                Put(cx, o, n, e, true);
                 n += 1;
             }
             /* steps 8-9 */
@@ -418,8 +418,8 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* steps 7-8 */
             for (long lower = 0; lower != middle; ++lower) {
                 long upper = len - lower - 1;
-                String upperP = ToString(upper);
-                String lowerP = ToString(lower);
+                long upperP = upper;
+                long lowerP = lower;
                 boolean lowerExists = HasProperty(cx, o, lowerP);
                 Object lowerValue = lowerExists ? Get(cx, o, lowerP) : null;
                 boolean upperExists = HasProperty(cx, o, upperP);
@@ -464,11 +464,11 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 return UNDEFINED;
             }
             /* steps 7-8 */
-            Object first = Get(cx, o, "0");
+            Object first = Get(cx, o, 0);
             /* steps 9-10 */
             for (long k = 1; k < len; ++k) {
-                String from = ToString(k);
-                String to = ToString(k - 1);
+                long from = k;
+                long to = k - 1;
                 boolean fromPresent = HasProperty(cx, o, from);
                 if (fromPresent) {
                     Object fromVal = Get(cx, o, from);
@@ -478,7 +478,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 }
             }
             /* steps 11-12 */
-            DeletePropertyOrThrow(cx, o, ToString(len - 1));
+            DeletePropertyOrThrow(cx, o, len - 1);
             /* steps 13-14 */
             Put(cx, o, "length", len - 1, true);
             /* step 15 */
@@ -547,11 +547,11 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* steps 17-18 */
             long n = 0;
             for (; k < finall; ++k, ++n) {
-                String pk = ToString(k);
+                long pk = k;
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
-                    CreateDataPropertyOrThrow(cx, a, ToString(n), kvalue);
+                    CreateDataPropertyOrThrow(cx, a, n, kvalue);
                 }
             }
             /* steps 19-20 */
@@ -628,7 +628,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             int undefCount = 0;
             List<Object> elements = new ArrayList<>(Math.min(length, 1024));
             for (int i = 0; i < length; ++i) {
-                String index = ToString(i);
+                int index = i;
                 if (HasProperty(cx, obj, index)) {
                     Object e = Get(cx, obj, index);
                     if (!Type.isUndefined(e)) {
@@ -663,15 +663,15 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
 
             // and finally set sorted elements
             for (int i = 0, offset = 0; i < count; ++i) {
-                String p = ToString(offset + i);
+                int p = offset + i;
                 Put(cx, obj, p, elements.get(i), true);
             }
             for (int i = 0, offset = count; i < undefCount; ++i) {
-                String p = ToString(offset + i);
+                int p = offset + i;
                 Put(cx, obj, p, UNDEFINED, true);
             }
             for (int i = 0, offset = count + undefCount; i < emptyCount; ++i) {
-                DeletePropertyOrThrow(cx, obj, ToString(offset + i));
+                DeletePropertyOrThrow(cx, obj, offset + i);
             }
 
             return obj;
@@ -736,11 +736,11 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* steps 16-17 */
             for (long k = 0; k < actualDeleteCount; ++k) {
-                String from = ToString(actualStart + k);
+                long from = actualStart + k;
                 boolean fromPresent = HasProperty(cx, o, from);
                 if (fromPresent) {
                     Object fromValue = Get(cx, o, from);
-                    CreateDataPropertyOrThrow(cx, a, ToString(k), fromValue);
+                    CreateDataPropertyOrThrow(cx, a, k, fromValue);
                 }
             }
             /* steps 18-19 */
@@ -750,8 +750,8 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             if (itemCount < actualDeleteCount) {
                 /* step 22 */
                 for (long k = actualStart; k < (len - actualDeleteCount); ++k) {
-                    String from = ToString(k + actualDeleteCount);
-                    String to = ToString(k + itemCount);
+                    long from = k + actualDeleteCount;
+                    long to = k + itemCount;
                     boolean fromPresent = HasProperty(cx, o, from);
                     if (fromPresent) {
                         Object fromValue = Get(cx, o, from);
@@ -761,13 +761,13 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     }
                 }
                 for (long k = len; k > (len - actualDeleteCount + itemCount); --k) {
-                    DeletePropertyOrThrow(cx, o, ToString(k - 1));
+                    DeletePropertyOrThrow(cx, o, k - 1);
                 }
             } else if (itemCount > actualDeleteCount) {
                 /* step 23 */
                 for (long k = (len - actualDeleteCount); k > actualStart; --k) {
-                    String from = ToString(k + actualDeleteCount - 1);
-                    String to = ToString(k + itemCount - 1);
+                    long from = k + actualDeleteCount - 1;
+                    long to = k + itemCount - 1;
                     boolean fromPresent = HasProperty(cx, o, from);
                     if (fromPresent) {
                         Object fromValue = Get(cx, o, from);
@@ -782,7 +782,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 25 */
             for (int i = 0; i < itemCount; ++k, ++i) {
                 Object e = items[i];
-                Put(cx, o, ToString(k), e, true);
+                Put(cx, o, k, e, true);
             }
             /* steps 26-27 */
             Put(cx, o, "length", len - actualDeleteCount + itemCount, true);
@@ -815,8 +815,8 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             if (argCount > 0) {
                 /* steps 7.a-7.b */
                 for (long k = len; k > 0; --k) {
-                    String from = ToString(k - 1);
-                    String to = ToString(k + argCount - 1);
+                    long from = k - 1;
+                    long to = k + argCount - 1;
                     boolean fromPresent = HasProperty(cx, o, from);
                     if (fromPresent) {
                         Object fromValue = Get(cx, o, from);
@@ -828,7 +828,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 /* steps 7.c-7.e */
                 for (int j = 0; j < items.length; ++j) {
                     Object e = items[j];
-                    Put(cx, o, ToString(j), e, true);
+                    Put(cx, o, j, e, true);
                 }
             }
             /* steps 8-9 */
@@ -911,7 +911,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* step 12 */
             for (; k < len; ++k) {
-                String pk = ToString(k);
+                long pk = k;
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object elementk = Get(cx, o, pk);
@@ -992,7 +992,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* step 11 */
             for (; k >= 0; --k) {
-                String pk = ToString(k);
+                long pk = k;
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object elementk = Get(cx, o, pk);
@@ -1061,7 +1061,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 7 (omitted) */
             /* steps 8-9 */
             for (long k = 0; k < len; ++k) {
-                String pk = ToString(k);
+                long pk = k;
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
@@ -1130,7 +1130,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 7 (omitted) */
             /* steps 8-9 */
             for (long k = 0; k < len; ++k) {
-                String pk = ToString(k);
+                long pk = k;
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
@@ -1199,7 +1199,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 7 (omitted) */
             /* steps 8-9 */
             for (long k = 0; k < len; ++k) {
-                String pk = ToString(k);
+                long pk = k;
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
@@ -1253,7 +1253,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* steps 12-13 */
             for (long k = 0; k < len; ++k) {
-                String pk = ToString(k);
+                long pk = k;
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
@@ -1308,13 +1308,13 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* steps 12-14 */
             for (long k = 0, to = 0; k < len; ++k) {
-                String pk = ToString(k);
+                long pk = k;
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     Object selected = callback.call(cx, thisArg, kvalue, k, o);
                     if (ToBoolean(selected)) {
-                        CreateDataPropertyOrThrow(cx, a, ToString(to), kvalue);
+                        CreateDataPropertyOrThrow(cx, a, to, kvalue);
                         to += 1;
                     }
                 }
@@ -1388,7 +1388,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             } else {
                 boolean kpresent = false;
                 for (; !kpresent && k < len; ++k) {
-                    String pk = ToString(k);
+                    long pk = k;
                     kpresent = HasProperty(cx, o, pk);
                     if (kpresent) {
                         accumulator = Get(cx, o, pk);
@@ -1400,7 +1400,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* step 11 */
             for (; k < len; ++k) {
-                String pk = ToString(k);
+                long pk = k;
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
@@ -1476,7 +1476,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             } else {
                 boolean kpresent = false;
                 for (; !kpresent && k >= 0; --k) {
-                    String pk = ToString(k);
+                    long pk = k;
                     kpresent = HasProperty(cx, o, pk);
                     if (kpresent) {
                         accumulator = Get(cx, o, pk);
@@ -1488,7 +1488,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* step 11 */
             for (; k >= 0; --k) {
-                String pk = ToString(k);
+                long pk = k;
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
@@ -1554,7 +1554,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 7 (omitted) */
             /* steps 8-9 */
             for (long k = 0; k < len; ++k) {
-                String pk = ToString(k);
+                long pk = k;
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
@@ -1623,7 +1623,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 7 (omitted) */
             /* steps 8-9 */
             for (long k = 0; k < len; ++k) {
-                String pk = ToString(k);
+                long pk = k;
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
@@ -1788,7 +1788,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* step 12 */
             for (; k < finall; ++k) {
-                String pk = ToString(k);
+                long pk = k;
                 Put(cx, o, pk, value, true);
             }
             /* step 13 */
@@ -1887,8 +1887,8 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* step 18 */
             for (; count > 0; --count) {
-                String fromKey = ToString(from);
-                String toKey = ToString(to);
+                long fromKey = from;
+                long toKey = to;
                 boolean fromPresent = HasProperty(cx, o, fromKey);
                 if (fromPresent) {
                     Object fromVal = Get(cx, o, fromKey);

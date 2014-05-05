@@ -421,7 +421,7 @@ public final class IntlAbstractOperations {
         Object lenValue = Get(cx, o, "length");
         long len = ToUint32(cx, lenValue);
         for (long k = 0; k < len; ++k) {
-            String pk = ToString(k);
+            long pk = k;
             boolean kPresent = HasProperty(cx, o, pk);
             if (kPresent) {
                 Object kValue = Get(cx, o, pk);

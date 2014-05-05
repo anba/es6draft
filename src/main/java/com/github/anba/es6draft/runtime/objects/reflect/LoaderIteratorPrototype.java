@@ -165,8 +165,8 @@ public final class LoaderIteratorPrototype extends OrdinaryObject implements Ini
                     // FIXME: spec bug? need to protect against returning half-init modules?
                     assert itemKind == LoaderIterationKind.KeyValue;
                     ExoticArray array = ArrayCreate(cx, 2);
-                    CreateDataProperty(cx, array, "0", e.getKey());
-                    CreateDataProperty(cx, array, "1", e.getValue().getModuleObject());
+                    CreateDataProperty(cx, array, 0, e.getKey());
+                    CreateDataProperty(cx, array, 1, e.getValue().getModuleObject());
                     result = array;
                 }
                 return CreateIterResultObject(cx, result, false);

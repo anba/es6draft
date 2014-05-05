@@ -79,7 +79,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             /* steps 7-8 */
             long intLen;
             if (!Type.isNumber(len)) {
-                CreateDataPropertyOrThrow(calleeContext, array, "0", len);
+                CreateDataPropertyOrThrow(calleeContext, array, 0, len);
                 intLen = 1;
             } else {
                 double llen = Type.numberValue(len);
@@ -98,7 +98,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             ExoticArray array = initOrCreateArray(calleeContext, thisValue, numberOfArgs);
             /* steps 7-9 */
             for (int k = 0; k < numberOfArgs; ++k) {
-                String pk = ToString(k);
+                int pk = k;
                 Object itemK = args[k];
                 CreateDataPropertyOrThrow(calleeContext, array, pk, itemK);
             }
@@ -198,7 +198,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             }
             /* steps 7-8 */
             for (int k = 0; k < len; ++k) {
-                String pk = ToString(k);
+                int pk = k;
                 Object kValue = items[k];
                 CreateDataPropertyOrThrow(cx, a, pk, kValue);
             }
@@ -257,7 +257,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                 ScriptObject iterator = GetIterator(cx, items, usingIterator);
                 /* steps 8f-8g */
                 for (int k = 0;; ++k) {
-                    String pk = ToString(k);
+                    int pk = k;
                     ScriptObject next = IteratorStep(cx, iterator);
                     if (next == null) {
                         Put(cx, a, "length", k, true);
@@ -287,7 +287,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             }
             /* steps 16-17 */
             for (long k = 0; k < len; ++k) {
-                String pk = ToString(k);
+                long pk = k;
                 Object kValue = Get(cx, items, pk);
                 Object mappedValue;
                 if (mapping) {
