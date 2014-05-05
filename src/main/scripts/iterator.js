@@ -64,7 +64,7 @@ function MakeIterator() {
   const nextSym = Symbol("next");
 
   function mixin(target, source) {
-    for (let name of {[Symbol.iterator]: () => Reflect.ownKeys(source)}) {
+    for (let name of Reflect.ownKeys(source)) {
       Reflect.defineProperty(target, name, Reflect.getOwnPropertyDescriptor(source, name));
     }
     return target;

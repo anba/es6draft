@@ -58,7 +58,7 @@ function toProxyHandler(handler) {
     proxyHandler['getOwnPropertyDescriptor'] = (_, pk) => handler['getPropertyDescriptor'](pk);
   }
   if ('getOwnPropertyNames' in handler) {
-    proxyHandler['ownKeys'] = () => toArrayIterator(handler['getOwnPropertyNames']());
+    proxyHandler['ownKeys'] = () => handler['getOwnPropertyNames']();
   }
   if ('defineProperty' in handler) {
     proxyHandler['defineProperty'] = (_, pk, desc) => (handler['defineProperty'](pk, desc), true);
@@ -133,7 +133,7 @@ function toProxyHandler(handler) {
     )[iteratorSym]();
   }
   if ('keys' in handler) {
-    proxyHandler['ownKeys'] = () => toArrayIterator(handler['keys']());
+    proxyHandler['ownKeys'] = () => handler['keys']();
   }
   return proxyHandler;
 }
