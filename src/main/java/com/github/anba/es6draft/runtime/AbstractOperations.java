@@ -2031,6 +2031,14 @@ public final class AbstractOperations {
         return ((Callable) func).call(cx, object, args);
     }
 
+    private static <T> ArrayList<T> toList(Iterator<T> iterator) {
+        ArrayList<T> list = new ArrayList<>();
+        while (iterator.hasNext()) {
+            list.add(iterator.next());
+        }
+        return list;
+    }
+
     /**
      * 7.3.11 SetIntegrityLevel (O, level)
      * 
@@ -2047,7 +2055,7 @@ public final class AbstractOperations {
         /* steps 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
         /* steps 3-4 */
-        Iterator<?> keys = object.ownKeys(cx);
+        Iterator<?> keys = toList(object.ownKeys(cx)).iterator();
         /* step 5 */
         ScriptException pendingException = null;
         if (level == IntegrityLevel.Sealed) {
@@ -2139,7 +2147,7 @@ public final class AbstractOperations {
             return false;
         }
         /* steps 7-8 */
-        Iterator<?> keys = object.ownKeys(cx);
+        Iterator<?> keys = toList(object.ownKeys(cx)).iterator();
         /* step 9 */
         ScriptException pendingException = null;
         /* step 10 */
