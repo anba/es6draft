@@ -74,7 +74,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
      */
     public final void defineBuiltinProperties(ExecutionContext cx, ScriptObject object) {
         // FIXME: spec issue - copy non-standard properties?
-        Iterator<?> keys = GetOwnPropertyNamesIterator(cx, this);
+        Iterator<?> keys = ownKeys(cx);
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());
             if (key instanceof String) {
@@ -105,7 +105,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
     public final OrdinaryObject getBuiltinProperties(ExecutionContext cx) {
         OrdinaryObject props = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         // FIXME: spec issue - copy non-standard properties?
-        Iterator<?> keys = GetOwnPropertyNamesIterator(cx, this);
+        Iterator<?> keys = ownKeys(cx);
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());
             if (key instanceof String) {

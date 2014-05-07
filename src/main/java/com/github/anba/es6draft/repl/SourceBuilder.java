@@ -308,7 +308,7 @@ public final class SourceBuilder {
 
     private static String objectToSource(Mode mode, ExecutionContext cx, Set<ScriptObject> stack,
             ScriptObject object) {
-        Iterator<?> keys = GetOwnPropertyNamesIterator(cx, object);
+        Iterator<?> keys = object.ownKeys(cx);
         if (!keys.hasNext()) {
             return "{}";
         }
