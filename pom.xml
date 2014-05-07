@@ -246,6 +246,44 @@
         </plugins>
       </build>
     </profile>
+    <!-- Profile for buildhive (Select Java 8 and skip external tests) -->
+    <profile>
+      <id>buildhive</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <executable>/opt/jdk/jdk1.8.latest/bin/javac</executable>
+              <fork>true</fork>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <jvm>/opt/jdk/jdk1.8.latest/bin/java</jvm>
+              <forkMode>once</forkMode>
+            </configuration>
+            <executions>
+              <execution>
+                <id>surefire-test</id>
+                <configuration>
+                  <excludes>
+                    <exclude>**/mozilla/*</exclude>
+                    <exclude>**/test262/*</exclude>
+                    <exclude>**/traceur/*</exclude>
+                    <exclude>**/v8/*</exclude>
+                    <exclude>**/webkit/*</exclude>
+                  </excludes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <build>
