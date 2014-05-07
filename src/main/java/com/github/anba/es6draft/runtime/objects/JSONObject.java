@@ -221,10 +221,10 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 for (long i = 0; i < len; ++i) {
                     Object newElement = Walk(cx, reviver, objVal, ToString(i));
                     if (Type.isUndefined(newElement)) {
-                        objVal.delete(cx, ToString(i));
+                        objVal.delete(cx, i);
                     } else {
-                        objVal.defineOwnProperty(cx, ToString(i), new PropertyDescriptor(
-                                newElement, true, true, true));
+                        objVal.defineOwnProperty(cx, i, new PropertyDescriptor(newElement, true,
+                                true, true));
                     }
                 }
             } else {
@@ -307,7 +307,8 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         case String:
             return Quote(Type.stringValue(value));
         case Number:
-            return isFinite(Type.numberValue(value)) ? ToFlatString(cx, value) : "null";
+            double d = Type.numberValue(value);
+            return isFinite(d) ? ToString(d) : "null";
         case Object:
             if (!IsCallable(value)) {
                 if (value instanceof ExoticArray) {

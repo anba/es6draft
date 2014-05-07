@@ -177,7 +177,7 @@ public final class ScriptRuntime {
     public static void defineProperty(ExoticArray array, int nextIndex, Object value,
             ExecutionContext cx) {
         // String propertyName = ToString(ToUint32(nextIndex));
-        String propertyName = ToString(nextIndex);
+        int propertyName = nextIndex;
         boolean created = array.defineOwnProperty(cx, propertyName, new PropertyDescriptor(value,
                 true, true, true));
         assert created;
@@ -369,7 +369,7 @@ public final class ScriptRuntime {
         /* steps 7-8 */
         for (int i = 0, n = strings.length; i < n; i += 2) {
             int index = i >>> 1;
-            String prop = ToString(index);
+            int prop = index;
             String cookedValue = strings[i];
             siteObj.defineOwnProperty(cx, prop, new PropertyDescriptor(cookedValue, false, true,
                     false));
