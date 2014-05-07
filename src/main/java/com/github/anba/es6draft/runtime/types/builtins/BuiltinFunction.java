@@ -172,9 +172,9 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
      * 9.2.3 [[GetOwnProperty]] (P)
      */
     @Override
-    public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
+    protected Property getProperty(ExecutionContext cx, String propertyKey) {
         /* steps 1-2 */
-        Property v = super.getOwnProperty(cx, propertyKey);
+        Property v = super.getProperty(cx, propertyKey);
         /* step 3 */
         if (v != null && v.isDataDescriptor()) {
             // TODO: spec bug? [[GetOwnProperty]] override necessary, cf.

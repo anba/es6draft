@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -72,6 +73,11 @@ public final class ExoticModule extends OrdinaryObject {
     }
 
     @Override
+    protected boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
+        throw newTypeError(cx, Messages.Key.InternalError);// TODO: error message
+    }
+
+    @Override
     protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         throw newTypeError(cx, Messages.Key.InternalError);// TODO: error message
     }
@@ -83,46 +89,70 @@ public final class ExoticModule extends OrdinaryObject {
 
     /** 9.4.6.5 [[GetOwnProperty]] (P) */
     @Override
-    public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
+    protected Property getProperty(ExecutionContext cx, long propertyKey) {
         throw newTypeError(cx, Messages.Key.InternalError);// TODO: error message
     }
 
     /** 9.4.6.5 [[GetOwnProperty]] (P) */
     @Override
-    public Property getOwnProperty(ExecutionContext cx, Symbol propertyKey) {
+    protected Property getProperty(ExecutionContext cx, String propertyKey) {
+        throw newTypeError(cx, Messages.Key.InternalError);// TODO: error message
+    }
+
+    /** 9.4.6.5 [[GetOwnProperty]] (P) */
+    @Override
+    protected Property getProperty(ExecutionContext cx, Symbol propertyKey) {
         throw newTypeError(cx, Messages.Key.InternalError);// TODO: error message
     }
 
     /** 9.4.6.6 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
+    protected boolean defineProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
+        return false;
+    }
+
+    /** 9.4.6.6 [[DefineOwnProperty]] (P, Desc) */
+    @Override
+    protected boolean defineProperty(ExecutionContext cx, String propertyKey,
             PropertyDescriptor desc) {
         return false;
     }
 
     /** 9.4.6.6 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
+    protected boolean defineProperty(ExecutionContext cx, Symbol propertyKey,
             PropertyDescriptor desc) {
         return false;
     }
 
     /** 9.4.6.7 [[HasProperty]] (P) */
     @Override
-    public boolean hasProperty(ExecutionContext cx, String propertyKey) {
+    protected boolean hasProp(ExecutionContext cx, long propertyKey) {
+        return hasProp(cx, ToString(propertyKey));
+    }
+
+    /** 9.4.6.7 [[HasProperty]] (P) */
+    @Override
+    protected boolean hasProp(ExecutionContext cx, String propertyKey) {
         /* steps 1-3 */
         return exports.contains(propertyKey);
     }
 
     /** 9.4.6.7 [[HasProperty]] (P) */
     @Override
-    public boolean hasProperty(ExecutionContext cx, Symbol propertyKey) {
+    protected boolean hasProp(ExecutionContext cx, Symbol propertyKey) {
         return false;
     }
 
     /** 9.4.6.8 [[Get]] (P, Receiver) */
     @Override
-    public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
+    protected Object getValue(ExecutionContext cx, long propertyKey, Object receiver) {
+        return getValue(cx, ToString(propertyKey), receiver);
+    }
+
+    /** 9.4.6.8 [[Get]] (P, Receiver) */
+    @Override
+    protected Object getValue(ExecutionContext cx, String propertyKey, Object receiver) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
         if (!exports.contains(propertyKey)) {
@@ -134,25 +164,37 @@ public final class ExoticModule extends OrdinaryObject {
 
     /** 9.4.6.8 [[Get]] (P, Receiver) */
     @Override
-    public Object get(ExecutionContext cx, Symbol propertyKey, Object receiver) {
+    protected Object getValue(ExecutionContext cx, Symbol propertyKey, Object receiver) {
         return UNDEFINED;
     }
 
     /** 9.4.6.9 [[Set]] ( P, V, Receiver) */
     @Override
-    public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
+    protected boolean setValue(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
         return false;
     }
 
     /** 9.4.6.9 [[Set]] ( P, V, Receiver) */
     @Override
-    public boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
+    protected boolean setValue(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
+        return false;
+    }
+
+    /** 9.4.6.9 [[Set]] ( P, V, Receiver) */
+    @Override
+    protected boolean setValue(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
         return false;
     }
 
     /** 9.4.6.10 [[Delete]] (P) */
     @Override
-    public boolean delete(ExecutionContext cx, String propertyKey) {
+    protected boolean deleteProperty(ExecutionContext cx, long propertyKey) {
+        return deleteProperty(cx, ToString(propertyKey));
+    }
+
+    /** 9.4.6.10 [[Delete]] (P) */
+    @Override
+    protected boolean deleteProperty(ExecutionContext cx, String propertyKey) {
         /* step 1 (not applicable) */
         /* steps 2-4 */
         return !exports.contains(propertyKey);
@@ -160,7 +202,7 @@ public final class ExoticModule extends OrdinaryObject {
 
     /** 9.4.6.10 [[Delete]] (P) */
     @Override
-    public boolean delete(ExecutionContext cx, Symbol propertyKey) {
+    protected boolean deleteProperty(ExecutionContext cx, Symbol propertyKey) {
         return true;
     }
 

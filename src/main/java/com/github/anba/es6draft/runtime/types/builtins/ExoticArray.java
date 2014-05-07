@@ -7,15 +7,15 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Iterator;
+import java.util.Map;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -60,6 +60,32 @@ public final class ExoticArray extends OrdinaryObject {
      *            the property key
      * @return {@code true} if the property key is a valid array index
      */
+    public static boolean isArrayIndex(int p) {
+        return p >= 0;
+    }
+
+    /**
+     * 9.4.2 Array Exotic Objects
+     * <p>
+     * Introductory paragraph
+     * 
+     * @param p
+     *            the property key
+     * @return {@code true} if the property key is a valid array index
+     */
+    public static boolean isArrayIndex(long p) {
+        return p >= 0 && p < 0xFFFF_FFFFL;
+    }
+
+    /**
+     * 9.4.2 Array Exotic Objects
+     * <p>
+     * Introductory paragraph
+     * 
+     * @param p
+     *            the property key
+     * @return {@code true} if the property key is a valid array index
+     */
     public static boolean isArrayIndex(String p) {
         return toArrayIndex(p) >= 0;
     }
@@ -81,20 +107,15 @@ public final class ExoticArray extends OrdinaryObject {
      * 9.4.2.1 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
-        /* step 1 (not applicable) */
-        /* steps 2-3 */
-        if ("length".equals(propertyKey)) {
-            /* step 2 */
-            return ArraySetLength(cx, this, desc);
-        } else if (isArrayIndex(propertyKey)) {
-            /* step 3 */
+    protected boolean defineProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        if (isArrayIndex(propertyKey)) {
             /* steps 3.a-3.d */
             Property oldLenDesc = getOwnProperty(cx, "length");
             assert oldLenDesc != null && !oldLenDesc.isAccessorDescriptor();
             long oldLen = ToUint32(cx, oldLenDesc.getValue());
-            long index = ToUint32(cx, propertyKey);
+            long index = propertyKey;
             /* steps 3.e */
             if (index >= oldLen && !oldLenDesc.isWritable()) {
                 return false;
@@ -112,6 +133,21 @@ public final class ExoticArray extends OrdinaryObject {
             }
             /* step 3.j */
             return true;
+        }
+        /* step 4 */
+        return ordinaryDefineOwnProperty(cx, propertyKey, desc);
+    }
+
+    /**
+     * 9.4.2.1 [[DefineOwnProperty]] (P, Desc)
+     */
+    @Override
+    protected boolean defineProperty(ExecutionContext cx, String propertyKey,
+            PropertyDescriptor desc) {
+        /* steps 1, 3 (not applicable) */
+        /* step 2 */
+        if ("length".equals(propertyKey)) {
+            return ArraySetLength(cx, this, desc);
         }
         /* step 4 */
         return ordinaryDefineOwnProperty(cx, propertyKey, desc);
@@ -205,8 +241,9 @@ public final class ExoticArray extends OrdinaryObject {
      */
     public static ExoticArray DenseArrayCreate(ExecutionContext cx, Object[] values) {
         ExoticArray array = ArrayCreate(cx, values.length);
+        IndexedMap<Property> indexed = array.indexedProperties();
         for (int i = 0, len = values.length; i < len; ++i) {
-            array.addProperty(i, new Property(values[i], true, true, true));
+            indexed.put(i, new Property(values[i], true, true, true));
         }
         return array;
     }
@@ -224,9 +261,10 @@ public final class ExoticArray extends OrdinaryObject {
      */
     public static ExoticArray SparseArrayCreate(ExecutionContext cx, Object[] values) {
         ExoticArray array = ArrayCreate(cx, values.length);
+        IndexedMap<Property> indexed = array.indexedProperties();
         for (int i = 0, len = values.length; i < len; ++i) {
             if (values[i] != null) {
-                array.addProperty(i, new Property(values[i], true, true, true));
+                indexed.put(i, new Property(values[i], true, true, true));
             }
         }
         return array;
@@ -260,7 +298,7 @@ public final class ExoticArray extends OrdinaryObject {
         /* step 5 */
         newLenDesc.setValue(newLen);
         /* step 6 */
-        Property oldLenDesc = array.getOwnProperty(cx, "length");
+        Property oldLenDesc = array.getProperty(cx, "length");
         assert oldLenDesc != null && !oldLenDesc.isAccessorDescriptor();
         /* step 7 */
         long oldLen = ToUint32(cx, oldLenDesc.getValue());
@@ -287,11 +325,14 @@ public final class ExoticArray extends OrdinaryObject {
             return false;
         }
         /* step 15 */
-        if ((oldLen - newLen) > 1000) {
-            oldLen = SparseArraySetLength(cx, array, newLen);
+        IndexedMap<Property> indexed = array.indexedProperties();
+        if (indexed.isSparse()) {
+            oldLen = SparseArraySetLength(indexed, newLen, oldLen);
         } else {
-            oldLen = DenseArraySetLength(cx, array, oldLen, newLen);
+            oldLen = DenseArraySetLength(indexed, newLen, oldLen);
         }
+        // Need to call updateLength() manually.
+        indexed.updateLength();
         /* step 15.d */
         if (oldLen >= 0) {
             newLenDesc.setValue(oldLen + 1);
@@ -311,42 +352,32 @@ public final class ExoticArray extends OrdinaryObject {
         return true;
     }
 
-    private static long DenseArraySetLength(ExecutionContext cx, ExoticArray array, long oldLen,
-            long newLen) {
-        while (newLen < oldLen) {
-            oldLen -= 1;
-            boolean deleteSucceeded = array.delete(cx, ToString(oldLen));
-            if (!deleteSucceeded) {
-                return oldLen;
+    private static long DenseArraySetLength(IndexedMap<Property> indexed, long newLen, long oldLen) {
+        assert newLen < oldLen;
+        for (long index = oldLen; --index >= newLen;) {
+            Property prop = indexed.get(index);
+            if (prop != null && !prop.isConfigurable()) {
+                return index;
             }
+            indexed.removeUnchecked(index);
         }
         return -1;
     }
 
-    private static long SparseArraySetLength(ExecutionContext cx, ExoticArray array, long newLen) {
-        long[] indices = array.indices(cx, newLen);
-        for (int i = indices.length - 1; i >= 0; --i) {
-            long oldLen = indices[i];
-            boolean deleteSucceeded = array.delete(cx, ToString(oldLen));
-            if (!deleteSucceeded) {
-                return oldLen;
+    private static long SparseArraySetLength(IndexedMap<Property> indexed, long newLen, long oldLen) {
+        assert newLen < oldLen;
+        Iterator<Map.Entry<Long, Property>> iter = indexed.descendingIterator(newLen, oldLen);
+        while (iter.hasNext()) {
+            Map.Entry<Long, Property> entry = iter.next();
+            long index = entry.getKey();
+            Property prop = entry.getValue();
+            if (!prop.isConfigurable()) {
+                return index;
             }
+            // Cannot call remove[Unchecked]() directly b/c of ConcurrentModificationException.
+            // indexed.remove(index);
+            iter.remove();
         }
         return -1;
-    }
-
-    private long[] indices(ExecutionContext cx, long minIndex) {
-        List<String> keys = getEnumerableKeys(cx);
-        long[] indices = new long[keys.size()];
-        int i = 0;
-        for (String key : keys) {
-            long index = toArrayIndex(key);
-            if (index >= minIndex) {
-                indices[i++] = index;
-            }
-        }
-        indices = Arrays.copyOf(indices, i);
-        Arrays.sort(indices);
-        return indices;
     }
 }

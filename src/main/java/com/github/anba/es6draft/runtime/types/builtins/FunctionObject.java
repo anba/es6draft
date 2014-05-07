@@ -13,6 +13,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -251,14 +252,24 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     @Override
     protected final List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        List<Object> ownKeys = super.getOwnPropertyKeys(cx);
+        ArrayList<Object> ownKeys = new ArrayList<>();
+        if (!indexedProperties().isEmpty()) {
+            ownKeys.addAll(indexedProperties().keys());
+        }
+        if (!properties().isEmpty()) {
+            ownKeys.addAll(properties().keySet());
+        }
         if (isLegacy()) {
+            // TODO: add test case
             if (!ordinaryHasOwnProperty("caller")) {
                 ownKeys.add("caller");
             }
             if (!ordinaryHasOwnProperty("arguments")) {
                 ownKeys.add("arguments");
             }
+        }
+        if (!symbolProperties().isEmpty()) {
+            ownKeys.addAll(symbolProperties().keySet());
         }
         return ownKeys;
     }
@@ -267,8 +278,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * 9.2.2 [[GetOwnProperty]] (P)
      */
     @Override
-    public final Property getOwnProperty(ExecutionContext cx, String propertyKey) {
-        Property desc = super.getOwnProperty(cx, propertyKey);
+    protected final Property getProperty(ExecutionContext cx, String propertyKey) {
+        Property desc = super.getProperty(cx, propertyKey);
         if (desc != null) {
             return desc;
         }

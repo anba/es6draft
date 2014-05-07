@@ -51,9 +51,9 @@ public final class ExoticArguments extends OrdinaryObject {
      * 9.4.4.1 [[GetOwnProperty]] (P)
      */
     @Override
-    public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
+    protected Property getProperty(ExecutionContext cx, long propertyKey) {
         /* step 1 */
-        Property desc = super.getOwnProperty(cx, propertyKey);
+        Property desc = super.getProperty(cx, propertyKey);
         /* step 2 */
         if (desc == null) {
             return desc;
@@ -68,6 +68,23 @@ public final class ExoticArguments extends OrdinaryObject {
             d.setValue(map.get(propertyKey));
             desc = d.toProperty();
         }
+        /* step 6 (not applicable) */
+        /* step 7 */
+        return desc;
+    }
+
+    /**
+     * 9.4.4.1 [[GetOwnProperty]] (P)
+     */
+    @Override
+    protected Property getProperty(ExecutionContext cx, String propertyKey) {
+        /* step 1 */
+        Property desc = super.getProperty(cx, propertyKey);
+        /* step 2 */
+        if (desc == null) {
+            return desc;
+        }
+        /* steps 3-5 (not applicable) */
         /* step 6 */
         if (desc.isDataDescriptor() && "caller".equals(propertyKey)
                 && isStrictFunction(desc.getValue())
@@ -82,14 +99,13 @@ public final class ExoticArguments extends OrdinaryObject {
      * 9.4.4.2 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
+    protected boolean defineProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
         /* step 1 */
         ParameterMap map = this.parameterMap;
         /* step 2 */
         boolean isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
         /* steps 3-4 */
-        boolean allowed = super.defineOwnProperty(cx, propertyKey, desc);
+        boolean allowed = super.defineProperty(cx, propertyKey, desc);
         /* step 5 */
         if (!allowed) {
             return false;
@@ -115,7 +131,7 @@ public final class ExoticArguments extends OrdinaryObject {
      * 9.4.4.3 [[Get]] (P, Receiver)
      */
     @Override
-    public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
+    protected Object getValue(ExecutionContext cx, long propertyKey, Object receiver) {
         /* steps 1-2 */
         ParameterMap map = this.parameterMap;
         /* steps 3-4 */
@@ -124,11 +140,24 @@ public final class ExoticArguments extends OrdinaryObject {
         Object v;
         if (!isMapped) {
             /* step 5 */
-            v = super.get(cx, propertyKey, receiver);
+            v = super.getValue(cx, propertyKey, receiver);
         } else {
             /* step 6 */
             v = map.get(propertyKey);
         }
+        /* step 8 (not applicable) */
+        /* step 9 */
+        return v;
+    }
+
+    /**
+     * 9.4.4.3 [[Get]] (P, Receiver)
+     */
+    @Override
+    protected Object getValue(ExecutionContext cx, String propertyKey, Object receiver) {
+        /* steps 1-4, 6 (not applicable) */
+        /* steps 5, 7 */
+        Object v = super.getValue(cx, propertyKey, receiver);
         /* step 8 */
         if ("caller".equals(propertyKey) && isStrictFunction(v)
                 && cx.getRealm().isEnabled(CompatibilityOption.FunctionPrototype)) {
@@ -142,7 +171,7 @@ public final class ExoticArguments extends OrdinaryObject {
      * 9.4.4.4 [[Set]] ( P, V, Receiver)
      */
     @Override
-    public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
+    protected boolean setValue(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
         /* steps 1, 3.a */
         ParameterMap map = this.parameterMap;
         /* steps 2-3 */
@@ -157,7 +186,7 @@ public final class ExoticArguments extends OrdinaryObject {
         /* steps 4-5 */
         if (!isMapped) {
             /* step 4 */
-            return super.set(cx, propertyKey, value, receiver);
+            return super.setValue(cx, propertyKey, value, receiver);
         } else {
             /* step 5 */
             map.put(propertyKey, value);
@@ -169,13 +198,13 @@ public final class ExoticArguments extends OrdinaryObject {
      * 9.4.4.5 [[Delete]] (P)
      */
     @Override
-    public boolean delete(ExecutionContext cx, String propertyKey) {
+    protected boolean deleteProperty(ExecutionContext cx, long propertyKey) {
         /* step 1 */
         ParameterMap map = this.parameterMap;
         /* steps 2-3 */
         boolean isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
         /* step 4 */
-        boolean result = super.delete(cx, propertyKey);
+        boolean result = super.deleteProperty(cx, propertyKey);
         /* step 5 */
         if (result && isMapped) {
             map.delete(propertyKey);

@@ -118,14 +118,19 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
     }
 
     @Override
+    protected boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
+        int index = ParameterMap.toArgumentIndex(propertyKey);
+        return 0 <= index && index < arguments.length;
+    }
+
+    @Override
     protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         switch (propertyKey) {
         case "callee":
         case "length":
             return true;
         default:
-            int index = ParameterMap.toArgumentIndex(propertyKey);
-            return index >= 0 && index < arguments.length;
+            return false;
         }
     }
 
@@ -152,36 +157,31 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
     @Override
     protected boolean isEnumerableOwnProperty(String key) {
         int index = ParameterMap.toArgumentIndex(key);
-        return index >= 0 && index < arguments.length;
+        return 0 <= index && index < arguments.length;
     }
 
     private void addArgumentIndices(List<? super String> keys) {
-        keys.add("length");
-        keys.add("callee");
+        // TODO: test case for property order!
         for (int i = 0; i < arguments.length; ++i) {
             keys.add(Integer.toString(i));
         }
+        keys.add("length");
+        keys.add("callee");
     }
 
     @Override
-    public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
+    protected Object getValue(ExecutionContext cx, long propertyKey, Object receiver) {
         ParameterMap map = parameterMap;
         if (map == null || !map.hasOwnProperty(propertyKey, true)) {
-            return super.get(cx, propertyKey, receiver);
+            return super.getValue(cx, propertyKey, receiver);
         }
         return map.get(propertyKey);
     }
 
     @Override
-    public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
-        switch (propertyKey) {
-        case "callee":
-            return new Property(callee, true, false, true);
-        case "length":
-            return new Property(arguments.length, true, false, true);
-        }
+    protected Property getProperty(ExecutionContext cx, long propertyKey) {
         int index = ParameterMap.toArgumentIndex(propertyKey);
-        if (index >= 0 && index < arguments.length) {
+        if (0 <= index && index < arguments.length) {
             ParameterMap map = parameterMap;
             if (map == null || !map.hasOwnProperty(propertyKey, true)) {
                 return new Property(arguments[index], true, true, true);
@@ -192,8 +192,19 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
     }
 
     @Override
-    public Property getOwnProperty(ExecutionContext cx, Symbol propertyKey) {
-        // legacy arguments object has no own symbol-keyed properties
+    protected Property getProperty(ExecutionContext cx, String propertyKey) {
+        switch (propertyKey) {
+        case "callee":
+            return new Property(callee, true, false, true);
+        case "length":
+            return new Property(arguments.length, true, false, true);
+        }
+        return null;
+    }
+
+    @Override
+    protected Property getProperty(ExecutionContext cx, Symbol propertyKey) {
+        // legacy arguments objects have no own symbol-keyed properties
         return null;
     }
 
@@ -210,20 +221,38 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
     }
 
     @Override
-    public boolean delete(ExecutionContext cx, String propertyKey) {
+    protected boolean deleteProperty(ExecutionContext cx, long propertyKey) {
         // this object is effectively unmodifiable
         return true;
     }
 
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
+    protected boolean deleteProperty(ExecutionContext cx, String propertyKey) {
+        // this object is effectively unmodifiable
+        return true;
+    }
+
+    @Override
+    protected boolean deleteProperty(ExecutionContext cx, Symbol propertyKey) {
+        // this object is effectively unmodifiable
+        return true;
+    }
+
+    @Override
+    protected boolean defineProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
+        // this object is effectively unmodifiable
+        return true;
+    }
+
+    @Override
+    protected boolean defineProperty(ExecutionContext cx, String propertyKey,
             PropertyDescriptor desc) {
         // this object is effectively unmodifiable
         return true;
     }
 
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
+    protected boolean defineProperty(ExecutionContext cx, Symbol propertyKey,
             PropertyDescriptor desc) {
         // this object is effectively unmodifiable
         return true;

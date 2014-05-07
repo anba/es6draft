@@ -20,6 +20,7 @@ import com.github.anba.es6draft.runtime.internal.Strings;
  * </ul>
  */
 final class ParameterMap {
+    private static final long MAX_LENGTH = 0x7FFF_FFFF;
     private final LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env;
     private final int length;
     private final String[] parameters;
@@ -30,6 +31,18 @@ final class ParameterMap {
         this.length = length;
         this.parameters = new String[length];
         this.legacyUnmapped = new BitSet();
+    }
+
+    /**
+     * Returns a non-negative integer if {@code p} is a valid argument index, otherwise
+     * <code>-1</code>.
+     * 
+     * @param p
+     *            the property key
+     * @return the integer index or {@code -1}
+     */
+    static int toArgumentIndex(long p) {
+        return 0 <= p && p < MAX_LENGTH ? (int) p : -1;
     }
 
     /**
@@ -97,9 +110,9 @@ final class ParameterMap {
      *            flag for legacy arguments objects
      * @return {@code true} if the property key is mapped
      */
-    boolean hasOwnProperty(String propertyKey, boolean isLegacy) {
+    boolean hasOwnProperty(long propertyKey, boolean isLegacy) {
         int index = toArgumentIndex(propertyKey);
-        if (index >= 0 && index < length && !(isLegacy && legacyUnmapped.get(index))) {
+        if (0 <= index && index < length && !(isLegacy && legacyUnmapped.get(index))) {
             return parameters[index] != null;
         }
         return false;
@@ -112,9 +125,9 @@ final class ParameterMap {
      *            the property key
      * @return the mapped argument
      */
-    Object get(String propertyKey) {
+    Object get(long propertyKey) {
         int index = toArgumentIndex(propertyKey);
-        assert (index >= 0 && index < length && parameters[index] != null);
+        assert (0 <= index && index < length && parameters[index] != null);
         String name = parameters[index];
         return env.getEnvRec().getBindingValue(name, false);
     }
@@ -127,9 +140,9 @@ final class ParameterMap {
      * @param value
      *            the new value for the mapped argument
      */
-    void put(String propertyKey, Object value) {
+    void put(long propertyKey, Object value) {
         int index = toArgumentIndex(propertyKey);
-        assert (index >= 0 && index < length && parameters[index] != null);
+        assert (0 <= index && index < length && parameters[index] != null);
         legacyUnmapped.set(index);
         String name = parameters[index];
         env.getEnvRec().setMutableBinding(name, value, false);
@@ -141,9 +154,9 @@ final class ParameterMap {
      * @param propertyKey
      *            the property key
      */
-    void delete(String propertyKey) {
+    void delete(long propertyKey) {
         int index = toArgumentIndex(propertyKey);
-        assert (index >= 0 && index < length && parameters[index] != null);
+        assert (0 <= index && index < length && parameters[index] != null);
         legacyUnmapped.set(index);
         parameters[index] = null;
     }
