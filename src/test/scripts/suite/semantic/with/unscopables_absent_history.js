@@ -21,6 +21,7 @@ loadRelativeToScript("../../lib/recorder.js");
       property;
     }
   }
+  Recorder.unwatch(object);
   assertEquals([
     {name: "get", target: object, property: Symbol.unscopables, result: void 0, receiver: object},
     {name: "has", target: object, property: "property", result: false},
@@ -39,6 +40,7 @@ loadRelativeToScript("../../lib/recorder.js");
       property;
     }
   }
+  Recorder.unwatch(object);
   assertEquals([
     {name: "get", target: object, property: Symbol.unscopables, result: void 0, receiver: object},
     {name: "has", target: object, property: "property", result: false},
@@ -59,6 +61,7 @@ loadRelativeToScript("../../lib/recorder.js");
       property;
     }
   }
+  Recorder.unwatch(object);
   assertEquals([
     {name: "get", target: object, property: Symbol.unscopables, result: void 0, receiver: object},
     {name: "has", target: object, property: "property", result: true},
@@ -81,6 +84,7 @@ loadRelativeToScript("../../lib/recorder.js");
       property;
     }
   }
+  Recorder.unwatch(object);
   assertEquals([
     {name: "get", target: object, property: Symbol.unscopables, result: void 0, receiver: object},
     {name: "has", target: object, property: "property", result: true},

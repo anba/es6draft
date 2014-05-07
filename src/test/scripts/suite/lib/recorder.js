@@ -78,8 +78,17 @@ function createObject(target, {log, output} = createLogger()) {
   return {object, record: output};
 }
 
+const watchedObjects = new WeakSet();
+
+function unwatch(object) {
+  watchedObjects.delete(object);
+}
+
 function watch(target, history) {
   function trap(entry, name, ...args) {
+    if (!watchedObjects.has(object)) {
+      return $Reflect[name](...args);
+    }
     try {
       let result = $Reflect[name](...args);
       history.push(Object.assign(entry, {name, result}));
@@ -141,6 +150,7 @@ function watch(target, history) {
       history.push({name: p});
     }
   }));
+  watchedObjects.add(object);
   return object;
 }
 
@@ -149,6 +159,7 @@ Object.defineProperty(global, "Recorder", {value: {
   createLogger,
   createObject,
   watch,
+  unwatch,
 }});
 
 })(this);

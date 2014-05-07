@@ -24,6 +24,8 @@ assertBuiltinFunction(Promise.prototype.catch, "catch", 1);
   let then = Recorder.watch(() => returnValue, history);
   let thenable = Recorder.watch({then}, history);
   let result = Promise.prototype.catch.call(thenable, onRejected);
+  Recorder.unwatch(then);
+  Recorder.unwatch(thenable);
 
   assertSame(returnValue, result);
   assertEquals([
