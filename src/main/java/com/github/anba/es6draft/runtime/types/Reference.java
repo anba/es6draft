@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.types;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Put;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
@@ -372,6 +373,58 @@ public abstract class Reference<BASE, NAME> {
                 assert false : "invalid type";
                 return null;
             }
+        }
+    }
+
+    public static final class PropertyIndexReference extends PropertyReference<String> {
+        private final long referencedName;
+
+        public PropertyIndexReference(Object base, long referencedName, boolean strictReference) {
+            super(base, strictReference);
+            this.referencedName = referencedName;
+        }
+
+        @Override
+        public String getReferencedName() {
+            return ToString(referencedName);
+        }
+
+        @Override
+        public Object getValue(ExecutionContext cx) {
+            /* steps 4, 6 (not applicable) */
+            /* steps 3, 5.a */
+            if (hasPrimitiveBase()) {
+                // base = ToObject(realm, base);
+                return GetValuePrimitive(cx);
+            }
+            /* steps 3, 5.b */
+            return ((ScriptObject) getBase()).get(cx, referencedName, getThisValue(cx));
+        }
+
+        @Override
+        public void putValue(Object w, ExecutionContext cx) {
+            assert Type.of(w) != null : "invalid value type";
+
+            ScriptObject base = (hasPrimitiveBase() ? ToObject(cx, getBase())
+                    : (ScriptObject) getBase());
+            boolean succeeded = base.set(cx, referencedName, w, getThisValue(cx));
+            if (!succeeded && isStrictReference()) {
+                throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
+            }
+        }
+
+        private Object GetValuePrimitive(ExecutionContext cx) {
+            if (type == Type.String) {
+                int index = ExoticString.toStringIndex(referencedName);
+                if (index >= 0) {
+                    CharSequence str = Type.stringValue(getBase());
+                    int len = str.length();
+                    if (index < len) {
+                        return str.subSequence(index, index + 1);
+                    }
+                }
+            }
+            return getPrimitiveBaseProto(cx).get(cx, referencedName, getBase());
         }
     }
 

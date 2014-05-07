@@ -234,9 +234,39 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Types.ScriptRuntime, "getProperty", Type.getMethodType(Types.Reference,
                         Types.Object, Types.String, Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
+        static final MethodDesc ScriptRuntime_getProperty_int = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "getProperty", Type.getMethodType(
+                        Types.Reference, Types.Object, Type.INT_TYPE, Types.ExecutionContext,
+                        Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_getProperty_long = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "getProperty", Type.getMethodType(
+                        Types.Reference, Types.Object, Type.LONG_TYPE, Types.ExecutionContext,
+                        Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_getProperty_double = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "getProperty", Type.getMethodType(
+                        Types.Reference, Types.Object, Type.DOUBLE_TYPE, Types.ExecutionContext,
+                        Type.BOOLEAN_TYPE));
+
         static final MethodDesc ScriptRuntime_getPropertyValue = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "getPropertyValue", Type.getMethodType(
                         Types.Object, Types.Object, Types.String, Types.ExecutionContext,
+                        Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_getPropertyValue_int = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "getPropertyValue", Type.getMethodType(
+                        Types.Object, Types.Object, Type.INT_TYPE, Types.ExecutionContext,
+                        Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_getPropertyValue_long = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "getPropertyValue", Type.getMethodType(
+                        Types.Object, Types.Object, Type.LONG_TYPE, Types.ExecutionContext,
+                        Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_getPropertyValue_double = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "getPropertyValue", Type.getMethodType(
+                        Types.Object, Types.Object, Type.DOUBLE_TYPE, Types.ExecutionContext,
                         Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_IsBuiltinEval = MethodDesc.create(MethodType.Static,
@@ -1892,15 +1922,36 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 4-6 */
         ValType elementType = evalAndGetValue(node.getElement(), mv);
         /* steps 7-11 */
-        if (elementType.isPrimitive()) {
+        switch (elementType) {
+        case Number:
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_getProperty_double);
+            break;
+        case Number_int:
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_getProperty_int);
+            break;
+        case Number_uint:
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_getProperty_long);
+            break;
+        case Boolean:
+        case Null:
+        case String:
+        case Undefined:
             ToFlatString(elementType, mv);
             mv.loadExecutionContext();
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getProperty);
-        } else {
+            break;
+        default:
             mv.loadExecutionContext();
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getElement);
+            break;
         }
         /* step 11 */
         return ValType.Reference;
@@ -1916,15 +1967,36 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 4-6 */
         ValType elementType = evalAndGetValue(node.getElement(), mv);
         /* steps 7-11 */
-        if (elementType.isPrimitive()) {
+        switch (elementType) {
+        case Number:
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_getPropertyValue_double);
+            break;
+        case Number_int:
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_getPropertyValue_int);
+            break;
+        case Number_uint:
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_getPropertyValue_long);
+            break;
+        case Boolean:
+        case Null:
+        case String:
+        case Undefined:
             ToFlatString(elementType, mv);
             mv.loadExecutionContext();
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getPropertyValue);
-        } else {
+            break;
+        default:
             mv.loadExecutionContext();
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getElementValue);
+            break;
         }
         /* step 11 */
         return ValType.Any;

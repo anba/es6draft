@@ -415,6 +415,86 @@ public final class ScriptRuntime {
      *            the strict mode flag
      * @return the property reference
      */
+    public static Reference<Object, String> getProperty(Object baseValue, int propertyNameString,
+            ExecutionContext cx, boolean strict) {
+        return getProperty(baseValue, (long) propertyNameString, cx, strict);
+    }
+
+    /**
+     * 12.3.2 Property Accessors
+     * <p>
+     * 12.3.2.1 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>MemberExpression : MemberExpression . IdentifierName
+     * <li>CallExpression : CallExpression . IdentifierName
+     * </ul>
+     * 
+     * @param baseValue
+     *            the base value
+     * @param propertyNameString
+     *            the property name
+     * @param cx
+     *            the execution context
+     * @param strict
+     *            the strict mode flag
+     * @return the property reference
+     */
+    public static Reference<Object, String> getProperty(Object baseValue, long propertyNameString,
+            ExecutionContext cx, boolean strict) {
+        /* steps 1-6 (generated code) */
+        /* step 7 */
+        CheckObjectCoercible(cx, baseValue);
+        /* steps 8-10 */
+        return new Reference.PropertyIndexReference(baseValue, propertyNameString, strict);
+    }
+
+    /**
+     * 12.3.2 Property Accessors
+     * <p>
+     * 12.3.2.1 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>MemberExpression : MemberExpression . IdentifierName
+     * <li>CallExpression : CallExpression . IdentifierName
+     * </ul>
+     * 
+     * @param baseValue
+     *            the base value
+     * @param propertyNameString
+     *            the property name
+     * @param cx
+     *            the execution context
+     * @param strict
+     *            the strict mode flag
+     * @return the property reference
+     */
+    public static Reference<Object, String> getProperty(Object baseValue,
+            double propertyNameString, ExecutionContext cx, boolean strict) {
+        long index = (long) propertyNameString;
+        if (index == propertyNameString) {
+            return getProperty(baseValue, index, cx, strict);
+        }
+        return getProperty(baseValue, ToString(propertyNameString), cx, strict);
+    }
+
+    /**
+     * 12.3.2 Property Accessors
+     * <p>
+     * 12.3.2.1 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>MemberExpression : MemberExpression . IdentifierName
+     * <li>CallExpression : CallExpression . IdentifierName
+     * </ul>
+     * 
+     * @param baseValue
+     *            the base value
+     * @param propertyNameString
+     *            the property name
+     * @param cx
+     *            the execution context
+     * @param strict
+     *            the strict mode flag
+     * @return the property reference
+     */
     public static Reference<Object, String> getProperty(Object baseValue,
             String propertyNameString, ExecutionContext cx, boolean strict) {
         /* steps 1-6 (generated code) */
@@ -422,6 +502,88 @@ public final class ScriptRuntime {
         CheckObjectCoercible(cx, baseValue);
         /* steps 8-10 */
         return new Reference.PropertyNameReference(baseValue, propertyNameString, strict);
+    }
+
+    /**
+     * 12.3.2 Property Accessors
+     * <p>
+     * 12.3.2.1 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>MemberExpression : MemberExpression . IdentifierName
+     * <li>CallExpression : CallExpression . IdentifierName
+     * </ul>
+     * 
+     * @param baseValue
+     *            the base value
+     * @param propertyNameString
+     *            the property name
+     * @param cx
+     *            the execution context
+     * @param strict
+     *            the strict mode flag
+     * @return the property value
+     */
+    public static Object getPropertyValue(Object baseValue, int propertyNameString,
+            ExecutionContext cx, boolean strict) {
+        return getPropertyValue(baseValue, (long) propertyNameString, cx, strict);
+    }
+
+    /**
+     * 12.3.2 Property Accessors
+     * <p>
+     * 12.3.2.1 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>MemberExpression : MemberExpression . IdentifierName
+     * <li>CallExpression : CallExpression . IdentifierName
+     * </ul>
+     * 
+     * @param baseValue
+     *            the base value
+     * @param propertyNameString
+     *            the property name
+     * @param cx
+     *            the execution context
+     * @param strict
+     *            the strict mode flag
+     * @return the property value
+     */
+    public static Object getPropertyValue(Object baseValue, long propertyNameString,
+            ExecutionContext cx, boolean strict) {
+        /* steps 1-6 (generated code) */
+        /* step 7 */
+        CheckObjectCoercible(cx, baseValue);
+        /* steps 8-10 */
+        Reference<Object, String> ref = new Reference.PropertyIndexReference(baseValue,
+                propertyNameString, strict);
+        return ref.getValue(cx);
+    }
+
+    /**
+     * 12.3.2 Property Accessors
+     * <p>
+     * 12.3.2.1 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>MemberExpression : MemberExpression . IdentifierName
+     * <li>CallExpression : CallExpression . IdentifierName
+     * </ul>
+     * 
+     * @param baseValue
+     *            the base value
+     * @param propertyNameString
+     *            the property name
+     * @param cx
+     *            the execution context
+     * @param strict
+     *            the strict mode flag
+     * @return the property value
+     */
+    public static Object getPropertyValue(Object baseValue, double propertyNameString,
+            ExecutionContext cx, boolean strict) {
+        long index = (long) propertyNameString;
+        if (index == propertyNameString) {
+            return getPropertyValue(baseValue, index, cx, strict);
+        }
+        return getPropertyValue(baseValue, ToString(propertyNameString), cx, strict);
     }
 
     /**
