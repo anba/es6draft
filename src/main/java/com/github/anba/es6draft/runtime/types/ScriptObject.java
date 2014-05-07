@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.types;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
-
 import java.util.Iterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -68,9 +66,7 @@ public interface ScriptObject {
      *            the property key
      * @return the property or {@code null} if none found
      */
-    default Property getOwnProperty(ExecutionContext cx, long propertyKey) {
-        return getOwnProperty(cx, ToString(propertyKey));
-    }
+    Property getOwnProperty(ExecutionContext cx, long propertyKey);
 
     /**
      * [[GetOwnProperty]] (P)
@@ -94,9 +90,7 @@ public interface ScriptObject {
      *            the receiver object
      * @return the property value
      */
-    default Object get(ExecutionContext cx, long propertyKey, Object receiver) {
-        return get(cx, ToString(propertyKey), receiver);
-    }
+    Object get(ExecutionContext cx, long propertyKey, Object receiver);
 
     /**
      * [[GetOwnProperty]] (P)
@@ -118,9 +112,7 @@ public interface ScriptObject {
      *            the property key
      * @return {@code true} if the property was found
      */
-    default boolean hasProperty(ExecutionContext cx, long propertyKey) {
-        return hasProperty(cx, ToString(propertyKey));
-    }
+    boolean hasProperty(ExecutionContext cx, long propertyKey);
 
     /**
      * [[HasProperty]](P)
@@ -183,9 +175,7 @@ public interface ScriptObject {
      *            the receiver object
      * @return {@code true} on success
      */
-    default boolean set(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
-        return set(cx, ToString(propertyKey), value, receiver);
-    }
+    boolean set(ExecutionContext cx, long propertyKey, Object value, Object receiver);
 
     /**
      * [[Set] (P, V, Receiver)
@@ -226,9 +216,7 @@ public interface ScriptObject {
      *            the property key
      * @return {@code true} if the property was successfully deleted
      */
-    default boolean delete(ExecutionContext cx, long propertyKey) {
-        return delete(cx, ToString(propertyKey));
-    }
+    boolean delete(ExecutionContext cx, long propertyKey);
 
     /**
      * [[Delete]] (P)
@@ -263,9 +251,7 @@ public interface ScriptObject {
      *            the property descriptor
      * @return {@code true} if the property was successfully defined
      */
-    default boolean defineOwnProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
-        return defineOwnProperty(cx, ToString(propertyKey), desc);
-    }
+    boolean defineOwnProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc);
 
     /**
      * [[DefineOwnProperty]] (P, Desc)

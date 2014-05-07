@@ -41,13 +41,15 @@ public final class IndexedMapTest {
 
     private static <K, V> List<V> collect(Iterator<Map.Entry<K, V>> iterator) {
         ArrayList<V> list = new ArrayList<>();
-        iterator.forEachRemaining(e -> list.add(e.getValue()));
+        while (iterator.hasNext()) {
+            list.add(iterator.next().getValue());
+        }
         return list;
     }
 
     @Test
     public void denseContainsKey() {
-        IndexedMap<String> indexed = putAll(new IndexedMap<>(), 0, 1, 2, 3, 4, 5);
+        IndexedMap<String> indexed = putAll(new IndexedMap<String>(), 0, 1, 2, 3, 4, 5);
 
         assertTrue(indexed.containsKey(0));
         assertTrue(indexed.containsKey(1));
@@ -64,7 +66,7 @@ public final class IndexedMapTest {
 
     @Test
     public void sparseContainsKey() {
-        IndexedMap<String> indexed = putAll(new IndexedMap<>(), 0, 1, 2, 3, 4, 5);
+        IndexedMap<String> indexed = putAll(new IndexedMap<String>(), 0, 1, 2, 3, 4, 5);
         indexed.put(10000, "");
 
         assertTrue(indexed.containsKey(0));
@@ -84,7 +86,7 @@ public final class IndexedMapTest {
 
     @Test
     public void denseAscendingRange() {
-        IndexedMap<String> indexed = putAll(new IndexedMap<>(), 0, 1, 2, 3, 4, 5);
+        IndexedMap<String> indexed = putAll(new IndexedMap<String>(), 0, 1, 2, 3, 4, 5);
 
         assertThat(ascendingList(indexed, 0, 0), Matchers.empty());
         assertThat(ascendingList(indexed, 1, 1), Matchers.empty());
@@ -197,7 +199,7 @@ public final class IndexedMapTest {
 
     @Test
     public void denseDescendingRange() {
-        IndexedMap<String> indexed = putAll(new IndexedMap<>(), 0, 1, 2, 3, 4, 5);
+        IndexedMap<String> indexed = putAll(new IndexedMap<String>(), 0, 1, 2, 3, 4, 5);
 
         assertThat(descendingList(indexed, 0, 0), Matchers.empty());
         assertThat(descendingList(indexed, 1, 1), Matchers.empty());
@@ -310,7 +312,7 @@ public final class IndexedMapTest {
 
     @Test
     public void sparseAscendingRange() {
-        IndexedMap<String> indexed = putAll(new IndexedMap<>(), 0, 1, 2, 3, 4, 5);
+        IndexedMap<String> indexed = putAll(new IndexedMap<String>(), 0, 1, 2, 3, 4, 5);
         indexed.put(10000, "");
 
         assertThat(ascendingList(indexed, 0, 0), Matchers.empty());
@@ -424,7 +426,7 @@ public final class IndexedMapTest {
 
     @Test
     public void sparseDescendingRange() {
-        IndexedMap<String> indexed = putAll(new IndexedMap<>(), 0, 1, 2, 3, 4, 5);
+        IndexedMap<String> indexed = putAll(new IndexedMap<String>(), 0, 1, 2, 3, 4, 5);
         indexed.put(10000, "");
 
         assertThat(descendingList(indexed, 0, 0), Matchers.empty());

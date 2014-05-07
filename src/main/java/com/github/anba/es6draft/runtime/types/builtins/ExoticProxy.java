@@ -415,6 +415,14 @@ public class ExoticProxy implements ScriptObject {
      * 9.5.5 [[GetOwnProperty]] (P)
      */
     @Override
+    public Property getOwnProperty(ExecutionContext cx, long propertyKey) {
+        return getOwnProperty(cx, (Object) ToString(propertyKey));
+    }
+
+    /**
+     * 9.5.5 [[GetOwnProperty]] (P)
+     */
+    @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         return getOwnProperty(cx, (Object) propertyKey);
     }
@@ -494,6 +502,14 @@ public class ExoticProxy implements ScriptObject {
         }
         /* step 22 */
         return resultDesc.toProperty();
+    }
+
+    /**
+     * 9.5.6 [[DefineOwnProperty]] (P, Desc)
+     */
+    @Override
+    public boolean defineOwnProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
+        return defineOwnProperty(cx, (Object) ToString(propertyKey), desc);
     }
 
     /**
@@ -582,6 +598,14 @@ public class ExoticProxy implements ScriptObject {
      * 9.5.7 [[HasProperty]] (P)
      */
     @Override
+    public boolean hasProperty(ExecutionContext cx, long propertyKey) {
+        return hasProperty(cx, (Object) ToString(propertyKey));
+    }
+
+    /**
+     * 9.5.7 [[HasProperty]] (P)
+     */
+    @Override
     public boolean hasProperty(ExecutionContext cx, String propertyKey) {
         return hasProperty(cx, (Object) propertyKey);
     }
@@ -634,6 +658,14 @@ public class ExoticProxy implements ScriptObject {
         }
         /* step 12 */
         return booleanTrapResult;
+    }
+
+    /**
+     * 9.5.8 [[Get]] (P, Receiver)
+     */
+    @Override
+    public Object get(ExecutionContext cx, long propertyKey, Object receiver) {
+        return get(cx, (Object) ToString(propertyKey), receiver);
     }
 
     /**
@@ -696,6 +728,14 @@ public class ExoticProxy implements ScriptObject {
         }
         /* step 13 */
         return trapResult;
+    }
+
+    /**
+     * 9.5.9 [[Set]] ( P, V, Receiver)
+     */
+    @Override
+    public boolean set(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
+        return set(cx, (Object) ToString(propertyKey), value, receiver);
     }
 
     /**
@@ -765,6 +805,14 @@ public class ExoticProxy implements ScriptObject {
         }
         /* step 15 */
         return true;
+    }
+
+    /**
+     * 9.5.10 [[Delete]] (P)
+     */
+    @Override
+    public boolean delete(ExecutionContext cx, long propertyKey) {
+        return delete(cx, (Object) ToString(propertyKey));
     }
 
     /**

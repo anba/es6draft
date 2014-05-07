@@ -174,6 +174,14 @@ class WrapperProxy implements ScriptObject {
      * [[GetOwnProperty]] (P)
      */
     @Override
+    public Property getOwnProperty(ExecutionContext cx, long propertyKey) {
+        return proxyTarget.getOwnProperty(cx, propertyKey);
+    }
+
+    /**
+     * [[GetOwnProperty]] (P)
+     */
+    @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         return proxyTarget.getOwnProperty(cx, propertyKey);
     }
@@ -184,6 +192,14 @@ class WrapperProxy implements ScriptObject {
     @Override
     public Property getOwnProperty(ExecutionContext cx, Symbol propertyKey) {
         return proxyTarget.getOwnProperty(cx, propertyKey);
+    }
+
+    /**
+     * [[DefineOwnProperty]] (P, Desc)
+     */
+    @Override
+    public boolean defineOwnProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
+        return proxyTarget.defineOwnProperty(cx, propertyKey, desc);
     }
 
     /**
@@ -202,6 +218,22 @@ class WrapperProxy implements ScriptObject {
     public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
             PropertyDescriptor desc) {
         return proxyTarget.defineOwnProperty(cx, propertyKey, desc);
+    }
+
+    /**
+     * [[HasProperty]] (P)
+     */
+    @Override
+    public boolean hasProperty(ExecutionContext cx, long propertyKey) {
+        /* modified 8.3.8 [[HasProperty]](P) */
+        boolean hasOwn = HasOwnProperty(cx, proxyTarget, propertyKey);
+        if (!hasOwn) {
+            ScriptObject parent = getProto(cx); // modified
+            if (parent != null) {
+                return parent.hasProperty(cx, propertyKey);
+            }
+        }
+        return hasOwn;
     }
 
     /**
@@ -234,6 +266,31 @@ class WrapperProxy implements ScriptObject {
             }
         }
         return hasOwn;
+    }
+
+    /**
+     * [[Get]] (P, Receiver)
+     */
+    @Override
+    public Object get(ExecutionContext cx, long propertyKey, Object receiver) {
+        /* modified 8.3.9 [[Get]] (P, Receiver) */
+        Property desc = proxyTarget.getOwnProperty(cx, propertyKey);
+        if (desc == null) {
+            ScriptObject parent = getProto(cx);// modified
+            if (parent == null) {
+                return UNDEFINED;
+            }
+            return parent.get(cx, propertyKey, receiver);
+        }
+        if (desc.isDataDescriptor()) {
+            return desc.getValue();
+        }
+        assert desc.isAccessorDescriptor();
+        Callable getter = desc.getGetter();
+        if (getter == null) {
+            return UNDEFINED;
+        }
+        return getter.call(cx, receiver);
     }
 
     /**
@@ -284,6 +341,49 @@ class WrapperProxy implements ScriptObject {
             return UNDEFINED;
         }
         return getter.call(cx, receiver);
+    }
+
+    /**
+     * [[Set]] ( P, V, Receiver)
+     */
+    @Override
+    public boolean set(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
+        /* modified 8.3.10 [[Set] (P, V, Receiver) */
+        Property ownDesc = proxyTarget.getOwnProperty(cx, propertyKey);
+        if (ownDesc == null) {
+            ScriptObject parent = getProto(cx);// modified
+            if (parent != null) {
+                return parent.set(cx, propertyKey, value, receiver);
+            } else {
+                if (!Type.isObject(receiver)) {
+                    return false;
+                }
+                return CreateDataProperty(cx, Type.objectValue(receiver), propertyKey, value);
+            }
+        }
+        if (ownDesc.isDataDescriptor()) {
+            if (!ownDesc.isWritable()) {
+                return false;
+            }
+            if (!Type.isObject(receiver)) {
+                return false;
+            }
+            ScriptObject _receiver = Type.objectValue(receiver);
+            Property existingDescriptor = _receiver.getOwnProperty(cx, propertyKey);
+            if (existingDescriptor != null) {
+                PropertyDescriptor valueDesc = new PropertyDescriptor(value);
+                return _receiver.defineOwnProperty(cx, propertyKey, valueDesc);
+            } else {
+                return CreateDataProperty(cx, _receiver, propertyKey, value);
+            }
+        }
+        assert ownDesc.isAccessorDescriptor();
+        Callable setter = ownDesc.getSetter();
+        if (setter == null) {
+            return false;
+        }
+        setter.call(cx, receiver, value);
+        return true;
     }
 
     /**
@@ -370,6 +470,14 @@ class WrapperProxy implements ScriptObject {
         }
         setter.call(cx, receiver, value);
         return true;
+    }
+
+    /**
+     * [[Delete]] (P)
+     */
+    @Override
+    public boolean delete(ExecutionContext cx, long propertyKey) {
+        return proxyTarget.delete(cx, propertyKey);
     }
 
     /**
