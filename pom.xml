@@ -255,7 +255,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
             <configuration>
-              <executable>/opt/jdk/jdk1.8.0/bin/javac</executable>
+              <executable>/opt/jdk/latest/bin/javac</executable>
               <fork>true</fork>
             </configuration>
           </plugin>
@@ -263,7 +263,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-              <jvm>/opt/jdk/jdk1.8.0/bin/java</jvm>
+              <jvm>/opt/jdk/latest/bin/java</jvm>
               <forkMode>once</forkMode>
             </configuration>
             <executions>
