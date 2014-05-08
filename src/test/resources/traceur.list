@@ -114,6 +114,7 @@ feature/Yield/Try12.js
 #######################################
 
 # module syntax
+feature/AsyncFunctions/Export.js
 feature/Syntax/Error_WithInModule.module.js
 feature/TemplateLiterals/InModule.js
 
