@@ -18,6 +18,9 @@ env:
     - PROFILE='skip-external'
     - PROFILE='test262'
 
+before_install:
+  - if [[ $TRAVIS_JDK_VERSION = 'oraclejdk8' ]]; then sudo apt-get update; sudo apt-get install oracle-java8-installer; else true; fi
+
 install:
   - if [[ $PROFILE = 'test262' ]]; then git clone --depth 1 --branch master git://github.com/tc39/test262.git "${TEST262_PATH}"; else true; fi
   - mvn install --show-version --batch-mode --quiet --errors -DskipTests=true
