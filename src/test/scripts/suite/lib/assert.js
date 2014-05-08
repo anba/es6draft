@@ -202,7 +202,7 @@ function assertNotConstructor(o, message = "Is not a [[Constructor]] object") {
 function assertDataProperty(object, propertyKey, {value, writable, enumerable, configurable}) {
   let desc = Object_getOwnPropertyDescriptor(object, propertyKey);
   assertNotUndefined(desc, `${PropertyKeyToString(propertyKey)} not found`);
-  assertTrue('value' in desc);
+  assertTrue('value' in desc, `${PropertyKeyToString(propertyKey)}.[[Value]] present`);
   assertSame(value, desc.value, `${PropertyKeyToString(propertyKey)}.[[Value]]`);
   assertSame(writable, desc.writable, `${PropertyKeyToString(propertyKey)}.[[Writable]]`);
   assertSame(enumerable, desc.enumerable, `${PropertyKeyToString(propertyKey)}.[[Enumerable]]`);
@@ -212,7 +212,7 @@ function assertDataProperty(object, propertyKey, {value, writable, enumerable, c
 function assertAccessorProperty(object, propertyKey, {get, set, enumerable, configurable}) {
   let desc = Object_getOwnPropertyDescriptor(object, propertyKey);
   assertNotUndefined(desc, `${PropertyKeyToString(propertyKey)} not found`);
-  assertFalse('value' in desc);
+  assertFalse('value' in desc, `${PropertyKeyToString(propertyKey)}.[[Value]] present`);
   assertSame(get, desc.get, `${PropertyKeyToString(propertyKey)}.[[Get]]`);
   assertSame(set, desc.set, `${PropertyKeyToString(propertyKey)}.[[Set]]`);
   assertSame(enumerable, desc.enumerable, `${PropertyKeyToString(propertyKey)}.[[Enumerable]]`);

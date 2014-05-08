@@ -15,7 +15,7 @@ const {
 const instanceOf = Function.prototype.call.bind(Function.prototype[Symbol.hasInstance]);
 
 /*
- * Make InternalError instances compatible to `instanceof` with RangeError constructor
+ * Make InternalError instances compatible to `instanceof RangeError`
  */
 Object.defineProperty(RangeError, Symbol.hasInstance, {
   value(o) {
