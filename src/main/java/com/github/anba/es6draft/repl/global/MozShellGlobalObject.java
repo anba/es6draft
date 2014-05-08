@@ -20,11 +20,10 @@ import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
 import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.ScriptLoader;
+import com.github.anba.es6draft.Scripts;
 import com.github.anba.es6draft.ast.ExpressionStatement;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -92,8 +91,8 @@ public class MozShellGlobalObject extends ShellGlobalObject {
         Realm realm = global.getRealm();
         try {
             StringReader reader = new StringReader(source);
-            Script script = scriptCache.script(sourceName, sourceLine, reader, realm.getExecutor());
-            return ScriptLoader.ScriptEvaluation(script, realm, false);
+            Script script = getScriptLoader().script(sourceName, sourceLine, reader);
+            return Scripts.ScriptEvaluation(script, realm, false);
         } catch (ParserException | CompilationException e) {
             // create a script exception from the requested code realm, not from the caller's realm!
             throw e.toScriptException(realm.defaultContext());
@@ -391,8 +390,10 @@ public class MozShellGlobalObject extends ShellGlobalObject {
             return UNDEFINED;
         }
         String source = ((Callable) function).toSource();
-        Parser parser = new Parser("<decompileBody>", 1, cx.getRealm().getOptions());
-        com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript("(" + source + ")");
+        source = "(" + source + ")";
+
+        com.github.anba.es6draft.ast.Script parsedScript = cx.getRealm().getScriptLoader()
+                .parseScript("<decompileBody>", 1, source);
         ExpressionStatement expr = (ExpressionStatement) parsedScript.getStatements().get(0);
         FunctionNode fnode = (FunctionNode) expr.getExpression();
         return fnode.getBodySource();

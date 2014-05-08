@@ -81,7 +81,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         public static Object parse(ExecutionContext cx, Object thisValue, Object text,
                 Object reviver) {
             /* steps 1-2 */
-            CharSequence jtext = ToString(cx, text);
+            String jtext = ToFlatString(cx, text);
             /* steps 3-7 */
             Object unfiltered;
             try {

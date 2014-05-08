@@ -34,7 +34,7 @@ public final class JSONParser {
     private JSONTokenStream ts;
     private ExecutionContext cx;
 
-    public JSONParser(ExecutionContext cx, CharSequence source) {
+    public JSONParser(ExecutionContext cx, String source) {
         this.cx = cx;
         ts = new JSONTokenStream(new TokenStreamInput(source));
     }

@@ -29,6 +29,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 
 import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
@@ -39,7 +40,6 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -50,22 +50,26 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngine, Compilable,
         Invocable {
     private final ScriptEngineFactoryImpl factory;
-    private final ScriptCache scriptCache;
+    private final ScriptLoader scriptLoader;
     private final World<ScriptingGlobalObject> world;
 
     ScriptEngineImpl(ScriptEngineFactoryImpl factory) {
         this.factory = factory;
 
         Set<CompatibilityOption> compatibilityOptions = CompatibilityOption.WebCompatibility();
+        // This is a terrible hack to ensure bindings are properly resolved
         Set<Parser.Option> parserOptions = EnumSet.of(Parser.Option.EvalScript);
         Set<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
-        ScriptCache scriptCache = new ScriptCache(compatibilityOptions, parserOptions,
+        ScriptLoader scriptLoader = new ScriptLoader(compatibilityOptions, parserOptions,
                 compilerOptions);
-        this.scriptCache = scriptCache;
+
+        // TODO: Remove "EvalScript" hack and use shared script loader
+        this.scriptLoader = scriptLoader;
 
         ObjectAllocator<ScriptingGlobalObject> allocator = ScriptingGlobalObject
                 .newGlobalObjectAllocator();
-        this.world = new World<>(allocator, compatibilityOptions, compilerOptions);
+        this.world = new World<>(allocator, compatibilityOptions,
+                EnumSet.noneOf(Parser.Option.class), compilerOptions);
         context.setBindings(createBindings(), ScriptContext.ENGINE_SCOPE);
     }
 
@@ -133,7 +137,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         String sourceName = Objects.toString(context.getAttribute(FILENAME), "<eval>");
         int sourceLine = 1;
         try {
-            return scriptCache.script(sourceName, sourceLine, reader);
+            return scriptLoader.script(sourceName, sourceLine, reader);
         } catch (ParserException e) {
             throw new javax.script.ScriptException(e.getMessage(), e.getFile(), e.getLine(),
                     e.getColumn());

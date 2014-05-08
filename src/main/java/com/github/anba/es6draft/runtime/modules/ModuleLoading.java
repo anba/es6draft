@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.Module;
-import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -570,10 +569,10 @@ public final class ModuleLoading {
             Iterable<String> depsList;
             if (Type.isUndefined(instantiateResult)) {
                 /* step 4 */
-                Parser parser = new Parser("<module>", 1, calleeContext.getRealm().getOptions());
                 Module body;
                 try {
-                    body = parser.parseModule(load.getSource());
+                    body = calleeContext.getRealm().getScriptLoader()
+                            .parseModule("<module>", 1, load.getSource());
                 } catch (ParserException e) {
                     throw e.toScriptException(calleeContext);
                 }

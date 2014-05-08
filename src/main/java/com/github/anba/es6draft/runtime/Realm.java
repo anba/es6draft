@@ -15,15 +15,12 @@ import java.security.SecureRandom;
 import java.text.Collator;
 import java.text.DecimalFormatSymbols;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Random;
 import java.util.TimeZone;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import com.github.anba.es6draft.compiler.Compiler.Option;
+import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.objects.*;
@@ -338,30 +335,6 @@ public final class Realm {
         this.scriptContext = scriptContext;
     }
 
-    private final AtomicInteger evalCounter = new AtomicInteger(0);
-    private final AtomicInteger functionCounter = new AtomicInteger(0);
-
-    /**
-     * Next class name for eval scripts
-     * 
-     * @return the next class name for eval scripts
-     * @see Eval
-     */
-    public String nextEvalName() {
-        return "Eval_" + evalCounter.incrementAndGet();
-    }
-
-    /**
-     * Next class name for functions
-     * 
-     * @return the next class name for functions
-     * @see FunctionConstructor
-     * @see GeneratorFunctionConstructor
-     */
-    public String nextFunctionName() {
-        return "Function_" + functionCounter.incrementAndGet();
-    }
-
     /**
      * Returns this realm's locale.
      * 
@@ -414,21 +387,12 @@ public final class Realm {
     }
 
     /**
-     * Returns the shared runtime executor.
+     * Returns the script loader.
      * 
-     * @return the runtime executor
+     * @return the script loader
      */
-    public ExecutorService getExecutor() {
-        return world.getExecutor();
-    }
-
-    /**
-     * Returns the compatibility options for this realm instance.
-     * 
-     * @return the compatibility options
-     */
-    public EnumSet<CompatibilityOption> getOptions() {
-        return world.getOptions();
+    public ScriptLoader getScriptLoader() {
+        return world.getScriptLoader();
     }
 
     /**
@@ -440,15 +404,6 @@ public final class Realm {
      */
     public boolean isEnabled(CompatibilityOption option) {
         return world.isEnabled(option);
-    }
-
-    /**
-     * Returns the compiler options for this realm instance.
-     * 
-     * @return the compiler options
-     */
-    public EnumSet<Option> getCompilerOptions() {
-        return world.getCompilerOptions();
     }
 
     /**

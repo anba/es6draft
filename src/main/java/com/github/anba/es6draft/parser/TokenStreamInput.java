@@ -19,8 +19,8 @@ public final class TokenStreamInput {
     private final int length;
     private int cursor = 0;
 
-    public TokenStreamInput(CharSequence source) {
-        this.source = source.toString();
+    public TokenStreamInput(String source) {
+        this.source = source;
         this.length = source.length();
     }
 

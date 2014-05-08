@@ -11,10 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
 
-import com.github.anba.es6draft.ScriptLoader;
-import com.github.anba.es6draft.ast.FunctionDefinition;
 import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
@@ -69,11 +66,11 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         /* steps 1-7 */
         int argCount = args.length;
         StringBuilder p = new StringBuilder();
-        CharSequence bodyText;
+        String bodyText;
         if (argCount == 0) {
             bodyText = "";
         } else if (argCount == 1) {
-            bodyText = ToString(calleeContext, args[0]);
+            bodyText = ToFlatString(calleeContext, args[0]);
         } else {
             Object firstArg = args[0];
             p.append(ToString(calleeContext, firstArg));
@@ -83,16 +80,15 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
                 CharSequence nextArgString = ToString(calleeContext, nextArg);
                 p.append(',').append(nextArgString);
             }
-            bodyText = ToString(calleeContext, args[k - 1]);
+            bodyText = ToFlatString(calleeContext, args[k - 1]);
         }
 
         /* steps 8-11 */
         RuntimeInfo.Function function;
         try {
             Realm realm = calleeContext.getRealm();
-            Parser parser = new Parser("<Function>", 1, realm.getOptions());
-            FunctionDefinition functionDef = parser.parseFunction(p, bodyText);
-            function = ScriptLoader.compile(realm, functionDef);
+            function = realm.getScriptLoader().function("<Function>", 1, p.toString(), bodyText)
+                    .getFunction();
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(calleeContext);
         }

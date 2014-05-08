@@ -34,7 +34,6 @@ import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
-import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -231,13 +230,11 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         ReflectParser reflect = new ReflectParser(cx, location, sourceInfo, line, builder);
         Node parsedNode = null;
         try {
-            Parser parser = new Parser("<parse>", line, realm.getOptions());
-            parsedNode = parser.parseScript(source);
+            parsedNode = realm.getScriptLoader().parseScript("<parse>", line, source);
         } catch (ParserException ignore) {
             // TODO: Reflect.parse() currently accepts scripts and modules...
             try {
-                Parser parser = new Parser("<parse>", line, realm.getOptions());
-                parsedNode = parser.parseModule(source);
+                parsedNode = realm.getScriptLoader().parseModule("<parse>", line, source);
             } catch (ParserException e) {
                 throw e.toScriptException(cx);
             }

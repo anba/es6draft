@@ -12,10 +12,8 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.ExecutorService;
 
 import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -78,9 +76,8 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
      */
     @Function(name = "parseModule", arity = 1)
     public String parseModule(ExecutionContext cx, String source) {
-        Parser parser = new Parser("<module>", 1, cx.getRealm().getOptions());
         try {
-            parser.parseModule(source);
+            cx.getRealm().getScriptLoader().parseModule("<module>", 1, source);
         } catch (ParserException e) {
             throw e.toScriptException(cx);
         }
@@ -98,9 +95,8 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
      */
     @Function(name = "parseScript", arity = 1)
     public String parseScript(ExecutionContext cx, String source) {
-        Parser parser = new Parser("<script>", 1, cx.getRealm().getOptions());
         try {
-            parser.parseScript(source);
+            cx.getRealm().getScriptLoader().parseScript("<script", 1, source);
         } catch (ParserException e) {
             throw e.toScriptException(cx);
         }
@@ -119,8 +115,7 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
     @Function(name = "compile", arity = 1)
     public String compile(ExecutionContext cx, String filename) {
         try {
-            ExecutorService executor = cx.getRealm().getExecutor();
-            scriptCache.script(filename, 1, absolutePath(Paths.get(filename)), executor);
+            getScriptLoader().script(filename, 1, absolutePath(Paths.get(filename)));
         } catch (ParserException | CompilationException | IOException e) {
             return "error: " + e.getMessage();
         }

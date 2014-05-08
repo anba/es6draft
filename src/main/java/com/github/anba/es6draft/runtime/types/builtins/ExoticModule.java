@@ -176,13 +176,15 @@ public final class ExoticModule extends OrdinaryObject {
 
     /** 9.4.6.9 [[Set]] ( P, V, Receiver) */
     @Override
-    protected boolean setValue(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
+    protected boolean setValue(ExecutionContext cx, String propertyKey, Object value,
+            Object receiver) {
         return false;
     }
 
     /** 9.4.6.9 [[Set]] ( P, V, Receiver) */
     @Override
-    protected boolean setValue(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
+    protected boolean setValue(ExecutionContext cx, Symbol propertyKey, Object value,
+            Object receiver) {
         return false;
     }
 

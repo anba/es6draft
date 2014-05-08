@@ -41,7 +41,7 @@ import org.kohsuke.args4j.spi.Setter;
 import org.kohsuke.args4j.spi.StopOptionHandler;
 
 import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.ScriptLoader;
+import com.github.anba.es6draft.Scripts;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
@@ -405,8 +405,7 @@ public final class Repl {
 
     private static com.github.anba.es6draft.ast.Script parse(Realm realm, String sourceName,
             String source, int line) {
-        Parser parser = new Parser(sourceName, line, realm.getOptions());
-        return parser.parseScript(source);
+        return realm.getScriptLoader().parseScript(sourceName, line, source);
     }
 
     /**
@@ -449,11 +448,11 @@ public final class Repl {
         String className = "typein_" + scriptCounter.incrementAndGet();
         Script script;
         if (options.noInterpreter) {
-            script = ScriptLoader.compile(realm, parsedScript, className);
+            script = realm.getScriptLoader().compile(parsedScript, className);
         } else {
-            script = ScriptLoader.load(realm, parsedScript, className);
+            script = realm.getScriptLoader().load(parsedScript, className);
         }
-        return ScriptLoader.ScriptEvaluation(script, realm, false);
+        return Scripts.ScriptEvaluation(script, realm, false);
     }
 
     /**
@@ -552,9 +551,8 @@ public final class Repl {
         if (options.verifyStack) {
             compilerOptions.add(Compiler.Option.VerifyStack);
         }
-        ScriptCache scriptCache = new ScriptCache(compatibilityOptions, parserOptions,
-                compilerOptions);
 
+        ScriptCache scriptCache = new ScriptCache();
         ObjectAllocator<? extends ShellGlobalObject> allocator;
         if (options.shellMode == ShellMode.Mozilla) {
             allocator = MozShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
@@ -568,10 +566,10 @@ public final class Repl {
         }
 
         World<? extends ShellGlobalObject> world = new World<>(allocator, compatibilityOptions,
-                compilerOptions);
+                parserOptions, compilerOptions);
         final ShellGlobalObject global = world.newGlobal();
         final Realm realm = global.getRealm();
-        final ScriptObject globalThis = realm.getGlobalThis();
+        ScriptObject globalThis = realm.getGlobalThis();
         ExecutionContext cx = realm.defaultContext();
 
         // Add completion to console

@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -21,6 +22,7 @@ import org.apache.commons.configuration.Configuration;
 import org.junit.rules.ExternalResource;
 
 import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.repl.console.ShellConsole;
@@ -66,24 +68,17 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
 
         // read options ...
         options = compatibilityOptions(configuration.getString("mode", ""));
-        scriptCache = new ScriptCache(getOptions(), getParserOptions(), getCompilerOptions());
+        scriptCache = new ScriptCache();
 
         // pre-compile initialisation scripts
-        Path basedir = Resources.getTestSuitePath(configuration);
-        List<?> scriptNames = configuration.getList("scripts", emptyList());
-        List<Script> scripts = new ArrayList<>();
-        for (String scriptName : toStrings(scriptNames)) {
-            Script script = scriptCache.script(scriptName, 1,
-                    Resources.resource(scriptName, basedir));
-            scripts.add(script);
-        }
-        this.scripts = scripts;
+        scripts = compileScripts();
     }
 
     public final GLOBAL newGlobal(ShellConsole console, TEST test) throws IOException,
             URISyntaxException {
         ObjectAllocator<GLOBAL> allocator = newAllocator(console, test, scriptCache);
-        World<GLOBAL> world = new World<>(allocator, getOptions(), getCompilerOptions());
+        World<GLOBAL> world = new World<>(allocator, getOptions(), getParserOptions(),
+                getCompilerOptions());
         GLOBAL global = world.newGlobal();
         global.initialize();
         // Evaluate additional initialisation scripts
@@ -106,5 +101,22 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         default:
             return CompatibilityOption.StrictCompatibility();
         }
+    }
+
+    private List<Script> compileScripts() throws IOException {
+        List<?> scriptNames = configuration.getList("scripts", emptyList());
+        if (scriptNames.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Path basedir = Resources.getTestSuitePath(configuration);
+        ScriptLoader scriptLoader = new ScriptLoader(getOptions(), getParserOptions(),
+                getCompilerOptions());
+        List<Script> scripts = new ArrayList<>();
+        for (String scriptName : toStrings(scriptNames)) {
+            Script script = scriptLoader.script(scriptName, 1,
+                    Resources.resource(scriptName, basedir));
+            scripts.add(script);
+        }
+        return scripts;
     }
 }

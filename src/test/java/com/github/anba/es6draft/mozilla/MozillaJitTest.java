@@ -135,7 +135,7 @@ public class MozillaJitTest {
     @After
     public void tearDown() {
         if (global != null) {
-            global.getRealm().getExecutor().shutdown();
+            global.getScriptLoader().getExecutor().shutdown();
         }
     }
 

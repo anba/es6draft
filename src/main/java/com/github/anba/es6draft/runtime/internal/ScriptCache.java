@@ -6,30 +6,18 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.compiler.Compiler;
-import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 
 /**
@@ -37,200 +25,55 @@ import com.github.anba.es6draft.parser.ParserException;
  */
 public final class ScriptCache {
     private static final int MAX_SIZE = 10;
+    private Map<CacheKey, Script> cache = Collections.synchronizedMap(new Cache());
 
     @SuppressWarnings("serial")
-    private Map<URI, Script> cache = Collections.synchronizedMap(new LinkedHashMap<URI, Script>(16,
-            .75f, true) {
+    private static final class Cache extends LinkedHashMap<CacheKey, Script> {
+        Cache() {
+            super(16, .75f, true);
+        }
+
         @Override
-        protected boolean removeEldestEntry(Map.Entry<URI, Script> eldest) {
-            return (size() > MAX_SIZE);
-        }
-    });
-
-    private final EnumSet<CompatibilityOption> options;
-    private final EnumSet<Parser.Option> parserOptions;
-    private final EnumSet<Compiler.Option> compilerOptions;
-    private final AtomicInteger scriptCounter = new AtomicInteger(0);
-
-    private String nextScriptName() {
-        return "Script_" + scriptCounter.incrementAndGet();
-    }
-
-    public ScriptCache(Set<CompatibilityOption> options, Set<Parser.Option> parserOptions,
-            Set<Compiler.Option> compilerOptions) {
-        this.options = EnumSet.copyOf(options);
-        this.parserOptions = EnumSet.copyOf(parserOptions);
-        this.compilerOptions = EnumSet.copyOf(compilerOptions);
-    }
-
-    /**
-     * Returns a new {@link Reader} for the {@code stream} parameter.
-     * 
-     * @param stream
-     *            the input stream
-     * @return the buffered input stream reader
-     */
-    private Reader newReader(InputStream stream) {
-        return new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
-    }
-
-    /**
-     * Parses the javascript source.
-     * 
-     * @param sourceName
-     *            the script source name
-     * @param sourceLine
-     *            the script start line
-     * @param reader
-     *            the source
-     * @return the parsed script node
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     */
-    private com.github.anba.es6draft.ast.Script parse(String sourceName, int sourceLine,
-            Reader reader) throws ParserException, IOException {
-        String source = readFully(reader);
-        Parser parser = new Parser(sourceName, sourceLine, options, parserOptions);
-        com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(source);
-        return parsedScript;
-    }
-
-    /**
-     * Parses the javascript source.
-     * 
-     * @param sourceFile
-     *            the script source file
-     * @param sourceName
-     *            the script source name
-     * @param sourceLine
-     *            the script start line
-     * @param reader
-     *            the source
-     * @return the parsed script node
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     */
-    private com.github.anba.es6draft.ast.Script parse(Path sourceFile, String sourceName,
-            int sourceLine, Reader reader) throws ParserException, IOException {
-        String source = readFully(reader);
-        Parser parser = new Parser(sourceFile, sourceName, sourceLine, options, parserOptions);
-        com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(source);
-        return parsedScript;
-    }
-
-    private static String readFully(Reader reader) throws IOException {
-        StringBuilder sb = new StringBuilder(4096);
-        char cbuf[] = new char[4096];
-        for (int len; (len = reader.read(cbuf)) != -1;) {
-            sb.append(cbuf, 0, len);
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Parses and compiles the javascript file.
-     * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
-     * @param file
-     *            the script file path
-     * @return the compiled script
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
-     */
-    public Script script(String sourceName, int sourceLine, Path file) throws IOException,
-            ParserException, CompilationException {
-        assert file.isAbsolute() : String.format("'%s' is not an absolute path", file);
-        return script(sourceName, sourceLine, Files.newInputStream(file));
-    }
-
-    /**
-     * Parses and compiles the javascript file.
-     * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
-     * @param file
-     *            the script file URL
-     * @return the compiled script
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
-     */
-    public Script script(String sourceName, int sourceLine, URL file) throws IOException,
-            ParserException, CompilationException {
-        return script(sourceName, sourceLine, file.openStream());
-    }
-
-    /**
-     * Parses and compiles the javascript file.
-     * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
-     * @param stream
-     *            the source
-     * @return the compiled script
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
-     */
-    public Script script(String sourceName, int sourceLine, InputStream stream) throws IOException,
-            ParserException, CompilationException {
-        try (Reader r = newReader(stream)) {
-            com.github.anba.es6draft.ast.Script parsedScript = parse(sourceName, sourceLine, r);
-            return ScriptLoader.load(parsedScript, nextScriptName(), compilerOptions);
+        protected boolean removeEldestEntry(Map.Entry<CacheKey, Script> eldest) {
+            return size() > MAX_SIZE;
         }
     }
 
-    /**
-     * Parses and compiles the javascript file.
-     * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
-     * @param reader
-     *            the source
-     * @return the compiled script
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
-     */
-    public Script script(String sourceName, int sourceLine, Reader reader) throws IOException,
-            ParserException, CompilationException {
-        try (Reader r = reader) {
-            com.github.anba.es6draft.ast.Script parsedScript = parse(sourceName, sourceLine, r);
-            return ScriptLoader.load(parsedScript, nextScriptName(), compilerOptions);
+    private static final class CacheKey {
+        private final URI uri;
+
+        CacheKey(URI uri) {
+            this.uri = uri;
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj.getClass() != CacheKey.class) {
+                return false;
+            }
+            CacheKey other = (CacheKey) obj;
+            return uri.equals(other.uri);
+        }
+
+        @Override
+        public int hashCode() {
+            return uri.hashCode();
+        }
+    }
+
+    private CacheKey keyFor(URI uri) {
+        return new CacheKey(uri);
     }
 
     /**
      * Compiles {@code file} to a {@link Script} and caches the result.
      * 
+     * @param scriptLoader
+     *            the script loader
      * @param file
      *            the script file path
+     * @param executor
+     *            the executor for parallel compilation
      * @return the compiled script
      * @throws IOException
      *             if there was any I/O error
@@ -239,14 +82,15 @@ public final class ScriptCache {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script get(Path file) throws IOException, ParserException, CompilationException {
-        URI cacheKey = file.toUri();
+    public Script get(ScriptLoader scriptLoader, Path file) throws IOException, ParserException,
+            CompilationException {
+        CacheKey cacheKey = keyFor(file.toUri());
         if (cache.containsKey(cacheKey)) {
             return cache.get(cacheKey);
         }
         String sourceName = file.getFileName().toString();
         int sourceLine = 1;
-        Script script = script(sourceName, sourceLine, file);
+        Script script = scriptLoader.script(sourceName, sourceLine, file);
         cache.put(cacheKey, script);
         return script;
     }
@@ -254,6 +98,8 @@ public final class ScriptCache {
     /**
      * Compiles {@code file} to a {@link Script} and caches the result.
      * 
+     * @param scriptLoader
+     *            the script loader
      * @param file
      *            the script file URL
      * @return the compiled script
@@ -266,181 +112,15 @@ public final class ScriptCache {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script get(URL file) throws IOException, URISyntaxException, ParserException,
-            CompilationException {
-        URI cacheKey = file.toURI();
-        if (cache.containsKey(cacheKey)) {
-            return cache.get(cacheKey);
-        }
-        String sourceName = file.getFile();
-        int sourceLine = 1;
-        Script script = script(sourceName, sourceLine, file);
-        cache.put(cacheKey, script);
-        return script;
-    }
-
-    /**
-     * Parses and compiles the javascript file.
-     * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
-     * @param file
-     *            the script file path
-     * @param executor
-     *            the executor for parallel compilation
-     * @return the compiled script
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
-     */
-    public Script script(String sourceName, int sourceLine, Path file, ExecutorService executor)
-            throws IOException, ParserException, CompilationException {
-        assert file.isAbsolute() : String.format("'%s' is not an absolute path", file);
-        // return script(sourceName, sourceLine, Files.newInputStream(file), executor);
-        try (Reader r = newReader(Files.newInputStream(file))) {
-            com.github.anba.es6draft.ast.Script parsedScript = parse(file, sourceName, sourceLine,
-                    r);
-            return ScriptLoader.load(parsedScript, nextScriptName(), executor, compilerOptions);
-        }
-    }
-
-    /**
-     * Parses and compiles the javascript file.
-     * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
-     * @param file
-     *            the script file URL
-     * @param executor
-     *            the executor for parallel compilation
-     * @return the compiled script
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
-     */
-    public Script script(String sourceName, int sourceLine, URL file, ExecutorService executor)
-            throws IOException, ParserException, CompilationException {
-        return script(sourceName, sourceLine, file.openStream(), executor);
-    }
-
-    /**
-     * Parses and compiles the javascript file.
-     * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
-     * @param stream
-     *            the source
-     * @param executor
-     *            the executor for parallel compilation
-     * @return the compiled script
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
-     */
-    public Script script(String sourceName, int sourceLine, InputStream stream,
-            ExecutorService executor) throws IOException, ParserException, CompilationException {
-        try (Reader r = newReader(stream)) {
-            com.github.anba.es6draft.ast.Script parsedScript = parse(sourceName, sourceLine, r);
-            return ScriptLoader.load(parsedScript, nextScriptName(), executor, compilerOptions);
-        }
-    }
-
-    /**
-     * Parses and compiles the javascript file.
-     * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
-     * @param reader
-     *            the source
-     * @param executor
-     *            the executor for parallel compilation
-     * @return the compiled script
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
-     */
-    public Script script(String sourceName, int sourceLine, Reader reader, ExecutorService executor)
-            throws IOException, ParserException, CompilationException {
-        try (Reader r = reader) {
-            com.github.anba.es6draft.ast.Script parsedScript = parse(sourceName, sourceLine, r);
-            return ScriptLoader.load(parsedScript, nextScriptName(), executor, compilerOptions);
-        }
-    }
-
-    /**
-     * Compiles {@code file} to a {@link Script} and caches the result.
-     * 
-     * @param file
-     *            the script file path
-     * @param executor
-     *            the executor for parallel compilation
-     * @return the compiled script
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
-     */
-    public Script get(Path file, ExecutorService executor) throws IOException, ParserException,
-            CompilationException {
-        URI cacheKey = file.toUri();
-        if (cache.containsKey(cacheKey)) {
-            return cache.get(cacheKey);
-        }
-        String sourceName = file.getFileName().toString();
-        int sourceLine = 1;
-        Script script = script(sourceName, sourceLine, file, executor);
-        cache.put(cacheKey, script);
-        return script;
-    }
-
-    /**
-     * Compiles {@code file} to a {@link Script} and caches the result.
-     * 
-     * @param file
-     *            the script file URL
-     * @param executor
-     *            the executor for parallel compilation
-     * @return the compiled script
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws URISyntaxException
-     *             if the URL is not a valid URI
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
-     */
-    public Script get(URL file, ExecutorService executor) throws IOException, URISyntaxException,
+    public Script get(ScriptLoader scriptLoader, URL file) throws IOException, URISyntaxException,
             ParserException, CompilationException {
-        URI cacheKey = file.toURI();
+        CacheKey cacheKey = keyFor(file.toURI());
         if (cache.containsKey(cacheKey)) {
             return cache.get(cacheKey);
         }
         String sourceName = file.getFile();
         int sourceLine = 1;
-        Script script = script(sourceName, sourceLine, file, executor);
+        Script script = scriptLoader.script(sourceName, sourceLine, file);
         cache.put(cacheKey, script);
         return script;
     }

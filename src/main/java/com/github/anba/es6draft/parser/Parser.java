@@ -1141,7 +1141,7 @@ public final class Parser {
      * @throws ParserException
      *             if the input source could not be parsed successfully
      */
-    public Script parseScript(CharSequence source) throws ParserException {
+    public Script parseScript(String source) throws ParserException {
         if (ts != null)
             throw new IllegalStateException();
         ts = new TokenStream(this, new TokenStreamInput(source));
@@ -1157,7 +1157,7 @@ public final class Parser {
      * @throws ParserException
      *             if the input source could not be parsed successfully
      */
-    public Module parseModule(CharSequence source) throws ParserException {
+    public Module parseModule(String source) throws ParserException {
         if (ts != null)
             throw new IllegalStateException();
         ts = new TokenStream(this, new TokenStreamInput(source));
@@ -1175,8 +1175,7 @@ public final class Parser {
      * @throws ParserException
      *             if the input source could not be parsed successfully
      */
-    public FunctionDefinition parseFunction(CharSequence formals, CharSequence bodyText)
-            throws ParserException {
+    public FunctionDefinition parseFunction(String formals, String bodyText) throws ParserException {
         if (ts != null)
             throw new IllegalStateException();
 
@@ -1242,7 +1241,7 @@ public final class Parser {
      * @throws ParserException
      *             if the input source could not be parsed successfully
      */
-    public GeneratorDefinition parseGenerator(CharSequence formals, CharSequence bodyText)
+    public GeneratorDefinition parseGenerator(String formals, String bodyText)
             throws ParserException {
         if (ts != null)
             throw new IllegalStateException();

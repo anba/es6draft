@@ -122,7 +122,7 @@ public final class Test262Strict {
     @After
     public void tearDown() {
         if (global != null) {
-            global.getRealm().getExecutor().shutdown();
+            global.getScriptLoader().getExecutor().shutdown();
         }
     }
 

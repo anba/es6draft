@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.ScriptLoader.ScriptEvaluation;
+import static com.github.anba.es6draft.Scripts.ScriptEvaluation;
 import static com.github.anba.es6draft.runtime.ExecutionContext.newEvalExecutionContext;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -276,22 +276,17 @@ public final class Eval {
             if (withStatement) {
                 options.add(Parser.Option.EnclosedByWithStatement);
             }
-            String sourceFile;
+            String sourceName;
             ExecutionContext scriptContext = cx.getRealm().getScriptContext();
             if (scriptContext != null) {
                 Script currentScript = scriptContext.getCurrentScript();
-                sourceFile = String.format("<eval> (%s)", currentScript.getScriptBody()
+                sourceName = String.format("<eval> (%s)", currentScript.getScriptBody()
                         .sourceFile());
             } else {
                 // eval call crossing realm boundaries, include source file information here?
-                sourceFile = "<eval>";
+                sourceName = "<eval>";
             }
-            Parser parser = new Parser(sourceFile, 1, realm.getOptions(), options);
-            com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(source);
-            if (parsedScript.getStatements().isEmpty()) {
-                return null;
-            }
-            return ScriptLoader.load(realm, parsedScript);
+            return realm.getScriptLoader().evalScript(sourceName, 1, source.toString(), options);
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         }

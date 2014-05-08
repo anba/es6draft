@@ -11,15 +11,10 @@ import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
+import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.compiler.Compiler;
-import com.github.anba.es6draft.compiler.Compiler.Option;
+import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -33,13 +28,9 @@ import com.github.anba.es6draft.runtime.objects.GlobalObject;
  * </ul>
  */
 public final class World<GLOBAL extends GlobalObject> {
-    private static final int THREAD_POOL_SIZE = 2;
-    private static final long THREAD_POOL_TTL = 5 * 60;
-
     private final ObjectAllocator<GLOBAL> allocator;
-    private final ThreadPoolExecutor executor;
+    private final ScriptLoader scriptLoader;
     private final EnumSet<CompatibilityOption> options;
-    private final EnumSet<Option> compilerOptions;
 
     private final Locale locale = Locale.getDefault();
     private final TimeZone timezone = TimeZone.getDefault();
@@ -74,8 +65,8 @@ public final class World<GLOBAL extends GlobalObject> {
      *            the global object allocator
      */
     public World(ObjectAllocator<GLOBAL> allocator) {
-        this(allocator, CompatibilityOption.WebCompatibility(), EnumSet
-                .noneOf(Compiler.Option.class));
+        this(allocator, CompatibilityOption.WebCompatibility(),
+                EnumSet.noneOf(Parser.Option.class), EnumSet.noneOf(Compiler.Option.class));
     }
 
     /**
@@ -87,7 +78,8 @@ public final class World<GLOBAL extends GlobalObject> {
      *            the compatibility options
      */
     public World(ObjectAllocator<GLOBAL> allocator, Set<CompatibilityOption> options) {
-        this(allocator, options, EnumSet.noneOf(Compiler.Option.class));
+        this(allocator, options, EnumSet.noneOf(Parser.Option.class), EnumSet
+                .noneOf(Compiler.Option.class));
     }
 
     /**
@@ -101,65 +93,19 @@ public final class World<GLOBAL extends GlobalObject> {
      *            the compiler options
      */
     public World(ObjectAllocator<GLOBAL> allocator, Set<CompatibilityOption> options,
-            Set<Compiler.Option> compilerOptions) {
+            Set<Parser.Option> parserOptions, Set<Compiler.Option> compilerOptions) {
         this.allocator = allocator;
-        this.executor = createThreadPoolExecutor();
+        this.scriptLoader = new ScriptLoader(options, parserOptions, compilerOptions);
         this.options = EnumSet.copyOf(options);
-        this.compilerOptions = EnumSet.copyOf(compilerOptions);
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        executor.shutdown();
-        super.finalize();
     }
 
     /**
-     * Returns the shared runtime executor.
+     * Returns the script loader.
      * 
-     * @return the shared runtime executor
+     * @return the script loader
      */
-    public ExecutorService getExecutor() {
-        return executor;
-    }
-
-    /**
-     * Create a new executor service.
-     * 
-     * @return a new executor
-     */
-    private static ThreadPoolExecutor createThreadPoolExecutor() {
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(THREAD_POOL_SIZE, THREAD_POOL_SIZE,
-                THREAD_POOL_TTL, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
-                new RuntimeThreadFactory());
-        executor.allowCoreThreadTimeOut(true);
-        return executor;
-    }
-
-    private static final class RuntimeThreadFactory implements ThreadFactory {
-        private static final AtomicInteger runtimeCount = new AtomicInteger(0);
-        private final AtomicInteger workerCount = new AtomicInteger(0);
-        private final ThreadGroup group;
-        private final String namePrefix;
-
-        RuntimeThreadFactory() {
-            SecurityManager sec = System.getSecurityManager();
-            group = sec != null ? sec.getThreadGroup() : Thread.currentThread().getThreadGroup();
-            namePrefix = "runtime-" + runtimeCount.incrementAndGet() + "-worker-";
-        }
-
-        @Override
-        public Thread newThread(Runnable r) {
-            String name = namePrefix + workerCount.incrementAndGet();
-            Thread newThread = new Thread(group, r, name);
-            if (!newThread.isDaemon()) {
-                newThread.setDaemon(true);
-            }
-            if (newThread.getPriority() != Thread.NORM_PRIORITY) {
-                newThread.setPriority(Thread.NORM_PRIORITY);
-            }
-            return newThread;
-        }
+    public ScriptLoader getScriptLoader() {
+        return scriptLoader;
     }
 
     /**
@@ -287,15 +233,6 @@ public final class World<GLOBAL extends GlobalObject> {
      */
     public boolean isEnabled(CompatibilityOption option) {
         return options.contains(option);
-    }
-
-    /**
-     * Returns the compiler options for this instance.
-     * 
-     * @return the compiler options
-     */
-    public EnumSet<Option> getCompilerOptions() {
-        return compilerOptions;
     }
 
     /**
