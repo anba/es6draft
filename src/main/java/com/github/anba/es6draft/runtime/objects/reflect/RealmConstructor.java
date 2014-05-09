@@ -129,6 +129,17 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         /* step 25 */
         realmObject.setRealm(realm);
 
+        // Run any initialization scripts, if required
+        try {
+            GlobalObject globalObject = realm.getGlobalObject();
+            assert globalObject != null;
+            globalObject.initialize();
+        } catch (ParserException | CompilationException e) {
+            throw e.toScriptException(realm.defaultContext());
+        } catch (IOException | URISyntaxException e) {
+            throw newError(realm.defaultContext(), e.getMessage());
+        }
+
         /* steps 26-27 */
         Callable initGlobal = GetMethod(calleeContext, realmObject, "initGlobal");
 
@@ -144,15 +155,6 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
 
             // Define the built-in properties
             globalObject.defineBuiltinProperties(calleeContext, globalThis);
-
-            // Run any initialization scripts, if required
-            try {
-                globalObject.initialize();
-            } catch (ParserException | CompilationException e) {
-                throw e.toScriptException(realm.defaultContext());
-            } catch (IOException | URISyntaxException e) {
-                throw newError(realm.defaultContext(), e.getMessage());
-            }
         }
         /* step 30 */
         return realmObject;
