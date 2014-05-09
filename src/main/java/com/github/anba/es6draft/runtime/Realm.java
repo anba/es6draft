@@ -213,6 +213,18 @@ public final class Realm {
     }
 
     /**
+     * [[intrinsics]]
+     * 
+     * @param id
+     *            the intrinsic identifier
+     * @param intrinsic
+     *            the intrinsic object
+     */
+    public void setIntrinsic(Intrinsics id, OrdinaryObject intrinsic) {
+        intrinsics.put(id, intrinsic);
+    }
+
+    /**
      * [[realmObject]]
      * 
      * @return the realm object

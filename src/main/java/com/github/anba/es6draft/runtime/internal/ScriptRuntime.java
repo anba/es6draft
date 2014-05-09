@@ -872,7 +872,7 @@ public final class ScriptRuntime {
      * @return the return value
      */
     public static Object nativeCall(String name, Object[] args, ExecutionContext cx) {
-        return UNDEFINED;
+        return NativeCalls.nativeCall(cx, name, args);
     }
 
     /**
