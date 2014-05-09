@@ -6,8 +6,8 @@
  */
 package com.github.anba.es6draft.scripting;
 
-import static com.github.anba.es6draft.util.IsInstanceOfWith.instanceOfWith;
-import static com.github.anba.es6draft.util.IsNumberCloseTo.numberCloseTo;
+import static com.github.anba.es6draft.util.matchers.IsInstanceOfWith.instanceOfWith;
+import static com.github.anba.es6draft.util.matchers.IsNumberCloseTo.numberCloseTo;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 

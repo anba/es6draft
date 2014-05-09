@@ -22,7 +22,6 @@ import org.apache.commons.configuration.Configuration;
 import org.junit.rules.ExternalResource;
 
 import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.repl.console.ShellConsole;
@@ -31,6 +30,7 @@ import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**

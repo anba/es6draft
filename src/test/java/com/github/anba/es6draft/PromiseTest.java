@@ -36,12 +36,12 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
-import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
+import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
+import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
 
 /**
  *

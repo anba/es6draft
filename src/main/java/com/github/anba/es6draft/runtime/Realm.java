@@ -20,9 +20,9 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.TimeZone;
 
-import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.objects.*;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;

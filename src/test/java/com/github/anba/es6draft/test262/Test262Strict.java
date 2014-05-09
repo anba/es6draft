@@ -8,9 +8,9 @@ package com.github.anba.es6draft.test262;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.test262.Test262GlobalObject.newGlobalObjectAllocator;
-import static com.github.anba.es6draft.util.ErrorMessageMatcher.hasErrorMessage;
-import static com.github.anba.es6draft.util.PatternMatcher.matchesPattern;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
+import static com.github.anba.es6draft.util.matchers.ErrorMessageMatcher.hasErrorMessage;
+import static com.github.anba.es6draft.util.matchers.PatternMatcher.matchesPattern;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assume.assumeTrue;
 
@@ -38,9 +38,9 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
-import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.Functional.BiFunction;
+import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
+import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.Resources;
 import com.github.anba.es6draft.util.TestConfiguration;

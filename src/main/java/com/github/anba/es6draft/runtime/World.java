@@ -12,12 +12,12 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
 
-import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**

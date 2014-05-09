@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.mozilla;
 
 import static com.github.anba.es6draft.mozilla.MozTestGlobalObject.newTestGlobalObjectAllocator;
-import static com.github.anba.es6draft.util.ErrorMessageMatcher.hasErrorMessage;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
+import static com.github.anba.es6draft.util.matchers.ErrorMessageMatcher.hasErrorMessage;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assume.assumeTrue;
 
@@ -42,11 +42,11 @@ import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
-import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
-import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
-import com.github.anba.es6draft.util.ExceptionHandlers.StopExecutionHandler;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Functional.Function;
+import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
+import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
+import com.github.anba.es6draft.util.rules.ExceptionHandlers.StopExecutionHandler;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;

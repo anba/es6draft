@@ -21,7 +21,6 @@ import java.nio.file.Paths;
 import java.util.Objects;
 
 import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.Scripts;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
@@ -32,6 +31,7 @@ import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**

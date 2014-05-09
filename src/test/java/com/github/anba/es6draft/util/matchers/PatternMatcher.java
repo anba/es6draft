@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.util;
+package com.github.anba.es6draft.util.matchers;
 
 import java.util.regex.Pattern;
 

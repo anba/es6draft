@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.util;
+package com.github.anba.es6draft.util.rules;
 
 import static java.util.Objects.requireNonNull;
 import static org.hamcrest.Matchers.anything;
