@@ -46,6 +46,7 @@ public final class ScriptLoader {
     private static final int THREAD_POOL_SIZE = 2;
     private static final long THREAD_POOL_TTL = 5 * 60;
 
+    private final boolean finalizeExecutor;
     private final ExecutorService executor;
     private final EnumSet<CompatibilityOption> options;
     private final EnumSet<Parser.Option> parserOptions;
@@ -87,18 +88,19 @@ public final class ScriptLoader {
     }
 
     public ScriptLoader(Set<CompatibilityOption> options) {
-        this(createThreadPoolExecutor(), options, EnumSet.noneOf(Parser.Option.class), EnumSet
+        this(null, options, EnumSet.noneOf(Parser.Option.class), EnumSet
                 .noneOf(Compiler.Option.class));
     }
 
     public ScriptLoader(Set<CompatibilityOption> options, Set<Parser.Option> parserOptions,
             Set<Compiler.Option> compilerOptions) {
-        this(createThreadPoolExecutor(), options, parserOptions, compilerOptions);
+        this(null, options, parserOptions, compilerOptions);
     }
 
     public ScriptLoader(ExecutorService executor, Set<CompatibilityOption> options,
             Set<Parser.Option> parserOptions, Set<Compiler.Option> compilerOptions) {
-        this.executor = executor;
+        this.finalizeExecutor = executor == null;
+        this.executor = executor != null ? executor : createThreadPoolExecutor();
         this.options = EnumSet.copyOf(options);
         this.parserOptions = EnumSet.copyOf(parserOptions);
         this.compilerOptions = EnumSet.copyOf(compilerOptions);
@@ -106,7 +108,8 @@ public final class ScriptLoader {
 
     @Override
     protected void finalize() throws Throwable {
-        executor.shutdown();
+        if (finalizeExecutor)
+            executor.shutdown();
         super.finalize();
     }
 
@@ -117,6 +120,15 @@ public final class ScriptLoader {
      */
     public ExecutorService getExecutor() {
         return executor;
+    }
+
+    /**
+     * Returns the compatibility options for this instance.
+     * 
+     * @return the compatibility options
+     */
+    public EnumSet<CompatibilityOption> getOptions() {
+        return options;
     }
 
     /**
