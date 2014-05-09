@@ -445,6 +445,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
         MozShellGlobalObject global = (MozShellGlobalObject) cx.getRealm().getWorld().newGlobal();
         try {
             global.initialize();
+            global.defineBuiltinProperties();
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         } catch (IOException | URISyntaxException e) {

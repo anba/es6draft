@@ -65,6 +65,18 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
     }
 
     /**
+     * Initializes the global this with the default properties of the Global Object.
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     */
+    public final void defineBuiltinProperties() {
+        defineBuiltinProperties(getRealm().defaultContext(), getRealm().getGlobalThis());
+    }
+
+    /**
      * Initializes {@code object} with the default properties of the Global Object.
      * 
      * @param cx
@@ -138,6 +150,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
      */
     public void initialize() throws IOException, URISyntaxException, ParserException,
             CompilationException {
+        // TODO: rename to avoid confusion with initialize(cx) method
         /* empty */
     }
 

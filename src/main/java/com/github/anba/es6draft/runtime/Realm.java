@@ -142,27 +142,23 @@ public final class Realm {
         this.globalObject = world.getAllocator().newInstance(this);
         this.globalThis = world.getAllocator().newInstance(this); // TODO: yuk...
         this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
-        RealmObject realmObject = new RealmObject(this);
-        realmObject.setRealm(this);
-        this.realmObject = realmObject;
+        this.realmObject = new RealmObject(this);
 
         // Create all built-in intrinsics
         createIntrinsics(this);
 
-        // Set [[Prototype]] after intrinsics are initialized
-        realmObject.setPrototype(getIntrinsic(Intrinsics.RealmPrototype));
-
         // Initialize global object
         globalObject.initialize(defaultContext);
+
+        // Store reference to built-in eval
+        builtinEval = (Callable) Get(defaultContext, globalObject, "eval");
 
         // [[Prototype]] for default global is implementation defined
         globalThis.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
 
-        // Define built-in properties on global this
-        globalObject.defineBuiltinProperties(defaultContext, globalThis);
-
-        // Store reference to built-in eval
-        this.builtinEval = (Callable) Get(defaultContext, globalObject, "eval");
+        // Set [[Prototype]] after intrinsics are initialized
+        realmObject.setPrototype(getIntrinsic(Intrinsics.RealmPrototype));
+        realmObject.setRealm(this);
     }
 
     private Realm(World<? extends GlobalObject> world, RealmObject realmObject) {
@@ -179,11 +175,11 @@ public final class Realm {
         // Initialize global object
         globalObject.initialize(defaultContext);
 
+        // Store reference to built-in eval
+        builtinEval = (Callable) Get(defaultContext, globalObject, "eval");
+
         // Set prototype to %ObjectPrototype%, cf. Reflect.Realm.[[Call]]
         globalThis.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
-
-        // Store reference to built-in eval
-        this.builtinEval = (Callable) Get(defaultContext, globalObject, "eval");
     }
 
     private Realm(World<? extends GlobalObject> world, RealmObject realmObject,
@@ -202,7 +198,7 @@ public final class Realm {
         globalObject.initialize(defaultContext);
 
         // Store reference to built-in eval
-        this.builtinEval = (Callable) Get(defaultContext, globalObject, "eval");
+        builtinEval = (Callable) Get(defaultContext, globalObject, "eval");
     }
 
     /**

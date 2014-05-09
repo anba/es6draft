@@ -569,8 +569,8 @@ public final class Repl {
                 parserOptions, compilerOptions);
         final ShellGlobalObject global = world.newGlobal();
         final Realm realm = global.getRealm();
-        ScriptObject globalThis = realm.getGlobalThis();
-        ExecutionContext cx = realm.defaultContext();
+        final ScriptObject globalThis = realm.getGlobalThis();
+        final ExecutionContext cx = realm.defaultContext();
 
         // Add completion to console
         console.addCompletion(realm);
@@ -585,7 +585,10 @@ public final class Repl {
             @Override
             public void execute() {
                 try {
+                    // Initialization scripts
                     global.initialize();
+                    // Define built-in properties on global this
+                    global.defineBuiltinProperties();
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 } catch (URISyntaxException e) {

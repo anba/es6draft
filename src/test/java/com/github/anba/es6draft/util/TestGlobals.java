@@ -80,8 +80,11 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         World<GLOBAL> world = new World<>(allocator, getOptions(), getParserOptions(),
                 getCompilerOptions());
         GLOBAL global = world.newGlobal();
+        // Evaluate realm initialization scripts
         global.initialize();
-        // Evaluate additional initialisation scripts
+        // Define built-in properties on global this
+        global.defineBuiltinProperties();
+        // Evaluate additional initialization scripts
         for (Script script : scripts) {
             global.eval(script);
         }
