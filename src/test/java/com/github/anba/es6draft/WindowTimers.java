@@ -13,13 +13,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Undefined;
 
 /**
- * Simple <code>setTimeout()</code> implementation for test cases
+ * Simple <code>setTimeout()</code> implementation for test cases.
  */
 public final class WindowTimers {
     private AtomicInteger timerCount = new AtomicInteger(0);
@@ -35,7 +36,21 @@ public final class WindowTimers {
     }
 
     /**
-     * Returns the next task or <code>null</code> if no tasks is waiting
+     * Runs the event loop until all tasks have been finished.
+     */
+    public void runEventLoop(Realm realm) throws InterruptedException {
+        for (;;) {
+            realm.getWorld().executeTasks();
+            Task task = nextTaskOrNull();
+            if (task == null) {
+                break;
+            }
+            realm.enqueueScriptTask(task);
+        }
+    }
+
+    /**
+     * Returns the next task or <code>null</code> if no tasks are waiting.
      */
     public Task nextTaskOrNull() throws InterruptedException {
         if (timerCount.get() == 0) {

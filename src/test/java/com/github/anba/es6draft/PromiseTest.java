@@ -31,7 +31,6 @@ import org.junit.runners.Parameterized.Parameters;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.SimpleShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -112,14 +111,7 @@ public class PromiseTest {
 
         // wait for pending tasks to finish
         assertFalse(async.doneCalled);
-        for (;;) {
-            global.getRealm().getWorld().executeTasks();
-            Task task = timers.nextTaskOrNull();
-            if (task == null) {
-                break;
-            }
-            global.getRealm().enqueueScriptTask(task);
-        }
+        timers.runEventLoop(global.getRealm());
         assertTrue(async.doneCalled);
     }
 

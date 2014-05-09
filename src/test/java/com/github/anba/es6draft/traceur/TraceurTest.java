@@ -40,7 +40,6 @@ import com.github.anba.es6draft.WindowTimers;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
@@ -145,9 +144,11 @@ public class TraceurTest {
     @Test
     public void runTest() throws Throwable {
         // create global 'done' function for async tests
-        AsyncHelper async = new AsyncHelper();
-        WindowTimers timers = new WindowTimers();
+        AsyncHelper async = null;
+        WindowTimers timers = null;
         if (test.async) {
+            async = new AsyncHelper();
+            timers = new WindowTimers();
             ExecutionContext cx = global.getRealm().defaultContext();
             ScriptObject globalThis = global.getRealm().getGlobalThis();
             Properties.createProperties(cx, globalThis, async, AsyncHelper.class);
@@ -160,14 +161,7 @@ public class TraceurTest {
         // wait for pending tasks to finish
         if (test.async) {
             assertFalse(async.doneCalled);
-            for (;;) {
-                global.getRealm().getWorld().executeTasks();
-                Task task = timers.nextTaskOrNull();
-                if (task == null) {
-                    break;
-                }
-                global.getRealm().enqueueScriptTask(task);
-            }
+            timers.runEventLoop(global.getRealm());
             assertTrue(async.doneCalled);
         }
     }
