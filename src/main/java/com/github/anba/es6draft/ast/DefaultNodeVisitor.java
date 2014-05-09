@@ -470,6 +470,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(NativeCallExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public R visit(NewExpression node, V value) {
         return visit((Expression) node, value);
     }

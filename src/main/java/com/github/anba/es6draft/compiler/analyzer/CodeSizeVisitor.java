@@ -540,6 +540,11 @@ final class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
+    public Integer visit(NativeCallExpression node, CodeSizeHandler value) {
+        return analyze(node, node.getArguments(), node.getBase(), 30, 5, value);
+    }
+
+    @Override
     public Integer visit(NewExpression node, CodeSizeHandler value) {
         return analyze(node, node.getArguments(), node.getExpression(), 15, 5, value);
     }

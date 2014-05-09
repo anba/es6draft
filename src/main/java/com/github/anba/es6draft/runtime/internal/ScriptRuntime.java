@@ -861,6 +861,21 @@ public final class ScriptRuntime {
     }
 
     /**
+     * Extension: Native function calls
+     * 
+     * @param name
+     *            the native function
+     * @param args
+     *            the function arguments
+     * @param cx
+     *            the execution context
+     * @return the return value
+     */
+    public static Object nativeCall(String name, Object[] args, ExecutionContext cx) {
+        return UNDEFINED;
+    }
+
+    /**
      * 12.3.5 The super Keyword
      * <p>
      * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)

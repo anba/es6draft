@@ -293,6 +293,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Types.ScriptRuntime, "toFlatArray",
                 Type.getMethodType(Types.Object_, Types.Object_, Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_nativeCall = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "nativeCall", Type.getMethodType(Types.Object, Types.String,
+                        Types.Object_, Types.ExecutionContext));
+
         // class: StringBuilder
         static final MethodDesc StringBuilder_append_Charsequence = MethodDesc.create(
                 MethodType.Virtual, Types.StringBuilder, "append",
@@ -2148,6 +2152,17 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         popLexicalEnvironment(mv);
 
         return type;
+    }
+
+    @Override
+    public ValType visit(NativeCallExpression node, ExpressionVisitor mv) {
+        String nativeName = node.getBase().getName();
+        mv.aconst(nativeName);
+        ArgumentListEvaluation(node.getArguments(), mv);
+        mv.lineInfo(node);
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_nativeCall);
+        return ValType.Any;
     }
 
     /**

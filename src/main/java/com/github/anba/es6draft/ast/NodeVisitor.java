@@ -172,6 +172,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(ModuleImport node, V value);
 
+    R visit(NativeCallExpression node, V value);
+
     R visit(NewExpression node, V value);
 
     R visit(NullLiteral node, V value);

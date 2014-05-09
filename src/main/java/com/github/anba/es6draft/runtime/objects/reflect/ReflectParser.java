@@ -1588,6 +1588,17 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     @Override
+    public Object visit(NativeCallExpression node, Void value) {
+        Object callee = node.getBase().accept(this, value);
+        ExoticArray arguments = createList(node.getArguments(), value);
+        OrdinaryObject expression = createExpression(node, Type.CallExpression);
+        addProperty(expression, "callee", callee);
+        addProperty(expression, "arguments", arguments);
+        addProperty(expression, "native", true);
+        return expression;
+    }
+
+    @Override
     public Object visit(NewExpression node, Void value) {
         Object callee = node.getExpression().accept(this, value);
         ExoticArray arguments = createList(node.getArguments(), value);

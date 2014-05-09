@@ -457,7 +457,8 @@ public final class Parser {
     }
 
     public enum Option {
-        Strict, FunctionCode, LocalScope, DirectEval, EvalScript, EnclosedByWithStatement
+        Strict, FunctionCode, LocalScope, DirectEval, EvalScript, EnclosedByWithStatement,
+        NativeCall
     }
 
     public Parser(String sourceName, int sourceLine, Set<CompatibilityOption> compatOptions) {
@@ -5414,6 +5415,11 @@ public final class Parser {
             }
         case TEMPLATE:
             return templateLiteral(false);
+        case MOD:
+            if (isEnabled(Option.NativeCall)) {
+                return nativeCallExpression();
+            }
+            break;
         case LET:
             if (isEnabled(CompatibilityOption.LetExpression)) {
                 return letExpression();
@@ -6224,6 +6230,22 @@ public final class Parser {
         long begin = ts.beginPosition();
         String[] values = ts.readTemplateLiteral(start);
         elements.add(new TemplateCharacters(begin, ts.endPosition(), values[0], values[1]));
+    }
+
+    /**
+     * <strong>[Extension] Native call expression</strong>
+     * 
+     * <pre>
+     * NativeCallExpression :
+     *     % Identifier ( Arguments )
+     * </pre>
+     */
+    private NativeCallExpression nativeCallExpression() {
+        long begin = ts.beginPosition();
+        consume(Token.MOD);
+        Identifier name = identifierReference();
+        List<Expression> args = arguments();
+        return new NativeCallExpression(begin, ts.endPosition(), name, args);
     }
 
     /**
