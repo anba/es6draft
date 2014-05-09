@@ -15,7 +15,7 @@
     <exclude name="AvoidUsingOctalValues" />
     <exclude name="CollapsibleIfStatements" />
   </rule>
-  <rule ref="rulesets/java/clone.xml" />
+  <!-- <rule ref="rulesets/java/clone.xml" /> -->
   <rule ref="rulesets/java/comments.xml">
     <exclude name="CommentSize" />
   </rule>
