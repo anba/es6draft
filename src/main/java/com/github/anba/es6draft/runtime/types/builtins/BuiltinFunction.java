@@ -26,7 +26,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>9.3 Built-in Function Objects
  * </ul>
  */
-public abstract class BuiltinFunction extends OrdinaryObject implements Callable {
+public abstract class BuiltinFunction extends OrdinaryObject implements Callable, Cloneable {
     protected static final String ANONYMOUS = "";
 
     /** [[Realm]] */

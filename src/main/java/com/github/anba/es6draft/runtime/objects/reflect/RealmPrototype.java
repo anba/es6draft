@@ -259,8 +259,12 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param source
-         *            the source string
+         * @param function
+         *            the non-eval function
+         * @param thisArgument
+         *            the this-argument for the non-eval function
+         * @param argumentsList
+         *            the arguments for the non-eval function
          * @return the evaluation result
          */
         @TailCall

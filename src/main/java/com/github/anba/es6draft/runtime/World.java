@@ -89,6 +89,8 @@ public final class World<GLOBAL extends GlobalObject> {
      *            the global object allocator
      * @param options
      *            the compatibility options
+     * @param parserOptions
+     *            the parser options
      * @param compilerOptions
      *            the compiler options
      */

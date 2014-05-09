@@ -18,7 +18,7 @@ final class UncheckedIOException extends RuntimeException {
     }
 
     @Override
-    public synchronized IOException getCause() {
+    public IOException getCause() {
         return (IOException) super.getCause();
     }
 }

@@ -583,7 +583,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param s
+         * @param string
          *            the string
          * @return the string index of the first match
          */
@@ -947,8 +947,6 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      * 
      * @param cx
      *            the execution context
-     * @param r
-     *            the regular expression object
      * @param s
      *            the string
      * @param m
@@ -985,7 +983,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
     /**
      * Returns the capturing groups of the {@link MatchResult} argument.
      * 
-     * @param m
+     * @param matchResult
      *            the match result
      * @return the match groups
      */

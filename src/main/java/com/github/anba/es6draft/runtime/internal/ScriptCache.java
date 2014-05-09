@@ -71,8 +71,6 @@ public final class ScriptCache {
      *            the script loader
      * @param file
      *            the script file path
-     * @param executor
-     *            the executor for parallel compilation
      * @return the compiled script
      * @throws IOException
      *             if there was any I/O error

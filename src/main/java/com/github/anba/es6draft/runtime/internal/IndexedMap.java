@@ -742,7 +742,7 @@ public final class IndexedMap<VALUE> {
 
     /**
      * If {@code s} is an integer indexed property key less than {@code 2}<span><sup>{@code 53}
-     * </sup><span>{@code -1}, its integer value is returned. Otherwise {@code -1} is returned.
+     * </sup></span>{@code -1}, its integer value is returned. Otherwise {@code -1} is returned.
      * 
      * @param propertyKey
      *            the property key
