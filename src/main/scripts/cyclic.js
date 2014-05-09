@@ -5,8 +5,10 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function Cyclic(global) {
+(function Cyclic() {
 "use strict";
+
+const global = %GlobalObject();
 
 const {
   Object, Function, Array, Error, Set, WeakSet,
@@ -82,4 +84,4 @@ Object.defineProperty(Object.assign(Error.prototype, {
   }
 }), "toString", {enumerable: false});
 
-})(this);
+})();

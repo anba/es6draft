@@ -5,8 +5,10 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function IteratorAPI(global) {
+(function IteratorAPI() {
 "use strict";
+
+const global = %GlobalObject();
 
 const {
   Object, Function, Array, String, Symbol, TypeError, Proxy, Reflect
@@ -53,6 +55,8 @@ const StopIteration = Object.freeze(Object.defineProperties({
   [hasInstanceSym]: {writable: false, enumerable: false},
 }));
 
+// TODO: Add intrinsic for `StopIteration`?
+// Export as global object
 Object.defineProperty(global, "StopIteration", {
   value: StopIteration,
   writable: true, enumerable: false, configurable: true
@@ -139,7 +143,8 @@ function MakeIterator() {
   return Iterator;
 }
 
-// export as global constructor
+// TODO: Add intrinsic for `Iterator`?
+// Export as global constructor
 Object.defineProperty(global, "Iterator", {
   value: Iterator,
   writable: true, enumerable: false, configurable: true
@@ -388,4 +393,4 @@ function MakeBuiltinIterator(ctor) {
   delete String.prototype[iteratorSym];
 }
 
-})(this);
+})();

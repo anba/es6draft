@@ -5,8 +5,10 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function TypedArray(global) {
+(function TypedArray() {
 "use strict";
+
+const global = %GlobalObject();
 
 const {
   Object, Function, Math, TypeError,
@@ -56,4 +58,4 @@ for (const type of ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32",
   });
 }
 
-})(this);
+})();

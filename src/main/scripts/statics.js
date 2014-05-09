@@ -5,8 +5,10 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function ArrayStringStatics(global) {
+(function ArrayStringStatics() {
 "use strict";
+
+const global = %GlobalObject();
 
 const {
   Object, Function,
@@ -263,4 +265,4 @@ Object.defineProperties(Object.assign(String, {
 });
 }
 
-})(this);
+})();

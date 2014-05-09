@@ -5,8 +5,10 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function LegacyGenerator(global) {
+(function LegacyGenerator() {
 "use strict";
+
+const global = %GlobalObject();
 
 const {
   Object, Function, Symbol, StopIteration, Reflect
@@ -188,4 +190,4 @@ Object.defineProperties(mixin(LegacyGeneratorPrototype, {
   [toStringTagSym]: {enumerable: false},
 });
 
-})(this);
+})();

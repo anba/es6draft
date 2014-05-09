@@ -5,8 +5,10 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function Stacktrace(global) {
+(function Stacktrace() {
 "use strict";
+
+const global = %GlobalObject();
 
 const {
   Object, Function, Math, Error,
@@ -51,4 +53,4 @@ Object.defineProperty(Error.prototype, "stack", {
   enumerable: false, configurable: true
 });
 
-})(this);
+})();

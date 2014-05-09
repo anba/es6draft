@@ -5,15 +5,17 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function Generator(global) {
+(function Generator() {
 "use strict";
+
+const global = %GlobalObject();
 
 const {
   Object, Symbol, TypeError,
 } = global;
 
 const Object_getPrototypeOf = Object.getPrototypeOf;
-const Generator = Object.getPrototypeOf(function*(){});
+const Generator = Object_getPrototypeOf(function*(){});
 
 Object.defineProperty(Generator, Symbol.hasInstance, {
   value(O) {
@@ -48,4 +50,4 @@ Object.defineProperty(Object.prototype, Symbol.iterator, {
   enumerable: false, configurable: true
 });
 
-})(this);
+})();

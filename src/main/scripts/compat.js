@@ -5,8 +5,10 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function Compatibility(global) {
+(function Compatibility() {
 "use strict";
+
+const global = %GlobalObject();
 
 const {
   Object, Function, RegExp, String, Symbol, TypeError,
@@ -41,13 +43,13 @@ Object.defineProperties(Object.assign(Object.prototype, {
   __defineGetter__(name, getter) {
     if (typeof getter != 'function') throw new TypeError();
     var pk = ToPropertyKey(name);
-    var obj = this != null ? Object(this) : global;
+    var obj = this != null ? Object(this) : %GlobalThis();
     Object_defineProperty(obj, pk, {__proto__: null, get: getter, enumerable: true, configurable: true});
   },
   __defineSetter__(name, setter) {
     if (typeof setter != 'function') throw new TypeError();
     var pk = ToPropertyKey(name);
-    var obj = this != null ? Object(this) : global;
+    var obj = this != null ? Object(this) : %GlobalThis();
     Object_defineProperty(obj, pk, {__proto__: null, set: setter, enumerable: true, configurable: true});
   },
   __lookupGetter__(name) {
@@ -93,4 +95,4 @@ Object.defineProperties(Object.assign(String.prototype, {
   trimRight: {enumerable: false},
 });
 
-})(this);
+})();

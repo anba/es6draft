@@ -5,11 +5,13 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function OldProxyAPI(global) {
+(function OldProxyAPI() {
 "use strict";
 
+const global = %GlobalObject();
+
 const {
-  Object, Function, Array, Proxy, Reflect, TypeError,
+  Object, Function, Array, Proxy, Reflect, Symbol, TypeError,
 } = global;
 
 const {
@@ -165,10 +167,14 @@ Object.defineProperties(Object_assign(Proxy, {
 });
 
 // Enable creating proxies without `new` for tests
-global.Proxy = new Proxy(Proxy, {
+const newProxy = new Proxy(Proxy, {
   apply(target, thisValue, args) {
     return new target(...args);
   }
 });
 
-})(this);
+// FIXME: Cannot replace intrinsic because intrinsics are restricted to ordinary objects...
+// %SetIntrinsic("Proxy", newProxy);
+global.Proxy = newProxy;
+
+})();

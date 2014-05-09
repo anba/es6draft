@@ -5,8 +5,10 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function ToSource(global) {
+(function ToSource() {
 "use strict";
+
+const global = %GlobalObject();
 
 const {
   Object, Function, Array, String, Boolean,
@@ -271,4 +273,4 @@ Object.defineProperty(Object.assign(Intl, {
   }
 }), "toSource", {enumerable: false});
 
-})(this);
+})();

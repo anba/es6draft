@@ -5,8 +5,10 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function RegExpExtensions(global) {
+(function RegExpExtensions() {
 "use strict";
+
+const global = %GlobalObject();
 
 const {
   Object, RegExp
@@ -17,4 +19,4 @@ const {
  */
 Object.defineProperty(RegExp, "$input", Object.getOwnPropertyDescriptor(RegExp, "input"));
 
-})(this);
+})();

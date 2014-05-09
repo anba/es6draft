@@ -5,8 +5,10 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function NumberExtensions(global) {
+(function NumberExtensions() {
 "use strict";
+
+const global = %GlobalObject();
 
 const {
   Object, Number, Math,
@@ -30,4 +32,4 @@ Object.defineProperties(Object.assign(Number, {
   toInteger: {enumerable: false}
 });
 
-})(this);
+})();

@@ -5,8 +5,10 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function StringExtensions(global) {
+(function StringExtensions() {
 "use strict";
+
+const global = %GlobalObject();
 
 const {
   Object, Function, String, RegExp,
@@ -58,4 +60,4 @@ Object.defineProperties(Object.assign(String.prototype, {
   replace: {enumerable: false},
 });
 
-})(this);
+})();

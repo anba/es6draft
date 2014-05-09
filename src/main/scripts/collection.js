@@ -5,8 +5,10 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function Collection(global) {
+(function Collection() {
 "use strict";
+
+const global = %GlobalObject();
 
 const {
   Object, Function, Symbol, TypeError,
@@ -50,7 +52,7 @@ function addBrand(o, sym) {
       if (!isObjectWithBrand(this, isMapSym)) {
         return new Map(iterable);
       }
-      if (iterable !== undefined) {
+      if (iterable !== void 0) {
         iterable = iterable[mozIteratorSym]();
       }
       return super(iterable);
@@ -80,6 +82,7 @@ function addBrand(o, sym) {
     [createSym]: {writable: false, enumerable: false},
   });
 
+  %SetIntrinsic("Map", Map);
   global.Map = Map;
 }
 
@@ -92,7 +95,7 @@ function addBrand(o, sym) {
       if (!isObjectWithBrand(this, isSetSym)) {
         return new Set(iterable);
       }
-      if (iterable !== undefined) {
+      if (iterable !== void 0) {
         iterable = iterable[mozIteratorSym]();
       }
       return super(iterable);
@@ -122,6 +125,7 @@ function addBrand(o, sym) {
     [createSym]: {writable: false, enumerable: false},
   });
 
+  %SetIntrinsic("Set", Set);
   global.Set = Set;
 }
 
@@ -134,7 +138,7 @@ function addBrand(o, sym) {
       if (!isObjectWithBrand(this, isWeakMapSym)) {
         return new WeakMap(iterable);
       }
-      if (iterable !== undefined) {
+      if (iterable !== void 0) {
         iterable = iterable[mozIteratorSym]();
       }
       return super(iterable);
@@ -163,6 +167,7 @@ function addBrand(o, sym) {
     [createSym]: {writable: false, enumerable: false},
   });
 
+  %SetIntrinsic("WeakMap", WeakMap);
   global.WeakMap = WeakMap;
 }
 
@@ -175,7 +180,7 @@ function addBrand(o, sym) {
       if (!isObjectWithBrand(this, isWeakSetSym)) {
         return new WeakSet(iterable);
       }
-      if (iterable !== undefined) {
+      if (iterable !== void 0) {
         iterable = iterable[mozIteratorSym]();
       }
       return super(iterable);
@@ -199,7 +204,8 @@ function addBrand(o, sym) {
     [createSym]: {writable: false, enumerable: false},
   });
 
+  %SetIntrinsic("WeakSet", WeakSet);
   global.WeakSet = WeakSet;
 }
 
-})(this);
+})();

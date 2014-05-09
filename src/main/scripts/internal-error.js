@@ -5,8 +5,10 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function Internal_Error(global) {
+(function Internal_Error() {
 "use strict";
+
+const global = %GlobalObject();
 
 const {
   Object, Function, InternalError, RangeError, Symbol,
@@ -23,4 +25,4 @@ Object.defineProperty(RangeError, Symbol.hasInstance, {
   }, configurable: true
 });
 
-})(this);
+})();
