@@ -25,6 +25,8 @@ import com.github.anba.es6draft.runtime.internal.ScriptCache;
  * Global object class with support for some v8-shell functions
  */
 public class V8ShellGlobalObject extends ShellGlobalObject {
+    private static final String LEGACY_SCRIPT = "v8legacy.js";
+
     public V8ShellGlobalObject(Realm realm, ShellConsole console, Path baseDir, Path script,
             ScriptCache scriptCache) {
         super(realm, console, baseDir, script, scriptCache);
@@ -63,7 +65,7 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
     @Override
     public void initialize() throws IOException, URISyntaxException, ParserException,
             CompilationException {
-        include(getScriptURL("v8legacy.js"));
+        includeNative(getScriptURL(LEGACY_SCRIPT));
     }
 
     /**

@@ -42,6 +42,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
  * Global object class with support for some moz-shell functions
  */
 public class MozShellGlobalObject extends ShellGlobalObject {
+    private static final String LEGACY_SCRIPT = "mozlegacy.js";
     private final long startMilli = System.currentTimeMillis();
     private final long startNano = System.nanoTime();
 
@@ -83,7 +84,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
     @Override
     public void initialize() throws IOException, URISyntaxException, ParserException,
             CompilationException {
-        include(getScriptURL("mozlegacy.js"));
+        includeNative(getScriptURL(LEGACY_SCRIPT));
     }
 
     private Object evaluate(GlobalObject global, String source, String sourceName, int sourceLine)

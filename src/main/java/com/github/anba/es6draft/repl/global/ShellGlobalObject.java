@@ -18,11 +18,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.EnumSet;
 import java.util.Objects;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.Scripts;
 import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -188,6 +190,20 @@ public abstract class ShellGlobalObject extends GlobalObject {
             CompilationException {
         Script script = scriptCache.get(getScriptLoader(), file);
         Scripts.ScriptEvaluation(script, getRealm(), false);
+    }
+
+    protected void includeNative(URL file) throws IOException, URISyntaxException, ParserException,
+            CompilationException {
+        Script script = scriptCache.get(createNativeScriptLoader(), file);
+        Scripts.ScriptEvaluation(script, getRealm(), false);
+    }
+
+    private ScriptLoader createNativeScriptLoader() {
+        ScriptLoader scriptLoader = getScriptLoader();
+        EnumSet<Parser.Option> parserOptions = EnumSet.copyOf(scriptLoader.getParserOptions());
+        parserOptions.add(Parser.Option.NativeCall);
+        return new ScriptLoader(scriptLoader.getExecutor(), scriptLoader.getOptions(),
+                parserOptions, scriptLoader.getCompilerOptions());
     }
 
     protected static final ScriptException newError(ExecutionContext cx, String message) {
