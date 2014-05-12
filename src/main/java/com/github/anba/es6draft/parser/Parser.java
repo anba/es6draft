@@ -1242,7 +1242,7 @@ public final class Parser {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);
                 }
 
-                String header = String.format("function anonymous (%s) ", formals);
+                String header = String.format("function anonymous(%s) ", formals);
                 String body = String.format("\n%s\n", bodyText);
 
                 FunctionContext scope = context.funContext;
@@ -1309,7 +1309,7 @@ public final class Parser {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);
                 }
 
-                String header = String.format("function* anonymous (%s) ", formals);
+                String header = String.format("function* anonymous(%s) ", formals);
                 String body = String.format("\n%s\n", bodyText);
 
                 FunctionContext scope = context.funContext;
