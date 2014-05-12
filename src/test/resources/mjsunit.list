@@ -5,17 +5,8 @@
 # <https://github.com/anba/es6draft>
 #
 
-# rev23 update pending
-harmony/string-contains.js
-
-# Object.prototype.__proto__ not yet updated to return undefined
-proto-accessor.js
-
 # spec "9.1.3.1 ToNumber Applied to the String Type" not updated for new number literals
 harmony/numeric-literals.js
-
-# current spec issue: function declaration binding broken
-regress/regress-540.js
 
 # TypedArray implementation vs. spec issues:
 # - offsets/lengths with fractional part is a RangeError
@@ -50,9 +41,6 @@ harmony/module-resolution.js
 
 # RegExp: invalid test, match/replace call Put("lastIndex", 0) if global
 regress/regress-2438.js
-
-# invalid test, Array.prototype.sort throws if array is frozen
-regress/regress-2419.js
 
 # spec issue/invalid test, GetViewValue() throws RangeError instead of TypeError for invalid indices
 harmony/dataview-accessors.js
@@ -139,9 +127,6 @@ regress/regress-95920.js
 # __defineGetter__ does not throw in V8
 regress/regress-1240.js
 
-# different function source representation
-regress/regress-2470.js
-
 # truncate vs. rounding in milliseconds field of iso-date
 regress/regress-944.js
 
@@ -211,7 +196,6 @@ regress/regress-1217.js
 # built-in function poisoned
 function-arguments-null.js
 fuzz-accessors.js
-regress/regress-1548.js
 
 # built-in functions not exposed in caller
 function-caller.js
@@ -253,9 +237,6 @@ regexp-string-methods.js
 # various strict-mode restrictions which only apply to ES5
 strict-mode.js
 
-# re-declaration of catch-variable
-throw-and-catch-function.js
-
 # function declaration not in block
 regress/regress-220.js
 
@@ -284,9 +265,6 @@ regress/regress-1201933.js
 regress/regress-1207276.js
 regress/regress-799761.js
 regress/regress-handle-illegal-redeclaration.js
-
-# Static Semantics: Early errors for return statement not implemented
-delay-syntax-error.js
 
 # Static Semantics: Early errors invalid LHS
 invalid-lhs.js

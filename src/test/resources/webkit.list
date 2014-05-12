@@ -5,14 +5,13 @@
 # <https://github.com/anba/es6draft>
 #
 
-# Symbol.iterator for arguments object (not yet in draft)
+# for-of over undefined/null throws in JSC
 js/script-tests/arguments-iterator.js
-js/script-tests/for-of-arguments-continue-hang.js
 
 # array destructuring uses Symbol.iterator
 js/script-tests/destructuring-assignment.js
 
-# 'values' in [] returns false in WebKit?
+# `'values' in []` returns false in JSC
 js/script-tests/array-iterators.js
 
 # computed property names are defined after literal property names in WebKit?
@@ -94,15 +93,9 @@ js/script-tests/dfg-redundant-load-of-captured-variable-proven-constant.js
 js/script-tests/dfg-resolve-global-specific-dictionary.js
 js/script-tests/function-toString-semicolon-insertion.js
 
-# String.prototype.trim() removes \u200B in V8
-js/script-tests/string-trim.js
-
 # error objects have non-standard 'line' and 'sourceURL' properties in JSC
 js/script-tests/exception-properties.js
 js/script-tests/exception-linenums.js
-
-# cause?
-js/script-tests/stack-overflow-arrity-catch.js
 
 # property key enumeration order
 js/script-tests/array-functions-non-arrays.js
@@ -115,6 +108,9 @@ js/script-tests/parse-backslash-before-newline.js
 
 # RegExp.input has a setter in JSC
 js/script-tests/static-put-in-prototype-chain.js
+
+# Requires proper numberOfDFGCompiles() support
+js/script-tests/dfg-min-max.js
 
 
 ###############################################################
@@ -151,9 +147,6 @@ js/script-tests/toString-prefix-postfix-preserve-parens.js
 js/script-tests/function-toString-parentheses.js
 js/script-tests/modify-non-references.js
 js/script-tests/dfg-activation-register-overwritten-in-throw.js
-
-# re-declaration of catch-variable
-js/script-tests/vardecl-blocks-init.js
 
 # setter in object literal requires exactly one argument
 js/script-tests/for-in-cached.js
@@ -194,12 +187,12 @@ js/script-tests/comparison-operators-less.js
 js/script-tests/comparison-operators-greater.js
 js/script-tests/dfg-double-vote-fuzz.js
 js/script-tests/dfg-int-overflow-in-loop.js
-js/script-tests/dfg-min-max.js
+js/script-tests/function-apply-aliased.js
 js/script-tests/sort-with-side-effecting-comparisons.js
 js/script-tests/typedarray-zero-size.js
 
 # StackOverflowError during compilation
 js/script-tests/function-apply-many-args.js
 
-# OutOfMemory
-js/script-tests/function-apply-aliased.js
+# Intermittent failures
+js/script-tests/stack-overflow-arrity-catch.js

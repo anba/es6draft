@@ -19,13 +19,6 @@ feature/Symbol/Inherited.js
 # invalid test, symbol-valued properties are not non-enumerable by default
 feature/Symbol/Object.js
 
-# invalid test, Symbol.prototype.toString() throws when thisArg is primitive symbol
-feature/Symbol/ObjectModel.js
-
-# changed default constructor and old functions as base class
-feature/Classes/FieldLookup.js
-feature/Classes/InheritanceFromNonclass.js
-
 # Object.mixin() removed in rev22
 feature/ObjectMixin.js
 

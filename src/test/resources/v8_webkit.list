@@ -15,10 +15,6 @@ fast/regex/lastIndex.js
 fast/js/JSON-parse-reviver.js
 fast/js/toString-overrides.js
 
-# Promise.prototype.{catch,then} throw a TypeError if handlers are not undefined/null/callable
-fast/js/Promise-catch.js
-fast/js/Promise-then.js
-
 # invalid test, `JSON.stringify(Object.assign(new Boolean(true), {valueOf(){ return 2 }}))` is "true"
 run-json-stringify.js
 
@@ -107,9 +103,6 @@ string-trim.js
 # error objects have non-standard 'line' and 'sourceURL' properties in JSC
 fast/js/exception-properties.js
 
-# cause?
-fast/js/stack-overflow-arrity-catch.js
-
 # property key enumeration order
 fast/js/array-functions-non-arrays.js
 
@@ -145,16 +138,9 @@ fast/js/Object-getOwnPropertyNames.js
 toString-for-var-decl.js
 fast/js/parser-syntax-check.js
 
-# for-in with invalid assignment
-fast/js/kde/exception_propagation.js
-
 # Static Semantics: Early errors invalid LHS
-toString-prefix-postfix-preserve-parens.js
 fast/js/function-toString-parentheses.js
 fast/js/modify-non-references.js
-
-# re-declaration of catch-variable
-vardecl-blocks-init.js
 
 # setter in object literal requires exactly one argument
 for-in-cached.js
@@ -180,14 +166,13 @@ fast/js/arguments.js
 # Compilation or runtime issues       #
 #######################################
 
+# Too many local variables
+fast/js/excessive-comma-usage.js
+
 # Different maximal stack depth
 function-call-register-allocation.js
 stack-overflow-catch.js
 
-# Method code too large
-# too many variables
-fast/js/excessive-comma-usage.js
- 
 # StackOverflowError in java.util.regex.Pattern
 fast/js/regexp-stack-overflow.js
 
@@ -198,8 +183,11 @@ comparison-operators-less.js
 comparison-operators-greater.js
 dfg-double-vote-fuzz.js
 dfg-int-overflow-in-loop.js
+function-apply-aliased.js
 sort-with-side-effecting-comparisons.js
 
 # OutOfMemory
-function-apply-aliased.js
 string-replacement-outofmemory.js
+
+# Intermittent failures
+fast/js/stack-overflow-arrity-catch.js

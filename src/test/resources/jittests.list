@@ -60,7 +60,6 @@ tests/collections/Array-of-ordering.js
 tests/basic/testBug720695.js
 
 # WithStatement vs. block scope
-tests/basic/testBug753158.js
 tests/basic/testDestructuringVarInsideWith.js
 
 # __noSuchMethod__ not supported
@@ -75,9 +74,6 @@ tests/basic/testArrayComp1.js
 tests/basic/testArrayComp2.js
 tests/basic/testBrandedVsGeneric.js
 tests/basic/testCustomIterator.js
-
-# emulated ArrayIterator.prototype.next does not work cross-global
-tests/for-of/next-3.js
 
 # emulated Map/Set do not work cross-global
 tests/collections/Map-iterator-proxies-2.js
@@ -236,9 +232,6 @@ tests/basic/bug699166.js
 # Arrow functions tests don't match draft  #
 ############################################
 
-# invalid tests wrt arrow function with rest argument length
-tests/arrow-functions/length.js
-
 # arguments allowed even with rest-parameters
 tests/arguments/rest-disallow-arguments.js
 tests/arrow-functions/arguments-4.js
@@ -271,9 +264,6 @@ tests/basic/bug750307.js
 # - Emulated Map/Set need to use delegation to pass surface test
 tests/collections/Map-surfaces-1.js
 tests/collections/Set-surfaces-1.js
-
-# ES6 [[Construct]] restricted to return Objects
-tests/proxy/testDirectProxyConstruct2.js
 
 # ES6-change: <this> within generator is always a generator object
 tests/auto-regress/bug678090.js
@@ -336,9 +326,6 @@ tests/basic/bug778268.js
 # ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
 tests/arguments/defaults-bound-to-function.js
 tests/arguments/defaults-with-rest.js
-tests/arguments/rest-alias-function.js
-tests/auto-regress/bug765055.js
-tests/auto-regress/bug785305.js
 
 # ES6-change: block-scoped function declaration
 tests/basic/bug-826124.js

@@ -147,12 +147,6 @@ js1_7/extensions/regress-381301.js
 js1_8/extensions/regress-385729.js
 js1_8_5/regress/regress-584355.js
 
-# JSON.stringify() - for-in enumeration order
-ecma_5/JSON/stringify.js
-
-# Object.keys() - for-in enumeration order
-ecma_5/Object/15.2.3.14-01.js
-
 # SpiderMonkey __proto__ not own property on Object.prototype
 ecma_5/extensions/getOwnPropertyNames-__proto__.js
 
@@ -268,9 +262,6 @@ js1_7/iterable/regress-568056.js
 ecma_5/extensions/proxy-array-target-length-definition.js
 js1_8_5/extensions/mutable-proto-special-form.js
 
-# legacy generator support requires adding non-standard properties to GeneratorPrototype
-ecma_6/Generators/runtime.js
-
 # Various issues, see modified reflect-parse.js file
 js1_8_5/extensions/reflect-parse.js
 
@@ -357,12 +348,7 @@ js1_7/block/regress-349507.js
 ecma_5/misc/future-reserved-words.js
 
 # ES6-change: 'eval'/'arguments' not allowed in binding pattern
-ecma_5/strict/13.1.js
 js1_8_1/strict/12.2.1.js
-
-# ES6-change: var-redeclaration in try-catch verboten
-ecma_3/ExecutionContexts/regress-448595-01.js
-js1_5/Regress/regress-146596.js
 
 # lexical declared variables must not be redeclared
 js1_8_1/regress/regress-452498-054.js
@@ -375,13 +361,6 @@ ecma_5/extensions/strict-function-statements.js
 ecma_3/Function/scope-001.js
 js1_8_5/regress/regress-554955-5.js
 js1_8_5/regress/regress-602621.js
-
-# ES6: block scope
-js1_7/block/regress-343765.js
-
-# ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
-js1_7/extensions/regress-591450.js
-js1_7/regress/regress-410649.js
 
 # ES6: duplicate formal-parameter + lexical declaration
 js1_8_1/extensions/regress-353214-02.js
