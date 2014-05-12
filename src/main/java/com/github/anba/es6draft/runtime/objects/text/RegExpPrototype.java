@@ -462,7 +462,11 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 }
             }
             /* step 17 */
-            return accumulatedResult.append(s, nextSrcPosition, s.length()).toString();
+            // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=2849
+            if (nextSrcPosition < s.length()) {
+                accumulatedResult.append(s, nextSrcPosition, s.length());
+            }
+            return accumulatedResult.toString();
         }
 
         private static Object[] GetReplacerArguments(MatchResult matchResult, String string,
