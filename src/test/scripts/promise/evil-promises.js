@@ -17,4 +17,53 @@ describe("Evil promises should not be able to break invariants", function () {
         })
         .then(done, done);
     });
+
+    specify("If resolved to a thenable which calls back with different values each time", function (done) {
+        var thenable = {
+            i: 0,
+            then: function (f) {
+                f(this.i++);
+            }
+        };
+        var p = Promise.resolve(thenable);
+
+        p.then(function (value) {
+            assert.strictEqual(value, 0);
+
+            p.then(function (value) {
+                assert.strictEqual(value, 0);
+
+                p.then(function (value) {
+                    assert.strictEqual(value, 0);
+                    done();
+                });
+            });
+        });
+    });
+});
+
+// Kudos to @Octane at https://github.com/getify/native-promise-only/issues/5 for this, and @getify for pinging me.
+describe("Thenables should not be able to run code during assimilation", function () {
+    specify("resolving to a thenable", function () {
+        var thenCalled = false;
+        var thenable = {
+            then: function () {
+                thenCalled = true;
+            }
+        };
+
+        Promise.resolve(thenable);
+        assert.strictEqual(thenCalled, false);
+    });
+
+    specify("resolving to an evil promise", function () {
+        var thenCalled = false;
+        var evilPromise = Promise.resolve();
+        evilPromise.then = function () {
+            thenCalled = true;
+        };
+
+        Promise.resolve(evilPromise);
+        assert.strictEqual(thenCalled, false);
+    });
 });

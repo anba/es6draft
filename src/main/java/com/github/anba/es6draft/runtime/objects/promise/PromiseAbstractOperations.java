@@ -204,15 +204,10 @@ public final class PromiseAbstractOperations {
                 return UNDEFINED;
             }
             /* step 12 */
-            ResolvingFunctions resolvingFunctions = CreateResolvingFunctions(calleeContext, promise);
-            /* steps 13-14 */
-            try {
-                ((Callable) then).call(calleeContext, resolution, resolvingFunctions.getResolve(),
-                        resolvingFunctions.getReject());
-            } catch (ScriptException e) {
-                return resolvingFunctions.getReject().call(calleeContext, UNDEFINED, e.getValue());
-            }
-            /* step 15 */
+            Realm realm = calleeContext.getRealm();
+            realm.enqueuePromiseTask(new ResolvePromiseViaThenableTask(realm, promise, Type
+                    .objectValue(resolution), (Callable) then));
+            /* step 13 */
             return UNDEFINED;
         }
     }
@@ -448,6 +443,42 @@ public final class PromiseAbstractOperations {
             }
             /* steps 9-10 */
             promiseCapability.getResolve().call(cx, UNDEFINED, handlerResult);
+        }
+    }
+
+    /**
+     * <h2>25.4.2 Promise Tasks</h2>
+     * <p>
+     * 25.4.2.? ResolvePromiseViaThenableTask ( promiseToResolve, thenable, then )
+     */
+    public static final class ResolvePromiseViaThenableTask implements Task {
+        private final Realm realm;
+        private final PromiseObject promise;
+        private final ScriptObject thenable;
+        private final Callable then;
+
+        public ResolvePromiseViaThenableTask(Realm realm, PromiseObject promise,
+                ScriptObject thenable, Callable then) {
+            this.realm = realm;
+            this.promise = promise;
+            this.thenable = thenable;
+            this.then = then;
+        }
+
+        @Override
+        public void execute() {
+            ExecutionContext cx = realm.defaultContext();
+            /* step 1 */
+            ResolvingFunctions resolvingFunctions = CreateResolvingFunctions(cx, promise);
+            /* steps 2-3 */
+            try {
+                /* step 2 */
+                then.call(cx, thenable, resolvingFunctions.getResolve(),
+                        resolvingFunctions.getReject());
+            } catch (ScriptException e) {
+                /* step 3 */
+                resolvingFunctions.getReject().call(cx, UNDEFINED, e.getValue());
+            }
         }
     }
 
