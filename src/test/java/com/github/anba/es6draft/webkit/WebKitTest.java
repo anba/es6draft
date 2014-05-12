@@ -153,7 +153,8 @@ public class WebKitTest {
         }
 
         @Properties.Function(name = "numberOfDFGCompiles", arity = 0)
-        public void numberOfDFGCompiles() {
+        public double numberOfDFGCompiles() {
+            return Double.NaN;
         }
     }
 

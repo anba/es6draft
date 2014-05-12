@@ -467,13 +467,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             /* steps 5 */
             TypedArrayObject obj = new TypedArrayObject(cx.getRealm());
             obj.setPrototype(proto);
-            /* steps 6-7 (implicit) */
-            // obj.setBuffer(null);
-            // obj.setElementType(null);
-            /* steps 8-10 */
-            obj.setByteLength(0);
-            obj.setByteOffset(0);
-            obj.setArrayLength(0);
+            /* steps 6-10 (implicit) */
             /* step 11 */
             return obj;
         }

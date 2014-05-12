@@ -12,6 +12,6 @@ package com.github.anba.es6draft.compiler.analyzer;
 @SuppressWarnings("serial")
 public final class CodeSizeException extends RuntimeException {
     public CodeSizeException(int size) {
-        super("code-size exceeds maximum size: " + size);
+        super("code exceeds maximum size: " + size);
     }
 }

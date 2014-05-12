@@ -457,8 +457,40 @@ public final class Parser {
     }
 
     public enum Option {
-        Strict, FunctionCode, LocalScope, DirectEval, EvalScript, EnclosedByWithStatement,
-        NativeCall
+        /**
+         * Strictness for source code
+         */
+        Strict,
+
+        /**
+         * Source code is not global code
+         */
+        FunctionCode,
+
+        /**
+         * Source code is not in global scope
+         */
+        LocalScope,
+
+        /**
+         * Source code is direct eval code
+         */
+        DirectEval,
+
+        /**
+         * Source code is eval code
+         */
+        EvalScript,
+
+        /**
+         * Source code is nested in with-statement context
+         */
+        EnclosedByWithStatement,
+
+        /**
+         * Allow native call syntax
+         */
+        NativeCall,
     }
 
     public Parser(String sourceName, int sourceLine, Set<CompatibilityOption> compatOptions) {
@@ -485,6 +517,12 @@ public final class Parser {
         context = new ParseContext();
         context.strictMode = this.parserOptions.contains(Option.Strict) ? StrictMode.Strict
                 : StrictMode.NonStrict;
+
+        // eval-script option must be set if one of the following options is used
+        assert !(options.contains(Option.FunctionCode) || options.contains(Option.LocalScope)
+                || options.contains(Option.DirectEval) || options
+                    .contains(Option.EnclosedByWithStatement))
+                || options.contains(Option.EvalScript) : "Illegal option: " + options;
     }
 
     String getSourceName() {
