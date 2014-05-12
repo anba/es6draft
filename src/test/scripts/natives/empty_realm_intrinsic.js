@@ -5,34 +5,23 @@
  * <https://github.com/anba/es6draft>
  */
 
-function assertEq(actual, expected, message = "Not same") {
-  if (actual !== expected) {
-    throw new Error(`Assertion failed: got ${actual}, expected ${expected}`);
+if (typeof assertEq === 'undefined') {
+  assertEq = function assertEq(actual, expected, message = "Not same") {
+    if (actual !== expected) {
+      throw new Error(`Assertion failed: got ${actual}, expected ${expected}`);
+    }
   }
 }
-
-assertEq(%Intrinsic("Object"), Object);
-
-assertEq(%GlobalThis(), this);
 
 // Create a new, blank realm
 
-class R extends Reflect.Realm {
-  get initGlobal() {}
-}
+let r = new class extends Reflect.Realm {
+  initGlobal() {}
+};
+let s = Object.defineProperties(Object.create(null), r.stdlib);
 
-s = Object.create(null);
-
-r = new R({}, {
-  defineProperty(t, pk, d) {
-    // print(`def=${Object(pk).toString()}`);
-    Reflect.defineProperty(s, pk, d);
-    if (d.configurable) {
-      return true;
-    }
-    return Reflect.defineProperty(t, pk, d);
-  }
-});
+assertEq(Object.getOwnPropertyNames(r.global).length, 0);
+assertEq(Object.getOwnPropertySymbols(r.global).length, 0);
 
 
 // 18.3  Constructor Properties of the Global Object
@@ -74,7 +63,6 @@ assertEq(s.JSON, %IntrinsicFrom("JSON", r));
 assertEq(s.Math, %IntrinsicFrom("Math", r));
 // TODO: See fixme in proxy.js
 // assertEq(s.Proxy, %IntrinsicFrom("Proxy", r));
-assertEq(s.WeakSet, %IntrinsicFrom("WeakSet", r));
 assertEq(s.Reflect, %IntrinsicFrom("Reflect", r));
 assertEq(s.System, %IntrinsicFrom("System", r));
 
