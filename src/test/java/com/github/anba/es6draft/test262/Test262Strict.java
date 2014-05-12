@@ -39,13 +39,13 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.util.Functional.BiFunction;
-import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
-import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.Resources;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
+import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
+import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
 
 /**
  * The standard test262 test suite (strict)
