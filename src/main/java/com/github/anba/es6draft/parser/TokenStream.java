@@ -108,6 +108,17 @@ public final class TokenStream {
     }
 
     /**
+     * Returns {@code true} if the compatibility option is enabled.
+     * 
+     * @param option
+     *            the compatibility option
+     * @return {@code true} if the compatibility option is enabled.
+     */
+    private boolean isEnabled(CompatibilityOption option) {
+        return parser.isEnabled(option);
+    }
+
+    /**
      * Updates line state information for line breaks within literals, does <strong>not</strong> set
      * the {@link #hasLineTerminator} flag.
      */
@@ -838,7 +849,7 @@ public final class TokenStream {
             } else if (match('=')) {
                 return Token.LE;
             } else if (input.peek(0) == '!' && input.peek(1) == '-' && input.peek(2) == '-'
-                    && parser.isEnabled(CompatibilityOption.HTMLComments)) {
+                    && isEnabled(CompatibilityOption.HTMLComments)) {
                 // html start-comment
                 mustMatch('!');
                 mustMatch('-');
@@ -899,7 +910,7 @@ public final class TokenStream {
         case '-':
             if (match('-')) {
                 if (input.peek(0) == '>' && hasLineTerminator
-                        && parser.isEnabled(CompatibilityOption.HTMLComments)) {
+                        && isEnabled(CompatibilityOption.HTMLComments)) {
                     // html end-comment at line start
                     mustMatch('>');
                     readSingleLineComment();
@@ -1643,7 +1654,7 @@ public final class TokenStream {
                 break;
             case '0':
                 if (isDecimalDigit(input.peek(0))) {
-                    if (!parser.isEnabled(CompatibilityOption.OctalEscapeSequence)) {
+                    if (!isEnabled(CompatibilityOption.OctalEscapeSequence)) {
                         throw error(Messages.Key.InvalidNULLEscape);
                     }
                     c = readOctalEscape(c);
@@ -1658,7 +1669,7 @@ public final class TokenStream {
             case '5':
             case '6':
             case '7':
-                if (!parser.isEnabled(CompatibilityOption.OctalEscapeSequence)) {
+                if (!isEnabled(CompatibilityOption.OctalEscapeSequence)) {
                     throw error(Messages.Key.StrictModeOctalEscapeSequence);
                 }
                 c = readOctalEscape(c);
@@ -1666,7 +1677,7 @@ public final class TokenStream {
             case '8':
             case '9':
                 // FIXME: spec bug - undefined behaviour for \8 and \9
-                if (!parser.isEnabled(CompatibilityOption.OctalEscapeSequence)) {
+                if (!isEnabled(CompatibilityOption.OctalEscapeSequence)) {
                     throw error(Messages.Key.StrictModeOctalEscapeSequence);
                 }
                 // fall-through
@@ -1703,23 +1714,27 @@ public final class TokenStream {
      * @return the octal escape value
      */
     private int readOctalEscape(int c) {
+        assert '0' <= c && c <= '7';
         parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalEscapeSequence);
         int d = (c - '0');
         c = input.getChar();
-        if (c < '0' || c > '7') {
-            // FIXME: spec bug? behaviour for non-octal decimal digits?
-            input.ungetChar(c);
-        } else {
+        if (isOctalDigit(c)) {
             d = d * 8 + (c - '0');
             if (d <= 037) {
                 c = input.getChar();
-                if (c < '0' || c > '7') {
-                    // FIXME: spec bug? behaviour for non-octal decimal digits?
-                    input.ungetChar(c);
-                } else {
+                if (isOctalDigit(c)) {
                     d = d * 8 + (c - '0');
+                } else {
+                    input.ungetChar(c);
                 }
             }
+        } else {
+            input.ungetChar(c);
+        }
+        if (c == '8' || c == '9') {
+            // FIXME: spec bug? behaviour for non-octal decimal digits?
+            // "[0-7] [8-9]" and "[0-3] [0-7] [8-9]" errors per spec (lookahead restriction B.1.2),
+            // web compliance requires to ignore trailing [8-9].
         }
         return d;
     }
@@ -1749,7 +1764,7 @@ public final class TokenStream {
             } else if (d == 'o' || d == 'O') {
                 number = readOctalIntegerLiteral();
             } else if (isDecimalDigit(d)
-                    && parser.isEnabled(CompatibilityOption.LegacyOctalIntegerLiteral)) {
+                    && isEnabled(CompatibilityOption.LegacyOctalIntegerLiteral)) {
                 input.ungetChar(d);
                 number = readLegacyOctalIntegerLiteral();
             } else {
@@ -1879,9 +1894,7 @@ public final class TokenStream {
             throw error(Messages.Key.InvalidOctalIntegerLiteral);
         }
         input.unget(c);
-        if (buffer.length == 0) {
-            throw error(Messages.Key.InvalidOctalIntegerLiteral);
-        }
+        assert buffer.length != 0;
         return parseOctal(buffer.cbuf, buffer.length);
     }
 

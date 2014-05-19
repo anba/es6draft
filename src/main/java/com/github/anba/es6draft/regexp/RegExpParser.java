@@ -292,17 +292,18 @@ public final class RegExpParser {
     }
 
     private int readOctalEscapeSequence() {
-        // compliant to Spidermonkey/JSC; V8 only allows three characters in octal escape sequence,
-        // that means /^\0000$/.test("\x000") === true in V8,
-        // whereas /^\0000$/.test("\x00") === true in Spidermonkey/JSC
         int num = get() - '0';
-        while (num <= 037) {
-            char d = peek(0);
-            if (!(d >= '0' && d <= '7')) {
-                break;
-            }
+        char d = peek(0);
+        if (d >= '0' && d <= '7') {
             num = num * 8 + (get() - '0');
+            if (num <= 037) {
+                d = peek(0);
+                if (d >= '0' && d <= '7') {
+                    num = num * 8 + (get() - '0');
+                }
+            }
         }
+        assert 0 <= num && num <= 0377;
         return num;
     }
 
