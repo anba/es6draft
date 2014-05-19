@@ -50,7 +50,7 @@ const Transformers = (() => {
   function toOctalEscape(range) {
     let result = "";
     for (let cp of range) {
-      result += `\\0${toStr(cp, 8, 3)}`;
+      result += `\\${toStr(cp, 8, 3)}`;
     }
     return result;
   }
