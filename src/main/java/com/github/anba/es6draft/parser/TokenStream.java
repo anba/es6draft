@@ -1886,7 +1886,10 @@ public final class TokenStream {
         }
         if (c == '8' || c == '9') {
             // invalid octal integer literal -> treat as decimal literal, no strict-mode error
-            // FIXME: spec bug? undefined behaviour - SM reports a strict-mode error in this case
+            // FIXME: spec bug? undefined behaviour - SM reports an error in this case
+            if (isEnabled(CompatibilityOption.StrictLegacyOctalIntegerLiteral)) {
+                throw error(Messages.Key.InvalidOctalIntegerLiteral);
+            }
             return readDecimalLiteral(c, false);
         }
         parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalIntegerLiteral);

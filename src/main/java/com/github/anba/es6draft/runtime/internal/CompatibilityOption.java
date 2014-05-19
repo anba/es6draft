@@ -129,6 +129,11 @@ public enum CompatibilityOption {
     ExtendedPrecision,
 
     /**
+     * Moz-Extension: 8 and 9 in legacy octal integer literal are reported as errors
+     */
+    StrictLegacyOctalIntegerLiteral,
+
+    /**
      * Extension: Async Function Definitions
      */
     AsyncFunction;
@@ -157,6 +162,6 @@ public enum CompatibilityOption {
      * @return the options set for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return EnumSet.range(LegacyOctalIntegerLiteral, ExtendedPrecision);
+        return EnumSet.range(LegacyOctalIntegerLiteral, StrictLegacyOctalIntegerLiteral);
     }
 }
