@@ -21,12 +21,13 @@ const {
   create: createSym,
 } = Symbol;
 
-// pseudo-symbol in SpiderMonkey
+// Pseudo-symbol in SpiderMonkey
 const mozIteratorSym = "@@iterator";
 
-// create overrides for Map/Set/WeakMap/WeakSet
-// - to enable construction without `new`
-// - to enable initialisation with `mozIteratorSym`
+// Create overrides for Map/Set/WeakMap/WeakSet:
+// - To enable construction without `new`
+// - To enable initialisation with `mozIteratorSym`
+// - Map, Set and WeakSet can be patched by sub-classing, WeakMap requires delegation to pass all tests
 
 function isObjectWithBrand(o, sym) {
   if (typeof o !== 'object' || o === null) {
@@ -133,7 +134,7 @@ function addBrand(o, sym) {
   const BuiltinWeakMap = global.WeakMap;
   const isWeakMapSym = Symbol("isWeakMap");
 
-  class WeakMap extends BuiltinWeakMap {
+  class WeakMap {
     constructor(iterable) {
       if (!isObjectWithBrand(this, isWeakMapSym)) {
         return new WeakMap(iterable);
@@ -141,26 +142,50 @@ function addBrand(o, sym) {
       if (iterable !== void 0) {
         iterable = iterable[mozIteratorSym]();
       }
-      return super(iterable);
+      return BuiltinWeakMap.call(this, iterable);
+    }
+
+    clear() {
+      return BuiltinWeakMap.prototype.clear.call(this);
+    }
+
+    delete(key) {
+      return BuiltinWeakMap.prototype.delete.call(this, key);
     }
 
     get(key, defaultValue) {
-      return this.has(key) ? super(key) : defaultValue;
+      if (BuiltinWeakMap.prototype.has.call(this, key)) {
+        return BuiltinWeakMap.prototype.get.call(this, key);
+      }
+      return defaultValue;
     }
 
-    // overridden to change return value to `undefined`
+    has(key) {
+      return BuiltinWeakMap.prototype.has.call(this, key);
+    }
+
     set(key, value) {
-      super(key, value);
+      // No `return` here because tests require `undefined` as return value.
+      BuiltinWeakMap.prototype.set.call(this, key, value);
+    }
+
+    get [Symbol.toStringTag]() {
+      return "WeakMap";
     }
 
     static [createSym]() {
-      return addBrand(super(), isWeakMapSym);
+      let wm = BuiltinWeakMap[createSym].call(this);
+      return addBrand(wm, isWeakMapSym);
     }
   }
 
   Object.defineProperties(WeakMap.prototype, {
+    clear: {enumerable: false},
+    delete: {enumerable: false},
     get: {enumerable: false},
+    has: {enumerable: false},
     set: {enumerable: false},
+    [Symbol.toStringTag]: {enumerable: false},
   });
 
   Object.defineProperties(WeakMap, {
