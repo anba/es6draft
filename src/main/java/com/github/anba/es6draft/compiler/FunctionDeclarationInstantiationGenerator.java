@@ -366,9 +366,6 @@ final class FunctionDeclarationInstantiationGenerator extends
                 if (lexicalNames.contains(fname)) {
                     continue;
                 }
-                if (!simpleParameterList && parameterNamesSet.contains(fname)) {
-                    continue;
-                }
                 // TODO: Pending update (bug 2873)
                 // TODO: spec clear enough to omit function declarations?
                 // TODO: may change when function binding is properly specified!
