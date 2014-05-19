@@ -201,6 +201,7 @@ public class MozillaJitTest {
                         test.setEnabled(false);
                         break;
                     case "allow-oom":
+                    case "allow-overrecursed":
                     case "valgrind":
                     case "tz-pacific":
                     case "mjitalways":
