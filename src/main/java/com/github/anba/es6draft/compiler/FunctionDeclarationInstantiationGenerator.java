@@ -223,7 +223,6 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
         /* step 17 */
         else if (parameterNamesSet.contains("arguments")) {
-            // FIXME: spec bug - `(function(arguments){})()` broken (Bug 2642)
             needsSpecialArgumentsBinding = false;
             argumentsObjectNeeded = false;
         }
@@ -285,7 +284,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                 initializeBinding(envRec, "arguments", argumentsValue, mv);
                 instantiatedVarNames.add("arguments");
             }
-            // FIXME: spec bug - "arguments" as function not handled
+            // FIXME: spec bug - "arguments" as function not handled (bug 2774)
             else if (!needsParameterEnvironment) {
                 assert argumentsValue == undef;
                 initializeBinding(envRec, "arguments", argumentsValue, mv);
@@ -326,8 +325,6 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
         /* step 28 */
         for (String varName : varNames) {
-            // FIXME: spec bug - "arguments" not handled (Bug 2644)
-            // FIXME: spec bug - duplicate varNames (Bug 2645)
             if (!instantiatedVarNames.contains(varName)) {
                 instantiatedVarNames.add(varName);
                 createMutableBinding(localEnvRec, varName, false, mv);
@@ -344,6 +341,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                 break BLOCK;
             }
 
+            // TODO: Pending update (bug 2873)
             // parameters, var-names and implicit "arguments"
             HashSet<String> envBindings = new HashSet<>();
             if (needsParameterEnvironment) {
@@ -371,6 +369,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                 if (!simpleParameterList && parameterNamesSet.contains(fname)) {
                     continue;
                 }
+                // TODO: Pending update (bug 2873)
                 // TODO: spec clear enough to omit function declarations?
                 // TODO: may change when function binding is properly specified!
                 // TODO: add test case!
@@ -399,7 +398,6 @@ final class FunctionDeclarationInstantiationGenerator extends
                 }
             }
         }
-        // FIXME: spec bug - missing function bindings (Bug 2643)
         /* step 31 */
         for (Declaration f : functionsToInitialize) {
             // String fn = BoundName(f);

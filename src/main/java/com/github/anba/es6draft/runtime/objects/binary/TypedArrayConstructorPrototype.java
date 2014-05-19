@@ -544,7 +544,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             TypedArrayObject target, ScriptObject items, Callable mapfn, Object thisArg) {
         /* step 1 (omitted) */
         /* step 2 (not applicable) */
-        // FIXME: spec bug - %TypedArray% is not a constructor
+        // FIXME: spec bug - %TypedArray% is not a constructor (bug 2782, 2783)
         assert constructor != null ^ target != null;
         /* step 3 */
         assert target == null || (target.getElementType() != null && target.getBuffer() == null);
@@ -577,7 +577,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
                 targetObj = constructor.construct(cx, len);
             } else {
                 /* step 10.i */
-                // FIXME: spec bug - assert is invalid, side-effects may have init'ed target
+                // FIXME: spec bug - invalid assert, side-effects may have init'ed target (bug 2783)
                 // assert target.getElementType() != null && target.getBuffer() == null;
                 targetObj = initializeTypedArray(cx, target, len);
             }
@@ -602,7 +602,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         /* steps 13-14 */
         long len = ToLength(cx, lenValue);
         /* steps 15-16 */
-        // FIXME: spec bug - target is not initialized for this path
+        // FIXME: spec bug - target is not initialized for this path (bug 2784)
         // ScriptObject newObj = constructor.construct(cx, len);
         ScriptObject newObj;
         if (target == null) {

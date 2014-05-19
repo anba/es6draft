@@ -83,6 +83,7 @@ public final class PromiseAbstractOperations {
      */
     public static ResolvingFunctions CreateResolvingFunctions(ExecutionContext cx,
             PromiseObject promise) {
+        assert promise.getState() != null : "Promise not initialized";
         /* step 1 */
         AtomicBoolean alreadyResolved = new AtomicBoolean(false);
         /* steps 2-4 */
@@ -113,6 +114,7 @@ public final class PromiseAbstractOperations {
         private PromiseRejectFunction(Realm realm, PromiseObject promise,
                 AtomicBoolean alreadyResolved, Void ignore) {
             super(realm, ANONYMOUS);
+            assert promise.getState() != null : "Promise not initialized";
             this.promise = promise;
             this.alreadyResolved = alreadyResolved;
         }
@@ -157,6 +159,7 @@ public final class PromiseAbstractOperations {
         private PromiseResolveFunction(Realm realm, PromiseObject promise,
                 AtomicBoolean alreadyResolved, Void ignore) {
             super(realm, ANONYMOUS);
+            assert promise.getState() != null : "Promise not initialized";
             this.promise = promise;
             this.alreadyResolved = alreadyResolved;
         }
@@ -459,6 +462,7 @@ public final class PromiseAbstractOperations {
 
         public ResolvePromiseViaThenableTask(Realm realm, PromiseObject promise,
                 ScriptObject thenable, Callable then) {
+            assert promise.getState() != null : "Promise not initialized";
             this.realm = realm;
             this.promise = promise;
             this.thenable = thenable;

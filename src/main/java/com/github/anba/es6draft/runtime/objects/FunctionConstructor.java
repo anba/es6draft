@@ -105,7 +105,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
                     Intrinsics.FunctionPrototype);
             f = FunctionAllocate(calleeContext, proto, strict, FunctionKind.Normal);
         } else {
-            // FIXME: this also updates uninitialized generator (not function!)
+            // FIXME: this also updates uninitialized generator (not function!) (bug 2855)
             ((FunctionObject) f).setStrict(strict);
         }
         /* step 17 */

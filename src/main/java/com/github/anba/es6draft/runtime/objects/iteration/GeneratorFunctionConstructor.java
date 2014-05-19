@@ -107,7 +107,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
                     Intrinsics.Generator);
             f = FunctionAllocate(calleeContext, proto, strict, FunctionKind.Normal);
         } else {
-            // FIXME: this also updates uninitialized function (not generator!)
+            // FIXME: this also updates uninitialized function (not generator!) (bug 2855)
             ((FunctionObject) f).setStrict(strict);
         }
         /* steps 17-19 */

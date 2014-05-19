@@ -93,7 +93,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         }
 
         /* steps 5-6 */
-        // FIXME: spec bug - invalid steps
+        // FIXME: spec bug - invalid steps (bug 2787)
 
         /* steps 8-10 (moved) */
         ScriptObject newGlobal;

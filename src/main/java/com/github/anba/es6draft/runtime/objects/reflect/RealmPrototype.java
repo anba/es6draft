@@ -275,7 +275,7 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             @SuppressWarnings("unused")
             RealmObject realmObject = thisRealmObject(cx, thisValue);
             /* steps 5-6 */
-            // FIXME: spec bug - invalid steps
+            // FIXME: spec bug - invalid steps (bug 2789)
             /* step 7 */
             if (!IsCallable(function)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);

@@ -168,7 +168,6 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
                 /* step 14 */
                 assert elementValue != null;
                 ExoticArray result = ArrayCreate(cx, 2);
-                // TODO: explicit cast to workaround eclipse compiler bug
                 CreateDataProperty(cx, result, 0, (Long) index);
                 CreateDataProperty(cx, result, 1, elementValue);
                 return CreateIterResultObject(cx, result, false);

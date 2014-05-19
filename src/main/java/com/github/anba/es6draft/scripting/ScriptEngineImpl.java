@@ -63,7 +63,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         ScriptLoader scriptLoader = new ScriptLoader(compatibilityOptions, parserOptions,
                 compilerOptions);
 
-        // TODO: Remove "EvalScript" hack and use shared script loader
+        // TODO: Remove "EvalScript" hack and use shared script loader?
         this.scriptLoader = scriptLoader;
 
         ObjectAllocator<ScriptingGlobalObject> allocator = ScriptingGlobalObject

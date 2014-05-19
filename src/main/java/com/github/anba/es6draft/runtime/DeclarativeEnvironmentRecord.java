@@ -238,7 +238,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         /* step 2 */
         assert b != null : "binding not found: " + name;
         /* step 3 */
-        // FIXME: spec bug - assertion already handles this case
+        // FIXME: spec bug - assertion already handles this case (bug 2757)
         if (b == null) {
             if (!strict) {
                 return UNDEFINED;
