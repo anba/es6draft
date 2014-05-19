@@ -48,6 +48,11 @@ harmony/dataview-accessors.js
 # invalid test, ToDateTimeOptions does not alter input options object
 regress/regress-builtinbust-7.js
 
+# TODO: Add new v8-compat mode?
+# .caller and .arguments in sloppy generator functions are poison-pilled in V8
+harmony/generators-poisoned-properties.js
+harmony/generators-runtime.js
+
 
 ###################
 # Misc issues     #
@@ -172,6 +177,7 @@ regress/regress-280531.js
 regress/d8-readbuffer.js
 
 # Object.observe
+regress/regress-3315.js
 regress/regress-356589.js
 
 

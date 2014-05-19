@@ -149,9 +149,6 @@ tests/basic/testBug773108.js
 # SpiderMonkey restriction test for destructuring with spread
 tests/parser/bug-889628.js
 
-# SpiderMonkey restriction test for RegExp match limit
-tests/basic/regexp-match-limit.js
-
 
 ############################################
 # Misc proxy implementation isssues        #
