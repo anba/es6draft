@@ -382,6 +382,9 @@ public final class MathObject extends OrdinaryObject implements Initializable {
             if (d != d || d == 0 || Double.isInfinite(d)) {
                 return d;
             }
+            if (d > 0 && d < 0.5) {
+                return +0.0d;
+            }
             if (d < 0 && d >= -0.5) {
                 return -0.0d;
             }
