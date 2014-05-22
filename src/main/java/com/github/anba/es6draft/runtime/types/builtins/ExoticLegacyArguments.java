@@ -161,7 +161,6 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
     }
 
     private void addArgumentIndices(List<? super String> keys) {
-        // TODO: test case for property order!
         for (int i = 0; i < arguments.length; ++i) {
             keys.add(Integer.toString(i));
         }
