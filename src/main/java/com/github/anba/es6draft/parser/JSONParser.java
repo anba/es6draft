@@ -31,8 +31,8 @@ public final class JSONParser {
     private static final boolean DEBUG = false;
 
     private boolean parseCalled = false;
-    private JSONTokenStream ts;
-    private ExecutionContext cx;
+    private final JSONTokenStream ts;
+    private final ExecutionContext cx;
 
     public JSONParser(ExecutionContext cx, String source) {
         this.cx = cx;

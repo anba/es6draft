@@ -8,8 +8,6 @@ package com.github.anba.es6draft.parser;
 
 import static com.github.anba.es6draft.parser.NumberParser.parseDecimal;
 
-import java.util.Arrays;
-
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.internal.Messages;
 
@@ -26,31 +24,8 @@ public final class JSONTokenStream {
     // token data
     private Token current;
     // literal data
-    private StringBuffer buffer = new StringBuffer();
+    private StrBuffer buffer = new StrBuffer();
     private double number = 0;
-
-    private static final class StringBuffer {
-        char[] cbuf = new char[512];
-        int length = 0;
-
-        void clear() {
-            length = 0;
-        }
-
-        void add(int c) {
-            int len = length;
-            if (len == cbuf.length) {
-                cbuf = Arrays.copyOf(cbuf, len << 1);
-            }
-            cbuf[len] = (char) c;
-            length = len + 1;
-        }
-
-        @Override
-        public String toString() {
-            return new String(cbuf, 0, length);
-        }
-    }
 
     public JSONTokenStream(TokenStreamInput input) {
         this.input = input;
@@ -213,11 +188,6 @@ public final class JSONTokenStream {
      * JSONStringCharacter ::
      *     SourceCharacter but not one of " or \ or U+0000 through U+001F
      *     \ JSONEscapeSequence
-     * JSONEscapeSequence ::
-     *     JSONEscapeCharacter
-     *     u HexDigit HexDigit HexDigit HexDigit
-     * JSONEscapeCharacter :: one of
-     *     " / \ b f n r t
      * </pre>
      * 
      * @param quoteChar
@@ -229,59 +199,75 @@ public final class JSONTokenStream {
 
         final int EOF = TokenStreamInput.EOF;
         TokenStreamInput input = this.input;
-        StringBuffer buffer = this.buffer();
+        StrBuffer buffer = this.buffer();
+        int start = input.position();
         for (;;) {
             int c = input.getChar();
             if (c == EOF) {
                 throw error(Messages.Key.JSONUnterminatedStringLiteral);
             }
             if (c == quoteChar) {
+                buffer.append(input, start, input.position() - 1);
                 break;
             }
             if (c >= 0 && c <= 0x1F) {
                 throw error(Messages.Key.JSONInvalidStringLiteral);
             }
             if (c != '\\') {
-                // TODO: add substring range
-                buffer.add(c);
                 continue;
             }
-            c = input.getChar();
-            // escape sequences
-            switch (c) {
-            case '"':
-            case '/':
-            case '\\':
-                break;
-            case 'b':
-                c = '\b';
-                break;
-            case 'f':
-                c = '\f';
-                break;
-            case 'n':
-                c = '\n';
-                break;
-            case 'r':
-                c = '\r';
-                break;
-            case 't':
-                c = '\t';
-                break;
-            case 'u':
-                c = (hexDigit(input.getChar()) << 12) | (hexDigit(input.getChar()) << 8)
-                        | (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
-                if (c < 0) {
-                    throw error(Messages.Key.JSONInvalidUnicodeEscape);
-                }
-                break;
-            default:
-                throw error(Messages.Key.JSONInvalidStringLiteral);
-            }
-            buffer.add(c);
+            buffer.append(input, start, input.position() - 1);
+            buffer.append(readEscapeSequence());
+            start = input.position();
         }
-
         return Token.STRING;
+    }
+
+    /**
+     * <pre>
+     * JSONEscapeSequence ::
+     *     JSONEscapeCharacter
+     *     u HexDigit HexDigit HexDigit HexDigit
+     * JSONEscapeCharacter :: one of
+     *     " / \ b f n r t
+     * </pre>
+     * 
+     * @return the escaped character
+     */
+    private int readEscapeSequence() {
+        TokenStreamInput input = this.input;
+        int c = input.getChar();
+        switch (c) {
+        case '"':
+        case '/':
+        case '\\':
+            break;
+        case 'b':
+            c = '\b';
+            break;
+        case 'f':
+            c = '\f';
+            break;
+        case 'n':
+            c = '\n';
+            break;
+        case 'r':
+            c = '\r';
+            break;
+        case 't':
+            c = '\t';
+            break;
+        case 'u':
+            c = (hexDigit(input.getChar()) << 12) | (hexDigit(input.getChar()) << 8)
+                    | (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
+            if (c < 0) {
+                throw error(Messages.Key.JSONInvalidUnicodeEscape);
+            }
+            break;
+        default:
+            throw error(Messages.Key.JSONInvalidStringLiteral);
+        }
+        return c;
     }
 
     /**
@@ -309,48 +295,48 @@ public final class JSONTokenStream {
     private double readDecimalLiteral(int c) {
         assert c == '-' || isDigit(c);
         TokenStreamInput input = this.input;
-        StringBuffer buffer = this.buffer();
+        StrBuffer buffer = this.buffer();
         if (c == '-') {
-            buffer.add(c);
+            buffer.append(c);
             if (!isDigit(c = input.getChar())) {
                 throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
         }
-        buffer.add(c);
+        buffer.append(c);
         if (c != '0') {
             while (isDigit(c = input.getChar())) {
-                buffer.add(c);
+                buffer.append(c);
             }
         } else {
             c = input.getChar();
         }
         if (c == '.') {
-            buffer.add(c);
+            buffer.append(c);
             if (!isDigit(c = input.getChar())) {
                 throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
-            buffer.add(c);
+            buffer.append(c);
             while (isDigit(c = input.getChar())) {
-                buffer.add(c);
+                buffer.append(c);
             }
         }
         if (c == 'e' || c == 'E') {
-            buffer.add(c);
+            buffer.append(c);
             c = input.getChar();
             if (c == '+' || c == '-') {
-                buffer.add(c);
+                buffer.append(c);
                 c = input.getChar();
             }
             if (!isDigit(c)) {
                 throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
-            buffer.add(c);
+            buffer.append(c);
             while (isDigit(c = input.getChar())) {
-                buffer.add(c);
+                buffer.append(c);
             }
         }
         input.ungetChar(c);
-        return parseDecimal(buffer.cbuf, buffer.length);
+        return parseDecimal(buffer.array(), buffer.length());
     }
 
     /**
@@ -358,8 +344,8 @@ public final class JSONTokenStream {
      * 
      * @return the character buffer
      */
-    private StringBuffer buffer() {
-        StringBuffer buffer = this.buffer;
+    private StrBuffer buffer() {
+        StrBuffer buffer = this.buffer;
         buffer.clear();
         return buffer;
     }

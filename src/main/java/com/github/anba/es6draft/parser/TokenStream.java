@@ -8,8 +8,6 @@ package com.github.anba.es6draft.parser;
 
 import static com.github.anba.es6draft.parser.NumberParser.*;
 
-import java.util.Arrays;
-
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -49,60 +47,18 @@ public final class TokenStream {
     private long nextSourcePosition;
 
     // literal data
-    private StringBuffer buffer = new StringBuffer();
+    private StrBuffer buffer = new StrBuffer();
     private String string = null;
     private double number = 0;
     private boolean hasEscape = false;
-
-    private static final class StringBuffer {
-        char[] cbuf = new char[512];
-        int length = 0;
-
-        void clear() {
-            length = 0;
-        }
-
-        void add(int c) {
-            int len = length;
-            if (len == cbuf.length) {
-                cbuf = Arrays.copyOf(cbuf, len << 1);
-            }
-            cbuf[len] = (char) c;
-            length = len + 1;
-        }
-
-        void addCodepoint(int c) {
-            if (c > 0xFFFF) {
-                add(Character.highSurrogate(c));
-                add(Character.lowSurrogate(c));
-            } else {
-                add(c);
-            }
-        }
-
-        void add(String s) {
-            int len = length;
-            int newlen = len + s.length();
-            if (newlen > cbuf.length) {
-                cbuf = Arrays.copyOf(cbuf, Integer.highestOneBit(newlen) << 1);
-            }
-            s.getChars(0, s.length(), cbuf, len);
-            length = newlen;
-        }
-
-        @Override
-        public String toString() {
-            return new String(cbuf, 0, length);
-        }
-    }
 
     /**
      * Resets and returns the internal character buffer.
      * 
      * @return the character buffer
      */
-    private StringBuffer buffer() {
-        StringBuffer buffer = this.buffer;
+    private StrBuffer buffer() {
+        StrBuffer buffer = this.buffer;
         buffer.clear();
         return buffer;
     }
@@ -441,9 +397,9 @@ public final class TokenStream {
 
         final int EOF = TokenStreamInput.EOF;
         TokenStreamInput input = this.input;
-        StringBuffer buffer = buffer();
+        StrBuffer buffer = buffer();
         if (start == Token.ASSIGN_DIV) {
-            buffer.add('=');
+            buffer.append('=');
         } else {
             int c = input.peek(0);
             if (c == '/' || c == '*') {
@@ -455,7 +411,7 @@ public final class TokenStream {
             int c = input.getChar();
             if (c == '\\') {
                 // escape sequence
-                buffer.add(c);
+                buffer.append(c);
                 c = input.getChar();
             } else if (c == '[') {
                 inClass = true;
@@ -467,7 +423,7 @@ public final class TokenStream {
             if (c == EOF || isLineTerminator(c)) {
                 throw error(Messages.Key.UnterminatedRegExpLiteral);
             }
-            buffer.add(c);
+            buffer.append(c);
         }
         String regexp = buffer.toString();
 
@@ -482,7 +438,7 @@ public final class TokenStream {
                 input.unget(c);
                 break;
             }
-            buffer.addCodepoint(c);
+            buffer.appendCodePoint(c);
         }
 
         String flags = buffer.toString();
@@ -518,21 +474,22 @@ public final class TokenStream {
      *     LineContinuation
      * </pre>
      * 
-     * @param start
+     * @param startToken
      *            the start token of the template literal, either {@link Token#TEMPLATE} or
      *            {@link Token#RC}
      * @return string tuple {cooked, raw} for the template literal
      */
-    public String[] readTemplateLiteral(Token start) {
-        assert start == Token.TEMPLATE || start == Token.RC;
-        assert currentToken() == start;
+    public String[] readTemplateLiteral(Token startToken) {
+        assert startToken == Token.TEMPLATE || startToken == Token.RC;
+        assert currentToken() == startToken;
         assert next == null : "template literal in lookahead";
 
         final int EOF = TokenStreamInput.EOF;
         TokenStreamInput input = this.input;
         StringBuilder raw = new StringBuilder();
-        StringBuffer buffer = buffer();
+        StrBuffer buffer = buffer();
         int pos = input.position();
+        int rawPos = input.position();
         for (;;) {
             int c = input.getChar();
             if (c == EOF) {
@@ -540,12 +497,14 @@ public final class TokenStream {
             }
             if (c == '`') {
                 current = Token.TEMPLATE;
-                raw.append(input.range(pos, input.position() - 1));
+                buffer.append(input, pos, input.position() - 1);
+                raw.append(input.range(rawPos, input.position() - 1));
                 return new String[] { buffer.toString(), raw.toString() };
             }
             if (c == '$' && match('{')) {
                 current = Token.LC;
-                raw.append(input.range(pos, input.position() - 2));
+                buffer.append(input, pos, input.position() - 2);
+                raw.append(input.range(rawPos, input.position() - 2));
                 return new String[] { buffer.toString(), raw.toString() };
             }
             if (c != '\\') {
@@ -553,88 +512,123 @@ public final class TokenStream {
                     // line terminator sequence
                     if (c == '\r') {
                         // normalize \r and \r\n to \n
-                        raw.append(input.range(pos, input.position() - 1)).append('\n');
+                        buffer.append(input, pos, input.position() - 1);
+                        buffer.append('\n');
+                        raw.append(input.range(rawPos, input.position() - 1)).append('\n');
                         match('\n');
-                        pos = input.position();
-                        c = '\n';
+                        pos = rawPos = input.position();
                     }
-                    buffer.add(c);
                     incrementLine();
-                    continue;
                 }
-                // TODO: add substring range
-                buffer.add(c);
                 continue;
             }
+            buffer.append(input, pos, input.position() - 1);
 
             c = input.getChar();
             if (c == EOF) {
                 throw eofError(Messages.Key.UnterminatedTemplateLiteral);
             }
-            // EscapeSequence
             if (isLineTerminator(c)) {
                 // line continuation
                 if (c == '\r') {
                     // normalize \r and \r\n to \n
-                    raw.append(input.range(pos, input.position() - 1)).append('\n');
+                    raw.append(input.range(rawPos, input.position() - 1)).append('\n');
                     match('\n');
-                    pos = input.position();
+                    rawPos = input.position();
                 }
                 incrementLine();
-                continue;
+            } else {
+                buffer.appendCodePoint(readTemplateEscapeSequence(c));
             }
-            switch (c) {
-            case 'b':
-                c = '\b';
-                break;
-            case 'f':
-                c = '\f';
-                break;
-            case 'n':
-                c = '\n';
-                break;
-            case 'r':
-                c = '\r';
-                break;
-            case 't':
-                c = '\t';
-                break;
-            case 'v':
-                c = '\u000B';
-                break;
-            case '0':
-                if (isDecimalDigit(input.peek(0))) {
-                    throw error(Messages.Key.InvalidNULLEscape);
-                }
-                c = '\0';
-                break;
-            case 'x':
-                c = (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
-                if (c < 0) {
-                    throw error(Messages.Key.InvalidHexEscape);
-                }
-                break;
-            case 'u':
-                c = readUnicode();
-                break;
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-                throw error(Messages.Key.StrictModeOctalEscapeSequence);
-            case '"':
-            case '\'':
-            case '\\':
-            default:
-                // fall-through
-            }
-            buffer.addCodepoint(c);
+            pos = input.position();
         }
+    }
+
+    /**
+     * <strong>[11.8.4] String Literals</strong>
+     * 
+     * <pre>
+     * EscapeSequence ::
+     *     CharacterEscapeSequence
+     *     0  [lookahead &#x2209; DecimalDigit]
+     *     HexEscapeSequence
+     *     UnicodeEscapeSequence
+     * CharacterEscapeSequence ::
+     *     SingleEscapeCharacter
+     *     NonEscapeCharacter
+     * SingleEscapeCharacter ::  one of
+     *     ' "  \  b f n r t v
+     * NonEscapeCharacter ::
+     *     SourceCharacter but not one of EscapeCharacter or LineTerminator
+     * EscapeCharacter ::
+     *     SingleEscapeCharacter
+     *     DecimalDigit
+     *     x
+     *     u
+     * HexEscapeSequence ::
+     *     x HexDigit HexDigit
+     * UnicodeEscapeSequence ::
+     *     u HexDigit HexDigit HexDigit HexDigit
+     *     u{ HexDigits }
+     * </pre>
+     * 
+     * @param c
+     *            the start character
+     * @return the escaped character
+     */
+    private int readTemplateEscapeSequence(int c) {
+        TokenStreamInput input = this.input;
+        switch (c) {
+        case 'b':
+            c = '\b';
+            break;
+        case 'f':
+            c = '\f';
+            break;
+        case 'n':
+            c = '\n';
+            break;
+        case 'r':
+            c = '\r';
+            break;
+        case 't':
+            c = '\t';
+            break;
+        case 'v':
+            c = '\u000B';
+            break;
+        case 'x':
+            c = (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
+            if (c < 0) {
+                throw error(Messages.Key.InvalidHexEscape);
+            }
+            break;
+        case 'u':
+            c = readUnicode();
+            break;
+        case '0':
+            if (isDecimalDigit(input.peek(0))) {
+                throw error(Messages.Key.InvalidNULLEscape);
+            }
+            c = '\0';
+            break;
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            throw error(Messages.Key.StrictModeOctalEscapeSequence);
+        case '"':
+        case '\'':
+        case '\\':
+        default:
+            // fall-through
+        }
+        return c;
     }
 
     //
@@ -1262,12 +1256,12 @@ public final class TokenStream {
         assert isIdentifierStart(c);
 
         TokenStreamInput input = this.input;
-        StringBuffer buffer = this.buffer();
-        buffer.addCodepoint(c);
+        StrBuffer buffer = this.buffer();
+        buffer.appendCodePoint(c);
         for (;;) {
             c = input.get();
             if (isIdentifierPart(c)) {
-                buffer.addCodepoint(c);
+                buffer.appendCodePoint(c);
             } else if (c == '\\') {
                 hasEscape = true;
                 mustMatch('u');
@@ -1275,7 +1269,7 @@ public final class TokenStream {
                 if (!isIdentifierPart(c)) {
                     throw error(Messages.Key.InvalidUnicodeEscapedIdentifierPart);
                 }
-                buffer.addCodepoint(c);
+                buffer.appendCodePoint(c);
             } else {
                 input.unget(c);
                 break;
@@ -1387,11 +1381,11 @@ public final class TokenStream {
      *            the string buffer containing identifier
      * @return the token type for the identifier
      */
-    private static Token readReservedWord(StringBuffer buffer) {
-        int length = buffer.length;
+    private static Token readReservedWord(StrBuffer buffer) {
+        int length = buffer.length();
         if (length < 2 || length > 10)
             return Token.NAME;
-        char[] cbuf = buffer.cbuf;
+        char[] cbuf = buffer.array();
         char c0 = cbuf[0], c1 = cbuf[1];
         Token test = null;
         switch (c0) {
@@ -1550,6 +1544,58 @@ public final class TokenStream {
      *     LineContinuation
      * LineContinuation ::
      *     \ LineTerminatorSequence
+     * </pre>
+     * 
+     * @param quoteChar
+     *            the quotation character for the string literal
+     * @return the string literal value
+     */
+    private Token readString(int quoteChar) {
+        assert quoteChar == '"' || quoteChar == '\'';
+
+        final int EOF = TokenStreamInput.EOF;
+        TokenStreamInput input = this.input;
+        int start = input.position();
+        StrBuffer buffer = this.buffer();
+        hasEscape = false;
+        for (;;) {
+            int c = input.getChar();
+            if (c == EOF) {
+                throw eofError(Messages.Key.UnterminatedStringLiteral);
+            }
+            if (c == quoteChar) {
+                buffer.append(input, start, input.position() - 1);
+                break;
+            }
+            if (isLineTerminator(c)) {
+                throw error(Messages.Key.UnterminatedStringLiteral);
+            }
+            if (c != '\\') {
+                continue;
+            }
+            buffer.append(input, start, input.position() - 1);
+
+            // EscapeSequence or LineContinuation
+            hasEscape = true;
+            c = input.getChar();
+            if (isLineTerminator(c)) {
+                if (c == '\r' && match('\n')) {
+                    // \r\n sequence
+                }
+                incrementLine();
+            } else {
+                buffer.appendCodePoint(readStringEscapeSequence(c));
+            }
+            start = input.position();
+        }
+
+        return Token.STRING;
+    }
+
+    /**
+     * <strong>[11.8.4] String Literals</strong>
+     * 
+     * <pre>
      * EscapeSequence ::
      *     CharacterEscapeSequence
      *     0  [lookahead &#x2209; DecimalDigit]
@@ -1584,114 +1630,76 @@ public final class TokenStream {
      *     UnicodeEscapeSequence
      * </pre>
      * 
-     * @param quoteChar
-     *            the quotation character for the string literal
-     * @return the string literal value
+     * @param c
+     *            the start character
+     * @return the escaped character
      */
-    private Token readString(int quoteChar) {
-        assert quoteChar == '"' || quoteChar == '\'';
-
-        final int EOF = TokenStreamInput.EOF;
+    private int readStringEscapeSequence(int c) {
         TokenStreamInput input = this.input;
-        int start = input.position();
-        StringBuffer buffer = this.buffer();
-        hasEscape = false;
-        for (;;) {
-            int c = input.getChar();
-            if (c == EOF) {
-                throw eofError(Messages.Key.UnterminatedStringLiteral);
+        switch (c) {
+        case 'b':
+            c = '\b';
+            break;
+        case 'f':
+            c = '\f';
+            break;
+        case 'n':
+            c = '\n';
+            break;
+        case 'r':
+            c = '\r';
+            break;
+        case 't':
+            c = '\t';
+            break;
+        case 'v':
+            c = '\u000B';
+            break;
+        case 'x':
+            c = (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
+            if (c < 0) {
+                throw error(Messages.Key.InvalidHexEscape);
             }
-            if (c == quoteChar) {
-                buffer.add(input.range(start, input.position() - 1));
-                break;
-            }
-            if (isLineTerminator(c)) {
-                throw error(Messages.Key.UnterminatedStringLiteral);
-            }
-            if (c != '\\') {
-                continue;
-            }
-            buffer.add(input.range(start, input.position() - 1));
-            hasEscape = true;
-            c = input.getChar();
-            if (isLineTerminator(c)) {
-                // line continuation
-                if (c == '\r' && match('\n')) {
-                    // \r\n sequence
-                }
-                incrementLine();
-                start = input.position();
-                continue;
-            }
-            // escape sequences
-            switch (c) {
-            case 'b':
-                c = '\b';
-                break;
-            case 'f':
-                c = '\f';
-                break;
-            case 'n':
-                c = '\n';
-                break;
-            case 'r':
-                c = '\r';
-                break;
-            case 't':
-                c = '\t';
-                break;
-            case 'v':
-                c = '\u000B';
-                break;
-            case 'x':
-                c = (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
-                if (c < 0) {
-                    throw error(Messages.Key.InvalidHexEscape);
-                }
-                break;
-            case 'u':
-                c = readUnicode();
-                break;
-            case '0':
-                if (isDecimalDigit(input.peek(0))) {
-                    if (!isEnabled(CompatibilityOption.OctalEscapeSequence)) {
-                        throw error(Messages.Key.InvalidNULLEscape);
-                    }
-                    c = readOctalEscape(c);
-                } else {
-                    c = '\0';
-                }
-                break;
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
+            break;
+        case 'u':
+            c = readUnicode();
+            break;
+        case '0':
+            if (isDecimalDigit(input.peek(0))) {
                 if (!isEnabled(CompatibilityOption.OctalEscapeSequence)) {
-                    throw error(Messages.Key.StrictModeOctalEscapeSequence);
+                    throw error(Messages.Key.InvalidNULLEscape);
                 }
                 c = readOctalEscape(c);
-                break;
-            case '8':
-            case '9':
-                // FIXME: spec bug - undefined behaviour for \8 and \9
-                if (!isEnabled(CompatibilityOption.OctalEscapeSequence)) {
-                    throw error(Messages.Key.StrictModeOctalEscapeSequence);
-                }
-                // fall-through
-            case '"':
-            case '\'':
-            case '\\':
-            default:
-                // fall-through
+            } else {
+                c = '\0';
             }
-            buffer.addCodepoint(c);
-            start = input.position();
+            break;
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+            if (!isEnabled(CompatibilityOption.OctalEscapeSequence)) {
+                throw error(Messages.Key.StrictModeOctalEscapeSequence);
+            }
+            c = readOctalEscape(c);
+            break;
+        case '8':
+        case '9':
+            // FIXME: spec bug - undefined behaviour for \8 and \9
+            if (!isEnabled(CompatibilityOption.OctalEscapeSequence)) {
+                throw error(Messages.Key.StrictModeOctalEscapeSequence);
+            }
+            // fall-through
+        case '"':
+        case '\'':
+        case '\\':
+        default:
+            // fall-through
         }
-
-        return Token.STRING;
+        return c;
     }
 
     /**
@@ -1793,19 +1801,19 @@ public final class TokenStream {
      */
     private double readHexIntegerLiteral() {
         TokenStreamInput input = this.input;
-        StringBuffer buffer = this.buffer();
+        StrBuffer buffer = this.buffer();
         int c;
         while (isHexDigit(c = input.get())) {
-            buffer.add(c);
+            buffer.append(c);
         }
         if (isDecimalDigitOrIdentifierStart(c)) {
             throw error(Messages.Key.InvalidHexIntegerLiteral);
         }
         input.unget(c);
-        if (buffer.length == 0) {
+        if (buffer.length() == 0) {
             throw error(Messages.Key.InvalidHexIntegerLiteral);
         }
-        return parseHex(buffer.cbuf, buffer.length);
+        return parseHex(buffer.array(), buffer.length());
     }
 
     /**
@@ -1822,19 +1830,19 @@ public final class TokenStream {
      */
     private double readBinaryIntegerLiteral() {
         TokenStreamInput input = this.input;
-        StringBuffer buffer = this.buffer();
+        StrBuffer buffer = this.buffer();
         int c;
         while (isBinaryDigit(c = input.get())) {
-            buffer.add(c);
+            buffer.append(c);
         }
         if (isDecimalDigitOrIdentifierStart(c)) {
             throw error(Messages.Key.InvalidBinaryIntegerLiteral);
         }
         input.unget(c);
-        if (buffer.length == 0) {
+        if (buffer.length() == 0) {
             throw error(Messages.Key.InvalidBinaryIntegerLiteral);
         }
-        return parseBinary(buffer.cbuf, buffer.length);
+        return parseBinary(buffer.array(), buffer.length());
     }
 
     /**
@@ -1851,19 +1859,19 @@ public final class TokenStream {
      */
     private double readOctalIntegerLiteral() {
         TokenStreamInput input = this.input;
-        StringBuffer buffer = this.buffer();
+        StrBuffer buffer = this.buffer();
         int c;
         while (isOctalDigit(c = input.get())) {
-            buffer.add(c);
+            buffer.append(c);
         }
         if (isDecimalDigitOrIdentifierStart(c)) {
             throw error(Messages.Key.InvalidOctalIntegerLiteral);
         }
         input.unget(c);
-        if (buffer.length == 0) {
+        if (buffer.length() == 0) {
             throw error(Messages.Key.InvalidOctalIntegerLiteral);
         }
-        return parseOctal(buffer.cbuf, buffer.length);
+        return parseOctal(buffer.array(), buffer.length());
     }
 
     /**
@@ -1879,10 +1887,10 @@ public final class TokenStream {
      */
     private double readLegacyOctalIntegerLiteral() {
         TokenStreamInput input = this.input;
-        StringBuffer buffer = this.buffer();
+        StrBuffer buffer = this.buffer();
         int c;
         while (isOctalDigit(c = input.get())) {
-            buffer.add(c);
+            buffer.append(c);
         }
         if (c == '8' || c == '9') {
             // invalid octal integer literal -> treat as decimal literal, no strict-mode error
@@ -1897,8 +1905,8 @@ public final class TokenStream {
             throw error(Messages.Key.InvalidOctalIntegerLiteral);
         }
         input.unget(c);
-        assert buffer.length != 0;
-        return parseOctal(buffer.cbuf, buffer.length);
+        assert buffer.length() != 0;
+        return parseOctal(buffer.array(), buffer.length());
     }
 
     /**
@@ -1939,37 +1947,37 @@ public final class TokenStream {
         assert c == '.' || isDecimalDigit(c);
         boolean isInteger = true;
         TokenStreamInput input = this.input;
-        StringBuffer buffer = reset ? this.buffer() : this.buffer;
+        StrBuffer buffer = reset ? this.buffer() : this.buffer;
         if (c != '.' && c != '0') {
-            buffer.add(c);
+            buffer.append(c);
             while (isDecimalDigit(c = input.get())) {
-                buffer.add(c);
+                buffer.append(c);
             }
         } else if (c == '0') {
-            buffer.add(c);
+            buffer.append(c);
             c = input.get();
         }
         if (c == '.') {
             isInteger = false;
-            buffer.add(c);
+            buffer.append(c);
             while (isDecimalDigit(c = input.get())) {
-                buffer.add(c);
+                buffer.append(c);
             }
         }
         if (c == 'e' || c == 'E') {
             isInteger = false;
-            buffer.add(c);
+            buffer.append(c);
             c = input.get();
             if (c == '+' || c == '-') {
-                buffer.add(c);
+                buffer.append(c);
                 c = input.get();
             }
             if (!isDecimalDigit(c)) {
                 throw error(Messages.Key.InvalidNumberLiteral);
             }
-            buffer.add(c);
+            buffer.append(c);
             while (isDecimalDigit(c = input.get())) {
-                buffer.add(c);
+                buffer.append(c);
             }
         }
         if (isDecimalDigitOrIdentifierStart(c)) {
@@ -1977,9 +1985,9 @@ public final class TokenStream {
         }
         input.unget(c);
         if (isInteger) {
-            return parseInteger(buffer.cbuf, buffer.length);
+            return parseInteger(buffer.array(), buffer.length());
         }
-        return parseDecimal(buffer.cbuf, buffer.length);
+        return parseDecimal(buffer.array(), buffer.length());
     }
 
     /**
