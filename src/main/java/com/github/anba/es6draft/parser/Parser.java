@@ -6252,6 +6252,9 @@ public final class Parser {
         while (token() == Token.LC) {
             consume(Token.LC);
             elements.add(expression(true));
+            if (token() != Token.RC) {
+                reportTokenMismatch(Token.RC, token());
+            }
             templateCharacters(elements, Token.RC);
         }
         consume(Token.TEMPLATE);
