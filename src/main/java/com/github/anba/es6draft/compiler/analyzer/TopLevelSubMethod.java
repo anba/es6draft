@@ -17,7 +17,7 @@ import com.github.anba.es6draft.ast.TopLevelNode;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 
 /**
- * Subdivides statements into {@link StatementListMethod} elements
+ * Subdivides statements into {@link StatementListMethod} elements.
  */
 abstract class TopLevelSubMethod<NODE extends TopLevelNode<?>> extends SubMethod<NODE> {
     static final class FunctionSubMethod extends TopLevelSubMethod<FunctionNode> {
@@ -62,8 +62,8 @@ abstract class TopLevelSubMethod<NODE extends TopLevelNode<?>> extends SubMethod
     }
 
     private List<StatementListItem> visitTopLevel(List<StatementListItem> statements) {
-        // don't need to consider break/continue statements at top-level, simply
-        // subdivide statement list into smaller parts
+        // Don't need to consider break/continue statements at top-level, simply
+        // subdivide statement list into smaller parts.
         StatementConflater conflater = new StatementConflater();
         boolean needsRerun;
         do {

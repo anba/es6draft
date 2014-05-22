@@ -23,12 +23,12 @@ final class ArrayLiteralSubMethod extends ListSubMethod<ArrayLiteral> {
     private static final int MAX_SPREAD_SIZE = 4 * MAX_ARRAY_ELEMENT_SIZE;
 
     private static final class ArrayElement extends NodeElement<Expression> {
-        ArrayElement(Expression node, int index, int size) {
-            super(node, index, size);
+        ArrayElement(Expression node, int size, int index) {
+            super(node, size, index);
         }
 
         @Override
-        protected final Expression getReplacement(Expression node) {
+        protected final Expression createReplacement() {
             return new ExpressionMethod(node);
         }
 
@@ -41,8 +41,8 @@ final class ArrayLiteralSubMethod extends ListSubMethod<ArrayLiteral> {
     private static final class ArrayElementMapper implements
             NodeElementMapper<Expression, ArrayElement> {
         @Override
-        public ArrayElement map(Expression node, int index, int size) {
-            return new ArrayElement(node, index, size);
+        public ArrayElement map(Expression node, int size, int index) {
+            return new ArrayElement(node, size, index);
         }
     }
 

@@ -34,20 +34,19 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
     }
 
     private static final class StatementElement extends NodeElement<StatementListItem> {
-        static final StatementElement EMPTY = new StatementElement(null, -1, 0, ExportState.Empty);
+        static final StatementElement EMPTY = new StatementElement(ExportState.Empty, null, 0, -1);
 
-        StatementElement(StatementListItem node, int index, int size, ExportState state) {
-            super(node, index, size);
-            this.state = state;
+        StatementElement(ExportState state, StatementListItem node, int size, int index) {
+            super(state, node, size, index);
         }
 
         void maybeExport(List<StatementListItem> statements, int size) {
             assert state == ExportState.NotExported && size < MAX_STATEMENT_SIZE;
-            update(new StatementListMethod(statements), size, ExportState.MaybeExported);
+            update(ExportState.MaybeExported, new StatementListMethod(statements), size);
         }
 
         @Override
-        protected final StatementListItem getReplacement(StatementListItem node) {
+        protected final StatementListItem createReplacement() {
             return new StatementListMethod(singletonList(node));
         }
 
@@ -62,7 +61,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
             for (int i = 0, len = statements.size(); i < len; i++) {
                 StatementListItem stmt = statements.get(i);
                 int size = codeSizes.get(stmt);
-                list.add(new StatementElement(stmt, i, size, ExportState.NotExported));
+                list.add(new StatementElement(ExportState.NotExported, stmt, size, i));
             }
             return list;
         }

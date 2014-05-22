@@ -17,12 +17,12 @@ import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
  */
 final class CommaExpressionSubMethod extends ListSubMethod<CommaExpression> {
     private static final class ExpressionElement extends NodeElement<Expression> {
-        ExpressionElement(Expression node, int index, int size) {
-            super(node, index, size);
+        ExpressionElement(Expression node, int size, int index) {
+            super(node, size, index);
         }
 
         @Override
-        protected final Expression getReplacement(Expression node) {
+        protected final Expression createReplacement() {
             return new ExpressionMethod(node);
         }
 
@@ -35,8 +35,8 @@ final class CommaExpressionSubMethod extends ListSubMethod<CommaExpression> {
     private static final class ExpressionElementMapper implements
             NodeElementMapper<Expression, ExpressionElement> {
         @Override
-        public ExpressionElement map(Expression node, int index, int size) {
-            return new ExpressionElement(node, index, size);
+        public ExpressionElement map(Expression node, int size, int index) {
+            return new ExpressionElement(node, size, index);
         }
     }
 

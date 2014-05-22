@@ -71,36 +71,38 @@ abstract class SubMethod<NODE extends Node> {
 
     protected static abstract class NodeElement<NODE extends Node> implements
             Comparable<NodeElement<?>> {
-        ExportState state = ExportState.NotExported;
+        ExportState state;
         NODE node;
-        int index;
         int size;
+        final int index;
 
-        NodeElement(NODE node, int index, int size) {
-            this.node = node;
-            this.index = index;
-            this.size = size;
+        NodeElement(NODE node, int size, int index) {
+            this(ExportState.NotExported, node, size, index);
         }
 
-        protected final void update(NODE newNode, int newSize, ExportState newState) {
+        NodeElement(ExportState state, NODE node, int size, int index) {
+            this.state = state;
+            this.node = node;
+            this.size = size;
+            this.index = index;
+        }
+
+        protected final void update(ExportState newState, NODE newNode, int newSize) {
+            this.state = newState;
             this.node = newNode;
             this.size = newSize;
-            this.state = newState;
         }
 
-        protected abstract NODE getReplacement(NODE node);
+        protected abstract NODE createReplacement();
 
         protected abstract int getReplacementSize();
 
         final int export() {
             assert state == ExportState.NotExported || state == ExportState.MaybeExported;
-            NODE replacement = this.node;
-            if (state == ExportState.NotExported) {
-                replacement = getReplacement(replacement);
-            }
+            NODE replacement = state == ExportState.NotExported ? createReplacement() : node;
             int replacementSize = getReplacementSize();
             int savedSize = -size + replacementSize;
-            update(replacement, replacementSize, ExportState.Exported);
+            update(ExportState.Exported, replacement, replacementSize);
             return savedSize;
         }
 
@@ -118,6 +120,7 @@ abstract class SubMethod<NODE extends Node> {
         protected abstract Target newTarget(List<Target> list);
 
         private int conflate(List<Target> newElements, int start, int end) {
+            assert start < end;
             List<Target> view = newElements.subList(start, end);
             Target chunk = newTarget(new ArrayList<>(view));
             view.clear();

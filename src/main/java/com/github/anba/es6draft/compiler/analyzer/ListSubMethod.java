@@ -17,7 +17,7 @@ import com.github.anba.es6draft.ast.Node;
  */
 abstract class ListSubMethod<NODE extends Node> extends SubMethod<NODE> {
     protected static interface NodeElementMapper<NODE extends Node, ELEMENT> {
-        ELEMENT map(NODE node, int index, int size);
+        ELEMENT map(NODE node, int size, int index);
     }
 
     private static final <NODE extends Node, ELEMENT> List<ELEMENT> from(List<NODE> nodes,
@@ -28,7 +28,7 @@ abstract class ListSubMethod<NODE extends Node> extends SubMethod<NODE> {
         for (int i = 0, len = nodes.size(); i < len; i++) {
             NODE property = nodes.get(i);
             int size = property.accept(visitor, handler);
-            list.add(mapper.map(property, i, size));
+            list.add(mapper.map(property, size, i));
         }
         return list;
     }

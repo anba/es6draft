@@ -23,12 +23,12 @@ final class ObjectLiteralSubMethod extends ListSubMethod<ObjectLiteral> {
     private static final int MAX_SPREAD_SIZE = 4 * MAX_OBJECT_ELEMENT_SIZE;
 
     private static final class ObjectElement extends NodeElement<PropertyDefinition> {
-        ObjectElement(PropertyDefinition node, int index, int size) {
-            super(node, index, size);
+        ObjectElement(PropertyDefinition node, int size, int index) {
+            super(node, size, index);
         }
 
         @Override
-        protected final PropertyDefinition getReplacement(PropertyDefinition node) {
+        protected final PropertyDefinition createReplacement() {
             assert node instanceof PropertyValueDefinition : node.getClass();
             PropertyValueDefinition valDef = (PropertyValueDefinition) node;
             return new PropertyValueDefinition(valDef.getBeginPosition(), valDef.getEndPosition(),
@@ -44,8 +44,8 @@ final class ObjectLiteralSubMethod extends ListSubMethod<ObjectLiteral> {
     private static final class ObjectElementMapper implements
             NodeElementMapper<PropertyDefinition, ObjectElement> {
         @Override
-        public ObjectElement map(PropertyDefinition node, int index, int size) {
-            return new ObjectElement(node, index, size);
+        public ObjectElement map(PropertyDefinition node, int size, int index) {
+            return new ObjectElement(node, size, index);
         }
     }
 
