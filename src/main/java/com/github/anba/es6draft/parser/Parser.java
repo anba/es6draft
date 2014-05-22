@@ -6257,7 +6257,7 @@ public final class Parser {
         }
         consume(Token.TEMPLATE);
 
-        if ((elements.size() / 2) + 1 > MAX_ARGUMENTS) {
+        if (tagged && (elements.size() / 2) + 1 > MAX_ARGUMENTS) {
             reportSyntaxError(Messages.Key.FunctionTooManyArguments);
         }
 

@@ -2431,10 +2431,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.dup();
             mv.invoke(Methods.StringBuilder_init);
 
-            boolean chars = true;
             for (Expression expr : elements) {
-                assert chars == (expr instanceof TemplateCharacters);
-                if (chars) {
+                if (expr instanceof TemplateCharacters) {
                     String value = ((TemplateCharacters) expr).getValue();
                     if (!value.isEmpty()) {
                         mv.aconst(value);
@@ -2445,7 +2443,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                     ToString(type, mv);
                     mv.invoke(Methods.StringBuilder_append_Charsequence);
                 }
-                chars = !chars;
             }
 
             mv.invoke(Methods.StringBuilder_toString);

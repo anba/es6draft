@@ -258,5 +258,13 @@ public final class CodeSizeAnalysis {
         public Integer visit(SwitchClause node, Integer size) {
             return visit(node, size, new NestedSubMethod.SwitchClauseSubMethod());
         }
+
+        @Override
+        public Integer visit(TemplateLiteral node, Integer size) {
+            if (node.isTagged()) {
+                return super.visit(node, size);
+            }
+            return visit(node, size, new TemplateLiteralSubMethod());
+        }
     }
 }
