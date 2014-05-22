@@ -89,7 +89,7 @@ public final class Repl {
             ReplConsole console = createConsole(options);
             new Repl(console, options).loop();
         } catch (Throwable e) {
-            printStackTrace(e);
+            printStackTrace(e, options.stacktraceDepth);
             System.exit(1);
         }
     }
@@ -106,13 +106,13 @@ public final class Repl {
         return console;
     }
 
-    private static void printStackTrace(Throwable e) {
+    private static void printStackTrace(Throwable e, int maxDepth) {
+        final int depth = Math.max(maxDepth, 0);
         StackTraceElement[] stackTrace = e.getStackTrace();
-        if (stackTrace.length > STACKTRACE_DEPTH) {
-            int omitted = stackTrace.length - STACKTRACE_DEPTH;
-            stackTrace = Arrays.copyOf(stackTrace, STACKTRACE_DEPTH + 1);
-            stackTrace[STACKTRACE_DEPTH] = new StackTraceElement("..", "", "Frames omitted",
-                    omitted);
+        if (stackTrace.length > depth) {
+            int omitted = stackTrace.length - depth;
+            stackTrace = Arrays.copyOf(stackTrace, depth + 1);
+            stackTrace[depth] = new StackTraceElement("..", "", "Frames omitted", omitted);
             e.setStackTrace(stackTrace);
         }
         e.printStackTrace();
@@ -411,7 +411,7 @@ public final class Repl {
         String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
         console.printf("%s%n", message);
         if (options.stacktrace) {
-            printStackTrace(e);
+            printStackTrace(e, options.stacktraceDepth);
         }
     }
 
@@ -419,7 +419,7 @@ public final class Repl {
         String message = formatMessage("uncaught_exception", e.getMessage(realm.defaultContext()));
         console.printf("%s%n", message);
         if (options.stacktrace) {
-            printStackTrace(e);
+            printStackTrace(e, options.stacktraceDepth);
         }
     }
 
@@ -437,7 +437,7 @@ public final class Repl {
         console.printf("%s %s%n", sourceInfo, offendingLine);
         console.printf("%s %s%n", sourceInfo, marker);
         if (options.stacktrace) {
-            printStackTrace(e);
+            printStackTrace(e, options.stacktraceDepth);
         }
     }
 
