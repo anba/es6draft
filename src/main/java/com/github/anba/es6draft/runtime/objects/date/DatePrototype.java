@@ -1289,7 +1289,7 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
             Object toISO = Get(cx, o, "toISOString");
             /* step 6 */
             if (!IsCallable(toISO)) {
-                throw newTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.PropertyNotCallable, "toISOString");
             }
             /* step 7 */
             return ((Callable) toISO).call(cx, o);

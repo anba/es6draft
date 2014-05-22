@@ -201,7 +201,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 double srcLength = ToInteger(numberLength);// TODO: spec bug - call ToLength()?
                 /* step 22 */
                 if (numberLength != srcLength || srcLength < 0) {
-                    throw newRangeError(cx, Messages.Key.InvalidByteOffset);
+                    throw newRangeError(cx, Messages.Key.InvalidByteLength);
                 }
                 /* step 23 */
                 if (srcLength + targetOffset > targetLength) {

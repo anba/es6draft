@@ -230,8 +230,7 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
             // TODO: call ToLength() instead of ToInteger() in spec?
             double viewLength = ToInteger(numberLength);
             if (numberLength != viewLength || viewLength < 0) {
-                // TODO: correct error message -> invalid length
-                throw newRangeError(calleeContext, Messages.Key.InvalidByteOffset);
+                throw newRangeError(calleeContext, Messages.Key.InvalidByteLength);
             }
             viewByteLength = (long) viewLength;
             if (offset + viewByteLength > bufferByteLength) {

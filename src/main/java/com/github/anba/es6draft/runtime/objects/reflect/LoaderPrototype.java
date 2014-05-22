@@ -565,7 +565,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         @Function(name = "fetch", arity = 1)
         public static Object fetch(ExecutionContext cx, Object thisValue, Object loadRequest) {
             /* step 1 */
-            throw newTypeError(cx, Messages.Key.InternalError);
+            throw newTypeError(cx, Messages.Key.InternalError);// TODO: error message
         }
 
         /**

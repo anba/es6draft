@@ -83,27 +83,27 @@ public final class RegExpParser {
                 switch (flag) {
                 case global:
                     detail = "global";
-                    reason = Messages.Key.DuplicateRegExpFlag;
+                    reason = Messages.Key.RegExpDuplicateFlag;
                     break;
                 case ignoreCase:
                     detail = "ignoreCase";
-                    reason = Messages.Key.DuplicateRegExpFlag;
+                    reason = Messages.Key.RegExpDuplicateFlag;
                     break;
                 case multiline:
                     detail = "multiline";
-                    reason = Messages.Key.DuplicateRegExpFlag;
+                    reason = Messages.Key.RegExpDuplicateFlag;
                     break;
                 case unicode:
                     detail = "unicode";
-                    reason = Messages.Key.DuplicateRegExpFlag;
+                    reason = Messages.Key.RegExpDuplicateFlag;
                     break;
                 case sticky:
                     detail = "sticky";
-                    reason = Messages.Key.DuplicateRegExpFlag;
+                    reason = Messages.Key.RegExpDuplicateFlag;
                     break;
                 default:
                     detail = String.valueOf(c);
-                    reason = Messages.Key.InvalidRegExpFlag;
+                    reason = Messages.Key.RegExpInvalidFlag;
                     break;
                 }
                 throw error(sourceFile, sourceLine, sourceColumn, reason, detail);

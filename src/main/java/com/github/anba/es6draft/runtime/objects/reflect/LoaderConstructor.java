@@ -93,7 +93,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
             Object hook = GetOption(calleeContext, options, name);
             if (!Type.isUndefined(hook)) {
                 if (!IsCallable(hook)) {
-                    throw newTypeError(calleeContext, Messages.Key.NotCallable);
+                    throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, name);
                 }
                 CreateDataPropertyOrThrow(calleeContext, loader, name, hook);
             }

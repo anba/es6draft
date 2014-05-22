@@ -1869,7 +1869,7 @@ public final class AbstractOperations {
         }
         /* step 6 */
         if (!IsCallable(func)) {
-            throw newTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey);
         }
         /* step 7 */
         return (Callable) func;
@@ -1895,7 +1895,7 @@ public final class AbstractOperations {
         }
         /* step 6 */
         if (!IsCallable(func)) {
-            throw newTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey.toString());
         }
         /* step 7 */
         return (Callable) func;
@@ -1945,7 +1945,7 @@ public final class AbstractOperations {
         Object func = base.get(cx, propertyKey, object);
         /* step 7 */
         if (!IsCallable(func)) {
-            throw newTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey);
         }
         /* step 8 */
         return ((Callable) func).call(cx, object, args);
@@ -1971,7 +1971,7 @@ public final class AbstractOperations {
         Object func = object.get(cx, propertyKey, object);
         /* step 7 */
         if (!IsCallable(func)) {
-            throw newTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey);
         }
         /* step 8 */
         return ((Callable) func).call(cx, object, args);
@@ -1999,7 +1999,7 @@ public final class AbstractOperations {
         Object func = base.get(cx, propertyKey, object);
         /* step 7 */
         if (!IsCallable(func)) {
-            throw newTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey.toString());
         }
         /* step 8 */
         return ((Callable) func).call(cx, object, args);
@@ -2025,7 +2025,7 @@ public final class AbstractOperations {
         Object func = object.get(cx, propertyKey, object);
         /* step 7 */
         if (!IsCallable(func)) {
-            throw newTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey.toString());
         }
         /* step 8 */
         return ((Callable) func).call(cx, object, args);
@@ -2585,7 +2585,8 @@ public final class AbstractOperations {
         /* step 1 (not applicable) */
         /* step 2 */
         if (!IsCallable(method)) {
-            throw newTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.PropertyNotCallable,
+                    BuiltinSymbol.iterator.toString());
         }
         /* steps 3-4 */
         Object iterator = ((Callable) method).call(cx, obj);

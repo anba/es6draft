@@ -81,7 +81,7 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
             iter = GetIterator(calleeContext, iterable);
             Object _adder = Get(calleeContext, set, "add");
             if (!IsCallable(_adder)) {
-                throw newTypeError(calleeContext, Messages.Key.NotCallable);
+                throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "add");
             }
             adder = (Callable) _adder;
         }

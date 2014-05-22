@@ -166,7 +166,7 @@ public final class ModuleLoading {
             Object normalizeHook = Get(calleeContext, loaderObj, "normalize");
             // FIXME: missing [[Call]] check
             if (!IsCallable(normalizeHook)) {
-                throw newTypeError(calleeContext, Messages.Key.NotCallable);
+                throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "normalize");
             }
             /* steps 7-8 */
             Object name = ((Callable) normalizeHook).call(calleeContext, loaderObj, request,
@@ -294,7 +294,7 @@ public final class ModuleLoading {
             Object hook = Get(calleeContext, loaderObj, "locate");
             /* step 6 */
             if (!IsCallable(hook)) {
-                throw newTypeError(calleeContext, Messages.Key.NotCallable);
+                throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "locate");
             }
             /* step 7 */
             OrdinaryObject obj = CreateLoadRequestObject(calleeContext, load.getNameOrNull(),
@@ -373,7 +373,7 @@ public final class ModuleLoading {
             Object hook = Get(calleeContext, loaderObj, "fetch");
             /* step 8 */
             if (!IsCallable(hook)) {
-                throw newTypeError(calleeContext, Messages.Key.NotCallable);
+                throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "fetch");
             }
             /* step 9 */
             OrdinaryObject obj = CreateLoadRequestObject(calleeContext, load.getNameOrNull(),
@@ -460,7 +460,7 @@ public final class ModuleLoading {
             Object hook = Get(calleeContext, loaderObj, "translate");
             /* step 6 */
             if (!IsCallable(hook)) {
-                throw newTypeError(calleeContext, Messages.Key.NotCallable);
+                throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "translate");
             }
             /* step 7 */
             OrdinaryObject obj = CreateLoadRequestObject(calleeContext, load.getNameOrNull(),
@@ -517,7 +517,7 @@ public final class ModuleLoading {
             Object hook = Get(calleeContext, loaderObj, "instantiate");
             /* step 8 */
             if (!IsCallable(hook)) {
-                throw newTypeError(calleeContext, Messages.Key.NotCallable);
+                throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "instantiate");
             }
             /* step 9 */
             OrdinaryObject obj = CreateLoadRequestObject(calleeContext, load.getNameOrNull(),
@@ -591,7 +591,7 @@ public final class ModuleLoading {
                 Object execute = Get(calleeContext, instantiateResultObject, "execute");
                 // TODO: assert callable here?
                 if (!IsCallable(execute)) {
-                    throw newTypeError(calleeContext, Messages.Key.NotCallable);
+                    throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "execute");
                 }
                 load.dynamic((Callable) execute);
             } else {
@@ -870,11 +870,11 @@ public final class ModuleLoading {
             Object source = this.moduleSource;
             /* step 6 */
             if (loader.getModules().containsKey(name)) {
-                throw newTypeError(calleeContext, Messages.Key.InternalError);
+                throw newTypeError(calleeContext, Messages.Key.InternalError);// TODO: error message
             }
             /* step 7 */
             if (loader.getLoads().containsKey(name)) {
-                throw newTypeError(calleeContext, Messages.Key.InternalError);
+                throw newTypeError(calleeContext, Messages.Key.InternalError);// TODO: error message
             }
             /* steps 8-9 */
             Load load = CreateLoad(calleeContext, name, moduleMetadata);
