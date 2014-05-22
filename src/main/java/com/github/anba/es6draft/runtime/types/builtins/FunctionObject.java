@@ -187,9 +187,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      */
     public final void setLegacyCaller(FunctionObject caller) {
         if (caller == null || caller.isStrict()) {
-            this.caller.applyValue(NULL);
+            this.caller.setValue(NULL);
         } else {
-            this.caller.applyValue(caller);
+            this.caller.setValue(caller);
         }
     }
 
@@ -200,7 +200,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      *            the new arguments value
      */
     public final void setLegacyArguments(ExoticLegacyArguments arguments) {
-        this.arguments.applyValue(arguments);
+        this.arguments.setValue(arguments);
     }
 
     /**
@@ -212,8 +212,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      *            the old arguments value
      */
     public final void restoreLegacyProperties(Object oldCaller, Object oldArguments) {
-        this.caller.applyValue(oldCaller);
-        this.arguments.applyValue(oldArguments);
+        this.caller.setValue(oldCaller);
+        this.arguments.setValue(oldArguments);
     }
 
     @Override

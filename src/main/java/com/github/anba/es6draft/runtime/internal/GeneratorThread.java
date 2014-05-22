@@ -10,7 +10,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * {@link Thread} subclass used for Generators and Generator Comprehensions
+ * {@link Thread} subclass used for Generators and Generator Comprehensions.
  */
 public final class GeneratorThread extends Thread {
     private static final int MAX_STACK_DEPTH = 1000;

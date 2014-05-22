@@ -149,7 +149,7 @@ final class ParameterMap {
     }
 
     /**
-     * Removes mapping for {@code arguments[propertyKey]}.
+     * Removes the mapping for {@code arguments[propertyKey]}.
      * 
      * @param propertyKey
      *            the property key

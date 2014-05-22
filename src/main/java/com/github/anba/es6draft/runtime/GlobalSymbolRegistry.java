@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import com.github.anba.es6draft.runtime.types.Symbol;
 
@@ -19,7 +18,7 @@ import com.github.anba.es6draft.runtime.types.Symbol;
  * </ul>
  */
 public final class GlobalSymbolRegistry {
-    private final Map<String, Symbol> elements = new HashMap<>();
+    private final HashMap<String, Symbol> elements = new HashMap<>();
 
     /**
      * Returns the symbol which is mapped to {@code key}, or creates a new mapping.

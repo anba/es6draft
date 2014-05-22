@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.LexicalEnvironment.newDeclarativeEnvironment;
 import static com.github.anba.es6draft.runtime.LexicalEnvironment.newFunctionEnvironment;
-import static java.util.Objects.requireNonNull;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
@@ -74,8 +73,8 @@ public final class ExecutionContext {
     }
 
     public void setCurrentGenerator(GeneratorObject generator) {
-        assert this.generator == null;
-        this.generator = requireNonNull(generator);
+        assert this.generator == null && generator != null;
+        this.generator = generator;
     }
 
     /**
@@ -135,13 +134,10 @@ public final class ExecutionContext {
      * <li>15 ECMAScript Language: Scripts and Modules
      * <ul>
      * <li>15.1 Script
-     * <ul>
-     * <li>15.1.2 Runtime Semantics
-     * </ul>
      * </ul>
      * </ul>
      * <p>
-     * Runtime Semantics: Script Evaluation
+     * 15.1.7 Runtime Semantics: ScriptEvaluation
      * 
      * @param realm
      *            the realm instance

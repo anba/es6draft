@@ -174,7 +174,7 @@ public final class Property implements Cloneable {
      * @param value
      *            the new value
      */
-    public void applyValue(Object value) {
+    public void setValue(Object value) {
         assert isDataDescriptor() && value != null;
         this.value = value;
     }

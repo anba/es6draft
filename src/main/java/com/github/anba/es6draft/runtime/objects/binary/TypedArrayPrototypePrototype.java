@@ -198,7 +198,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 /* step 19 */
                 double numberLength = ToNumber(cx, srcLen);
                 /* steps 20-21 */
-                double srcLength = ToInteger(numberLength);
+                double srcLength = ToInteger(numberLength);// TODO: spec bug - call ToLength()?
                 /* step 22 */
                 if (numberLength != srcLength || srcLength < 0) {
                     throw newRangeError(cx, Messages.Key.InvalidByteOffset);
@@ -527,9 +527,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             if (length == 1) {
                 // just to trigger possible side-effects (which shouldn't actually be possible
                 // unless there's a spec bug...)
-                Object e = Get(cx, obj, "0");
+                Object e = Get(cx, obj, 0);
                 assert Type.isNumber(e);
-                Put(cx, obj, "0", e, true);
+                Put(cx, obj, 0, e, true);
                 return obj;
             }
 

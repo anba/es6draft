@@ -21,7 +21,6 @@ import com.github.anba.es6draft.regexp.RegExpParser;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.SmallArrayList;
-import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 
 /**
  * Parser for ECMAScript6 source code
@@ -35,7 +34,7 @@ import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 public final class Parser {
     private static final boolean DEBUG = false;
 
-    private static final int MAX_ARGUMENTS = FunctionPrototype.getMaxArguments();
+    private static final int MAX_ARGUMENTS = 0x4000;
     private static final List<Binding> NO_INHERITED_BINDING = Collections.emptyList();
     private static final Set<String> EMPTY_LABEL_SET = Collections.emptySet();
 

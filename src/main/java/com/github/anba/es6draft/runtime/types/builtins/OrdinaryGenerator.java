@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.F
 
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -85,7 +86,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     /**
      * 14.4 Generator Function Definitions
      * <p>
-     * 14.4.11 Runtime Semantics: EvaluateBody
+     * 14.4.14 Runtime Semantics: EvaluateBody
      * 
      * <pre>
      * GeneratorBody : FunctionBody
@@ -98,9 +99,10 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
      * @return the generator result value
      */
     public static GeneratorObject EvaluateBody(ExecutionContext cx, OrdinaryGenerator functionObject) {
-        // FIXME: spec bug - (function*(a=0){})() (Bug 2640)
         /* step 1 */
-        // assert cx.getLexicalEnvironment().getEnvRec() instanceof FunctionEnvironmentRecord;
+        assert cx.getVariableEnvironment() == cx.getLexicalEnvironment();
+        assert cx.getLexicalEnvironment().getEnvRec() instanceof FunctionEnvironmentRecord
+                || cx.getLexicalEnvironment().getOuter().getEnvRec() instanceof FunctionEnvironmentRecord;
         /* step 2 */
         EnvironmentRecord env = cx.getThisEnvironment();
         /* step 3 */

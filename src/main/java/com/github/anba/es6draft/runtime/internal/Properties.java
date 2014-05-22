@@ -101,7 +101,7 @@ public final class Properties {
         int arity();
 
         /**
-         * Returns the function attributes, default to <code>{[[Writable]]: true, [[Enumerable]]:
+         * Returns the function attributes, defaults to <code>{[[Writable]]: true, [[Enumerable]]:
          * false, [[Configurable]]: true}</code>.
          * 
          * @return the function attributes
@@ -139,7 +139,7 @@ public final class Properties {
         BuiltinSymbol symbol() default BuiltinSymbol.NONE;
 
         /**
-         * Returns the value attributes, default to <code>{[[Writable]]: true, [[Enumerable]]:
+         * Returns the value attributes, defaults to <code>{[[Writable]]: true, [[Enumerable]]:
          * false, [[Configurable]]: true}</code>.
          * 
          * @return the value attributes
@@ -181,7 +181,7 @@ public final class Properties {
         Type type();
 
         /**
-         * Returns the accessor attributes, default to <code>{[[Enumerable]]:
+         * Returns the accessor attributes, defaults to <code>{[[Enumerable]]:
          * false, [[Configurable]]: true}</code>.
          * 
          * @return the accessor attributes
@@ -212,7 +212,7 @@ public final class Properties {
         BuiltinSymbol symbol() default BuiltinSymbol.NONE;
 
         /**
-         * Returns the function attributes, default to <code>{[[Writable]]: true, [[Enumerable]]:
+         * Returns the function attributes, defaults to <code>{[[Writable]]: true, [[Enumerable]]:
          * false, [[Configurable]]: true}</code>.
          * 
          * @return the function attributes

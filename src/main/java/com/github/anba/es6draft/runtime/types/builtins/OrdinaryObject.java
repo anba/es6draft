@@ -908,6 +908,7 @@ public class OrdinaryObject implements ScriptObject {
         return false;
     }
 
+    /** 9.1.8 [[Get]] (P, Receiver) */
     @Override
     public final Object get(ExecutionContext cx, long propertyKey, Object receiver) {
         if (IndexedMap.isIndex(propertyKey)) {
@@ -1046,6 +1047,7 @@ public class OrdinaryObject implements ScriptObject {
         return getter.call(cx, receiver);
     }
 
+    /** 9.1.9 [[Set] (P, V, Receiver) */
     @Override
     public final boolean set(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
         if (IndexedMap.isIndex(propertyKey)) {

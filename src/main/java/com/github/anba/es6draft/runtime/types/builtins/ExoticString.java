@@ -189,7 +189,7 @@ public final class ExoticString extends OrdinaryObject {
      * @param keys
      *            the property keys
      */
-    private void addStringIndices(List<? super String> keys) {
+    private void addStringIndices(ArrayList<? super String> keys) {
         for (int i = 0, length = getStringDataOrEmpty().length(); i < length; ++i) {
             keys.add(Integer.toString(i));
         }

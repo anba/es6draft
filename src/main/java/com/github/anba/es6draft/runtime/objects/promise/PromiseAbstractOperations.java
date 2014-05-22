@@ -548,7 +548,7 @@ public final class PromiseAbstractOperations {
     public static ScriptObject PromiseCatch(ExecutionContext cx, ScriptObject promise,
             Callable onRejected) {
         // TODO: make safe
-        Object p = PromisePrototype.Properties._catch(cx, promise, onRejected);
+        Object p = PromisePrototype.Properties.then(cx, promise, UNDEFINED, onRejected);
         assert p instanceof ScriptObject;
         return (ScriptObject) p;
     }

@@ -6,10 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * {@link Future} with an immediate result
@@ -37,13 +35,12 @@ public class ImmediateFuture<V> implements Future<V> {
     }
 
     @Override
-    public V get() throws InterruptedException, ExecutionException {
+    public V get() {
         return result;
     }
 
     @Override
-    public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException,
-            TimeoutException {
+    public V get(long timeout, TimeUnit unit) {
         return result;
     }
 }
