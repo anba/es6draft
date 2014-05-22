@@ -171,6 +171,7 @@ eval-stack-trace.js
 
 # V8 Realm API
 contextual-calls.js
+cross-realm-filtering.js
 regress/regress-280531.js
 
 # readbuffer function
