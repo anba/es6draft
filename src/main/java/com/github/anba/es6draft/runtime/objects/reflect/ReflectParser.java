@@ -138,6 +138,9 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         ImportDeclaration(),
         ImportSpecifier(),
 
+        // Async
+        AwaitExpression(),
+
         ;
         /* @formatter:on */
 
@@ -767,12 +770,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(AwaitExpression node, Void value) {
-        // TODO: add own expression node
         Object argument = acceptOrNull(node.getExpression(), value);
-        if (hasBuilder(Type.YieldExpression)) {
-            return call(Type.YieldExpression, node, argument);
-        }
-        OrdinaryObject expression = createExpression(node, Type.YieldExpression);
+        OrdinaryObject expression = createExpression(node, Type.AwaitExpression);
         addProperty(expression, "argument", argument);
         return expression;
     }
