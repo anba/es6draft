@@ -70,6 +70,11 @@ public enum BuiltinSymbol {
         return symbols.get(this);
     }
 
+    @Override
+    public String toString() {
+        return "Symbol." + name();
+    }
+
     private static final EnumMap<BuiltinSymbol, Symbol> symbols;
     static {
         EnumMap<BuiltinSymbol, Symbol> map = new EnumMap<>(BuiltinSymbol.class);
