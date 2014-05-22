@@ -139,4 +139,21 @@ public enum Intrinsics {/* @formatter:off */
     public String getKey() {
         return '%' + name() + '%';
     }
+
+    /**
+     * Returns {@code true} if the intrinsic is internal.
+     * 
+     * @return {@code true} if internal intrinsic
+     */
+    public boolean isInternal() {
+        switch (this) {
+        case ListIteratorNext:
+        case InternalError:
+        case InternalErrorPrototype:
+        case LegacyGeneratorPrototype:
+            return true;
+        default:
+            return false;
+        }
+    }
 }

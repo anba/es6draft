@@ -15,8 +15,6 @@ import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareFor
 import static com.github.anba.es6draft.runtime.objects.reflect.RealmConstructor.IndirectEval;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.util.EnumSet;
-
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
@@ -139,7 +137,7 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             OrdinaryObject table = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             /* step 6 */
             for (Intrinsics intrinsic : Intrinsics.values()) {
-                if (internalIntrinsics.contains(intrinsic)) {
+                if (intrinsic.isInternal()) {
                     continue;
                 }
                 String intrinsicKey = intrinsic.getKey();
@@ -147,13 +145,6 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             }
             /* step 7 */
             return table;
-        }
-
-        // TODO: move to Intrinsics enum class?
-        private static final EnumSet<Intrinsics> internalIntrinsics;
-        static {
-            internalIntrinsics = EnumSet.of(Intrinsics.ListIteratorNext, Intrinsics.InternalError,
-                    Intrinsics.InternalErrorPrototype, Intrinsics.LegacyGeneratorPrototype);
         }
 
         /**
