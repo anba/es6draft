@@ -88,7 +88,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 JSONParser parser = new JSONParser(cx, jtext);
                 unfiltered = parser.parse();
             } catch (ParserException e) {
-                throw newSyntaxError(cx, Messages.Key.InvalidJSONLiteral);
+                throw newSyntaxError(cx, Messages.Key.JSONInvalidLiteral);
             }
             /* step 8 */
             if (IsCallable(reviver)) {
@@ -410,7 +410,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             Callable replacerFunction, String indent, String gap, ScriptObject value) {
         /* step 1 */
         if (stack.contains(value)) {
-            throw newTypeError(cx, Messages.Key.CyclicValue);
+            throw newTypeError(cx, Messages.Key.JSONCyclicValue);
         }
         /* step 2 */
         stack.add(value);
@@ -492,7 +492,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             Callable replacerFunction, String indent, String gap, ExoticArray value) {
         /* step 1 */
         if (stack.contains(value)) {
-            throw newTypeError(cx, Messages.Key.CyclicValue);
+            throw newTypeError(cx, Messages.Key.JSONCyclicValue);
         }
         /* step 2 */
         stack.add(value);

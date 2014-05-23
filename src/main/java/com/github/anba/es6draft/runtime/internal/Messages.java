@@ -192,6 +192,8 @@ public final class Messages {
         ModulesUnresolvedImport("modules.unresolved_import"),
         ModulesUnresolvedExport("modules.unresolved_export"),
         ModulesDuplicateExport("modules.duplicate_export"),
+        ModulesDuplicateModule("modules.duplicate_module"),
+        ModulesAlreadyLoading("modules.already_loading"),
         ModulesCyclicExport("modules.cyclic_export"),
 
         // 18 The Global Object
@@ -237,8 +239,8 @@ public final class Messages {
         JSONInvalidStringLiteral("json.invalid_string_literal"),
         JSONInvalidUnicodeEscape("json.invalid_unicode_escape"),
         JSONInvalidNumberLiteral("json.invalid_number_literal"),
-        InvalidJSONLiteral("json.invalid_json_literal"),
-        CyclicValue("json.cyclic_value"),
+        JSONInvalidLiteral("json.invalid_json_literal"),
+        JSONCyclicValue("json.cyclic_value"),
 
         // 24.1 Binary Data Objects
         OutOfMemory("binary.out_of_memory"),
@@ -270,6 +272,9 @@ public final class Messages {
         ProxyNotConfigurable("proxy.not_configurable"),
         ProxyAbsentOrConfigurable("proxy.absent_or_configurable"),
         ProxyAbsentNotExtensible("proxy.absent_not_extensible"),
+
+        // # 26.3 Loader Objects
+        LoaderFetchNotImplemented("loader.fetch_not_implemented"),
 
         // Intl
         IntlStructurallyInvalidLanguageTag("intl.structurally_invalid_language_tag"),

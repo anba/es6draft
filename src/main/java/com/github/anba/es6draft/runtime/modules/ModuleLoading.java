@@ -870,11 +870,11 @@ public final class ModuleLoading {
             Object source = this.moduleSource;
             /* step 6 */
             if (loader.getModules().containsKey(name)) {
-                throw newTypeError(calleeContext, Messages.Key.InternalError);// TODO: error message
+                throw newTypeError(calleeContext, Messages.Key.ModulesDuplicateModule, name);
             }
             /* step 7 */
             if (loader.getLoads().containsKey(name)) {
-                throw newTypeError(calleeContext, Messages.Key.InternalError);// TODO: error message
+                throw newTypeError(calleeContext, Messages.Key.ModulesAlreadyLoading, name);
             }
             /* steps 8-9 */
             Load load = CreateLoad(calleeContext, name, moduleMetadata);
