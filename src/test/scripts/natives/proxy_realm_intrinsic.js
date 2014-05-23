@@ -15,63 +15,63 @@ if (typeof assertEq === 'undefined') {
 
 // Create a new, blank realm
 
-let s = Object.create(null);
-
-let r = new Reflect.Realm({}, {
+let stdlib = Object.create(null);
+let realm = new Reflect.Realm({}, {
   defineProperty(t, pk, d) {
-    Reflect.defineProperty(s, pk, d);
+    Reflect.defineProperty(stdlib, pk, d);
     if (d.configurable) {
       return true;
     }
     return Reflect.defineProperty(t, pk, d);
   }
 });
+let intrinsics = realm.intrinsics;
 
-assertEq(Object.getOwnPropertyNames(r.global).length, ["Infinity", "NaN", "undefined"].length);
-assertEq(Object.getOwnPropertySymbols(r.global).length, 0);
+assertEq(Object.getOwnPropertyNames(realm.global).length, ["Infinity", "NaN", "undefined"].length);
+assertEq(Object.getOwnPropertySymbols(realm.global).length, 0);
 
 
 // 18.3  Constructor Properties of the Global Object
 
-assertEq(s.Array, %IntrinsicFrom("Array", r));
-assertEq(s.ArrayBuffer, %IntrinsicFrom("ArrayBuffer", r));
-assertEq(s.Boolean, %IntrinsicFrom("Boolean", r));
-assertEq(s.DataView, %IntrinsicFrom("DataView", r));
-assertEq(s.Date, %IntrinsicFrom("Date", r));
-assertEq(s.Error, %IntrinsicFrom("Error", r));
-assertEq(s.EvalError, %IntrinsicFrom("EvalError", r));
-assertEq(s.Float32Array, %IntrinsicFrom("Float32Array", r));
-assertEq(s.Float64Array, %IntrinsicFrom("Float64Array", r));
-assertEq(s.Function, %IntrinsicFrom("Function", r));
-assertEq(s.Int8Array, %IntrinsicFrom("Int8Array", r));
-assertEq(s.Int16Array, %IntrinsicFrom("Int16Array", r));
-assertEq(s.Int32Array, %IntrinsicFrom("Int32Array", r));
-assertEq(s.Map, %IntrinsicFrom("Map", r));
-assertEq(s.Number, %IntrinsicFrom("Number", r));
-assertEq(s.Object, %IntrinsicFrom("Object", r));
-assertEq(s.RangeError, %IntrinsicFrom("RangeError", r));
-assertEq(s.ReferenceError, %IntrinsicFrom("ReferenceError", r));
-assertEq(s.RegExp, %IntrinsicFrom("RegExp", r));
-assertEq(s.Set, %IntrinsicFrom("Set", r));
-assertEq(s.String, %IntrinsicFrom("String", r));
-assertEq(s.Symbol, %IntrinsicFrom("Symbol", r));
-assertEq(s.SyntaxError, %IntrinsicFrom("SyntaxError", r));
-assertEq(s.TypeError, %IntrinsicFrom("TypeError", r));
-assertEq(s.Uint8Array, %IntrinsicFrom("Uint8Array", r));
-assertEq(s.Uint8ClampedArray, %IntrinsicFrom("Uint8ClampedArray", r));
-assertEq(s.Uint16Array, %IntrinsicFrom("Uint16Array", r));
-assertEq(s.Uint32Array, %IntrinsicFrom("Uint32Array", r));
-assertEq(s.URIError, %IntrinsicFrom("URIError", r));
-assertEq(s.WeakMap, %IntrinsicFrom("WeakMap", r));
-assertEq(s.WeakSet, %IntrinsicFrom("WeakSet", r));
+assertEq(stdlib.Array, intrinsics.Array);
+assertEq(stdlib.ArrayBuffer, intrinsics.ArrayBuffer);
+assertEq(stdlib.Boolean, intrinsics.Boolean);
+assertEq(stdlib.DataView, intrinsics.DataView);
+assertEq(stdlib.Date, intrinsics.Date);
+assertEq(stdlib.Error, intrinsics.Error);
+assertEq(stdlib.EvalError, intrinsics.EvalError);
+assertEq(stdlib.Float32Array, intrinsics.Float32Array);
+assertEq(stdlib.Float64Array, intrinsics.Float64Array);
+assertEq(stdlib.Function, intrinsics.Function);
+assertEq(stdlib.Int8Array, intrinsics.Int8Array);
+assertEq(stdlib.Int16Array, intrinsics.Int16Array);
+assertEq(stdlib.Int32Array, intrinsics.Int32Array);
+assertEq(stdlib.Map, intrinsics.Map);
+assertEq(stdlib.Number, intrinsics.Number);
+assertEq(stdlib.Object, intrinsics.Object);
+assertEq(stdlib.RangeError, intrinsics.RangeError);
+assertEq(stdlib.ReferenceError, intrinsics.ReferenceError);
+assertEq(stdlib.RegExp, intrinsics.RegExp);
+assertEq(stdlib.Set, intrinsics.Set);
+assertEq(stdlib.String, intrinsics.String);
+assertEq(stdlib.Symbol, intrinsics.Symbol);
+assertEq(stdlib.SyntaxError, intrinsics.SyntaxError);
+assertEq(stdlib.TypeError, intrinsics.TypeError);
+assertEq(stdlib.Uint8Array, intrinsics.Uint8Array);
+assertEq(stdlib.Uint8ClampedArray, intrinsics.Uint8ClampedArray);
+assertEq(stdlib.Uint16Array, intrinsics.Uint16Array);
+assertEq(stdlib.Uint32Array, intrinsics.Uint32Array);
+assertEq(stdlib.URIError, intrinsics.URIError);
+assertEq(stdlib.WeakMap, intrinsics.WeakMap);
+assertEq(stdlib.WeakSet, intrinsics.WeakSet);
 
 // 18.4  Other Properties of the Global Object
-assertEq(s.JSON, %IntrinsicFrom("JSON", r));
-assertEq(s.Math, %IntrinsicFrom("Math", r));
+assertEq(stdlib.JSON, intrinsics.JSON);
+assertEq(stdlib.Math, intrinsics.Math);
 // TODO: See fixme in proxy.js
-// assertEq(s.Proxy, %IntrinsicFrom("Proxy", r));
-assertEq(s.Reflect, %IntrinsicFrom("Reflect", r));
-assertEq(s.System, %IntrinsicFrom("System", r));
+// assertEq(stdlib.Proxy, intrinsics.Proxy);
+assertEq(stdlib.Reflect, intrinsics.Reflect);
+assertEq(stdlib.System, intrinsics.System);
 
 // ECMA - 402
-assertEq(s.Intl, %IntrinsicFrom("Intl", r));
+assertEq(stdlib.Intl, intrinsics.Intl);

@@ -55,7 +55,7 @@ assertEq(WeakSet, %Intrinsic("WeakSet"));
 assertEq(JSON, %Intrinsic("JSON"));
 assertEq(Math, %Intrinsic("Math"));
 // TODO: See fixme in proxy.js
-// assertEq(s.Proxy, %Intrinsic("Proxy"));
+// assertEq(Proxy, %Intrinsic("Proxy"));
 assertEq(Reflect, %Intrinsic("Reflect"));
 assertEq(System, %Intrinsic("System"));
 

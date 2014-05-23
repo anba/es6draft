@@ -18,7 +18,7 @@ const globalThis = %GlobalThis();
 
 assertEq(globalThis, this);
 if (globalThis === globalObject) {
-  assertEq(globalObject, {});
+  assertEq(globalObject, "<fail>");
 }
 
 // 18.3  Constructor Properties of the Global Object

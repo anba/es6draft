@@ -7,12 +7,9 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
-import com.github.anba.es6draft.runtime.objects.reflect.RealmObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -42,14 +39,6 @@ public final class NativeCalls {
             if (args.length == 1 && Type.isString(args[0])) {
                 String intrinsicName = Type.stringValue(args[0]).toString();
                 return Intrinsic(cx, intrinsicName);
-            }
-            break;
-        }
-        case "IntrinsicFrom": {
-            if (args.length == 2 && Type.isString(args[0]) && args[1] instanceof RealmObject) {
-                String intrinsicName = Type.stringValue(args[0]).toString();
-                RealmObject realmObject = (RealmObject) args[1];
-                return IntrinsicFrom(cx, intrinsicName, realmObject);
             }
             break;
         }
@@ -91,29 +80,6 @@ public final class NativeCalls {
     public static OrdinaryObject Intrinsic(ExecutionContext cx, String name) {
         Intrinsics id = Intrinsics.valueOf(name);
         return cx.getRealm().getIntrinsic(id);
-    }
-
-    /**
-     * Native function: {@code %IntrinsicFrom(<name>, <realm>)}.
-     * <p>
-     * Returns the intrinsic by name.
-     * 
-     * @param cx
-     *            the execution class
-     * @param name
-     *            the intrinsic name
-     * @param realmObject
-     *            the realm object
-     * @return the intrinsic
-     */
-    public static OrdinaryObject IntrinsicFrom(ExecutionContext cx, String name,
-            RealmObject realmObject) {
-        Intrinsics id = Intrinsics.valueOf(name);
-        Realm realm = realmObject.getRealm();
-        if (realm == null) {
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        return realm.getIntrinsic(id);
     }
 
     /**

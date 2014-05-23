@@ -137,7 +137,7 @@ public enum Intrinsics {/* @formatter:off */
      * @return the intrinsic key
      */
     public String getKey() {
-        return '%' + name() + '%';
+        return name();
     }
 
     /**
