@@ -27,16 +27,31 @@ public final class WeakSetObject extends OrdinaryObject {
         super(realm);
     }
 
+    /**
+     * [[WeakSetData]]
+     * <p>
+     * Returns the underlying set data.
+     * 
+     * @return the underlying set data
+     */
     public WeakHashMap<ScriptObject, Boolean> getWeakSetData() {
         return weakSetData;
     }
 
+    /**
+     * Initializes this WeakSet instance.
+     */
     public void initialize() {
         assert this.weakSetData == null : "WeakSet already initialized";
         // no ephemeron tables in java :(
         this.weakSetData = new WeakHashMap<>();
     }
 
+    /**
+     * Returns {@code true} if this WeakSet instance is initialized.
+     * 
+     * @return {@code true} if this object initialized
+     */
     public boolean isInitialized() {
         return weakSetData != null;
     }

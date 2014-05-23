@@ -19,7 +19,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 
 /**
- *
+ * Concrete implementation of the {@link ScriptEngineFactory} interface.
  */
 public final class ScriptEngineFactoryImpl implements ScriptEngineFactory {
     @Override

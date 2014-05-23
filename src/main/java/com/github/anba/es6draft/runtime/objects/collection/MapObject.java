@@ -28,6 +28,8 @@ public final class MapObject extends OrdinaryObject {
 
     /**
      * [[MapData]]
+     * <p>
+     * Returns the underlying map data.
      * 
      * @return the underlying map data
      */
@@ -35,11 +37,19 @@ public final class MapObject extends OrdinaryObject {
         return mapData;
     }
 
+    /**
+     * Initializes this Map instance.
+     */
     public void initialize() {
         assert this.mapData == null : "Map already initialized";
         this.mapData = new LinkedMapImpl<Object>();
     }
 
+    /**
+     * Returns {@code true} if this Map instance is initialized.
+     * 
+     * @return {@code true} if this object initialized
+     */
     public boolean isInitialized() {
         return mapData != null;
     }

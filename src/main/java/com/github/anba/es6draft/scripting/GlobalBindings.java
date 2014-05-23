@@ -23,17 +23,30 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
- *
+ * Concrete implementation of the {@link Bindings} interface.
  */
 final class GlobalBindings implements Bindings {
     private final GlobalObject globalObject;
-    private final GlobalEnvironmentRecord envRec;
+    private final GlobalEnvironmentRecord globalEnvRec;
 
     public GlobalBindings(GlobalObject globalObject) {
         this.globalObject = globalObject;
-        this.envRec = globalObject.getRealm().getGlobalEnv().getEnvRec();
+        this.globalEnvRec = globalObject.getRealm().getGlobalEnv().getEnvRec();
     }
 
+    /**
+     * Converts <var>key</var> to a binding name.
+     * 
+     * @param key
+     *            the key
+     * @return the binding name
+     * @throws ClassCastException
+     *             if <var>key</var> is not a {@link String}
+     * @throws NullPointerException
+     *             if <var>key</var> is {@code null}
+     * @throws IllegalArgumentException
+     *             if <var>key</var> is the empty string
+     */
     private static String toBindingName(Object key) {
         String name = (String) key;
         if (name.isEmpty()) {
@@ -46,6 +59,11 @@ final class GlobalBindings implements Bindings {
         return containsKey(name) ? get(name) : null;
     }
 
+    /**
+     * Returns the global object this {@link Bindings} instance is bound to.
+     * 
+     * @return the global object
+     */
     GlobalObject getGlobalObject() {
         return globalObject;
     }
@@ -54,7 +72,7 @@ final class GlobalBindings implements Bindings {
     public Object put(String key, Object value) {
         String name = toBindingName(key);
         Object oldValue = getOrNull(name);
-        envRec.setMutableBinding(name, fromJava(value), false);
+        globalEnvRec.setMutableBinding(name, fromJava(value), false);
         return oldValue;
     }
 
@@ -68,13 +86,13 @@ final class GlobalBindings implements Bindings {
     @Override
     public boolean containsKey(Object key) {
         String name = toBindingName(key);
-        return envRec.hasBinding(name);
+        return globalEnvRec.hasBinding(name);
     }
 
     @Override
     public Object get(Object key) {
         String name = toBindingName(key);
-        Object value = envRec.getBindingValue(name, false);
+        Object value = globalEnvRec.getBindingValue(name, false);
         return toJava(value);
     }
 
@@ -82,13 +100,13 @@ final class GlobalBindings implements Bindings {
     public Object remove(Object key) {
         String name = toBindingName(key);
         Object oldValue = getOrNull(name);
-        envRec.deleteBinding(name);
+        globalEnvRec.deleteBinding(name);
         return oldValue;
     }
 
     @Override
     public Set<String> keySet() {
-        return Collections.unmodifiableSet(envRec.bindingNames());
+        return Collections.unmodifiableSet(globalEnvRec.bindingNames());
     }
 
     @Override

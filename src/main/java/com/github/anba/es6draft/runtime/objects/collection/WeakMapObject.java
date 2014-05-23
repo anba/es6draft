@@ -27,16 +27,31 @@ public final class WeakMapObject extends OrdinaryObject {
         super(realm);
     }
 
+    /**
+     * [[WeakMapData]]
+     * <p>
+     * Returns the underlying map data.
+     * 
+     * @return the underlying map data
+     */
     public WeakHashMap<ScriptObject, Object> getWeakMapData() {
         return weakMapData;
     }
 
+    /**
+     * Initializes this WeakMap instance.
+     */
     public void initialize() {
         assert this.weakMapData == null : "WeakMap already initialized";
         // no ephemeron tables in java :(
         this.weakMapData = new WeakHashMap<>();
     }
 
+    /**
+     * Returns {@code true} if this WeakMap instance is initialized.
+     * 
+     * @return {@code true} if this object initialized
+     */
     public boolean isInitialized() {
         return weakMapData != null;
     }

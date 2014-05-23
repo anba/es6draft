@@ -6,6 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -33,12 +37,17 @@ public final class GeneratorThread extends Thread {
     }
 
     /**
-     * Creates a new {@link ThreadFactory} to create {@link GeneratorThread} objects.
+     * Submits <var>callable</var> to a new generator thread.
      * 
-     * @return the new thread factory instance
+     * @param callable
+     *            the callable
+     * @return the future representing the pending result
      */
-    public static ThreadFactory newGeneratorThreadFactory() {
-        return new GeneratorThreadFactory();
+    public static <V> Future<V> submit(Callable<V> callable) {
+        ExecutorService executor = Executors.newSingleThreadExecutor(new GeneratorThreadFactory());
+        Future<V> future = executor.submit(callable);
+        executor.shutdown();
+        return future;
     }
 
     private static final class GeneratorThreadFactory implements ThreadFactory {

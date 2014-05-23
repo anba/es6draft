@@ -35,6 +35,8 @@ import com.github.anba.es6draft.runtime.types.Type;
  * </ul>
  */
 public class OrdinaryObject implements ScriptObject {
+    private static final int STRING_PROPERTIES_DEFAULT_INITIAL_CAPACITY = 16;
+    private static final int SYMBOL_PROPERTIES_DEFAULT_INITIAL_CAPACITY = 4;
     // Maps for String and Symbol valued property keys
     private final LinkedHashMap<String, Property> properties;
     private final LinkedHashMap<Symbol, Property> symbolProperties;
@@ -53,8 +55,8 @@ public class OrdinaryObject implements ScriptObject {
 
     public OrdinaryObject(Realm realm) {
         this.realm = realm;
-        this.properties = new LinkedHashMap<>();
-        this.symbolProperties = new LinkedHashMap<>(4);
+        this.properties = new LinkedHashMap<>(STRING_PROPERTIES_DEFAULT_INITIAL_CAPACITY);
+        this.symbolProperties = new LinkedHashMap<>(SYMBOL_PROPERTIES_DEFAULT_INITIAL_CAPACITY);
         this.indexedProperties = new IndexedMap<>();
     }
 

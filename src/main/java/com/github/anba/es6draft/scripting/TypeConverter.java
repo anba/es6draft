@@ -11,7 +11,7 @@ import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
- * Simple type conversions from/to Java types
+ * Type conversions from/to Java types
  */
 final class TypeConverter {
     private TypeConverter() {

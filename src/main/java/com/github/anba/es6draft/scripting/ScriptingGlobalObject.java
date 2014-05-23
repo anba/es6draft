@@ -15,7 +15,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
- * 
+ * {@link GlobalObject} implementation for the JSR-223 Scripting API.
  */
 public final class ScriptingGlobalObject extends GlobalObject {
     public ScriptingGlobalObject(Realm realm) {

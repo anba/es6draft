@@ -14,7 +14,7 @@ import javax.script.ScriptException;
 import com.github.anba.es6draft.Script;
 
 /**
- *
+ * Concrete implementation of the {@link CompiledScript} abstract class.
  */
 final class CompiledScriptImpl extends CompiledScript {
     private final ScriptEngineImpl scriptEngine;

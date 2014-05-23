@@ -8,19 +8,17 @@ package com.github.anba.es6draft.runtime.objects.iteration;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResultObject;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
-import static com.github.anba.es6draft.runtime.internal.GeneratorThread.newGeneratorThreadFactory;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.lang.invoke.MethodHandle;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.GeneratorThread;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
@@ -343,9 +341,7 @@ public final class GeneratorObject extends OrdinaryObject {
         private void start0() {
             in = new SynchronousQueue<>();
             out = new SynchronousQueue<>();
-            ExecutorService executor = Executors
-                    .newSingleThreadExecutor(newGeneratorThreadFactory());
-            future = executor.submit(new Callable<Object>() {
+            future = GeneratorThread.submit(new Callable<Object>() {
                 @Override
                 public Object call() throws Exception {
                     Object result;
@@ -361,7 +357,6 @@ public final class GeneratorObject extends OrdinaryObject {
                     return result;
                 }
             });
-            executor.shutdown();
         }
 
         private Object evaluate(MethodHandle handle, ExecutionContext cx) {

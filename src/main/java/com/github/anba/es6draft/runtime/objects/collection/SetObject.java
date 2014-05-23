@@ -28,6 +28,8 @@ public final class SetObject extends OrdinaryObject {
 
     /**
      * [[SetData]]
+     * <p>
+     * Returns the underlying set data.
      * 
      * @return the underlying set data
      */
@@ -35,11 +37,19 @@ public final class SetObject extends OrdinaryObject {
         return setData;
     }
 
+    /**
+     * Initializes this Set instance.
+     */
     public void initialize() {
         assert this.setData == null : "Set already initialized";
         this.setData = new LinkedMapImpl<Void>();
     }
 
+    /**
+     * Returns {@code true} if this Set instance is initialized.
+     * 
+     * @return {@code true} if this object initialized
+     */
     public boolean isInitialized() {
         return setData != null;
     }

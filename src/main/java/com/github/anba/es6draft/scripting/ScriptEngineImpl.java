@@ -45,7 +45,7 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- *
+ * Concrete implementation of the {@link AbstractScriptEngine} abstract class.
  */
 final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngine, Compilable,
         Invocable {
@@ -202,14 +202,19 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
     }
 
     private Realm getEvalRealm(ScriptContext context) {
+        return getBindings(context).getGlobalObject().getRealm();
+    }
+
+    private GlobalBindings getBindings(ScriptContext context) {
         Bindings bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
         if (bindings instanceof GlobalBindings) {
+            // Return engine scope bindings as-is if compatible, i.e. from the same world instance
             GlobalBindings globalBindings = (GlobalBindings) bindings;
-            Realm realm = globalBindings.getGlobalObject().getRealm();
-            if (realm.getWorld() == world) {
-                return realm;
+            if (globalBindings.getGlobalObject().getRealm().getWorld() == world) {
+                return globalBindings;
             }
         }
-        return createBindings().getGlobalObject().getRealm();
+        // Otherwise create a fresh binding instance
+        return createBindings();
     }
 }

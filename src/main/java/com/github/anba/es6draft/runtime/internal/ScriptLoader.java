@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
+import static com.github.anba.es6draft.runtime.internal.RuntimeWorkerThreadFactory.createThreadPoolExecutor;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,10 +21,6 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.Script;
@@ -43,9 +41,6 @@ import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionConst
  * 
  */
 public final class ScriptLoader {
-    private static final int THREAD_POOL_SIZE = 2;
-    private static final long THREAD_POOL_TTL = 5 * 60;
-
     private final boolean finalizeExecutor;
     private final ExecutorService executor;
     private final EnumSet<CompatibilityOption> options;
@@ -561,39 +556,5 @@ public final class ScriptLoader {
             sb.append(cbuf, 0, len);
         }
         return sb.toString();
-    }
-
-    private static ThreadPoolExecutor createThreadPoolExecutor() {
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(THREAD_POOL_SIZE, THREAD_POOL_SIZE,
-                THREAD_POOL_TTL, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
-                new RuntimeThreadFactory());
-        executor.allowCoreThreadTimeOut(true);
-        return executor;
-    }
-
-    private static final class RuntimeThreadFactory implements ThreadFactory {
-        private static final AtomicInteger runtimeCount = new AtomicInteger(0);
-        private final AtomicInteger workerCount = new AtomicInteger(0);
-        private final ThreadGroup group;
-        private final String namePrefix;
-
-        RuntimeThreadFactory() {
-            SecurityManager sec = System.getSecurityManager();
-            group = sec != null ? sec.getThreadGroup() : Thread.currentThread().getThreadGroup();
-            namePrefix = "runtime-" + runtimeCount.incrementAndGet() + "-worker-";
-        }
-
-        @Override
-        public Thread newThread(Runnable r) {
-            String name = namePrefix + workerCount.incrementAndGet();
-            Thread newThread = new Thread(group, r, name);
-            if (!newThread.isDaemon()) {
-                newThread.setDaemon(true);
-            }
-            if (newThread.getPriority() != Thread.NORM_PRIORITY) {
-                newThread.setPriority(Thread.NORM_PRIORITY);
-            }
-            return newThread;
-        }
     }
 }
