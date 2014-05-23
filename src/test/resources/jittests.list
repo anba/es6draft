@@ -523,3 +523,6 @@ tests/basic/bug710947.js
 
 # Intermittent stackoverflow error
 tests/auto-regress/bug622167.js
+
+# Too much recursion in interpreter
+tests/basic/bug1013922.js
