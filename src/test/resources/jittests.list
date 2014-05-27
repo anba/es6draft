@@ -447,6 +447,8 @@ tests/basic/testNeutering.js
 tests/basic/offThreadCompileScript-02.js
 # newGlobal() with principal option
 tests/basic/shell-principals.js
+# isLatin1, toLatin1
+tests/basic/latin1.js
 
 # Unsupported 'Testing' functions
 # gcparam
