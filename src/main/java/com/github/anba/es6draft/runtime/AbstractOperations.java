@@ -35,6 +35,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
+import com.github.anba.es6draft.runtime.objects.internal.CompoundIterator;
 import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
@@ -705,23 +706,28 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.16 CanonicalNumericString(argument)
+     * 7.1.16 CanonicalNumericIndexString(argument)
      * 
      * @param value
      *            the argument value
-     * @return the canonical number or {@code -0d} if not canonical
+     * @return the canonical number or {@code NaN} if not canonical
      */
-    public static double CanonicalNumericString(String value) {
+    public static double CanonicalNumericIndexString(String value) {
         /* step 1 (not applicable) */
-        /* step 2 */
-        double n = ToNumber(value);
         /* step 3 */
+        double n = ToNumber(value);
+        /* step 2 */
         if (n == 0 && Double.compare(n, -0d) == 0) {
-            return +0d;
+            return Double.NEGATIVE_INFINITY;
         }
+        // FIXME: spec issue https://bugs.ecmascript.org/show_bug.cgi?id=2049
         /* step 4 */
         if (!value.equals(ToString(n))) {
-            return -0d;
+            return Double.NaN;
+        }
+        // Directly perform IsInteger() check and encode non-integer indices as -Infinity.
+        if (!IsInteger(n)) {
+            return Double.NEGATIVE_INFINITY;
         }
         /* step 5 */
         return n;
@@ -2204,7 +2210,7 @@ public final class AbstractOperations {
      *            the array elements
      * @return the array object
      */
-    public static ExoticArray CreateArrayFromList(ExecutionContext cx, List<?> elements) {
+    public static <T> ExoticArray CreateArrayFromList(ExecutionContext cx, List<T> elements) {
         /* step 1 (not applicable) */
         /* step 2 */
         ExoticArray array = ArrayCreate(cx, 0);
@@ -2747,7 +2753,7 @@ public final class AbstractOperations {
      *            the source iterable
      * @return a new script object iterator
      */
-    public static ScriptObject CreateListIterator(ExecutionContext cx, Iterable<?> list) {
+    public static <T> ScriptObject CreateListIterator(ExecutionContext cx, Iterable<T> list) {
         return ListIterator.CreateListIterator(cx, list.iterator());
     }
 
@@ -2760,7 +2766,7 @@ public final class AbstractOperations {
      *            the source iterator
      * @return a new script object iterator
      */
-    public static ScriptObject CreateListIterator(ExecutionContext cx, Iterator<?> iterator) {
+    public static <T> ScriptObject CreateListIterator(ExecutionContext cx, Iterator<T> iterator) {
         return ListIterator.CreateListIterator(cx, iterator);
     }
 
@@ -2776,6 +2782,22 @@ public final class AbstractOperations {
         List<?> empty = Collections.emptyList();
         /* step 2 */
         return CreateListIterator(cx, empty);
+    }
+
+    /**
+     * 7.4.10 CreateCompoundIterator ( iterator1, iterator2 )
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator1
+     *            the first source iterator
+     * @param iterator2
+     *            the second source iterator
+     * @return a new script object iterator
+     */
+    public static <T> ScriptObject CreateCompoundIterator(ExecutionContext cx,
+            Iterator<T> iterator1, Iterator<T> iterator2) {
+        return CompoundIterator.CreateCompoundIterator(cx, iterator1, iterator2);
     }
 
     /**

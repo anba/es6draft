@@ -260,7 +260,7 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.1 ResolveBinding(name)
+     * 8.3.1 ResolveBinding(name) Abstract Operation
      * 
      * @param name
      *            the binding name
@@ -274,7 +274,7 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.2 GetThisEnvironment
+     * 8.3.2 GetThisEnvironment() Abstract Operation
      * 
      * @return the first environment record with a this-binding
      */
@@ -293,7 +293,7 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.3 ResolveThisBinding
+     * 8.3.3 ResolveThisBinding() Abstract Operation
      * 
      * @return the this-binding object
      */
@@ -305,7 +305,7 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.4 GetGlobalObject
+     * 8.3.4 GetGlobalObject() Abstract Operation
      * 
      * @return the global object instance
      */

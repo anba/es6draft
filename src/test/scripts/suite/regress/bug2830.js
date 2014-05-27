@@ -22,7 +22,7 @@ function* zip(a, b) {
 {
   let indices = [0, -0, +0, "0", "-0", "+0"];
   let arrayExpected = [7, 7, 7, 7, void 0, void 0];
-  let typedArrayExpected = [7, 7, 7, 7, 7, void 0];
+  let typedArrayExpected = [7, 7, 7, 7, void 0, void 0];
   let array = [7];
   let typedArray = new Int8Array(array);
 

@@ -14,7 +14,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static java.util.Arrays.asList;
 
 import java.util.HashSet;
@@ -126,8 +125,8 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
 
     @Override
     public void initialize(ExecutionContext cx) {
+        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
-        AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override

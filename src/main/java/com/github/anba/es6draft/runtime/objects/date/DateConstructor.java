@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.date.DateAbstractOperations.*;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -45,8 +44,8 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
 
     @Override
     public void initialize(ExecutionContext cx) {
+        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
-        AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override

@@ -15,6 +15,7 @@ import java.io.StringReader;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
@@ -80,9 +81,12 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
 
     @Override
     public GlobalBindings createBindings() {
-        ScriptingGlobalObject global = world.newGlobal();
-        global.initialize();
-        global.defineBuiltinProperties();
+        ScriptingGlobalObject global;
+        try {
+            global = world.newInitializedGlobal();
+        } catch (ParserException | CompilationException | IOException | URISyntaxException e) {
+            throw new IllegalStateException(e);
+        }
         return new GlobalBindings(global);
     }
 

@@ -52,24 +52,25 @@ public final class ExoticArguments extends OrdinaryObject {
      */
     @Override
     protected Property getProperty(ExecutionContext cx, long propertyKey) {
-        /* step 1 */
-        Property desc = super.getProperty(cx, propertyKey);
+        /* step 1 (not applicable) */
         /* step 2 */
+        Property desc = ordinaryGetOwnProperty(propertyKey);
+        /* step 3 */
         if (desc == null) {
             return desc;
         }
-        /* step 3 */
-        ParameterMap map = this.parameterMap;
         /* step 4 */
+        ParameterMap map = this.parameterMap;
+        /* steps 5-6 */
         boolean isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
-        /* step 5 */
+        /* step 7 */
         if (isMapped) {
             PropertyDescriptor d = desc.toPropertyDescriptor();
             d.setValue(map.get(propertyKey));
             desc = d.toProperty();
         }
-        /* step 6 (not applicable) */
-        /* step 7 */
+        /* step 8 (not applicable) */
+        /* step 9 */
         return desc;
     }
 
@@ -78,20 +79,21 @@ public final class ExoticArguments extends OrdinaryObject {
      */
     @Override
     protected Property getProperty(ExecutionContext cx, String propertyKey) {
-        /* step 1 */
-        Property desc = super.getProperty(cx, propertyKey);
+        /* step 1 (not applicable) */
         /* step 2 */
+        Property desc = ordinaryGetOwnProperty(propertyKey);
+        /* step 3 */
         if (desc == null) {
             return desc;
         }
-        /* steps 3-5 (not applicable) */
-        /* step 6 */
+        /* steps 4-7 (not applicable) */
+        /* step 8 */
         if (desc.isDataDescriptor() && "caller".equals(propertyKey)
                 && isStrictFunction(desc.getValue())
                 && cx.getRealm().isEnabled(CompatibilityOption.FunctionPrototype)) {
             throw newTypeError(cx, Messages.Key.StrictModePoisonPill);
         }
-        /* step 7 */
+        /* step 9 */
         return desc;
     }
 
@@ -100,17 +102,18 @@ public final class ExoticArguments extends OrdinaryObject {
      */
     @Override
     protected boolean defineProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
-        /* step 1 */
-        ParameterMap map = this.parameterMap;
+        /* step 1 (not applicable) */
         /* step 2 */
+        ParameterMap map = this.parameterMap;
+        /* step 3 */
         boolean isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
-        /* steps 3-4 */
-        boolean allowed = super.defineProperty(cx, propertyKey, desc);
-        /* step 5 */
+        /* steps 4-5 */
+        boolean allowed = ordinaryDefineOwnProperty(cx, propertyKey, desc);
+        /* step 6 */
         if (!allowed) {
             return false;
         }
-        /* step 6 */
+        /* step 7 */
         if (isMapped) {
             if (desc.isAccessorDescriptor()) {
                 map.delete(propertyKey);
@@ -123,7 +126,7 @@ public final class ExoticArguments extends OrdinaryObject {
                 }
             }
         }
-        /* step 7 */
+        /* step 8 */
         return true;
     }
 
@@ -203,13 +206,13 @@ public final class ExoticArguments extends OrdinaryObject {
         ParameterMap map = this.parameterMap;
         /* steps 2-3 */
         boolean isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
-        /* step 4 */
+        /* steps 4-5 */
         boolean result = super.deleteProperty(cx, propertyKey);
-        /* step 5 */
+        /* step 6 */
         if (result && isMapped) {
             map.delete(propertyKey);
         }
-        /* step 6 */
+        /* step 7 */
         return result;
     }
 
@@ -228,29 +231,29 @@ public final class ExoticArguments extends OrdinaryObject {
             Object[] argumentsList) {
         /* step 1 */
         int len = argumentsList.length;
-        /* step 2 */
+        /* steps 2-3 */
         ExoticArguments obj = new ExoticArguments(cx.getRealm());
         obj.setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
-        /* step 3 */
+        /* step 4 */
         DefinePropertyOrThrow(cx, obj, "length", new PropertyDescriptor(len, true, false, true));
-        /* steps 4-5 */
+        /* steps 5-6 */
         for (int index = 0; index < len; ++index) {
             Object val = argumentsList[index];
             CreateDataProperty(cx, obj, index, val);
         }
         Callable thrower = cx.getRealm().getThrowTypeError();
-        /* step 6 */
+        /* step 7 */
         DefinePropertyOrThrow(cx, obj, BuiltinSymbol.iterator.get(),
                 new PropertyDescriptor(cx.getIntrinsic(Intrinsics.ArrayProto_values), true, false,
                         true));
-        /* step 7 */
+        /* step 8 */
         DefinePropertyOrThrow(cx, obj, "caller", new PropertyDescriptor(thrower, thrower, false,
                 false));
-        /* step 8 */
+        /* step 9 */
         DefinePropertyOrThrow(cx, obj, "callee", new PropertyDescriptor(thrower, thrower, false,
                 false));
-        /* step 9 (not applicable) */
-        /* step 10 */
+        /* step 10 (not applicable) */
+        /* step 11 */
         return obj;
     }
 

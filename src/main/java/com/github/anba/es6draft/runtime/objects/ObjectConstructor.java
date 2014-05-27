@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -54,8 +53,8 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
     @Override
     public void initialize(ExecutionContext cx) {
+        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
-        AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override
@@ -436,9 +435,9 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         public static Object keys(ExecutionContext cx, Object thisValue, Object o) {
             /* steps 1-2 */
             ScriptObject obj = ToObject(cx, o);
-            /* steps 3-7 */
+            /* steps 3-10 */
             List<String> nameList = GetOwnEnumerablePropertyNames(cx, obj);
-            /* step 8 */
+            /* step 11 */
             return CreateArrayFromList(cx, nameList);
         }
 
@@ -462,7 +461,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.2.1 Object.assign ( target, source )
+         * 19.1.2.1 Object.assign ( target, ...sources )
          * 
          * @param cx
          *            the execution context
@@ -470,29 +469,28 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
          *            the function this-value
          * @param target
          *            the target object
-         * @param source
+         * @param sources
          *            the source objects
          * @return the target object
          */
         @Function(name = "assign", arity = 2)
         public static Object assign(ExecutionContext cx, Object thisValue, Object target,
-                Object... source) {
+                Object... sources) {
             /* steps 1-2 */
             ScriptObject to = ToObject(cx, target);
             /* step 3 */
-            if (source.length == 0) {
+            if (sources.length == 0) {
                 return to;
             }
             /* steps 4-5 */
-            for (Object nextSource : source) {
+            for (Object nextSource : sources) {
                 /* steps 5.a-5.b */
                 ScriptObject from = ToObject(cx, nextSource);
                 /* steps 5.c-5.h */
                 Iterator<?> keys = from.ownKeys(cx);
-                /* step 5.i (omitted) */
-                /* step 5.j */
+                /* step 5.i */
                 ScriptException pendingException = null;
-                /* step 5.k */
+                /* step 5.j */
                 while (keys.hasNext()) {
                     // FIXME: missing ToPropertyKey() call in specification
                     Object nextKey = ToPropertyKey(cx, keys.next());
@@ -513,7 +511,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                         }
                     }
                 }
-                /* step 5.l */
+                /* step 5.k */
                 if (pendingException != null) {
                     throw pendingException;
                 }
@@ -620,7 +618,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 19.1.2.8.1 GetOwnPropertyKey ( O, Type ) Abstract Operation, with Type = String
+     * 19.1.2.8.1 GetOwnPropertyKeys ( O, Type ) Abstract Operation, with Type = String
      * 
      * @param cx
      *            the execution context
@@ -631,24 +629,23 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     public static ExoticArray GetOwnPropertyNames(ExecutionContext cx, Object o) {
         /* steps 1-2 */
         ScriptObject obj = ToObject(cx, o);
-        /* steps 3-4 */
+        /* steps 3-8 */
         Iterator<?> keys = obj.ownKeys(cx);
-        /* step 5 */
+        /* step 9 */
         List<String> nameList = new ArrayList<>();
-        /* step 6 (omitted) */
-        /* step 7 */
+        /* step 10 */
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());
             if (key instanceof String) {
                 nameList.add((String) key);
             }
         }
-        /* step 8 */
+        /* step 11 */
         return CreateArrayFromList(cx, nameList);
     }
 
     /**
-     * 19.1.2.8.1 GetOwnPropertyKey ( O, Type ) Abstract Operation, with Type = Symbol
+     * 19.1.2.8.1 GetOwnPropertyKeys ( O, Type ) Abstract Operation, with Type = Symbol
      * 
      * @param cx
      *            the execution context
@@ -659,19 +656,18 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     public static ExoticArray GetOwnPropertySymbols(ExecutionContext cx, Object o) {
         /* steps 1-2 */
         ScriptObject obj = ToObject(cx, o);
-        /* steps 3-4 */
+        /* steps 3-8 */
         Iterator<?> keys = obj.ownKeys(cx);
-        /* step 5 */
+        /* step 9 */
         List<Symbol> nameList = new ArrayList<>();
-        /* step 6 (omitted) */
-        /* step 7 */
+        /* step 10 */
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());
             if (key instanceof Symbol) {
                 nameList.add((Symbol) key);
             }
         }
-        /* step 8 */
+        /* step 11 */
         return CreateArrayFromList(cx, nameList);
     }
 }

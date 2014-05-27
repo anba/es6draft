@@ -24,6 +24,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -47,8 +48,8 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
 
     @Override
     public void initialize(ExecutionContext cx) {
+        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
-        AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override
@@ -73,11 +74,11 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
             bodyText = ToFlatString(calleeContext, args[0]);
         } else {
             Object firstArg = args[0];
-            p.append(ToString(calleeContext, firstArg));
+            p.append(ToFlatString(calleeContext, firstArg));
             int k = 2;
             for (; k < argCount; ++k) {
                 Object nextArg = args[k - 1];
-                CharSequence nextArgString = ToString(calleeContext, nextArg);
+                String nextArgString = ToFlatString(calleeContext, nextArg);
                 p.append(',').append(nextArgString);
             }
             bodyText = ToFlatString(calleeContext, args[k - 1]);
@@ -86,9 +87,8 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         /* steps 8-11 */
         RuntimeInfo.Function function;
         try {
-            Realm realm = calleeContext.getRealm();
-            function = realm.getScriptLoader().function("<Function>", 1, p.toString(), bodyText)
-                    .getFunction();
+            ScriptLoader scriptLoader = calleeContext.getRealm().getScriptLoader();
+            function = scriptLoader.function("<Function>", 1, p.toString(), bodyText).getFunction();
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(calleeContext);
         }
@@ -99,26 +99,23 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         LexicalEnvironment<GlobalEnvironmentRecord> scope = calleeContext.getRealm().getGlobalEnv();
         /* step 14 */
         Object f = thisValue;
-        /* steps 15-16 */
+        /* step 15 */
         if (!(f instanceof FunctionObject) || ((FunctionObject) f).getCode() != null) {
             ScriptObject proto = GetPrototypeFromConstructor(calleeContext, this,
                     Intrinsics.FunctionPrototype);
             f = FunctionAllocate(calleeContext, proto, strict, FunctionKind.Normal);
-        } else {
-            // FIXME: this also updates uninitialized generator (not function!) (bug 2855)
-            ((FunctionObject) f).setStrict(strict);
         }
-        /* step 17 */
+        /* step 16 */
         if (!(f instanceof OrdinaryFunction)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         OrdinaryFunction fn = (OrdinaryFunction) f;
-        /* steps 18-20 */
+        /* steps 17-19 */
         if (!IsExtensible(calleeContext, fn)) {
             throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
-        /* step 21 */
-        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, function, scope);
+        /* steps 20-21 */
+        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, strict, function, scope);
         /* step 22 */
         if (function.hasSuperReference()) {
             MakeMethod(fn, (String) null, null);
@@ -180,10 +177,11 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         @Function(name = "[Symbol.create]", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
+            /* steps 1-3 */
             ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue,
                     Intrinsics.FunctionPrototype);
-            OrdinaryFunction obj = FunctionAllocate(cx, proto, false, FunctionKind.Normal);
-            return obj;
+            /* step 4 */
+            return FunctionAllocate(cx, proto, false, FunctionKind.Normal);
         }
     }
 }

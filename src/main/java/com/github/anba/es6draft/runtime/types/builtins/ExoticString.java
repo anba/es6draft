@@ -6,9 +6,12 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateCompoundIterator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -89,17 +92,26 @@ public final class ExoticString extends OrdinaryObject {
      */
     @Override
     protected Property getProperty(ExecutionContext cx, long propertyKey) {
+        /* step 1 (not applicable) */
+        /* step 2 */
         Property desc = ordinaryGetOwnProperty(propertyKey);
+        /* step 3 */
         if (desc != null) {
             return desc;
         }
+        /* steps 4-9 (not applicable) */
+        /* step 10 */
         CharSequence str = getStringDataOrEmpty();
+        /* step 11 */
         int len = str.length();
+        /* step 12 */
         if (len <= propertyKey) {
             return null;
         }
         int index = (int) propertyKey;
+        /* step 13 */
         CharSequence resultStr = str.subSequence(index, index + 1);
+        /* step 14 */
         return new Property(resultStr, false, true, false);
     }
 
@@ -107,9 +119,23 @@ public final class ExoticString extends OrdinaryObject {
      * 9.4.3.2 [[Enumerate]] ()
      */
     @Override
+    @SuppressWarnings("unchecked")
+    public ScriptObject enumerate(ExecutionContext cx) {
+        // FIXME: spec issue - override necessary because of bug xxxx
+        return CreateCompoundIterator(cx, (Iterator<Object>) enumerateKeys(cx),
+                Collections.emptyIterator());
+    }
+
+    /**
+     * 9.4.3.2 [[Enumerate]] ()
+     */
+    @Override
     protected List<String> getEnumerableKeys(ExecutionContext cx) {
+        /* step 1 */
         ArrayList<String> keys = new ArrayList<>();
+        /* steps 2-4 */
         addStringIndices(keys);
+        /* steps 5-6 */
         if (!indexedProperties().isEmpty()) {
             keys.addAll(indexedProperties().keys(getStringDataOrEmpty().length(),
                     0x1F_FFFF_FFFF_FFFFL));
@@ -117,6 +143,7 @@ public final class ExoticString extends OrdinaryObject {
         if (!properties().isEmpty()) {
             keys.addAll(properties().keySet());
         }
+        /* step 7 */
         return keys;
     }
 
@@ -125,18 +152,24 @@ public final class ExoticString extends OrdinaryObject {
      */
     @Override
     protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
+        /* step 1 */
         ArrayList<Object> ownKeys = new ArrayList<>();
+        /* steps 2-4 */
         addStringIndices(ownKeys);
+        /* step 5 */
         if (!indexedProperties().isEmpty()) {
             ownKeys.addAll(indexedProperties().keys(getStringDataOrEmpty().length(),
                     0x1F_FFFF_FFFF_FFFFL));
         }
+        /* step 6 */
         if (!properties().isEmpty()) {
             ownKeys.addAll(properties().keySet());
         }
+        /* step 7 */
         if (!symbolProperties().isEmpty()) {
             ownKeys.addAll(symbolProperties().keySet());
         }
+        /* step 8 */
         return ownKeys;
     }
 
@@ -159,10 +192,11 @@ public final class ExoticString extends OrdinaryObject {
      * @return the new string exotic object
      */
     public static ExoticString StringCreate(ExecutionContext cx, ScriptObject prototype) {
-        // steps 1-7, 9 (implicit)
+        /* steps 1-5, 7 (implicit) */
         ExoticString obj = new ExoticString(cx.getRealm());
-        // step 8
+        /* step 6 */
         obj.setPrototype(prototype);
+        /* step 8 */
         return obj;
     }
 

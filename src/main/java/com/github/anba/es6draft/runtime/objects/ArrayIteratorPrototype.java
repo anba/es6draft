@@ -51,7 +51,7 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
      * 22.1.5.3 Properties of Array Iterator Instances
      */
     public enum ArrayIterationKind {
-        Key, Value, KeyValue, SparseKey, SparseValue, SparseKeyValue
+        Key, Value, KeyValue
     }
 
     /**
@@ -155,33 +155,29 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
             }
             /* step 12 */
             iter.nextIndex = index + 1;
-            /* step 13 */
-            Object elementValue = null;
-            if (itemKind == ArrayIterationKind.Value || itemKind == ArrayIterationKind.KeyValue
-                    || itemKind == ArrayIterationKind.SparseValue
-                    || itemKind == ArrayIterationKind.SparseKeyValue) {
-                long elementKey = index;
-                elementValue = Get(cx, array, elementKey);
-            }
-            if (itemKind == ArrayIterationKind.KeyValue
-                    || itemKind == ArrayIterationKind.SparseKeyValue) {
-                /* step 14 */
-                assert elementValue != null;
-                ExoticArray result = ArrayCreate(cx, 2);
-                CreateDataProperty(cx, result, 0, (Long) index);
-                CreateDataProperty(cx, result, 1, elementValue);
-                return CreateIterResultObject(cx, result, false);
-            } else if (itemKind == ArrayIterationKind.Key
-                    || itemKind == ArrayIterationKind.SparseKey) {
-                /* step 15 */
-                return CreateIterResultObject(cx, index, false);
+            /* steps 13-16 */
+            Object result;
+            if (itemKind == ArrayIterationKind.Key) {
+                /* step 13 */
+                result = index;
             } else {
-                /* steps 16-17 */
-                assert itemKind == ArrayIterationKind.Value
-                        || itemKind == ArrayIterationKind.SparseValue;
-                assert elementValue != null;
-                return CreateIterResultObject(cx, elementValue, false);
+                /* step 14 */
+                long elementKey = index;
+                Object elementValue = Get(cx, array, elementKey);
+                if (itemKind == ArrayIterationKind.Value) {
+                    /* step 15 */
+                    result = elementValue;
+                } else {
+                    /* step 16 */
+                    assert itemKind == ArrayIterationKind.KeyValue;
+                    ExoticArray _result = ArrayCreate(cx, 2);
+                    CreateDataProperty(cx, _result, 0, (Long) index);
+                    CreateDataProperty(cx, _result, 1, elementValue);
+                    result = _result;
+                }
             }
+            /* step 17 */
+            return CreateIterResultObject(cx, result, false);
         }
 
         /**

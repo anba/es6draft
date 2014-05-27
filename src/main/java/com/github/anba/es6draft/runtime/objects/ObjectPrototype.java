@@ -32,19 +32,16 @@ import com.github.anba.es6draft.runtime.objects.date.DateObject;
 import com.github.anba.es6draft.runtime.objects.number.NumberObject;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticLegacyArguments;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -99,18 +96,15 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             }
             /* step 3 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 4-15 */
+            /* steps 4-13 */
             String builtinTag;
             if (o instanceof ExoticArray) {
                 builtinTag = "Array";
             } else if (o instanceof ExoticString) {
                 builtinTag = "String";
-            } else if (o instanceof ExoticProxy) {
-                builtinTag = "Proxy";
             } else if (o instanceof ExoticArguments || o instanceof ExoticLegacyArguments) {
                 builtinTag = "Arguments";
-            } else if (o instanceof FunctionObject || o instanceof BuiltinFunction
-                    || o instanceof ExoticBoundFunction) {
+            } else if (o instanceof Callable) {
                 builtinTag = "Function";
             } else if (o instanceof ErrorObject) {
                 builtinTag = "Error";
@@ -125,13 +119,15 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             } else {
                 builtinTag = "Object";
             }
-            /* steps 15-16 */
+            /* steps 14-15 */
             boolean hasTag = HasProperty(cx, o, BuiltinSymbol.toStringTag.get());
-            /* steps 17-18 */
+            /* steps 16-17 */
             String tag;
             if (!hasTag) {
+                /* step 16 */
                 tag = builtinTag;
             } else {
+                /* step 17 */
                 try {
                     Object ttag = Get(cx, o, BuiltinSymbol.toStringTag.get());
                     if (Type.isString(ttag)) {
@@ -147,7 +143,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
                     tag = "~" + tag;
                 }
             }
-            /* step 19 */
+            /* step 18 */
             return "[object " + tag + "]";
         }
 
@@ -264,18 +260,18 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             Object p = ToPropertyKey(cx, v);
             /* steps 3-4 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* step 5 */
+            /* steps 5-6 */
             Property desc;
             if (p instanceof String) {
                 desc = o.getOwnProperty(cx, (String) p);
             } else {
                 desc = o.getOwnProperty(cx, (Symbol) p);
             }
-            /* step 6 */
+            /* step 7 */
             if (desc == null) {
                 return false;
             }
-            /* step 7 */
+            /* step 8 */
             return desc.isEnumerable();
         }
     }

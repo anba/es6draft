@@ -120,9 +120,9 @@ public final class NativesV8Test {
         }
 
         @Override
-        public void initialize() throws IOException, URISyntaxException, ParserException,
+        public void initializeScripted() throws IOException, URISyntaxException, ParserException,
                 CompilationException {
-            // super.initialize();
+            // super.initializeScripted();
             includeNative(getScriptURL("compat.js"));
             includeNative(getScriptURL("cyclic.js"));
             includeNative(getScriptURL("generator.js"));

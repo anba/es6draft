@@ -282,7 +282,7 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 20.2.2.24 Math.max ( value1, value2 [ , ...values ] )
+         * 20.2.2.24 Math.max ( value1, value2, ...values )
          * 
          * @param cx
          *            the execution context
@@ -308,7 +308,7 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 20.2.2.25 Math.min ( value1, value2 [ , ...values ] )
+         * 20.2.2.25 Math.min ( value1, value2, ...values )
          * 
          * @param cx
          *            the execution context
@@ -634,7 +634,7 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 20.2.2.18 Math.hypot ( value1 , value2 [ , ...values ] )
+         * 20.2.2.18 Math.hypot ( value1, value2, ...values )
          * 
          * @param cx
          *            the execution context

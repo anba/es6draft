@@ -6,7 +6,7 @@
  */
 
 const {
-  assertSame, assertNotSame
+  assertSame
 } = Assert;
 
 // 9.2.8 AddRestrictedFunctionProperties: Use %ThrowTypeError% from function's [[Realm]]?
@@ -20,5 +20,5 @@ const {
 
   let foreignThrower = Object.getOwnPropertyDescriptor(f, "caller").get;
   let cloneThrower = Object.getOwnPropertyDescriptor(clone, "caller").get;
-  assertNotSame(foreignThrower, cloneThrower);
+  assertSame(foreignThrower, cloneThrower);
 }

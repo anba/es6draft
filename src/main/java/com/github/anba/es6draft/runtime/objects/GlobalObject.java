@@ -6,16 +6,17 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
+import static com.github.anba.es6draft.runtime.Realm.SetDefaultGlobalBindings;
 import static com.github.anba.es6draft.runtime.internal.Errors.newURIError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.Eval.indirectEval;
-import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Iterator;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
@@ -29,10 +30,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtensi
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Property;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -55,7 +52,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
+    public final void initialize(ExecutionContext cx) {
         createProperties(cx, this, ValueProperties.class);
         createProperties(cx, this, FunctionProperties.class);
         createProperties(cx, this, URIHandlingFunctions.class);
@@ -65,74 +62,17 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
     }
 
     /**
-     * Initializes the global this with the default properties of the Global Object.
-     */
-    public final void defineBuiltinProperties() {
-        defineBuiltinProperties(getRealm().defaultContext(), getRealm().getGlobalThis());
-    }
-
-    /**
-     * Initializes {@code object} with the default properties of the Global Object.
+     * Initializes implementation defined extensions.
      * 
      * @param cx
      *            the execution context
-     * @param object
-     *            the script object
      */
-    public final void defineBuiltinProperties(ExecutionContext cx, ScriptObject object) {
-        // FIXME: spec issue - copy non-standard properties?
-        Iterator<?> keys = ownKeys(cx);
-        while (keys.hasNext()) {
-            Object key = ToPropertyKey(cx, keys.next());
-            if (key instanceof String) {
-                String propertyKey = (String) key;
-                Property prop = getOwnProperty(cx, propertyKey);
-                if (prop != null) {
-                    PropertyDescriptor desc = prop.toPropertyDescriptor();
-                    DefinePropertyOrThrow(cx, object, propertyKey, desc);
-                }
-            } else {
-                Symbol propertyKey = (Symbol) key;
-                Property prop = getOwnProperty(cx, propertyKey);
-                if (prop != null) {
-                    PropertyDescriptor desc = prop.toPropertyDescriptor();
-                    DefinePropertyOrThrow(cx, object, propertyKey, desc);
-                }
-            }
-        }
+    protected void initializeExtensions(ExecutionContext cx) {
+        /* empty */
     }
 
     /**
-     * Retrieves the default properties of the Global Object.
-     * 
-     * @param cx
-     *            the execution context
-     * @return the built-in properties of the Global Object
-     */
-    public final OrdinaryObject getBuiltinProperties(ExecutionContext cx) {
-        OrdinaryObject props = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        // FIXME: spec issue - copy non-standard properties?
-        Iterator<?> keys = ownKeys(cx);
-        while (keys.hasNext()) {
-            Object key = ToPropertyKey(cx, keys.next());
-            if (key instanceof String) {
-                String propertyKey = (String) key;
-                // TODO: skip if 'prop' is null?
-                Property prop = getOwnProperty(cx, propertyKey);
-                Object desc = FromPropertyDescriptor(cx, prop);
-                CreateDataPropertyOrThrow(cx, props, propertyKey, desc);
-            } else {
-                Symbol propertyKey = (Symbol) key;
-                Property prop = getOwnProperty(cx, propertyKey);
-                Object desc = FromPropertyDescriptor(cx, prop);
-                CreateDataPropertyOrThrow(cx, props, propertyKey, desc);
-            }
-        }
-        return props;
-    }
-
-    /**
-     * Execute any initialization scripts which should be run for this global instance.
+     * Executes any initialization scripts which should be run for this global instance.
      * 
      * @throws IOException
      *             if there was any I/O error
@@ -143,10 +83,35 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public void initialize() throws IOException, URISyntaxException, ParserException,
+    public void initializeScripted() throws IOException, URISyntaxException, ParserException,
             CompilationException {
-        // TODO: rename to avoid confusion with initialize(cx) method
         /* empty */
+    }
+
+    /**
+     * 8.5.1 InitializeFirstRealm ( realm ) Abstract Operation
+     * <p>
+     * Initializes the global this with the default properties of the Global Object.
+     * 
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws URISyntaxException
+     *             the URL is not a valid URI
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
+     */
+    public final void initializeFirstRealmGlobal() throws IOException, URISyntaxException,
+            ParserException, CompilationException {
+        ExecutionContext cx = getRealm().defaultContext();
+        // Execute initialization scripts
+        initializeScripted();
+        /* steps 1-3 (not applicable) */
+        /* steps 4-5 */
+        SetDefaultGlobalBindings(cx, getRealm());
+        /* step 6 */
+        initializeExtensions(cx);
     }
 
     /**

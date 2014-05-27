@@ -10,6 +10,8 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -34,6 +36,8 @@ public final class ExoticModule extends OrdinaryObject {
     /** [[Exports]] */
     private final List<String> exports;
 
+    private List<String> sortedExports;
+
     public ExoticModule(Realm realm, LexicalEnvironment<?> moduleEnvironment, List<String> exports) {
         super(realm);
         this.moduleEnvironment = moduleEnvironment;
@@ -46,6 +50,15 @@ public final class ExoticModule extends OrdinaryObject {
 
     public List<String> getExports() {
         return exports;
+    }
+
+    private List<String> getSortedExports() {
+        if (sortedExports == null) {
+            ArrayList<String> sorted = new ArrayList<>(exports);
+            Collections.sort(sorted);
+            sortedExports = sorted;
+        }
+        return sortedExports;
     }
 
     /** 9.4.6.1 [[GetPrototypeOf]] ( ) */
@@ -211,7 +224,7 @@ public final class ExoticModule extends OrdinaryObject {
     /** 9.4.6.11 [[Enumerate]] () */
     @Override
     protected List<String> getEnumerableKeys(ExecutionContext cx) {
-        return exports;
+        return getSortedExports();
     }
 
     @Override
@@ -225,7 +238,7 @@ public final class ExoticModule extends OrdinaryObject {
     @Override
     @SuppressWarnings("unchecked")
     protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        return (List<Object>) (List<?>) exports;
+        return (List<Object>) (List<?>) getSortedExports();
     }
 
     /**

@@ -460,11 +460,11 @@ public class OrdinaryObject implements ScriptObject {
      */
     protected final boolean ordinaryDefineOwnProperty(ExecutionContext cx, long propertyKey,
             PropertyDescriptor desc) {
-        /* step 1 */
+        /* steps 1-2 */
         Property current = getProperty(cx, propertyKey);
-        /* step 2 */
-        boolean extensible = isExtensible();
         /* step 3 */
+        boolean extensible = isExtensible();
+        /* step 4 */
         return validateAndApplyPropertyDescriptor(indexedProperties, propertyKey, extensible, desc,
                 current);
     }
@@ -482,11 +482,11 @@ public class OrdinaryObject implements ScriptObject {
      */
     protected final boolean ordinaryDefineOwnProperty(ExecutionContext cx, String propertyKey,
             PropertyDescriptor desc) {
-        /* step 1 */
+        /* steps 1-2 */
         Property current = getProperty(cx, propertyKey);
-        /* step 2 */
-        boolean extensible = isExtensible();
         /* step 3 */
+        boolean extensible = isExtensible();
+        /* step 4 */
         return validateAndApplyPropertyDescriptor(properties, propertyKey, extensible, desc,
                 current);
     }
@@ -504,11 +504,11 @@ public class OrdinaryObject implements ScriptObject {
      */
     protected final boolean ordinaryDefineOwnProperty(ExecutionContext cx, Symbol propertyKey,
             PropertyDescriptor desc) {
-        /* step 1 */
+        /* steps 1-2 */
         Property current = getProperty(cx, propertyKey);
-        /* step 2 */
-        boolean extensible = isExtensible();
         /* step 3 */
+        boolean extensible = isExtensible();
+        /* step 4 */
         return validateAndApplyPropertyDescriptor(symbolProperties, propertyKey, extensible, desc,
                 current);
     }
@@ -1270,18 +1270,19 @@ public class OrdinaryObject implements ScriptObject {
      * @return {@code true} if the property was successfully deleted
      */
     protected boolean deleteProperty(ExecutionContext cx, long propertyKey) {
-        /* step 2 */
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
         Property desc = getProperty(cx, propertyKey);
-        /* step 3 */
+        /* step 4 */
         if (desc == null) {
             return true;
         }
-        /* step 4 */
+        /* step 5 */
         if (desc.isConfigurable()) {
             indexedProperties.remove(propertyKey);
             return true;
         }
-        /* step 5 */
+        /* step 6 */
         return false;
     }
 
@@ -1295,18 +1296,19 @@ public class OrdinaryObject implements ScriptObject {
      * @return {@code true} if the property was successfully deleted
      */
     protected boolean deleteProperty(ExecutionContext cx, String propertyKey) {
-        /* step 2 */
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
         Property desc = getProperty(cx, propertyKey);
-        /* step 3 */
+        /* step 4 */
         if (desc == null) {
             return true;
         }
-        /* step 4 */
+        /* step 5 */
         if (desc.isConfigurable()) {
             properties.remove(propertyKey);
             return true;
         }
-        /* step 5 */
+        /* step 6 */
         return false;
     }
 
@@ -1320,24 +1322,26 @@ public class OrdinaryObject implements ScriptObject {
      * @return {@code true} if the property was successfully deleted
      */
     protected boolean deleteProperty(ExecutionContext cx, Symbol propertyKey) {
-        /* step 2 */
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
         Property desc = getProperty(cx, propertyKey);
-        /* step 3 */
+        /* step 4 */
         if (desc == null) {
             return true;
         }
-        /* step 4 */
+        /* step 5 */
         if (desc.isConfigurable()) {
             symbolProperties.remove(propertyKey);
             return true;
         }
-        /* step 5 */
+        /* step 6 */
         return false;
     }
 
     /** 9.1.11 [[Enumerate]] () */
     @Override
-    public final ScriptObject enumerate(ExecutionContext cx) {
+    public/* final */ScriptObject enumerate(ExecutionContext cx) {
+        // FIXME: spec issue - non-final because of bug xxxx
         return CreateListIterator(cx, new EnumKeysIterator(cx, this));
     }
 
@@ -1461,16 +1465,21 @@ public class OrdinaryObject implements ScriptObject {
      * @return the list of own property keys
      */
     protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
+        /* step 1 */
         ArrayList<Object> ownKeys = new ArrayList<>();
+        /* step 2 */
         if (!indexedProperties.isEmpty()) {
             ownKeys.addAll(indexedProperties.keys());
         }
+        /* step 3 */
         if (!properties.isEmpty()) {
             ownKeys.addAll(properties.keySet());
         }
+        /* step 4 */
         if (!symbolProperties.isEmpty()) {
             ownKeys.addAll(symbolProperties.keySet());
         }
+        /* step 5 */
         return ownKeys;
     }
 
@@ -1481,17 +1490,6 @@ public class OrdinaryObject implements ScriptObject {
         public OrdinaryObject newInstance(Realm realm) {
             return new OrdinaryObject(realm);
         }
-    }
-
-    /**
-     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
-     *
-     * @param cx
-     *            the execution context
-     * @return the new object
-     */
-    public static final OrdinaryObject ObjectCreate(ExecutionContext cx) {
-        return ObjectCreate(cx, Intrinsics.ObjectPrototype, DefaultAllocator.INSTANCE);
     }
 
     /**

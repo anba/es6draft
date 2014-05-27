@@ -8,7 +8,7 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
-import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
+import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyDeclaredNames;
 
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
             mv.swap();
             mv.invoke(codegen.methodDesc(node));
         } else {
-            generateInline(LexicalDeclarations(node), mv);
+            generateInline(LexicallyScopedDeclarations(node), mv);
         }
     }
 
@@ -70,7 +70,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
             mv.swap();
             mv.invoke(codegen.methodDesc(node));
         } else {
-            generateInline(LexicalDeclarations(node), mv);
+            generateInline(LexicallyScopedDeclarations(node), mv);
         }
     }
 
@@ -84,7 +84,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
      */
     void generateMethod(BlockStatement node, ExpressionVisitor mv) {
         // TODO: split into multiple methods if there are still too many declarations
-        generateInline(LexicalDeclarations(node), mv);
+        generateInline(LexicallyScopedDeclarations(node), mv);
     }
 
     /**
@@ -97,7 +97,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
      */
     void generateMethod(SwitchStatement node, ExpressionVisitor mv) {
         // TODO: split into multiple methods if there are still too many declarations
-        generateInline(LexicalDeclarations(node), mv);
+        generateInline(LexicallyScopedDeclarations(node), mv);
     }
 
     /**

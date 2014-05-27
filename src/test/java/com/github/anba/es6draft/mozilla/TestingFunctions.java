@@ -9,6 +9,7 @@ package com.github.anba.es6draft.mozilla;
 import com.github.anba.es6draft.repl.global.StopExecutionException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -65,7 +66,7 @@ public final class TestingFunctions {
      **/
     @Function(name = "getBuildConfiguration", arity = 0)
     public ScriptObject getBuildConfiguration(ExecutionContext cx) {
-        return OrdinaryObject.ObjectCreate(cx);
+        return OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
     }
 
     /**

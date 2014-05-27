@@ -370,8 +370,9 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* steps 4-5 */
             String s = ToFlatString(cx, string);
             /* step 6 */
+            int lengthS = s.length();
+            /* step 7 */
             boolean functionalReplace = IsCallable(replaceValue);
-            // FIXME: spec issue - always call ToString(replValue) even if no match
             String replaceValueString = null;
             Callable replaceValueCallable = null;
             if (!functionalReplace) {
@@ -379,28 +380,28 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             } else {
                 replaceValueCallable = (Callable) replaceValue;
             }
-            /* steps 7-8 */
+            /* steps 8-9 */
             boolean global = ToBoolean(Get(cx, rx, "global"));
-            /* step 9 */
+            /* step 10 */
             if (global) {
                 Put(cx, rx, "lastIndex", 0, true);
             }
-            /* step 10 */
-            // double previousLastIndex = 0;
             /* step 11 */
-            ArrayList<MatchResult> results = new ArrayList<>();
+            // double previousLastIndex = 0;
             /* step 12 */
-            boolean done = false;
+            ArrayList<MatchResult> results = new ArrayList<>();
             /* step 13 */
+            boolean done = false;
+            /* step 14 */
             while (!done) {
-                /* steps 13.a-13.b */
+                /* steps 14.a-14.b */
                 MatchResult result = getMatcherOrNull(cx, rx, s, false);
-                /* steps 13.c-13.d */
+                /* steps 14.c-14.d */
                 if (result == null) {
-                    /* step 13.c */
+                    /* step 14.c */
                     done = true;
                 } else {
-                    /* step 13.d */
+                    /* step 14.d */
                     if (!global) {
                         done = true;
                     } else {
@@ -419,33 +420,32 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                         }
                     }
                 }
-                /* step 13.e */
+                /* step 14.e */
                 if (result != null) {
                     results.add(result);
                 }
             }
-            // fast-path if no match was found
+            // fast-path if matches were found
             if (results.isEmpty()) {
                 return s;
             }
-            /* step 14 */
-            StringBuilder accumulatedResult = new StringBuilder();
             /* step 15 */
+            StringBuilder accumulatedResult = new StringBuilder();
+            /* step 16 */
             int nextSrcPosition = 0;
-            /* step 16 (omitted) */
-            /* step 17 */
+            /* step 17 (omitted) */
+            /* step 18 */
             for (MatchResult result : results) {
                 if (!(result instanceof ScriptObjectMatchResult)) {
                     RegExpConstructor.storeLastMatchResult(cx, s, result);
                 }
-                /* steps 17.a-17.b */
+                /* steps 18.a-18.b */
                 String matched = result.group(0);
-                /* step 17.c */
+                /* step 18.c */
                 int matchLength = matched.length();
-                /* steps 17.d-17.e */
-                // FIXME: spec bug - restrict position to [0, s.length[
-                int position = Math.max(Math.min(result.start(), s.length()), 0);
-                /* steps 17.f-17.h */
+                /* steps 18.d-18.f */
+                int position = Math.max(Math.min(result.start(), lengthS), 0);
+                /* steps 18.g-18.l */
                 String replacement;
                 if (functionalReplace) {
                     Object[] replacerArgs = GetReplacerArguments(result, s, matched, position);
@@ -456,17 +456,18 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                     replacement = GetReplaceSubstitution(matched, s, position, captures,
                             replaceValueString);
                 }
+                /* step 18.m */
                 if (position >= nextSrcPosition) {
                     accumulatedResult.append(s, nextSrcPosition, position).append(replacement);
                     nextSrcPosition = position + matchLength;
                 }
             }
-            /* step 17 */
-            // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=2849
-            if (nextSrcPosition < s.length()) {
-                accumulatedResult.append(s, nextSrcPosition, s.length());
+            /* step 19 */
+            if (nextSrcPosition >= s.length()) {
+                return accumulatedResult.toString();
             }
-            return accumulatedResult.toString();
+            /* step 20 */
+            return accumulatedResult.append(s, nextSrcPosition, s.length()).toString();
         }
 
         private static Object[] GetReplacerArguments(MatchResult matchResult, String string,
@@ -495,12 +496,12 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
          *            the match position
          * @param captures
          *            the captured groups
-         * @param replaceValue
+         * @param replacement
          *            the replace string
          * @return the replacement string
          */
         private static String GetReplaceSubstitution(String matched, String string, int position,
-                String[] captures, String replaceValue) {
+                String[] captures, String replacement) {
             /* step 1 (not applicable) */
             /* step 2 */
             int matchLength = matched.length();
@@ -511,17 +512,17 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             assert position >= 0;
             /* step 6 */
             assert position <= stringLength;
-            /* step 7 (not applicable) */
-            /* step 8 */
-            int tailPos = Math.min(position + matchLength, stringLength);
+            /* steps 7-8 (not applicable) */
             /* step 9 */
-            int m = captures.length;
+            int tailPos = Math.min(position + matchLength, stringLength);
             /* step 10 */
-            StringBuilder replacement = new StringBuilder();
-            for (int cursor = 0, len = replaceValue.length(); cursor < len;) {
-                char c = replaceValue.charAt(cursor++);
+            int m = captures.length;
+            /* step 11 */
+            StringBuilder result = new StringBuilder();
+            for (int cursor = 0, len = replacement.length(); cursor < len;) {
+                char c = replacement.charAt(cursor++);
                 if (c == '$' && cursor < len) {
-                    c = replaceValue.charAt(cursor++);
+                    c = replacement.charAt(cursor++);
                     switch (c) {
                     case '0':
                     case '1':
@@ -535,7 +536,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                     case '9': {
                         int n = c - '0';
                         if (cursor < len) {
-                            char d = replaceValue.charAt(cursor);
+                            char d = replacement.charAt(cursor);
                             if (d >= (n == 0 ? '1' : '0') && d <= '9') {
                                 int nn = n * 10 + (d - '0');
                                 if (nn <= m) {
@@ -546,38 +547,38 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                         }
                         if (n == 0 || n > m) {
                             assert n >= 0 && n <= 9;
-                            replacement.append('$').append(c);
+                            result.append('$').append(c);
                         } else {
                             assert n >= 1 && n <= 99;
                             String capture = captures[n - 1];
                             if (capture != null) {
-                                replacement.append(capture);
+                                result.append(capture);
                             }
                         }
                         break;
                     }
                     case '&':
-                        replacement.append(matched);
+                        result.append(matched);
                         break;
                     case '`':
-                        replacement.append(string, 0, position);
+                        result.append(string, 0, position);
                         break;
                     case '\'':
-                        replacement.append(string, tailPos, stringLength);
+                        result.append(string, tailPos, stringLength);
                         break;
                     case '$':
-                        replacement.append('$');
+                        result.append('$');
                         break;
                     default:
-                        replacement.append('$').append(c);
+                        result.append('$').append(c);
                         break;
                     }
                 } else {
-                    replacement.append(c);
+                    result.append(c);
                 }
             }
-            /* step 11 */
-            return replacement.toString();
+            /* step 12 */
+            return result.toString();
         }
 
         /**
@@ -857,11 +858,13 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
 
     private static ScriptObject RegExpUserExec(ExecutionContext cx, Callable exec, ScriptObject r,
             String s) {
+        /* steps 5.a-5.b */
         Object result = ((Callable) exec).call(cx, r, s);
-        // FIXME: spec bug - missing type checks
+        /* step 5.c */
         if (!Type.isObjectOrNull(result)) {
             throw newTypeError(cx, Messages.Key.NotObjectOrNull);
         }
+        /* step 5.d */
         return Type.objectValueOrNull(result);
     }
 

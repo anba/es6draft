@@ -25,6 +25,8 @@ public final class ArrayBufferObject extends OrdinaryObject {
     /** [[ArrayBufferByteLength]] */
     private long byteLength = 0;
 
+    private boolean neutered = false;
+
     public ArrayBufferObject(Realm realm) {
         super(realm);
     }
@@ -68,5 +70,23 @@ public final class ArrayBufferObject extends OrdinaryObject {
     public void setByteLength(long byteLength) {
         assert byteLength >= 0 : "negative byte length: " + byteLength;
         this.byteLength = byteLength;
+    }
+
+    /**
+     * Neuters this array buffer object.
+     */
+    public void neuter() {
+        data = null;
+        byteLength = 0;
+        neutered = true;
+    }
+
+    /**
+     * Returns {@code true} if this array buffer object has been neutered.
+     * 
+     * @return {@code true} if this array buffer object is neutered
+     */
+    public boolean isNeutered() {
+        return neutered;
     }
 }

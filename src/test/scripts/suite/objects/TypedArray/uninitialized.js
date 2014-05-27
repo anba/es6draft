@@ -43,10 +43,12 @@ for (let constructor of [MyConstructor, Int8Array]) {
 
   // [[DefineOwnProperty]]
   for (let p of integerIndexedProperties) {
-    assertFalse(Reflect.defineProperty(create(), p, {value: 0}));
+    assertThrows(() => Reflect.defineProperty(create(), p, {value: 0}), TypeError);
   }
   for (let p of notIntegerIndexedProperties) {
-    assertTrue(Reflect.defineProperty(create(), p, {value: 0}));
+    // assertTrue(Reflect.defineProperty(create(), p, {value: 0}));
+    // FIXME: spec bug xxxx
+    assertThrows(() => Reflect.defineProperty(create(), p, {value: 0}), TypeError);
   }
 
   // [[GetOwnProperty]]
@@ -86,7 +88,9 @@ for (let constructor of [MyConstructor, Int8Array]) {
     assertThrows(() => Reflect.set(create(), p, 0), TypeError);
   }
   for (let p of notIntegerIndexedProperties) {
-    assertTrue(Reflect.set(create(), p, 0));
+    // assertTrue(Reflect.set(create(), p, 0));
+    // FIXME: spec bug xxxx
+    assertThrows(() => Reflect.set(create(), p, 0), TypeError);
   }
 
   // [[Delete]]

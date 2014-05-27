@@ -45,23 +45,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     }
 
     /**
-     * 9.2.1 [[Construct]] (argumentsList)
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
-
-    /**
-     * 9.2.1 [[Construct]] (argumentsList)
-     */
-    @Override
-    public ScriptObject tailConstruct(ExecutionContext callerContext, Object... args) {
-        return construct(callerContext, args);
-    }
-
-    /**
-     * 9.2.4 [[Call]] (thisArgument, argumentsList)
+     * 9.2.2 [[Call]] (thisArgument, argumentsList)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -75,12 +59,28 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     }
 
     /**
-     * 9.2.4 [[Call]] (thisArgument, argumentsList)
+     * 9.2.2 [[Call]] (thisArgument, argumentsList)
      */
     @Override
     public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
             throws Throwable {
         return getTailCallMethod().invokeExact(this, callerContext, thisValue, args);
+    }
+
+    /**
+     * 9.2.3 [[Construct]] (argumentsList)
+     */
+    @Override
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
+        return Construct(callerContext, this, args);
+    }
+
+    /**
+     * 9.2.3 [[Construct]] (argumentsList)
+     */
+    @Override
+    public ScriptObject tailConstruct(ExecutionContext callerContext, Object... args) {
+        return construct(callerContext, args);
     }
 
     /**
@@ -159,7 +159,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     /* ***************************************************************************************** */
 
     /**
-     * 9.2.4 FunctionAllocate Abstract Operation
+     * 9.2.4 FunctionAllocate (functionPrototype, strict) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -199,35 +199,12 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
-        return GeneratorFunctionCreate(cx, kind, function, scope, null);
-    }
-
-    /**
-     * 9.2.7 GeneratorFunctionCreate Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param kind
-     *            the function kind
-     * @param function
-     *            the function code
-     * @param scope
-     *            the lexical environment
-     * @param functionPrototype
-     *            the function prototype
-     * @return the new generator function object
-     */
-    public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment<?> scope,
-            ScriptObject functionPrototype) {
         assert function.isGenerator() && kind != FunctionKind.ConstructorMethod;
         /* step 1 */
-        if (functionPrototype == null) {
-            functionPrototype = cx.getIntrinsic(Intrinsics.Generator);
-        }
+        ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.Generator);
         /* step 2 */
         OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
-        return FunctionInitialize(cx, f, kind, function, scope);
+        return FunctionInitialize(f, kind, function.isStrict(), function, scope);
     }
 }

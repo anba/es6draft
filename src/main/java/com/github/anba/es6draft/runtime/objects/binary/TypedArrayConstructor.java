@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.objects.binary;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -50,6 +49,7 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
 
     @Override
     public void initialize(ExecutionContext cx) {
+        addRestrictedFunctionProperties(cx);
         switch (elementType) {
         case Int8:
             createProperties(cx, this, Properties_Int8Array.class);
@@ -81,7 +81,6 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
         default:
             throw new IllegalStateException();
         }
-        AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override

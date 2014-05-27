@@ -6,12 +6,12 @@
  */
 
 const {
-  assertSame, assertThrows
+  assertSame
 } = Assert;
 
 // 26.2.3.7.1 Reflect.Realm.prototype.directEval: Type checks don't match NOTE
 // https://bugs.ecmascript.org/show_bug.cgi?id=2788
 
 let source = "123";
-assertThrows(() => Reflect.Realm.prototype.directEval.call(void 0, source), TypeError);
+assertSame(source, Reflect.Realm.prototype.directEval.call(void 0, source));
 assertSame(source, Reflect.Realm.prototype.directEval.call(new Reflect.Realm, source));

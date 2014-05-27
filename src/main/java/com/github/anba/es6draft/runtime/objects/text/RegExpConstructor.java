@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.Strings.isLineTerminator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -51,9 +50,9 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
     @Override
     public void initialize(ExecutionContext cx) {
+        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
         createProperties(cx, this, RegExpStatics.class);
-        AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override

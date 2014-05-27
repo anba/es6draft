@@ -6,7 +6,9 @@
  */
 package com.github.anba.es6draft.runtime;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToPropertyKey;
 import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecutionContext;
 import static com.github.anba.es6draft.runtime.LexicalEnvironment.newGlobalEnvironment;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
@@ -16,6 +18,7 @@ import java.text.Collator;
 import java.text.DecimalFormatSymbols;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Random;
 import java.util.TimeZone;
@@ -37,6 +40,7 @@ import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypeProtot
 import com.github.anba.es6draft.runtime.objects.collection.*;
 import com.github.anba.es6draft.runtime.objects.date.DateConstructor;
 import com.github.anba.es6draft.runtime.objects.date.DatePrototype;
+import com.github.anba.es6draft.runtime.objects.internal.CompoundIteratorNext;
 import com.github.anba.es6draft.runtime.objects.internal.ListIteratorNext;
 import com.github.anba.es6draft.runtime.objects.intl.CollatorConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.CollatorPrototype;
@@ -69,10 +73,13 @@ import com.github.anba.es6draft.runtime.objects.text.StringIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.text.StringPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.github.anba.es6draft.runtime.types.builtins.TypeErrorThrower;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1>
@@ -104,7 +111,7 @@ public final class Realm {
     /**
      * [[ThrowTypeError]]
      */
-    private Callable throwTypeError;
+    private TypeErrorThrower throwTypeError;
 
     /**
      * [[directEvalTranslate]]
@@ -145,7 +152,7 @@ public final class Realm {
         this.realmObject = new RealmObject(this);
 
         // Create all built-in intrinsics
-        createIntrinsics(this);
+        CreateIntrinsics(this);
 
         // Initialize global object
         globalObject.initialize(defaultContext);
@@ -170,7 +177,7 @@ public final class Realm {
         this.realmObject = realmObject;
 
         // Create all built-in intrinsics
-        createIntrinsics(this);
+        CreateIntrinsics(this);
 
         // Initialize global object
         globalObject.initialize(defaultContext);
@@ -178,7 +185,7 @@ public final class Realm {
         // Store reference to built-in eval
         builtinEval = (Callable) Get(defaultContext, globalObject, "eval");
 
-        // Set prototype to %ObjectPrototype%, cf. Reflect.Realm.[[Call]]
+        // Set prototype to %ObjectPrototype%, cf. 8.2.3 SetRealmGlobalObj
         globalThis.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
     }
 
@@ -192,7 +199,7 @@ public final class Realm {
         this.realmObject = realmObject;
 
         // Create all built-in intrinsics
-        createIntrinsics(this);
+        CreateIntrinsics(this);
 
         // Initialize global object
         globalObject.initialize(defaultContext);
@@ -514,29 +521,6 @@ public final class Realm {
     }
 
     /**
-     * 8.2.1 CreateRealm ( )
-     * 
-     * Creates a new {@link Realm} object.
-     * 
-     * @param cx
-     *            the execution context
-     * @param realmObject
-     *            the realm object
-     * @param globalThis
-     *            the global this object or {@code null}
-     * @return the new realm instance
-     */
-    public static Realm CreateRealm(ExecutionContext cx, RealmObject realmObject,
-            ScriptObject globalThis) {
-        World<? extends GlobalObject> world = cx.getRealm().getWorld();
-        if (globalThis == null) {
-            return new Realm(world, realmObject);
-        } else {
-            return new Realm(world, realmObject, globalThis);
-        }
-    }
-
-    /**
      * Creates a new {@link Realm} object.
      * 
      * @param <GLOBAL>
@@ -549,7 +533,104 @@ public final class Realm {
         return new Realm(world);
     }
 
-    private static void createIntrinsics(Realm realm) {
+    /**
+     * 8.2.1 CreateRealm ( ) Abstract Operation<br>
+     * 8.2.3 SetRealmGlobalObj ( realmRec, globalObj ) Abstract Operation
+     * <p>
+     * Creates a new {@link Realm} object.
+     * 
+     * @param cx
+     *            the execution context
+     * @param realmObject
+     *            the realm object
+     * @param globalObj
+     *            the global this object or {@code null}
+     * @return the new realm instance
+     */
+    public static Realm CreateRealmAndSetRealmGlobalObj(ExecutionContext cx,
+            RealmObject realmObject, ScriptObject globalObj) {
+        World<? extends GlobalObject> world = cx.getRealm().getWorld();
+        if (globalObj == null) {
+            return new Realm(world, realmObject);
+        } else {
+            return new Realm(world, realmObject, globalObj);
+        }
+    }
+
+    /**
+     * 8.2.4 SetDefaultGlobalBindings ( realmRec ) Abstract Operation
+     * <p>
+     * Initializes {@code [[globalThis]]} with the default properties of the Global Object.
+     * 
+     * @return the global this object
+     */
+    public static ScriptObject SetDefaultGlobalBindings(ExecutionContext cx, Realm realm) {
+        /* step 1 */
+        ScriptObject globalThis = realm.getGlobalThis();
+        GlobalObject globalObject = realm.getGlobalObject();
+        assert globalThis != null && globalObject != null;
+        /* step 2 */
+        for (Iterator<?> keys = globalObject.ownKeys(cx); keys.hasNext();) {
+            Object key = ToPropertyKey(cx, keys.next());
+            if (key instanceof String) {
+                String propertyKey = (String) key;
+                Property prop = globalObject.getOwnProperty(cx, propertyKey);
+                if (prop != null) {
+                    PropertyDescriptor desc = prop.toPropertyDescriptor();
+                    DefinePropertyOrThrow(cx, globalThis, propertyKey, desc);
+                }
+            } else {
+                Symbol propertyKey = (Symbol) key;
+                Property prop = globalObject.getOwnProperty(cx, propertyKey);
+                if (prop != null) {
+                    PropertyDescriptor desc = prop.toPropertyDescriptor();
+                    DefinePropertyOrThrow(cx, globalThis, propertyKey, desc);
+                }
+            }
+        }
+        /* step 3 */
+        return globalThis;
+    }
+
+    /**
+     * 8.2.1 CreateRealm ( )
+     * <p>
+     * Creates a new {@link Realm} object.
+     * 
+     * @param cx
+     *            the execution context
+     * @return the new realm instance
+     */
+    public static Realm CreateRealm(ExecutionContext cx) {
+        // The operation is not supported in this implementation.
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * 8.2.3 SetRealmGlobalObj ( realmRec, globalObj ) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param realm
+     *            the realm instance
+     * @param globalObj
+     *            the global this object or {@code null}
+     * @return the new realm instance
+     */
+    public static Realm SetRealmGlobalObj(ExecutionContext cx, Realm realm, ScriptObject globalObj) {
+        // The operation is not supported in this implementation.
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * 8.2.2 CreateIntrinsics ( realmRec ) Abstract Operation
+     * 
+     * @param realm
+     *            the realm instance
+     */
+    private static void CreateIntrinsics(Realm realm) {
+        /* steps 1-18 */
+
         // intrinsics: 19, 20, 21, 22.1, 24.3
         initializeFundamentalObjects(realm);
         initializeStandardObjects(realm);
@@ -591,8 +672,11 @@ public final class Realm {
         intrinsics.put(Intrinsics.Function, functionConstructor);
         intrinsics.put(Intrinsics.FunctionPrototype, functionPrototype);
 
-        // create [[ThrowTypeError]] unique function (needs to be done before init'ing intrinsics)
-        realm.throwTypeError = OrdinaryFunction.createThrowTypeError(defaultContext);
+        // Create [[ThrowTypeError]] unique function (needs to be done before init'ing intrinsics).
+        realm.throwTypeError = TypeErrorThrower.createThrowTypeError(defaultContext);
+
+        // Also stored in intrinsics table.
+        intrinsics.put(Intrinsics.ThrowTypeError, realm.throwTypeError);
 
         // initialization phase
         objectConstructor.initialize(defaultContext);
@@ -773,6 +857,7 @@ public final class Realm {
 
         // intrinsic functions
         intrinsics.put(Intrinsics.ListIteratorNext, new ListIteratorNext(realm));
+        intrinsics.put(Intrinsics.CompoundIteratorNext, new CompoundIteratorNext(realm));
     }
 
     /**
@@ -890,7 +975,8 @@ public final class Realm {
         generator.initialize(defaultContext);
 
         if (realm.isEnabled(CompatibilityOption.LegacyGenerator)) {
-            OrdinaryObject legacyGeneratorPrototype = OrdinaryObject.ObjectCreate(defaultContext);
+            OrdinaryObject legacyGeneratorPrototype = ObjectCreate(defaultContext,
+                    Intrinsics.ObjectPrototype);
             intrinsics.put(Intrinsics.LegacyGeneratorPrototype, legacyGeneratorPrototype);
         }
     }

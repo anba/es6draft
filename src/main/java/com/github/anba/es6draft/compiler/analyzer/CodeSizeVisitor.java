@@ -132,21 +132,6 @@ final class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
         return reportSize(node, size, value);
     }
 
-    private int analyze(Node node, List<? extends Node> children1, List<? extends Node> children2,
-            Node extra, int nodeSize, int childFactor, CodeSizeHandler value) {
-        int size = nodeSize + childFactor * children1.size() + childFactor * children2.size();
-        for (Node child : children1) {
-            size += child.accept(this, value);
-        }
-        for (Node child : children2) {
-            size += child.accept(this, value);
-        }
-        if (extra != null) {
-            size += extra.accept(this, value);
-        }
-        return reportSize(node, size, value);
-    }
-
     private int stringSize(String s) {
         if (s.length() <= 32768) {
             return 5;
@@ -286,14 +271,12 @@ final class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(ClassDeclaration node, CodeSizeHandler value) {
-        return analyze(node, node.getPrototypeMethods(), node.getStaticMethods(),
-                node.getHeritage(), 50, 10, value);
+        return analyze(node, node.getMethods(), node.getHeritage(), 50, 10, value);
     }
 
     @Override
     public Integer visit(ClassExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getPrototypeMethods(), node.getStaticMethods(),
-                node.getHeritage(), 50, 10, value);
+        return analyze(node, node.getMethods(), node.getHeritage(), 50, 10, value);
     }
 
     @Override

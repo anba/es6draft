@@ -6,10 +6,13 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CanonicalNumericString;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CanonicalNumericIndexString;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateCompoundIterator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsInteger;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -31,9 +34,8 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         super(realm);
     }
 
-    private static boolean isCanonicalNumeric(double numericIndex) {
-        // FIXME: spec issue https://bugs.ecmascript.org/show_bug.cgi?id=2049
-        return numericIndex != 0 || Double.compare(numericIndex, -0d) != 0;
+    private static boolean isCanonicalNumericIndex(double numericIndex) {
+        return !Double.isNaN(numericIndex);
     }
 
     /** [[HasOwnProperty]] (P) */
@@ -47,8 +49,8 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     protected final boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
-        double numericIndex = CanonicalNumericString(propertyKey);
-        if (isCanonicalNumeric(numericIndex)) {
+        double numericIndex = CanonicalNumericIndexString(propertyKey);
+        if (isCanonicalNumericIndex(numericIndex)) {
             return elementHas(cx, numericIndex);
         }
         /* step 4 */
@@ -70,8 +72,8 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     protected final Property getProperty(ExecutionContext cx, String propertyKey) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
-        double numericIndex = CanonicalNumericString(propertyKey);
-        if (isCanonicalNumeric(numericIndex)) {
+        double numericIndex = CanonicalNumericIndexString(propertyKey);
+        if (isCanonicalNumericIndex(numericIndex)) {
             Object value = elementGet(cx, numericIndex);
             if (Type.isUndefined(value)) {
                 return null;
@@ -95,53 +97,61 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
             PropertyDescriptor desc) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
-        double numericIndex = CanonicalNumericString(propertyKey);
-        if (isCanonicalNumeric(numericIndex)) {
+        double numericIndex = CanonicalNumericIndexString(propertyKey);
+        if (isCanonicalNumericIndex(numericIndex)) {
             return defineProperty(cx, numericIndex, desc);
         }
+        // FIXME: spec bug - define non-indexed properties on uninit'ed objects should be valid
+        // Call fallible getLength() to trigger initialisation check....
+        getLength(cx);
         /* step 4 */
         return ordinaryDefineOwnProperty(cx, propertyKey, desc);
     }
 
     private boolean defineProperty(ExecutionContext cx, double numericIndex, PropertyDescriptor desc) {
-        /* step 3.c.i */
+        // FIXME: spec bug - defined non-indexed properties on uninit'ed objects should be valid
+        // Call fallible getLength() to trigger initialisation check....
+        getLength(cx);
+        /* step 3.c.i, 3.c.iii */
         if (!IsInteger(numericIndex)) {
+            assert numericIndex == Double.NEGATIVE_INFINITY : "unexpected non-integer: "
+                    + numericIndex;
             return false;
         }
         /* step 3.c.ii */
         double intIndex = numericIndex;
-        /* step 3.c.iii */
+        /* step 3.c.iv */
         if (intIndex < 0) {
             return false;
         }
-        /* step 3.c.iv */
-        long length = getLength();
         /* step 3.c.v */
+        long length = getLength(); // TODO: Use here getLength(cx), but see above.
+        /* step 3.c.vi */
         if (intIndex >= length) {
             return false;
         }
-        /* step 3.c.vi */
+        /* step 3.c.vii */
         if (desc.isAccessorDescriptor()) {
             return false;
         }
-        /* step 3.c.vii */
+        /* step 3.c.viii */
         if (desc.hasConfigurable() && desc.isConfigurable()) {
             return false;
         }
-        /* step 3.c.viii */
+        /* step 3.c.ix */
         if (desc.hasEnumerable() && !desc.isEnumerable()) {
             return false;
         }
-        /* step 3.c.ix */
+        /* step 3.c.x */
         if (desc.hasWritable() && !desc.isWritable()) {
             return false;
         }
-        /* step 3.c.x */
+        /* step 3.c.xi */
         if (desc.hasValue()) {
             Object value = desc.getValue();
             elementSet(cx, intIndex, value);
         }
-        /* step 3.c.xi */
+        /* step 3.c.xii */
         return true;
     }
 
@@ -157,8 +167,8 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         /* step 1 (not applicable) */
         /* step 2 */
         if (this == receiver) { // SameValue(this, receiver)
-            double numericIndex = CanonicalNumericString(propertyKey);
-            if (isCanonicalNumeric(numericIndex)) {
+            double numericIndex = CanonicalNumericIndexString(propertyKey);
+            if (isCanonicalNumericIndex(numericIndex)) {
                 return elementGet(cx, numericIndex);
             }
         }
@@ -180,8 +190,8 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         /* step 1 (not applicable) */
         /* step 2 */
         if (this == receiver) { // SameValue(this, receiver)
-            double numericIndex = CanonicalNumericString(propertyKey);
-            if (isCanonicalNumeric(numericIndex)) {
+            double numericIndex = CanonicalNumericIndexString(propertyKey);
+            if (isCanonicalNumericIndex(numericIndex)) {
                 return elementSet(cx, numericIndex, value);
             }
         }
@@ -191,35 +201,57 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
 
     /** 9.4.5.5 [[Enumerate]] () */
     @Override
+    @SuppressWarnings("unchecked")
+    public ScriptObject enumerate(ExecutionContext cx) {
+        // FIXME: spec issue - override necessary because of bug xxxx
+        return CreateCompoundIterator(cx, (Iterator<Object>) enumerateKeys(cx),
+                Collections.emptyIterator());
+    }
+
+    /** 9.4.5.5 [[Enumerate]] () */
+    @Override
     protected final List<String> getEnumerableKeys(ExecutionContext cx) {
+        /* step 1 */
         ArrayList<String> keys = new ArrayList<>();
+        /* step 2 (not applicable) */
+        /* steps 3-5 */
         addIntegerIndices(cx, keys);
         assert indexedProperties().isEmpty();
+        /* steps 6-7 */
         if (!properties().isEmpty()) {
             keys.addAll(properties().keySet());
         }
+        // FIXME: CompundIterator is detectable by client code!
+        /* step 8 */
         return keys;
     }
 
     /** 9.4.5.6 [[OwnPropertyKeys]] () */
     @Override
     protected final List<Object> getOwnPropertyKeys(ExecutionContext cx) {
+        /* step 1 */
         ArrayList<Object> ownKeys = new ArrayList<>();
+        /* step 2 (not applicable) */
+        /* steps 3-5 */
         addIntegerIndices(cx, ownKeys);
+        /* step 6 */
         assert indexedProperties().isEmpty();
+        /* step 7 */
         if (!properties().isEmpty()) {
             ownKeys.addAll(properties().keySet());
         }
+        /* step 8 */
         if (!symbolProperties().isEmpty()) {
             ownKeys.addAll(symbolProperties().keySet());
         }
+        /* step 9 */
         return ownKeys;
     }
 
     @Override
     protected final boolean isEnumerableOwnProperty(String propertyKey) {
-        double numericIndex = CanonicalNumericString(propertyKey);
-        if (isCanonicalNumeric(numericIndex)) {
+        double numericIndex = CanonicalNumericIndexString(propertyKey);
+        if (isCanonicalNumericIndex(numericIndex)) {
             long length = getLength();
             return 0 <= numericIndex && numericIndex < length;
         }

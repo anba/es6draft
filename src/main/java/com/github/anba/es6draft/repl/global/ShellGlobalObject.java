@@ -55,9 +55,9 @@ public abstract class ShellGlobalObject extends GlobalObject {
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        super.initialize(cx);
-        createProperties(cx, this, this, ShellGlobalObject.class);
+    protected void initializeExtensions(ExecutionContext cx) {
+        super.initializeExtensions(cx);
+        createProperties(cx, cx.getGlobalObject(), this, ShellGlobalObject.class);
     }
 
     /**

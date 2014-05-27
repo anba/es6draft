@@ -866,34 +866,31 @@ public final class ModuleLoading {
             /* step 4 */
             Step step = this.step;
             /* step 5 */
-            @SuppressWarnings("unused")
-            Object source = this.moduleSource;
-            /* step 6 */
             if (loader.getModules().containsKey(name)) {
                 throw newTypeError(calleeContext, Messages.Key.ModulesDuplicateModule, name);
             }
-            /* step 7 */
+            /* step 6 */
             if (loader.getLoads().containsKey(name)) {
                 throw newTypeError(calleeContext, Messages.Key.ModulesAlreadyLoading, name);
             }
-            /* steps 8-9 */
+            /* steps 7-8 */
             Load load = CreateLoad(calleeContext, name, moduleMetadata);
-            /* step 10 */
+            /* step 9 */
             LinkSet linkSet = CreateLinkSet(calleeContext, loader, load);
-            /* step 11 */
+            /* step 10 */
             loader.getLoads().put(name, load);
-            /* step 12 */
+            /* step 11 */
             resolve.call(calleeContext, UNDEFINED, linkSet.getDone());
-            /* steps 13-15 */
+            /* steps 12-14 */
             if (step == Step.Locate) {
-                /* step 13 */
+                /* step 12 */
                 return ProceedToLocate(calleeContext, loader, load);
             } else if (step == Step.Fetch) {
-                /* step 14 */
+                /* step 13 */
                 PromiseObject addressPromise = PromiseOf(calleeContext, moduleAddress);
                 return ProceedToFetch(calleeContext, loader, load, addressPromise);
             } else {
-                /* step 15 */
+                /* step 14 */
                 assert step == Step.Translate;
                 load.setAddress(moduleAddress);
                 PromiseObject sourcePromise = PromiseOf(calleeContext, moduleSource);

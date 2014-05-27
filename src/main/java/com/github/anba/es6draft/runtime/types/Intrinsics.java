@@ -15,11 +15,12 @@ package com.github.anba.es6draft.runtime.types;
  * </ul>
  */
 public enum Intrinsics {/* @formatter:off */
-    Object,
     ObjectPrototype,
+    ThrowTypeError,
+    FunctionPrototype,
+    Object,
     ObjProto_toString,
     Function,
-    FunctionPrototype,
     Array,
     ArrayPrototype,
     ArrayProto_values,
@@ -122,6 +123,7 @@ public enum Intrinsics {/* @formatter:off */
 
     // internal
     ListIteratorNext,
+    CompoundIteratorNext,
     InternalError,
     InternalErrorPrototype,
 
@@ -148,6 +150,7 @@ public enum Intrinsics {/* @formatter:off */
     public boolean isInternal() {
         switch (this) {
         case ListIteratorNext:
+        case CompoundIteratorNext:
         case InternalError:
         case InternalErrorPrototype:
         case LegacyGeneratorPrototype:

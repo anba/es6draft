@@ -12,8 +12,6 @@ const {
 // 14.1 FunctionDeclaration, 14.4 GeneratorDeclaration: Disallow "yield" as BindingIdentifier in Function/GeneratorDeclaration when enclosed by generator
 // https://bugs.ecmascript.org/show_bug.cgi?id=2508
 
-// TODO: Validate correct behaviour in rev23
-
 // Function -> FunctionDeclaration
 function outerFunction() {
   function yield(){}

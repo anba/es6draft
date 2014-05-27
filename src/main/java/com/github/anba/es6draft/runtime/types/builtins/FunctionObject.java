@@ -250,36 +250,12 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         return false;
     }
 
-    @Override
-    protected final List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        ArrayList<Object> ownKeys = new ArrayList<>();
-        if (!indexedProperties().isEmpty()) {
-            ownKeys.addAll(indexedProperties().keys());
-        }
-        if (!properties().isEmpty()) {
-            ownKeys.addAll(properties().keySet());
-        }
-        if (isLegacy()) {
-            // TODO: add test case
-            if (!ordinaryHasOwnProperty("caller")) {
-                ownKeys.add("caller");
-            }
-            if (!ordinaryHasOwnProperty("arguments")) {
-                ownKeys.add("arguments");
-            }
-        }
-        if (!symbolProperties().isEmpty()) {
-            ownKeys.addAll(symbolProperties().keySet());
-        }
-        return ownKeys;
-    }
-
     /**
-     * 9.2.2 [[GetOwnProperty]] (P)
+     * 9.2.1 [[GetOwnProperty]] (P)
      */
     @Override
     protected final Property getProperty(ExecutionContext cx, String propertyKey) {
-        Property desc = super.getProperty(cx, propertyKey);
+        Property desc = ordinaryGetOwnProperty(propertyKey);
         if (desc != null) {
             return desc;
         }
@@ -296,20 +272,45 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     @Override
+    protected final List<Object> getOwnPropertyKeys(ExecutionContext cx) {
+        ArrayList<Object> ownKeys = new ArrayList<>();
+        if (!indexedProperties().isEmpty()) {
+            ownKeys.addAll(indexedProperties().keys());
+        }
+        if (!properties().isEmpty()) {
+            ownKeys.addAll(properties().keySet());
+        }
+        if (isLegacy()) {
+            // TODO: add test case for property order
+            if (!ordinaryHasOwnProperty("caller")) {
+                ownKeys.add("caller");
+            }
+            if (!ordinaryHasOwnProperty("arguments")) {
+                ownKeys.add("arguments");
+            }
+        }
+        if (!symbolProperties().isEmpty()) {
+            ownKeys.addAll(symbolProperties().keySet());
+        }
+        return ownKeys;
+    }
+
+    @Override
     public final FunctionObject clone(ExecutionContext cx) {
         /* steps 1-3 (not applicable) */
         /* steps 4-6 */
         FunctionObject clone = allocateNew();
         if (isInitialized()) {
-            clone.initialize(getFunctionKind(), getCode(), getEnvironment());
+            clone.initialize(getFunctionKind(), isStrict(), getCode(), getEnvironment());
         }
         clone.setConstructor(isConstructor());
         /* step 7 */
-        clone.setExtensible(true);
+        assert clone.isExtensible() : "cloned function not extensible";
         /* step 8 (not applicable) */
         /* step 9 */
         if (isStrict()) {
-            clone.addRestrictedFunctionProperties(cx);
+            assert isInitialized() : "uninitialized, strict-mode function";
+            clone.addRestrictedFunctionProperties();
         }
         /* step 10 */
         return clone;
@@ -323,7 +324,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     protected abstract FunctionObject allocateNew();
 
     /**
-     * 9.2.3 FunctionAllocate Abstract Operation
+     * 9.2.4 FunctionAllocate (functionPrototype, strict) Abstract Operation
      * 
      * @param realm
      *            the realm instance
@@ -342,7 +343,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         this.callMethod = defaultCallMethod;
         this.tailCallMethod = defaultCallMethod;
         /* step 9 */
-        this.setStrict(strict);
+        this.strict = strict;
         /* step 10 */
         this.functionKind = kind;
         /* step 11 */
@@ -354,26 +355,30 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 9.2.5 FunctionInitialize Abstract Operation
+     * 9.2.5 FunctionInitialize (F, kind, Strict, ParameterList, Body, Scope) Abstract Operation
      * 
      * @param kind
      *            the function kind
+     * @param strict
+     *            the strict mode flag
      * @param function
      *            the function code
      * @param scope
      *            the function scope
      */
-    protected final void initialize(FunctionKind kind, RuntimeInfo.Function function,
-            LexicalEnvironment<?> scope) {
+    protected final void initialize(FunctionKind kind, boolean strict,
+            RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
         assert this.function == null && function != null : "function object already initialized";
         assert this.functionKind == kind : String.format("%s != %s", functionKind, kind);
         /* step 6 */
+        this.strict = strict;
+        /* step 7 */
         this.environment = scope;
-        /* steps 7-8 */
+        /* steps 8-9 */
         this.function = function;
         this.callMethod = tailCallAdapter(function);
         this.tailCallMethod = function.callMethod();
-        /* steps 9-11 */
+        /* steps 10-12 */
         if (kind == FunctionKind.Arrow) {
             this.thisMode = ThisMode.Lexical;
         } else if (strict) {
@@ -384,7 +389,24 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 9.2.8 AddRestrictedFunctionProperties Abstract Operation
+     * 9.2.8 AddRestrictedFunctionProperties ( F, realm ) Abstract Operation
+     */
+    protected final void addRestrictedFunctionProperties() {
+        // Modified AddRestrictedFunctionProperties() to bypass .caller and .arguments properties
+        // from FunctionObject
+
+        /* step 1 */
+        Callable thrower = realm.getThrowTypeError();
+        /* step 2 */
+        infallibleDefineOwnProperty("caller",
+                new PropertyDescriptor(thrower, thrower, false, false));
+        /* step 3 */
+        infallibleDefineOwnProperty("arguments", new PropertyDescriptor(thrower, thrower, false,
+                false));
+    }
+
+    /**
+     * 9.2.8 AddRestrictedFunctionProperties ( F, realm ) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -393,9 +415,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         // Modified AddRestrictedFunctionProperties() to bypass .caller and .arguments properties
         // from FunctionObject
 
-        // TODO: %ThrowTypeError% from current realm or function's realm? (current realm per spec)
         /* step 1 */
-        Callable thrower = cx.getRealm().getThrowTypeError();
+        Callable thrower = realm.getThrowTypeError();
         /* step 2 */
         ordinaryDefinePropertyOrThrow(cx, "caller", new PropertyDescriptor(thrower, thrower, false,
                 false));
@@ -404,15 +425,20 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
                 false, false));
     }
 
-    private void ordinaryDefinePropertyOrThrow(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
+    protected boolean infallibleDefineOwnProperty(String propertyKey, PropertyDescriptor desc) {
+        // Similar to ordinaryDefineOwnProperty(), except infallible ordinaryGetOwnProperty() used.
         /* step 1 */
         Property current = ordinaryGetOwnProperty(propertyKey);
         /* step 2 */
         boolean extensible = isExtensible();
         /* step 3 */
-        boolean success = ValidateAndApplyPropertyDescriptor(this, propertyKey, extensible, desc,
-                current);
+        return ValidateAndApplyPropertyDescriptor(this, propertyKey, extensible, desc, current);
+    }
+
+    private void ordinaryDefinePropertyOrThrow(ExecutionContext cx, String propertyKey,
+            PropertyDescriptor desc) {
+        // See DefinePropertyOrThrow() abstract operation
+        boolean success = infallibleDefineOwnProperty(propertyKey, desc);
         if (!success) {
             throw newTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey);
         }
@@ -516,16 +542,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      */
     public final boolean isStrict() {
         return strict;
-    }
-
-    /**
-     * [[Strict]]
-     * 
-     * @param strict
-     *            the new strict mode flag
-     */
-    public final void setStrict(boolean strict) {
-        this.strict = strict;
     }
 
     /**

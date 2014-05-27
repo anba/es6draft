@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -54,8 +53,8 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
 
     @Override
     public void initialize(ExecutionContext cx) {
+        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
-        AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override
@@ -164,7 +163,23 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.2 SetArrayBufferData (arrayBuffer, bytes)
+     * 24.1.1.2 NeuterArrayBuffer( arrayBuffer )
+     * 
+     * @param cx
+     *            the execution context
+     * @param arrayBuffer
+     *            the array buffer object
+     */
+    public static void NeuterArrayBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer) {
+        // TODO: Perform any checks here? E.g. initialized or already neutered?
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        arrayBuffer.neuter();
+        /* step 4 (return) */
+    }
+
+    /**
+     * 24.1.1.3 SetArrayBufferData (arrayBuffer, bytes)
      * 
      * @param cx
      *            the execution context
@@ -191,7 +206,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.3 CloneArrayBuffer (srcBuffer, srcByteOffset)
+     * 24.1.1.4 CloneArrayBuffer (srcBuffer, srcByteOffset)
      * 
      * @param cx
      *            the execution context
@@ -235,7 +250,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.4 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
+     * 24.1.1.5 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
      * 
      * @param cx
      *            the execution context
@@ -253,7 +268,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.4 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
+     * 24.1.1.5 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
      * 
      * @param cx
      *            the execution context
@@ -318,7 +333,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.5 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
+     * 24.1.1.6 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
      * 
      * @param cx
      *            the execution context
@@ -337,7 +352,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.5 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
+     * 24.1.1.6 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
      * 
      * @param cx
      *            the execution context
@@ -421,7 +436,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         ArrayBufferObject buf = (ArrayBufferObject) thisValue;
-        if (buf.getData() != null) {
+        if (buf.getData() != null || buf.isNeutered()) {
             throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
         // FIXME: spec issue? - undefined length is same as 0 for bwcompat?
@@ -437,7 +452,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
             throw newRangeError(calleeContext, Messages.Key.InvalidBufferSize);
         }
         /* step 7 */
-        if (buf.getData() != null) {
+        if (buf.getData() != null || buf.isNeutered()) {
             throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
         /* step 8 */

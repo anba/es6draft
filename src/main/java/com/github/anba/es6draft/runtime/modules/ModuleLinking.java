@@ -229,8 +229,8 @@ public final class ModuleLinking {
     public static void LinkDynamicModules(ExecutionContext cx, List<Load> loads, Loader loader) {
         /* step 1 */
         for (Load load : loads) {
-            Callable execute = load.getExecute();
-            Object result = execute.call(cx, UNDEFINED);
+            Callable exec = load.getExecute();
+            Object result = exec.call(cx, UNDEFINED);
             if (!(result instanceof ModuleObject)) {
                 throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }

@@ -15,11 +15,38 @@ import java.util.List;
  * </ul>
  */
 public interface ClassDefinition extends ScopedNode {
+    /**
+     * Returns the class name or {@code null} if not present.
+     * 
+     * @return the class name or {@code null}
+     */
     BindingIdentifier getName();
 
+    /**
+     * Returns the class heritage expression or {@code null} if not present.
+     * 
+     * @return the class heritage expression or {@code null}
+     */
     Expression getHeritage();
 
+    /**
+     * Returns the list of class methods in source order.
+     * 
+     * @return the list of class methods
+     */
+    List<MethodDefinition> getMethods();
+
+    /**
+     * Returns the list of static class methods.
+     * 
+     * @return the list of static class methods
+     */
     List<MethodDefinition> getStaticMethods();
 
+    /**
+     * Returns the list of prototype class methods.
+     * 
+     * @return the list of prototype class methods
+     */
     List<MethodDefinition> getPrototypeMethods();
 }

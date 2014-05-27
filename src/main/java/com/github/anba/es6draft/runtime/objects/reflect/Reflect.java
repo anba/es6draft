@@ -92,16 +92,14 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         @Function(name = "apply", arity = 3)
         public static Object apply(ExecutionContext cx, Object thisValue, Object target,
                 Object thisArgument, Object argumentsList) {
-            /* steps 1-2 */
-            ScriptObject obj = ToObject(cx, target);
-            /* step 3 */
-            if (!IsCallable(obj)) {
+            /* step 1 */
+            if (!IsCallable(target)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
-            /* steps 4-5 */
+            /* steps 2-3 */
             Object[] args = CreateListFromArrayLike(cx, argumentsList);
-            /* steps 6-7 */
-            return PrepareForTailCall(args, thisArgument, (Callable) obj);
+            /* steps 4-5 */
+            return PrepareForTailCall(args, thisArgument, (Callable) target);
         }
 
         /**
@@ -120,16 +118,14 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         @Function(name = "construct", arity = 2)
         public static Object construct(ExecutionContext cx, Object thisValue, Object target,
                 Object argumentsList) {
-            /* steps 1-2 */
-            ScriptObject obj = ToObject(cx, target);
-            /* step 3 */
-            if (!IsConstructor(obj)) {
+            /* step 1 */
+            if (!IsConstructor(target)) {
                 throw newTypeError(cx, Messages.Key.NotConstructor);
             }
-            /* steps 4-5 */
+            /* steps 2-3 */
             Object[] args = CreateListFromArrayLike(cx, argumentsList);
-            /* steps 6-7 */
-            return ((Constructor) obj).construct(cx, args);
+            /* steps 4-5 */
+            return ((Constructor) target).construct(cx, args);
         }
 
         /**

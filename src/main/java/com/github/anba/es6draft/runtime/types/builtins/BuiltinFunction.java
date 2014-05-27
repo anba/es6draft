@@ -102,7 +102,8 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     /**
      * Creates the default function properties, i.e. 'name' and 'length', initializes the
      * [[Prototype]] to the <code>%FunctionPrototype%</code> object and calls
-     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, ScriptObject)}.
+     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, ScriptObject, Realm)}
+     * .
      * 
      * @param name
      *            the function name
@@ -125,6 +126,18 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         AddRestrictedFunctionProperties(cx, this, thrower);
     }
 
+    /**
+     * Calls
+     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, ScriptObject, Realm)}
+     * .
+     * 
+     * @param cx
+     *            the execution context
+     */
+    protected final void addRestrictedFunctionProperties(ExecutionContext cx) {
+        AddRestrictedFunctionProperties(cx, this, realm.getThrowTypeError());
+    }
+
     @Override
     protected abstract BuiltinFunction clone();
 
@@ -132,7 +145,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     public final BuiltinFunction clone(ExecutionContext cx) {
         BuiltinFunction f = clone();
         f.setPrototype(getPrototype());
-        AddRestrictedFunctionProperties(cx, f);
+        AddRestrictedFunctionProperties(cx, f, realm.getThrowTypeError());
         return f;
     }
 

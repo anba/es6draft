@@ -57,8 +57,8 @@ const {
   assertNotSame(tte, clone);
   assertNotSame(ThrowTypeError, clone);
   assertNotSame(foreignThrowTypeError, clone);
-  assertAccessorProperty(clone, "arguments", {get: foreignThrowTypeError, set: foreignThrowTypeError, enumerable: false, configurable: false});
-  assertAccessorProperty(clone, "caller", {get: foreignThrowTypeError, set: foreignThrowTypeError, enumerable: false, configurable: false});
+  assertAccessorProperty(clone, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
+  assertAccessorProperty(clone, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
   assertFalse(clone.hasOwnProperty("length"));
   assertFalse(clone.hasOwnProperty("name"));
   assertEquals(["arguments", "caller"], Object.getOwnPropertyNames(clone).sort());

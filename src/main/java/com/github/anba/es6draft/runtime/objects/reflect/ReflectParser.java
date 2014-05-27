@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Type.isUndefinedOrNull;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.DenseArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
-import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
+import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
 import static com.github.anba.es6draft.semantics.StaticSemantics.Substitutions;
 import static com.github.anba.es6draft.semantics.StaticSemantics.TemplateStrings;
 
@@ -39,6 +39,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -246,7 +247,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     private OrdinaryObject createEmptyNode() {
-        return ObjectCreate(cx);
+        return ObjectCreate(cx, Intrinsics.ObjectPrototype);
     }
 
     private void addProperty(OrdinaryObject holder, String key, Object value) {
@@ -529,11 +530,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     private OrdinaryObject createClassBody(ClassDefinition node, Void value) {
         // ClassBody is materalized as a single node
         List<OrdinaryObject> methods = new ArrayList<>();
-        for (MethodDefinition method : node.getPrototypeMethods()) {
-            methods.add(createClassMethod(method, value, false));
-        }
-        for (MethodDefinition method : node.getStaticMethods()) {
-            methods.add(createClassMethod(method, value, true));
+        for (MethodDefinition method : node.getMethods()) {
+            methods.add(createClassMethod(method, value));
         }
         OrdinaryObject body = createListFromValues(methods);
         OrdinaryObject classBody = createNode(node, Type.ClassBody);
@@ -541,7 +539,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         return classBody;
     }
 
-    private OrdinaryObject createClassMethod(MethodDefinition node, Void value, boolean isStatic) {
+    private OrdinaryObject createClassMethod(MethodDefinition node, Void value) {
         Object key = node.getPropertyName().accept(this, null);
         Object _value = toFunctionExpression(node, value);
         String kind = methodKind(node, "");
@@ -549,7 +547,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         addProperty(property, "key", key);
         addProperty(property, "value", _value);
         addProperty(property, "kind", kind);
-        addProperty(property, "static", isStatic);
+        addProperty(property, "static", node.isStatic());
         return property;
     }
 
@@ -1824,7 +1822,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         Object switchStatement;
         Object discriminant = node.getExpression().accept(this, value);
         ExoticArray cases = createList(node.getClauses(), value);
-        boolean lexical = !LexicalDeclarations(node).isEmpty();
+        boolean lexical = !LexicallyScopedDeclarations(node).isEmpty();
         if (hasBuilder(Type.SwitchStatement)) {
             switchStatement = call(Type.SwitchStatement, node, discriminant, cases, lexical);
         } else {

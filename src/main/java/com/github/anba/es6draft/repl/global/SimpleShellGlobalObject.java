@@ -36,9 +36,9 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        super.initialize(cx);
-        createProperties(cx, this, this, SimpleShellGlobalObject.class);
+    protected void initializeExtensions(ExecutionContext cx) {
+        super.initializeExtensions(cx);
+        createProperties(cx, cx.getGlobalObject(), this, SimpleShellGlobalObject.class);
     }
 
     /**

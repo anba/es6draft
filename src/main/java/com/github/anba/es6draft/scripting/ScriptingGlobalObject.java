@@ -23,14 +23,9 @@ public final class ScriptingGlobalObject extends GlobalObject {
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        super.initialize(cx);
-        createProperties(cx, this, this, ScriptingGlobalObject.class);
-    }
-
-    @Override
-    public void initialize() {
-        /* no initialization required */
+    protected void initializeExtensions(ExecutionContext cx) {
+        super.initializeExtensions(cx);
+        createProperties(cx, cx.getGlobalObject(), this, ScriptingGlobalObject.class);
     }
 
     /**

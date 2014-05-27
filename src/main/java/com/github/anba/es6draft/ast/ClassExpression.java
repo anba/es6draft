@@ -18,16 +18,18 @@ public final class ClassExpression extends Expression implements ClassDefinition
     private final BlockScope scope;
     private final BindingIdentifier name;
     private final Expression heritage;
+    private final List<MethodDefinition> methods;
     private final List<MethodDefinition> staticMethods;
     private final List<MethodDefinition> prototypeMethods;
 
     public ClassExpression(long beginPosition, long endPosition, BlockScope scope,
-            BindingIdentifier name, Expression heritage, List<MethodDefinition> staticMethods,
-            List<MethodDefinition> prototypeMethods) {
+            BindingIdentifier name, Expression heritage, List<MethodDefinition> methods,
+            List<MethodDefinition> staticMethods, List<MethodDefinition> prototypeMethods) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.name = name;
         this.heritage = heritage;
+        this.methods = methods;
         this.staticMethods = staticMethods;
         this.prototypeMethods = prototypeMethods;
     }
@@ -45,6 +47,11 @@ public final class ClassExpression extends Expression implements ClassDefinition
     @Override
     public Expression getHeritage() {
         return heritage;
+    }
+
+    @Override
+    public List<MethodDefinition> getMethods() {
+        return methods;
     }
 
     @Override

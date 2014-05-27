@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -149,12 +149,29 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
     }
 
     @Override
-    public Callable clone(ExecutionContext cx) {
-        throw newTypeError(cx, Messages.Key.FunctionNotCloneable);
+    public ExoticBoundFunction clone(ExecutionContext cx) {
+        /* step 1 (not applicable) */
+        /* steps 2-4 */
+        ExoticBoundFunction clone;
+        if (this instanceof ConstructorExoticBoundFunction) {
+            clone = new ConstructorExoticBoundFunction(cx.getRealm());
+        } else {
+            clone = new ExoticBoundFunction(cx.getRealm());
+        }
+        clone.setPrototype(getPrototype());
+        clone.boundTargetFunction = boundTargetFunction;
+        clone.boundThis = boundThis;
+        clone.boundArguments = boundArguments;
+        /* step 5 */
+        Realm realm = BoundFunctionTargetRealm(cx, this);
+        /* step 6-7 */
+        AddRestrictedFunctionProperties(cx, clone, realm);
+        /* step 8 */
+        return clone;
     }
 
     /**
-     * 9.4.1.3 BoundFunctionCreate Abstract Operation
+     * 9.4.1.3 BoundFunctionCreate (targetFunction, boundThis, boundArgs) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -188,5 +205,46 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
         obj.boundArguments = boundArgs;
         /* step 11 */
         return obj;
+    }
+
+    /**
+     * 9.4.1.4 BoundFunctionClone ( function ) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param bound
+     *            the bound function object
+     * @return the new cloned bound function object
+     */
+    public static ExoticBoundFunction BoundFunctionClone(ExecutionContext cx,
+            ExoticBoundFunction function) {
+        return function.clone(cx);
+    }
+
+    /**
+     * 9.4.1.5 BoundFunctionTargetRealm ( bound ) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param bound
+     *            the bound function object
+     * @return the realm object
+     */
+    public static Realm BoundFunctionTargetRealm(ExecutionContext cx, ExoticBoundFunction bound) {
+        /* step 1 (implicit) */
+        /* step 2 */
+        Callable target = bound.getBoundTargetFunction();
+        /* step 3 */
+        while (target instanceof ExoticBoundFunction) {
+            target = ((ExoticBoundFunction) target).getBoundTargetFunction();
+        }
+        /* step 4 */
+        if (target instanceof FunctionObject) {
+            return ((FunctionObject) target).getRealm();
+        } else if (target instanceof BuiltinFunction) {
+            return ((BuiltinFunction) target).getRealm();
+        }
+        /* step 5 */
+        return cx.getRealm();
     }
 }

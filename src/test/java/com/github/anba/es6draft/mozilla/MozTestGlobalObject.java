@@ -27,9 +27,9 @@ public class MozTestGlobalObject extends MozShellGlobalObject {
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        super.initialize(cx);
-        createProperties(cx, this, new TestingFunctions(), TestingFunctions.class);
+    protected void initializeExtensions(ExecutionContext cx) {
+        super.initializeExtensions(cx);
+        createProperties(cx, cx.getGlobalObject(), new TestingFunctions(), TestingFunctions.class);
     }
 
     /**

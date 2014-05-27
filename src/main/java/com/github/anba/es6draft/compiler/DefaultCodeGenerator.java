@@ -7,11 +7,9 @@
 package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMethod;
-import static com.github.anba.es6draft.semantics.StaticSemantics.PrototypeMethodDefinitions;
-import static com.github.anba.es6draft.semantics.StaticSemantics.StaticMethodDefinitions;
+import static com.github.anba.es6draft.semantics.StaticSemantics.MethodDefinitions;
 
 import java.util.EnumSet;
-import java.util.List;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
@@ -29,6 +27,7 @@ import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 
 /**
  * Abstract base class for specialised generators
@@ -1189,14 +1188,14 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.enterScope(def);
         }
 
-        // step 6
+        // steps 6-7
         MethodDefinition constructor = ConstructorMethod(def);
         if (constructor != null) {
             codegen.compile(constructor);
             // Runtime Semantics: Evaluation -> MethodDefinition
             mv.invoke(codegen.methodDesc(constructor, FunctionName.RTI));
         } else {
-            // step 7
+            // step 8
             if (def.getHeritage() != null) {
                 // FIXME: spec bug? - `new (class extends null {})` throws TypeError
                 mv.invoke(Methods.ScriptRuntime_CreateDefaultConstructor);
@@ -1205,48 +1204,41 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             }
         }
 
-        // step 8 (empty)
-        // steps 9-13
+        // step 9 (empty)
+        // steps 10-14
         // stack: [proto, ctor, proto, <rti>] -> [proto, F]
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
 
-        // stack: [proto, F] -> [F, proto]
-        mv.swap();
+        Variable<OrdinaryFunction> F = mv.newScratchVariable(OrdinaryFunction.class);
+        Variable<ScriptObject> proto = mv.newScratchVariable(ScriptObject.class);
 
-        // steps 14-15
-        List<MethodDefinition> protoMethods = PrototypeMethodDefinitions(def);
-        for (MethodDefinition method : protoMethods) {
+        // stack: [proto, F] -> []
+        mv.store(F);
+        mv.store(proto);
+
+        // steps 15-17
+        for (MethodDefinition method : MethodDefinitions(def)) {
             if (method == constructor) {
                 continue;
             }
-            mv.dup();
-            codegen.propertyDefinition(method, mv);
-        }
-
-        // stack: [F, proto] -> [F]
-        mv.pop();
-
-        // steps 16-17
-        List<MethodDefinition> staticMethods = StaticMethodDefinitions(def);
-        for (MethodDefinition method : staticMethods) {
-            mv.dup();
+            if (method.isStatic()) {
+                mv.load(F);
+            } else {
+                mv.load(proto);
+            }
             codegen.propertyDefinition(method, mv);
         }
 
         // step 19
         if (className != null) {
-            // stack: [F] -> [F, F, envRec]
-            mv.dup();
+            // stack: [] -> [envRec, name, F]
             getLexicalEnvironment(mv);
             mv.invoke(Methods.LexicalEnvironment_getEnvRec);
-
-            // stack: [F, F, envRec] -> [F, envRec, name, F]
-            mv.swap();
             mv.aconst(className);
-            mv.swap();
+            mv.load(F);
 
-            // stack: [F, envRec, name, F] -> [F]
+            // stack: [envRec, name, F] -> []
             mv.invoke(Methods.EnvironmentRecord_initializeBinding);
         }
 
@@ -1256,6 +1248,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             // restore previous lexical environment
             popLexicalEnvironment(mv);
         }
+
+        // stack: [] -> [F]
+        mv.load(F);
+
+        mv.freeVariable(proto);
+        mv.freeVariable(F);
 
         // step 20 (return F)
         mv.exitClassDefinition();

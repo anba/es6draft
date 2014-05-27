@@ -122,7 +122,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          */
         @Function(name = "getInt8", arity = 1)
         public static Object getInt8(ExecutionContext cx, Object thisValue, Object byteOffset) {
-            return GetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementType.Int8);
+            return GetViewValue(cx, thisValue, byteOffset, true, ElementType.Int8);
         }
 
         /**
@@ -138,7 +138,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          */
         @Function(name = "getUint8", arity = 1)
         public static Object getUint8(ExecutionContext cx, Object thisValue, Object byteOffset) {
-            return GetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementType.Uint8);
+            return GetViewValue(cx, thisValue, byteOffset, true, ElementType.Uint8);
         }
 
         /**
@@ -271,7 +271,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
         @Function(name = "setInt8", arity = 2)
         public static Object setInt8(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value) {
-            SetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementType.Int8, value);
+            SetViewValue(cx, thisValue, byteOffset, true, ElementType.Int8, value);
             return UNDEFINED;
         }
 
@@ -291,7 +291,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
         @Function(name = "setUint8", arity = 2)
         public static Object setUint8(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value) {
-            SetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementType.Uint8, value);
+            SetViewValue(cx, thisValue, byteOffset, true, ElementType.Uint8, value);
             return UNDEFINED;
         }
 

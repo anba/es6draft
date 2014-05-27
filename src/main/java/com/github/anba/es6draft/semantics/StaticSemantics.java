@@ -152,8 +152,8 @@ public final class StaticSemantics {
      * @return the constructor method if found, otherwise {@code null}
      */
     public static MethodDefinition ConstructorMethod(ClassDefinition node) {
-        for (MethodDefinition m : PrototypeMethodDefinitions(node)) {
-            if ("constructor".equals(PropName(m))) {
+        for (MethodDefinition m : node.getMethods()) {
+            if (!m.isStatic() && "constructor".equals(PropName(m))) {
                 return m;
             }
         }
@@ -554,39 +554,39 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.1.2 Static Semantics: LexicalDeclarations
+     * 13.1.2 Static Semantics: LexicallyScopedDeclarations
      * 
      * @param node
      *            the block statement node
      * @return the list of lexically scoped declarations
      */
-    public static List<Declaration> LexicalDeclarations(BlockStatement node) {
+    public static List<Declaration> LexicallyScopedDeclarations(BlockStatement node) {
         return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
     }
 
     /**
-     * 13.11.2 Static Semantics: LexicalDeclarations
+     * 13.11.2 Static Semantics: LexicallyScopedDeclarations
      * 
      * @param node
      *            the switch statement node
      * @return the list of lexically scoped declarations
      */
-    public static List<Declaration> LexicalDeclarations(SwitchStatement node) {
+    public static List<Declaration> LexicallyScopedDeclarations(SwitchStatement node) {
         return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
     }
 
     /**
-     * Static Semantics: LexicalDeclarations
+     * Static Semantics: LexicallyScopedDeclarations
      * <ul>
-     * <li>14.1.14 Static Semantics: LexicalDeclarations
-     * <li>14.2.11 Static Semantics: LexicalDeclarations
+     * <li>14.1.14 Static Semantics: LexicallyScopedDeclarations
+     * <li>14.2.11 Static Semantics: LexicallyScopedDeclarations
      * </ul>
      * 
      * @param node
      *            the function node
      * @return the list of lexically scoped declarations
      */
-    public static List<Declaration> LexicalDeclarations(FunctionNode node) {
+    public static List<Declaration> LexicallyScopedDeclarations(FunctionNode node) {
         return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
     }
 
@@ -926,13 +926,13 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.0.11 Static Semantics: LexicalDeclarations
+     * 15.2.0.11 Static Semantics: LexicallyScopedDeclarations
      * 
      * @param node
      *            the module node
      * @return the list of lexically scoped declarations
      */
-    public static List<Declaration> LexicalDeclarations(Module node) {
+    public static List<Declaration> LexicallyScopedDeclarations(Module node) {
         // FIXME: Does not include ImportDeclaration nodes! May need to change class structure...
         return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
     }
@@ -977,7 +977,18 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.5.11 Static Semantics: PrototypeMethodDefinitions
+     * 14.5.x Static Semantics: MethodDefinitions
+     * 
+     * @param node
+     *            the class definition
+     * @return the list of class methods
+     */
+    public static List<MethodDefinition> MethodDefinitions(ClassDefinition node) {
+        return node.getMethods();
+    }
+
+    /**
+     * 14.5.x Static Semantics: PrototypeMethodDefinitions
      * 
      * @param node
      *            the class definition
@@ -988,7 +999,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.5.15 Static Semantics: StaticMethodDefinitions
+     * 14.5.x Static Semantics: StaticMethodDefinitions
      * 
      * @param node
      *            the class definition
@@ -1088,8 +1099,11 @@ public final class StaticSemantics {
     /**
      * Static Semantics: TailCallNodes (not in spec)
      * <p>
-     * 14.6.1 Static Semantics: Tail Position<br>
-     * 14.6.2 Static Semantics: HasProductionInTailPosition
+     * 14.6 Tail Position Calls
+     * <ul>
+     * <li>14.6.1 Static Semantics: IsInTailPosition(nonterminal) Abstract Operation
+     * <li>14.6.2 Static Semantics: HasProductionInTailPosition
+     * </ul>
      * 
      * @param expr
      *            the return expression

@@ -33,9 +33,9 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        super.initialize(cx);
-        createProperties(cx, this, this, V8ShellGlobalObject.class);
+    protected void initializeExtensions(ExecutionContext cx) {
+        super.initializeExtensions(cx);
+        createProperties(cx, cx.getGlobalObject(), this, V8ShellGlobalObject.class);
     }
 
     /**
@@ -63,7 +63,7 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    public void initialize() throws IOException, URISyntaxException, ParserException,
+    public void initializeScripted() throws IOException, URISyntaxException, ParserException,
             CompilationException {
         includeNative(getScriptURL(LEGACY_SCRIPT));
     }

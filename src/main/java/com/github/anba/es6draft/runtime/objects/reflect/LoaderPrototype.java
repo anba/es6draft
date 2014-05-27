@@ -17,7 +17,6 @@ import static com.github.anba.es6draft.runtime.modules.ModuleLoading.LoadModule;
 import static com.github.anba.es6draft.runtime.modules.ModuleLoading.ProceedToTranslate;
 import static com.github.anba.es6draft.runtime.modules.ModuleLoading.PromiseOfStartLoadPartwayThrough;
 import static com.github.anba.es6draft.runtime.objects.reflect.LoaderIteratorPrototype.CreateLoaderIterator;
-import static com.github.anba.es6draft.runtime.objects.reflect.RealmConstructor.IndirectEval;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.List;
@@ -103,7 +102,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         public static final Intrinsics constructor = Intrinsics.Loader;
 
         /**
-         * 26.3.3.14 get Reflect.Loader.prototype.realm
+         * 26.3.3.13 get Reflect.Loader.prototype.realm
          * 
          * @param cx
          *            the execution context
@@ -122,7 +121,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.7 get Reflect.Loader.prototype.global
+         * 26.3.3.6 get Reflect.Loader.prototype.global
          * 
          * @param cx
          *            the execution context
@@ -183,7 +182,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.11 Reflect.Loader.prototype.load ( name, options = undefined )
+         * 26.3.3.10 Reflect.Loader.prototype.load ( name, options = undefined )
          * 
          * @param cx
          *            the execution context
@@ -210,8 +209,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.12 Reflect.Loader.prototype.module ( source, options ) <br>
-         * FIXME: spec bug - options not declared as optional (options = undefined)
+         * 26.3.3.11 Reflect.Loader.prototype.module ( source [, options ] )
          * 
          * @param cx
          *            the execution context
@@ -250,7 +248,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.9 Reflect.Loader.prototype.import ( name, options = undefined )
+         * 26.3.3.8 Reflect.Loader.prototype.import ( name, options = undefined )
          * 
          * @param cx
          *            the execution context
@@ -278,7 +276,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.13 newModule ( obj )
+         * 26.3.3.12 newModule ( obj )
          * 
          * @param cx
          *            the execution context
@@ -313,28 +311,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.5 Reflect.Loader.prototype.eval ( source )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param source
-         *            the source string
-         * @return the evaluation result
-         */
-        @Function(name = "eval", arity = 1)
-        public static Object eval(ExecutionContext cx, Object thisValue, Object source) {
-            /* steps 1-2 */
-            LoaderObject loader = thisLoader(cx, thisValue);
-            /* step 3 */
-            Loader loaderRecord = loader.getLoader();
-            /* step 4 */
-            return IndirectEval(loaderRecord.getRealm(), source);
-        }
-
-        /**
-         * 26.3.3.6 Reflect.Loader.prototype.get ( name )
+         * 26.3.3.5 Reflect.Loader.prototype.get ( name )
          * 
          * @param cx
          *            the execution context
@@ -364,7 +341,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.8 Reflect.Loader.prototype.has ( name )
+         * 26.3.3.7 Reflect.Loader.prototype.has ( name )
          * 
          * @param cx
          *            the execution context
@@ -387,7 +364,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.15 Reflect.Loader.prototype.set ( name, module )
+         * 26.3.3.14 Reflect.Loader.prototype.set ( name, module )
          * 
          * @param cx
          *            the execution context
@@ -444,7 +421,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
 
         /**
          * 26.3.3.4 Reflect.Loader.prototype.entries ( )<br>
-         * 26.3.3.17 Reflect.Loader.prototype[@@iterator] ( )
+         * 26.3.3.16 Reflect.Loader.prototype[@@iterator] ( )
          * 
          * @param cx
          *            the execution context
@@ -462,7 +439,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.10 Reflect.Loader.prototype.keys ( )
+         * 26.3.3.9 Reflect.Loader.prototype.keys ( )
          * 
          * @param cx
          *            the execution context
@@ -479,7 +456,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.16 Reflect.Loader.prototype.values ( )
+         * 26.3.3.15 Reflect.Loader.prototype.values ( )
          * 
          * @param cx
          *            the execution context

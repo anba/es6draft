@@ -12,8 +12,6 @@ const {
 // 9.2.4 [[Call]]: Use callee's realm for ToObject() operation
 // https://bugs.ecmascript.org/show_bug.cgi?id=2484
 
-// Note: This behaviour is most likely not intended, but correct per rev22 spec
-
 let realm = new Reflect.Realm();
 realm.eval(`
   function returnThis() {

@@ -35,7 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
  * <h2>9.2 ECMAScript Function Objects</h2>
  * <ul>
- * <li>9.2.13 Function Declaration Instantiation
+ * <li>9.2.13 Function Declaration Instantiation(func, argumentsList, env) Abstract Operation
  * </ul>
  */
 final class FunctionDeclarationInstantiationGenerator extends
@@ -173,7 +173,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         boolean strict = IsStrict(function);
         boolean legacy = !strict && codegen.isEnabled(CompatibilityOption.FunctionPrototype);
         boolean block = !strict && codegen.isEnabled(CompatibilityOption.BlockFunctionDeclaration)
-                && (function instanceof FunctionDefinition); // Arrow or generator functions?
+                && (function instanceof FunctionDefinition); // TODO: Arrow or generator functions?
         /* step 3 */
         FormalParameterList formals = function.getParameters();
         /* step 4 */
@@ -232,6 +232,8 @@ final class FunctionDeclarationInstantiationGenerator extends
                 argumentsObjectNeeded = false;
             } else if (lexicalNames.contains("arguments")) {
                 argumentsObjectNeeded = false;
+                // FIXME: spec bug - function f() { let arguments }
+                needsSpecialArgumentsBinding = false;
             }
         }
         /* steps 19-20 */
@@ -282,17 +284,11 @@ final class FunctionDeclarationInstantiationGenerator extends
             }
             if (argumentsObjectNeeded) {
                 initializeBinding(envRec, "arguments", argumentsValue, mv);
-                instantiatedVarNames.add("arguments");
             }
-            // FIXME: spec bug - "arguments" as function not handled (bug 2774)
-            else if (!needsParameterEnvironment) {
-                assert argumentsValue == undef;
-                initializeBinding(envRec, "arguments", argumentsValue, mv);
-                instantiatedVarNames.add("arguments");
-            } else {
-                assert argumentsValue == undef;
-                initializeBinding(envRec, "arguments", argumentsValue, mv);
-            }
+            // FIXME: spec bug - need to special case 'needsParameterEnvironment'?
+            // FIXME: function f(g = () => arguments) { function arguments() {} return g() }
+            // FIXME: Should not return inner `arguments` function...?
+            instantiatedVarNames.add("arguments");
         }
         /* steps 24-26 */
         if (hasParameters) {
@@ -305,6 +301,13 @@ final class FunctionDeclarationInstantiationGenerator extends
             }
         }
         /* step 27 */
+        if (needsSpecialArgumentsBinding && !argumentsObjectNeeded) {
+            // TODO: Initializing "arguments" here means access to "arguments" in default parameters
+            // throws a ReferenceError, late access (function closure in default parameters) will
+            // return "undefined"
+            initializeBinding(envRec, "arguments", undef, mv);
+        }
+        /* step 28 */
         Variable<LexicalEnvironment<?>> localEnv;
         Variable<EnvironmentRecord> localEnvRec;
         if (needsParameterEnvironment) {
@@ -323,7 +326,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             localEnv = env;
             localEnvRec = envRec;
         }
-        /* step 28 */
+        /* step 29 */
         for (String varName : varNames) {
             if (!instantiatedVarNames.contains(varName)) {
                 instantiatedVarNames.add(varName);
@@ -341,50 +344,25 @@ final class FunctionDeclarationInstantiationGenerator extends
                 break BLOCK;
             }
 
-            // TODO: Pending update (bug 2873)
-            // parameters, var-names and implicit "arguments"
-            HashSet<String> envBindings = new HashSet<>();
-            if (needsParameterEnvironment) {
-                // only bindings from step 28
-                envBindings.addAll(varNames);
-                if (needsSpecialArgumentsBinding) {
-                    envBindings.remove("arguments");
-                }
-                envBindings.removeAll(parameterNames);
-            } else {
-                // bindings from step 21, 23, 28
-                envBindings.addAll(parameterNames);
-                envBindings.addAll(varNames);
-                if (needsSpecialArgumentsBinding) {
-                    envBindings.add("arguments");
-                }
-                assert instantiatedVarNames.size() == envBindings.size();
-            }
-
             for (FunctionDeclaration f : functions) {
                 String fname = f.getIdentifier().getName();
+                // See 14.1.2 Static Semantics: Early Errors
                 if (lexicalNames.contains(fname)) {
                     continue;
                 }
-                // TODO: Pending update (bug 2873)
-                // TODO: spec clear enough to omit function declarations?
-                // TODO: may change when function binding is properly specified!
-                // TODO: add test case!
-                if (functionNames.contains(fname)) {
-                    continue;
-                }
-                boolean alreadyDeclared = envBindings.contains(fname);
-                if (!alreadyDeclared) {
-                    envBindings.add(fname);
+                if (!instantiatedVarNames.contains(fname)) {
+                    // FIXME: spec bug - Need to add fname to instantiatedVarNames
+                    // function f() { { function g(){} } { function g(){} } } f()
+                    instantiatedVarNames.add(fname);
                     createMutableBinding(localEnvRec, fname, false, mv);
                     f.setLegacyBlockScoped(true);
                 }
             }
         }
 
-        /* step 29 */
-        List<Declaration> lexDeclarations = LexicalDeclarations(function);
         /* step 30 */
+        List<Declaration> lexDeclarations = LexicallyScopedDeclarations(function);
+        /* step 31 */
         for (Declaration d : lexDeclarations) {
             assert !isFunctionDeclaration(d);
             for (String dn : BoundNames(d)) {
@@ -395,7 +373,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                 }
             }
         }
-        /* step 31 */
+        /* step 32 */
         for (Declaration f : functionsToInitialize) {
             // String fn = BoundName(f);
             BindingIdentifier fn = getFunctionName(f);
@@ -409,7 +387,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             // stack: [ref, fo] -> []
             PutValue(mv);
         }
-        /* step 32 */
+        /* step 33 */
         mv.areturn();
     }
 

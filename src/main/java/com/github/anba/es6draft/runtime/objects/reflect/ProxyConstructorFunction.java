@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticProxy.ProxyCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -43,8 +42,8 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
 
     @Override
     public void initialize(ExecutionContext cx) {
+        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
-        AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override
@@ -109,7 +108,7 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
             /* steps 3-4 */
             ProxyRevocationFunction revoker = new ProxyRevocationFunction(cx.getRealm(), p);
             /* step 5 */
-            OrdinaryObject result = ObjectCreate(cx);
+            OrdinaryObject result = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             /* step 6 */
             CreateDataProperty(cx, result, "proxy", p);
             /* step 7 */

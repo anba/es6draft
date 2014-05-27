@@ -92,6 +92,7 @@ public final class Parser {
         boolean awaitAllowed = false;
         boolean returnAllowed = false;
         boolean noDivAfterYield = false;
+        boolean inArrowParameters = false;
         boolean legacyGenerator = false;
         boolean explicitStrict = false;
 
@@ -2357,9 +2358,11 @@ public final class Parser {
                 consume(Token.LP);
                 int start = ts.position() - 1;
                 // handle `YieldExpression = yield RegExp` in ArrowParameters
-                context.noDivAfterYield = context.parent.kind == ContextKind.Generator;
+                context.noDivAfterYield = context.parent.yieldAllowed;
+                context.inArrowParameters = true;
                 parameters = strictFormalParameters(Token.RP);
                 context.noDivAfterYield = false;
+                context.inArrowParameters = false;
                 consume(Token.RP);
 
                 source.append(ts.range(start, ts.position()));
@@ -2450,21 +2453,23 @@ public final class Parser {
      *     set PropertyName<span><sub>[?Yield]</sub></span> ( PropertySetParameterList ) { FunctionBody }
      * </pre>
      * 
+     * @param isStatic
+     *            {@code true} for <tt>static</tt> class methods
      * @return the parsed method definition
      */
-    private MethodDefinition methodDefinition() {
+    private MethodDefinition methodDefinition(boolean isStatic) {
         switch (methodType()) {
         case AsyncFunction:
-            return asyncMethod();
+            return asyncMethod(isStatic);
         case Generator:
-            return generatorMethod();
+            return generatorMethod(isStatic);
         case Getter:
-            return getterMethod();
+            return getterMethod(isStatic);
         case Setter:
-            return setterMethod();
+            return setterMethod(isStatic);
         case Function:
         default:
-            return normalMethod();
+            return normalMethod(isStatic);
         }
     }
 
@@ -2476,15 +2481,17 @@ public final class Parser {
      *     PropertyName<span><sub>[?Yield]</sub></span> ( StrictFormalParameters ) { FunctionBody }
      * </pre>
      * 
+     * @param isStatic
+     *            {@code true} for <tt>static</tt> class methods
      * @return the parsed method definition
      */
-    private MethodDefinition normalMethod() {
+    private MethodDefinition normalMethod(boolean isStatic) {
         long begin = ts.beginPosition();
         PropertyName propertyName = propertyName();
-        return normalMethod(begin, propertyName);
+        return normalMethod(isStatic, begin, propertyName);
     }
 
-    private MethodDefinition normalMethod(long begin, PropertyName propertyName) {
+    private MethodDefinition normalMethod(boolean isStatic, long begin, PropertyName propertyName) {
         newContext(ContextKind.Method);
         try {
             consume(Token.LP);
@@ -2503,7 +2510,8 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.Function;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    propertyName, parameters, statements, context.hasSuperReference(), header, body);
+                    isStatic, propertyName, parameters, statements, context.hasSuperReference(),
+                    header, body);
             scope.node = method;
 
             methodDefinition_EarlyErrors(method);
@@ -2522,9 +2530,11 @@ public final class Parser {
      *     get PropertyName<span><sub>[?Yield]</sub></span> ( ) { FunctionBody }
      * </pre>
      * 
+     * @param isStatic
+     *            {@code true} for <tt>static</tt> class methods
      * @return the parsed getter method definition
      */
-    private MethodDefinition getterMethod() {
+    private MethodDefinition getterMethod(boolean isStatic) {
         long begin = ts.beginPosition();
 
         consume(Token.NAME); // "get"
@@ -2561,7 +2571,8 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.Getter;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    propertyName, parameters, statements, context.hasSuperReference(), header, body);
+                    isStatic, propertyName, parameters, statements, context.hasSuperReference(),
+                    header, body);
             scope.node = method;
 
             methodDefinition_EarlyErrors(method);
@@ -2580,9 +2591,11 @@ public final class Parser {
      *     set PropertyName<span><sub>[?Yield]</sub></span> ( PropertySetParameterList ) { FunctionBody }
      * </pre>
      * 
+     * @param isStatic
+     *            {@code true} for <tt>static</tt> class methods
      * @return the parsed setter method definition
      */
-    private MethodDefinition setterMethod() {
+    private MethodDefinition setterMethod(boolean isStatic) {
         long begin = ts.beginPosition();
 
         consume(Token.NAME); // "set"
@@ -2618,7 +2631,8 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.Setter;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    propertyName, parameters, statements, context.hasSuperReference(), header, body);
+                    isStatic, propertyName, parameters, statements, context.hasSuperReference(),
+                    header, body);
             scope.node = method;
 
             methodDefinition_EarlyErrors(method);
@@ -2730,9 +2744,11 @@ public final class Parser {
      *     * PropertyName<span><sub>[?Yield]</sub></span> ( StrictFormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { FunctionBody<span><sub>[Yield]</sub></span> }
      * </pre>
      * 
+     * @param isStatic
+     *            {@code true} for <tt>static</tt> class methods
      * @return the parsed generator method definition
      */
-    private MethodDefinition generatorMethod() {
+    private MethodDefinition generatorMethod(boolean isStatic) {
         long begin = ts.beginPosition();
 
         consume(Token.MUL);
@@ -2756,7 +2772,8 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.Generator;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    propertyName, parameters, statements, context.hasSuperReference(), header, body);
+                    isStatic, propertyName, parameters, statements, context.hasSuperReference(),
+                    header, body);
             scope.node = method;
 
             methodDefinition_EarlyErrors(method);
@@ -3062,14 +3079,15 @@ public final class Parser {
             }
             consume(Token.LC);
             BlockContext scope = enterBlockContext(name);
+            List<MethodDefinition> methods = newList();
             List<MethodDefinition> staticMethods = newList();
             List<MethodDefinition> prototypeMethods = newList();
-            classBody(name, staticMethods, prototypeMethods);
+            classBody(name, methods, staticMethods, prototypeMethods);
             exitBlockContext();
             consume(Token.RC);
 
             ClassDeclaration decl = new ClassDeclaration(begin, ts.endPosition(), scope, name,
-                    heritage, staticMethods, prototypeMethods);
+                    heritage, methods, staticMethods, prototypeMethods);
             scope.node = decl;
             addLexDeclaredName(name);
             addLexScopedDeclaration(decl);
@@ -3112,16 +3130,17 @@ public final class Parser {
             if (name != null) {
                 scope = enterBlockContext(name);
             }
+            List<MethodDefinition> methods = newList();
             List<MethodDefinition> staticMethods = newList();
             List<MethodDefinition> prototypeMethods = newList();
-            classBody(name, staticMethods, prototypeMethods);
+            classBody(name, methods, staticMethods, prototypeMethods);
             if (name != null) {
                 exitBlockContext();
             }
             consume(Token.RC);
 
             ClassExpression expr = new ClassExpression(begin, ts.endPosition(), scope, name,
-                    heritage, staticMethods, prototypeMethods);
+                    heritage, methods, staticMethods, prototypeMethods);
             if (name != null) {
                 scope.node = expr;
             }
@@ -3163,22 +3182,30 @@ public final class Parser {
      * 
      * @param className
      *            the class' name if present, otherwise {@code null}
+     * @param methods
+     *            the list to hold all methods in source order
      * @param staticMethods
      *            the list to hold static methods
      * @param prototypeMethods
      *            the list to hold prototype methods
      */
-    private void classBody(BindingIdentifier className, List<MethodDefinition> staticMethods,
-            List<MethodDefinition> prototypeMethods) {
+    private void classBody(BindingIdentifier className, List<MethodDefinition> methods,
+            List<MethodDefinition> staticMethods, List<MethodDefinition> prototypeMethods) {
         while (token() != Token.RC) {
             if (token() == Token.SEMI) {
                 consume(Token.SEMI);
-            } else if (token() == Token.STATIC && !LOOKAHEAD(Token.LP)) {
-                consume(Token.STATIC);
-                staticMethods.add(methodDefinition());
-            } else {
-                prototypeMethods.add(methodDefinition());
+                continue;
             }
+            MethodDefinition method;
+            if (token() == Token.STATIC && !LOOKAHEAD(Token.LP)) {
+                consume(Token.STATIC);
+                method = methodDefinition(true);
+                staticMethods.add(method);
+            } else {
+                method = methodDefinition(false);
+                prototypeMethods.add(method);
+            }
+            methods.add(method);
         }
 
         classBody_EarlyErrors(className, staticMethods, true);
@@ -3366,9 +3393,11 @@ public final class Parser {
      *     async PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </pre>
      * 
+     * @param isStatic
+     *            {@code true} for <tt>static</tt> class methods
      * @return the parsed async method
      */
-    private MethodDefinition asyncMethod() {
+    private MethodDefinition asyncMethod(boolean isStatic) {
         long begin = ts.beginPosition();
 
         consume("async");
@@ -3392,7 +3421,8 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.AsyncFunction;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    propertyName, parameters, statements, context.hasSuperReference(), header, body);
+                    isStatic, propertyName, parameters, statements, context.hasSuperReference(),
+                    header, body);
             scope.node = method;
 
             methodDefinition_EarlyErrors(method);
@@ -5240,6 +5270,34 @@ public final class Parser {
 
     /**
      * <strong>[12.1] Identifiers</strong>
+     * <p>
+     * Special case for {@link Token#YIELD} as {@link BindingIdentifier} arrow rest parameter.
+     * 
+     * <pre>
+     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
+     *     <span><sub>[+Default]</sub></span> default
+     *     <span><sub>[~Yield]</sub></span> yield
+     *     Identifier
+     * </pre>
+     * 
+     * @return the parsed binding identifier
+     */
+    private BindingIdentifier bindingIdentifierArrowRestParameter() {
+        Token tok = token();
+        if (tok == Token.YIELD || tok == Token.ESCAPED_YIELD) {
+            long begin = ts.beginPosition();
+            // Treat as reference context for error reporting
+            if (!isYieldName(context, true)) {
+                reportTokenNotIdentifier(Token.YIELD);
+            }
+            consume(tok);
+            return new BindingIdentifier(begin, ts.endPosition(), getName(Token.YIELD));
+        }
+        return bindingIdentifier();
+    }
+
+    /**
+     * <strong>[12.1] Identifiers</strong>
      * 
      * <pre>
      * LabelIdentifier<span><sub>[Yield]</sub></span> :
@@ -5375,6 +5433,12 @@ public final class Parser {
             // 'yield' nested in generator comprehension, nested in generator
             reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
         }
+        if (yieldContext.kind == ContextKind.ArrowFunction && yieldContext.inArrowParameters
+                && yieldContext.parent.yieldAllowed && !isReference) {
+            // 'yield' in arrow function parameters embedded in generator or generator comprehension
+            reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
+        }
+
         assert !yieldContext.yieldAllowed : String.format(
                 "unexpected context kind '%s' with yield allowed", yieldContext.kind);
         // 'yield' is always a keyword in strict-mode (independent of `yieldContext`!)
@@ -5556,7 +5620,7 @@ public final class Parser {
     private SpreadElement arrowFunctionRestParameter() {
         long begin = ts.beginPosition();
         consume(Token.TRIPLE_DOT);
-        String ident = bindingIdentifier().getName();
+        String ident = bindingIdentifierArrowRestParameter().getName();
         Identifier identifier = new Identifier(ts.beginPosition(), ts.endPosition(), ident);
         SpreadElement spread = new SpreadElement(begin, ts.endPosition(), identifier);
         if (!(token() == Token.RP && LOOKAHEAD(Token.ARROW))) {
@@ -6016,7 +6080,7 @@ public final class Parser {
                         propertyValue);
             }
             // otherwise it's MethodDefinition (normal)
-            return normalMethod(begin, propertyName);
+            return normalMethod(false, begin, propertyName);
         }
         if (LOOKAHEAD(Token.COLON)) {
             PropertyName propertyName = literalPropertyName();
@@ -6034,7 +6098,7 @@ public final class Parser {
             Expression initializer = assignmentExpression(true);
             return new CoverInitializedName(begin, ts.endPosition(), identifier, initializer);
         }
-        return methodDefinition();
+        return methodDefinition(false);
     }
 
     /**

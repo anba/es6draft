@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -238,18 +237,10 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         /* step 2 */
         assert b != null : "binding not found: " + name;
         /* step 3 */
-        // FIXME: spec bug - assertion already handles this case (bug 2757)
-        if (b == null) {
-            if (!strict) {
-                return UNDEFINED;
-            }
-            throw newReferenceError(cx, Messages.Key.InvalidReference, name);
-        }
-        /* step 4 */
         if (b.value == null) {
             throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
         }
-        /* step 5 */
+        /* step 4 */
         return b.value;
     }
 

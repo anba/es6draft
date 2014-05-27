@@ -107,7 +107,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.1 GetIdentifierReference (lex, name, strict)
+     * 8.1.2.1 GetIdentifierReference (lex, name, strict) Abstract Operation
      * 
      * @param lex
      *            the lexical environment
@@ -126,7 +126,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.2 NewDeclarativeEnvironment (E)
+     * 8.1.2.2 NewDeclarativeEnvironment (E) Abstract Operation
      * 
      * @param e
      *            the outer lexical environment
@@ -143,7 +143,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.3 NewObjectEnvironment (O, E)
+     * 8.1.2.3 NewObjectEnvironment (O, E) Abstract Operation
      * 
      * @param o
      *            the script object
@@ -157,7 +157,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.3 NewObjectEnvironment (O, E)
+     * 8.1.2.3 NewObjectEnvironment (O, E) Abstract Operation
      * 
      * @param o
      *            the script object
@@ -178,7 +178,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.4 NewFunctionEnvironment (F, T)
+     * 8.1.2.4 NewFunctionEnvironment (F, T) Abstract Operation
      * 
      * @param callerContext
      *            the caller execution context
@@ -207,7 +207,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.5 NewGlobalEnvironment ( G )
+     * 8.1.2.5 NewGlobalEnvironment ( G ) Abstract Operation
      * 
      * @param cx
      *            the default execution context
@@ -226,7 +226,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.? NewModuleEnvironment (E)
+     * 8.1.2.? NewModuleEnvironment (E) Abstract Operation
      * 
      * @param e
      *            the outer lexical environment

@@ -120,9 +120,9 @@ public final class NativesMozillaTest {
         }
 
         @Override
-        public void initialize() throws IOException, URISyntaxException, ParserException,
+        public void initializeScripted() throws IOException, URISyntaxException, ParserException,
                 CompilationException {
-            // super.initialize();
+            // super.initializeScripted();
             includeNative(getScriptURL("collection.js"));
             includeNative(getScriptURL("compat.js"));
             includeNative(getScriptURL("iterator.js"));

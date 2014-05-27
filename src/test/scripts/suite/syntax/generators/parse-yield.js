@@ -773,8 +773,7 @@ assertSyntaxError(`(function* g(){ (for(a of b) yield d) });`);
 // function name (= property name, yield allowed!)
 ({ yield(){} });
 ({ "yield"(){} });
-// TODO: enable when supported (rev17)
-// ({ ["yield"](){} });
+({ ["yield"](){} });
 // parameter name
 ({ f(yield){} });
 assertSyntaxError(`({ f(yield, yield){} });`);
@@ -854,8 +853,7 @@ assertSyntaxError(`({ f(){ (for(a of b) yield d) } });`);
 // function name (= property name, yield allowed!)
 ({ yield(){"use strict";} });
 ({ "yield"(){"use strict";} });
-// TODO: enable when supported (rev17)
-// ({ ["yield"](){"use strict";} });
+({ ["yield"](){"use strict";} });
 // parameter name
 assertSyntaxError(`({ f(yield){"use strict";} });`);
 assertSyntaxError(`({ f(yield, yield){"use strict";} });`);
@@ -936,8 +934,7 @@ assertSyntaxError(`({ f(){"use strict"; (for(a of b) yield d) } });`);
 // function name (= property name, yield allowed!)
 ({ * yield(){} });
 ({ * "yield"(){} });
-// TODO: enable when supported (rev17)
-// ({ * ["yield"](){} });
+({ * ["yield"](){} });
 // parameter name
 assertSyntaxError(`({ * g(yield){} });`);
 assertSyntaxError(`({ * g(yield, yield){} });`);
@@ -1018,8 +1015,7 @@ assertSyntaxError(`({ * g(){ (for(a of b) yield d) } });`);
 // function name (= property name, yield allowed!)
 ({ * yield(){"use strict";} });
 ({ * "yield"(){"use strict";} });
-// TODO: enable when supported (rev17)
-// ({ * ["yield"](){"use strict";} });
+({ * ["yield"](){"use strict";} });
 // parameter name
 assertSyntaxError(`({ * g(yield){"use strict";} });`);
 assertSyntaxError(`({ * g(yield, yield){"use strict";} });`);
@@ -1107,8 +1103,7 @@ assertSyntaxError(`({ * g(){"use strict"; (for(a of b) yield d) } });`);
 // function name (= property name, yield allowed!)
 class C{ yield(){} }
 class D{ "yield"(){} }
-// TODO: enable when supported (rev17)
-// class E{ ["yield"](){} }
+class E{ ["yield"](){} }
 // parameter name
 assertSyntaxError(`class C{ f(yield){} }`);
 assertSyntaxError(`class C{ f(yield, yield){} }`);
@@ -1188,8 +1183,7 @@ assertSyntaxError(`class C{ f(){ (for(a of b) yield d) } }`);
 // function name (= property name, yield allowed!)
 class C{ * yield(){} }
 class D{ * "yield"(){} }
-// TODO: enable when supported (rev17)
-// class E{ * ["yield"](){} }
+class E{ * ["yield"](){} }
 // parameter name
 assertSyntaxError(`class C{ * g(yield){} }`);
 assertSyntaxError(`class C{ * g(yield, yield){} }`);

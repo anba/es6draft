@@ -52,9 +52,9 @@ public class MozShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        super.initialize(cx);
-        createProperties(cx, this, this, MozShellGlobalObject.class);
+    protected void initializeExtensions(ExecutionContext cx) {
+        super.initializeExtensions(cx);
+        createProperties(cx, cx.getGlobalObject(), this, MozShellGlobalObject.class);
     }
 
     /**
@@ -82,14 +82,13 @@ public class MozShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    public void initialize() throws IOException, URISyntaxException, ParserException,
+    public void initializeScripted() throws IOException, URISyntaxException, ParserException,
             CompilationException {
         includeNative(getScriptURL(LEGACY_SCRIPT));
     }
 
-    private Object evaluate(GlobalObject global, String source, String sourceName, int sourceLine)
+    private Object evaluate(Realm realm, String source, String sourceName, int sourceLine)
             throws IOException {
-        Realm realm = global.getRealm();
         try {
             StringReader reader = new StringReader(source);
             Script script = getScriptLoader().script(sourceName, sourceLine, reader);
@@ -162,7 +161,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
         }
 
         try {
-            Object result = evaluate(global, source, sourceName, sourceLine);
+            Object result = evaluate(global.getRealm(), source, sourceName, sourceLine);
             return (!noScriptRval ? result : UNDEFINED);
         } catch (StackOverflowError e) {
             throw e;
@@ -300,7 +299,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
             throw newError(cx, "invalid global argument");
         }
         try {
-            return evaluate((GlobalObject) global, s, "evalcx", 1);
+            return evaluate(((GlobalObject) global).getRealm(), s, "evalcx", 1);
         } catch (IOException e) {
             throw newError(cx, e.getMessage());
         }
@@ -442,10 +441,9 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      **/
     @Function(name = "newGlobal", arity = 0)
     public ScriptObject newGlobal(ExecutionContext cx) {
-        MozShellGlobalObject global = (MozShellGlobalObject) cx.getRealm().getWorld().newGlobal();
+        MozShellGlobalObject global;
         try {
-            global.initialize();
-            global.defineBuiltinProperties();
+            global = (MozShellGlobalObject) cx.getRealm().getWorld().newInitializedGlobal();
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         } catch (IOException | URISyntaxException e) {

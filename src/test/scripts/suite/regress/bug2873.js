@@ -18,8 +18,8 @@ const {
     if (true) { function a() { return "web-compat" } }
     return a();
   }
-  assertSame("web-compat", f());
-  assertSame("web-compat", f(() => "param"));
+  assertSame("default", f());
+  assertSame("param", f(() => "param"));
 }
 
 // Parameter environment not present

@@ -14,16 +14,24 @@ const {
 
 assertSyntaxError(`
   function* g() {
-    var f1 = yield => { return yield };
+    var f1 = yield => { };
   }
 `);
 
+assertSyntaxError(`
 function* g() {
-  var f2 = (yield) => { return yield };
-  var f3 = (a, yield) => { return yield };
-  var f4 = (yield, a) => { return yield };
-
-  assertSame(0, f2(0));
-  assertSame(0, f3(0));
-  assertSame(0, f4(0));
+  var f2 = (yield) => { };
 }
+`);
+
+assertSyntaxError(`
+function* g() {
+  var f3 = (a, yield) => { };
+}
+`);
+
+assertSyntaxError(`
+function* g() {
+  var f4 = (yield, a) => { };
+}
+`);

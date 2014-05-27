@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.modules;
 import static com.github.anba.es6draft.runtime.ExecutionContext.newModuleExecutionContext;
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
-import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
+import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -160,7 +160,7 @@ public final class ModuleEvaluation {
         // TODO: implement
         DeclarativeEnvironmentRecord envRec = env.getEnvRec();
         /* step 1 */
-        List<Declaration> declarations = LexicalDeclarations(body);
+        List<Declaration> declarations = LexicallyScopedDeclarations(body);
         /* step 2 */
         List<Declaration> functionsToInitialize = new ArrayList<>();
         /* step 3 */

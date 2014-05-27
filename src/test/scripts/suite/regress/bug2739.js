@@ -17,7 +17,7 @@ var log = "";
   static [(log += "|static", "")] () { }
   [(log += "|proto", "")] () { }
 });
-assertSame("|proto|static", log);
+assertSame("|static|proto", log);
 
 var log = "";
 (class {

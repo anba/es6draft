@@ -17,6 +17,7 @@ import java.util.List;
 public final class MethodDefinition extends PropertyDefinition implements FunctionNode {
     private final FunctionScope scope;
     private final MethodType type;
+    private final boolean isStatic;
     private final PropertyName propertyName;
     private String functionName;
     private final FormalParameterList parameters;
@@ -31,12 +32,13 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     }
 
     public MethodDefinition(long beginPosition, long endPosition, FunctionScope scope,
-            MethodType type, PropertyName propertyName, FormalParameterList parameters,
-            List<StatementListItem> statements, boolean superReference, String headerSource,
-            String bodySource) {
+            MethodType type, boolean isStatic, PropertyName propertyName,
+            FormalParameterList parameters, List<StatementListItem> statements,
+            boolean superReference, String headerSource, String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.type = type;
+        this.isStatic = isStatic;
         this.propertyName = propertyName;
         this.parameters = parameters;
         this.statements = statements;
@@ -52,6 +54,10 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
 
     public MethodType getType() {
         return type;
+    }
+
+    public boolean isStatic() {
+        return isStatic;
     }
 
     @Override

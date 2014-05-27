@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
+import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -191,7 +191,7 @@ final class SwitchStatementGenerator extends
             mv.store(switchValue);
         }
 
-        boolean hasDeclarations = !LexicalDeclarations(node).isEmpty();
+        boolean hasDeclarations = !LexicallyScopedDeclarations(node).isEmpty();
         if (hasDeclarations) {
             newDeclarativeEnvironment(mv);
             new BlockDeclarationInstantiationGenerator(codegen).generate(node, mv);

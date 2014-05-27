@@ -15,118 +15,119 @@ import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 /**
  * 
  */
-final class FunctionDeclarationCollector extends
-        DefaultNodeVisitor<List<FunctionDeclaration>, List<FunctionDeclaration>> {
+final class FunctionDeclarationCollector extends DefaultNodeVisitor<Void, Boolean> {
+    private final ArrayList<FunctionDeclaration> declarations = new ArrayList<>();
+
     private FunctionDeclarationCollector() {
     }
 
     static List<FunctionDeclaration> functionDeclarations(FunctionDefinition f) {
         FunctionDeclarationCollector collector = new FunctionDeclarationCollector();
-        List<FunctionDeclaration> declarations = new ArrayList<>();
-        return collector.forEach(f.getStatements(), declarations);
+        collector.forEach(f.getStatements(), Boolean.FALSE);
+        return collector.declarations;
     }
 
-    private List<FunctionDeclaration> forEach(Iterable<? extends Node> list,
-            List<FunctionDeclaration> value) {
+    private Void forEach(Iterable<? extends Node> list, Boolean value) {
         for (Node node : list) {
             node.accept(this, value);
         }
-        return value;
+        return null;
     }
 
     @Override
-    protected List<FunctionDeclaration> visit(Node node, List<FunctionDeclaration> value) {
+    protected Void visit(Node node, Boolean value) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
     @Override
-    protected List<FunctionDeclaration> visit(StatementListItem node,
-            List<FunctionDeclaration> value) {
-        return value;
+    protected Void visit(StatementListItem node, Boolean value) {
+        return null;
     }
 
     @Override
-    public List<FunctionDeclaration> visit(FunctionDeclaration node, List<FunctionDeclaration> value) {
-        value.add(node);
-        return value;
+    public Void visit(FunctionDeclaration node, Boolean value) {
+        if (value) {
+            declarations.add(node);
+        }
+        return null;
     }
 
     @Override
-    public List<FunctionDeclaration> visit(BlockStatement node, List<FunctionDeclaration> value) {
-        return forEach(node.getStatements(), value);
+    public Void visit(BlockStatement node, Boolean value) {
+        return forEach(node.getStatements(), Boolean.TRUE);
     }
 
     @Override
-    public List<FunctionDeclaration> visit(IfStatement node, List<FunctionDeclaration> value) {
+    public Void visit(IfStatement node, Boolean value) {
         node.getThen().accept(this, value);
         if (node.getOtherwise() != null) {
             node.getOtherwise().accept(this, value);
         }
-        return value;
+        return null;
     }
 
     @Override
-    public List<FunctionDeclaration> visit(DoWhileStatement node, List<FunctionDeclaration> value) {
+    public Void visit(DoWhileStatement node, Boolean value) {
         return node.getStatement().accept(this, value);
     }
 
     @Override
-    public List<FunctionDeclaration> visit(ForEachStatement node, List<FunctionDeclaration> value) {
+    public Void visit(ForEachStatement node, Boolean value) {
         return node.getStatement().accept(this, value);
     }
 
     @Override
-    public List<FunctionDeclaration> visit(ForOfStatement node, List<FunctionDeclaration> value) {
+    public Void visit(ForOfStatement node, Boolean value) {
         return node.getStatement().accept(this, value);
     }
 
     @Override
-    public List<FunctionDeclaration> visit(ForInStatement node, List<FunctionDeclaration> value) {
+    public Void visit(ForInStatement node, Boolean value) {
         return node.getStatement().accept(this, value);
     }
 
     @Override
-    public List<FunctionDeclaration> visit(ForStatement node, List<FunctionDeclaration> value) {
+    public Void visit(ForStatement node, Boolean value) {
         return node.getStatement().accept(this, value);
     }
 
     @Override
-    public List<FunctionDeclaration> visit(WhileStatement node, List<FunctionDeclaration> value) {
+    public Void visit(WhileStatement node, Boolean value) {
         return node.getStatement().accept(this, value);
     }
 
     @Override
-    public List<FunctionDeclaration> visit(LabelledStatement node, List<FunctionDeclaration> value) {
+    public Void visit(LabelledStatement node, Boolean value) {
         return node.getStatement().accept(this, value);
     }
 
     @Override
-    public List<FunctionDeclaration> visit(WithStatement node, List<FunctionDeclaration> value) {
+    public Void visit(WithStatement node, Boolean value) {
         return node.getStatement().accept(this, value);
     }
 
     @Override
-    public List<FunctionDeclaration> visit(SwitchStatement node, List<FunctionDeclaration> value) {
+    public Void visit(SwitchStatement node, Boolean value) {
         return forEach(node.getClauses(), value);
     }
 
     @Override
-    public List<FunctionDeclaration> visit(SwitchClause node, List<FunctionDeclaration> value) {
+    public Void visit(SwitchClause node, Boolean value) {
+        return forEach(node.getStatements(), Boolean.TRUE);
+    }
+
+    @Override
+    public Void visit(StatementListMethod node, Boolean value) {
         return forEach(node.getStatements(), value);
     }
 
     @Override
-    public List<FunctionDeclaration> visit(StatementListMethod node, List<FunctionDeclaration> value) {
-        return forEach(node.getStatements(), value);
-    }
-
-    @Override
-    public List<FunctionDeclaration> visit(LetStatement node, List<FunctionDeclaration> value) {
+    public Void visit(LetStatement node, Boolean value) {
         return node.getStatement().accept(this, value);
     }
 
     @Override
-    public List<FunctionDeclaration> visit(TryStatement node, List<FunctionDeclaration> value) {
+    public Void visit(TryStatement node, Boolean value) {
         node.getTryBlock().accept(this, value);
         if (node.getCatchNode() != null) {
             node.getCatchNode().accept(this, value);
@@ -134,16 +135,16 @@ final class FunctionDeclarationCollector extends
         if (node.getFinallyBlock() != null) {
             node.getFinallyBlock().accept(this, value);
         }
-        return value;
+        return null;
     }
 
     @Override
-    public List<FunctionDeclaration> visit(GuardedCatchNode node, List<FunctionDeclaration> value) {
+    public Void visit(GuardedCatchNode node, Boolean value) {
         return node.getCatchBlock().accept(this, value);
     }
 
     @Override
-    public List<FunctionDeclaration> visit(CatchNode node, List<FunctionDeclaration> value) {
+    public Void visit(CatchNode node, Boolean value) {
         return node.getCatchBlock().accept(this, value);
     }
 }

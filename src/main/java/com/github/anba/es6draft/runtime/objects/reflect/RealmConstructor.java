@@ -8,12 +8,12 @@ package com.github.anba.es6draft.runtime.objects.reflect;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
-import static com.github.anba.es6draft.runtime.Realm.CreateRealm;
+import static com.github.anba.es6draft.runtime.Realm.CreateRealmAndSetRealmGlobalObj;
+import static com.github.anba.es6draft.runtime.Realm.SetDefaultGlobalBindings;
 import static com.github.anba.es6draft.runtime.internal.Errors.newError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticProxy.ProxyCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -52,8 +52,8 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
 
     @Override
     public void initialize(ExecutionContext cx) {
+        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
-        AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override
@@ -81,82 +81,68 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
     @Override
     public RealmObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        /* steps 2-3 */
+        /* step 2 */
         if (!(thisValue instanceof RealmObject)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         /* step 1 */
         RealmObject realmObject = (RealmObject) thisValue;
-        /* step 4 */
+        /* step 3 */
         if (realmObject.getRealm() != null) {
             throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
 
-        /* steps 5-6 */
-        // FIXME: spec bug - invalid steps (bug 2787)
-
-        /* steps 8-10 (moved) */
+        /* steps 4-5 */
         ScriptObject newGlobal;
         if (args.length != 0) {
+            /* step 4 */
             Object target = getArgument(args, 0);
             Object handler = getArgument(args, 1);
             newGlobal = ProxyCreate(calleeContext, target, handler);
         } else {
-            // Note: created in CreateRealm()
+            /* step 5 */
             newGlobal = null;
         }
 
-        /* steps 7, 11-13 */
-        Realm realm = CreateRealm(calleeContext, realmObject, newGlobal);
-
-        /* steps 14-15 */
+        /* steps 6-7 */
+        Realm realm = CreateRealmAndSetRealmGlobalObj(calleeContext, realmObject, newGlobal);
+        /* steps 8-9 */
         Callable translate = GetMethod(calleeContext, realmObject, "directEval");
-
-        /* steps 16-17 */
+        /* steps 10-11 */
         Callable fallback = GetMethod(calleeContext, realmObject, "nonEval");
-
-        /* steps 18-19 */
+        /* steps 12-13 */
         Callable indirectEval = GetMethod(calleeContext, realmObject, "indirectEval");
-
-        /* steps 20-22 */
+        /* steps 14-16 */
         realm.setExtensionHooks(translate, fallback, indirectEval);
-
-        /* steps 23-24 */
+        /* steps 17-18 */
         if (realmObject.getRealm() != null) {
             throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
-
-        /* step 25 */
+        /* step 19 */
         realmObject.setRealm(realm);
 
-        // Run any initialization scripts, if required
+        // Run any initialization scripts, if required. But do _not_ install extensions!
         try {
             GlobalObject globalObject = realm.getGlobalObject();
             assert globalObject != null;
-            globalObject.initialize();
+            globalObject.initializeScripted();
         } catch (ParserException | CompilationException e) {
-            throw e.toScriptException(realm.defaultContext());
+            throw e.toScriptException(calleeContext);
         } catch (IOException | URISyntaxException e) {
-            throw newError(realm.defaultContext(), e.getMessage());
+            throw newError(calleeContext, e.getMessage());
         }
 
-        /* steps 26-27 */
+        /* steps 20-21 */
         Callable initGlobal = GetMethod(calleeContext, realmObject, "initGlobal");
-
-        /* steps 28-29 */
+        /* steps 22-23 */
         if (initGlobal != null) {
-            /* step 28 */
+            /* step 22 */
             initGlobal.call(calleeContext, realmObject);
         } else {
-            /* step 29 */
-            ScriptObject globalThis = realm.getGlobalThis();
-            GlobalObject globalObject = realm.getGlobalObject();
-            assert globalThis != null && globalObject != null;
-
-            // Define the built-in properties
-            globalObject.defineBuiltinProperties(calleeContext, globalThis);
+            /* step 23 */
+            SetDefaultGlobalBindings(calleeContext, realm);
         }
-        /* step 30 */
+        /* step 24 */
         return realmObject;
     }
 

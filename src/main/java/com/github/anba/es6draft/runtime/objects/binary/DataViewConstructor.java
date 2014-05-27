@@ -16,7 +16,6 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -49,8 +48,8 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
 
     @Override
     public void initialize(ExecutionContext cx) {
+        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
-        AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override
@@ -204,7 +203,7 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         }
         ArrayBufferObject bufferObj = (ArrayBufferObject) buffer;
         /* step 7 */
-        if (bufferObj.getData() == null) {
+        if (bufferObj.getData() == null && !bufferObj.isNeutered()) {
             throw newTypeError(calleeContext, Messages.Key.UninitializedObject);
         }
         /* step 8 */

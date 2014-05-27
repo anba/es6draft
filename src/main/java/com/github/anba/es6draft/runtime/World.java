@@ -6,14 +6,18 @@
  */
 package com.github.anba.es6draft.runtime;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayDeque;
 import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
 
+import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
+import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -255,6 +259,26 @@ public final class World<GLOBAL extends GlobalObject> {
         Realm realm = Realm.newRealm(this);
         @SuppressWarnings("unchecked")
         GLOBAL global = (GLOBAL) realm.getGlobalObject();
+        return global;
+    }
+
+    /**
+     * Creates a new, initialized {@link Realm} object and returns its {@link GlobalObject}.
+     * 
+     * @return the new global object
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws URISyntaxException
+     *             the URL is not a valid URI
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
+     */
+    public GLOBAL newInitializedGlobal() throws ParserException, CompilationException, IOException,
+            URISyntaxException {
+        GLOBAL global = newGlobal();
+        global.initializeFirstRealmGlobal();
         return global;
     }
 }

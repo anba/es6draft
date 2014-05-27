@@ -21,24 +21,24 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 /**
  * <h1>7 Abstract Operations</h1><br>
  * <h2>7.4 Operations on Iterator Objects</h2><br>
- * <h3>7.4.8 CreateListIterator (list)</h3>
+ * <h3>7.4.10 CreateCompoundIterator ( iterator1, iterator2 )</h3>
  * <ul>
- * <li>7.4.8.1 ListIterator next( )
+ * <li>7.4.10.1 CompoundIterator next( )
  * </ul>
  */
-public final class ListIteratorNext extends BuiltinFunction {
-    public ListIteratorNext(Realm realm) {
+public final class CompoundIteratorNext extends BuiltinFunction {
+    public CompoundIteratorNext(Realm realm) {
         super(realm, "next");
         createDefaultFunctionProperties("next", 0);
     }
 
-    private ListIteratorNext(Realm realm, Void ignore) {
+    private CompoundIteratorNext(Realm realm, Void ignore) {
         super(realm, "next");
     }
 
     @Override
-    public ListIteratorNext clone() {
-        return new ListIteratorNext(getRealm(), null);
+    public CompoundIteratorNext clone() {
+        return new CompoundIteratorNext(getRealm(), null);
     }
 
     @Override
@@ -46,16 +46,27 @@ public final class ListIteratorNext extends BuiltinFunction {
         ExecutionContext calleeContext = calleeContext();
         /* step 1 (omitted) */
         /* step 2 */
-        if (!(thisValue instanceof ListIterator)) {
+        if (!(thisValue instanceof CompoundIterator)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         /* step 3 */
-        Iterator<?> iterator = ((ListIterator<?>) thisValue).getIterator();
-        /* steps 4-6 */
+        CompoundIterator<?> compound = (CompoundIterator<?>) thisValue;
+        /* steps 4-5 */
+        if (compound.isFirstIteratorActive()) {
+            /* step 5 */
+            Iterator<?> iterator = compound.getFirstIterator();
+            if (iterator.hasNext()) {
+                return CreateIterResultObject(calleeContext, iterator.next(), false);
+            }
+            compound.setFirstIteratorActive(false);
+        }
+        /* step 6 */
+        Iterator<?> iterator = compound.getSecondIterator();
+        /* step 7 */
         if (!iterator.hasNext()) {
             return CreateIterResultObject(calleeContext, UNDEFINED, true);
         }
-        /* steps 7-8 */
+        /* step 7 */
         return CreateIterResultObject(calleeContext, iterator.next(), false);
     }
 }

@@ -112,7 +112,7 @@ public final class ExoticArray extends OrdinaryObject {
         /* step 3 */
         if (isArrayIndex(propertyKey)) {
             /* steps 3.a-3.d */
-            Property oldLenDesc = getOwnProperty(cx, "length");
+            Property oldLenDesc = ordinaryGetOwnProperty("length");
             assert oldLenDesc != null && !oldLenDesc.isAccessorDescriptor();
             long oldLen = ToUint32(cx, oldLenDesc.getValue());
             long index = propertyKey;
@@ -154,21 +154,7 @@ public final class ExoticArray extends OrdinaryObject {
     }
 
     /**
-     * 9.4.2.2 ArrayCreate(length) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param length
-     *            the array length
-     * @return the new array object
-     */
-    public static ExoticArray ArrayCreate(ExecutionContext cx, long length) {
-        assert length >= 0;
-        return ArrayCreate(cx, length, cx.getIntrinsic(Intrinsics.ArrayPrototype));
-    }
-
-    /**
-     * 9.4.2.2 ArrayCreate(length) Abstract Operation
+     * 9.4.2.2 ArrayCreate(length, proto) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -178,24 +164,37 @@ public final class ExoticArray extends OrdinaryObject {
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, ScriptObject proto) {
         assert proto != null;
-        /* step 1 (not applicable) */
-        /* steps 2-4, 6 (implicit) */
+        /* steps 1-3 (not applicable) */
+        /* steps 4-6, 8 (implicit) */
         ExoticArray array = new ExoticArray(cx.getRealm());
-        /* step 5 */
+        /* step 7 */
         array.setPrototype(proto);
-        /* step 7 (not applicable) */
-        /* step 8 */
-        long length = 0;
         /* step 9 (not applicable) */
         /* step 10 */
+        long length = 0;
+        /* step 11 (not applicable) */
+        /* step 12 */
         array.ordinaryDefineOwnProperty(cx, "length", new PropertyDescriptor(length, true, false,
                 false));
-        /* step 11 */
+        /* step 13 */
         return array;
     }
 
     /**
-     * 9.4.2.2 ArrayCreate(length) Abstract Operation
+     * 9.4.2.2 ArrayCreate(length, proto) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param length
+     *            the array length
+     * @return the new array object
+     */
+    public static ExoticArray ArrayCreate(ExecutionContext cx, long length) {
+        return ArrayCreate(cx, length, cx.getIntrinsic(Intrinsics.ArrayPrototype));
+    }
+
+    /**
+     * 9.4.2.2 ArrayCreate(length, proto) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -206,25 +205,27 @@ public final class ExoticArray extends OrdinaryObject {
      * @return the new array object
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length, ScriptObject proto) {
-        assert proto != null && length >= 0;
-        /* step 1 (not applicable) */
-        /* step 9 (moved) */
+        assert proto != null;
+        /* steps 1-2 */
+        assert length >= 0;
+        /* step 3 (not applicable) */
+        /* step 11 (moved) */
         if (length > 0xFFFF_FFFFL) {
             // enfore array index invariant
             throw newRangeError(cx, Messages.Key.InvalidArrayLength);
         }
-        /* steps 2-4, 6 (implicit) */
+        /* steps 4-6, 8 (implicit) */
         ExoticArray array = new ExoticArray(cx.getRealm());
-        /* step 5 */
-        array.setPrototype(proto);
         /* step 7 */
+        array.setPrototype(proto);
+        /* step 9 */
         array.initialized = true;
-        /* step 8 (not applicable) */
-        /* step 9 (see above) */
-        /* step 10 */
+        /* step 10 (not applicable) */
+        /* step 11 (see above) */
+        /* step 12 */
         array.ordinaryDefineOwnProperty(cx, "length", new PropertyDescriptor(length, true, false,
                 false));
-        /* step 11 */
+        /* step 13 */
         return array;
     }
 
@@ -297,20 +298,21 @@ public final class ExoticArray extends OrdinaryObject {
         }
         /* step 5 */
         newLenDesc.setValue(newLen);
-        /* step 6 */
+        /* steps 6-7 */
         Property oldLenDesc = array.getProperty(cx, "length");
-        assert oldLenDesc != null && !oldLenDesc.isAccessorDescriptor();
-        /* step 7 */
-        long oldLen = ToUint32(cx, oldLenDesc.getValue());
         /* step 8 */
+        assert oldLenDesc != null && !oldLenDesc.isAccessorDescriptor();
+        /* step 9 */
+        long oldLen = ToUint32(cx, oldLenDesc.getValue());
+        /* step 10 */
         if (newLen >= oldLen) {
             return array.ordinaryDefineOwnProperty(cx, "length", newLenDesc);
         }
-        /* step 9 */
+        /* step 11 */
         if (!oldLenDesc.isWritable()) {
             return false;
         }
-        /* steps 10-11 */
+        /* steps 12-13 */
         boolean newWritable;
         if (!newLenDesc.hasWritable() || newLenDesc.isWritable()) {
             newWritable = true;
@@ -318,13 +320,13 @@ public final class ExoticArray extends OrdinaryObject {
             newWritable = false;
             newLenDesc.setWritable(true);
         }
-        /* steps 12-13 */
+        /* steps 14-15 */
         boolean succeeded = array.ordinaryDefineOwnProperty(cx, "length", newLenDesc);
-        /* step 14 */
+        /* step 16 */
         if (!succeeded) {
             return false;
         }
-        /* step 15 */
+        /* step 17 */
         IndexedMap<Property> indexed = array.indexedProperties();
         if (indexed.isSparse()) {
             oldLen = SparseArraySetLength(indexed, newLen, oldLen);
@@ -333,7 +335,7 @@ public final class ExoticArray extends OrdinaryObject {
         }
         // Need to call updateLength() manually.
         indexed.updateLength();
-        /* step 15.d */
+        /* step 17.d */
         if (oldLen >= 0) {
             newLenDesc.setValue(oldLen + 1);
             if (!newWritable) {
@@ -342,13 +344,13 @@ public final class ExoticArray extends OrdinaryObject {
             array.ordinaryDefineOwnProperty(cx, "length", newLenDesc);
             return false;
         }
-        /* step 16 */
+        /* step 18 */
         if (!newWritable) {
             PropertyDescriptor nonWritable = new PropertyDescriptor();
             nonWritable.setWritable(false);
             array.ordinaryDefineOwnProperty(cx, "length", nonWritable);
         }
-        /* step 17 */
+        /* step 19 */
         return true;
     }
 

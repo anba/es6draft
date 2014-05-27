@@ -208,7 +208,7 @@ public final class PromiseAbstractOperations {
             }
             /* step 12 */
             Realm realm = calleeContext.getRealm();
-            realm.enqueuePromiseTask(new ResolvePromiseViaThenableTask(realm, promise, Type
+            realm.enqueuePromiseTask(new ResolvePromiseThenableTask(realm, promise, Type
                     .objectValue(resolution), (Callable) then));
             /* step 13 */
             return UNDEFINED;
@@ -275,26 +275,28 @@ public final class PromiseAbstractOperations {
      */
     public static <PROMISE extends ScriptObject> PromiseCapability<PROMISE> CreatePromiseCapabilityRecord(
             ExecutionContext cx, PROMISE promise, Constructor constructor) {
-        /* step 1 (not applicable) */
-        /* steps 2-3 */
-        GetCapabilitiesExecutor executor = new GetCapabilitiesExecutor(cx.getRealm());
+        /* step 1 */
+        assert IsConstructor(constructor);
+        /* step 2 (not applicable) */
         /* steps 4-5 */
+        GetCapabilitiesExecutor executor = new GetCapabilitiesExecutor(cx.getRealm());
+        /* steps 6-7 */
         Object constructorResult = constructor.call(cx, promise, executor);
-        /* step 6 */
+        /* step 8 */
         Object resolve = executor.resolve;
         if (!IsCallable(resolve)) {
             throw newTypeError(cx, Messages.Key.NotCallable);
         }
-        /* step 7 */
+        /* step 9 */
         Object reject = executor.reject;
         if (!IsCallable(reject)) {
             throw newTypeError(cx, Messages.Key.NotCallable);
         }
-        /* step 8 */
+        /* step 10 */
         if (Type.isObject(constructorResult) && !SameValue(promise, constructorResult)) {
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        /* steps 1, 9 */
+        /* steps 3, 11 */
         return new PromiseCapability<>(promise, (Callable) resolve, (Callable) reject);
     }
 
@@ -452,15 +454,15 @@ public final class PromiseAbstractOperations {
     /**
      * <h2>25.4.2 Promise Tasks</h2>
      * <p>
-     * 25.4.2.? ResolvePromiseViaThenableTask ( promiseToResolve, thenable, then )
+     * 25.4.2.2 ResolvePromiseThenableTask ( promiseToResolve, thenable, then )
      */
-    public static final class ResolvePromiseViaThenableTask implements Task {
+    public static final class ResolvePromiseThenableTask implements Task {
         private final Realm realm;
         private final PromiseObject promise;
         private final ScriptObject thenable;
         private final Callable then;
 
-        public ResolvePromiseViaThenableTask(Realm realm, PromiseObject promise,
+        public ResolvePromiseThenableTask(Realm realm, PromiseObject promise,
                 ScriptObject thenable, Callable then) {
             assert promise.getState() != null : "Promise not initialized";
             this.realm = realm;
@@ -474,7 +476,7 @@ public final class PromiseAbstractOperations {
             ExecutionContext cx = realm.defaultContext();
             /* step 1 */
             ResolvingFunctions resolvingFunctions = CreateResolvingFunctions(cx, promise);
-            /* steps 2-3 */
+            /* steps 2-4 */
             try {
                 /* step 2 */
                 then.call(cx, thenable, resolvingFunctions.getResolve(),

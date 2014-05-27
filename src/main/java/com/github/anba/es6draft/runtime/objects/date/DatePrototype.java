@@ -35,7 +35,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -1285,14 +1284,8 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
             if (Type.isNumber(tv) && !isFinite(Type.numberValue(tv))) {
                 return NULL;
             }
-            /* steps 4-5 */
-            Object toISO = Get(cx, o, "toISOString");
-            /* step 6 */
-            if (!IsCallable(toISO)) {
-                throw newTypeError(cx, Messages.Key.PropertyNotCallable, "toISOString");
-            }
-            /* step 7 */
-            return ((Callable) toISO).call(cx, o);
+            /* step 4 */
+            return Invoke(cx, o, "toISOString");
         }
 
         /**

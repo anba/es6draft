@@ -206,21 +206,20 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
          */
         @Function(name = "concat", arity = 1)
         public static Object concat(ExecutionContext cx, Object thisValue, Object... args) {
-            /* step 1 (omitted) */
-            /* step 2 */
+            /* step 1 */
             Object obj = CheckObjectCoercible(cx, thisValue);
-            /* steps 3-4 */
+            /* steps 2-3 */
             CharSequence s = ToString(cx, obj);
-            /* step 5 (omitted) */
-            /* step 6 */
+            /* step 4 (omitted) */
+            /* step 5 */
             StringBuilder r = new StringBuilder(s);
-            /* step 7 */
+            /* step 6 */
             for (int i = 0; i < args.length; ++i) {
                 Object next = args[i];
                 CharSequence nextString = ToString(cx, next);
                 r.append(nextString);
             }
-            /* step 8 */
+            /* step 7 */
             return r.toString();
         }
 
@@ -396,8 +395,8 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
                         string);
                 replStr = ToFlatString(cx, replValue);
             } else {
-                String replValue = (String) replaceValue;
-                replStr = GetReplaceSubstitution(matched, replValue, string, pos);
+                String replacement = (String) replaceValue;
+                replStr = GetReplaceSubstitution(matched, string, pos, replacement);
             }
             /* step 10 */
             int tailPos = pos + searchString.length();
@@ -410,16 +409,16 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
          * 
          * @param matched
          *            the matched substring
-         * @param replaceValue
-         *            the replacement value
          * @param string
          *            the string
          * @param position
          *            the string index
+         * @param replacement
+         *            the replacement value
          * @return the replacement string
          */
-        private static String GetReplaceSubstitution(String matched, String replaceValue,
-                String string, int position) {
+        private static String GetReplaceSubstitution(String matched, String string, int position,
+                String replacement) {
             /* step 1 (not applicable) */
             /* step 2 */
             int matchLength = matched.length();
@@ -428,18 +427,18 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             int stringLength = string.length();
             /* steps 5-6 */
             assert position >= 0 && position <= stringLength;
-            /* step 7 (not applicable) */
-            /* step 8 */
+            /* steps 7-8 (not applicable) */
+            /* step 9 */
             int tailPos = position + matchLength;
             assert tailPos >= 0 && tailPos <= stringLength;
-            /* step 9 (not applicable) */
+            /* step 10 (not applicable) */
 
-            /* step 10 */
+            /* step 11 */
             StringBuilder result = new StringBuilder();
-            for (int cursor = 0, len = replaceValue.length(); cursor < len;) {
-                char c = replaceValue.charAt(cursor++);
+            for (int cursor = 0, len = replacement.length(); cursor < len;) {
+                char c = replacement.charAt(cursor++);
                 if (c == '$' && cursor < len) {
-                    c = replaceValue.charAt(cursor++);
+                    c = replacement.charAt(cursor++);
                     switch (c) {
                     case '&':
                         result.append(matched);
@@ -462,7 +461,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
                 }
             }
 
-            /* step 11 */
+            /* step 12 */
             return result.toString();
         }
 

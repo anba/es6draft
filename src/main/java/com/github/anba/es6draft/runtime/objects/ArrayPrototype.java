@@ -678,7 +678,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
         }
 
         /**
-         * 22.1.3.25 Array.prototype.splice (start, deleteCount [ , ...items ] )
+         * 22.1.3.25 Array.prototype.splice (start, deleteCount, ...items )
          * 
          * @param cx
          *            the execution context

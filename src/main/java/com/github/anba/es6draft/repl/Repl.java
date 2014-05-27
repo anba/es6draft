@@ -637,15 +637,12 @@ public final class Repl {
         globalThis.defineOwnProperty(cx, "arguments", new PropertyDescriptor(arguments, true,
                 false, true));
 
-        // Execute any global specific initialization scripts
+        // Execute any global specific initialization
         realm.enqueueScriptTask(new Task() {
             @Override
             public void execute() {
                 try {
-                    // Initialization scripts
-                    global.initialize();
-                    // Define built-in properties on global this
-                    global.defineBuiltinProperties();
+                    global.initializeFirstRealmGlobal();
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 } catch (URISyntaxException e) {

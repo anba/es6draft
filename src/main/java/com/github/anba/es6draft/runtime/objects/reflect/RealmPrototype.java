@@ -6,14 +6,15 @@
  */
 package com.github.anba.es6draft.runtime.objects.reflect;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListFromArrayLike;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.Realm.SetDefaultGlobalBindings;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareForTailCall;
 import static com.github.anba.es6draft.runtime.objects.reflect.RealmConstructor.IndirectEval;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
+
+import java.util.Iterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -25,10 +26,12 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.TailCall;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -74,6 +77,19 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
+        /**
+         * Abstract Operation: thisRealmValue(value)
+         * 
+         * @param cx
+         *            the execution context
+         * @param value
+         *            the argument value
+         * @return the realm record
+         */
+        private static Realm thisRealmValue(ExecutionContext cx, Object value) {
+            return thisRealmObject(cx, value).getRealm();
+        }
+
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
@@ -97,9 +113,9 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         @Function(name = "eval", arity = 1)
         public static Object eval(ExecutionContext cx, Object thisValue, Object source) {
             /* steps 1-4 */
-            RealmObject realmObject = thisRealmObject(cx, thisValue);
+            Realm realm = thisRealmValue(cx, thisValue);
             /* step 5 */
-            return IndirectEval(realmObject.getRealm(), source);
+            return IndirectEval(realm, source);
         }
 
         /**
@@ -114,9 +130,9 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         @Accessor(name = "global", type = Accessor.Type.Getter)
         public static Object global(ExecutionContext cx, Object thisValue) {
             /* steps 1-4 */
-            RealmObject realmObject = thisRealmObject(cx, thisValue);
+            Realm realm = thisRealmValue(cx, thisValue);
             /* step 5 */
-            return realmObject.getRealm().getGlobalThis();
+            return realm.getGlobalThis();
         }
 
         /**
@@ -131,8 +147,7 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         @Accessor(name = "intrinsics", type = Accessor.Type.Getter)
         public static Object intrinsics(ExecutionContext cx, Object thisValue) {
             /* steps 1-4 */
-            RealmObject realmObject = thisRealmObject(cx, thisValue);
-            Realm realm = realmObject.getRealm();
+            Realm realm = thisRealmValue(cx, thisValue);
             /* step 5 */
             OrdinaryObject table = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             /* step 6 */
@@ -159,11 +174,30 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         @Accessor(name = "stdlib", type = Accessor.Type.Getter)
         public static Object stdlib(ExecutionContext cx, Object thisValue) {
             /* steps 1-4 */
-            RealmObject realmObject = thisRealmObject(cx, thisValue);
-            Realm realm = realmObject.getRealm();
-            /* steps 5-6 */
+            Realm realm = thisRealmValue(cx, thisValue);
+            /* step 5 */
+            OrdinaryObject props = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            /* step 6 */
             // FIXME: spec bug - props not applicable for Object.defineProperties
-            OrdinaryObject props = realm.getGlobalObject().getBuiltinProperties(cx);
+            GlobalObject globalObject = realm.getGlobalObject();
+            for (Iterator<?> keys = globalObject.ownKeys(cx); keys.hasNext();) {
+                Object key = ToPropertyKey(cx, keys.next());
+                if (key instanceof String) {
+                    String propertyKey = (String) key;
+                    Property prop = globalObject.getOwnProperty(cx, propertyKey);
+                    if (prop != null) {
+                        Object desc = FromPropertyDescriptor(cx, prop);
+                        CreateDataPropertyOrThrow(cx, props, propertyKey, desc);
+                    }
+                } else {
+                    Symbol propertyKey = (Symbol) key;
+                    Property prop = globalObject.getOwnProperty(cx, propertyKey);
+                    if (prop != null) {
+                        Object desc = FromPropertyDescriptor(cx, prop);
+                        CreateDataPropertyOrThrow(cx, props, propertyKey, desc);
+                    }
+                }
+            }
             /* step 7 */
             return props;
         }
@@ -186,14 +220,11 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
          *            the function this-value
          * @param source
          *            the source string
-         * @return the evaluation result
+         * @return the translated source
          */
         @Function(name = "directEval", arity = 1)
         public static Object directEval(ExecutionContext cx, Object thisValue, Object source) {
-            /* steps 1-4 */
-            @SuppressWarnings("unused")
-            RealmObject realmObject = thisRealmObject(cx, thisValue);
-            /* step 5 */
+            /* step 1 */
             return source;
         }
 
@@ -213,9 +244,9 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         @Function(name = "indirectEval", arity = 1)
         public static Object indirectEval(ExecutionContext cx, Object thisValue, Object source) {
             /* steps 1-4 */
-            RealmObject realmObject = thisRealmObject(cx, thisValue);
+            Realm realm = thisRealmValue(cx, thisValue);
             /* step 5 */
-            return IndirectEval(realmObject.getRealm(), source);
+            return IndirectEval(realm, source);
         }
 
         /**
@@ -227,18 +258,14 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the evaluation result
+         * @return the global this object
          */
         @Function(name = "initGlobal", arity = 0)
         public static Object initGlobal(ExecutionContext cx, Object thisValue) {
             /* steps 1-4 */
-            RealmObject realmObject = thisRealmObject(cx, thisValue);
+            Realm realm = thisRealmValue(cx, thisValue);
             /* step 5 */
-            ScriptObject globalThis = realmObject.getRealm().getGlobalThis();
-            /* step 6 */
-            realmObject.getRealm().getGlobalObject().defineBuiltinProperties(cx, globalThis);
-            /* step 7 */
-            return UNDEFINED;
+            return SetDefaultGlobalBindings(cx, realm);
         }
 
         /**
@@ -262,18 +289,13 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         @Function(name = "nonEval", arity = 3)
         public static Object nonEval(ExecutionContext cx, Object thisValue, Object function,
                 Object thisArgument, Object argumentsList) {
-            /* steps 1-4 */
-            @SuppressWarnings("unused")
-            RealmObject realmObject = thisRealmObject(cx, thisValue);
-            /* steps 5-6 */
-            // FIXME: spec bug - invalid steps (bug 2789)
-            /* step 7 */
+            /* step 1 */
             if (!IsCallable(function)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
-            /* steps 8-9 */
+            /* steps 2-3 */
             Object[] args = CreateListFromArrayLike(cx, argumentsList);
-            /* steps 10-11 */
+            /* steps 4-5 */
             return PrepareForTailCall(args, thisArgument, (Callable) function);
         }
     }

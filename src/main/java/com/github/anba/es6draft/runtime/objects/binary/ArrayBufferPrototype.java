@@ -55,7 +55,7 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
         private static ArrayBufferObject thisArrayBufferObject(ExecutionContext cx, Object m) {
             if (m instanceof ArrayBufferObject) {
                 ArrayBufferObject buffer = (ArrayBufferObject) m;
-                if (buffer.getData() != null) {
+                if (buffer.getData() != null || buffer.isNeutered()) {
                     return buffer;
                 }
                 throw newTypeError(cx, Messages.Key.UninitializedObject);
@@ -85,10 +85,8 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
             /* steps 1-4 */
             ArrayBufferObject obj = thisArrayBufferObject(cx, thisValue);
-            /* step 5 */
-            long length = obj.getByteLength();
-            /* step 6 */
-            return length;
+            /* steps 5-7 */
+            return obj.getByteLength();
         }
 
         /**
@@ -140,6 +138,10 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
             ByteBuffer fromBuf = obj.getData();
             /* step 22 */
             ByteBuffer toBuf = _new.getData();
+            // FIXME: spec bug - need to check for neutered buffers
+            if (fromBuf == null || toBuf == null) {
+                return _new;
+            }
             /* steps 23 */
             CopyDataBlockBytes(toBuf, 0, fromBuf, first, newLen);
             /* step 24 */

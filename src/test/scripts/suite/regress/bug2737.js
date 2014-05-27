@@ -6,7 +6,7 @@
  */
 
 const {
-  assertFalse, assertThrows
+  assertFalse, assertEquals
 } = Assert;
 
 // 12.2.4.2.4 ComprehensionComponentEvaluation, 13.6.4.6 ForIn/OfExpressionEvaluation: Align behaviour for iteration over undefined/null?
@@ -32,9 +32,9 @@ for (let k of null) forOfNull = true;
 assertFalse(forOfNull);
 
 
-// undefined and null throw TypeError in comprehension
-assertThrows(() => [for (k of void 0) k], TypeError);
-assertThrows(() => [for (k of null) k], TypeError);
-assertThrows(() => (for (k of void 0) k).next(), TypeError);
-assertThrows(() => (for (k of null) k).next(), TypeError);
+// undefined and null are ignored in comprehension
+assertEquals([], [for (k of void 0) k]);
+assertEquals([], [for (k of null) k]);
+assertEquals({value: void 0, done: true}, (for (k of void 0) k).next());
+assertEquals({value: void 0, done: true}, (for (k of null) k).next());
 

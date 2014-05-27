@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -84,6 +83,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
 
     @Override
     public void initialize(ExecutionContext cx) {
+        addRestrictedFunctionProperties(cx);
         switch (type) {
         case EvalError:
             createProperties(cx, this, EvalErrorConstructorProperties.class);
@@ -109,7 +109,6 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         default:
             throw new IllegalStateException();
         }
-        AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override

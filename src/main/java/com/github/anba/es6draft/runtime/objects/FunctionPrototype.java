@@ -12,7 +12,9 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.EMPTY_ARRAY;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareForTailCall;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction.BoundFunctionClone;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction.BoundFunctionCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction.BoundFunctionTargetRealm;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.CloneMethod;
 
@@ -29,6 +31,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
@@ -52,8 +55,8 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
 
     @Override
     public void initialize(ExecutionContext cx) {
+        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
-        AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override
@@ -151,7 +154,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
         }
 
         /**
-         * 19.2.3.3 Function.prototype.call (thisArg [, arg1 [, arg2, ... ]])
+         * 19.2.3.3 Function.prototype.call (thisArg, ...args)
          * 
          * @param cx
          *            the execution context
@@ -177,7 +180,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
         }
 
         /**
-         * 19.2.3.2 Function.prototype.bind (thisArg [, arg1 [, arg2, ... ]])
+         * 19.2.3.2 Function.prototype.bind (thisArg, ...args)
          * 
          * @param cx
          *            the execution context
@@ -212,13 +215,15 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
             /* step 7 */
             f.defineOwnProperty(cx, "length", new PropertyDescriptor(l, false, false, true));
             /* step 8 */
-            AddRestrictedFunctionProperties(cx, f);
+            Realm targetRealm = BoundFunctionTargetRealm(cx, f);
             /* step 9 */
+            AddRestrictedFunctionProperties(cx, f, targetRealm);
+            /* step 10 */
             return f;
         }
 
         /**
-         * 19.2.3.5 Function.prototype.toMethod (newHome, methodName = undefined)
+         * 19.2.3.5 Function.prototype.toMethod (newHome [ , methodName ] )
          * 
          * @param cx
          *            the execution context
@@ -233,25 +238,38 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
         @Function(name = "toMethod", arity = 1)
         public static Object toMethod(ExecutionContext cx, Object thisValue, Object newHome,
                 Object methodName) {
-            if (thisValue instanceof FunctionObject || thisValue instanceof BuiltinFunction) {
-                /* step 1.a */
-                if (!Type.isObject(newHome)) {
-                    throw newTypeError(cx, Messages.Key.NotObjectType);
-                }
-                /* step 1.b */
+            /* step 1 */
+            if (!Type.isObject(newHome)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            ScriptObject newHomeObject = Type.objectValue(newHome);
+            /* step 2 */
+            if (thisValue instanceof FunctionObject) {
                 Object newName;
                 if (!Type.isUndefined(methodName)) {
                     newName = ToPropertyKey(cx, methodName);
                 } else {
                     newName = null;
                 }
-                /* step 1.c */
-                return CloneMethod(cx, (Callable) thisValue, Type.objectValue(newHome), newName);
-            } else if (thisValue instanceof Callable) {
-                /* steps 2-3 */
-                return ((Callable) thisValue).clone(cx);
+                return CloneMethod(cx, (FunctionObject) thisValue, newHomeObject, newName);
+            }
+            if (thisValue instanceof BuiltinFunction) {
+                if (!Type.isUndefined(methodName)) {
+                    // Only need to evaluate for side-effects
+                    // TODO: add test case!
+                    ToPropertyKey(cx, methodName);
+                }
+                return CloneMethod(cx, (BuiltinFunction) thisValue);
+            }
+            /* step 3 */
+            if (thisValue instanceof ExoticBoundFunction) {
+                return BoundFunctionClone(cx, (ExoticBoundFunction) thisValue);
             }
             /* step 4 */
+            if (thisValue instanceof Callable) {
+                return ((Callable) thisValue).clone(cx);
+            }
+            /* step 5 */
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 

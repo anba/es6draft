@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -42,8 +41,8 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
 
     @Override
     public void initialize(ExecutionContext cx) {
+        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
-        AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override
@@ -186,23 +185,24 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
         public static Object raw(ExecutionContext cx, Object thisValue, Object callSite,
                 Object... substitutions) {
             /* step 1 (not applicable) */
-            /* steps 2-3 */
+            /* step 2 */
+            long numberOfSubstitutions = substitutions.length;
+            /* steps 3-4 */
             ScriptObject cooked = ToObject(cx, callSite);
-            /* steps 4-6 */
+            /* steps 5-7 */
             Object rawValue = Get(cx, cooked, "raw");
             ScriptObject raw = ToObject(cx, rawValue);
-            /* step 7 */
+            /* step 8 */
             Object len = Get(cx, raw, "length");
-            /* steps 8-9 */
+            /* steps 9-10 */
             long literalSegments = ToLength(cx, len);
-            /* step 10 */
+            /* step 11 */
             if (literalSegments <= 0) {
                 return "";
             }
-            /* step 11 */
+            /* step 12 */
             StringBuilder stringElements = new StringBuilder();
-            long substlength = substitutions.length;
-            /* steps 12-13 */
+            /* steps 13-14 */
             for (long nextIndex = 0;; ++nextIndex) {
                 long nextKey = nextIndex;
                 Object next = Get(cx, raw, nextKey);
@@ -211,11 +211,10 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
                 if (nextIndex + 1 == literalSegments) {
                     return stringElements.toString();
                 }
-                if (nextIndex < substlength) {
+                if (nextIndex < numberOfSubstitutions) {
                     next = substitutions[(int) nextIndex];
                 } else {
-                    // rest parameter objects are arrays, out of bounds access delegates to proto
-                    next = Get(cx, cx.getIntrinsic(Intrinsics.ArrayPrototype), nextKey);
+                    next = "";
                 }
                 CharSequence nextSub = ToString(cx, next);
                 stringElements.append(nextSub);

@@ -6,7 +6,7 @@
  */
 
 const {
-  assertFalse
+  assertThrows
 } = Assert;
 
 // 9.4.5.2 [[DefineOwnProperty]]: Condition in step 3.c.iii is never true
@@ -18,7 +18,7 @@ for (let w of [{}, {writable: true}, {writable: false}]) {
     for (let c of [{}, {configurable: true}, {configurable: false}]) {
       let d = Object.assign({value: 1}, w, e, c);
       for (let index of [-0, +0, -1, +1]) {
-        assertFalse(Reflect.defineProperty(ta, index, d));
+        assertThrows(() => Reflect.defineProperty(ta, index, d), TypeError);
       }
     }
   }

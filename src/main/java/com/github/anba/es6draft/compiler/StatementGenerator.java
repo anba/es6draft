@@ -9,7 +9,7 @@ package com.github.anba.es6draft.compiler;
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
-import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
+import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -274,7 +274,7 @@ final class StatementGenerator extends
         }
 
         /* steps 1-4 */
-        boolean hasDeclarations = !LexicalDeclarations(node).isEmpty();
+        boolean hasDeclarations = !LexicallyScopedDeclarations(node).isEmpty();
         if (hasDeclarations) {
             newDeclarativeEnvironment(mv);
             new BlockDeclarationInstantiationGenerator(codegen).generate(node, mv);
