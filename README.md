@@ -33,6 +33,11 @@ Full support of [ECMAScript 6 draft rev. 25] [es6drafts].
 * Start the shell using either `./bin/es6draft` or `.\bin\es6draft.bat` on Windows&reg;.
 * `./bin/es6draft --help` prints the available options.
 
+### Downloads ###
+
+Prebuilt packages are available [here] [builds]. The zip archive contains the full distribution,
+simply unzip the archive, start shell, and you are ready to go!
+
 
 ## Test Suites ##
 
@@ -83,3 +88,4 @@ mvn test -P external -Dtraceur.path=<...> -Dmozilla.skip=true -Dv8.skip=true -Dw
 [traceur]: https://github.com/google/traceur-compiler/
 [v8]: https://github.com/v8/v8/
 [webkit]: https://www.webkit.org/building/checkout.html
+[builds]: https://buildhive.cloudbees.com/job/anba/job/es6draft/lastSuccessfulBuild/com.github.anba$es6draft/artifact/com.github.anba/es6draft/0.0.1-SNAPSHOT/
