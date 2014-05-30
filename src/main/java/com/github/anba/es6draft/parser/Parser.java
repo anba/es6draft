@@ -55,8 +55,8 @@ public final class Parser {
     }
 
     private enum ContextKind {
-        Script, Module, AsyncFunction, Function, Generator, ArrowFunction, GeneratorComprehension,
-        Method;
+        Script, Module, AsyncFunction, Function, Generator, AsyncArrowFunction, ArrowFunction,
+        GeneratorComprehension, Method;
 
         final boolean isScript() {
             return this == Script;
@@ -69,6 +69,7 @@ public final class Parser {
         final boolean isFunction() {
             switch (this) {
             case ArrowFunction:
+            case AsyncArrowFunction:
             case AsyncFunction:
             case Function:
             case Generator:
@@ -147,12 +148,16 @@ public final class Parser {
         }
 
         ParseContext findSuperContext() {
-            ParseContext cx = this;
-            while (cx.kind == ContextKind.ArrowFunction
-                    || cx.kind == ContextKind.GeneratorComprehension) {
-                cx = cx.parent;
+            for (ParseContext cx = this;; cx = cx.parent) {
+                switch (cx.kind) {
+                case ArrowFunction:
+                case AsyncArrowFunction:
+                case GeneratorComprehension:
+                    continue;
+                default:
+                    return cx;
+                }
             }
-            return cx;
         }
 
         void setReferencesSuper() {
@@ -2295,7 +2300,7 @@ public final class Parser {
         // enable 'yield' if in generator
         context.yieldAllowed = (context.kind == ContextKind.Generator);
         // enable 'await' if in async function
-        context.awaitAllowed = (context.kind == ContextKind.AsyncFunction);
+        context.awaitAllowed = (context.kind == ContextKind.AsyncFunction || context.kind == ContextKind.AsyncArrowFunction);
         List<StatementListItem> prologue = directivePrologue();
         List<StatementListItem> body = statementList(end);
         assert context.assertLiteralsUnchecked(0);
@@ -3400,6 +3405,121 @@ public final class Parser {
      * <strong>[Extension] <code>async</code> Function Definitions</strong>
      * 
      * <pre>
+     * AsyncArrowFunction<span><sub>[In, Yield]</sub></span> :
+     *     async [no <i>LineTerminator</i> here] AsyncArrowParameters<span><sub>[?Yield]</sub></span> [no <i>LineTerminator</i> here] {@literal =>} ConciseBody<span><sub>[?In]</sub></span>
+     * AsyncArrowParameters<span><sub>[Yield]</sub></span> :
+     *     BindingIdentifier<span><sub>[?Yield]</sub></span>
+     *     CoverArgumentsAndArrowParameterList<span><sub>[?Yield]</sub></span>
+     * </pre>
+     * 
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
+     * @return the parsed async arrow function
+     */
+    private AsyncArrowFunction asyncArrowFunction(boolean allowIn) {
+        newContext(ContextKind.AsyncArrowFunction);
+        try {
+            long begin = ts.beginPosition();
+            consume(Token.ASYNC);
+            if (!noLineTerminator()) {
+                reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
+            }
+            StringBuilder source = new StringBuilder();
+            source.append("async function anonymous");
+
+            FormalParameterList parameters;
+            if (token() == Token.LP) {
+                consume(Token.LP);
+                int start = ts.position() - 1;
+                // handle `YieldExpression = yield RegExp` in ArrowParameters
+                context.noDivAfterYield = context.parent.yieldAllowed;
+                context.inArrowParameters = true;
+                parameters = strictFormalParameters(Token.RP);
+                context.noDivAfterYield = false;
+                context.inArrowParameters = false;
+                consume(Token.RP);
+
+                source.append(ts.range(start, ts.position()));
+            } else {
+                BindingIdentifier identifier = bindingIdentifier();
+                FormalParameter parameter = new BindingElement(begin, ts.endPosition(), identifier,
+                        null);
+                parameters = new FormalParameterList(begin, ts.endPosition(),
+                        singletonList(parameter));
+
+                source.append('(').append(identifier.getName()).append(')');
+            }
+            if (!noLineTerminator()) {
+                reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
+            }
+            consume(Token.ARROW);
+            if (token() == Token.LC) {
+                consume(Token.LC);
+                int startBody = ts.position();
+                List<StatementListItem> statements = functionBody(Token.RC);
+                consume(Token.RC);
+                int endFunction = ts.position() - 1;
+
+                String header = source.toString();
+                String body = ts.range(startBody, endFunction);
+
+                FunctionContext scope = context.funContext;
+                AsyncArrowFunction function = new AsyncArrowFunction(begin, ts.endPosition(),
+                        scope, parameters, statements, header, body);
+                scope.node = function;
+
+                asyncArrowFunction_EarlyErrors(function);
+
+                return inheritStrictness(function);
+            } else {
+                // need to call manually b/c functionBody() isn't used here
+                applyStrictMode(false);
+
+                int startBody = ts.position();
+                Expression expression = assignmentExpression(allowIn);
+                assert context.assertLiteralsUnchecked(0);
+                int endFunction = ts.position();
+
+                String header = source.toString();
+                String body = "return " + ts.range(startBody, endFunction);
+
+                FunctionContext scope = context.funContext;
+                AsyncArrowFunction function = new AsyncArrowFunction(begin, ts.endPosition(),
+                        scope, parameters, expression, header, body);
+                scope.node = function;
+
+                asyncArrowFunction_EarlyErrors(function);
+
+                return inheritStrictness(function);
+            }
+        } finally {
+            restoreContext();
+        }
+    }
+
+    /**
+     * Static Semantics: Early Errors
+     * 
+     * @param function
+     *            the async arrow function node to validate
+     */
+    private void asyncArrowFunction_EarlyErrors(AsyncArrowFunction function) {
+        assert context.scopeContext == context.funContext;
+
+        FunctionContext scope = context.funContext;
+        FormalParameterList parameters = function.getParameters();
+        List<String> boundNames = BoundNames(parameters);
+        scope.parameterNames = new HashSet<>(boundNames);
+
+        boolean simple = IsSimpleParameterList(parameters);
+        checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
+        strictFormalParameters_EarlyErrors(function, boundNames, scope.parameterNames, simple);
+    }
+
+    /**
+     * <strong>[Extension] <code>async</code> Function Definitions</strong>
+     * 
+     * <pre>
      * AsyncMethod<span><sub>[Yield]</sub></span> :
      *     async PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </pre>
@@ -3455,7 +3575,8 @@ public final class Parser {
      * @return the parsed await expression
      */
     private AwaitExpression awaitExpression() {
-        assert context.kind == ContextKind.AsyncFunction && context.awaitAllowed;
+        assert (context.kind == ContextKind.AsyncFunction || context.kind == ContextKind.AsyncArrowFunction)
+                && context.awaitAllowed;
         long begin = ts.beginPosition();
         consume(Token.AWAIT);
         Expression expr = unaryExpression();
@@ -5447,19 +5568,28 @@ public final class Parser {
      * @return {@code true} if 'yield' is a valid name in the parse context
      */
     private boolean isYieldName(ParseContext yieldContext, boolean isReference) {
-        if (yieldContext.kind == ContextKind.Generator
-                && (yieldContext.yieldAllowed || !isReference)) {
-            // 'yield' in generator, but not in default parameter initializer expression
-            reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
-        }
-        if (yieldContext.kind == ContextKind.GeneratorComprehension && yieldContext.yieldAllowed) {
-            // 'yield' nested in generator comprehension, nested in generator
-            reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
-        }
-        if (yieldContext.kind == ContextKind.ArrowFunction && yieldContext.inArrowParameters
-                && yieldContext.parent.yieldAllowed && !isReference) {
-            // 'yield' in arrow function parameters embedded in generator or generator comprehension
-            reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
+        switch (yieldContext.kind) {
+        case Generator:
+            if (yieldContext.yieldAllowed || !isReference) {
+                // 'yield' in generator, but not in default parameter initializer expression
+                reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
+            }
+            break;
+        case GeneratorComprehension:
+            if (yieldContext.yieldAllowed) {
+                // 'yield' in generator comprehension, embedded in generator
+                reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
+            }
+            break;
+        case ArrowFunction:
+        case AsyncArrowFunction:
+            if (yieldContext.inArrowParameters && yieldContext.parent.yieldAllowed && !isReference) {
+                // 'yield' in arrow function parameters embedded in generator or generator compr.
+                reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
+            }
+            break;
+        default:
+            break;
         }
 
         assert !yieldContext.yieldAllowed : String.format(
@@ -6654,9 +6784,9 @@ public final class Parser {
         }
         case AWAIT:
             if (isEnabled(CompatibilityOption.AsyncFunction)
-                    && (context.awaitAllowed || context.kind == ContextKind.AsyncFunction)
-                    && isName("await")) {
-                if (context.kind == ContextKind.AsyncFunction) {
+                    && (context.awaitAllowed || context.kind == ContextKind.AsyncFunction || context.kind == ContextKind.AsyncArrowFunction)) {
+                if (context.kind == ContextKind.AsyncFunction
+                        || context.kind == ContextKind.AsyncArrowFunction) {
                     if (!context.awaitAllowed) {
                         // await in default parameters
                         reportSyntaxError(Messages.Key.InvalidAwaitExpression);
@@ -6912,6 +7042,30 @@ public final class Parser {
             }
         }
         long position = ts.position(), lineinfo = ts.lineinfo();
+        boolean asyncArrow = false;
+        if (token() == Token.ASYNC && isEnabled(CompatibilityOption.AsyncFunction)) {
+            Token next = peek();
+            if (noNextLineTerminator()) {
+                if (isBindingIdentifier(next)) {
+                    // async BindingIdentifier => ConciseBody
+                    consume(Token.ASYNC);
+                    // Parse in this context, but ignore result (escaped yield)
+                    // TODO: add test case
+                    bindingIdentifier();
+                    assert context.countLiterals() == oldCount;
+                    Token tok = token();
+                    // Reset token stream and parse again
+                    ts.reset(position, lineinfo);
+                    if (tok == Token.ARROW) {
+                        return asyncArrowFunction(allowIn);
+                    }
+                    // Invalid async arrow function, fall through
+                } else if (next == Token.LP) {
+                    // async CoverArgumentsAndAsyncArrowParameterList => ConciseBody
+                    asyncArrow = true;
+                }
+            }
+        }
         Expression left = binaryExpression(allowIn);
         Token tok = token();
         if (tok == Token.HOOK) {
@@ -6920,10 +7074,13 @@ public final class Parser {
             consume(Token.COLON);
             Expression otherwise = assignmentExpression(allowIn);
             return new ConditionalExpression(left, then, otherwise);
-        } else if (tok == Token.ARROW) {
-            // discard parsed object literals
+        } else if (tok == Token.ARROW && isCoveredArrowParameters(left, asyncArrow)) {
+            // Discard parsed object literals.
             discardUncheckedObjectLiterals(oldCount);
             ts.reset(position, lineinfo);
+            if (asyncArrow) {
+                return asyncArrowFunction(allowIn);
+            }
             return arrowFunction(allowIn);
         } else if (tok == Token.ASSIGN) {
             LeftHandSideExpression lhs = validateAssignment(left, ExceptionType.ReferenceError,
@@ -6940,6 +7097,15 @@ public final class Parser {
         } else {
             return left;
         }
+    }
+
+    private static boolean isCoveredArrowParameters(Expression expr, boolean async) {
+        if (async) {
+            return expr instanceof CallExpression
+                    && ((CallExpression) expr).getBase() instanceof Identifier
+                    && expr.getParentheses() == 0;
+        }
+        return expr instanceof Identifier || expr.isParenthesized();
     }
 
     private static AssignmentExpression.Operator assignmentOp(Token token) {

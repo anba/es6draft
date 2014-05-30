@@ -180,6 +180,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                         .getMethodType(Types.OrdinaryFunction, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_EvaluateAsyncArrowFunction = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluateAsyncArrowFunction", Type
+                        .getMethodType(Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_EvaluateAsyncFunctionExpression = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateAsyncFunctionExpression", Type
                         .getMethodType(Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function,
@@ -1396,6 +1401,19 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 throw new IllegalStateException(Objects.toString(node.getOperator(), "<null>"));
             }
         }
+    }
+
+    @Override
+    public ValType visit(AsyncArrowFunction node, ExpressionVisitor mv) {
+        codegen.compile(node);
+
+        /* steps 1-4 */
+        mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_EvaluateAsyncArrowFunction);
+
+        /* step 5 */
+        return ValType.Object;
     }
 
     /**

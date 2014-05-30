@@ -634,6 +634,10 @@ final class CodeGenerator {
         compile((FunctionNode) node);
     }
 
+    void compile(AsyncArrowFunction node) {
+        compile((FunctionNode) node);
+    }
+
     void compile(AsyncFunctionDefinition node) {
         compile((FunctionNode) node);
     }
@@ -649,6 +653,9 @@ final class CodeGenerator {
             boolean tailCalls;
             if (node instanceof ArrowFunction && ((ArrowFunction) node).getExpression() != null) {
                 tailCalls = conciseFunctionBody((ArrowFunction) node);
+            } else if (node instanceof AsyncArrowFunction
+                    && ((AsyncArrowFunction) node).getExpression() != null) {
+                tailCalls = conciseAsyncFunctionBody((AsyncArrowFunction) node);
             } else if (node instanceof GeneratorComprehension) {
                 tailCalls = generatorComprehensionBody((GeneratorComprehension) node);
             } else if (node.isGenerator()) {
@@ -760,6 +767,25 @@ final class CodeGenerator {
         body.invoke(Methods.DeclarativeEnvironmentRecord_getBinding);
         body.store(variable);
         return variable;
+    }
+
+    private boolean conciseAsyncFunctionBody(AsyncArrowFunction node) {
+        ExpressionVisitor body = new AsyncArrowFunctionVisitor(newMethod(node, FunctionName.Code,
+                true), node);
+        body.lineInfo(node);
+        body.begin();
+        Variable<ResumptionPoint> resume = body.getParameter(1, ResumptionPoint.class);
+        GeneratorState state = body.prologue(resume);
+
+        body.enterScope(node);
+        expressionBoxedValue(node.getExpression(), body);
+        body.exitScope();
+
+        body.areturn();
+        body.epilogue(resume, state);
+        body.end();
+
+        return body.hasTailCalls();
     }
 
     private boolean asyncFunctionBody(FunctionNode node) {
@@ -1028,6 +1054,19 @@ final class CodeGenerator {
         public void begin() {
             super.begin();
             setParameterName("cx", 0, Types.ExecutionContext);
+        }
+    }
+
+    private static final class AsyncArrowFunctionVisitor extends ExpressionVisitor {
+        AsyncArrowFunctionVisitor(MethodCode method, AsyncArrowFunction node) {
+            super(method, IsStrict(node), false, node.hasSyntheticNodes());
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", 0, Types.ExecutionContext);
+            setParameterName("rp", 1, Types.ResumptionPoint);
         }
     }
 

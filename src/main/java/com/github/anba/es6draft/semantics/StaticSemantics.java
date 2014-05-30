@@ -310,6 +310,9 @@ public final class StaticSemantics {
         if (node instanceof ClassExpression) {
             return !HasName((ClassExpression) node);
         }
+        if (node instanceof AsyncArrowFunction) {
+            return !HasName((AsyncArrowFunction) node);
+        }
         if (node instanceof AsyncFunctionExpression) {
             return !HasName((AsyncFunctionExpression) node);
         }
@@ -358,6 +361,17 @@ public final class StaticSemantics {
      */
     public static boolean HasName(ClassExpression node) {
         return node.getName() != null;
+    }
+
+    /**
+     * Static Semantics: HasName
+     * 
+     * @param node
+     *            the function node
+     * @return {@code true} if the function has a binding name
+     */
+    public static boolean HasName(AsyncArrowFunction node) {
+        return false;
     }
 
     /**
@@ -426,6 +440,9 @@ public final class StaticSemantics {
             return true;
         }
         if (node instanceof ClassExpression) {
+            return true;
+        }
+        if (node instanceof AsyncArrowFunction) {
             return true;
         }
         if (node instanceof AsyncFunctionExpression) {

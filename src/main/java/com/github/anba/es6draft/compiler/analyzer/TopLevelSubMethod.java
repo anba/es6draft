@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.ArrowFunction;
+import com.github.anba.es6draft.ast.AsyncArrowFunction;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
@@ -24,6 +25,8 @@ abstract class TopLevelSubMethod<NODE extends TopLevelNode<?>> extends SubMethod
         @Override
         int processNode(FunctionNode node, int oldSize) {
             assert !(node instanceof ArrowFunction && ((ArrowFunction) node).getExpression() != null);
+            assert !(node instanceof AsyncArrowFunction && ((AsyncArrowFunction) node)
+                    .getExpression() != null);
 
             List<StatementListItem> newStatements = super.visitTopLevel(node.getStatements());
             node.setStatements(newStatements);

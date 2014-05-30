@@ -185,6 +185,14 @@ public final class CodeSizeAnalysis {
         }
 
         @Override
+        public Integer visit(AsyncArrowFunction node, Integer size) {
+            if (node.getExpression() != null) {
+                return super.visit(node, size);
+            }
+            return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
+        }
+
+        @Override
         public Integer visit(AsyncFunctionDeclaration node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
         }

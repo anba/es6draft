@@ -38,6 +38,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(AssignmentRestElement node, V value);
 
+    R visit(AsyncArrowFunction node, V value);
+
     R visit(AsyncFunctionDeclaration node, V value);
 
     R visit(AsyncFunctionExpression node, V value);

@@ -109,7 +109,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
      */
     public static OrdinaryAsyncFunction FunctionAllocate(ExecutionContext cx,
             ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
-        assert kind != FunctionKind.ConstructorMethod && kind != FunctionKind.Arrow;
+        assert kind != FunctionKind.ConstructorMethod;
         Realm realm = cx.getRealm();
         /* steps 1-3 (implicit) */
         /* steps 4-8 */
@@ -135,33 +135,9 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
      */
     public static OrdinaryAsyncFunction AsyncFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
-        return AsyncFunctionCreate(cx, kind, function, scope, null);
-    }
-
-    /**
-     * AsyncFunctionCreate Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param kind
-     *            the function kind
-     * @param function
-     *            the function code
-     * @param scope
-     *            the lexical environment
-     * @param functionPrototype
-     *            the function prototype
-     * @return the new async function object
-     */
-    public static OrdinaryAsyncFunction AsyncFunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment<?> scope,
-            ScriptObject functionPrototype) {
-        assert function.isAsync() && kind != FunctionKind.ConstructorMethod
-                && kind != FunctionKind.Arrow;
+        assert function.isAsync() && kind != FunctionKind.ConstructorMethod;
         /* step 1 */
-        if (functionPrototype == null) {
-            functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
-        }
+        ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         /* step 2 */
         OrdinaryAsyncFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */

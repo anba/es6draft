@@ -193,6 +193,16 @@ final class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
+    public Integer visit(AsyncArrowFunction node, CodeSizeHandler value) {
+        if (node.getExpression() != null) {
+            submit(node, singletonList(node.getExpression()), value);
+        } else {
+            submit(node, node.getStatements(), value);
+        }
+        return 10;
+    }
+
+    @Override
     public Integer visit(AsyncFunctionDeclaration node, CodeSizeHandler value) {
         submit(node, node.getStatements(), value);
         return 0;

@@ -719,6 +719,35 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     @Override
+    public Object visit(AsyncArrowFunction node, Void value) {
+        Object id = NULL;
+        ExoticArray params = createList(getParameterBindings(node.getParameters()), value);
+        ExoticArray defaults = createList(getParameterDefaults(node.getParameters()), value);
+        Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
+        Object body;
+        if (node.getExpression() == null) {
+            body = createFunctionBody(node, value);
+        } else {
+            body = node.getExpression().accept(this, value);
+        }
+        // TODO: flag for async
+        boolean generator = false;
+        boolean expression = node.getExpression() != null;
+        if (hasBuilder(Type.ArrowExpression)) {
+            return call(Type.ArrowExpression, node, id, params, body, generator, expression);
+        }
+        OrdinaryObject function = createFunction(node, Type.ArrowExpression);
+        addProperty(function, "id", id);
+        addProperty(function, "params", params);
+        addProperty(function, "defaults", defaults);
+        addProperty(function, "body", body);
+        addProperty(function, "rest", rest);
+        addProperty(function, "generator", generator);
+        addProperty(function, "expression", expression);
+        return function;
+    }
+
+    @Override
     public Object visit(AsyncFunctionDeclaration node, Void value) {
         Object id = node.getIdentifier().accept(this, value);
         ExoticArray params = createList(getParameterBindings(node.getParameters()), value);

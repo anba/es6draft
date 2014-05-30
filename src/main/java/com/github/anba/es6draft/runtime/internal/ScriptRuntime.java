@@ -2625,6 +2625,30 @@ public final class ScriptRuntime {
     /**
      * Extension: Async Function Definitions
      * 
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     * @return the new async function instance
+     */
+    public static OrdinaryAsyncFunction EvaluateAsyncArrowFunction(RuntimeInfo.Function fd,
+            ExecutionContext cx) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+        /* steps 3-4 */
+        OrdinaryAsyncFunction closure = AsyncFunctionCreate(cx, FunctionKind.Arrow, fd, scope);
+        /* step ? */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
+        /* step ? */
+        MakeConstructor(cx, closure, true, prototype);
+        /* step 5 */
+        return closure;
+    }
+
+    /**
+     * Extension: Async Function Definitions
+     * 
      * @param object
      *            the script object
      * @param propKey
