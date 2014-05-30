@@ -33,6 +33,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.runtime.internal.Bootstrap;
+import com.github.anba.es6draft.runtime.internal.NativeCalls;
 import com.github.anba.es6draft.runtime.objects.Eval.EvalFlags;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
@@ -293,10 +294,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Types.ScriptRuntime, "toFlatArray",
                 Type.getMethodType(Types.Object_, Types.Object_, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_nativeCall = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "nativeCall", Type.getMethodType(Types.Object, Types.String,
-                        Types.Object_, Types.ExecutionContext));
-
         // class: StringBuilder
         static final MethodDesc StringBuilder_append_Charsequence = MethodDesc.create(
                 MethodType.Virtual, Types.StringBuilder, "append",
@@ -325,6 +322,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     private void invokeDynamicCall(ExpressionVisitor mv) {
         mv.invokedynamic(Bootstrap.getCallName(), Bootstrap.getCallMethodDescriptor(),
                 Bootstrap.getCallBootstrap(), EMPTY_BSM_ARGS);
+    }
+
+    private void invokeDynamicNativeCall(String name, ExpressionVisitor mv) {
+        mv.invokedynamic(NativeCalls.getNativeCallName(name),
+                NativeCalls.getNativeCallMethodDescriptor(), NativeCalls.getNativeCallBootstrap(),
+                EMPTY_BSM_ARGS);
     }
 
     private void invokeDynamicOperator(BinaryExpression.Operator operator, ExpressionVisitor mv) {
@@ -2157,11 +2160,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     @Override
     public ValType visit(NativeCallExpression node, ExpressionVisitor mv) {
         String nativeName = node.getBase().getName();
-        mv.aconst(nativeName);
         ArgumentListEvaluation(node.getArguments(), mv);
         mv.lineInfo(node);
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_nativeCall);
+        invokeDynamicNativeCall(nativeName, mv);
         return ValType.Any;
     }
 
