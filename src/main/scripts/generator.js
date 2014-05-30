@@ -26,7 +26,7 @@ Object.defineProperty(Generator, Symbol.hasInstance, {
     }
     let P = C.prototype;
     if (Object(P) !== P) {
-      throw new TypeError();
+      throw TypeError();
     }
     for (;;) {
       O = Object_getPrototypeOf(O);

@@ -14,21 +14,24 @@ const {
   Object, Function, Symbol, StopIteration, Reflect
 } = global;
 
-const Object_defineProperty = Object.defineProperty,
-      Object_getPrototypeOf = Object.getPrototypeOf,
-      Object_toString = Function.prototype.call.bind(Object.prototype.toString),
-      Object_hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty);
+const {
+  defineProperty: Object_defineProperty,
+  getPrototypeOf: Object_getPrototypeOf,
+  prototype: {
+    hasOwnProperty: Object_prototype_hasOwnProperty
+  }
+} = Object;
 
-const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
+const {
+  iterator: iteratorSym,
+  toStringTag: toStringTagSym,
+} = Symbol;
 
 const GeneratorFunction = Object.getPrototypeOf(function*(){}).constructor;
 const GeneratorPrototype = Object.getPrototypeOf(function*(){}.prototype);
 const GeneratorPrototype_next = GeneratorPrototype.next,
       GeneratorPrototype_throw = GeneratorPrototype.throw;
 const LegacyGeneratorPrototype = Object.getPrototypeOf(function(){yield 0}.prototype);
-
-const iteratorSym = Symbol.iterator,
-      toStringTagSym = Symbol.toStringTag;
 
 // pseudo-symbol in SpiderMonkey
 const mozIteratorSym = "@@iterator";
@@ -54,11 +57,11 @@ const generatorStateSym = Symbol("generatorState");
 
 function GeneratorState(g) {
   // no proper way to test for generators in scripts
-  if (Object_toString(g) == "[object Generator]") {
+  if (%IsGenerator(g)) {
     if (g === LegacyGeneratorPrototype || Object_getPrototypeOf(g) === LegacyGeneratorPrototype) {
       return;
     }
-    if (!Object_hasOwnProperty(g, generatorStateSym)) {
+    if (!%CallFunction(Object_prototype_hasOwnProperty, g, generatorStateSym)) {
       Object_defineProperty(g, generatorStateSym, {__proto__: null, value: "newborn", writable: true});
     }
     return g[generatorStateSym];
@@ -69,7 +72,7 @@ function GeneratorResume(fn, g, v) {
   g[generatorStateSym] = "executing";
 
   try {
-    var result = $CallFunction(fn, g, v);
+    var result = %CallFunction(fn, g, v);
   } catch (e) {
     // uncaught exception
     g[generatorStateSym] = "closed";
@@ -137,7 +140,7 @@ Object.defineProperties(mixin(LegacyGeneratorPrototype, {
         throw StopIteration;
       case "executing":
       default:
-        throw new TypeError();
+        throw TypeError();
     }
   },
   send(v) {
@@ -149,7 +152,7 @@ Object.defineProperties(mixin(LegacyGeneratorPrototype, {
         throw StopIteration;
       case "executing":
       default:
-        throw new TypeError();
+        throw TypeError();
     }
   },
   close() {
@@ -161,7 +164,7 @@ Object.defineProperties(mixin(LegacyGeneratorPrototype, {
         return;
       case "executing":
       default:
-        throw new TypeError();
+        throw TypeError();
     }
   },
   throw(e) {
@@ -174,7 +177,7 @@ Object.defineProperties(mixin(LegacyGeneratorPrototype, {
         throw e;
       case "executing":
       default:
-        throw new TypeError();
+        throw TypeError();
     }
   },
   get [toStringTagSym]() {

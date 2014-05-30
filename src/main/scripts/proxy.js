@@ -11,7 +11,7 @@
 const global = %GlobalObject();
 
 const {
-  Object, Function, Array, Proxy, Reflect, Symbol, TypeError,
+  Object, Proxy, Symbol, TypeError,
 } = global;
 
 const {
@@ -87,16 +87,16 @@ function toProxyHandler(handler) {
       // XXX: special case for iteration tests
       if (pk === iteratorSym) {
         var desc = handler['getPropertyDescriptor'](mozIteratorSym);
-        if (desc !== undefined && 'value' in desc) {
+        if (desc !== void 0 && 'value' in desc) {
           // call @@iterator() so we don't end up with a StopIteration based Iterator
           return function() { return desc.value.call(this)[iteratorSym]() };
         }
       }
       var desc = handler['getPropertyDescriptor'](pk);
-      if (desc !== undefined && 'value' in desc) {
+      if (desc !== void 0 && 'value' in desc) {
         return desc.value;
       }
-      if (desc !== undefined && desc.get !== undefined) {
+      if (desc !== void 0 && desc.get !== void 0) {
         return desc.get.call(receiver);
       }
     };

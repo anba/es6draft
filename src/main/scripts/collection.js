@@ -11,11 +11,8 @@
 const global = %GlobalObject();
 
 const {
-  Object, Function, Symbol, TypeError,
+  Object, Symbol
 } = global;
-
-const Object_defineProperty = Object.defineProperty,
-      Object_hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty);
 
 const {
   create: createSym,
@@ -26,57 +23,86 @@ const mozIteratorSym = "@@iterator";
 
 // Create overrides for Map/Set/WeakMap/WeakSet:
 // - To enable construction without `new`
-// - To enable initialisation with `mozIteratorSym`
-// - Map, Set and WeakSet can be patched by sub-classing, WeakMap requires delegation to pass all tests
-
-function isObjectWithBrand(o, sym) {
-  if (typeof o !== 'object' || o === null) {
-    return false;
-  }
-  if (!Object_hasOwnProperty(o, sym) || o[sym] !== false) {
-    return false;
-  }
-  Object_defineProperty(o, sym, {__proto__: null, value: true, configurable: false});
-  return true;
-}
-
-function addBrand(o, sym) {
-  return Object_defineProperty(o, sym, {__proto__: null, value: false, configurable: true});
-}
+// - To enable initialization with `mozIteratorSym`
 
 { /* Map */
   const BuiltinMap = global.Map;
-  const isMapSym = Symbol("isMap");
+  const BuiltinMap_prototype_size = Object.getOwnPropertyDescriptor(BuiltinMap.prototype, "size").get;
 
-  class Map extends BuiltinMap {
+  class Map {
     constructor(iterable) {
-      if (!isObjectWithBrand(this, isMapSym)) {
+      if (!%IsUninitializedMap(this)) {
         return new Map(iterable);
       }
       if (iterable !== void 0) {
         iterable = iterable[mozIteratorSym]();
       }
-      return super(iterable);
+      return %CallFunction(BuiltinMap, this, iterable);
     }
 
-    // overridden to change return value to `undefined`
+    clear() {
+      return %CallFunction(BuiltinMap.prototype.clear, this);
+    }
+
+    delete(key) {
+      return %CallFunction(BuiltinMap.prototype.delete, this, key);
+    }
+
+    entries() {
+      return %CallFunction(BuiltinMap.prototype.entries, this);
+    }
+
+    forEach(callbackfn, thisArg = void 0) {
+      return %CallFunction(BuiltinMap.prototype.forEach, this, callbackfn, thisArg);
+    }
+
+    get(key) {
+      return %CallFunction(BuiltinMap.prototype.get, this, key);
+    }
+
+    has(key) {
+      return %CallFunction(BuiltinMap.prototype.has, this, key);
+    }
+
+    keys() {
+      return %CallFunction(BuiltinMap.prototype.keys, this);
+    }
+
     set(key, value) {
-      super(key, value);
+      // No `return` here because tests require `undefined` as return value.
+      %CallFunction(BuiltinMap.prototype.set, this, key, value);
     }
 
-    // overriden to pass surface tests
     get size() {
-      return super.size;
+      return %CallFunction(BuiltinMap_prototype_size, this);
+    }
+
+    values() {
+      return %CallFunction(BuiltinMap.prototype.values, this);
+    }
+
+    get [Symbol.toStringTag]() {
+      return "Map";
     }
 
     static [createSym]() {
-      return addBrand(super(), isMapSym);
+      return %CallFunction(BuiltinMap[createSym], this);
     }
   }
 
   Object.defineProperties(Map.prototype, {
+    clear: {enumerable: false},
+    delete: {enumerable: false},
+    entries: {enumerable: false},
+    forEach: {enumerable: false},
+    get: {enumerable: false},
+    has: {enumerable: false},
+    keys: {enumerable: false},
     set: {enumerable: false},
     size: {enumerable: false},
+    values: {enumerable: false},
+    [Symbol.iterator]: {value: Map.prototype.entries, writable: true, enumerable: false, configurable: true},
+    [Symbol.toStringTag]: {enumerable: false},
   });
 
   Object.defineProperties(Map, {
@@ -89,37 +115,73 @@ function addBrand(o, sym) {
 
 { /* Set */
   const BuiltinSet = global.Set;
-  const isSetSym = Symbol("isSet");
+  const BuiltinSet_prototype_size = Object.getOwnPropertyDescriptor(BuiltinSet.prototype, "size").get;
 
-  class Set extends BuiltinSet {
+  class Set {
     constructor(iterable) {
-      if (!isObjectWithBrand(this, isSetSym)) {
+      if (!%IsUninitializedSet(this)) {
         return new Set(iterable);
       }
       if (iterable !== void 0) {
         iterable = iterable[mozIteratorSym]();
       }
-      return super(iterable);
+      return %CallFunction(BuiltinSet, this, iterable);
     }
 
-    // overridden to change return value to `undefined`
     add(value) {
-      super(value);
+      // No `return` here because tests require `undefined` as return value.
+      %CallFunction(BuiltinSet.prototype.add, this, value);
     }
 
-    // overriden to pass surface tests
+    clear() {
+      return %CallFunction(BuiltinSet.prototype.clear, this);
+    }
+
+    delete(value) {
+      return %CallFunction(BuiltinSet.prototype.delete, this, value);
+    }
+
+    entries() {
+      return %CallFunction(BuiltinSet.prototype.entries, this);
+    }
+
+    forEach(callbackfn, thisArg = void 0) {
+      return %CallFunction(BuiltinSet.prototype.forEach, this, callbackfn, thisArg);
+    }
+
+    has(value) {
+      return %CallFunction(BuiltinSet.prototype.has, this, value);
+    }
+
     get size() {
-      return super.size;
+      return %CallFunction(BuiltinSet_prototype_size, this);
+    }
+
+    values() {
+      return %CallFunction(BuiltinSet.prototype.values, this);
+    }
+
+    get [Symbol.toStringTag]() {
+      return "Set";
     }
 
     static [createSym]() {
-      return addBrand(super(), isSetSym);
+      return %CallFunction(BuiltinSet[createSym], this);
     }
   }
 
   Object.defineProperties(Set.prototype, {
     add: {enumerable: false},
+    clear: {enumerable: false},
+    delete: {enumerable: false},
+    entries: {enumerable: false},
+    forEach: {enumerable: false},
+    has: {enumerable: false},
+    keys: {value: Set.prototype.values, writable: true, enumerable: false, configurable: true},
     size: {enumerable: false},
+    values: {enumerable: false},
+    [Symbol.iterator]: {value: Set.prototype.values, writable: true, enumerable: false, configurable: true},
+    [Symbol.toStringTag]: {enumerable: false},
   });
 
   Object.defineProperties(Set, {
@@ -132,41 +194,40 @@ function addBrand(o, sym) {
 
 { /* WeakMap */
   const BuiltinWeakMap = global.WeakMap;
-  const isWeakMapSym = Symbol("isWeakMap");
 
   class WeakMap {
     constructor(iterable) {
-      if (!isObjectWithBrand(this, isWeakMapSym)) {
+      if (!%IsUninitializedWeakMap(this)) {
         return new WeakMap(iterable);
       }
       if (iterable !== void 0) {
         iterable = iterable[mozIteratorSym]();
       }
-      return BuiltinWeakMap.call(this, iterable);
+      return %CallFunction(BuiltinWeakMap, this, iterable);
     }
 
     clear() {
-      return BuiltinWeakMap.prototype.clear.call(this);
+      return %CallFunction(BuiltinWeakMap.prototype.clear, this);
     }
 
     delete(key) {
-      return BuiltinWeakMap.prototype.delete.call(this, key);
+      return %CallFunction(BuiltinWeakMap.prototype.delete, this, key);
     }
 
     get(key, defaultValue) {
-      if (BuiltinWeakMap.prototype.has.call(this, key)) {
-        return BuiltinWeakMap.prototype.get.call(this, key);
+      if (%CallFunction(BuiltinWeakMap.prototype.has, this, key)) {
+        return %CallFunction(BuiltinWeakMap.prototype.get, this, key);
       }
       return defaultValue;
     }
 
     has(key) {
-      return BuiltinWeakMap.prototype.has.call(this, key);
+      return %CallFunction(BuiltinWeakMap.prototype.has, this, key);
     }
 
     set(key, value) {
       // No `return` here because tests require `undefined` as return value.
-      BuiltinWeakMap.prototype.set.call(this, key, value);
+      %CallFunction(BuiltinWeakMap.prototype.set, this, key, value);
     }
 
     get [Symbol.toStringTag]() {
@@ -174,8 +235,7 @@ function addBrand(o, sym) {
     }
 
     static [createSym]() {
-      let wm = BuiltinWeakMap[createSym].call(this);
-      return addBrand(wm, isWeakMapSym);
+      return %CallFunction(BuiltinWeakMap[createSym], this);
     }
   }
 
@@ -198,31 +258,50 @@ function addBrand(o, sym) {
 
 { /* WeakSet */
   const BuiltinWeakSet = global.WeakSet;
-  const isWeakSetSym = Symbol("isWeakSet");
 
-  class WeakSet extends BuiltinWeakSet {
+  class WeakSet {
     constructor(iterable) {
-      if (!isObjectWithBrand(this, isWeakSetSym)) {
+      if (!%IsUninitializedWeakSet(this)) {
         return new WeakSet(iterable);
       }
       if (iterable !== void 0) {
         iterable = iterable[mozIteratorSym]();
       }
-      return super(iterable);
+      return %CallFunction(BuiltinWeakSet, this, iterable);
     }
 
-    // overridden to change return value to `undefined`
     add(value) {
-      super(value);
+      // No `return` here because tests require `undefined` as return value.
+      %CallFunction(BuiltinWeakSet.prototype.add, this, value);
+    }
+
+    clear() {
+      return %CallFunction(BuiltinWeakSet.prototype.clear, this);
+    }
+
+    delete(value) {
+      return %CallFunction(BuiltinWeakSet.prototype.delete, this, value);
+    }
+
+    has(value) {
+      return %CallFunction(BuiltinWeakSet.prototype.has, this, value);
+    }
+
+    get [Symbol.toStringTag]() {
+      return "WeakSet";
     }
 
     static [createSym]() {
-      return addBrand(super(), isWeakSetSym);
+      return %CallFunction(BuiltinWeakSet[createSym], this);
     }
   }
 
   Object.defineProperties(WeakSet.prototype, {
     add: {enumerable: false},
+    clear: {enumerable: false},
+    delete: {enumerable: false},
+    has: {enumerable: false},
+    [Symbol.toStringTag]: {enumerable: false},
   });
 
   Object.defineProperties(WeakSet, {

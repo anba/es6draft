@@ -17,8 +17,8 @@ const {
 } = global;
 
 const Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
-      Object_hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty),
       Object_keys = Object.keys,
+      Object_prototype_hasOwnProperty = Object.prototype.hasOwnProperty,
       Array_isArray = Array.isArray,
       Array_prototype_join = Array.prototype.join;
 
@@ -103,7 +103,7 @@ const weakset = new WeakSet();
 var depth = 0;
 
 function ObjectToSource(o) {
-  if (o == null) throw new TypeError();
+  if (o == null) throw TypeError();
   var obj = Object(o);
   if (weakset.has(obj)) {
     return "{}";
@@ -194,7 +194,7 @@ Object.defineProperty(Object.assign(Function.prototype, {
 
 Object.defineProperty(Object.assign(Array.prototype, {
   toSource() {
-    if (!Array_isArray(this)) throw new TypeError();
+    if (!Array_isArray(this)) throw TypeError();
     if (weakset.has(this)) {
       return "[]";
     }
@@ -203,7 +203,7 @@ Object.defineProperty(Object.assign(Array.prototype, {
     try {
       var s = "";
       for (var i = 0, len = this.length; i < len; ++i) {
-        if (!Object_hasOwnProperty(this, i)) {
+        if (!%CallFunction(Object_prototype_hasOwnProperty, this, i)) {
           s += ",";
           if (i + 1 < len) s += " ";
         } else {

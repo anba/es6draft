@@ -11,7 +11,7 @@
 const global = %GlobalObject();
 
 const {
-  Object, Function, Array, Error, Set, WeakSet,
+  Object, Array, Error, Set, WeakSet,
 } = global;
 
 const Array_prototype_join = Array.prototype.join,
@@ -30,29 +30,28 @@ const {
   has: WeakSet_prototype_has,
 } = WeakSet.prototype;
 
-const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 const weakset = new WeakSet(), set = new Set();
 
 function checkCycle(fn, o, ...args) {
   const isObject = typeof o == 'function' || typeof o == 'object' && o !== null;
   if (isObject) {
-    if ($CallFunction(WeakSet_prototype_has, weakset, o)) {
+    if (%CallFunction(WeakSet_prototype_has, weakset, o)) {
       return "";
     }
-    $CallFunction(WeakSet_prototype_add, weakset, o);
+    %CallFunction(WeakSet_prototype_add, weakset, o);
   } else {
-    if ($CallFunction(Set_prototype_has, set, o)) {
+    if (%CallFunction(Set_prototype_has, set, o)) {
       return "" + o;
     }
-    $CallFunction(Set_prototype_add, set, o);
+    %CallFunction(Set_prototype_add, set, o);
   }
   try {
-    return $CallFunction(fn, o, ...args);
+    return %CallFunction(fn, o, ...args);
   } finally {
     if (isObject) {
-      $CallFunction(WeakSet_prototype_delete, weakset, o);
+      %CallFunction(WeakSet_prototype_delete, weakset, o);
     } else {
-      $CallFunction(Set_prototype_delete, set, o);
+      %CallFunction(Set_prototype_delete, set, o);
     }
   }
 }

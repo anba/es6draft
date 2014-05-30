@@ -11,7 +11,7 @@
 const global = %GlobalObject();
 
 const {
-  Object, Function, RegExp, String, Symbol, TypeError,
+  Object, RegExp, String, Symbol, TypeError,
 } = global;
 
 const {
@@ -19,8 +19,6 @@ const {
   getPrototypeOf: Object_getPrototypeOf,
   getOwnPropertyDescriptor: Object_getOwnPropertyDescriptor,
 } = Object;
-
-const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
 function ToPropertyKey(pk) {
   if (typeof pk == 'symbol') {
@@ -41,13 +39,13 @@ Object.defineProperty(global, Symbol.toStringTag, {
  */
 Object.defineProperties(Object.assign(Object.prototype, {
   __defineGetter__(name, getter) {
-    if (typeof getter != 'function') throw new TypeError();
+    if (typeof getter != 'function') throw TypeError();
     var pk = ToPropertyKey(name);
     var obj = this != null ? Object(this) : %GlobalThis();
     Object_defineProperty(obj, pk, {__proto__: null, get: getter, enumerable: true, configurable: true});
   },
   __defineSetter__(name, setter) {
-    if (typeof setter != 'function') throw new TypeError();
+    if (typeof setter != 'function') throw TypeError();
     var pk = ToPropertyKey(name);
     var obj = this != null ? Object(this) : %GlobalThis();
     Object_defineProperty(obj, pk, {__proto__: null, set: setter, enumerable: true, configurable: true});
@@ -83,12 +81,12 @@ const trimLeftRE = /^\s+/, trimRightRE = /\s+$/;
  */
 Object.defineProperties(Object.assign(String.prototype, {
   trimLeft() {
-    if (this == null) throw new TypeError();
-    return $CallFunction(RegExp_prototype_replace, trimLeftRE, String(this), "");
+    if (this == null) throw TypeError();
+    return %CallFunction(RegExp_prototype_replace, trimLeftRE, String(this), "");
   },
   trimRight() {
-    if (this == null) throw new TypeError();
-    return $CallFunction(RegExp_prototype_replace, trimRightRE, String(this), "");
+    if (this == null) throw TypeError();
+    return %CallFunction(RegExp_prototype_replace, trimRightRE, String(this), "");
   },
 }), {
   trimLeft: {enumerable: false},

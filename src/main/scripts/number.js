@@ -14,6 +14,12 @@ const {
   Object, Number, Math,
 } = global;
 
+const {
+  abs: Math_abs,
+  floor: Math_floor,
+  sign: Math_sign,
+} = Math;
+
 /*
  * Add 'Number.toInteger(v)'
  */
@@ -26,7 +32,7 @@ Object.defineProperties(Object.assign(Number, {
     if (number === 0 || number === 1/0 || number === -1/0) {
       return number;
     }
-    return Math.sign(number) * Math.floor(Math.abs(number));
+    return Math_sign(number) * Math_floor(Math_abs(number));
   }
 }), {
   toInteger: {enumerable: false}

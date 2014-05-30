@@ -11,15 +11,13 @@
 const global = %GlobalObject();
 
 const {
-  Object, Function, Math, TypeError,
+  Object, Math, TypeError,
 } = global;
 
 const {
   max: Math_max,
   min: Math_min,
 } = Math;
-
-const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
 for (const type of ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32", "Uint32", "Float32", "Float64"]) {
   const ctor = global[`${type}Array`];
@@ -41,7 +39,7 @@ for (const type of ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32",
         dest = len + dest;
       }
       dest = Math_max(0, Math_min(len, dest));
-      $CallFunction(set, this, $CallFunction(subarray, this, start, end), dest);
+      %CallFunction(set, this, %CallFunction(subarray, this, start, end), dest);
     },
     writable: true, enumerable: false, configurable: true
   });
@@ -51,8 +49,8 @@ for (const type of ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32",
    */
   Object.defineProperty(ctor.prototype, "subarray", {
     value(begin, end) {
-      if (!(this instanceof ctor)) throw new TypeError();
-      return $CallFunction(subarray, this, begin, end);
+      if (!(this instanceof ctor)) throw TypeError();
+      return %CallFunction(subarray, this, begin, end);
     },
     writable: true, enumerable: false, configurable: true
   });

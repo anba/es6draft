@@ -11,13 +11,10 @@
 const global = %GlobalObject();
 
 const {
-  Object, Function,
+  Object, Array, String
 } = global;
 
-const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
-
 { /* Array statics */
-const Array = global.Array;
 
 const {
   join: Array_prototype_join,
@@ -43,70 +40,70 @@ const {
 
 Object.defineProperties(Object.assign(Array, {
   join(array, $1, ...more) {
-    return $CallFunction(Array_prototype_join, array, $1, ...more);
+    return %CallFunction(Array_prototype_join, array, $1, ...more);
   },
   reverse(array, ...more) {
-    return $CallFunction(Array_prototype_reverse, array, ...more);
+    return %CallFunction(Array_prototype_reverse, array, ...more);
   },
   sort(array, $1, ...more) {
-    return $CallFunction(Array_prototype_sort, array, $1, ...more);
+    return %CallFunction(Array_prototype_sort, array, $1, ...more);
   },
   push(array, $1, ...more) {
     if (arguments.length <= 1) {
-      return $CallFunction(Array_prototype_push, array);
+      return %CallFunction(Array_prototype_push, array);
     }
-    return $CallFunction(Array_prototype_push, array, ...[$1, ...more]);
+    return %CallFunction(Array_prototype_push, array, ...[$1, ...more]);
   },
   pop(array, ...more) {
-    return $CallFunction(Array_prototype_pop, array, ...more);
+    return %CallFunction(Array_prototype_pop, array, ...more);
   },
   shift(array, ...more) {
-    return $CallFunction(Array_prototype_shift, array, ...more);
+    return %CallFunction(Array_prototype_shift, array, ...more);
   },
   unshift(array, $1, ...more) {
     if (arguments.length <= 1) {
-      return $CallFunction(Array_prototype_unshift, array);
+      return %CallFunction(Array_prototype_unshift, array);
     }
-    return $CallFunction(Array_prototype_unshift, array, ...[$1, ...more]);
+    return %CallFunction(Array_prototype_unshift, array, ...[$1, ...more]);
   },
   splice(array, $1, $2, ...more) {
-    return $CallFunction(Array_prototype_splice, array, $1, $2, ...more);
+    return %CallFunction(Array_prototype_splice, array, $1, $2, ...more);
   },
   concat(array, $1, ...more) {
     if (arguments.length <= 1) {
-      return $CallFunction(Array_prototype_concat, array);
+      return %CallFunction(Array_prototype_concat, array);
     }
-    return $CallFunction(Array_prototype_concat, array, ...[$1, ...more]);
+    return %CallFunction(Array_prototype_concat, array, ...[$1, ...more]);
   },
   slice(array, $1, $2, ...more) {
-    return $CallFunction(Array_prototype_slice, array, $1, $2, ...more);
+    return %CallFunction(Array_prototype_slice, array, $1, $2, ...more);
   },
   filter(array, $1, ...more) {
-    return $CallFunction(Array_prototype_filter, array, $1, ...more);
+    return %CallFunction(Array_prototype_filter, array, $1, ...more);
   },
   lastIndexOf(array, $1, ...more) {
-    return $CallFunction(Array_prototype_lastIndexOf, array, $1, ...more);
+    return %CallFunction(Array_prototype_lastIndexOf, array, $1, ...more);
   },
   indexOf(array, $1, ...more) {
-    return $CallFunction(Array_prototype_indexOf, array, $1, ...more);
+    return %CallFunction(Array_prototype_indexOf, array, $1, ...more);
   },
   forEach(array, $1, ...more) {
-    return $CallFunction(Array_prototype_forEach, array, $1, ...more);
+    return %CallFunction(Array_prototype_forEach, array, $1, ...more);
   },
   map(array, $1, ...more) {
-    return $CallFunction(Array_prototype_map, array, $1, ...more);
+    return %CallFunction(Array_prototype_map, array, $1, ...more);
   },
   every(array, $1, ...more) {
-    return $CallFunction(Array_prototype_every, array, $1, ...more);
+    return %CallFunction(Array_prototype_every, array, $1, ...more);
   },
   some(array, $1, ...more) {
-    return $CallFunction(Array_prototype_some, array, $1, ...more);
+    return %CallFunction(Array_prototype_some, array, $1, ...more);
   },
   reduce(array, $1, ...more) {
-    return $CallFunction(Array_prototype_reduce, array, $1, ...more);
+    return %CallFunction(Array_prototype_reduce, array, $1, ...more);
   },
   reduceRight(array, $1, ...more) {
-    return $CallFunction(Array_prototype_reduceRight, array, $1, ...more);
+    return %CallFunction(Array_prototype_reduceRight, array, $1, ...more);
   },
 }), {
   join: {enumerable: false},
@@ -132,7 +129,6 @@ Object.defineProperties(Object.assign(Array, {
 }
 
 { /* String statics */
-const String = global.String;
 
 const {
   quote: String_prototype_quote,
@@ -163,79 +159,79 @@ const {
 
 Object.defineProperties(Object.assign(String, {
   quote(string, ...more) {
-    return $CallFunction(String_prototype_quote, string, ...more);
+    return %CallFunction(String_prototype_quote, string, ...more);
   },
   substring(string, $1, $2, ...more) {
-    return $CallFunction(String_prototype_substring, string, $1, $2, ...more);
+    return %CallFunction(String_prototype_substring, string, $1, $2, ...more);
   },
   toLowerCase(string, ...more) {
-    return $CallFunction(String_prototype_toLowerCase, string, ...more);
+    return %CallFunction(String_prototype_toLowerCase, string, ...more);
   },
   toUpperCase(string, ...more) {
-    return $CallFunction(String_prototype_toUpperCase, string, ...more);
+    return %CallFunction(String_prototype_toUpperCase, string, ...more);
   },
   charAt(string, $1, ...more) {
-    return $CallFunction(String_prototype_charAt, string, $1, ...more);
+    return %CallFunction(String_prototype_charAt, string, $1, ...more);
   },
   charCodeAt(string, $1, ...more) {
-    return $CallFunction(String_prototype_charCodeAt, string, $1, ...more);
+    return %CallFunction(String_prototype_charCodeAt, string, $1, ...more);
   },
   contains(string, $1, ...more) {
-    return $CallFunction(String_prototype_contains, string, $1, ...more);
+    return %CallFunction(String_prototype_contains, string, $1, ...more);
   },
   indexOf(string, $1, ...more) {
-    return $CallFunction(String_prototype_indexOf, string, $1, ...more);
+    return %CallFunction(String_prototype_indexOf, string, $1, ...more);
   },
   lastIndexOf(string, $1, ...more) {
-    return $CallFunction(String_prototype_lastIndexOf, string, $1, ...more);
+    return %CallFunction(String_prototype_lastIndexOf, string, $1, ...more);
   },
   startsWith(string, $1, ...more) {
-    return $CallFunction(String_prototype_startsWith, string, $1, ...more);
+    return %CallFunction(String_prototype_startsWith, string, $1, ...more);
   },
   endsWith(string, $1, ...more) {
-    return $CallFunction(String_prototype_endsWith, string, $1, ...more);
+    return %CallFunction(String_prototype_endsWith, string, $1, ...more);
   },
   trim(string, ...more) {
-    return $CallFunction(String_prototype_trim, string, ...more);
+    return %CallFunction(String_prototype_trim, string, ...more);
   },
   trimLeft(string, ...more) {
-    return $CallFunction(String_prototype_trimLeft, string, ...more);
+    return %CallFunction(String_prototype_trimLeft, string, ...more);
   },
   trimRight(string, ...more) {
-    return $CallFunction(String_prototype_trimRight, string, ...more);
+    return %CallFunction(String_prototype_trimRight, string, ...more);
   },
   toLocaleLowerCase(string, ...more) {
-    return $CallFunction(String_prototype_toLocaleLowerCase, string, ...more);
+    return %CallFunction(String_prototype_toLocaleLowerCase, string, ...more);
   },
   toLocaleUpperCase(string, ...more) {
-    return $CallFunction(String_prototype_toLocaleUpperCase, string, ...more);
+    return %CallFunction(String_prototype_toLocaleUpperCase, string, ...more);
   },
   localeCompare(string, $1, ...more) {
-    return $CallFunction(String_prototype_localeCompare, string, $1, ...more);
+    return %CallFunction(String_prototype_localeCompare, string, $1, ...more);
   },
   match(string, $1, ...more) {
-    return $CallFunction(String_prototype_match, string, $1, ...more);
+    return %CallFunction(String_prototype_match, string, $1, ...more);
   },
   search(string, $1, ...more) {
-    return $CallFunction(String_prototype_search, string, $1, ...more);
+    return %CallFunction(String_prototype_search, string, $1, ...more);
   },
   replace(string, $1, $2, ...more) {
-    return $CallFunction(String_prototype_replace, string, $1, $2, ...more);
+    return %CallFunction(String_prototype_replace, string, $1, $2, ...more);
   },
   split(string, $1, $2, ...more) {
-    return $CallFunction(String_prototype_split, string, $1, $2, ...more);
+    return %CallFunction(String_prototype_split, string, $1, $2, ...more);
   },
   substr(string, $1, $2, ...more) {
-    return $CallFunction(String_prototype_substr, string, $1, $2, ...more);
+    return %CallFunction(String_prototype_substr, string, $1, $2, ...more);
   },
   concat(string, $1, ...more) {
     if (arguments.length <= 1) {
-      return $CallFunction(String_prototype_concat, string);
+      return %CallFunction(String_prototype_concat, string);
     }
-    return $CallFunction(String_prototype_concat, string, ...[$1, ...more]);
+    return %CallFunction(String_prototype_concat, string, ...[$1, ...more]);
   },
   slice(string, $1, $2, ...more) {
-    return $CallFunction(String_prototype_slice, string, $1, $2, ...more);
+    return %CallFunction(String_prototype_slice, string, $1, $2, ...more);
   },
 }), {
   quote: {enumerable: false},

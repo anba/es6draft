@@ -14,14 +14,14 @@ const {
   Object, Function, InternalError, RangeError, Symbol,
 } = global;
 
-const instanceOf = Function.prototype.call.bind(Function.prototype[Symbol.hasInstance]);
+const hasInstance = Function.prototype[Symbol.hasInstance];
 
 /*
  * Make InternalError instances compatible to `instanceof RangeError`
  */
 Object.defineProperty(RangeError, Symbol.hasInstance, {
   value(o) {
-    return instanceOf(RangeError, o) || instanceOf(InternalError, o);
+    return %CallFunction(hasInstance, RangeError, o) || %CallFunction(hasInstance, InternalError, o);
   }, configurable: true
 });
 

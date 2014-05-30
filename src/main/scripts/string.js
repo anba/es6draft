@@ -11,7 +11,7 @@
 const global = %GlobalObject();
 
 const {
-  Object, Function, String, RegExp,
+  Object, String, RegExp,
 } = global;
 
 const {
@@ -24,12 +24,10 @@ const {
   search: String_prototype_search,
 } = String.prototype;
 
-const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
-
 const specialCharsRE = /[|^$\\()[\]{}.?*+]/g;
 
 function ToFlatPattern(p) {
-  return $CallFunction(RegExp_prototype_replace, specialCharsRE, p, "\\$&");
+  return %CallFunction(RegExp_prototype_replace, specialCharsRE, p, "\\$&");
 }
 
 /*
@@ -38,21 +36,21 @@ function ToFlatPattern(p) {
 Object.defineProperties(Object.assign(String.prototype, {
   match(regexp, flags = void 0) {
     if (typeof regexp == 'string' && flags !== void 0) {
-      regexp = new RegExp(regexp, flags);
+      regexp = RegExp(regexp, flags);
     }
-    return $CallFunction(String_prototype_match, this, regexp);
+    return %CallFunction(String_prototype_match, this, regexp);
   },
   search(regexp, flags = void 0) {
     if (typeof regexp == 'string' && flags !== void 0) {
-      regexp = new RegExp(regexp, flags);
+      regexp = RegExp(regexp, flags);
     }
-    return $CallFunction(String_prototype_search, this, regexp);
+    return %CallFunction(String_prototype_search, this, regexp);
   },
   replace(searchValue, replaceValue, flags = void 0) {
     if (typeof searchValue == 'string' && flags !== void 0) {
-      searchValue = new RegExp(ToFlatPattern(searchValue), flags);
+      searchValue = RegExp(ToFlatPattern(searchValue), flags);
     }
-    return $CallFunction(String_prototype_replace, this, searchValue, replaceValue);
+    return %CallFunction(String_prototype_replace, this, searchValue, replaceValue);
   },
 }), {
   match: {enumerable: false},

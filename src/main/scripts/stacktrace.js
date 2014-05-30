@@ -11,15 +11,13 @@
 const global = %GlobalObject();
 
 const {
-  Object, Function, Math, Error,
+  Object, Math, Error,
 } = global;
 
 const Object_defineProperty = Object.defineProperty,
       Error_prototype_toString = Error.prototype.toString,
       Math_floor = Math.floor,
       Math_min = Math.min;
-
-const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
 // stackTraceLimit defaults to 10
 Error.stackTraceLimit = 10;
@@ -33,11 +31,11 @@ Object.defineProperty(Error.prototype, "stack", {
     if (typeof limit != 'number') {
       return;
     }
-    var stacktrace = $CallFunction(getStackTrace, this);
+    var stacktrace = %CallFunction(getStackTrace, this);
     if (!stacktrace) {
       return;
     }
-    var out = $CallFunction(Error_prototype_toString, this);
+    var out = %CallFunction(Error_prototype_toString, this);
     var len = Math_min(stacktrace.length, Math_floor(limit));
     for (var i = 0; i < len; ++i) {
       var elem = stacktrace[i];

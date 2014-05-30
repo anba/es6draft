@@ -16,10 +16,7 @@ const {
 
 const Object_keys = Object.keys,
       Object_defineProperty = Object.defineProperty,
-      Object_hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty),
-      Array_isArray = Array.isArray;
-
-const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
+      Object_prototype_hasOwnProperty = Object.prototype.hasOwnProperty;
 
 const {
   iterator: iteratorSym,
@@ -74,20 +71,54 @@ function MakeIterator() {
     return target;
   }
 
+  function ToIteratorKey(name) {
+    let int32 = name | 0;
+    if (int32 >= 0 && int32 <= 0x7fffffff && int32 + "" === name) {
+      return int32;
+    }
+    return name;
+  }
+
+  class KeyIterator extends null {
+    constructor(o) {
+      this._keys = Object_keys(o);
+      this._index = 0;
+    }
+
+    next() {
+      let value, done = (this._index >= this._keys.length);
+      if (!done) {
+        value = ToIteratorKey(this._keys[this._index++]);
+      }
+      return {value, done};
+    }
+  }
+
+  class KeyValueIterator extends null {
+    constructor(o) {
+      this._object = Object(o);
+      this._keys = Object_keys(o);
+      this._index = 0;
+    }
+
+    next() {
+      let value, done = (this._index >= this._keys.length);
+      if (!done) {
+        let key = ToIteratorKey(this._keys[this._index++]);
+        value = [key, this._object[key]];
+      }
+      return {value, done};
+    }
+  }
+
   function ToIterator(instance, obj, keys = false) {
-    var iter = (
-      Array_isArray(obj) && keys ? obj.map((_, k) => k) :
-      Array_isArray(obj) ? obj.map((v, k) => [k, v]) :
-      keys ? Object_keys(Object(obj)) :
-      Object_keys(Object(obj)).map(k => [k, obj[k]])
-    )[iteratorSym]();
-    var next = iter.next.bind(iter);
-    Object_defineProperty(instance, nextSym, {__proto__: null, value: next, configurable: false});
+    var iter = keys ? new KeyIterator(obj) : new KeyValueIterator(obj);
+    Object_defineProperty(instance, nextSym, {__proto__: null, value: () => iter.next(), configurable: false});
     return new Proxy(instance, {enumerate: () => iter});
   }
 
   function IsIterator(o) {
-    return Object(o) === o && Object_hasOwnProperty(o, nextSym);
+    return Object(o) === o && %CallFunction(Object_prototype_hasOwnProperty, o, nextSym);
   }
 
   function Iterator(obj, keys) {
@@ -177,7 +208,7 @@ function MakeLegacyIterator() {
     }
 
     static [createSym]() {
-      return $CallFunction(Function.prototype[createSym], this);
+      return %CallFunction(Function.prototype[createSym], this);
     }
   }
 
@@ -202,7 +233,7 @@ function MakeBuiltinIterator(ctor) {
 
   class BuiltinIterator extends Iterator {
     constructor(obj, iterF) {
-      Object_defineProperty(this, iterSym, {__proto__: null, value: $CallFunction(iterF, obj)});
+      Object_defineProperty(this, iterSym, {__proto__: null, value: %CallFunction(iterF, obj)});
       Object_defineProperty(this, closedSym, {__proto__: null, value: false, configurable: true});
     }
 
@@ -230,7 +261,7 @@ function MakeBuiltinIterator(ctor) {
     }
 
     static [createSym]() {
-      return $CallFunction(Function.prototype[createSym], this);
+      return %CallFunction(Function.prototype[createSym], this);
     }
   }
 
@@ -354,7 +385,7 @@ function MakeBuiltinIterator(ctor) {
     // "@@iterator" iterator based on Array.prototype[mozIteratorSym]
     Object.defineProperties(Object.assign(ctor.prototype, {
       [mozIteratorSym]() {
-        return $CallFunction(ArrayPrototype_iterator, this);
+        return %CallFunction(ArrayPrototype_iterator, this);
       }
     }), {
       [mozIteratorSym]: {enumerable: false},
