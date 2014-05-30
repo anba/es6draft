@@ -98,6 +98,11 @@ public final class ArrowFunction extends Expression implements FunctionNode {
     }
 
     @Override
+    public ThisMode getThisMode() {
+        return ThisMode.Lexical;
+    }
+
+    @Override
     public boolean isGenerator() {
         return false;
     }

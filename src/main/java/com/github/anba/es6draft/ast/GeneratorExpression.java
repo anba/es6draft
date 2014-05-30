@@ -106,6 +106,11 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
     }
 
     @Override
+    public ThisMode getThisMode() {
+        return strictMode == StrictMode.NonStrict ? ThisMode.Global : ThisMode.Strict;
+    }
+
+    @Override
     public boolean isGenerator() {
         return true;
     }

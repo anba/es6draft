@@ -113,6 +113,11 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     }
 
     @Override
+    public ThisMode getThisMode() {
+        return strictMode == StrictMode.NonStrict ? ThisMode.Global : ThisMode.Strict;
+    }
+
+    @Override
     public boolean isGenerator() {
         return getType() == MethodType.Generator;
     }

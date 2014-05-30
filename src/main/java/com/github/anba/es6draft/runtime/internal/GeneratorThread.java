@@ -39,6 +39,8 @@ public final class GeneratorThread extends Thread {
     /**
      * Submits <var>callable</var> to a new generator thread.
      * 
+     * @param <V>
+     *            the result type
      * @param callable
      *            the callable
      * @return the future representing the pending result

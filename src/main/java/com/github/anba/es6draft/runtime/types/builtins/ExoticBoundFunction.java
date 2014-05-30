@@ -212,7 +212,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
      * 
      * @param cx
      *            the execution context
-     * @param bound
+     * @param function
      *            the bound function object
      * @return the new cloned bound function object
      */

@@ -216,8 +216,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         /* step 15 */
         boolean argumentsObjectNeeded = true;
         /* step 16 */
-        if (function instanceof ArrowFunction || function instanceof GeneratorComprehension) {
-            // => [[ThisMode]] of func is lexical
+        if (function.getThisMode() == FunctionNode.ThisMode.Lexical) {
             needsSpecialArgumentsBinding = false;
             argumentsObjectNeeded = false;
         }

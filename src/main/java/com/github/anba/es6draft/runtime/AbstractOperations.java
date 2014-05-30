@@ -2204,6 +2204,8 @@ public final class AbstractOperations {
     /**
      * 7.3.13 CreateArrayFromList (elements)
      * 
+     * @param <T>
+     *            the element type
      * @param cx
      *            the execution context
      * @param elements
@@ -2747,6 +2749,8 @@ public final class AbstractOperations {
     /**
      * 7.4.8 CreateListIterator (list)
      * 
+     * @param <T>
+     *            the element type
      * @param cx
      *            the execution context
      * @param list
@@ -2760,6 +2764,8 @@ public final class AbstractOperations {
     /**
      * 7.4.8 CreateListIterator (list)
      * 
+     * @param <T>
+     *            the element type
      * @param cx
      *            the execution context
      * @param iterator
@@ -2787,6 +2793,8 @@ public final class AbstractOperations {
     /**
      * 7.4.10 CreateCompoundIterator ( iterator1, iterator2 )
      * 
+     * @param <T>
+     *            the element type
      * @param cx
      *            the execution context
      * @param iterator1

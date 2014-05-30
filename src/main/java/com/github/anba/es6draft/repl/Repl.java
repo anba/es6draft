@@ -204,7 +204,7 @@ public final class Repl {
     }
 
     public enum ShellMode {
-        // TODO: "simple" is a misnomer...
+        // TODO: "simple" is a misnomer, change to "standard"?
         Simple, Mozilla, V8;
 
         @Override
@@ -269,6 +269,9 @@ public final class Repl {
 
         @Option(name = "--verify-stack", hidden = true, usage = "options.verify_stack")
         boolean verifyStack;
+
+        @Option(name = "--native-calls", hidden = true, usage = "options.native_calls")
+        boolean nativeCalls;
 
         @Option(name = "--xhelp", hidden = true, usage = "options.extended_help")
         boolean showExtendedHelp;
@@ -607,6 +610,9 @@ public final class Repl {
         }
         if (options.verifyStack) {
             compilerOptions.add(Compiler.Option.VerifyStack);
+        }
+        if (options.nativeCalls) {
+            parserOptions.add(Parser.Option.NativeCall);
         }
 
         ScriptCache scriptCache = new ScriptCache();

@@ -247,6 +247,11 @@ public final class IndexedMap<VALUE> {
         Iterator<Map.Entry<Long, VALUE>> descendingIterator(long from, long to) {
             return Collections.emptyIterator();
         }
+
+        @Override
+        public String toString() {
+            return "Empty=[]";
+        }
     }
 
     private static final class DenseElements<VALUE> extends Elements<VALUE> {
@@ -269,14 +274,12 @@ public final class IndexedMap<VALUE> {
             this((VALUE[]) EMPTY_ARRAY, 0);
         }
 
-        @SuppressWarnings("unchecked")
         DenseElements(int capacity) {
-            this((VALUE[]) newArray(nextCapacity(capacity)), 0);
+            this(Elements.<VALUE> newArray(nextCapacity(capacity)), 0);
         }
 
-        @SuppressWarnings("unchecked")
         DenseElements(List<VALUE> c, int count) {
-            this((VALUE[]) c.toArray(newArray(nextCapacity(c.size()))), count);
+            this(c.toArray(Elements.<VALUE> newArray(nextCapacity(c.size()))), count);
         }
 
         @Override
@@ -417,6 +420,11 @@ public final class IndexedMap<VALUE> {
             int endIndex = (int) Math.min(from, array.length) - 1;
             int startIndex = Math.max(0, (int) Math.min(to, array.length) - 1);
             return new SparseEntryIterator<>(startIndex, endIndex, array);
+        }
+
+        @Override
+        public String toString() {
+            return "Dense=" + Arrays.toString(indices());
         }
 
         private void add(int index, VALUE value) {
@@ -580,6 +588,11 @@ public final class IndexedMap<VALUE> {
         @Override
         Iterator<Map.Entry<Long, VALUE>> descendingIterator(long from, long to) {
             return map.descendingMap().subMap(to, false, from, true).entrySet().iterator();
+        }
+
+        @Override
+        public String toString() {
+            return "Sparse=" + Arrays.toString(indices());
         }
     }
 
@@ -1003,5 +1016,10 @@ public final class IndexedMap<VALUE> {
             throw new IndexOutOfBoundsException();
         }
         return elements.descendingIterator(from, to);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("{length=%d, elements=%s}", length, elements);
     }
 }

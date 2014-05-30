@@ -68,8 +68,10 @@ public final class CompoundIterator<T> extends OrdinaryObject {
      *            the iteration type
      * @param cx
      *            the execution context
-     * @param iter
-     *            the source iterator
+     * @param iterator1
+     *            the first source iterator
+     * @param iterator2
+     *            the second source iterator
      * @return a new script object iterator
      */
     public static <T> CompoundIterator<T> CreateCompoundIterator(ExecutionContext cx,

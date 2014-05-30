@@ -90,6 +90,11 @@ public final class FunctionDeclaration extends Declaration implements FunctionDe
     }
 
     @Override
+    public ThisMode getThisMode() {
+        return strictMode == StrictMode.NonStrict ? ThisMode.Global : ThisMode.Strict;
+    }
+
+    @Override
     public boolean isGenerator() {
         return false;
     }

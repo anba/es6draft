@@ -12,6 +12,10 @@ import java.util.List;
  * <h1>14 ECMAScript Language: Functions and Classes</h1>
  */
 public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNode {
+    public enum ThisMode {
+        Lexical, Strict, Global
+    }
+
     /**
      * Returns the function name.
      * 
@@ -67,6 +71,13 @@ public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNod
 
     @Override
     FunctionScope getScope();
+
+    /**
+     * Returns the [[ThisMode]] of this function.
+     * 
+     * @return the this-mode field
+     */
+    ThisMode getThisMode();
 
     /**
      * Returns <code>true</code> if this function is a generator function.

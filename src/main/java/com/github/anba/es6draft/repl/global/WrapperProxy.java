@@ -48,6 +48,12 @@ class WrapperProxy implements ScriptObject {
         this.withProto = withProto;
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s@%x {{%n\tTarget=%s%n}}", getClass().getSimpleName(),
+                System.identityHashCode(this), proxyTarget);
+    }
+
     private static final class CallabeWrapperProxy extends WrapperProxy implements Callable {
         public CallabeWrapperProxy(ScriptObject target, ScriptObject prototype, boolean withProto) {
             super(target, prototype, withProto);

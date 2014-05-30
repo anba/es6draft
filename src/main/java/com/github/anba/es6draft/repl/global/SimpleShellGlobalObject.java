@@ -150,6 +150,17 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
     }
 
     /**
+     * shell-function: {@code dumpObject(object)}
+     * 
+     * @param object
+     *            the object to inspect
+     */
+    @Function(name = "dumpObject", arity = 1)
+    public void dumpObject(ScriptObject object) {
+        console.print(object.toString());
+    }
+
+    /**
      * shell-function: {@code error()}
      */
     @Function(name = "error", arity = 0)

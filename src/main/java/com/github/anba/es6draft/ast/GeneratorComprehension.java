@@ -80,6 +80,11 @@ public final class GeneratorComprehension extends Expression implements Function
     }
 
     @Override
+    public ThisMode getThisMode() {
+        return ThisMode.Lexical;
+    }
+
+    @Override
     public boolean isGenerator() {
         return true;
     }

@@ -103,6 +103,11 @@ public final class AsyncFunctionExpression extends Expression implements AsyncFu
     }
 
     @Override
+    public ThisMode getThisMode() {
+        return strictMode == StrictMode.NonStrict ? ThisMode.Global : ThisMode.Strict;
+    }
+
+    @Override
     public boolean isGenerator() {
         return false;
     }

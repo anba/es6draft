@@ -562,6 +562,10 @@ public final class Realm {
      * <p>
      * Initializes {@code [[globalThis]]} with the default properties of the Global Object.
      * 
+     * @param cx
+     *            the execution context
+     * @param realm
+     *            the realm instance
      * @return the global this object
      */
     public static ScriptObject SetDefaultGlobalBindings(ExecutionContext cx, Realm realm) {

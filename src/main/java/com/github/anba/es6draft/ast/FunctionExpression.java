@@ -106,6 +106,11 @@ public final class FunctionExpression extends Expression implements FunctionDefi
     }
 
     @Override
+    public ThisMode getThisMode() {
+        return strictMode == StrictMode.NonStrict ? ThisMode.Global : ThisMode.Strict;
+    }
+
+    @Override
     public boolean isGenerator() {
         return false;
     }

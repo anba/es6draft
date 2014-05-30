@@ -88,7 +88,8 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     /**
      * Creates the default function properties, i.e. 'name' and 'length', initializes the
      * [[Prototype]] to the <code>%FunctionPrototype%</code> object and calls
-     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, ScriptObject)}.
+     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, ScriptObject, Realm)}
+     * .
      * 
      * @param name
      *            the function name

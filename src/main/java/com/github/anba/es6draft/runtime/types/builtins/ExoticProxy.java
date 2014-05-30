@@ -64,6 +64,12 @@ public class ExoticProxy implements ScriptObject {
         return proxyHandler == null;
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s@%x {{%n\tTarget=%s%n\tHandler=%s%n}}", getClass().getSimpleName(),
+                System.identityHashCode(this), proxyTarget, proxyHandler);
+    }
+
     /**
      * Revoke this proxy, that means set both, [[ProxyTarget]] and [[ProxyHandler]], to {@code null}
      * and by that prevent further operations on this proxy.

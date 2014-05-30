@@ -8,8 +8,8 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
-import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyDeclaredNames;
+import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
 
 import java.util.ArrayList;
 import java.util.List;

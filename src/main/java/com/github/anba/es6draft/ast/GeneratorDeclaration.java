@@ -89,6 +89,11 @@ public class GeneratorDeclaration extends Declaration implements GeneratorDefini
     }
 
     @Override
+    public ThisMode getThisMode() {
+        return strictMode == StrictMode.NonStrict ? ThisMode.Global : ThisMode.Strict;
+    }
+
+    @Override
     public boolean isGenerator() {
         return true;
     }

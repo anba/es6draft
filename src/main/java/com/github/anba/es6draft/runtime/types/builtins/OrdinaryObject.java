@@ -67,6 +67,13 @@ public class OrdinaryObject implements ScriptObject {
         this.indexedProperties = null;
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s@%x: indexed=%s, strings=%s, symbols=%s, extensible=%b", getClass()
+                .getSimpleName(), System.identityHashCode(this), indexedProperties, properties
+                .keySet(), symbolProperties.keySet(), extensible);
+    }
+
     /**
      * Returns the string valued properties.
      * 

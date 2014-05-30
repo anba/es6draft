@@ -238,11 +238,11 @@ final class PropertyGenerator extends
         boolean isAnonymousFunctionDefinition = IsAnonymousFunctionDefinition(propertyValue);
         boolean updateMethodFields;
         if (isAnonymousFunctionDefinition) {
-            if (propertyValue instanceof ArrowFunction) {
-                // [[ThisMode]] is 'lexical'
+            FunctionNode fdef = (FunctionNode) propertyValue;
+            if (fdef.getThisMode() == FunctionNode.ThisMode.Lexical) {
                 updateMethodFields = false;
             } else if (propertyValue instanceof ClassExpression) {
-                // [[HomeObject]] is never undefined if [[NeedsSuper]] is true in class constructors
+                // [[HomeObject]] is never undefined if [[NeedsSuper]] is true in class constructor.
                 updateMethodFields = false;
             } else {
                 assert propertyValue instanceof FunctionExpression
