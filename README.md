@@ -36,7 +36,7 @@ Full support of [ECMAScript 6 draft rev. 25] [es6drafts].
 ### Downloads ###
 
 Prebuilt packages are available [here] [builds]. The zip archive contains the full distribution,
-simply unzip the archive, start shell, and you are ready to go!
+simply unzip the archive, start the shell, and you are ready to go!
 
 
 ## Test Suites ##
