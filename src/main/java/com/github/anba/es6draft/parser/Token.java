@@ -45,6 +45,8 @@ public enum Token {/* @formatter:off */
     WITH("with"),
     YIELD("yield"),
     // Contextual Keywords
+    ASYNC("async"),
+    AWAIT("await"),
     LET("let"),
     // FutureReservedWord -> 11.6.2.2
     ENUM("enum"),
@@ -63,6 +65,8 @@ public enum Token {/* @formatter:off */
     ESCAPED_RESERVED_WORD("<escaped-reserved-word>"),
     ESCAPED_STRICT_RESERVED_WORD("<escaped-strict-reserved-word>"),
     ESCAPED_YIELD("<escaped-yield>"),
+    ESCAPED_ASYNC("<escaped-async>"),
+    ESCAPED_AWAIT("<escaped-await>"),
     ESCAPED_LET("<escaped-let>"),
     // Literal
     NULL("null"),
@@ -127,6 +131,8 @@ public enum Token {/* @formatter:off */
         case ESCAPED_RESERVED_WORD:
         case ESCAPED_STRICT_RESERVED_WORD:
         case ESCAPED_YIELD:
+        case ESCAPED_ASYNC:
+        case ESCAPED_AWAIT:
         case ESCAPED_LET:
             // Names
         case BREAK:
@@ -163,6 +169,8 @@ public enum Token {/* @formatter:off */
         case WITH:
         case YIELD:
             // Keywords
+        case ASYNC:
+        case AWAIT:
         case LET:
             // Contextual Keywords
         case ENUM:
@@ -272,20 +280,24 @@ public enum Token {/* @formatter:off */
      * @return the escaped form of the token
      */
     public static Token toEscapedNameToken(Token token) {
-        if (token == Token.NAME) {
+        switch (token) {
+        case NAME:
             return Token.ESCAPED_NAME;
-        }
-        if (token == Token.YIELD) {
+        case YIELD:
             return Token.ESCAPED_YIELD;
-        }
-        if (token == Token.LET) {
+        case ASYNC:
+            return Token.ESCAPED_ASYNC;
+        case AWAIT:
+            return Token.ESCAPED_AWAIT;
+        case LET:
             return Token.ESCAPED_LET;
+        default:
+            if (Token.isReservedWord(token)) {
+                return Token.ESCAPED_RESERVED_WORD;
+            }
+            assert Token.isStrictReservedWord(token);
+            return Token.ESCAPED_STRICT_RESERVED_WORD;
         }
-        if (Token.isReservedWord(token)) {
-            return Token.ESCAPED_RESERVED_WORD;
-        }
-        assert Token.isStrictReservedWord(token);
-        return Token.ESCAPED_STRICT_RESERVED_WORD;
     }
 
     /**

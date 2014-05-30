@@ -1748,7 +1748,7 @@ public final class Parser {
         case CLASS:
         case CONST:
         case LET:
-        case NAME: {
+        case ASYNC: {
             // export Declaration[Default]
             Declaration declaration = declaration(true);
 
@@ -2668,8 +2668,9 @@ public final class Parser {
             if (("get".equals(name) || "set".equals(name)) && isPropertyName(peek())) {
                 return "get".equals(name) ? MethodType.Getter : MethodType.Setter;
             }
-            if (isEnabled(CompatibilityOption.AsyncFunction) && "async".equals(name)
-                    && isPropertyName(peek())) {
+        }
+        if (token() == Token.ASYNC) {
+            if (isEnabled(CompatibilityOption.AsyncFunction) && isPropertyName(peek())) {
                 return MethodType.AsyncFunction;
             }
         }
@@ -3012,6 +3013,8 @@ public final class Parser {
         case ASSIGN_DIV:
             // FIRST(RegularExpressionLiteral)
             return true;
+        case ASYNC:
+        case AWAIT:
         case LET:
         case IMPLEMENTS:
         case INTERFACE:
@@ -3025,6 +3028,8 @@ public final class Parser {
         case ESCAPED_RESERVED_WORD:
         case ESCAPED_STRICT_RESERVED_WORD:
         case ESCAPED_YIELD:
+        case ESCAPED_ASYNC:
+        case ESCAPED_AWAIT:
         case ESCAPED_LET:
             // FIRST(Identifier)
             return isIdentifierReference(token);
@@ -3275,7 +3280,7 @@ public final class Parser {
      * 
      * <pre>
      * AsyncFunctionDeclaration<span><sub>[Default]</sub></span> :
-     *     async function BindingIdentifier<span><sub>[?Default]</sub></span> ( FormalParameters ) { FunctionBody }
+     *     async [no <i>LineTerminator</i> here] function BindingIdentifier<span><sub>[?Default]</sub></span> ( FormalParameters ) { FunctionBody }
      * </pre>
      * 
      * @param allowDefault
@@ -3286,7 +3291,10 @@ public final class Parser {
         newContext(ContextKind.AsyncFunction);
         try {
             long begin = ts.beginPosition();
-            consume("async");
+            consume(Token.ASYNC);
+            if (!noLineTerminator()) {
+                reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
+            }
             int startFunction = ts.position() - "async".length();
             consume(Token.FUNCTION);
             BindingIdentifier identifier = bindingIdentifierFunctionName(true, allowDefault);
@@ -3324,7 +3332,7 @@ public final class Parser {
      * 
      * <pre>
      * AsyncFunctionExpression :
-     *     async function BindingIdentifier<span><sub>opt</sub></span> ( FormalParameters ) { FunctionBody }
+     *     async [no <i>LineTerminator</i> here] function BindingIdentifier<span><sub>opt</sub></span> ( FormalParameters ) { FunctionBody }
      * </pre>
      * 
      * @return the parsed async function expression
@@ -3333,7 +3341,10 @@ public final class Parser {
         newContext(ContextKind.AsyncFunction);
         try {
             long begin = ts.beginPosition();
-            consume("async");
+            consume(Token.ASYNC);
+            if (!noLineTerminator()) {
+                reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
+            }
             int startFunction = ts.position() - "async".length();
             consume(Token.FUNCTION);
             BindingIdentifier identifier = null;
@@ -3400,7 +3411,7 @@ public final class Parser {
     private MethodDefinition asyncMethod(boolean isStatic) {
         long begin = ts.beginPosition();
 
-        consume("async");
+        consume(Token.ASYNC);
         PropertyName propertyName = propertyName();
 
         newContext(ContextKind.AsyncFunction);
@@ -3446,7 +3457,7 @@ public final class Parser {
     private AwaitExpression awaitExpression() {
         assert context.kind == ContextKind.AsyncFunction && context.awaitAllowed;
         long begin = ts.beginPosition();
-        consume("await");
+        consume(Token.AWAIT);
         Expression expr = unaryExpression();
         return new AwaitExpression(begin, ts.endPosition(), expr);
     }
@@ -3518,6 +3529,8 @@ public final class Parser {
                 return letStatement();
             }
             // fall-through
+        case ASYNC:
+        case AWAIT:
         case YIELD:
         case IMPLEMENTS:
         case INTERFACE:
@@ -3531,6 +3544,8 @@ public final class Parser {
         case ESCAPED_RESERVED_WORD:
         case ESCAPED_STRICT_RESERVED_WORD:
         case ESCAPED_YIELD:
+        case ESCAPED_ASYNC:
+        case ESCAPED_AWAIT:
         case ESCAPED_LET:
             if (LOOKAHEAD(Token.COLON)) {
                 return labelledStatement();
@@ -3621,9 +3636,9 @@ public final class Parser {
         case CLASS:
         case CONST:
             return declaration(false);
-        case NAME:
+        case ASYNC:
             if (isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION)
-                    && noNextLineTerminator() && isName("async")) {
+                    && noNextLineTerminator()) {
                 return declaration(false);
             }
             break;
@@ -3662,7 +3677,7 @@ public final class Parser {
         case LET:
         case CONST:
             return lexicalDeclaration(true);
-        case NAME:
+        case ASYNC:
             if (isEnabled(CompatibilityOption.AsyncFunction)) {
                 return asyncFunctionDeclaration(allowDefault);
             }
@@ -4872,6 +4887,8 @@ public final class Parser {
                     break labels;
                 }
                 // fall-through
+            case ASYNC:
+            case AWAIT:
             case YIELD:
             case IMPLEMENTS:
             case INTERFACE:
@@ -4885,6 +4902,8 @@ public final class Parser {
             case ESCAPED_RESERVED_WORD:
             case ESCAPED_STRICT_RESERVED_WORD:
             case ESCAPED_YIELD:
+            case ESCAPED_ASYNC:
+            case ESCAPED_AWAIT:
             case ESCAPED_LET:
                 if (LOOKAHEAD(Token.COLON)) {
                     break;
@@ -5386,7 +5405,11 @@ public final class Parser {
     private boolean isIdentifier(Token tok, boolean isReference) {
         switch (tok) {
         case NAME:
+        case ASYNC:
+        case AWAIT:
         case ESCAPED_NAME:
+        case ESCAPED_ASYNC:
+        case ESCAPED_AWAIT:
             return true;
         case ESCAPED_RESERVED_WORD:
             throw reportSyntaxError(Messages.Key.InvalidIdentifier, getName(tok));
@@ -5532,9 +5555,9 @@ public final class Parser {
                 reportTokenMismatch(Token.DIV, Token.REGEXP);
             }
             break;
-        case NAME:
+        case ASYNC:
             if (isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION)
-                    && noNextLineTerminator() && isName("async")) {
+                    && noNextLineTerminator()) {
                 return asyncFunctionExpression();
             }
             break;
@@ -6629,7 +6652,7 @@ public final class Parser {
             }
             return unary;
         }
-        case NAME:
+        case AWAIT:
             if (isEnabled(CompatibilityOption.AsyncFunction)
                     && (context.awaitAllowed || context.kind == ContextKind.AsyncFunction)
                     && isName("await")) {
@@ -6640,7 +6663,7 @@ public final class Parser {
                     }
                     return awaitExpression();
                 } else if (context.kind == ContextKind.GeneratorComprehension) {
-                    // await nested in generator comprehension, nested in generator
+                    // await nested in generator comprehension, nested in async function
                     reportSyntaxError(Messages.Key.InvalidAwaitExpression);
                 }
                 assert false : "unexpected context-kind: " + context.kind;
@@ -6877,11 +6900,11 @@ public final class Parser {
     private Expression assignmentExpression(boolean allowIn, int oldCount) {
         if (token() == Token.YIELD) {
             if (context.kind == ContextKind.Generator && context.yieldAllowed) {
-                // yield in default parameters expressions is parsed as identifier
+                // `yield` in default parameters expressions is parsed as identifier.
                 return yieldExpression(allowIn);
             } else if (context.kind == ContextKind.GeneratorComprehension && context.yieldAllowed) {
                 // 12.2.7.1 Static Semantics: Early Errors for GeneratorComprehension
-                // yield nested in generator comprehension, nested in generator
+                // `yield` nested in generator comprehension, nested in generator.
                 reportSyntaxError(Messages.Key.InvalidYieldExpression);
             } else if (context.kind == ContextKind.Function
                     && isEnabled(CompatibilityOption.LegacyGenerator)) {

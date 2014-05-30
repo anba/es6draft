@@ -316,6 +316,8 @@ public final class TokenStream {
             case ESCAPED_RESERVED_WORD:
             case ESCAPED_STRICT_RESERVED_WORD:
             case ESCAPED_YIELD:
+            case ESCAPED_ASYNC:
+            case ESCAPED_AWAIT:
             case ESCAPED_LET:
             case STRING:
                 string = getString();
@@ -1389,6 +1391,11 @@ public final class TokenStream {
         char c0 = cbuf[0], c1 = cbuf[1];
         Token test = null;
         switch (c0) {
+        case 'a':
+            // async, await
+            if (length == 5)
+                test = (c1 == 's' ? Token.ASYNC : Token.AWAIT);
+            break;
         case 'b':
             // break
             if (length == 5)
