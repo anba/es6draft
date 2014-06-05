@@ -257,11 +257,6 @@ tests/basic/bug745360.js
 # RegExp.prototype.{source,ignoreCase,global,multiline} now accessor
 tests/basic/bug750307.js
 
-# ES6-change or? Map|Set.length is 0
-# - Emulated Map/Set need to use delegation to pass surface test
-tests/collections/Map-surfaces-1.js
-tests/collections/Set-surfaces-1.js
-
 # ES6-change: <this> within generator is always a generator object
 tests/auto-regress/bug678090.js
 
@@ -447,8 +442,6 @@ tests/basic/testNeutering.js
 tests/basic/offThreadCompileScript-02.js
 # newGlobal() with principal option
 tests/basic/shell-principals.js
-# isLatin1, toLatin1
-tests/basic/latin1.js
 
 # Unsupported 'Testing' functions
 # gcparam

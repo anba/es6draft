@@ -67,9 +67,11 @@ feature/Destructuring/Empty.js
 feature/Destructuring/Rest.js
 
 # ... spread call without @@iterator, no implicit ToObject
-# (https://github.com/google/traceur-compiler/issues/842)
-feature/Spread/Type.js
+# (https://github.com/google/traceur-compiler/issues/1049)
 feature/TempVarTransformer/UseStrictDirective.js
+
+# Traceur does not support String.prototype.@@iterator
+feature/Spread/Type.js
 
 # SetFunctionName() not supported in traceur
 feature/Classes/ClassNameBinding.js
