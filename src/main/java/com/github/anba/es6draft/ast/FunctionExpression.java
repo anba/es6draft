@@ -17,12 +17,12 @@ import java.util.List;
 public final class FunctionExpression extends Expression implements FunctionDefinition {
     private final FunctionScope scope;
     private final BindingIdentifier identifier;
-    private final String functionName;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
-    private StrictMode strictMode;
     private final boolean superReference;
     private final String headerSource, bodySource;
+    private String functionName;
+    private StrictMode strictMode;
     private boolean syntheticNodes;
 
     public FunctionExpression(long beginPosition, long endPosition, FunctionScope scope,
@@ -32,7 +32,6 @@ public final class FunctionExpression extends Expression implements FunctionDefi
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
-        this.functionName = (identifier != null ? identifier.getName() : "");
         this.parameters = parameters;
         this.statements = statements;
         this.superReference = superReference;
@@ -66,8 +65,21 @@ public final class FunctionExpression extends Expression implements FunctionDefi
     }
 
     @Override
+    public String getMethodName() {
+        return getFunctionName();
+    }
+
+    @Override
     public String getFunctionName() {
-        return functionName;
+        if (functionName != null) {
+            return functionName;
+        }
+        return identifier != null ? identifier.getName() : "";
+    }
+
+    @Override
+    public void setFunctionName(String functionName) {
+        this.functionName = functionName;
     }
 
     @Override

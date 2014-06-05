@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.internal;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -78,17 +77,9 @@ public final class TailCallInvocation {
         return new TailCallInvocation(function, thisValue, argumentsList, object);
     }
 
-    private static final MethodHandle tailCallTrampolineMH;
-    static {
-        Lookup lookup = MethodHandles.lookup();
-        try {
-            tailCallTrampolineMH = lookup.findStatic(TailCallInvocation.class,
-                    "tailCallTrampoline",
-                    MethodType.methodType(Object.class, Object.class, ExecutionContext.class));
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new IllegalStateException(e);
-        }
-    }
+    private static final MethodHandle tailCallTrampolineMH = MethodLookup.findStatic(
+            MethodHandles.lookup(), "tailCallTrampoline",
+            MethodType.methodType(Object.class, Object.class, ExecutionContext.class));
 
     /**
      * (Object, ExecutionContext) {@literal ->} Object.

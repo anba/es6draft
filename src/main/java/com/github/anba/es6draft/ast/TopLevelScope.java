@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Scope class for {@link FunctionNode} and {@link Script} objects
+ * Scope class for {@link FunctionNode} and {@link Script} objects.
  */
 public interface TopLevelScope extends Scope {
     /**

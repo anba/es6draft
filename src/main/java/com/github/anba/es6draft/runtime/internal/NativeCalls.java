@@ -24,10 +24,13 @@ import com.github.anba.es6draft.runtime.objects.collection.SetObject;
 import com.github.anba.es6draft.runtime.objects.collection.WeakMapObject;
 import com.github.anba.es6draft.runtime.objects.collection.WeakSetObject;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
+import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
+import com.github.anba.es6draft.runtime.objects.text.RegExpPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -131,6 +134,15 @@ public final class NativeCalls {
         case "native:IsUninitializedWeakSet":
             target = callIsUninitializedWeakSetMH;
             break;
+        case "native:RegExpReplace":
+            target = callRegExpReplaceMH;
+            break;
+        case "native:RegExpTest":
+            target = callRegExpTestMH;
+            break;
+        case "native:IsFunctionExpression":
+            target = callIsFunctionExpressionMH;
+            break;
         default:
             target = MethodHandles.insertArguments(invalidNativeCallMH, 0, name);
             target = MethodHandles.dropArguments(target, 0, Object[].class);
@@ -142,32 +154,26 @@ public final class NativeCalls {
     private static final MethodHandle callIntrinsicMH, callSetIntrinsicMH, callGlobalObjectMH,
             callGlobalThisMH, callCallFunctionMH, callIsGeneratorMH, callIsUninitializedMapMH,
             callIsUninitializedSetMH, callIsUninitializedWeakMapMH, callIsUninitializedWeakSetMH,
-            invalidNativeCallMH;
+            callRegExpReplaceMH, callRegExpTestMH, callIsFunctionExpressionMH, invalidNativeCallMH;
     static {
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
-        Class<?> thisClass = lookup.lookupClass();
-        try {
-            MethodType type = MethodType.methodType(Object.class, Object[].class,
-                    ExecutionContext.class);
-            callIntrinsicMH = lookup.findStatic(thisClass, "call_Intrinsic", type);
-            callSetIntrinsicMH = lookup.findStatic(thisClass, "call_SetIntrinsic", type);
-            callGlobalObjectMH = lookup.findStatic(thisClass, "call_GlobalObject", type);
-            callGlobalThisMH = lookup.findStatic(thisClass, "call_GlobalThis", type);
-            callCallFunctionMH = lookup.findStatic(thisClass, "call_CallFunction", type);
-            callIsGeneratorMH = lookup.findStatic(thisClass, "call_IsGenerator", type);
-            callIsUninitializedMapMH = lookup
-                    .findStatic(thisClass, "call_IsUninitializedMap", type);
-            callIsUninitializedSetMH = lookup
-                    .findStatic(thisClass, "call_IsUninitializedSet", type);
-            callIsUninitializedWeakMapMH = lookup.findStatic(thisClass,
-                    "call_IsUninitializedWeakMap", type);
-            callIsUninitializedWeakSetMH = lookup.findStatic(thisClass,
-                    "call_IsUninitializedWeakSet", type);
-            invalidNativeCallMH = lookup.findStatic(thisClass, "invalidNativeCall",
-                    MethodType.methodType(Object.class, String.class, ExecutionContext.class));
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new Error(e);
-        }
+        MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
+        MethodType callType = MethodType.methodType(Object.class, Object[].class,
+                ExecutionContext.class);
+        callIntrinsicMH = lookup.findStatic("call_Intrinsic", callType);
+        callSetIntrinsicMH = lookup.findStatic("call_SetIntrinsic", callType);
+        callGlobalObjectMH = lookup.findStatic("call_GlobalObject", callType);
+        callGlobalThisMH = lookup.findStatic("call_GlobalThis", callType);
+        callCallFunctionMH = lookup.findStatic("call_CallFunction", callType);
+        callIsGeneratorMH = lookup.findStatic("call_IsGenerator", callType);
+        callIsUninitializedMapMH = lookup.findStatic("call_IsUninitializedMap", callType);
+        callIsUninitializedSetMH = lookup.findStatic("call_IsUninitializedSet", callType);
+        callIsUninitializedWeakMapMH = lookup.findStatic("call_IsUninitializedWeakMap", callType);
+        callIsUninitializedWeakSetMH = lookup.findStatic("call_IsUninitializedWeakSet", callType);
+        callRegExpReplaceMH = lookup.findStatic("call_RegExpReplace", callType);
+        callRegExpTestMH = lookup.findStatic("call_RegExpTest", callType);
+        callIsFunctionExpressionMH = lookup.findStatic("call_IsFunctionExpression", callType);
+        invalidNativeCallMH = lookup.findStatic("invalidNativeCall",
+                MethodType.methodType(Object.class, String.class, ExecutionContext.class));
     }
 
     @SuppressWarnings("unused")
@@ -261,6 +267,32 @@ public final class NativeCalls {
     }
 
     @SuppressWarnings("unused")
+    private static Object call_RegExpReplace(Object[] args, ExecutionContext cx) {
+        if (args.length == 3 && args[0] instanceof RegExpObject && Type.isString(args[1])
+                && Type.isString(args[2])) {
+            return RegExpReplace(cx, (RegExpObject) args[0], Type.stringValue(args[1]),
+                    Type.stringValue(args[2]));
+        }
+        return invalidNativeCallArguments(cx);
+    }
+
+    @SuppressWarnings("unused")
+    private static Object call_RegExpTest(Object[] args, ExecutionContext cx) {
+        if (args.length == 2 && args[0] instanceof RegExpObject && Type.isString(args[1])) {
+            return RegExpTest(cx, (RegExpObject) args[0], Type.stringValue(args[1]));
+        }
+        return invalidNativeCallArguments(cx);
+    }
+
+    @SuppressWarnings("unused")
+    private static Object call_IsFunctionExpression(Object[] args, ExecutionContext cx) {
+        if (args.length == 1 && args[0] instanceof Callable) {
+            return IsFunctionExpression((Callable) args[0]);
+        }
+        return invalidNativeCallArguments(cx);
+    }
+
+    @SuppressWarnings("unused")
     private static Object invalidNativeCall(String name, ExecutionContext cx) {
         throw newInternalError(cx, Messages.Key.InternalError, "Invalid native call " + name);
     }
@@ -283,7 +315,7 @@ public final class NativeCalls {
      * Returns the intrinsic by name.
      * 
      * @param cx
-     *            the execution class
+     *            the execution context
      * @param name
      *            the intrinsic name
      * @return the intrinsic
@@ -299,7 +331,7 @@ public final class NativeCalls {
      * Sets the intrinsic to a new value.
      * 
      * @param cx
-     *            the execution class
+     *            the execution context
      * @param name
      *            the intrinsic name
      * @param intrinsic
@@ -319,7 +351,7 @@ public final class NativeCalls {
      * Returns the global object.
      * 
      * @param cx
-     *            the execution class
+     *            the execution context
      * @return the global object
      */
     public static GlobalObject GlobalObject(ExecutionContext cx) {
@@ -332,7 +364,7 @@ public final class NativeCalls {
      * Returns the global this.
      * 
      * @param cx
-     *            the execution class
+     *            the execution context
      * @return the global this
      */
     public static ScriptObject GlobalThis(ExecutionContext cx) {
@@ -345,7 +377,7 @@ public final class NativeCalls {
      * Calls the function object.
      * 
      * @param cx
-     *            the execution class
+     *            the execution context
      * @param fn
      *            the function
      * @param thisValue
@@ -422,5 +454,66 @@ public final class NativeCalls {
      */
     public static boolean IsUninitializedWeakSet(Object value) {
         return value instanceof WeakSetObject && !((WeakSetObject) value).isInitialized();
+    }
+
+    /**
+     * Native function: {@code %RegExpReplace(<regexp>, <string>, <replacement>)}.
+     * <p>
+     * Replaces every occurrence of <var>regexp</var> in <var>string</var> with
+     * <var>replacement</var>.
+     * 
+     * @param cx
+     *            the execution context
+     * @param regexp
+     *            the regular expression object
+     * @param string
+     *            the input string
+     * @param replacement
+     *            the replacement string
+     * @return the result string
+     */
+    public static String RegExpReplace(ExecutionContext cx, RegExpObject regexp,
+            CharSequence string, CharSequence replacement) {
+        return RegExpPrototype.RegExpReplace(cx, regexp, string.toString(), replacement.toString());
+    }
+
+    /**
+     * Native function: {@code %RegExpTest(<regexp>, <string>)}.
+     * <p>
+     * Returns {@code true} if <var>string</var> matches <var>regexp</var>.
+     * 
+     * @param cx
+     *            the execution context
+     * @param regexp
+     *            the regular expression object
+     * @param string
+     *            the input string
+     * @return {@code true} if <var>string</var> matches <var>regexp</var>
+     */
+    public static boolean RegExpTest(ExecutionContext cx, RegExpObject regexp, CharSequence string) {
+        return RegExpPrototype.RegExpTest(cx, regexp, string.toString());
+    }
+
+    /**
+     * Native function: {@code %IsFunctionExpression(<function>)}.
+     * <p>
+     * Returns {@code true} if <var>function</var> is a function expression.
+     * 
+     * @param function
+     *            the function object
+     * @return {@code true} if <var>function</var> is a function expression
+     */
+    public static boolean IsFunctionExpression(Callable function) {
+        if (!(function instanceof FunctionObject)) {
+            return false;
+        }
+        FunctionObject funObj = (FunctionObject) function;
+        RuntimeInfo.Function code = funObj.getCode();
+        if (code == null) {
+            return false;
+        }
+        int flags = code.functionFlags();
+        return RuntimeInfo.FunctionFlags.Expression.isSet(flags)
+                && !RuntimeInfo.FunctionFlags.Arrow.isSet(flags);
     }
 }

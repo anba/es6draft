@@ -24,7 +24,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
-import com.github.anba.es6draft.ast.FunctionNode.StrictMode;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
@@ -133,7 +132,7 @@ final class CodeGenerator {
 
     private static final boolean INCLUDE_SOURCE = true;
     private static final Future<String> NO_SOURCE = new ImmediateFuture<>(null);
-    private static final int MAX_FNAME_LENGTH = 0x4000;
+    private static final int MAX_FNAME_LENGTH = 0x400;
 
     private final Code code;
     private final EnumSet<CompatibilityOption> options;
@@ -159,9 +158,8 @@ final class CodeGenerator {
     private Future<String> compressed(String source) {
         if (INCLUDE_SOURCE) {
             return executor.submit(SourceCompressor.compress(source));
-        } else {
-            return NO_SOURCE;
         }
+        return NO_SOURCE;
     }
 
     // template strings
@@ -276,10 +274,8 @@ final class CodeGenerator {
     private String methodName(FunctionNode node) {
         String n = methodNames.get(node);
         if (n == null) {
-            String fname = node.getFunctionName();
-            if (fname == null) {
-                fname = "<...>";
-            } else if (fname.isEmpty()) {
+            String fname = node.getMethodName();
+            if (fname.isEmpty()) {
                 fname = "anonymous";
             } else if (fname.length() > MAX_FNAME_LENGTH) {
                 fname = fname.substring(0, MAX_FNAME_LENGTH);
@@ -677,12 +673,7 @@ final class CodeGenerator {
     private Future<String> getSource(FunctionNode node) {
         StringBuilder sb = new StringBuilder();
         sb.append(node.getHeaderSource());
-        sb.append('{');
-        if (node.getStrictMode() == StrictMode.ImplicitStrict) {
-            sb.append("\n\"use strict\";\n");
-        }
         sb.append(node.getBodySource());
-        sb.append('}');
         return compressed(sb.toString());
     }
 

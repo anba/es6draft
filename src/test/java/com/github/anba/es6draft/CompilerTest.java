@@ -14,6 +14,7 @@ import static org.junit.Assume.assumeTrue;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -30,6 +31,7 @@ import org.junit.runners.Parameterized.Parameters;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.SimpleShellGlobalObject;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.Parallelized;
@@ -60,6 +62,13 @@ public class CompilerTest {
                 TestInfo test, ScriptCache scriptCache) {
             return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
                     scriptCache);
+        }
+
+        @Override
+        protected Set<CompatibilityOption> getOptions() {
+            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            options.add(CompatibilityOption.AsyncFunction);
+            return options;
         }
 
         @Override
@@ -102,5 +111,8 @@ public class CompilerTest {
     public void runTest() throws Throwable {
         // evaluate actual test-script
         global.eval(test.getScript(), test.toFile());
+
+        // wait for pending tasks to finish
+        global.getRealm().getWorld().executeTasks();
     }
 }

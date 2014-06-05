@@ -57,10 +57,24 @@ public interface Callable extends ScriptObject {
      */
     Callable clone(ExecutionContext cx);
 
+    enum SourceSelector {
+        /**
+         * Select the complete function.
+         */
+        Function,
+
+        /**
+         * Select only the function body.
+         */
+        Body
+    }
+
     /**
      * Source representation of this callable.
      * 
+     * @param selector
+     *            selects which function part to return
      * @return the function source
      */
-    String toSource();
+    String toSource(SourceSelector selector);
 }

@@ -30,7 +30,7 @@ public final class TokenStream {
     /** start position of current token, includes leading whitespace and comments */
     private int position;
     /** start position of next token, includes leading whitespace and comments */
-    private int nextposition;
+    private int nextPosition;
 
     // token data
     /** current token in stream */
@@ -189,7 +189,7 @@ public final class TokenStream {
         this.linestart = input.position();
         this.current = scanTokenNoComment();
         this.sourcePosition = nextSourcePosition;
-        this.nextposition = input.position();
+        this.nextPosition = input.position();
         this.next = null;
         return this;
     }
@@ -213,7 +213,7 @@ public final class TokenStream {
         this.position = input.position();
         this.current = scanTokenNoComment();
         this.sourcePosition = nextSourcePosition;
-        this.nextposition = input.position();
+        this.nextPosition = input.position();
         this.next = null;
         // reset line state last, effectively ignoring any changes from scanTokenNoComment()
         this.line = (int) (lineinfo >>> 32);
@@ -279,16 +279,16 @@ public final class TokenStream {
     public Token nextToken() {
         if (next == null) {
             hasLineTerminator = false;
-            nextposition = input.position();
+            nextPosition = input.position();
             next = scanTokenNoComment();
         }
         current = next;
         sourcePosition = nextSourcePosition;
-        position = nextposition;
+        position = nextPosition;
         hasCurrentLineTerminator = hasLineTerminator;
         string = null;
         next = null;
-        nextposition = input.position();
+        nextPosition = input.position();
         hasLineTerminator = false;
         return current;
     }
@@ -324,7 +324,7 @@ public final class TokenStream {
             default:
             }
             hasLineTerminator = false;
-            nextposition = input.position();
+            nextPosition = input.position();
             next = scanTokenNoComment();
         }
         return next;

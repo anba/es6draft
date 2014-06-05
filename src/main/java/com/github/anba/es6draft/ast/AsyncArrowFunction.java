@@ -16,8 +16,9 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
     private final Expression expression;
-    private StrictMode strictMode;
     private final String headerSource, bodySource;
+    private String functionName;
+    private StrictMode strictMode;
     private boolean syntheticNodes;
 
     public AsyncArrowFunction(long beginPosition, long endPosition, FunctionScope scope,
@@ -50,8 +51,21 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
     }
 
     @Override
+    public String getMethodName() {
+        return getFunctionName();
+    }
+
+    @Override
     public String getFunctionName() {
+        if (functionName != null) {
+            return functionName;
+        }
         return "";
+    }
+
+    @Override
+    public void setFunctionName(String functionName) {
+        this.functionName = functionName;
     }
 
     @Override

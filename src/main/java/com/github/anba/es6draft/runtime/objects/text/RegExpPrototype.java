@@ -366,7 +366,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             }
             /* step 1 */
             ScriptObject rx = Type.objectValue(thisValue);
-            /* step 3 (FIXME: spec bug - invalid) */
+            /* step 3 (FIXME: spec bug - invalid) (bug 2778) */
             /* steps 4-5 */
             String s = ToFlatString(cx, string);
             /* step 6 */
@@ -468,117 +468,6 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             }
             /* step 20 */
             return accumulatedResult.append(s, nextSrcPosition, s.length()).toString();
-        }
-
-        private static Object[] GetReplacerArguments(MatchResult matchResult, String string,
-                String matched, int position) {
-            int groupCount = matchResult.groupCount();
-            Object[] arguments = new Object[groupCount + 3];
-            arguments[0] = matched;
-            Iterator<String> iterator = groupIterator(matchResult, groupCount);
-            for (int i = 1; iterator.hasNext(); ++i) {
-                String group = iterator.next();
-                arguments[i] = (group != null ? group : UNDEFINED);
-            }
-            arguments[groupCount + 1] = position;
-            arguments[groupCount + 2] = string;
-            return arguments;
-        }
-
-        /**
-         * Runtime Semantics: GetReplaceSubstitution Abstract Operation
-         * 
-         * @param matched
-         *            the matched substring
-         * @param string
-         *            the input string
-         * @param position
-         *            the match position
-         * @param captures
-         *            the captured groups
-         * @param replacement
-         *            the replace string
-         * @return the replacement string
-         */
-        private static String GetReplaceSubstitution(String matched, String string, int position,
-                String[] captures, String replacement) {
-            /* step 1 (not applicable) */
-            /* step 2 */
-            int matchLength = matched.length();
-            /* step 3 (not applicable) */
-            /* step 4 */
-            int stringLength = string.length();
-            /* step 5 */
-            assert position >= 0;
-            /* step 6 */
-            assert position <= stringLength;
-            /* steps 7-8 (not applicable) */
-            /* step 9 */
-            int tailPos = Math.min(position + matchLength, stringLength);
-            /* step 10 */
-            int m = captures.length;
-            /* step 11 */
-            StringBuilder result = new StringBuilder();
-            for (int cursor = 0, len = replacement.length(); cursor < len;) {
-                char c = replacement.charAt(cursor++);
-                if (c == '$' && cursor < len) {
-                    c = replacement.charAt(cursor++);
-                    switch (c) {
-                    case '0':
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                    case '5':
-                    case '6':
-                    case '7':
-                    case '8':
-                    case '9': {
-                        int n = c - '0';
-                        if (cursor < len) {
-                            char d = replacement.charAt(cursor);
-                            if (d >= (n == 0 ? '1' : '0') && d <= '9') {
-                                int nn = n * 10 + (d - '0');
-                                if (nn <= m) {
-                                    cursor += 1;
-                                    n = nn;
-                                }
-                            }
-                        }
-                        if (n == 0 || n > m) {
-                            assert n >= 0 && n <= 9;
-                            result.append('$').append(c);
-                        } else {
-                            assert n >= 1 && n <= 99;
-                            String capture = captures[n - 1];
-                            if (capture != null) {
-                                result.append(capture);
-                            }
-                        }
-                        break;
-                    }
-                    case '&':
-                        result.append(matched);
-                        break;
-                    case '`':
-                        result.append(string, 0, position);
-                        break;
-                    case '\'':
-                        result.append(string, tailPos, stringLength);
-                        break;
-                    case '$':
-                        result.append('$');
-                        break;
-                    default:
-                        result.append('$').append(c);
-                        break;
-                    }
-                } else {
-                    result.append(c);
-                }
-            }
-            /* step 12 */
-            return result.toString();
         }
 
         /**
@@ -985,6 +874,245 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         }
         /* step 30 */
         return array;
+    }
+
+    private static Object[] GetReplacerArguments(MatchResult matchResult, String string,
+            String matched, int position) {
+        int groupCount = matchResult.groupCount();
+        Object[] arguments = new Object[groupCount + 3];
+        arguments[0] = matched;
+        Iterator<String> iterator = groupIterator(matchResult, groupCount);
+        for (int i = 1; iterator.hasNext(); ++i) {
+            String group = iterator.next();
+            arguments[i] = (group != null ? group : UNDEFINED);
+        }
+        arguments[groupCount + 1] = position;
+        arguments[groupCount + 2] = string;
+        return arguments;
+    }
+
+    /**
+     * 21.1.3.14.1 Runtime Semantics: GetReplaceSubstitution Abstract Operation
+     * 
+     * @param matched
+     *            the matched substring
+     * @param string
+     *            the input string
+     * @param position
+     *            the match position
+     * @param captures
+     *            the captured groups
+     * @param replacement
+     *            the replace string
+     * @return the replacement string
+     */
+    private static String GetReplaceSubstitution(String matched, String string, int position,
+            String[] captures, String replacement) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        int matchLength = matched.length();
+        /* step 3 (not applicable) */
+        /* step 4 */
+        int stringLength = string.length();
+        /* step 5 */
+        assert position >= 0;
+        /* step 6 */
+        assert position <= stringLength;
+        /* steps 7-8 (not applicable) */
+        /* step 9 */
+        int tailPos = Math.min(position + matchLength, stringLength);
+        /* step 10 */
+        int m = captures.length;
+        /* step 11 */
+        StringBuilder result = new StringBuilder();
+        for (int cursor = 0, len = replacement.length(); cursor < len;) {
+            char c = replacement.charAt(cursor++);
+            if (c == '$' && cursor < len) {
+                c = replacement.charAt(cursor++);
+                switch (c) {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9': {
+                    int n = c - '0';
+                    if (cursor < len) {
+                        char d = replacement.charAt(cursor);
+                        if (d >= (n == 0 ? '1' : '0') && d <= '9') {
+                            int nn = n * 10 + (d - '0');
+                            if (nn <= m) {
+                                cursor += 1;
+                                n = nn;
+                            }
+                        }
+                    }
+                    if (n == 0 || n > m) {
+                        assert n >= 0 && n <= 9;
+                        result.append('$').append(c);
+                    } else {
+                        assert n >= 1 && n <= 99;
+                        String capture = captures[n - 1];
+                        if (capture != null) {
+                            result.append(capture);
+                        }
+                    }
+                    break;
+                }
+                case '&':
+                    result.append(matched);
+                    break;
+                case '`':
+                    result.append(string, 0, position);
+                    break;
+                case '\'':
+                    result.append(string, tailPos, stringLength);
+                    break;
+                case '$':
+                    result.append('$');
+                    break;
+                default:
+                    result.append('$').append(c);
+                    break;
+                }
+            } else {
+                result.append(c);
+            }
+        }
+        /* step 12 */
+        return result.toString();
+    }
+
+    /**
+     * Internal {@code RegExp.prototype.test()} function.
+     * 
+     * @param cx
+     *            the execution context
+     * @param rx
+     *            the regular expression object
+     * @param string
+     *            the string
+     * @return the result string
+     */
+    public static boolean RegExpTest(ExecutionContext cx, RegExpObject rx, String string) {
+        if (!rx.isInitialized()) {
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
+        }
+        int lastIndex = 0;
+        return getMatcherOrNull(rx, string, lastIndex) != null;
+    }
+
+    /**
+     * Internal {@code RegExp.prototype.replace()} function.
+     * 
+     * @param cx
+     *            the execution context
+     * @param rx
+     *            the regular expression object
+     * @param string
+     *            the string
+     * @param replaceValue
+     *            the replacement string
+     * @return the result string
+     */
+    public static String RegExpReplace(ExecutionContext cx, RegExpObject rx, String string,
+            String replaceValue) {
+        if (!rx.isInitialized()) {
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
+        }
+        /* steps 1-5 (not applicable) */
+        /* step 6 */
+        int lengthS = string.length();
+        /* steps 7-8 (not applicable) */
+        /* steps 9-10 */
+        boolean global = rx.getOriginalFlags().indexOf('g') != -1;
+        /* step 11 */
+        int lastIndex = 0;
+        /* steps 12-14 (not applicable) */
+        /* step 16 */
+        StringBuilder accumulatedResult = new StringBuilder();
+        /* step 17 */
+        int nextSrcPosition = 0;
+        /* step 18 (omitted) */
+        /* steps 15, 19 */
+        do {
+            /* steps 15.a-15.b */
+            MatchResult result = getMatcherOrNull(rx, string, lastIndex);
+            /* step 15.c */
+            if (result == null) {
+                break;
+            }
+            /* step 15.d */
+            String matched = result.group(0);
+            int matchLength = matched.length();
+            lastIndex = (matchLength > 0 ? result.end() : result.end() + 1);
+            /* step 15.e (not applicable) */
+            /* step 19 */
+            int position = result.start();
+            assert 0 <= position && position < lengthS;
+            assert position >= nextSrcPosition;
+            String[] captures = groups(result);
+            String replacement = GetReplaceSubstitution(matched, string, position, captures,
+                    replaceValue);
+            accumulatedResult.append(string, nextSrcPosition, position).append(replacement);
+            nextSrcPosition = position + matchLength;
+        } while (global);
+        /* step 20 (not applicable) */
+        assert nextSrcPosition <= lengthS;
+        /* step 21 */
+        return accumulatedResult.append(string, nextSrcPosition, lengthS).toString();
+    }
+
+    private static MatchResult getMatcherOrNull(RegExpObject r, String s, int lastIndex) {
+        /* step 1 */
+        assert r.isInitialized();
+        /* steps 2-6 */
+        /* steps 7-8 */
+        boolean global = r.getOriginalFlags().indexOf('g') != -1;
+        /* steps 9-10 */
+        boolean sticky = r.getOriginalFlags().indexOf('y') != -1;
+        /* steps 11-16 */
+        MatchState m = getMatcherOrNull(r, s, lastIndex, global, sticky);
+        /* step 16.a, 16.c */
+        if (m == null) {
+            return null;
+        }
+        return m.toMatchResult();
+    }
+
+    private static MatchState getMatcherOrNull(RegExpObject r, String s, int lastIndex,
+            boolean global, boolean sticky) {
+        /* steps 11, 16.a */
+        int i;
+        if (global || sticky) {
+            /* step 16.a */
+            if (lastIndex < 0 || lastIndex > s.length()) {
+                return null;
+            }
+            i = lastIndex;
+        } else {
+            /* step 11 */
+            i = 0;
+        }
+        /* steps 12-14  */
+        RegExpMatcher matcher = r.getRegExpMatcher();
+        /* steps 15-16 */
+        MatchState m = matcher.matcher(s);
+        boolean matchSucceeded;
+        if (!sticky) {
+            matchSucceeded = m.find(i);
+        } else {
+            matchSucceeded = m.matches(i);
+        }
+        /* step 16.a, 16.c */
+        if (!matchSucceeded) {
+            return null;
+        }
+        return m;
     }
 
     /**

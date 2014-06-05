@@ -22,7 +22,6 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -37,8 +36,6 @@ import com.github.anba.es6draft.runtime.types.Symbol;
  * </ul>
  */
 public abstract class FunctionObject extends OrdinaryObject implements Callable {
-    private static final String SOURCE_NOT_AVAILABLE = "function F() { /* source not available */ }";
-
     protected static final MethodHandle uninitializedFunctionMH;
     protected static final MethodHandle uninitializedGeneratorMH;
     protected static final MethodHandle uninitializedAsyncFunctionMH;
@@ -217,23 +214,17 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     @Override
-    public final String toSource() {
+    public final String toSource(SourceSelector selector) {
         if (!isInitialized()) {
-            return SOURCE_NOT_AVAILABLE;
+            return FunctionSource.noSource(selector);
         }
+        if (selector == SourceSelector.Body) {
+            return FunctionSource.toSourceString(selector, this);
+        }
+        // Complete source string is cached
         String source = this.source;
         if (source == null) {
-            String src = function.source();
-            if (src != null) {
-                try {
-                    source = SourceCompressor.decompress(src).call();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                source = SOURCE_NOT_AVAILABLE;
-            }
-            this.source = source;
+            this.source = source = FunctionSource.toSourceString(selector, this);
         }
         return source;
     }
@@ -480,7 +471,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     private static MethodHandle tailCallAdapter(RuntimeInfo.Function function) {
         MethodHandle mh = function.callMethod();
         if (function.hasTailCall()) {
-            assert !function.isGenerator() && function.isStrict();
+            assert !function.isGenerator() && !function.isAsync() && function.isStrict();
             MethodHandle result = TailCallInvocation.getTailCallHandler();
             result = MethodHandles.dropArguments(result, 1, OrdinaryFunction.class);
             result = MethodHandles.dropArguments(result, 3, Object.class, Object[].class);

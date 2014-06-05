@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Scope class for nodes with block scope semantics
+ * Scope class for nodes with block scope semantics.
  */
 public interface BlockScope extends Scope {
     /**

@@ -19,6 +19,7 @@ import java.util.List;
 public final class GeneratorComprehension extends Expression implements FunctionNode {
     private final FunctionScope scope;
     private final Comprehension comprehension;
+    private String functionName;
     private StrictMode strictMode;
     private boolean syntheticNodes;
 
@@ -34,8 +35,21 @@ public final class GeneratorComprehension extends Expression implements Function
     }
 
     @Override
+    public String getMethodName() {
+        return getFunctionName();
+    }
+
+    @Override
     public String getFunctionName() {
+        if (functionName != null) {
+            return functionName;
+        }
         return "gencompr";
+    }
+
+    @Override
+    public void setFunctionName(String functionName) {
+        this.functionName = functionName;
     }
 
     @Override
@@ -56,12 +70,12 @@ public final class GeneratorComprehension extends Expression implements Function
 
     @Override
     public String getHeaderSource() {
-        return "function gencompr() ";
+        return "() ";
     }
 
     @Override
     public String getBodySource() {
-        return "\n  /* generator comprehension */\n";
+        return " [generator comprehension] ";
     }
 
     @Override

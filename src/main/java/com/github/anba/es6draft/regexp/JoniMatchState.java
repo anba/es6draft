@@ -79,6 +79,12 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
     }
 
     @Override
+    public String toString() {
+        return String.format("%s: [string=%s, begin=%d, end=%d]", getClass().getSimpleName(),
+                string, begin, end);
+    }
+
+    @Override
     public Iterator<String> iterator() {
         return new GroupIterator(this, negativeLAGroups);
     }

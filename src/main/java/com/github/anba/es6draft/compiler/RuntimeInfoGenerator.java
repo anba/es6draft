@@ -14,11 +14,7 @@ import java.util.concurrent.Future;
 
 import org.objectweb.asm.Type;
 
-import com.github.anba.es6draft.ast.AsyncFunctionExpression;
-import com.github.anba.es6draft.ast.FunctionExpression;
-import com.github.anba.es6draft.ast.FunctionNode;
-import com.github.anba.es6draft.ast.GeneratorExpression;
-import com.github.anba.es6draft.ast.Script;
+import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -39,7 +35,7 @@ final class RuntimeInfoGenerator {
 
         static final MethodDesc RTI_newFunction = MethodDesc.create(MethodType.Static,
                 Types.RuntimeInfo, "newFunction", Type.getMethodType(Types.RuntimeInfo$Function,
-                        Types.String, Type.INT_TYPE, Type.INT_TYPE, Types.String,
+                        Types.String, Type.INT_TYPE, Type.INT_TYPE, Types.String, Type.INT_TYPE,
                         Types.MethodHandle, Types.MethodHandle));
     }
 
@@ -56,11 +52,8 @@ final class RuntimeInfoGenerator {
         if (strict) {
             functionFlags |= FunctionFlags.Strict.getValue();
         }
-        if (node.hasSuperReference()) {
-            functionFlags |= FunctionFlags.Super.getValue();
-        }
-        if (hasScopedName(node)) {
-            functionFlags |= FunctionFlags.ScopedName.getValue();
+        if (strict && node.getStrictMode() == FunctionNode.StrictMode.ImplicitStrict) {
+            functionFlags |= FunctionFlags.ImplicitStrict.getValue();
         }
         if (node.isGenerator()) {
             functionFlags |= FunctionFlags.Generator.getValue();
@@ -68,15 +61,45 @@ final class RuntimeInfoGenerator {
         if (node.isAsync()) {
             functionFlags |= FunctionFlags.Async.getValue();
         }
+        if (node.getThisMode() == FunctionNode.ThisMode.Lexical) {
+            functionFlags |= FunctionFlags.Arrow.getValue();
+        }
+        if (node instanceof Declaration) {
+            functionFlags |= FunctionFlags.Declaration.getValue();
+        }
+        if (node instanceof Expression) {
+            functionFlags |= FunctionFlags.Expression.getValue();
+        }
+        if (node instanceof ArrowFunction && ((ArrowFunction) node).getExpression() != null) {
+            functionFlags |= FunctionFlags.ConciseBody.getValue();
+        } else if (node instanceof AsyncArrowFunction
+                && ((AsyncArrowFunction) node).getExpression() != null) {
+            functionFlags |= FunctionFlags.ConciseBody.getValue();
+        }
+        if (node instanceof MethodDefinition) {
+            functionFlags |= FunctionFlags.Method.getValue();
+            if (((MethodDefinition) node).isStatic()) {
+                functionFlags |= FunctionFlags.Static.getValue();
+            }
+        }
+        if (node instanceof LegacyGeneratorDeclaration || node instanceof LegacyGeneratorExpression) {
+            functionFlags |= FunctionFlags.LegacyGenerator.getValue();
+        }
+        if (legacy) {
+            functionFlags |= FunctionFlags.Legacy.getValue();
+        }
+        if (hasScopedName(node)) {
+            functionFlags |= FunctionFlags.ScopedName.getValue();
+        }
+        if (node.hasSuperReference()) {
+            functionFlags |= FunctionFlags.Super.getValue();
+        }
         if (node.hasSyntheticNodes()) {
             functionFlags |= FunctionFlags.SyntheticMethods.getValue();
         }
         if (tailCall) {
             assert !node.isGenerator() && !node.isAsync() && strict;
             functionFlags |= FunctionFlags.TailCall.getValue();
-        }
-        if (legacy) {
-            functionFlags |= FunctionFlags.Legacy.getValue();
         }
         return functionFlags;
     }
@@ -109,6 +132,7 @@ final class RuntimeInfoGenerator {
         mv.iconst(functionFlags(node, tailCall));
         mv.iconst(ExpectedArgumentCount(node.getParameters()));
         mv.aconst(get(source));
+        mv.iconst(node.getHeaderSource().length());
         mv.handle(codegen.methodDesc(node, FunctionName.Code));
         mv.handle(codegen.methodDesc(node, FunctionName.Call));
         mv.invoke(Methods.RTI_newFunction);

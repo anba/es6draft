@@ -162,7 +162,7 @@ public final class ModuleEvaluation {
         /* step 1 */
         List<Declaration> declarations = LexicallyScopedDeclarations(body);
         /* step 2 */
-        List<Declaration> functionsToInitialize = new ArrayList<>();
+        List<FunctionNode> functionsToInitialize = new ArrayList<>();
         /* step 3 */
         for (Declaration d : declarations) {
             for (String dn : BoundNames(d)) {
@@ -173,18 +173,18 @@ public final class ModuleEvaluation {
                 }
             }
             if (d instanceof FunctionNode) {
-                functionsToInitialize.add(d);
+                functionsToInitialize.add((FunctionNode) d);
             }
         }
         /* step 4 */
-        for (Declaration f : functionsToInitialize) {
-            String fn = ((FunctionNode) f).getFunctionName();
+        for (FunctionNode f : functionsToInitialize) {
+            String fn = f.getFunctionName();
             Object fo = InstantiateFunctionObject(f, env);
             envRec.initializeBinding(fn, fo);
         }
     }
 
-    private static Object InstantiateFunctionObject(Declaration f,
+    private static Object InstantiateFunctionObject(FunctionNode f,
             LexicalEnvironment<DeclarativeEnvironmentRecord> env) {
         // TODO: implement
         return null;

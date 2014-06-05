@@ -11,7 +11,7 @@
 const global = %GlobalObject();
 
 const {
-  Object, RegExp, String, Symbol, TypeError,
+  Object, String, Symbol, TypeError
 } = global;
 
 const {
@@ -73,7 +73,6 @@ Object.defineProperties(Object.assign(Object.prototype, {
   __lookupSetter__: {enumerable: false},
 });
 
-const RegExp_prototype_replace = RegExp.prototype.replace;
 const trimLeftRE = /^\s+/, trimRightRE = /\s+$/;
 
 /*
@@ -82,11 +81,11 @@ const trimLeftRE = /^\s+/, trimRightRE = /\s+$/;
 Object.defineProperties(Object.assign(String.prototype, {
   trimLeft() {
     if (this == null) throw TypeError();
-    return %CallFunction(RegExp_prototype_replace, trimLeftRE, String(this), "");
+    return %RegExpReplace(trimLeftRE, String(this), "");
   },
   trimRight() {
     if (this == null) throw TypeError();
-    return %CallFunction(RegExp_prototype_replace, trimRightRE, String(this), "");
+    return %RegExpReplace(trimRightRE, String(this), "");
   },
 }), {
   trimLeft: {enumerable: false},

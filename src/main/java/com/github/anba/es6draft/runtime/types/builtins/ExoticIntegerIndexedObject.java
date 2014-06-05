@@ -102,7 +102,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
             return defineProperty(cx, numericIndex, desc);
         }
         // FIXME: spec bug - define non-indexed properties on uninit'ed objects should be valid
-        // Call fallible getLength() to trigger initialisation check....
+        // Call fallible getLength() to trigger initialisation check.... (bug 2897)
         getLength(cx);
         /* step 4 */
         return ordinaryDefineOwnProperty(cx, propertyKey, desc);
@@ -110,7 +110,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
 
     private boolean defineProperty(ExecutionContext cx, double numericIndex, PropertyDescriptor desc) {
         // FIXME: spec bug - defined non-indexed properties on uninit'ed objects should be valid
-        // Call fallible getLength() to trigger initialisation check....
+        // Call fallible getLength() to trigger initialisation check.... (bug 2897)
         getLength(cx);
         /* step 3.c.i, 3.c.iii */
         if (!IsInteger(numericIndex)) {
@@ -203,7 +203,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     @Override
     @SuppressWarnings("unchecked")
     public ScriptObject enumerate(ExecutionContext cx) {
-        // FIXME: spec issue - override necessary because of bug xxxx
+        // FIXME: spec issue - override necessary because of bug 2957
         return CreateCompoundIterator(cx, (Iterator<Object>) enumerateKeys(cx),
                 Collections.emptyIterator());
     }
@@ -221,7 +221,6 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         if (!properties().isEmpty()) {
             keys.addAll(properties().keySet());
         }
-        // FIXME: CompundIterator is detectable by client code!
         /* step 8 */
         return keys;
     }

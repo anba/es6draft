@@ -19,12 +19,12 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     private final MethodType type;
     private final boolean isStatic;
     private final PropertyName propertyName;
-    private String functionName;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
-    private StrictMode strictMode;
     private final boolean superReference;
     private final String headerSource, bodySource;
+    private String className;
+    private StrictMode strictMode;
     private boolean syntheticNodes;
 
     public enum MethodType {
@@ -52,10 +52,20 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         return scope;
     }
 
+    /**
+     * Returns the method's type.
+     * 
+     * @return the method's type
+     */
     public MethodType getType() {
         return type;
     }
 
+    /**
+     * Returns {@code true} if this method is a <tt>static</tt> class method definition.
+     * 
+     * @return {@code true} if this method is a <tt>static</tt> method definition
+     */
     public boolean isStatic() {
         return isStatic;
     }
@@ -65,16 +75,88 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         return propertyName;
     }
 
-    @Override
-    public String getFunctionName() {
-        if (functionName != null) {
-            return functionName;
-        }
-        return propertyName.getName();
+    /**
+     * Returns the optional class name.
+     * 
+     * @return the class name or {@code null} if not available
+     */
+    public String getClassName() {
+        return className;
     }
 
+    /**
+     * Set the class name property.
+     * 
+     * @param className
+     *            the class name
+     */
+    public void setClassName(String className) {
+        this.className = className;
+    }
+
+    @Override
+    public String getMethodName() {
+        // Give methods a better name for stacktraces
+        final String fname;
+        String pname = propertyName.getName();
+        if (pname != null) {
+            if (!isStatic && className != null) {
+                if ("constructor".equals(pname)) {
+                    fname = className;
+                } else {
+                    fname = className + '.' + pname;
+                }
+            } else {
+                fname = pname;
+            }
+        } else {
+            assert propertyName instanceof ComputedPropertyName;
+            String cname = ((ComputedPropertyName) propertyName).toString();
+            if (!isStatic && className != null) {
+                fname = className + cname;
+            } else {
+                fname = cname;
+            }
+        }
+        switch (type) {
+        case Getter:
+            return "get " + fname;
+        case Setter:
+            return "set " + fname;
+        case AsyncFunction:
+        case Function:
+        case Generator:
+        default:
+            return fname;
+        }
+    }
+
+    @Override
+    public String getFunctionName() {
+        final String fname;
+        String pname = propertyName.getName();
+        if (pname != null) {
+            fname = pname;
+        } else {
+            assert propertyName instanceof ComputedPropertyName;
+            fname = ((ComputedPropertyName) propertyName).toString();
+        }
+        switch (type) {
+        case Getter:
+            return "get " + fname;
+        case Setter:
+            return "set " + fname;
+        case AsyncFunction:
+        case Function:
+        case Generator:
+        default:
+            return fname;
+        }
+    }
+
+    @Override
     public void setFunctionName(String functionName) {
-        this.functionName = functionName;
+        throw new AssertionError();
     }
 
     @Override

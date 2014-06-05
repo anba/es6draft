@@ -118,7 +118,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
             if (!IsCallable(thisValue)) {
                 throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
-            return ((Callable) thisValue).toSource();
+            return ((Callable) thisValue).toSource(SourceSelector.Function);
         }
 
         /**

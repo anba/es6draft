@@ -11,12 +11,8 @@
 const global = %GlobalObject();
 
 const {
-  Object, String, RegExp,
+  Object, String, RegExp
 } = global;
-
-const {
-  replace: RegExp_prototype_replace
-} = RegExp.prototype;
 
 const {
   match: String_prototype_match,
@@ -27,7 +23,7 @@ const {
 const specialCharsRE = /[|^$\\()[\]{}.?*+]/g;
 
 function ToFlatPattern(p) {
-  return %CallFunction(RegExp_prototype_replace, specialCharsRE, p, "\\$&");
+  return %RegExpReplace(specialCharsRE, p, "\\$&");
 }
 
 /*

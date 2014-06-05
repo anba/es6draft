@@ -21,8 +21,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.Scripts;
-import com.github.anba.es6draft.ast.ExpressionStatement;
-import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
@@ -372,7 +370,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
         if (!(function instanceof Callable)) {
             return UNDEFINED;
         }
-        return ((Callable) function).toSource();
+        return ((Callable) function).toSource(Callable.SourceSelector.Function);
     }
 
     /**
@@ -389,14 +387,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
         if (!(function instanceof Callable)) {
             return UNDEFINED;
         }
-        String source = ((Callable) function).toSource();
-        source = "(" + source + ")";
-
-        com.github.anba.es6draft.ast.Script parsedScript = cx.getRealm().getScriptLoader()
-                .parseScript("<decompileBody>", 1, source);
-        ExpressionStatement expr = (ExpressionStatement) parsedScript.getStatements().get(0);
-        FunctionNode fnode = (FunctionNode) expr.getExpression();
-        return fnode.getBodySource();
+        return ((Callable) function).toSource(Callable.SourceSelector.Body);
     }
 
     /**

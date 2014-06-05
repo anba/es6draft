@@ -19,9 +19,9 @@ public final class FunctionDeclaration extends Declaration implements FunctionDe
     private final BindingIdentifier identifier;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
-    private StrictMode strictMode;
     private final boolean superReference;
     private final String headerSource, bodySource;
+    private StrictMode strictMode;
     private boolean syntheticNodes;
     private boolean legacyBlockScoped;
 
@@ -50,8 +50,18 @@ public final class FunctionDeclaration extends Declaration implements FunctionDe
     }
 
     @Override
+    public String getMethodName() {
+        return getFunctionName();
+    }
+
+    @Override
     public String getFunctionName() {
         return identifier.getName();
+    }
+
+    @Override
+    public void setFunctionName(String functionName) {
+        throw new AssertionError();
     }
 
     @Override

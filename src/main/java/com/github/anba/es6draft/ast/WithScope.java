@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * Scope class for {@link WithStatement} nodes
+ * Scope class for {@link WithStatement} nodes.
  */
 public interface WithScope extends Scope {
     @Override

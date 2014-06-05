@@ -378,7 +378,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             }
             /* steps 5-6 */
             String searchString = ToFlatString(cx, searchValue);
-            // FIXME: always call ToString(replValue) even if no match
+            // FIXME: always call ToString(replValue) even if no match (bug 2956)
             if (!IsCallable(replaceValue)) {
                 replaceValue = ToFlatString(cx, replaceValue);
             }

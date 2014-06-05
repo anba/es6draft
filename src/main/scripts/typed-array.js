@@ -31,7 +31,7 @@ for (const type of ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32",
   Object.defineProperty(ctor.prototype, "move", {
     value(start, end, dest) {
       start = +start; end = +end; dest = +dest;
-      const len = this.length;
+      const len = +this.length;
       if (end < 0) {
         end = len + end;
       }

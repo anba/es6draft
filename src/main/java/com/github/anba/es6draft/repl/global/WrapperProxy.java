@@ -76,8 +76,8 @@ class WrapperProxy implements ScriptObject {
         }
 
         @Override
-        public String toSource() {
-            return ((Callable) proxyTarget).toSource();
+        public String toSource(SourceSelector selector) {
+            return ((Callable) proxyTarget).toSource(selector);
         }
 
         @Override

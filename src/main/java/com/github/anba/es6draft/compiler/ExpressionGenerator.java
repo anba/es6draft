@@ -1891,8 +1891,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 3-4 */
         ClassDefinitionEvaluation(node, className, mv);
         /* step 5 */
-        if (node.getName() != null) {
-            SetFunctionName(node, node.getName().getName(), mv);
+        if (className != null) {
+            SetFunctionName(node, className, mv);
         }
         /* step 6 */
         return ValType.Object;

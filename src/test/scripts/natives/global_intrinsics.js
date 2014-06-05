@@ -6,7 +6,7 @@
  */
 
 if (typeof assertEq === 'undefined') {
-  assertEq = function assertEq(actual, expected, message = "Not same") {
+  assertEq = function assertEq(actual, expected) {
     if (actual !== expected) {
       throw new Error(`Assertion failed: got ${actual}, expected ${expected}`);
     }

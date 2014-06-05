@@ -231,7 +231,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         /* step 4 */
         long srcLength = srcBuffer.getByteLength();
         /* steps 5-6 */
-        // FIXME: neutered after side-effects?
+        // FIXME: neutered after side-effects? (bug 2963)
         Object bufferConstructor = Get(cx, srcBuffer, "constructor");
         /* step 7 */
         assert srcByteOffset <= srcLength;
@@ -242,7 +242,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
             bufferConstructor = cx.getIntrinsic(Intrinsics.ArrayBuffer);
         }
         /* step 10 */
-        // FIXME: neutered after side-effects?
+        // FIXME: neutered after side-effects? (bug 2963)
         ArrayBufferObject targetBuffer = AllocateArrayBuffer(cx, bufferConstructor);
         /* steps 11-12 */
         SetArrayBufferData(cx, targetBuffer, cloneLength);

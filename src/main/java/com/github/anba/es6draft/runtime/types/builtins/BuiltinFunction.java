@@ -151,8 +151,8 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     @Override
-    public final String toSource() {
-        return String.format("function %s() { /* native code */ }", name);
+    public final String toSource(SourceSelector selector) {
+        return FunctionSource.nativeCode(selector, name);
     }
 
     /**

@@ -91,28 +91,18 @@ public final class Bootstrap {
             testNativeTailCallFunctionMH;
 
     static {
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
-        Class<?> thisClass = lookup.lookupClass();
-
-        try {
-            testFunctionObjectMH = lookup.findStatic(thisClass, "testFunctionObject",
-                    MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
-            testNativeFunctionMH = lookup.findStatic(thisClass, "testNativeFunction",
-                    MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
-            testNativeTailCallFunctionMH = lookup.findStatic(thisClass,
-                    "testNativeTailCallFunction",
-                    MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
-
-            callGenericMH = lookup.findStatic(thisClass, "callGeneric", MethodType.methodType(
-                    Object.class, Callable.class, ExecutionContext.class, Object.class,
-                    Object[].class));
-
-            callSetupMH = lookup.findStatic(thisClass, "callSetup", MethodType.methodType(
-                    MethodHandle.class, MutableCallSite.class, Callable.class,
-                    ExecutionContext.class, Object.class, Object[].class));
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new Error(e);
-        }
+        MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
+        testFunctionObjectMH = lookup.findStatic("testFunctionObject",
+                MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
+        testNativeFunctionMH = lookup.findStatic("testNativeFunction",
+                MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
+        testNativeTailCallFunctionMH = lookup.findStatic("testNativeTailCallFunction",
+                MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
+        callGenericMH = lookup.findStatic("callGeneric", MethodType.methodType(Object.class,
+                Callable.class, ExecutionContext.class, Object.class, Object[].class));
+        callSetupMH = lookup.findStatic("callSetup", MethodType.methodType(MethodHandle.class,
+                MutableCallSite.class, Callable.class, ExecutionContext.class, Object.class,
+                Object[].class));
     }
 
     @SuppressWarnings("unused")
@@ -230,69 +220,59 @@ public final class Bootstrap {
     private static final MethodHandle testStringMH, testNumberMH, testBooleanMH;
 
     static {
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
-        Class<?> thisClass = lookup.lookupClass();
+        MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
+        testStringMH = lookup.findStatic("testString",
+                MethodType.methodType(boolean.class, Object.class, Object.class));
+        testNumberMH = lookup.findStatic("testNumber",
+                MethodType.methodType(boolean.class, Object.class, Object.class));
+        testBooleanMH = lookup.findStatic("testBoolean",
+                MethodType.methodType(boolean.class, Object.class, Object.class));
 
-        try {
-            testStringMH = lookup.findStatic(thisClass, "testString",
-                    MethodType.methodType(boolean.class, Object.class, Object.class));
-            testNumberMH = lookup.findStatic(thisClass, "testNumber",
-                    MethodType.methodType(boolean.class, Object.class, Object.class));
-            testBooleanMH = lookup.findStatic(thisClass, "testBoolean",
-                    MethodType.methodType(boolean.class, Object.class, Object.class));
+        addStringMH = lookup.findStatic("addString", MethodType.methodType(CharSequence.class,
+                CharSequence.class, CharSequence.class, ExecutionContext.class));
+        MethodHandle addNumber = lookup.findStatic("addNumber",
+                MethodType.methodType(Double.class, Number.class, Number.class));
+        addNumberMH = MethodHandles.dropArguments(addNumber, 2, ExecutionContext.class);
+        addGenericMH = lookup.findStatic("addGeneric", MethodType.methodType(Object.class,
+                Object.class, Object.class, ExecutionContext.class));
 
-            addStringMH = lookup.findStatic(thisClass, "addString", MethodType.methodType(
-                    CharSequence.class, CharSequence.class, CharSequence.class,
-                    ExecutionContext.class));
-            MethodHandle addNumber = lookup.findStatic(thisClass, "addNumber",
-                    MethodType.methodType(Double.class, Number.class, Number.class));
-            addNumberMH = MethodHandles.dropArguments(addNumber, 2, ExecutionContext.class);
-            addGenericMH = lookup.findStatic(thisClass, "addGeneric", MethodType.methodType(
-                    Object.class, Object.class, Object.class, ExecutionContext.class));
+        MethodHandle relCmpString = lookup.findStatic("relCmpString",
+                MethodType.methodType(int.class, CharSequence.class, CharSequence.class));
+        relCmpStringMH = MethodHandles.dropArguments(relCmpString, 2, ExecutionContext.class);
+        MethodHandle relCmpNumber = lookup.findStatic("relCmpNumber",
+                MethodType.methodType(int.class, Number.class, Number.class));
+        relCmpNumberMH = MethodHandles.dropArguments(relCmpNumber, 2, ExecutionContext.class);
+        relCmpGenericMH = lookup.findStatic("relCmpGeneric", MethodType.methodType(int.class,
+                Object.class, Object.class, boolean.class, ExecutionContext.class));
 
-            MethodHandle relCmpString = lookup.findStatic(thisClass, "relCmpString",
-                    MethodType.methodType(int.class, CharSequence.class, CharSequence.class));
-            relCmpStringMH = MethodHandles.dropArguments(relCmpString, 2, ExecutionContext.class);
-            MethodHandle relCmpNumber = lookup.findStatic(thisClass, "relCmpNumber",
-                    MethodType.methodType(int.class, Number.class, Number.class));
-            relCmpNumberMH = MethodHandles.dropArguments(relCmpNumber, 2, ExecutionContext.class);
-            relCmpGenericMH = lookup.findStatic(thisClass, "relCmpGeneric", MethodType.methodType(
-                    int.class, Object.class, Object.class, boolean.class, ExecutionContext.class));
+        MethodHandle eqCmpString = lookup.findStatic("eqCmpString",
+                MethodType.methodType(boolean.class, CharSequence.class, CharSequence.class));
+        MethodHandle eqCmpNumber = lookup.findStatic("eqCmpNumber",
+                MethodType.methodType(boolean.class, Number.class, Number.class));
+        MethodHandle eqCmpBoolean = lookup.findStatic("eqCmpBoolean",
+                MethodType.methodType(boolean.class, Boolean.class, Boolean.class));
 
-            MethodHandle eqCmpString = lookup.findStatic(thisClass, "eqCmpString",
-                    MethodType.methodType(boolean.class, CharSequence.class, CharSequence.class));
-            MethodHandle eqCmpNumber = lookup.findStatic(thisClass, "eqCmpNumber",
-                    MethodType.methodType(boolean.class, Number.class, Number.class));
-            MethodHandle eqCmpBoolean = lookup.findStatic(thisClass, "eqCmpBoolean",
-                    MethodType.methodType(boolean.class, Boolean.class, Boolean.class));
+        eqCmpStringMH = MethodHandles.dropArguments(eqCmpString, 2, ExecutionContext.class);
+        eqCmpNumberMH = MethodHandles.dropArguments(eqCmpNumber, 2, ExecutionContext.class);
+        eqCmpBooleanMH = MethodHandles.dropArguments(eqCmpBoolean, 2, ExecutionContext.class);
+        eqCmpGenericMH = lookup.findStatic("eqCmpGeneric", MethodType.methodType(boolean.class,
+                Object.class, Object.class, ExecutionContext.class));
 
-            eqCmpStringMH = MethodHandles.dropArguments(eqCmpString, 2, ExecutionContext.class);
-            eqCmpNumberMH = MethodHandles.dropArguments(eqCmpNumber, 2, ExecutionContext.class);
-            eqCmpBooleanMH = MethodHandles.dropArguments(eqCmpBoolean, 2, ExecutionContext.class);
-            eqCmpGenericMH = lookup.findStatic(thisClass, "eqCmpGeneric", MethodType.methodType(
-                    boolean.class, Object.class, Object.class, ExecutionContext.class));
+        strictEqCmpStringMH = eqCmpString;
+        strictEqCmpNumberMH = eqCmpNumber;
+        strictEqCmpBooleanMH = eqCmpBoolean;
+        strictEqCmpGenericMH = lookup.findStatic("strictEqCmpGeneric",
+                MethodType.methodType(boolean.class, Object.class, Object.class));
 
-            strictEqCmpStringMH = eqCmpString;
-            strictEqCmpNumberMH = eqCmpNumber;
-            strictEqCmpBooleanMH = eqCmpBoolean;
-            strictEqCmpGenericMH = lookup.findStatic(thisClass, "strictEqCmpGeneric",
-                    MethodType.methodType(boolean.class, Object.class, Object.class));
-
-            addSetupMH = lookup.findStatic(thisClass, "addSetup", MethodType.methodType(
-                    MethodHandle.class, MutableCallSite.class, Object.class, Object.class,
-                    ExecutionContext.class));
-            relCmpSetupMH = lookup.findStatic(thisClass, "relCmpSetup", MethodType.methodType(
-                    MethodHandle.class, MutableCallSite.class, boolean.class, Object.class,
-                    Object.class, ExecutionContext.class));
-            eqCmpSetupMH = lookup.findStatic(thisClass, "eqCmpSetup", MethodType.methodType(
-                    MethodHandle.class, MutableCallSite.class, Object.class, Object.class,
-                    ExecutionContext.class));
-            strictEqCmpSetupMH = lookup.findStatic(thisClass, "strictEqCmpSetup", MethodType
-                    .methodType(MethodHandle.class, MutableCallSite.class, Object.class,
-                            Object.class));
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new Error(e);
-        }
+        addSetupMH = lookup.findStatic("addSetup", MethodType.methodType(MethodHandle.class,
+                MutableCallSite.class, Object.class, Object.class, ExecutionContext.class));
+        relCmpSetupMH = lookup.findStatic("relCmpSetup", MethodType.methodType(MethodHandle.class,
+                MutableCallSite.class, boolean.class, Object.class, Object.class,
+                ExecutionContext.class));
+        eqCmpSetupMH = lookup.findStatic("eqCmpSetup", MethodType.methodType(MethodHandle.class,
+                MutableCallSite.class, Object.class, Object.class, ExecutionContext.class));
+        strictEqCmpSetupMH = lookup.findStatic("strictEqCmpSetup", MethodType.methodType(
+                MethodHandle.class, MutableCallSite.class, Object.class, Object.class));
     }
 
     @SuppressWarnings("unused")
@@ -487,14 +467,9 @@ public final class Bootstrap {
 
     private static final MethodHandle switchToGenericMH;
     static {
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
-        Class<?> thisClass = lookup.lookupClass();
-        try {
-            switchToGenericMH = lookup.findStatic(thisClass, "switchToGeneric", MethodType
-                    .methodType(MethodHandle.class, MutableCallSite.class, MethodHandle.class));
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new Error(e);
-        }
+        MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
+        switchToGenericMH = lookup.findStatic("switchToGeneric", MethodType.methodType(
+                MethodHandle.class, MutableCallSite.class, MethodHandle.class));
     }
 
     @SuppressWarnings("unused")
@@ -509,27 +484,18 @@ public final class Bootstrap {
     private static final ConstantCallSite stackOverFlow_StrictEq;
     private static final ConstantCallSite stackOverFlow_Call;
     static {
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
-        Class<?> thisClass = lookup.lookupClass();
-        try {
-            stackOverFlow_Add = new ConstantCallSite(lookup.findStatic(thisClass,
-                    "stackOverFlow_Add", MethodType.methodType(Object.class, Object.class,
-                            Object.class, ExecutionContext.class)));
-            stackOverFlow_Cmp = new ConstantCallSite(lookup.findStatic(thisClass,
-                    "stackOverFlow_Cmp", MethodType.methodType(int.class, Object.class,
-                            Object.class, ExecutionContext.class)));
-            stackOverFlow_Eq = new ConstantCallSite(lookup.findStatic(thisClass,
-                    "stackOverFlow_Eq", MethodType.methodType(boolean.class, Object.class,
-                            Object.class, ExecutionContext.class)));
-            stackOverFlow_StrictEq = new ConstantCallSite(lookup.findStatic(thisClass,
-                    "stackOverFlow_StrictEq",
-                    MethodType.methodType(boolean.class, Object.class, Object.class)));
-            stackOverFlow_Call = new ConstantCallSite(lookup.findStatic(thisClass,
-                    "stackOverFlow_Call", MethodType.methodType(Object.class, Callable.class,
-                            ExecutionContext.class, Object.class, Object[].class)));
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new Error(e);
-        }
+        MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
+        stackOverFlow_Add = new ConstantCallSite(lookup.findStatic("stackOverFlow_Add", MethodType
+                .methodType(Object.class, Object.class, Object.class, ExecutionContext.class)));
+        stackOverFlow_Cmp = new ConstantCallSite(lookup.findStatic("stackOverFlow_Cmp", MethodType
+                .methodType(int.class, Object.class, Object.class, ExecutionContext.class)));
+        stackOverFlow_Eq = new ConstantCallSite(lookup.findStatic("stackOverFlow_Eq", MethodType
+                .methodType(boolean.class, Object.class, Object.class, ExecutionContext.class)));
+        stackOverFlow_StrictEq = new ConstantCallSite(lookup.findStatic("stackOverFlow_StrictEq",
+                MethodType.methodType(boolean.class, Object.class, Object.class)));
+        stackOverFlow_Call = new ConstantCallSite(lookup.findStatic("stackOverFlow_Call",
+                MethodType.methodType(Object.class, Callable.class, ExecutionContext.class,
+                        Object.class, Object[].class)));
     }
 
     @SuppressWarnings("unused")

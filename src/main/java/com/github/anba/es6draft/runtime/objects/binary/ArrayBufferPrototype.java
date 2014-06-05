@@ -138,7 +138,7 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
             ByteBuffer fromBuf = obj.getData();
             /* step 22 */
             ByteBuffer toBuf = _new.getData();
-            // FIXME: spec bug - need to check for neutered buffers
+            // FIXME: spec bug - need to check for neutered buffers (bug 2964)
             if (fromBuf == null || toBuf == null) {
                 return _new;
             }

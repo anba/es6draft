@@ -194,7 +194,7 @@ public final class SourceBuilder {
         case Object:
             ScriptObject objValue = Type.objectValue(value);
             if (IsCallable(objValue)) {
-                return ((Callable) objValue).toSource();
+                return ((Callable) objValue).toSource(Callable.SourceSelector.Function);
             }
             if (stack.contains(objValue) || stack.size() > MAX_STACK_DEPTH) {
                 return "« ... »";

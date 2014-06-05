@@ -9,7 +9,7 @@ package com.github.anba.es6draft.ast;
 import java.util.Set;
 
 /**
- * Scope class for {@link FunctionNode} objects
+ * Scope class for {@link FunctionNode} objects.
  */
 public interface FunctionScope extends TopLevelScope {
     @Override
@@ -31,4 +31,12 @@ public interface FunctionScope extends TopLevelScope {
      * @return <code>true</code> if a dynamic scope
      */
     boolean isDynamic();
+
+    /**
+     * Returns {@code true} if the <tt>arguments</tt> object needs to be allocated for this
+     * function.
+     * 
+     * @return {@code true} if the <tt>arguments</tt> object needs to be allocated
+     */
+    boolean needsArguments();
 }

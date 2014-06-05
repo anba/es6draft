@@ -25,6 +25,11 @@ final class JDKMatchState implements MatchState, IterableMatchResult {
     }
 
     @Override
+    public String toString() {
+        return String.format("%s: [matcher=%s]", getClass().getSimpleName(), matcher);
+    }
+
+    @Override
     public Iterator<String> iterator() {
         return new GroupIterator(this, negativeLAGroups);
     }

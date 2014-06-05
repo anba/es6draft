@@ -20,9 +20,10 @@ public final class RuntimeInfo {
     }
 
     public static Function newFunction(String functionName, int functionFlags,
-            int expectedArgumentCount, String source, MethodHandle handle, MethodHandle callMethod) {
+            int expectedArgumentCount, String source, int bodySourceStart, MethodHandle handle,
+            MethodHandle callMethod) {
         return new CompiledFunction(functionName, functionFlags, expectedArgumentCount, source,
-                handle, callMethod);
+                bodySourceStart, handle, callMethod);
     }
 
     public static ScriptBody newScriptBody(String sourceFile, boolean isStrict,
@@ -115,44 +116,86 @@ public final class RuntimeInfo {
 
     public enum FunctionFlags {
         /**
-         * Flag for strict-mode functions
+         * Flag for strict-mode functions.
          */
-        Strict(0b0000_0001),
+        Strict(0b0000_0000_0000_0001),
 
         /**
-         * Flag for functions with super-binding
+         * Flag for implicit strict functions.
          */
-        Super(0b0000_0010),
+        ImplicitStrict(0b0000_0000_0000_0010),
 
         /**
-         * Flag for functions which have their name in scope
+         * Flag for generator functions.
          */
-        ScopedName(0b0000_0100),
+        Generator(0b0000_0000_0000_0100),
 
         /**
-         * Flag for generator functions
+         * Flag for async functions.
          */
-        Generator(0b0000_1000),
+        Async(0b0000_0000_0000_1000),
 
         /**
-         * Flag for tail-call functions
+         * Flag for arrow functions.
          */
-        TailCall(0b0001_0000),
+        Arrow(0b0000_0000_0001_0000),
 
         /**
-         * Flag for legacy functions
+         * Flag for declarative functions.
          */
-        Legacy(0b0010_0000),
+        Declaration(0b0000_0000_0010_0000),
 
         /**
-         * Flag for functions with synthetic sub-methods
+         * Flag for expression functions.
          */
-        SyntheticMethods(0b0100_0000),
+        Expression(0b0000_0000_0100_0000),
 
         /**
-         * Flag for async functions
+         * Flag for functions with concise, braceless body.
          */
-        Async(0b1000_0000);
+        ConciseBody(0b0000_0000_1000_0000),
+
+        /**
+         * Flag for method definitions.
+         */
+        Method(0b0000_0001_0000_0000),
+
+        /**
+         * Flag for static method definitions.
+         */
+        Static(0b0000_0010_0000_0000),
+
+        /**
+         * Flag for legacy generator functions.
+         */
+        LegacyGenerator(0b0000_0100_0000_0000),
+
+        /**
+         * Flag for legacy functions.
+         */
+        Legacy(0b0000_1000_0000_0000),
+
+        /**
+         * Flag for functions which create a named scope binding.
+         */
+        ScopedName(0b0001_0000_0000_0000),
+
+        /**
+         * Flag for functions with super-binding.
+         */
+        Super(0b0010_0000_0000_0000),
+
+        /**
+         * Flag for functions with synthetic sub-methods.
+         */
+        SyntheticMethods(0b0100_0000_0000_0000),
+
+        /**
+         * Flag for tail-call functions.
+         */
+        TailCall(0b1000_0000_0000_0000),
+
+        ;
 
         private final int value;
 
@@ -191,9 +234,13 @@ public final class RuntimeInfo {
 
         boolean hasSyntheticMethods();
 
+        int functionFlags();
+
         int expectedArgumentCount();
 
         String source();
+
+        int bodySourceStart();
 
         /**
          * (? extends FunctionObject, ExecutionContext, Object, Object[]) {@literal ->} Object.
@@ -215,15 +262,17 @@ public final class RuntimeInfo {
         private final int functionFlags;
         private final int expectedArgumentCount;
         private final String source;
+        private final int bodySourceStart;
         private final MethodHandle handle;
         private final MethodHandle callMethod;
 
         CompiledFunction(String functionName, int functionFlags, int expectedArgumentCount,
-                String source, MethodHandle handle, MethodHandle callMethod) {
+                String source, int bodySourceStart, MethodHandle handle, MethodHandle callMethod) {
             this.functionName = functionName;
             this.functionFlags = functionFlags;
             this.expectedArgumentCount = expectedArgumentCount;
             this.source = source;
+            this.bodySourceStart = bodySourceStart;
             this.handle = handle;
             this.callMethod = callMethod;
         }
@@ -274,6 +323,11 @@ public final class RuntimeInfo {
         }
 
         @Override
+        public int functionFlags() {
+            return functionFlags;
+        }
+
+        @Override
         public int expectedArgumentCount() {
             return expectedArgumentCount;
         }
@@ -281,6 +335,11 @@ public final class RuntimeInfo {
         @Override
         public String source() {
             return source;
+        }
+
+        @Override
+        public int bodySourceStart() {
+            return bodySourceStart;
         }
 
         @Override

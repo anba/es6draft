@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * Base interface for scope information
+ * Base interface for scope information.
  */
 public interface Scope {
     /**

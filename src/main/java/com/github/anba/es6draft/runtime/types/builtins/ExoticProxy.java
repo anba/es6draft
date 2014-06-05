@@ -81,8 +81,6 @@ public class ExoticProxy implements ScriptObject {
     }
 
     private static class CallabeExoticProxy extends ExoticProxy implements Callable {
-        private static final String SOURCE_NOT_AVAILABLE = "function F() { /* source not available */ }";
-
         public CallabeExoticProxy(ScriptObject target, ScriptObject handler) {
             super(target, handler);
         }
@@ -117,11 +115,11 @@ public class ExoticProxy implements ScriptObject {
         }
 
         @Override
-        public String toSource() {
+        public String toSource(SourceSelector selector) {
             if (isRevoked()) {
-                return SOURCE_NOT_AVAILABLE;
+                return FunctionSource.noSource(selector);
             }
-            return ((Callable) getProxyTarget()).toSource();
+            return ((Callable) getProxyTarget()).toSource(selector);
         }
 
         @Override

@@ -12,20 +12,72 @@ const global = %GlobalObject();
 
 const {
   Object, Function, Array, String, Boolean,
-  Number, Math, Date, RegExp, Error,
+  Number, Math, Date, RegExp, Error, Symbol,
   TypeError, JSON, Intl, WeakSet,
 } = global;
 
-const Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
-      Object_keys = Object.keys,
-      Object_prototype_hasOwnProperty = Object.prototype.hasOwnProperty,
-      Array_isArray = Array.isArray,
-      Array_prototype_join = Array.prototype.join;
+const {
+  getOwnPropertyDescriptor: Object_getOwnPropertyDescriptor,
+  keys: Object_keys,
+  prototype: {
+    hasOwnProperty: Object_prototype_hasOwnProperty
+  }
+} = Object;
+
+const {
+  isArray: Array_isArray,
+  prototype: {
+    join: Array_prototype_join
+  }
+} = Array;
+
+const {
+  toString: Boolean_prototype_toString
+} = Boolean.prototype;
+
+const {
+  toString: Date_prototype_toString
+} = Date.prototype;
+
+const {
+  toString: Function_prototype_toString
+} = Function.prototype;
+
+const {
+  toString: Number_prototype_toString
+} = Number.prototype;
+
+const {
+  toString: RegExp_prototype_toString
+} = RegExp.prototype;
+
+const {
+  charAt: String_prototype_charAt,
+  charCodeAt: String_prototype_charCodeAt,
+  indexOf: String_prototype_indexOf,
+  substring: String_prototype_substring,
+  toString: String_prototype_toString,
+  toUpperCase: String_prototype_toUpperCase,
+} = String.prototype;
+
+const {
+  toString: Symbol_prototype_toString
+} = Symbol.prototype;
+
+const {
+  add: WeakSet_prototype_add,
+  delete: WeakSet_prototype_delete,
+  has: WeakSet_prototype_has,
+} = WeakSet.prototype;
+
+function ToHexString(c) {
+  return %CallFunction(String_prototype_toUpperCase, %CallFunction(Number_prototype_toString, c, 16));
+}
 
 function Quote(s, qc = '"') {
   var r = "";
   for (var i = 0, len = s.length; i < len; ++i) {
-    var c = s.charCodeAt(i);
+    var c = %CallFunction(String_prototype_charCodeAt, s, i);
     switch (c) {
       case 0x09: r += "\\t"; continue;
       case 0x0A: r += "\\n"; continue;
@@ -37,34 +89,33 @@ function Quote(s, qc = '"') {
     }
     if (c == 0x27 && qc == "'") {
       r += "\\\'";
-    }
-    if (c < 20) {
-      r += "\\x" + (c < 0x10 ? "0" : "") + c.toString(16).toUpperCase();
+    } else if (c < 0x20) {
+      r += "\\x" + (c < 0x10 ? "0" : "") + ToHexString(c);
     } else if (c < 0x7F) {
-      r += s.charAt(i);
-    } else if (c < 0xFF) {
-      r += "\\x" + c.toString(16).toUpperCase();
+      r += %CallFunction(String_prototype_charAt, s, i);
+    } else if (c < 0x100) {
+      r += "\\x" + ToHexString(c);
     } else {
-      r += "\\u" + (c < 0x1000 ? "0" : "") + c.toString(16).toUpperCase();
+      r += "\\u" + (c < 0x1000 ? "0" : "") + ToHexString(c);
     }
   }
   return qc + r + qc;
 }
 
-const startsWithParens = /^\s*\(/;
-const anonymousFunction = /^\s*function\s*\*?\s*\(/;
 const ASCII_Ident = /^[_$a-zA-Z][_$a-zA-Z0-9]*$/;
+const functionSource = /^\(?function /;
+const accessorSource = /^(?:get|set) [_$a-zA-Z][_$a-zA-Z0-9]*/;
 
-function IsAnonymousFunction(source) {
-  // comments betwenn "function" and "(" are not handled
-  return anonymousFunction.test(source);
-}
-
-function UnwrapAndRemoveName(source) {
-  if (startsWithParens.test(source)) {
-    source = source.substring(source.indexOf('(') + 1, source.lastIndexOf(')'));
+function toAccessorFunctionString(source) {
+  if (%RegExpTest(functionSource, source)) {
+    let leadingParen = (%CallFunction(String_prototype_charAt, source, 0) === '(');
+    let start = %CallFunction(String_prototype_indexOf, source, '(', 0 + leadingParen);
+    return %CallFunction(String_prototype_substring, source, start, source.length - leadingParen);
   }
-  return source.substring(source.indexOf('('));
+  if (%RegExpTest(accessorSource, source)) {
+    let start = %CallFunction(String_prototype_indexOf, source, '(', 0);
+    return %CallFunction(String_prototype_substring, source, start);
+  }
 }
 
 function IsInt32(name) {
@@ -72,7 +123,7 @@ function IsInt32(name) {
 }
 
 function ToPropertyName(name) {
-  if (ASCII_Ident.test(name) || IsInt32(name)) {
+  if (%RegExpTest(ASCII_Ident, name) || IsInt32(name)) {
     return name;
   }
   return Quote(name, "'");
@@ -88,27 +139,28 @@ function ToSource(o) {
     case 'string':
       return Quote(o);
     case 'symbol':
-      return Object(o).toString();
+      return %CallFunction(Symbol_prototype_toString, o);
     case 'function':
     case 'object':
       if (o !== null) {
-        return typeof o.toSource == 'function' ? o.toSource() : ObjectToSource(o);
+        return typeof o.toSource == 'function' ? String(o.toSource()) : ObjectToSource(o);
       }
     default:
       return "null";
   }
 }
 
+// weakset for cycle detection
 const weakset = new WeakSet();
 var depth = 0;
 
 function ObjectToSource(o) {
   if (o == null) throw TypeError();
   var obj = Object(o);
-  if (weakset.has(obj)) {
+  if (%CallFunction(WeakSet_prototype_has, weakset, obj)) {
     return "{}";
   }
-  weakset.add(obj);
+  %CallFunction(WeakSet_prototype_add, weakset, obj);
   depth += 1;
   try {
     var s = "";
@@ -118,25 +170,41 @@ function ObjectToSource(o) {
       var desc = Object_getOwnPropertyDescriptor(obj, name);
       if (desc == null) {
         // ignore removed properties
-      } else if ('value' in desc) {
-        s += `${ToPropertyName(name)}:${ToSource(desc.value)}`
+        continue;
+      }
+      if (s.length) {
+        s += ", ";
+      }
+      if ('value' in desc) {
+        s += `${ToPropertyName(name)}:${ToSource(desc.value)}`;
       } else {
         if (desc.get !== void 0) {
-          s += `get ${ToPropertyName(name)} ${UnwrapAndRemoveName(ToSource(desc.get))}`;
+          let getterSource = ToSource(desc.get);
+          let accessorSource = toAccessorFunctionString(getterSource);
+          if (accessorSource) {
+            s += `get ${ToPropertyName(name)} ${accessorSource}`;
+          } else {
+            s += `${ToPropertyName(name)}:${getterSource}`;
+          }
           if (desc.set !== void 0) s += ", ";
         }
         if (desc.set !== void 0) {
-          s += `set ${ToPropertyName(name)} ${UnwrapAndRemoveName(ToSource(desc.set))}`;
+          let setterSource = ToSource(desc.set);
+          let accessorSource = toAccessorFunctionString(setterSource);
+          if (accessorSource) {
+            s += `set ${ToPropertyName(name)} ${accessorSource}`;
+          } else {
+            s += `${ToPropertyName(name)}:${setterSource}`;
+          }
         }
       }
-      if (i + 1 < len) s += ", ";
     }
     if (depth > 1) {
       return "{" + s + "}";
     }
     return "({" + s + "})";
   } finally {
-    weakset.delete(obj);
+    %CallFunction(WeakSet_prototype_delete, weakset, obj);
     depth -= 1;
   }
 }
@@ -152,16 +220,16 @@ Object.defineProperty(Object.assign(Array.prototype, {
   join(separator) {
     const isObject = typeof this == 'function' || typeof this == 'object' && this !== null;
     if (isObject) {
-      if (weakset.has(this)) {
+      if (%CallFunction(WeakSet_prototype_has, weakset, this)) {
         return "";
       }
-      weakset.add(this);
+      %CallFunction(WeakSet_prototype_add, weakset, this);
     }
     try {
-      return Array_prototype_join.call(this, separator);
+      return %CallFunction(Array_prototype_join, this, separator);
     } finally {
       if (isObject) {
-        weakset.delete(this);
+        %CallFunction(WeakSet_prototype_delete, weakset, this);
       }
     }
   }
@@ -169,7 +237,7 @@ Object.defineProperty(Object.assign(Array.prototype, {
 
 Object.defineProperty(Object.assign(String.prototype, {
   quote() {
-    return Quote(String.prototype.toString.call(this));
+    return Quote(%CallFunction(String_prototype_toString, this));
   }
 }), "quote", {enumerable: false});
 
@@ -184,8 +252,8 @@ Object.defineProperty(Object.assign(Function.prototype, {
     if (typeof this != 'function') {
       return ObjectToSource(this);
     }
-    var source = Function.prototype.toString.call(this);
-    if (IsAnonymousFunction(source)) {
+    var source = %CallFunction(Function_prototype_toString, this);
+    if (%IsFunctionExpression(this)) {
       return "(" + source + ")";
     }
     return source;
@@ -195,10 +263,10 @@ Object.defineProperty(Object.assign(Function.prototype, {
 Object.defineProperty(Object.assign(Array.prototype, {
   toSource() {
     if (!Array_isArray(this)) throw TypeError();
-    if (weakset.has(this)) {
+    if (%CallFunction(WeakSet_prototype_has, weakset, this)) {
       return "[]";
     }
-    weakset.add(this);
+    %CallFunction(WeakSet_prototype_add, weakset, this);
     depth += 1;
     try {
       var s = "";
@@ -213,7 +281,7 @@ Object.defineProperty(Object.assign(Array.prototype, {
       }
       return "[" + s + "]";
     } finally {
-      weakset.delete(this);
+      %CallFunction(WeakSet_prototype_delete, weakset, this);
       depth -= 1;
     }
   }
@@ -221,19 +289,19 @@ Object.defineProperty(Object.assign(Array.prototype, {
 
 Object.defineProperty(Object.assign(String.prototype, {
   toSource() {
-    return `(new String(${ Quote(String.prototype.toString.call(this)) }))`;
+    return `(new String(${ Quote(%CallFunction(String_prototype_toString, this)) }))`;
   }
 }), "toSource", {enumerable: false});
 
 Object.defineProperty(Object.assign(Boolean.prototype, {
   toSource() {
-    return `(new Boolean(${ Boolean.prototype.valueOf.call(this) }))`;
+    return `(new Boolean(${ %CallFunction(Boolean_prototype_toString, this) }))`;
   }
 }), "toSource", {enumerable: false});
 
 Object.defineProperty(Object.assign(Number.prototype, {
   toSource() {
-    return `(new Number(${ Number.prototype.valueOf.call(this) }))`;
+    return `(new Number(${ %CallFunction(Number_prototype_toString, this) }))`;
   }
 }), "toSource", {enumerable: false});
 
@@ -245,13 +313,13 @@ Object.defineProperty(Object.assign(Math, {
 
 Object.defineProperty(Object.assign(Date.prototype, {
   toSource() {
-    return `(new Date(${ Date.prototype.valueOf.call(this) }))`;
+    return `(new Date(${ %CallFunction(Date_prototype_toString, this) }))`;
   }
 }), "toSource", {enumerable: false});
 
 Object.defineProperty(Object.assign(RegExp.prototype, {
   toSource() {
-    return RegExp.prototype.toString.call(this);
+    return %CallFunction(RegExp_prototype_toString, this);
   }
 }), "toSource", {enumerable: false});
 

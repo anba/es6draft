@@ -2407,11 +2407,13 @@ public final class ScriptRuntime {
     public static RuntimeInfo.Function CreateDefaultConstructor() {
         String functionName = "constructor";
         int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue()
+                | RuntimeInfo.FunctionFlags.ImplicitStrict.getValue()
+                | RuntimeInfo.FunctionFlags.Method.getValue()
                 | RuntimeInfo.FunctionFlags.Super.getValue();
         int expectedArguments = 0;
         RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
-                expectedArguments, DefaultConstructorSource, DefaultConstructorMH,
-                DefaultConstructorCallMH);
+                expectedArguments, DefaultConstructorSource, DefaultConstructorSourceBody,
+                DefaultConstructorMH, DefaultConstructorCallMH);
 
         return function;
     }
@@ -2425,10 +2427,13 @@ public final class ScriptRuntime {
      */
     public static RuntimeInfo.Function CreateDefaultEmptyConstructor() {
         String functionName = "constructor";
-        int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue();
+        int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue()
+                | RuntimeInfo.FunctionFlags.ImplicitStrict.getValue()
+                | RuntimeInfo.FunctionFlags.Method.getValue();
         int expectedArguments = 0;
         RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
-                expectedArguments, DefaultEmptyConstructorSource, DefaultEmptyConstructorMH,
+                expectedArguments, DefaultEmptyConstructorSource,
+                DefaultEmptyConstructorSourceBody, DefaultEmptyConstructorMH,
                 DefaultEmptyConstructorCallMH);
 
         return function;
@@ -2437,6 +2442,7 @@ public final class ScriptRuntime {
     private static final MethodHandle DefaultConstructorMH;
     private static final MethodHandle DefaultConstructorCallMH;
     private static final String DefaultConstructorSource;
+    private static final int DefaultConstructorSourceBody;
     static {
         Lookup lookup = MethodHandles.publicLookup();
         try {
@@ -2449,8 +2455,9 @@ public final class ScriptRuntime {
             throw new IllegalStateException(e);
         }
         try {
-            String source = "constructor(...args) { super(...args); }";
+            String parameters = "(...args)", body = "super(...args);", source = parameters + body;
             DefaultConstructorSource = SourceCompressor.compress(source).call();
+            DefaultConstructorSourceBody = parameters.length();
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -2491,6 +2498,7 @@ public final class ScriptRuntime {
     private static final MethodHandle DefaultEmptyConstructorMH;
     private static final MethodHandle DefaultEmptyConstructorCallMH;
     private static final String DefaultEmptyConstructorSource;
+    private static final int DefaultEmptyConstructorSourceBody;
     static {
         Lookup lookup = MethodHandles.publicLookup();
         try {
@@ -2505,8 +2513,9 @@ public final class ScriptRuntime {
             throw new IllegalStateException(e);
         }
         try {
-            String source = "constructor() { }";
+            String parameters = "()", body = "", source = parameters + body;
             DefaultEmptyConstructorSource = SourceCompressor.compress(source).call();
+            DefaultEmptyConstructorSourceBody = parameters.length();
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

@@ -134,6 +134,11 @@ public enum CompatibilityOption {
     StrictLegacyOctalIntegerLiteral,
 
     /**
+     * Moz-Extension: Implicit strict functions include <tt>"use strict;"</tt> directive in source
+     */
+    ImplicitStrictDirective,
+
+    /**
      * Extension: Async Function Definitions
      */
     AsyncFunction;
@@ -162,6 +167,6 @@ public enum CompatibilityOption {
      * @return the options set for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return EnumSet.range(LegacyOctalIntegerLiteral, StrictLegacyOctalIntegerLiteral);
+        return EnumSet.range(LegacyOctalIntegerLiteral, ImplicitStrictDirective);
     }
 }

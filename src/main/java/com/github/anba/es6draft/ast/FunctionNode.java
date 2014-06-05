@@ -12,9 +12,20 @@ import java.util.List;
  * <h1>14 ECMAScript Language: Functions and Classes</h1>
  */
 public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNode {
+    enum StrictMode {
+        NonStrict, ImplicitStrict, ExplicitStrict
+    }
+
     public enum ThisMode {
         Lexical, Strict, Global
     }
+
+    /**
+     * Returns the method name for compilation.
+     * 
+     * @return the method name
+     */
+    String getMethodName();
 
     /**
      * Returns the function name.
@@ -24,18 +35,22 @@ public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNod
     String getFunctionName();
 
     /**
+     * Sets the function name for this object.
+     * 
+     * @param functionName
+     *            the function name
+     */
+    void setFunctionName(String functionName);
+
+    /**
      * Returns the formal parameter list for this function.
      * 
      * @return the parameters
      */
     FormalParameterList getParameters();
 
-    enum StrictMode {
-        NonStrict, ImplicitStrict, ExplicitStrict
-    }
-
     /**
-     * Retrieves the strict-mode for this object.
+     * Returns the strict-mode for this object.
      * 
      * @return the strict-mode
      */

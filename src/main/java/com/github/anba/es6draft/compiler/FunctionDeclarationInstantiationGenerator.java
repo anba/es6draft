@@ -231,7 +231,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                 argumentsObjectNeeded = false;
             } else if (lexicalNames.contains("arguments")) {
                 argumentsObjectNeeded = false;
-                // FIXME: spec bug - function f() { let arguments }
+                // FIXME: spec bug - function f() { let arguments } (bug 2958)
                 needsSpecialArgumentsBinding = false;
             }
         }
@@ -286,7 +286,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             }
             // FIXME: spec bug - need to special case 'needsParameterEnvironment'?
             // FIXME: function f(g = () => arguments) { function arguments() {} return g() }
-            // FIXME: Should not return inner `arguments` function...?
+            // FIXME: Should not return inner `arguments` function...? (bug 2961)
             instantiatedVarNames.add("arguments");
         }
         /* steps 24-26 */
@@ -303,7 +303,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         if (needsSpecialArgumentsBinding && !argumentsObjectNeeded) {
             // TODO: Initializing "arguments" here means access to "arguments" in default parameters
             // throws a ReferenceError, late access (function closure in default parameters) will
-            // return "undefined"
+            // return "undefined" (bug 2961)
             initializeBinding(envRec, "arguments", undef, mv);
         }
         /* step 28 */
@@ -350,7 +350,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                     continue;
                 }
                 if (!instantiatedVarNames.contains(fname)) {
-                    // FIXME: spec bug - Need to add fname to instantiatedVarNames
+                    // FIXME: spec bug - Need to add fname to instantiatedVarNames (bug 2959)
                     // function f() { { function g(){} } { function g(){} } } f()
                     instantiatedVarNames.add(fname);
                     createMutableBinding(localEnvRec, fname, false, mv);

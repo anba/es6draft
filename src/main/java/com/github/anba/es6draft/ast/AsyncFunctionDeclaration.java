@@ -16,9 +16,9 @@ public final class AsyncFunctionDeclaration extends Declaration implements Async
     private final BindingIdentifier identifier;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
-    private StrictMode strictMode;
     private final boolean superReference;
     private final String headerSource, bodySource;
+    private StrictMode strictMode;
     private boolean syntheticNodes;
 
     public AsyncFunctionDeclaration(long beginPosition, long endPosition, FunctionScope scope,
@@ -46,8 +46,18 @@ public final class AsyncFunctionDeclaration extends Declaration implements Async
     }
 
     @Override
+    public String getMethodName() {
+        return getFunctionName();
+    }
+
+    @Override
     public String getFunctionName() {
         return identifier.getName();
+    }
+
+    @Override
+    public void setFunctionName(String functionName) {
+        throw new AssertionError();
     }
 
     @Override

@@ -34,4 +34,47 @@ public final class ComputedPropertyName extends AstNode implements PropertyName 
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
     }
+
+    @Override
+    public String toString() {
+        String cname = accept(new ComputedNameToString(), null);
+        if (cname != null) {
+            return '[' + cname + ']';
+        }
+        return "[<...>]";
+    }
+
+    private static final class ComputedNameToString extends DefaultNodeVisitor<String, Void> {
+        @Override
+        protected String visit(Node node, Void value) {
+            return null;
+        }
+
+        @Override
+        public String visit(ComputedPropertyName node, Void value) {
+            return node.getExpression().accept(this, value);
+        }
+
+        @Override
+        public String visit(NumericLiteral node, Void value) {
+            return node.getName();
+        }
+
+        @Override
+        public String visit(StringLiteral node, Void value) {
+            // TODO: proper quoting
+            return '"' + node.getName() + '"';
+        }
+
+        @Override
+        public String visit(Identifier node, Void value) {
+            return node.getName();
+        }
+
+        @Override
+        public String visit(PropertyAccessor node, Void value) {
+            String baseValue = node.getBase().accept(this, value);
+            return baseValue != null ? baseValue + '.' + node.getName() : null;
+        }
+    }
 }

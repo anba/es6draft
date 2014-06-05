@@ -113,8 +113,8 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
     }
 
     @Override
-    public String toSource() {
-        return "function BoundFunction() { /* native code */ }";
+    public String toSource(SourceSelector selector) {
+        return FunctionSource.nativeCode(selector, "BoundFunction");
     }
 
     /**
