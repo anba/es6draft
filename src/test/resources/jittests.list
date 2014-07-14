@@ -52,7 +52,7 @@ tests/generators/es6-syntax.js
 tests/arrays/sort-getter-only.js
 
 # invalid test, Array.of() creates properties with DefinePropertyOrThrow(), but Proxy defined in
-# the test case does return a positive success value from [[DefineOwnProperty]]
+# the test case does not return a positive success value from [[DefineOwnProperty]]
 tests/collections/Array-of-ordering.js
 
 # invalid test case (relies on order in which elements are visited in Array.prototype.sort)
@@ -200,12 +200,8 @@ tests/proxy/testDirectProxyKeys7.js
 tests/proxy/testDirectProxyKeys8.js
 tests/proxy/testDirectProxyKeys9.js
 
-# hasOwn trap has been removed
-tests/proxy/testDirectProxyHasOwn2.js
-tests/proxy/testDirectProxyHasOwn3.js
-tests/proxy/testDirectProxyHasOwn4.js
-tests/proxy/testDirectProxyHasOwn5.js
-tests/proxy/testDirectProxyHasOwn6.js
+# Proxy gets [[ClassName]] from target object in SM
+tests/basic/array-copyWithin.js
 
 
 ###############################################################

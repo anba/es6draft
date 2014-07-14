@@ -15,6 +15,9 @@ harmony/numeric-literals.js
 # - DataView is callable without `new`
 harmony/typedarrays.js
 
+# V8 does not implement %TypedArray% prototype object
+harmony/typed-array-iterator.js
+
 # invalid test `function f(x){function x(){}}` is valid syntax
 harmony/block-conflicts.js
 harmony/regress/regress-2243.js
@@ -156,6 +159,10 @@ string-oom-concat.js
 string-oom-replace-global-regexp-with-string.js
 string-oom-replace-regexp-global-with-function.js
 
+# .stack is an own accessor property on error objects in V8
+regress/regress-3404.js
+stack-traces-overflow.js
+
 
 ############################################
 # Unsupported built-in object functions    #
@@ -164,6 +171,7 @@ string-oom-replace-regexp-global-with-function.js
 # V8 StackTrace API
 regress/regress-2564.js
 regress/regress-conditional-position.js
+regress/regress-function-constructor-receiver.js
 stack-traces.js
 stack-traces-2.js
 stack-traces-custom-lazy.js

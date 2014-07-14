@@ -31,12 +31,16 @@ feature/StringExtras/FromCodePoint.js
 # Default parameter allowed in set accessor
 feature/DefaultParameters/Error_SetAccessor.js
 
+# Wrong Array subclass in test case (Traceur limitation)
+feature/ArrayExtras/From.js
+
 
 ############################################
 # Implementation specific differences      #
 ############################################
 
 # different error message
+feature/Classes/ExtendNonConstructableFunction.js
 feature/Yield/GeneratorSend.js
 feature/Yield/GeneratorThrow.js
 
@@ -65,10 +69,6 @@ feature/Destructuring/ForInLoop.js
 # (https://github.com/google/traceur-compiler/issues/840)
 feature/Destructuring/Empty.js
 feature/Destructuring/Rest.js
-
-# ... spread call without @@iterator, no implicit ToObject
-# (https://github.com/google/traceur-compiler/issues/1049)
-feature/TempVarTransformer/UseStrictDirective.js
 
 # Traceur does not support String.prototype.@@iterator
 feature/Spread/Type.js

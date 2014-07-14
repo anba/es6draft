@@ -43,6 +43,19 @@ ecma_6/Generators/syntax.js
 # String.fromCodePoint length changed to 1
 ecma_6/String/fromCodePoint.js
 
+# Boxing broken in strict mode accessor (Bug 603201, Bug 869098)
+ecma_6/Symbol/as-base-value.js
+
+# @@toPrimitive not supported in SM
+ecma_6/Symbol/conversions.js
+
+# Realm API not supported in SM
+ecma_6/Symbol/realms.js
+
+# lib/asserts.js: assertDeepEq() considers `{a: 1, b: 2}` and `{b: 2, a: 1}` as different objects...
+ecma_6/Symbol/property-basics.js
+ecma_6/Symbol/property-reflection.js
+
 
 ####################################
 # Intl only partially supported    #
@@ -110,6 +123,7 @@ ecma_5/String/split-xregexp.js
 js1_5/extensions/no-such-method.js
 js1_5/extensions/regress-429739.js
 js1_5/extensions/regress-564577.js
+js1_8_5/extensions/noSuchMethod-symbols.js
 
 # __iterator__ not supported
 js1_7/extensions/basic-for-each.js
@@ -122,8 +136,13 @@ js1_7/extensions/regress-354945-01.js
 js1_7/extensions/regress-354945-02.js
 js1_8/genexps/regress-380237-01.js
 
-# assertDeepEq() considers `{a: 1, b: 2}` and `{b: 2, a: 1}` as different objects...
+# invalid test, Array.prototype.fill() sets properties with Put(, throw=True), but Proxy defined in
+# the test case does not return a positive success value from [[Set]]
 ecma_6/Array/fill.js
+
+# invalid test, Array.from() creates properties with DefinePropertyOrThrow(), but Proxy defined in
+# the test case does not return a positive success value from [[DefineOwnProperty]]
+ecma_6/Array/from_proxy.js
 
 
 ############################################
@@ -230,6 +249,7 @@ js1_8_1/regress/regress-420399.js
 js1_8_1/regress/regress-452498-092.js
 js1_8_1/regress/regress-452498-185.js
 js1_8_1/regress/regress-452498-191.js
+js1_8_5/extensions/redeclaration-of-catch-warning.js
 js1_8_5/regress/regress-469758.js
 js1_8_5/regress/regress-619003-1.js
 js1_8_5/regress/regress-618572.js
