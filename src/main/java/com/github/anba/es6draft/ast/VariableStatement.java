@@ -24,12 +24,22 @@ public final class VariableStatement extends Statement {
         this.elements = elements;
     }
 
+    /**
+     * Returns the variable declaration elements.
+     * 
+     * @return the variable declarations
+     */
     public List<VariableDeclaration> getElements() {
         return elements;
     }
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

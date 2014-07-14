@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.compiler;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
@@ -21,9 +22,16 @@ final class FunctionDeclarationCollector extends DefaultNodeVisitor<Void, Boolea
     private FunctionDeclarationCollector() {
     }
 
-    static List<FunctionDeclaration> functionDeclarations(FunctionDefinition f) {
+    static List<FunctionDeclaration> functionDeclarations(FunctionNode f) {
+        List<StatementListItem> statements = f.getStatements();
+        if (statements == null) {
+            assert (f instanceof ArrowFunction && ((ArrowFunction) f).getExpression() != null)
+                    || (f instanceof AsyncArrowFunction && ((AsyncArrowFunction) f).getExpression() != null)
+                    || f instanceof GeneratorComprehension;
+            return Collections.emptyList();
+        }
         FunctionDeclarationCollector collector = new FunctionDeclarationCollector();
-        collector.forEach(f.getStatements(), Boolean.FALSE);
+        collector.forEach(statements, Boolean.FALSE);
         return collector.declarations;
     }
 

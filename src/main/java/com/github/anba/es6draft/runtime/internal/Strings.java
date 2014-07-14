@@ -119,6 +119,80 @@ public final class Strings {
         return new String(value);
     }
 
+    private static final char[] hexdigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            'a', 'b', 'c', 'd', 'e', 'f' };
+
+    /**
+     * Quotes the input string.
+     * 
+     * @param s
+     *            the string
+     * @return the quoted string
+     */
+    public static String quote(String s) {
+        for (int i = 0, length = s.length(); i < length; ++i) {
+            char c = s.charAt(i);
+            switch (c) {
+            case '"':
+            case '\\':
+            case '\b':
+            case '\f':
+            case '\n':
+            case '\r':
+            case '\t':
+                break;
+            default:
+                if (c < ' ' || c > 0xff) {
+                    break;
+                }
+                continue;
+            }
+            return quote(s, i);
+        }
+        return new StringBuilder(s.length() + 2).append('"').append(s).append('"').toString();
+    }
+
+    private static String quote(String s, int start) {
+        StringBuilder sb = new StringBuilder(s.length() + 5);
+        sb.append('"').append(s.substring(0, start));
+        for (int i = start, length = s.length(); i < length; ++i) {
+            char c = s.charAt(i);
+            switch (c) {
+            case '"':
+            case '\\':
+                sb.append('\\').append(c);
+                break;
+            case '\b':
+                sb.append('\\').append('b');
+                break;
+            case '\f':
+                sb.append('\\').append('f');
+                break;
+            case '\n':
+                sb.append('\\').append('n');
+                break;
+            case '\r':
+                sb.append('\\').append('r');
+                break;
+            case '\t':
+                sb.append('\\').append('t');
+                break;
+            default:
+                if (c < ' ' || c > 0xff) {
+                    sb.append('\\').append('u')//
+                            .append(hexdigits[(c >> 12) & 0xf])//
+                            .append(hexdigits[(c >> 8) & 0xf])//
+                            .append(hexdigits[(c >> 4) & 0xf])//
+                            .append(hexdigits[(c >> 0) & 0xf]);
+                } else {
+                    sb.append(c);
+                }
+            }
+        }
+        sb.append('"');
+        return sb.toString();
+    }
+
     /**
      * If {@code s} is an integer indexed property key less than {@code 0x7FFFFFF}, its integer
      * value is returned. Otherwise {@code -1} is returned.

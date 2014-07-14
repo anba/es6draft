@@ -91,7 +91,7 @@ final class RuntimeInfoGenerator {
         if (hasScopedName(node)) {
             functionFlags |= FunctionFlags.ScopedName.getValue();
         }
-        if (node.hasSuperReference()) {
+        if (node.getScope().hasSuperReference()) {
             functionFlags |= FunctionFlags.Super.getValue();
         }
         if (node.hasSyntheticNodes()) {

@@ -289,6 +289,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      */
     public static double GetValueFromBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type, boolean isLittleEndian) {
+        // TODO: invalid assertion when buffer is neutered (bug 3004)
         /* steps 1-2 */
         assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
         /* step 3 */
@@ -377,6 +378,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      */
     public static void SetValueInBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type, double value, boolean isLittleEndian) {
+        // TODO: invalid assertion when buffer is neutered (bug 3004)
         /* steps 1-2 */
         assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
         /* step 3 */
@@ -511,7 +513,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
          *            the function this-value
          * @param arg
          *            the argument object
-         * @return {@code true} if the argument is array buffer view object
+         * @return {@code true} if the argument is an array buffer view object
          */
         @Function(name = "isView", arity = 1)
         public static Object isView(ExecutionContext cx, Object thisValue, Object arg) {

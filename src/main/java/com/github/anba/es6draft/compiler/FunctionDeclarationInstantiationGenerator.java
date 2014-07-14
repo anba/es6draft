@@ -17,7 +17,15 @@ import java.util.Set;
 
 import org.objectweb.asm.Type;
 
-import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.BindingElement;
+import com.github.anba.es6draft.ast.BindingIdentifier;
+import com.github.anba.es6draft.ast.Declaration;
+import com.github.anba.es6draft.ast.FormalParameter;
+import com.github.anba.es6draft.ast.FormalParameterList;
+import com.github.anba.es6draft.ast.FunctionDeclaration;
+import com.github.anba.es6draft.ast.FunctionNode;
+import com.github.anba.es6draft.ast.StatementListItem;
+import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -172,8 +180,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         /* step 2 */
         boolean strict = IsStrict(function);
         boolean legacy = !strict && codegen.isEnabled(CompatibilityOption.FunctionPrototype);
-        boolean block = !strict && codegen.isEnabled(CompatibilityOption.BlockFunctionDeclaration)
-                && (function instanceof FunctionDefinition); // TODO: Arrow or generator functions?
+        boolean block = !strict && codegen.isEnabled(CompatibilityOption.BlockFunctionDeclaration);
         /* step 3 */
         FormalParameterList formals = function.getParameters();
         /* step 4 */
@@ -335,12 +342,11 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
 
         /* B.3.2  Web Legacy Compatibility for Block-Level Function Declarations */
-        BLOCK: if (block) {
-            assert function instanceof FunctionDefinition;
+        LEGACY_BLOCK: if (block) {
             // Find all function declarations
-            List<FunctionDeclaration> functions = functionDeclarations((FunctionDefinition) function);
+            List<FunctionDeclaration> functions = functionDeclarations(function);
             if (functions.isEmpty()) {
-                break BLOCK;
+                break LEGACY_BLOCK;
             }
 
             for (FunctionDeclaration f : functions) {

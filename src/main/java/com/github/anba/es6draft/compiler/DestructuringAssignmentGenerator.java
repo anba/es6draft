@@ -167,8 +167,8 @@ final class DestructuringAssignmentGenerator {
                 // stack: [obj, obj] -> [obj]
                 if (property.getPropertyName() == null) {
                     // AssignmentProperty : IdentifierReference Initializer{opt}
-                    assert property.getTarget() instanceof Identifier;
-                    String name = ((Identifier) property.getTarget()).getName();
+                    assert property.getTarget() instanceof IdentifierReference;
+                    String name = ((IdentifierReference) property.getTarget()).getName();
                     KeyedDestructuringAssignmentEvaluation(property, name);
                 } else {
                     // AssignmentProperty : PropertyName : AssignmentElement

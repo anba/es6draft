@@ -4,7 +4,9 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.ast;
+package com.github.anba.es6draft.ast.scope;
+
+import com.github.anba.es6draft.ast.Script;
 
 /**
  * Scope class for {@link Script} objects

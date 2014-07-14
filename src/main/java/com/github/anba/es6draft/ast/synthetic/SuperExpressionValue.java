@@ -9,6 +9,7 @@ package com.github.anba.es6draft.ast.synthetic;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.Expression;
+import com.github.anba.es6draft.ast.IntNodeVisitor;
 import com.github.anba.es6draft.ast.NodeVisitor;
 import com.github.anba.es6draft.ast.SuperExpression;
 
@@ -43,6 +44,11 @@ public final class SuperExpressionValue extends SuperExpression {
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

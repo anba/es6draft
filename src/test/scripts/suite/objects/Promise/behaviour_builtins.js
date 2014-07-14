@@ -20,14 +20,12 @@ const {
 } = Promises;
 
 // Test access to built-in functions:
-// - DeferredConstructionFunction
-// - ResolvePromiseFunction
-// - RejectPromiseFunction
-// - IdentityFunction
-// - ThrowerFunction
-// - PromiseAllCountdownFunction
+// - GetCapabilitiesExecutor Functions
+// - Promise Resolve Functions
+// - Promise Reject Functions
+// - Promise.all Resolve Element Functions
 
-// Access to 'DeferredConstructionFunction'
+// Access to 'GetCapabilitiesExecutor Functions'
 {
   function F(resolver) {
     Object.assign(this, {resolver});
@@ -38,7 +36,7 @@ const {
   assertNativeFunction(o.resolver, undefined, 2);
 }
 
-// Access to 'ResolvePromiseFunction' and 'RejectPromiseFunction'
+// Access to 'Promise Resolve Functions' and 'Promise Reject Functions'
 {
   let result = {};
   new Promise((resolve, reject) => {
@@ -48,7 +46,7 @@ const {
   assertNativeFunction(result.reject, undefined, 1);
 }
 
-// Access to 'ResolvePromiseFunction' and 'RejectPromiseFunction'
+// Access to 'Promise Resolve Functions' and 'Promise Reject Functions'
 {
   let stepCount = 0;
   let builtins = {
@@ -75,7 +73,7 @@ const {
           assertSame(reportFailure, reject);
           break;
         case 4:
-          // 'ResolvePromiseFunction' and 'RejectPromiseFunction'
+          // 'Promise Resolve Functions' and 'Promise Reject Functions'
           builtins.resolvePromise = fulfill;
           builtins.rejectPromise = reject;
           assertNativeFunction(fulfill, undefined, 1);
@@ -109,7 +107,7 @@ const {
   d.resolve(XPromise.resolve());
 }
 
-// Access to 'PromiseAllCountdownFunction'
+// Access to 'Promise.all Resolve Element Functions'
 {
   let allCountdownFunction;
   class P {

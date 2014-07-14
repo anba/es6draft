@@ -9,11 +9,11 @@ package com.github.anba.es6draft.compiler;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.BindingIdentifier;
-import com.github.anba.es6draft.ast.BlockScope;
-import com.github.anba.es6draft.ast.FunctionScope;
-import com.github.anba.es6draft.ast.Identifier;
-import com.github.anba.es6draft.ast.Scope;
-import com.github.anba.es6draft.ast.WithScope;
+import com.github.anba.es6draft.ast.IdentifierReference;
+import com.github.anba.es6draft.ast.scope.BlockScope;
+import com.github.anba.es6draft.ast.scope.FunctionScope;
+import com.github.anba.es6draft.ast.scope.Scope;
+import com.github.anba.es6draft.ast.scope.WithScope;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
@@ -47,7 +47,7 @@ final class IdentifierResolution {
                 Type.getMethodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
     }
 
-    ValType resolve(Identifier node, ExpressionVisitor mv) {
+    ValType resolve(IdentifierReference node, ExpressionVisitor mv) {
         mv.lineInfo(node);
         return resolve(node.getName(), mv);
     }
@@ -56,7 +56,7 @@ final class IdentifierResolution {
         return resolve(node.getName(), mv);
     }
 
-    ValType resolveValue(Identifier node, ExpressionVisitor mv) {
+    ValType resolveValue(IdentifierReference node, ExpressionVisitor mv) {
         mv.lineInfo(node);
         return resolveValue(node.getName(), mv);
     }

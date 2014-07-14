@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.scope.BlockScope;
 import com.github.anba.es6draft.runtime.internal.SmallArrayList;
 import com.github.anba.es6draft.runtime.modules.ExportEntry;
 import com.github.anba.es6draft.runtime.modules.ImportEntry;
@@ -463,7 +464,7 @@ public final class StaticSemantics {
      * @return {@code true} if node is an identifier
      */
     public static boolean IsIdentifierRef(LeftHandSideExpression node) {
-        return node instanceof Identifier && !node.isParenthesized();
+        return node instanceof IdentifierReference && !node.isParenthesized();
     }
 
     /**
@@ -550,8 +551,8 @@ public final class StaticSemantics {
      * @return {@code true} if the left-hand side expression is a simple assignment target
      */
     public static boolean IsValidSimpleAssignmentTarget(Expression lhs, boolean strict) {
-        if (lhs instanceof Identifier) {
-            String name = ((Identifier) lhs).getName();
+        if (lhs instanceof IdentifierReference) {
+            String name = ((IdentifierReference) lhs).getName();
             if (strict && ("eval".equals(name) || "arguments".equals(name))) {
                 return false;
             }

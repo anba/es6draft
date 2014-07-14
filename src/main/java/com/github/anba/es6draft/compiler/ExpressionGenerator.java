@@ -19,9 +19,12 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.scope.Scope;
+import com.github.anba.es6draft.ast.scope.TopLevelScope;
+import com.github.anba.es6draft.ast.scope.WithScope;
 import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
-import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
+import com.github.anba.es6draft.ast.synthetic.IdentifierReferenceValue;
 import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
 import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
@@ -371,10 +374,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         return type;
     }
 
-    private void GetValue(LeftHandSideExpression node, ValType type, ExpressionVisitor mv) {
+    private ValType GetValue(LeftHandSideExpression node, ValType type, ExpressionVisitor mv) {
         assert type == ValType.Reference : "type is not reference: " + type;
         mv.loadExecutionContext();
         mv.invoke(Methods.Reference_getValue);
+        return ValType.Any;
     }
 
     private void PutValue(LeftHandSideExpression node, ValType type, ExpressionVisitor mv) {
@@ -401,7 +405,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     private static boolean isPropertyReference(Expression base, ValType type) {
-        return type == ValType.Reference && !(base instanceof Identifier);
+        return type == ValType.Reference && !(base instanceof IdentifierReference);
     }
 
     private static boolean isEnclosedByWithStatement(String name, ExpressionVisitor mv) {
@@ -473,7 +477,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      * @param mv
      *            the expression visitor
      */
-    private void EvaluateCall(Expression call, Expression base, ValType type,
+    private ValType EvaluateCall(Expression call, Expression base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
         if (type == ValType.Reference) {
             assert base instanceof LeftHandSideExpression;
@@ -481,7 +485,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             if (isPropertyReference(lhs, type)) {
                 EvaluateCallPropRef(call, lhs, type, arguments, mv);
             } else {
-                Identifier ident = (Identifier) base;
+                IdentifierReference ident = (IdentifierReference) base;
                 if (isEnclosedByWithStatement(ident.getName(), mv)) {
                     EvaluateCallWithIdentRef(call, ident, type, arguments, directEval, mv);
                 } else {
@@ -491,6 +495,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         } else {
             EvaluateCallWithValue(call, base, type, arguments, mv);
         }
+        return ValType.Any;
     }
 
     /**
@@ -607,7 +612,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      * @param mv
      *            the expression visitor
      */
-    private void EvaluateCallIdentRef(Expression call, Identifier base, ValType type,
+    private void EvaluateCallIdentRef(Expression call, IdentifierReference base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
         assert type == ValType.Reference;
 
@@ -664,7 +669,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      * @param mv
      *            the expression visitor
      */
-    private void EvaluateCallWithIdentRef(Expression call, Identifier base, ValType type,
+    private void EvaluateCallWithIdentRef(Expression call, IdentifierReference base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
         assert type == ValType.Reference;
 
@@ -1103,7 +1108,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 ValType rtype = evalAndGetValue(right, mv);
 
                 if (IsAnonymousFunctionDefinition(right) && IsIdentifierRef(left)) {
-                    SetFunctionName(right, ((Identifier) left).getName(), mv);
+                    SetFunctionName(right, ((IdentifierReference) left).getName(), mv);
                 }
 
                 // lref rval
@@ -1119,15 +1124,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 // 12.6 Multiplicative Operators
                 ValType ltype = left.accept(this, mv);
                 mv.dup();
-                GetValue(left, ltype, mv);
+                ValType vtype = GetValue(left, ltype, mv);
                 // lref lval
                 if (right instanceof Literal) {
-                    ToNumber(ltype, mv);
+                    ToNumber(vtype, mv);
                 }
                 ValType rtype = evalAndGetValue(right, mv);
                 if (!(right instanceof Literal)) {
                     mv.swap(ltype, rtype);
-                    ToNumber(ltype, mv);
+                    ToNumber(vtype, mv);
                     mv.swap(rtype, ValType.Number);
                 }
                 ToNumber(rtype, mv);
@@ -1143,15 +1148,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 // 12.6 Multiplicative Operators
                 ValType ltype = left.accept(this, mv);
                 mv.dup();
-                GetValue(left, ltype, mv);
+                ValType vtype = GetValue(left, ltype, mv);
                 // lref lval
                 if (right instanceof Literal) {
-                    ToNumber(ltype, mv);
+                    ToNumber(vtype, mv);
                 }
                 ValType rtype = evalAndGetValue(right, mv);
                 if (!(right instanceof Literal)) {
                     mv.swap(ltype, rtype);
-                    ToNumber(ltype, mv);
+                    ToNumber(vtype, mv);
                     mv.swap(rtype, ValType.Number);
                 }
                 ToNumber(rtype, mv);
@@ -1167,15 +1172,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 // 12.6 Multiplicative Operators
                 ValType ltype = left.accept(this, mv);
                 mv.dup();
-                GetValue(left, ltype, mv);
+                ValType vtype = GetValue(left, ltype, mv);
                 // lref lval
                 if (right instanceof Literal) {
-                    ToNumber(ltype, mv);
+                    ToNumber(vtype, mv);
                 }
                 ValType rtype = evalAndGetValue(right, mv);
                 if (!(right instanceof Literal)) {
                     mv.swap(ltype, rtype);
-                    ToNumber(ltype, mv);
+                    ToNumber(vtype, mv);
                     mv.swap(rtype, ValType.Number);
                 }
                 ToNumber(rtype, mv);
@@ -1189,18 +1194,20 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             }
             case ASSIGN_ADD: {
                 // 12.7.1 The Addition operator ( + )
-                if (right instanceof StringLiteral) {
+                if (right instanceof StringLiteral || right instanceof TemplateLiteral) {
+                    assert !(right instanceof TemplateLiteral && ((TemplateLiteral) right)
+                            .isTagged());
                     // x += "..."
                     ValType ltype = left.accept(this, mv);
                     mv.dup();
-                    GetValue(left, ltype, mv);
-                    ToPrimitive(ltype, mv);
-                    ToString(ltype, mv);
+                    ValType vtype = GetValue(left, ltype, mv);
+                    vtype = ToPrimitive(vtype, mv);
+                    ToString(vtype, mv);
                     // lref lval(string)
-                    if (!((StringLiteral) right).getValue().isEmpty()) {
-                        right.accept(this, mv);
-                        mv.loadExecutionContext();
-                        mv.invoke(Methods.ScriptRuntime_add_str);
+                    if (!(right instanceof StringLiteral && ((StringLiteral) right).getValue()
+                            .isEmpty())) {
+                        ValType rtype = right.accept(this, mv);
+                        addStrings(ValType.String, rtype, mv);
                     }
                     // r lref r
                     mv.dupX1();
@@ -1226,15 +1233,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 // 12.7.2 The Subtraction Operator ( - )
                 ValType ltype = left.accept(this, mv);
                 mv.dup();
-                GetValue(left, ltype, mv);
+                ValType vtype = GetValue(left, ltype, mv);
                 // lref lval
                 if (right instanceof Literal) {
-                    ToNumber(ltype, mv);
+                    ToNumber(vtype, mv);
                 }
                 ValType rtype = evalAndGetValue(right, mv);
                 if (!(right instanceof Literal)) {
                     mv.swap(ltype, rtype);
-                    ToNumber(ltype, mv);
+                    ToNumber(vtype, mv);
                     mv.swap(rtype, ValType.Number);
                 }
                 ToNumber(rtype, mv);
@@ -1250,15 +1257,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 // 12.8.1 The Left Shift Operator ( << )
                 ValType ltype = left.accept(this, mv);
                 mv.dup();
-                GetValue(left, ltype, mv);
+                ValType vtype = GetValue(left, ltype, mv);
                 // lref lval
                 if (right instanceof Literal) {
-                    ToInt32(ltype, mv);
+                    ToInt32(vtype, mv);
                 }
                 ValType rtype = evalAndGetValue(right, mv);
                 if (!(right instanceof Literal)) {
                     mv.swap(ltype, rtype);
-                    ToInt32(ltype, mv);
+                    ToInt32(vtype, mv);
                     mv.swap(rtype, ValType.Number_int);
                 }
                 ToInt32(rtype, mv); // ToUint32()
@@ -1276,15 +1283,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 // 12.8.2 The Signed Right Shift Operator ( >> )
                 ValType ltype = left.accept(this, mv);
                 mv.dup();
-                GetValue(left, ltype, mv);
+                ValType vtype = GetValue(left, ltype, mv);
                 // lref lval
                 if (right instanceof Literal) {
-                    ToInt32(ltype, mv);
+                    ToInt32(vtype, mv);
                 }
                 ValType rtype = evalAndGetValue(right, mv);
                 if (!(right instanceof Literal)) {
                     mv.swap(ltype, rtype);
-                    ToInt32(ltype, mv);
+                    ToInt32(vtype, mv);
                     mv.swap(rtype, ValType.Number_int);
                 }
                 ToInt32(rtype, mv); // ToUint32()
@@ -1302,15 +1309,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 // 12.8.3 The Unsigned Right Shift Operator ( >>> )
                 ValType ltype = left.accept(this, mv);
                 mv.dup();
-                GetValue(left, ltype, mv);
+                ValType vtype = GetValue(left, ltype, mv);
                 // lref lval
                 if (right instanceof Literal) {
-                    ToUint32(ltype, mv);
+                    ToUint32(vtype, mv);
                 }
                 ValType rtype = evalAndGetValue(right, mv);
                 if (!(right instanceof Literal)) {
                     mv.swap(ltype, rtype);
-                    ToUint32(ltype, mv);
+                    ToUint32(vtype, mv);
                     mv.swap(rtype, ValType.Number_uint);
                 }
                 ToInt32(rtype, mv); // ToUint32()
@@ -1328,15 +1335,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 // 12.11 Binary Bitwise Operators ( & )
                 ValType ltype = left.accept(this, mv);
                 mv.dup();
-                GetValue(left, ltype, mv);
+                ValType vtype = GetValue(left, ltype, mv);
                 // lref lval
                 if (right instanceof Literal) {
-                    ToInt32(ltype, mv);
+                    ToInt32(vtype, mv);
                 }
                 ValType rtype = evalAndGetValue(right, mv);
                 if (!(right instanceof Literal)) {
                     mv.swap(ltype, rtype);
-                    ToInt32(ltype, mv);
+                    ToInt32(vtype, mv);
                     mv.swap(rtype, ValType.Number_int);
                 }
                 ToInt32(rtype, mv); // ToUint32()
@@ -1352,15 +1359,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 // 12.11 Binary Bitwise Operators ( ^ )
                 ValType ltype = left.accept(this, mv);
                 mv.dup();
-                GetValue(left, ltype, mv);
+                ValType vtype = GetValue(left, ltype, mv);
                 // lref lval
                 if (right instanceof Literal) {
-                    ToInt32(ltype, mv);
+                    ToInt32(vtype, mv);
                 }
                 ValType rtype = evalAndGetValue(right, mv);
                 if (!(right instanceof Literal)) {
                     mv.swap(ltype, rtype);
-                    ToInt32(ltype, mv);
+                    ToInt32(vtype, mv);
                     mv.swap(rtype, ValType.Number_int);
                 }
                 ToInt32(rtype, mv); // ToUint32()
@@ -1376,15 +1383,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 // 12.11 Binary Bitwise Operators ( | )
                 ValType ltype = left.accept(this, mv);
                 mv.dup();
-                GetValue(left, ltype, mv);
+                ValType vtype = GetValue(left, ltype, mv);
                 // lref lval
                 if (right instanceof Literal) {
-                    ToInt32(ltype, mv);
+                    ToInt32(vtype, mv);
                 }
                 ValType rtype = evalAndGetValue(right, mv);
                 if (!(right instanceof Literal)) {
                     mv.swap(ltype, rtype);
-                    ToInt32(ltype, mv);
+                    ToInt32(vtype, mv);
                     mv.swap(rtype, ValType.Number_int);
                 }
                 ToInt32(rtype, mv); // ToUint32()
@@ -1516,35 +1523,25 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             if (left instanceof StringLiteral) {
                 if (((StringLiteral) left).getValue().isEmpty()) {
                     // "" + x
-                    ValType rtype = evalAndGetValue(right, mv);
-                    rtype = ToPrimitive(rtype, mv);
-                    ToString(rtype, mv);
-                } else {
-                    // "..." + x
-                    left.accept(this, mv);
-                    ValType rtype = evalAndGetValue(right, mv);
-                    rtype = ToPrimitive(rtype, mv);
-                    ToString(rtype, mv);
-                    mv.loadExecutionContext();
-                    mv.invoke(Methods.ScriptRuntime_add_str);
+                    return evalToString(right, mv);
                 }
-                return ValType.String;
+                // "..." + x
+                return addStringLeft(left, right, mv);
             } else if (right instanceof StringLiteral) {
                 if (((StringLiteral) right).getValue().isEmpty()) {
                     // x + ""
-                    ValType ltype = evalAndGetValue(left, mv);
-                    ltype = ToPrimitive(ltype, mv);
-                    ToString(ltype, mv);
-                } else {
-                    // x + "..."
-                    ValType ltype = evalAndGetValue(left, mv);
-                    ltype = ToPrimitive(ltype, mv);
-                    ToString(ltype, mv);
-                    right.accept(this, mv);
-                    mv.loadExecutionContext();
-                    mv.invoke(Methods.ScriptRuntime_add_str);
+                    return evalToString(left, mv);
                 }
-                return ValType.String;
+                // x + "..."
+                return addStringRight(left, right, mv);
+            } else if (left instanceof TemplateLiteral) {
+                // `...` + x
+                assert !((TemplateLiteral) left).isTagged();
+                return addStringLeft(left, right, mv);
+            } else if (right instanceof TemplateLiteral) {
+                // x + `...`
+                assert !((TemplateLiteral) right).isTagged();
+                return addStringRight(left, right, mv);
             }
 
             ValType ltype = evalAndGetValue(left, mv);
@@ -1843,6 +1840,32 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         }
     }
 
+    private ValType evalToString(Expression node, ExpressionVisitor mv) {
+        ValType type = evalAndGetValue(node, mv);
+        type = ToPrimitive(type, mv);
+        ToString(type, mv);
+        return ValType.String;
+    }
+
+    private ValType addStringLeft(Expression left, Expression right, ExpressionVisitor mv) {
+        ValType ltype = left.accept(this, mv);
+        ValType rtype = evalToString(right, mv);
+        return addStrings(ltype, rtype, mv);
+    }
+
+    private ValType addStringRight(Expression left, Expression right, ExpressionVisitor mv) {
+        ValType ltype = evalToString(left, mv);
+        ValType rtype = right.accept(this, mv);
+        return addStrings(ltype, rtype, mv);
+    }
+
+    private ValType addStrings(ValType left, ValType right, ExpressionVisitor mv) {
+        assert left == ValType.String && right == ValType.String;
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_add_str);
+        return ValType.String;
+    }
+
     /**
      * 12.2.3.1 Runtime Semantics: Evaluation
      */
@@ -1862,11 +1885,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.toBoxed(type);
 
         // direct call to eval?
-        boolean directEval = (node.getBase() instanceof Identifier && "eval"
-                .equals(((Identifier) node.getBase()).getName()));
-        EvaluateCall(node, node.getBase(), type, node.getArguments(), directEval, mv);
-
-        return ValType.Any;
+        boolean directEval = (node.getBase() instanceof IdentifierReference && "eval"
+                .equals(((IdentifierReference) node.getBase()).getName()));
+        return EvaluateCall(node, node.getBase(), type, node.getArguments(), directEval, mv);
     }
 
     /**
@@ -1887,7 +1908,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     @Override
     public ValType visit(ClassExpression node, ExpressionVisitor mv) {
         /* steps 1-2 */
-        String className = (node.getName() != null ? node.getName().getName() : null);
+        String className = node.getName() != null ? node.getName().getName() : null;
         /* steps 3-4 */
         ClassDefinitionEvaluation(node, className, mv);
         /* step 5 */
@@ -2109,7 +2130,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      * 12.2.2.1 Runtime Semantics: Evaluation
      */
     @Override
-    public ValType visit(Identifier node, ExpressionVisitor mv) {
+    public ValType visit(IdentifierReference node, ExpressionVisitor mv) {
         /* steps 1-2 */
         return identifierResolution.resolve(node, mv);
     }
@@ -2118,7 +2139,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      * 12.2.2.1 Runtime Semantics: Evaluation
      */
     @Override
-    public ValType visit(IdentifierValue node, ExpressionVisitor mv) {
+    public ValType visit(IdentifierReferenceValue node, ExpressionVisitor mv) {
         /* steps 1-2 */
         return identifierResolution.resolveValue(node, mv);
     }
@@ -2337,9 +2358,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 
-            EvaluateCall(node, node, ValType.Reference, node.getArguments(), false, mv);
-
-            return ValType.Any;
+            return EvaluateCall(node, node, ValType.Reference, node.getArguments(), false, mv);
         }
         case NewExpression: {
             mv.loadExecutionContext();
@@ -2366,9 +2385,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeStringSuperReference);
 
-            GetValue(node, ValType.Reference, mv);
-
-            return ValType.Any;
+            return GetValue(node, ValType.Reference, mv);
         }
         case ElementAccessor: {
             mv.loadExecutionContext();
@@ -2377,9 +2394,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 
-            GetValue(node, ValType.Reference, mv);
-
-            return ValType.Any;
+            return GetValue(node, ValType.Reference, mv);
         }
         case CallExpression: {
             mv.loadExecutionContext();
@@ -2387,9 +2402,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 
-            EvaluateCall(node, node, ValType.Reference, node.getArguments(), false, mv);
-
-            return ValType.Any;
+            return EvaluateCall(node, node, ValType.Reference, node.getArguments(), false, mv);
         }
         case NewExpression: {
             mv.loadExecutionContext();
@@ -2397,9 +2410,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 
-            GetValue(node, ValType.Reference, mv);
-
-            return ValType.Any;
+            return GetValue(node, ValType.Reference, mv);
         }
         default:
             throw new IllegalStateException();
@@ -2418,7 +2429,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         // 12.2.9.2.3 Runtime Semantics: SubstitutionEvaluation
         TemplateLiteral template = node.getTemplate();
         List<Expression> substitutions = Substitutions(template);
-        List<Expression> arguments = new ArrayList<>(substitutions.size() + 1);
+        ArrayList<Expression> arguments = new ArrayList<>(substitutions.size() + 1);
         arguments.add(template);
         arguments.addAll(substitutions);
 
@@ -2426,9 +2437,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         ValType type = node.getBase().accept(this, mv);
         mv.toBoxed(type);
         /* steps 2-4 */
-        EvaluateCall(node, node.getBase(), type, arguments, false, mv);
-
-        return ValType.Any;
+        return EvaluateCall(node, node.getBase(), type, arguments, false, mv);
     }
 
     /**
@@ -2504,8 +2513,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             LeftHandSideExpression expr = (LeftHandSideExpression) node.getOperand();
             ValType type = expr.accept(this, mv);
             mv.dup();
-            GetValue(expr, type, mv);
-            ToNumber(type, mv);
+            ValType vtype = GetValue(expr, type, mv);
+            ToNumber(vtype, mv);
             mv.dupX(type, ValType.Number);
             mv.dconst(1d);
             mv.add(Type.DOUBLE_TYPE);
@@ -2519,8 +2528,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             LeftHandSideExpression expr = (LeftHandSideExpression) node.getOperand();
             ValType type = expr.accept(this, mv);
             mv.dup();
-            GetValue(expr, type, mv);
-            ToNumber(type, mv);
+            ValType vtype = GetValue(expr, type, mv);
+            ToNumber(vtype, mv);
             mv.dupX(type, ValType.Number);
             mv.dconst(1d);
             mv.sub(Type.DOUBLE_TYPE);
@@ -2569,8 +2578,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             LeftHandSideExpression expr = (LeftHandSideExpression) node.getOperand();
             ValType type = expr.accept(this, mv);
             mv.dup();
-            GetValue(expr, type, mv);
-            ToNumber(type, mv);
+            ValType vtype = GetValue(expr, type, mv);
+            ToNumber(vtype, mv);
             mv.dconst(1d);
             mv.add(Type.DOUBLE_TYPE);
             mv.dupX(type, ValType.Number);
@@ -2584,8 +2593,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             LeftHandSideExpression expr = (LeftHandSideExpression) node.getOperand();
             ValType type = expr.accept(this, mv);
             mv.dup();
-            GetValue(expr, type, mv);
-            ToNumber(type, mv);
+            ValType vtype = GetValue(expr, type, mv);
+            ToNumber(vtype, mv);
             mv.dconst(1d);
             mv.sub(Type.DOUBLE_TYPE);
             mv.dupX(type, ValType.Number);

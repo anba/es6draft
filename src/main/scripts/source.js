@@ -18,18 +18,16 @@ const {
 
 const {
   getOwnPropertyDescriptor: Object_getOwnPropertyDescriptor,
-  keys: Object_keys,
+  getOwnPropertyNames: Object_getOwnPropertyNames,
+  getOwnPropertySymbols: Object_getOwnPropertySymbols,
   prototype: {
     hasOwnProperty: Object_prototype_hasOwnProperty
   }
 } = Object;
 
 const {
-  isArray: Array_isArray,
-  prototype: {
-    join: Array_prototype_join
-  }
-} = Array;
+  join: Array_prototype_join
+} = Array.prototype;
 
 const {
   toString: Boolean_prototype_toString
@@ -61,8 +59,12 @@ const {
 } = String.prototype;
 
 const {
-  toString: Symbol_prototype_toString
-} = Symbol.prototype;
+  keyFor: Symbol_keyFor,
+  prototype: {
+    toString: Symbol_prototype_toString,
+    valueOf: Symbol_prototype_valueOf,
+  }
+} = Symbol;
 
 const {
   add: WeakSet_prototype_add,
@@ -102,9 +104,32 @@ function Quote(s, qc = '"') {
   return qc + r + qc;
 }
 
+function SymbolToSource(sym) {
+  // Well-known symbols
+  if (sym === Symbol.create) return "Symbol.create";
+  if (sym === Symbol.hasInstance) return "Symbol.hasInstance";
+  if (sym === Symbol.isConcatSpreadable) return "Symbol.isConcatSpreadable";
+  if (sym === Symbol.isRegExp) return "Symbol.isRegExp";
+  if (sym === Symbol.iterator) return "Symbol.iterator";
+  if (sym === Symbol.toPrimitive) return "Symbol.toPrimitive";
+  if (sym === Symbol.toStringTag) return "Symbol.toStringTag";
+  if (sym === Symbol.unscopables) return "Symbol.unscopables";
+  // Registered symbols
+  let key = Symbol_keyFor(sym);
+  if (key !== void 0) {
+    return `Symbol.for(${Quote(key)})`;
+  }
+  // Other symbols
+  let desc = %SymbolDescription(sym);
+  if (desc === void 0) {
+    return "Symbol()";
+  }
+  return `Symbol(${Quote(desc)})`;
+}
+
 const ASCII_Ident = /^[_$a-zA-Z][_$a-zA-Z0-9]*$/;
 const functionSource = /^\(?function /;
-const accessorSource = /^(?:get|set) [_$a-zA-Z][_$a-zA-Z0-9]*/;
+const accessorSource = /^(?:get|set) [_$a-zA-Z0-9]+/;
 
 function toAccessorFunctionString(source) {
   if (%RegExpTest(functionSource, source)) {
@@ -123,6 +148,9 @@ function IsInt32(name) {
 }
 
 function ToPropertyName(name) {
+  if (typeof name === 'symbol') {
+    return `[${SymbolToSource(name)}]`;
+  }
   if (%RegExpTest(ASCII_Ident, name) || IsInt32(name)) {
     return name;
   }
@@ -139,7 +167,7 @@ function ToSource(o) {
     case 'string':
       return Quote(o);
     case 'symbol':
-      return %CallFunction(Symbol_prototype_toString, o);
+      return SymbolToSource(o);
     case 'function':
     case 'object':
       if (o !== null) {
@@ -164,37 +192,39 @@ function ObjectToSource(o) {
   depth += 1;
   try {
     var s = "";
-    var names = Object_keys(obj);
-    for (var i = 0, len = names.length; i < len; ++i) {
-      var name = names[i];
-      var desc = Object_getOwnPropertyDescriptor(obj, name);
-      if (desc == null) {
-        // ignore removed properties
-        continue;
-      }
-      if (s.length) {
-        s += ", ";
-      }
-      if ('value' in desc) {
-        s += `${ToPropertyName(name)}:${ToSource(desc.value)}`;
-      } else {
-        if (desc.get !== void 0) {
-          let getterSource = ToSource(desc.get);
-          let accessorSource = toAccessorFunctionString(getterSource);
-          if (accessorSource) {
-            s += `get ${ToPropertyName(name)} ${accessorSource}`;
-          } else {
-            s += `${ToPropertyName(name)}:${getterSource}`;
-          }
-          if (desc.set !== void 0) s += ", ";
+    for (var i = 0; i < 2; ++i) {
+      var names = (i === 0 ? Object_getOwnPropertyNames : Object_getOwnPropertySymbols)(obj);
+      for (var j = 0, len = names.length; j < len; ++j) {
+        var name = names[j];
+        var desc = Object_getOwnPropertyDescriptor(obj, name);
+        if (desc == null || !desc.enumerable) {
+          // ignore removed or non-enumerable properties
+          continue;
         }
-        if (desc.set !== void 0) {
-          let setterSource = ToSource(desc.set);
-          let accessorSource = toAccessorFunctionString(setterSource);
-          if (accessorSource) {
-            s += `set ${ToPropertyName(name)} ${accessorSource}`;
-          } else {
-            s += `${ToPropertyName(name)}:${setterSource}`;
+        if (s.length) {
+          s += ", ";
+        }
+        if ('value' in desc) {
+          s += `${ToPropertyName(name)}:${ToSource(desc.value)}`;
+        } else {
+          if (desc.get !== void 0) {
+            let getterSource = ToSource(desc.get);
+            let accessorSource = toAccessorFunctionString(getterSource);
+            if (accessorSource) {
+              s += `get ${ToPropertyName(name)} ${accessorSource}`;
+            } else {
+              s += `${ToPropertyName(name)}:${getterSource}`;
+            }
+            if (desc.set !== void 0) s += ", ";
+          }
+          if (desc.set !== void 0) {
+            let setterSource = ToSource(desc.set);
+            let accessorSource = toAccessorFunctionString(setterSource);
+            if (accessorSource) {
+              s += `set ${ToPropertyName(name)} ${accessorSource}`;
+            } else {
+              s += `${ToPropertyName(name)}:${setterSource}`;
+            }
           }
         }
       }
@@ -262,7 +292,7 @@ Object.defineProperty(Object.assign(Function.prototype, {
 
 Object.defineProperty(Object.assign(Array.prototype, {
   toSource() {
-    if (!Array_isArray(this)) throw TypeError();
+    if (!(typeof this == 'function' || typeof this == 'object' && this !== null)) throw TypeError();
     if (%CallFunction(WeakSet_prototype_has, weakset, this)) {
       return "[]";
     }
@@ -338,6 +368,12 @@ Object.defineProperty(Object.assign(JSON, {
 Object.defineProperty(Object.assign(Intl, {
   toSource() {
     return "Intl";
+  }
+}), "toSource", {enumerable: false});
+
+Object.defineProperty(Object.assign(Symbol.prototype, {
+  toSource() {
+    return SymbolToSource(%CallFunction(Symbol_prototype_valueOf, this));
   }
 }), "toSource", {enumerable: false});
 

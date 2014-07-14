@@ -9,6 +9,7 @@ package com.github.anba.es6draft.ast;
 import java.util.EnumSet;
 import java.util.List;
 
+import com.github.anba.es6draft.ast.scope.ModuleScope;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 
@@ -74,6 +75,11 @@ public final class Module extends AstNode implements TopLevelNode<ModuleItem>, S
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

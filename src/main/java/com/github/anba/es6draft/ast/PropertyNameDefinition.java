@@ -14,20 +14,26 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class PropertyNameDefinition extends PropertyDefinition {
-    private final Identifier propertyName;
+    private final IdentifierReference propertyName;
 
-    public PropertyNameDefinition(long beginPosition, long endPosition, Identifier propertyName) {
+    public PropertyNameDefinition(long beginPosition, long endPosition,
+            IdentifierReference propertyName) {
         super(beginPosition, endPosition);
         this.propertyName = propertyName;
     }
 
     @Override
-    public Identifier getPropertyName() {
+    public IdentifierReference getPropertyName() {
         return propertyName;
     }
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

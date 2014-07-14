@@ -8,7 +8,7 @@ package com.github.anba.es6draft.ast;
 
 import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
-import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
+import com.github.anba.es6draft.ast.synthetic.IdentifierReferenceValue;
 import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
@@ -132,9 +132,11 @@ public interface NodeVisitor<R, V> {
 
     R visit(GuardedCatchNode node, V value);
 
-    R visit(Identifier node, V value);
+    R visit(IdentifierName node, V value);
 
-    R visit(IdentifierValue node, V value);
+    R visit(IdentifierReference node, V value);
+
+    R visit(IdentifierReferenceValue node, V value);
 
     R visit(IfStatement node, V value);
 

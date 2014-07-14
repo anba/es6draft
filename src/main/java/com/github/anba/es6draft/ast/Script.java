@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
 
+import com.github.anba.es6draft.ast.scope.ScriptScope;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 
@@ -110,6 +111,11 @@ public final class Script extends AstNode implements TopLevelNode<StatementListI
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

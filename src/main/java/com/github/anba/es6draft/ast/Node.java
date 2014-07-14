@@ -66,4 +66,6 @@ public interface Node {
      * @return the return value from the visitor
      */
     <R, V> R accept(NodeVisitor<R, V> visitor, V value);
+
+    <V> int accept(IntNodeVisitor<V> visitor, V value);
 }

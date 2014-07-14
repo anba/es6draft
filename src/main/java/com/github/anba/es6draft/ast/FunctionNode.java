@@ -8,6 +8,8 @@ package com.github.anba.es6draft.ast;
 
 import java.util.List;
 
+import com.github.anba.es6draft.ast.scope.FunctionScope;
+
 /**
  * <h1>14 ECMAScript Language: Functions and Classes</h1>
  */
@@ -26,6 +28,14 @@ public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNod
      * @return the method name
      */
     String getMethodName();
+
+    /**
+     * Sets the method name for compilation.
+     * 
+     * @param methodName
+     *            the method name
+     */
+    void setMethodName(String methodName);
 
     /**
      * Returns the function name.
@@ -107,11 +117,4 @@ public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNod
      * @return <code>true</code> if this node is an async function
      */
     boolean isAsync();
-
-    /**
-     * Returns <code>true</code> if the <code>"super"</code> keyword is used within this function.
-     * 
-     * @return <code>true</code> if <code>"super"</code> reference is present
-     */
-    boolean hasSuperReference();
 }

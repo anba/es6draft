@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.ast.scope.WithScope;
+
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
@@ -30,16 +32,31 @@ public final class WithStatement extends Statement implements ScopedNode {
         return scope;
     }
 
+    /**
+     * Returns the <tt>with</tt>-statement's expression node.
+     * 
+     * @return the expression node
+     */
     public Expression getExpression() {
         return expression;
     }
 
+    /**
+     * Returns the <tt>with</tt>-statement's statement node.
+     * 
+     * @return the statement node
+     */
     public Statement getStatement() {
         return statement;
     }
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

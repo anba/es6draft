@@ -21,6 +21,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.NativeConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.NativeTailCallFunction;
 
@@ -88,7 +89,7 @@ public final class Bootstrap {
     private static final MethodHandle callSetupMH;
     private static final MethodHandle callGenericMH;
     private static final MethodHandle testFunctionObjectMH, testNativeFunctionMH,
-            testNativeTailCallFunctionMH;
+            testNativeTailCallFunctionMH, testNativeConstructorMH;
 
     static {
         MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
@@ -97,6 +98,8 @@ public final class Bootstrap {
         testNativeFunctionMH = lookup.findStatic("testNativeFunction",
                 MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
         testNativeTailCallFunctionMH = lookup.findStatic("testNativeTailCallFunction",
+                MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
+        testNativeConstructorMH = lookup.findStatic("testNativeConstructor",
                 MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
         callGenericMH = lookup.findStatic("callGeneric", MethodType.methodType(Object.class,
                 Callable.class, ExecutionContext.class, Object.class, Object[].class));
@@ -121,6 +124,10 @@ public final class Bootstrap {
             MethodHandle mh = ((NativeTailCallFunction) function).getCallMethod();
             test = MethodHandles.insertArguments(testNativeTailCallFunctionMH, 1, mh);
             target = MethodHandles.dropArguments(mh, 0, Callable.class);
+        } else if (function instanceof NativeConstructor) {
+            MethodHandle mh = ((NativeConstructor) function).getCallMethod();
+            test = MethodHandles.insertArguments(testNativeConstructorMH, 1, mh);
+            target = MethodHandles.dropArguments(mh, 0, Callable.class, ExecutionContext.class);
         } else {
             target = test = null;
         }
@@ -143,6 +150,12 @@ public final class Bootstrap {
     private static boolean testNativeTailCallFunction(Callable function, MethodHandle callMethod) {
         return function instanceof NativeTailCallFunction
                 && ((NativeTailCallFunction) function).getCallMethod() == callMethod;
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testNativeConstructor(Callable function, MethodHandle callMethod) {
+        return function instanceof NativeConstructor
+                && ((NativeConstructor) function).getCallMethod() == callMethod;
     }
 
     @SuppressWarnings("unused")

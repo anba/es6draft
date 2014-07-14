@@ -8,6 +8,8 @@ package com.github.anba.es6draft.ast;
 
 import java.util.List;
 
+import com.github.anba.es6draft.ast.scope.FunctionScope;
+
 /**
  * <h1>14 ECMAScript Language: Functions and Classes</h1>
  * <ul>
@@ -19,7 +21,6 @@ public final class FunctionDeclaration extends Declaration implements FunctionDe
     private final BindingIdentifier identifier;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
-    private final boolean superReference;
     private final String headerSource, bodySource;
     private StrictMode strictMode;
     private boolean syntheticNodes;
@@ -27,14 +28,12 @@ public final class FunctionDeclaration extends Declaration implements FunctionDe
 
     public FunctionDeclaration(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
-            List<StatementListItem> statements, boolean superReference, String headerSource,
-            String bodySource) {
+            List<StatementListItem> statements, String headerSource, String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
         this.parameters = parameters;
         this.statements = statements;
-        this.superReference = superReference;
         this.headerSource = headerSource;
         this.bodySource = bodySource;
     }
@@ -52,6 +51,11 @@ public final class FunctionDeclaration extends Declaration implements FunctionDe
     @Override
     public String getMethodName() {
         return getFunctionName();
+    }
+
+    @Override
+    public void setMethodName(String methodName) {
+        throw new AssertionError();
     }
 
     @Override
@@ -115,11 +119,6 @@ public final class FunctionDeclaration extends Declaration implements FunctionDe
     }
 
     @Override
-    public boolean hasSuperReference() {
-        return superReference;
-    }
-
-    @Override
     public boolean isConstDeclaration() {
         return false;
     }
@@ -144,6 +143,11 @@ public final class FunctionDeclaration extends Declaration implements FunctionDe
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

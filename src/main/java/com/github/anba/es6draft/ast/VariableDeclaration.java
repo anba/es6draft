@@ -23,16 +23,31 @@ public final class VariableDeclaration extends AstNode {
         this.initializer = initializer;
     }
 
+    /**
+     * Returns the binding node.
+     * 
+     * @return the binding node
+     */
     public Binding getBinding() {
         return binding;
     }
 
+    /**
+     * Returns the optional initializer expression.
+     * 
+     * @return the initializer expression or {@code null}
+     */
     public Expression getInitializer() {
         return initializer;
     }
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 

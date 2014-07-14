@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -31,8 +32,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class ErrorObject extends OrdinaryObject {
     private boolean initialized = false;
-    private ScriptException exception = null;
-    private List<StackTraceElement[]> stackTraces;
+    private final ScriptException exception;
+    private final List<StackTraceElement[]> stackTraces;
 
     public ErrorObject(Realm realm) {
         super(realm);
@@ -41,12 +42,15 @@ public final class ErrorObject extends OrdinaryObject {
     }
 
     private List<StackTraceElement[]> collectStackTraces() {
-        List<StackTraceElement[]> stackTraces = new ArrayList<>();
         Thread thread = Thread.currentThread();
-        while (thread instanceof GeneratorThread) {
+        if (!(thread instanceof GeneratorThread)) {
+            return Collections.emptyList();
+        }
+        List<StackTraceElement[]> stackTraces = new ArrayList<>();
+        do {
             thread = ((GeneratorThread) thread).getParent();
             stackTraces.add(thread.getStackTrace());
-        }
+        } while (thread instanceof GeneratorThread);
         return stackTraces;
     }
 

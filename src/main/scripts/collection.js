@@ -69,8 +69,7 @@ const mozIteratorSym = "@@iterator";
     }
 
     set(key, value) {
-      // No `return` here because tests require `undefined` as return value.
-      %CallFunction(BuiltinMap.prototype.set, this, key, value);
+      return %CallFunction(BuiltinMap.prototype.set, this, key, value);
     }
 
     get size() {
@@ -129,8 +128,7 @@ const mozIteratorSym = "@@iterator";
     }
 
     add(value) {
-      // No `return` here because tests require `undefined` as return value.
-      %CallFunction(BuiltinSet.prototype.add, this, value);
+      return %CallFunction(BuiltinSet.prototype.add, this, value);
     }
 
     clear() {
@@ -226,8 +224,7 @@ const mozIteratorSym = "@@iterator";
     }
 
     set(key, value) {
-      // No `return` here because tests require `undefined` as return value.
-      %CallFunction(BuiltinWeakMap.prototype.set, this, key, value);
+      return %CallFunction(BuiltinWeakMap.prototype.set, this, key, value);
     }
 
     get [Symbol.toStringTag]() {
@@ -271,8 +268,7 @@ const mozIteratorSym = "@@iterator";
     }
 
     add(value) {
-      // No `return` here because tests require `undefined` as return value.
-      %CallFunction(BuiltinWeakSet.prototype.add, this, value);
+      return %CallFunction(BuiltinWeakSet.prototype.add, this, value);
     }
 
     clear() {

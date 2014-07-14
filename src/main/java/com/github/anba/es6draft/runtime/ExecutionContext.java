@@ -237,7 +237,7 @@ public final class ExecutionContext {
                     thisValue = thisArgument;
                 } else {
                     /*  step 14 */
-                    thisValue = ToObject(f.getRealm().defaultContext(), thisArgument);
+                    thisValue = ToObject(calleeRealm.defaultContext(), thisArgument);
                 }
             }
             localEnv = newFunctionEnvironment(callerContext, f, thisValue);

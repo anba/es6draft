@@ -9,6 +9,8 @@ package com.github.anba.es6draft.ast;
 import java.util.Collections;
 import java.util.List;
 
+import com.github.anba.es6draft.ast.scope.FunctionScope;
+
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.2 Primary Expression</h2>
@@ -19,7 +21,7 @@ import java.util.List;
 public final class GeneratorComprehension extends Expression implements FunctionNode {
     private final FunctionScope scope;
     private final Comprehension comprehension;
-    private String functionName;
+    private String functionName, methodName;
     private StrictMode strictMode;
     private boolean syntheticNodes;
 
@@ -36,7 +38,15 @@ public final class GeneratorComprehension extends Expression implements Function
 
     @Override
     public String getMethodName() {
+        if (methodName != null) {
+            return methodName;
+        }
         return getFunctionName();
+    }
+
+    @Override
+    public void setMethodName(String methodName) {
+        this.methodName = methodName;
     }
 
     @Override
@@ -109,11 +119,6 @@ public final class GeneratorComprehension extends Expression implements Function
     }
 
     @Override
-    public boolean hasSuperReference() {
-        return false;
-    }
-
-    @Override
     public boolean hasSyntheticNodes() {
         return syntheticNodes;
     }
@@ -125,6 +130,11 @@ public final class GeneratorComprehension extends Expression implements Function
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

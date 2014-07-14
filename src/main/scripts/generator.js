@@ -14,7 +14,15 @@ const {
   Object, Symbol, TypeError,
 } = global;
 
-const Object_getPrototypeOf = Object.getPrototypeOf;
+const {
+  defineProperty: Object_defineProperty,
+  getPrototypeOf: Object_getPrototypeOf,
+} = Object;
+
+const {
+  iterator: iteratorSym,
+} = Symbol;
+
 const Generator = Object_getPrototypeOf(function*(){});
 
 Object.defineProperty(Generator, Symbol.hasInstance, {
@@ -46,6 +54,13 @@ Object.defineProperty(Object.prototype, Symbol.iterator, {
     if (typeof this.next === "function") {
       return () => ({__proto__: null, next: () => Object(this.next())})
     }
+  },
+  set(iter) {
+    Object_defineProperty(this, iteratorSym, {
+      __proto__: null,
+      value: iter,
+      writable: true, enumerable: true, configurable: true
+    });
   },
   enumerable: false, configurable: true
 });

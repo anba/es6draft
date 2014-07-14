@@ -6,7 +6,8 @@
  */
 package com.github.anba.es6draft.ast.synthetic;
 
-import com.github.anba.es6draft.ast.Identifier;
+import com.github.anba.es6draft.ast.IdentifierReference;
+import com.github.anba.es6draft.ast.IntNodeVisitor;
 import com.github.anba.es6draft.ast.NodeVisitor;
 
 /**
@@ -15,18 +16,23 @@ import com.github.anba.es6draft.ast.NodeVisitor;
  * <li>12.1 Identifiers
  * </ul>
  */
-public final class IdentifierValue extends Identifier {
-    public IdentifierValue(long beginPosition, long endPosition, String name) {
+public final class IdentifierReferenceValue extends IdentifierReference {
+    public IdentifierReferenceValue(long beginPosition, long endPosition, String name) {
         super(beginPosition, endPosition, name);
     }
 
     @Override
-    public IdentifierValue asValue() {
+    public IdentifierReferenceValue asValue() {
         return this;
     }
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

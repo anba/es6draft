@@ -121,7 +121,7 @@ public final class ExoticString extends OrdinaryObject {
     @Override
     @SuppressWarnings("unchecked")
     public ScriptObject enumerate(ExecutionContext cx) {
-        // FIXME: spec issue - override necessary because of bug xxxx
+        // FIXME: spec issue - override necessary because of bug 2957
         return CreateCompoundIterator(cx, (Iterator<Object>) enumerateKeys(cx),
                 Collections.emptyIterator());
     }

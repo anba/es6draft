@@ -1348,7 +1348,7 @@ public class OrdinaryObject implements ScriptObject {
     /** 9.1.11 [[Enumerate]] () */
     @Override
     public/* final */ScriptObject enumerate(ExecutionContext cx) {
-        // FIXME: spec issue - non-final because of bug xxxx
+        // FIXME: spec issue - non-final because of bug 2957
         return CreateListIterator(cx, new EnumKeysIterator(cx, this));
     }
 

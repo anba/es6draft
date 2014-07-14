@@ -26,7 +26,7 @@ public final class AssignmentProperty extends AstNode {
         this.initializer = initializer;
     }
 
-    public AssignmentProperty(long beginPosition, long endPosition, Identifier identifier,
+    public AssignmentProperty(long beginPosition, long endPosition, IdentifierReference identifier,
             Expression initializer) {
         super(beginPosition, endPosition);
         this.propertyName = null;
@@ -48,6 +48,11 @@ public final class AssignmentProperty extends AstNode {
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

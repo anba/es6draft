@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.lang.invoke.CallSite;
 import java.lang.invoke.ConstantCallSite;
@@ -29,7 +30,9 @@ import com.github.anba.es6draft.runtime.objects.text.RegExpPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -143,6 +146,9 @@ public final class NativeCalls {
         case "native:IsFunctionExpression":
             target = callIsFunctionExpressionMH;
             break;
+        case "native:SymbolDescription":
+            target = callSymbolDescriptionMH;
+            break;
         default:
             target = MethodHandles.insertArguments(invalidNativeCallMH, 0, name);
             target = MethodHandles.dropArguments(target, 0, Object[].class);
@@ -154,7 +160,8 @@ public final class NativeCalls {
     private static final MethodHandle callIntrinsicMH, callSetIntrinsicMH, callGlobalObjectMH,
             callGlobalThisMH, callCallFunctionMH, callIsGeneratorMH, callIsUninitializedMapMH,
             callIsUninitializedSetMH, callIsUninitializedWeakMapMH, callIsUninitializedWeakSetMH,
-            callRegExpReplaceMH, callRegExpTestMH, callIsFunctionExpressionMH, invalidNativeCallMH;
+            callRegExpReplaceMH, callRegExpTestMH, callIsFunctionExpressionMH,
+            callSymbolDescriptionMH, invalidNativeCallMH;
     static {
         MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
         MethodType callType = MethodType.methodType(Object.class, Object[].class,
@@ -172,6 +179,7 @@ public final class NativeCalls {
         callRegExpReplaceMH = lookup.findStatic("call_RegExpReplace", callType);
         callRegExpTestMH = lookup.findStatic("call_RegExpTest", callType);
         callIsFunctionExpressionMH = lookup.findStatic("call_IsFunctionExpression", callType);
+        callSymbolDescriptionMH = lookup.findStatic("call_SymbolDescription", callType);
         invalidNativeCallMH = lookup.findStatic("invalidNativeCall",
                 MethodType.methodType(Object.class, String.class, ExecutionContext.class));
     }
@@ -288,6 +296,14 @@ public final class NativeCalls {
     private static Object call_IsFunctionExpression(Object[] args, ExecutionContext cx) {
         if (args.length == 1 && args[0] instanceof Callable) {
             return IsFunctionExpression((Callable) args[0]);
+        }
+        return invalidNativeCallArguments(cx);
+    }
+
+    @SuppressWarnings("unused")
+    private static Object call_SymbolDescription(Object[] args, ExecutionContext cx) {
+        if (args.length == 1 && args[0] instanceof Symbol) {
+            return SymbolDescription((Symbol) args[0]);
         }
         return invalidNativeCallArguments(cx);
     }
@@ -515,5 +531,18 @@ public final class NativeCalls {
         int flags = code.functionFlags();
         return RuntimeInfo.FunctionFlags.Expression.isSet(flags)
                 && !RuntimeInfo.FunctionFlags.Arrow.isSet(flags);
+    }
+
+    /**
+     * Native function: {@code %SymbolDescription(<symbol>)}.
+     * <p>
+     * Returns the symbol's description or {@link Undefined#UNDEFINED}.
+     * 
+     * @param symbol
+     *            the symbol object
+     * @return the symbol's description or {@link Undefined#UNDEFINED}
+     */
+    public static Object SymbolDescription(Symbol symbol) {
+        return symbol.getDescription() != null ? symbol.getDescription() : UNDEFINED;
     }
 }

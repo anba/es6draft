@@ -14,18 +14,18 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class CoverInitializedName extends PropertyDefinition {
-    private final Identifier identifier;
+    private final IdentifierReference identifier;
     private final Expression initializer;
 
-    public CoverInitializedName(long beginPosition, long endPosition, Identifier identifier,
-            Expression initializer) {
+    public CoverInitializedName(long beginPosition, long endPosition,
+            IdentifierReference identifier, Expression initializer) {
         super(beginPosition, endPosition);
         this.identifier = identifier;
         this.initializer = initializer;
     }
 
     @Override
-    public Identifier getPropertyName() {
+    public IdentifierReference getPropertyName() {
         return identifier;
     }
 
@@ -35,6 +35,11 @@ public final class CoverInitializedName extends PropertyDefinition {
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         throw new IllegalStateException();
     }
 }

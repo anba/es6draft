@@ -22,7 +22,7 @@ const Object_defineProperty = Object.defineProperty,
 // stackTraceLimit defaults to 10
 Error.stackTraceLimit = 10;
 
-const getStackTrace = Object.getOwnPropertyDescriptor(Error.prototype, "stacktrace").get;
+const getStackTrace = Object.getOwnPropertyDescriptor(Error.prototype, "stackTrace").get;
 
 delete Error.prototype.stack;
 Object.defineProperty(Error.prototype, "stack", {
@@ -31,14 +31,14 @@ Object.defineProperty(Error.prototype, "stack", {
     if (typeof limit != 'number') {
       return;
     }
-    var stacktrace = %CallFunction(getStackTrace, this);
-    if (!stacktrace) {
+    var stackTrace = %CallFunction(getStackTrace, this);
+    if (!stackTrace) {
       return;
     }
     var out = %CallFunction(Error_prototype_toString, this);
-    var len = Math_min(stacktrace.length, Math_floor(limit));
+    var len = Math_min(stackTrace.length, Math_floor(limit));
     for (var i = 0; i < len; ++i) {
-      var elem = stacktrace[i];
+      var elem = stackTrace[i];
       out += `\n    at ${elem.methodName} (${elem.fileName}:${elem.lineNumber})`;
     }
     return out;

@@ -16,17 +16,17 @@ import java.util.List;
  * </ul>
  */
 public final class NativeCallExpression extends Expression {
-    private final Identifier base;
+    private final IdentifierReference base;
     private final List<Expression> arguments;
 
-    public NativeCallExpression(long beginPosition, long endPosition, Identifier base,
+    public NativeCallExpression(long beginPosition, long endPosition, IdentifierReference base,
             List<Expression> arguments) {
         super(beginPosition, endPosition);
         this.base = base;
         this.arguments = arguments;
     }
 
-    public Identifier getBase() {
+    public IdentifierReference getBase() {
         return base;
     }
 
@@ -36,6 +36,11 @@ public final class NativeCallExpression extends Expression {
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

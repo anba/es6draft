@@ -649,6 +649,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @return the returned value type
      */
     protected final ValType ToPrimitive(ValType from, ExpressionVisitor mv) {
+        assert from != ValType.Reference;
         switch (from) {
         case Number:
         case Number_int:
@@ -677,6 +678,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      */
     protected final void ToBoolean(ValType from, ExpressionVisitor mv) {
+        assert from != ValType.Reference;
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToBoolean_double);
@@ -727,6 +729,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      */
     protected final void ToNumber(ValType from, ExpressionVisitor mv) {
+        assert from != ValType.Reference;
         switch (from) {
         case Number:
             return;
@@ -769,6 +772,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      */
     protected final void ToInt32(ValType from, ExpressionVisitor mv) {
+        assert from != ValType.Reference;
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToInt32_double);
@@ -808,6 +812,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      */
     protected final void ToUint32(ValType from, ExpressionVisitor mv) {
+        assert from != ValType.Reference;
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToUint32_double);
@@ -850,6 +855,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      */
     protected final void ToString(ValType from, ExpressionVisitor mv) {
+        assert from != ValType.Reference;
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToString_double);
@@ -892,6 +898,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      */
     protected final void ToFlatString(ValType from, ExpressionVisitor mv) {
+        assert from != ValType.Reference;
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToString_double);
@@ -935,6 +942,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      */
     protected final void ToObject(ValType from, ExpressionVisitor mv) {
+        assert from != ValType.Reference;
         switch (from) {
         case Number:
         case Number_int:
@@ -966,6 +974,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      */
     protected static final ValType ToPropertyKey(ValType from, ExpressionVisitor mv) {
+        assert from != ValType.Reference;
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToString_double);
@@ -1378,7 +1387,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * <li>YieldExpression : yield AssignmentExpression
      * </ul>
      * <p>
-     * stack: [value] {@literal ->} [value]
+     * stack: [value] {@literal ->} [value']
      * 
      * @param node
      *            the expression node

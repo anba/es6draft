@@ -35,6 +35,11 @@ public final class CommaExpression extends Expression {
         return visitor.visit(this, value);
     }
 
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
     private static Expression first(List<Expression> elements) {
         assert !elements.isEmpty();
         return elements.get(0);

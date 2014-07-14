@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.repl.global;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.NeuterArrayBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
@@ -23,6 +24,7 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
+import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -197,6 +199,22 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
                 function.call(cx, UNDEFINED);
             }
         });
+    }
+
+    /**
+     * shell-function: {@code neuterArrayBuffer(arrayBuffer)}
+     * 
+     * @param cx
+     *            the execution context
+     * @param arrayBuffer
+     *            the array buffer object
+     */
+    @Function(name = "neuterArrayBuffer", arity = 1)
+    public void neuterArrayBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer) {
+        // initialized and not already neutered
+        if (arrayBuffer.getData() != null) {
+            NeuterArrayBuffer(cx, arrayBuffer);
+        }
     }
 
     /**

@@ -8,6 +8,9 @@ package com.github.anba.es6draft.ast;
 
 import java.util.List;
 
+import com.github.anba.es6draft.ast.scope.BlockScope;
+import com.github.anba.es6draft.ast.scope.Scope;
+
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
  * <ul>
@@ -42,6 +45,11 @@ public final class LetStatement extends Statement implements ScopedNode {
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

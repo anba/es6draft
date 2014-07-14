@@ -21,4 +21,9 @@ public final class EmptyExpression extends Expression {
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         throw new IllegalStateException();
     }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
+        throw new IllegalStateException();
+    }
 }

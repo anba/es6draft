@@ -4,10 +4,16 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.ast;
+package com.github.anba.es6draft.ast.scope;
 
 import java.util.List;
 import java.util.Set;
+
+import com.github.anba.es6draft.ast.Declaration;
+import com.github.anba.es6draft.ast.FunctionNode;
+import com.github.anba.es6draft.ast.Script;
+import com.github.anba.es6draft.ast.StatementListItem;
+import com.github.anba.es6draft.ast.TopLevelNode;
 
 /**
  * Scope class for {@link FunctionNode} and {@link Script} objects.

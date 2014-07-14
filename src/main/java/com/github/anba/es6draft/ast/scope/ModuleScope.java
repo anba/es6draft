@@ -4,9 +4,11 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.ast;
+package com.github.anba.es6draft.ast.scope;
 
 import java.util.Set;
+
+import com.github.anba.es6draft.ast.Module;
 
 /**
  * Scope class for {@link Module} objects

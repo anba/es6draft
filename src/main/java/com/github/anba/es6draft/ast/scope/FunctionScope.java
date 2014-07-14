@@ -4,9 +4,11 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.ast;
+package com.github.anba.es6draft.ast.scope;
 
 import java.util.Set;
+
+import com.github.anba.es6draft.ast.FunctionNode;
 
 /**
  * Scope class for {@link FunctionNode} objects.
@@ -31,6 +33,13 @@ public interface FunctionScope extends TopLevelScope {
      * @return <code>true</code> if a dynamic scope
      */
     boolean isDynamic();
+
+    /**
+     * Returns {@code true} if the <tt>super</tt> keyword is used within this function.
+     * 
+     * @return {@code true} if this function contains a <tt>super</tt> reference
+     */
+    boolean hasSuperReference();
 
     /**
      * Returns {@code true} if the <tt>arguments</tt> object needs to be allocated for this

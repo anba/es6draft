@@ -8,6 +8,8 @@ package com.github.anba.es6draft.ast;
 
 import java.util.List;
 
+import com.github.anba.es6draft.ast.scope.BlockScope;
+
 /**
  * <h1>14 ECMAScript Language: Functions and Classes</h1>
  * <ul>
@@ -66,6 +68,11 @@ public final class ClassExpression extends Expression implements ClassDefinition
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

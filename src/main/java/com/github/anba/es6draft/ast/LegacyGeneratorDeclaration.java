@@ -8,6 +8,8 @@ package com.github.anba.es6draft.ast;
 
 import java.util.List;
 
+import com.github.anba.es6draft.ast.scope.FunctionScope;
+
 /**
  * <h1>14 ECMAScript Language: Functions and Classes</h1>
  * <ul>
@@ -17,14 +19,18 @@ import java.util.List;
 public final class LegacyGeneratorDeclaration extends GeneratorDeclaration {
     public LegacyGeneratorDeclaration(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
-            List<StatementListItem> statements, boolean superReference, String headerSource,
-            String bodySource) {
-        super(beginPosition, endPosition, scope, identifier, parameters, statements,
-                superReference, headerSource, bodySource);
+            List<StatementListItem> statements, String headerSource, String bodySource) {
+        super(beginPosition, endPosition, scope, identifier, parameters, statements, headerSource,
+                bodySource);
     }
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

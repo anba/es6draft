@@ -18,5 +18,10 @@ public abstract class ValueLiteral<T> extends Literal {
         super(beginPosition, endPosition);
     }
 
+    /**
+     * Returns the value.
+     * 
+     * @return the value
+     */
     public abstract T getValue();
 }

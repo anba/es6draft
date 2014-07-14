@@ -10,6 +10,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import com.github.anba.es6draft.ast.scope.BlockScope;
+
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
@@ -45,6 +47,11 @@ public final class SwitchStatement extends BreakableStatement implements ScopedN
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

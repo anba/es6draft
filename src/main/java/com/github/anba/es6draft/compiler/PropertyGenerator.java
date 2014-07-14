@@ -210,7 +210,7 @@ final class PropertyGenerator extends
      */
     @Override
     public ValType visit(PropertyNameDefinition node, ExpressionVisitor mv) {
-        Identifier propertyName = node.getPropertyName();
+        IdentifierReference propertyName = node.getPropertyName();
         String propName = PropName(propertyName);
         assert propName != null;
 
@@ -243,14 +243,14 @@ final class PropertyGenerator extends
                 updateMethodFields = false;
             } else {
                 assert propertyValue instanceof FunctionNode : propertyValue.getClass();
-                FunctionNode fdef = (FunctionNode) propertyValue;
-                if (fdef.getThisMode() == FunctionNode.ThisMode.Lexical) {
+                FunctionNode function = (FunctionNode) propertyValue;
+                if (function.getThisMode() == FunctionNode.ThisMode.Lexical) {
                     updateMethodFields = false;
                 } else {
-                    assert propertyValue instanceof FunctionExpression
-                            || propertyValue instanceof GeneratorExpression
-                            || propertyValue instanceof AsyncFunctionExpression;
-                    updateMethodFields = ((FunctionNode) propertyValue).hasSuperReference();
+                    assert function instanceof FunctionExpression
+                            || function instanceof GeneratorExpression
+                            || function instanceof AsyncFunctionExpression;
+                    updateMethodFields = function.getScope().hasSuperReference();
                 }
             }
         } else {

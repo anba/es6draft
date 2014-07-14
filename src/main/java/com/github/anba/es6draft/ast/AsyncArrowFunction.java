@@ -8,6 +8,8 @@ package com.github.anba.es6draft.ast;
 
 import java.util.List;
 
+import com.github.anba.es6draft.ast.scope.FunctionScope;
+
 /**
  * Extension: Async Arrow Function Definition
  */
@@ -17,7 +19,7 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
     private List<StatementListItem> statements;
     private final Expression expression;
     private final String headerSource, bodySource;
-    private String functionName;
+    private String functionName, methodName;
     private StrictMode strictMode;
     private boolean syntheticNodes;
 
@@ -52,7 +54,15 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
 
     @Override
     public String getMethodName() {
+        if (methodName != null) {
+            return methodName;
+        }
         return getFunctionName();
+    }
+
+    @Override
+    public void setMethodName(String methodName) {
+        this.methodName = methodName;
     }
 
     @Override
@@ -124,11 +134,6 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
     }
 
     @Override
-    public boolean hasSuperReference() {
-        return false;
-    }
-
-    @Override
     public boolean hasSyntheticNodes() {
         return syntheticNodes;
     }
@@ -140,6 +145,11 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

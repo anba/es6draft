@@ -286,7 +286,7 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
         }
 
         /**
-         * Extension: Error.prototype.stacktrace
+         * Extension: Error.prototype.stackTrace
          * 
          * @param cx
          *            the execution context
@@ -294,9 +294,9 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
          *            the function this-value
          * @return stack-trace object
          */
-        @Accessor(name = "stacktrace", type = Accessor.Type.Getter, attributes = @Attributes(
+        @Accessor(name = "stackTrace", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))
-        public static Object get_stacktrace(ExecutionContext cx, Object thisValue) {
+        public static Object get_stackTrace(ExecutionContext cx, Object thisValue) {
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
@@ -343,7 +343,7 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
     }
 
     private static final class StackTraceElementIterable implements Iterable<StackTraceElement> {
-        private ErrorObject error;
+        private final ErrorObject error;
 
         StackTraceElementIterable(ErrorObject error) {
             this.error = error;
@@ -365,8 +365,8 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
             this.stackTraces = error.getStackTraces().iterator();
         }
 
-        private static boolean isInternalStackFrame(StackTraceElement element) {
-            // filter stacktrace elements based on the encoding in CodeGenerator/ScriptLoader
+        private static boolean isScriptStackFrame(StackTraceElement element) {
+            // filter stacktrace elements based on the encoding in Compiler/CodeGenerator
             return (element.getClassName().charAt(0) == '#'
                     && JVMNames.fromBytecodeName(element.getMethodName()).charAt(0) == '!' && element
                     .getLineNumber() > 0);
@@ -377,7 +377,7 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
             while (elements != null) {
                 while (cursor < elements.length) {
                     StackTraceElement element = elements[cursor++];
-                    if (isInternalStackFrame(element)) {
+                    if (isScriptStackFrame(element)) {
                         return element;
                     }
                 }

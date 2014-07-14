@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.runtime.internal.Strings;
+
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.2 Primary Expression</h2>
@@ -36,6 +38,11 @@ public final class ComputedPropertyName extends AstNode implements PropertyName 
     }
 
     @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
     public String toString() {
         String cname = accept(new ComputedNameToString(), null);
         if (cname != null) {
@@ -62,12 +69,11 @@ public final class ComputedPropertyName extends AstNode implements PropertyName 
 
         @Override
         public String visit(StringLiteral node, Void value) {
-            // TODO: proper quoting
-            return '"' + node.getName() + '"';
+            return Strings.quote(node.getName());
         }
 
         @Override
-        public String visit(Identifier node, Void value) {
+        public String visit(IdentifierReference node, Void value) {
             return node.getName();
         }
 

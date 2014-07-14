@@ -39,7 +39,22 @@ final class MethodLookup {
      * @return method handle for a static method
      */
     public MethodHandle findStatic(String name, MethodType type) {
-        return findStatic(lookup, name, type);
+        return findStatic(lookup, lookup.lookupClass(), name, type);
+    }
+
+    /**
+     * Returns a method handle for a static method.
+     * 
+     * @param clazz
+     *            the reference class
+     * @param name
+     *            the method name
+     * @param type
+     *            the method type
+     * @return method handle for a static method
+     */
+    public MethodHandle findStatic(Class<?> clazz, String name, MethodType type) {
+        return findStatic(lookup, clazz, name, type);
     }
 
     /**
@@ -49,15 +64,96 @@ final class MethodLookup {
      *            the lookup object
      * @param name
      *            the method name
-     * @param rtype
-     *            the method return type
-     * @param ptypes
-     *            the method parameter types
+     * @param type
+     *            the method type
      * @return method handle for a static method
      */
     public static MethodHandle findStatic(MethodHandles.Lookup lookup, String name, MethodType type) {
+        return findStatic(lookup, lookup.lookupClass(), name, type);
+    }
+
+    /**
+     * Returns a method handle for a static method.
+     * 
+     * @param lookup
+     *            the lookup object
+     * @param clazz
+     *            the reference class
+     * @param name
+     *            the method name
+     * @param type
+     *            the method type
+     * @return method handle for a static method
+     */
+    public static MethodHandle findStatic(MethodHandles.Lookup lookup, Class<?> clazz, String name,
+            MethodType type) {
         try {
-            return lookup.findStatic(lookup.lookupClass(), name, type);
+            return lookup.findStatic(clazz, name, type);
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * Returns a method handle for a virtual method.
+     * 
+     * @param name
+     *            the method name
+     * @param type
+     *            the method type
+     * @return method handle for a virtual method
+     */
+    public MethodHandle findVirtual(String name, MethodType type) {
+        return findVirtual(lookup, lookup.lookupClass(), name, type);
+    }
+
+    /**
+     * Returns a method handle for a virtual method.
+     * 
+     * @param clazz
+     *            the reference class
+     * @param name
+     *            the method name
+     * @param type
+     *            the method type
+     * @return method handle for a virtual method
+     */
+    public MethodHandle findVirtual(Class<?> clazz, String name, MethodType type) {
+        return findVirtual(lookup, clazz, name, type);
+    }
+
+    /**
+     * Returns a method handle for a virtual method.
+     * 
+     * @param lookup
+     *            the lookup object
+     * @param name
+     *            the method name
+     * @param type
+     *            the method type
+     * @return method handle for a virtual method
+     */
+    public static MethodHandle findVirtual(MethodHandles.Lookup lookup, String name, MethodType type) {
+        return findVirtual(lookup, lookup.lookupClass(), name, type);
+    }
+
+    /**
+     * Returns a method handle for a virtual method.
+     * 
+     * @param lookup
+     *            the lookup object
+     * @param clazz
+     *            the reference class
+     * @param name
+     *            the method name
+     * @param type
+     *            the method type
+     * @return method handle for a virtual method
+     */
+    public static MethodHandle findVirtual(MethodHandles.Lookup lookup, Class<?> clazz,
+            String name, MethodType type) {
+        try {
+            return lookup.findVirtual(clazz, name, type);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new IllegalStateException(e);
         }

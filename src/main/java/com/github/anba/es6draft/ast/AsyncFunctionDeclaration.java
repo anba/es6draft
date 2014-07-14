@@ -8,6 +8,8 @@ package com.github.anba.es6draft.ast;
 
 import java.util.List;
 
+import com.github.anba.es6draft.ast.scope.FunctionScope;
+
 /**
  * Extension: Async Function Declaration
  */
@@ -16,21 +18,18 @@ public final class AsyncFunctionDeclaration extends Declaration implements Async
     private final BindingIdentifier identifier;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
-    private final boolean superReference;
     private final String headerSource, bodySource;
     private StrictMode strictMode;
     private boolean syntheticNodes;
 
     public AsyncFunctionDeclaration(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
-            List<StatementListItem> statements, boolean superReference, String headerSource,
-            String bodySource) {
+            List<StatementListItem> statements, String headerSource, String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
         this.parameters = parameters;
         this.statements = statements;
-        this.superReference = superReference;
         this.headerSource = headerSource;
         this.bodySource = bodySource;
     }
@@ -48,6 +47,11 @@ public final class AsyncFunctionDeclaration extends Declaration implements Async
     @Override
     public String getMethodName() {
         return getFunctionName();
+    }
+
+    @Override
+    public void setMethodName(String methodName) {
+        throw new AssertionError();
     }
 
     @Override
@@ -111,11 +115,6 @@ public final class AsyncFunctionDeclaration extends Declaration implements Async
     }
 
     @Override
-    public boolean hasSuperReference() {
-        return superReference;
-    }
-
-    @Override
     public boolean isConstDeclaration() {
         return false;
     }
@@ -132,6 +131,11 @@ public final class AsyncFunctionDeclaration extends Declaration implements Async
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

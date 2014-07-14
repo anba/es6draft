@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.ast.scope.Scope;
+
 /**
  * Base interface for {@link Node} objects which hold any {@link Scope} information
  */

@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunc
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -491,7 +490,7 @@ final class StatementGenerator extends
 
         List<String> tdzNames;
         if (lhs instanceof Expression || lhs instanceof VariableStatement) {
-            tdzNames = Collections.emptyList();
+            tdzNames = null;
         } else {
             assert lhs instanceof LexicalDeclaration;
             LexicalDeclaration lexDecl = (LexicalDeclaration) lhs;
@@ -537,24 +536,26 @@ final class StatementGenerator extends
             FORSTATEMENT node, List<String> tdzNames, Expression expr, IterationKind iterationKind,
             Label lblFail, StatementVisitor mv) {
         /* steps 1-2 */
-        if (!tdzNames.isEmpty()) {
-            // create new declarative lexical environment
-            // stack: [] -> [TDZ]
-            newDeclarativeEnvironment(mv);
-            {
-                // stack: [TDZ] -> [TDZ, TDZRec]
-                mv.dup();
-                mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+        if (tdzNames != null) {
+            if (!tdzNames.isEmpty()) {
+                // create new declarative lexical environment
+                // stack: [] -> [TDZ]
+                newDeclarativeEnvironment(mv);
+                {
+                    // stack: [TDZ] -> [TDZ, TDZRec]
+                    mv.dup();
+                    mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
-                // stack: [TDZ, TDZRec] -> [TDZ]
-                for (String name : tdzNames) {
-                    // FIXME: spec bug (CreateMutableBinding concrete method of `TDZ`)
-                    createMutableBinding(name, false, mv);
+                    // stack: [TDZ, TDZRec] -> [TDZ]
+                    for (String name : tdzNames) {
+                        // FIXME: spec bug (CreateMutableBinding concrete method of `TDZ`)
+                        createMutableBinding(name, false, mv);
+                    }
+                    mv.pop();
                 }
-                mv.pop();
+                // stack: [TDZ] -> []
+                pushLexicalEnvironment(mv);
             }
-            // stack: [TDZ] -> []
-            pushLexicalEnvironment(mv);
             mv.enterScope(node);
         }
 
@@ -562,10 +563,12 @@ final class StatementGenerator extends
         ValType type = expressionValue(expr, mv);
 
         /* step 4 */
-        if (!tdzNames.isEmpty()) {
+        if (tdzNames != null) {
             mv.exitScope();
-            // restore previous lexical environment
-            popLexicalEnvironment(mv);
+            if (!tdzNames.isEmpty()) {
+                // restore previous lexical environment
+                popLexicalEnvironment(mv);
+            }
         }
 
         /* step 7 */

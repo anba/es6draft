@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.date.DateObject;
 import com.github.anba.es6draft.runtime.objects.date.DatePrototype;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
@@ -186,7 +187,7 @@ public final class SourceBuilder {
         case Boolean:
             return Type.booleanValue(value) ? "true" : "false";
         case String:
-            return stringToSource(Type.stringValue(value));
+            return Strings.quote(Type.stringValue(value).toString());
         case Symbol:
             return Type.symbolValue(value).toString();
         case Number:
@@ -219,48 +220,6 @@ public final class SourceBuilder {
         }
     }
 
-    private static final char[] hexdigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            'a', 'b', 'c', 'd', 'e', 'f' };
-
-    private static String stringToSource(CharSequence value) {
-        StringBuilder sb = new StringBuilder(value.length() + 2);
-        sb.append('"');
-        for (int i = 0, len = value.length(); i < len; ++i) {
-            char c = value.charAt(i);
-            switch (c) {
-            case '"':
-            case '\\':
-                sb.append('\\').append(c);
-                break;
-            case '\b':
-                sb.append("\\b");
-                break;
-            case '\f':
-                sb.append("\\f");
-                break;
-            case '\n':
-                sb.append("\\n");
-                break;
-            case '\r':
-                sb.append("\\r");
-                break;
-            case '\t':
-                sb.append("\\t");
-                break;
-            default:
-                if (c < 0x20 || c > 0xff) {
-                    sb.append('\\').append('u').append(hexdigits[(c >> 12) & 0xf])
-                            .append(hexdigits[(c >> 8) & 0xf]).append(hexdigits[(c >> 4) & 0xf])
-                            .append(hexdigits[(c >> 0) & 0xf]);
-                } else {
-                    sb.append(c);
-                }
-            }
-        }
-        sb.append('"');
-        return sb.toString();
-    }
-
     private static final Pattern namePattern = Pattern
             .compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*");
 
@@ -270,7 +229,7 @@ public final class SourceBuilder {
             if (namePattern.matcher(s).matches()) {
                 return s;
             }
-            return format(mode, stringToSource(s), Style.String);
+            return format(mode, Strings.quote(s), Style.String);
         }
         assert key instanceof Symbol;
         String description = ((Symbol) key).getDescription();

@@ -8,6 +8,8 @@ package com.github.anba.es6draft.ast;
 
 import java.util.List;
 
+import com.github.anba.es6draft.ast.scope.FunctionScope;
+
 /**
  * <h1>14 ECMAScript Language: Functions and Classes</h1>
  * <ul>
@@ -21,7 +23,6 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     private final PropertyName propertyName;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
-    private final boolean superReference;
     private final String headerSource, bodySource;
     private String className;
     private StrictMode strictMode;
@@ -34,7 +35,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     public MethodDefinition(long beginPosition, long endPosition, FunctionScope scope,
             MethodType type, boolean isStatic, PropertyName propertyName,
             FormalParameterList parameters, List<StatementListItem> statements,
-            boolean superReference, String headerSource, String bodySource) {
+            String headerSource, String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.type = type;
@@ -42,7 +43,6 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         this.propertyName = propertyName;
         this.parameters = parameters;
         this.statements = statements;
-        this.superReference = superReference;
         this.headerSource = headerSource;
         this.bodySource = bodySource;
     }
@@ -132,6 +132,11 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     }
 
     @Override
+    public void setMethodName(String methodName) {
+        throw new AssertionError();
+    }
+
+    @Override
     public String getFunctionName() {
         final String fname;
         String pname = propertyName.getName();
@@ -210,11 +215,6 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     }
 
     @Override
-    public boolean hasSuperReference() {
-        return superReference;
-    }
-
-    @Override
     public boolean hasSyntheticNodes() {
         return syntheticNodes;
     }
@@ -226,6 +226,11 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

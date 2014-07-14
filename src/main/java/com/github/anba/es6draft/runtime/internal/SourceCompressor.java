@@ -34,8 +34,32 @@ public final class SourceCompressor {
         }
     }
 
+    private static String compressInternal(String source) throws IOException {
+        ByteOutputStream bout = new ByteOutputStream(BUFFER_SIZE);
+        GZIPOutputStream out = new GZIPOutputStream(bout, BUFFER_SIZE);
+        out.write(source.getBytes(StandardCharsets.UTF_8));
+        out.close();
+
+        return bout.toString(StandardCharsets.ISO_8859_1);
+    }
+
+    private static String decompressInternal(String source) throws IOException {
+        byte[] compressed = source.getBytes(StandardCharsets.ISO_8859_1);
+        ByteArrayInputStream bin = new ByteArrayInputStream(compressed);
+        GZIPInputStream in = new GZIPInputStream(bin, BUFFER_SIZE);
+
+        ByteOutputStream bout = new ByteOutputStream(BUFFER_SIZE);
+        byte[] buf = new byte[BUFFER_SIZE];
+        for (int n; (n = in.read(buf)) != -1;) {
+            bout.write(buf, 0, n);
+        }
+        bout.close();
+
+        return bout.toString(StandardCharsets.UTF_8);
+    }
+
     private static final class CompressedSource implements Callable<String> {
-        final String source;
+        private final String source;
 
         CompressedSource(String source) {
             this.source = source;
@@ -43,17 +67,12 @@ public final class SourceCompressor {
 
         @Override
         public String call() throws IOException {
-            ByteOutputStream bout = new ByteOutputStream(BUFFER_SIZE);
-            GZIPOutputStream out = new GZIPOutputStream(bout, BUFFER_SIZE);
-            out.write(source.getBytes(StandardCharsets.UTF_8));
-            out.close();
-
-            return bout.toString(StandardCharsets.ISO_8859_1);
+            return compressInternal(source);
         }
     }
 
     private static final class DecompressedSource implements Callable<String> {
-        final String source;
+        private final String source;
 
         DecompressedSource(String source) {
             this.source = source;
@@ -61,18 +80,7 @@ public final class SourceCompressor {
 
         @Override
         public String call() throws IOException {
-            byte[] compressed = source.getBytes(StandardCharsets.ISO_8859_1);
-            ByteArrayInputStream bin = new ByteArrayInputStream(compressed);
-            GZIPInputStream in = new GZIPInputStream(bin, BUFFER_SIZE);
-
-            ByteOutputStream bout = new ByteOutputStream(BUFFER_SIZE);
-            byte[] buf = new byte[BUFFER_SIZE];
-            for (int n; (n = in.read(buf)) != -1;) {
-                bout.write(buf, 0, n);
-            }
-            bout.close();
-
-            return bout.toString(StandardCharsets.UTF_8);
+            return decompressInternal(source);
         }
     }
 
@@ -82,5 +90,13 @@ public final class SourceCompressor {
 
     public static Callable<String> decompress(String source) {
         return new DecompressedSource(source);
+    }
+
+    static String compressToString(String source) {
+        try {
+            return compressInternal(source);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -18,7 +18,7 @@ function testFunctions() {
     try {
       f();
     } catch (e) {
-      [{methodName}] = e.stacktrace;
+      [{methodName}] = e.stackTrace;
     }
     assertEq(methodName, expectedName);
   }
@@ -118,6 +118,31 @@ function testFunctions() {
     ["" + "c5"]: function m5() { throw new Error() },
     ["" + "c6"]: () => { throw new Error() },
   };
+
+  let q1 = {};
+  q1.m1 = function() { throw new Error() };
+  q1.m2_ = function m2() { throw new Error() };
+  q1.m3 = () => { throw new Error() };
+  let q2 = {};
+  q2["m1"] = function() { throw new Error() };
+  q2["m2_"] = function m2() { throw new Error() };
+  q2["m3"] = () => { throw new Error() };
+  let q3 = {};
+  q3[1] = function() { throw new Error() };
+  q3[2] = function m2() { throw new Error() };
+  q3[3] = () => { throw new Error() };
+  let q4 = {};
+  q4[id1] = function() { throw new Error() };
+  q4[id2] = function m2() { throw new Error() };
+  q4[id3] = () => { throw new Error() };
+  let q5 = {};
+  q5[p.p1] = function() { throw new Error() };
+  q5[p.p2] = function m2() { throw new Error() };
+  q5[p.p3] = () => { throw new Error() };
+  let q6 = {};
+  q6["" + "c1"] = function() { throw new Error() };
+  q6["" + "c2"] = function m2() { throw new Error() };
+  q6["" + "c3"] = () => { throw new Error() };
 
   class C1 {
     m1() { throw new Error() }
@@ -326,6 +351,30 @@ function testFunctions() {
   testStackTrace(o6["c5"], "m5");
   testStackTrace(o6["c6"], '[<...>]');
 
+  testStackTrace(q1.m1, "q1.m1");
+  testStackTrace(q1.m2_, "m2");
+  testStackTrace(q1.m3, "q1.m3");
+
+  testStackTrace(q2.m1, "q2.m1");
+  testStackTrace(q2.m2_, "m2");
+  testStackTrace(q2.m3, "q2.m3");
+
+  testStackTrace(q3[1], "q3[1]");
+  testStackTrace(q3[2], "m2");
+  testStackTrace(q3[3], "q3[3]");
+
+  testStackTrace(q4[id1], 'q4[id1]');
+  testStackTrace(q4[id2], "m2");
+  testStackTrace(q4[id3], 'q4[id3]');
+
+  testStackTrace(q5[p.p1], 'q5[p.p1]');
+  testStackTrace(q5[p.p2], "m2");
+  testStackTrace(q5[p.p3], 'q5[p.p3]');
+
+  testStackTrace(q6["c1"], "anonymous");
+  testStackTrace(q6["c2"], "m2");
+  testStackTrace(q6["c3"], "anonymous");
+
   testStackTrace((new C1).m1, "C1.m1");
   testStackTrace(() => (new C1).m2, "get C1.m2");
   testStackTrace(() => (new C1).m3 = 0, "set C1.m3");
@@ -465,7 +514,7 @@ function testGenerators() {
     try {
       f().next();
     } catch (e) {
-      [{methodName}] = e.stacktrace;
+      [{methodName}] = e.stackTrace;
     }
     assertEq(methodName, expectedName);
   }
@@ -553,6 +602,31 @@ function testGenerators() {
     ["" + "c5"]: function* m5() { throw new Error() },
     ["" + "c6"]: (for (v of 0) v),
   };
+
+  let q1 = {};
+  q1.m1 = function*() { throw new Error() };
+  q1.m2_ = function* m2() { throw new Error() };
+  q1.m3 = (for (v of 0) v);
+  let q2 = {};
+  q2["m1"] = function*() { throw new Error() };
+  q2["m2_"] = function* m2() { throw new Error() };
+  q2["m3"] = (for (v of 0) v);
+  let q3 = {};
+  q3[1] = function*() { throw new Error() };
+  q3[2] = function* m2() { throw new Error() };
+  q3[3] = (for (v of 0) v);
+  let q4 = {};
+  q4[id1] = function*() { throw new Error() };
+  q4[id2] = function* m2() { throw new Error() };
+  q4[id3] = (for (v of 0) v);
+  let q5 = {};
+  q5[p.p1] = function*() { throw new Error() };
+  q5[p.p2] = function* m2() { throw new Error() };
+  q5[p.p3] = (for (v of 0) v);
+  let q6 = {};
+  q6["" + "c1"] = function*() { throw new Error() };
+  q6["" + "c2"] = function* m2() { throw new Error() };
+  q6["" + "c3"] = (for (v of 0) v);
 
   class C1 {
     *m1() { throw new Error() }
@@ -667,6 +741,30 @@ function testGenerators() {
   testStackTrace(o6["c5"], "m5");
   testStackTrace(() => o6["c6"], '[<...>]');
 
+  testStackTrace(q1.m1, "q1.m1");
+  testStackTrace(q1.m2_, "m2");
+  testStackTrace(() => q1.m3, "q1.m3");
+
+  testStackTrace(q2.m1, "q2.m1");
+  testStackTrace(q2.m2_, "m2");
+  testStackTrace(() => q2.m3, "q2.m3");
+
+  testStackTrace(q3[1], "q3[1]");
+  testStackTrace(q3[2], "m2");
+  testStackTrace(() => q3[3], "q3[3]");
+
+  testStackTrace(q4[id1], 'q4[id1]');
+  testStackTrace(q4[id2], "m2");
+  testStackTrace(() => q4[id3], 'q4[id3]');
+
+  testStackTrace(q5[p.p1], 'q5[p.p1]');
+  testStackTrace(q5[p.p2], "m2");
+  testStackTrace(() => q5[p.p3], 'q5[p.p3]');
+
+  testStackTrace(q6["c1"], "anonymous");
+  testStackTrace(q6["c2"], "m2");
+  testStackTrace(() => q6["c3"], "gencompr");
+
   testStackTrace((new C1).m1, "C1.m1");
   testStackTrace(C1.m1, "m1");
 
@@ -739,7 +837,7 @@ function testAsync() {
         throw new Error("no exception");
       },
       e => {
-        let [{methodName}] = e.stacktrace;
+        let [{methodName}] = e.stackTrace;
         assertEq(methodName, expectedName);
       }
     ).catch(reportFailure);
@@ -828,6 +926,31 @@ function testAsync() {
     ["" + "c5"]: async function m5() { throw new Error() },
     ["" + "c6"]: async () => { throw new Error() },
   };
+
+  let q1 = {};
+  q1.m1 = async function() { throw new Error() };
+  q1.m2_ = async function m2() { throw new Error() };
+  q1.m3 = async () => { throw new Error() };
+  let q2 = {};
+  q2["m1"] = async function() { throw new Error() };
+  q2["m2_"] = async function m2() { throw new Error() };
+  q2["m3"] = async () => { throw new Error() };
+  let q3 = {};
+  q3[1] = async function() { throw new Error() };
+  q3[2] = async function m2() { throw new Error() };
+  q3[3] = async () => { throw new Error() };
+  let q4 = {};
+  q4[id1] = async function() { throw new Error() };
+  q4[id2] = async function m2() { throw new Error() };
+  q4[id3] = async () => { throw new Error() };
+  let q5 = {};
+  q5[p.p1] = async function() { throw new Error() };
+  q5[p.p2] = async function m2() { throw new Error() };
+  q5[p.p3] = async () => { throw new Error() };
+  let q6 = {};
+  q6["" + "c1"] = async function() { throw new Error() };
+  q6["" + "c2"] = async function m2() { throw new Error() };
+  q6["" + "c3"] = async () => { throw new Error() };
 
   class C1 {
     async m1() { throw new Error() }
@@ -941,6 +1064,30 @@ function testAsync() {
   testStackTrace(o6["c4"], '[<...>]');
   testStackTrace(o6["c5"], "m5");
   testStackTrace(o6["c6"], '[<...>]');
+
+  testStackTrace(q1.m1, "q1.m1");
+  testStackTrace(q1.m2_, "m2");
+  testStackTrace(q1.m3, "q1.m3");
+
+  testStackTrace(q2.m1, "q2.m1");
+  testStackTrace(q2.m2_, "m2");
+  testStackTrace(q2.m3, "q2.m3");
+
+  testStackTrace(q3[1], "q3[1]");
+  testStackTrace(q3[2], "m2");
+  testStackTrace(q3[3], "q3[3]");
+
+  testStackTrace(q4[id1], 'q4[id1]');
+  testStackTrace(q4[id2], "m2");
+  testStackTrace(q4[id3], 'q4[id3]');
+
+  testStackTrace(q5[p.p1], 'q5[p.p1]');
+  testStackTrace(q5[p.p2], "m2");
+  testStackTrace(q5[p.p3], 'q5[p.p3]');
+
+  testStackTrace(q6["c1"], "anonymous");
+  testStackTrace(q6["c2"], "m2");
+  testStackTrace(q6["c3"], "anonymous");
 
   testStackTrace((new C1).m1, "C1.m1");
   testStackTrace(C1.m1, "m1");

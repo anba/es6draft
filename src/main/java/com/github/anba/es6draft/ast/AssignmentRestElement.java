@@ -29,4 +29,9 @@ public final class AssignmentRestElement extends AstNode implements AssignmentEl
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
     }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
 }

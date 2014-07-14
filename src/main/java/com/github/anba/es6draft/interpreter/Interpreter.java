@@ -916,7 +916,8 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     private static boolean directEval(CallExpression node) {
         Expression base = node.getBase();
-        if (base instanceof Identifier && "eval".equals(((Identifier) base).getName())) {
+        if (base instanceof IdentifierReference
+                && "eval".equals(((IdentifierReference) base).getName())) {
             return true;
         }
         return false;
@@ -947,7 +948,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     @Override
-    public Object visit(Identifier node, ExecutionContext cx) {
+    public Object visit(IdentifierReference node, ExecutionContext cx) {
         return cx.resolveBinding(node.getName(), strict);
     }
 
@@ -1092,7 +1093,12 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         }
 
         @Override
-        public Boolean visit(Identifier node, Void value) {
+        public Boolean visit(IdentifierName node, Void value) {
+            return true;
+        }
+
+        @Override
+        public Boolean visit(IdentifierReference node, Void value) {
             return true;
         }
 

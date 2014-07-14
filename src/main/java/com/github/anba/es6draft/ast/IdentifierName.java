@@ -6,18 +6,16 @@
  */
 package com.github.anba.es6draft.ast;
 
-import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
-
 /**
  * <h1>12 ECMAScript Language: Expressions</h1>
  * <ul>
  * <li>12.1 Identifiers
  * </ul>
  */
-public class Identifier extends LeftHandSideExpression implements PropertyName {
+public final class IdentifierName extends Expression implements PropertyName {
     private final String name;
 
-    public Identifier(long beginPosition, long endPosition, String name) {
+    public IdentifierName(long beginPosition, long endPosition, String name) {
         super(beginPosition, endPosition);
         this.name = name;
     }
@@ -28,12 +26,12 @@ public class Identifier extends LeftHandSideExpression implements PropertyName {
     }
 
     @Override
-    public IdentifierValue asValue() {
-        return new IdentifierValue(getBeginPosition(), getEndPosition(), name);
+    public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
     }
 
     @Override
-    public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }

@@ -24,7 +24,6 @@ import static java.util.Arrays.asList;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2439,28 +2438,19 @@ public final class ScriptRuntime {
         return function;
     }
 
-    private static final MethodHandle DefaultConstructorMH;
-    private static final MethodHandle DefaultConstructorCallMH;
+    private static final MethodHandle DefaultConstructorMH, DefaultConstructorCallMH;
     private static final String DefaultConstructorSource;
     private static final int DefaultConstructorSourceBody;
     static {
-        Lookup lookup = MethodHandles.publicLookup();
-        try {
-            DefaultConstructorMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
-                    MethodType.methodType(Object.class, ExecutionContext.class));
-            DefaultConstructorCallMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
-                    MethodType.methodType(Object.class, OrdinaryFunction.class,
-                            ExecutionContext.class, Object.class, Object[].class));
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new IllegalStateException(e);
-        }
-        try {
-            String parameters = "(...args)", body = "super(...args);", source = parameters + body;
-            DefaultConstructorSource = SourceCompressor.compress(source).call();
-            DefaultConstructorSourceBody = parameters.length();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+        MethodLookup lookup = new MethodLookup(MethodHandles.publicLookup());
+        DefaultConstructorMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
+                MethodType.methodType(Object.class, ExecutionContext.class));
+        DefaultConstructorCallMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
+                MethodType.methodType(Object.class, OrdinaryFunction.class, ExecutionContext.class,
+                        Object.class, Object[].class));
+        String parameters = "(...args)", body = "super(...args);", source = parameters + body;
+        DefaultConstructorSource = SourceCompressor.compressToString(source);
+        DefaultConstructorSourceBody = parameters.length();
     }
 
     private static void DefaultConstructorInit(ExecutionContext cx, FunctionObject f, Object[] args) {
@@ -2495,30 +2485,21 @@ public final class ScriptRuntime {
         return DefaultConstructor(calleeContext);
     }
 
-    private static final MethodHandle DefaultEmptyConstructorMH;
-    private static final MethodHandle DefaultEmptyConstructorCallMH;
+    private static final MethodHandle DefaultEmptyConstructorMH, DefaultEmptyConstructorCallMH;
     private static final String DefaultEmptyConstructorSource;
     private static final int DefaultEmptyConstructorSourceBody;
     static {
-        Lookup lookup = MethodHandles.publicLookup();
-        try {
-            DefaultEmptyConstructorMH = lookup.findStatic(ScriptRuntime.class,
-                    "DefaultEmptyConstructor",
-                    MethodType.methodType(Object.class, ExecutionContext.class));
-            DefaultEmptyConstructorCallMH = lookup.findStatic(ScriptRuntime.class,
-                    "DefaultEmptyConstructor", MethodType.methodType(Object.class,
-                            OrdinaryFunction.class, ExecutionContext.class, Object.class,
-                            Object[].class));
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new IllegalStateException(e);
-        }
-        try {
-            String parameters = "()", body = "", source = parameters + body;
-            DefaultEmptyConstructorSource = SourceCompressor.compress(source).call();
-            DefaultEmptyConstructorSourceBody = parameters.length();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+        MethodLookup lookup = new MethodLookup(MethodHandles.publicLookup());
+        DefaultEmptyConstructorMH = lookup.findStatic(ScriptRuntime.class,
+                "DefaultEmptyConstructor",
+                MethodType.methodType(Object.class, ExecutionContext.class));
+        DefaultEmptyConstructorCallMH = lookup.findStatic(ScriptRuntime.class,
+                "DefaultEmptyConstructor", MethodType.methodType(Object.class,
+                        OrdinaryFunction.class, ExecutionContext.class, Object.class,
+                        Object[].class));
+        String parameters = "()", body = "", source = parameters + body;
+        DefaultEmptyConstructorSource = SourceCompressor.compressToString(source);
+        DefaultEmptyConstructorSourceBody = parameters.length();
     }
 
     private static void DefaultEmptyConstructorInit(ExecutionContext cx, FunctionObject f,

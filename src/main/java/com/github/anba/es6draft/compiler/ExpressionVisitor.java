@@ -22,8 +22,8 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
-import com.github.anba.es6draft.ast.Scope;
 import com.github.anba.es6draft.ast.ScopedNode;
+import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;

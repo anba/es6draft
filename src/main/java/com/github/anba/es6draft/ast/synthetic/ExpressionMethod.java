@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.ast.synthetic;
 
 import com.github.anba.es6draft.ast.Expression;
+import com.github.anba.es6draft.ast.IntNodeVisitor;
 import com.github.anba.es6draft.ast.NodeVisitor;
 
 /**
@@ -50,6 +51,11 @@ public final class ExpressionMethod extends Expression {
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
 }
