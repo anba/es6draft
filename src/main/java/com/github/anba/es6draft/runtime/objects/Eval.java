@@ -234,8 +234,6 @@ public final class Eval {
         Realm realm = cx.getRealm();
         /* steps 1-2 */
         RuntimeInfo.ScriptBody scriptBody = script.getScriptBody();
-        if (scriptBody == null)
-            return null;
         /* step 3 */
         assert cx.getVariableEnvironment() == realm.getGlobalEnv();
         LexicalEnvironment<GlobalEnvironmentRecord> variableEnv = realm.getGlobalEnv();

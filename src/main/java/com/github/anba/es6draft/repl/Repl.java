@@ -37,6 +37,7 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.OptionDef;
 import org.kohsuke.args4j.OptionHandlerFilter;
+import org.kohsuke.args4j.ParserProperties;
 import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.Parameters;
 import org.kohsuke.args4j.spi.RestOfArgumentsHandler;
@@ -119,8 +120,8 @@ public final class Repl {
     }
 
     private static void parseOptions(Options options, String[] args) {
-        CmdLineParser parser = new CmdLineParser(options);
-        parser.setUsageWidth(120);
+        ParserProperties properties = ParserProperties.defaults().withUsageWidth(120);
+        CmdLineParser parser = new CmdLineParser(options, properties);
         try {
             parser.parseArgument(args);
         } catch (CmdLineException e) {

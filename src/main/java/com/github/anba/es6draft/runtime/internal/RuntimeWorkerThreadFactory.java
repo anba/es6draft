@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * 
  */
-public final class RuntimeWorkerThreadFactory implements ThreadFactory {
+final class RuntimeWorkerThreadFactory implements ThreadFactory {
     private static final int THREAD_POOL_SIZE = 2;
     private static final long THREAD_POOL_TTL = 5 * 60;
     private static final AtomicInteger runtimeCount = new AtomicInteger(0);
@@ -24,7 +24,7 @@ public final class RuntimeWorkerThreadFactory implements ThreadFactory {
     private final ThreadGroup group;
     private final String namePrefix;
 
-    public RuntimeWorkerThreadFactory() {
+    private RuntimeWorkerThreadFactory() {
         SecurityManager sec = System.getSecurityManager();
         group = sec != null ? sec.getThreadGroup() : Thread.currentThread().getThreadGroup();
         namePrefix = "runtime-" + runtimeCount.incrementAndGet() + "-worker-";
@@ -48,7 +48,7 @@ public final class RuntimeWorkerThreadFactory implements ThreadFactory {
      * 
      * @return a new {@link ThreadPoolExecutor} for runtime worker threads
      */
-    public static ThreadPoolExecutor createThreadPoolExecutor() {
+    static ThreadPoolExecutor createThreadPoolExecutor() {
         ThreadPoolExecutor executor = new ThreadPoolExecutor(THREAD_POOL_SIZE, THREAD_POOL_SIZE,
                 THREAD_POOL_TTL, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
                 new RuntimeWorkerThreadFactory());

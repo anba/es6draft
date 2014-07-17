@@ -24,7 +24,7 @@ public abstract class BuiltinConstructor extends BuiltinFunction implements Cons
 
     @Override
     public final boolean isConstructor() {
-        // built-in constructors are born with [[Construct]] already attached
+        // [[Construct]] always present for built-in constructors
         return true;
     }
 

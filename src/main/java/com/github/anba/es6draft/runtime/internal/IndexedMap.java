@@ -762,28 +762,7 @@ public final class IndexedMap<VALUE> {
      * @return the integer index or {@code -1}
      */
     public static long toIndex(String propertyKey) {
-        return toIndex(propertyKey, MAX_LENGTH);
-    }
-
-    private static long toIndex(String s, long limit) {
-        int length = s.length();
-        if (length < 1 || length > 16) {
-            // empty string or definitely greater than "9007199254740991"
-            // "9007199254740991".length == 16
-            return -1;
-        }
-        if (s.charAt(0) == '0') {
-            return length == 1 ? 0 : -1;
-        }
-        long index = 0L;
-        for (int i = 0; i < length; ++i) {
-            char c = s.charAt(i);
-            if (!(c >= '0' && c <= '9')) {
-                return -1;
-            }
-            index = index * 10 + (c - '0');
-        }
-        return index < limit ? index : -1;
+        return Strings.toLargeIndex(propertyKey);
     }
 
     /**

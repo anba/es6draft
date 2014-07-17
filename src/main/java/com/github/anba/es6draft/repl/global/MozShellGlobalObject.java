@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,6 +28,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -85,11 +85,9 @@ public class MozShellGlobalObject extends ShellGlobalObject {
         includeNative(getScriptURL(LEGACY_SCRIPT));
     }
 
-    private Object evaluate(Realm realm, String source, String sourceName, int sourceLine)
-            throws IOException {
+    private Object evaluate(Realm realm, String source, String sourceName, int sourceLine) {
         try {
-            StringReader reader = new StringReader(source);
-            Script script = getScriptLoader().script(sourceName, sourceLine, reader);
+            Script script = getScriptLoader().script(sourceName, sourceLine, source);
             return Scripts.ScriptEvaluation(script, realm, false);
         } catch (ParserException | CompilationException e) {
             // create a script exception from the requested code realm, not from the caller's realm!
@@ -161,9 +159,9 @@ public class MozShellGlobalObject extends ShellGlobalObject {
         try {
             Object result = evaluate(global.getRealm(), source, sourceName, sourceLine);
             return (!noScriptRval ? result : UNDEFINED);
-        } catch (StackOverflowError e) {
+        } catch (ScriptException | StackOverflowError e) {
             throw e;
-        } catch (IOException | Error e) {
+        } catch (Exception e) {
             if (catchTermination) {
                 return "terminated";
             }
@@ -296,11 +294,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
         if (!(global instanceof GlobalObject)) {
             throw newError(cx, "invalid global argument");
         }
-        try {
-            return evaluate(((GlobalObject) global).getRealm(), s, "evalcx", 1);
-        } catch (IOException e) {
-            throw newError(cx, e.getMessage());
-        }
+        return evaluate(((GlobalObject) global).getRealm(), s, "evalcx", 1);
     }
 
     /**

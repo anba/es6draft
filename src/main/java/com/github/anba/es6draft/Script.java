@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 public interface Script {
     /**
      * Returns this script's
-     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.ScriptBody} object.
+     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.ScriptBody ScriptBody} object.
      * 
      * @return the script body object
      */

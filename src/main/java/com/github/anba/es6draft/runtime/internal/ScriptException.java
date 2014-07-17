@@ -13,7 +13,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
 
 /**
- * Runtime exception to represent exceptions thrown from the ThrowStatement
+ * Runtime exception to represent exceptions thrown from the ThrowStatement.
  */
 @SuppressWarnings("serial")
 public final class ScriptException extends RuntimeException {

@@ -194,39 +194,54 @@ public final class Strings {
     }
 
     /**
-     * If {@code s} is an integer indexed property key less than {@code 0x7FFFFFF}, its integer
-     * value is returned. Otherwise {@code -1} is returned.
+     * If {@code s} is an integer indexed property key less than {@code 2}<span><sup>{@code 31}
+     * </sup></span>{@code -1} ({@code 0x7FFFFFF}), its integer value is returned. Otherwise
+     * {@code -1} is returned.
      * 
      * @param s
      *            the property key
      * @return the integer index or {@code -1}
      */
     public static int toIndex(String s) {
-        return (int) toIndex(s, 0x7FFF_FFFFL);
+        // "2147483647".length == 10
+        return (int) toIndex(s, 10, 0x7FFF_FFFFL);
     }
 
     /**
-     * If {@code s} is an integer indexed property key less than {@code 0xFFFFFFF}, its integer
-     * value is returned. Otherwise {@code -1} is returned.
+     * If {@code s} is an integer indexed property key less than {@code 2}<span><sup>{@code 32}
+     * </sup></span>{@code -1} ({@code 0xFFFFFFF}), its integer value is returned. Otherwise
+     * {@code -1} is returned.
      * 
      * @param s
      *            the property key
      * @return the array index or {@code -1}
      */
     public static long toArrayIndex(String s) {
-        return toIndex(s, 0xFFFF_FFFFL);
+        // "4294967295".length == 10
+        return toIndex(s, 10, 0xFFFF_FFFFL);
     }
 
-    private static long toIndex(String s, long limit) {
+    /**
+     * If {@code s} is an integer indexed property key less than {@code 2}<span><sup>{@code 53}
+     * </sup></span>{@code -1}, its integer value is returned. Otherwise {@code -1} is returned.
+     * 
+     * @param propertyKey
+     *            the property key
+     * @return the integer index or {@code -1}
+     */
+    static long toLargeIndex(String propertyKey) {
+        // "9007199254740991".length == 16
+        return toIndex(propertyKey, 16, 0x1F_FFFF_FFFF_FFFFL);
+    }
+
+    private static long toIndex(String s, int maxLength, long limit) {
         int length = s.length();
-        if (length < 1 || length > 10) {
-            // empty string or definitely greater than "2147483647" or "4294967295"
-            // "2147483647".length == 10
-            // "4294967295".length == 10
+        if (length < 1 || length > maxLength) {
+            // empty string or definitely greater than maximum value
             return -1;
         }
         if (s.charAt(0) == '0') {
-            return (length == 1 ? 0 : -1);
+            return length == 1 ? 0 : -1;
         }
         long index = 0L;
         for (int i = 0; i < length; ++i) {

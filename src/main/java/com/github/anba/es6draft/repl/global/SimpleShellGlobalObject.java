@@ -177,10 +177,8 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
      *            the error object
      */
     @Function(name = "printStackTrace", arity = 1)
-    public void printStackTrace(ScriptObject object) {
-        if (object instanceof ErrorObject) {
-            ((ErrorObject) object).getException().printStackTrace();
-        }
+    public void printStackTrace(ErrorObject object) {
+        object.getException().printStackTrace();
     }
 
     /**

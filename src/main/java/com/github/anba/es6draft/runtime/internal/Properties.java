@@ -390,7 +390,7 @@ public final class Properties {
      *            the class which holds the constructor properties
      * @param prototypeProperties
      *            the class which holds the prototype properties
-     * @return
+     * @return the new native script class
      */
     public static Constructor createClass(ExecutionContext cx, String className,
             Class<?> constructorProperties, Class<?> prototypeProperties) {

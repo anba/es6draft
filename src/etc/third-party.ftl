@@ -28,11 +28,11 @@
 This software contains the following third party components.
 
 - Mozilla Rhino, licensed under Mozilla Public License, v. 2.0.
-  The copyright notice and license is located at
+  The copyright notice and license is located at:
   third_party/LICENSE.RHINO
 
 - Google V8, licensed under BSD 3-Clause License.
-  The copyright notice and license is located at
+  The copyright notice and license is located at:
   third_party/LICENSE.V8
 
 <#list dependencyMap as dependency>

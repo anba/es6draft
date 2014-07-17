@@ -74,14 +74,29 @@ public final class Bootstrap {
                 mt.toMethodDescriptorString());
     }
 
+    /**
+     * Returns the invokedynamic instruction name for call expressions.
+     * 
+     * @return the invokedynamic instruction name
+     */
     public static String getCallName() {
         return CallNames.CALL;
     }
 
+    /**
+     * Returns the method descriptor for call expressions.
+     * 
+     * @return the method descriptor
+     */
     public static String getCallMethodDescriptor() {
         return OP_CALL;
     }
 
+    /**
+     * Returns the bootstrapping handle for call expressions.
+     * 
+     * @return the bootstrapping handle
+     */
     public static Handle getCallBootstrap() {
         return BOOTSTRAP;
     }
@@ -164,6 +179,13 @@ public final class Bootstrap {
         return function.call(callerContext, thisValue, arguments);
     }
 
+    /**
+     * Returns the invokedynamic instruction name for the given binary operator.
+     * 
+     * @param binary
+     *            the binary operator
+     * @return the invokedynamic instruction name
+     */
     public static String getName(BinaryExpression.Operator binary) {
         switch (binary) {
         case ADD:
@@ -187,6 +209,13 @@ public final class Bootstrap {
         }
     }
 
+    /**
+     * Returns the method descriptor for the given binary operator.
+     * 
+     * @param binary
+     *            the binary operator
+     * @return the method descriptor
+     */
     public static String getMethodDescriptor(BinaryExpression.Operator binary) {
         switch (binary) {
         case ADD:
@@ -207,6 +236,13 @@ public final class Bootstrap {
         }
     }
 
+    /**
+     * Returns the bootstrapping handle for the given binary operator.
+     * 
+     * @param binary
+     *            the binary operator
+     * @return the bootstrapping handle
+     */
     public static Handle getBootstrap(BinaryExpression.Operator binary) {
         switch (binary) {
         case ADD:
@@ -537,6 +573,17 @@ public final class Bootstrap {
         throw new StackOverflowError("bootstrap stack overflow");
     }
 
+    /**
+     * The invokedynamic bootstrapping method.
+     * 
+     * @param caller
+     *            the caller lookup
+     * @param name
+     *            the instruction name
+     * @param type
+     *            the expected method type
+     * @return the invokedynamic call-site object
+     */
     public static CallSite bootstrapDynamic(MethodHandles.Lookup caller, String name,
             MethodType type) {
         // System.out.printf("caller: %s\n", caller);

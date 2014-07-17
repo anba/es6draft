@@ -300,17 +300,6 @@ public final class ScriptLoader {
     }
 
     /**
-     * Returns a new {@link Reader} for the {@code stream} parameter.
-     * 
-     * @param stream
-     *            the input stream
-     * @return the buffered input stream reader
-     */
-    private Reader newReader(InputStream stream) {
-        return new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
-    }
-
-    /**
      * Parses and compiles the javascript file.
      * 
      * @param sourceName
@@ -388,6 +377,28 @@ public final class ScriptLoader {
      *            the source name
      * @param sourceLine
      *            the source start line number
+     * @param source
+     *            the source
+     * @return the compiled script
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
+     */
+    public Script script(String sourceName, int sourceLine, String source) throws ParserException,
+            CompilationException {
+        com.github.anba.es6draft.ast.Script parsedScript = parseScript(sourceName, sourceLine,
+                source);
+        return load(parsedScript, nextScriptName());
+    }
+
+    /**
+     * Parses and compiles the javascript file.
+     * 
+     * @param sourceName
+     *            the source name
+     * @param sourceLine
+     *            the source start line number
      * @param file
      *            the script file path
      * @return the compiled script
@@ -403,12 +414,10 @@ public final class ScriptLoader {
         if (!file.isAbsolute()) {
             throw new IllegalArgumentException(String.format("'%s' is not an absolute path", file));
         }
-        try (Reader r = newReader(Files.newInputStream(file))) {
-            String source = readFully(r);
-            com.github.anba.es6draft.ast.Script parsedScript = parseScript(file, sourceName,
-                    sourceLine, source);
-            return load(parsedScript, nextScriptName());
-        }
+        String source = readFully(file);
+        com.github.anba.es6draft.ast.Script parsedScript = parseScript(file, sourceName,
+                sourceLine, source);
+        return load(parsedScript, nextScriptName());
     }
 
     /**
@@ -549,6 +558,10 @@ public final class ScriptLoader {
         return compiler.compile(generator, className);
     }
 
+    private Reader newReader(InputStream stream) {
+        return new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
+    }
+
     private static String readFully(Reader reader) throws IOException {
         StringBuilder sb = new StringBuilder(4096);
         char cbuf[] = new char[4096];
@@ -556,5 +569,9 @@ public final class ScriptLoader {
             sb.append(cbuf, 0, len);
         }
         return sb.toString();
+    }
+
+    private static String readFully(Path p) throws IOException {
+        return new String(Files.readAllBytes(p), StandardCharsets.UTF_8);
     }
 }

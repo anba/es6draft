@@ -38,8 +38,6 @@ public final class Scripts {
     public static Object ScriptEvaluation(Script script, Realm realm, boolean deletableBindings) {
         /* steps 1-2 */
         RuntimeInfo.ScriptBody scriptBody = script.getScriptBody();
-        if (scriptBody == null)
-            return null;
         /* step 3 */
         LexicalEnvironment<GlobalEnvironmentRecord> globalEnv = realm.getGlobalEnv();
         /* steps 4-5 */
