@@ -56,6 +56,9 @@ regress/regress-builtinbust-7.js
 harmony/generators-poisoned-properties.js
 harmony/generators-runtime.js
 
+# direct eval() and lexical declarations
+regress/regress-1213575.js
+
 
 ###################
 # Misc issues     #
@@ -169,6 +172,7 @@ stack-traces-overflow.js
 ############################################
 
 # V8 StackTrace API
+regress/regress-crbug-393988.js
 regress/regress-2564.js
 regress/regress-conditional-position.js
 regress/regress-function-constructor-receiver.js

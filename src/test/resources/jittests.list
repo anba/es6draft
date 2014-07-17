@@ -309,6 +309,8 @@ tests/auto-regress/bug487570.js
 tests/auto-regress/bug495843.js
 
 # let variable must not be redeclared
+tests/arguments/alias-function-closed.js
+tests/arguments/alias-function-not-closed.js
 tests/basic/bug778268.js
 
 # ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
