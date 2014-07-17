@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
 
@@ -16,6 +14,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -235,23 +234,21 @@ public final class ExoticArguments extends OrdinaryObject {
         ExoticArguments obj = new ExoticArguments(cx.getRealm());
         obj.setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
         /* step 4 */
-        DefinePropertyOrThrow(cx, obj, "length", new PropertyDescriptor(len, true, false, true));
+        obj.properties().put("length", new Property(len, true, false, true));
         /* steps 5-6 */
+        IndexedMap<Property> indexed = obj.indexedProperties();
         for (int index = 0; index < len; ++index) {
             Object val = argumentsList[index];
-            CreateDataProperty(cx, obj, index, val);
+            indexed.put(index, new Property(val, true, true, true));
         }
         Callable thrower = cx.getRealm().getThrowTypeError();
         /* step 7 */
-        DefinePropertyOrThrow(cx, obj, BuiltinSymbol.iterator.get(),
-                new PropertyDescriptor(cx.getIntrinsic(Intrinsics.ArrayProto_values), true, false,
-                        true));
+        obj.symbolProperties().put(BuiltinSymbol.iterator.get(),
+                new Property(cx.getIntrinsic(Intrinsics.ArrayProto_values), true, false, true));
         /* step 8 */
-        DefinePropertyOrThrow(cx, obj, "caller", new PropertyDescriptor(thrower, thrower, false,
-                false));
+        obj.properties().put("caller", new Property(thrower, thrower, false, false));
         /* step 9 */
-        DefinePropertyOrThrow(cx, obj, "callee", new PropertyDescriptor(thrower, thrower, false,
-                false));
+        obj.properties().put("callee", new Property(thrower, thrower, false, false));
         /* step 10 (not applicable) */
         /* step 11 */
         return obj;
@@ -285,22 +282,20 @@ public final class ExoticArguments extends OrdinaryObject {
         obj.setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
         /* steps 12-13 (not applicable) */
         /* steps 14-15 */
+        IndexedMap<Property> indexed = obj.indexedProperties();
         for (int index = 0; index < len; ++index) {
             Object val = argumentsList[index];
-            CreateDataProperty(cx, obj, index, val);
+            indexed.put(index, new Property(val, true, true, true));
         }
         /* step 16 */
-        DefinePropertyOrThrow(cx, obj, "length", new PropertyDescriptor(len, true, false, true));
-        /* steps 17-20 */
-        ParameterMap map = ParameterMap.create(len, formals, env);
-        /* step 21 */
-        obj.parameterMap = map;
+        obj.properties().put("length", new Property(len, true, false, true));
+        /* steps 17-21 */
+        obj.parameterMap = ParameterMap.create(len, formals, env);
         /* step 22 */
-        DefinePropertyOrThrow(cx, obj, BuiltinSymbol.iterator.get(),
-                new PropertyDescriptor(cx.getIntrinsic(Intrinsics.ArrayProto_values), true, false,
-                        true));
+        obj.symbolProperties().put(BuiltinSymbol.iterator.get(),
+                new Property(cx.getIntrinsic(Intrinsics.ArrayProto_values), true, false, true));
         /* steps 23-24 */
-        DefinePropertyOrThrow(cx, obj, "callee", new PropertyDescriptor(func, true, false, true));
+        obj.properties().put("callee", new Property(func, true, false, true));
         /* step 25 */
         return obj;
     }

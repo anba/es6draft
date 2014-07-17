@@ -240,6 +240,10 @@ final class FunctionDeclarationInstantiationGenerator extends
                 argumentsObjectNeeded = false;
                 // FIXME: spec bug - function f() { let arguments } (bug 2958)
                 needsSpecialArgumentsBinding = false;
+            } else if (!function.getScope().needsArguments()) {
+                // Optimization: Skip 'arguments' allocation if not referenced in function
+                needsSpecialArgumentsBinding = false;
+                argumentsObjectNeeded = false;
             }
         }
         /* steps 19-20 */

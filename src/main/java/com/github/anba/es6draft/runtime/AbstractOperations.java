@@ -32,6 +32,7 @@ import org.mozilla.javascript.v8dtoa.FastDtoa;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
@@ -2238,6 +2239,21 @@ public final class AbstractOperations {
      * @return the array elements
      */
     public static Object[] CreateListFromArrayLike(ExecutionContext cx, Object obj) {
+        if (obj instanceof ExoticArray) {
+            // Fast-path for dense arrays
+            ExoticArray array = (ExoticArray) obj;
+            if (array.isDenseArray()) {
+                long len = array.getLength();
+                if (len == 0) {
+                    return ScriptRuntime.EMPTY_ARRAY;
+                }
+                // CreateListFromArrayLike() is (currently) only used for argument arrays
+                if (len > FunctionPrototype.getMaxArguments()) {
+                    throw newRangeError(cx, Messages.Key.FunctionTooManyArguments);
+                }
+                return array.toArray();
+            }
+        }
         /* step 1 */
         if (!Type.isObject(obj)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);

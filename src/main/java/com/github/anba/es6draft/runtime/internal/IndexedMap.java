@@ -944,6 +944,15 @@ public final class IndexedMap<VALUE> {
     }
 
     /**
+     * Returns {@code true} if the map has holes.
+     * 
+     * @return {@code true} if the map has holes
+     */
+    public boolean hasHoles() {
+        return length != elements.count();
+    }
+
+    /**
      * Returns {@code true} if the map is empty.
      * 
      * @return {@code true} if the map is empty

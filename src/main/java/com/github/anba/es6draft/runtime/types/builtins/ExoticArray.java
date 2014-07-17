@@ -10,7 +10,9 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -33,6 +35,9 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 public final class ExoticArray extends OrdinaryObject {
     /** [[ArrayInitializationState]] */
     private boolean initialized = false;
+    private boolean hasIndexedAccessors = false;
+    private boolean lengthWritable = true;
+    private long length = 0;
 
     public ExoticArray(Realm realm) {
         super(realm);
@@ -49,6 +54,43 @@ public final class ExoticArray extends OrdinaryObject {
         }
         initialized = true;
         return true;
+    }
+
+    /**
+     * Returns the array's length.
+     * 
+     * @return the array's length
+     */
+    public long getLength() {
+        return length;
+    }
+
+    /**
+     * Returns {@code true} if the array is dense.
+     * 
+     * @return {@code true} if the array is dense
+     */
+    public boolean isDenseArray() {
+        IndexedMap<Property> ix = indexedProperties();
+        return !hasIndexedAccessors && ix.getLength() == length && !ix.isSparse() && !ix.hasHoles();
+    }
+
+    /**
+     * Returns the array's indexed property values. Only applicable for dense arrays.
+     * 
+     * @return the array's indexed values
+     */
+    public Object[] toArray() {
+        assert isDenseArray();
+        IndexedMap<Property> indexed = indexedProperties();
+        long length = this.length;
+        assert 0 <= length && length <= Integer.MAX_VALUE : "length=" + length;
+        int len = (int) length;
+        Object[] values = new Object[len];
+        for (int i = 0; i < len; ++i) {
+            values[i] = indexed.get(i).getValue();
+        }
+        return values;
     }
 
     /**
@@ -103,6 +145,82 @@ public final class ExoticArray extends OrdinaryObject {
         return Strings.toArrayIndex(p);
     }
 
+    private boolean isCompatibleLengthProperty(PropertyDescriptor desc, long newLength) {
+        if (desc.isEmpty()) {
+            return true;
+        }
+        if (desc.isAccessorDescriptor() || desc.isConfigurable() || desc.isEnumerable()) {
+            return false;
+        }
+        if (desc.isGenericDescriptor()) {
+            return true;
+        }
+        assert desc.isDataDescriptor();
+        if (!lengthWritable && (desc.isWritable() || (desc.hasValue() && newLength != length))) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean defineLength(PropertyDescriptor desc, long newLength) {
+        assert desc.hasValue() ? newLength >= 0 : newLength < 0;
+        boolean succeeded = isCompatibleLengthProperty(desc, newLength);
+        if (succeeded) {
+            if (newLength >= 0) {
+                length = newLength;
+            }
+            if (desc.hasWritable()) {
+                lengthWritable = desc.isWritable();
+            }
+        }
+        return succeeded;
+    }
+
+    @Override
+    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+        if ("length".equals(propertyKey)) {
+            return true;
+        }
+        return super.hasOwnProperty(cx, propertyKey);
+    }
+
+    @Override
+    protected Property getProperty(ExecutionContext cx, String propertyKey) {
+        if ("length".equals(propertyKey)) {
+            return new Property(length, lengthWritable, false, false);
+        }
+        return super.getProperty(cx, propertyKey);
+    }
+
+    @Override
+    protected boolean deleteProperty(ExecutionContext cx, String propertyKey) {
+        if ("length".equals(propertyKey)) {
+            return false;
+        }
+        return super.deleteProperty(cx, propertyKey);
+    }
+
+    @Override
+    protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
+        /* step 1 */
+        ArrayList<Object> ownKeys = new ArrayList<>();
+        /* step 2 */
+        if (!indexedProperties().isEmpty()) {
+            ownKeys.addAll(indexedProperties().keys());
+        }
+        /* step 3 */
+        ownKeys.add("length");
+        if (!properties().isEmpty()) {
+            ownKeys.addAll(properties().keySet());
+        }
+        /* step 4 */
+        if (!symbolProperties().isEmpty()) {
+            ownKeys.addAll(symbolProperties().keySet());
+        }
+        /* step 5 */
+        return ownKeys;
+    }
+
     /**
      * 9.4.2.1 [[DefineOwnProperty]] (P, Desc)
      */
@@ -112,12 +230,10 @@ public final class ExoticArray extends OrdinaryObject {
         /* step 3 */
         if (isArrayIndex(propertyKey)) {
             /* steps 3.a-3.d */
-            Property oldLenDesc = ordinaryGetOwnProperty("length");
-            assert oldLenDesc != null && !oldLenDesc.isAccessorDescriptor();
-            long oldLen = ToUint32(cx, oldLenDesc.getValue());
+            long oldLen = this.length;
             long index = propertyKey;
             /* steps 3.e */
-            if (index >= oldLen && !oldLenDesc.isWritable()) {
+            if (index >= oldLen && !lengthWritable) {
                 return false;
             }
             /* steps 3.f-3.h */
@@ -127,10 +243,9 @@ public final class ExoticArray extends OrdinaryObject {
             }
             /* step 3.i */
             if (index >= oldLen) {
-                PropertyDescriptor lenDesc = oldLenDesc.toPropertyDescriptor();
-                lenDesc.setValue(index + 1);
-                ordinaryDefineOwnProperty(cx, "length", lenDesc);
+                this.length = index + 1;
             }
+            hasIndexedAccessors |= desc.isAccessorDescriptor();
             /* step 3.j */
             return true;
         }
@@ -174,8 +289,7 @@ public final class ExoticArray extends OrdinaryObject {
         long length = 0;
         /* step 11 (not applicable) */
         /* step 12 */
-        array.ordinaryDefineOwnProperty(cx, "length", new PropertyDescriptor(length, true, false,
-                false));
+        array.length = length;
         /* step 13 */
         return array;
     }
@@ -223,8 +337,7 @@ public final class ExoticArray extends OrdinaryObject {
         /* step 10 (not applicable) */
         /* step 11 (see above) */
         /* step 12 */
-        array.ordinaryDefineOwnProperty(cx, "length", new PropertyDescriptor(length, true, false,
-                false));
+        array.length = length;
         /* step 13 */
         return array;
     }
@@ -286,7 +399,7 @@ public final class ExoticArray extends OrdinaryObject {
             PropertyDescriptor desc) {
         /* step 1 */
         if (!desc.hasValue()) {
-            return array.ordinaryDefineOwnProperty(cx, "length", desc);
+            return array.defineLength(desc, -1);
         }
         /* step 2 */
         PropertyDescriptor newLenDesc = desc.clone();
@@ -298,18 +411,15 @@ public final class ExoticArray extends OrdinaryObject {
         }
         /* step 5 */
         newLenDesc.setValue(newLen);
-        /* steps 6-7 */
-        Property oldLenDesc = array.getProperty(cx, "length");
-        /* step 8 */
-        assert oldLenDesc != null && !oldLenDesc.isAccessorDescriptor();
+        /* steps 6-8 (not applicable) */
         /* step 9 */
-        long oldLen = ToUint32(cx, oldLenDesc.getValue());
+        long oldLen = array.length;
         /* step 10 */
         if (newLen >= oldLen) {
-            return array.ordinaryDefineOwnProperty(cx, "length", newLenDesc);
+            return array.defineLength(newLenDesc, newLen);
         }
         /* step 11 */
-        if (!oldLenDesc.isWritable()) {
+        if (!array.lengthWritable) {
             return false;
         }
         /* steps 12-13 */
@@ -321,37 +431,40 @@ public final class ExoticArray extends OrdinaryObject {
             newLenDesc.setWritable(true);
         }
         /* steps 14-15 */
-        boolean succeeded = array.ordinaryDefineOwnProperty(cx, "length", newLenDesc);
+        boolean succeeded = array.defineLength(newLenDesc, newLen);
         /* step 16 */
         if (!succeeded) {
             return false;
         }
         /* step 17 */
-        IndexedMap<Property> indexed = array.indexedProperties();
-        if (indexed.isSparse()) {
-            oldLen = SparseArraySetLength(indexed, newLen, oldLen);
-        } else {
-            oldLen = DenseArraySetLength(indexed, newLen, oldLen);
-        }
-        // Need to call updateLength() manually.
-        indexed.updateLength();
+        oldLen = ArraySetLength(array, newLen, oldLen);
         /* step 17.d */
         if (oldLen >= 0) {
-            newLenDesc.setValue(oldLen + 1);
+            array.length = oldLen + 1;
             if (!newWritable) {
-                newLenDesc.setWritable(false);
+                array.lengthWritable = false;
             }
-            array.ordinaryDefineOwnProperty(cx, "length", newLenDesc);
             return false;
         }
         /* step 18 */
         if (!newWritable) {
-            PropertyDescriptor nonWritable = new PropertyDescriptor();
-            nonWritable.setWritable(false);
-            array.ordinaryDefineOwnProperty(cx, "length", nonWritable);
+            array.lengthWritable = false;
         }
         /* step 19 */
         return true;
+    }
+
+    private static long ArraySetLength(ExoticArray array, long newLen, long oldLen) {
+        IndexedMap<Property> indexed = array.indexedProperties();
+        long lastIndex;
+        if (indexed.isSparse()) {
+            lastIndex = SparseArraySetLength(indexed, newLen, oldLen);
+        } else {
+            lastIndex = DenseArraySetLength(indexed, newLen, oldLen);
+        }
+        // Need to call updateLength() manually.
+        indexed.updateLength();
+        return lastIndex;
     }
 
     private static long DenseArraySetLength(IndexedMap<Property> indexed, long newLen, long oldLen) {
