@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.internal;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 
 /**
- * Base class for internal exceptions
+ * Base class for internal exceptions.
  */
 @SuppressWarnings("serial")
 public abstract class InternalException extends RuntimeException {

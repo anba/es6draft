@@ -20,15 +20,26 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 
 /**
- * An {@link ExoticArguments} object with 'special' behaviour for legacy use
+ * An {@link ExoticArguments} object with 'special' behaviour for legacy use.
  */
 public final class ExoticLegacyArguments extends OrdinaryObject {
     private final FunctionObject callee;
     private final Object[] arguments;
     private final ParameterMap parameterMap;
 
-    public ExoticLegacyArguments(Realm realm, FunctionObject callee, Object[] arguments,
-            ParameterMap map) {
+    /**
+     * Constructs a new legacy Arguments object.
+     * 
+     * @param realm
+     *            the realm object
+     * @param callee
+     *            the callee function
+     * @param arguments
+     *            the function arguments
+     * @param map
+     *            the parameter map
+     */
+    ExoticLegacyArguments(Realm realm, FunctionObject callee, Object[] arguments, ParameterMap map) {
         super(realm, (Void) null);
         this.callee = callee;
         this.arguments = arguments;

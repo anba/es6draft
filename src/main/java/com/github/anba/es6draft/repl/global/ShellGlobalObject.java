@@ -34,6 +34,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
@@ -58,6 +59,15 @@ public abstract class ShellGlobalObject extends GlobalObject {
     protected void initializeExtensions(ExecutionContext cx) {
         super.initializeExtensions(cx);
         createProperties(cx, cx.getGlobalObject(), this, ShellGlobalObject.class);
+    }
+
+    /**
+     * Returns the shell console.
+     * 
+     * @return the shell console
+     */
+    public final ShellConsole getConsole() {
+        return console;
     }
 
     /**
@@ -93,21 +103,6 @@ public abstract class ShellGlobalObject extends GlobalObject {
             return reader.readLine();
         } catch (IOException e) {
             return defaultValue;
-        }
-    }
-
-    protected static final String concat(String... strings) {
-        if (strings.length == 0) {
-            return "";
-        } else if (strings.length == 1) {
-            return strings[0];
-        } else {
-            StringBuilder sb = new StringBuilder();
-            for (String string : strings) {
-                sb.append(string).append(' ');
-            }
-            sb.setLength(sb.length() - 1);
-            return sb.toString();
         }
     }
 
@@ -254,7 +249,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
      */
     @Function(name = "print", arity = 1)
     public void print(String... messages) {
-        console.print(concat(messages));
+        console.print(Strings.concat(messages));
     }
 
     /**

@@ -53,6 +53,12 @@ public final class GeneratorObject extends OrdinaryObject {
     // internal generator implementation
     private Generator generator;
 
+    /**
+     * Constructs a new Generator object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public GeneratorObject(Realm realm) {
         super(realm);
     }

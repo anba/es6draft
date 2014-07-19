@@ -38,6 +38,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class SetIteratorPrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new Set Iterator prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public SetIteratorPrototype(Realm realm) {
         super(realm);
     }
@@ -162,7 +168,6 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
             /* step 10 */
             if (iter.hasNext()) {
                 Entry<Object, Void> e = iter.next();
-                assert e != null;
                 if (itemKind == SetIterationKind.KeyValue) {
                     ExoticArray result = ArrayCreate(cx, 2);
                     CreateDataProperty(cx, result, 0, e.getKey());

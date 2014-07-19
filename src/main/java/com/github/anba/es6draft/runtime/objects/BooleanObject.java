@@ -24,10 +24,21 @@ public final class BooleanObject extends OrdinaryObject {
 
     private boolean initialized = false;
 
+    /**
+     * Constructs a new Boolean object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public BooleanObject(Realm realm) {
         super(realm);
     }
 
+    /**
+     * Returns {@code true} if this Boolean object is initialized.
+     * 
+     * @return {@code true} if the object is initialized
+     */
     public boolean isInitialized() {
         return initialized;
     }

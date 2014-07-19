@@ -35,6 +35,12 @@ public final class ErrorObject extends OrdinaryObject {
     private final ScriptException exception;
     private final List<StackTraceElement[]> stackTraces;
 
+    /**
+     * Constructs a new Error object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public ErrorObject(Realm realm) {
         super(realm);
         this.exception = new ScriptException(this);
@@ -54,19 +60,39 @@ public final class ErrorObject extends OrdinaryObject {
         return stackTraces;
     }
 
+    /**
+     * Returns {@code true} if this Error object is initialized.
+     * 
+     * @return {@code true} if the object is initialized
+     */
     public boolean isInitialized() {
         return initialized;
     }
 
+    /**
+     * Initializes an Error object.
+     * <p>
+     * <strong>Must not be called on initialized Error objects!</strong>
+     */
     public void initialize() {
         assert !this.initialized : "ErrorObject already initialized";
         this.initialized = true;
     }
 
+    /**
+     * Returns the wrapped {@link ScriptException} object.
+     * 
+     * @return the wrapped {@link ScriptException} object
+     */
     public ScriptException getException() {
         return exception;
     }
 
+    /**
+     * Returns the list of additional stack trace frames.
+     * 
+     * @return the list of additional stack trace frames
+     */
     public List<StackTraceElement[]> getStackTraces() {
         return stackTraces;
     }

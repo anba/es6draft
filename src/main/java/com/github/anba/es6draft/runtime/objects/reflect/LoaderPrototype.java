@@ -57,6 +57,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class LoaderPrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new Loader prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public LoaderPrototype(Realm realm) {
         super(realm);
     }
@@ -416,7 +422,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
             /* steps 4-5 */
             String sname = ToFlatString(cx, name);
             /* steps 6-8 */
-            return loaderRecord.getModules().remove(sname);
+            return loaderRecord.getModules().remove(sname) != null;
         }
 
         /**

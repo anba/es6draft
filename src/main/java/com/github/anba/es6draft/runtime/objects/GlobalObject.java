@@ -46,6 +46,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 public class GlobalObject extends OrdinaryObject implements Initializable {
     private final Realm realm;
 
+    /**
+     * Constructs a new Global object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public GlobalObject(Realm realm) {
         super(realm);
         this.realm = realm;

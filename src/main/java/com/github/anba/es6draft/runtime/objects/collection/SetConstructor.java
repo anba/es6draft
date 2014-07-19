@@ -36,6 +36,12 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  */
 public final class SetConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new Set constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public SetConstructor(Realm realm) {
         super(realm, "Set");
     }

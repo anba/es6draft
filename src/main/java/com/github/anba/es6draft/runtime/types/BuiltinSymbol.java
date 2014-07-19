@@ -61,7 +61,7 @@ public enum BuiltinSymbol {
     ;
 
     /**
-     * Returns a {@link Symbol} object for this {@link BuiltinSymbol}.
+     * Returns the {@link Symbol} object for this {@link BuiltinSymbol}.
      * 
      * @return the built-in symbol
      */

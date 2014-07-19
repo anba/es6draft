@@ -25,6 +25,16 @@ public final class ModuleObject extends OrdinaryObject {
     private ModuleLinkage moduleLinkage;
 
     /**
+     * Constructs a new Module object.
+     * 
+     * @param realm
+     *            the realm object
+     */
+    public ModuleObject(Realm realm) {
+        super(realm);
+    }
+
+    /**
      * [[ModuleLinkage]]
      *
      * @return the module linkage record
@@ -42,9 +52,5 @@ public final class ModuleObject extends OrdinaryObject {
     public void setModuleLinkage(ModuleLinkage moduleLinkage) {
         assert this.moduleLinkage == null && moduleLinkage != null : "ModuleObject already initialized";
         this.moduleLinkage = moduleLinkage;
-    }
-
-    public ModuleObject(Realm realm) {
-        super(realm);
     }
 }

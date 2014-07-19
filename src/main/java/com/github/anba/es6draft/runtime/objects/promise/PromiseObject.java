@@ -40,10 +40,21 @@ public final class PromiseObject extends OrdinaryObject {
     /** [[PromiseRejectReactions]] */
     private List<PromiseReaction> rejectReactions;
 
+    /**
+     * Constructs a new Promise object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public PromiseObject(Realm realm) {
         super(realm);
     }
 
+    /**
+     * Initializes a Promise object.
+     * <p>
+     * <strong>Must not be called on initialized Promise objects!</strong>
+     */
     public void initialize() {
         assert state == null;
         state = PromiseObject.State.Pending;
@@ -111,12 +122,26 @@ public final class PromiseObject extends OrdinaryObject {
         rejectReactions.add(reaction);
     }
 
-    public List<PromiseReaction> resolve(Object value) {
+    /**
+     * Fulfills the pending promise with <var>value</var>.
+     * 
+     * @param value
+     *            the fulfillment value
+     * @return the list of collected promise reaction records
+     */
+    public List<PromiseReaction> fufill(Object value) {
         List<PromiseReaction> reactions = fulfillReactions;
         resolve(State.Fulfilled, value);
         return reactions;
     }
 
+    /**
+     * Rejects the pending promise with <var>reason</var>.
+     * 
+     * @param reason
+     *            the rejection value
+     * @return the list of collected promise reaction records
+     */
     public List<PromiseReaction> reject(Object reason) {
         List<PromiseReaction> reactions = rejectReactions;
         resolve(State.Rejected, reason);

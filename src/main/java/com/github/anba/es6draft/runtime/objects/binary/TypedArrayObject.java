@@ -41,6 +41,12 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
     /** [[ArrayLength]] */
     private long arrayLength;
 
+    /**
+     * Constructs a new TypedArray object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public TypedArrayObject(Realm realm) {
         super(realm);
     }

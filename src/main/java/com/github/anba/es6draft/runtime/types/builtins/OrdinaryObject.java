@@ -53,6 +53,12 @@ public class OrdinaryObject implements ScriptObject {
     /** [[Extensible]] */
     private boolean extensible = true;
 
+    /**
+     * Constructs a new Ordinary Object instance.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public OrdinaryObject(Realm realm) {
         this.realm = realm;
         this.properties = new LinkedHashMap<>(STRING_PROPERTIES_DEFAULT_INITIAL_CAPACITY);
@@ -60,6 +66,14 @@ public class OrdinaryObject implements ScriptObject {
         this.indexedProperties = new IndexedMap<>();
     }
 
+    /**
+     * Constructs a new Ordinary Object instance.
+     * 
+     * @param realm
+     *            the realm object
+     * @param empty
+     *            unused placeholder
+     */
     /* package */OrdinaryObject(Realm realm, Void empty) {
         this.realm = realm;
         this.properties = null;

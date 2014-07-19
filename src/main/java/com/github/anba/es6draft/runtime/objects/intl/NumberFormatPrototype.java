@@ -34,6 +34,12 @@ import com.ibm.icu.text.NumberFormat;
  * </ul>
  */
 public final class NumberFormatPrototype extends NumberFormatObject implements Initializable {
+    /**
+     * Constructs a new NumberFormat prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public NumberFormatPrototype(Realm realm) {
         super(realm);
     }

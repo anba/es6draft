@@ -36,6 +36,12 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  */
 public final class WeakMapConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new WeakMap constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public WeakMapConstructor(Realm realm) {
         super(realm, "WeakMap");
     }

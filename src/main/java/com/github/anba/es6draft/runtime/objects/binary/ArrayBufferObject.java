@@ -27,6 +27,12 @@ public final class ArrayBufferObject extends OrdinaryObject {
 
     private boolean neutered = false;
 
+    /**
+     * Constructs a new ArrayBuffer object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public ArrayBufferObject(Realm realm) {
         super(realm);
     }

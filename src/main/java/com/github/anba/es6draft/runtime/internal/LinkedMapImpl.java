@@ -15,22 +15,16 @@ import com.github.anba.es6draft.runtime.types.Type;
 public final class LinkedMapImpl<VALUE> extends LinkedMap<Object, VALUE> {
     @Override
     protected Object hashKey(Object key) {
-        switch (Type.of(key)) {
-        case Number:
-            // int/long/double -> double
-            double v = Type.numberValue(key);
-            // Map +/-0 to +0 to enforce SameValueZero comparison
-            return v == 0 ? +0.0 : v;
-        case String:
+        if (Type.isString(key)) {
             // String/ConsString -> String
             return Type.stringValue(key).toString();
-        case Undefined:
-        case Null:
-        case Boolean:
-        case Symbol:
-        case Object:
-        default:
-            return key;
         }
+        if (Type.isNumber(key)) {
+            // int/long/double -> double
+            double v = Type.numberValue(key);
+            // Map +/-0 to +0 to enforce SameValueZero comparison semantics
+            return v == 0 ? +0.0 : v;
+        }
+        return key;
     }
 }

@@ -41,6 +41,12 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * </ul>
  */
 public final class TypedArrayConstructorPrototype extends BuiltinFunction implements Initializable {
+    /**
+     * Constructs a new TypedArray constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public TypedArrayConstructorPrototype(Realm realm) {
         super(realm, "TypedArray");
     }

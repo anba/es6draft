@@ -12,6 +12,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
@@ -42,21 +43,6 @@ public final class ScriptingGlobalObject extends GlobalObject {
         };
     }
 
-    private static String concat(String... strings) {
-        if (strings.length == 0) {
-            return "";
-        } else if (strings.length == 1) {
-            return strings[0];
-        } else {
-            StringBuilder sb = new StringBuilder();
-            for (String string : strings) {
-                sb.append(string).append(' ');
-            }
-            sb.setLength(sb.length() - 1);
-            return sb.toString();
-        }
-    }
-
     /**
      * builtin-function: {@code print(message)}
      *
@@ -65,6 +51,6 @@ public final class ScriptingGlobalObject extends GlobalObject {
      */
     @Function(name = "print", arity = 1)
     public void print(String... messages) {
-        System.out.println(concat(messages));
+        System.out.println(Strings.concat(messages));
     }
 }

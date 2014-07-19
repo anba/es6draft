@@ -20,6 +20,12 @@ public final class RealmObject extends OrdinaryObject {
     /** [[RealmRecord]] */
     private Realm realm;
 
+    /**
+     * Constructs a new Realm object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public RealmObject(Realm realm) {
         super(realm);
     }

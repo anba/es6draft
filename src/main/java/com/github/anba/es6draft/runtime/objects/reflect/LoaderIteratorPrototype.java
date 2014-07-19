@@ -39,6 +39,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class LoaderIteratorPrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new Loader Iterator prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public LoaderIteratorPrototype(Realm realm) {
         super(realm);
     }
@@ -154,7 +160,6 @@ public final class LoaderIteratorPrototype extends OrdinaryObject implements Ini
             Iterator<Entry<String, ModuleLinkage>> iter = o.iterator;
             if (iter.hasNext()) {
                 Entry<String, ModuleLinkage> e = iter.next();
-                assert e != null;
                 Object result;
                 if (itemKind == LoaderIterationKind.Key) {
                     result = e.getKey();

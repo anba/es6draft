@@ -26,6 +26,12 @@ public final class DataViewObject extends OrdinaryObject implements ArrayBufferV
     /** [[ByteOffset]] */
     private long byteOffset;
 
+    /**
+     * Constructs a new DataView object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public DataViewObject(Realm realm) {
         super(realm);
     }

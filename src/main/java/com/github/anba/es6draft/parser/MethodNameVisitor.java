@@ -9,6 +9,7 @@ package com.github.anba.es6draft.parser;
 import com.github.anba.es6draft.ast.DefaultNodeVisitor;
 import com.github.anba.es6draft.ast.ElementAccessor;
 import com.github.anba.es6draft.ast.IdentifierReference;
+import com.github.anba.es6draft.ast.LeftHandSideExpression;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.NumericLiteral;
 import com.github.anba.es6draft.ast.PropertyAccessor;
@@ -21,7 +22,14 @@ import com.github.anba.es6draft.runtime.internal.Strings;
 final class MethodNameVisitor extends DefaultNodeVisitor<String, Void> {
     private static final MethodNameVisitor INSTANCE = new MethodNameVisitor();
 
-    public static String toMethodName(Node node) {
+    /**
+     * Returns the inferred method name for the node
+     * 
+     * @param node
+     *            the AST node
+     * @return the inferred method name
+     */
+    static String toMethodName(LeftHandSideExpression node) {
         return node.accept(INSTANCE, null);
     }
 

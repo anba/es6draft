@@ -36,6 +36,12 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  */
 public final class MapConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new Map constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public MapConstructor(Realm realm) {
         super(realm, "Map");
     }

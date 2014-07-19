@@ -33,6 +33,12 @@ public final class ExoticArguments extends OrdinaryObject {
     /** [[ParameterMap]] */
     private ParameterMap parameterMap = null;
 
+    /**
+     * Constructs a new Arguments object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public ExoticArguments(Realm realm) {
         super(realm);
     }

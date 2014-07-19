@@ -119,6 +119,12 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         }
     }
 
+    /**
+     * Constructs a new NumberFormat constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public NumberFormatConstructor(Realm realm) {
         super(realm, "NumberFormat");
     }

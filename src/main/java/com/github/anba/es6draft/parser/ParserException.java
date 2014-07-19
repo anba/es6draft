@@ -15,7 +15,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 
 /**
- * {@link RuntimeException} subclass for parser exceptions
+ * {@link InternalException} subclass for parser exceptions.
  */
 @SuppressWarnings("serial")
 public class ParserException extends InternalException {
@@ -29,6 +29,22 @@ public class ParserException extends InternalException {
     private final Messages.Key messageKey;
     private final String[] messageArguments;
 
+    /**
+     * Constructs a new parser exception with the given arguments.
+     * 
+     * @param type
+     *            the exception type
+     * @param file
+     *            the source file location
+     * @param line
+     *            the source line
+     * @param column
+     *            the source column
+     * @param messageKey
+     *            the message key
+     * @param args
+     *            the message arguments
+     */
     public ParserException(ExceptionType type, String file, int line, int column,
             Messages.Key messageKey, String... args) {
         super(messageKey.name());

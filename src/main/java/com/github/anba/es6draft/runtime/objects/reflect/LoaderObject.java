@@ -21,6 +21,12 @@ public class LoaderObject extends OrdinaryObject {
     /** [[Loader]] */
     private Loader loader;
 
+    /**
+     * Constructs a new Loader object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public LoaderObject(Realm realm) {
         super(realm);
     }

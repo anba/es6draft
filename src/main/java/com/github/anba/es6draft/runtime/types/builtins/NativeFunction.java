@@ -23,15 +23,44 @@ public final class NativeFunction extends BuiltinFunction {
 
     private final NativeFunctionId id;
 
+    /**
+     * Internal enumeration to mark native functions.
+     */
     public enum NativeFunctionId {
         None, RegExpPrototypeExec
     }
 
+    /**
+     * Constructs a new native function.
+     * 
+     * @param realm
+     *            the realm object
+     * @param name
+     *            the function name
+     * @param arity
+     *            the function arity
+     * @param mh
+     *            the method handle to the function code
+     */
     public NativeFunction(Realm realm, String name, int arity, MethodHandle mh) {
         this(realm, name, NativeFunctionId.None, mh);
         createDefaultFunctionProperties(name, arity);
     }
 
+    /**
+     * Constructs a new native function.
+     * 
+     * @param realm
+     *            the realm object
+     * @param name
+     *            the function name
+     * @param arity
+     *            the function arity
+     * @param id
+     *            the native function identifier
+     * @param mh
+     *            the method handle to the function code
+     */
     public NativeFunction(Realm realm, String name, int arity, NativeFunctionId id, MethodHandle mh) {
         this(realm, name, id, mh);
         createDefaultFunctionProperties(name, arity);
@@ -53,7 +82,7 @@ public final class NativeFunction extends BuiltinFunction {
     }
 
     /**
-     * Returns the id for this native function.
+     * Returns the identifier for this native function.
      * 
      * @return the native function id
      */

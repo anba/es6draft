@@ -33,6 +33,12 @@ public final class ExoticString extends OrdinaryObject {
     /** [[StringData]] */
     private CharSequence stringData = null;
 
+    /**
+     * Constructs a new String object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public ExoticString(Realm realm) {
         super(realm);
     }
@@ -67,10 +73,26 @@ public final class ExoticString extends OrdinaryObject {
         this.stringData = stringData;
     }
 
+    /**
+     * If {@code p} is a string index, its integer value is returned. Otherwise {@code -1} is
+     * returned.
+     * 
+     * @param p
+     *            the property key
+     * @return the string index or {@code -1}
+     */
     public static int toStringIndex(long p) {
         return 0 <= p && p < 0x7FFF_FFFFL ? (int) p : -1;
     }
 
+    /**
+     * If {@code p} is a string index, its integer value is returned. Otherwise {@code -1} is
+     * returned.
+     * 
+     * @param p
+     *            the property key
+     * @return the string index or {@code -1}
+     */
     public static int toStringIndex(String p) {
         return Strings.toIndex(p);
     }

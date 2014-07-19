@@ -23,6 +23,12 @@ public final class SymbolObject extends OrdinaryObject {
     /** [[SymbolData]] */
     private Symbol symbolData;
 
+    /**
+     * Constructs a new Symbol object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public SymbolObject(Realm realm) {
         super(realm);
     }

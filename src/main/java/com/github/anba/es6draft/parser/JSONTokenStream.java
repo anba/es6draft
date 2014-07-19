@@ -19,7 +19,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  * <li>24.3.1.1 The JSON Lexical Grammar
  * </ul>
  */
-public final class JSONTokenStream {
+final class JSONTokenStream {
     private final TokenStreamInput input;
     // token data
     private Token current;
@@ -50,7 +50,7 @@ public final class JSONTokenStream {
         return number;
     }
 
-    //
+    /* token operations */
 
     /**
      * Advances the token stream to the next token.
@@ -70,7 +70,7 @@ public final class JSONTokenStream {
         return current;
     }
 
-    //
+    /* lexer operations */
 
     private Token scanToken() {
         TokenStreamInput input = this.input;
@@ -182,9 +182,9 @@ public final class JSONTokenStream {
     /**
      * <pre>
      * JSONString ::
-     *     " JSONStringCharacters[opt] "
+     *     " JSONStringCharacters<span><sub>opt</sub></span> "
      * JSONStringCharacters ::
-     *     JSONStringCharacter JSONStringCharacters[opt]
+     *     JSONStringCharacter JSONStringCharacters<span><sub>opt</sub></span>
      * JSONStringCharacter ::
      *     SourceCharacter but not one of " or \ or U+0000 through U+001F
      *     \ JSONEscapeSequence
@@ -273,10 +273,10 @@ public final class JSONTokenStream {
     /**
      * <pre>
      * JSONNumber ::
-     *      -[opt]  DecimalIntegerLiteral JSONFraction[opt]  ExponentPart[opt]
+     *      -<span><sub>opt</sub></span> DecimalIntegerLiteral JSONFraction<span><sub>opt</sub></span> ExponentPart<span><sub>opt</sub></span>
      * DecimalIntegerLiteral ::
      *      0
-     *      NonZeroDigit DecimalDigits[opt]
+     *      NonZeroDigit DecimalDigits<span><sub>opt</sub></span>
      * JSONFraction ::
      *      . DecimalDigits
      * ExponentPart ::

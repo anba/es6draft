@@ -514,36 +514,28 @@ public final class Parser {
         NativeCall,
     }
 
-    public Parser(String sourceName, int sourceLine, Set<CompatibilityOption> compatOptions) {
-        this(null, sourceName, sourceLine, compatOptions, EnumSet.noneOf(Option.class));
-    }
-
-    public Parser(Path sourceFile, String sourceName, int sourceLine,
-            Set<CompatibilityOption> compatOptions) {
-        this(sourceFile, sourceName, sourceLine, compatOptions, EnumSet.noneOf(Option.class));
-    }
-
     public Parser(String sourceName, int sourceLine, Set<CompatibilityOption> compatOptions,
-            EnumSet<Option> options) {
-        this(null, sourceName, sourceLine, compatOptions, options);
+            EnumSet<Option> parserOptions) {
+        this(null, sourceName, sourceLine, compatOptions, parserOptions);
     }
 
     public Parser(Path sourceFile, String sourceName, int sourceLine,
-            Set<CompatibilityOption> compatOptions, EnumSet<Option> options) {
+            Set<CompatibilityOption> compatOptions, EnumSet<Option> parserOptions) {
         this.sourceFile = sourceFile;
         this.sourceName = sourceName;
         this.sourceLine = sourceLine;
         this.options = EnumSet.copyOf(compatOptions);
-        this.parserOptions = EnumSet.copyOf(options);
+        this.parserOptions = EnumSet.copyOf(parserOptions);
         context = new ParseContext();
         context.strictMode = this.parserOptions.contains(Option.Strict) ? StrictMode.Strict
                 : StrictMode.NonStrict;
 
         // eval-script option must be set if one of the following options is used
-        assert !(options.contains(Option.FunctionCode) || options.contains(Option.LocalScope)
-                || options.contains(Option.DirectEval) || options
+        assert !(parserOptions.contains(Option.FunctionCode)
+                || parserOptions.contains(Option.LocalScope)
+                || parserOptions.contains(Option.DirectEval) || parserOptions
                     .contains(Option.EnclosedByWithStatement))
-                || options.contains(Option.EvalScript) : "Illegal option: " + options;
+                || parserOptions.contains(Option.EvalScript) : "Illegal option: " + parserOptions;
     }
 
     String getSourceName() {

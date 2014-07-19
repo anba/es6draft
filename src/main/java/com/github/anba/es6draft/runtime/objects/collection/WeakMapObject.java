@@ -23,6 +23,12 @@ public final class WeakMapObject extends OrdinaryObject {
     /** [[WeakMapData]] */
     private WeakHashMap<ScriptObject, Object> weakMapData = null;
 
+    /**
+     * Constructs a new WeakMap object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public WeakMapObject(Realm realm) {
         super(realm);
     }
@@ -50,7 +56,7 @@ public final class WeakMapObject extends OrdinaryObject {
     /**
      * Returns {@code true} if this WeakMap instance is initialized.
      * 
-     * @return {@code true} if this object initialized
+     * @return {@code true} if this object is initialized
      */
     public boolean isInitialized() {
         return weakMapData != null;

@@ -31,6 +31,14 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 public final class NativeErrorPrototype extends OrdinaryObject implements Initializable {
     private final ErrorType type;
 
+    /**
+     * Constructs a new NativeError prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     * @param type
+     *            the native error type
+     */
     public NativeErrorPrototype(Realm realm, ErrorType type) {
         super(realm);
         this.type = type;

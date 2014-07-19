@@ -81,6 +81,22 @@ public final class JSONParser {
         return jsonText();
     }
 
+    /**
+     * Parses the input source string as a JSON text and returns its value. Throws a
+     * {@link ParserException} if the source string is not a valid JSON text.
+     * 
+     * @param cx
+     *            the execution context
+     * @param source
+     *            the source string
+     * @return the value of parsed JSON text
+     * @throws ParserException
+     *             if the input source is not a valid JSON text
+     */
+    public static Object parse(ExecutionContext cx, String source) throws ParserException {
+        return new JSONParser(cx, source).parse();
+    }
+
     /* ***************************************************************************************** */
 
     /**

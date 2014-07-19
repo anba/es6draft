@@ -43,16 +43,36 @@ public class ExoticProxy implements ScriptObject {
     /** [[ProxyHandler]] */
     private ScriptObject proxyHandler;
 
+    /**
+     * Constructs a new Proxy object.
+     * 
+     * @param target
+     *            the proxy target object
+     * @param handler
+     *            the proxy handler object
+     */
     protected ExoticProxy(ScriptObject target, ScriptObject handler) {
         this.proxyTarget = target;
         this.proxyHandler = handler;
     }
 
+    /**
+     * Returns the proxy target object.
+     * 
+     * @return the proxy target object
+     */
     protected final ScriptObject getProxyTarget() {
         assert proxyTarget != null;
         return proxyTarget;
     }
 
+    /**
+     * Returns the proxy handler object or throws a script exception of the proxy has been revoked.
+     * 
+     * @param cx
+     *            the execution context
+     * @return the proxy handler object
+     */
     protected final ScriptObject getProxyHandler(ExecutionContext cx) {
         if (proxyHandler == null) {
             throw newTypeError(cx, Messages.Key.ProxyRevoked);
@@ -60,6 +80,11 @@ public class ExoticProxy implements ScriptObject {
         return proxyHandler;
     }
 
+    /**
+     * Returns {@code true} if the proxy has been revoked.
+     * 
+     * @return {@code true} if the proxy has been revoked
+     */
     protected final boolean isRevoked() {
         return proxyHandler == null;
     }
@@ -81,6 +106,14 @@ public class ExoticProxy implements ScriptObject {
     }
 
     private static class CallabeExoticProxy extends ExoticProxy implements Callable {
+        /**
+         * Constructs a new Proxy object.
+         * 
+         * @param target
+         *            the proxy target object
+         * @param handler
+         *            the proxy handler object
+         */
         public CallabeExoticProxy(ScriptObject target, ScriptObject handler) {
             super(target, handler);
         }
@@ -129,6 +162,14 @@ public class ExoticProxy implements ScriptObject {
     }
 
     private static class ConstructorExoticProxy extends CallabeExoticProxy implements Constructor {
+        /**
+         * Constructs a new Proxy object.
+         * 
+         * @param target
+         *            the proxy target object
+         * @param handler
+         *            the proxy handler object
+         */
         public ConstructorExoticProxy(ScriptObject target, ScriptObject handler) {
             super(target, handler);
         }

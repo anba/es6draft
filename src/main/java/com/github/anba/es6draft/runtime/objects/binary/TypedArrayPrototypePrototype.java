@@ -48,6 +48,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class TypedArrayPrototypePrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new TypedArray prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public TypedArrayPrototypePrototype(Realm realm) {
         super(realm);
     }

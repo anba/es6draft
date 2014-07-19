@@ -34,6 +34,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class WeakMapPrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new WeakMap prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public WeakMapPrototype(Realm realm) {
         super(realm);
     }

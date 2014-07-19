@@ -22,6 +22,12 @@ public final class SetObject extends OrdinaryObject {
     /** [[SetData]] */
     private LinkedMap<Object, Void> setData = null;
 
+    /**
+     * Constructs a new Set object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public SetObject(Realm realm) {
         super(realm);
     }
@@ -48,7 +54,7 @@ public final class SetObject extends OrdinaryObject {
     /**
      * Returns {@code true} if this Set instance is initialized.
      * 
-     * @return {@code true} if this object initialized
+     * @return {@code true} if this object is initialized
      */
     public boolean isInitialized() {
         return setData != null;

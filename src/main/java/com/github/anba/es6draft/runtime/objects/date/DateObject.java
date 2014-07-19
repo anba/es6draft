@@ -22,10 +22,21 @@ public final class DateObject extends OrdinaryObject {
 
     private boolean initialized = false;
 
+    /**
+     * Constructs a new Date object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public DateObject(Realm realm) {
         super(realm);
     }
 
+    /**
+     * Returns {@code true} if this Date object is initialized.
+     * 
+     * @return {@code true} if the object is initialized
+     */
     public boolean isInitialized() {
         return initialized;
     }

@@ -39,6 +39,12 @@ public final class ExoticArray extends OrdinaryObject {
     private boolean lengthWritable = true;
     private long length = 0;
 
+    /**
+     * Constructs a new Array object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public ExoticArray(Realm realm) {
         super(realm);
     }

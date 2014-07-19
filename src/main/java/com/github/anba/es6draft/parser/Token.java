@@ -9,7 +9,7 @@ package com.github.anba.es6draft.parser;
 /**
  * Enumeration of lexer tokens
  */
-public enum Token {/* @formatter:off */
+enum Token {/* @formatter:off */
     // Keyword -> 11.6.2.1
     BREAK("break"),
     CASE("case"),

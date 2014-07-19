@@ -42,6 +42,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class RealmPrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new Realm prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public RealmPrototype(Realm realm) {
         super(realm);
     }

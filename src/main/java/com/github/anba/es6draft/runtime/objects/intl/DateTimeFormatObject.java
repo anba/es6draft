@@ -51,6 +51,12 @@ public class DateTimeFormatObject extends OrdinaryObject {
 
     private DateFormat dateFormat;
 
+    /**
+     * Constructs a new DateTimeFormat object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public DateTimeFormatObject(Realm realm) {
         super(realm);
     }

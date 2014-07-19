@@ -6,13 +6,11 @@
  */
 package com.github.anba.es6draft;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 
 import org.junit.Test;
 
@@ -74,7 +72,11 @@ public class LinkedMapTest {
         assertEntryEquals("key2", "value2", itr.next());
 
         assertFalse(itr.hasNext());
-        assertNull(itr.next());
+        try {
+            itr.next();
+            fail();
+        } catch (NoSuchElementException e) {
+        }
     }
 
     @Test
@@ -88,7 +90,11 @@ public class LinkedMapTest {
         assertEntryEquals("key1", "value1", itr.next());
 
         assertFalse(itr.hasNext());
-        assertNull(itr.next());
+        try {
+            itr.next();
+            fail();
+        } catch (NoSuchElementException e) {
+        }
     }
 
     @Test
@@ -99,14 +105,22 @@ public class LinkedMapTest {
 
         // iterator finished concept not available
         assertFalse(itr.hasNext());
-        assertNull(itr.next());
+        try {
+            itr.next();
+            fail();
+        } catch (NoSuchElementException e) {
+        }
 
         map.set("key1", "value1");
         assertTrue(itr.hasNext());
         assertEntryEquals("key1", "value1", itr.next());
 
         assertFalse(itr.hasNext());
-        assertNull(itr.next());
+        try {
+            itr.next();
+            fail();
+        } catch (NoSuchElementException e) {
+        }
     }
 
     @Test
@@ -125,7 +139,11 @@ public class LinkedMapTest {
         assertEntryEquals("key2", "value2", itr.next());
 
         assertFalse(itr.hasNext());
-        assertNull(itr.next());
+        try {
+            itr.next();
+            fail();
+        } catch (NoSuchElementException e) {
+        }
     }
 
     @Test
@@ -150,7 +168,11 @@ public class LinkedMapTest {
         assertEntryEquals("key2", "value2", itr.next());
         assertEntryEquals("key3", "value3", itr.next());
         assertEntryEquals("key4", "value4", itr.next());
-        assertNull(itr.next());
+        try {
+            itr.next();
+            fail();
+        } catch (NoSuchElementException e) {
+        }
     }
 
     @Test
@@ -175,7 +197,11 @@ public class LinkedMapTest {
         assertTrue(itr.hasNext());
         assertEntryEquals("key3", "value3", itr.next());
         assertEntryEquals("key4", "value4", itr.next());
-        assertNull(itr.next());
+        try {
+            itr.next();
+            fail();
+        } catch (NoSuchElementException e) {
+        }
     }
 
     @Test
@@ -200,6 +226,10 @@ public class LinkedMapTest {
         assertTrue(itr.hasNext());
         assertEntryEquals("key2", "value2", itr.next());
         assertEntryEquals("key4", "value4", itr.next());
-        assertNull(itr.next());
+        try {
+            itr.next();
+            fail();
+        } catch (NoSuchElementException e) {
+        }
     }
 }

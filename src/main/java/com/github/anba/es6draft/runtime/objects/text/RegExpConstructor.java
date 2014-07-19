@@ -44,6 +44,12 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  */
 public final class RegExpConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new RegExp constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public RegExpConstructor(Realm realm) {
         super(realm, "RegExp");
     }
@@ -164,7 +170,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         String f = Type.isUndefined(flags) ? "" : ToFlatString(cx, flags);
 
         /* RegExp statics extension */
-        if (getRegExp(cx).isDefaultMultiline() && f.indexOf('m') == -1) {
+        if (getRegExpStatics(cx).isDefaultMultiline() && f.indexOf('m') == -1) {
             f = f + 'm';
         }
 
@@ -312,54 +318,66 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
      * RegExp statics extensions below this point
      */
 
-    private static RegExpConstructor getRegExp(ExecutionContext cx) {
-        return (RegExpConstructor) cx.getIntrinsic(Intrinsics.RegExp);
+    private static final class RegExpStaticsHolder {
+        private static final MatchResult EMPTY_MATCH_RESULT;
+        static {
+            Matcher m = Pattern.compile("").matcher("");
+            m.matches();
+            EMPTY_MATCH_RESULT = m;
+        }
+
+        private boolean defaultMultiline = false;
+        private CharSequence lastInput = "";
+        private MatchResult lastMatchResult = EMPTY_MATCH_RESULT;
+
+        boolean isDefaultMultiline() {
+            return defaultMultiline;
+        }
+
+        void setDefaultMultiline(boolean defaultMultiline) {
+            this.defaultMultiline = defaultMultiline;
+        }
+
+        CharSequence getLastInput() {
+            return lastInput;
+        }
+
+        MatchResult getLastMatchResult() {
+            return lastMatchResult;
+        }
+
+        void storeLastMatchResult(CharSequence input, MatchResult matchResult) {
+            this.lastInput = input;
+            this.lastMatchResult = matchResult;
+        }
     }
 
-    private static final MatchResult EMPTY_MATCH_RESULT;
-    static {
-        Matcher m = Pattern.compile("").matcher("");
-        m.matches();
-        EMPTY_MATCH_RESULT = m;
+    private RegExpStaticsHolder regExpStatics;
+
+    private static RegExpStaticsHolder getRegExpStatics(ExecutionContext cx) {
+        RegExpConstructor re = (RegExpConstructor) cx.getIntrinsic(Intrinsics.RegExp);
+        RegExpStaticsHolder statics = re.regExpStatics;
+        if (statics == null) {
+            re.regExpStatics = statics = new RegExpStaticsHolder();
+        }
+        return statics;
     }
 
-    private boolean defaultMultiline = false;
-    private CharSequence lastInput = "";
-    private MatchResult lastMatchResult = EMPTY_MATCH_RESULT;
-
-    public boolean isDefaultMultiline() {
-        return defaultMultiline;
-    }
-
-    public void setDefaultMultiline(boolean defaultMultiline) {
-        this.defaultMultiline = defaultMultiline;
-    }
-
-    public CharSequence getLastInput() {
-        return lastInput;
-    }
-
-    public MatchResult getLastMatchResult() {
-        return lastMatchResult;
-    }
-
-    public static void storeLastMatchResult(ExecutionContext cx, CharSequence input,
+    static void storeLastMatchResult(ExecutionContext cx, CharSequence input,
             MatchResult matchResult) {
-        RegExpConstructor re = getRegExp(cx);
-        re.lastInput = input;
-        re.lastMatchResult = matchResult;
+        getRegExpStatics(cx).storeLastMatchResult(input, matchResult);
     }
 
     @CompatibilityExtension(CompatibilityOption.RegExpStatics)
     public enum RegExpStatics {
         ;
 
-        private static String group(RegExpConstructor re, int groupIndex) {
+        private static String group(RegExpStaticsHolder statics, int groupIndex) {
             assert groupIndex >= 0;
-            if (groupIndex == 0 || groupIndex > re.getLastMatchResult().groupCount()) {
+            if (groupIndex == 0 || groupIndex > statics.getLastMatchResult().groupCount()) {
                 return "";
             }
-            String[] groups = RegExpPrototype.groups(re.getLastMatchResult());
+            String[] groups = RegExpPrototype.groups(statics.getLastMatchResult());
             String group = groups[groupIndex - 1];
             return group != null ? group : "";
         }
@@ -408,7 +426,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "multiline", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object get_multiline(ExecutionContext cx, Object thisValue) {
-            return getRegExp(cx).isDefaultMultiline();
+            return getRegExpStatics(cx).isDefaultMultiline();
         }
 
         /**
@@ -425,7 +443,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "multiline", type = Accessor.Type.Setter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object set_multiline(ExecutionContext cx, Object thisValue, Object value) {
-            getRegExp(cx).setDefaultMultiline(ToBoolean(value));
+            getRegExpStatics(cx).setDefaultMultiline(ToBoolean(value));
             return UNDEFINED;
         }
 
@@ -456,7 +474,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "input", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object input(ExecutionContext cx, Object thisValue) {
-            return getRegExp(cx).getLastInput();
+            return getRegExpStatics(cx).getLastInput();
         }
 
         /**
@@ -486,7 +504,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "lastMatch", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object lastMatch(ExecutionContext cx, Object thisValue) {
-            return getRegExp(cx).getLastMatchResult().group();
+            return getRegExpStatics(cx).getLastMatchResult().group();
         }
 
         /**
@@ -516,8 +534,8 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "lastParen", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object lastParen(ExecutionContext cx, Object thisValue) {
-            RegExpConstructor re = getRegExp(cx);
-            return group(re, re.getLastMatchResult().groupCount());
+            RegExpStaticsHolder statics = getRegExpStatics(cx);
+            return group(statics, statics.getLastMatchResult().groupCount());
         }
 
         /**
@@ -547,8 +565,9 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "leftContext", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object leftContext(ExecutionContext cx, Object thisValue) {
-            RegExpConstructor re = getRegExp(cx);
-            return re.getLastInput().toString().substring(0, re.getLastMatchResult().start());
+            RegExpStaticsHolder statics = getRegExpStatics(cx);
+            return statics.getLastInput().toString()
+                    .substring(0, statics.getLastMatchResult().start());
         }
 
         /**
@@ -578,8 +597,8 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "rightContext", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object rightContext(ExecutionContext cx, Object thisValue) {
-            RegExpConstructor re = getRegExp(cx);
-            return re.getLastInput().toString().substring(re.getLastMatchResult().end());
+            RegExpStaticsHolder statics = getRegExpStatics(cx);
+            return statics.getLastInput().toString().substring(statics.getLastMatchResult().end());
         }
 
         /**
@@ -594,7 +613,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "$1", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object $1(ExecutionContext cx, Object thisValue) {
-            return group(getRegExp(cx), 1);
+            return group(getRegExpStatics(cx), 1);
         }
 
         /**
@@ -609,7 +628,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "$2", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object $2(ExecutionContext cx, Object thisValue) {
-            return group(getRegExp(cx), 2);
+            return group(getRegExpStatics(cx), 2);
         }
 
         /**
@@ -624,7 +643,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "$3", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object $3(ExecutionContext cx, Object thisValue) {
-            return group(getRegExp(cx), 3);
+            return group(getRegExpStatics(cx), 3);
         }
 
         /**
@@ -639,7 +658,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "$4", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object $4(ExecutionContext cx, Object thisValue) {
-            return group(getRegExp(cx), 4);
+            return group(getRegExpStatics(cx), 4);
         }
 
         /**
@@ -654,7 +673,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "$5", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object $5(ExecutionContext cx, Object thisValue) {
-            return group(getRegExp(cx), 5);
+            return group(getRegExpStatics(cx), 5);
         }
 
         /**
@@ -669,7 +688,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "$6", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object $6(ExecutionContext cx, Object thisValue) {
-            return group(getRegExp(cx), 6);
+            return group(getRegExpStatics(cx), 6);
         }
 
         /**
@@ -684,7 +703,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "$7", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object $7(ExecutionContext cx, Object thisValue) {
-            return group(getRegExp(cx), 7);
+            return group(getRegExpStatics(cx), 7);
         }
 
         /**
@@ -699,7 +718,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "$8", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object $8(ExecutionContext cx, Object thisValue) {
-            return group(getRegExp(cx), 8);
+            return group(getRegExpStatics(cx), 8);
         }
 
         /**
@@ -714,7 +733,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Accessor(name = "$9", type = Accessor.Type.Getter, attributes = @Attributes(
                 writable = false, enumerable = true, configurable = true))
         public static Object $9(ExecutionContext cx, Object thisValue) {
-            return group(getRegExp(cx), 9);
+            return group(getRegExpStatics(cx), 9);
         }
     }
 }

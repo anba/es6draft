@@ -76,6 +76,14 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
 
     private final ErrorType type;
 
+    /**
+     * Constructs a new NativeError constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     * @param type
+     *            the native error type
+     */
     public NativeErrorConstructor(Realm realm, ErrorType type) {
         super(realm, type.name());
         this.type = type;

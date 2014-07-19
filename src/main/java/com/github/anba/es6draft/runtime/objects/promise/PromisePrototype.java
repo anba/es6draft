@@ -37,6 +37,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class PromisePrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new Promise prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public PromisePrototype(Realm realm) {
         super(realm);
     }

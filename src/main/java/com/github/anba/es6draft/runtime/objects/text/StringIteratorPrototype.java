@@ -32,6 +32,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class StringIteratorPrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new String Iterator prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public StringIteratorPrototype(Realm realm) {
         super(realm);
     }

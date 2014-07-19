@@ -25,7 +25,20 @@ import org.mozilla.javascript.ConsString;
  * </ul>
  */
 public enum Type {
-    Undefined, Null, Boolean, String, Symbol, Number, Object;
+    /** 6.1.1 The Undefined Type */
+    Undefined,
+    /** 6.1.2 The Null Type */
+    Null,
+    /** 6.1.3 The Boolean Type */
+    Boolean,
+    /** 6.1.4 The String Type */
+    String,
+    /** 6.1.5 The Symbol Type */
+    Symbol,
+    /** 6.1.6 The Number Type */
+    Number,
+    /** 6.1.7 The Object Type */
+    Object;
 
     /**
      * Returns the {@link Type} of the input parameter.

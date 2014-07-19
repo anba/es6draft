@@ -21,6 +21,12 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
  * <h2>26.4 The System Object</h2>
  */
 public final class SystemObject extends LoaderObject implements Initializable {
+    /**
+     * Constructs a new System object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public SystemObject(Realm realm) {
         super(realm);
     }

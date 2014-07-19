@@ -49,6 +49,12 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
  * </ul>
  */
 public final class PromiseConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new Promise constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public PromiseConstructor(Realm realm) {
         super(realm, "Promise");
     }

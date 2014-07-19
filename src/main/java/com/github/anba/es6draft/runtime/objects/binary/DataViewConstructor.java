@@ -42,6 +42,12 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  */
 public final class DataViewConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new DataView constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public DataViewConstructor(Realm realm) {
         super(realm, "DataView");
     }

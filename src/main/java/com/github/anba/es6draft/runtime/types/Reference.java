@@ -161,6 +161,9 @@ public abstract class Reference<BASE, NAME> {
         return ((Reference<?, ?>) v).getThisValue(cx);
     }
 
+    /**
+     * Reference specialization for binding references.
+     */
     public static final class BindingReference extends
             Reference<DeclarativeEnvironmentRecord.Binding, String> {
         private final DeclarativeEnvironmentRecord.Binding base;
@@ -225,6 +228,9 @@ public abstract class Reference<BASE, NAME> {
         }
     }
 
+    /**
+     * Reference specialization for identifier references.
+     */
     public static final class IdentifierReference extends Reference<EnvironmentRecord, String> {
         private final EnvironmentRecord base;
         private final String referencedName;
@@ -309,11 +315,25 @@ public abstract class Reference<BASE, NAME> {
         }
     }
 
+    /**
+     * Reference specialization for property references.
+     *
+     * @param <NAME>
+     *            the reference name type
+     */
     protected static abstract class PropertyReference<NAME> extends Reference<Object, NAME> {
         protected final Object base;
         protected final Type type;
         protected final boolean strictReference;
 
+        /**
+         * Constructs a new property reference.
+         * 
+         * @param base
+         *            the base object
+         * @param strictReference
+         *            the strict mode flag
+         */
         protected PropertyReference(Object base, boolean strictReference) {
             this.base = base;
             this.type = Type.of(base);
@@ -376,9 +396,22 @@ public abstract class Reference<BASE, NAME> {
         }
     }
 
+    /**
+     * Reference specialization for indexed property references.
+     */
     public static final class PropertyIndexReference extends PropertyReference<String> {
         private final long referencedName;
 
+        /**
+         * Constructs a new property reference.
+         * 
+         * @param base
+         *            the base object
+         * @param referencedName
+         *            the referenced name
+         * @param strictReference
+         *            the strict mode flag
+         */
         public PropertyIndexReference(Object base, long referencedName, boolean strictReference) {
             super(base, strictReference);
             this.referencedName = referencedName;
@@ -428,9 +461,22 @@ public abstract class Reference<BASE, NAME> {
         }
     }
 
+    /**
+     * Reference specialization for string-valued property references.
+     */
     public static final class PropertyNameReference extends PropertyReference<String> {
         private final String referencedName;
 
+        /**
+         * Constructs a new property reference.
+         * 
+         * @param base
+         *            the base object
+         * @param referencedName
+         *            the referenced name
+         * @param strictReference
+         *            the strict mode flag
+         */
         public PropertyNameReference(Object base, String referencedName, boolean strictReference) {
             super(base, strictReference);
             this.referencedName = referencedName;
@@ -484,9 +530,22 @@ public abstract class Reference<BASE, NAME> {
         }
     }
 
+    /**
+     * Reference specialization for symbol-valued property references.
+     */
     public static final class PropertySymbolReference extends PropertyReference<Symbol> {
         private final Symbol referencedName;
 
+        /**
+         * Constructs a new property reference.
+         * 
+         * @param base
+         *            the base object
+         * @param referencedName
+         *            the referenced name
+         * @param strictReference
+         *            the strict mode flag
+         */
         public PropertySymbolReference(Object base, Symbol referencedName, boolean strictReference) {
             super(base, strictReference);
             this.referencedName = referencedName;
@@ -527,11 +586,27 @@ public abstract class Reference<BASE, NAME> {
         }
     }
 
+    /**
+     * Reference specialization for <code>super</code> references.
+     *
+     * @param <NAME>
+     *            the reference name type
+     */
     protected static abstract class SuperReference<NAME> extends Reference<ScriptObject, NAME> {
         private final ScriptObject base;
         private final boolean strictReference;
         private final Object thisValue;
 
+        /**
+         * Constructs a new <code>super</code> reference.
+         * 
+         * @param base
+         *            the base object
+         * @param strictReference
+         *            the strict mode flag
+         * @param thisValue
+         *            the this-binding
+         */
         protected SuperReference(ScriptObject base, boolean strictReference, Object thisValue) {
             this.base = base;
             this.strictReference = strictReference;
@@ -576,9 +651,24 @@ public abstract class Reference<BASE, NAME> {
         }
     }
 
+    /**
+     * Reference specialization for string-valued <code>super</code> references.
+     */
     public static final class SuperNameReference extends SuperReference<String> {
         private final String referencedName;
 
+        /**
+         * Constructs a new <code>super</code> reference.
+         * 
+         * @param base
+         *            the base object
+         * @param referencedName
+         *            the referenced name
+         * @param strictReference
+         *            the strict mode flag
+         * @param thisValue
+         *            the this-binding
+         */
         public SuperNameReference(ScriptObject base, String referencedName,
                 boolean strictReference, Object thisValue) {
             super(base, strictReference, thisValue);
@@ -606,9 +696,24 @@ public abstract class Reference<BASE, NAME> {
         }
     }
 
+    /**
+     * Reference specialization for symbol-valued <code>super</code> references.
+     */
     public static final class SuperSymbolReference extends SuperReference<Symbol> {
         private final Symbol referencedName;
 
+        /**
+         * Constructs a new <code>super</code> reference.
+         * 
+         * @param base
+         *            the base object
+         * @param referencedName
+         *            the referenced name
+         * @param strictReference
+         *            the strict mode flag
+         * @param thisValue
+         *            the this-binding
+         */
         public SuperSymbolReference(ScriptObject base, Symbol referencedName,
                 boolean strictReference, Object thisValue) {
             super(base, strictReference, thisValue);

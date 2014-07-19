@@ -38,6 +38,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class MapIteratorPrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new Map Iterator prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public MapIteratorPrototype(Realm realm) {
         super(realm);
     }
@@ -162,7 +168,6 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
             /* step 10 */
             if (iter.hasNext()) {
                 Entry<Object, Object> e = iter.next();
-                assert e != null;
                 Object result;
                 if (itemKind == MapIterationKind.Key) {
                     result = e.getKey();

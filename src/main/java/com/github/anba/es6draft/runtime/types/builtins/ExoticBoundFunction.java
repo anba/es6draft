@@ -38,6 +38,12 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
 
     private static final class ConstructorExoticBoundFunction extends ExoticBoundFunction implements
             Constructor {
+        /**
+         * Constructs a new Bound Function object.
+         * 
+         * @param realm
+         *            the realm object
+         */
         public ConstructorExoticBoundFunction(Realm realm) {
             super(realm);
         }
@@ -81,6 +87,12 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
         }
     }
 
+    /**
+     * Constructs a new Bound Function object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public ExoticBoundFunction(Realm realm) {
         super(realm);
     }

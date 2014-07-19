@@ -29,7 +29,13 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public final class OrdinaryGenerator extends FunctionObject implements Constructor {
-    public OrdinaryGenerator(Realm realm) {
+    /**
+     * Constructs a new Generator Function object.
+     * 
+     * @param realm
+     *            the realm object
+     */
+    protected OrdinaryGenerator(Realm realm) {
         super(realm);
     }
 

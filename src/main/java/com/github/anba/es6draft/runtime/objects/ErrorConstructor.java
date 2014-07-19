@@ -34,6 +34,12 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  */
 public final class ErrorConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new Error constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public ErrorConstructor(Realm realm) {
         super(realm, "Error");
     }

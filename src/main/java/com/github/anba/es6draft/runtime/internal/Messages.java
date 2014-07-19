@@ -13,7 +13,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
- *
+ * Wrapper class for {@link ResourceBundle} to provide localized messages.
  */
 public final class Messages {
     private static final PropertiesReaderControl UTF8_RESOURCE_CONTROL = new PropertiesReaderControl(
@@ -39,11 +39,11 @@ public final class Messages {
     }
 
     /**
-     * Returns the localised message for {@code key} from the resource bundle.
+     * Returns the localized message for {@code key} from the resource bundle.
      * 
      * @param key
      *            the message key
-     * @return the localised message string
+     * @return the localized message string
      */
     public String getMessage(Key key) {
         try {
@@ -54,13 +54,13 @@ public final class Messages {
     }
 
     /**
-     * Returns the localised message for {@code key} from the resource bundle.
+     * Returns the localized message for {@code key} from the resource bundle.
      * 
      * @param key
      *            the message key
      * @param args
      *            the message arguments
-     * @return the localised message string
+     * @return the localized message string
      */
     public String getMessage(Key key, String... args) {
         try {

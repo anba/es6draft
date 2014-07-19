@@ -31,6 +31,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class MathObject extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new Math object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public MathObject(Realm realm) {
         super(realm);
     }

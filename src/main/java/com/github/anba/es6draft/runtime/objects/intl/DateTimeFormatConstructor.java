@@ -212,6 +212,12 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         }
     }
 
+    /**
+     * Constructs a new DateTimeFormat constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public DateTimeFormatConstructor(Realm realm) {
         super(realm, "DateTimeFormat");
     }

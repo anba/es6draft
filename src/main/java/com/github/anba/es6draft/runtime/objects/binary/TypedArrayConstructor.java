@@ -33,6 +33,14 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
     /** [[ElementType]] */
     private final ElementType elementType;
 
+    /**
+     * Constructs a new TypedArray constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     * @param elementType
+     *            the typed array element type
+     */
     public TypedArrayConstructor(Realm realm, ElementType elementType) {
         super(realm, elementType.getConstructorName());
         this.elementType = elementType;

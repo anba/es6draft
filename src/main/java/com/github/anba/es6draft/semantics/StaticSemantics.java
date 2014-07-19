@@ -1006,28 +1006,6 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.5.x Static Semantics: PrototypeMethodDefinitions
-     * 
-     * @param node
-     *            the class definition
-     * @return the list of prototype class methods
-     */
-    public static List<MethodDefinition> PrototypeMethodDefinitions(ClassDefinition node) {
-        return node.getPrototypeMethods();
-    }
-
-    /**
-     * 14.5.x Static Semantics: StaticMethodDefinitions
-     * 
-     * @param node
-     *            the class definition
-     * @return the list of static class methods
-     */
-    public static List<MethodDefinition> StaticMethodDefinitions(ClassDefinition node) {
-        return node.getStaticMethods();
-    }
-
-    /**
      * 12.2.5.6 Static Semantics: PropName<br>
      * 14.3.5 Static Semantics: PropName
      * 

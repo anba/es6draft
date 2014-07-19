@@ -52,6 +52,12 @@ public class CollatorObject extends OrdinaryObject {
 
     private Collator collator;
 
+    /**
+     * Constructs a new Collator object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public CollatorObject(Realm realm) {
         super(realm);
     }

@@ -17,7 +17,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
- * Object representing a tail-call invocation
+ * Object representing a tail-call invocation.
  */
 public final class TailCallInvocation {
     private enum InvokeType {
@@ -30,6 +30,16 @@ public final class TailCallInvocation {
     private final Object[] argumentsList;
     private final ScriptObject object;
 
+    /**
+     * Constructs a new tail-call object.
+     * 
+     * @param function
+     *            the target callable
+     * @param thisValue
+     *            the this-value for the function
+     * @param argumentsList
+     *            the function arguments
+     */
     public TailCallInvocation(Callable function, Object thisValue, Object[] argumentsList) {
         this.type = InvokeType.Call;
         this.function = function;

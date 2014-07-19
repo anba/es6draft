@@ -16,7 +16,50 @@ import com.google.doubleconversion.DoubleConversion;
  * </ul>
  */
 public enum ElementType {
-    Int8(1), Uint8(1), Uint8C(1), Int16(2), Uint16(2), Int32(4), Uint32(4), Float32(4), Float64(8);
+    /**
+     * Signed 8-bit integer type
+     */
+    Int8(1),
+
+    /**
+     * Unsigned 8-bit integer type
+     */
+    Uint8(1),
+
+    /**
+     * Unsigned 8-bit integer type (clamped)
+     */
+    Uint8C(1),
+
+    /**
+     * Signed 16-bit integer type
+     */
+    Int16(2),
+
+    /**
+     * Unsigned 16-bit integer type
+     */
+    Uint16(2),
+
+    /**
+     * Signed 32-bit integer type
+     */
+    Int32(4),
+
+    /**
+     * Unsigned 32-bit integer type
+     */
+    Uint32(4),
+
+    /**
+     * Single precision 32-bit float type
+     */
+    Float32(4),
+
+    /**
+     * Double precision 64-bit float type
+     */
+    Float64(8);
 
     private int size;
 
@@ -24,10 +67,20 @@ public enum ElementType {
         this.size = size;
     }
 
+    /**
+     * Returns the byte size for the element type.
+     * 
+     * @return the element's byte size
+     */
     public int size() {
         return size;
     }
 
+    /**
+     * Returns the constructor name for the element type.
+     * 
+     * @return the constructor name
+     */
     public String getConstructorName() {
         switch (this) {
         case Int8:
@@ -53,31 +106,80 @@ public enum ElementType {
         }
     }
 
+    /**
+     * Converts the input value to a signed 8-bit integer.
+     * 
+     * @param v
+     *            the input value
+     * @return the signed 8-bit integer
+     */
     public static byte ToInt8(double v) {
         return (byte) DoubleConversion.doubleToInt32(v);
     }
 
+    /**
+     * Converts the input value to an unsigned 8-bit integer.
+     * 
+     * @param v
+     *            the input value
+     * @return the unsigned 8-bit integer
+     */
     public static byte ToUint8(double v) {
         return (byte) DoubleConversion.doubleToInt32(v);
     }
 
+    /**
+     * Converts the input value to an unsigned 8-bit integer (clamped).
+     * 
+     * @param v
+     *            the input value
+     * @return the unsigned 8-bit integer (clamped)
+     */
     public static byte ToUint8Clamp(double v) {
         v = Math.rint(v);
         return (byte) (v >= 0 ? v <= 255 ? v : 255 : 0);
     }
 
+    /**
+     * Converts the input value to a signed 16-bit integer.
+     * 
+     * @param v
+     *            the input value
+     * @return the signed 16-bit integer
+     */
     public static short ToInt16(double v) {
         return (short) DoubleConversion.doubleToInt32(v);
     }
 
+    /**
+     * Converts the input value to an unsigned 16-bit integer.
+     * 
+     * @param v
+     *            the input value
+     * @return the unsigned 16-bit integer
+     */
     public static short ToUint16(double v) {
         return (short) DoubleConversion.doubleToInt32(v);
     }
 
+    /**
+     * Converts the input value to a signed 32-bit integer.
+     * 
+     * @param v
+     *            the input value
+     * @return the signed 32-bit integer
+     */
     public static int ToInt32(double v) {
         return (int) DoubleConversion.doubleToInt32(v);
     }
 
+    /**
+     * Converts the input value to an unsigned 32-bit integer.
+     * 
+     * @param v
+     *            the input value
+     * @return the unsigned 32-bit integer
+     */
     public static int ToUint32(double v) {
         return (int) DoubleConversion.doubleToInt32(v);
     }

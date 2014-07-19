@@ -36,6 +36,12 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  */
 public final class WeakSetConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new WeakSet constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public WeakSetConstructor(Realm realm) {
         super(realm, "WeakSet");
     }

@@ -59,6 +59,12 @@ import com.ibm.icu.util.ULocale;
  * </ul>
  */
 public final class StringPrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new String prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public StringPrototype(Realm realm) {
         super(realm);
     }

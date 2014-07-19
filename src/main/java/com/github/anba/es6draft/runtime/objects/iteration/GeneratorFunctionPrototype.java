@@ -28,6 +28,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class GeneratorFunctionPrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new Generator Function prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public GeneratorFunctionPrototype(Realm realm) {
         super(realm);
     }

@@ -209,6 +209,12 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         }
     }
 
+    /**
+     * Constructs a new Collator constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public CollatorConstructor(Realm realm) {
         super(realm, "Collator");
     }

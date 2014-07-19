@@ -49,6 +49,12 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 public final class FunctionPrototype extends BuiltinFunction implements Initializable {
     private static final int MAX_ARGUMENTS = 0x10000;
 
+    /**
+     * Constructs a new Function prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public FunctionPrototype(Realm realm) {
         super(realm, "");
     }

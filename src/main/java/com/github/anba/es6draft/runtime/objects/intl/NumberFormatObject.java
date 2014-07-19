@@ -66,6 +66,12 @@ public class NumberFormatObject extends OrdinaryObject {
 
     private NumberFormat numberFormat;
 
+    /**
+     * Constructs a new NumberFormat object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public NumberFormatObject(Realm realm) {
         super(realm);
     }

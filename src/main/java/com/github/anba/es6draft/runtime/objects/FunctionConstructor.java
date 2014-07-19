@@ -42,6 +42,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
  * </ul>
  */
 public final class FunctionConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new Function constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public FunctionConstructor(Realm realm) {
         super(realm, "Function");
     }

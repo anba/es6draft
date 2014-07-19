@@ -203,6 +203,17 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         }
     }
 
+    /**
+     * Parses the given script code and returns the matching Reflect AST nodes.
+     * 
+     * @param cx
+     *            the execution context
+     * @param source
+     *            the source string
+     * @param options
+     *            the options object
+     * @return the parsed node
+     */
     public static Object parse(ExecutionContext cx, String source, ScriptObject options) {
         boolean location = true;
         String sourceInfo = null;
@@ -228,11 +239,28 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         return parse(cx, source, location, sourceInfo, line, builder);
     }
 
+    /**
+     * Parses the given script code and returns the matching Reflect AST nodes.
+     * 
+     * @param cx
+     *            the execution context
+     * @param source
+     *            the source string
+     * @param location
+     *            if set to {@code true} node locations will be recorded
+     * @param sourceInfo
+     *            the source info string
+     * @param line
+     *            the start line offset
+     * @param builder
+     *            map to customize AST node processing
+     * @return the parsed node
+     */
     public static Object parse(ExecutionContext cx, String source, boolean location,
             String sourceInfo, int line, EnumMap<Type, Callable> builder) {
         Realm realm = cx.getRealm();
         ReflectParser reflect = new ReflectParser(cx, location, sourceInfo, line, builder);
-        Node parsedNode = null;
+        TopLevelNode<?> parsedNode = null;
         try {
             parsedNode = realm.getScriptLoader().parseScript("<parse>", line, source);
         } catch (ParserException ignore) {

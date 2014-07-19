@@ -28,6 +28,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class BooleanPrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new Boolean prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public BooleanPrototype(Realm realm) {
         super(realm);
     }

@@ -23,6 +23,12 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * Extension: Async Function Definitions
  */
 public final class OrdinaryAsyncFunction extends FunctionObject implements Constructor {
+    /**
+     * Constructs a new Async Function object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     protected OrdinaryAsyncFunction(Realm realm) {
         super(realm);
     }

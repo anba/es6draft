@@ -19,7 +19,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  * <li>11 ECMAScript Language: Lexical Grammar
  * </ul>
  */
-public final class TokenStream {
+final class TokenStream {
     private final Parser parser;
     private final TokenStreamInput input;
 
@@ -269,7 +269,27 @@ public final class TokenStream {
         return input.position() - linestart;
     }
 
-    //
+    /**
+     * Returns <code>true</code> if there is a line terminator before the current token.
+     * 
+     * @return {@code true} if there is a line terminator
+     */
+    public boolean hasCurrentLineTerminator() {
+        assert current != null;
+        return hasCurrentLineTerminator;
+    }
+
+    /**
+     * Returns <code>true</code> if there is a line terminator before the next token.
+     * 
+     * @return {@code true} if there is a line terminator
+     */
+    public boolean hasNextLineTerminator() {
+        assert next != null;
+        return hasLineTerminator;
+    }
+
+    /* token operations */
 
     /**
      * Advances the token stream to the next token.
@@ -330,27 +350,7 @@ public final class TokenStream {
         return next;
     }
 
-    /**
-     * Returns <code>true</code> if there is a line terminator before the current token.
-     * 
-     * @return {@code true} if there is a line terminator
-     */
-    public boolean hasCurrentLineTerminator() {
-        assert current != null;
-        return hasCurrentLineTerminator;
-    }
-
-    /**
-     * Returns <code>true</code> if there is a line terminator before the next token.
-     * 
-     * @return {@code true} if there is a line terminator
-     */
-    public boolean hasNextLineTerminator() {
-        assert next != null;
-        return hasLineTerminator;
-    }
-
-    //
+    /* lexer operations */
 
     /**
      * <strong>[11.8.5] Regular Expression Literals</strong>

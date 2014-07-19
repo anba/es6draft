@@ -228,7 +228,7 @@ public final class PromiseAbstractOperations {
      *            the resolve value
      */
     public static void FulfillPromise(ExecutionContext cx, PromiseObject promise, Object value) {
-        List<PromiseReaction> reactions = promise.resolve(value);
+        List<PromiseReaction> reactions = promise.fufill(value);
         TriggerPromiseReactions(cx, reactions, value);
     }
 

@@ -42,6 +42,12 @@ import com.ibm.icu.text.DateTimePatternGenerator;
  * </ul>
  */
 public final class DateTimeFormatPrototype extends DateTimeFormatObject implements Initializable {
+    /**
+     * Constructs a new DateTimeFormat prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public DateTimeFormatPrototype(Realm realm) {
         super(realm);
     }

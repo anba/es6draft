@@ -88,6 +88,12 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     private Property caller = new Property(NULL, false, false, false);
     private Property arguments = new Property(NULL, false, false, false);
 
+    /**
+     * Constructs a new Function object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     protected FunctionObject(Realm realm) {
         super(realm);
     }

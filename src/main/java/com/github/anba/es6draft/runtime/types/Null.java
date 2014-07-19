@@ -14,6 +14,9 @@ package com.github.anba.es6draft.runtime.types;
  * </ul>
  */
 public final class Null {
+    /**
+     * The singleton instance of this type.
+     */
     public static final Null NULL = new Null();
 
     private Null() {

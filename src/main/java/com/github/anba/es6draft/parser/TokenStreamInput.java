@@ -9,7 +9,7 @@ package com.github.anba.es6draft.parser;
 /**
  * Class to provide character-based access to an input source string
  */
-public final class TokenStreamInput {
+final class TokenStreamInput {
     /**
      * The end-of-file marker
      */

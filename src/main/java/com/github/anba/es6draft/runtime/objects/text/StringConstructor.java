@@ -35,6 +35,12 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
  * </ul>
  */
 public final class StringConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new String constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public StringConstructor(Realm realm) {
         super(realm, "String");
     }

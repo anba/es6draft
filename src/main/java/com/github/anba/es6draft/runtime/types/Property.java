@@ -114,14 +114,14 @@ public final class Property implements Cloneable {
     }
 
     /**
-     * Convert this property to a data-property.
+     * Converts this property to a data-property.
      */
     public void toDataProperty() {
         toProperty(Type.DataProperty);
     }
 
     /**
-     * Convert this property to an accessor-property.
+     * Converts this property to an accessor-property.
      */
     public void toAccessorProperty() {
         toProperty(Type.AccessorProperty);

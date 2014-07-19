@@ -36,6 +36,12 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  */
 public final class SymbolConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new Symbol constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public SymbolConstructor(Realm realm) {
         super(realm, "Symbol");
     }

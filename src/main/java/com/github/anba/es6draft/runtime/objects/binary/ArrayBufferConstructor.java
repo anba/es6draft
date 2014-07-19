@@ -47,6 +47,12 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         assert IS_LITTLE_ENDIAN == (DEFAULT_BYTE_ORDER == ByteOrder.LITTLE_ENDIAN);
     }
 
+    /**
+     * Constructs a new ArrayBuffer constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public ArrayBufferConstructor(Realm realm) {
         super(realm, "ArrayBuffer");
     }

@@ -41,6 +41,12 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  */
 public final class LoaderConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new Loader constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public LoaderConstructor(Realm realm) {
         super(realm, "Loader");
     }

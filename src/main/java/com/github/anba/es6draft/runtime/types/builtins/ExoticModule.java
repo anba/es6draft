@@ -38,16 +38,36 @@ public final class ExoticModule extends OrdinaryObject {
 
     private List<String> sortedExports;
 
+    /**
+     * Constructs a new Module object.
+     * 
+     * @param realm
+     *            the realm object
+     * @param moduleEnvironment
+     *            the module lexical environment
+     * @param exports
+     *            the list of exported bindings
+     */
     public ExoticModule(Realm realm, LexicalEnvironment<?> moduleEnvironment, List<String> exports) {
         super(realm);
         this.moduleEnvironment = moduleEnvironment;
         this.exports = exports;
     }
 
+    /**
+     * Returns the module lexical environment.
+     * 
+     * @return the module lexical environment
+     */
     public LexicalEnvironment<?> getModuleEnvironment() {
         return moduleEnvironment;
     }
 
+    /**
+     * Returns the list of exported bindings.
+     * 
+     * @return the list of exported bindings
+     */
     public List<String> getExports() {
         return exports;
     }

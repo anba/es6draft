@@ -27,6 +27,14 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 public final class TypedArrayPrototype extends OrdinaryObject implements Initializable {
     private final ElementType elementKind;
 
+    /**
+     * Constructs a new TypedArray prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     * @param elementKind
+     *            the typed array element type
+     */
     public TypedArrayPrototype(Realm realm, ElementType elementKind) {
         super(realm);
         this.elementKind = elementKind;

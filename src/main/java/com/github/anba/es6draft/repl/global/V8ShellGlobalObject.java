@@ -20,6 +20,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.internal.Strings;
 
 /**
  * Global object class with support for some v8-shell functions
@@ -76,6 +77,6 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
      */
     @Function(name = "write", arity = 1)
     public void write(String... messages) {
-        console.putstr(concat(messages));
+        console.putstr(Strings.concat(messages));
     }
 }

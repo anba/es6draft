@@ -10,11 +10,19 @@ import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 
 /**
- * Integrity level of objects
+ * Integrity level of objects.
  * 
  * @see AbstractOperations#SetIntegrityLevel(ExecutionContext, ScriptObject, IntegrityLevel)
  * @see AbstractOperations#TestIntegrityLevel(ExecutionContext, ScriptObject, IntegrityLevel)
  */
 public enum IntegrityLevel {
-    Sealed, Frozen
+    /**
+     * Integrity level for sealed objects.
+     */
+    Sealed,
+
+    /**
+     * Integrity level for frozen objects.
+     */
+    Frozen
 }

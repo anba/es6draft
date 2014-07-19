@@ -28,6 +28,12 @@ import com.github.anba.es6draft.runtime.types.Symbol;
  * </ul>
  */
 public class OrdinaryFunction extends FunctionObject {
+    /**
+     * Constructs a new Function object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     protected OrdinaryFunction(Realm realm) {
         super(realm);
     }
@@ -282,18 +288,6 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 4 */
         DefinePropertyOrThrow(cx, f, "arguments", new PropertyDescriptor(thrower, thrower, false,
                 false));
-    }
-
-    /**
-     * 9.2.8.1 %ThrowTypeError% ( )
-     * 
-     * @param cx
-     *            the execution context
-     * @return the %ThrowTypeError% function object
-     */
-    public static Callable createThrowTypeError(ExecutionContext cx) {
-        assert cx.getIntrinsic(Intrinsics.FunctionPrototype) != null : "%FunctionPrototype% not initialized";
-        return new TypeErrorThrower(cx.getRealm());
     }
 
     /**

@@ -46,6 +46,12 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  */
 public final class RealmConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new Realm constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public RealmConstructor(Realm realm) {
         super(realm, "Realm");
     }

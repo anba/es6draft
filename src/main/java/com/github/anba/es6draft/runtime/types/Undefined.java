@@ -14,6 +14,9 @@ package com.github.anba.es6draft.runtime.types;
  * </ul>
  */
 public final class Undefined {
+    /**
+     * The singleton instance of this type.
+     */
     public static final Undefined UNDEFINED = new Undefined();
 
     private Undefined() {

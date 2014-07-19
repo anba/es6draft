@@ -22,6 +22,12 @@ public final class MapObject extends OrdinaryObject {
     /** [[MapData]] */
     private LinkedMap<Object, Object> mapData = null;
 
+    /**
+     * Constructs a new Map object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public MapObject(Realm realm) {
         super(realm);
     }
@@ -48,7 +54,7 @@ public final class MapObject extends OrdinaryObject {
     /**
      * Returns {@code true} if this Map instance is initialized.
      * 
-     * @return {@code true} if this object initialized
+     * @return {@code true} if this object is initialized
      */
     public boolean isInitialized() {
         return mapData != null;

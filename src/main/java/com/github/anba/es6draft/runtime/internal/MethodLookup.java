@@ -11,11 +11,17 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
 /**
- * Wrapper for {@link MethodHandles.Lookup}.
+ * Wrapper class for {@link MethodHandles.Lookup}.
  */
 final class MethodLookup {
     private final MethodHandles.Lookup lookup;
 
+    /**
+     * Constructs a new instance.
+     * 
+     * @param lookup
+     *            the lookup object
+     */
     public MethodLookup(MethodHandles.Lookup lookup) {
         this.lookup = lookup;
     }

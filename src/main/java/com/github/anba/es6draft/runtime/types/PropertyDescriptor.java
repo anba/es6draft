@@ -46,11 +46,14 @@ public final class PropertyDescriptor implements Cloneable {
     // [[Origin]]
     private ScriptObject origin = null;
 
+    /**
+     * Constructs a new empty property descriptor record.
+     */
     public PropertyDescriptor() {
     }
 
     /**
-     * Creates a shallow copy of the supplied property descriptor.
+     * Constructs a shallow copy of the supplied property descriptor.
      * 
      * @param original
      *            the original property descriptor
@@ -66,8 +69,13 @@ public final class PropertyDescriptor implements Cloneable {
         origin = original.origin;
     }
 
-    // package-private for Property
-    PropertyDescriptor(Property original) {
+    /**
+     * Constructs a shallow copy of the supplied property.
+     * 
+     * @param original
+     *            the original property
+     */
+    /* package */PropertyDescriptor(Property original) {
         present = original.isDataDescriptor() ? POPULATED_DATA_DESC : POPULATED_ACCESSOR_DESC;
         value = original.getValue();
         getter = original.getGetter();
@@ -79,7 +87,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Creates a new data property descriptor with an initial value:<br>
+     * Constructs a new data property descriptor with an initial value:<br>
      * <code>{[[Value]]: ?}</code>
      * 
      * @param value
@@ -91,7 +99,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Creates a new data property descriptor with an initial value and initial attributes:<br>
+     * Constructs a new data property descriptor with an initial value and initial attributes:<br>
      * <code>{[[Value]]: ?, [[Writable]]: ?, [[Enumerable]]: ?,
      * [[Configurable]]: ?}</code>
      * 
@@ -114,7 +122,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Creates a new accessor property descriptor with initial getter and setter:<br>
+     * Constructs a new accessor property descriptor with initial getter and setter:<br>
      * <code>{[[Get]]: ?, [[Set]]: ?}</code>
      * 
      * @param getter
@@ -129,7 +137,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Creates a new accessor property descriptor with initial getter and setter and initial
+     * Constructs a new accessor property descriptor with initial getter and setter and initial
      * attributes:<br>
      * <code>{[[Get]]: ?, [[Set]]: ?, [[Enumerable]]: ?, [[Configurable]]: ?}
      * </code>
@@ -346,7 +354,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     private static Object undefinedIfNull(Callable value) {
-        return (value != null ? value : UNDEFINED);
+        return value != null ? value : UNDEFINED;
     }
 
     /**
@@ -410,10 +418,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     private static Callable callableOrNull(Object value) {
-        if (!(value instanceof Callable)) {
-            return null;
-        }
-        return (Callable) value;
+        return value instanceof Callable ? (Callable) value : null;
     }
 
     /**

@@ -19,6 +19,12 @@ public final class Symbol {
     /** [[Description]] */
     private final String description;
 
+    /**
+     * Constructs a new symbol instance.
+     * 
+     * @param description
+     *            the symbol description or {@code null}
+     */
     public Symbol(String description) {
         this.description = description;
     }
@@ -26,7 +32,7 @@ public final class Symbol {
     /**
      * [[Description]]
      *
-     * @return the symbol description
+     * @return the symbol description or {@code null}
      */
     public String getDescription() {
         return description;

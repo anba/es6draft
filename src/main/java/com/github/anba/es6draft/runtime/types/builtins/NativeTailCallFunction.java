@@ -26,6 +26,18 @@ public final class NativeTailCallFunction extends BuiltinFunction {
     // (Object, Object[]) -> Object
     private final MethodHandle tmh;
 
+    /**
+     * Constructs a new native tail-calling function.
+     * 
+     * @param realm
+     *            the realm object
+     * @param name
+     *            the function name
+     * @param arity
+     *            the function arity
+     * @param mh
+     *            the method handle to the function code
+     */
     public NativeTailCallFunction(Realm realm, String name, int arity, MethodHandle mh) {
         this(realm, name, tailCallAdapter(mh), mh);
         createDefaultFunctionProperties(name, arity);

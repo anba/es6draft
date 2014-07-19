@@ -49,6 +49,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class JSONObject extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new JSON object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public JSONObject(Realm realm) {
         super(realm);
     }
@@ -85,8 +91,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             /* steps 3-7 */
             Object unfiltered;
             try {
-                JSONParser parser = new JSONParser(cx, jtext);
-                unfiltered = parser.parse();
+                unfiltered = JSONParser.parse(cx, jtext);
             } catch (ParserException e) {
                 throw newSyntaxError(cx, Messages.Key.JSONInvalidLiteral);
             }

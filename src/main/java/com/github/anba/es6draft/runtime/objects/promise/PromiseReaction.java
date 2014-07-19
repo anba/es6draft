@@ -25,11 +25,32 @@ public final class PromiseReaction {
 
     private final Type type;
 
+    /**
+     * Promise reaction handler type
+     */
     public enum Type {
-        Identity, Thrower, Function
+        /** Identity function reaction handler */
+        Identity,
+
+        /** Thrower function reaction handler */
+        Thrower,
+
+        /** User-defined reaction handler */
+        Function
     }
 
+    /**
+     * Constructs a new Promise Reaction record.
+     * 
+     * @param capabilities
+     *            the promise capabilities
+     * @param handler
+     *            the reaction handle
+     * @param type
+     *            the reaction type
+     */
     public PromiseReaction(PromiseCapability<?> capabilities, Callable handler, Type type) {
+        assert type == Type.Function ^ handler == null;
         this.capabilities = capabilities;
         this.handler = handler;
         this.type = type;

@@ -20,6 +20,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>8 The Intl Object</h1>
  */
 public final class IntlObject extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new Intl object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public IntlObject(Realm realm) {
         super(realm);
     }

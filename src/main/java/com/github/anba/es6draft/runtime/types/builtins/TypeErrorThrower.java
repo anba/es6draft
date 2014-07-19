@@ -23,7 +23,13 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
  * </ul>
  */
 public final class TypeErrorThrower extends BuiltinFunction {
-    TypeErrorThrower(Realm realm) {
+    /**
+     * Constructs a new ThrowTypeError function.
+     * 
+     * @param realm
+     *            the realm object
+     */
+    private TypeErrorThrower(Realm realm) {
         super(realm, ANONYMOUS);
         createDefaultFunctionProperties(ANONYMOUS, 0, this);
         // [[Extensible]] slot is false

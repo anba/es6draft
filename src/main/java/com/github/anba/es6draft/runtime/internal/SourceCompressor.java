@@ -84,14 +84,35 @@ public final class SourceCompressor {
         }
     }
 
+    /**
+     * Returns a callable to compress the source string.
+     * 
+     * @param source
+     *            the source string
+     * @return the callable
+     */
     public static Callable<String> compress(String source) {
         return new CompressedSource(source);
     }
 
+    /**
+     * Returns a callable to decompress the source string.
+     * 
+     * @param source
+     *            the compressed source string
+     * @return the callable
+     */
     public static Callable<String> decompress(String source) {
         return new DecompressedSource(source);
     }
 
+    /**
+     * Compresses the source string
+     * 
+     * @param source
+     *            the source string
+     * @return the compressed source string
+     */
     static String compressToString(String source) {
         try {
             return compressInternal(source);

@@ -30,6 +30,12 @@ import com.github.anba.es6draft.runtime.types.Type;
  * </ul>
  */
 public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
+    /**
+     * Constructs a new Integer Indexed object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public ExoticIntegerIndexedObject(Realm realm) {
         super(realm);
     }

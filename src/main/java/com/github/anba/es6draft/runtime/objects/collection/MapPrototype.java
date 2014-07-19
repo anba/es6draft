@@ -40,6 +40,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class MapPrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new Map prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public MapPrototype(Realm realm) {
         super(realm);
     }
@@ -146,7 +152,6 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
             /* step 8 */
             for (Iterator<Entry<Object, Object>> iter = entries.iterator(); iter.hasNext();) {
                 Entry<Object, Object> e = iter.next();
-                assert e != null;
                 callback.call(cx, thisArg, e.getValue(), e.getKey(), m);
             }
             /* step 9 */

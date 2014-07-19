@@ -23,6 +23,12 @@ public final class WeakSetObject extends OrdinaryObject {
     /** [[WeakSetData]] */
     private WeakHashMap<ScriptObject, Boolean> weakSetData = null;
 
+    /**
+     * Constructs a new WeakSet object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public WeakSetObject(Realm realm) {
         super(realm);
     }
@@ -50,7 +56,7 @@ public final class WeakSetObject extends OrdinaryObject {
     /**
      * Returns {@code true} if this WeakSet instance is initialized.
      * 
-     * @return {@code true} if this object initialized
+     * @return {@code true} if this object is initialized
      */
     public boolean isInitialized() {
         return weakSetData != null;

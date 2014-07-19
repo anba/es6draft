@@ -38,6 +38,12 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  */
 public final class DateConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new Date constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public DateConstructor(Realm realm) {
         super(realm, "Date");
     }

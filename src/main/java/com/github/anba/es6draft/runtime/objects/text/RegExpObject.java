@@ -27,6 +27,12 @@ public final class RegExpObject extends OrdinaryObject {
     /** [[RegExpMatcher]] */
     private RegExpMatcher regExpMatcher = null;
 
+    /**
+     * Constructs a new RegExp object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public RegExpObject(Realm realm) {
         super(realm);
     }
@@ -37,6 +43,11 @@ public final class RegExpObject extends OrdinaryObject {
         this.regExpMatcher = matcher;
     }
 
+    /**
+     * Returns {@code true} if this RegExp object is initialized.
+     * 
+     * @return {@code true} if the object is initialized
+     */
     protected boolean isInitialized() {
         return regExpMatcher != null;
     }

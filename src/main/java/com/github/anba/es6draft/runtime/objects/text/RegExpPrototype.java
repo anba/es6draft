@@ -52,6 +52,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class RegExpPrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new RegExp prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public RegExpPrototype(Realm realm) {
         super(realm);
     }

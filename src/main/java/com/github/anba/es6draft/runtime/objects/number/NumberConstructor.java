@@ -35,6 +35,12 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  */
 public final class NumberConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new Number constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public NumberConstructor(Realm realm) {
         super(realm, "Number");
     }

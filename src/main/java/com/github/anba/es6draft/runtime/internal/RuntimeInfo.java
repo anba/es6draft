@@ -13,12 +13,31 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
- * Classes for bootstrapping of function and script code
+ * Classes for function and script code bootstrapping.
  */
 public final class RuntimeInfo {
     private RuntimeInfo() {
     }
 
+    /**
+     * Returns a new {@link Function} object.
+     * 
+     * @param functionName
+     *            the function name
+     * @param functionFlags
+     *            the function flags
+     * @param expectedArgumentCount
+     *            the number of expected arguments
+     * @param source
+     *            the encoded source string
+     * @param bodySourceStart
+     *            the body source start index
+     * @param handle
+     *            the method handle
+     * @param callMethod
+     *            the call method handle
+     * @return the new function object
+     */
     public static Function newFunction(String functionName, int functionFlags,
             int expectedArgumentCount, String source, int bodySourceStart, MethodHandle handle,
             MethodHandle callMethod) {
@@ -26,6 +45,21 @@ public final class RuntimeInfo {
                 bodySourceStart, handle, callMethod);
     }
 
+    /**
+     * Returns a new {@link ScriptBody} object.
+     * 
+     * @param sourceFile
+     *            the source file location
+     * @param isStrict
+     *            the strict mode flag
+     * @param initialization
+     *            the initialization method handle
+     * @param evalinitialization
+     *            the eval-initialization method handle
+     * @param handle
+     *            the code method handle
+     * @return the new script object
+     */
     public static ScriptBody newScriptBody(String sourceFile, boolean isStrict,
             MethodHandle initialization, MethodHandle evalinitialization, MethodHandle handle) {
         return new CompiledScriptBody(sourceFile, isStrict, initialization, evalinitialization,
@@ -36,17 +70,58 @@ public final class RuntimeInfo {
      * Compiled script body information
      */
     public interface ScriptBody {
+        /**
+         * Returns the source file location.
+         * 
+         * @return the source file location
+         */
         String sourceFile();
 
+        /**
+         * Returns {@code true} if the script uses strict mode semantics.
+         * 
+         * @return {@code true} if the script is strict
+         */
         boolean isStrict();
 
+        /**
+         * Performs 15.1.8 Runtime Semantics: GlobalDeclarationInstantiation.
+         * 
+         * @param cx
+         *            the execution context
+         * @param globalEnv
+         *            the global environment
+         * @param lexicalEnv
+         *            the current lexical environment
+         * @param deletableBindings
+         *            {@code true} if new bindings are deletable
+         */
         void globalDeclarationInstantiation(ExecutionContext cx,
                 LexicalEnvironment<GlobalEnvironmentRecord> globalEnv,
                 LexicalEnvironment<?> lexicalEnv, boolean deletableBindings);
 
+        /**
+         * Performs 18.2.1.2 Eval Declaration Instantiation.
+         * 
+         * @param cx
+         *            the execution context
+         * @param variableEnv
+         *            the current variable environment
+         * @param lexicalEnv
+         *            the current lexical environment
+         * @param deletableBindings
+         *            {@code true} if new bindings are deletable
+         */
         void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment<?> variableEnv,
                 LexicalEnvironment<?> lexicalEnv, boolean deletableBindings);
 
+        /**
+         * Performs 15.1.7 Runtime Semantics: Script Evaluation.
+         * 
+         * @param cx
+         *            the execution context
+         * @return the evaluation result
+         */
         Object evaluate(ExecutionContext cx);
     }
 
@@ -114,86 +189,89 @@ public final class RuntimeInfo {
         }
     }
 
+    /**
+     * Function flags enumeration.
+     */
     public enum FunctionFlags {
         /**
          * Flag for strict-mode functions.
          */
-        Strict(0b0000_0000_0000_0001),
+        Strict(0x0001),
 
         /**
          * Flag for implicit strict functions.
          */
-        ImplicitStrict(0b0000_0000_0000_0010),
+        ImplicitStrict(0x0002),
 
         /**
          * Flag for generator functions.
          */
-        Generator(0b0000_0000_0000_0100),
+        Generator(0x0004),
 
         /**
          * Flag for async functions.
          */
-        Async(0b0000_0000_0000_1000),
+        Async(0x0008),
 
         /**
          * Flag for arrow functions.
          */
-        Arrow(0b0000_0000_0001_0000),
+        Arrow(0x0010),
 
         /**
          * Flag for declarative functions.
          */
-        Declaration(0b0000_0000_0010_0000),
+        Declaration(0x0020),
 
         /**
          * Flag for expression functions.
          */
-        Expression(0b0000_0000_0100_0000),
+        Expression(0x0040),
 
         /**
          * Flag for functions with concise, braceless body.
          */
-        ConciseBody(0b0000_0000_1000_0000),
+        ConciseBody(0x0080),
 
         /**
          * Flag for method definitions.
          */
-        Method(0b0000_0001_0000_0000),
+        Method(0x0100),
 
         /**
          * Flag for static method definitions.
          */
-        Static(0b0000_0010_0000_0000),
+        Static(0x0200),
 
         /**
          * Flag for legacy generator functions.
          */
-        LegacyGenerator(0b0000_0100_0000_0000),
+        LegacyGenerator(0x0400),
 
         /**
          * Flag for legacy functions.
          */
-        Legacy(0b0000_1000_0000_0000),
+        Legacy(0x0800),
 
         /**
          * Flag for functions which create a named scope binding.
          */
-        ScopedName(0b0001_0000_0000_0000),
+        ScopedName(0x1000),
 
         /**
          * Flag for functions with super-binding.
          */
-        Super(0b0010_0000_0000_0000),
+        Super(0x2000),
 
         /**
          * Flag for functions with synthetic sub-methods.
          */
-        SyntheticMethods(0b0100_0000_0000_0000),
+        SyntheticMethods(0x4000),
 
         /**
          * Flag for tail-call functions.
          */
-        TailCall(0b1000_0000_0000_0000),
+        TailCall(0x8000),
 
         ;
 
@@ -203,10 +281,22 @@ public final class RuntimeInfo {
             this.value = value;
         }
 
+        /**
+         * Returns the function flag bitmask.
+         * 
+         * @return the function flag bitmask
+         */
         public int getValue() {
             return value;
         }
 
+        /**
+         * Returns {@code true} if this function flag is set in <var>bitmask</var>.
+         * 
+         * @param bitmask
+         *            the bitmask
+         * @return {@code true} if the function flag is set
+         */
         public boolean isSet(int bitmask) {
             return (value & bitmask) != 0;
         }
@@ -218,28 +308,91 @@ public final class RuntimeInfo {
     public interface Function {
         String functionName();
 
+        /**
+         * Returns {@code true} for strict mode functions.
+         * 
+         * @return {@code true} if a strict mode function
+         */
         boolean isStrict();
 
+        /**
+         * Returns {@code true} for functions containing a <code>super</code> expression.
+         * 
+         * @return {@code true} if <code>super</code> expression is present
+         */
         boolean hasSuperReference();
 
+        /**
+         * Returns {@code true} if the function name is scoped.
+         * 
+         * @return {@code true} if the function name is scoped
+         */
         boolean hasScopedName();
 
+        /**
+         * Returns {@code true} for generator function.
+         * 
+         * @return {@code true} if the function is a generator function
+         */
         boolean isGenerator();
 
+        /**
+         * Returns {@code true} for async function.
+         * 
+         * @return {@code true} if the function is an async function
+         */
         boolean isAsync();
 
+        /**
+         * Returns {@code true} for functions containing a tail-call.
+         * 
+         * @return {@code true} if tail-call is present
+         */
         boolean hasTailCall();
 
+        /**
+         * Returns {@code true} for legacy mode function.
+         * 
+         * @return {@code true} if the function has legacy properties
+         */
         boolean isLegacy();
 
+        /**
+         * Returns {@code true} if the compiled function has synthetic methods. Synthetic methods
+         * are typically created to work around byte code limitations, e.g. the number of
+         * instructions allowed for a single method.
+         * 
+         * @return {@code true} if the function has synthetic methods
+         */
         boolean hasSyntheticMethods();
 
+        /**
+         * Returns the function flags bitmask.
+         * 
+         * @return the function flags bitmask
+         * @see FunctionFlags
+         */
         int functionFlags();
 
+        /**
+         * Returns the number of expected arguments of this function.
+         * 
+         * @return the number of expected arguments
+         */
         int expectedArgumentCount();
 
+        /**
+         * Returns the compressed source string.
+         * 
+         * @return the compressed source string
+         */
         String source();
 
+        /**
+         * Returns the start index of the function body in the decompressed source string.
+         * 
+         * @return the start index of the function body
+         */
         int bodySourceStart();
 
         /**

@@ -38,6 +38,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class NumberPrototype extends OrdinaryObject implements Initializable {
+    /**
+     * Constructs a new Number prototype object.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public NumberPrototype(Realm realm) {
         super(realm);
     }

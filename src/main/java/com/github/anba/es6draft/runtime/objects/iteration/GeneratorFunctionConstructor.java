@@ -47,6 +47,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class GeneratorFunctionConstructor extends BuiltinConstructor implements Initializable {
+    /**
+     * Constructs a new Generator Function constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     */
     public GeneratorFunctionConstructor(Realm realm) {
         super(realm, "GeneratorFunction");
     }

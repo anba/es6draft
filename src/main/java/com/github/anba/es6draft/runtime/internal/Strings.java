@@ -8,8 +8,6 @@ package com.github.anba.es6draft.runtime.internal;
 
 import java.util.Arrays;
 
-import com.github.anba.es6draft.parser.TokenStream;
-
 /**
  * Operations on strings
  */
@@ -21,9 +19,9 @@ public final class Strings {
      * @param c
      *            the character to inspect
      * @return {@code true} if the character is a line terminator
-     * @see TokenStream#isLineTerminator(int)
      */
     public static boolean isLineTerminator(int c) {
+        // @see TokenStream#isLineTerminator(int)
         if ((c & ~0b0010_0000_0010_1111) != 0) {
             return false;
         }
@@ -34,9 +32,9 @@ public final class Strings {
      * @param c
      *            the character to inspect
      * @return {@code true} if the character is a whitespace
-     * @see TokenStream#isWhitespace(int)
      */
     public static boolean isWhitespace(int c) {
+        // @see TokenStream#isWhitespace(int)
         return (c == 0x09 || c == 0x0B || c == 0x0C || c == 0x20 || c == 0xA0 || c == 0xFEFF || isSpaceSeparator(c));
     }
 
@@ -44,9 +42,9 @@ public final class Strings {
      * @param c
      *            the character to inspect
      * @return {@code true} if the character is space separator
-     * @see TokenStream#isSpaceSeparator(int)
      */
     private static boolean isSpaceSeparator(int c) {
+        // @see TokenStream#isSpaceSeparator(int)
         return (c == 0x20 || c == 0xA0 || c == 0x1680 || c == 0x180E
                 || (c >= 0x2000 && c <= 0x200A) || c == 0x202F || c == 0x205F || c == 0x3000);
     }
@@ -101,6 +99,28 @@ public final class Strings {
             return "";
         }
         return s.substring(start, end);
+    }
+
+    /**
+     * Concatenates the input strings, adjacent strings are separated by a single space character.
+     * 
+     * @param strings
+     *            the input strings
+     * @return the concatenated string
+     */
+    public static String concat(String... strings) {
+        if (strings.length == 0) {
+            return "";
+        } else if (strings.length == 1) {
+            return strings[0];
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (String string : strings) {
+                sb.append(string).append(' ');
+            }
+            sb.setLength(sb.length() - 1);
+            return sb.toString();
+        }
     }
 
     /**

@@ -18,6 +18,14 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public abstract class BuiltinConstructor extends BuiltinFunction implements Constructor {
+    /**
+     * Constructs a new built-in constructor function.
+     * 
+     * @param realm
+     *            the realm object
+     * @param name
+     *            the function name
+     */
     public BuiltinConstructor(Realm realm, String name) {
         super(realm, name);
     }
