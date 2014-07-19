@@ -43,6 +43,9 @@ tests/basic/spread-call-setcall.js
 # ES6: 'yield' allowed as identifier reference in generator default parameters
 tests/generators/es6-syntax.js
 
+# ES6: SpiderMonkey bug 1022967
+tests/arguments/defaults-call-function.js
+
 
 ###################
 # Misc issues     #
@@ -432,8 +435,6 @@ tests/basic/cross-context-stack-1.js
 tests/basic/bug863084.js
 # decompileThis
 tests/basic/decompile-script.js
-# getpda
-tests/basic/bug923390.js
 # neuter
 tests/basic/testNeutering.js
 # offThreadCompileScript
@@ -476,6 +477,8 @@ tests/basic/bug970643.js
 tests/basic/testBug686274.js
 # enableTrackAllocations
 tests/basic/track-allocation-sites.js
+# evalReturningScope
+tests/basic/bug673569.js
 
 
 #######################################
