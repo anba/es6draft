@@ -15,13 +15,13 @@ const {
   class Fn extends Function {
     constructor(...args) {
       this.preBound = this.bind(null);
-      // [[Construct]] is assigned in super constructor() method
+      // [[Construct]] was already assigned when allocated
       super(...args);
       this.postBound = this.bind(null);
     }
   }
 
   let fn = new Fn("");
-  assertNotConstructor(fn.preBound);
+  assertConstructor(fn.preBound);
   assertConstructor(fn.postBound);
 }

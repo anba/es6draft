@@ -9,7 +9,7 @@ const {
   assertThrows,
   assertTrue,
   assertFalse,
-  assertNotConstructor,
+  assertConstructor,
 } = Assert;
 
 // function object without [[Code]] throws TypeError
@@ -21,7 +21,7 @@ const {
   assertThrows(() => new fn, TypeError);
 }
 
-// function object without [[Code]] does not call @@create
+// function object without [[Code]] throws TypeError
 {
   let createCalled = false;
   class Fn extends Function {
@@ -34,7 +34,7 @@ const {
 
   let fn = new Fn();
   assertFalse(createCalled);
-  assertNotConstructor(fn);
+  assertConstructor(fn);
   assertThrows(() => new fn, TypeError);
   assertFalse(createCalled);
 }

@@ -42,11 +42,6 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     }
 
     @Override
-    public final boolean isConstructor() {
-        return super.isConstructor();
-    }
-
-    @Override
     protected OrdinaryGenerator allocateNew() {
         return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(),
                 getFunctionKind());

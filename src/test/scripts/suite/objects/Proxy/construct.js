@@ -15,13 +15,13 @@ const {
   class Fn extends Function {
     constructor(...args) {
       this.preProxy = new Proxy(this, {});
-      // [[Construct]] is assigned in super constructor() method
+      // [[Construct]] was assigned when allocated
       super(...args);
       this.postProxy = new Proxy(this, {});
     }
   }
 
   let fn = new Fn("");
-  assertNotConstructor(fn.preProxy);
+  assertConstructor(fn.preProxy);
   assertConstructor(fn.postProxy);
 }

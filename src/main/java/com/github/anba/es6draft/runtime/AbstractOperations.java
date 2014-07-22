@@ -927,7 +927,7 @@ public final class AbstractOperations {
      */
     public static boolean IsConstructor(Object value) {
         /* steps 1-4 */
-        return value instanceof Constructor && ((Constructor) value).isConstructor();
+        return value instanceof Constructor;
     }
 
     /**

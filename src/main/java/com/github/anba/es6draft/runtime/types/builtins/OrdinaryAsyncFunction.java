@@ -36,11 +36,6 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
     }
 
     @Override
-    public final boolean isConstructor() {
-        return super.isConstructor();
-    }
-
-    @Override
     protected OrdinaryAsyncFunction allocateNew() {
         return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(),
                 getFunctionKind());

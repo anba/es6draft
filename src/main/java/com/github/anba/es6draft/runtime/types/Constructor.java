@@ -42,13 +42,4 @@ public interface Constructor extends ScriptObject, Callable {
      *             any error thrown by the underlying method implementation
      */
     Object tailConstruct(ExecutionContext callerContext, Object... args) throws Throwable;
-
-    /**
-     * [[Construct]] internal method is added dynamically to objects, but interfaces cannot be added
-     * dynamically, therefore add an extra predicate to test whether the [[Construct]] method is
-     * already attached to the object.
-     * 
-     * @return {@code true} if the [[Construct]] internal method is attached
-     */
-    boolean isConstructor();
 }

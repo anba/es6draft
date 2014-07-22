@@ -46,11 +46,6 @@ public class OrdinaryFunction extends FunctionObject {
             super(realm);
         }
 
-        @Override
-        public final boolean isConstructor() {
-            return super.isConstructor();
-        }
-
         /**
          * 9.2.3 [[Construct]] (argumentsList)
          */
@@ -307,12 +302,21 @@ public class OrdinaryFunction extends FunctionObject {
      *            the function object
      */
     public static void MakeConstructor(ExecutionContext cx, FunctionObject f) {
-        /* step 3 */
-        boolean installNeeded = true;
-        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        /* step 1 (not applicable) */
+        /* step 2 */
+        assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
+        /* step 3 (not applicable) */
         /* step 4 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        /* step 5 */
         boolean writablePrototype = true;
-        MakeConstructor(cx, f, writablePrototype, prototype, installNeeded);
+        /* step 6 */
+        DefinePropertyOrThrow(cx, prototype, "constructor", new PropertyDescriptor(f,
+                writablePrototype, false, writablePrototype));
+        /* steps 7-8 */
+        DefinePropertyOrThrow(cx, f, "prototype", new PropertyDescriptor(prototype,
+                writablePrototype, false, false));
+        /* step 9 (return) */
     }
 
     /**
@@ -329,35 +333,10 @@ public class OrdinaryFunction extends FunctionObject {
      */
     public static void MakeConstructor(ExecutionContext cx, FunctionObject f,
             boolean writablePrototype, ScriptObject prototype) {
+        /* step 1 (not applicable) */
         /* step 2 */
-        boolean installNeeded = false;
-        MakeConstructor(cx, f, writablePrototype, prototype, installNeeded);
-    }
-
-    /**
-     * 9.2.9 MakeConstructor (F, writablePrototype, prototype) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param f
-     *            the function object
-     * @param writablePrototype
-     *            the writable flag for the .prototype property
-     * @param prototype
-     *            the prototype object
-     * @param installNeeded
-     *            the install flag
-     */
-    private static void MakeConstructor(ExecutionContext cx, FunctionObject f,
-            boolean writablePrototype, ScriptObject prototype, boolean installNeeded) {
         assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
-        /* step 5 */
-        f.setConstructor(true);
-        /* step 6 */
-        if (installNeeded) {
-            DefinePropertyOrThrow(cx, prototype, "constructor", new PropertyDescriptor(f,
-                    writablePrototype, false, writablePrototype));
-        }
+        /* steps 3-6 (not applicable) */
         /* steps 7-8 */
         DefinePropertyOrThrow(cx, f, "prototype", new PropertyDescriptor(prototype,
                 writablePrototype, false, false));

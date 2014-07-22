@@ -31,12 +31,6 @@ public abstract class BuiltinConstructor extends BuiltinFunction implements Cons
     }
 
     @Override
-    public final boolean isConstructor() {
-        // [[Construct]] always present for built-in constructors
-        return true;
-    }
-
-    @Override
     public final ScriptObject tailConstruct(ExecutionContext callerContext, Object... args) {
         return construct(callerContext, args);
     }

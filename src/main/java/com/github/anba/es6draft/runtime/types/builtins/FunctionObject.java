@@ -79,9 +79,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /** [[MethodName]] */
     private Object /* String|ExoticSymbol */methodName;
 
-    private boolean isConstructor;
     private String source;
-
     private MethodHandle callMethod;
     private MethodHandle tailCallMethod;
 
@@ -125,25 +123,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         // Uninitialized and non-strict functions have legacy support
         return !(isInitialized() && strict)
                 && realm.isEnabled(CompatibilityOption.FunctionPrototype);
-    }
-
-    /**
-     * Returns {@code true} if the [[Construct]] method is attached to this function object.
-     * 
-     * @return {@code true} if this function is a constructor
-     */
-    protected boolean isConstructor() {
-        return isConstructor;
-    }
-
-    /**
-     * Sets the [[Construct]] flag for this function object.
-     * 
-     * @param isConstructor
-     *            the new constructor flag
-     */
-    protected final void setConstructor(boolean isConstructor) {
-        this.isConstructor = isConstructor;
     }
 
     /**
@@ -300,7 +279,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         if (isInitialized()) {
             clone.initialize(getFunctionKind(), isStrict(), getCode(), getEnvironment());
         }
-        clone.setConstructor(isConstructor());
         /* step 7 */
         assert clone.isExtensible() : "cloned function not extensible";
         /* step 8 (not applicable) */

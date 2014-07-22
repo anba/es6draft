@@ -49,13 +49,6 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
             super(realm);
         }
 
-        @Override
-        public boolean isConstructor() {
-            // ConstructorExoticBoundFunction is only created if [[BoundTargetFunction]] already has
-            // [[Construct]]
-            return true;
-        }
-
         /**
          * 9.4.1.2 [[Construct]]
          */
