@@ -2711,6 +2711,26 @@ public final class AbstractOperations {
     }
 
     /**
+     * 7.4.? IteratorReturn ( iterator, value )
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the script iterator object
+     * @param value
+     *            the value to pass to the throw() function
+     * @return the next value from the iterator
+     */
+    public static ScriptObject IteratorReturn(ExecutionContext cx, ScriptObject iterator,
+            Object value) {
+        Object result = Invoke(cx, iterator, "return", value);
+        if (!Type.isObject(result)) {
+            throw newTypeError(cx, Messages.Key.NotObjectType);
+        }
+        return Type.objectValue(result);
+    }
+
+    /**
      * 7.4.? IteratorThrow ( iterator, value )
      * 
      * @param cx

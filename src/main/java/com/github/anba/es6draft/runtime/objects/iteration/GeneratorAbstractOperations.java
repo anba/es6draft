@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -76,8 +77,11 @@ public final class GeneratorAbstractOperations {
      * @param iterNextObj
      *            the iterator result object
      * @return the yield value
+     * @throws ReturnValue
+     *             to signal an abrupt Return completion
      */
-    public static Object GeneratorYield(ExecutionContext genContext, ScriptObject iterNextObj) {
+    public static Object GeneratorYield(ExecutionContext genContext, ScriptObject iterNextObj)
+            throws ReturnValue {
         /* step 1 (?) */
         /* steps 2-4 */
         GeneratorObject generator = genContext.getCurrentGenerator();
@@ -87,7 +91,35 @@ public final class GeneratorAbstractOperations {
     }
 
     /**
-     * GeneratorThrow(generator, value)
+     * 25.3.3.3 GeneratorResumeAbrupt(generator, abruptCompletion)
+     * <p>
+     * GeneratorReturn(generator, value)
+     * 
+     * @param cx
+     *            the execution context
+     * @param generator
+     *            the generator object
+     * @param value
+     *            the return value
+     * @return the iterator result object
+     */
+    public static Object GeneratorReturn(ExecutionContext cx, Object generator, Object value) {
+        /* steps 1-2 */
+        if (!Type.isObject(generator)) {
+            throw newTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* step 3 */
+        if (!(generator instanceof GeneratorObject)) {
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        /* steps 4-18 */
+        return ((GeneratorObject) generator)._return(cx, value);
+    }
+
+    /**
+     * 25.3.3.3 GeneratorResumeAbrupt(generator, abruptCompletion)
+     * <p>
+     * GeneratorThrow(generator, exception)
      * 
      * @param cx
      *            the execution context

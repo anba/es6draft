@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.objects.iteration;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorResume;
+import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorReturn;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorThrow;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -77,7 +78,23 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
         }
 
         /**
-         * 25.3.1.3 Generator.prototype.throw ( exception )
+         * 25.3.1.3 Generator.prototype.return ( value )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the return value
+         * @return the iterator result object
+         */
+        @Function(name = "return", arity = 1)
+        public static Object _return(ExecutionContext cx, Object thisValue, Object value) {
+            return GeneratorReturn(cx, thisValue, value);
+        }
+
+        /**
+         * 25.3.1.4 Generator.prototype.throw ( exception )
          * 
          * @param cx
          *            the execution context
@@ -93,7 +110,7 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
         }
 
         /**
-         * 25.3.1.4 Generator.prototype [ @@iterator ] ( )
+         * 25.3.1.5 Generator.prototype [ @@iterator ] ( )
          * 
          * @param cx
          *            the execution context
@@ -107,7 +124,7 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
         }
 
         /**
-         * 25.3.1.5 Generator.prototype [ @@toStringTag ]
+         * 25.3.1.6 Generator.prototype [ @@toStringTag ]
          */
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

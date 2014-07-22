@@ -271,6 +271,9 @@ public final class Repl {
         @Option(name = "--verify-stack", hidden = true, usage = "options.verify_stack")
         boolean verifyStack;
 
+        @Option(name = "--no-resume", hidden = true, usage = "options.no_resume")
+        boolean noResume;
+
         @Option(name = "--native-calls", hidden = true, usage = "options.native_calls")
         boolean nativeCalls;
 
@@ -611,6 +614,9 @@ public final class Repl {
         }
         if (options.verifyStack) {
             compilerOptions.add(Compiler.Option.VerifyStack);
+        }
+        if (options.noResume) {
+            compilerOptions.add(Compiler.Option.NoResume);
         }
         if (options.nativeCalls) {
             parserOptions.add(Parser.Option.NativeCall);

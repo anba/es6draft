@@ -215,7 +215,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     /**
      * List of saved execution states
      */
-    private List<ExecutionState> states = null;
+    private ArrayList<ExecutionState> states = null;
 
     /**
      * Create a new object to save the current execution state.

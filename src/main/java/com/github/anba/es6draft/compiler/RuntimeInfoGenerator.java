@@ -94,8 +94,8 @@ final class RuntimeInfoGenerator {
         if (node.getScope().hasSuperReference()) {
             functionFlags |= FunctionFlags.Super.getValue();
         }
-        if (node.hasSyntheticNodes()) {
-            functionFlags |= FunctionFlags.SyntheticMethods.getValue();
+        if (!node.hasSyntheticNodes() && !codegen.isEnabled(Compiler.Option.NoResume)) {
+            functionFlags |= FunctionFlags.ResumeGenerator.getValue();
         }
         if (tailCall) {
             assert !node.isGenerator() && !node.isAsync() && strict;

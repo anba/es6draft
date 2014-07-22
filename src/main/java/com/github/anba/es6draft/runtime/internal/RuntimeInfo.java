@@ -264,9 +264,9 @@ public final class RuntimeInfo {
         Super(0x2000),
 
         /**
-         * Flag for functions with synthetic sub-methods.
+         * Flag to select resume generator implementation.
          */
-        SyntheticMethods(0x4000),
+        ResumeGenerator(0x4000),
 
         /**
          * Flag for tail-call functions.
@@ -358,13 +358,11 @@ public final class RuntimeInfo {
         boolean isLegacy();
 
         /**
-         * Returns {@code true} if the compiled function has synthetic methods. Synthetic methods
-         * are typically created to work around byte code limitations, e.g. the number of
-         * instructions allowed for a single method.
+         * Returns {@code true} if resume generators are requested for this function.
          * 
-         * @return {@code true} if the function has synthetic methods
+         * @return {@code true} if resume generators are requested
          */
-        boolean hasSyntheticMethods();
+        boolean isResumeGenerator();
 
         /**
          * Returns the function flags bitmask.
@@ -471,8 +469,8 @@ public final class RuntimeInfo {
         }
 
         @Override
-        public boolean hasSyntheticMethods() {
-            return FunctionFlags.SyntheticMethods.isSet(functionFlags);
+        public boolean isResumeGenerator() {
+            return FunctionFlags.ResumeGenerator.isSet(functionFlags);
         }
 
         @Override

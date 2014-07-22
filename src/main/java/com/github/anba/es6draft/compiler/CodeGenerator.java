@@ -155,6 +155,10 @@ final class CodeGenerator {
         return options.contains(option);
     }
 
+    boolean isEnabled(Compiler.Option option) {
+        return compilerOptions.contains(option);
+    }
+
     private Future<String> compressed(String source) {
         if (INCLUDE_SOURCE) {
             return executor.submit(SourceCompressor.compress(source));

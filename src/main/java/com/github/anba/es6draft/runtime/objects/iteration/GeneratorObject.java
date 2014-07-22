@@ -21,6 +21,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.GeneratorThread;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
+import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -106,8 +107,8 @@ public final class GeneratorObject extends OrdinaryObject {
         this.code = code;
         this.state = GeneratorState.SuspendedStart;
         this.context.setCurrentGenerator(this);
-        this.generator = code.hasSyntheticMethods() ? new ThreadGenerator(this)
-                : new ResumeGenerator(this);
+        this.generator = code.isResumeGenerator() ? new ResumeGenerator(this)
+                : new ThreadGenerator(this);
     }
 
     /**
@@ -136,6 +137,35 @@ public final class GeneratorObject extends OrdinaryObject {
         default:
             this.state = GeneratorState.Executing;
             return generator.resume(cx, value);
+        }
+    }
+
+    /**
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the return value
+     * @return the iterator result object
+     * @see GeneratorPrototype.Properties#_return(ExecutionContext, Object, Object)
+     */
+    Object _return(ExecutionContext cx, Object value) {
+        GeneratorState state = this.state;
+        if (state == null) {
+            // uninitialized generator object
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
+        }
+        switch (state) {
+        case Executing:
+            throw newTypeError(cx, Messages.Key.GeneratorExecuting);
+        case Completed:
+            return value;
+        case SuspendedStart:
+            close();
+            return value;
+        case SuspendedYield:
+        default:
+            this.state = GeneratorState.Executing;
+            return generator._return(cx, new ReturnValue(value));
         }
     }
 
@@ -173,8 +203,10 @@ public final class GeneratorObject extends OrdinaryObject {
      *            the iteration result object to yield
      * @return the yield result
      * @see GeneratorAbstractOperations#GeneratorYield(ExecutionContext, ScriptObject)
+     * @throws ReturnValue
+     *             to signal an abrupt Return completion
      */
-    Object yield(ScriptObject value) {
+    Object yield(ScriptObject value) throws ReturnValue {
         assert state == GeneratorState.Executing : "yield from: " + state;
         return generator.yield(value);
     }
@@ -204,6 +236,17 @@ public final class GeneratorObject extends OrdinaryObject {
         ScriptObject resume(ExecutionContext cx, Object value);
 
         /**
+         * Resumes generator execution with a return instruction.
+         * 
+         * @param cx
+         *            the execution context
+         * @param value
+         *            the return value
+         * @return the iterator result object
+         */
+        Object _return(ExecutionContext cx, ReturnValue value);
+
+        /**
          * Resumes generator execution with an exception.
          * 
          * @param cx
@@ -220,8 +263,10 @@ public final class GeneratorObject extends OrdinaryObject {
          * @param value
          *            the iterator result object
          * @return the yield value
+         * @throws ReturnValue
+         *             to signal an abrupt Return completion
          */
-        Object yield(ScriptObject value);
+        Object yield(ScriptObject value) throws ReturnValue;
     }
 
     /**
@@ -243,6 +288,13 @@ public final class GeneratorObject extends OrdinaryObject {
 
         @Override
         public ScriptObject resume(ExecutionContext cx, Object value) {
+            assert resumptionPoint != null && value != null;
+            resumptionPoint.getStack()[0] = value;
+            return execute(cx);
+        }
+
+        @Override
+        public Object _return(ExecutionContext cx, ReturnValue value) {
             assert resumptionPoint != null && value != null;
             resumptionPoint.getStack()[0] = value;
             return execute(cx);
@@ -325,18 +377,27 @@ public final class GeneratorObject extends OrdinaryObject {
         }
 
         @Override
+        public Object _return(ExecutionContext cx, ReturnValue value) {
+            resume0(value);
+            return execute0(cx);
+        }
+
+        @Override
         public ScriptObject _throw(ExecutionContext cx, ScriptException exception) {
             resume0(exception);
             return execute0(cx);
         }
 
         @Override
-        public Object yield(ScriptObject value) {
+        public Object yield(ScriptObject value) throws ReturnValue {
             try {
                 this.out.put(value);
                 Object resumptionValue = this.in.take();
                 if (resumptionValue instanceof ScriptException) {
                     throw (ScriptException) resumptionValue;
+                }
+                if (resumptionValue instanceof ReturnValue) {
+                    throw (ReturnValue) resumptionValue;
                 }
                 return resumptionValue;
             } catch (InterruptedException e) {
@@ -355,9 +416,14 @@ public final class GeneratorObject extends OrdinaryObject {
                         result = evaluate(generatorObject.code.handle(), generatorObject.context);
                     } catch (ScriptException | StackOverflowError e) {
                         result = e;
-                    } catch (Throwable t) {
+                    } catch (ReturnValue e) {
+                        result = e.getValue();
+                    } catch (RuntimeException | Error e) {
                         out.put(COMPLETED);
-                        throw t;
+                        throw e;
+                    } catch (Throwable e) {
+                        out.put(COMPLETED);
+                        throw new RuntimeException(e);
                     }
                     out.put(COMPLETED);
                     return result;
@@ -365,14 +431,8 @@ public final class GeneratorObject extends OrdinaryObject {
             });
         }
 
-        private Object evaluate(MethodHandle handle, ExecutionContext cx) {
-            try {
-                return handle.invokeExact(cx, (ResumptionPoint) null);
-            } catch (RuntimeException | Error e) {
-                throw e;
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
+        private Object evaluate(MethodHandle handle, ExecutionContext cx) throws Throwable {
+            return handle.invokeExact(cx, (ResumptionPoint) null);
         }
 
         private void resume0(Object value) {

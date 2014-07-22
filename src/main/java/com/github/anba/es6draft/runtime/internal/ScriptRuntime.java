@@ -2269,8 +2269,10 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      * @return the result value
+     * @throws ReturnValue
+     *             to signal an abrupt Return completion
      */
-    public static Object yield(Object value, ExecutionContext cx) {
+    public static Object yield(Object value, ExecutionContext cx) throws ReturnValue {
         return GeneratorYield(cx, CreateIterResultObject(cx, value, false));
     }
 
@@ -2287,13 +2289,15 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      * @return the result value
+     * @throws ReturnValue
+     *             to signal an abrupt Return completion
      */
-    public static Object delegatedYield(Object value, ExecutionContext cx) {
+    public static Object delegatedYield(Object value, ExecutionContext cx) throws ReturnValue {
         /* steps 1-3 (generated code) */
         /* steps 4-5 */
         ScriptObject iterator = GetIterator(cx, ToObject(cx, value));
         /* step 6 */
-        boolean normalCompletion = true;
+        boolean normalCompletion = true, throwCompletion = false;
         Object received = UNDEFINED;
         /* step 7 */
         for (;;) {
@@ -2301,9 +2305,13 @@ public final class ScriptRuntime {
             if (normalCompletion) {
                 /* step 7a */
                 innerResult = IteratorNext(cx, iterator, received);
-            } else {
+            } else if (throwCompletion) {
                 /* step 7b */
                 innerResult = IteratorThrow(cx, iterator, received);
+            } else {
+                // TODO: spec bug - unhandled condition
+                /* step 7? */
+                innerResult = IteratorReturn(cx, iterator, received);
             }
             /* steps 7c-7d */
             boolean done = IteratorComplete(cx, innerResult);
@@ -2319,6 +2327,15 @@ public final class ScriptRuntime {
                 if (HasProperty(cx, iterator, "throw")) {
                     received = e.getValue();
                     normalCompletion = false;
+                    throwCompletion = true;
+                } else {
+                    throw e;
+                }
+            } catch (ReturnValue e) {
+                if (HasProperty(cx, iterator, "return")) {
+                    received = e.getValue();
+                    normalCompletion = false;
+                    throwCompletion = false;
                 } else {
                     throw e;
                 }
