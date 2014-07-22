@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -28,6 +29,7 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
 /**
  * Wrapper-Proxy for shell tests
@@ -83,6 +85,11 @@ class WrapperProxy implements ScriptObject {
         @Override
         public CallabeWrapperProxy clone(ExecutionContext cx) {
             throw newTypeError(cx, Messages.Key.FunctionNotCloneable);
+        }
+
+        @Override
+        public Realm getRealm(ExecutionContext cx) {
+            return ((Callable) proxyTarget).getRealm(cx);
         }
     }
 
@@ -558,7 +565,7 @@ class WrapperProxy implements ScriptObject {
      * [[OwnPropertyKeys]] ()
      */
     @Override
-    public ScriptObject ownPropertyKeys(ExecutionContext cx) {
+    public ExoticArray ownPropertyKeys(ExecutionContext cx) {
         return proxyTarget.ownPropertyKeys(cx);
     }
 

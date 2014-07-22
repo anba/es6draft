@@ -6,12 +6,9 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateCompoundIterator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -135,17 +132,6 @@ public final class ExoticString extends OrdinaryObject {
         CharSequence resultStr = str.subSequence(index, index + 1);
         /* step 14 */
         return new Property(resultStr, false, true, false);
-    }
-
-    /**
-     * 9.4.3.2 [[Enumerate]] ()
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    public ScriptObject enumerate(ExecutionContext cx) {
-        // FIXME: spec issue - override necessary because of bug 2957
-        return CreateCompoundIterator(cx, (Iterator<Object>) enumerateKeys(cx),
-                Collections.emptyIterator());
     }
 
     /**

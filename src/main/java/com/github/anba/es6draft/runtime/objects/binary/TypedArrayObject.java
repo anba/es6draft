@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.IsInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsNeuteredBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -84,14 +85,18 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
         if (buffer == null) {
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
-        /* steps 5-6 */
+        /* step 5 */
+        if (IsNeuteredBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        }
+        /* steps 6-7 */
         if (!IsInteger(index)) {
             assert index == Double.NEGATIVE_INFINITY : "unexpected non-integer: " + index;
             return false;
         }
-        /* step 7 */
-        long length = getArrayLength();
         /* step 8 */
+        long length = getArrayLength();
+        /* step 9 */
         if (index < 0 || index >= length) {
             return false;
         }
@@ -110,26 +115,30 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
         if (buffer == null) {
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
-        /* steps 5-6 */
+        /* step 5 */
+        if (IsNeuteredBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        }
+        /* steps 6-7 */
         if (!IsInteger(index)) {
             assert index == Double.NEGATIVE_INFINITY : "unexpected non-integer: " + index;
             return UNDEFINED;
         }
-        /* step 7 */
-        long length = getArrayLength();
         /* step 8 */
+        long length = getArrayLength();
+        /* step 9 */
         if (index < 0 || index >= length) {
             return UNDEFINED;
         }
-        /* step 9 */
+        /* step 10 */
         long offset = getByteOffset();
-        /* steps 10, 13 */
+        /* steps 11, 14 */
         ElementType elementType = getElementType();
-        /* step 11 */
-        int elementSize = elementType.size();
         /* step 12 */
+        int elementSize = elementType.size();
+        /* step 13 */
         long indexedPosition = (long) ((index * elementSize) + offset);
-        /* step 14 */
+        /* step 15 */
         return GetValueFromBuffer(cx, buffer, indexedPosition, elementType);
     }
 
@@ -139,36 +148,40 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
     @Override
     protected boolean elementSet(ExecutionContext cx, double index, Object value) {
         /* steps 1-2 (not applicable) */
-        /* step 3 */
+        /* steps 3-4 */
+        double numValue = ToNumber(cx, value);
+        /* step 5 */
         ArrayBufferObject buffer = getBuffer();
-        /* step 4 */
+        /* step 6 */
         if (buffer == null) {
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
-        /* steps 5-6 */
+        /* step 7 */
+        if (IsNeuteredBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        }
+        /* steps 8-9 */
         if (!IsInteger(index)) {
             assert index == Double.NEGATIVE_INFINITY : "unexpected non-integer: " + index;
             return false;
         }
-        /* step 7 */
-        long length = getArrayLength();
-        /* steps 8-9 */
-        double numValue = ToNumber(cx, value);
         /* step 10 */
+        long length = getArrayLength();
+        /* step 11 */
         if (index < 0 || index >= length) {
             return false;
         }
-        /* step 11 */
+        /* step 12 */
         long offset = getByteOffset();
-        /* steps 12, 15 */
+        /* steps 13, 16 */
         ElementType elementType = getElementType();
-        /* step 13 */
-        int elementSize = elementType.size();
         /* step 14 */
+        int elementSize = elementType.size();
+        /* step 15 */
         long indexedPosition = (long) ((index * elementSize) + offset);
-        /* steps 16-17 */
+        /* steps 17-18 */
         SetValueInBuffer(cx, buffer, indexedPosition, elementType, numValue);
-        /* step 18 */
+        /* step 19 */
         return true;
     }
 
@@ -187,7 +200,7 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
      *            the new array buffer object
      */
     public void setBuffer(ArrayBufferObject buffer) {
-        assert buffer != null && (buffer.getData() != null || buffer.isNeutered()) : "ArrayBufferObject not initialized";
+        assert buffer != null && buffer.isInitialized() : "ArrayBufferObject not initialized";
         assert this.buffer == null : "TypedArrayObject already initialized";
         this.buffer = buffer;
     }

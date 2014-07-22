@@ -215,10 +215,6 @@ public enum Intrinsics {/* @formatter:off */
     Intl_DateTimeFormatPrototype,
 
     // internal
-    /** Intrinsic: <tt>%ListIteratorNext%</tt> */
-    ListIteratorNext,
-    /** Intrinsic: <tt>%CompoundIteratorNext%</tt> */
-    CompoundIteratorNext,
     /** Intrinsic: <tt>%InternalError%</tt> */
     InternalError,
     /** Intrinsic: <tt>%InternalErrorPrototype%</tt> */
@@ -247,8 +243,6 @@ public enum Intrinsics {/* @formatter:off */
      */
     public boolean isInternal() {
         switch (this) {
-        case ListIteratorNext:
-        case CompoundIteratorNext:
         case InternalError:
         case InternalErrorPrototype:
         case LegacyGeneratorPrototype:

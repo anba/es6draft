@@ -372,13 +372,13 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             }
             /* step 1 */
             ScriptObject rx = Type.objectValue(thisValue);
-            /* step 3 (FIXME: spec bug - invalid) (bug 2778) */
-            /* steps 4-5 */
+            /* steps 3-4 */
             String s = ToFlatString(cx, string);
-            /* step 6 */
+            /* step 5 */
             int lengthS = s.length();
-            /* step 7 */
+            /* step 6 */
             boolean functionalReplace = IsCallable(replaceValue);
+            /* step 7 */
             String replaceValueString = null;
             Callable replaceValueCallable = null;
             if (!functionalReplace) {
@@ -438,42 +438,45 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* step 15 */
             StringBuilder accumulatedResult = new StringBuilder();
             /* step 16 */
-            int nextSrcPosition = 0;
+            int nextSourcePosition = 0;
             /* step 17 (omitted) */
             /* step 18 */
             for (MatchResult result : results) {
                 if (!(result instanceof ScriptObjectMatchResult)) {
                     RegExpConstructor.storeLastMatchResult(cx, s, result);
                 }
-                /* steps 18.a-18.b */
+                /* steps 18.a-18.c */
+                int nCaptures = result.groupCount();
+                /* steps 18.d-18.e */
                 String matched = result.group(0);
-                /* step 18.c */
+                /* step 18.f */
                 int matchLength = matched.length();
-                /* steps 18.d-18.f */
+                /* steps 18.g-18.i */
                 int position = Math.max(Math.min(result.start(), lengthS), 0);
-                /* steps 18.g-18.l */
+                /* steps 18.j-18.o */
                 String replacement;
                 if (functionalReplace) {
-                    Object[] replacerArgs = GetReplacerArguments(result, s, matched, position);
+                    Object[] replacerArgs = GetReplacerArguments(result, nCaptures, s, matched,
+                            position);
                     Object replValue = replaceValueCallable.call(cx, UNDEFINED, replacerArgs);
                     replacement = ToFlatString(cx, replValue);
                 } else {
-                    String[] captures = groups(result);
+                    String[] captures = groups(result, nCaptures);
                     replacement = GetReplaceSubstitution(matched, s, position, captures,
                             replaceValueString);
                 }
-                /* step 18.m */
-                if (position >= nextSrcPosition) {
-                    accumulatedResult.append(s, nextSrcPosition, position).append(replacement);
-                    nextSrcPosition = position + matchLength;
+                /* step 18.p */
+                if (position >= nextSourcePosition) {
+                    accumulatedResult.append(s, nextSourcePosition, position).append(replacement);
+                    nextSourcePosition = position + matchLength;
                 }
             }
             /* step 19 */
-            if (nextSrcPosition >= s.length()) {
+            if (nextSourcePosition >= lengthS) {
                 return accumulatedResult.toString();
             }
             /* step 20 */
-            return accumulatedResult.append(s, nextSrcPosition, s.length()).toString();
+            return accumulatedResult.append(s, nextSourcePosition, lengthS).toString();
         }
 
         /**
@@ -882,9 +885,8 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         return array;
     }
 
-    private static Object[] GetReplacerArguments(MatchResult matchResult, String string,
-            String matched, int position) {
-        int groupCount = matchResult.groupCount();
+    private static Object[] GetReplacerArguments(MatchResult matchResult, int groupCount,
+            String string, String matched, int position) {
         Object[] arguments = new Object[groupCount + 3];
         arguments[0] = matched;
         Iterator<String> iterator = groupIterator(matchResult, groupCount);
@@ -1129,7 +1131,19 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      * @return the match groups
      */
     public static String[] groups(MatchResult matchResult) {
-        int groupCount = matchResult.groupCount();
+        return groups(matchResult, matchResult.groupCount());
+    }
+
+    /**
+     * Returns the capturing groups of the {@link MatchResult} argument.
+     * 
+     * @param matchResult
+     *            the match result
+     * @param groupCount
+     *            the number of capturing groups
+     * @return the match groups
+     */
+    private static String[] groups(MatchResult matchResult, int groupCount) {
         Iterator<String> iterator = groupIterator(matchResult, groupCount);
         String[] groups = new String[groupCount];
         for (int i = 0; iterator.hasNext(); ++i) {
@@ -1220,8 +1234,8 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
 
         @Override
         public int groupCount() {
-            long len = ToLength(cx, Get(cx, object, "length"));
-            return (int) Math.max(len - 1, 0);
+            long nCaptures = ToLength(cx, Get(cx, object, "length"));
+            return (int) Math.max(nCaptures - 1, 0);
         }
     }
 }

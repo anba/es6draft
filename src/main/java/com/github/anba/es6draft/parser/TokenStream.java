@@ -1021,7 +1021,7 @@ final class TokenStream {
             return true;
         }
         // Additional characters for ID_Start based on Unicode 5.1.
-        // Also applies to Unicode 6.0 (Java 7), Unicode 6.2 (Java 8) and Unicode 6.3 (Current).
+        // Also applies to Unicode 6.0 (Java 7), Unicode 6.2 (Java 8) and Unicode 7.0 (Current).
         switch (c) {
         case '\u2118':
         case '\u212E':
@@ -1100,7 +1100,7 @@ final class TokenStream {
             return true;
         }
         // Additional characters for ID_Continue based on Unicode 6.0 (Java 7).
-        // Also applies to Unicode 6.2 (Java 8) and Unicode 6.3 (Current).
+        // Also applies to Unicode 6.2 (Java 8) and Unicode 7.0 (Current).
         switch (c) {
         case '\u19DA':
             return true;

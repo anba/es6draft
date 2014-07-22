@@ -6,14 +6,14 @@
  */
 package com.github.anba.es6draft.runtime.objects.internal;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+
 import java.util.Iterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -26,6 +26,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 public final class CompoundIterator<T> extends OrdinaryObject {
     private Iterator<T> iterator1;
     private Iterator<T> iterator2;
+    private CompoundIteratorNext iteratorNext;
     private boolean firstIteratorActive = true;
 
     public CompoundIterator(Realm realm) {
@@ -42,6 +43,10 @@ public final class CompoundIterator<T> extends OrdinaryObject {
         return iterator2;
     }
 
+    CompoundIteratorNext getIteratorNext() {
+        return iteratorNext;
+    }
+
     boolean isFirstIteratorActive() {
         return firstIteratorActive;
     }
@@ -50,8 +55,9 @@ public final class CompoundIterator<T> extends OrdinaryObject {
         this.firstIteratorActive = firstIteratorActive;
     }
 
-    private static final class CompoundIteratorNext implements ObjectAllocator<CompoundIterator<?>> {
-        static final ObjectAllocator<CompoundIterator<?>> INSTANCE = new CompoundIteratorNext();
+    private static final class CompoundIteratorAllocator implements
+            ObjectAllocator<CompoundIterator<?>> {
+        static final ObjectAllocator<CompoundIterator<?>> INSTANCE = new CompoundIteratorAllocator();
 
         @Override
         public CompoundIterator<?> newInstance(Realm realm) {
@@ -79,15 +85,17 @@ public final class CompoundIterator<T> extends OrdinaryObject {
         /* step 1 */
         @SuppressWarnings("unchecked")
         CompoundIterator<T> iterator = (CompoundIterator<T>) ObjectCreate(cx,
-                Intrinsics.ObjectPrototype, CompoundIteratorNext.INSTANCE);
+                Intrinsics.ObjectPrototype, CompoundIteratorAllocator.INSTANCE);
         /* steps 2-4 */
         iterator.iterator1 = iterator1;
         iterator.iterator2 = iterator2;
         /* step 5 */
-        ScriptObject listIteratorNext = cx.getIntrinsic(Intrinsics.CompoundIteratorNext);
-        PropertyDescriptor desc = new PropertyDescriptor(listIteratorNext, true, false, true);
-        iterator.defineOwnProperty(cx, "next", desc);
+        CompoundIteratorNext next = new CompoundIteratorNext(cx.getRealm());
         /* step 6 */
+        iterator.iteratorNext = next;
+        /* step 7 */
+        CreateDataProperty(cx, iterator, "next", next);
+        /* step 8 */
         return iterator;
     }
 }

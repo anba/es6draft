@@ -17,8 +17,8 @@ const {
   let tte = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller").get;
 
   assertSame(ThrowTypeError, tte);
-  assertAccessorProperty(tte, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
-  assertAccessorProperty(tte, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
+  assertAccessorProperty(tte, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
+  assertAccessorProperty(tte, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
   assertDataProperty(tte, "length", {value: 0, writable: false, enumerable: false, configurable: true});
   assertFalse(tte.hasOwnProperty("name"));
   assertEquals(["arguments", "caller", "length"], Object.getOwnPropertyNames(tte).sort());
@@ -35,8 +35,8 @@ const {
 
   assertNotSame(tte, clone);
   assertNotSame(ThrowTypeError, clone);
-  assertAccessorProperty(clone, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
-  assertAccessorProperty(clone, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
+  assertAccessorProperty(clone, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
+  assertAccessorProperty(clone, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
   assertFalse(clone.hasOwnProperty("length"));
   assertFalse(clone.hasOwnProperty("name"));
   assertEquals(["arguments", "caller"], Object.getOwnPropertyNames(clone).sort());
@@ -57,8 +57,8 @@ const {
   assertNotSame(tte, clone);
   assertNotSame(ThrowTypeError, clone);
   assertNotSame(foreignThrowTypeError, clone);
-  assertAccessorProperty(clone, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
-  assertAccessorProperty(clone, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
+  assertAccessorProperty(clone, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
+  assertAccessorProperty(clone, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
   assertFalse(clone.hasOwnProperty("length"));
   assertFalse(clone.hasOwnProperty("name"));
   assertEquals(["arguments", "caller"], Object.getOwnPropertyNames(clone).sort());

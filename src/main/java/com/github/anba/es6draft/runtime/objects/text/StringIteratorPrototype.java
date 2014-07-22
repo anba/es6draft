@@ -81,13 +81,13 @@ public final class StringIteratorPrototype extends OrdinaryObject implements Ini
      * @return the new string iterator
      */
     public static OrdinaryObject CreateStringIterator(ExecutionContext cx, String string) {
-        /* steps 1-2 (omitted) */
-        /* steps 3-5 */
+        /* step 1 (not applicable) */
+        /* steps 2-4 */
         StringIterator iterator = ObjectCreate(cx, Intrinsics.StringIteratorPrototype,
                 StringIteratorAllocator.INSTANCE);
         iterator.iteratedString = string;
         iterator.nextIndex = 0;
-        /* step 6 */
+        /* step 5 */
         return iterator;
     }
 

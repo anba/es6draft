@@ -302,7 +302,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
             /* step 2 */
             ModuleObject mod = CreateLinkedModuleInstance(cx).getModuleObject();
             /* steps 3-4 */
-            List<String> keys = GetOwnEnumerablePropertyNames(cx, object);
+            List<String> keys = EnumerableOwnNames(cx, object);
             /* step 5 */
             for (String key : keys) {
                 Object value = Get(cx, object, key);

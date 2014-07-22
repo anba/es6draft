@@ -131,20 +131,24 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         if (!SameValueZero(numberLength, elementLength)) {
             throw newRangeError(cx, Messages.Key.InvalidBufferSize);
         }
-        /* steps 14-16 */
+        /* steps 14-15 */
         ArrayBufferObject data = AllocateArrayBuffer(cx, Intrinsics.ArrayBuffer);
         /* step 16 */
-        int elementSize = elementType.size();
+        if (array.getBuffer() != null) {
+            throw newTypeError(cx, Messages.Key.InitializedObject);
+        }
         /* step 17 */
+        int elementSize = elementType.size();
+        /* step 18 */
         long byteLength = elementSize * elementLength;
-        /* steps 18-19 */
+        /* steps 19-20 */
         SetArrayBufferData(cx, data, byteLength);
-        /* steps 20-23 */
+        /* steps 21-24 */
         array.setBuffer(data);
         array.setByteLength(byteLength);
         array.setByteOffset(0);
         array.setArrayLength(elementLength);
-        /* step 24 */
+        /* step 25 */
         return array;
     }
 
@@ -180,40 +184,55 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             throw newTypeError(cx, Messages.Key.InitializedObject);
         }
         /* step 8 */
-        if (srcArray.getBuffer() == null) {
+        ArrayBufferObject srcData = srcArray.getBuffer();
+        /* step 9 */
+        if (srcData == null) {
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
-        /* steps 9-10 */
+        /* step 10 */
+        if (IsNeuteredBuffer(srcData)) {
+            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        }
+        /* steps 11-12 */
         ElementType elementType = array.getElementType();
-        /* step 11 */
+        /* step 13 */
         long elementLength = srcArray.getArrayLength();
-        /* steps 12-13 */
+        /* steps 14-15 */
         ElementType srcType = srcArray.getElementType();
-        /* step 14 */
-        int srcElementSize = srcType.size();
-        /* step 15 */
-        ArrayBufferObject srcData = srcArray.getBuffer();
         /* step 16 */
-        long srcByteOffset = srcArray.getByteOffset();
+        int srcElementSize = srcType.size();
         /* step 17 */
-        int elementSize = elementType.size();
+        long srcByteOffset = srcArray.getByteOffset();
         /* step 18 */
+        int elementSize = elementType.size();
+        /* step 19 */
         long byteLength = elementSize * elementLength;
-        /* steps 19-20 */
+        /* steps 20-21 */
         ArrayBufferObject data;
         if (elementType == srcType) {
-            /* step 19 */
+            /* step 20 */
             data = CloneArrayBuffer(cx, srcData, srcByteOffset);
         } else {
-            /* step 20 */
+            /* step 21 */
+            /* steps 21.a-21.b */
             Object bufferConstructor = Get(cx, srcData, "constructor");
+            /* step 21.c */
             if (Type.isUndefined(bufferConstructor)) {
                 bufferConstructor = cx.getIntrinsic(Intrinsics.ArrayBuffer);
             }
+            /* step 21.d */
             data = AllocateArrayBuffer(cx, bufferConstructor);
+            /* step 21.e */
+            if (IsNeuteredBuffer(srcData)) {
+                throw newTypeError(cx, Messages.Key.BufferNeutered);
+            }
+            /* steps 21.f-21.g */
             SetArrayBufferData(cx, data, byteLength);
+            /* step 21.h */
             long srcByteIndex = srcByteOffset;
+            /* step 21.i */
             long targetByteIndex = 0;
+            /* steps 21.j-21.k */
             for (long count = elementLength; count > 0; --count) {
                 double value = GetValueFromBuffer(cx, srcData, srcByteIndex, srcType);
                 SetValueInBuffer(cx, data, targetByteIndex, elementType, value);
@@ -221,16 +240,16 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
                 targetByteIndex += elementSize;
             }
         }
-        /* steps 21-22 */
+        /* steps 23-23 */
         if (array.getBuffer() != null) {
             throw newTypeError(cx, Messages.Key.InitializedObject);
         }
-        /* steps 23-26 */
+        /* steps 24-27 */
         array.setBuffer(data);
         array.setByteLength(byteLength);
         array.setByteOffset(0);
         array.setArrayLength(elementLength);
-        /* step 27 */
+        /* step 28 */
         return array;
     }
 
@@ -289,42 +308,46 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         /* step 2 */
         Object obj = thisValue;
         /* step 3 */
-        if (buffer.getData() == null && !buffer.isNeutered()) {
+        if (!buffer.isInitialized()) {
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 4 */
+        if (IsNeuteredBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        }
+        /* step 5 */
         if (!(obj instanceof TypedArrayObject)) {
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         TypedArrayObject array = (TypedArrayObject) obj;
-        /* step 5 */
+        /* step 6 */
         if (array.getElementType() == null) {
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
-        /* steps 6-7 */
+        /* steps 7-8 */
         if (array.getBuffer() != null) {
             throw newTypeError(cx, Messages.Key.InitializedObject);
         }
-        /* steps 8-9 */
+        /* steps 9-10 */
         ElementType elementType = array.getElementType();
-        /* step 10 */
+        /* step 11 */
         int elementSize = elementType.size();
-        /* steps 11-12 */
+        /* steps 12-13 */
         double offset = ToInteger(cx, byteOffset);
-        /* step 13 */
+        /* step 14 */
         if (offset < 0) {
             throw newRangeError(cx, Messages.Key.InvalidByteOffset);
         }
-        /* step 14 */
+        /* step 15 */
         if (offset % elementSize != 0) {
             throw newRangeError(cx, Messages.Key.InvalidByteOffset);
         }
-        /* step 15 */
+        /* step 16 */
         long bufferByteLength = buffer.getByteLength();
-        /* steps 16-17 */
+        /* steps 17-18 */
         long newByteLength;
         if (Type.isUndefined(length)) {
-            /* step 16 */
+            /* step 17 */
             if (bufferByteLength % elementSize != 0) {
                 throw newRangeError(cx, Messages.Key.InvalidBufferSize);
             }
@@ -333,23 +356,23 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
                 throw newRangeError(cx, Messages.Key.InvalidBufferSize);
             }
         } else {
-            /* step 17 */
+            /* step 18 */
             long newLength = ToLength(cx, length);
             newByteLength = newLength * elementSize;
             if (offset + newByteLength > bufferByteLength) {
                 throw newRangeError(cx, Messages.Key.InvalidBufferSize);
             }
         }
-        /* step 18 */
+        /* step 19 */
         if (array.getBuffer() != null) {
             throw newTypeError(cx, Messages.Key.InitializedObject);
         }
-        /* steps 19-22 */
+        /* steps 20-23 */
         array.setBuffer(buffer);
         array.setByteLength(newByteLength);
         array.setByteOffset((long) offset);
         array.setArrayLength(newByteLength / elementSize);
-        /* step 23 */
+        /* step 24 */
         return array;
     }
 
@@ -475,56 +498,6 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
     }
 
     /**
-     * TODO: remove method
-     * 
-     * @param cx
-     *            the execution context
-     * @param target
-     *            the typed array object or {@code null}
-     * @param items
-     *            the source object
-     * @return the new typed array object
-     */
-    @SuppressWarnings("unused")
-    private static TypedArrayObject TypedArrayFrom(ExecutionContext cx, TypedArrayObject array,
-            ScriptObject items) {
-        /* step 3 */
-        ScriptObject srcArray = items;
-        /* steps 8-9 */
-        ElementType elementType = array.getElementType();
-        /* step 10 */
-        Object arrayLength = Get(cx, srcArray, "length");
-        /* steps 11-12 */
-        long elementLength = ToLength(cx, arrayLength);
-        /* steps 13-14 */
-        ArrayBufferObject data = AllocateArrayBuffer(cx, Intrinsics.ArrayBuffer);
-        /* step 15 */
-        int elementSize = elementType.size();
-        /* step 16 */
-        long byteLength = elementSize * elementLength;
-        /* steps 17-18 */
-        SetArrayBufferData(cx, data, byteLength);
-        /* steps 19-20 */
-        for (long k = 0; k < elementLength; ++k) {
-            long pk = k;
-            Object kValue = Get(cx, srcArray, pk);
-            double kNumber = ToNumber(cx, kValue);
-            SetValueInBuffer(cx, data, k * elementSize, elementType, kNumber);
-        }
-        /* steps 21-22 */
-        if (array.getBuffer() != null) {
-            throw newTypeError(cx, Messages.Key.InitializedObject);
-        }
-        /* steps 23-26 */
-        array.setBuffer(data);
-        array.setByteLength(byteLength);
-        array.setByteOffset(0);
-        array.setArrayLength(elementLength);
-        /* step 27 */
-        return array;
-    }
-
-    /**
      * 22.2.2.1.1 Runtime Semantics: TypedArrayFrom( constructor, target, items, mapfn, thisArg )
      * 
      * @param cx
@@ -634,7 +607,6 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         /* step 2 */
         assert constructor == null || IsConstructor(constructor);
         /* step 3 */
-        // assert target == null || (target.getElementType() != null && target.getBuffer() == null);
         assert target == null || target.getElementType() != null;
         /* step 4 (not applicable) */
         /* steps 5-6 */
@@ -644,10 +616,12 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             targetObj = constructor.construct(cx, length);
         } else {
             /* step 6 */
-            /* steps 6.i-6.j */
+            /* steps 6.j-6.k */
             if (target.getBuffer() != null) {
                 throw newTypeError(cx, Messages.Key.InitializedObject);
             }
+            /* step 6.a */
+            targetObj = target;
             /* steps 6.b-6.c */
             ElementType elementType = target.getElementType();
             /* steps 6.d-6.e */
@@ -656,17 +630,15 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             int elementSize = elementType.size();
             /* step 6.g */
             long byteLength = elementSize * length;
-            /* steps 6.h, 6.k */
+            /* steps 6.h-6.i */
             SetArrayBufferData(cx, data, byteLength);
-            /* steps 6.i-6.j */
+            /* steps 6.j-6.k */
             assert target.getBuffer() == null;
             /* steps 6.l-6.o */
             target.setBuffer(data);
             target.setByteLength(byteLength);
             target.setByteOffset(0);
             target.setArrayLength(length);
-            /* step 6.a */
-            targetObj = target;
         }
         /* step 7 */
         return targetObj;

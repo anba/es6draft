@@ -141,7 +141,12 @@ public enum CompatibilityOption {
     /**
      * Extension: Async Function Definitions
      */
-    AsyncFunction;
+    AsyncFunction,
+
+    /**
+     * Extension: arguments.caller (not implemented)
+     */
+    ArgumentsCaller;
 
     /**
      * Returns a set of all options for strict-compatibility.

@@ -202,15 +202,10 @@ public final class ScriptRuntime {
      */
     public static int ArrayAccumulationSpreadElement(ExoticArray array, int nextIndex,
             Object spreadObj, ExecutionContext cx) {
-        /* steps 1-3 (cf. generated code) */
-        /* step 4 */
-        if (!Type.isObject(spreadObj)) {
-            // FIXME: spec bug ? why restrict to objects?
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* steps 5-6 */
-        ScriptObject iterator = GetIterator(cx, Type.objectValue(spreadObj));
-        /* step 7 */
+        /* steps 1-2 (cf. generated code) */
+        /* steps 2-4 */
+        ScriptObject iterator = GetIterator(cx, ToObject(cx, spreadObj));
+        /* step 5 */
         for (;;) {
             ScriptObject next = IteratorStep(cx, iterator);
             if (next == null) {
@@ -943,17 +938,11 @@ public final class ScriptRuntime {
      */
     public static Object[] SpreadArray(Object spreadObj, ExecutionContext cx) {
         final int MAX_ARGS = FunctionPrototype.getMaxArguments();
-        /* step 1 */
-        ArrayList<Object> list = new ArrayList<>();
-        /* steps 2-4 (cf. generated code) */
+        /* steps 1-3 (cf. generated code) */
+        /* steps 3-4 */
+        ScriptObject iterator = GetIterator(cx, ToObject(cx, spreadObj));
         /* step 5 */
-        if (!Type.isObject(spreadObj)) {
-            // FIXME: spec bug ? why restrict to objects?
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* steps 6-7 */
-        ScriptObject iterator = GetIterator(cx, Type.objectValue(spreadObj));
-        /* step 8 */
+        ArrayList<Object> list = new ArrayList<>();
         for (int n = 0; n <= MAX_ARGS; ++n) {
             ScriptObject next = IteratorStep(cx, iterator);
             if (next == null) {
@@ -1529,9 +1518,9 @@ public final class ScriptRuntime {
         }
         /* step 5 */
         MakeConstructor(cx, f);
-        /* step 6 */
+        /* steps 6-7 */
         SetFunctionName(f, name);
-        /* step 7 */
+        /* step 8 */
         return f;
     }
 
@@ -1586,12 +1575,12 @@ public final class ScriptRuntime {
             }
             /* step 9 */
             MakeConstructor(cx, closure);
-            /* step 10 */
+            /* steps 10-11 */
             SetFunctionName(closure, name);
-            /* step 11 */
+            /* step 12 */
             envRec.initializeBinding(name, closure);
         }
-        /* step 6/12 */
+        /* step 6/13 */
         return closure;
     }
 
@@ -1715,12 +1704,10 @@ public final class ScriptRuntime {
         if (fd.hasSuperReference()) {
             MakeMethod(closure, propKey, object);
         }
-        /* step 3 */
+        /* steps 3-4 */
         SetFunctionName(closure, propKey);
         /* step 4 */
-        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
-        /* step 5 */
-        DefinePropertyOrThrow(cx, object, propKey, desc);
+        CreateDataPropertyOrThrow(cx, object, propKey, closure);
     }
 
     /**
@@ -1752,12 +1739,10 @@ public final class ScriptRuntime {
         if (fd.hasSuperReference()) {
             MakeMethod(closure, propKey, object);
         }
-        /* step 3 */
+        /* steps 3-4 */
         SetFunctionName(closure, propKey);
         /* step 4 */
-        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
-        /* step 5 */
-        DefinePropertyOrThrow(cx, object, propKey, desc);
+        CreateDataPropertyOrThrow(cx, object, propKey, closure);
     }
 
     /**
@@ -1814,14 +1799,14 @@ public final class ScriptRuntime {
         if (fd.hasSuperReference()) {
             MakeMethod(closure, propKey, object);
         }
-        /* step 8 */
+        /* steps 8-9 */
         SetFunctionName(closure, propKey, "get");
-        /* step 9 */
+        /* step 10 */
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setGetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
-        /* step 10 */
+        /* step 11 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
@@ -1853,14 +1838,14 @@ public final class ScriptRuntime {
         if (fd.hasSuperReference()) {
             MakeMethod(closure, propKey, object);
         }
-        /* step 8 */
+        /* steps 8-9 */
         SetFunctionName(closure, propKey, "get");
-        /* step 9 */
+        /* step 10 */
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setGetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
-        /* step 10 */
+        /* step 11 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
@@ -1918,14 +1903,14 @@ public final class ScriptRuntime {
         if (fd.hasSuperReference()) {
             MakeMethod(closure, propKey, object);
         }
-        /* step 7 */
+        /* steps 7-8 */
         SetFunctionName(closure, propKey, "set");
-        /* step 8 */
+        /* step 9 */
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setSetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
-        /* step 9 */
+        /* step 10 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
@@ -1957,14 +1942,14 @@ public final class ScriptRuntime {
         if (fd.hasSuperReference()) {
             MakeMethod(closure, propKey, object);
         }
-        /* step 7 */
+        /* steps 7-8 */
         SetFunctionName(closure, propKey, "set");
-        /* step 8 */
+        /* step 9 */
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setSetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
-        /* step 9 */
+        /* step 10 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
@@ -1996,9 +1981,9 @@ public final class ScriptRuntime {
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 7 */
         MakeConstructor(cx, f, true, prototype);
-        /* step 8 */
+        /* steps 8-9 */
         SetFunctionName(f, name);
-        /* step 9 */
+        /* step 10 */
         return f;
     }
 
@@ -2030,9 +2015,9 @@ public final class ScriptRuntime {
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
         /* step 7 */
         MakeConstructor(cx, f, true, prototype);
-        /* step 8 */
+        /* steps 8-9 */
         SetFunctionName(f, name);
-        /* step 9 */
+        /* step 10 */
         return f;
     }
 
@@ -2096,12 +2081,10 @@ public final class ScriptRuntime {
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 9 */
         MakeConstructor(cx, closure, true, prototype);
-        /* step 10 */
+        /* steps 10-11 */
         SetFunctionName(closure, propKey);
-        /* step 11 */
-        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
         /* step 12 */
-        DefinePropertyOrThrow(cx, object, propKey, desc);
+        CreateDataPropertyOrThrow(cx, object, propKey, closure);
     }
 
     /**
@@ -2138,12 +2121,10 @@ public final class ScriptRuntime {
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 9 */
         MakeConstructor(cx, closure, true, prototype);
-        /* step 10 */
+        /* steps 10-11 */
         SetFunctionName(closure, propKey);
-        /* step 11 */
-        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
         /* step 12 */
-        DefinePropertyOrThrow(cx, object, propKey, desc);
+        CreateDataPropertyOrThrow(cx, object, propKey, closure);
     }
 
     /**
@@ -2201,12 +2182,12 @@ public final class ScriptRuntime {
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
             /* step 11 */
             MakeConstructor(cx, closure, true, prototype);
-            /* step 12 */
+            /* steps 12-13 */
             SetFunctionName(closure, name);
-            /* step 13 */
+            /* step 14 */
             envRec.initializeBinding(name, closure);
         }
-        /* step 8/14 */
+        /* step 8/15 */
         return closure;
     }
 
@@ -2310,7 +2291,7 @@ public final class ScriptRuntime {
     public static Object delegatedYield(Object value, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* steps 4-5 */
-        ScriptObject iterator = GetIterator(cx, value);
+        ScriptObject iterator = GetIterator(cx, ToObject(cx, value));
         /* step 6 */
         boolean normalCompletion = true;
         Object received = UNDEFINED;

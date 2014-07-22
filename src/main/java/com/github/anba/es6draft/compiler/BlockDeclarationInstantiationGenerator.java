@@ -11,12 +11,14 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDecla
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyDeclaredNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.BlockStatement;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.SwitchStatement;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.runtime.EnvironmentRecord;
+import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
@@ -109,54 +111,55 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
      *            the expression visitor
      */
     private void generateInline(List<Declaration> declarations, ExpressionVisitor mv) {
-        /* steps 1-2 */
-        List<Declaration> functionsToInitialize = new ArrayList<>();
+        Variable<EnvironmentRecord> envRec = mv.newScratchVariable(EnvironmentRecord.class);
+        Variable<LexicalEnvironment<?>> env = mv.newScratchVariable(LexicalEnvironment.class)
+                .uncheckedCast();
 
         // stack: [env] -> [env, envRec]
         mv.dup();
         getEnvironmentRecord(mv);
 
-        /* step 3 */
+        // stack: [env, envRec] -> []
+        mv.store(envRec);
+        mv.store(env);
+
+        /* steps 1-3 */
         for (Declaration d : declarations) {
-            for (String dn : BoundNames(d)) {
-                mv.dup();
-                if (IsConstantDeclaration(d)) {
-                    // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
-                    createImmutableBinding(dn, mv);
-                } else {
-                    // FIXME: spec bug (CreateMutableBinding concrete method of `env`)
-                    createMutableBinding(dn, false, mv);
-                }
-            }
             if (isFunctionDeclaration(d)) {
-                functionsToInitialize.add(d);
-            }
-        }
+                String fn = BoundName(d);
 
-        if (!functionsToInitialize.isEmpty()) {
-            // stack: [env, envRec] -> [envRec, env]
-            mv.swap();
+                // FIXME: spec bug - CreateMutableBinding not called
+                mv.load(envRec);
+                createMutableBinding(fn, false, mv);
 
-            /* step 4 */
-            for (Declaration f : functionsToInitialize) {
-                String fn = BoundName(f);
-
-                // stack: [envRec, env] -> [envRec, env, envRec, env, cx]
-                mv.dup2();
+                // stack: [] -> [envRec, env, cx]
+                mv.load(envRec);
+                mv.load(env);
                 mv.loadExecutionContext();
 
-                // stack: [envRec, env, envRec, env, cx] -> [envRec, env, envRec, fo]
-                InstantiateFunctionObject(f, mv);
+                // stack: [envRec, env, cx] -> [envRec, fo]
+                InstantiateFunctionObject(d, mv);
 
-                // stack: [envRec, env, envRec, fo] -> [envRec, env]
+                // stack: [envRec, fo] -> []
                 initializeBinding(fn, mv);
+            } else {
+                for (String dn : BoundNames(d)) {
+                    mv.load(envRec);
+                    if (IsConstantDeclaration(d)) {
+                        // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
+                        createImmutableBinding(dn, mv);
+                    } else {
+                        // FIXME: spec bug (CreateMutableBinding concrete method of `env`)
+                        createMutableBinding(dn, false, mv);
+                    }
+                }
             }
-
-            // stack: [envRec, env] -> [env, envRec]
-            mv.swap();
         }
 
-        // stack: [env, envRec] -> [env]
-        mv.pop();
+        // stack: [] -> [env]
+        mv.load(env);
+
+        mv.freeVariable(env);
+        mv.freeVariable(envRec);
     }
 }

@@ -44,18 +44,23 @@ public final class ListIteratorNext extends BuiltinFunction {
     @Override
     public OrdinaryObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        /* step 1 (omitted) */
-        /* step 2 */
+        /* steps 1-2 (omitted) */
+        /* steps 3, 6 */
         if (!(thisValue instanceof ListIterator)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
-        /* step 3 */
+        ListIterator<?> listIterator = (ListIterator<?>) thisValue;
+        /* steps 4-5 */
+        if (this != listIterator.getIteratorNext()) {
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
+        }
+        /* step 7 */
         Iterator<?> iterator = ((ListIterator<?>) thisValue).getIterator();
-        /* steps 4-6 */
+        /* steps 8-10 */
         if (!iterator.hasNext()) {
             return CreateIterResultObject(calleeContext, UNDEFINED, true);
         }
-        /* steps 7-8 */
+        /* steps 11-12 */
         return CreateIterResultObject(calleeContext, iterator.next(), false);
     }
 }

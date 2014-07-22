@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsNeuteredBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -96,34 +97,38 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         }
         DataViewObject dataView = (DataViewObject) view;
         /* step 3 */
-        ArrayBufferObject buffer = dataView.getBuffer();
-        /* step 4 */
-        if (buffer == null) {
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        /* step 5 */
         double numberIndex = ToNumber(cx, requestIndex);
-        /* steps 6-7 */
+        /* steps 4-5 */
         double getIndex = ToInteger(numberIndex);
-        /* step 8 */
+        /* step 6 */
         if (numberIndex != getIndex || getIndex < 0) {
             throw newRangeError(cx, Messages.Key.InvalidByteOffset);
         }
-        /* steps 9-10 */
+        /* steps 7-8 */
         boolean littleEndian = ToBoolean(isLittleEndian);
+        /* step 9 */
+        ArrayBufferObject buffer = dataView.getBuffer();
+        /* step 10 */
+        if (buffer == null) {
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
+        }
         /* step 11 */
-        long viewOffset = dataView.getByteOffset();
+        if (IsNeuteredBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        }
         /* step 12 */
-        long viewSize = dataView.getByteLength();
+        long viewOffset = dataView.getByteOffset();
         /* step 13 */
-        int elementSize = type.size();
+        long viewSize = dataView.getByteLength();
         /* step 14 */
+        int elementSize = type.size();
+        /* step 15 */
         if (getIndex + elementSize > viewSize) {
             throw newRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
         }
-        /* step 15 */
-        long bufferIndex = (long) getIndex + viewOffset;
         /* step 16 */
+        long bufferIndex = (long) getIndex + viewOffset;
+        /* step 17 */
         return GetValueFromBuffer(cx, buffer, bufferIndex, type, littleEndian);
     }
 
@@ -152,21 +157,25 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         }
         DataViewObject dataView = (DataViewObject) view;
         /* step 3 */
-        ArrayBufferObject buffer = dataView.getBuffer();
-        /* step 4 */
-        if (buffer == null) {
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        /* step 5 */
         double numberIndex = ToNumber(cx, requestIndex);
-        /* steps 6-7 */
+        /* steps 4-5 */
         double getIndex = ToInteger(numberIndex);
-        /* step 8 */
+        /* step 6 */
         if (numberIndex != getIndex || getIndex < 0) {
             throw newRangeError(cx, Messages.Key.InvalidByteOffset);
         }
-        /* steps 9-10 */
+        /* steps 7-8 */
         boolean littleEndian = ToBoolean(isLittleEndian);
+        /* step 9 */
+        ArrayBufferObject buffer = dataView.getBuffer();
+        /* step 10 */
+        if (buffer == null) {
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
+        }
+        /* step 11 */
+        if (IsNeuteredBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        }
         /* step 11 */
         long viewOffset = dataView.getByteOffset();
         /* step 12 */
@@ -209,7 +218,7 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         }
         ArrayBufferObject bufferObj = (ArrayBufferObject) buffer;
         /* step 7 */
-        if (bufferObj.getData() == null && !bufferObj.isNeutered()) {
+        if (!bufferObj.isInitialized()) {
             throw newTypeError(calleeContext, Messages.Key.UninitializedObject);
         }
         /* step 8 */

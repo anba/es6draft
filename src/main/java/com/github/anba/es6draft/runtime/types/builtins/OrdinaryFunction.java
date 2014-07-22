@@ -9,10 +9,12 @@ package com.github.anba.es6draft.runtime.types.builtins;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ConstructTailCall;
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -54,6 +56,9 @@ public class OrdinaryFunction extends FunctionObject {
          */
         @Override
         public ScriptObject construct(ExecutionContext callerContext, Object... args) {
+            if (getCode() == null) {
+                throw newTypeError(callerContext, Messages.Key.UninitializedObject);
+            }
             return Construct(callerContext, this, args);
         }
 
@@ -63,6 +68,9 @@ public class OrdinaryFunction extends FunctionObject {
         @Override
         public Object tailConstruct(ExecutionContext callerContext, Object... args)
                 throws Throwable {
+            if (getCode() == null) {
+                throw newTypeError(callerContext, Messages.Key.UninitializedObject);
+            }
             return ConstructTailCall(callerContext, this, args);
         }
     }
@@ -283,11 +291,11 @@ public class OrdinaryFunction extends FunctionObject {
             ExecutionContext cx, FUNCTION f, Callable thrower) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
-        DefinePropertyOrThrow(cx, f, "caller", new PropertyDescriptor(thrower, thrower, false,
-                false));
+        DefinePropertyOrThrow(cx, f, "caller",
+                new PropertyDescriptor(thrower, thrower, false, true));
         /* step 4 */
         DefinePropertyOrThrow(cx, f, "arguments", new PropertyDescriptor(thrower, thrower, false,
-                false));
+                true));
     }
 
     /**
@@ -458,6 +466,33 @@ public class OrdinaryFunction extends FunctionObject {
         String sname = description == null ? "" : "[" + description + "]";
         /* steps 1-2, 4-7 */
         SetFunctionName(f, sname, prefix);
+    }
+
+    /**
+     * 9.2.11 SetFunctionName (F, name, prefix) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param f
+     *            the function object
+     * @param name
+     *            the function name
+     * @param prefix
+     *            the function name prefix
+     */
+    public static void SetFunctionName(ExecutionContext cx, ExoticBoundFunction f, String name,
+            String prefix) {
+        /* step 1 */
+        assert f.isExtensible() : "function is not extensible";
+        assert !f.ordinaryHasOwnProperty("name") : "function has 'name' property";
+        /* step 2 (implicit) */
+        /* step 3 (not applicable) */
+        /* step 4 */
+        if (!name.isEmpty() && prefix != null) {
+            name = prefix + " " + name;
+        }
+        /* step 5 */
+        DefinePropertyOrThrow(cx, f, "name", new PropertyDescriptor(name, false, false, true));
     }
 
     /**

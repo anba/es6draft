@@ -6,7 +6,7 @@
  */
 
 const {
-  assertFalse, assertUndefined, assertDataProperty
+  assertFalse, assertUndefined, assertDataProperty, assertThrows
 } = Assert;
 
 // 6.1.7.3, 9.4.3: String exotic objects can violate [[GetOwnProperty]] invariant
@@ -22,5 +22,5 @@ assertFalse(Reflect.isExtensible(str));
 assertUndefined(Reflect.getOwnPropertyDescriptor(str, "0"));
 
 // Initialize string object and retrieve "0" property
-String.call(str, "A");
-assertDataProperty(str, "0", {value: "A", writable: false, enumerable: true, configurable: false});
+assertThrows(() => String.call(str, "A"), TypeError);
+assertUndefined(Reflect.getOwnPropertyDescriptor(str, "0"));

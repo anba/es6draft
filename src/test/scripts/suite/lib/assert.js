@@ -231,8 +231,8 @@ function assertBuiltinFunction(fun, name, arity) {
     // anonymous function
     assertFalse($CallFunction(Object_prototype_hasOwnProperty, fun, "name"));
   }
-  assertAccessorProperty(fun, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
-  assertAccessorProperty(fun, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
+  assertAccessorProperty(fun, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
+  assertAccessorProperty(fun, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
 }
 
 function assertNativeFunction(fun, name, arity) {
@@ -248,8 +248,8 @@ function assertBuiltinConstructor(fun, name, arity) {
   assertSame(Function.prototype, Object_getPrototypeOf(fun), `${name}.[[Prototype]]`);
   assertDataProperty(fun, "length", {value: arity, writable: false, enumerable: false, configurable: true});
   assertDataProperty(fun, "name", {value: name, writable: false, enumerable: false, configurable: true});
-  assertAccessorProperty(fun, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
-  assertAccessorProperty(fun, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
+  assertAccessorProperty(fun, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
+  assertAccessorProperty(fun, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
 }
 
 function assertBuiltinPrototype(o, proto = Object.prototype) {

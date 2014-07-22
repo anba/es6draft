@@ -28,18 +28,16 @@ const {
   const foreignBoundConstructor = foreignRealm.eval("function F(){}; F.bind(null)");
   foreignBoundConstructor.prototype = null;
 
-  // GetPrototypeFromConstructor() uses the current realm's intrinsic %ObjectPrototype%, because
-  // bound functions have no [[Realm]] internal slot
+  // GetPrototypeFromConstructor() retrieves the foreign realm's intrinsic %ObjectPrototype%
   let obj2 = create.call(foreignBoundConstructor);
-  assertSame(Object.prototype, Object.getPrototypeOf(obj2));
+  assertSame(foreignRealm.global.Object.prototype, Object.getPrototypeOf(obj1));
 
 
   // foreign proxy constructor function whose .prototype is not an object
   const foreignProxyConstructor = foreignRealm.eval("function F(){}; new Proxy(F, {})");
   foreignProxyConstructor.prototype = null;
 
-  // GetPrototypeFromConstructor() uses the current realm's intrinsic %ObjectPrototype%, because
-  // proxy functions have no [[Realm]] internal slot
+  // GetPrototypeFromConstructor() retrieves the foreign realm's intrinsic %ObjectPrototype%
   let obj3 = create.call(foreignProxyConstructor);
-  assertSame(Object.prototype, Object.getPrototypeOf(obj3));
+  assertSame(foreignRealm.global.Object.prototype, Object.getPrototypeOf(obj1));
 }

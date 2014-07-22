@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.objects.text;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
 
@@ -69,6 +70,9 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
         if (thisValue instanceof ExoticString) {
             ExoticString obj = (ExoticString) thisValue;
             if (obj.getStringData() == null) {
+                if (!IsExtensible(calleeContext, obj)) {
+                    throw newTypeError(calleeContext, Messages.Key.NotExtensible);
+                }
                 int length = s.length();
                 DefinePropertyOrThrow(calleeContext, obj, "length", new PropertyDescriptor(length,
                         false, false, false));

@@ -17,7 +17,7 @@ new Set(void 0);
 new Set(null);
 
 // TypeError for non-iterable
-for (let nonIterable of [0, 1, 0.5, 0 / 0, true, false, "", "abc", Symbol.create, Symbol()]) {
+for (let nonIterable of [0, 1, 0.5, 0 / 0, true, false, Symbol.create, Symbol()]) {
   assertThrows(() => new Set(nonIterable), TypeError);
 }
 for (let nonIterable of [{}, {a: 0}, /(?:)/, new Date, () => {}]) {
@@ -25,6 +25,6 @@ for (let nonIterable of [{}, {a: 0}, /(?:)/, new Date, () => {}]) {
 }
 
 // No TypeError for iterable
-new Set([]);
-new Set([0, 1]);
-new Set(function*(){}());
+for (let iterable of [[], [0, 1], function*(){}(), "", "abc"]) {
+  new Set(iterable);
+}

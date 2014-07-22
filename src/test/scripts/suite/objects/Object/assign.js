@@ -168,10 +168,9 @@ assertBuiltinFunction(Object.assign, "assign", 2);
   let source = new Proxy({
     get a() { hasB = "b" in this },
   }, {
-    ownKeys: () => ({
-      length: 2,
-      get 0() { return "a" },
-      get 1() { source.b = 2; return "b" },
+    ownKeys: () => Object.defineProperties([], {
+      0: {get() { return "a" }},
+      1: {get() { source.b = 2; return "b" }},
     })
   });
   let target = Object.assign({}, source);
@@ -299,50 +298,48 @@ assertBuiltinFunction(Object.assign, "assign", 2);
 }
 
 // Exceptions in Iterator directly stop property traversal (1)
-{
-  class ErrorLength extends Error {}
-  let source = new Proxy({}, {
-    ownKeys: () => ({
-      get length() { throw new ErrorLength }
-    })
-  });
-  assertThrows(() => Object.assign({}, source), ErrorLength);
-}
+// {
+//   class ErrorLength extends Error {}
+//   let source = new Proxy({}, {
+//     ownKeys: () => ({
+//       get length() { throw new ErrorLength }
+//     })
+//   });
+//   assertThrows(() => Object.assign({}, source), ErrorLength);
+// }
 
 // Exceptions in Iterator directly stop property traversal (2)
 {
   class ErrorZero extends Error {}
   let source = new Proxy({}, {
-    ownKeys: () => ({
-      length: 1,
-      get 0() { throw new ErrorZero },
+    ownKeys: () => Object.defineProperties([], {
+      0: {get() { throw new ErrorZero }},
     })
   });
   assertThrows(() => Object.assign({}, source), ErrorZero);
 }
 
 // Exceptions in Iterator directly stop property traversal (3)
-{
-  class ErrorLength extends Error {}
-  class ErrorZero extends Error {}
-  let source = new Proxy({}, {
-    ownKeys: () => ({
-      get length() { throw new ErrorLength },
-      get 0() { throw new ErrorZero },
-    })
-  });
-  assertThrows(() => Object.assign({}, source), ErrorLength);
-}
+// {
+//   class ErrorLength extends Error {}
+//   class ErrorZero extends Error {}
+//   let source = new Proxy({}, {
+//     ownKeys: () => ({
+//       get length() { throw new ErrorLength },
+//       get 0() { throw new ErrorZero },
+//     })
+//   });
+//   assertThrows(() => Object.assign({}, source), ErrorLength);
+// }
 
 // Exceptions in Iterator directly stop property traversal (4)
 {
   class ErrorZero extends Error {}
   class ErrorOne extends Error {}
   let source = new Proxy({}, {
-    ownKeys: () => ({
-      length: 2,
-      get 0() { throw new ErrorZero },
-      get 1() { throw new ErrorOne },
+    ownKeys: () => Object.defineProperties([], {
+      0: {get() { throw new ErrorZero }},
+      1: {get() { throw new ErrorOne }},
     })
   });
   assertThrows(() => Object.assign({}, source), ErrorZero);
@@ -356,10 +353,9 @@ assertBuiltinFunction(Object.assign, "assign", 2);
   let source = new Proxy({
     get a() { getterCalled = true }
   }, {
-    ownKeys: () => ({
-      length: 2,
-      get 0() { return "a" },
-      get 1() { throw new ErrorOne },
+    ownKeys: () => Object.defineProperties([], {
+      0: {get() { return "a" }},
+      1: {get() { throw new ErrorOne }},
     })
   });
   assertThrows(() => Object.assign({}, source), ErrorOne);

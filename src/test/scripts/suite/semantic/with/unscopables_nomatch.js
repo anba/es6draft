@@ -10,14 +10,7 @@ const {
 } = Assert;
 
 loadRelativeToScript("../../lib/recorder.js");
-
-function HasBinding(name) {
-  return `get:Symbol(Symbol.unscopables);has:${name};`;
-}
-
-function GetBindingValue(name) {
-  return `has:${name};get:${name};`;
-}
+loadRelativeToScript("helper.js");
 
 // Object with @@unscopables but no match, property is not present, single access
 {
@@ -29,7 +22,7 @@ function GetBindingValue(name) {
       property;
     }
   }
-  assertSame(HasBinding("property"), record());
+  assertSame(HasBindingFail("property"), record());
   assertSame(1, fallbackCalled);
 }
 
@@ -44,7 +37,7 @@ function GetBindingValue(name) {
       property;
     }
   }
-  assertSame(HasBinding("property") + HasBinding("property"), record());
+  assertSame(HasBindingFail("property").repeat(2), record());
   assertSame(2, fallbackCalled);
 }
 
@@ -59,7 +52,7 @@ function GetBindingValue(name) {
       property;
     }
   }
-  assertSame(HasBinding("property") + GetBindingValue("property"), record());
+  assertSame(HasBindingSuccess("property") + BindingNotIntercepted("property") + GetBindingValueSuccess("property") + BindingNotIntercepted("property") + GetValue("property"), record());
   assertSame(1, getterCalled);
   assertSame(0, fallbackCalled);
 }
@@ -76,7 +69,7 @@ function GetBindingValue(name) {
       property;
     }
   }
-  assertSame(HasBinding("property") + GetBindingValue("property") + HasBinding("property") + GetBindingValue("property"), record());
+  assertSame((HasBindingSuccess("property") + BindingNotIntercepted("property") + GetBindingValueSuccess("property") + BindingNotIntercepted("property") + GetValue("property")).repeat(2), record());
   assertSame(2, getterCalled);
   assertSame(0, fallbackCalled);
 }

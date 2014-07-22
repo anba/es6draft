@@ -442,7 +442,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
             /* steps 1-2 */
             ScriptObject obj = ToObject(cx, o);
             /* steps 3-10 */
-            List<String> nameList = GetOwnEnumerablePropertyNames(cx, obj);
+            List<String> nameList = EnumerableOwnNames(cx, obj);
             /* step 11 */
             return CreateArrayFromList(cx, nameList);
         }
@@ -591,19 +591,32 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         ScriptObject obj = Type.objectValue(o);
         /* step 2 */
         ScriptObject props = ToObject(cx, properties);
-        /* step 3 */
-        List<Object> names = GetOwnEnumerablePropertyKeys(cx, props);
-        /* step 4 */
-        List<PropertyDescriptor> descriptors = new ArrayList<>();
-        /* step 5 */
-        for (Object p : names) {
-            Object descObj = Get(cx, props, p);
-            PropertyDescriptor desc = ToPropertyDescriptor(cx, descObj);
-            descriptors.add(desc);
+        /* step 3 (empty) */
+        // FIXME: spec bug - variable not used
+        /* steps 4-9 */
+        Iterator<?> keysArray = props.ownKeys(cx);
+        /* step 10 */
+        ArrayList<PropertyDescriptor> descriptors = new ArrayList<>();
+        ArrayList<Object> names = new ArrayList<>();
+        /* step 11 */
+        while (keysArray.hasNext()) {
+            Object nextKey = ToPropertyKey(cx, keysArray.next());
+            Property propDesc;
+            if (nextKey instanceof String) {
+                propDesc = props.getOwnProperty(cx, (String) nextKey);
+            } else {
+                propDesc = props.getOwnProperty(cx, (Symbol) nextKey);
+            }
+            if (propDesc != null && propDesc.isEnumerable()) {
+                Object descObj = Get(cx, props, nextKey);
+                PropertyDescriptor desc = ToPropertyDescriptor(cx, descObj);
+                descriptors.add(desc);
+                names.add(nextKey);
+            }
         }
-        /* step 6 */
+        /* step 12 */
         ScriptException pendingException = null;
-        /* step 7 */
+        /* step 13 */
         for (int i = 0, size = names.size(); i < size; ++i) {
             Object p = names.get(i);
             PropertyDescriptor desc = descriptors.get(i);
@@ -615,11 +628,11 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                 }
             }
         }
-        /* step 8 */
+        /* step 14 */
         if (pendingException != null) {
             throw pendingException;
         }
-        /* step 9 */
+        /* step 15 */
         return obj;
     }
 

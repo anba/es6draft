@@ -1361,8 +1361,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 9.1.11 [[Enumerate]] () */
     @Override
-    public/* final */ScriptObject enumerate(ExecutionContext cx) {
-        // FIXME: spec issue - non-final because of bug 2957
+    public final ScriptObject enumerate(ExecutionContext cx) {
         return CreateListIterator(cx, new EnumKeysIterator(cx, this));
     }
 
@@ -1468,7 +1467,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 9.1.12 [[OwnPropertyKeys]] ( ) */
     @Override
-    public final ScriptObject ownPropertyKeys(ExecutionContext cx) {
+    public final ExoticArray ownPropertyKeys(ExecutionContext cx) {
         return CreateArrayFromList(cx, getOwnPropertyKeys(cx));
     }
 

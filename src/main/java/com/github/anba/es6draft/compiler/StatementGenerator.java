@@ -572,7 +572,8 @@ final class StatementGenerator extends
         }
 
         /* step 7 */
-        if (type != ValType.Object) {
+        if ((iterationKind == IterationKind.Enumerate || iterationKind == IterationKind.EnumerateValues)
+                && type != ValType.Object) {
             mv.toBoxed(type);
             Label loopstart = new Label();
             mv.dup();

@@ -52,6 +52,7 @@ public final class Parser {
     private final EnumSet<Option> parserOptions;
     private TokenStream ts;
     private ParseContext context;
+    private boolean moduleCode;
 
     private enum StrictMode {
         Unknown, Strict, NonStrict
@@ -475,6 +476,9 @@ public final class Parser {
 
     @SuppressWarnings("serial")
     private static final class RetryGenerator extends RuntimeException {
+        public RetryGenerator() {
+            super("RetryGenerator", null, false, false);
+        }
     }
 
     public enum Option {
@@ -1285,6 +1289,7 @@ public final class Parser {
         if (ts != null)
             throw new IllegalStateException();
         ts = new TokenStream(this, new TokenStreamInput(source));
+        moduleCode = true;
         return module();
     }
 
@@ -4014,6 +4019,8 @@ public final class Parser {
             return true;
         case YIELD:
             return !context.yieldAllowed;
+        case AWAIT:
+            return !moduleCode;
         default:
             return isBindingIdentifier(token);
         }
@@ -5614,11 +5621,15 @@ public final class Parser {
         switch (tok) {
         case NAME:
         case ASYNC:
-        case AWAIT:
         case ESCAPED_NAME:
         case ESCAPED_ASYNC:
-        case ESCAPED_AWAIT:
             return true;
+        case AWAIT:
+        case ESCAPED_AWAIT:
+            if (!moduleCode) {
+                return true;
+            }
+            // fall-through
         case ESCAPED_RESERVED_WORD:
             throw reportSyntaxError(Messages.Key.InvalidIdentifier, getName(tok));
         case YIELD:
@@ -7662,6 +7673,8 @@ public final class Parser {
         case ESCAPED_RESERVED_WORD:
         case ESCAPED_STRICT_RESERVED_WORD:
         case ESCAPED_YIELD:
+        case ESCAPED_ASYNC:
+        case ESCAPED_AWAIT:
         case ESCAPED_LET:
             return ts.getString();
         default:

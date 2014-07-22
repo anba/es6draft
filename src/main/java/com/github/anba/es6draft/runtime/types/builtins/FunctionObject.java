@@ -395,11 +395,10 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         /* step 1 */
         Callable thrower = realm.getThrowTypeError();
         /* step 2 */
-        infallibleDefineOwnProperty("caller",
-                new PropertyDescriptor(thrower, thrower, false, false));
+        infallibleDefineOwnProperty("caller", new PropertyDescriptor(thrower, thrower, false, true));
         /* step 3 */
         infallibleDefineOwnProperty("arguments", new PropertyDescriptor(thrower, thrower, false,
-                false));
+                true));
     }
 
     /**
@@ -416,10 +415,10 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         Callable thrower = realm.getThrowTypeError();
         /* step 2 */
         ordinaryDefinePropertyOrThrow(cx, "caller", new PropertyDescriptor(thrower, thrower, false,
-                false));
+                true));
         /* step 3 */
         ordinaryDefinePropertyOrThrow(cx, "arguments", new PropertyDescriptor(thrower, thrower,
-                false, false));
+                false, true));
     }
 
     protected boolean infallibleDefineOwnProperty(String propertyKey, PropertyDescriptor desc) {
@@ -520,6 +519,12 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * @return the realm field
      */
     public final Realm getRealm() {
+        return realm;
+    }
+
+    @Override
+    public Realm getRealm(ExecutionContext cx) {
+        /* 7.3.21 GetFunctionRealm ( obj ) Abstract Operation */
         return realm;
     }
 

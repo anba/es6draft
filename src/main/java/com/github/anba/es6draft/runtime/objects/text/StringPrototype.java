@@ -384,29 +384,33 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             }
             /* steps 5-6 */
             String searchString = ToFlatString(cx, searchValue);
-            // FIXME: always call ToString(replValue) even if no match (bug 2956)
-            if (!IsCallable(replaceValue)) {
-                replaceValue = ToFlatString(cx, replaceValue);
-            }
             /* step 7 */
+            boolean functionalReplace = IsCallable(replaceValue);
+            /* step 8 */
+            String replaceValueString = null;
+            Callable replaceValueCallable = null;
+            if (!functionalReplace) {
+                replaceValueString = ToFlatString(cx, replaceValue);
+            } else {
+                replaceValueCallable = (Callable) replaceValue;
+            }
+            /* step 9 */
             int pos = string.indexOf(searchString);
             if (pos < 0) {
                 return string;
             }
             String matched = searchString;
-            /* steps 8-9 */
+            /* steps 10-11 */
             String replStr;
-            if (IsCallable(replaceValue)) {
-                Object replValue = ((Callable) replaceValue).call(cx, UNDEFINED, matched, pos,
-                        string);
+            if (functionalReplace) {
+                Object replValue = replaceValueCallable.call(cx, UNDEFINED, matched, pos, string);
                 replStr = ToFlatString(cx, replValue);
             } else {
-                String replacement = (String) replaceValue;
-                replStr = GetReplaceSubstitution(matched, string, pos, replacement);
+                replStr = GetReplaceSubstitution(matched, string, pos, replaceValueString);
             }
-            /* step 10 */
+            /* step 12 */
             int tailPos = pos + searchString.length();
-            /* steps 11-12 */
+            /* steps 13-14 */
             return string.substring(0, pos) + replStr + string.substring(tailPos);
         }
 

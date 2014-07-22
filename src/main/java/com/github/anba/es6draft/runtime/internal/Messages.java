@@ -169,6 +169,7 @@ public final class Messages {
         UninitializedObject("type.uninitialized_object"),
         SymbolPrimitive("type.symbol_primitive"),
         SymbolString("type.symbol_string"),
+        SymbolNumber("type.symbol_number"),
         SymbolCreate("type.symbol_create"),
         CyclicProto("type.cyclic_proto"),
         FunctionNotCloneable("type.function_not_cloneable"),
@@ -273,6 +274,7 @@ public final class Messages {
         ProxyNotConfigurable("proxy.not_configurable"),
         ProxyAbsentOrConfigurable("proxy.absent_or_configurable"),
         ProxyAbsentNotExtensible("proxy.absent_not_extensible"),
+        ProxyOwnKeysNotArray("proxy.own_keys_not_array"),
 
         // # 26.3 Loader Objects
         LoaderFetchNotImplemented("loader.fetch_not_implemented"),

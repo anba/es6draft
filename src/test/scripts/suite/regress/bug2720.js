@@ -15,4 +15,4 @@ const {
 let listIterator = Reflect.enumerate({});
 let listIteratorNext = listIterator.next;
 
-assertDataProperty(listIterator, "next", {value: listIteratorNext, writable: true, enumerable: false, configurable: true});
+assertDataProperty(listIterator, "next", {value: listIteratorNext, writable: true, enumerable: true, configurable: true});

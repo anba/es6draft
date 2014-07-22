@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.GetFunctionRealm;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -175,11 +176,17 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
         clone.boundThis = boundThis;
         clone.boundArguments = boundArguments;
         /* step 5 */
-        Realm realm = BoundFunctionTargetRealm(cx, this);
+        Realm realm = GetFunctionRealm(cx, this);
         /* step 6-7 */
         AddRestrictedFunctionProperties(cx, clone, realm);
         /* step 8 */
         return clone;
+    }
+
+    @Override
+    public Realm getRealm(ExecutionContext cx) {
+        /* 7.3.21 GetFunctionRealm ( obj ) Abstract Operation */
+        return getBoundTargetFunction().getRealm(cx);
     }
 
     /**
@@ -231,32 +238,5 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
     public static ExoticBoundFunction BoundFunctionClone(ExecutionContext cx,
             ExoticBoundFunction function) {
         return function.clone(cx);
-    }
-
-    /**
-     * 9.4.1.5 BoundFunctionTargetRealm ( bound ) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param bound
-     *            the bound function object
-     * @return the realm object
-     */
-    public static Realm BoundFunctionTargetRealm(ExecutionContext cx, ExoticBoundFunction bound) {
-        /* step 1 (implicit) */
-        /* step 2 */
-        Callable target = bound.getBoundTargetFunction();
-        /* step 3 */
-        while (target instanceof ExoticBoundFunction) {
-            target = ((ExoticBoundFunction) target).getBoundTargetFunction();
-        }
-        /* step 4 */
-        if (target instanceof FunctionObject) {
-            return ((FunctionObject) target).getRealm();
-        } else if (target instanceof BuiltinFunction) {
-            return ((BuiltinFunction) target).getRealm();
-        }
-        /* step 5 */
-        return cx.getRealm();
     }
 }

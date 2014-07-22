@@ -12,4 +12,4 @@ const {
 // 13.3: Property Definition Evaluation for getters not updated to use DefinePropertyOrThrow
 // https://bugs.ecmascript.org/show_bug.cgi?id=1417
 
-assertThrows(() => (class { static get ["caller"](){} }), TypeError);
+assertThrows(() => (class { static get ["prototype"](){} }), TypeError);

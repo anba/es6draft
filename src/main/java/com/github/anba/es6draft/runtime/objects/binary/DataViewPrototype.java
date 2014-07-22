@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsNeuteredBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.DataViewConstructor.GetViewValue;
 import static com.github.anba.es6draft.runtime.objects.binary.DataViewConstructor.SetViewValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -56,10 +57,25 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
         private static ArrayBufferView thisArrayBufferView(ExecutionContext cx, Object m) {
             if (m instanceof ArrayBufferView) {
                 ArrayBufferView view = (ArrayBufferView) m;
-                if (view.getBuffer() != null) {
-                    return view;
+                if (view.getBuffer() == null) {
+                    throw newTypeError(cx, Messages.Key.UninitializedObject);
                 }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return view;
+            }
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+
+        private static ArrayBufferView thisArrayBufferViewChecked(ExecutionContext cx, Object m) {
+            if (m instanceof ArrayBufferView) {
+                ArrayBufferView view = (ArrayBufferView) m;
+                ArrayBufferObject buffer = view.getBuffer();
+                if (buffer == null) {
+                    throw newTypeError(cx, Messages.Key.UninitializedObject);
+                }
+                if (IsNeuteredBuffer(buffer)) {
+                    throw newTypeError(cx, Messages.Key.BufferNeutered);
+                }
+                return view;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -84,6 +100,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          */
         @Accessor(name = "buffer", type = Accessor.Type.Getter)
         public static Object buffer(ExecutionContext cx, Object thisValue) {
+            /* steps 1-6 */
             return thisArrayBufferView(cx, thisValue).getBuffer();
         }
 
@@ -98,7 +115,8 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
-            return thisArrayBufferView(cx, thisValue).getByteLength();
+            /* steps 1-8 */
+            return thisArrayBufferViewChecked(cx, thisValue).getByteLength();
         }
 
         /**
@@ -112,7 +130,8 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          */
         @Accessor(name = "byteOffset", type = Accessor.Type.Getter)
         public static Object byteOffset(ExecutionContext cx, Object thisValue) {
-            return thisArrayBufferView(cx, thisValue).getByteOffset();
+            /* steps 1-8 */
+            return thisArrayBufferViewChecked(cx, thisValue).getByteOffset();
         }
 
         /**

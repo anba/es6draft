@@ -38,9 +38,7 @@ import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -65,16 +63,6 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
     @Override
     public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
-    }
-
-    private static Realm getConstructorRealm(Constructor constructor) {
-        if (constructor instanceof FunctionObject) {
-            return ((FunctionObject) constructor).getRealm();
-        } else if (constructor instanceof BuiltinFunction) {
-            return ((BuiltinFunction) constructor).getRealm();
-        } else {
-            return null;
-        }
     }
 
     /**
@@ -116,7 +104,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
         }
 
         /**
-         * 22.1.3.26 Array.prototype.toLocaleString ( )
+         * 22.1.3.26 Array.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )
          * 
          * @param cx
          *            the execution context
@@ -181,7 +169,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 4 */
             if (o instanceof ExoticArray) {
                 Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c) && getConstructorRealm((Constructor) c) == cx.getRealm()) {
+                if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, 0);
                 }
             }
@@ -542,7 +530,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 14 */
             if (o instanceof ExoticArray) {
                 Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c) && getConstructorRealm((Constructor) c) == cx.getRealm()) {
+                if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, count);
                 }
             }
@@ -732,7 +720,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 13 */
             if (o instanceof ExoticArray) {
                 Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c) && getConstructorRealm((Constructor) c) == cx.getRealm()) {
+                if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, actualDeleteCount);
                 }
             }
@@ -1249,7 +1237,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 9 */
             if (o instanceof ExoticArray) {
                 Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c) && getConstructorRealm((Constructor) c) == cx.getRealm()) {
+                if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, len);
                 }
             }
@@ -1304,7 +1292,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 9 */
             if (o instanceof ExoticArray) {
                 Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c) && getConstructorRealm((Constructor) c) == cx.getRealm()) {
+                if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, 0);
                 }
             }
@@ -1710,11 +1698,11 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             OrdinaryObject blackList = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             /* steps 2-8 */
             boolean status = true;
-            status &= CreateDataProperty(cx, blackList, "find", true);
-            status &= CreateDataProperty(cx, blackList, "findIndex", true);
-            status &= CreateDataProperty(cx, blackList, "fill", true);
             status &= CreateDataProperty(cx, blackList, "copyWithin", true);
             status &= CreateDataProperty(cx, blackList, "entries", true);
+            status &= CreateDataProperty(cx, blackList, "fill", true);
+            status &= CreateDataProperty(cx, blackList, "find", true);
+            status &= CreateDataProperty(cx, blackList, "findIndex", true);
             status &= CreateDataProperty(cx, blackList, "keys", true);
             status &= CreateDataProperty(cx, blackList, "values", true);
             /* step 9 */

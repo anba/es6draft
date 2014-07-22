@@ -7,12 +7,14 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.objects.async.AsyncAbstractOperations.Spawn;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -49,6 +51,9 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
+        if (getCode() == null) {
+            throw newTypeError(callerContext, Messages.Key.UninitializedObject);
+        }
         return Construct(callerContext, this, args);
     }
 
@@ -58,6 +63,9 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
     @Override
     public ScriptObject tailConstruct(ExecutionContext callerContext, Object... args)
             throws Throwable {
+        if (getCode() == null) {
+            throw newTypeError(callerContext, Messages.Key.UninitializedObject);
+        }
         return construct(callerContext, args);
     }
 

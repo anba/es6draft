@@ -73,7 +73,11 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     @Override
     public void createMutableBinding(String name, boolean deletable) {
         /* steps 1-2 (omitted) */
-        /* steps 3-4 */
+        /* step 3-4 */
+        // FIXME: spec bug - dead store
+        @SuppressWarnings("unused")
+        boolean alreadyThere = declRec.hasBinding(name);
+        /* step 5 */
         declRec.createMutableBinding(name, deletable);
     }
 
@@ -83,7 +87,11 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     @Override
     public void createImmutableBinding(String name) {
         /* steps 1-2 (omitted) */
-        /* step 3 */
+        /* step 3-4 */
+        // FIXME: spec bug - dead store
+        @SuppressWarnings("unused")
+        boolean alreadyThere = declRec.hasBinding(name);
+        /* step 5 */
         declRec.createImmutableBinding(name);
     }
 

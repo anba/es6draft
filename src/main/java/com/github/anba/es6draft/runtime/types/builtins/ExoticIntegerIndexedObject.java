@@ -7,12 +7,9 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CanonicalNumericIndexString;
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateCompoundIterator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsInteger;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -107,17 +104,14 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         if (isCanonicalNumericIndex(numericIndex)) {
             return defineProperty(cx, numericIndex, desc);
         }
-        // FIXME: spec bug - define non-indexed properties on uninit'ed objects should be valid
-        // Call fallible getLength() to trigger initialisation check.... (bug 2897)
-        getLength(cx);
         /* step 4 */
         return ordinaryDefineOwnProperty(cx, propertyKey, desc);
     }
 
     private boolean defineProperty(ExecutionContext cx, double numericIndex, PropertyDescriptor desc) {
-        // FIXME: spec bug - defined non-indexed properties on uninit'ed objects should be valid
-        // Call fallible getLength() to trigger initialisation check.... (bug 2897)
-        getLength(cx);
+        // Moved fallible getLength(cx) to top to perform initialization check
+        /* step 3.c.v */
+        long length = getLength(cx);
         /* step 3.c.i, 3.c.iii */
         if (!IsInteger(numericIndex)) {
             assert numericIndex == Double.NEGATIVE_INFINITY : "unexpected non-integer: "
@@ -130,8 +124,6 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         if (intIndex < 0) {
             return false;
         }
-        /* step 3.c.v */
-        long length = getLength(); // TODO: Use here getLength(cx), but see above.
         /* step 3.c.vi */
         if (intIndex >= length) {
             return false;
@@ -203,15 +195,6 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         }
         /* step 3 */
         return super.setValue(cx, propertyKey, value, receiver);
-    }
-
-    /** 9.4.5.5 [[Enumerate]] () */
-    @Override
-    @SuppressWarnings("unchecked")
-    public ScriptObject enumerate(ExecutionContext cx) {
-        // FIXME: spec issue - override necessary because of bug 2957
-        return CreateCompoundIterator(cx, (Iterator<Object>) enumerateKeys(cx),
-                Collections.emptyIterator());
     }
 
     /** 9.4.5.5 [[Enumerate]] () */

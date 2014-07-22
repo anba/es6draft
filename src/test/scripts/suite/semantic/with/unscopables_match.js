@@ -10,10 +10,7 @@ const {
 } = Assert;
 
 loadRelativeToScript("../../lib/recorder.js");
-
-function HasBindingIntercepted(name) {
-  return `get:Symbol(Symbol.unscopables);`;
-}
+loadRelativeToScript("helper.js");
 
 // Object with @@unscopables and match, property is not present, single access
 {
@@ -25,7 +22,7 @@ function HasBindingIntercepted(name) {
       property;
     }
   }
-  assertSame(HasBindingIntercepted("property"), record());
+  assertSame(HasBindingFail("property"), record());
   assertSame(1, fallbackCalled);
 }
 
@@ -40,7 +37,7 @@ function HasBindingIntercepted(name) {
       property;
     }
   }
-  assertSame(HasBindingIntercepted("property") + HasBindingIntercepted("property"), record());
+  assertSame(HasBindingFail("property").repeat(2), record());
   assertSame(2, fallbackCalled);
 }
 
@@ -55,7 +52,7 @@ function HasBindingIntercepted(name) {
       property;
     }
   }
-  assertSame(HasBindingIntercepted("property"), record());
+  assertSame(HasBindingSuccess("property") + BindingIntercepted(), record());
   assertSame(0, getterCalled);
   assertSame(1, fallbackCalled);
 }
@@ -72,7 +69,7 @@ function HasBindingIntercepted(name) {
       property;
     }
   }
-  assertSame(HasBindingIntercepted("property") + HasBindingIntercepted("property"), record());
+  assertSame((HasBindingSuccess("property") + BindingIntercepted()).repeat(2), record());
   assertSame(0, getterCalled);
   assertSame(2, fallbackCalled);
 }

@@ -194,42 +194,21 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
      */
     @Override
     public Void visit(ComprehensionFor node, ExpressionVisitor mv) {
-        Label lblTest = new Label(), lblLoop = new Label(), lblFail = new Label();
+        Label lblTest = new Label(), lblLoop = new Label();
 
         /* steps 1-2 */
-        ValType type = expressionValue(node.getExpression(), mv);
+        expressionBoxedValue(node.getExpression(), mv);
 
-        /* step 3 */
-        if (type.isJavaPrimitive()) {
-            // Omit null/undefined check, but box primitive value
-            mv.toBoxed(type);
-        } else if (type == ValType.String || type == ValType.Object) {
-            // Omit null/undefined check
-        } else if (type == ValType.Undefined || type == ValType.Null) {
-            // Unlikely, except for test cases
-            mv.pop();
-            return null;
-        } else {
-            assert type == ValType.Any : "Unexpected type: " + type;
-            Label loopstart = new Label();
-            mv.dup();
-            isUndefinedOrNull(mv);
-            mv.ifeq(loopstart);
-            mv.pop();
-            mv.goTo(lblFail);
-            mv.mark(loopstart);
-        }
-
-        /* steps 4-7 */
+        /* steps 3-4 */
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_iterate);
 
         Variable<Iterator<?>> iter = iterators.next();
         mv.store(iter);
 
-        /* step 8 (not applicable) */
+        /* step 5 (not applicable) */
 
-        /* step 9 */
+        /* step 6 */
         mv.goToAndSetStack(lblTest);
 
         /* steps 9d-9e */
@@ -237,7 +216,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         mv.load(iter);
         mv.invoke(Methods.Iterator_next);
 
-        /* steps 9f-9j */
+        /* steps 6f-6j */
         // create new declarative lexical environment
         // stack: [nextValue] -> [nextValue, forEnv]
         newDeclarativeEnvironment(mv);
@@ -268,21 +247,20 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         // stack: [forEnv] -> []
         pushLexicalEnvironment(mv);
 
-        /* steps 9k, 9m */
+        /* steps 6k, 6m */
         mv.enterScope(node);
         elements.next().accept(this, mv);
         mv.exitScope();
 
-        /* step 9l */
+        /* step 6l */
         // restore previous lexical environment
         popLexicalEnvironment(mv);
 
-        /* steps 9a-9c */
+        /* steps 6a-6c */
         mv.mark(lblTest);
         mv.load(iter);
         mv.invoke(Methods.Iterator_hasNext);
         mv.ifne(lblLoop);
-        mv.mark(lblFail);
 
         return null;
     }

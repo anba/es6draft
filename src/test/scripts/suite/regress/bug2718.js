@@ -6,7 +6,7 @@
  */
 
 const {
-  assertFalse, assertTrue, assertUndefined, assertThrows
+  assertSame, assertTrue, assertUndefined, assertDataProperty
 } = Assert;
 
 // 9.4.4.1 [[GetOwnProperty]], 9.4.4.3 [[Get]]: Strict caller restriction for environments without extension?
@@ -23,10 +23,10 @@ const {
   var f = function(){ "use strict" };
   args.caller = f;
 
-  // [[Get]] and [[GetOwnProperty]] is now supposed to throw
-  assertThrows(() => args.caller, TypeError);
-  assertThrows(() => Object.getOwnPropertyDescriptor(args, "caller"), TypeError);
+  // [[Get]] and [[GetOwnProperty]] are not supposed to throw
+  assertSame(f, args.caller);
+  assertDataProperty(args, "caller", {value: f, writable: true, enumerable: true, configurable: true});
 
-  // Cannot delete .caller because [[Delete]] invokes [[GetOwnProperty]]!
-  assertThrows(() => delete args.caller, TypeError);
+  // Can delete .caller
+  assertTrue(delete args.caller);
 })();

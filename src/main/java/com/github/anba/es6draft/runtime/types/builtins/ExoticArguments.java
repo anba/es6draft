@@ -95,7 +95,7 @@ public final class ExoticArguments extends OrdinaryObject {
         /* step 8 */
         if (desc.isDataDescriptor() && "caller".equals(propertyKey)
                 && isStrictFunction(desc.getValue())
-                && cx.getRealm().isEnabled(CompatibilityOption.FunctionPrototype)) {
+                && cx.getRealm().isEnabled(CompatibilityOption.ArgumentsCaller)) {
             throw newTypeError(cx, Messages.Key.StrictModePoisonPill);
         }
         /* step 9 */
@@ -168,7 +168,7 @@ public final class ExoticArguments extends OrdinaryObject {
         Object v = super.getValue(cx, propertyKey, receiver);
         /* step 8 */
         if ("caller".equals(propertyKey) && isStrictFunction(v)
-                && cx.getRealm().isEnabled(CompatibilityOption.FunctionPrototype)) {
+                && cx.getRealm().isEnabled(CompatibilityOption.ArgumentsCaller)) {
             throw newTypeError(cx, Messages.Key.StrictModePoisonPill);
         }
         /* step 9 */

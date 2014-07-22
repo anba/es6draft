@@ -234,8 +234,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 }
             } else {
                 /* step 3.b */
-                Iterable<String> keys = GetOwnEnumerablePropertyNames(cx, objVal);
-                for (String p : keys) {
+                for (String p : EnumerableOwnNames(cx, objVal)) {
                     Object newElement = Walk(cx, reviver, objVal, p);
                     if (Type.isUndefined(newElement)) {
                         objVal.delete(cx, p);
@@ -428,7 +427,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         if (propertyList != null) {
             k = propertyList;
         } else {
-            k = GetOwnEnumerablePropertyNames(cx, value);
+            k = EnumerableOwnNames(cx, value);
         }
         /* step 7 */
         List<String> partial = new ArrayList<>();

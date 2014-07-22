@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CopyDataBlockBytes;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsNeuteredBuffer;
 
 import java.nio.ByteBuffer;
 
@@ -61,10 +62,24 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
         private static ArrayBufferObject thisArrayBufferObject(ExecutionContext cx, Object m) {
             if (m instanceof ArrayBufferObject) {
                 ArrayBufferObject buffer = (ArrayBufferObject) m;
-                if (buffer.getData() != null || buffer.isNeutered()) {
-                    return buffer;
+                if (!buffer.isInitialized()) {
+                    throw newTypeError(cx, Messages.Key.UninitializedObject);
                 }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return buffer;
+            }
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+
+        private static ArrayBufferObject thisArrayBufferObjectChecked(ExecutionContext cx, Object m) {
+            if (m instanceof ArrayBufferObject) {
+                ArrayBufferObject buffer = (ArrayBufferObject) m;
+                if (!buffer.isInitialized()) {
+                    throw newTypeError(cx, Messages.Key.UninitializedObject);
+                }
+                if (IsNeuteredBuffer(buffer)) {
+                    throw newTypeError(cx, Messages.Key.BufferNeutered);
+                }
+                return buffer;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -89,9 +104,9 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
-            /* steps 1-4 */
-            ArrayBufferObject obj = thisArrayBufferObject(cx, thisValue);
-            /* steps 5-7 */
+            /* steps 1-5 */
+            ArrayBufferObject obj = thisArrayBufferObjectChecked(cx, thisValue);
+            /* steps 6-7 */
             return obj.getByteLength();
         }
 
@@ -110,47 +125,48 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
-            /* steps 1-4 */
-            ArrayBufferObject obj = thisArrayBufferObject(cx, thisValue);
-            /* step 5 */
+            /* steps 1-5 */
+            ArrayBufferObject obj = thisArrayBufferObjectChecked(cx, thisValue);
+            /* step 6 */
             long len = obj.getByteLength();
-            /* steps 6-7 */
+            /* steps 7-8 */
             double relativeStart = ToInteger(cx, start);
-            /* step 8 */
+            /* step 9 */
             long first = (long) (relativeStart < 0 ? Math.max((len + relativeStart), 0) : Math.min(
                     relativeStart, len));
-            /* steps 9-10 */
+            /* steps 10-11 */
             double relativeEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
-            /* step 11 */
+            /* step 12 */
             long _final = (long) (relativeEnd < 0 ? Math.max((len + relativeEnd), 0) : Math.min(
                     relativeEnd, len));
-            /* step 12 */
+            /* step 13 */
             long newLen = Math.max(_final - first, 0);
-            /* steps 13-14 */
+            /* steps 14-15 */
             Object ctor = Get(cx, obj, "constructor");
-            /* step 15 */
+            /* step 16 */
             if (!IsConstructor(ctor)) {
                 throw newTypeError(cx, Messages.Key.NotConstructor);
             }
-            /* steps 16-19 */
+            /* steps 17-20 */
             ArrayBufferObject _new = thisArrayBufferObject(cx,
                     ((Constructor) ctor).construct(cx, newLen));
-            /* step 20 */
+            /* step 21 */
             if (_new.getByteLength() < newLen) {
                 // FIXME: spec bug - throw RangeError instead of TypeError?
                 throw newTypeError(cx, Messages.Key.InvalidBufferSize);
             }
-            /* step 21 */
-            ByteBuffer fromBuf = obj.getData();
-            /* step 22 */
-            ByteBuffer toBuf = _new.getData();
-            // FIXME: spec bug - need to check for neutered buffers (bug 2964)
-            if (fromBuf == null || toBuf == null) {
-                return _new;
+            /* steps 22-23 */
+            if (IsNeuteredBuffer(obj)) {
+                throw newTypeError(cx, Messages.Key.BufferNeutered);
             }
-            /* steps 23 */
-            CopyDataBlockBytes(toBuf, 0, fromBuf, first, newLen);
             /* step 24 */
+            ByteBuffer fromBuf = obj.getData();
+            /* step 25 */
+            // FIXME: spec bug - need to check for neutered buffers
+            ByteBuffer toBuf = _new.getData();
+            /* steps 26 */
+            CopyDataBlockBytes(toBuf, 0, fromBuf, first, newLen);
+            /* step 27 */
             return _new;
         }
 

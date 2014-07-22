@@ -44,29 +44,32 @@ public final class CompoundIteratorNext extends BuiltinFunction {
     @Override
     public OrdinaryObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        /* step 1 (omitted) */
-        /* step 2 */
+        /* steps 1-2 (omitted) */
+        /* steps 3, 6 */
         if (!(thisValue instanceof CompoundIterator)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
-        /* step 3 */
         CompoundIterator<?> compound = (CompoundIterator<?>) thisValue;
         /* steps 4-5 */
+        if (this != compound.getIteratorNext()) {
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
+        }
+        /* step 7 (not applicable) */
+        /* steps 8-9 */
         if (compound.isFirstIteratorActive()) {
-            /* step 5 */
-            Iterator<?> iterator = compound.getFirstIterator();
-            if (iterator.hasNext()) {
-                return CreateIterResultObject(calleeContext, iterator.next(), false);
+            /* step 9 */
+            Iterator<?> iterator1 = compound.getFirstIterator();
+            if (iterator1.hasNext()) {
+                return CreateIterResultObject(calleeContext, iterator1.next(), false);
             }
             compound.setFirstIteratorActive(false);
         }
-        /* step 6 */
-        Iterator<?> iterator = compound.getSecondIterator();
-        /* step 7 */
-        if (!iterator.hasNext()) {
-            return CreateIterResultObject(calleeContext, UNDEFINED, true);
+        /* step 10 */
+        Iterator<?> iterator2 = compound.getSecondIterator();
+        /* step 11 */
+        if (iterator2.hasNext()) {
+            return CreateIterResultObject(calleeContext, iterator2.next(), false);
         }
-        /* step 7 */
-        return CreateIterResultObject(calleeContext, iterator.next(), false);
+        return CreateIterResultObject(calleeContext, UNDEFINED, true);
     }
 }

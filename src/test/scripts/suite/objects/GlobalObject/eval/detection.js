@@ -19,6 +19,26 @@ function GetBindingValue(name) {
   return `has:${name};get:${name};`;
 }
 
+function HasBindingFail(name) {
+  return `getOwnPropertyDescriptor:${name};getPrototypeOf:`;
+}
+
+function HasBindingSuccess(name) {
+  return `getOwnPropertyDescriptor:${name};getOwnPropertyDescriptor:Symbol(Symbol.unscopables);`;
+}
+
+function GetBindingValueFail(name) {
+  return `getOwnPropertyDescriptor:${name};getPrototypeOf:`;
+}
+
+function GetBindingValueSuccess(name) {
+  return `getOwnPropertyDescriptor:${name};getOwnPropertyDescriptor:Symbol(Symbol.unscopables);get:${name};`;
+}
+
+function CreatePrototype() {
+  return `getPrototypeOf:`;
+}
+
 const global = this;
 
 {
@@ -26,7 +46,7 @@ const global = this;
   with (object) {
     eval("");
   }
-  assertSame(HasBinding("eval"), record());
+  assertSame(HasBindingFail("eval"), record());
 }
 
 {
@@ -34,7 +54,17 @@ const global = this;
   with (object) {
     eval("");
   }
-  assertSame(HasBinding("eval") + GetBindingValue("eval"), record());
+  assertSame(HasBindingSuccess("eval") + GetBindingValueSuccess("eval"), record());
+}
+
+{
+  let logger = Recorder.createLogger();
+  let {object: p} = Recorder.createObject({eval: () => {}}, logger);
+  let {object, record} = Recorder.createObject({__proto__: p}, logger);
+  with (object) {
+    eval("");
+  }
+  assertSame(CreatePrototype() + HasBindingFail("eval") + HasBindingSuccess("eval") + GetBindingValueFail("eval") + GetBindingValueSuccess("eval"), record());
 }
 
 {
@@ -42,5 +72,15 @@ const global = this;
   with (object) {
     eval("");
   }
-  assertSame(HasBinding("eval") + GetBindingValue("eval"), record());
+  assertSame(HasBindingSuccess("eval") + GetBindingValueSuccess("eval"), record());
+}
+
+{
+  let logger = Recorder.createLogger();
+  let {object: p} = Recorder.createObject({eval: global.eval}, logger);
+  let {object, record} = Recorder.createObject({__proto__: p}, logger);
+  with (object) {
+    eval("");
+  }
+  assertSame(CreatePrototype() + HasBindingFail("eval") + HasBindingSuccess("eval") + GetBindingValueFail("eval") + GetBindingValueSuccess("eval"), record());
 }

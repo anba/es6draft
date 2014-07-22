@@ -17,10 +17,14 @@ import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToProper
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.IsCompatiblePropertyDescriptor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -148,16 +152,26 @@ public class ExoticProxy implements ScriptObject {
         }
 
         @Override
+        public Callable clone(ExecutionContext cx) {
+            throw newTypeError(cx, Messages.Key.FunctionNotCloneable);
+        }
+
+        @Override
+        public Realm getRealm(ExecutionContext cx) {
+            /* 7.3.21 GetFunctionRealm ( obj ) Abstract Operation */
+            // FIXME: spec bug - revoked proxy not handled in 7.3.21 GetFunctionRealm
+            if (isRevoked()) {
+                throw newTypeError(cx, Messages.Key.ProxyRevoked);
+            }
+            return ((Callable) getProxyTarget()).getRealm(cx);
+        }
+
+        @Override
         public String toSource(SourceSelector selector) {
             if (isRevoked()) {
                 return FunctionSource.noSource(selector);
             }
             return ((Callable) getProxyTarget()).toSource(selector);
-        }
-
-        @Override
-        public Callable clone(ExecutionContext cx) {
-            throw newTypeError(cx, Messages.Key.FunctionNotCloneable);
         }
     }
 
@@ -532,7 +546,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 16-17 */
         PropertyDescriptor resultDesc = ToPropertyDescriptor(cx, trapResultObj);
         /* step 18 */
-        CompletePropertyDescriptor(resultDesc, null);
+        CompletePropertyDescriptor(resultDesc);
         /* step 19 */
         boolean valid = IsCompatiblePropertyDescriptor(extensibleTarget, resultDesc, targetDesc);
         /* step 20 */
@@ -956,7 +970,7 @@ public class ExoticProxy implements ScriptObject {
      * 9.5.12 [[OwnPropertyKeys]] ()
      */
     @Override
-    public ScriptObject ownPropertyKeys(ExecutionContext cx) {
+    public ExoticArray ownPropertyKeys(ExecutionContext cx) {
         /* steps 1-2 */
         ScriptObject handler = getProxyHandler(cx);
         /* step 3 */
@@ -973,8 +987,99 @@ public class ExoticProxy implements ScriptObject {
         if (!Type.isObject(trapResult)) {
             throw newTypeError(cx, Messages.Key.ProxyNotObject);
         }
-        /* steps 10-11 */
-        return Type.objectValue(trapResult);
+        /* step 10 */
+        if (!(trapResult instanceof ExoticArray)) {
+            throw newTypeError(cx, Messages.Key.ProxyOwnKeysNotArray);
+        }
+        ExoticArray keys = (ExoticArray) trapResult;
+        /* steps 11-12 */
+        boolean extensibleTarget = target.isExtensible(cx);
+        /* steps 13-16 */
+        Iterator<?> targetKeys = target.ownKeys(cx);
+        /* step 17 */
+        ArrayList<Object> targetConfigurableKeys = new ArrayList<>();
+        /* step 18 */
+        ArrayList<Object> targetNonConfigurableKeys = new ArrayList<>();
+        /* steps 19-20 */
+        while (targetKeys.hasNext()) {
+            // FIXME: spec bug - missing ToPropertyKey()
+            Object key = ToPropertyKey(cx, targetKeys.next());
+            Property desc;
+            if (key instanceof String) {
+                desc = target.getOwnProperty(cx, (String) key);
+            } else {
+                desc = target.getOwnProperty(cx, (Symbol) key);
+            }
+            if (desc != null && !desc.isConfigurable()) {
+                targetNonConfigurableKeys.add(key);
+            } else {
+                targetConfigurableKeys.add(key);
+            }
+        }
+        /* step 21 */
+        if (extensibleTarget && targetNonConfigurableKeys.isEmpty()) {
+            return keys;
+        }
+        /* steps 22-23 */
+        long resultLength = ToLength(cx, Get(cx, keys, "length"));
+        /* step 24 */
+        HashSet<Object> uncheckedResultKeys = new HashSet<>();
+        HashMap<Object, Integer> uncheckedDuplicateKeys = null;
+        /* steps 25-26 */
+        for (long n = 0; n < resultLength; ++n) {
+            // TODO: spec issue - need to check key type (String or Symbol)?
+            Object key = Get(cx, keys, n);
+            if (!uncheckedResultKeys.add(key)) {
+                // Duplicate key in result set
+                if (uncheckedDuplicateKeys == null) {
+                    uncheckedDuplicateKeys = new HashMap<>();
+                }
+                Integer count = uncheckedDuplicateKeys.get(key);
+                uncheckedDuplicateKeys.put(key, (count != null ? count + 1 : 1));
+            }
+        }
+        /* steps 27 */
+        for (Object key : targetNonConfigurableKeys) {
+            if (!uncheckedResultKeys.remove(key)) {
+                throw newTypeError(cx, Messages.Key.ProxyNotConfigurable);
+            }
+            if (uncheckedDuplicateKeys != null) {
+                updateUncheckedWithDuplicates(uncheckedResultKeys, uncheckedDuplicateKeys, key);
+            }
+        }
+        /* step 28 */
+        if (extensibleTarget) {
+            return keys;
+        }
+        /* step 29 */
+        for (Object key : targetConfigurableKeys) {
+            if (!uncheckedResultKeys.remove(key)) {
+                throw newTypeError(cx, Messages.Key.NotExtensible);
+            }
+            if (uncheckedDuplicateKeys != null) {
+                updateUncheckedWithDuplicates(uncheckedResultKeys, uncheckedDuplicateKeys, key);
+            }
+        }
+        /* step 30 */
+        if (!uncheckedResultKeys.isEmpty()) {
+            throw newTypeError(cx, Messages.Key.ProxyAbsentNotExtensible);
+        }
+        /* step 31 */
+        return keys;
+    }
+
+    private static void updateUncheckedWithDuplicates(HashSet<Object> uncheckedResultKeys,
+            HashMap<Object, Integer> uncheckedDuplicateKeys, Object key) {
+        Integer count = uncheckedDuplicateKeys.get(key);
+        if (count != null) {
+            if (count == 1) {
+                uncheckedDuplicateKeys.remove(key);
+            } else {
+                assert count > 1;
+                uncheckedDuplicateKeys.put(key, count - 1);
+            }
+            uncheckedResultKeys.add(key);
+        }
     }
 
     /**

@@ -95,4 +95,13 @@ public final class ArrayBufferObject extends OrdinaryObject {
     public boolean isNeutered() {
         return neutered;
     }
+
+    /**
+     * Returns {@code true} if this array buffer object has been initialized.
+     * 
+     * @return {@code true} if this array buffer object is initialized
+     */
+    /* package */boolean isInitialized() {
+        return neutered || data != null;
+    }
 }

@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.internal;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorStep;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorValue;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 
 import java.util.Iterator;
 
@@ -18,7 +15,6 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -31,6 +27,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class ListIterator<T> extends OrdinaryObject {
     private Iterator<T> iterator;
+    private ListIteratorNext iteratorNext;
 
     public ListIterator(Realm realm) {
         super(realm);
@@ -38,6 +35,10 @@ public final class ListIterator<T> extends OrdinaryObject {
 
     Iterator<T> getIterator() {
         return iterator;
+    }
+
+    ListIteratorNext getIteratorNext() {
+        return iteratorNext;
     }
 
     private static final class ListIteratorAllocator implements ObjectAllocator<ListIterator<?>> {
@@ -70,10 +71,12 @@ public final class ListIterator<T> extends OrdinaryObject {
         /* steps 2-3 */
         iterator.iterator = iter;
         /* step 4 */
-        ScriptObject listIteratorNext = cx.getIntrinsic(Intrinsics.ListIteratorNext);
-        PropertyDescriptor desc = new PropertyDescriptor(listIteratorNext, true, false, true);
-        iterator.defineOwnProperty(cx, "next", desc);
+        ListIteratorNext next = new ListIteratorNext(cx.getRealm());
         /* step 5 */
+        iterator.iteratorNext = next;
+        /* step 6 */
+        CreateDataProperty(cx, iterator, "next", next);
+        /* step 7 */
         return iterator;
     }
 

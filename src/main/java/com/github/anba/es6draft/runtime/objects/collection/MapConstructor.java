@@ -83,12 +83,12 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
         if (Type.isUndefinedOrNull(iterable)) {
             iter = null;
         } else {
-            iter = GetIterator(calleeContext, iterable);
             Object _adder = Get(calleeContext, map, "set");
             if (!IsCallable(_adder)) {
                 throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "set");
             }
             adder = (Callable) _adder;
+            iter = GetIterator(calleeContext, iterable);
         }
 
         /* step 8 */

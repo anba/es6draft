@@ -40,8 +40,6 @@ import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypeProtot
 import com.github.anba.es6draft.runtime.objects.collection.*;
 import com.github.anba.es6draft.runtime.objects.date.DateConstructor;
 import com.github.anba.es6draft.runtime.objects.date.DatePrototype;
-import com.github.anba.es6draft.runtime.objects.internal.CompoundIteratorNext;
-import com.github.anba.es6draft.runtime.objects.internal.ListIteratorNext;
 import com.github.anba.es6draft.runtime.objects.intl.CollatorConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.CollatorPrototype;
 import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor;
@@ -639,7 +637,6 @@ public final class Realm {
         initializeFundamentalObjects(realm);
         initializeStandardObjects(realm);
         initializeNativeErrors(realm);
-        initializeInternalObjects(realm);
 
         // intrinsics: 22.2, 23, 24.1, 24.2, 25
         initializeBinaryModule(realm);
@@ -848,20 +845,6 @@ public final class Realm {
         uriErrorPrototype.initialize(defaultContext);
         internalErrorConstructor.initialize(defaultContext);
         internalErrorPrototype.initialize(defaultContext);
-    }
-
-    /**
-     * Additional internal built-in objects used in this implementation
-     * 
-     * @param realm
-     *            the realm instance
-     */
-    private static void initializeInternalObjects(Realm realm) {
-        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
-
-        // intrinsic functions
-        intrinsics.put(Intrinsics.ListIteratorNext, new ListIteratorNext(realm));
-        intrinsics.put(Intrinsics.CompoundIteratorNext, new CompoundIteratorNext(realm));
     }
 
     /**

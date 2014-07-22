@@ -62,7 +62,7 @@ assertBuiltinFunction(Object.defineProperties, "defineProperties", 2);
 // Intermediate exceptions during install do not stop property traversal, first exception is reported (1)
 {
   // Precondition: [[OwnKeys]] for Proxies can return the same key multiple times
-  assertSame(2, [for (k of Reflect.ownKeys(new Proxy({}, {ownKeys: () => ["a", "a"].values()}))) k].length);
+  assertSame(2, [for (k of Reflect.ownKeys(new Proxy({}, {ownKeys: () => ["a", "a"]}))) k].length);
 
   let value = 0;
   let props = new Proxy({a: -1}, {

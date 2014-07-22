@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.types;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 
 /**
  * <h1>6 ECMAScript Data Types and Values</h1><br>
@@ -56,6 +57,15 @@ public interface Callable extends ScriptObject {
      * @return the new function object
      */
     Callable clone(ExecutionContext cx);
+
+    /**
+     * Returns the function's bound realm component.
+     * 
+     * @param cx
+     *            the execution context
+     * @return the function's realm
+     */
+    Realm getRealm(ExecutionContext cx); // TODO: add default implementation: return cx.getRealm();
 
     enum SourceSelector {
         /**

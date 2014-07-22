@@ -207,9 +207,14 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
-            /* step 1 */
-            double tv = thisTimeValue(cx, thisValue);
-            /* step 2 */
+            /* steps 1-3 */
+            double tv;
+            if (Type.isObject(thisValue) && !(thisValue instanceof DateObject)) {
+                tv = Double.NaN;
+            } else {
+                tv = thisTimeValue(cx, thisValue);
+            }
+            /* step 4 */
             return ToDateString(cx, tv, DateString.DateTime);
         }
 
@@ -746,11 +751,11 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         public static Object setTime(ExecutionContext cx, Object thisValue, Object time) {
             // just to trigger type and initialization test
             thisTimeValue(cx, thisValue);
-            /* steps 1-2 */
+            /* steps 1-3 */
             double v = TimeClip(ToNumber(cx, time));
-            /* step 3 */
-            ((DateObject) thisValue).setDateValue(v);
             /* step 4 */
+            ((DateObject) thisValue).setDateValue(v);
+            /* step 5 */
             return v;
         }
 
@@ -770,14 +775,15 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
             Realm realm = cx.getRealm();
             /* step 1 */
             double t = LocalTime(realm, thisTimeValue(cx, thisValue));
-            /* step 2 */
-            double time = MakeTime(HourFromTime(t), MinFromTime(t), SecFromTime(t),
-                    ToNumber(cx, ms));
-            /* step 3 */
-            double u = TimeClip(UTC(realm, MakeDate(Day(t), time)));
+            /* steps 2-3 */
+            double milli = ToNumber(cx, ms);
             /* step 4 */
-            ((DateObject) thisValue).setDateValue(u);
+            double time = MakeTime(HourFromTime(t), MinFromTime(t), SecFromTime(t), milli);
             /* step 5 */
+            double u = TimeClip(UTC(realm, MakeDate(Day(t), time)));
+            /* step 6 */
+            ((DateObject) thisValue).setDateValue(u);
+            /* step 7 */
             return u;
         }
 
@@ -796,14 +802,15 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         public static Object setUTCMilliseconds(ExecutionContext cx, Object thisValue, Object ms) {
             /* steps 1-2 */
             double t = thisTimeValue(cx, thisValue);
-            /* step 4 */
-            double time = MakeTime(HourFromTime(t), MinFromTime(t), SecFromTime(t),
-                    ToNumber(cx, ms));
-            /* step 4 */
-            double v = TimeClip(MakeDate(Day(t), time));
+            /* steps 3-4 */
+            double milli = ToNumber(cx, ms);
             /* step 5 */
-            ((DateObject) thisValue).setDateValue(v);
+            double time = MakeTime(HourFromTime(t), MinFromTime(t), SecFromTime(t), milli);
             /* step 6 */
+            double v = TimeClip(MakeDate(Day(t), time));
+            /* step 7 */
+            ((DateObject) thisValue).setDateValue(v);
+            /* step 8 */
             return v;
         }
 
@@ -826,17 +833,17 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
             Realm realm = cx.getRealm();
             /* step 1 */
             double t = LocalTime(realm, thisTimeValue(cx, thisValue));
-            /* step 2 */
+            /* steps 2-3 */
             double s = ToNumber(cx, sec);
-            /* step 3 */
+            /* steps 4-5 */
             double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
-            /* step 4 */
-            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));
-            /* step 5 */
-            double u = TimeClip(UTC(realm, date));
             /* step 6 */
-            ((DateObject) thisValue).setDateValue(u);
+            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));
             /* step 7 */
+            double u = TimeClip(UTC(realm, date));
+            /* step 8 */
+            ((DateObject) thisValue).setDateValue(u);
+            /* step 9 */
             return u;
         }
 
@@ -894,19 +901,19 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
             Realm realm = cx.getRealm();
             /* step 1 */
             double t = LocalTime(realm, thisTimeValue(cx, thisValue));
-            /* step 2 */
+            /* steps 2-3 */
             double m = ToNumber(cx, min);
-            /* step 3 */
+            /* steps 4-5 */
             double s = (sec == null ? SecFromTime(t) : ToNumber(cx, sec));
-            /* step 4 */
+            /* steps 6-7 */
             double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
-            /* step 5 */
-            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
-            /* step 6 */
-            double u = TimeClip(UTC(realm, date));
-            /* step 7 */
-            ((DateObject) thisValue).setDateValue(u);
             /* step 8 */
+            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
+            /* step 9 */
+            double u = TimeClip(UTC(realm, date));
+            /* step 10 */
+            ((DateObject) thisValue).setDateValue(u);
+            /* step 11 */
             return u;
         }
 
@@ -972,21 +979,21 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
             Realm realm = cx.getRealm();
             /* step 1 */
             double t = LocalTime(realm, thisTimeValue(cx, thisValue));
-            /* step 2 */
+            /* steps 2-3 */
             double h = ToNumber(cx, hour);
-            /* step 3 */
+            /* steps 4-5 */
             double m = (min == null ? MinFromTime(t) : ToNumber(cx, min));
-            /* step 4 */
+            /* steps 6-7 */
             double s = (sec == null ? SecFromTime(t) : ToNumber(cx, sec));
-            /* step 5 */
+            /* steps 8-9 */
             double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
-            /* step 6 */
+            /* step 10 */
             double date = MakeDate(Day(t), MakeTime(h, m, s, milli));
-            /* step 7 */
+            /* step 11 */
             double u = TimeClip(UTC(realm, date));
-            /* step 8 */
+            /* step 12 */
             ((DateObject) thisValue).setDateValue(u);
-            /* step 9 */
+            /* step 13 */
             return u;
         }
 
@@ -1014,21 +1021,21 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
                 @Optional(Optional.Default.NONE) Object ms) {
             /* steps 1-2 */
             double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
+            /* steps 3-4 */
             double h = ToNumber(cx, hour);
-            /* step 4 */
+            /* steps 5-6 */
             double m = (min == null ? MinFromTime(t) : ToNumber(cx, min));
-            /* step 5 */
+            /* steps 7-8 */
             double s = (sec == null ? SecFromTime(t) : ToNumber(cx, sec));
-            /* step 6 */
+            /* steps 9-10 */
             double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
-            /* step 7 */
+            /* step 11 */
             double newDate = MakeDate(Day(t), MakeTime(h, m, s, milli));
-            /* step 8 */
+            /* step 12 */
             double v = TimeClip(newDate);
-            /* step 9 */
+            /* step 13 */
             ((DateObject) thisValue).setDateValue(v);
-            /* step 10 */
+            /* step 14 */
             return v;
         }
 
@@ -1048,16 +1055,16 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
             Realm realm = cx.getRealm();
             /* step 1 */
             double t = LocalTime(realm, thisTimeValue(cx, thisValue));
-            /* step 2 */
+            /* steps 2-3 */
             double dt = ToNumber(cx, date);
-            /* step 3 */
+            /* step 4 */
             double newDate = MakeDate(MakeDay(YearFromTime(t), MonthFromTime(t), dt),
                     TimeWithinDay(t));
-            /* step 4 */
-            double u = TimeClip(UTC(realm, newDate));
             /* step 5 */
-            ((DateObject) thisValue).setDateValue(u);
+            double u = TimeClip(UTC(realm, newDate));
             /* step 6 */
+            ((DateObject) thisValue).setDateValue(u);
+            /* step 7 */
             return u;
         }
 
@@ -1076,16 +1083,16 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         public static Object setUTCDate(ExecutionContext cx, Object thisValue, Object date) {
             /* steps 1-2 */
             double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
+            /* steps 3-4 */
             double dt = ToNumber(cx, date);
-            /* step 4 */
+            /* step 5 */
             double newDate = MakeDate(MakeDay(YearFromTime(t), MonthFromTime(t), dt),
                     TimeWithinDay(t));
-            /* step 5 */
-            double v = TimeClip(newDate);
             /* step 6 */
-            ((DateObject) thisValue).setDateValue(v);
+            double v = TimeClip(newDate);
             /* step 7 */
+            ((DateObject) thisValue).setDateValue(v);
+            /* step 8 */
             return v;
         }
 
@@ -1108,17 +1115,17 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
             Realm realm = cx.getRealm();
             /* step 1 */
             double t = LocalTime(realm, thisTimeValue(cx, thisValue));
-            /* step 2 */
+            /* steps 2-3 */
             double m = ToNumber(cx, month);
-            /* step 3 */
+            /* steps 4-5 */
             double dt = (date == null ? DateFromTime(t) : ToNumber(cx, date));
-            /* step 4 */
-            double newDate = MakeDate(MakeDay(YearFromTime(t), m, dt), TimeWithinDay(t));
-            /* step 5 */
-            double u = TimeClip(UTC(realm, newDate));
             /* step 6 */
-            ((DateObject) thisValue).setDateValue(u);
+            double newDate = MakeDate(MakeDay(YearFromTime(t), m, dt), TimeWithinDay(t));
             /* step 7 */
+            double u = TimeClip(UTC(realm, newDate));
+            /* step 8 */
+            ((DateObject) thisValue).setDateValue(u);
+            /* step 9 */
             return u;
         }
 
@@ -1177,19 +1184,19 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
             /* step 1 */
             double t = thisTimeValue(cx, thisValue);
             t = Double.isNaN(t) ? +0 : LocalTime(realm, t);
-            /* step 2 */
+            /* steps 2-3 */
             double y = ToNumber(cx, year);
-            /* step 3 */
+            /* steps 4-5 */
             double m = (month == null ? MonthFromTime(t) : ToNumber(cx, month));
-            /* step 4 */
+            /* steps 6-7 */
             double dt = (date == null ? DateFromTime(t) : ToNumber(cx, date));
-            /* step 5 */
-            double newDate = MakeDate(MakeDay(y, m, dt), TimeWithinDay(t));
-            /* step 6 */
-            double u = TimeClip(UTC(realm, newDate));
-            /* step 7 */
-            ((DateObject) thisValue).setDateValue(u);
             /* step 8 */
+            double newDate = MakeDate(MakeDay(y, m, dt), TimeWithinDay(t));
+            /* step 9 */
+            double u = TimeClip(UTC(realm, newDate));
+            /* step 10 */
+            ((DateObject) thisValue).setDateValue(u);
+            /* step 11 */
             return u;
         }
 
@@ -1217,19 +1224,19 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
             if (Double.isNaN(t)) {
                 t = +0;
             }
-            /* step 3 */
+            /* steps 3-4 */
             double y = ToNumber(cx, year);
-            /* step 4 */
+            /* steps 5-6 */
             double m = (month == null ? MonthFromTime(t) : ToNumber(cx, month));
-            /* step 5 */
+            /* steps 7-8 */
             double dt = (date == null ? DateFromTime(t) : ToNumber(cx, date));
-            /* step 6 */
-            double newDate = MakeDate(MakeDay(y, m, dt), TimeWithinDay(t));
-            /* step 7 */
-            double v = TimeClip(newDate);
-            /* step 8 */
-            ((DateObject) thisValue).setDateValue(v);
             /* step 9 */
+            double newDate = MakeDate(MakeDay(y, m, dt), TimeWithinDay(t));
+            /* step 10 */
+            double v = TimeClip(newDate);
+            /* step 11 */
+            ((DateObject) thisValue).setDateValue(v);
+            /* step 12 */
             return v;
         }
 
@@ -1284,13 +1291,13 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         public static Object toJSON(ExecutionContext cx, Object thisValue, Object key) {
             /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* step 2 */
+            /* steps 2-3 */
             Object tv = AbstractOperations.ToPrimitive(cx, o, ToPrimitiveHint.Number);
-            /* step 3 */
+            /* step 4 */
             if (Type.isNumber(tv) && !isFinite(Type.numberValue(tv))) {
                 return NULL;
             }
-            /* step 4 */
+            /* step 5 */
             return Invoke(cx, o, "toISOString");
         }
 

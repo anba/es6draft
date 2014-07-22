@@ -169,11 +169,11 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      */
     public static LexicalEnvironment<ObjectEnvironmentRecord> newObjectEnvironment(ScriptObject o,
             LexicalEnvironment<?> e, boolean withEnvironment) {
-        /* steps 2-3 */
+        /* step 2 */
         ObjectEnvironmentRecord envRec = new ObjectEnvironmentRecord(e.cx, o, withEnvironment);
-        /* steps 1, 4-5 */
+        /* steps 1, 3-4 */
         LexicalEnvironment<ObjectEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
-        /* step 6 */
+        /* step 5 */
         return env;
     }
 

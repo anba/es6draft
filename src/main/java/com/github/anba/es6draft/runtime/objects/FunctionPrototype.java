@@ -14,9 +14,9 @@ import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareFor
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction.BoundFunctionClone;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction.BoundFunctionCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction.BoundFunctionTargetRealm;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.CloneMethod;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.SetFunctionName;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -209,22 +209,31 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
             Callable target = (Callable) thisValue;
             /* steps 3-4 */
             ExoticBoundFunction f = BoundFunctionCreate(cx, target, thisArg, args);
-            /* steps 5-6 */
-            int l;
-            if (target instanceof FunctionObject || target instanceof BuiltinFunction
-                    || target instanceof ExoticBoundFunction) {
-                Object targetLen = Get(cx, target, "length");
-                l = (int) Math.max(0, ToLength(cx, targetLen) - args.length);
-            } else {
-                l = 0;
-            }
-            /* step 7 */
-            f.defineOwnProperty(cx, "length", new PropertyDescriptor(l, false, false, true));
-            /* step 8 */
-            Realm targetRealm = BoundFunctionTargetRealm(cx, f);
-            /* step 9 */
+            /* step 5 */
+            Realm targetRealm = GetFunctionRealm(cx, target);
+            /* step 6 */
             AddRestrictedFunctionProperties(cx, f, targetRealm);
-            /* step 10 */
+            /* steps 7-8 */
+            boolean targetHasLength = HasOwnProperty(cx, target, "length");
+            /* steps 9-10 */
+            double l = 0;
+            if (targetHasLength) {
+                Object targetLen = Get(cx, target, "length");
+                if (Type.isNumber(targetLen)) {
+                    l = Math.max(0, Type.numberValue(targetLen) - args.length);
+                }
+            }
+            /* steps 11-12 */
+            DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(l, false, false, true));
+            /* steps 13-14 */
+            Object targetName = Get(cx, target, "name");
+            /* step 15 */
+            if (!Type.isString(targetName)) {
+                targetName = "";
+            }
+            /* steps 16-17 */
+            SetFunctionName(cx, f, Type.stringValue(targetName).toString(), "bound");
+            /* step 18 */
             return f;
         }
 

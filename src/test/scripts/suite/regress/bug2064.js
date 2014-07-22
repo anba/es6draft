@@ -15,5 +15,5 @@ const {
 const ThrowTypeError = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller").get;
 
 let builtin = Object.create;
-assertAccessorProperty(builtin, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
-assertAccessorProperty(builtin, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
+assertAccessorProperty(builtin, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
+assertAccessorProperty(builtin, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});

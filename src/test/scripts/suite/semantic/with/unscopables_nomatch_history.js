@@ -10,73 +10,67 @@ const {
 } = Assert;
 
 loadRelativeToScript("../../lib/recorder.js");
+loadRelativeToScript("helper_history.js");
 
 // Object with @@unscopables but no match, property is not present, single access
 {
-  let fallbackCalled = 0;
   let history = [];
-  let blackList = Recorder.watch({otherProperty: true}, history);
-  let object = Recorder.watch({[Symbol.unscopables]: blackList}, history);
-  with ({get property() { fallbackCalled += 1 }}) {
-    with (object) {
-      property;
-    }
-  }
-  Recorder.unwatch(blackList);
-  Recorder.unwatch(object);
+  let fallbackCalled = 0;
+  let lookup, lookupBlackList = WithLookup(history, {otherProperty: true}, blackList => {
+    lookup = WithLookup(history, {[Symbol.unscopables]: blackList}, object => {
+      with ({get property() { fallbackCalled += 1 }}) {
+        with (object) {
+          property;
+        }
+      }
+    });
+  });
   assertEquals([
-    {name: "get", target: object, property: Symbol.unscopables, result: blackList, receiver: object},
-    {name: "has", target: blackList, property: "property", result: false},
-    {name: "has", target: object, property: "property", result: false},
+    ...HasBindingFail(lookup, "property"),
   ], history);
   assertSame(1, fallbackCalled);
 }
 
 // Object with @@unscopables but no match, property is not present, multi access
 {
-  let fallbackCalled = 0;
   let history = [];
-  let blackList = Recorder.watch({otherProperty: true}, history);
-  let object = Recorder.watch({[Symbol.unscopables]: blackList}, history);
-  with ({get property() { fallbackCalled += 1 }}) {
-    with (object) {
-      property;
-      property;
-    }
-  }
-  Recorder.unwatch(blackList);
-  Recorder.unwatch(object);
+  let fallbackCalled = 0;
+  let lookup, lookupBlackList = WithLookup(history, {otherProperty: true}, blackList => {
+    lookup = WithLookup(history, {[Symbol.unscopables]: blackList}, object => {
+      with ({get property() { fallbackCalled += 1 }}) {
+        with (object) {
+          property;
+          property;
+        }
+      }
+    });
+  });
   assertEquals([
-    {name: "get", target: object, property: Symbol.unscopables, result: blackList, receiver: object},
-    {name: "has", target: blackList, property: "property", result: false},
-    {name: "has", target: object, property: "property", result: false},
-    {name: "get", target: object, property: Symbol.unscopables, result: blackList, receiver: object},
-    {name: "has", target: blackList, property: "property", result: false},
-    {name: "has", target: object, property: "property", result: false},
+    ...HasBindingFail(lookup, "property"),
+    ...HasBindingFail(lookup, "property"),
   ], history);
   assertSame(2, fallbackCalled);
 }
 
 // Object with @@unscopables but no match, property is present, single access
 {
-  let fallbackCalled = 0;
-  let getterCalled = 0;
   let history = [];
-  let blackList = Recorder.watch({otherProperty: true}, history);
-  let object = Recorder.watch({[Symbol.unscopables]: blackList, get property() { getterCalled += 1 }}, history);
-  with ({get property() { fallbackCalled += 1 }}) {
-    with (object) {
-      property;
-    }
-  }
-  Recorder.unwatch(blackList);
-  Recorder.unwatch(object);
+  let fallbackCalled = 0, getterCalled = 0;
+  let lookup, lookupBlackList = WithLookup(history, {otherProperty: true}, blackList => {
+    lookup = WithLookup(history, {[Symbol.unscopables]: blackList, get property() { getterCalled += 1 }}, object => {
+      with ({get property() { fallbackCalled += 1 }}) {
+        with (object) {
+          property;
+        }
+      }
+    });
+  });
   assertEquals([
-    {name: "get", target: object, property: Symbol.unscopables, result: blackList, receiver: object},
-    {name: "has", target: blackList, property: "property", result: false},
-    {name: "has", target: object, property: "property", result: true},
-    {name: "has", target: object, property: "property", result: true},
-    {name: "get", target: object, property: "property", result: void 0, receiver: object},
+    ...HasBindingSuccess(lookup, "property"),
+    ...BindingNotIntercepted(lookup, lookupBlackList, "property"),
+    ...GetBindingValueSuccess(lookup, "property"),
+    ...BindingNotIntercepted(lookup, lookupBlackList, "property"),
+    ...GetValue(lookup, "property", void 0),
   ], history);
   assertSame(1, getterCalled);
   assertSame(0, fallbackCalled);
@@ -84,30 +78,29 @@ loadRelativeToScript("../../lib/recorder.js");
 
 // Object with @@unscopables but no match, property is present, multi access
 {
-  let fallbackCalled = 0;
-  let getterCalled = 0;
   let history = [];
-  let blackList = Recorder.watch({otherProperty: true}, history);
-  let object = Recorder.watch({[Symbol.unscopables]: blackList, get property() { getterCalled += 1 }}, history);
-  with ({get property() { fallbackCalled += 1 }}) {
-    with (object) {
-      property;
-      property;
-    }
-  }
-  Recorder.unwatch(blackList);
-  Recorder.unwatch(object);
+  let fallbackCalled = 0, getterCalled = 0;
+  let lookup, lookupBlackList = WithLookup(history, {otherProperty: true}, blackList => {
+    lookup = WithLookup(history, {[Symbol.unscopables]: blackList, get property() { getterCalled += 1 }}, object => {
+      with ({get property() { fallbackCalled += 1 }}) {
+        with (object) {
+          property;
+          property;
+        }
+      }
+    });
+  });
   assertEquals([
-    {name: "get", target: object, property: Symbol.unscopables, result: blackList, receiver: object},
-    {name: "has", target: blackList, property: "property", result: false},
-    {name: "has", target: object, property: "property", result: true},
-    {name: "has", target: object, property: "property", result: true},
-    {name: "get", target: object, property: "property", result: void 0, receiver: object},
-    {name: "get", target: object, property: Symbol.unscopables, result: blackList, receiver: object},
-    {name: "has", target: blackList, property: "property", result: false},
-    {name: "has", target: object, property: "property", result: true},
-    {name: "has", target: object, property: "property", result: true},
-    {name: "get", target: object, property: "property", result: void 0, receiver: object},
+    ...HasBindingSuccess(lookup, "property"),
+    ...BindingNotIntercepted(lookup, lookupBlackList, "property"),
+    ...GetBindingValueSuccess(lookup, "property"),
+    ...BindingNotIntercepted(lookup, lookupBlackList, "property"),
+    ...GetValue(lookup, "property", void 0),
+    ...HasBindingSuccess(lookup, "property"),
+    ...BindingNotIntercepted(lookup, lookupBlackList, "property"),
+    ...GetBindingValueSuccess(lookup, "property"),
+    ...BindingNotIntercepted(lookup, lookupBlackList, "property"),
+    ...GetValue(lookup, "property", void 0),
   ], history);
   assertSame(2, getterCalled);
   assertSame(0, fallbackCalled);

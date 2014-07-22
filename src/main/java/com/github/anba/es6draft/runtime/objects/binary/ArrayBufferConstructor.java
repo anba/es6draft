@@ -169,7 +169,20 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.2 NeuterArrayBuffer( arrayBuffer )
+     * 24.1.1.2 IsNeuteredBuffer( arrayBuffer )
+     * 
+     * @param arrayBuffer
+     *            the array buffer object
+     * @return {@code true} if the array buffer is neutered
+     */
+    public static boolean IsNeuteredBuffer(ArrayBufferObject arrayBuffer) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        return arrayBuffer.isNeutered();
+    }
+
+    /**
+     * 24.1.1.3 NeuterArrayBuffer( arrayBuffer )
      * 
      * @param cx
      *            the execution context
@@ -185,7 +198,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.3 SetArrayBufferData (arrayBuffer, bytes)
+     * 24.1.1.4 SetArrayBufferData (arrayBuffer, bytes)
      * 
      * @param cx
      *            the execution context
@@ -212,7 +225,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.4 CloneArrayBuffer (srcBuffer, srcByteOffset)
+     * 24.1.1.5 CloneArrayBuffer (srcBuffer, srcByteOffset)
      * 
      * @param cx
      *            the execution context
@@ -228,40 +241,45 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         /* step 2 */
         ByteBuffer srcBlock = srcBuffer.getData();
         /* step 3 */
-        if (srcBlock == null) {
-            if (srcBuffer.isNeutered()) {
-                throw newTypeError(cx, Messages.Key.BufferNeutered);
-            }
+        if (!srcBuffer.isInitialized()) {
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 4 */
+        if (IsNeuteredBuffer(srcBuffer)) {
+            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        }
+        /* step 5 */
         long srcLength = srcBuffer.getByteLength();
-        /* steps 5-6 */
-        // FIXME: neutered after side-effects? (bug 2963)
+        /* steps 6-7 */
         Object bufferConstructor = Get(cx, srcBuffer, "constructor");
-        /* step 7 */
-        assert srcByteOffset <= srcLength;
         /* step 8 */
-        long cloneLength = srcLength - srcByteOffset;
+        assert srcByteOffset <= srcLength;
         /* step 9 */
+        long cloneLength = srcLength - srcByteOffset;
+        /* step 10 */
         if (Type.isUndefined(bufferConstructor)) {
             bufferConstructor = cx.getIntrinsic(Intrinsics.ArrayBuffer);
         }
-        /* step 10 */
-        // FIXME: neutered after side-effects? (bug 2963)
+        /* step 11 */
         ArrayBufferObject targetBuffer = AllocateArrayBuffer(cx, bufferConstructor);
-        /* steps 11-12 */
-        SetArrayBufferData(cx, targetBuffer, cloneLength);
-        /* step 13 */
-        ByteBuffer targetBlock = targetBuffer.getData();
+        /* steps 12-13 */
+        if (IsNeuteredBuffer(srcBuffer)) {
+            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        }
         /* step 14 */
+        assert srcBlock == srcBuffer.getData();
+        /* steps 15-16 */
+        SetArrayBufferData(cx, targetBuffer, cloneLength);
+        /* step 17 */
+        ByteBuffer targetBlock = targetBuffer.getData();
+        /* step 18 */
         CopyDataBlockBytes(targetBlock, 0, srcBlock, srcByteOffset, cloneLength);
-        /* step 15 */
+        /* step 19 */
         return targetBuffer;
     }
 
     /**
-     * 24.1.1.5 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
+     * 24.1.1.6 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
      * 
      * @param cx
      *            the execution context
@@ -279,7 +297,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.5 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
+     * 24.1.1.6 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
      * 
      * @param cx
      *            the execution context
@@ -295,19 +313,14 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      */
     public static double GetValueFromBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type, boolean isLittleEndian) {
-        // TODO: invalid assertion when buffer is neutered (bug 3004)
         /* steps 1-2 */
+        assert arrayBuffer.isInitialized() : "ArrayBuffer not initialized";
+        assert !IsNeuteredBuffer(arrayBuffer) : "ArrayBuffer is neutered";
+        /* steps 3-4 */
         assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
-        /* step 3 */
+        /* step 5 */
         ByteBuffer block = arrayBuffer.getData();
-        /* step 4 */
-        if (block == null) {
-            if (arrayBuffer.isNeutered()) {
-                throw newTypeError(cx, Messages.Key.BufferNeutered);
-            }
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        /* steps 7-8 */
+        /* steps 8-9 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
             block.order(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
         }
@@ -315,17 +328,17 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         int index = (int) byteIndex;
         switch (type) {
         case Float32: {
-            /* steps 5-6, 9 */
+            /* steps 6-7, 10 */
             double rawValue = block.getFloat(index);
             return Double.isNaN(rawValue) ? Double.NaN : rawValue;
         }
         case Float64: {
-            /* steps 5-6, 10 */
+            /* steps 6-7, 11 */
             double rawValue = block.getDouble(index);
             return Double.isNaN(rawValue) ? Double.NaN : rawValue;
         }
 
-        /* steps 5-6, 11, 13 */
+        /* steps 6-7, 12, 14 */
         case Uint8:
         case Uint8C:
             return block.get(index) & 0xffL;
@@ -334,7 +347,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         case Uint32:
             return block.getInt(index) & 0xffffffffL;
 
-            /* steps 5-6, 12-13 */
+            /* steps 6-7, 13-14 */
         case Int8:
             return (long) block.get(index);
         case Int16:
@@ -348,7 +361,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.6 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
+     * 24.1.1.7 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
      * 
      * @param cx
      *            the execution context
@@ -367,7 +380,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.6 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
+     * 24.1.1.7 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
      * 
      * @param cx
      *            the execution context
@@ -384,19 +397,17 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      */
     public static void SetValueInBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type, double value, boolean isLittleEndian) {
-        // TODO: invalid assertion when buffer is neutered (bug 3004)
         /* steps 1-2 */
+        assert arrayBuffer.isInitialized() : "ArrayBuffer not initialized";
+        assert !IsNeuteredBuffer(arrayBuffer) : "ArrayBuffer is neutered";
+        /* steps 3-4 */
         assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
-        /* step 3 */
+        /* step 5 (not applicable) */
+        /* step 6 */
         ByteBuffer block = arrayBuffer.getData();
-        /* step 4 */
-        if (block == null) {
-            if (arrayBuffer.isNeutered()) {
-                throw newTypeError(cx, Messages.Key.BufferNeutered);
-            }
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        /* steps 6-9 */
+        /* step 7 */
+        assert block != null;
+        /* step 9 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
             block.order(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
         }
@@ -404,15 +415,15 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         int index = (int) byteIndex;
         switch (type) {
         case Float32:
-            /* steps 7, 10-11 */
+            /* steps 6, 10, 13-14 */
             block.putFloat(index, (float) value);
             return;
         case Float64:
-            /* steps 8, 10-11 */
+            /* steps 6, 11, 13-14 */
             block.putDouble(index, value);
             return;
 
-            /* steps 9, 10-11 */
+            /* steps 6, 12-14 */
         case Int8:
             block.put(index, ElementType.ToInt8(value));
             return;
@@ -455,7 +466,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         ArrayBufferObject buf = (ArrayBufferObject) thisValue;
-        if (buf.getData() != null || buf.isNeutered()) {
+        if (buf.isInitialized()) {
             throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
         // FIXME: spec issue? - undefined length is same as 0 for bwcompat?
@@ -471,7 +482,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
             throw newRangeError(calleeContext, Messages.Key.InvalidBufferSize);
         }
         /* step 7 */
-        if (buf.getData() != null || buf.isNeutered()) {
+        if (buf.isInitialized()) {
             throw newTypeError(calleeContext, Messages.Key.InitializedObject);
         }
         /* step 8 */

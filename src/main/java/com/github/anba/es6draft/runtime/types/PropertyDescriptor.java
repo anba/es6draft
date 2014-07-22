@@ -426,48 +426,38 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @param desc
      *            the property descriptor
-     * @param likeDesc
-     *            the property descriptor from which to retrieve absent fields
      * @return the <var>desc</var> parameter
      */
-    public static PropertyDescriptor CompletePropertyDescriptor(PropertyDescriptor desc,
-            Property likeDesc) {
-        /* steps 1-3 (implicit) */
+    public static PropertyDescriptor CompletePropertyDescriptor(PropertyDescriptor desc) {
+        /* steps 1-2 (implicit) */
+        /* steps 3 (omitted) */
         /* steps 4-5 */
-        PropertyDescriptor like;
-        if (likeDesc == null) {
-            like = new PropertyDescriptor();
-        } else {
-            // TODO: create a test case to test this behaviour?
-            like = likeDesc.toPropertyDescriptor();
-            CompletePropertyDescriptor(like, null);
-        }
         if (IsGenericDescriptor(desc) || IsDataDescriptor(desc)) {
-            /* step 6 */
+            /* step 4 */
             if (!desc.hasValue()) {
-                desc.setValue(like.getValue());
+                desc.setValue(UNDEFINED);
             }
             if (!desc.hasWritable()) {
-                desc.setWritable(like.isWritable());
+                desc.setWritable(false);
             }
         } else {
-            /* step 7 */
+            /* step 5 */
             if (!desc.hasGetter()) {
-                desc.setGetter(like.getGetter());
+                desc.setGetter(null);
             }
             if (!desc.hasSetter()) {
-                desc.setSetter(like.getSetter());
+                desc.setSetter(null);
             }
         }
-        /* step 8 */
+        /* step 6 */
         if (!desc.hasEnumerable()) {
-            desc.setEnumerable(like.isEnumerable());
+            desc.setEnumerable(false);
         }
-        /* step 9 */
+        /* step 7 */
         if (!desc.hasConfigurable()) {
-            desc.setConfigurable(like.isConfigurable());
+            desc.setConfigurable(false);
         }
-        /* step 10 */
+        /* step 8 */
         return desc;
     }
 

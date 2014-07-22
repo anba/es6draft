@@ -13,7 +13,7 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=1206
 
 let f1 = Object.defineProperty(function(){}, Symbol.create, {
-  value: null
+  value: {}
 });
 assertThrows(() => new f1, TypeError);
 

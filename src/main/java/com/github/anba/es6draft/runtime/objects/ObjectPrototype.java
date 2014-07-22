@@ -144,7 +144,6 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
                 } catch (ScriptException e) {
                     tag = "???";
                 }
-                // FIXME: spec bug? (censor 'Object' again, but see Bug 1148) (Bug 1408/1459)
                 if (censoredNames.contains(tag) && !builtinTag.equals(tag)) {
                     tag = "~" + tag;
                 }
@@ -161,7 +160,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 19.1.3.5 Object.prototype.toLocaleString ( )
+         * 19.1.3.5 Object.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )
          * 
          * @param cx
          *            the execution context

@@ -90,7 +90,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
             bodyText = ToFlatString(calleeContext, args[k - 1]);
         }
 
-        /* steps 8-11 */
+        /* steps 8-10 */
         RuntimeInfo.Function function;
         try {
             ScriptLoader scriptLoader = calleeContext.getRealm().getScriptLoader();
@@ -99,40 +99,40 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
             throw e.toScriptException(calleeContext);
         }
 
-        /* step 12 */
+        /* step 11 */
         boolean strict = function.isStrict();
-        /* step 13 */
+        /* step 12 */
         LexicalEnvironment<GlobalEnvironmentRecord> scope = calleeContext.getRealm().getGlobalEnv();
-        /* step 14 */
+        /* step 13 */
         Object f = thisValue;
-        /* step 15 */
+        /* step 14 */
         if (!(f instanceof FunctionObject) || ((FunctionObject) f).getCode() != null) {
             ScriptObject proto = GetPrototypeFromConstructor(calleeContext, this,
                     Intrinsics.FunctionPrototype);
             f = FunctionAllocate(calleeContext, proto, strict, FunctionKind.Normal);
         }
-        /* step 16 */
+        /* step 15 */
         if (!(f instanceof OrdinaryFunction)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         OrdinaryFunction fn = (OrdinaryFunction) f;
-        /* steps 17-19 */
+        /* steps 16-18 */
         if (!IsExtensible(calleeContext, fn)) {
             throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
-        /* steps 20-21 */
+        /* steps 19-20 */
         FunctionInitialize(calleeContext, fn, FunctionKind.Normal, strict, function, scope);
-        /* step 22 */
+        /* step 21 */
         if (function.hasSuperReference()) {
             MakeMethod(fn, (String) null, null);
         }
-        /* steps 23-24 */
+        /* steps 22-23 */
         MakeConstructor(calleeContext, fn);
-        /* steps 25-27 */
+        /* steps 24-26 */
         if (!HasOwnProperty(calleeContext, fn, "name")) {
             SetFunctionName(fn, "anonymous");
         }
-        /* step 28 */
+        /* step 27 */
         return fn;
     }
 

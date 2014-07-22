@@ -42,10 +42,8 @@ import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperation
 import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.*;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.google.doubleconversion.DoubleConversion;
 
@@ -85,7 +83,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.1 ToPrimitive
+     * 7.1.1 ToPrimitive ( input [, PreferredType] )
      * 
      * @param cx
      *            the execution context
@@ -101,7 +99,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.1 ToPrimitive
+     * 7.1.1 ToPrimitive ( input [, PreferredType] )
      * 
      * @param cx
      *            the execution context
@@ -120,7 +118,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.1 ToPrimitive
+     * 7.1.1 ToPrimitive ( input [, PreferredType] )
      * <p>
      * ToPrimitive for the Object type
      * 
@@ -155,7 +153,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.1 ToPrimitive
+     * 7.1.1 ToPrimitive ( input [, PreferredType] )
      * <p>
      * OrdinaryToPrimitive
      * 
@@ -201,7 +199,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.2 ToBoolean
+     * 7.1.2 ToBoolean ( argument )
      * 
      * @param value
      *            the argument value
@@ -229,7 +227,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.2 ToBoolean
+     * 7.1.2 ToBoolean ( argument )
      * 
      * @param value
      *            the argument value
@@ -240,7 +238,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.3 ToNumber
+     * 7.1.3 ToNumber ( argument )
      * 
      * @param cx
      *            the execution context
@@ -261,7 +259,7 @@ public final class AbstractOperations {
         case String:
             return ToNumber(Type.stringValue(value));
         case Symbol:
-            return Double.NaN;
+            throw newTypeError(cx, Messages.Key.SymbolNumber);
         case Object:
         default:
             Object primValue = ToPrimitive(cx, value, ToPrimitiveHint.Number);
@@ -281,7 +279,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.4 ToInteger
+     * 7.1.4 ToInteger ( argument )
      * 
      * @param cx
      *            the execution context
@@ -303,7 +301,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.4 ToInteger
+     * 7.1.4 ToInteger ( argument )
      * 
      * @param number
      *            the argument value
@@ -322,7 +320,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.5 ToInt32: (Signed 32 Bit Integer)
+     * 7.1.5 ToInt32 ( argument ) — Signed 32 Bit Integer
      * 
      * @param cx
      *            the execution context
@@ -338,7 +336,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.5 ToInt32: (Signed 32 Bit Integer)
+     * 7.1.5 ToInt32 ( argument ) — Signed 32 Bit Integer
      * 
      * @param number
      *            the argument value
@@ -351,7 +349,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.6 ToUint32: (Unsigned 32 Bit Integer)
+     * 7.1.6 ToUint32 ( argument ) — Unsigned 32 Bit Integer
      * 
      * @param cx
      *            the execution context
@@ -367,7 +365,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.6 ToUint32: (Unsigned 32 Bit Integer)
+     * 7.1.6 ToUint32 ( argument ) — Unsigned 32 Bit Integer
      * 
      * @param number
      *            the argument value
@@ -380,7 +378,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.7 ToInt16: (Signed 16 Bit Integer)
+     * 7.1.7 ToInt16 ( argument ) — Signed 16 Bit Integer
      * 
      * @param cx
      *            the execution context
@@ -396,7 +394,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.7 ToInt16: (Signed 16 Bit Integer)
+     * 7.1.7 ToInt16 ( argument ) — Signed 16 Bit Integer
      * 
      * @param number
      *            the argument value
@@ -409,7 +407,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.8 ToUint16: (Unsigned 16 Bit Integer)
+     * 7.1.8 ToUint16 ( argument ) — Unsigned 16 Bit Integer
      * 
      * @param cx
      *            the execution context
@@ -425,7 +423,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.8 ToUint16: (Unsigned 16 Bit Integer)
+     * 7.1.8 ToUint16 ( argument ) — Unsigned 16 Bit Integer
      * 
      * @param number
      *            the argument value
@@ -438,7 +436,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.9 ToInt8: (Signed 8 Bit Integer)
+     * 7.1.9 ToInt8 ( argument ) — Signed 8 Bit Integer
      * 
      * @param cx
      *            the execution context
@@ -454,7 +452,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.9 ToInt8: (Signed 8 Bit Integer)
+     * 7.1.9 ToInt8 ( argument ) — Signed 8 Bit Integer
      * 
      * @param number
      *            the argument value
@@ -467,7 +465,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.10 ToUint8: (Unsigned 8 Bit Integer)
+     * 7.1.10 ToUint8 ( argument ) — Unsigned 8 Bit Integer
      * 
      * @param cx
      *            the execution context
@@ -483,7 +481,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.10 ToUint8: (Unsigned 8 Bit Integer)
+     * 7.1.10 ToUint8 ( argument ) — Unsigned 8 Bit Integer
      * 
      * @param number
      *            the argument value
@@ -496,7 +494,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.11 ToUint8Clamp: (Unsigned 8 Bit Integer, Clamped)
+     * 7.1.11 ToUint8Clamp ( argument ) — Unsigned 8 Bit Integer, Clamped
      * 
      * @param cx
      *            the execution context
@@ -512,7 +510,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.11 ToUint8Clamp: (Unsigned 8 Bit Integer, Clamped)
+     * 7.1.11 ToUint8Clamp ( argument ) — Unsigned 8 Bit Integer, Clamped
      * 
      * @param number
      *            the argument value
@@ -525,7 +523,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.12 ToString
+     * 7.1.12 ToString ( argument )
      * 
      * @param cx
      *            the execution context
@@ -538,7 +536,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.12 ToString
+     * 7.1.12 ToString ( argument )
      * 
      * @param cx
      *            the execution context
@@ -626,7 +624,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.13 ToObject
+     * 7.1.13 ToObject ( argument )
      * 
      * @param cx
      *            the execution context
@@ -654,7 +652,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.14 ToPropertyKey
+     * 7.1.14 ToPropertyKey ( argument )
      * 
      * @param cx
      *            the execution context
@@ -670,7 +668,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.15 ToLength
+     * 7.1.15 ToLength ( argument )
      * 
      * @param cx
      *            the execution context
@@ -690,7 +688,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.15 ToLength
+     * 7.1.15 ToLength ( argument )
      * 
      * @param value
      *            the argument value
@@ -707,7 +705,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.16 CanonicalNumericIndexString(argument)
+     * 7.1.16 CanonicalNumericIndexString ( argument )
      * 
      * @param value
      *            the argument value
@@ -722,6 +720,7 @@ public final class AbstractOperations {
             return Double.NEGATIVE_INFINITY;
         }
         // FIXME: spec issue https://bugs.ecmascript.org/show_bug.cgi?id=2049
+        // FIXME: not resolved in rev26 - reopen bug report!
         /* step 4 */
         if (!value.equals(ToString(n))) {
             return Double.NaN;
@@ -802,7 +801,7 @@ public final class AbstractOperations {
         if (tx == Type.String) {
             CharSequence sx = Type.stringValue(x);
             CharSequence sy = Type.stringValue(y);
-            return sx.length() == sy.length() && sx.toString().contentEquals(sy);
+            return sx.length() == sy.length() && sx.toString().equals(sy.toString());
         }
         /* step 8 */
         if (tx == Type.Boolean) {
@@ -887,7 +886,7 @@ public final class AbstractOperations {
         if (tx == Type.String) {
             CharSequence sx = Type.stringValue(x);
             CharSequence sy = Type.stringValue(y);
-            return sx.length() == sy.length() && sx.toString().contentEquals(sy);
+            return sx.length() == sy.length() && sx.toString().equals(sy.toString());
         }
         /* step 8 */
         if (tx == Type.Boolean) {
@@ -1031,33 +1030,34 @@ public final class AbstractOperations {
             py = ToPrimitive(cx, y, ToPrimitiveHint.Number);
             px = ToPrimitive(cx, x, ToPrimitiveHint.Number);
         }
-        /* steps 5-6 */
-        if (!(Type.isString(px) && Type.isString(py))) {
-            double nx = ToNumber(cx, px);
-            double ny = ToNumber(cx, py);
-            if (Double.isNaN(nx) || Double.isNaN(ny)) {
-                return -1;
-            }
-            if (nx == ny) {
-                return 0;
-            }
-            if (nx == Double.POSITIVE_INFINITY) {
-                return 0;
-            }
-            if (ny == Double.POSITIVE_INFINITY) {
-                return 1;
-            }
-            if (ny == Double.NEGATIVE_INFINITY) {
-                return 0;
-            }
-            if (nx == Double.NEGATIVE_INFINITY) {
-                return 1;
-            }
-            return nx < ny ? 1 : 0;
-        } else {
+        /* step 5 */
+        if (Type.isString(px) && Type.isString(py)) {
             int c = Type.stringValue(px).toString().compareTo(Type.stringValue(py).toString());
             return c < 0 ? 1 : 0;
         }
+        /* step 6 */
+        double nx = ToNumber(cx, px);
+        double ny = ToNumber(cx, py);
+        if (Double.isNaN(nx) || Double.isNaN(ny)) {
+            return -1;
+        }
+        if (nx == ny) {
+            return 0;
+        }
+        if (nx == Double.POSITIVE_INFINITY) {
+            return 0;
+        }
+        if (ny == Double.POSITIVE_INFINITY) {
+            return 1;
+        }
+        if (ny == Double.NEGATIVE_INFINITY) {
+            return 0;
+        }
+        if (nx == Double.NEGATIVE_INFINITY) {
+            return 1;
+        }
+        return nx < ny ? 1 : 0;
+
     }
 
     /**
@@ -1079,47 +1079,53 @@ public final class AbstractOperations {
             }
             return true;
         }
+        /* steps 1-2 (not applicable) */
         Type tx = Type.of(x);
         Type ty = Type.of(y);
-        /* step 1 */
+        /* step 3 */
         if (tx == ty) {
             return StrictEqualityComparison(x, y);
         }
-        /* step 2 */
+        /* step 4 */
         if (tx == Type.Null && ty == Type.Undefined) {
             return true;
         }
-        /* step 3 */
+        /* step 5 */
         if (tx == Type.Undefined && ty == Type.Null) {
             return true;
         }
-        /* step 4 */
+        /* step 6 */
         if (tx == Type.Number && ty == Type.String) {
             // return EqualityComparison(cx, x, ToNumber(cx, y));
             return Type.numberValue(x) == ToNumber(cx, y);
         }
-        /* step 5 */
+        /* step 7 */
         if (tx == Type.String && ty == Type.Number) {
             // return EqualityComparison(cx, ToNumber(cx, x), y);
             return ToNumber(cx, x) == Type.numberValue(y);
         }
-        /* step 6 */
+        /* step 8 */
+        if (tx == Type.Symbol || ty == Type.Symbol) {
+            // FIXME: spec bug - unnecessary step
+            return false;
+        }
+        /* step 9 */
         if (tx == Type.Boolean) {
             return EqualityComparison(cx, ToNumber(cx, x), y);
         }
-        /* step 7 */
+        /* step 10 */
         if (ty == Type.Boolean) {
             return EqualityComparison(cx, x, ToNumber(cx, y));
         }
-        /* step 8 */
+        /* step 11 */
         if ((tx == Type.String || tx == Type.Number) && ty == Type.Object) {
             return EqualityComparison(cx, x, ToPrimitive(cx, y));
         }
-        /* step 9 */
+        /* step 12 */
         if (tx == Type.Object && (ty == Type.String || ty == Type.Number)) {
             return EqualityComparison(cx, ToPrimitive(cx, x), y);
         }
-        /* step 10 */
+        /* step 13 */
         return false;
     }
 
@@ -1160,7 +1166,9 @@ public final class AbstractOperations {
         }
         /* step 5 */
         if (tx == Type.String) {
-            return Type.stringValue(x).toString().equals(Type.stringValue(y).toString());
+            CharSequence sx = Type.stringValue(x);
+            CharSequence sy = Type.stringValue(y);
+            return sx.length() == sy.length() && sx.toString().equals(sy.toString());
         }
         /* step 6 */
         if (tx == Type.Boolean) {
@@ -1871,7 +1879,7 @@ public final class AbstractOperations {
         /* steps 1-4 */
         Object func = object.get(cx, propertyKey, object);
         /* step 5 */
-        if (Type.isUndefined(func)) {
+        if (Type.isUndefinedOrNull(func)) {
             return null;
         }
         /* step 6 */
@@ -1897,7 +1905,7 @@ public final class AbstractOperations {
         /* steps 1-4 */
         Object func = object.get(cx, propertyKey, object);
         /* step 5 */
-        if (Type.isUndefined(func)) {
+        if (Type.isUndefinedOrNull(func)) {
             return null;
         }
         /* step 6 */
@@ -2061,17 +2069,17 @@ public final class AbstractOperations {
             IntegrityLevel level) {
         /* steps 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
-        /* steps 3-4 */
-        Iterator<?> keys = toList(object.ownKeys(cx)).iterator();
-        /* step 5 */
+        /* steps 3-5 */
+        ArrayList<?> keys = toList(object.ownKeys(cx));
+        /* step 6 */
         ScriptException pendingException = null;
         if (level == IntegrityLevel.Sealed) {
-            /* step 6 */
+            /* step 7 */
             PropertyDescriptor nonConfigurable = new PropertyDescriptor();
             nonConfigurable.setConfigurable(false);
-            while (keys.hasNext()) {
+            for (Object key : keys) {
                 // FIXME: spec bug? (missing call to ToPropertyKey()?)
-                Object key = ToPropertyKey(cx, keys.next());
+                key = ToPropertyKey(cx, key);
                 try {
                     if (key instanceof String) {
                         DefinePropertyOrThrow(cx, object, (String) key, nonConfigurable);
@@ -2086,16 +2094,16 @@ public final class AbstractOperations {
                 }
             }
         } else {
-            /* step 7 */
+            /* step 8 */
             PropertyDescriptor nonConfigurable = new PropertyDescriptor();
             nonConfigurable.setConfigurable(false);
             PropertyDescriptor nonConfigurableWritable = new PropertyDescriptor();
             nonConfigurableWritable.setConfigurable(false);
             nonConfigurableWritable.setWritable(false);
-            while (keys.hasNext()) {
+            for (Object key : keys) {
                 try {
                     // FIXME: spec bug? (missing call to ToPropertyKey()?)
-                    Object key = ToPropertyKey(cx, keys.next());
+                    key = ToPropertyKey(cx, key);
                     Property currentDesc;
                     if (key instanceof String) {
                         currentDesc = object.getOwnProperty(cx, (String) key);
@@ -2124,11 +2132,11 @@ public final class AbstractOperations {
                 }
             }
         }
-        /* step 8 */
+        /* step 9 */
         if (pendingException != null) {
             throw pendingException;
         }
-        /* step 9 */
+        /* step 10 */
         return object.preventExtensions(cx);
     }
 
@@ -2153,18 +2161,18 @@ public final class AbstractOperations {
         if (status) {
             return false;
         }
-        /* steps 7-8 */
-        Iterator<?> keys = toList(object.ownKeys(cx)).iterator();
-        /* step 9 */
-        ScriptException pendingException = null;
+        /* steps 7-9 */
+        ArrayList<?> keys = toList(object.ownKeys(cx));
         /* step 10 */
-        boolean configurable = false;
+        ScriptException pendingException = null;
         /* step 11 */
+        boolean configurable = false;
+        /* step 12 */
         boolean writable = false;
-        while (keys.hasNext()) {
+        for (Object key : keys) {
             // FIXME: spec bug? (missing call to ToPropertyKey()?)
-            Object key = ToPropertyKey(cx, keys.next());
-            /* step 12 */
+            key = ToPropertyKey(cx, key);
+            /* step 13 */
             try {
                 Property currentDesc;
                 if (key instanceof String) {
@@ -2183,22 +2191,21 @@ public final class AbstractOperations {
                 if (pendingException == null) {
                     pendingException = e;
                 }
-                configurable = true;
             }
         }
-        /* step 13 */
+        /* step 14 */
         if (pendingException != null) {
             throw pendingException;
         }
-        /* step 14 */
+        /* step 15 */
         if (level == IntegrityLevel.Frozen && writable) {
             return false;
         }
-        /* step 15 */
+        /* step 16 */
         if (configurable) {
             return false;
         }
-        /* step 16 */
+        /* step 17 */
         return true;
     }
 
@@ -2254,29 +2261,30 @@ public final class AbstractOperations {
                 return array.toArray();
             }
         }
-        /* step 1 */
+        /* step 1 (not applicable) */
+        /* step 2 */
         if (!Type.isObject(obj)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject object = Type.objectValue(obj);
-        /* step 2 */
+        /* step 3 */
         Object len = Get(cx, object, "length");
-        /* steps 3-4 */
+        /* steps 4-5 */
         long n = ToLength(cx, len);
         // CreateListFromArrayLike() is (currently) only used for argument arrays
         if (n > FunctionPrototype.getMaxArguments()) {
             throw newRangeError(cx, Messages.Key.FunctionTooManyArguments);
         }
         int length = (int) n;
-        /* step 5 */
+        /* step 6 */
         Object[] list = new Object[length];
-        /* steps 6-7 */
+        /* steps 7-8 */
         for (int index = 0; index < length; ++index) {
             int indexName = index;
             Object next = Get(cx, object, indexName);
             list[index] = next;
         }
-        /* step 8 */
+        /* step 9 */
         return list;
     }
 
@@ -2344,14 +2352,7 @@ public final class AbstractOperations {
         Object proto = Get(cx, Type.objectValue(constructor), "prototype");
         /* step 5 */
         if (!Type.isObject(proto)) {
-            Realm realm;
-            if (constructor instanceof FunctionObject) {
-                realm = ((FunctionObject) constructor).getRealm();
-            } else if (constructor instanceof BuiltinFunction) {
-                realm = ((BuiltinFunction) constructor).getRealm();
-            } else {
-                realm = cx.getRealm();
-            }
+            Realm realm = GetFunctionRealm(cx, (Constructor) constructor);
             proto = realm.getIntrinsic(intrinsicDefaultProto);
         }
         /* step 6 */
@@ -2529,6 +2530,50 @@ public final class AbstractOperations {
     }
 
     /**
+     * 7.3.20 EnumerableOwnNames (O)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @return <var>object</var>'s own enumerable string-valued property keys
+     */
+    public static List<String> EnumerableOwnNames(ExecutionContext cx, ScriptObject object) {
+        /* step 1 (not applicable) */
+        /* steps 2-5 */
+        Iterator<?> ownKeys = object.ownKeys(cx);
+        /* step 6 */
+        ArrayList<String> names = new ArrayList<>();
+        /* steps 7-8 */
+        while (ownKeys.hasNext()) {
+            Object key = ownKeys.next();
+            if (Type.isString(key)) {
+                String skey = Type.stringValue(key).toString();
+                Property desc = object.getOwnProperty(cx, skey);
+                if (desc != null && desc.isEnumerable()) {
+                    names.add(skey);
+                }
+            }
+        }
+        /* step 9 */
+        return names;
+    }
+
+    /**
+     * 7.3.21 GetFunctionRealm ( obj ) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param function
+     *            the callable object
+     * @return the function's realm
+     */
+    public static Realm GetFunctionRealm(ExecutionContext cx, Callable function) {
+        /* steps 1-5 */
+        return function.getRealm(cx);
+    }
+
+    /**
      * 7.4.1 CheckIterable ( obj )
      * 
      * @param cx
@@ -2538,12 +2583,11 @@ public final class AbstractOperations {
      * @return the iterator method
      */
     public static Object CheckIterable(ExecutionContext cx, Object obj) {
-        // TODO: Check behaviour change - no longer ToObject() implicit conversion!
         /* step 1 */
         if (!Type.isObject(obj)) {
             return UNDEFINED;
         }
-        /* steps 2-3 */
+        /* step 2 */
         return Get(cx, Type.objectValue(obj), BuiltinSymbol.iterator.get());
     }
 
@@ -2558,7 +2602,7 @@ public final class AbstractOperations {
      */
     public static Object CheckIterable(ExecutionContext cx, ScriptObject obj) {
         /* step 1 (not applicable) */
-        /* steps 2-3 */
+        /* step 2 */
         return Get(cx, Type.objectValue(obj), BuiltinSymbol.iterator.get());
     }
 
@@ -2572,9 +2616,10 @@ public final class AbstractOperations {
      * @return the script iterator object
      */
     public static ScriptObject GetIterator(ExecutionContext cx, Object obj) {
-        /* step 1 */
+        /* step 1 (not applicable) */
+        /* step 2 */
         Object method = CheckIterable(cx, obj);
-        /* steps 2-6 */
+        /* steps 3-7 */
         return GetIterator(cx, obj, method);
     }
 
@@ -2588,9 +2633,10 @@ public final class AbstractOperations {
      * @return the script iterator object
      */
     public static ScriptObject GetIterator(ExecutionContext cx, ScriptObject obj) {
-        /* step 1 */
+        /* step 1 (not applicable) */
+        /* step 2 */
         Object method = CheckIterable(cx, obj);
-        /* steps 2-6 */
+        /* steps 3-7 */
         return GetIterator(cx, obj, method);
     }
 
@@ -2606,19 +2652,19 @@ public final class AbstractOperations {
      * @return the script iterator object
      */
     public static ScriptObject GetIterator(ExecutionContext cx, Object obj, Object method) {
-        /* step 1 (not applicable) */
-        /* step 2 */
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
         if (!IsCallable(method)) {
             throw newTypeError(cx, Messages.Key.PropertyNotCallable,
                     BuiltinSymbol.iterator.toString());
         }
-        /* steps 3-4 */
+        /* steps 4-5 */
         Object iterator = ((Callable) method).call(cx, obj);
-        /* step 5 */
+        /* step 6 */
         if (!Type.isObject(iterator)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
-        /* step 6 */
+        /* step 7 */
         return Type.objectValue(iterator);
     }
 
@@ -2947,38 +2993,11 @@ public final class AbstractOperations {
      */
     public static List<String> GetOwnPropertyNames(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
-        Iterator<?> keys = obj.ownKeys(cx);
-        List<String> nameList = new ArrayList<>();
-        while (keys.hasNext()) {
+        ArrayList<String> nameList = new ArrayList<>();
+        for (Iterator<?> keys = obj.ownKeys(cx); keys.hasNext();) {
             Object key = ToPropertyKey(cx, keys.next());
             if (key instanceof String) {
                 nameList.add((String) key);
-            }
-        }
-        return nameList;
-    }
-
-    /**
-     * Returns a list of all string-valued, enumerable [[OwnPropertyKeys]] of {@code obj}.
-     * 
-     * @param cx
-     *            the execution context
-     * @param obj
-     *            the script object
-     * @return <var>obj</var>'s own enumerable string-valued property keys
-     */
-    public static List<String> GetOwnEnumerablePropertyNames(ExecutionContext cx, ScriptObject obj) {
-        // FIXME: spec clean-up (Bug 1142)
-        Iterator<?> keys = obj.ownKeys(cx);
-        List<String> nameList = new ArrayList<>();
-        while (keys.hasNext()) {
-            Object key = ToPropertyKey(cx, keys.next());
-            if (key instanceof String) {
-                String skey = (String) key;
-                Property desc = obj.getOwnProperty(cx, skey);
-                if (desc != null && desc.isEnumerable()) {
-                    nameList.add(skey);
-                }
             }
         }
         return nameList;

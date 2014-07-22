@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
+import static com.github.anba.es6draft.runtime.AbstractOperations.GetFunctionRealm;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
@@ -116,11 +117,11 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
         /* step 5 */
         array.setElementType(getElementType());
         /* steps 6-7 */
-        Realm realmF = calleeContext.getRealm();
+        Realm realmF = GetFunctionRealm(calleeContext, this);
         /* step 8 */
         ScriptObject super_ = realmF.getIntrinsic(Intrinsics.TypedArray);
         assert super_ instanceof TypedArrayConstructorPrototype;
-        /* steps 9-10 */
+        /* step 10 */
         return ((TypedArrayConstructorPrototype) super_).call(calleeContext, thisValue, args);
     }
 

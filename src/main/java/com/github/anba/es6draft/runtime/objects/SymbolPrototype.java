@@ -130,8 +130,8 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
         @Function(name = "[Symbol.toPrimitive]", symbol = BuiltinSymbol.toPrimitive, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object toPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
-            /* step 1 */
-            throw newTypeError(cx, Messages.Key.SymbolPrimitive);
+            /* steps 1-4 */
+            return thisSymbolValue(cx, thisValue);
         }
 
         /**

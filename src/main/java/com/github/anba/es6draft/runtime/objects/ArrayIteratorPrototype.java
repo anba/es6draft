@@ -100,14 +100,14 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
      */
     public static OrdinaryObject CreateArrayIterator(ExecutionContext cx, ScriptObject array,
             ArrayIterationKind kind) {
-        /* steps 1-2 (omitted) */
-        /* steps 3-6 */
+        /* step 1 (not applicable) */
+        /* steps 2-5 */
         ArrayIterator iterator = ObjectCreate(cx, Intrinsics.ArrayIteratorPrototype,
                 ArrayIteratorAllocator.INSTANCE);
         iterator.iteratedObject = array;
         iterator.nextIndex = 0;
         iterator.kind = kind;
-        /* step 7 */
+        /* step 6 */
         return iterator;
     }
 

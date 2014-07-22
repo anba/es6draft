@@ -83,12 +83,12 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
         if (Type.isUndefinedOrNull(iterable)) {
             iter = null;
         } else {
-            iter = GetIterator(calleeContext, iterable);
             Object _adder = Get(calleeContext, set, "add");
             if (!IsCallable(_adder)) {
                 throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "add");
             }
             adder = (Callable) _adder;
+            iter = GetIterator(calleeContext, ToObject(calleeContext, iterable));
         }
 
         /* steps 8-9 */

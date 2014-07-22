@@ -11,13 +11,15 @@ const {
 
 // Access on typed array with invalid integer indices
 
-// Invalid integer indices, value is not coerced with ToNumber
-(new Int8Array(0))["-0"] = {valueOf() { fail `ToNumber called` }};
-(new Int8Array(1))["-0"] = {valueOf() { fail `ToNumber called` }};
-(new Int8Array(1))["-Infinity"] = {valueOf() { fail `ToNumber called` }};
-(new Int8Array(1))["Infinity"] = {valueOf() { fail `ToNumber called` }};
-(new Int8Array(1))["NaN"] = {valueOf() { fail `ToNumber called` }};
-(new Int8Array(1))["0.5"] = {valueOf() { fail `ToNumber called` }};
+// Invalid integer indices, value is still coerced with ToNumber
+let invalidIndexLog = "";
+(new Int8Array(0))["-0"] = {valueOf() { invalidIndexLog += "a"; }};
+(new Int8Array(1))["-0"] = {valueOf() { invalidIndexLog += "b"; }};
+(new Int8Array(1))["-Infinity"] = {valueOf() { invalidIndexLog += "c"; }};
+(new Int8Array(1))["Infinity"] = {valueOf() { invalidIndexLog += "d"; }};
+(new Int8Array(1))["NaN"] = {valueOf() { invalidIndexLog += "e"; }};
+(new Int8Array(1))["0.5"] = {valueOf() { invalidIndexLog += "f"; }};
+assertSame("abcdef", invalidIndexLog);
 
 // Valid integer indices, but out-of-bounds, value is still coerced with ToNumber
 let callLog = "";

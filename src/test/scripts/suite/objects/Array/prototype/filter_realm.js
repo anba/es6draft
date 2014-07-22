@@ -72,10 +72,46 @@ function assertSameArray(array1, array2) {
   array1.constructor = new Proxy(array1.constructor, {});
   let array2 = array1.filter(() => true);
 
-  // Proxy (function) objects do not have a [[Realm]] internal slot, filter() creates default Array instances
+  // Proxy (function) objects do not have a [[Realm]] internal slot, realm retrieved from proxy target
+  assertTrue(Array.isArray(array2));
+  assertSame(MyArray, array2.constructor);
+  assertSame(MyArray.prototype, Object.getPrototypeOf(array2));
+  assertSameArray(array1, array2);
+}
+
+// filter() with proxied constructor and with different realm constructor (1)
+{
+  const ForeignMyArray = new Reflect.Realm().eval(`
+    class MyArray extends Array { }
+    MyArray;
+  `);
+  const obj1 = {}, obj2 = {};
+  let array1 = new ForeignMyArray(obj1, obj2);
+  array1.constructor = new Proxy(array1.constructor, {});
+  let array2 = Array.prototype.filter.call(array1, () => true);
+
+  // Proxy (function) objects do not have a [[Realm]] internal slot, realm retrieved from proxy target
+  // array1.constructor is from a different realm, filter() creates default Array instances
   assertTrue(Array.isArray(array2));
   assertSame(Array, array2.constructor);
   assertSame(Array.prototype, Object.getPrototypeOf(array2));
+  assertSameArray(array1, array2);
+}
+
+// filter() with proxied constructor and with different realm constructor (2)
+{
+  class MyArray extends Array { }
+  const ForeignArray = new Reflect.Realm().eval("Array");
+  const obj1 = {}, obj2 = {};
+  let array1 = new MyArray(obj1, obj2);
+  array1.constructor = new Proxy(array1.constructor, {});
+  let array2 = ForeignArray.prototype.filter.call(array1, () => true);
+
+  // Proxy (function) objects do not have a [[Realm]] internal slot, realm retrieved from proxy target
+  // array1.constructor is from a different realm, filter() creates default Array instances
+  assertTrue(Array.isArray(array2));
+  assertSame(ForeignArray, array2.constructor);
+  assertSame(ForeignArray.prototype, Object.getPrototypeOf(array2));
   assertSameArray(array1, array2);
 }
 
@@ -87,9 +123,82 @@ function assertSameArray(array1, array2) {
   array1.constructor = array1.constructor.bind(null);
   let array2 = array1.filter(() => true);
 
-  // Bound function objects do not have a [[Realm]] internal slot, filter() creates default Array instances
+  // Bound function objects do not have a [[Realm]] internal slot, realm retrieved from bound target
+  assertTrue(Array.isArray(array2));
+  assertSame(MyArray, array2.constructor);
+  assertSame(MyArray.prototype, Object.getPrototypeOf(array2));
+  assertSameArray(array1, array2);
+}
+
+// filter() with bound constructor and with different realm constructor (1a)
+{
+  const ForeignMyArray = new Reflect.Realm().eval(`
+    class MyArray extends Array { }
+    MyArray;
+  `);
+  const obj1 = {}, obj2 = {};
+  let array1 = new ForeignMyArray(obj1, obj2);
+  array1.constructor = array1.constructor.bind(null);
+  let array2 = Array.prototype.filter.call(array1, () => true);
+
+  // Bound function objects do not have a [[Realm]] internal slot, realm retrieved from bound target
+  // array1.constructor is from a different realm, filter() creates default Array instances
   assertTrue(Array.isArray(array2));
   assertSame(Array, array2.constructor);
   assertSame(Array.prototype, Object.getPrototypeOf(array2));
+  assertSameArray(array1, array2);
+}
+
+// filter() with bound constructor and with different realm constructor (1b)
+{
+  const ForeignMyArray = new Reflect.Realm().eval(`
+    class MyArray extends Array { }
+    MyArray;
+  `);
+  const obj1 = {}, obj2 = {};
+  let array1 = new ForeignMyArray(obj1, obj2);
+  array1.constructor = Function.prototype.bind.call(array1.constructor, null);
+  let array2 = Array.prototype.filter.call(array1, () => true);
+
+  // Bound function objects do not have a [[Realm]] internal slot, realm retrieved from bound target
+  // array1.constructor is from a different realm, filter() creates default Array instances
+  assertTrue(Array.isArray(array2));
+  assertSame(Array, array2.constructor);
+  assertSame(Array.prototype, Object.getPrototypeOf(array2));
+  assertSameArray(array1, array2);
+}
+
+// filter() with bound constructor and with different realm constructor (2a)
+{
+  class MyArray extends Array { }
+  const ForeignArray = new Reflect.Realm().eval("Array");
+  const obj1 = {}, obj2 = {};
+  let array1 = new MyArray(obj1, obj2);
+  array1.constructor = array1.constructor.bind(null);
+  let array2 = ForeignArray.prototype.filter.call(array1, () => true);
+
+  // Bound function objects do not have a [[Realm]] internal slot, realm retrieved from bound target
+  // array1.constructor is from a different realm, filter() creates default Array instances
+  assertTrue(Array.isArray(array2));
+  assertSame(ForeignArray, array2.constructor);
+  assertSame(ForeignArray.prototype, Object.getPrototypeOf(array2));
+  assertSameArray(array1, array2);
+}
+
+// filter() with bound constructor and with different realm constructor (2b)
+{
+  class MyArray extends Array { }
+  const ForeignArray = new Reflect.Realm().eval("Array");
+  const ForeignFunction = ForeignArray.constructor;
+  const obj1 = {}, obj2 = {};
+  let array1 = new MyArray(obj1, obj2);
+  array1.constructor = ForeignFunction.prototype.bind.call(array1.constructor, null);
+  let array2 = ForeignArray.prototype.filter.call(array1, () => true);
+
+  // Bound function objects do not have a [[Realm]] internal slot, realm retrieved from bound target
+  // array1.constructor is from a different realm, filter() creates default Array instances
+  assertTrue(Array.isArray(array2));
+  assertSame(ForeignArray, array2.constructor);
+  assertSame(ForeignArray.prototype, Object.getPrototypeOf(array2));
   assertSameArray(array1, array2);
 }
