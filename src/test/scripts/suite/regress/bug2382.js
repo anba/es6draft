@@ -27,4 +27,4 @@ let p2 = new Proxy(target, {
   }
 });
 
-assertDataProperty(p2, propertyName, {value: 1, enumerable: true, writable: true, configurable: false});
+assertDataProperty(p2, propertyName, {value: 1, enumerable: true, writable: true, configurable: true});

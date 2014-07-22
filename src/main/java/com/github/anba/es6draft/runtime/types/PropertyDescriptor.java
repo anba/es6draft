@@ -43,9 +43,6 @@ public final class PropertyDescriptor implements Cloneable {
     private boolean enumerable = false;
     private boolean configurable = false;
 
-    // [[Origin]]
-    private ScriptObject origin = null;
-
     /**
      * Constructs a new empty property descriptor record.
      */
@@ -66,7 +63,6 @@ public final class PropertyDescriptor implements Cloneable {
         writable = original.writable;
         enumerable = original.enumerable;
         configurable = original.configurable;
-        origin = original.origin;
     }
 
     /**
@@ -83,7 +79,6 @@ public final class PropertyDescriptor implements Cloneable {
         writable = original.isWritable();
         enumerable = original.isEnumerable();
         configurable = original.isConfigurable();
-        origin = original.getOrigin();
     }
 
     /**
@@ -163,20 +158,10 @@ public final class PropertyDescriptor implements Cloneable {
     /**
      * Converts this property descriptor to a {@link Property} object.
      * 
-     * @return the property record for this descriptor, excluding the origin field
-     */
-    public Property toPlainProperty() {
-        // [[Origin]] field must not be copied in this constructor, otherwise we'd create a leak
-        return new Property(this, null);
-    }
-
-    /**
-     * Converts this property descriptor to a {@link Property} object.
-     * 
-     * @return the property record for this descriptor, including the origin field
+     * @return the property record for this descriptor
      */
     public Property toProperty() {
-        return new Property(this, origin);
+        return new Property(this);
     }
 
     @Override
@@ -280,13 +265,9 @@ public final class PropertyDescriptor implements Cloneable {
         if (desc == null) {
             return UNDEFINED;
         }
-        /* step 2 */
-        if (desc.getOrigin() != null) {
-            return desc.getOrigin();
-        }
-        /* steps 3-4 */
+        /* steps 2-3 */
         OrdinaryObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        /* steps 5-10 */
+        /* steps 4-9 */
         if (desc.isDataDescriptor()) {
             obj.defineOwnProperty(cx, "value", _p(desc.getValue()));
             obj.defineOwnProperty(cx, "writable", _p(desc.isWritable()));
@@ -296,7 +277,7 @@ public final class PropertyDescriptor implements Cloneable {
         }
         obj.defineOwnProperty(cx, "enumerable", _p(desc.isEnumerable()));
         obj.defineOwnProperty(cx, "configurable", _p(desc.isConfigurable()));
-        /* step 11 */
+        /* step 10 */
         return obj;
     }
 
@@ -315,18 +296,13 @@ public final class PropertyDescriptor implements Cloneable {
     public static Object FromPropertyDescriptor(ExecutionContext cx, PropertyDescriptor desc)
             throws IllegalArgumentException {
         assert desc == null || !(desc.isDataDescriptor() && desc.isAccessorDescriptor());
-
         /* step 1 */
         if (desc == null) {
             return UNDEFINED;
         }
-        /* step 2 */
-        if (desc.origin != null) {
-            return desc.origin;
-        }
-        /* steps 3-4 */
+        /* steps 2-3 */
         OrdinaryObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        /* steps 5-10 */
+        /* steps 4-9 */
         if (desc.hasValue()) {
             obj.defineOwnProperty(cx, "value", _p(desc.getValue()));
         }
@@ -345,7 +321,7 @@ public final class PropertyDescriptor implements Cloneable {
         if (desc.hasConfigurable()) {
             obj.defineOwnProperty(cx, "configurable", _p(desc.isConfigurable()));
         }
-        /* step 11 */
+        /* step 10 */
         return obj;
     }
 
@@ -412,8 +388,6 @@ public final class PropertyDescriptor implements Cloneable {
             throw newTypeError(cx, Messages.Key.InvalidDescriptor);
         }
         /* step 11 */
-        desc.origin = obj;
-        /* step 12 */
         return desc;
     }
 
@@ -702,14 +676,5 @@ public final class PropertyDescriptor implements Cloneable {
     public final void setConfigurable(boolean configurable) {
         present |= CONFIGURABLE;
         this.configurable = configurable;
-    }
-
-    /**
-     * Returns the <tt>[[Origin]]</tt> field.
-     * 
-     * @return the origin field
-     */
-    public ScriptObject getOrigin() {
-        return origin;
     }
 }

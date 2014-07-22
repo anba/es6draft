@@ -24,9 +24,7 @@ const {
   });
   assertThrows(() => Object.getOwnPropertyDescriptor(p1, propertyName), TypeError);
 
-  // Now test how [[Origin]] can fool callers of Object.getOwnPropertyDescriptor(). Idea:
-  // - report the property as configurable when testing the object integrity rules in Proxy
-  // - but then change the property descriptor object to report the property as non-configurable
+  // Getters mutating property descriptor record have no effect
   let p2 = new Proxy(target, {
     getOwnPropertyDescriptor(t, pk) {
       return {
@@ -40,13 +38,11 @@ const {
     }
   });
   let desc = Object.getOwnPropertyDescriptor(p2, propertyName);
-  assertSame(1, desc.value);
-  assertSame(false, desc.configurable);
-  assertSame(true, desc.writable);
-  assertSame(true, desc.enumerable);
+  let normalizedDesc = {value: 1, writable: true, enumerable: true, configurable: true};
+  assertEquals(normalizedDesc, desc);
 }
 
-// Object.getOwnPropertyDescriptor() no longer returns either undefined or an object with Object.prototype as [[Prototype]]
+// Object.getOwnPropertyDescriptor() returns either undefined or an object with Object.prototype as [[Prototype]]
 {
   let p = new Proxy({}, {
     getOwnPropertyDescriptor() {
@@ -54,10 +50,12 @@ const {
       return Object.assign(() => {}, {configurable: true});
     }
   });
-  assertSame("function", typeof Object.getOwnPropertyDescriptor(p, "propertyName"));
+  let desc = Object.getOwnPropertyDescriptor(p, "propertyName");
+  assertSame("object", typeof desc);
+  assertSame(Object.prototype, Object.getPrototypeOf(desc));
 }
 
-// Object.getOwnPropertyDescriptor() returns an empty object
+// Object.getOwnPropertyDescriptor() returns a normalized property descriptor
 {
   let p = new Proxy({}, {
     getOwnPropertyDescriptor() {
@@ -70,5 +68,6 @@ const {
       };
     }
   });
-  assertEquals({}, Object.getOwnPropertyDescriptor(p, "propertyName"));
+  let normalizedDesc = {value: void 0, writable: false, enumerable: false, configurable: true};
+  assertEquals(normalizedDesc, Object.getOwnPropertyDescriptor(p, "propertyName"));
 }

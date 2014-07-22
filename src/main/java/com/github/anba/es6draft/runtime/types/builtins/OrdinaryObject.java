@@ -641,12 +641,12 @@ public class OrdinaryObject implements ScriptObject {
             }
             if (desc.isGenericDescriptor() || desc.isDataDescriptor()) {
                 if (object != null) {
-                    object.put(propertyKey, desc.toPlainProperty());
+                    object.put(propertyKey, desc.toProperty());
                 }
             } else {
                 assert desc.isAccessorDescriptor();
                 if (object != null) {
-                    object.put(propertyKey, desc.toPlainProperty());
+                    object.put(propertyKey, desc.toProperty());
                 }
             }
             return true;
@@ -743,12 +743,12 @@ public class OrdinaryObject implements ScriptObject {
             }
             if (desc.isGenericDescriptor() || desc.isDataDescriptor()) {
                 if (object != null) {
-                    object.put(propertyKey, desc.toPlainProperty());
+                    object.put(propertyKey, desc.toProperty());
                 }
             } else {
                 assert desc.isAccessorDescriptor();
                 if (object != null) {
-                    object.put(propertyKey, desc.toPlainProperty());
+                    object.put(propertyKey, desc.toProperty());
                 }
             }
             return true;

@@ -29,7 +29,6 @@ public final class Property implements Cloneable {
     private boolean writable;
     private boolean enumerable;
     private boolean configurable;
-    private ScriptObject origin;
 
     /**
      * Copy constructor.
@@ -45,7 +44,6 @@ public final class Property implements Cloneable {
         writable = original.writable;
         enumerable = original.enumerable;
         configurable = original.configurable;
-        origin = original.origin;
     }
 
     /**
@@ -55,10 +53,8 @@ public final class Property implements Cloneable {
      * 
      * @param original
      *            the source property descriptor
-     * @param originObject
-     *            the origin object, may be {@code null}
      */
-    Property(PropertyDescriptor original, ScriptObject originObject) {
+    Property(PropertyDescriptor original) {
         type = original.isAccessorDescriptor() ? Type.AccessorProperty : Type.DataProperty;
         value = original.getValue();
         getter = original.getGetter();
@@ -66,7 +62,6 @@ public final class Property implements Cloneable {
         writable = original.isWritable();
         enumerable = original.isEnumerable();
         configurable = original.isConfigurable();
-        origin = originObject;
     }
 
     /**
@@ -324,14 +319,5 @@ public final class Property implements Cloneable {
      */
     public final boolean isConfigurable() {
         return configurable;
-    }
-
-    /**
-     * Returns the <tt>[[Origin]]</tt> field.
-     * 
-     * @return the origin field
-     */
-    public final ScriptObject getOrigin() {
-        return origin;
     }
 }
