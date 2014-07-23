@@ -59,10 +59,10 @@ function assertMethodName(o, pk, name) {
   assertMethodName(m2, symbolWithoutDescription, "");
 
   let g2 = class {static get [symbolWithoutDescription](){}};
-  assertMethodName(g2, symbolWithoutDescription, "");
+  assertMethodName(g2, symbolWithoutDescription, "get ");
 
   let s2 = class {static set [symbolWithoutDescription](_){}};
-  assertMethodName(s2, symbolWithoutDescription, "");
+  assertMethodName(s2, symbolWithoutDescription, "set ");
 
   let gm2 = class {static *[symbolWithoutDescription](){}};
   assertMethodName(gm2, symbolWithoutDescription, "");

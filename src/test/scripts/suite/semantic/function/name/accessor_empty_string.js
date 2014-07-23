@@ -26,14 +26,14 @@ function assertMethodName(o, pk, name) {
   // - MethodDefinition : set PropertyName ( PropertySetParameterList ) { FunctionBody }
   // 9.2.10  SetFunctionName Abstract Operation, step 4
   let g0 = {get ""(){}};
-  assertMethodName(g0, "", "");
+  assertMethodName(g0, "", "get ");
 
   let s0 = {set ""(_){}};
-  assertMethodName(s0, "", "");
+  assertMethodName(s0, "", "set ");
 
   let g1 = {get [""](){}};
-  assertMethodName(g1, "", "");
+  assertMethodName(g1, "", "get ");
 
   let s1 = {set [""](_){}};
-  assertMethodName(s1, "", "");
+  assertMethodName(s1, "", "set ");
 }

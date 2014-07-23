@@ -406,7 +406,7 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 2 (implicit) */
         /* step 3 (not applicable) */
         /* step 4 */
-        if (!name.isEmpty() && prefix != null) {
+        if (prefix != null) {
             name = prefix + " " + name;
         }
         /* step 5 */
@@ -467,7 +467,7 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 2 (implicit) */
         /* step 3 (not applicable) */
         /* step 4 */
-        if (!name.isEmpty() && prefix != null) {
+        if (prefix != null) {
             name = prefix + " " + name;
         }
         /* step 5 */
