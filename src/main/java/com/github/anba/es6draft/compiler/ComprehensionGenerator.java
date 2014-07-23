@@ -66,15 +66,15 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
         static final MethodDesc ScriptRuntime_enumerate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "enumerate",
-                Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
+                Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_enumerateValues = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "enumerateValues",
-                Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
+                Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "iterate",
-                Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
+                Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
     }
 
     private Iterator<Node> elements;

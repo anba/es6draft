@@ -19,6 +19,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -1367,7 +1368,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 9.1.11 [[Enumerate]] () */
     @Override
-    public final Iterator<?> enumerateKeys(ExecutionContext cx) {
+    public final ScriptIterator<?> enumerateKeys(ExecutionContext cx) {
         return new EnumKeysIterator(cx, this);
     }
 
@@ -1407,12 +1408,14 @@ public class OrdinaryObject implements ScriptObject {
         return prop != null && prop.isEnumerable();
     }
 
-    private static final class EnumKeysIterator extends SimpleIterator<Object> {
+    private static final class EnumKeysIterator extends SimpleIterator<Object> implements
+            ScriptIterator<Object> {
         private final ExecutionContext cx;
         private OrdinaryObject obj;
         private HashSet<Object> visitedKeys = new HashSet<>();
         private Iterator<String> keys;
         private Iterator<?> protoKeys;
+        private ScriptObject scriptIter;
 
         EnumKeysIterator(ExecutionContext cx, OrdinaryObject obj) {
             this.cx = cx;
@@ -1462,6 +1465,14 @@ public class OrdinaryObject implements ScriptObject {
                 this.protoKeys = null;
             }
             return null;
+        }
+
+        @Override
+        public ScriptObject getScriptObject() {
+            if (scriptIter == null) {
+                scriptIter = CreateListIterator(cx, this);
+            }
+            return scriptIter;
         }
     }
 

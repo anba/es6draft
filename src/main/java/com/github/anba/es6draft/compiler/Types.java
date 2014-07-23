@@ -26,6 +26,7 @@ import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
@@ -142,4 +143,5 @@ final class Types {
     static final Type RuntimeInfo$Function = Type.getType(RuntimeInfo.Function.class);
     static final Type RuntimeInfo$ScriptBody = Type.getType(RuntimeInfo.ScriptBody.class);
     static final Type ScriptException = Type.getType(ScriptException.class);
+    static final Type ScriptIterator = Type.getType(ScriptIterator.class);
 }

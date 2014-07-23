@@ -770,14 +770,19 @@ final class CodeGenerator {
         body.lineInfo(node);
         body.begin();
         Variable<ResumptionPoint> resume = body.getParameter(1, ResumptionPoint.class);
-        GeneratorState state = body.prologue(resume);
+        GeneratorState state = null;
+        if (body.isResumable() && !isEnabled(Compiler.Option.NoResume)) {
+            state = body.prologue(resume);
+        }
 
         body.enterScope(node);
         expressionBoxedValue(node.getExpression(), body);
         body.exitScope();
 
         body.areturn();
-        body.epilogue(resume, state);
+        if (state != null) {
+            body.epilogue(resume, state);
+        }
         body.end();
 
         return body.hasTailCalls();
@@ -794,7 +799,10 @@ final class CodeGenerator {
         body.lineInfo(node);
         body.begin();
         Variable<ResumptionPoint> resume = body.getParameter(1, ResumptionPoint.class);
-        GeneratorState state = body.prologue(resume);
+        GeneratorState state = null;
+        if (body.isResumable() && !isEnabled(Compiler.Option.NoResume)) {
+            state = body.prologue(resume);
+        }
 
         body.enterScope(node);
         Completion result = statements(node.getStatements(), body);
@@ -806,7 +814,9 @@ final class CodeGenerator {
             body.areturn();
         }
 
-        body.epilogue(resume, state);
+        if (state != null) {
+            body.epilogue(resume, state);
+        }
         body.end();
 
         return body.hasTailCalls();
@@ -818,7 +828,10 @@ final class CodeGenerator {
         body.lineInfo(node);
         body.begin();
         Variable<ResumptionPoint> resume = body.getParameter(1, ResumptionPoint.class);
-        GeneratorState state = body.prologue(resume);
+        GeneratorState state = null;
+        if (body.isResumable() && !isEnabled(Compiler.Option.NoResume)) {
+            state = body.prologue(resume);
+        }
 
         body.enterScope(node);
         node.accept(new GeneratorComprehensionGenerator(this), body);
@@ -827,7 +840,9 @@ final class CodeGenerator {
         body.loadUndefined();
         body.areturn();
 
-        body.epilogue(resume, state);
+        if (state != null) {
+            body.epilogue(resume, state);
+        }
         body.end();
 
         return body.hasTailCalls();

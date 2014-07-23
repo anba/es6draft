@@ -737,7 +737,7 @@ class InstructionVisitor extends InstructionAdapter {
      * @param length
      *            the array length
      * @param type
-     *            the array type
+     *            the array component type
      */
     public void newarray(int length, Type type) {
         iconst(length);

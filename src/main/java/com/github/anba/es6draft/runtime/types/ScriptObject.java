@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.types;
 import java.util.Iterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
 /**
@@ -296,7 +297,7 @@ public interface ScriptObject {
      *            the execution context
      * @return the enumeration iterator object
      */
-    Iterator<?> enumerateKeys(ExecutionContext cx);
+    ScriptIterator<?> enumerateKeys(ExecutionContext cx);
 
     /**
      * [[OwnPropertyKeys]] ( )

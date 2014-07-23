@@ -9,10 +9,8 @@ package com.github.anba.es6draft.compiler;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.objectweb.asm.Label;
 
@@ -30,30 +28,32 @@ import com.github.anba.es6draft.compiler.JumpLabel.TempLabel;
 abstract class StatementVisitor extends ExpressionVisitor {
     private static final class Labels {
         // unlabelled breaks and continues
-        final Deque<JumpLabel> breakTargets = new ArrayDeque<>(4);
-        final Deque<JumpLabel> continueTargets = new ArrayDeque<>(4);
+        final ArrayDeque<JumpLabel> breakTargets = new ArrayDeque<>(4);
+        final ArrayDeque<JumpLabel> continueTargets = new ArrayDeque<>(4);
 
         // labelled breaks and continues
-        final Map<String, JumpLabel> namedBreakLabels = new HashMap<>(4);
-        final Map<String, JumpLabel> namedContinueLabels = new HashMap<>(4);
+        final HashMap<String, JumpLabel> namedBreakLabels = new HashMap<>(4);
+        final HashMap<String, JumpLabel> namedContinueLabels = new HashMap<>(4);
 
         JumpLabel returnLabel = null;
 
         // label after last catch node
-        final Deque<Label> catchLabels = new ArrayDeque<>(4);
+        final ArrayDeque<Label> catchLabels = new ArrayDeque<>(4);
 
         // temporary labels in try-catch-finally blocks
-        List<TempLabel> tempLabels = null;
+        ArrayList<TempLabel> tempLabels = null;
 
         final Labels parent;
         final Variable<Object> completion;
+        final boolean isFinallyScope;
 
-        Labels(Labels parent, Variable<Object> completion) {
+        Labels(Labels parent, Variable<Object> completion, boolean isFinallyScope) {
             this.parent = parent;
             this.completion = completion;
+            this.isFinallyScope = isFinallyScope;
         }
 
-        TempLabel newTemp(JumpLabel actual) {
+        private TempLabel newTemp(JumpLabel actual) {
             assert actual != null;
             TempLabel temp = new TempLabel(actual);
             if (tempLabels == null) {
@@ -63,10 +63,36 @@ abstract class StatementVisitor extends ExpressionVisitor {
             return temp;
         }
 
+        private JumpLabel getBreakLabel(String name) {
+            return name == null ? breakTargets.peek() : namedBreakLabels.get(name);
+        }
+
+        private void setBreakLabel(String name, JumpLabel label) {
+            if (name == null) {
+                assert breakTargets.isEmpty();
+                breakTargets.push(label);
+            } else {
+                namedBreakLabels.put(name, label);
+            }
+        }
+
+        private JumpLabel getContinueLabel(String name) {
+            return name == null ? continueTargets.peek() : namedContinueLabels.get(name);
+        }
+
+        private void setContinueLabel(String name, JumpLabel label) {
+            if (name == null) {
+                assert continueTargets.isEmpty();
+                continueTargets.push(label);
+            } else {
+                namedContinueLabels.put(name, label);
+            }
+        }
+
         JumpLabel returnLabel() {
             JumpLabel lbl = returnLabel;
             if (lbl == null) {
-                assert parent != null;
+                assert parent != null : "return outside of function";
                 lbl = newTemp(parent.returnLabel());
                 returnLabel = lbl;
             }
@@ -74,40 +100,22 @@ abstract class StatementVisitor extends ExpressionVisitor {
         }
 
         JumpLabel breakLabel(String name) {
-            JumpLabel label;
-            if (name == null) {
-                label = breakTargets.peek();
-            } else {
-                label = namedBreakLabels.get(name);
-            }
+            JumpLabel label = getBreakLabel(name);
             if (label == null) {
-                assert parent != null;
+                assert parent != null : "Label not found: " + name;
                 label = newTemp(parent.breakLabel(name));
-                if (name == null) {
-                    assert breakTargets.isEmpty();
-                    breakTargets.push(label);
-                } else {
-                    namedBreakLabels.put(name, label);
-                }
+                setBreakLabel(name, label);
             }
             return label;
         }
 
         JumpLabel continueLabel(String name) {
-            JumpLabel label;
-            if (name == null) {
-                label = continueTargets.peek();
-            } else {
-                label = namedContinueLabels.get(name);
-            }
+            JumpLabel label = getContinueLabel(name);
             if (label == null) {
-                assert parent != null;
-                label = newTemp(parent.continueLabel(name));
-                if (name == null) {
-                    assert continueTargets.isEmpty();
-                    continueTargets.push(label);
-                } else {
-                    namedContinueLabels.put(name, label);
+                assert parent != null : "Label not found: " + name;
+                label = parent.continueLabel(name);
+                if (isFinallyScope) {
+                    setContinueLabel(name, label = newTemp(label));
                 }
             }
             return label;
@@ -125,7 +133,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
     private final boolean isScriptCode;
     private final boolean isGeneratorOrAsync;
     private Variable<Object> completionValue;
-    private Labels labels = new Labels(null, null);
+    private Labels labels = new Labels(null, null, false);
     private int finallyDepth = 0;
 
     // tail-call support
@@ -185,6 +193,15 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     /**
+     * Returns {@code true} if compiling generator or async function code.
+     * 
+     * @return {@code true} if generator or async function
+     */
+    boolean isGeneratorOrAsync() {
+        return isGeneratorOrAsync;
+    }
+
+    /**
      * Pushes the completion value onto the stack.
      */
     void loadCompletionValue() {
@@ -223,16 +240,11 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * 
      * @return <code>true</code> if currently in a finally block
      */
-    private boolean isFinallyScoped() {
+    private boolean isAbruptRegion() {
         return labels.parent != null;
     }
 
-    /**
-     * Enter a finally scoped block.
-     * 
-     * @return the temporary completion object variable
-     */
-    Variable<Object> enterFinallyScoped() {
+    private Variable<Object> enterAbruptRegion(boolean isFinallyScope) {
         assert labels != null;
         Variable<Object> completion = labels.completion;
         if (completion == null) {
@@ -241,8 +253,43 @@ abstract class StatementVisitor extends ExpressionVisitor {
             aconst(null);
             store(completion);
         }
-        labels = new Labels(labels, completion);
+        labels = new Labels(labels, completion, isFinallyScope);
         return completion;
+    }
+
+    private List<TempLabel> exitAbruptRegion(boolean isFinallyScope) {
+        assert labels.isFinallyScope == isFinallyScope;
+        ArrayList<TempLabel> tempLabels = labels.tempLabels;
+        labels = labels.parent;
+        assert labels != null;
+        return tempLabels != null ? tempLabels : Collections.<TempLabel> emptyList();
+    }
+
+    /**
+     * Enter an iteration body block.
+     * 
+     * @return the temporary completion object variable
+     */
+    Variable<Object> enterIterationBody() {
+        return enterAbruptRegion(false);
+    }
+
+    /**
+     * Exit an iteration body block.
+     * 
+     * @return the list of generated labels
+     */
+    List<TempLabel> exitIterationBody() {
+        return exitAbruptRegion(false);
+    }
+
+    /**
+     * Enter a finally scoped block.
+     * 
+     * @return the temporary completion object variable
+     */
+    Variable<Object> enterFinallyScoped() {
+        return enterAbruptRegion(true);
     }
 
     /**
@@ -251,10 +298,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * @return the list of generated labels
      */
     List<TempLabel> exitFinallyScoped() {
-        List<TempLabel> tempLabels = labels.tempLabels;
-        labels = labels.parent;
-        assert labels != null;
-        return tempLabels != null ? tempLabels : Collections.<TempLabel> emptyList();
+        return exitAbruptRegion(true);
     }
 
     /**
@@ -434,11 +478,9 @@ abstract class StatementVisitor extends ExpressionVisitor {
         labels.catchLabels.pop();
     }
 
-    /**
-     * Pops the stack's top element and emits a return instruction.
-     */
+    @Override
     void returnCompletion() {
-        if (isFinallyScoped()) {
+        if (isAbruptRegion()) {
             // If currently enclosed by a finally scoped block, store value in completion register
             // and jump to (temporary) return label
             store(labels.completion);

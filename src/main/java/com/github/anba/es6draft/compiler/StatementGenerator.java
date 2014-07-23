@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunc
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
 
-import java.util.Iterator;
 import java.util.List;
 
 import org.objectweb.asm.Label;
@@ -28,7 +27,9 @@ import com.github.anba.es6draft.compiler.JumpLabel.ContinueLabel;
 import com.github.anba.es6draft.compiler.JumpLabel.TempLabel;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 
 /**
  *
@@ -108,6 +109,16 @@ final class StatementGenerator extends
     }
 
     private static final class Methods {
+        // class: AbstractOperations
+        static final MethodDesc AbstractOperations_HasProperty = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "HasProperty", Type
+                        .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
+                                Types.ScriptObject, Types.String));
+
+        static final MethodDesc AbstractOperations_Invoke = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "Invoke", Type.getMethodType(Types.Object,
+                        Types.ExecutionContext, Types.ScriptObject, Types.String, Types.Object_));
+
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
                 MethodType.Interface, Types.EnvironmentRecord, "createMutableBinding",
@@ -142,6 +153,11 @@ final class StatementGenerator extends
         static final MethodDesc ScriptException_getValue = MethodDesc.create(MethodType.Virtual,
                 Types.ScriptException, "getValue", Type.getMethodType(Types.Object));
 
+        // class: ScriptIterator
+        static final MethodDesc ScriptIterator_getScriptObject = MethodDesc.create(
+                MethodType.Interface, Types.ScriptIterator, "getScriptObject",
+                Type.getMethodType(Types.ScriptObject));
+
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_debugger = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "debugger", Type.getMethodType(Type.VOID_TYPE));
@@ -152,11 +168,11 @@ final class StatementGenerator extends
 
         static final MethodDesc ScriptRuntime_enumerate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "enumerate",
-                Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
+                Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_enumerateValues = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "enumerateValues",
-                Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
+                Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_getStackOverflowError = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "getStackOverflowError",
@@ -168,7 +184,7 @@ final class StatementGenerator extends
 
         static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "iterate",
-                Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
+                Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_toInternalError = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "toInternalError", Type.getMethodType(
@@ -643,11 +659,11 @@ final class StatementGenerator extends
 
         mv.enterVariableScope();
         Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(node, mv);
-        @SuppressWarnings("rawtypes")
-        Variable<Iterator> iter = mv.newVariable("iter", Iterator.class);
+        Variable<ScriptIterator<?>> iterator = mv.newVariable("iter", ScriptIterator.class)
+                .uncheckedCast();
 
         // stack: [Iterator] -> []
-        mv.store(iter);
+        mv.store(iterator);
 
         /* steps 1-2 (not applicable) */
         /* step 3 (repeat loop) */
@@ -655,9 +671,172 @@ final class StatementGenerator extends
         mv.mark(loopbody);
 
         /* steps 3d-3e */
-        mv.load(iter);
+        mv.load(iterator);
         mv.invoke(Methods.Iterator_next);
 
+        Completion result;
+        {
+            mv.enterIteration(node, lblBreak, lblContinue);
+            result = ForInOfBodyEvaluationWrap(node, lhs, stmt, iterator, lblContinue, mv);
+            mv.exitIteration(node);
+        }
+
+        /* steps 3j-3k */
+        mv.mark(lblContinue);
+        if (lblContinue.isUsed()) {
+            restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
+        }
+
+        /* steps 3a-3c */
+        mv.load(iterator);
+        mv.invoke(Methods.Iterator_hasNext);
+        mv.ifne(loopbody);
+
+        /* steps 3j-3k */
+        if (lblBreak.isUsed()) {
+            mv.mark(lblBreak);
+            restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        }
+        mv.exitVariableScope();
+
+        return result.normal(lblContinue.isUsed() || lblBreak.isUsed()).select(Completion.Normal);
+    }
+
+    private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion ForInOfBodyEvaluationWrap(
+            FORSTATEMENT node, Node lhs, Statement stmt, Variable<ScriptIterator<?>> iterator,
+            ContinueLabel lblContinue, StatementVisitor mv) {
+        LocationLabel startIteration = new LocationLabel(), endIteration = new LocationLabel();
+        LocationLabel handlerCatch = new LocationLabel();
+        LocationLabel handlerCatchStackOverflow = new LocationLabel();
+        LocationLabel handlerReturn = null;
+        if (mv.isGeneratorOrAsync()
+                && !(mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume))) {
+            handlerReturn = new LocationLabel();
+        }
+
+        mv.enterVariableScope();
+        Variable<Object> completion = mv.enterIterationBody();
+
+        // Emit loop body
+        mv.mark(startIteration);
+        mv.enterWrapped();
+        Completion loopBodyResult = ForInOfBodyEvaluationInner(node, lhs, stmt, mv);
+        mv.exitWrapped();
+        if (!loopBodyResult.isAbrupt()) {
+            mv.goTo(lblContinue);
+        }
+        mv.mark(endIteration);
+
+        // Restore temporary abrupt targets
+        List<TempLabel> tempLabels = mv.exitIterationBody();
+
+        // Emit throw handler
+        Completion throwResult = emitForInOfThrowHandler(iterator, handlerCatch,
+                handlerCatchStackOverflow, mv);
+
+        // Emit return handler
+        Completion returnResult = emitForInOfReturnHandler(iterator, completion, handlerReturn,
+                tempLabels, mv);
+
+        mv.exitVariableScope();
+        mv.tryCatch(startIteration, endIteration, handlerCatch, Types.ScriptException);
+        mv.tryCatch(startIteration, endIteration, handlerCatchStackOverflow, Types.Error);
+        if (handlerReturn != null) {
+            mv.tryCatch(startIteration, endIteration, handlerReturn, Types.ReturnValue);
+        }
+
+        if (handlerReturn == null && tempLabels.isEmpty()) {
+            // No Return handler installed
+            return throwResult.select(loopBodyResult);
+        }
+        return returnResult.select(throwResult.select(loopBodyResult));
+    }
+
+    private Completion emitForInOfThrowHandler(Variable<ScriptIterator<?>> iterator,
+            LocationLabel handlerCatch, LocationLabel handlerCatchStackOverflow, StatementVisitor mv) {
+        // StackOverflowError -> ScriptException
+        mv.enterVariableScope();
+        Variable<ScriptException> exception = mv.newVariable("exception", ScriptException.class);
+
+        mv.catchHandler(handlerCatchStackOverflow, Types.Error);
+        mv.invoke(Methods.ScriptRuntime_getStackOverflowError);
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_toInternalError);
+
+        mv.catchHandler(handlerCatch, Types.ScriptException);
+        mv.store(exception);
+
+        InvokeIfPresent(iterator, "throw", exception, mv);
+
+        mv.load(exception);
+        mv.athrow();
+        mv.exitVariableScope();
+
+        return Completion.Throw;
+    }
+
+    private Completion emitForInOfReturnHandler(Variable<ScriptIterator<?>> iterator,
+            Variable<Object> completion, LocationLabel handlerReturn, List<TempLabel> tempLabels,
+            StatementVisitor mv) {
+        // (1) Optional ReturnValue exception handler
+        if (handlerReturn != null) {
+            mv.enterVariableScope();
+            Variable<ReturnValue> returnValue = mv.newVariable("throwable", ReturnValue.class);
+            mv.catchHandler(handlerReturn, Types.ReturnValue);
+            mv.store(returnValue);
+
+            InvokeIfPresent(iterator, "return", null, mv);
+
+            mv.load(returnValue);
+            mv.athrow();
+            mv.exitVariableScope();
+        }
+
+        // (2) Intercept return/break instructions
+        for (TempLabel temp : tempLabels) {
+            mv.mark(temp);
+
+            InvokeIfPresent(iterator, "return", null, mv);
+
+            mv.goTo(temp, completion);
+        }
+
+        return Completion.Abrupt; // Return or Break
+    }
+
+    private void InvokeIfPresent(Variable<ScriptIterator<?>> iterator, String name,
+            Variable<ScriptException> exception, StatementVisitor mv) {
+        Label hasOwn = new Label();
+        mv.loadExecutionContext();
+        mv.load(iterator);
+        mv.invoke(Methods.ScriptIterator_getScriptObject);
+        mv.aconst(name);
+        mv.invoke(Methods.AbstractOperations_HasProperty);
+        mv.ifeq(hasOwn);
+        {
+            mv.loadExecutionContext();
+            mv.load(iterator);
+            mv.invoke(Methods.ScriptIterator_getScriptObject);
+            mv.aconst(name);
+            if (exception != null) {
+                mv.newarray(1, Types.Object);
+
+                mv.dup();
+                mv.iconst(0);
+                mv.load(exception);
+                mv.invoke(Methods.ScriptException_getValue);
+                mv.astore(Types.Object);
+            } else {
+                mv.newarray(0, Types.Object);
+            }
+            mv.invoke(Methods.AbstractOperations_Invoke);
+            mv.pop();
+        }
+        mv.mark(hasOwn);
+    }
+
+    private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion ForInOfBodyEvaluationInner(
+            FORSTATEMENT node, Node lhs, Statement stmt, StatementVisitor mv) {
         /* steps 3f-3h */
         if (lhs instanceof Expression) {
             /* step 3f.i */
@@ -723,12 +902,7 @@ final class StatementGenerator extends
         }
 
         /* step 3i */
-        Completion result;
-        {
-            mv.enterIteration(node, lblBreak, lblContinue);
-            result = stmt.accept(this, mv);
-            mv.exitIteration(node);
-        }
+        Completion result = stmt.accept(this, mv);
 
         /* step 3j */
         if (lhs instanceof LexicalDeclaration) {
@@ -738,26 +912,7 @@ final class StatementGenerator extends
                 popLexicalEnvironment(mv);
             }
         }
-
-        /* steps 3j-3k */
-        mv.mark(lblContinue);
-        if (lblContinue.isUsed()) {
-            restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
-        }
-
-        /* steps 3a-3c */
-        mv.load(iter);
-        mv.invoke(Methods.Iterator_hasNext);
-        mv.ifne(loopbody);
-
-        /* steps 3j-3k */
-        if (lblBreak.isUsed()) {
-            mv.mark(lblBreak);
-            restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
-        }
-        mv.exitVariableScope();
-
-        return result.normal(lblContinue.isUsed() || lblBreak.isUsed()).select(Completion.Normal);
+        return result;
     }
 
     /**
@@ -1199,6 +1354,11 @@ final class StatementGenerator extends
         LocationLabel endFinally = new LocationLabel(), handlerFinally = new LocationLabel();
         LocationLabel handlerCatchStackOverflow = new LocationLabel();
         LocationLabel handlerFinallyStackOverflow = new LocationLabel();
+        LocationLabel handlerReturn = null;
+        if (mv.isGeneratorOrAsync()
+                && !(mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume))) {
+            handlerReturn = new LocationLabel();
+        }
         Label noException = new Label();
 
         mv.enterVariableScope();
@@ -1226,12 +1386,15 @@ final class StatementGenerator extends
         /* step 4 */
         // Emit finally-block
         Completion finallyResult = emitFinallyBlock(node, savedEnv, completion, tryResult,
-                catchResult, handlerFinally, handlerFinallyStackOverflow, noException, tempLabels,
-                mv);
+                catchResult, handlerFinally, handlerFinallyStackOverflow, handlerReturn,
+                noException, tempLabels, mv);
 
         mv.exitVariableScope();
         mv.tryCatch(startCatchFinally, endCatch, handlerCatch, Types.ScriptException);
         mv.tryCatch(startCatchFinally, endCatch, handlerCatchStackOverflow, Types.Error);
+        if (handlerReturn != null) {
+            mv.tryCatch(startCatchFinally, endFinally, handlerReturn, Types.ReturnValue);
+        }
         mv.tryCatch(startCatchFinally, endFinally, handlerFinally, Types.ScriptException);
         mv.tryCatch(startCatchFinally, endFinally, handlerFinallyStackOverflow, Types.Error);
 
@@ -1298,6 +1461,11 @@ final class StatementGenerator extends
         LocationLabel startFinally = new LocationLabel(), endFinally = new LocationLabel();
         LocationLabel handlerFinally = new LocationLabel();
         LocationLabel handlerFinallyStackOverflow = new LocationLabel();
+        LocationLabel handlerReturn = null;
+        if (mv.isGeneratorOrAsync()
+                && !(mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume))) {
+            handlerReturn = new LocationLabel();
+        }
         Label noException = new Label();
 
         mv.enterVariableScope();
@@ -1316,10 +1484,13 @@ final class StatementGenerator extends
         /* step 2 */
         // Emit finally-block
         Completion finallyResult = emitFinallyBlock(node, savedEnv, completion, tryResult,
-                Completion.Abrupt, handlerFinally, handlerFinallyStackOverflow, noException,
-                tempLabels, mv);
+                Completion.Abrupt, handlerFinally, handlerFinallyStackOverflow, handlerReturn,
+                noException, tempLabels, mv);
 
         mv.exitVariableScope();
+        if (handlerReturn != null) {
+            mv.tryCatch(startFinally, endFinally, handlerReturn, Types.ReturnValue);
+        }
         mv.tryCatch(startFinally, endFinally, handlerFinally, Types.ScriptException);
         mv.tryCatch(startFinally, endFinally, handlerFinallyStackOverflow, Types.Error);
 
@@ -1398,8 +1569,8 @@ final class StatementGenerator extends
     private Completion emitFinallyBlock(TryStatement node,
             Variable<LexicalEnvironment<?>> savedEnv, Variable<Object> completion,
             Completion tryResult, Completion catchResult, LocationLabel handlerFinally,
-            LocationLabel handlerFinallyStackOverflow, Label noException,
-            List<TempLabel> tempLabels, StatementVisitor mv) {
+            LocationLabel handlerFinallyStackOverflow, LocationLabel handlerReturn,
+            Label noException, List<TempLabel> tempLabels, StatementVisitor mv) {
         BlockStatement finallyBlock = node.getFinallyBlock();
         assert finallyBlock != null;
 
@@ -1410,6 +1581,9 @@ final class StatementGenerator extends
         mv.catchHandler(handlerFinallyStackOverflow, Types.Error);
         mv.invoke(Methods.ScriptRuntime_getStackOverflowError);
         mv.catchHandler(handlerFinally, Types.ScriptException);
+        if (handlerReturn != null) {
+            mv.catchHandler(handlerReturn, Types.ReturnValue);
+        }
         mv.store(throwable);
         restoreEnvironment(savedEnv, mv);
         Completion finallyResult = emitFinallyBlock(finallyBlock, mv);
@@ -1425,7 +1599,7 @@ final class StatementGenerator extends
         if (!tryResult.isAbrupt() || !catchResult.isAbrupt()) {
             mv.mark(noException);
             emitFinallyBlock(finallyBlock, mv);
-            if (!finallyResult.isAbrupt()) {
+            if (!finallyResult.isAbrupt() && !tempLabels.isEmpty()) {
                 exceptionHandled = new Label();
                 mv.goTo(exceptionHandled);
             }

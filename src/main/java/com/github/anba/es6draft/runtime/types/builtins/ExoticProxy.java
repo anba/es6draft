@@ -26,6 +26,7 @@ import java.util.Iterator;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Null;
@@ -956,7 +957,7 @@ public class ExoticProxy implements ScriptObject {
      * 9.5.11 [[Enumerate]] ()
      */
     @Override
-    public Iterator<?> enumerateKeys(ExecutionContext cx) {
+    public ScriptIterator<?> enumerateKeys(ExecutionContext cx) {
         return FromScriptIterator(cx, enumerate(cx));
     }
 

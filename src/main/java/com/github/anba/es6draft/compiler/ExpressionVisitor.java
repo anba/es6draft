@@ -131,8 +131,8 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         return globalCode;
     }
 
-    boolean hasSyntheticMethods() {
-        return syntheticMethods;
+    boolean isResumable() {
+        return !syntheticMethods;
     }
 
     void enterClassDefinition() {
@@ -194,6 +194,13 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     }
 
     /**
+     * Pops the stack's top element and emits a return instruction.
+     */
+    void returnCompletion() {
+        areturn();
+    }
+
+    /**
      * Current execution state (locals + stack + ip)
      */
     private static final class ExecutionState {
@@ -233,7 +240,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     }
 
     static final class GeneratorState {
-        private final Label resumeSwitch = new Label(), start = new Label();
+        private final Label resumeSwitch = new Label(), startBody = new Label();
     }
 
     /**
@@ -244,10 +251,11 @@ abstract class ExpressionVisitor extends InstructionVisitor {
      * @return the generator state
      */
     GeneratorState prologue(Variable<ResumptionPoint> resume) {
+        assert isResumable();
         GeneratorState state = new GeneratorState();
         load(resume);
         ifnonnull(state.resumeSwitch);
-        mark(state.start);
+        mark(state.startBody);
         return state;
     }
 
@@ -260,10 +268,11 @@ abstract class ExpressionVisitor extends InstructionVisitor {
      *            the generator state
      */
     void epilogue(Variable<ResumptionPoint> resume, GeneratorState state) {
+        assert isResumable();
         mark(state.resumeSwitch);
         List<ExecutionState> states = this.states;
         if (states == null) {
-            goTo(state.start);
+            goTo(state.startBody);
         } else {
             assert !states.isEmpty();
             int count = states.size();
@@ -273,7 +282,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
             }
             load(resume);
             invoke(Methods.ResumptionPoint_getOffset);
-            tableswitch(0, count - 1, state.start, restore);
+            tableswitch(0, count - 1, state.startBody, restore);
             for (int i = 0; i < count; ++i) {
                 mark(restore[i]);
                 resume(resume, states.get(i));
@@ -285,7 +294,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
      * Create a new resumption point at the current instruction offset.
      */
     void newResumptionPoint() {
-        assert hasStack() && !hasSyntheticMethods();
+        assert hasStack() && isResumable();
         ExecutionState state = suspend();
         // manually restore stack type information
         restoreStack(state.stack);
@@ -359,7 +368,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
      *            the execution state
      */
     private void resume(Variable<ResumptionPoint> resume, ExecutionState state) {
-        assert hasStack() && !hasSyntheticMethods();
+        assert hasStack() && isResumable();
         assert getStack().length == 0;
 
         // emit line info for debugging

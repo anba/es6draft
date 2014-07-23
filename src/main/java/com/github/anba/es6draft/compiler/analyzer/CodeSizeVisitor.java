@@ -394,12 +394,12 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(ForEachStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 50, value);
+        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150, value);
     }
 
     @Override
     public int visit(ForInStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 50, value);
+        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150, value);
     }
 
     @Override
@@ -409,7 +409,7 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(ForOfStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 50, value);
+        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150, value);
     }
 
     @Override

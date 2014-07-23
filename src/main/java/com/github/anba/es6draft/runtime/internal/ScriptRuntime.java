@@ -1375,11 +1375,11 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the keys enumerator
      */
-    public static Iterator<?> enumerate(Object o, ExecutionContext cx) {
+    public static ScriptIterator<?> enumerate(Object o, ExecutionContext cx) {
         /* step 8 */
         ScriptObject obj = ToObject(cx, o);
         /* step 9-11 */
-        Iterator<?> keys = obj.enumerateKeys(cx);
+        ScriptIterator<?> keys = obj.enumerateKeys(cx);
         /* step 12 */
         return keys;
     }
@@ -1395,7 +1395,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the object iterator
      */
-    public static Iterator<?> iterate(Object o, ExecutionContext cx) {
+    public static ScriptIterator<?> iterate(Object o, ExecutionContext cx) {
         /* step 8 */
         ScriptObject obj = ToObject(cx, o);
         /* step 9-11 */
@@ -1416,21 +1416,22 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the values enumerator
      */
-    public static Iterator<?> enumerateValues(Object o, ExecutionContext cx) {
+    public static ScriptIterator<?> enumerateValues(Object o, ExecutionContext cx) {
         /* step 8 */
         ScriptObject obj = ToObject(cx, o);
         /* step 9-11 */
-        Iterator<?> keys = new ValuesIterator(cx, obj, obj.enumerateKeys(cx));
+        ScriptIterator<?> keys = new ValuesIterator(cx, obj, obj.enumerateKeys(cx));
         /* step 12 */
         return keys;
     }
 
-    private static final class ValuesIterator extends SimpleIterator<Object> {
+    private static final class ValuesIterator extends SimpleIterator<Object> implements
+            ScriptIterator<Object> {
         private final ExecutionContext cx;
         private final ScriptObject object;
-        private final Iterator<?> keysIterator;
+        private final ScriptIterator<?> keysIterator;
 
-        ValuesIterator(ExecutionContext cx, ScriptObject object, Iterator<?> keysIterator) {
+        ValuesIterator(ExecutionContext cx, ScriptObject object, ScriptIterator<?> keysIterator) {
             this.cx = cx;
             this.object = object;
             this.keysIterator = keysIterator;
@@ -1443,6 +1444,11 @@ public final class ScriptRuntime {
                 return Get(cx, object, pk);
             }
             return null;
+        }
+
+        @Override
+        public ScriptObject getScriptObject() {
+            return keysIterator.getScriptObject();
         }
     }
 

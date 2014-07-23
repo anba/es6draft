@@ -13,6 +13,7 @@ import java.util.Iterator;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -90,8 +91,8 @@ public final class ListIterator<T> extends OrdinaryObject {
      *            the script iterator object
      * @return the iterator object
      */
-    public static Iterator<?> FromScriptIterator(ExecutionContext cx, ScriptObject iterator) {
-        return new ScriptIterator(cx, iterator);
+    public static ScriptIterator<?> FromScriptIterator(ExecutionContext cx, ScriptObject iterator) {
+        return new ScriptIteratorImpl(cx, iterator);
     }
 
     /**
@@ -107,11 +108,12 @@ public final class ListIterator<T> extends OrdinaryObject {
         return new ArrayIterator(cx, arrayLike);
     }
 
-    private static final class ScriptIterator extends SimpleIterator<Object> {
+    private static final class ScriptIteratorImpl extends SimpleIterator<Object> implements
+            ScriptIterator<Object> {
         private final ExecutionContext cx;
         private final ScriptObject object;
 
-        ScriptIterator(ExecutionContext cx, ScriptObject object) {
+        ScriptIteratorImpl(ExecutionContext cx, ScriptObject object) {
             this.cx = cx;
             this.object = object;
         }
@@ -123,6 +125,11 @@ public final class ListIterator<T> extends OrdinaryObject {
                 return null;
             }
             return IteratorValue(cx, next);
+        }
+
+        @Override
+        public ScriptObject getScriptObject() {
+            return object;
         }
     }
 

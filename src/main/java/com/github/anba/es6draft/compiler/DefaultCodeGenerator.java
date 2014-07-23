@@ -1294,7 +1294,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      */
     protected final void delegatedYield(Expression node, ExpressionVisitor mv) {
         mv.lineInfo(node);
-        if (!mv.hasSyntheticMethods() && !codegen.isEnabled(Compiler.Option.NoResume)) {
+        if (mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume)) {
             assert mv.hasStack();
             Label iteratorNext = new Label(), iteratorThrow = new Label(), iteratorReturn = new Label(), iteratorComplete = new Label();
             Label done = new Label();
@@ -1404,7 +1404,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                     mv.goTo(iteratorReturn);
                 }
                 mv.mark(hasReturn);
-                mv.areturn();
+                mv.returnCompletion();
             }
 
             /* step 7e */
@@ -1439,7 +1439,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      */
     protected final void yield(Expression node, ExpressionVisitor mv) {
         mv.lineInfo(node);
-        if (!mv.hasSyntheticMethods() && !codegen.isEnabled(Compiler.Option.NoResume)) {
+        if (mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume)) {
             assert mv.hasStack();
             mv.loadExecutionContext();
             mv.swap();
@@ -1469,7 +1469,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             {
                 mv.checkcast(Types.ReturnValue);
                 mv.invoke(Methods.ReturnValue_getValue);
-                mv.areturn();
+                mv.returnCompletion();
             }
             mv.mark(isReturn);
         } else {
