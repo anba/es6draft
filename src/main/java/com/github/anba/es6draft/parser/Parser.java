@@ -3336,10 +3336,13 @@ public final class Parser {
      */
     private void classBody_EarlyErrors(BindingIdentifier className, List<MethodDefinition> defs,
             boolean isStatic) {
-        final int VALUE = 0, GETTER = 1, SETTER = 2;
-        Map<String, Integer> values = new HashMap<>();
+        boolean hasConstructor = false;
+        HashMap<String, Integer> values = null;
+        if (isEnabled(CompatibilityOption.DuplicateProperties)) {
+            values = new HashMap<>();
+        }
         for (MethodDefinition def : defs) {
-            String key = PropName(def);
+            String key = def.getPropertyName().getName();
             if (key == null) {
                 assert def.getPropertyName() instanceof ComputedPropertyName;
                 continue;
@@ -3349,28 +3352,41 @@ public final class Parser {
                     reportSyntaxError(def, Messages.Key.InvalidPrototypeMethod);
                 }
             } else {
-                if ("constructor".equals(key) && SpecialMethod(def)) {
-                    reportSyntaxError(def, Messages.Key.InvalidConstructorMethod);
+                if ("constructor".equals(key)) {
+                    if (hasConstructor) {
+                        reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
+                    } else if (SpecialMethod(def)) {
+                        reportSyntaxError(def, Messages.Key.InvalidConstructorMethod);
+                    }
+                    hasConstructor = true;
                 }
             }
-            MethodDefinition.MethodType type = def.getType();
-            final int kind = type == MethodType.Getter ? GETTER
-                    : type == MethodType.Setter ? SETTER : VALUE;
-            if (values.containsKey(key)) {
-                int prev = values.get(key);
-                if (kind == VALUE) {
-                    reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-                }
-                if (kind == GETTER && prev != SETTER) {
-                    reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-                }
-                if (kind == SETTER && prev != GETTER) {
-                    reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-                }
-                values.put(key, prev | kind);
-            } else {
-                values.put(key, kind);
+            if (values != null) {
+                checkDuplicateMethod(def, values);
             }
+        }
+    }
+
+    private void checkDuplicateMethod(MethodDefinition def, HashMap<String, Integer> values) {
+        final int VALUE = 0, GETTER = 1, SETTER = 2;
+        MethodDefinition.MethodType type = def.getType();
+        final int kind = type == MethodType.Getter ? GETTER : type == MethodType.Setter ? SETTER
+                : VALUE;
+        String key = def.getPropertyName().getName();
+        if (values.containsKey(key)) {
+            int prev = values.get(key);
+            if (kind == VALUE) {
+                reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
+            }
+            if (kind == GETTER && prev != SETTER) {
+                reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
+            }
+            if (kind == SETTER && prev != GETTER) {
+                reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
+            }
+            values.put(key, prev | kind);
+        } else {
+            values.put(key, kind);
         }
     }
 
@@ -6329,52 +6345,86 @@ public final class Parser {
      *            the object literal to check for early errors
      */
     private void objectLiteral_EarlyErrors(ObjectLiteral object) {
-        final int VALUE = 0, GETTER = 1, SETTER = 2, SPECIAL = 4;
-        Map<String, Integer> values = new HashMap<>();
+        boolean hasProto = false, checkProto = isEnabled(CompatibilityOption.ProtoInitializer);
+        HashMap<String, Integer> values = null;
+        if (isEnabled(CompatibilityOption.DuplicateProperties)) {
+            values = new HashMap<String, Integer>();
+        }
         for (PropertyDefinition def : object.getProperties()) {
-            PropertyName propertyName = def.getPropertyName();
-            String key = propertyName.getName();
-            if (key == null) {
-                assert propertyName instanceof ComputedPropertyName;
-                continue;
-            }
-            final int kind;
-            if (def instanceof PropertyValueDefinition) {
-                kind = VALUE;
-            } else if (def instanceof PropertyNameDefinition) {
-                kind = SPECIAL;
-            } else if (def instanceof MethodDefinition) {
-                MethodDefinition.MethodType type = ((MethodDefinition) def).getType();
-                kind = type == MethodType.Getter ? GETTER : type == MethodType.Setter ? SETTER
-                        : SPECIAL;
-            } else {
-                assert def instanceof CoverInitializedName;
+            if (def instanceof CoverInitializedName) {
                 // Always throw a Syntax Error if this production is present
+                String key = def.getPropertyName().getName();
                 throw reportSyntaxError(def, Messages.Key.MissingColonAfterPropertyId, key);
             }
-            // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any
-            // duplicate entries [...]
-            if (values.containsKey(key)) {
-                int prev = values.get(key);
-                if (kind == VALUE && prev != VALUE) {
-                    reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-                }
-                if (kind == VALUE && prev == VALUE) {
-                    reportStrictModeSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-                }
-                if (kind == GETTER && prev != SETTER) {
-                    reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-                }
-                if (kind == SETTER && prev != GETTER) {
-                    reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-                }
-                if (kind == SPECIAL) {
-                    reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-                }
-                values.put(key, prev | kind);
-            } else {
-                values.put(key, kind);
+            if (checkProto) {
+                hasProto = checkDuplicateProtoInitializer(def, hasProto);
             }
+            if (values != null) {
+                checkDuplicateProperty(def, values);
+            }
+        }
+    }
+
+    private boolean checkDuplicateProtoInitializer(PropertyDefinition def, boolean hasProto) {
+        if (!(def instanceof PropertyValueDefinition)) {
+            return hasProto;
+        }
+        PropertyName propertyName = def.getPropertyName();
+        String key = propertyName.getName();
+        if (key == null) {
+            assert propertyName instanceof ComputedPropertyName;
+            return hasProto;
+        }
+        if (!"__proto__".equals(key)) {
+            return hasProto;
+        }
+        if (hasProto) {
+            reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
+        }
+        return true;
+    }
+
+    private void checkDuplicateProperty(PropertyDefinition def, HashMap<String, Integer> values) {
+        final int VALUE = 0, GETTER = 1, SETTER = 2, SPECIAL = 4;
+        PropertyName propertyName = def.getPropertyName();
+        String key = propertyName.getName();
+        if (key == null) {
+            assert propertyName instanceof ComputedPropertyName;
+            return;
+        }
+        final int kind;
+        if (def instanceof PropertyValueDefinition) {
+            kind = VALUE;
+        } else if (def instanceof PropertyNameDefinition) {
+            kind = SPECIAL;
+        } else {
+            assert def instanceof MethodDefinition;
+            MethodDefinition.MethodType type = ((MethodDefinition) def).getType();
+            kind = type == MethodType.Getter ? GETTER : type == MethodType.Setter ? SETTER
+                    : SPECIAL;
+        }
+        // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any
+        // duplicate entries [...]
+        if (values.containsKey(key)) {
+            int prev = values.get(key);
+            if (kind == VALUE && prev != VALUE) {
+                reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
+            }
+            if (kind == VALUE && prev == VALUE) {
+                reportStrictModeSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
+            }
+            if (kind == GETTER && prev != SETTER) {
+                reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
+            }
+            if (kind == SETTER && prev != GETTER) {
+                reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
+            }
+            if (kind == SPECIAL) {
+                reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
+            }
+            values.put(key, prev | kind);
+        } else {
+            values.put(key, kind);
         }
     }
 

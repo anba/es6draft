@@ -156,7 +156,12 @@ public enum CompatibilityOption {
     /**
      * Extension: arguments.caller (not implemented)
      */
-    ArgumentsCaller;
+    ArgumentsCaller,
+
+    /**
+     * Extension: Detect duplicate property definitions
+     */
+    DuplicateProperties;
 
     /**
      * Returns a set of all options for strict-compatibility.
