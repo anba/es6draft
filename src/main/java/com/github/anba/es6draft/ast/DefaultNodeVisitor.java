@@ -420,6 +420,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(LabelledFunctionStatement node, V value) {
+        return visit((Statement) node, value);
+    }
+
+    @Override
     public R visit(LabelledStatement node, V value) {
         return visit((Statement) node, value);
     }

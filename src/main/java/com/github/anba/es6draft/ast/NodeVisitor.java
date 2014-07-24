@@ -152,6 +152,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(PropertyDefinitionsMethod node, V value);
 
+    R visit(LabelledFunctionStatement node, V value);
+
     R visit(LabelledStatement node, V value);
 
     R visit(LegacyComprehension node, V value);

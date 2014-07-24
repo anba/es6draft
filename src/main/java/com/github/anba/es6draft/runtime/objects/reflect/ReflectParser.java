@@ -1513,6 +1513,11 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     @Override
+    public Object visit(LabelledFunctionStatement node, Void value) {
+        return node.getFunction().accept(this, value);
+    }
+
+    @Override
     public Object visit(LabelledStatement node, Void value) {
         Object body = node.getStatement().accept(this, value);
         return createLabelledStatement(node, body);

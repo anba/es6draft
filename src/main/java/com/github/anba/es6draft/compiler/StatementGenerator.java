@@ -1143,6 +1143,12 @@ final class StatementGenerator extends
         return result.normal(label.isUsed());
     }
 
+    @Override
+    public Completion visit(LabelledFunctionStatement node, StatementVisitor mv) {
+        // placeholder node, just pass through
+        return node.getFunction().accept(this, mv);
+    }
+
     /**
      * 13.2.1.5 Runtime Semantics: Evaluation
      */

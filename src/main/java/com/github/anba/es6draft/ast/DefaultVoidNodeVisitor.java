@@ -420,6 +420,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(LabelledFunctionStatement node, V value) {
+        visit((Statement) node, value);
+    }
+
+    @Override
     public void visit(LabelledStatement node, V value) {
         visit((Statement) node, value);
     }

@@ -152,6 +152,8 @@ public interface VoidNodeVisitor<V> {
 
     void visit(PropertyDefinitionsMethod node, V value);
 
+    void visit(LabelledFunctionStatement node, V value);
+
     void visit(LabelledStatement node, V value);
 
     void visit(LegacyComprehension node, V value);

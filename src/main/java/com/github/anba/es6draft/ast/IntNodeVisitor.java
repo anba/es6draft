@@ -152,6 +152,8 @@ public interface IntNodeVisitor<V> {
 
     int visit(PropertyDefinitionsMethod node, V value);
 
+    int visit(LabelledFunctionStatement node, V value);
+
     int visit(LabelledStatement node, V value);
 
     int visit(LegacyComprehension node, V value);

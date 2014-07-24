@@ -74,12 +74,22 @@ public enum CompatibilityOption {
     ProtoInitializer,
 
     /**
-     * B.3.2 Web Legacy Compatibility for Block-Level Function Declarations
+     * B.3.2 Labelled Function Declarations
+     */
+    LabelledFunctionDeclaration,
+
+    /**
+     * B.3.3 Block-Level Function Declarations Web Legacy Compatibility Semantics
      */
     BlockFunctionDeclaration,
 
     /**
-     * B.3.3 var statements in Catch blocks
+     * B.3.4 FunctionDeclarations in IfStatement Statement Clauses
+     */
+    IfStatementFunctionDeclaration,
+
+    /**
+     * B.3.5 VariableStatements in Catch blocks
      */
     CatchVarStatement,
 

@@ -3704,9 +3704,11 @@ public final class Parser {
      *     SwitchStatement<span><sub>[?Yield, ?Return]</sub></span>
      * </pre>
      * 
+     * @param allowFunction
+     *            {@code true} if labelled function statements are allowed
      * @return the parsed statement node
      */
-    private Statement statement() {
+    private Statement statement(boolean allowFunction) {
         switch (token()) {
         case LC:
             return block(NO_INHERITED_BINDING, false);
@@ -3763,7 +3765,7 @@ public final class Parser {
         case ESCAPED_AWAIT:
         case ESCAPED_LET:
             if (LOOKAHEAD(Token.COLON)) {
-                return labelledStatement();
+                return labelledStatement(allowFunction);
             }
         default:
         }
@@ -3865,7 +3867,7 @@ public final class Parser {
             break;
         default:
         }
-        return statement();
+        return statement(true);
     }
 
     /**
@@ -3904,14 +3906,17 @@ public final class Parser {
     private Declaration functionOrGeneratorDeclaration(boolean allowDefault) {
         if (LOOKAHEAD(Token.MUL)) {
             return generatorDeclaration(allowDefault, false);
-        } else {
-            long position = ts.position(), lineinfo = ts.lineinfo();
-            try {
-                return functionDeclaration(allowDefault);
-            } catch (RetryGenerator e) {
-                ts.reset(position, lineinfo);
-                return generatorDeclaration(allowDefault, true);
-            }
+        }
+        return functionDeclarationWithRetry(allowDefault);
+    }
+
+    private Declaration functionDeclarationWithRetry(boolean allowDefault) {
+        long position = ts.position(), lineinfo = ts.lineinfo();
+        try {
+            return functionDeclaration(allowDefault);
+        } catch (RetryGenerator e) {
+            ts.reset(position, lineinfo);
+            return generatorDeclaration(allowDefault, true);
         }
     }
 
@@ -4482,6 +4487,16 @@ public final class Parser {
      *     if ( Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      * </pre>
      * 
+     * <strong>[B.3.4] FunctionDeclarations in IfStatement Statement Clauses</strong>
+     * 
+     * <pre>
+     * IfStatement<span><sub>[Yield, Return]</sub></span> :
+     *     if ( Expression<span><sub>[In, ?Yield]</sub></span> ) FunctionDeclaration<span><sub>[?Yield]</sub></span> else Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     if ( Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span> else FunctionDeclaration<span><sub>[?Yield]</sub></span>
+     *     if ( Expression<span><sub>[In, ?Yield]</sub></span> ) FunctionDeclaration<span><sub>[?Yield]</sub></span> else FunctionDeclaration<span><sub>[?Yield]</sub></span>
+     *     if ( Expression<span><sub>[In, ?Yield]</sub></span> ) FunctionDeclaration<span><sub>[?Yield]</sub></span>
+     * </pre>
+     * 
      * @return the parsed if-statement
      */
     private IfStatement ifStatement() {
@@ -4490,14 +4505,37 @@ public final class Parser {
         consume(Token.LP);
         Expression test = expression(true);
         consume(Token.RP);
-        Statement then = statement();
+        Statement then = statementOrFunctionDeclaration();
         Statement otherwise = null;
         if (token() == Token.ELSE) {
             consume(Token.ELSE);
-            otherwise = statement();
+            otherwise = statementOrFunctionDeclaration();
         }
 
         return new IfStatement(begin, ts.endPosition(), test, then, otherwise);
+    }
+
+    private Statement statementOrFunctionDeclaration() {
+        if (token() == Token.FUNCTION
+                && isEnabled(CompatibilityOption.IfStatementFunctionDeclaration)) {
+            return ifStatementFunctionDeclaration();
+        }
+        return statement(false);
+    }
+
+    private BlockStatement ifStatementFunctionDeclaration() {
+        if (context.strictMode != StrictMode.NonStrict) {
+            reportStrictModeSyntaxError(Messages.Key.InvalidToken, token().toString());
+        }
+        long begin = ts.beginPosition();
+        BlockContext scope = enterBlockContext();
+        Declaration declaration = functionDeclarationWithRetry(false);
+        List<StatementListItem> list = singletonList((StatementListItem) declaration);
+        exitBlockContext();
+
+        BlockStatement block = new BlockStatement(begin, ts.endPosition(), scope, list);
+        scope.node = block;
+        return block;
     }
 
     /**
@@ -4517,7 +4555,7 @@ public final class Parser {
         consume(Token.DO);
 
         LabelContext labelCx = enterIteration(labelSet);
-        Statement stmt = statement();
+        Statement stmt = statement(false);
         exitIteration();
 
         consume(Token.WHILE);
@@ -4552,7 +4590,7 @@ public final class Parser {
         consume(Token.RP);
 
         LabelContext labelCx = enterIteration(labelSet);
-        Statement stmt = statement();
+        Statement stmt = statement(false);
         exitIteration();
 
         return new WhileStatement(begin, ts.endPosition(), labelCx.abrupts, labelCx.labelSet, test,
@@ -4678,7 +4716,7 @@ public final class Parser {
         consume(Token.RP);
 
         LabelContext labelCx = enterIteration(labelSet);
-        Statement stmt = statement();
+        Statement stmt = statement(false);
         exitIteration();
 
         if (lexBlockContext != null) {
@@ -4814,7 +4852,7 @@ public final class Parser {
         }
 
         LabelContext labelCx = enterIteration(labelSet);
-        Statement stmt = statement();
+        Statement stmt = statement(false);
         exitIteration();
 
         if (lexicalBinding) {
@@ -5008,7 +5046,7 @@ public final class Parser {
         consume(Token.RP);
 
         WithContext scope = enterWithContext();
-        Statement stmt = statement();
+        Statement stmt = statement(false);
         exitWithContext();
 
         WithStatement withStatement = new WithStatement(begin, ts.endPosition(), scope, expr, stmt);
@@ -5094,24 +5132,39 @@ public final class Parser {
      * 
      * <pre>
      * LabelledStatement<span><sub>[Yield, Return]</sub></span> :
-     *     LabelIdentifier<span><sub>[?Yield]</sub></span> : Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     LabelIdentifier<span><sub>[?Yield]</sub></span> : LabelledItem<span><sub>[?Yield, ?Return]</sub></span>
+     * LabelledItem<span><sub>[Yield, Return]</sub></span> :
+     *     Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     FunctionDeclaration<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
+     * @param allowFunction
+     *            {@code true} if labelled function statements are allowed
      * @return the parsed labelled statement
      */
-    private Statement labelledStatement() {
+    private Statement labelledStatement(boolean allowFunction) {
         long begin = ts.beginPosition();
         LinkedHashSet<String> labelSet = new LinkedHashSet<>(4);
         labels: for (;;) {
             switch (token()) {
             case FOR:
+                assert !labelSet.isEmpty();
                 return forStatementOrForInOfStatement(labelSet);
             case WHILE:
+                assert !labelSet.isEmpty();
                 return whileStatement(labelSet);
             case DO:
+                assert !labelSet.isEmpty();
                 return doWhileStatement(labelSet);
             case SWITCH:
+                assert !labelSet.isEmpty();
                 return switchStatement(labelSet);
+            case FUNCTION:
+                if (isEnabled(CompatibilityOption.LabelledFunctionDeclaration)) {
+                    assert !labelSet.isEmpty();
+                    return labelledFunctionStatement(allowFunction);
+                }
+                break labels;
             case LET:
                 if (isEnabled(CompatibilityOption.LetStatement)
                         || isEnabled(CompatibilityOption.LetExpression)) {
@@ -5139,17 +5192,6 @@ public final class Parser {
                 if (LOOKAHEAD(Token.COLON)) {
                     break;
                 }
-            case LC:
-            case VAR:
-            case SEMI:
-            case IF:
-            case CONTINUE:
-            case BREAK:
-            case RETURN:
-            case WITH:
-            case THROW:
-            case TRY:
-            case DEBUGGER:
             default:
                 break labels;
             }
@@ -5162,11 +5204,29 @@ public final class Parser {
         assert !labelSet.isEmpty();
 
         LabelContext labelCx = enterLabelled(StatementType.Statement, labelSet);
-        Statement stmt = statement();
+        Statement stmt = statement(false);
         exitLabelled();
 
         return new LabelledStatement(begin, ts.endPosition(), labelCx.abrupts, labelCx.labelSet,
                 stmt);
+    }
+
+    /**
+     * B.3.2 Labelled Function Declarations
+     * 
+     * @param allowFunction
+     *            {@code true} if labelled function statements are allowed
+     * @return the labelled function statement
+     */
+    private LabelledFunctionStatement labelledFunctionStatement(boolean allowFunction) {
+        if (!allowFunction) {
+            reportSyntaxError(Messages.Key.InvalidToken, token().toString());
+        } else if (context.strictMode != StrictMode.NonStrict) {
+            reportStrictModeSyntaxError(Messages.Key.InvalidToken, token().toString());
+        }
+        long begin = ts.beginPosition();
+        Declaration function = functionDeclarationWithRetry(false);
+        return new LabelledFunctionStatement(begin, ts.endPosition(), function);
     }
 
     /**

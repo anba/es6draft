@@ -490,6 +490,11 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     }
 
     @Override
+    public int visit(LabelledFunctionStatement node, CodeSizeHandler value) {
+        return analyze(node, node.getFunction(), 0, value);
+    }
+
+    @Override
     public int visit(LabelledStatement node, CodeSizeHandler value) {
         return analyze(node, node.getStatement(), 15, value);
     }
