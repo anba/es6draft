@@ -12,6 +12,7 @@ import com.github.anba.es6draft.ast.ArrayLiteral;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.IntNodeVisitor;
 import com.github.anba.es6draft.ast.NodeVisitor;
+import com.github.anba.es6draft.ast.VoidNodeVisitor;
 
 /**
  * {@link ArrayLiteral} subclass for {@link SpreadElementMethod}
@@ -29,6 +30,11 @@ public final class SpreadArrayLiteral extends ArrayLiteral {
     @Override
     public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> void accept(VoidNodeVisitor<V> visitor, V value) {
+        visitor.visit(this, value);
     }
 
     private static Expression first(List<Expression> elements) {

@@ -43,6 +43,11 @@ public final class ComputedPropertyName extends AstNode implements PropertyName 
     }
 
     @Override
+    public <V> void accept(VoidNodeVisitor<V> visitor, V value) {
+        visitor.visit(this, value);
+    }
+
+    @Override
     public String toString() {
         String cname = accept(new ComputedNameToString(), null);
         if (cname != null) {

@@ -12,6 +12,7 @@ import com.github.anba.es6draft.ast.IntNodeVisitor;
 import com.github.anba.es6draft.ast.NodeVisitor;
 import com.github.anba.es6draft.ast.Statement;
 import com.github.anba.es6draft.ast.StatementListItem;
+import com.github.anba.es6draft.ast.VoidNodeVisitor;
 
 /**
  * List of {@link StatementListItem}s as an external Java method
@@ -36,6 +37,11 @@ public final class StatementListMethod extends Statement {
     @Override
     public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> void accept(VoidNodeVisitor<V> visitor, V value) {
+        visitor.visit(this, value);
     }
 
     private static StatementListItem first(List<StatementListItem> elements) {

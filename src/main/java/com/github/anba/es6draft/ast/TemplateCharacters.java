@@ -40,4 +40,9 @@ public final class TemplateCharacters extends Expression {
     public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
     }
+
+    @Override
+    public <V> void accept(VoidNodeVisitor<V> visitor, V value) {
+        visitor.visit(this, value);
+    }
 }

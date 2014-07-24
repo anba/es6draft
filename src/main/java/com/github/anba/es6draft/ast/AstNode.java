@@ -52,4 +52,7 @@ abstract class AstNode implements Node {
 
     @Override
     public abstract <V> int accept(IntNodeVisitor<V> visitor, V value);
+
+    @Override
+    public abstract <V> void accept(VoidNodeVisitor<V> visitor, V value);
 }

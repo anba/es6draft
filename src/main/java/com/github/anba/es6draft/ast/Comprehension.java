@@ -44,6 +44,11 @@ public class Comprehension extends AstNode {
         return visitor.visit(this, value);
     }
 
+    @Override
+    public <V> void accept(VoidNodeVisitor<V> visitor, V value) {
+        visitor.visit(this, value);
+    }
+
     private static ComprehensionQualifier first(List<ComprehensionQualifier> list) {
         assert !list.isEmpty();
         return list.get(0);

@@ -68,4 +68,6 @@ public interface Node {
     <R, V> R accept(NodeVisitor<R, V> visitor, V value);
 
     <V> int accept(IntNodeVisitor<V> visitor, V value);
+
+    <V> void accept(VoidNodeVisitor<V> visitor, V value);
 }

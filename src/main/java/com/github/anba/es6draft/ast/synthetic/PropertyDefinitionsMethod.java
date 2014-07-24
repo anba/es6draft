@@ -12,6 +12,7 @@ import com.github.anba.es6draft.ast.IntNodeVisitor;
 import com.github.anba.es6draft.ast.NodeVisitor;
 import com.github.anba.es6draft.ast.PropertyDefinition;
 import com.github.anba.es6draft.ast.PropertyName;
+import com.github.anba.es6draft.ast.VoidNodeVisitor;
 
 /**
  * List of {@link PropertyDefinition}s as an external Java method
@@ -41,6 +42,11 @@ public final class PropertyDefinitionsMethod extends PropertyDefinition {
     @Override
     public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         return visitor.visit(this, value);
+    }
+
+    @Override
+    public <V> void accept(VoidNodeVisitor<V> visitor, V value) {
+        visitor.visit(this, value);
     }
 
     private static PropertyDefinition first(List<PropertyDefinition> properties) {

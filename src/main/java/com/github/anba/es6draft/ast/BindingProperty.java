@@ -57,6 +57,11 @@ public final class BindingProperty extends AstNode {
         return visitor.visit(this, value);
     }
 
+    @Override
+    public <V> void accept(VoidNodeVisitor<V> visitor, V value) {
+        visitor.visit(this, value);
+    }
+
     private static AstNode eitherOr(AstNode left, AstNode right) {
         return left != null ? left : right;
     }

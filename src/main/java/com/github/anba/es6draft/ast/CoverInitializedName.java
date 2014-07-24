@@ -42,4 +42,9 @@ public final class CoverInitializedName extends PropertyDefinition {
     public <V> int accept(IntNodeVisitor<V> visitor, V value) {
         throw new IllegalStateException();
     }
+
+    @Override
+    public <V> void accept(VoidNodeVisitor<V> visitor, V value) {
+        throw new IllegalStateException();
+    }
 }
