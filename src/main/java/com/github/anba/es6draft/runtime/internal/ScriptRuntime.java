@@ -2799,13 +2799,16 @@ public final class ScriptRuntime {
     public static void initializeFunctionBlockBinding(String name, ExecutionContext cx) {
         assert cx.getVariableEnvironment().getEnvRec() instanceof DeclarativeEnvironmentRecord;
         assert cx.getLexicalEnvironment().getEnvRec() instanceof DeclarativeEnvironmentRecord;
+        /* step 2.b.1 */
         LexicalEnvironment<DeclarativeEnvironmentRecord> fenv = (LexicalEnvironment<DeclarativeEnvironmentRecord>) cx
                 .getVariableEnvironment();
+        /* step 2.b.2 */
         LexicalEnvironment<DeclarativeEnvironmentRecord> benv = (LexicalEnvironment<DeclarativeEnvironmentRecord>) cx
                 .getLexicalEnvironment();
+        /* step 2.b.3-2.b.4 */
         Object fobj = benv.getEnvRec().getBindingValue(name, false);
-        if (!fenv.getEnvRec().isInitialized(name)) {
-            fenv.getEnvRec().initializeBinding(name, fobj);
-        }
+        /* step 2.b.5-2.b.6 */
+        fenv.getEnvRec().setMutableBinding(name, fobj, false);
+        /* step 2.b.7 (return) */
     }
 }

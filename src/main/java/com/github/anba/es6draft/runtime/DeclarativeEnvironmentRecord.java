@@ -140,19 +140,6 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         }
     }
 
-    /**
-     * Tests if an existing binding is already initialized.
-     * 
-     * @param name
-     *            the binding name
-     * @return {@code true} if the binding is initialized
-     */
-    public boolean isInitialized(String name) {
-        Binding b = bindings.get(name);
-        assert b != null : "binding not found: " + name;
-        return b.value != null;
-    }
-
     @Override
     public Set<String> bindingNames() {
         return Collections.unmodifiableSet(bindings.keySet());

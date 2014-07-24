@@ -55,6 +55,10 @@ abstract class DeclarationBindingInstantiationGenerator {
                 MethodType.Interface, Types.EnvironmentRecord, "setMutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object, Type.BOOLEAN_TYPE));
 
+        static final MethodDesc EnvironmentRecord_getBindingValue = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "getBindingValue",
+                Type.getMethodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
+
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
                 MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
@@ -309,6 +313,28 @@ abstract class DeclarationBindingInstantiationGenerator {
         mv.swap();
         mv.iconst(strict);
         mv.invoke(Methods.EnvironmentRecord_setMutableBinding);
+    }
+
+    /**
+     * Emit function call for: {@link EnvironmentRecord#getBindingValue(String, boolean)}
+     * <p>
+     * stack: [] {@literal ->} [obj]
+     * 
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param strict
+     *            the strict-mode flag
+     * @param mv
+     *            the instruction visitor
+     */
+    protected void getBindingValue(Variable<? extends EnvironmentRecord> envRec, String name,
+            boolean strict, InstructionVisitor mv) {
+        mv.load(envRec);
+        mv.aconst(name);
+        mv.iconst(strict);
+        mv.invoke(Methods.EnvironmentRecord_getBindingValue);
     }
 
     /**
