@@ -23,6 +23,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -45,10 +46,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 MethodType.Static, Types.AbstractOperations, "CreateIterResultObject", Type
                         .getMethodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Object,
                                 Type.BOOLEAN_TYPE));
-
-        static final MethodDesc AbstractOperations_GetIterator = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "GetIterator",
-                Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
 
         static final MethodDesc AbstractOperations_HasOwnProperty = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "HasOwnProperty", Type
@@ -248,6 +245,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         static final MethodDesc ScriptRuntime_getDefaultClassProto = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "getDefaultClassProto",
                 Type.getMethodType(Types.ScriptObject_, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_getIteratorObject = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "getIteratorObject",
+                Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_yield = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "yield",
@@ -1307,8 +1308,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             /* steps 4-5 */
             // stack: [value] -> []
             mv.loadExecutionContext();
-            mv.swap();
-            mv.invoke(Methods.AbstractOperations_GetIterator);
+            mv.invoke(Methods.ScriptRuntime_getIteratorObject);
             mv.store(iterator);
 
             /* step 6 */
@@ -1391,7 +1391,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             {
                 mv.load(received);
                 mv.checkcast(Types.ReturnValue);
-                mv.invoke(Methods.ReturnValue_getValue);
 
                 Label hasReturn = new Label();
                 mv.loadExecutionContext();
@@ -1400,11 +1399,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 mv.invoke(Methods.AbstractOperations_HasProperty);
                 mv.ifeq(hasReturn);
                 {
+                    mv.invoke(Methods.ReturnValue_getValue);
                     mv.store(received);
                     mv.goTo(iteratorReturn);
                 }
                 mv.mark(hasReturn);
-                mv.returnCompletion();
+                popStackAndReturn(mv);
             }
 
             /* step 7e */
@@ -1468,8 +1468,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.ifeq(isReturn);
             {
                 mv.checkcast(Types.ReturnValue);
-                mv.invoke(Methods.ReturnValue_getValue);
-                mv.returnCompletion();
+                popStackAndReturn(mv);
             }
             mv.mark(isReturn);
         } else {
@@ -1477,5 +1476,24 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_yield);
         }
+    }
+
+    private void popStackAndReturn(ExpressionVisitor mv) {
+        // stack: [..., returnValue] -> [returnValue]
+        Type[] stack = mv.getStack();
+        assert stack.length != 0 && stack[stack.length - 1].equals(Types.ReturnValue);
+        if (stack.length > 1) {
+            // pop all remaining entries from stack before emitting return instruction
+            mv.enterVariableScope();
+            Variable<ReturnValue> returnValue = mv.newVariable("returnValue", ReturnValue.class);
+            mv.store(returnValue);
+            for (int i = 0; i < stack.length - 1; ++i) {
+                mv.pop(stack[i]);
+            }
+            mv.load(returnValue);
+            mv.exitVariableScope();
+        }
+        mv.invoke(Methods.ReturnValue_getValue);
+        mv.returnCompletion();
     }
 }

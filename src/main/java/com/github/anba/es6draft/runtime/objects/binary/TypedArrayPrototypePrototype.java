@@ -260,7 +260,8 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                     long pk = k;
                     Object kValue = Get(cx, src, pk);
                     double kNumber = ToNumber(cx, kValue);
-                    SetValueInBuffer(cx, targetBuffer, targetByteIndex, targetType, kNumber);
+                    // FIXME: spec bug - missing neutered check
+                    SetValueInBuffer(targetBuffer, targetByteIndex, targetType, kNumber);
                 }
                 /* step 28 */
                 return UNDEFINED;
@@ -333,8 +334,8 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                         * Math.min(srcLength, targetLength - targetOffset));
                 /* step 28 */
                 for (; targetByteIndex < limit; srcByteIndex += srcElementSize, targetByteIndex += targetElementSize) {
-                    double value = GetValueFromBuffer(cx, srcBuffer, srcByteIndex, srcType);
-                    SetValueInBuffer(cx, targetBuffer, targetByteIndex, targetType, value);
+                    double value = GetValueFromBuffer(srcBuffer, srcByteIndex, srcType);
+                    SetValueInBuffer(targetBuffer, targetByteIndex, targetType, value);
                 }
                 /* step 29 */
                 return UNDEFINED;

@@ -180,20 +180,10 @@ final class GlobalDeclarationInstantiationGenerator extends
                 }
             }
         }
-        /* steps 12-13 */
-        for (Declaration f : functionsToInitialize) {
-            String fn = BoundName(f);
-            // stack: [] -> [fo]
-            InstantiateFunctionObject(context, lexEnv, f, mv);
-            createGlobalFunctionBinding(envRec, fn, deletableBindings, mv);
-        }
-        /* step 14 */
-        for (String vn : declaredVarNames) {
-            createGlobalVarBinding(envRec, vn, deletableBindings, mv);
-        }
-        /* step 15 */
+        /* step 12 (NOTE) */
+        /* step 13 */
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(script);
-        /* step 16 */
+        /* step 14 */
         for (Declaration d : lexDeclarations) {
             assert !isFunctionDeclaration(d);
             for (String dn : BoundNames(d)) {
@@ -203,6 +193,17 @@ final class GlobalDeclarationInstantiationGenerator extends
                     createMutableBinding(lexEnvRec, dn, false, mv);
                 }
             }
+        }
+        /* steps 15 */
+        for (Declaration f : functionsToInitialize) {
+            String fn = BoundName(f);
+            // stack: [] -> [fo]
+            InstantiateFunctionObject(context, lexEnv, f, mv);
+            createGlobalFunctionBinding(envRec, fn, deletableBindings, mv);
+        }
+        /* step 16 */
+        for (String vn : declaredVarNames) {
+            createGlobalVarBinding(envRec, vn, deletableBindings, mv);
         }
         /* step 17 */
         mv.areturn();

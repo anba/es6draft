@@ -439,21 +439,20 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             StringBuilder accumulatedResult = new StringBuilder();
             /* step 16 */
             int nextSourcePosition = 0;
-            /* step 17 (omitted) */
-            /* step 18 */
+            /* step 17 */
             for (MatchResult result : results) {
                 if (!(result instanceof ScriptObjectMatchResult)) {
                     RegExpConstructor.storeLastMatchResult(cx, s, result);
                 }
-                /* steps 18.a-18.c */
+                /* steps 17.a-17.c */
                 int nCaptures = result.groupCount();
-                /* steps 18.d-18.e */
+                /* steps 17.d-17.e */
                 String matched = result.group(0);
-                /* step 18.f */
+                /* step 17.f */
                 int matchLength = matched.length();
-                /* steps 18.g-18.i */
+                /* steps 17.g-17.i */
                 int position = Math.max(Math.min(result.start(), lengthS), 0);
-                /* steps 18.j-18.o */
+                /* steps 17.j-17.o */
                 String replacement;
                 if (functionalReplace) {
                     Object[] replacerArgs = GetReplacerArguments(result, nCaptures, s, matched,
@@ -465,17 +464,17 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                     replacement = GetReplaceSubstitution(matched, s, position, captures,
                             replaceValueString);
                 }
-                /* step 18.p */
+                /* step 17.p */
                 if (position >= nextSourcePosition) {
                     accumulatedResult.append(s, nextSourcePosition, position).append(replacement);
                     nextSourcePosition = position + matchLength;
                 }
             }
-            /* step 19 */
+            /* step 18 */
             if (nextSourcePosition >= lengthS) {
                 return accumulatedResult.toString();
             }
-            /* step 20 */
+            /* step 19 */
             return accumulatedResult.append(s, nextSourcePosition, lengthS).toString();
         }
 

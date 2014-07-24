@@ -121,7 +121,7 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
         /* step 8 */
         ScriptObject super_ = realmF.getIntrinsic(Intrinsics.TypedArray);
         assert super_ instanceof TypedArrayConstructorPrototype;
-        /* step 10 */
+        /* step 9 */
         return ((TypedArrayConstructorPrototype) super_).call(calleeContext, thisValue, args);
     }
 

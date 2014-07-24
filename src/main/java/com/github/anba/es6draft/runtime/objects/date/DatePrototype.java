@@ -1406,23 +1406,23 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
             /* step 1 */
             double t = thisTimeValue(cx, thisValue);
             t = Double.isNaN(t) ? +0 : LocalTime(realm, t);
-            /* step 2 */
+            /* steps 2-3 */
             double y = ToNumber(cx, year);
-            /* step 3 */
+            /* step 4 */
             if (Double.isNaN(y)) {
                 ((DateObject) thisValue).setDateValue(Double.NaN);
                 return Double.NaN;
             }
-            /* step 4 */
+            /* step 5 */
             double intYear = ToInteger(y);
             double yyyy = (0 <= intYear && intYear <= 99 ? intYear + 1900 : y);
-            /* step 5 */
-            double d = MakeDay(yyyy, MonthFromTime(t), DateFromTime(t));
             /* step 6 */
-            double date = UTC(realm, MakeDate(d, TimeWithinDay(t)));
+            double d = MakeDay(yyyy, MonthFromTime(t), DateFromTime(t));
             /* step 7 */
-            ((DateObject) thisValue).setDateValue(TimeClip(date));
+            double date = UTC(realm, MakeDate(d, TimeWithinDay(t)));
             /* step 8 */
+            ((DateObject) thisValue).setDateValue(TimeClip(date));
+            /* step 9 */
             return ((DateObject) thisValue).getDateValue();
         }
 

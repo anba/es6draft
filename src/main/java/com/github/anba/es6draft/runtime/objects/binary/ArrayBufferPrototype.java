@@ -150,6 +150,7 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
             /* steps 17-20 */
             ArrayBufferObject _new = thisArrayBufferObject(cx,
                     ((Constructor) ctor).construct(cx, newLen));
+            // FIXME: spec bug - need to check for neutered buffer returned from constructor
             /* step 21 */
             if (_new.getByteLength() < newLen) {
                 // FIXME: spec bug - throw RangeError instead of TypeError?
@@ -162,7 +163,6 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
             /* step 24 */
             ByteBuffer fromBuf = obj.getData();
             /* step 25 */
-            // FIXME: spec bug - need to check for neutered buffers
             ByteBuffer toBuf = _new.getData();
             /* steps 26 */
             CopyDataBlockBytes(toBuf, 0, fromBuf, first, newLen);

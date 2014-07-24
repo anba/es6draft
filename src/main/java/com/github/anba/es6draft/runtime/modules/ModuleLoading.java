@@ -454,18 +454,18 @@ public final class ModuleLoading {
             if (load.getLinkSets().isEmpty()) {
                 return UNDEFINED;
             }
-            /* FIXME: missing step */
+            /* step 4 */
             LoaderObject loaderObj = loader.getLoaderObj();
-            /* steps 4-5 */
+            /* step 5-6 */
             Object hook = Get(calleeContext, loaderObj, "translate");
-            /* step 6 */
+            /* step 7 */
             if (!IsCallable(hook)) {
                 throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "translate");
             }
-            /* step 7 */
+            /* step 8 */
             OrdinaryObject obj = CreateLoadRequestObject(calleeContext, load.getNameOrNull(),
                     load.getMetadata(), load.getAddress(), source);
-            /* step 8 */
+            /* step 9 */
             // FIXME: spec bug - missing 'loader as thisArgument'
             return ((Callable) hook).call(calleeContext, loaderObj, obj);
         }

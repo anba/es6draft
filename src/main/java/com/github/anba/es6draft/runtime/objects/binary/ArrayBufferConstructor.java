@@ -291,16 +291,14 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      *            the element type
      * @return the buffer value
      */
-    public static double GetValueFromBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
-            long byteIndex, ElementType type) {
-        return GetValueFromBuffer(cx, arrayBuffer, byteIndex, type, IS_LITTLE_ENDIAN);
+    public static double GetValueFromBuffer(ArrayBufferObject arrayBuffer, long byteIndex,
+            ElementType type) {
+        return GetValueFromBuffer(arrayBuffer, byteIndex, type, IS_LITTLE_ENDIAN);
     }
 
     /**
      * 24.1.1.6 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
      * 
-     * @param cx
-     *            the execution context
      * @param arrayBuffer
      *            the array buffer object
      * @param byteIndex
@@ -311,10 +309,11 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      *            the little endian flag
      * @return the buffer value
      */
-    public static double GetValueFromBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
-            long byteIndex, ElementType type, boolean isLittleEndian) {
-        /* steps 1-2 */
+    public static double GetValueFromBuffer(ArrayBufferObject arrayBuffer, long byteIndex,
+            ElementType type, boolean isLittleEndian) {
+        /* step 1 */
         assert arrayBuffer.isInitialized() : "ArrayBuffer not initialized";
+        /* step 2 */
         assert !IsNeuteredBuffer(arrayBuffer) : "ArrayBuffer is neutered";
         /* steps 3-4 */
         assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
@@ -363,8 +362,6 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     /**
      * 24.1.1.7 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
      * 
-     * @param cx
-     *            the execution context
      * @param arrayBuffer
      *            the array buffer object
      * @param byteIndex
@@ -374,16 +371,14 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      * @param value
      *            the new element value
      */
-    public static void SetValueInBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
-            long byteIndex, ElementType type, double value) {
-        SetValueInBuffer(cx, arrayBuffer, byteIndex, type, value, IS_LITTLE_ENDIAN);
+    public static void SetValueInBuffer(ArrayBufferObject arrayBuffer, long byteIndex,
+            ElementType type, double value) {
+        SetValueInBuffer(arrayBuffer, byteIndex, type, value, IS_LITTLE_ENDIAN);
     }
 
     /**
      * 24.1.1.7 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
      * 
-     * @param cx
-     *            the execution context
      * @param arrayBuffer
      *            the array buffer object
      * @param byteIndex
@@ -395,10 +390,11 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      * @param isLittleEndian
      *            the little endian flag
      */
-    public static void SetValueInBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
-            long byteIndex, ElementType type, double value, boolean isLittleEndian) {
-        /* steps 1-2 */
+    public static void SetValueInBuffer(ArrayBufferObject arrayBuffer, long byteIndex,
+            ElementType type, double value, boolean isLittleEndian) {
+        /* step 1 */
         assert arrayBuffer.isInitialized() : "ArrayBuffer not initialized";
+        /* step 2 */
         assert !IsNeuteredBuffer(arrayBuffer) : "ArrayBuffer is neutered";
         /* steps 3-4 */
         assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());

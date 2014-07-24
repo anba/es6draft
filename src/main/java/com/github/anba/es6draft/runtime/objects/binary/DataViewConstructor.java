@@ -129,7 +129,7 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         /* step 16 */
         long bufferIndex = (long) getIndex + viewOffset;
         /* step 17 */
-        return GetValueFromBuffer(cx, buffer, bufferIndex, type, littleEndian);
+        return GetValueFromBuffer(buffer, bufferIndex, type, littleEndian);
     }
 
     /**
@@ -189,7 +189,7 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         /* step 15 */
         long bufferIndex = (long) getIndex + viewOffset;
         /* step 16 */
-        SetValueInBuffer(cx, buffer, bufferIndex, type, ToNumber(cx, value), littleEndian);
+        SetValueInBuffer(buffer, bufferIndex, type, ToNumber(cx, value), littleEndian);
     }
 
     /**

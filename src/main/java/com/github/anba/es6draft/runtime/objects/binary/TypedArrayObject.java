@@ -139,7 +139,7 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
         /* step 13 */
         long indexedPosition = (long) ((index * elementSize) + offset);
         /* step 15 */
-        return GetValueFromBuffer(cx, buffer, indexedPosition, elementType);
+        return GetValueFromBuffer(buffer, indexedPosition, elementType);
     }
 
     /**
@@ -180,7 +180,7 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
         /* step 15 */
         long indexedPosition = (long) ((index * elementSize) + offset);
         /* steps 17-18 */
-        SetValueInBuffer(cx, buffer, indexedPosition, elementType, numValue);
+        SetValueInBuffer(buffer, indexedPosition, elementType, numValue);
         /* step 19 */
         return true;
     }

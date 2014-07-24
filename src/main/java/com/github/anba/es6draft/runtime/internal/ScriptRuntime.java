@@ -2291,6 +2291,24 @@ public final class ScriptRuntime {
      * </ul>
      * 
      * @param value
+     *            the iterator value
+     * @param cx
+     *            the execution context
+     * @return the iterator object
+     */
+    public static ScriptObject getIteratorObject(Object value, ExecutionContext cx) {
+        return GetIterator(cx, ToObject(cx, value));
+    }
+
+    /**
+     * 14.4 Generator Function Definitions
+     * <p>
+     * 14.4.16 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>YieldExpression : yield * AssignmentExpression
+     * </ul>
+     * 
+     * @param value
      *            the value to yield
      * @param cx
      *            the execution context

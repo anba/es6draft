@@ -14,8 +14,6 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -152,12 +150,9 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             return "[object " + tag + "]";
         }
 
-        private static final Set<String> censoredNames;
-        static {
-            List<String> names = Arrays.asList("Arguments", "Array", "Boolean", "Date", "Error",
-                    "Function", "Number", "RegExp", "String");
-            censoredNames = new HashSet<>(names);
-        }
+        private static final HashSet<String> censoredNames = new HashSet<>(Arrays.asList(
+                "Arguments", "Array", "Boolean", "Date", "Error", "Function", "Number", "RegExp",
+                "String"));
 
         /**
          * 19.1.3.5 Object.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )
@@ -170,7 +165,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
          */
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue) {
-            /* steps 1-3 */
+            /* steps 1-2 */
             return Invoke(cx, thisValue, "toString");
         }
 
@@ -185,10 +180,8 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
-            /* step 1 */
-            ScriptObject o = ToObject(cx, thisValue);
-            /* step 2 */
-            return o;
+            /* steps 1-2 */
+            return ToObject(cx, thisValue);
         }
 
         /**

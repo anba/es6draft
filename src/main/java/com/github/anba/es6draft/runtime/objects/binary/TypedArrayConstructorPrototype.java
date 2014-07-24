@@ -234,8 +234,8 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             long targetByteIndex = 0;
             /* steps 21.j-21.k */
             for (long count = elementLength; count > 0; --count) {
-                double value = GetValueFromBuffer(cx, srcData, srcByteIndex, srcType);
-                SetValueInBuffer(cx, data, targetByteIndex, elementType, value);
+                double value = GetValueFromBuffer(srcData, srcByteIndex, srcType);
+                SetValueInBuffer(data, targetByteIndex, elementType, value);
                 srcByteIndex += srcElementSize;
                 targetByteIndex += elementSize;
             }

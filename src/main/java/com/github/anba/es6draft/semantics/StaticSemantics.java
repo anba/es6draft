@@ -12,7 +12,6 @@ import static java.util.Collections.singletonList;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -579,7 +578,7 @@ public final class StaticSemantics {
      * @return the list of lexically scoped declarations
      */
     public static List<Declaration> LexicallyScopedDeclarations(BlockStatement node) {
-        return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
+        return node.getScope().lexicallyScopedDeclarations();
     }
 
     /**
@@ -590,7 +589,7 @@ public final class StaticSemantics {
      * @return the list of lexically scoped declarations
      */
     public static List<Declaration> LexicallyScopedDeclarations(SwitchStatement node) {
-        return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
+        return node.getScope().lexicallyScopedDeclarations();
     }
 
     /**
@@ -605,7 +604,7 @@ public final class StaticSemantics {
      * @return the list of lexically scoped declarations
      */
     public static List<Declaration> LexicallyScopedDeclarations(FunctionNode node) {
-        return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
+        return node.getScope().lexicallyScopedDeclarations();
     }
 
     /**
@@ -616,7 +615,7 @@ public final class StaticSemantics {
      * @return the list of lexically scoped declarations
      */
     public static List<Declaration> LexicallyScopedDeclarations(Script node) {
-        return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
+        return node.getScope().lexicallyScopedDeclarations();
     }
 
     /**
@@ -627,7 +626,7 @@ public final class StaticSemantics {
      * @return the set of lexically declared names
      */
     public static Set<String> LexicallyDeclaredNames(BlockStatement node) {
-        return emptyIfNull(node.getScope().lexicallyDeclaredNames());
+        return node.getScope().lexicallyDeclaredNames();
     }
 
     /**
@@ -638,7 +637,7 @@ public final class StaticSemantics {
      * @return the list of lexically scoped declarations
      */
     public static Set<String> LexicallyDeclaredNames(SwitchStatement node) {
-        return emptyIfNull(node.getScope().lexicallyDeclaredNames());
+        return node.getScope().lexicallyDeclaredNames();
     }
 
     /**
@@ -649,7 +648,7 @@ public final class StaticSemantics {
      * @return the set of lexically declared names
      */
     public static Set<String> LexicallyDeclaredNames(BlockScope scope) {
-        return emptyIfNull(scope.lexicallyDeclaredNames());
+        return scope.lexicallyDeclaredNames();
     }
 
     /**
@@ -664,7 +663,7 @@ public final class StaticSemantics {
      * @return the set of lexically declared names
      */
     public static Set<String> LexicallyDeclaredNames(FunctionNode node) {
-        return emptyIfNull(node.getScope().lexicallyDeclaredNames());
+        return node.getScope().lexicallyDeclaredNames();
     }
 
     /**
@@ -675,7 +674,7 @@ public final class StaticSemantics {
      * @return the set of lexically declared names
      */
     public static Set<String> LexicallyDeclaredNames(Script node) {
-        return emptyIfNull(node.getScope().lexicallyDeclaredNames());
+        return node.getScope().lexicallyDeclaredNames();
     }
 
     /**
@@ -695,7 +694,7 @@ public final class StaticSemantics {
      * @return the set of variable declared names
      */
     public static Set<String> VarDeclaredNames(FunctionNode node) {
-        return emptyIfNull(node.getScope().varDeclaredNames());
+        return node.getScope().varDeclaredNames();
     }
 
     /**
@@ -706,7 +705,7 @@ public final class StaticSemantics {
      * @return the set of variable declared names
      */
     public static Set<String> VarDeclaredNames(Script node) {
-        return emptyIfNull(node.getScope().varDeclaredNames());
+        return node.getScope().varDeclaredNames();
     }
 
     /**
@@ -721,7 +720,7 @@ public final class StaticSemantics {
      * @return the list of variable scoped declarations
      */
     public static List<StatementListItem> VarScopedDeclarations(FunctionNode node) {
-        return emptyIfNull(node.getScope().varScopedDeclarations());
+        return node.getScope().varScopedDeclarations();
     }
 
     /**
@@ -732,7 +731,7 @@ public final class StaticSemantics {
      * @return the list of variable scoped declarations
      */
     public static List<StatementListItem> VarScopedDeclarations(Script node) {
-        return emptyIfNull(node.getScope().varScopedDeclarations());
+        return node.getScope().varScopedDeclarations();
     }
 
     /**
@@ -758,7 +757,7 @@ public final class StaticSemantics {
      * @return the set of export bindings
      */
     public static Set<String> ExportedBindings(Module node) {
-        return emptyIfNull(node.getScope().getExportBindings());
+        return node.getScope().getExportBindings();
     }
 
     /**
@@ -929,7 +928,7 @@ public final class StaticSemantics {
      * @return the ordered set of module requests
      */
     public static Set<String> ModuleRequests(Module node) {
-        return emptyIfNull(node.getScope().getModuleRequests());
+        return node.getScope().getModuleRequests();
     }
 
     /**
@@ -940,7 +939,7 @@ public final class StaticSemantics {
      * @return the set of lexically declared names
      */
     public static Set<String> LexicallyDeclaredNames(Module node) {
-        return emptyIfNull(node.getScope().lexicallyDeclaredNames());
+        return node.getScope().lexicallyDeclaredNames();
     }
 
     /**
@@ -952,7 +951,7 @@ public final class StaticSemantics {
      */
     public static List<Declaration> LexicallyScopedDeclarations(Module node) {
         // FIXME: Does not include ImportDeclaration nodes! May need to change class structure...
-        return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
+        return node.getScope().lexicallyScopedDeclarations();
     }
 
     /**
@@ -980,7 +979,7 @@ public final class StaticSemantics {
      * @return the set of variable declared names
      */
     public static Set<String> VarDeclaredNames(Module node) {
-        return emptyIfNull(node.getScope().varDeclaredNames());
+        return node.getScope().varDeclaredNames();
     }
 
     /**
@@ -991,7 +990,7 @@ public final class StaticSemantics {
      * @return the list of variable scoped declarations
      */
     public static List<StatementListItem> VarScopedDeclarations(Module node) {
-        return emptyIfNull(node.getScope().varScopedDeclarations());
+        return node.getScope().varScopedDeclarations();
     }
 
     /**
@@ -1149,14 +1148,6 @@ public final class StaticSemantics {
     }
 
     //
-
-    private static <T> Set<T> emptyIfNull(Set<T> list) {
-        return list != null ? list : Collections.<T> emptySet();
-    }
-
-    private static <T> List<T> emptyIfNull(List<T> list) {
-        return list != null ? list : Collections.<T> emptyList();
-    }
 
     private static <T> T last(List<T> list) {
         assert !list.isEmpty();

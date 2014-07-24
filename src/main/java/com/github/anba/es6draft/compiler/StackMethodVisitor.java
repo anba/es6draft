@@ -130,7 +130,11 @@ final class StackMethodVisitor extends MethodVisitor {
         if (stack == null) {
             return "<null>";
         }
-        return Arrays.toString(getStack());
+        // Replace [] with {}
+        StringBuilder sb = new StringBuilder(Arrays.toString(getStack()));
+        sb.setCharAt(0, '{');
+        sb.setCharAt(sb.length() - 1, '}');
+        return sb.toString();
     }
 
     private LabelInfo getInfo(Label label) {

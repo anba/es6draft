@@ -844,6 +844,21 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     /**
+     * value → []
+     * 
+     * @param type
+     *            the topmost stack value
+     */
+    public void pop(Type type) {
+        if (type.getSize() == 1) {
+            pop();
+        } else {
+            assert type.getSize() == 2;
+            pop2();
+        }
+    }
+
+    /**
      * lvalue, rvalue → rvalue, lvalue, rvalue
      * 
      * @param ltype

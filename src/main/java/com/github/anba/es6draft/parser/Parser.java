@@ -258,8 +258,8 @@ public final class Parser {
     }
 
     private static final class ModuleContext extends TopContext implements ModuleScope {
-        LinkedHashSet<String> moduleRequests = new LinkedHashSet<>();
-        HashSet<String> exportBindings = new HashSet<>();
+        final LinkedHashSet<String> moduleRequests = new LinkedHashSet<>();
+        final HashSet<String> exportBindings = new HashSet<>();
         Module node = null;
 
         ModuleContext(ScopeContext enclosing) {
@@ -314,22 +314,22 @@ public final class Parser {
 
         @Override
         public Set<String> lexicallyDeclaredNames() {
-            return lexDeclaredNames;
+            return emptyIfNull(lexDeclaredNames);
         }
 
         @Override
         public List<Declaration> lexicallyScopedDeclarations() {
-            return lexScopedDeclarations;
+            return emptyIfNull(lexScopedDeclarations);
         }
 
         @Override
         public Set<String> varDeclaredNames() {
-            return varDeclaredNames;
+            return emptyIfNull(varDeclaredNames);
         }
 
         @Override
         public List<StatementListItem> varScopedDeclarations() {
-            return varScopedDeclarations;
+            return emptyIfNull(varScopedDeclarations);
         }
 
         @Override
@@ -358,12 +358,12 @@ public final class Parser {
 
         @Override
         public Set<String> lexicallyDeclaredNames() {
-            return lexDeclaredNames;
+            return emptyIfNull(lexDeclaredNames);
         }
 
         @Override
         public List<Declaration> lexicallyScopedDeclarations() {
-            return lexScopedDeclarations;
+            return emptyIfNull(lexScopedDeclarations);
         }
 
         @Override
@@ -454,6 +454,14 @@ public final class Parser {
                 lexScopedDeclarations = newSmallList();
             }
             lexScopedDeclarations.add(decl);
+        }
+
+        protected static final <T> Set<T> emptyIfNull(Set<T> list) {
+            return list != null ? list : Collections.<T> emptySet();
+        }
+
+        protected static final <T> List<T> emptyIfNull(List<T> list) {
+            return list != null ? list : Collections.<T> emptyList();
         }
     }
 
@@ -2306,6 +2314,15 @@ public final class Parser {
         }
     }
 
+    private void checkFormalParameterDuplicationStrict(FunctionNode node, List<String> boundNames,
+            HashSet<String> names) {
+        boolean hasDuplicates = (boundNames.size() != names.size());
+        if (hasDuplicates) {
+            String duplicate = findDuplicate(names, boundNames);
+            reportStrictModeSyntaxError(node, Messages.Key.DuplicateFormalParameter, duplicate);
+        }
+    }
+
     /**
      * 14.1.1 Static Semantics: Early Errors
      * 
@@ -2344,7 +2361,7 @@ public final class Parser {
      */
     private void strictFormalParameters_EarlyErrors(FunctionNode node, List<String> boundNames,
             HashSet<String> names, boolean simple) {
-        checkFormalParameterDuplication(node, boundNames, names);
+        checkFormalParameterDuplicationStrict(node, boundNames, names);
         formalParameters_EarlyErrors(node, boundNames, names, simple);
     }
 

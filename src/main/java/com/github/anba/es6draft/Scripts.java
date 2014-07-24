@@ -43,14 +43,14 @@ public final class Scripts {
         /* steps 4-5 */
         scriptBody.globalDeclarationInstantiation(realm.defaultContext(), globalEnv, globalEnv,
                 deletableBindings);
-        /* steps 6-9 */
-        ExecutionContext progCxt = newScriptExecutionContext(realm, script);
+        /* steps 6-10 */
+        ExecutionContext scriptCxt = newScriptExecutionContext(realm, script);
         ExecutionContext oldScriptContext = realm.getScriptContext();
         try {
-            realm.setScriptContext(progCxt);
-            /* steps 10-14 */
-            Object result = script.evaluate(progCxt);
-            /* step 15 */
+            realm.setScriptContext(scriptCxt);
+            /* steps 11-16 */
+            Object result = script.evaluate(scriptCxt);
+            /* step 17 */
             return result;
         } finally {
             realm.setScriptContext(oldScriptContext);

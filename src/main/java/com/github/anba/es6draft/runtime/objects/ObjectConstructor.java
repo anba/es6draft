@@ -593,13 +593,11 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         ScriptObject props = ToObject(cx, properties);
         /* step 3 (empty) */
         // FIXME: spec bug - variable not used
-        /* steps 4-9 */
-        Iterator<?> keysArray = props.ownKeys(cx);
         /* step 10 */
         ArrayList<PropertyDescriptor> descriptors = new ArrayList<>();
         ArrayList<Object> names = new ArrayList<>();
-        /* step 11 */
-        while (keysArray.hasNext()) {
+        /* steps 4-9, 11 */
+        for (Iterator<?> keysArray = props.ownKeys(cx); keysArray.hasNext();) {
             Object nextKey = ToPropertyKey(cx, keysArray.next());
             Property propDesc;
             if (nextKey instanceof String) {
