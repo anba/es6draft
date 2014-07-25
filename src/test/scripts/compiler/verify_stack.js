@@ -39,5 +39,9 @@ function* g13() { L: return }
 function* g14() { try { return } catch(e) { return } }
 function* g15() { if (x) { return 0 } else { return 1 } }
 function* g16() { for (let i = 0;;) continue; }
+function* g17() { f(1,2,yield) }
+function* g18() { f(1,2,yield*3) }
+function* g19() { 2.4 - (yield) }
+function* g19() { 2.4 - (yield*3) }
 
 [...(for ({a = eval("let letInGenCompr = 0;")} of [{}]) 123)];

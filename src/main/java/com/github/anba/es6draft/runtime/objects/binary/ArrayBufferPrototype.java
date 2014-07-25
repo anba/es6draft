@@ -150,7 +150,15 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
             /* steps 17-20 */
             ArrayBufferObject _new = thisArrayBufferObject(cx,
                     ((Constructor) ctor).construct(cx, newLen));
-            // FIXME: spec bug - need to check for neutered buffer returned from constructor
+            // FIXME: spec bug - check new buffer not same instance as old buffer (bug 3046)
+            if (_new == obj) {
+                // TODO: better error message
+                throw newTypeError(cx, Messages.Key.BufferInvalid);
+            }
+            // FIXME: spec bug - check for neutered buffer (bug 3060)
+            if (IsNeuteredBuffer(_new)) {
+                throw newTypeError(cx, Messages.Key.BufferNeutered);
+            }
             /* step 21 */
             if (_new.getByteLength() < newLen) {
                 // FIXME: spec bug - throw RangeError instead of TypeError?

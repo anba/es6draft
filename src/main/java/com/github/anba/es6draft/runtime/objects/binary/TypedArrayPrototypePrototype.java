@@ -220,6 +220,10 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 if (targetBuffer == null) {
                     throw newTypeError(cx, Messages.Key.UninitializedObject);
                 }
+                // FIXME: spec bug - missing neutered buffer check (bug 3045)
+                if (IsNeuteredBuffer(targetBuffer)) {
+                    throw newTypeError(cx, Messages.Key.BufferNeutered);
+                }
                 /* step 8 */
                 long targetLength = target.getArrayLength();
                 /* steps 9-10 */
@@ -260,7 +264,10 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                     long pk = k;
                     Object kValue = Get(cx, src, pk);
                     double kNumber = ToNumber(cx, kValue);
-                    // FIXME: spec bug - missing neutered check
+                    // FIXME: spec bug - missing neutered buffer check (bug 3045)
+                    if (IsNeuteredBuffer(targetBuffer)) {
+                        throw newTypeError(cx, Messages.Key.BufferNeutered);
+                    }
                     SetValueInBuffer(targetBuffer, targetByteIndex, targetType, kNumber);
                 }
                 /* step 28 */

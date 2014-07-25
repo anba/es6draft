@@ -6,7 +6,7 @@
  */
 
 const {
-  assertSame, assertThrows
+  assertSame
 } = Assert;
 
 // B.3.2 Web Block Function Decl: Redeclaration checks when parameter environment is present
@@ -18,8 +18,8 @@ const {
     if (true) { function a() { return "web-compat" } }
     return a();
   }
-  assertSame("default", f());
-  assertSame("param", f(() => "param"));
+  assertSame("web-compat", f());
+  assertSame("web-compat", f(() => "param"));
 }
 
 // Parameter environment not present
@@ -28,6 +28,6 @@ const {
     if (true) { function a() { return "web-compat" } }
     return a();
   }
-  assertThrows(() => f(), TypeError);
-  assertSame("param", f(() => "param"));
+  assertSame("web-compat", f());
+  assertSame("web-compat", f(() => "param"));
 }

@@ -92,6 +92,9 @@ harmony/regress/regress-2219.js
 harmony/regress/regress-2225.js
 harmony/regress/regress-lookup-transition.js
 
+# with-binding lookup uses [[GetOwnProperty]], test proxy does not define trap
+harmony/proxies-with.js
+
 
 ############################################
 # Implementation specific differences      #
@@ -128,9 +131,6 @@ regress/regress-396.js
 
 # for-in order
 enumeration-order.js
-
-# experimental `typeof null` tests
-harmony/typeof.js
 
 # cannot seal/freeze TypedArrays in V8
 regress/regress-95920.js
@@ -247,6 +247,9 @@ regress/regress-349870.js
 
 # RegExp.prototype.test fetches "exec" dynamically
 regexp-string-methods.js
+
+# Function.prototype.{arguments,caller} now configurable=true for bound functions
+function-bind.js
 
 
 #######################################

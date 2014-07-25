@@ -20,7 +20,6 @@ interface   package  protected  static
 `.trim().split(/\s+/);
 
 const strictModeErrors = [
-  "{a: 0, a: 1}",
   "(delete id)",
   "function(eval) {}",
   "function(arguments) {}",

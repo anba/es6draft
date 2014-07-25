@@ -15,4 +15,10 @@ function nonStrictMode() {
   for ({x: a, x: b};;) ;
 }
 
-assertSyntaxError(`"use strict"; for ({x: a, x: b};;) ;`);
+function strictMode() {
+  "use strict";
+  for ({x: a, x: b};;) ;
+}
+
+assertSyntaxError(`for ({__proto__: a, __proto__: b};;) ;`);
+assertSyntaxError(`"use strict"; for ({__proto__: a, __proto__: b};;) ;`);

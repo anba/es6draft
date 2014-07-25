@@ -247,6 +247,7 @@ public final class Messages {
         OutOfMemory("binary.out_of_memory"),
         OutOfMemoryVM("binary.out_of_memory_vm"),
         BufferNeutered("binary.buffer_neutered"),
+        BufferInvalid("binary.buffer_invalid"),
         ArrayOffsetOutOfRange("binary.array_offset_out_of_range"),
         InvalidByteLength("binary.invalid_bytelength"),
         InvalidByteOffset("binary.invalid_byteoffset"),

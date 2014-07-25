@@ -286,6 +286,14 @@ tests/basic/setPrototypeOf.js
 # formal parameter initializers are evaluated in extra scope
 tests/arguments/defaults-scoping.js
 
+# Function.prototype.{arguments, caller} change to configurable=true for strict mode functions
+tests/basic/bug632778-1.js
+tests/basic/bug632778-2.js
+
+# ToNumber(symbol) throws TypeError
+tests/symbol/toNumber.js
+tests/symbol/typed-arrays.js
+
 
 #######################################
 # ES6 related syntax changes          #

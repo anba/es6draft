@@ -76,7 +76,7 @@ const {
   }
   f13(1);
 
-  function f14() {
+  function f14() {{
     function g1(arguments, h = () => arguments) {
       assertSame(void 0, h());
     }
@@ -89,33 +89,62 @@ const {
 
     function g3(h = () => arguments) {
       function arguments() { }
-      // FIXME: spec bug xxxx
-      // assertSame(void 0, h());
+      assertSame("function", typeof arguments);
+      assertNotSame(arguments, h());
+      assertSame("object", typeof h());
     }
     g3();
 
     function g4(h = () => arguments) {
       let arguments;
-      // FIXME: spec bug xxxx
-      // assertSame(void 0, h());
+      assertSame(void 0, arguments);
+      assertNotSame(arguments, h());
+      assertSame("object", typeof h());
     }
     g4();
 
     function g5(h = () => arguments) {
       const arguments = 0;
-      // FIXME: spec bug xxxx
-      // assertSame(void 0, h());
+      assertSame(0, arguments);
+      assertNotSame(arguments, h());
+      assertSame("object", typeof h());
     }
     g5();
 
     function g6(h = () => arguments) {
       var arguments;
-      // FIXME: spec bug xxxx
-      // assertSame(arguments, h());
       assertNotSame(void 0, arguments);
+      assertSame(arguments, h());
     }
     g6();
-  }
+
+    function g7(h = () => arguments) {
+      let arguments = 0;
+      assertSame(0, arguments);
+      assertNotSame(arguments, h());
+      assertSame("object", typeof h());
+    }
+    g7();
+
+    function g8(h = () => arguments) {
+      var arguments = 0;
+      assertSame(0, arguments);
+      assertNotSame(arguments, h());
+      assertSame("object", typeof h());
+    }
+    g8();
+
+    function g9(h = () => arguments) {
+      var arguments;
+      assertNotSame(void 0, arguments);
+      assertSame(arguments, h());
+      arguments = 0;
+      assertSame(0, arguments);
+      assertNotSame(arguments, h());
+      assertSame("object", typeof h());
+    }
+    g9();
+  }}
   f14();
 }
 

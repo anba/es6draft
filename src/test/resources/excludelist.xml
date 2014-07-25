@@ -415,6 +415,28 @@
   <test id="15.3.5.4_2-58gs">ES6-change: tail-call support</test>
   <test id="15.3.5.4_2-59gs">ES6-change: tail-call support</test>
 
+  <!-- rev26 changes -->
+  <test id="S13.2.3_A1">ES6-change: 'caller' property of strict mode Functions is configurable=true</test>
+  <test id="13.2-29-s">ES6-change: 'caller' property of strict mode Functions is configurable=true</test>
+  <test id="13.2-30-s">ES6-change: 'caller' property of strict mode Functions is configurable=true</test>
+  <test id="13.2-31-s">ES6-change: 'caller' property of strict mode Functions is configurable=true</test>
+  <test id="13.2-32-s">ES6-change: 'caller' property of strict mode Functions is configurable=true</test>
+  <test id="13.2-33-s">ES6-change: 'arguments' property of strict mode Functions is configurable=true</test>
+  <test id="13.2-34-s">ES6-change: 'arguments' property of strict mode Functions is configurable=true</test>
+  <test id="13.2-35-s">ES6-change: 'arguments' property of strict mode Functions is configurable=true</test>
+  <test id="13.2-36-s">ES6-change: 'arguments' property of strict mode Functions is configurable=true</test>
+  <test id="15.3.4.5-20-5">ES6-change: 'caller' property of bound functions is configurable=true</test>
+  <test id="11.1.5-2gs">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
+  <test id="11.1.5-4-4-a-1-s">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
+  <test id="11.1.5_4-4-b-1">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
+  <test id="11.1.5_4-4-b-2">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
+  <test id="11.1.5_4-4-c-1">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
+  <test id="11.1.5_4-4-c-2">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
+  <test id="11.1.5_4-4-d-1">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
+  <test id="11.1.5_4-4-d-2">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
+  <test id="11.1.5_4-4-d-3">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
+  <test id="11.1.5_4-4-d-4">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
+
   <test id="Sbp_A1_T1">ES6-change: function declaration in block</test>
   <test id="Sbp_A2_T1">ES6-change: function declaration in block</test>
   <test id="Sbp_A2_T2">ES6-change: function declaration in block</test>
