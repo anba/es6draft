@@ -12,6 +12,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1>
@@ -32,6 +33,10 @@ public final class TypeErrorThrower extends BuiltinFunction {
     private TypeErrorThrower(Realm realm) {
         super(realm, ANONYMOUS);
         createDefaultFunctionProperties(ANONYMOUS, 0, this);
+        // TODO: spec issue - why non-configurable? .arguments and .caller are now configurable
+        PropertyDescriptor nonConfigurable = new PropertyDescriptor();
+        nonConfigurable.setConfigurable(false);
+        ordinaryGetOwnProperty("length").apply(nonConfigurable);
         // [[Extensible]] slot is false
         setExtensible(false);
     }

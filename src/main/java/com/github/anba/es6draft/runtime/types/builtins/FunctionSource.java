@@ -12,7 +12,7 @@ import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 import com.github.anba.es6draft.runtime.types.Callable.SourceSelector;
 
 /**
- * Support class for function source.
+ * Support class to retrieve source code of compiled function objects.
  */
 final class FunctionSource {
     private FunctionSource() {

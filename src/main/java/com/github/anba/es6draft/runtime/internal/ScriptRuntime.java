@@ -2333,7 +2333,7 @@ public final class ScriptRuntime {
                 /* step 7b */
                 innerResult = IteratorThrow(cx, iterator, received);
             } else {
-                // TODO: spec bug - unhandled condition
+                // TODO: spec bug - unhandled condition (bug 3033)
                 /* step 7? */
                 innerResult = IteratorReturn(cx, iterator, received);
             }

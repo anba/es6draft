@@ -170,15 +170,38 @@ public final class Resources {
     /**
      * Load the test files based on the supplied {@link Configuration}
      */
-    public static Iterable<TestInfo[]> loadTests(Configuration config) throws IOException {
+    public static Iterable<Object[]> loadTestsAsArray(Configuration config) throws IOException {
+        return toObjectArray(loadTests(config));
+    }
+
+    /**
+     * Load the test files based on the supplied {@link Configuration}
+     */
+    public static <TEST extends TestInfo> Iterable<Object[]> loadTestsAsArray(Configuration config,
+            BiFunction<Path, Path, TEST> fn) throws IOException {
+        return toObjectArray(loadTests(config, fn));
+    }
+
+    /**
+     * Load the test files based on the supplied {@link Configuration}
+     */
+    public static <TEST extends TestInfo> Iterable<Object[]> loadTestsAsArray(Configuration config,
+            Function<Path, BiFunction<Path, Iterator<String>, TEST>> fn) throws IOException {
+        return toObjectArray(loadTests(config, fn));
+    }
+
+    /**
+     * Load the test files based on the supplied {@link Configuration}
+     */
+    public static List<TestInfo> loadTests(Configuration config) throws IOException {
         return loadTests(config, defaultCreate);
     }
 
     /**
      * Load the test files based on the supplied {@link Configuration}
      */
-    public static Iterable<TestInfo[]> loadTests(Configuration config,
-            BiFunction<Path, Path, TestInfo> fn) throws IOException {
+    public static <TEST extends TestInfo> List<TEST> loadTests(Configuration config,
+            BiFunction<Path, Path, TEST> fn) throws IOException {
         if (!isEnabled(config)) {
             return emptyList();
         }
@@ -192,8 +215,8 @@ public final class Resources {
     /**
      * Load the test files based on the supplied {@link Configuration}
      */
-    public static Iterable<TestInfo[]> loadTests(Configuration config,
-            Function<Path, BiFunction<Path, Iterator<String>, TestInfo>> fn) throws IOException {
+    public static <TEST extends TestInfo> List<TEST> loadTests(Configuration config,
+            Function<Path, BiFunction<Path, Iterator<String>, TEST>> fn) throws IOException {
         if (!isEnabled(config)) {
             return emptyList();
         }
@@ -207,20 +230,20 @@ public final class Resources {
     /**
      * Recursively searches for js-file test cases in {@code searchdir} and its sub-directories
      */
-    private static Iterable<TestInfo[]> loadTests(Configuration config,
-            Function<Path, TestInfo> mapper, Path basedir) throws IOException {
+    private static <TEST extends TestInfo> List<TEST> loadTests(Configuration config,
+            Function<Path, TEST> mapper, Path basedir) throws IOException {
         FilterFileVisitor<Path> ffv = newFilterFileVisitor(basedir, config);
-        CollectorFileVisitor<Path, TestInfo> cfv = new CollectorFileVisitor<>(ffv, mapper);
+        CollectorFileVisitor<Path, TEST> cfv = new CollectorFileVisitor<>(ffv, mapper);
         Files.walkFileTree(basedir, cfv);
-        List<TestInfo> tests = cfv.getResult();
+        List<TEST> tests = cfv.getResult();
         filterTests(tests, basedir, config);
-        return toObjectArray(tests);
+        return tests;
     }
 
     /**
      * Filter the initially collected test cases
      */
-    private static <TEST extends TestInfo> void filterTests(List<TEST> tests, Path basedir,
+    private static void filterTests(List<? extends TestInfo> tests, Path basedir,
             Configuration config) throws IOException {
         if (config.containsKey("exclude.list")) {
             InputStream exclusionList = Resources.resource(config.getString("exclude.list"),
@@ -237,11 +260,11 @@ public final class Resources {
     /**
      * Filter the initially collected test cases
      */
-    private static <TEST extends TestInfo> void filterTests(List<TEST> tests, InputStream resource)
+    private static void filterTests(List<? extends TestInfo> tests, InputStream resource)
             throws IOException {
         // list->map
-        Map<Path, TEST> map = new LinkedHashMap<>();
-        for (TEST test : tests) {
+        Map<Path, TestInfo> map = new LinkedHashMap<>();
+        for (TestInfo test : tests) {
             map.put(test.getScript(), test);
         }
         // disable tests
@@ -253,7 +276,7 @@ public final class Resources {
                 if (line.startsWith("#") || line.isEmpty()) {
                     continue;
                 }
-                TEST test = map.get(Paths.get(line));
+                TestInfo test = map.get(Paths.get(line));
                 if (test == null) {
                     System.err.printf("detected stale entry '%s'\n", line);
                     continue;
@@ -266,7 +289,7 @@ public final class Resources {
     /**
      * Filter the initially collected test cases
      */
-    private static <T extends TestInfo> void filterTests(List<T> tests, Set<String> excludes) {
+    private static void filterTests(List<? extends TestInfo> tests, Set<String> excludes) {
         Pattern pattern = Pattern.compile("(.+?)(?:\\.([^.]*)$|$)");
         for (TestInfo test : tests) {
             String filename = test.getScript().getFileName().toString();
@@ -339,10 +362,10 @@ public final class Resources {
     /**
      * {@link Parameterized} expects a list of {@code Object[]}
      */
-    private static Iterable<TestInfo[]> toObjectArray(Iterable<? extends TestInfo> iterable) {
-        List<TestInfo[]> list = new ArrayList<TestInfo[]>();
+    private static Iterable<Object[]> toObjectArray(Iterable<? extends TestInfo> iterable) {
+        ArrayList<Object[]> list = new ArrayList<>();
         for (TestInfo o : iterable) {
-            list.add(new TestInfo[] { o });
+            list.add(new Object[] { o });
         }
         return list;
     }

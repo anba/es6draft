@@ -18,11 +18,11 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
  * </ul>
  */
 public final class Property implements Cloneable {
-    private enum Type {
-        DataProperty, AccessorProperty
+    private enum PropertyType {
+        Data, Accessor
     }
 
-    private Type type;
+    private PropertyType type;
     private Object value;
     private Callable getter;
     private Callable setter;
@@ -55,7 +55,7 @@ public final class Property implements Cloneable {
      *            the source property descriptor
      */
     Property(PropertyDescriptor original) {
-        type = original.isAccessorDescriptor() ? Type.AccessorProperty : Type.DataProperty;
+        type = original.isAccessorDescriptor() ? PropertyType.Accessor : PropertyType.Data;
         value = original.getValue();
         getter = original.getGetter();
         setter = original.getSetter();
@@ -77,7 +77,7 @@ public final class Property implements Cloneable {
      *            the configurable flag
      */
     public Property(Object value, boolean writable, boolean enumerable, boolean configurable) {
-        this.type = Type.DataProperty;
+        this.type = PropertyType.Data;
         this.value = value;
         this.getter = null;
         this.setter = null;
@@ -99,7 +99,7 @@ public final class Property implements Cloneable {
      *            the configurable flag
      */
     public Property(Callable getter, Callable setter, boolean enumerable, boolean configurable) {
-        this.type = Type.AccessorProperty;
+        this.type = PropertyType.Accessor;
         this.value = UNDEFINED;
         this.getter = getter;
         this.setter = setter;
@@ -112,17 +112,17 @@ public final class Property implements Cloneable {
      * Converts this property to a data-property.
      */
     public void toDataProperty() {
-        toProperty(Type.DataProperty);
+        toProperty(PropertyType.Data);
     }
 
     /**
      * Converts this property to an accessor-property.
      */
     public void toAccessorProperty() {
-        toProperty(Type.AccessorProperty);
+        toProperty(PropertyType.Accessor);
     }
 
-    private void toProperty(Type newType) {
+    private void toProperty(PropertyType newType) {
         assert type != newType;
         type = newType;
         // default attribute values per 6.1.7.1, table 3
@@ -214,7 +214,7 @@ public final class Property implements Cloneable {
      * @return {@code true} if this object is an accessor property
      */
     public final boolean isAccessorDescriptor() {
-        return type == Type.AccessorProperty;
+        return type == PropertyType.Accessor;
     }
 
     /**
@@ -224,7 +224,7 @@ public final class Property implements Cloneable {
      * @return {@code true} if this object is a data property
      */
     public final boolean isDataDescriptor() {
-        return type == Type.DataProperty;
+        return type == PropertyType.Data;
     }
 
     /**

@@ -1,5 +1,10 @@
 "use strict";
 
+var assert = require("assert");
+// var Promise = require("../lib/testable-implementation");
+// var OrdinaryConstruct = require("especially/abstract-operations").OrdinaryConstruct;
+// var iterableFromArray = require("./helpers").iterableFromArray;
+
 describe("Promise.all", function () {
     it("fulfills if passed an empty array", function (done) {
         var iterable = iterableFromArray([]);
@@ -85,6 +90,30 @@ describe("Promise.all", function () {
                 done();
             }
         );
+    });
+
+    it("should execute fulfillment handler after handlers for promises queued in the same turn", function (done) {
+        var p1 = Promise.resolve();
+        var p2 = Promise.resolve();
+
+        var iterable = iterableFromArray([p1, p2]);
+
+        var calls = [];
+
+        p1.then(function () {
+            assert.deepEqual(calls, []);
+            calls.push(1);
+        }).catch(done);
+
+        Promise.all(iterable).then(function () {
+            assert.deepEqual(calls, [1, 2]);
+            calls.push("all");
+        }).then(done).catch(done);
+
+        p2.then(function () {
+            assert.deepEqual(calls, [1]);
+            calls.push(2);
+        }).catch(done);
     });
 
     describe("Using a promise that calls onFulfilled twice to trigger incorrect behavior", function () {

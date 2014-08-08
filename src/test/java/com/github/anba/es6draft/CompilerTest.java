@@ -8,7 +8,7 @@ package com.github.anba.es6draft;
 
 import static com.github.anba.es6draft.repl.global.SimpleShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTests;
+import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
@@ -50,8 +50,8 @@ public class CompilerTest {
     private static final Configuration configuration = loadConfiguration(CompilerTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<TestInfo[]> suiteValues() throws IOException {
-        return loadTests(configuration);
+    public static Iterable<Object[]> suiteValues() throws IOException {
+        return loadTestsAsArray(configuration);
     }
 
     @ClassRule
@@ -113,6 +113,6 @@ public class CompilerTest {
         global.eval(test.getScript(), test.toFile());
 
         // wait for pending tasks to finish
-        global.getRealm().getWorld().executeTasks();
+        global.getRealm().getWorld().runEventLoop();
     }
 }

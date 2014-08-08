@@ -78,9 +78,8 @@ public final class GeneratorThread extends Thread {
                     throw new StackOverflowError();
                 }
                 return parentDepth + 1;
-            } else {
-                return 1;
             }
+            return 1;
         }
     }
 }

@@ -9,7 +9,7 @@ package com.github.anba.es6draft.test262;
 /**
  * 
  */
-public class Test262AssertionError extends AssertionError {
+public final class Test262AssertionError extends AssertionError {
     private static final long serialVersionUID = -727900497296323773L;
 
     public Test262AssertionError(Object detailMessage) {

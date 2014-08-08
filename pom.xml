@@ -127,6 +127,12 @@
       <version>3.3.2</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>1.13</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <profiles>

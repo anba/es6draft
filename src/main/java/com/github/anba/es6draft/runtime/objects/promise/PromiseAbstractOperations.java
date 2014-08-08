@@ -17,6 +17,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.MutRef;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -283,12 +284,12 @@ public final class PromiseAbstractOperations {
         /* steps 6-7 */
         Object constructorResult = constructor.call(cx, promise, executor);
         /* step 8 */
-        Object resolve = executor.resolve;
+        Object resolve = executor.resolve.get();
         if (!IsCallable(resolve)) {
             throw newTypeError(cx, Messages.Key.NotCallable);
         }
         /* step 9 */
-        Object reject = executor.reject;
+        Object reject = executor.reject.get();
         if (!IsCallable(reject)) {
             throw newTypeError(cx, Messages.Key.NotCallable);
         }
@@ -305,23 +306,25 @@ public final class PromiseAbstractOperations {
      */
     public static final class GetCapabilitiesExecutor extends BuiltinFunction {
         /** [[Resolve]] */
-        private Object resolve = UNDEFINED;
+        private final MutRef<Object> resolve;
 
         /** [[Reject]] */
-        private Object reject = UNDEFINED;
+        private final MutRef<Object> reject;
 
         public GetCapabilitiesExecutor(Realm realm) {
-            super(realm, ANONYMOUS);
+            this(realm, new MutRef<Object>(UNDEFINED), new MutRef<Object>(UNDEFINED));
             createDefaultFunctionProperties(ANONYMOUS, 2);
         }
 
-        private GetCapabilitiesExecutor(Realm realm, Void ignore) {
+        private GetCapabilitiesExecutor(Realm realm, MutRef<Object> resolve, MutRef<Object> reject) {
             super(realm, ANONYMOUS);
+            this.resolve = resolve;
+            this.reject = reject;
         }
 
         @Override
         public GetCapabilitiesExecutor clone() {
-            return new GetCapabilitiesExecutor(getRealm(), null);
+            return new GetCapabilitiesExecutor(getRealm(), resolve, reject);
         }
 
         @Override
@@ -332,17 +335,17 @@ public final class PromiseAbstractOperations {
             /* step 1 (not applicable) */
             /* step 2 (omitted) */
             /* step 3 */
-            if (!Type.isUndefined(this.resolve)) {
+            if (!Type.isUndefined(this.resolve.get())) {
                 throw newTypeError(calleeContext, Messages.Key.NotUndefined);
             }
             /* step 4 */
-            if (!Type.isUndefined(this.reject)) {
+            if (!Type.isUndefined(this.reject.get())) {
                 throw newTypeError(calleeContext, Messages.Key.NotUndefined);
             }
             /* step 5 */
-            this.resolve = resolve;
+            this.resolve.set(resolve);
             /* step 6 */
-            this.reject = reject;
+            this.reject.set(reject);
             /* step 7 */
             return UNDEFINED;
         }

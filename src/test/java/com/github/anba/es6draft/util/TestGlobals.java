@@ -110,7 +110,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         Path basedir = Resources.getTestSuitePath(configuration);
         ScriptLoader scriptLoader = new ScriptLoader(getOptions(), getParserOptions(),
                 getCompilerOptions());
-        List<Script> scripts = new ArrayList<>();
+        ArrayList<Script> scripts = new ArrayList<>();
         for (String scriptName : toStrings(scriptNames)) {
             Script script = scriptLoader.script(scriptName, 1,
                     Resources.resource(scriptName, basedir));

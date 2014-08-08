@@ -230,7 +230,7 @@ final class BindingInitializationGenerator {
         NoEnvironment, EnvironmentFromStack, EnvironmentFromLocal
     }
 
-    private abstract static class RuntimeSemantics<R, V> extends DefaultNodeVisitor<R, V> {
+    private abstract static class RuntimeSemantics<V> extends DefaultVoidNodeVisitor<V> {
         protected final CodeGenerator codegen;
         protected final ExpressionVisitor mv;
         protected final EnvironmentType environment;
@@ -268,7 +268,7 @@ final class BindingInitializationGenerator {
         }
 
         @Override
-        protected final R visit(Node node, V value) {
+        protected final void visit(Node node, V value) {
             throw new IllegalStateException();
         }
 
@@ -317,14 +317,14 @@ final class BindingInitializationGenerator {
      * <li>13.14.3 Runtime Semantics: BindingInitialization
      * </ul>
      */
-    private static final class BindingInitialization extends RuntimeSemantics<Void, Void> {
+    private static final class BindingInitialization extends RuntimeSemantics<Void> {
         BindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
                 EnvironmentType environment, Variable<? extends EnvironmentRecord> envRec) {
             super(codegen, mv, environment, envRec);
         }
 
         @Override
-        public Void visit(ArrayBindingPattern node, Void value) {
+        public void visit(ArrayBindingPattern node, Void value) {
             // step 1: Assert: Type(value) is Object
 
             // step 2-3:
@@ -342,12 +342,10 @@ final class BindingInitializationGenerator {
 
             // stack: [(env)] -> []
             popEnv();
-
-            return null;
         }
 
         @Override
-        public Void visit(ObjectBindingPattern node, Void value) {
+        public void visit(ObjectBindingPattern node, Void value) {
             // step 1: Assert: Type(value) is Object
 
             // stack: [(env), value] -> [(env)]
@@ -378,12 +376,10 @@ final class BindingInitializationGenerator {
 
             // stack: [(env)] -> []
             popEnv();
-
-            return null;
         }
 
         @Override
-        public Void visit(BindingIdentifier node, Void value) {
+        public void visit(BindingIdentifier node, Void value) {
             if (environment == EnvironmentType.EnvironmentFromLocal) {
                 // stack: [envRec, id, value] -> []
                 mv.invoke(Methods.EnvironmentRecord_initializeBinding);
@@ -397,8 +393,6 @@ final class BindingInitializationGenerator {
                 mv.swap();
                 PutValue(mv);
             }
-
-            return null;
         }
     }
 
@@ -412,43 +406,37 @@ final class BindingInitializationGenerator {
      * </ul>
      */
     private static final class IteratorBindingInitialization extends
-            RuntimeSemantics<Void, Variable<Iterator<?>>> {
+            RuntimeSemantics<Variable<Iterator<?>>> {
         IteratorBindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
                 EnvironmentType environment, Variable<? extends EnvironmentRecord> envRec) {
             super(codegen, mv, environment, envRec);
         }
 
         @Override
-        public Void visit(FormalParameterList node, Variable<Iterator<?>> iterator) {
+        public void visit(FormalParameterList node, Variable<Iterator<?>> iterator) {
             // stack: [(env)] -> [(env)]
             for (FormalParameter formal : node) {
                 formal.accept(this, iterator);
             }
-
-            return null;
         }
 
         @Override
-        public Void visit(ArrayBindingPattern node, Variable<Iterator<?>> iterator) {
+        public void visit(ArrayBindingPattern node, Variable<Iterator<?>> iterator) {
             // stack: [(env)] -> [(env)]
             for (BindingElementItem element : node.getElements()) {
                 element.accept(this, iterator);
             }
-
-            return null;
         }
 
         @Override
-        public Void visit(BindingElision node, Variable<Iterator<?>> iterator) {
+        public void visit(BindingElision node, Variable<Iterator<?>> iterator) {
             // stack: [(env)] -> [(env)]
             mv.load(iterator);
             mv.invoke(Methods.ScriptRuntime_iteratorNextAndIgnore);
-
-            return null;
         }
 
         @Override
-        public Void visit(BindingElement node, Variable<Iterator<?>> iterator) {
+        public void visit(BindingElement node, Variable<Iterator<?>> iterator) {
             Binding binding = node.getBinding();
             Expression initializer = node.getInitializer();
 
@@ -522,12 +510,10 @@ final class BindingInitializationGenerator {
                 // stack: [(env), (env), v'] -> [(env)]
                 BindingInitialization(binding);
             }
-
-            return null;
         }
 
         @Override
-        public Void visit(BindingRestElement node, Variable<Iterator<?>> iterator) {
+        public void visit(BindingRestElement node, Variable<Iterator<?>> iterator) {
             // stack: [(env)] -> [(env), (env)]
             dupEnv();
 
@@ -541,8 +527,6 @@ final class BindingInitializationGenerator {
 
             // stack: [(env), (env, id), rest] -> [(env)]
             BindingInitialization(node.getBindingIdentifier());
-
-            return null;
         }
     }
 
@@ -553,7 +537,7 @@ final class BindingInitializationGenerator {
      * </ul>
      */
     private static abstract class KeyedBindingInitialization<PROPERTYNAME> extends
-            RuntimeSemantics<Void, PROPERTYNAME> {
+            RuntimeSemantics<PROPERTYNAME> {
         private final Variable<ScriptObject> object;
 
         KeyedBindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
@@ -566,7 +550,7 @@ final class BindingInitializationGenerator {
         abstract ValType evaluatePropertyName(PROPERTYNAME propertyName);
 
         @Override
-        public Void visit(BindingProperty node, PROPERTYNAME value) {
+        public void visit(BindingProperty node, PROPERTYNAME value) {
             Binding binding = node.getBinding();
             Expression initializer = node.getInitializer();
 
@@ -620,8 +604,6 @@ final class BindingInitializationGenerator {
             // step 5
             // stack: [(env), (env), v'] -> [(env)]
             BindingInitialization(binding);
-
-            return null;
         }
     }
 

@@ -294,6 +294,9 @@ ecma_6/Comprehensions/scope.js
 # SpiderMonkey does not support 'yield' as identifier in generator comprehensions
 ecma_6/Comprehensions/error-messages.js
 
+# SpiderMonkey sets RegExp.$n to undefined instead of "" when capturing group n is empty
+ecma_3/extensions/regress-220367-002.js
+
 
 #######################################
 # ES6 related runtime changes         #
@@ -544,12 +547,6 @@ js1_5/Regress/regress-352197.js
 js1_7/block/regress-347559.js
 js1_8_1/extensions/strict-warning.js
 js1_8_5/regress/regress-736792.js
-
-# trap() not supported
-js1_8_5/extensions/regress-672804-1.js
-js1_8_5/extensions/regress-672804-2.js
-js1_8_5/extensions/regress-672804-3.js
-js1_8_5/regress/regress-476088.js
 
 # clone() not supported
 js1_8_5/extensions/regress-677589.js

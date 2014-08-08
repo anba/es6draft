@@ -66,7 +66,7 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
     public enum Properties {
         ;
 
-        private static DateTimeFormatObject thisDateTimeFormatValue(ExecutionContext cx,
+        private static DateTimeFormatObject thisDateTimeFormatObject(ExecutionContext cx,
                 Object object) {
             if (object instanceof DateTimeFormatObject) {
                 DateTimeFormatObject dateTimeFormat = (DateTimeFormatObject) object;
@@ -98,7 +98,7 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
          */
         @Accessor(name = "format", type = Accessor.Type.Getter)
         public static Object format(ExecutionContext cx, Object thisValue) {
-            DateTimeFormatObject dateTimeFormat = thisDateTimeFormatValue(cx, thisValue);
+            DateTimeFormatObject dateTimeFormat = thisDateTimeFormatObject(cx, thisValue);
             if (dateTimeFormat.getBoundFormat() == null) {
                 FormatFunction f = new FormatFunction(cx.getRealm());
                 Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
@@ -118,7 +118,7 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
          */
         @Function(name = "resolvedOptions", arity = 0)
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
-            DateTimeFormatObject dateTimeFormat = thisDateTimeFormatValue(cx, thisValue);
+            DateTimeFormatObject dateTimeFormat = thisDateTimeFormatObject(cx, thisValue);
             OrdinaryObject object = OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
             CreateDataProperty(cx, object, "locale", dateTimeFormat.getLocale());
             CreateDataProperty(cx, object, "calendar", dateTimeFormat.getCalendar());

@@ -6,15 +6,21 @@
  */
 package com.github.anba.es6draft.test262;
 
-import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.test262.Test262GlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.matchers.ErrorMessageMatcher.hasErrorMessage;
 import static com.github.anba.es6draft.util.matchers.PatternMatcher.matchesPattern;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
@@ -28,16 +34,19 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.TestWatcher;
 import org.junit.rules.Timeout;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.Resources;
@@ -55,9 +64,12 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
 public final class Test262 {
     private static final Configuration configuration = loadConfiguration(Test262.class);
 
+    private static final DefaultMode unmarkedDefault = DefaultMode.forName(configuration
+            .getString("unmarked_default"));
+
     @Parameters(name = "{0}")
-    public static Iterable<TestInfo[]> suiteValues() throws IOException {
-        return Resources.loadTests(configuration, new BiFunction<Path, Path, TestInfo>() {
+    public static Iterable<Object[]> suiteValues() throws IOException {
+        return Resources.loadTestsAsArray(configuration, new BiFunction<Path, Path, TestInfo>() {
             @Override
             public TestInfo apply(Path basedir, Path file) {
                 return new Test262Info(basedir, file);
@@ -76,6 +88,15 @@ public final class Test262 {
     };
 
     @Rule
+    public TestWatcher watcher = new TestWatcher() {
+        @Override
+        protected void starting(Description description) {
+            isStrictTest = description.getAnnotation(Strict.class) != null;
+        }
+    };
+    private boolean isStrictTest = false;
+
+    @Rule
     public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(600));
 
     @Rule
@@ -91,13 +112,32 @@ public final class Test262 {
     public Test262Info test;
 
     private Test262GlobalObject global;
+    private AsyncHelper async;
+    private String sourceCode;
+    private int preambleLines;
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        // filter disabled tests
+        // Filter disabled tests
         assumeTrue(test.isEnabled());
 
-        test.readFileInformation();
+        String fileContent = test.readFile();
+        if (isStrictTest) {
+            assumeTrue(!test.isNoStrict()
+                    && (test.isOnlyStrict() || unmarkedDefault != DefaultMode.NonStrict));
+        } else {
+            assumeTrue(!test.isOnlyStrict()
+                    && (test.isNoStrict() || unmarkedDefault != DefaultMode.Strict));
+        }
+
+        final String preamble;
+        if (isStrictTest) {
+            preamble = "\"use strict\";\nvar strict_mode = true;\n";
+        } else {
+            preamble = "//\"use strict\";\nvar strict_mode = false;\n";
+        }
+        sourceCode = preamble + fileContent;
+        preambleLines = 2;
 
         global = globals.newGlobal(new Test262Console(), test);
         ExecutionContext cx = global.getRealm().defaultContext();
@@ -116,6 +156,20 @@ public final class Test262 {
                         matchesPattern(errorType, Pattern.CASE_INSENSITIVE)));
             }
         }
+
+        // Load test includes
+        for (String name : test.getIncludes()) {
+            global.include(name);
+        }
+
+        if (test.isAsync()) {
+            // "doneprintHandle.js" is replaced with AsyncHelper
+            global.include("timer.js");
+            async = install(new AsyncHelper(), AsyncHelper.class);
+        }
+
+        // Install test hooks
+        install(global, Test262GlobalObject.class);
     }
 
     @After
@@ -127,12 +181,56 @@ public final class Test262 {
 
     @Test
     public void runTest() throws Throwable {
-        // Install test hooks
-        ExecutionContext cx = global.getRealm().defaultContext();
-        ScriptObject globalThis = global.getRealm().getGlobalThis();
-        createProperties(cx, globalThis, global, Test262GlobalObject.class);
+        // Evaluate actual test-script
+        global.eval(test.getScript(), sourceCode, -preambleLines);
 
-        // evaluate actual test-script
-        global.eval(test.getScript(), test.toFile());
+        // Wait for pending tasks to finish
+        if (test.isAsync()) {
+            assertFalse(async.doneCalled);
+            global.getRealm().getWorld().runEventLoop();
+            assertTrue(async.doneCalled);
+        } else {
+            global.getRealm().getWorld().runEventLoop();
+        }
+    }
+
+    @Test
+    @Strict
+    public void runTestStrict() throws Throwable {
+        // Evaluate actual test-script
+        global.eval(test.getScript(), sourceCode, -preambleLines);
+
+        // Wait for pending tasks to finish
+        if (test.isAsync()) {
+            assertFalse(async.doneCalled);
+            global.getRealm().getWorld().runEventLoop();
+            assertTrue(async.doneCalled);
+        } else {
+            global.getRealm().getWorld().runEventLoop();
+        }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.METHOD })
+    public @interface Strict {
+    }
+
+    private <T> T install(T object, Class<T> clazz) {
+        Realm realm = global.getRealm();
+        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
+        return object;
+    }
+
+    public static class AsyncHelper {
+        boolean doneCalled = false;
+
+        @Properties.Function(name = "$DONE", arity = 0)
+        public void done(Object argument) {
+            assertFalse(doneCalled);
+            doneCalled = true;
+            if (ToBoolean(argument)) {
+                throw new Test262AssertionError(argument);
+            }
+        }
     }
 }

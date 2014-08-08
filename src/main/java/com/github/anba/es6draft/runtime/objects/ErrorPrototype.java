@@ -343,9 +343,9 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
 
     private static String getMethodName(StackTraceElement element) {
         String methodName = JVMNames.fromBytecodeName(element.getMethodName());
-        assert methodName.charAt(0) == '!';
+        assert methodName.charAt(0) != '!';
         int i = methodName.lastIndexOf('~');
-        return methodName.substring(1, (i != -1 ? i : methodName.length()));
+        return methodName.substring(0, (i != -1 ? i : methodName.length()));
     }
 
     private static final class StackTraceElementIterable implements Iterable<StackTraceElement> {
@@ -373,9 +373,9 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
 
         private static boolean isScriptStackFrame(StackTraceElement element) {
             // filter stacktrace elements based on the encoding in Compiler/CodeGenerator
-            return (element.getClassName().charAt(0) == '#'
-                    && JVMNames.fromBytecodeName(element.getMethodName()).charAt(0) == '!' && element
-                    .getLineNumber() > 0);
+            return element.getClassName().charAt(0) == '#'
+                    && JVMNames.fromBytecodeName(element.getMethodName()).charAt(0) != '!'
+                    && element.getLineNumber() > 0;
         }
 
         @Override

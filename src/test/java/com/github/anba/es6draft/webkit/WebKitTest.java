@@ -9,14 +9,13 @@ package com.github.anba.es6draft.webkit;
 import static com.github.anba.es6draft.repl.global.V8ShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTests;
+import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -42,7 +41,6 @@ import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.util.Functional.BiFunction;
-import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
@@ -59,14 +57,13 @@ public class WebKitTest {
     private static final Configuration configuration = loadConfiguration(WebKitTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<TestInfo[]> suiteValues() throws IOException {
-        return loadTests(configuration,
-                new Function<Path, BiFunction<Path, Iterator<String>, TestInfo>>() {
-                    @Override
-                    public TestInfos apply(Path basedir) {
-                        return new TestInfos(basedir);
-                    }
-                });
+    public static Iterable<Object[]> suiteValues() throws IOException {
+        return loadTestsAsArray(configuration, new BiFunction<Path, Path, TestInfo>() {
+            @Override
+            public TestInfo apply(Path basedir, Path file) {
+                return new WebKitTestInfo(basedir, file);
+            }
+        });
     }
 
     @ClassRule
@@ -99,10 +96,12 @@ public class WebKitTest {
     public WebKitTestInfo test;
 
     private static class WebKitTestInfo extends TestInfo {
-        boolean expect = true;
+        final boolean expect;
 
         public WebKitTestInfo(Path basedir, Path script) {
             super(basedir, script);
+            // negative tests end with "-n"
+            this.expect = !script.getFileName().toString().endsWith("-n.js");
         }
     }
 
@@ -110,7 +109,7 @@ public class WebKitTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        // filter disabled tests
+        // Filter disabled tests
         assumeTrue(test.isEnabled());
 
         global = globals.newGlobal(new WebKitTestConsole(collector), test);
@@ -140,11 +139,14 @@ public class WebKitTest {
 
     @Test
     public void runTest() throws Throwable {
-        // evaluate actual test-script
+        // Evaluate actual test-script
         // - load and execute pre and post before resp. after test-script
         global.include(Paths.get("resources/standalone-pre.js"));
         global.eval(test.getScript(), test.toFile());
         global.include(Paths.get("resources/standalone-post.js"));
+
+        // Wait for pending tasks to finish
+        global.getRealm().getWorld().runEventLoop();
     }
 
     public static final class WebKitNatives {
@@ -155,24 +157,6 @@ public class WebKitTest {
         @Properties.Function(name = "numberOfDFGCompiles", arity = 0)
         public double numberOfDFGCompiles() {
             return Double.NaN;
-        }
-    }
-
-    private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
-        private final Path basedir;
-
-        public TestInfos(Path basedir) {
-            this.basedir = basedir;
-        }
-
-        @Override
-        public TestInfo apply(Path file, Iterator<String> lines) {
-            WebKitTestInfo test = new WebKitTestInfo(basedir, file);
-            // negative tests end with "-n"
-            if (file.getFileName().toString().endsWith("-n.js")) {
-                test.expect = false;
-            }
-            return test;
         }
     }
 }

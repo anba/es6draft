@@ -160,7 +160,7 @@ public class ExoticProxy implements ScriptObject {
         @Override
         public Realm getRealm(ExecutionContext cx) {
             /* 7.3.21 GetFunctionRealm ( obj ) Abstract Operation */
-            // FIXME: spec bug - revoked proxy not handled in 7.3.21 GetFunctionRealm
+            // FIXME: spec bug - revoked proxy not handled in 7.3.21 GetFunctionRealm (bug 3018)
             if (isRevoked()) {
                 throw newTypeError(cx, Messages.Key.ProxyRevoked);
             }

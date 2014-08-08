@@ -420,6 +420,8 @@ public final class Properties {
                 return null;
             } else if (c == Double.TYPE) {
                 return MethodHandles.insertArguments(ToNumberMH, 0, cx);
+            } else if (c == Integer.TYPE) {
+                return MethodHandles.insertArguments(ToInt32MH, 0, cx);
             } else if (c == Boolean.TYPE) {
                 return ToBooleanMH;
             } else if (c == String.class) {
@@ -462,19 +464,21 @@ public final class Properties {
             throw new IllegalArgumentException(c.toString());
         }
 
-        private static final MethodHandle ToBooleanMH, ToStringMH, ToFlatStringMH, ToNumberMH,
-                ToObjectMH, ToCallableMH, IsInstanceMH;
+        private static final MethodHandle ToBooleanMH, ToNumberMH, ToInt32MH, ToStringMH,
+                ToFlatStringMH, ToObjectMH, ToCallableMH, IsInstanceMH;
         static {
             MethodLookup lookup = new MethodLookup(MethodHandles.publicLookup());
+            ToBooleanMH = lookup.findStatic(AbstractOperations.class, "ToBoolean",
+                    MethodType.methodType(Boolean.TYPE, Object.class));
+            ToNumberMH = lookup.findStatic(AbstractOperations.class, "ToNumber",
+                    MethodType.methodType(Double.TYPE, ExecutionContext.class, Object.class));
+            ToInt32MH = lookup.findStatic(AbstractOperations.class, "ToInt32",
+                    MethodType.methodType(Integer.TYPE, ExecutionContext.class, Object.class));
             ToStringMH = lookup
                     .findStatic(AbstractOperations.class, "ToString", MethodType.methodType(
                             CharSequence.class, ExecutionContext.class, Object.class));
             ToFlatStringMH = lookup.findStatic(AbstractOperations.class, "ToFlatString",
                     MethodType.methodType(String.class, ExecutionContext.class, Object.class));
-            ToNumberMH = lookup.findStatic(AbstractOperations.class, "ToNumber",
-                    MethodType.methodType(Double.TYPE, ExecutionContext.class, Object.class));
-            ToBooleanMH = lookup.findStatic(AbstractOperations.class, "ToBoolean",
-                    MethodType.methodType(Boolean.TYPE, Object.class));
             ToObjectMH = lookup
                     .findStatic(AbstractOperations.class, "ToObject", MethodType.methodType(
                             ScriptObject.class, ExecutionContext.class, Object.class));
@@ -908,8 +912,8 @@ public final class Properties {
         handle = MethodHandles.filterArguments(handle, 0, filters);
 
         Class<?> returnType = type.returnType();
-        if (returnType == Double.TYPE || returnType == Boolean.TYPE || returnType == String.class
-                || returnType == CharSequence.class
+        if (returnType == Double.TYPE || returnType == Integer.TYPE || returnType == Boolean.TYPE
+                || returnType == String.class || returnType == CharSequence.class
                 || ScriptObject.class.isAssignableFrom(returnType)) {
             handle = MethodHandles.explicitCastArguments(handle,
                     handle.type().changeReturnType(Object.class));

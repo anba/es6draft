@@ -25,6 +25,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
+import com.github.anba.es6draft.runtime.objects.collection.WeakMapObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -221,6 +222,18 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
         if (arrayBuffer.getData() != null) {
             NeuterArrayBuffer(cx, arrayBuffer);
         }
+    }
+
+    /**
+     * shell-function: {@code weakMapSize(weakMap)}
+     * 
+     * @param weakMap
+     *            the WeakMap object
+     * @return the WeakMap's current size
+     */
+    @Function(name = "weakMapSize", arity = 1)
+    public int weakMapSize(WeakMapObject weakMap) {
+        return weakMap.getWeakMapData().size();
     }
 
     /**

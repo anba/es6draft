@@ -86,7 +86,7 @@ final class DestructuringAssignmentGenerator {
         mv.invoke(Methods.Reference_putValue);
     }
 
-    private abstract static class RuntimeSemantics<R, V> extends DefaultNodeVisitor<R, V> {
+    private abstract static class RuntimeSemantics<V> extends DefaultVoidNodeVisitor<V> {
         protected final CodeGenerator codegen;
         protected final ExpressionVisitor mv;
 
@@ -127,7 +127,7 @@ final class DestructuringAssignmentGenerator {
         }
 
         @Override
-        protected final R visit(Node node, V value) {
+        protected final void visit(Node node, V value) {
             throw new IllegalStateException();
         }
     }
@@ -135,14 +135,13 @@ final class DestructuringAssignmentGenerator {
     /**
      * 12.14.5.2 Runtime Semantics: DestructuringAssignmentEvaluation
      */
-    private static final class DestructuringAssignmentEvaluation extends
-            RuntimeSemantics<Void, Void> {
+    private static final class DestructuringAssignmentEvaluation extends RuntimeSemantics<Void> {
         DestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
             super(codegen, mv);
         }
 
         @Override
-        public Void visit(ArrayAssignmentPattern node, Void value) {
+        public void visit(ArrayAssignmentPattern node, Void value) {
             // stack: [obj] -> [iterator]
             Variable<Iterator<?>> iterator = mv.newScratchVariable(Iterator.class).uncheckedCast();
             mv.lineInfo(node);
@@ -155,12 +154,10 @@ final class DestructuringAssignmentGenerator {
             }
 
             mv.freeVariable(iterator);
-
-            return null;
         }
 
         @Override
-        public Void visit(ObjectAssignmentPattern node, Void value) {
+        public void visit(ObjectAssignmentPattern node, Void value) {
             for (AssignmentProperty property : node.getProperties()) {
                 // stack: [obj] -> [obj, obj]
                 mv.dup();
@@ -185,8 +182,6 @@ final class DestructuringAssignmentGenerator {
             }
             // stack: [obj] -> []
             mv.pop();
-
-            return null;
         }
     }
 
@@ -194,22 +189,20 @@ final class DestructuringAssignmentGenerator {
      * 12.14.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
      */
     private static final class IteratorDestructuringAssignmentEvaluation extends
-            RuntimeSemantics<Void, Variable<Iterator<?>>> {
+            RuntimeSemantics<Variable<Iterator<?>>> {
         IteratorDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
             super(codegen, mv);
         }
 
         @Override
-        public Void visit(Elision node, Variable<Iterator<?>> iterator) {
+        public void visit(Elision node, Variable<Iterator<?>> iterator) {
             // stack: [] -> []
             mv.load(iterator);
             mv.invoke(Methods.ScriptRuntime_iteratorNextAndIgnore);
-
-            return null;
         }
 
         @Override
-        public Void visit(AssignmentElement node, Variable<Iterator<?>> iterator) {
+        public void visit(AssignmentElement node, Variable<Iterator<?>> iterator) {
             LeftHandSideExpression target = node.getTarget();
             Expression initializer = node.getInitializer();
 
@@ -248,12 +241,10 @@ final class DestructuringAssignmentGenerator {
                 // stack: [lref, 'v] -> []
                 PutValue(target, refType, mv);
             }
-
-            return null;
         }
 
         @Override
-        public Void visit(AssignmentRestElement node, Variable<Iterator<?>> iterator) {
+        public void visit(AssignmentRestElement node, Variable<Iterator<?>> iterator) {
             LeftHandSideExpression target = node.getTarget();
 
             // stack: [] -> [lref]
@@ -266,8 +257,6 @@ final class DestructuringAssignmentGenerator {
 
             // stack: [lref, rest] -> []
             PutValue(target, refType, mv);
-
-            return null;
         }
     }
 
@@ -275,7 +264,7 @@ final class DestructuringAssignmentGenerator {
      * 12.14.5.4 Runtime Semantics: KeyedDestructuringAssignmentEvaluation
      */
     private static abstract class KeyedDestructuringAssignmentEvaluation<PROPERTYNAME> extends
-            RuntimeSemantics<Void, PROPERTYNAME> {
+            RuntimeSemantics<PROPERTYNAME> {
         KeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
             super(codegen, mv);
         }
@@ -283,7 +272,7 @@ final class DestructuringAssignmentGenerator {
         abstract ValType evaluatePropertyName(PROPERTYNAME propertyName);
 
         @Override
-        public Void visit(AssignmentProperty node, PROPERTYNAME propertyName) {
+        public void visit(AssignmentProperty node, PROPERTYNAME propertyName) {
             LeftHandSideExpression target = node.getTarget();
             Expression initializer = node.getInitializer();
 
@@ -333,8 +322,6 @@ final class DestructuringAssignmentGenerator {
                 // stack: [lref, 'v] -> []
                 PutValue(target, refType, mv);
             }
-
-            return null;
         }
     }
 

@@ -8,7 +8,7 @@ package com.github.anba.es6draft.traceur;
 
 import static com.github.anba.es6draft.repl.global.V8ShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTests;
+import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -36,15 +36,14 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.github.anba.es6draft.WindowTimers;
+import com.github.anba.es6draft.repl.WindowTimers;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
-import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.Parallelized;
@@ -63,8 +62,8 @@ public class TraceurTest {
     private static final Configuration configuration = loadConfiguration(TraceurTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<TestInfo[]> suiteValues() throws IOException {
-        return loadTests(configuration,
+    public static Iterable<Object[]> suiteValues() throws IOException {
+        return loadTestsAsArray(configuration,
                 new Function<Path, BiFunction<Path, Iterator<String>, TestInfo>>() {
                     @Override
                     public TestInfos apply(Path basedir) {
@@ -116,6 +115,8 @@ public class TraceurTest {
     }
 
     private V8ShellGlobalObject global;
+    private AsyncHelper async;
+    private WindowTimers timers;
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
@@ -124,7 +125,10 @@ public class TraceurTest {
 
         global = globals.newGlobal(new TraceurConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
-
+        if (test.async) {
+            async = install(new AsyncHelper(), AsyncHelper.class);
+            timers = install(new WindowTimers(), WindowTimers.class);
+        }
         if (test.expect) {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
             exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
@@ -135,7 +139,7 @@ public class TraceurTest {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws InterruptedException {
         if (global != null) {
             global.getScriptLoader().getExecutor().shutdown();
         }
@@ -143,27 +147,21 @@ public class TraceurTest {
 
     @Test
     public void runTest() throws Throwable {
-        // create global 'done' function for async tests
-        AsyncHelper async = null;
-        WindowTimers timers = null;
-        if (test.async) {
-            async = new AsyncHelper();
-            timers = new WindowTimers();
-            ExecutionContext cx = global.getRealm().defaultContext();
-            ScriptObject globalThis = global.getRealm().getGlobalThis();
-            Properties.createProperties(cx, globalThis, async, AsyncHelper.class);
-            Properties.createProperties(cx, globalThis, timers, WindowTimers.class);
-        }
-
         // evaluate actual test-script
         global.eval(test.getScript(), test.toFile());
 
         // wait for pending tasks to finish
         if (test.async) {
             assertFalse(async.doneCalled);
-            timers.runEventLoop(global.getRealm());
+            global.getRealm().getWorld().runEventLoop(timers);
             assertTrue(async.doneCalled);
         }
+    }
+
+    private <T> T install(T object, Class<T> clazz) {
+        Realm realm = global.getRealm();
+        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
+        return object;
     }
 
     public static class AsyncHelper {

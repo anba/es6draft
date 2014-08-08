@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.parser;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
@@ -215,13 +214,12 @@ public final class JSONParser {
         if (token() != Token.RB) {
             long index = 0;
             Object value = jsonValue();
-            array.defineOwnProperty(cx, ToString(index++), new PropertyDescriptor(value, true,
-                    true, true));
+            array.defineOwnProperty(cx, index++, new PropertyDescriptor(value, true, true, true));
             while (token() != Token.RB) {
                 consume(Token.COMMA);
                 value = jsonValue();
-                array.defineOwnProperty(cx, ToString(index++), new PropertyDescriptor(value, true,
-                        true, true));
+                array.defineOwnProperty(cx, index++,
+                        new PropertyDescriptor(value, true, true, true));
             }
         }
         consume(Token.RB);

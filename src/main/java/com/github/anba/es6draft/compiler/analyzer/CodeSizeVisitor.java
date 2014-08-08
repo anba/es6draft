@@ -146,9 +146,8 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     private int stringSize(String s) {
         if (s.length() <= 32768) {
             return 5;
-        } else {
-            return ((s.length() / 32768) + 1) * 10;
         }
+        return ((s.length() / 32768) + 1) * 10;
     }
 
     /* ***************************************************************************************** */

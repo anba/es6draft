@@ -799,7 +799,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         // stack: [args, thisValue, func(Callable)]
 
         /* steps 10, 12-13 */
-        if (mv.isTailCall(call)) {
+        if (!codegen.isEnabled(Compiler.Option.NoTailCall) && mv.isTailCall(call)) {
             // stack: [args, thisValue, func(Callable)] -> [<func(Callable), thisValue, args>]
             mv.invoke(Methods.ScriptRuntime_PrepareForTailCall);
             return;
@@ -2217,7 +2217,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         ArgumentListEvaluation(node.getArguments(), mv);
         mv.lineInfo(node);
         mv.loadExecutionContext();
-        if (mv.isTailCall(node)) {
+        if (!codegen.isEnabled(Compiler.Option.NoTailCall) && mv.isTailCall(node)) {
             mv.invoke(Methods.ScriptRuntime_EvaluateConstructorTailCall);
         } else {
             mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);

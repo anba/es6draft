@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.VarDeclaredName
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -167,7 +166,7 @@ final class CodeGenerator {
     }
 
     // template strings
-    private final Map<TemplateLiteral, String> templateKeys = new HashMap<>();
+    private final HashMap<TemplateLiteral, String> templateKeys = new HashMap<>();
 
     private String templateKey(TemplateLiteral template) {
         String key = templateKeys.get(template);
@@ -190,7 +189,7 @@ final class CodeGenerator {
     /**
      * Map of nodes to base method names
      */
-    private final Map<Node, String> methodNames = new HashMap<>(32);
+    private final HashMap<Node, String> methodNames = new HashMap<>(32);
     private final AtomicInteger methodCounter = new AtomicInteger(0);
 
     private boolean isCompiled(Node node) {
@@ -200,13 +199,13 @@ final class CodeGenerator {
     private String methodName(Script node, ScriptName name) {
         switch (name) {
         case Code:
-            return "!~script";
+            return "~script";
         case Init:
-            return "script_init";
+            return "!script_init";
         case EvalInit:
-            return "script_evalinit";
+            return "!script_evalinit";
         case RTI:
-            return "script_rti";
+            return "!script_rti";
         default:
             throw new IllegalStateException();
         }
@@ -232,73 +231,68 @@ final class CodeGenerator {
     }
 
     private String methodName(TemplateLiteral node) {
-        return methodName(node, "template");
+        return methodName(node, "!template");
     }
 
     private String methodName(SpreadElementMethod node) {
-        return methodName(node, "spread");
+        return methodName(node, "!spread");
     }
 
     private String methodName(PropertyDefinitionsMethod node) {
-        return methodName(node, "propdef");
+        return methodName(node, "!propdef");
     }
 
     private String methodName(ExpressionMethod node) {
-        return methodName(node, "expr");
+        return methodName(node, "!expr");
     }
 
     private String methodName(BlockStatement node) {
-        return methodName(node, "block");
+        return methodName(node, "!block");
     }
 
     private String methodName(SwitchStatement node) {
-        return methodName(node, "block");
-    }
-
-    private String methodName(FunctionNode node, FunctionName name) {
-        String fname = methodName(node);
-        switch (name) {
-        case Call:
-            return insertMarker("", fname, "");
-        case Code:
-            return insertMarker("!", fname, "_code");
-        case Init:
-            return insertMarker("!", fname, "_init");
-        case RTI:
-            return insertMarker("", fname, "_rti");
-        default:
-            throw new IllegalStateException();
-        }
-    }
-
-    private String insertMarker(String prefix, String fname, String suffix) {
-        return JVMNames.addPrefixSuffix(fname, prefix, suffix);
-    }
-
-    private String methodName(FunctionNode node) {
-        String n = methodNames.get(node);
-        if (n == null) {
-            String fname = node.getMethodName();
-            if (fname.isEmpty()) {
-                fname = "anonymous";
-            } else if (fname.length() > MAX_FNAME_LENGTH) {
-                fname = fname.substring(0, MAX_FNAME_LENGTH);
-            }
-            n = addMethodName(node, fname);
-        }
-        return n;
+        return methodName(node, "!block");
     }
 
     private String methodName(Node node, String name) {
         String n = methodNames.get(node);
         if (n == null) {
-            n = addMethodName(node, name);
+            n = addMethodName(node, name, '~');
         }
         return n;
     }
 
-    private String addMethodName(Node node, String name) {
-        return addMethodName(node, name, '~');
+    private String methodName(FunctionNode node, FunctionName name) {
+        String fname = methodNames.get(node);
+        if (fname == null) {
+            fname = addMethodName(node, getMethodName(node), '~');
+        }
+        switch (name) {
+        case Call:
+            return insertMarker("!", fname, "_call");
+        case Code:
+            return insertMarker("", fname, "");
+        case Init:
+            return insertMarker("", fname, "_init");
+        case RTI:
+            return insertMarker("!", fname, "_rti");
+        default:
+            throw new IllegalStateException();
+        }
+    }
+
+    private String getMethodName(FunctionNode node) {
+        String name = node.getMethodName();
+        if (name.isEmpty()) {
+            name = "anonymous";
+        } else if (name.length() > MAX_FNAME_LENGTH) {
+            name = name.substring(0, MAX_FNAME_LENGTH);
+        }
+        return name;
+    }
+
+    private String insertMarker(String prefix, String fname, String suffix) {
+        return JVMNames.addPrefixSuffix(fname, prefix, suffix);
     }
 
     private String addMethodName(Node node, String name, char sep) {
@@ -385,7 +379,7 @@ final class CodeGenerator {
     /**
      * Map of concrete method names to class names
      */
-    private final Map<String, String> methodClasses = new HashMap<>(32 * 4);
+    private final HashMap<String, String> methodClasses = new HashMap<>(32 * 4);
 
     private MethodCode publicStaticMethod(String methodName, String methodDescriptor) {
         return publicStaticMethod(methodName, methodDescriptor, false);

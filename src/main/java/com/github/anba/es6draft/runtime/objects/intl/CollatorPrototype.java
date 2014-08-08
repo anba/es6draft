@@ -57,7 +57,7 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
     public enum Properties {
         ;
 
-        private static CollatorObject thisCollatorValue(ExecutionContext cx, Object object) {
+        private static CollatorObject thisCollatorObject(ExecutionContext cx, Object object) {
             if (object instanceof CollatorObject) {
                 CollatorObject collator = (CollatorObject) object;
                 if (collator.isInitializedCollator()) {
@@ -88,7 +88,7 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
          */
         @Accessor(name = "compare", type = Accessor.Type.Getter)
         public static Object compare(ExecutionContext cx, Object thisValue) {
-            CollatorObject collator = thisCollatorValue(cx, thisValue);
+            CollatorObject collator = thisCollatorObject(cx, thisValue);
             if (collator.getBoundCompare() == null) {
                 CompareFunction f = new CompareFunction(cx.getRealm());
                 Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
@@ -108,7 +108,7 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
          */
         @Function(name = "resolvedOptions", arity = 0)
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
-            CollatorObject collator = thisCollatorValue(cx, thisValue);
+            CollatorObject collator = thisCollatorObject(cx, thisValue);
             OrdinaryObject object = OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
             CreateDataProperty(cx, object, "locale", collator.getLocale());
             CreateDataProperty(cx, object, "usage", collator.getUsage());

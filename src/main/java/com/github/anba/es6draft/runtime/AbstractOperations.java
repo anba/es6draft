@@ -1106,7 +1106,7 @@ public final class AbstractOperations {
         }
         /* step 8 */
         if (tx == Type.Symbol || ty == Type.Symbol) {
-            // FIXME: spec bug - unnecessary step
+            // FIXME: spec bug - unnecessary step (bug 3016)
             return false;
         }
         /* step 9 */
@@ -2362,16 +2362,13 @@ public final class AbstractOperations {
     /**
      * 7.3.17 CreateFromConstructor (F)
      * 
-     * @param <FUNCTION>
-     *            the constructor function type
      * @param cx
      *            the execution context
      * @param f
      *            the constructor function
      * @return the new allocated object
      */
-    public static <FUNCTION extends ScriptObject & Callable & Constructor> ScriptObject CreateFromConstructor(
-            ExecutionContext cx, FUNCTION f) {
+    public static ScriptObject CreateFromConstructor(ExecutionContext cx, Constructor f) {
         /* steps 1-2 */
         Callable creator = GetMethod(cx, f, BuiltinSymbol.create.get());
         /* step 3 */
@@ -2391,8 +2388,6 @@ public final class AbstractOperations {
     /**
      * 7.3.18 Construct (F, argumentsList)
      * 
-     * @param <FUNCTION>
-     *            the constructor function type
      * @param cx
      *            the execution context
      * @param f
@@ -2401,8 +2396,7 @@ public final class AbstractOperations {
      *            the constructor function arguments
      * @return the new allocated and initialized object
      */
-    public static <FUNCTION extends ScriptObject & Callable & Constructor> ScriptObject Construct(
-            ExecutionContext cx, FUNCTION f, Object... args) {
+    public static ScriptObject Construct(ExecutionContext cx, Constructor f, Object... args) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
         ScriptObject obj = CreateFromConstructor(cx, f);
@@ -2423,8 +2417,6 @@ public final class AbstractOperations {
     /**
      * 7.3.18 Construct (F, argumentsList)
      * 
-     * @param <FUNCTION>
-     *            the constructor function type
      * @param cx
      *            the execution context
      * @param f
@@ -2435,8 +2427,8 @@ public final class AbstractOperations {
      * @throws Throwable
      *             if the underlying method throws an error
      */
-    public static <FUNCTION extends ScriptObject & Callable & Constructor> Object ConstructTailCall(
-            ExecutionContext cx, FUNCTION f, Object... args) throws Throwable {
+    public static Object ConstructTailCall(ExecutionContext cx, Constructor f, Object... args)
+            throws Throwable {
         /* step 1 (not applicable) */
         /* steps 2-3 */
         ScriptObject obj = CreateFromConstructor(cx, f);

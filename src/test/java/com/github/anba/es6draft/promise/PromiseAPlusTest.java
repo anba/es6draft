@@ -4,11 +4,11 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft;
+package com.github.anba.es6draft.promise;
 
 import static com.github.anba.es6draft.repl.global.SimpleShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTests;
+import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -28,13 +28,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.github.anba.es6draft.repl.WindowTimers;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.SimpleShellGlobalObject;
-import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
@@ -43,16 +43,16 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHand
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
 
 /**
- *
+ * Test class for Promise/A+ tests
  */
 @RunWith(Parallelized.class)
-@TestConfiguration(name = "promise.test", file = "resource:/test-configuration.properties")
-public class PromiseTest {
-    private static final Configuration configuration = loadConfiguration(PromiseTest.class);
+@TestConfiguration(name = "promise.test.aplus", file = "resource:/test-configuration.properties")
+public class PromiseAPlusTest {
+    private static final Configuration configuration = loadConfiguration(PromiseAPlusTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<TestInfo[]> suiteValues() throws IOException {
-        return loadTests(configuration);
+    public static Iterable<Object[]> suiteValues() throws IOException {
+        return loadTestsAsArray(configuration);
     }
 
     @ClassRule
@@ -79,18 +79,22 @@ public class PromiseTest {
     public TestInfo test;
 
     private SimpleShellGlobalObject global;
+    private AsyncHelper async;
+    private WindowTimers timers;
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
         // filter disabled tests
         assumeTrue(test.isEnabled());
 
-        global = globals.newGlobal(new ScriptTestConsole(), test);
+        global = globals.newGlobal(new PromiseTestConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
+        async = install(new AsyncHelper(), AsyncHelper.class);
+        timers = install(new WindowTimers(), WindowTimers.class);
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws InterruptedException {
         if (global != null) {
             global.getScriptLoader().getExecutor().shutdown();
         }
@@ -98,27 +102,25 @@ public class PromiseTest {
 
     @Test
     public void runTest() throws Throwable {
-        // create global 'done' function for async tests
-        AsyncHelper async = new AsyncHelper();
-        WindowTimers timers = new WindowTimers();
-        ExecutionContext cx = global.getRealm().defaultContext();
-        ScriptObject globalThis = global.getRealm().getGlobalThis();
-        Properties.createProperties(cx, globalThis, async, AsyncHelper.class);
-        Properties.createProperties(cx, globalThis, timers, WindowTimers.class);
-
         // evaluate actual test-script
         global.eval(test.getScript(), test.toFile());
 
         // wait for pending tasks to finish
         assertFalse(async.doneCalled);
-        timers.runEventLoop(global.getRealm());
+        global.getRealm().getWorld().runEventLoop(timers);
         assertTrue(async.doneCalled);
+    }
+
+    private <T> T install(T object, Class<T> clazz) {
+        Realm realm = global.getRealm();
+        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
+        return object;
     }
 
     public static class AsyncHelper {
         boolean doneCalled = false;
 
-        @Properties.Function(name = "done", arity = 0)
+        @Properties.Function(name = "$async_done", arity = 0)
         public void done() {
             assertFalse(doneCalled);
             doneCalled = true;

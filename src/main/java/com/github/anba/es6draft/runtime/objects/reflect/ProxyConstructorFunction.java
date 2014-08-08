@@ -20,6 +20,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.Ref;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
@@ -129,14 +130,14 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
      */
     private static final class ProxyRevocationFunction extends BuiltinFunction {
         /** [[RevokableProxy]] */
-        private ExoticProxy revokableProxy;
+        private Ref<ExoticProxy> revokableProxy;
 
         public ProxyRevocationFunction(Realm realm, ExoticProxy revokableProxy) {
-            this(realm, revokableProxy, null);
+            this(realm, new Ref<>(revokableProxy), null);
             createDefaultFunctionProperties(ANONYMOUS, 0);
         }
 
-        private ProxyRevocationFunction(Realm realm, ExoticProxy revokableProxy, Void ignore) {
+        private ProxyRevocationFunction(Realm realm, Ref<ExoticProxy> revokableProxy, Void ignore) {
             super(realm, ANONYMOUS);
             this.revokableProxy = revokableProxy;
         }
@@ -149,16 +150,16 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
         @Override
         public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             /* step 1 */
-            ExoticProxy p = revokableProxy;
+            Ref<ExoticProxy> p = revokableProxy;
             /* step 2 */
-            if (p == null) {
+            if (p == null || p.get() == null) {
                 return UNDEFINED;
             }
             /* step 3 */
             revokableProxy = null;
             /* step 4 (implicit) */
             /* steps 5-6 */
-            p.revoke();
+            p.getAndClear().revoke();
             /* step 7 */
             return UNDEFINED;
         }

@@ -139,7 +139,7 @@ public final class CodeSizeAnalysis {
         }
     }
 
-    private final class CodeSizeHandlerImpl extends DefaultNodeVisitor<Integer, Integer> implements
+    private final class CodeSizeHandlerImpl extends DefaultIntNodeVisitor<Integer> implements
             CodeSizeHandler {
         private final TopLevelNode<?> topLevelNode;
 
@@ -167,17 +167,17 @@ public final class CodeSizeAnalysis {
         }
 
         @Override
-        protected Integer visit(Node node, Integer size) {
+        protected int visit(Node node, Integer size) {
             throw new CodeSizeException(size);
         }
 
         @Override
-        public Integer visit(ArrayLiteral node, Integer size) {
+        public int visit(ArrayLiteral node, Integer size) {
             return visit(node, size, new ArrayLiteralSubMethod());
         }
 
         @Override
-        public Integer visit(ArrowFunction node, Integer size) {
+        public int visit(ArrowFunction node, Integer size) {
             if (node.getExpression() != null) {
                 return super.visit(node, size);
             }
@@ -185,7 +185,7 @@ public final class CodeSizeAnalysis {
         }
 
         @Override
-        public Integer visit(AsyncArrowFunction node, Integer size) {
+        public int visit(AsyncArrowFunction node, Integer size) {
             if (node.getExpression() != null) {
                 return super.visit(node, size);
             }
@@ -193,82 +193,82 @@ public final class CodeSizeAnalysis {
         }
 
         @Override
-        public Integer visit(AsyncFunctionDeclaration node, Integer size) {
+        public int visit(AsyncFunctionDeclaration node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
         }
 
         @Override
-        public Integer visit(AsyncFunctionExpression node, Integer size) {
+        public int visit(AsyncFunctionExpression node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
         }
 
         @Override
-        public Integer visit(BinaryExpression node, Integer size) {
+        public int visit(BinaryExpression node, Integer size) {
             return visit(node, size, new BinaryExpressionSubMethod());
         }
 
         @Override
-        public Integer visit(CommaExpression node, Integer size) {
+        public int visit(CommaExpression node, Integer size) {
             return visit(node, size, new CommaExpressionSubMethod());
         }
 
         @Override
-        public Integer visit(FunctionDeclaration node, Integer size) {
+        public int visit(FunctionDeclaration node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
         }
 
         @Override
-        public Integer visit(FunctionExpression node, Integer size) {
+        public int visit(FunctionExpression node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
         }
 
         @Override
-        public Integer visit(GeneratorDeclaration node, Integer size) {
+        public int visit(GeneratorDeclaration node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
         }
 
         @Override
-        public Integer visit(GeneratorExpression node, Integer size) {
+        public int visit(GeneratorExpression node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
         }
 
         @Override
-        public Integer visit(LegacyGeneratorDeclaration node, Integer size) {
+        public int visit(LegacyGeneratorDeclaration node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
         }
 
         @Override
-        public Integer visit(LegacyGeneratorExpression node, Integer size) {
+        public int visit(LegacyGeneratorExpression node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
         }
 
         @Override
-        public Integer visit(MethodDefinition node, Integer size) {
+        public int visit(MethodDefinition node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
         }
 
         @Override
-        public Integer visit(ObjectLiteral node, Integer size) {
+        public int visit(ObjectLiteral node, Integer size) {
             return visit(node, size, new ObjectLiteralSubMethod());
         }
 
         @Override
-        public Integer visit(Script node, Integer size) {
+        public int visit(Script node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.ScriptSubMethod());
         }
 
         @Override
-        protected Integer visit(Statement node, Integer size) {
+        protected int visit(Statement node, Integer size) {
             return visit(node, size, new NestedSubMethod.StatementSubMethod());
         }
 
         @Override
-        public Integer visit(SwitchClause node, Integer size) {
+        public int visit(SwitchClause node, Integer size) {
             return visit(node, size, new NestedSubMethod.SwitchClauseSubMethod());
         }
 
         @Override
-        public Integer visit(TemplateLiteral node, Integer size) {
+        public int visit(TemplateLiteral node, Integer size) {
             if (node.isTagged()) {
                 return super.visit(node, size);
             }

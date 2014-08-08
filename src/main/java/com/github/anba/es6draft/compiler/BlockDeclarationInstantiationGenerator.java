@@ -128,7 +128,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
             if (isFunctionDeclaration(d)) {
                 String fn = BoundName(d);
 
-                // FIXME: spec bug - CreateMutableBinding not called
+                // FIXME: spec bug - CreateMutableBinding not called (bug 3029)
                 mv.load(envRec);
                 createMutableBinding(fn, false, mv);
 

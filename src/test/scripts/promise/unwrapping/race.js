@@ -1,5 +1,11 @@
 "use strict";
 
+var assert = require("assert");
+// var Promise = require("../lib/testable-implementation");
+// var OrdinaryConstruct = require("especially/abstract-operations").OrdinaryConstruct;
+// var iterableFromArray = require("./helpers").iterableFromArray;
+// var delayPromise = require("./helpers").delayPromise;
+
 describe("Promise.race", function () {
     it("should fulfill if all promises are settled and the ordinally-first is fulfilled", function (done) {
         var iterable = iterableFromArray([Promise.resolve(1), Promise.reject(2), Promise.resolve(3)]);
@@ -23,6 +29,26 @@ describe("Promise.race", function () {
                 done();
             }
         );
+    });
+
+    it("should reject immediately when a promise rejects", function (done) {
+        var resolveP1, rejectP2;
+        var p1 = OrdinaryConstruct(Promise, [function (resolve) { resolveP1 = resolve; }]);
+        var p2 = OrdinaryConstruct(Promise, [function (resolve, reject) { rejectP2 = reject; }]);
+
+        var iterable = iterableFromArray([p1, p2]);
+
+        Promise.race(iterable).then(
+            function () {
+                throw new Error("should never fulfill");
+            },
+            function (reason) {
+                assert.strictEqual(reason, 2);
+            }
+        ).then(done).catch(done);
+
+        rejectP2(2);
+        resolveP1(1);
     });
 
     it("should settle in the same way as the first promise to settle", function (done) {

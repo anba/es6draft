@@ -253,8 +253,6 @@ public class OrdinaryFunction extends FunctionObject {
     /**
      * 9.2.8 AddRestrictedFunctionProperties ( F, realm ) Abstract Operation
      * 
-     * @param <FUNCTION>
-     *            the function type
      * @param cx
      *            the execution context
      * @param f
@@ -262,8 +260,7 @@ public class OrdinaryFunction extends FunctionObject {
      * @param realm
      *            the realm object
      */
-    public static <FUNCTION extends ScriptObject & Callable> void AddRestrictedFunctionProperties(
-            ExecutionContext cx, FUNCTION f, Realm realm) {
+    public static void AddRestrictedFunctionProperties(ExecutionContext cx, Callable f, Realm realm) {
         /* step 1 */
         Callable thrower = realm.getThrowTypeError();
         /* steps 2-4 */
@@ -273,8 +270,6 @@ public class OrdinaryFunction extends FunctionObject {
     /**
      * 9.2.8 AddRestrictedFunctionProperties ( F, realm ) Abstract Operation
      * 
-     * @param <FUNCTION>
-     *            the function type
      * @param cx
      *            the execution context
      * @param f
@@ -282,8 +277,8 @@ public class OrdinaryFunction extends FunctionObject {
      * @param thrower
      *            the thrower function object
      */
-    public static <FUNCTION extends ScriptObject & Callable> void AddRestrictedFunctionProperties(
-            ExecutionContext cx, FUNCTION f, Callable thrower) {
+    public static void AddRestrictedFunctionProperties(ExecutionContext cx, Callable f,
+            Callable thrower) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
         DefinePropertyOrThrow(cx, f, "caller",

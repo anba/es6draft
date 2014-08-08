@@ -524,7 +524,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
          */
         @Function(name = "locate", arity = 1)
         public static Object locate(ExecutionContext cx, Object thisValue, Object loadRequest) {
-            // FIXME: spec bug - missing type check for load
+            // FIXME: spec bug - missing type check for load (bug 2457)
             if (!Type.isObject(loadRequest)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
@@ -566,7 +566,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
          */
         @Function(name = "translate", arity = 1)
         public static Object translate(ExecutionContext cx, Object thisValue, Object loadRequest) {
-            // FIXME: spec bug - missing type check for load
+            // FIXME: spec bug - missing type check for load (bug 2456)
             if (!Type.isObject(loadRequest)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }

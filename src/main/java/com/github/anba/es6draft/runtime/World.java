@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
+import com.github.anba.es6draft.runtime.internal.TaskSource;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
@@ -45,6 +46,18 @@ public final class World<GLOBAL extends GlobalObject> {
     private final ArrayDeque<Task> promiseTasks = new ArrayDeque<>();
 
     private final GlobalSymbolRegistry symbolRegistry = new GlobalSymbolRegistry();
+
+    private static final TaskSource EMPTY_TASK_SOURCE = new TaskSource() {
+        @Override
+        public Task nextTask() {
+            return null;
+        }
+
+        @Override
+        public Task awaitTask() {
+            throw new IllegalStateException();
+        }
+    };
 
     private static final ObjectAllocator<GlobalObject> DEFAULT_GLOBAL_OBJECT = new ObjectAllocator<GlobalObject>() {
         @Override
@@ -149,11 +162,34 @@ public final class World<GLOBAL extends GlobalObject> {
 
     /**
      * Executes the queue of pending tasks.
+     * 
+     * @throws InterruptedException
+     *             if interrupted while waiting
      */
-    public void executeTasks() {
-        while (hasPendingTasks()) {
-            executeTasks(scriptTasks);
-            executeTasks(promiseTasks);
+    public void runEventLoop() throws InterruptedException {
+        runEventLoop(EMPTY_TASK_SOURCE);
+    }
+
+    /**
+     * Executes the queue of pending tasks.
+     * 
+     * @param taskSource
+     *            the task source
+     * @throws InterruptedException
+     *             if interrupted while waiting
+     */
+    public void runEventLoop(TaskSource taskSource) throws InterruptedException {
+        ArrayDeque<Task> scriptTasks = this.scriptTasks, promiseTasks = this.promiseTasks;
+        for (;;) {
+            while (!(scriptTasks.isEmpty() && promiseTasks.isEmpty())) {
+                executeTasks(scriptTasks);
+                executeTasks(promiseTasks);
+            }
+            Task task = taskSource.nextTask();
+            if (task == null) {
+                break;
+            }
+            enqueueScriptTask(task);
         }
     }
 
@@ -164,7 +200,7 @@ public final class World<GLOBAL extends GlobalObject> {
      *            the tasks to be executed
      */
     private void executeTasks(ArrayDeque<Task> tasks) {
-        // execute all pending tasks until the queue is empty
+        // Execute all pending tasks until the queue is empty
         for (Task task; (task = tasks.poll()) != null;) {
             task.execute();
         }

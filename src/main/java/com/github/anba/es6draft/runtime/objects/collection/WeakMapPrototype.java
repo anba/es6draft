@@ -55,7 +55,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
     public enum Properties {
         ;
 
-        private static WeakMapObject thisWeakMapValue(ExecutionContext cx, Object obj) {
+        private static WeakMapObject thisWeakMapObject(ExecutionContext cx, Object obj) {
             if (obj instanceof WeakMapObject) {
                 WeakMapObject map = (WeakMapObject) obj;
                 if (map.isInitialized()) {
@@ -87,7 +87,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
             /* steps 1-4 */
-            WeakMapObject m = thisWeakMapValue(cx, thisValue);
+            WeakMapObject m = thisWeakMapObject(cx, thisValue);
             /* step 5 */
             m.getWeakMapData().clear();
             /* step 6 */
@@ -108,7 +108,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object key) {
             /* steps 1-4 */
-            WeakMapObject m = thisWeakMapValue(cx, thisValue);
+            WeakMapObject m = thisWeakMapObject(cx, thisValue);
             /* step 5 */
             WeakHashMap<ScriptObject, Object> entries = m.getWeakMapData();
             /* step 6 */
@@ -133,7 +133,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
         @Function(name = "get", arity = 1)
         public static Object get(ExecutionContext cx, Object thisValue, Object key) {
             /* steps 1-4 */
-            WeakMapObject m = thisWeakMapValue(cx, thisValue);
+            WeakMapObject m = thisWeakMapObject(cx, thisValue);
             /* step 5 */
             WeakHashMap<ScriptObject, Object> entries = m.getWeakMapData();
             /* step 6 */
@@ -159,7 +159,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object key) {
             /* steps 1-4 */
-            WeakMapObject m = thisWeakMapValue(cx, thisValue);
+            WeakMapObject m = thisWeakMapObject(cx, thisValue);
             /* step 5 */
             WeakHashMap<ScriptObject, Object> entries = m.getWeakMapData();
             /* step 6 */
@@ -186,7 +186,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
         @Function(name = "set", arity = 2)
         public static Object set(ExecutionContext cx, Object thisValue, Object key, Object value) {
             /* steps 1-4 */
-            WeakMapObject m = thisWeakMapValue(cx, thisValue);
+            WeakMapObject m = thisWeakMapObject(cx, thisValue);
             /* step 5 */
             WeakHashMap<ScriptObject, Object> entries = m.getWeakMapData();
             /* step 6 */

@@ -1,5 +1,10 @@
 "use strict";
 
+var assert = require("assert");
+// var OrdinaryConstruct = require("especially/abstract-operations").OrdinaryConstruct;
+// var atAtIterator = require("especially/well-known-symbols")["@@iterator"];
+// var Promise = require("../lib/testable-implementation");
+
 describe("Easy-to-debug sanity check", function () {
     specify("a fulfilled promise calls its fulfillment handler", function (done) {
         Promise.resolve(5).then(function (value) {
@@ -27,6 +32,25 @@ describe("Self-resolution errors", function () {
             }
         );
     });
+});
+
+specify("An abrupt completion of the executor function should result in a rejected promise", function (done) {
+    var promise;
+
+    assert.doesNotThrow(function () {
+        promise = OrdinaryConstruct(Promise, [function () { throw new Error(); }]);
+    });
+
+    promise.then(
+        function () {
+            assert(false, "Should not be fulfilled");
+            done();
+        },
+        function (err) {
+            assert(err instanceof Error);
+            done();
+        }
+    );
 });
 
 specify("Stealing a resolver and using it to trigger possible reentrancy bug (#83)", function () {

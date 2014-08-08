@@ -18,7 +18,6 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1>
@@ -27,6 +26,9 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public abstract class BuiltinFunction extends OrdinaryObject implements Callable, Cloneable {
+    /**
+     * Function name for anonymous functions.
+     */
     protected static final String ANONYMOUS = "";
 
     /** [[Realm]] */
@@ -77,6 +79,34 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
+     * Returns the i-th argument or {@code undefined} if the argument index is out of bounds.
+     * 
+     * @param arguments
+     *            the function arguments
+     * @param index
+     *            the argument index
+     * @return the requested argument or undefined if not present
+     */
+    protected static final Object argument(Object[] arguments, int index) {
+        return arguments.length > index ? arguments[index] : UNDEFINED;
+    }
+
+    /**
+     * Returns the i-th argument or {@code defaultValue} if the argument index is out of bounds.
+     * 
+     * @param arguments
+     *            the function arguments
+     * @param index
+     *            the argument index
+     * @param defaultValue
+     *            the default value for absent arguments
+     * @return the requested argument or <var>defaultValue</var> if not present
+     */
+    protected static final Object argument(Object[] arguments, int index, Object defaultValue) {
+        return arguments.length > index ? arguments[index] : defaultValue;
+    }
+
+    /**
      * Returns the callee execution context.
      * 
      * @return the callee context
@@ -88,8 +118,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     /**
      * Creates the default function properties, i.e. 'name' and 'length', initializes the
      * [[Prototype]] to the <code>%FunctionPrototype%</code> object and calls
-     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, ScriptObject, Realm)}
-     * .
+     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, Callable, Realm)}.
      * 
      * @param name
      *            the function name
@@ -103,8 +132,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     /**
      * Creates the default function properties, i.e. 'name' and 'length', initializes the
      * [[Prototype]] to the <code>%FunctionPrototype%</code> object and calls
-     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, ScriptObject, Realm)}
-     * .
+     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, Callable, Realm)}.
      * 
      * @param name
      *            the function name
@@ -129,8 +157,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
 
     /**
      * Calls
-     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, ScriptObject, Realm)}
-     * .
+     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, Callable, Realm)}.
      * 
      * @param cx
      *            the execution context

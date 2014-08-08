@@ -58,7 +58,7 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
     public enum Properties {
         ;
 
-        private static NumberFormatObject thisNumberFormatValue(ExecutionContext cx, Object object) {
+        private static NumberFormatObject thisNumberFormatObject(ExecutionContext cx, Object object) {
             if (object instanceof NumberFormatObject) {
                 NumberFormatObject numberFormat = (NumberFormatObject) object;
                 if (numberFormat.isInitializedNumberFormat()) {
@@ -89,7 +89,7 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
          */
         @Accessor(name = "format", type = Accessor.Type.Getter)
         public static Object format(ExecutionContext cx, Object thisValue) {
-            NumberFormatObject numberFormat = thisNumberFormatValue(cx, thisValue);
+            NumberFormatObject numberFormat = thisNumberFormatObject(cx, thisValue);
             if (numberFormat.getBoundFormat() == null) {
                 FormatFunction f = new FormatFunction(cx.getRealm());
                 Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
@@ -109,7 +109,7 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
          */
         @Function(name = "resolvedOptions", arity = 0)
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
-            NumberFormatObject numberFormat = thisNumberFormatValue(cx, thisValue);
+            NumberFormatObject numberFormat = thisNumberFormatObject(cx, thisValue);
             OrdinaryObject object = OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
             CreateDataProperty(cx, object, "locale", numberFormat.getLocale());
             CreateDataProperty(cx, object, "numberingSystem", numberFormat.getNumberingSystem());

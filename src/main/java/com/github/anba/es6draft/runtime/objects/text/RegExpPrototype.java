@@ -68,7 +68,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         createProperties(cx, this, AdditionalProperties.class);
     }
 
-    private static RegExpObject thisRegExpValue(ExecutionContext cx, Object object) {
+    private static RegExpObject thisRegExpObject(ExecutionContext cx, Object object) {
         if (object instanceof RegExpObject) {
             RegExpObject obj = (RegExpObject) object;
             if (obj.isInitialized()) {
@@ -108,7 +108,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         @Function(name = "exec", arity = 1, nativeId = NativeFunctionId.RegExpPrototypeExec)
         public static Object exec(ExecutionContext cx, Object thisValue, Object string) {
             /* steps 1-4 */
-            RegExpObject r = thisRegExpValue(cx, thisValue);
+            RegExpObject r = thisRegExpObject(cx, thisValue);
             /* steps 5-6 */
             String s = ToFlatString(cx, string);
             /* step 7 */
@@ -128,7 +128,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         @Accessor(name = "global", type = Accessor.Type.Getter)
         public static Object global(ExecutionContext cx, Object thisValue) {
             /* steps 1-5 */
-            RegExpObject r = thisRegExpValue(cx, thisValue);
+            RegExpObject r = thisRegExpObject(cx, thisValue);
             /* steps 6-7 */
             return r.getOriginalFlags().indexOf('g') != -1;
         }
@@ -145,7 +145,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         @Accessor(name = "ignoreCase", type = Accessor.Type.Getter)
         public static Object ignoreCase(ExecutionContext cx, Object thisValue) {
             /* steps 1-5 */
-            RegExpObject r = thisRegExpValue(cx, thisValue);
+            RegExpObject r = thisRegExpObject(cx, thisValue);
             /* steps 6-7 */
             return r.getOriginalFlags().indexOf('i') != -1;
         }
@@ -162,7 +162,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         @Accessor(name = "multiline", type = Accessor.Type.Getter)
         public static Object multiline(ExecutionContext cx, Object thisValue) {
             /* steps 1-5 */
-            RegExpObject r = thisRegExpValue(cx, thisValue);
+            RegExpObject r = thisRegExpObject(cx, thisValue);
             /* steps 6-7 */
             return r.getOriginalFlags().indexOf('m') != -1;
         }
@@ -179,7 +179,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         @Accessor(name = "source", type = Accessor.Type.Getter)
         public static Object source(ExecutionContext cx, Object thisValue) {
             /* steps 1-7 */
-            RegExpObject r = thisRegExpValue(cx, thisValue);
+            RegExpObject r = thisRegExpObject(cx, thisValue);
             /* step 8 */
             return EscapeRegExpPattern(r.getOriginalSource(), r.getOriginalFlags());
         }
@@ -196,7 +196,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         @Accessor(name = "sticky", type = Accessor.Type.Getter)
         public static Object sticky(ExecutionContext cx, Object thisValue) {
             /* steps 1-5 */
-            RegExpObject r = thisRegExpValue(cx, thisValue);
+            RegExpObject r = thisRegExpObject(cx, thisValue);
             /* steps 6-7 */
             return r.getOriginalFlags().indexOf('y') != -1;
         }
@@ -240,7 +240,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         @Accessor(name = "unicode", type = Accessor.Type.Getter)
         public static Object unicode(ExecutionContext cx, Object thisValue) {
             /* steps 1-5 */
-            RegExpObject r = thisRegExpValue(cx, thisValue);
+            RegExpObject r = thisRegExpObject(cx, thisValue);
             /* steps 6-7 */
             return r.getOriginalFlags().indexOf('u') != -1;
         }
@@ -257,7 +257,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
             /* steps 1-4 */
-            RegExpObject r = thisRegExpValue(cx, thisValue);
+            RegExpObject r = thisRegExpObject(cx, thisValue);
             /* steps 5-6 */
             CharSequence source = ToString(cx, Get(cx, r, "source"));
             if (source.length() == 0) {
@@ -537,7 +537,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         public static Object split(ExecutionContext cx, Object thisValue, Object string,
                 Object limit) {
             /* steps 1-4 */
-            RegExpObject rx = thisRegExpValue(cx, thisValue);
+            RegExpObject rx = thisRegExpObject(cx, thisValue);
             /* step 5 (moved after step 14) */
             /* steps 6-7 */
             String s = ToFlatString(cx, string);
@@ -707,7 +707,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             return RegExpUserExec(cx, (Callable) exec, r, s);
         }
         /* steps 6-7 */
-        RegExpObject rx = thisRegExpValue(cx, r);
+        RegExpObject rx = thisRegExpObject(cx, r);
         /* step 8 */
         return RegExpBuiltinExec(cx, rx, s);
     }
@@ -735,7 +735,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             return o != null ? new ScriptObjectMatchResult(cx, o) : null;
         }
         /* steps 6-7 */
-        RegExpObject rx = thisRegExpValue(cx, r);
+        RegExpObject rx = thisRegExpObject(cx, r);
         /* step 8 */
         MatchResult m = getMatcherOrNull(cx, rx, s);
         if (m == null) {

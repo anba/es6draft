@@ -188,7 +188,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
     }
 
     private static final class StatementUpdater extends
-            DefaultNodeVisitor<Void, Entry<StatementListItem, StatementListMethod>> {
+            DefaultVoidNodeVisitor<Entry<StatementListItem, StatementListMethod>> {
         private List<StatementListItem> updateStatements(List<StatementListItem> statements,
                 Entry<StatementListItem, StatementListMethod> entry) {
             List<StatementListItem> newStatements = new ArrayList<>(statements);
@@ -208,36 +208,33 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         }
 
         @Override
-        protected Void visit(Node node, Entry<StatementListItem, StatementListMethod> entry) {
+        protected void visit(Node node, Entry<StatementListItem, StatementListMethod> entry) {
             throw new IllegalStateException("unhandled node: " + node.getClass());
         }
 
         @Override
-        protected Void visit(Statement node, Entry<StatementListItem, StatementListMethod> entry) {
+        protected void visit(Statement node, Entry<StatementListItem, StatementListMethod> entry) {
             throw new IllegalStateException("unhandled statement: " + node.getClass());
         }
 
         @Override
-        public Void visit(BlockStatement node, Entry<StatementListItem, StatementListMethod> entry) {
+        public void visit(BlockStatement node, Entry<StatementListItem, StatementListMethod> entry) {
             node.setStatements(updateStatements(node.getStatements(), entry));
-            return null;
         }
 
         @Override
-        public Void visit(IfStatement node, Entry<StatementListItem, StatementListMethod> entry) {
+        public void visit(IfStatement node, Entry<StatementListItem, StatementListMethod> entry) {
             if (entry.getKey() == node.getThen()) {
                 node.setThen(entry.getValue());
             } else {
                 assert entry.getKey() == node.getOtherwise();
                 node.setOtherwise(entry.getValue());
             }
-            return null;
         }
 
         @Override
-        public Void visit(SwitchClause node, Entry<StatementListItem, StatementListMethod> entry) {
+        public void visit(SwitchClause node, Entry<StatementListItem, StatementListMethod> entry) {
             node.setStatements(updateStatements(node.getStatements(), entry));
-            return null;
         }
     }
 

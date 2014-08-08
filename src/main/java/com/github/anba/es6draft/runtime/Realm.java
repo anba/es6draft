@@ -673,7 +673,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.Function, functionConstructor);
         intrinsics.put(Intrinsics.FunctionPrototype, functionPrototype);
 
-        // Create [[ThrowTypeError]] unique function (needs to be done before init'ing intrinsics).
+        // Create [[ThrowTypeError]] function before initializing intrinsics.
         realm.throwTypeError = TypeErrorThrower.createThrowTypeError(defaultContext);
 
         // Also stored in intrinsics table.

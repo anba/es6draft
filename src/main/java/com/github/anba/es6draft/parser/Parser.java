@@ -7533,7 +7533,8 @@ public final class Parser {
                 if (propertyValue instanceof AssignmentExpression) {
                     // AssignmentElement : DestructuringAssignmentTarget Initializer
                     AssignmentExpression assignment = (AssignmentExpression) propertyValue;
-                    if (assignment.getOperator() != AssignmentExpression.Operator.ASSIGN) {
+                    if (assignment.getOperator() != AssignmentExpression.Operator.ASSIGN
+                            || assignment.isParenthesized()) {
                         reportSyntaxError(p, Messages.Key.InvalidDestructuring);
                     }
                     target = destructuringAssignmentTarget_EarlyErrors(assignment.getLeft());
@@ -7625,7 +7626,8 @@ public final class Parser {
                 if (e instanceof AssignmentExpression) {
                     // AssignmentElement : DestructuringAssignmentTarget Initializer
                     AssignmentExpression assignment = (AssignmentExpression) e;
-                    if (assignment.getOperator() != AssignmentExpression.Operator.ASSIGN) {
+                    if (assignment.getOperator() != AssignmentExpression.Operator.ASSIGN
+                            || assignment.isParenthesized()) {
                         reportSyntaxError(e, Messages.Key.InvalidDestructuring);
                     }
                     target = destructuringAssignmentTarget_EarlyErrors(assignment.getLeft());

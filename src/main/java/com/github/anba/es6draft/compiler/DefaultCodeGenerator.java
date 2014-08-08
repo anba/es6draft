@@ -1384,7 +1384,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             }
             mv.mark(isException);
 
-            // FIXME: spec bug - unhandled return completion
+            // FIXME: spec bug - unhandled return completion (bug 3033)
             mv.load(received);
             mv.instanceOf(Types.ReturnValue);
             mv.ifeq(iteratorNext);

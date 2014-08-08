@@ -7,10 +7,12 @@
 package com.github.anba.es6draft.mozilla;
 
 import com.github.anba.es6draft.repl.global.StopExecutionException;
+import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -93,5 +95,38 @@ public final class TestingFunctions {
     @Function(name = "isAsmJSCompilationAvailable", arity = 0)
     public boolean isAsmJSCompilationAvailable() {
         return false;
+    }
+
+    /**
+     * shell-function: {@code helperThreadCount()}
+     * 
+     * @return always {@code 0}
+     **/
+    @Function(name = "helperThreadCount", arity = 0)
+    public int helperThreadCount() {
+        return 0;
+    }
+
+    /**
+     * shell-function: {@code getSelfHostedValue(name)}
+     * 
+     * @return a placeholder function
+     **/
+    @Function(name = "getSelfHostedValue", arity = 1)
+    public ScriptObject getSelfHostedValue(ExecutionContext cx, String name) {
+        if ("ToLength".equals(name)) {
+            return new BuiltinFunction(cx.getRealm(), "ToLength") {
+                @Override
+                public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+                    return AbstractOperations.ToLength(calleeContext(), argument(args, 0));
+                }
+
+                @Override
+                protected BuiltinFunction clone() {
+                    return this;
+                }
+            };
+        }
+        throw new IllegalArgumentException(name);
     }
 }

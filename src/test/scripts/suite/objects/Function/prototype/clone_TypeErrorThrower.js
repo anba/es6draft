@@ -19,7 +19,7 @@ const {
   assertSame(ThrowTypeError, tte);
   assertAccessorProperty(tte, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
   assertAccessorProperty(tte, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
-  assertDataProperty(tte, "length", {value: 0, writable: false, enumerable: false, configurable: true});
+  assertDataProperty(tte, "length", {value: 0, writable: false, enumerable: false, configurable: false});
   assertFalse(tte.hasOwnProperty("name"));
   assertEquals(["arguments", "caller", "length"], Object.getOwnPropertyNames(tte).sort());
   assertEquals([], Object.getOwnPropertySymbols(tte));

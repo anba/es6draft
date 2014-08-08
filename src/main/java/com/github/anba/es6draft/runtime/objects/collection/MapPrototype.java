@@ -61,7 +61,7 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
     public enum Properties {
         ;
 
-        private static MapObject thisMapValue(ExecutionContext cx, Object obj) {
+        private static MapObject thisMapObject(ExecutionContext cx, Object obj) {
             if (obj instanceof MapObject) {
                 MapObject map = (MapObject) obj;
                 if (map.isInitialized()) {
@@ -93,7 +93,7 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
             /* steps 1-4 */
-            MapObject m = thisMapValue(cx, thisValue);
+            MapObject m = thisMapObject(cx, thisValue);
             /* step 5 */
             LinkedMap<Object, Object> entries = m.getMapData();
             /* step 6 */
@@ -116,7 +116,7 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object key) {
             /* steps 1-4 */
-            MapObject m = thisMapValue(cx, thisValue);
+            MapObject m = thisMapObject(cx, thisValue);
             /* step 7 */
             LinkedMap<Object, Object> entries = m.getMapData();
             /* steps 5-6, 8-9 */
@@ -140,7 +140,7 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
         public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
             /* steps 1-4 */
-            MapObject m = thisMapValue(cx, thisValue);
+            MapObject m = thisMapObject(cx, thisValue);
             /* step 5 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
@@ -172,7 +172,7 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
         @Function(name = "get", arity = 1)
         public static Object get(ExecutionContext cx, Object thisValue, Object key) {
             /* steps 1-4 */
-            MapObject m = thisMapValue(cx, thisValue);
+            MapObject m = thisMapObject(cx, thisValue);
             /* step 5 */
             LinkedMap<Object, Object> entries = m.getMapData();
             /* steps 6-10 */
@@ -194,7 +194,7 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object key) {
             /* steps 1-4 */
-            MapObject m = thisMapValue(cx, thisValue);
+            MapObject m = thisMapObject(cx, thisValue);
             /* step 5 */
             LinkedMap<Object, Object> entries = m.getMapData();
             /* steps 6-9 */
@@ -249,7 +249,7 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
         @Function(name = "set", arity = 2)
         public static Object set(ExecutionContext cx, Object thisValue, Object key, Object value) {
             /* steps 1-4 */
-            MapObject m = thisMapValue(cx, thisValue);
+            MapObject m = thisMapObject(cx, thisValue);
             /* step 5 */
             LinkedMap<Object, Object> entries = m.getMapData();
             /* steps 6-10 */
@@ -270,7 +270,7 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
         @Accessor(name = "size", type = Accessor.Type.Getter)
         public static Object size(ExecutionContext cx, Object thisValue) {
             /* steps 1-4 */
-            MapObject m = thisMapValue(cx, thisValue);
+            MapObject m = thisMapObject(cx, thisValue);
             /* step 5 */
             LinkedMap<Object, Object> entries = m.getMapData();
             /* steps 6-8 */

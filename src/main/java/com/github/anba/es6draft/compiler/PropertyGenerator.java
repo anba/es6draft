@@ -236,25 +236,25 @@ final class PropertyGenerator extends
         Expression propertyValue = node.getPropertyValue();
 
         boolean isAnonymousFunctionDefinition = IsAnonymousFunctionDefinition(propertyValue);
-        boolean updateMethodFields;
+        boolean updateMethod;
         if (isAnonymousFunctionDefinition) {
             if (propertyValue instanceof ClassExpression) {
                 // [[HomeObject]] is never undefined if [[NeedsSuper]] is true in class constructor.
-                updateMethodFields = false;
+                updateMethod = false;
             } else {
                 assert propertyValue instanceof FunctionNode : propertyValue.getClass();
                 FunctionNode function = (FunctionNode) propertyValue;
                 if (function.getThisMode() == FunctionNode.ThisMode.Lexical) {
-                    updateMethodFields = false;
+                    updateMethod = false;
                 } else {
                     assert function instanceof FunctionExpression
                             || function instanceof GeneratorExpression
                             || function instanceof AsyncFunctionExpression;
-                    updateMethodFields = function.getScope().hasSuperReference();
+                    updateMethod = function.getScope().hasSuperReference();
                 }
             }
         } else {
-            updateMethodFields = false;
+            updateMethod = false;
         }
 
         String propName = PropName(propertyName);
@@ -262,13 +262,13 @@ final class PropertyGenerator extends
             assert propertyName instanceof ComputedPropertyName;
             ValType type = propertyName.accept(this, mv);
 
-            if (updateMethodFields) {
+            if (updateMethod) {
                 // stack: [<object>, pk] -> [<object>, pk, <object>, pk]
                 mv.dup2();
             }
             // stack: [<object>, pk]
             expressionBoxedValue(propertyValue, mv);
-            if (updateMethodFields) {
+            if (updateMethod) {
                 // stack: [<object>, pk, <object>, pk, value] -> [<object>, pk, value]
                 mv.dupX2();
                 mv.invoke(Methods.ScriptRuntime_updateMethod);
@@ -287,12 +287,12 @@ final class PropertyGenerator extends
             mv.invoke(Methods.ScriptRuntime_defineProtoProperty);
         } else {
             mv.aconst(propName);
-            if (updateMethodFields) {
+            if (updateMethod) {
                 // stack: [<object>, pk] -> [<object>, pk, <object>, pk]
                 mv.dup2();
             }
             expressionBoxedValue(propertyValue, mv);
-            if (updateMethodFields) {
+            if (updateMethod) {
                 // stack: [<object>, pk, <object>, pk, value] -> [<object>, pk, value]
                 mv.dupX2();
                 mv.invoke(Methods.ScriptRuntime_updateMethod);

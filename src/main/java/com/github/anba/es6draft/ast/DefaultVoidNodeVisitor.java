@@ -17,7 +17,7 @@ import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
 
 /**
- * Default implementation for {@link NodeVisitor}.
+ * Default implementation for {@link VoidNodeVisitor}.
  */
 public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     /**
@@ -27,7 +27,6 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
      *            the current node
      * @param value
      *            the value
-     * @return the return value
      */
     protected abstract void visit(Node node, V value);
 

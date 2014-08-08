@@ -10,8 +10,13 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.Scripts;
+import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -45,6 +50,26 @@ public class Test262GlobalObject extends ShellGlobalObject {
                 return new Test262GlobalObject(realm, console, test, scriptCache);
             }
         };
+    }
+
+    /**
+     * Parses, compiles and executes the javascript file.
+     * 
+     * @param fileName
+     *            the file name for the script file
+     * @param source
+     *            the source code
+     * @param sourceLine
+     *            the source line offset
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
+     */
+    void eval(Path fileName, String source, int sourceLine) throws ParserException,
+            CompilationException {
+        Script script = getScriptLoader().script(fileName.toString(), sourceLine, source);
+        Scripts.ScriptEvaluation(script, getRealm(), false);
     }
 
     /**

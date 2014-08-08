@@ -281,8 +281,6 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     /**
      * 24.1.1.6 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
      * 
-     * @param cx
-     *            the execution context
      * @param arrayBuffer
      *            the array buffer object
      * @param byteIndex

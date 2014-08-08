@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.v8;
 
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTests;
+import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
 import static com.github.anba.es6draft.v8.V8TestGlobalObject.newTestGlobalObjectAllocator;
 import static org.junit.Assume.assumeTrue;
 
@@ -52,8 +52,8 @@ public class MiniJSUnitTest {
     private static final Configuration configuration = loadConfiguration(MiniJSUnitTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<TestInfo[]> suiteValues() throws IOException {
-        return loadTests(configuration,
+    public static Iterable<Object[]> suiteValues() throws IOException {
+        return loadTestsAsArray(configuration,
                 new Function<Path, BiFunction<Path, Iterator<String>, TestInfo>>() {
                     @Override
                     public TestInfos apply(Path basedir) {
@@ -110,6 +110,9 @@ public class MiniJSUnitTest {
     public void runTest() throws Throwable {
         // evaluate actual test-script
         global.eval(test.getScript(), test.toFile());
+
+        // wait for pending tasks to finish
+        global.getRealm().getWorld().runEventLoop();
     }
 
     private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {

@@ -29,6 +29,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.kohsuke.args4j.Argument;
@@ -67,10 +71,12 @@ import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.PropertiesReaderControl;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Strings;
+import com.github.anba.es6draft.runtime.internal.TaskSource;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -280,6 +286,9 @@ public final class Repl {
         @Option(name = "--xhelp", hidden = true, usage = "options.extended_help")
         boolean showExtendedHelp;
 
+        @Option(name = "--timers", hidden = true, usage = "options.timers")
+        boolean timers;
+
         @Argument(index = 0, multiValued = false, metaVar = "meta.file", usage = "options.filename")
         Path fileName = null;
 
@@ -389,10 +398,12 @@ public final class Repl {
     @SuppressWarnings("serial")
     private static final class ParserExceptionWithSource extends RuntimeException {
         private final String source;
+        private final int lineOffset;
 
-        ParserExceptionWithSource(ParserException e, String source) {
+        ParserExceptionWithSource(ParserException e, String source, int lineOffset) {
             super(e);
             this.source = source;
+            this.lineOffset = lineOffset;
         }
 
         @Override
@@ -403,11 +414,15 @@ public final class Repl {
         public String getSource() {
             return source;
         }
+
+        public int getLineOffset() {
+            return lineOffset;
+        }
     }
 
     private final ReplConsole console;
     private final Options options;
-    private AtomicInteger scriptCounter = new AtomicInteger(0);
+    private final AtomicInteger scriptCounter = new AtomicInteger(0);
 
     private Repl(ReplConsole console, Options options) {
         this.console = console;
@@ -430,9 +445,10 @@ public final class Repl {
         }
     }
 
-    private void handleException(ParserExceptionWithSource exception, int lineOffset) {
+    private void handleException(ParserExceptionWithSource exception) {
         ParserException e = exception.getCause();
         String source = exception.getSource();
+        int lineOffset = exception.getLineOffset();
 
         String sourceInfo = String.format("%s:%d:%d", e.getFile(), e.getLine(), e.getColumn());
         int start = skipLines(source, e.getLine() - lineOffset);
@@ -468,7 +484,7 @@ public final class Repl {
     }
 
     private static com.github.anba.es6draft.ast.Script parse(Realm realm, String sourceName,
-            String source, int line) {
+            String source, int line) throws ParserException {
         return realm.getScriptLoader().parseScript(sourceName, line, source);
     }
 
@@ -494,7 +510,7 @@ public final class Repl {
             } catch (ParserEOFException e) {
                 continue;
             } catch (ParserException e) {
-                throw new ParserExceptionWithSource(e, source.toString());
+                throw new ParserExceptionWithSource(e, source.toString(), line);
             }
         }
     }
@@ -538,26 +554,19 @@ public final class Repl {
     /**
      * REPL: Loop
      */
-    private void loop() {
+    private void loop() throws InterruptedException {
         Realm realm = newRealm();
-        for (int line = 1;; line += 1) {
-            drainTaskQueue(realm);
-            if (!options.interactive) {
-                break;
-            }
+        World<?> world = realm.getWorld();
+        TaskSource taskSource = createTaskSource(realm);
+        for (;;) {
             try {
-                com.github.anba.es6draft.ast.Script parsedScript = read(realm, line);
-                if (parsedScript.getStatements().isEmpty()) {
-                    continue;
-                }
-                Object result = eval(realm, parsedScript);
-                print(realm, result);
+                world.runEventLoop(taskSource);
             } catch (StopExecutionException e) {
                 if (e.getReason() == Reason.Quit) {
                     System.exit(0);
                 }
             } catch (ParserExceptionWithSource e) {
-                handleException(e, line);
+                handleException(e);
             } catch (ScriptException e) {
                 handleException(realm, e);
             } catch (ParserException | CompilationException | StackOverflowError e) {
@@ -568,25 +577,162 @@ public final class Repl {
         }
     }
 
-    private void drainTaskQueue(Realm realm) {
-        World<?> world = realm.getWorld();
-        while (world.hasPendingTasks()) {
-            try {
-                world.executeTasks();
-            } catch (StopExecutionException e) {
-                if (e.getReason() == Reason.Quit) {
-                    System.exit(0);
+    private TaskSource createTaskSource(Realm realm) {
+        ArrayList<TaskSource> sources = new ArrayList<>();
+        if (options.interactive) {
+            sources.add(new InteractiveTaskSource(realm));
+        }
+        if (options.timers) {
+            WindowTimers timers = install(realm, new WindowTimers(), WindowTimers.class);
+            sources.add(timers);
+        }
+        switch (sources.size()) {
+        case 0:
+            return new EmptyTaskSource();
+        case 1:
+            return sources.get(0);
+        default:
+            return new MultiTaskSource(sources);
+        }
+    }
+
+    private static final class EmptyTaskSource implements TaskSource {
+        @Override
+        public Task nextTask() {
+            return null;
+        }
+
+        @Override
+        public Task awaitTask() {
+            throw new IllegalStateException();
+        }
+    }
+
+    private final class InteractiveTaskSource implements TaskSource {
+        private final Realm realm;
+        private int line = 0;
+
+        InteractiveTaskSource(Realm realm) {
+            this.realm = realm;
+        }
+
+        @Override
+        public Task nextTask() throws InterruptedException {
+            return awaitTask();
+        }
+
+        @Override
+        public Task awaitTask() throws InterruptedException {
+            for (;;) {
+                try {
+                    com.github.anba.es6draft.ast.Script parsedScript = read(realm, ++line);
+                    if (parsedScript.getStatements().isEmpty()) {
+                        continue;
+                    }
+                    return new EvalPrintTask(realm, parsedScript);
+                } catch (RuntimeException e) {
+                    return new ThrowExceptionTask<>(e);
+                } catch (Error e) {
+                    return new ThrowErrorTask<>(e);
                 }
-            } catch (ParserExceptionWithSource e) {
-                handleException(e, 1);
-            } catch (ScriptException e) {
-                handleException(realm, e);
-            } catch (ParserException | CompilationException | StackOverflowError e) {
-                handleException(e);
-            } catch (BootstrapMethodError | UncheckedIOException e) {
-                handleException(e.getCause());
             }
         }
+
+        private final class EvalPrintTask implements Task {
+            private final Realm realm;
+            private final com.github.anba.es6draft.ast.Script parsedScript;
+
+            EvalPrintTask(Realm realm, com.github.anba.es6draft.ast.Script parsedScript) {
+                this.realm = realm;
+                this.parsedScript = parsedScript;
+            }
+
+            @Override
+            public void execute() {
+                Object result = eval(realm, parsedScript);
+                print(realm, result);
+            }
+        }
+
+        private final class ThrowErrorTask<E extends Error> implements Task {
+            private final E exception;
+
+            ThrowErrorTask(E exception) {
+                this.exception = exception;
+            }
+
+            @Override
+            public void execute() throws E {
+                throw exception;
+            }
+        }
+
+        private final class ThrowExceptionTask<E extends RuntimeException> implements Task {
+            private final E exception;
+
+            ThrowExceptionTask(E exception) {
+                this.exception = exception;
+            }
+
+            @Override
+            public void execute() throws E {
+                throw exception;
+            }
+        }
+    }
+
+    private static final class MultiTaskSource implements TaskSource {
+        private final SynchronousQueue<Task> queue = new SynchronousQueue<>();
+        private final Semaphore sem = new Semaphore(-1);
+
+        MultiTaskSource(List<TaskSource> sources) {
+            ExecutorService service = Executors.newFixedThreadPool(sources.size());
+            for (TaskSource source : sources) {
+                service.submit(new TaskRunner(source));
+            }
+            service.shutdown();
+        }
+
+        @Override
+        public Task nextTask() throws InterruptedException {
+            return awaitTask();
+        }
+
+        @Override
+        public Task awaitTask() throws InterruptedException {
+            sem.release();
+            return queue.take();
+        }
+
+        private class TaskRunner implements Runnable {
+            private final TaskSource source;
+
+            TaskRunner(TaskSource source) {
+                this.source = source;
+            }
+
+            @Override
+            public void run() {
+                for (;;) {
+                    try {
+                        queue.put(source.awaitTask());
+                        sem.acquire();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    } catch (Throwable t) {
+                        System.err.println("Unexpected exception: " + t.getMessage());
+                        t.printStackTrace();
+                        System.exit(1);
+                    }
+                }
+            }
+        }
+    }
+
+    private static <T> T install(Realm realm, T object, Class<T> clazz) {
+        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
+        return object;
     }
 
     private Realm newRealm() {
@@ -675,7 +821,7 @@ public final class Repl {
                         try {
                             eval(realm, parse(realm, sourceName, source, 1));
                         } catch (ParserException e) {
-                            throw new ParserExceptionWithSource(e, source);
+                            throw new ParserExceptionWithSource(e, source, 1);
                         }
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);

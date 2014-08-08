@@ -39,7 +39,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
  */
 public final class Compiler {
     public enum Option {
-        Debug, FullDebug, NoResume, SourceMap, VerifyStack
+        Debug, FullDebug, NoResume, NoTailCall, SourceMap, VerifyStack
     }
 
     private final ExecutorService executor;

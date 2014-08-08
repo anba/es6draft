@@ -485,6 +485,7 @@ tests/basic/bug970643.js
 tests/basic/testBug686274.js
 # enableTrackAllocations
 tests/basic/track-allocation-sites.js
+tests/basic/bug1035287-track-allocation-sites-recursion.js
 # evalReturningScope
 tests/basic/bug673569.js
 

@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.v8;
 
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTests;
+import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
 import static com.github.anba.es6draft.v8.V8TestGlobalObject.newTestGlobalObjectAllocator;
 import static org.junit.Assume.assumeTrue;
 
@@ -47,8 +47,8 @@ public class WebkitTest {
     private static final Configuration configuration = loadConfiguration(WebkitTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<TestInfo[]> suiteValues() throws IOException {
-        return loadTests(configuration);
+    public static Iterable<Object[]> suiteValues() throws IOException {
+        return loadTestsAsArray(configuration);
     }
 
     @ClassRule
@@ -102,5 +102,8 @@ public class WebkitTest {
         global.include(Paths.get("resources/standalone-pre.js"));
         global.eval(test.getScript(), test.toFile());
         global.include(Paths.get("resources/standalone-post.js"));
+
+        // wait for pending tasks to finish
+        global.getRealm().getWorld().runEventLoop();
     }
 }

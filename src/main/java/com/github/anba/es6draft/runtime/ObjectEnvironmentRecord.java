@@ -64,7 +64,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasBinding(String name) {
-        // FIXME: spec bug - only consult @@unscopables if withEnvironment is true?
+        // FIXME: spec bug - only consult @@unscopables if withEnvironment is true? (bug 3020)
         if (!withEnvironment) {
             return HasProperty(cx, bindings, name);
         }
@@ -144,7 +144,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public Object getBindingValue(String name, boolean strict) {
-        // FIXME: spec bug - only consult @@unscopables if withEnvironment is true?
+        // FIXME: spec bug - only consult @@unscopables if withEnvironment is true? (bug 3020)
         if (!withEnvironment) {
             boolean value = HasProperty(cx, bindings, name);
             if (!value) {

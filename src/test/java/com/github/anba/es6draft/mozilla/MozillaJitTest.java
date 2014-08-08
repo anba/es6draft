@@ -8,7 +8,7 @@ package com.github.anba.es6draft.mozilla;
 
 import static com.github.anba.es6draft.mozilla.MozTestGlobalObject.newTestGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTests;
+import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
 import static com.github.anba.es6draft.util.matchers.ErrorMessageMatcher.hasErrorMessage;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assume.assumeTrue;
@@ -61,8 +61,8 @@ public class MozillaJitTest {
     private static final Configuration configuration = loadConfiguration(MozillaJitTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<TestInfo[]> suiteValues() throws IOException {
-        return loadTests(configuration,
+    public static Iterable<Object[]> suiteValues() throws IOException {
+        return loadTestsAsArray(configuration,
                 new Function<Path, BiFunction<Path, Iterator<String>, TestInfo>>() {
                     @Override
                     public TestInfos apply(Path basedir) {
@@ -150,6 +150,9 @@ public class MozillaJitTest {
 
         // evaluate actual test-script
         global.eval(moztest.getScript(), moztest.toFile());
+
+        // wait for pending tasks to finish
+        global.getRealm().getWorld().runEventLoop();
     }
 
     private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {

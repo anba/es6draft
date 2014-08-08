@@ -59,7 +59,7 @@ public interface Callable extends ScriptObject {
     Callable clone(ExecutionContext cx);
 
     /**
-     * Returns the function's bound realm component.
+     * Returns the function's realm component.
      * 
      * @param cx
      *            the execution context

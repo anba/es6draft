@@ -55,7 +55,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
     public enum Properties {
         ;
 
-        private static WeakSetObject thisWeakSetValue(ExecutionContext cx, Object obj) {
+        private static WeakSetObject thisWeakSetObject(ExecutionContext cx, Object obj) {
             if (obj instanceof WeakSetObject) {
                 WeakSetObject set = (WeakSetObject) obj;
                 if (set.isInitialized()) {
@@ -89,7 +89,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
         @Function(name = "add", arity = 1)
         public static Object set(ExecutionContext cx, Object thisValue, Object value) {
             /* steps 1-4 */
-            WeakSetObject s = thisWeakSetValue(cx, thisValue);
+            WeakSetObject s = thisWeakSetObject(cx, thisValue);
             /* step 5 */
             if (!Type.isObject(value)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
@@ -114,7 +114,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
             /* steps 1-4 */
-            WeakSetObject s = thisWeakSetValue(cx, thisValue);
+            WeakSetObject s = thisWeakSetObject(cx, thisValue);
             /* step 5 */
             s.getWeakSetData().clear();
             /* step 6 */
@@ -135,7 +135,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object value) {
             /* steps 1-4 */
-            WeakSetObject s = thisWeakSetValue(cx, thisValue);
+            WeakSetObject s = thisWeakSetObject(cx, thisValue);
             /* step 5 */
             if (!Type.isObject(value)) {
                 return false;
@@ -160,7 +160,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object value) {
             /* steps 1-4 */
-            WeakSetObject s = thisWeakSetValue(cx, thisValue);
+            WeakSetObject s = thisWeakSetObject(cx, thisValue);
             /* step ? */
             if (!Type.isObject(value)) {
                 return false;

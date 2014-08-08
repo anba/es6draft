@@ -9,7 +9,7 @@ package com.github.anba.es6draft.mozilla;
 import static com.github.anba.es6draft.mozilla.MozTestGlobalObject.newTestGlobalObjectAllocator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTests;
+import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
@@ -66,8 +66,8 @@ public class MozillaJSTest {
     private static final Configuration configuration = loadConfiguration(MozillaJSTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<TestInfo[]> suiteValues() throws IOException {
-        return loadTests(configuration,
+    public static Iterable<Object[]> suiteValues() throws IOException {
+        return loadTestsAsArray(configuration,
                 new Function<Path, BiFunction<Path, Iterator<String>, TestInfo>>() {
                     @Override
                     public TestInfos apply(Path basedir) {
@@ -183,6 +183,9 @@ public class MozillaJSTest {
 
         // evaluate actual test-script
         global.eval(moztest.getScript(), moztest.toFile());
+
+        // wait for pending tasks to finish
+        global.getRealm().getWorld().runEventLoop();
     }
 
     /**
