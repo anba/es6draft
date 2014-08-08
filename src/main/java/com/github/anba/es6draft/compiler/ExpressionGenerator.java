@@ -96,6 +96,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
                 Type.getMethodType(Types.EnvironmentRecord));
 
+        // class: Math
+        static final MethodDesc Math_pow = MethodDesc.create(MethodType.Static, Types.Math, "pow",
+                Type.getMethodType(Type.DOUBLE_TYPE, Type.DOUBLE_TYPE, Type.DOUBLE_TYPE));
+
         // class: OrdinaryObject
         static final MethodDesc OrdinaryObject_ObjectCreate = MethodDesc.create(MethodType.Static,
                 Types.OrdinaryObject, "ObjectCreate",
@@ -1120,6 +1124,30 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             }
         } else {
             switch (node.getOperator()) {
+            case ASSIGN_EXP: {
+                // Extension: Exponentiation Operator
+                ValType ltype = left.accept(this, mv);
+                mv.dup();
+                ValType vtype = GetValue(left, ltype, mv);
+                // lref lval
+                if (right instanceof Literal) {
+                    ToNumber(vtype, mv);
+                }
+                ValType rtype = evalAndGetValue(right, mv);
+                if (!(right instanceof Literal)) {
+                    mv.swap(ltype, rtype);
+                    ToNumber(vtype, mv);
+                    mv.swap(rtype, ValType.Number);
+                }
+                ToNumber(rtype, mv);
+                // lref lval rval
+                mv.invoke(Methods.Math_pow);
+                // r lref r
+                mv.dupX(ltype, ValType.Number);
+                mv.toBoxed(ValType.Number);
+                PutValue(left, ltype, mv);
+                return ValType.Number;
+            }
             case ASSIGN_MUL: {
                 // 12.6 Multiplicative Operators
                 ValType ltype = left.accept(this, mv);
@@ -1470,6 +1498,22 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         Expression right = node.getRight();
 
         switch (node.getOperator()) {
+        case EXP: {
+            // Extension: Exponentiation Operator
+            ValType ltype = evalAndGetValue(left, mv);
+            if (ltype.isPrimitive() || right instanceof Literal) {
+                ToNumber(ltype, mv);
+            }
+            ValType rtype = evalAndGetValue(right, mv);
+            if (!(ltype.isPrimitive() || right instanceof Literal)) {
+                mv.swap(ltype, rtype);
+                ToNumber(ltype, mv);
+                mv.swap(rtype, ValType.Number);
+            }
+            ToNumber(rtype, mv);
+            mv.invoke(Methods.Math_pow);
+            return ValType.Number;
+        }
         case MUL: {
             // 12.6 Multiplicative Operators
             ValType ltype = evalAndGetValue(left, mv);

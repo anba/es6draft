@@ -26,11 +26,19 @@ package com.github.anba.es6draft.ast;
  * <h2>12.12 Binary Logical Operators</h2><br>
  */
 public final class BinaryExpression extends Expression {
-    public enum Operator {
-        MUL("*", 9), MOD("%", 9), DIV("/", 9), ADD("+", 8), SUB("-", 8), SHL("<<", 7),
-        SHR(">>", 7), USHR(">>>", 7), LT("<", 6), GT(">", 6), LE("<=", 6), GE(">=", 6),
-        IN("in", 6), INSTANCEOF("instanceof", 6), EQ("==", 5), NE("!=", 5), SHEQ("===", 5), SHNE(
-                "!==", 5), BITAND("&", 4), BITXOR("^", 3), BITOR("|", 2), AND("&&", 1), OR("||", 0);
+    public enum Operator {/* @formatter:off */
+        EXP("**", 10),
+        MUL("*", 9), MOD("%", 9), DIV("/", 9),
+        ADD("+", 8), SUB("-", 8),
+        SHL("<<", 7), SHR(">>", 7), USHR(">>>", 7),
+        LT("<", 6), GT(">", 6), LE("<=", 6), GE(">=", 6), IN("in", 6), INSTANCEOF("instanceof", 6),
+        EQ("==", 5), NE("!=", 5), SHEQ("===", 5), SHNE("!==", 5),
+        BITAND("&", 4),
+        BITXOR("^", 3),
+        BITOR("|", 2),
+        AND("&&", 1),
+        OR("||", 0);
+        /* @formatter:on */
 
         private String name;
         private int precedence;
@@ -46,6 +54,10 @@ public final class BinaryExpression extends Expression {
 
         public int getPrecedence() {
             return precedence;
+        }
+
+        public boolean isRightAssociative() {
+            return this == EXP;
         }
     }
 

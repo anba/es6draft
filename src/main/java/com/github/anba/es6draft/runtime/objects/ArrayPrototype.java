@@ -22,10 +22,10 @@ import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initializable;
-import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.*;
 import com.github.anba.es6draft.runtime.internal.Properties.AliasFunction;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -63,6 +63,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
     @Override
     public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
+        createProperties(cx, this, AdditionalProperties.class);
     }
 
     /**
@@ -1895,6 +1896,68 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* step 19 */
             return o;
+        }
+    }
+
+    /**
+     * Proposed ECMAScript 7 additions
+     */
+    @CompatibilityExtension(CompatibilityOption.ArrayContains)
+    public enum AdditionalProperties {
+        ;
+
+        /**
+         * Array.prototype.contains ( searchElement [ , fromIndex ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param searchElement
+         *            the search element
+         * @param fromIndex
+         *            the optional start index
+         * @return the result index
+         */
+        @Function(name = "contains", arity = 1)
+        public static Object contains(ExecutionContext cx, Object thisValue, Object searchElement,
+                Object fromIndex) {
+            /* steps 1-2 */
+            ScriptObject o = ToObject(cx, thisValue);
+            /* steps 3-4 */
+            long len = ToLength(cx, Get(cx, o, "length"));
+            /* step 5 */
+            if (len == 0) {
+                return false;
+            }
+            /* steps 6-7 */
+            long n = (long) ToInteger(cx, fromIndex);
+            /* step 8 */
+            if (n >= len) {
+                return false;
+            }
+            /* steps 9-10 */
+            long k;
+            if (n >= 0) {
+                k = n;
+            } else {
+                k = len - Math.abs(n);
+                if (k < 0) {
+                    k = 0;
+                }
+            }
+            /* step 11 */
+            for (; k < len; ++k) {
+                boolean kpresent = HasProperty(cx, o, k);
+                if (kpresent) {
+                    Object element = Get(cx, o, k);
+                    if (SameValueZero(searchElement, element)) {
+                        return true;
+                    }
+                }
+            }
+            /* step 12 */
+            return false;
         }
     }
 }

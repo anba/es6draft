@@ -16,7 +16,7 @@ public final class AssignmentExpression extends Expression {
     public enum Operator {
         ASSIGN("="), ASSIGN_ADD("+="), ASSIGN_SUB("-="), ASSIGN_MUL("*="), ASSIGN_DIV("/="),
         ASSIGN_MOD("%="), ASSIGN_SHL("<<="), ASSIGN_SHR(">>="), ASSIGN_USHR(">>>="), ASSIGN_BITAND(
-                "&="), ASSIGN_BITOR("|="), ASSIGN_BITXOR("^=");
+                "&="), ASSIGN_BITOR("|="), ASSIGN_BITXOR("^="), ASSIGN_EXP("**=");
 
         private String name;
 

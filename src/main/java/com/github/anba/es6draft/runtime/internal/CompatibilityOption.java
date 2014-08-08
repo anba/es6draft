@@ -59,16 +59,6 @@ public enum CompatibilityOption {
     RegExpPrototype,
 
     /**
-     * RegExp statics
-     */
-    RegExpStatics,
-
-    /**
-     * Function.prototype.caller and Function.prototype.arguments
-     */
-    FunctionPrototype,
-
-    /**
      * B.3.1 __proto___ Property Names in Object Initializers
      */
     ProtoInitializer,
@@ -92,6 +82,26 @@ public enum CompatibilityOption {
      * B.3.5 VariableStatements in Catch blocks
      */
     CatchVarStatement,
+
+    /**
+     * Extension: RegExp statics
+     */
+    RegExpStatics,
+
+    /**
+     * Extension: Function.prototype.caller and Function.prototype.arguments
+     */
+    FunctionPrototype,
+
+    /**
+     * Extension: arguments.caller (not implemented)
+     */
+    ArgumentsCaller,
+
+    /**
+     * Extension: Detect duplicate property definitions
+     */
+    DuplicateProperties,
 
     /**
      * Moz-Extension: for-each statement
@@ -149,19 +159,19 @@ public enum CompatibilityOption {
     ImplicitStrictDirective,
 
     /**
-     * Extension: Async Function Definitions
+     * ES7-Extension: Async Function Definitions
      */
     AsyncFunction,
 
     /**
-     * Extension: arguments.caller (not implemented)
+     * ES7-Extension: Exponentiation operator {@code **}
      */
-    ArgumentsCaller,
+    Exponentiation,
 
     /**
-     * Extension: Detect duplicate property definitions
+     * ES7-Extension: Array.prototype.contains
      */
-    DuplicateProperties;
+    ArrayContains;
 
     /**
      * Returns a set of all options for strict-compatibility.
@@ -178,7 +188,7 @@ public enum CompatibilityOption {
      * @return the options set for web-compatibility
      */
     public static final Set<CompatibilityOption> WebCompatibility() {
-        return EnumSet.range(LegacyOctalIntegerLiteral, CatchVarStatement);
+        return addAll(AnnexB(), EnumSet.range(RegExpStatics, FunctionPrototype));
     }
 
     /**
@@ -187,6 +197,29 @@ public enum CompatibilityOption {
      * @return the options set for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return EnumSet.range(LegacyOctalIntegerLiteral, ImplicitStrictDirective);
+        return addAll(WebCompatibility(), EnumSet.range(ForEachStatement, ImplicitStrictDirective));
+    }
+
+    /**
+     * Returns a set of all options for Annex B features.
+     * 
+     * @return the options set for proposed Annex B features
+     */
+    public static final Set<CompatibilityOption> AnnexB() {
+        return EnumSet.range(LegacyOctalIntegerLiteral, CatchVarStatement);
+    }
+
+    /**
+     * Returns a set of all options for proposed ES7 extensions.
+     * 
+     * @return the options set for proposed ES7 extensions
+     */
+    public static final Set<CompatibilityOption> ECMAScript7() {
+        return EnumSet.range(AsyncFunction, ArrayContains);
+    }
+
+    private static <E extends Enum<E>> Set<E> addAll(Set<E> set, Set<E> set2) {
+        set.addAll(set2);
+        return set;
     }
 }

@@ -68,6 +68,7 @@ final class Types {
     static final Type IllegalStateException = Type.getType(IllegalStateException.class);
     static final Type Integer = Type.getType(Integer.class);
     static final Type Long = Type.getType(Long.class);
+    static final Type Math = Type.getType(Math.class);
     static final Type Number = Type.getType(Number.class);
     static final Type Object = Type.getType(Object.class);
     static final Type Object_ = Type.getType(Object[].class);

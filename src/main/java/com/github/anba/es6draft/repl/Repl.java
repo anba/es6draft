@@ -252,6 +252,9 @@ public final class Repl {
         @Option(name = "--async", usage = "options.async")
         boolean asyncFunctions;
 
+        @Option(name = "--es7", usage = "options.es7")
+        boolean ecmascript7;
+
         @Option(name = "--no-jline", usage = "options.no_jline")
         boolean noJLine;
 
@@ -749,6 +752,9 @@ public final class Repl {
         }
         if (options.asyncFunctions) {
             compatibilityOptions.add(CompatibilityOption.AsyncFunction);
+        }
+        if (options.ecmascript7) {
+            compatibilityOptions.addAll(CompatibilityOption.ECMAScript7());
         }
         Set<Parser.Option> parserOptions = EnumSet.noneOf(Parser.Option.class);
         Set<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);

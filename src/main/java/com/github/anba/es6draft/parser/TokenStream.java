@@ -919,7 +919,13 @@ final class TokenStream {
                 return Token.SUB;
             }
         case '*':
-            if (match('=')) {
+            if (input.peek(0) == '*' && isEnabled(CompatibilityOption.Exponentiation)) {
+                mustMatch('*');
+                if (match('=')) {
+                    return Token.ASSIGN_EXP;
+                }
+                return Token.EXP;
+            } else if (match('=')) {
                 return Token.ASSIGN_MUL;
             } else {
                 return Token.MUL;

@@ -7155,10 +7155,9 @@ public final class Parser {
             }
             consume(tok);
             Expression rhs = unaryExpression();
-            for (;;) {
-                BinaryExpression.Operator op2 = binaryOp(token());
-                int pred2 = (op2 != null ? op2.getPrecedence() : -1);
-                if (pred2 <= pred) {
+            for (BinaryExpression.Operator op2; (op2 = binaryOp(token())) != null;) {
+                int pred2 = op2.getPrecedence();
+                if (pred2 < pred || pred2 == pred && !op2.isRightAssociative()) {
                     break;
                 }
                 rhs = binaryExpression(allowIn, rhs, pred2);
@@ -7216,6 +7215,8 @@ public final class Parser {
             return BinaryExpression.Operator.DIV;
         case MOD:
             return BinaryExpression.Operator.MOD;
+        case EXP:
+            return BinaryExpression.Operator.EXP;
         default:
             return null;
         }
@@ -7374,6 +7375,8 @@ public final class Parser {
             return AssignmentExpression.Operator.ASSIGN_BITOR;
         case ASSIGN_BITXOR:
             return AssignmentExpression.Operator.ASSIGN_BITXOR;
+        case ASSIGN_EXP:
+            return AssignmentExpression.Operator.ASSIGN_EXP;
         default:
             throw new IllegalStateException();
         }
@@ -7404,6 +7407,7 @@ public final class Parser {
         case ASSIGN_SHR:
         case ASSIGN_SUB:
         case ASSIGN_USHR:
+        case ASSIGN_EXP:
             return true;
         default:
             return false;

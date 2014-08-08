@@ -79,6 +79,7 @@ public class TraceurTest {
         protected Set<CompatibilityOption> getOptions() {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             options.add(CompatibilityOption.AsyncFunction);
+            options.add(CompatibilityOption.Exponentiation);
             return options;
         }
 

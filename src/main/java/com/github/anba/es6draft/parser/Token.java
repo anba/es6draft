@@ -91,6 +91,8 @@ enum Token {/* @formatter:off */
     ASSIGN_SHL("<<="), ASSIGN_SHR(">>="), ASSIGN_USHR(">>>="),
     ASSIGN_BITAND("&="), ASSIGN_BITOR("|="), ASSIGN_BITXOR("^="),
     ARROW("=>"),
+    // Exponentiation Operator
+    EXP("**"), ASSIGN_EXP("**"),
     // Comment
     COMMENT("<comment>"),
     // EOF, Error
@@ -309,6 +311,8 @@ enum Token {/* @formatter:off */
      */
     public static boolean isBinaryOperator(Token token) {
         switch (token) {
+        case EXP:
+            // Extension: Exponentiation Operator
         case MUL:
         case MOD:
         case DIV:
@@ -366,6 +370,7 @@ enum Token {/* @formatter:off */
         case ASSIGN_SHR:
         case ASSIGN_SUB:
         case ASSIGN_USHR:
+        case ASSIGN_EXP:
             return true;
         default:
             return false;

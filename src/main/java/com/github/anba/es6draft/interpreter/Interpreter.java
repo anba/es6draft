@@ -223,6 +223,23 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
+     * Extension: Exponentiation Operator
+     * 
+     * @param leftValue
+     *            the left-hand side expression value
+     * @param rightValue
+     *            the right-hand side expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
+     */
+    private static Double exp(Object leftValue, Object rightValue, ExecutionContext cx) {
+        double lnum = ToNumber(cx, leftValue);
+        double rnum = ToNumber(cx, rightValue);
+        return Math.pow(lnum, rnum);
+    }
+
+    /**
      * 12.6 Multiplicative Operators
      * 
      * @param leftValue
@@ -610,6 +627,9 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             case ASSIGN_DIV:
                 rval = div(lval, rval, cx);
                 break;
+            case ASSIGN_EXP:
+                rval = exp(lval, rval, cx);
+                break;
             case ASSIGN_MOD:
                 rval = mod(lval, rval, cx);
                 break;
@@ -665,6 +685,8 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             return div(lval, rval, cx);
         case EQ:
             return equals(lval, rval, cx);
+        case EXP:
+            return exp(lval, rval, cx);
         case GE:
             return greaterThanEqual(lval, rval, cx);
         case GT:
