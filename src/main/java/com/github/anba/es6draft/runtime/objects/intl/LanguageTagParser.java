@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -19,21 +18,21 @@ import java.util.TreeMap;
  * @see <a href="http://tools.ietf.org/html/rfc5646">RFC-5646</a>
  */
 final class LanguageTagParser {
-    private static final Set<String> irregular = set("en-gb-oed", "i-ami", "i-bnn", "i-default",
-            "i-enochian", "i-hak", "i-klingon", "i-lux", "i-mingo", "i-navajo", "i-pwn", "i-tao",
-            "i-tay", "i-tsu", "sgn-be-fr", "sgn-be-nl", "sgn-ch-de");
+    private static final HashSet<String> irregular = set("en-gb-oed", "i-ami", "i-bnn",
+            "i-default", "i-enochian", "i-hak", "i-klingon", "i-lux", "i-mingo", "i-navajo",
+            "i-pwn", "i-tao", "i-tay", "i-tsu", "sgn-be-fr", "sgn-be-nl", "sgn-ch-de");
 
-    private static final Set<String> regular = set("art-lojban", "cel-gaulish", "no-bok", "no-nyn",
-            "zh-guoyu", "zh-hakka", "zh-min", "zh-min-nan", "zh-xiang");
+    private static final HashSet<String> regular = set("art-lojban", "cel-gaulish", "no-bok",
+            "no-nyn", "zh-guoyu", "zh-hakka", "zh-min", "zh-min-nan", "zh-xiang");
 
-    private static final Set<String> grandfathered = new HashSet<>();
+    private static final HashSet<String> grandfathered = new HashSet<>();
     static {
         grandfathered.addAll(irregular);
         grandfathered.addAll(regular);
     }
 
     @SafeVarargs
-    private static <T> Set<T> set(T... elements) {
+    private static <T> HashSet<T> set(T... elements) {
         return new HashSet<>(Arrays.asList(elements));
     }
 

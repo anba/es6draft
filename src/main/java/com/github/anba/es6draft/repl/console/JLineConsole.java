@@ -21,7 +21,6 @@ import java.util.Formatter;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -197,7 +196,7 @@ public final class JLineConsole implements ReplConsole {
             }
             Matcher m = hierarchyPattern.matcher(leftContext);
             lookupFailure: if (m.find()) {
-                List<String> segments = segments(m.group(1));
+                ArrayList<String> segments = segments(m.group(1));
                 StringBuilder prefix = new StringBuilder();
                 List<String> properties = segments.subList(0, segments.size() - 1);
                 if (!properties.isEmpty() && "this".equals(properties.get(0))) {
@@ -234,8 +233,8 @@ public final class JLineConsole implements ReplConsole {
             }
         }
 
-        private Set<String> getPropertyNames(ExecutionContext cx, ScriptObject object) {
-            Set<String> names = new LinkedHashSet<>();
+        private LinkedHashSet<String> getPropertyNames(ExecutionContext cx, ScriptObject object) {
+            LinkedHashSet<String> names = new LinkedHashSet<>();
             while (object != null) {
                 names.addAll(GetOwnPropertyNames(cx, object));
                 object = object.getPrototypeOf(cx);
@@ -243,8 +242,8 @@ public final class JLineConsole implements ReplConsole {
             return names;
         }
 
-        private List<String> segments(String hierarchy) {
-            List<String> segments = new ArrayList<>();
+        private ArrayList<String> segments(String hierarchy) {
+            ArrayList<String> segments = new ArrayList<>();
             Matcher m = namePattern.matcher(hierarchy);
             while (m.find()) {
                 segments.add(m.group());

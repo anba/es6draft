@@ -110,6 +110,8 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
          * 
          * @param cx
          *            the execution context
+         * @param caller
+         *            the caller context
          * @param thisValue
          *            the function this-value
          * @param source
@@ -117,11 +119,12 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
          * @return the evaluation result
          */
         @Function(name = "eval", arity = 1)
-        public static Object eval(ExecutionContext cx, Object thisValue, Object source) {
+        public static Object eval(ExecutionContext cx, ExecutionContext caller, Object thisValue,
+                Object source) {
             /* steps 1-4 */
             Realm realm = thisRealmValue(cx, thisValue);
             /* step 5 */
-            return IndirectEval(realm, source);
+            return IndirectEval(caller, realm, source);
         }
 
         /**
@@ -241,6 +244,8 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
          * 
          * @param cx
          *            the execution context
+         * @param caller
+         *            the caller context
          * @param thisValue
          *            the function this-value
          * @param source
@@ -248,11 +253,12 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
          * @return the evaluation result
          */
         @Function(name = "indirectEval", arity = 1)
-        public static Object indirectEval(ExecutionContext cx, Object thisValue, Object source) {
+        public static Object indirectEval(ExecutionContext cx, ExecutionContext caller,
+                Object thisValue, Object source) {
             /* steps 1-4 */
             Realm realm = thisRealmValue(cx, thisValue);
             /* step 5 */
-            return IndirectEval(realm, source);
+            return IndirectEval(caller, realm, source);
         }
 
         /**

@@ -9,16 +9,24 @@ package com.github.anba.es6draft.runtime.internal;
 import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import java.io.IOException;
 import java.lang.invoke.CallSite;
 import java.lang.invoke.ConstantCallSite;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.nio.file.Path;
+import java.util.Objects;
 
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 
+import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.Scripts;
+import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.objects.collection.MapObject;
 import com.github.anba.es6draft.runtime.objects.collection.SetObject;
@@ -149,6 +157,9 @@ public final class NativeCalls {
         case "native:SymbolDescription":
             target = callSymbolDescriptionMH;
             break;
+        case "native:Include":
+            target = callIncludeMH;
+            break;
         default:
             target = MethodHandles.insertArguments(invalidNativeCallMH, 0, name);
             target = MethodHandles.dropArguments(target, 0, Object[].class);
@@ -161,7 +172,7 @@ public final class NativeCalls {
             callGlobalThisMH, callCallFunctionMH, callIsGeneratorMH, callIsUninitializedMapMH,
             callIsUninitializedSetMH, callIsUninitializedWeakMapMH, callIsUninitializedWeakSetMH,
             callRegExpReplaceMH, callRegExpTestMH, callIsFunctionExpressionMH,
-            callSymbolDescriptionMH, invalidNativeCallMH;
+            callSymbolDescriptionMH, callIncludeMH, invalidNativeCallMH;
     static {
         MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
         MethodType callType = MethodType.methodType(Object.class, Object[].class,
@@ -180,6 +191,7 @@ public final class NativeCalls {
         callRegExpTestMH = lookup.findStatic("call_RegExpTest", callType);
         callIsFunctionExpressionMH = lookup.findStatic("call_IsFunctionExpression", callType);
         callSymbolDescriptionMH = lookup.findStatic("call_SymbolDescription", callType);
+        callIncludeMH = lookup.findStatic("call_Include", callType);
         invalidNativeCallMH = lookup.findStatic("invalidNativeCall",
                 MethodType.methodType(Object.class, String.class, ExecutionContext.class));
     }
@@ -304,6 +316,14 @@ public final class NativeCalls {
     private static Object call_SymbolDescription(Object[] args, ExecutionContext cx) {
         if (args.length == 1 && args[0] instanceof Symbol) {
             return SymbolDescription((Symbol) args[0]);
+        }
+        return invalidNativeCallArguments(cx);
+    }
+
+    @SuppressWarnings("unused")
+    private static Object call_Include(Object[] args, ExecutionContext cx) {
+        if (args.length == 1 && Type.isString(args[0])) {
+            return Include(cx, Type.stringValue(args[0]).toString());
         }
         return invalidNativeCallArguments(cx);
     }
@@ -544,5 +564,36 @@ public final class NativeCalls {
      */
     public static Object SymbolDescription(Symbol symbol) {
         return symbol.getDescription() != null ? symbol.getDescription() : UNDEFINED;
+    }
+
+    /**
+     * Native function: {@code %Include(<file>)}.
+     * <p>
+     * Loads and evaluates the script file.
+     * 
+     * @param cx
+     *            the execution context
+     * @param file
+     *            the file path
+     * @return the script evaluation result
+     */
+    public static Object Include(ExecutionContext cx, String file) {
+        Realm realm = cx.getRealm();
+        Source base = realm.sourceInfo(cx);
+        if (base == null || base.getFile() == null) {
+            throw newInternalError(cx, Messages.Key.InternalError,
+                    "No source: " + Objects.toString(base));
+        }
+        Path path = base.getFile().getParent().resolve(file);
+        Source source = new Source(path, path.getFileName().toString(), 1);
+        Script script;
+        try {
+            script = realm.getScriptLoader().script(source, path);
+        } catch (ParserException | CompilationException e) {
+            throw e.toScriptException(cx);
+        } catch (IOException e) {
+            throw newInternalError(cx, Messages.Key.InternalError, e.toString());
+        }
+        return Scripts.ScriptEvaluation(script, realm, false);
     }
 }

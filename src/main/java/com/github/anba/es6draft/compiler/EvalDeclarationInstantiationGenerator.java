@@ -20,6 +20,7 @@ import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -130,7 +131,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         for (StatementListItem item : varDeclarations) {
             if (isFunctionDeclaration(item)) {
                 Declaration f = (Declaration) item;
-                String fn = BoundName(f);
+                Name fn = BoundName(f);
 
                 // stack: [] -> [fo]
                 InstantiateFunctionObject(context, lexEnv, f, mv);
@@ -151,7 +152,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         /* step 8 */
         for (StatementListItem d : varDeclarations) {
             if (d instanceof VariableStatement) {
-                for (String dn : BoundNames((VariableStatement) d)) {
+                for (Name dn : BoundNames((VariableStatement) d)) {
                     hasBinding(envRec, dn, mv);
 
                     Label varAlreadyDeclared = new Label();
@@ -168,7 +169,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         // begin-modification
         for (Declaration d : LexicallyScopedDeclarations(evalScript)) {
             assert !isFunctionDeclaration(d);
-            for (String dn : BoundNames(d)) {
+            for (Name dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
                     createImmutableBinding(lexEnvRec, dn, mv);
                 } else {

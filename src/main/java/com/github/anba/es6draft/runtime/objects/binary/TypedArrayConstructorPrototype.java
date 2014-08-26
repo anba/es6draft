@@ -11,10 +11,8 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.*;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -72,7 +70,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
     @Override
     public TypedArrayObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object arg0 = args.length > 0 ? args[0] : UNDEFINED;
+        Object arg0 = argument(args, 0);
         if (!Type.isObject(arg0)) {
             return callWithLength(calleeContext, thisValue, arg0);
         }
@@ -80,8 +78,8 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             return callWithTypedArray(calleeContext, thisValue, (TypedArrayObject) arg0);
         }
         if (arg0 instanceof ArrayBufferObject) {
-            Object byteOffset = args.length > 1 ? args[1] : 0;
-            Object length = args.length > 2 ? args[2] : UNDEFINED;
+            Object byteOffset = argument(args, 1, 0);
+            Object length = argument(args, 2);
             return callWithArrayBuffer(calleeContext, thisValue, (ArrayBufferObject) arg0,
                     byteOffset, length);
         }
@@ -534,7 +532,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             /* steps 11.a-11.b */
             ScriptObject iterator = GetIterator(cx, items, usingIterator);
             /* steps 11.c-11.f */
-            List<Object> values = new ArrayList<>();
+            ArrayList<Object> values = new ArrayList<>();
             for (;;) {
                 ScriptObject next = IteratorStep(cx, iterator);
                 if (next == null) {

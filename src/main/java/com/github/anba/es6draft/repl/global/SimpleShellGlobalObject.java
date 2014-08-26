@@ -14,20 +14,24 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Task;
+import com.github.anba.es6draft.runtime.internal.DebugInfo;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
 import com.github.anba.es6draft.runtime.objects.collection.WeakMapObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
  *
@@ -80,7 +84,7 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
     @Function(name = "parseModule", arity = 1)
     public String parseModule(ExecutionContext cx, String source) {
         try {
-            cx.getRealm().getScriptLoader().parseModule("<module>", 1, source);
+            cx.getRealm().getScriptLoader().parseModule(new Source("<module>", 1), source);
         } catch (ParserException e) {
             throw e.toScriptException(cx);
         }
@@ -99,7 +103,7 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
     @Function(name = "parseScript", arity = 1)
     public String parseScript(ExecutionContext cx, String source) {
         try {
-            cx.getRealm().getScriptLoader().parseScript("<script", 1, source);
+            cx.getRealm().getScriptLoader().parseScript(new Source("<script>", 1), source);
         } catch (ParserException e) {
             throw e.toScriptException(cx);
         }
@@ -118,7 +122,8 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
     @Function(name = "compile", arity = 1)
     public String compile(ExecutionContext cx, String filename) {
         try {
-            getScriptLoader().script(filename, 1, absolutePath(Paths.get(filename)));
+            Path file = absolutePath(Paths.get(filename));
+            getScriptLoader().script(new Source(file, filename, 1), file);
         } catch (ParserException | CompilationException | IOException e) {
             return "error: " + e.getMessage();
         }
@@ -130,13 +135,15 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
      * 
      * @param cx
      *            the execution context
+     * @param caller
+     *            the caller execution context
      * @param filename
      *            the file to load
      * @return the result value
      */
     @Function(name = "loadRelativeToScript", arity = 1)
-    public Object loadRelativeToScript(ExecutionContext cx, String filename) {
-        return load(cx, Paths.get(filename), relativePathToScript(Paths.get(filename)));
+    public Object loadRelativeToScript(ExecutionContext cx, ExecutionContext caller, String filename) {
+        return load(cx, Paths.get(filename), relativePathToScript(caller, Paths.get(filename)));
     }
 
     /**
@@ -244,5 +251,36 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
     @Function(name = "version", arity = 1)
     public String version() {
         return String.format("%s", getResourceInfo("/version", "<unknown version>"));
+    }
+
+    /**
+     * shell-function: {@code disassemble([function])}
+     * 
+     * @param cx
+     *            the execution context
+     * @param caller
+     *            the caller context
+     * @param args
+     *            the arguments
+     */
+    @Function(name = "disassemble", arity = 1)
+    public void disassemble(ExecutionContext cx, ExecutionContext caller, Object... args) {
+        DebugInfo debugInfo = null;
+        if (args.length == 0) {
+            FunctionObject currentFunction = caller.getCurrentFunction();
+            Script currentScript = caller.getCurrentScript();
+            if (currentFunction != null && currentFunction.getScript() == currentScript) {
+                debugInfo = currentFunction.getCode().debugInfo();
+            } else if (currentScript != null && currentScript.getScriptBody() != null) {
+                debugInfo = currentScript.getScriptBody().debugInfo();
+            }
+        } else if (args[0] instanceof FunctionObject) {
+            debugInfo = ((FunctionObject) args[0]).getCode().debugInfo();
+        }
+        if (debugInfo != null) {
+            for (DebugInfo.Method method : debugInfo.getMethods()) {
+                console.print(method.disassemble());
+            }
+        }
     }
 }

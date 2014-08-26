@@ -35,10 +35,10 @@ public final class PromiseObject extends OrdinaryObject {
     private Object result;
 
     /** [[PromiseFulfillReactions]] */
-    private List<PromiseReaction> fulfillReactions;
+    private ArrayList<PromiseReaction> fulfillReactions;
 
     /** [[PromiseRejectReactions]] */
-    private List<PromiseReaction> rejectReactions;
+    private ArrayList<PromiseReaction> rejectReactions;
 
     /**
      * Constructs a new Promise object.

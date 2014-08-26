@@ -66,7 +66,7 @@ public final class FunctionExpression extends Expression implements FunctionDefi
         if (functionName != null) {
             return functionName;
         }
-        return identifier != null ? identifier.getName() : "";
+        return identifier != null ? identifier.getName().getIdentifier() : "";
     }
 
     @Override

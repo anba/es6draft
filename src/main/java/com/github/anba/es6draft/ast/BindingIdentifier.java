@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.ast.scope.Name;
+
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
  * <h2>13.2 Declarations and the Variable Statement</h2>
@@ -14,14 +16,14 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class BindingIdentifier extends Binding {
-    private final String name;
+    private final Name name;
 
     public BindingIdentifier(long beginPosition, long endPosition, String name) {
         super(beginPosition, endPosition);
-        this.name = name;
+        this.name = new Name(name);
     }
 
-    public String getName() {
+    public Name getName() {
         return name;
     }
 

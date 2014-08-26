@@ -7,14 +7,11 @@
 package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.TailCallNodes;
-import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.objectweb.asm.Label;
@@ -25,7 +22,6 @@ import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.ScopedNode;
 import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.compiler.Code.MethodCode;
-import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 
@@ -65,7 +61,6 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     private int classDef = 0;
     private Variable<ExecutionContext> executionContext;
     private Scope scope;
-    private Map<String, Variable<DeclarativeEnvironmentRecord.Binding>> variables = emptyMap();
     // tail-call support
     private boolean hasTailCalls = false;
     private Set<Expression> tailCallNodes = emptySet();
@@ -141,14 +136,6 @@ abstract class ExpressionVisitor extends InstructionVisitor {
 
     void exitClassDefinition() {
         --classDef;
-    }
-
-    Variable<DeclarativeEnvironmentRecord.Binding> getVariable(String name) {
-        return variables.get(name);
-    }
-
-    void setVariables(Map<String, Variable<DeclarativeEnvironmentRecord.Binding>> variables) {
-        this.variables = variables;
     }
 
     Scope getScope() {
@@ -270,7 +257,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     void epilogue(Variable<ResumptionPoint> resume, GeneratorState state) {
         assert isResumable();
         mark(state.resumeSwitch);
-        List<ExecutionState> states = this.states;
+        ArrayList<ExecutionState> states = this.states;
         if (states == null) {
             goTo(state.startBody);
         } else {

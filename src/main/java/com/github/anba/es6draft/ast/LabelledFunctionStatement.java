@@ -6,15 +6,37 @@
  */
 package com.github.anba.es6draft.ast;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
- *
+ * <h1>Annex B</h1><br>
+ * <h2>B.3 Other Additional Features</h2>
+ * <ul>
+ * <li>B.3.2 Labelled Function Declarations
+ * </ul>
+ * 
+ * Statement type enclosing a {@link FunctionDeclaration}.
  */
-public final class LabelledFunctionStatement extends Statement {
+public final class LabelledFunctionStatement extends Statement implements AbruptNode {
+    private final Set<String> labelSet;
     private final Declaration function;
 
-    public LabelledFunctionStatement(long beginPosition, long endPosition, Declaration function) {
+    public LabelledFunctionStatement(long beginPosition, long endPosition, Set<String> labelSet,
+            Declaration function) {
         super(beginPosition, endPosition);
+        this.labelSet = labelSet;
         this.function = function;
+    }
+
+    @Override
+    public Set<String> getLabelSet() {
+        return labelSet;
+    }
+
+    @Override
+    public EnumSet<Abrupt> getAbrupt() {
+        return EnumSet.noneOf(Abrupt.class);
     }
 
     public Declaration getFunction() {

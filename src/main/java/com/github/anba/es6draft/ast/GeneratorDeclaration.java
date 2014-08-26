@@ -59,7 +59,7 @@ public class GeneratorDeclaration extends Declaration implements GeneratorDefini
 
     @Override
     public String getFunctionName() {
-        return identifier.getName();
+        return identifier.getName().getIdentifier();
     }
 
     @Override

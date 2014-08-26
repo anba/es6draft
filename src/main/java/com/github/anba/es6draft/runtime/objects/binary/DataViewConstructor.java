@@ -16,7 +16,6 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsNeuteredBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -198,9 +197,9 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
     @Override
     public DataViewObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object buffer = args.length > 0 ? args[0] : UNDEFINED;
-        Object byteOffset = args.length > 1 ? args[1] : 0;
-        Object byteLength = args.length > 2 ? args[2] : UNDEFINED;
+        Object buffer = argument(args, 0);
+        Object byteOffset = argument(args, 1, 0);
+        Object byteLength = argument(args, 2);
         /* step 1 (implicit) */
         /* step 2 */
         if (!(thisValue instanceof DataViewObject)) {

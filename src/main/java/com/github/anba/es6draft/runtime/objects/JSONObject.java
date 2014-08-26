@@ -15,7 +15,6 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 import com.github.anba.es6draft.parser.JSONParser;
@@ -430,7 +429,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             k = EnumerableOwnNames(cx, value);
         }
         /* step 7 */
-        List<String> partial = new ArrayList<>();
+        ArrayList<String> partial = new ArrayList<>();
         /* step 8 */
         for (String p : k) {
             String strP = Str(cx, stack, propertyList, replacerFunction, indent, gap, p, value);
@@ -505,7 +504,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         /* step 4 */
         indent = indent + gap;
         /* step 5 */
-        List<String> partial = new ArrayList<>();
+        ArrayList<String> partial = new ArrayList<>();
         /* steps 6-7 */
         Object lenVal = Get(cx, value, "length");
         /* steps 8-9 */

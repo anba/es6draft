@@ -35,17 +35,14 @@ import com.github.anba.es6draft.runtime.objects.GlobalObject;
 public final class World<GLOBAL extends GlobalObject> {
     private final ObjectAllocator<GLOBAL> allocator;
     private final ScriptLoader scriptLoader;
-    private final EnumSet<CompatibilityOption> options;
-
     private final Locale locale = Locale.getDefault();
     private final TimeZone timezone = TimeZone.getDefault();
     private final Messages messages = Messages.create(locale);
+    private final GlobalSymbolRegistry symbolRegistry = new GlobalSymbolRegistry();
 
     // TODO: move to custom class
     private final ArrayDeque<Task> scriptTasks = new ArrayDeque<>();
     private final ArrayDeque<Task> promiseTasks = new ArrayDeque<>();
-
-    private final GlobalSymbolRegistry symbolRegistry = new GlobalSymbolRegistry();
 
     private static final TaskSource EMPTY_TASK_SOURCE = new TaskSource() {
         @Override
@@ -115,7 +112,6 @@ public final class World<GLOBAL extends GlobalObject> {
             Set<Parser.Option> parserOptions, Set<Compiler.Option> compilerOptions) {
         this.allocator = allocator;
         this.scriptLoader = new ScriptLoader(options, parserOptions, compilerOptions);
-        this.options = EnumSet.copyOf(options);
     }
 
     /**
@@ -258,15 +254,6 @@ public final class World<GLOBAL extends GlobalObject> {
     }
 
     /**
-     * Returns the compatibility options for this instance.
-     * 
-     * @return the compatibility options
-     */
-    public EnumSet<CompatibilityOption> getOptions() {
-        return options;
-    }
-
-    /**
      * Tests whether the requested compatibility option is enabled for this instance.
      * 
      * @param option
@@ -274,7 +261,7 @@ public final class World<GLOBAL extends GlobalObject> {
      * @return {@code true} if the compatibility option is enabled
      */
     public boolean isEnabled(CompatibilityOption option) {
-        return options.contains(option);
+        return scriptLoader.getOptions().contains(option);
     }
 
     /**

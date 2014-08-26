@@ -12,7 +12,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.1 Identifiers
  * </ul>
  */
-public final class IdentifierName extends Expression implements PropertyName {
+public final class IdentifierName extends AstNode implements PropertyName {
     private final String name;
 
     public IdentifierName(long beginPosition, long endPosition, String name) {

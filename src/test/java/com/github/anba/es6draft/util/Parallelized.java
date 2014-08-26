@@ -22,12 +22,11 @@ import org.junit.runners.model.RunnerScheduler;
  *      http://hwellmann.blogspot.de/2009/12/running-parameterized-junit-tests-in.html</a>
  */
 public class Parallelized extends Parameterized {
-    private static class ThreadPoolScheduler implements RunnerScheduler {
-        private ExecutorService executor;
+    private static final class ThreadPoolScheduler implements RunnerScheduler {
+        private final ExecutorService executor;
 
-        public ThreadPoolScheduler() {
-            int numThreads = Runtime.getRuntime().availableProcessors() * 2;
-            executor = Executors.newFixedThreadPool(numThreads);
+        public ThreadPoolScheduler(ExecutorService executor) {
+            this.executor = executor;
         }
 
         @Override
@@ -48,6 +47,25 @@ public class Parallelized extends Parameterized {
 
     public Parallelized(Class<?> klass) throws Throwable {
         super(klass);
-        setScheduler(new ThreadPoolScheduler());
+        setScheduler(new ThreadPoolScheduler(createExecutor(klass)));
+    }
+
+    protected ExecutorService createExecutor(Class<?> klass) {
+        int numThreads = numberOfThreads(klass);
+        return Executors.newFixedThreadPool(numThreads);
+    }
+
+    protected int numberOfThreads(Class<?> klass) {
+        Concurrency concurrency = klass.getAnnotation(Concurrency.class);
+        int threads, factor;
+        if (concurrency != null) {
+            threads = Math.max(concurrency.threads() < 0 ? Runtime.getRuntime()
+                    .availableProcessors() : concurrency.threads(), 1);
+            factor = Math.max(concurrency.factor(), 1);
+        } else {
+            threads = Runtime.getRuntime().availableProcessors();
+            factor = 2;
+        }
+        return threads * factor;
     }
 }

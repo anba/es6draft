@@ -19,6 +19,7 @@ import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -132,32 +133,32 @@ final class GlobalDeclarationInstantiationGenerator extends
         @SuppressWarnings("unused")
         boolean strict = script.isStrict();
         /* step 2 */
-        Set<String> lexNames = LexicallyDeclaredNames(script); // note: unordered set!
+        Set<Name> lexNames = LexicallyDeclaredNames(script); // note: unordered set!
         /* step 3 */
-        Set<String> varNames = VarDeclaredNames(script); // note: unordered set!
+        Set<Name> varNames = VarDeclaredNames(script); // note: unordered set!
         /* step 4 */
         if (script.isGlobalScope()) {
             // Perform this step only for ScriptEvaluation, EvalScriptEvaluation places lexical
             // declarations in a fresh environment
-            for (String name : lexNames) {
+            for (Name name : lexNames) {
                 canDeclareLexicalScopedOrThrow(context, envRec, name, mv);
             }
         }
         /* step 5 */
-        for (String name : varNames) {
+        for (Name name : varNames) {
             canDeclareVarScopedOrThrow(context, envRec, name, mv);
         }
         /* step 6 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
         /* step 7 */
-        List<Declaration> functionsToInitialize = new ArrayList<>();
+        ArrayList<Declaration> functionsToInitialize = new ArrayList<>();
         /* step 8 */
-        Set<String> declaredFunctionNames = new HashSet<>();
+        HashSet<Name> declaredFunctionNames = new HashSet<>();
         /* step 9 */
         for (StatementListItem item : reverse(varDeclarations)) {
             if (isFunctionDeclaration(item)) {
                 Declaration d = (Declaration) item;
-                String fn = BoundName(d);
+                Name fn = BoundName(d);
                 if (!declaredFunctionNames.contains(fn)) {
                     canDeclareGlobalFunctionOrThrow(context, envRec, fn, mv);
                     declaredFunctionNames.add(fn);
@@ -166,11 +167,11 @@ final class GlobalDeclarationInstantiationGenerator extends
             }
         }
         /* step 10 */
-        Set<String> declaredVarNames = new HashSet<>();
+        HashSet<Name> declaredVarNames = new HashSet<>();
         /* step 11 */
         for (StatementListItem d : varDeclarations) {
             if (d instanceof VariableStatement) {
-                for (String vn : BoundNames((VariableStatement) d)) {
+                for (Name vn : BoundNames((VariableStatement) d)) {
                     if (!declaredFunctionNames.contains(vn)) {
                         canDeclareGlobalVarOrThrow(context, envRec, vn, mv);
                         if (!declaredVarNames.contains(vn)) {
@@ -186,7 +187,7 @@ final class GlobalDeclarationInstantiationGenerator extends
         /* step 14 */
         for (Declaration d : lexDeclarations) {
             assert !isFunctionDeclaration(d);
-            for (String dn : BoundNames(d)) {
+            for (Name dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
                     createImmutableBinding(lexEnvRec, dn, mv);
                 } else {
@@ -196,13 +197,13 @@ final class GlobalDeclarationInstantiationGenerator extends
         }
         /* steps 15 */
         for (Declaration f : functionsToInitialize) {
-            String fn = BoundName(f);
+            Name fn = BoundName(f);
             // stack: [] -> [fo]
             InstantiateFunctionObject(context, lexEnv, f, mv);
             createGlobalFunctionBinding(envRec, fn, deletableBindings, mv);
         }
         /* step 16 */
-        for (String vn : declaredVarNames) {
+        for (Name vn : declaredVarNames) {
             createGlobalVarBinding(envRec, vn, deletableBindings, mv);
         }
         /* step 17 */
@@ -224,10 +225,10 @@ final class GlobalDeclarationInstantiationGenerator extends
      *            the instruction visitor
      */
     private void canDeclareLexicalScopedOrThrow(Variable<ExecutionContext> context,
-            Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
+            Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
-        mv.aconst(name);
+        mv.aconst(name.getIdentifier());
         mv.invoke(Methods.ScriptRuntime_canDeclareLexicalScopedOrThrow);
     }
 
@@ -246,10 +247,10 @@ final class GlobalDeclarationInstantiationGenerator extends
      *            the instruction visitor
      */
     private void canDeclareVarScopedOrThrow(Variable<ExecutionContext> context,
-            Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
+            Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
-        mv.aconst(name);
+        mv.aconst(name.getIdentifier());
         mv.invoke(Methods.ScriptRuntime_canDeclareVarScopedOrThrow);
     }
 
@@ -268,10 +269,10 @@ final class GlobalDeclarationInstantiationGenerator extends
      *            the instruction visitor
      */
     private void canDeclareGlobalFunctionOrThrow(Variable<ExecutionContext> context,
-            Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
+            Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
-        mv.aconst(name);
+        mv.aconst(name.getIdentifier());
         mv.invoke(Methods.ScriptRuntime_canDeclareGlobalFunctionOrThrow);
     }
 
@@ -290,10 +291,10 @@ final class GlobalDeclarationInstantiationGenerator extends
      *            the instruction visitor
      */
     private void canDeclareGlobalVarOrThrow(Variable<ExecutionContext> context,
-            Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
+            Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
-        mv.aconst(name);
+        mv.aconst(name.getIdentifier());
         mv.invoke(Methods.ScriptRuntime_canDeclareGlobalVarOrThrow);
     }
 
@@ -311,10 +312,10 @@ final class GlobalDeclarationInstantiationGenerator extends
      * @param mv
      *            the instruction visitor
      */
-    private void createGlobalVarBinding(Variable<GlobalEnvironmentRecord> envRec, String name,
+    private void createGlobalVarBinding(Variable<GlobalEnvironmentRecord> envRec, Name name,
             Variable<Boolean> deletableBindings, InstructionVisitor mv) {
         mv.load(envRec);
-        mv.aconst(name);
+        mv.aconst(name.getIdentifier());
         mv.load(deletableBindings);
         mv.invoke(Methods.GlobalEnvironmentRecord_createGlobalVarBinding);
     }
@@ -333,12 +334,12 @@ final class GlobalDeclarationInstantiationGenerator extends
      * @param mv
      *            the instruction visitor
      */
-    private void createGlobalFunctionBinding(Variable<GlobalEnvironmentRecord> envRec, String name,
+    private void createGlobalFunctionBinding(Variable<GlobalEnvironmentRecord> envRec, Name name,
             Variable<Boolean> deletableBindings, InstructionVisitor mv) {
         // stack: [fo] -> []
         mv.load(envRec);
         mv.swap();
-        mv.aconst(name);
+        mv.aconst(name.getIdentifier());
         mv.swap();
         mv.load(deletableBindings);
         mv.invoke(Methods.GlobalEnvironmentRecord_createGlobalFunctionBinding);

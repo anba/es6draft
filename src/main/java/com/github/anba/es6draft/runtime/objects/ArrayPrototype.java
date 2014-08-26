@@ -18,7 +18,6 @@ import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayC
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -587,8 +586,8 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
 
             @Override
             public int compare(Object o1, Object o2) {
-                double c = ToInteger(cx, comparefn.call(cx, UNDEFINED, o1, o2));
-                return (c == 0 ? 0 : c < 0 ? -1 : 1);
+                double c = ToNumber(cx, comparefn.call(cx, UNDEFINED, o1, o2));
+                return (c < 0 ? -1 : c > 0 ? 1 : 0);
             }
         }
 
@@ -621,7 +620,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             int length = (int) len;
             int emptyCount = 0;
             int undefCount = 0;
-            List<Object> elements = new ArrayList<>(Math.min(length, 1024));
+            ArrayList<Object> elements = new ArrayList<>(Math.min(length, 1024));
             for (int i = 0; i < length; ++i) {
                 int index = i;
                 if (HasProperty(cx, obj, index)) {
@@ -666,7 +665,8 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 Put(cx, obj, p, UNDEFINED, true);
             }
             for (int i = 0, offset = count + undefCount; i < emptyCount; ++i) {
-                DeletePropertyOrThrow(cx, obj, offset + i);
+                int p = offset + i;
+                DeletePropertyOrThrow(cx, obj, p);
             }
 
             return obj;

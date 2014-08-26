@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.interpreter;
 
-import static com.github.anba.es6draft.interpreter.DeclarationBindingInstantiation.EvalDeclarationInstantiation;
-import static com.github.anba.es6draft.interpreter.DeclarationBindingInstantiation.GlobalDeclarationInstantiation;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.CheckCallable;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.IsBuiltinEval;
@@ -25,10 +23,7 @@ import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BinaryExpression.Operator;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
-import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.Eval.EvalFlags;
@@ -46,8 +41,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     /**
-     * Returns a new {@link InterpretedScript} if the supplied {@code script} can be interpreted,
-     * otherwise returns {@code null}.
+     * Returns a new {@link InterpretedScript} if {@code parsedScript} can be interpreted, otherwise
+     * returns {@code null}.
      * 
      * @param parsedScript
      *            the script node
@@ -57,7 +52,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         if (!parsedScript.accept(InterpreterTest.INSTANCE, null)) {
             return null;
         }
-        return new InterpretedScript(new ScriptBodyImpl(parsedScript));
+        return new InterpretedScript(parsedScript);
     }
 
     private boolean strict;
@@ -585,7 +580,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         if (initializer != null) {
             Object val = initializer.accept(this, cx);
             val = GetValue(val, cx);
-            cx.resolveBinding(binding.getName(), strict).putValue(val, cx);
+            cx.resolveBinding(binding.getName().getIdentifier(), strict).putValue(val, cx);
         }
         return null;
     }
@@ -977,43 +972,6 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     @Override
     public Object visit(ThisExpression node, ExecutionContext cx) {
         return cx.resolveThisBinding();
-    }
-
-    private static final class ScriptBodyImpl implements RuntimeInfo.ScriptBody {
-        private Script parsedScript;
-
-        ScriptBodyImpl(Script parsedScript) {
-            this.parsedScript = parsedScript;
-        }
-
-        @Override
-        public String sourceFile() {
-            return parsedScript.getSourceName();
-        }
-
-        @Override
-        public boolean isStrict() {
-            return parsedScript.isStrict();
-        }
-
-        @Override
-        public void globalDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<GlobalEnvironmentRecord> globalEnv,
-                LexicalEnvironment<?> lexicalEnv, boolean deletableBindings) {
-            GlobalDeclarationInstantiation(cx, parsedScript, globalEnv, lexicalEnv,
-                    deletableBindings);
-        }
-
-        @Override
-        public void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment<?> varEnv,
-                LexicalEnvironment<?> lexEnv, boolean deletableBindings) {
-            EvalDeclarationInstantiation(cx, parsedScript, varEnv, lexEnv, deletableBindings);
-        }
-
-        @Override
-        public Object evaluate(ExecutionContext cx) {
-            return parsedScript.accept(new Interpreter(parsedScript), cx);
-        }
     }
 
     /**

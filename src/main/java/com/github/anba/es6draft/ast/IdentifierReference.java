@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.ast.synthetic.IdentifierReferenceValue;
 
 /**
@@ -25,6 +26,10 @@ public class IdentifierReference extends LeftHandSideExpression implements Prope
     @Override
     public String getName() {
         return name;
+    }
+
+    public Name toName() {
+        return new Name(name);
     }
 
     @Override

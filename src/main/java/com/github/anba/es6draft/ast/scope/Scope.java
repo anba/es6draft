@@ -33,5 +33,14 @@ public interface Scope {
      *            the variable name
      * @return <code>true</code> if {@code name} is declared
      */
-    boolean isDeclared(String name);
+    boolean isDeclared(Name name);
+
+    /**
+     * Returns the declared name for {@code name}.
+     * 
+     * @param name
+     *            the variable name
+     * @return the declared name
+     */
+    Name getDeclaredName(Name name);
 }

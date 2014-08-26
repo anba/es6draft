@@ -18,6 +18,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
@@ -197,7 +198,7 @@ final class BindingInitializationGenerator {
      */
     private void generateWithEnvironment(BindingIdentifier node, ExpressionVisitor mv) {
         // stack: [envRec, value] -> [envRec, id, value]
-        mv.aconst(((BindingIdentifier) node).getName());
+        mv.aconst(((BindingIdentifier) node).getName().toString());
         mv.swap();
         // stack: [envRec, id, value] -> []
         mv.invoke(Methods.EnvironmentRecord_initializeBinding);
@@ -297,10 +298,10 @@ final class BindingInitializationGenerator {
             if (environment == EnvironmentType.EnvironmentFromLocal) {
                 // stack: [] -> [envRec, id]
                 mv.load(envRec);
-                mv.aconst(identifier.getName());
+                mv.aconst(identifier.getName().toString());
             } else if (environment == EnvironmentType.EnvironmentFromStack) {
                 // stack: [envRec] -> [envRec, id]
-                mv.aconst(identifier.getName());
+                mv.aconst(identifier.getName().toString());
             } else {
                 assert environment == EnvironmentType.NoEnvironment;
             }
@@ -356,8 +357,8 @@ final class BindingInitializationGenerator {
             for (BindingProperty property : node.getProperties()) {
                 if (property.getPropertyName() == null) {
                     // BindingProperty : SingleNameBinding
-                    String name = BoundNames(property.getBinding()).get(0);
-                    KeyedBindingInitialization(property, object, name);
+                    Name name = BoundNames(property.getBinding()).get(0);
+                    KeyedBindingInitialization(property, object, name.getIdentifier());
                 } else {
                     // BindingProperty : PropertyName : BindingElement
                     String name = PropName(property.getPropertyName());

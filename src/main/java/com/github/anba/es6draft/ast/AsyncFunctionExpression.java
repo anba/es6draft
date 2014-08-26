@@ -63,7 +63,7 @@ public final class AsyncFunctionExpression extends Expression implements AsyncFu
         if (functionName != null) {
             return functionName;
         }
-        return identifier != null ? identifier.getName() : "";
+        return identifier != null ? identifier.getName().getIdentifier() : "";
     }
 
     @Override

@@ -63,6 +63,7 @@ public final class ExecutionContext {
         return script;
     }
 
+    // called from generated code
     public FunctionObject getCurrentFunction() {
         return function;
     }
@@ -187,6 +188,8 @@ public final class ExecutionContext {
      * 
      * @param callerContext
      *            the caller execution context
+     * @param evalScript
+     *            the eval script object
      * @param varEnv
      *            the current variable environment
      * @param lexEnv
@@ -194,9 +197,9 @@ public final class ExecutionContext {
      * @return the new eval execution context
      */
     public static ExecutionContext newEvalExecutionContext(ExecutionContext callerContext,
-            LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv) {
+            Script evalScript, LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv) {
         /* steps 17-20 */
-        return new ExecutionContext(callerContext.realm, varEnv, lexEnv, callerContext.script,
+        return new ExecutionContext(callerContext.realm, varEnv, lexEnv, evalScript,
                 callerContext.function);
     }
 
@@ -242,7 +245,7 @@ public final class ExecutionContext {
             }
             localEnv = newFunctionEnvironment(callerContext, f, thisValue);
         }
-        return new ExecutionContext(calleeRealm, localEnv, localEnv, null, f);
+        return new ExecutionContext(calleeRealm, localEnv, localEnv, f.getScript(), f);
     }
 
     /**

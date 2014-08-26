@@ -186,7 +186,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
 
         private List<String> getCalendarInfo() {
             String[] values = Calendar.getKeywordValuesForLocale("calendar", locale, false);
-            List<String> result = new ArrayList<>(values.length);
+            ArrayList<String> result = new ArrayList<>(values.length);
             for (int i = 0, len = values.length; i < len; ++i) {
                 String calendarName = values[i];
                 // Ignore "unknown" calendar entry in result set
@@ -709,8 +709,8 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object locales = args.length > 0 ? args[0] : UNDEFINED;
-        Object options = args.length > 1 ? args[1] : UNDEFINED;
+        Object locales = argument(args, 0);
+        Object options = argument(args, 1);
         if (Type.isUndefined(thisValue) || thisValue == calleeContext.getIntrinsic(Intrinsics.Intl)) {
             return construct(calleeContext, args);
         }
@@ -727,8 +727,8 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      */
     @Override
     public DateTimeFormatObject construct(ExecutionContext callerContext, Object... args) {
-        Object locales = args.length > 0 ? args[0] : UNDEFINED;
-        Object options = args.length > 1 ? args[1] : UNDEFINED;
+        Object locales = argument(args, 0);
+        Object options = argument(args, 1);
         DateTimeFormatObject obj = new DateTimeFormatObject(callerContext.getRealm());
         obj.setPrototype(callerContext.getIntrinsic(Intrinsics.Intl_DateTimeFormatPrototype));
         InitializeDateTimeFormat(callerContext, obj, locales, options);

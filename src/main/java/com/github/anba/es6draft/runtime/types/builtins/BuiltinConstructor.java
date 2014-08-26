@@ -26,7 +26,7 @@ public abstract class BuiltinConstructor extends BuiltinFunction implements Cons
      * @param name
      *            the function name
      */
-    public BuiltinConstructor(Realm realm, String name) {
+    protected BuiltinConstructor(Realm realm, String name) {
         super(realm, name);
     }
 

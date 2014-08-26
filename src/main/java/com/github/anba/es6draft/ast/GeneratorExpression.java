@@ -66,7 +66,7 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
         if (functionName != null) {
             return functionName;
         }
-        return identifier != null ? identifier.getName() : "";
+        return identifier != null ? identifier.getName().getIdentifier() : "";
     }
 
     @Override

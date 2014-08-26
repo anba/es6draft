@@ -70,7 +70,7 @@ abstract class TopLevelSubMethod<NODE extends TopLevelNode<?>> extends SubMethod
         StatementConflater conflater = new StatementConflater();
         boolean needsRerun;
         do {
-            List<StatementListItem> newStatements = new ArrayList<>(statements);
+            ArrayList<StatementListItem> newStatements = new ArrayList<>(statements);
             needsRerun = conflater.conflate(newStatements, newStatements, MAX_STATEMENT_SIZE);
             statements = newStatements;
         } while (needsRerun);

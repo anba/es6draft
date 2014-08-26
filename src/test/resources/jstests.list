@@ -56,6 +56,12 @@ ecma_6/Symbol/realms.js
 ecma_6/Symbol/property-basics.js
 ecma_6/Symbol/property-reflection.js
 
+# computed property names in accessors
+ecma_6/Class/compPropNames.js
+
+# Object.assign pending update for null/undefined sources in rev27
+ecma_6/Object/assign.js
+
 
 ####################################
 # Intl only partially supported    #
@@ -203,6 +209,9 @@ js1_5/extensions/toLocaleFormat-02.js
 # auto-assigned function names in Error.prototype.stack
 js1_5/Exceptions/errstack-001.js
 
+# auto-assigned function names and Error.prototype.toString
+ecma_5/extensions/error-tostring-function.js
+
 # different error message
 ecma_3/Array/15.4.5.1-01.js
 ecma_3/Exceptions/15.11.5.js
@@ -296,6 +305,10 @@ ecma_6/Comprehensions/error-messages.js
 
 # SpiderMonkey sets RegExp.$n to undefined instead of "" when capturing group n is empty
 ecma_3/extensions/regress-220367-002.js
+
+# legacy .caller and .arguments are implemented as accessors on Function.prototype in SM
+ecma_5/extensions/builtin-function-arguments-caller.js
+ecma_5/extensions/function-caller-strict-cross-global.js
 
 
 #######################################
@@ -538,13 +551,11 @@ ecma/extensions/errorcolumnblame.js
 # Spidermonkey strict/werror options
 ecma_3/Object/8.6.1-01.js
 ecma_5/extensions/8.12.5-01.js
+ecma_5/extensions/misplaced-inconsistent-directive.js
 js1_5/Exceptions/regress-315147.js
 js1_5/extensions/regress-367923.js
 js1_5/extensions/regress-365869.js
-js1_5/Regress/regress-317533.js
 js1_5/Regress/regress-323314-1.js
-js1_5/Regress/regress-352197.js
-js1_7/block/regress-347559.js
 js1_8_1/extensions/strict-warning.js
 js1_8_5/regress/regress-736792.js
 
@@ -694,14 +705,38 @@ js1_5/Regress/regress-321971.js
 js1_5/Regress/regress-360969-05.js
 js1_5/Regress/regress-360969-06.js
 js1_8/extensions/regress-476427.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-1-of-8.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-2-of-8.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-3-of-8.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-4-of-8.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-5-of-8.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-6-of-8.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-7-of-8.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-8-of-8.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-01-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-02-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-03-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-04-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-05-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-06-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-07-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-08-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-09-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-10-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-11-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-12-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-13-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-14-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-15-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-16-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-17-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-18-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-19-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-20-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-21-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-22-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-23-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-24-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-25-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-26-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-27-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-28-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-29-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-30-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-31-of-32.js
+ecma_5/Object/15.2.3.6-dictionary-redefinition-32-of-32.js
 ecma_5/Object/15.2.3.6-middle-redefinition-1-of-8.js
 ecma_5/Object/15.2.3.6-middle-redefinition-2-of-8.js
 ecma_5/Object/15.2.3.6-middle-redefinition-3-of-8.js

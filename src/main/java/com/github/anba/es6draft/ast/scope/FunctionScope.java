@@ -22,7 +22,14 @@ public interface FunctionScope extends TopLevelScope {
      * 
      * @return the parameter names
      */
-    Set<String> parameterNames();
+    Set<Name> parameterNames();
+
+    /**
+     * Returns the implicit {@code arguments} binding or {@code null} if not applicable.
+     * 
+     * @return the implicit {@code arguments} binding or {@code null}
+     */
+    Name arguments();
 
     /**
      * Returns <code>true</code> for dynamically scoped objects, <code>false</code> otherwise.

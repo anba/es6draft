@@ -5,13 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 
-if (typeof assertEq === 'undefined') {
-  assertEq = function assertEq(actual, expected) {
-    if (actual !== expected) {
-      throw new Error(`Assertion failed: got ${actual}, expected ${expected}`);
-    }
-  }
-}
+%Include("lib/assert.js");
 
 const globalThis = %GlobalThis();
 assertEq(globalThis, this);

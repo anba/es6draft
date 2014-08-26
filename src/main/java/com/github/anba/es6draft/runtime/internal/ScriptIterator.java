@@ -11,7 +11,7 @@ import java.util.Iterator;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * {@link Iterator} provinding access to an underlying {@link ScriptObject}.
+ * {@link Iterator} providing access to an underlying {@link ScriptObject}.
  */
 public interface ScriptIterator<E> extends Iterator<E> {
     /**

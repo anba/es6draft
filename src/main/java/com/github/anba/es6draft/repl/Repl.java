@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.repl;
 
-import static com.github.anba.es6draft.repl.SourceBuilder.ToSource;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateArrayFromList;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -75,6 +74,7 @@ import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.PropertiesReaderControl;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.internal.TaskSource;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -147,7 +147,7 @@ public final class Repl {
             System.out.println(getUsageString(parser, true));
             System.exit(0);
         }
-        if (options.debug || options.fullDebug) {
+        if (options.debug || options.fullDebug || options.debugInfo) {
             // Disable interpreter when bytecode is requested
             options.noInterpreter = true;
         }
@@ -162,26 +162,26 @@ public final class Repl {
     }
 
     private static interface EvalScript {
-        String getSourceName();
+        Source getSource();
 
-        String getSource() throws IOException;
+        String getSourceCode() throws IOException;
     }
 
     private static final class EvalString implements EvalScript {
-        private final String source;
+        private final String sourceCode;
 
-        EvalString(String source) {
-            this.source = source;
+        EvalString(String sourceCode) {
+            this.sourceCode = sourceCode;
         }
 
         @Override
-        public String getSourceName() {
-            return "<eval>";
+        public Source getSource() {
+            return new Source("<eval>", 1);
         }
 
         @Override
-        public String getSource() {
-            return source;
+        public String getSourceCode() {
+            return sourceCode;
         }
     }
 
@@ -193,12 +193,12 @@ public final class Repl {
         }
 
         @Override
-        public String getSourceName() {
-            return path.toString();
+        public Source getSource() {
+            return new Source(path, path.toString(), 1);
         }
 
         @Override
-        public String getSource() throws IOException {
+        public String getSourceCode() throws IOException {
             Path filePath = path.toAbsolutePath();
             if (!Files.exists(filePath)) {
                 String message = formatMessage("file_not_found", filePath.toString());
@@ -221,7 +221,7 @@ public final class Repl {
     }
 
     public static final class Options {
-        List<EvalScript> evalScripts = new ArrayList<>();
+        ArrayList<EvalScript> evalScripts = new ArrayList<>();
 
         @Option(name = "-v", aliases = { "--version" }, usage = "options.version")
         boolean showVersion;
@@ -255,6 +255,9 @@ public final class Repl {
         @Option(name = "--es7", usage = "options.es7")
         boolean ecmascript7;
 
+        @Option(name = "--parser", usage = "options.parser")
+        boolean parser;
+
         @Option(name = "--no-jline", usage = "options.no_jline")
         boolean noJLine;
 
@@ -277,11 +280,17 @@ public final class Repl {
         @Option(name = "--full-debug", hidden = true, usage = "options.full_debug")
         boolean fullDebug;
 
+        @Option(name = "--debug-info", hidden = true, usage = "options.debug_info")
+        boolean debugInfo;
+
         @Option(name = "--verify-stack", hidden = true, usage = "options.verify_stack")
         boolean verifyStack;
 
         @Option(name = "--no-resume", hidden = true, usage = "options.no_resume")
         boolean noResume;
+
+        @Option(name = "--no-tailcall", hidden = true, usage = "options.no_tailcall")
+        boolean noTailCall;
 
         @Option(name = "--native-calls", hidden = true, usage = "options.native_calls")
         boolean nativeCalls;
@@ -400,13 +409,13 @@ public final class Repl {
 
     @SuppressWarnings("serial")
     private static final class ParserExceptionWithSource extends RuntimeException {
-        private final String source;
-        private final int lineOffset;
+        private final Source source;
+        private final String sourceCode;
 
-        ParserExceptionWithSource(ParserException e, String source, int lineOffset) {
+        ParserExceptionWithSource(ParserException e, Source source, String sourceCode) {
             super(e);
             this.source = source;
-            this.lineOffset = lineOffset;
+            this.sourceCode = sourceCode;
         }
 
         @Override
@@ -414,22 +423,25 @@ public final class Repl {
             return (ParserException) super.getCause();
         }
 
-        public String getSource() {
+        public Source getSource() {
             return source;
         }
 
-        public int getLineOffset() {
-            return lineOffset;
+        public String getSourceCode() {
+            return sourceCode;
         }
     }
 
     private final ReplConsole console;
     private final Options options;
+    private final SourceBuilder sourceBuilder;
     private final AtomicInteger scriptCounter = new AtomicInteger(0);
 
     private Repl(ReplConsole console, Options options) {
         this.console = console;
         this.options = options;
+        this.sourceBuilder = new SourceBuilder(console.isAnsiSupported() && !options.noColor, 10,
+                30, 80);
     }
 
     private void handleException(Throwable e) {
@@ -450,13 +462,13 @@ public final class Repl {
 
     private void handleException(ParserExceptionWithSource exception) {
         ParserException e = exception.getCause();
-        String source = exception.getSource();
-        int lineOffset = exception.getLineOffset();
+        String sourceCode = exception.getSourceCode();
+        int lineOffset = exception.getSource().getLine();
 
         String sourceInfo = String.format("%s:%d:%d", e.getFile(), e.getLine(), e.getColumn());
-        int start = skipLines(source, e.getLine() - lineOffset);
-        int end = nextLineTerminator(source, start);
-        String offendingLine = source.substring(start, end);
+        int start = skipLines(sourceCode, e.getLine() - lineOffset);
+        int end = nextLineTerminator(sourceCode, start);
+        String offendingLine = sourceCode.substring(start, end);
         String marker = Strings.repeat('.', Math.max(e.getColumn() - 1, 0)) + '^';
 
         console.printf("%s %s: %s%n", sourceInfo, e.getType(), e.getFormattedMessage());
@@ -486,9 +498,9 @@ public final class Repl {
         return index;
     }
 
-    private static com.github.anba.es6draft.ast.Script parse(Realm realm, String sourceName,
-            String source, int line) throws ParserException {
-        return realm.getScriptLoader().parseScript(sourceName, line, source);
+    private static com.github.anba.es6draft.ast.Script parse(Realm realm, Source source,
+            String sourceCode) throws ParserException {
+        return realm.getScriptLoader().parseScript(source, sourceCode);
     }
 
     /**
@@ -501,19 +513,20 @@ public final class Repl {
      * @return the parsed script node
      */
     private com.github.anba.es6draft.ast.Script read(Realm realm, int line) {
-        StringBuilder source = new StringBuilder();
+        StringBuilder sourceCode = new StringBuilder();
         for (String prompt = PROMPT;; prompt = "") {
             String s = console.readLine(prompt);
             if (s == null) {
                 continue;
             }
-            source.append(s).append('\n');
+            sourceCode.append(s).append('\n');
+            Source source = new Source("typein", line);
             try {
-                return parse(realm, "typein", source.toString(), line);
+                return parse(realm, source, sourceCode.toString());
             } catch (ParserEOFException e) {
                 continue;
             } catch (ParserException e) {
-                throw new ParserExceptionWithSource(e, source.toString(), line);
+                throw new ParserExceptionWithSource(e, source, sourceCode.toString());
             }
         }
     }
@@ -548,9 +561,7 @@ public final class Repl {
      */
     private void print(Realm realm, Object result) {
         if (result != UNDEFINED) {
-            boolean color = console.isAnsiSupported() && !options.noColor;
-            SourceBuilder.Mode mode = color ? SourceBuilder.Mode.Color : SourceBuilder.Mode.Simple;
-            console.printf("%s%n", ToSource(mode, realm.defaultContext(), result));
+            console.printf("%s%n", sourceBuilder.toSource(realm.defaultContext(), result));
         }
     }
 
@@ -564,6 +575,7 @@ public final class Repl {
         for (;;) {
             try {
                 world.runEventLoop(taskSource);
+                return;
             } catch (StopExecutionException e) {
                 if (e.getReason() == Reason.Quit) {
                     System.exit(0);
@@ -756,19 +768,28 @@ public final class Repl {
         if (options.ecmascript7) {
             compatibilityOptions.addAll(CompatibilityOption.ECMAScript7());
         }
-        Set<Parser.Option> parserOptions = EnumSet.noneOf(Parser.Option.class);
-        Set<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
+        if (options.parser) {
+            compatibilityOptions.add(CompatibilityOption.ReflectParse);
+        }
+        EnumSet<Parser.Option> parserOptions = EnumSet.noneOf(Parser.Option.class);
+        EnumSet<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
         if (options.debug) {
             compilerOptions.add(Compiler.Option.Debug);
         }
         if (options.fullDebug) {
             compilerOptions.add(Compiler.Option.FullDebug);
         }
+        if (options.debugInfo) {
+            compilerOptions.add(Compiler.Option.DebugInfo);
+        }
         if (options.verifyStack) {
             compilerOptions.add(Compiler.Option.VerifyStack);
         }
         if (options.noResume) {
             compilerOptions.add(Compiler.Option.NoResume);
+        }
+        if (options.noTailCall) {
+            compilerOptions.add(Compiler.Option.NoTailCall);
         }
         if (options.nativeCalls) {
             parserOptions.add(Parser.Option.NativeCall);
@@ -822,12 +843,12 @@ public final class Repl {
                 @Override
                 public void execute() {
                     try {
-                        String sourceName = evalScript.getSourceName();
-                        String source = evalScript.getSource();
+                        Source source = evalScript.getSource();
+                        String sourceCode = evalScript.getSourceCode();
                         try {
-                            eval(realm, parse(realm, sourceName, source, 1));
+                            eval(realm, parse(realm, source, sourceCode));
                         } catch (ParserException e) {
-                            throw new ParserExceptionWithSource(e, source, 1);
+                            throw new ParserExceptionWithSource(e, source, sourceCode);
                         }
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);

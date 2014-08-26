@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import java.lang.invoke.MethodHandle;
+import java.nio.file.Paths;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
@@ -42,14 +43,44 @@ public final class RuntimeInfo {
             int expectedArgumentCount, String source, int bodySourceStart, MethodHandle handle,
             MethodHandle callMethod) {
         return new CompiledFunction(functionName, functionFlags, expectedArgumentCount, source,
-                bodySourceStart, handle, callMethod);
+                bodySourceStart, handle, callMethod, null);
+    }
+
+    /**
+     * Returns a new {@link Function} object.
+     * 
+     * @param functionName
+     *            the function name
+     * @param functionFlags
+     *            the function flags
+     * @param expectedArgumentCount
+     *            the number of expected arguments
+     * @param source
+     *            the encoded source string
+     * @param bodySourceStart
+     *            the body source start index
+     * @param handle
+     *            the method handle
+     * @param callMethod
+     *            the call method handle
+     * @param debugInfo
+     *            the debug info method handle
+     * @return the new function object
+     */
+    public static Function newFunction(String functionName, int functionFlags,
+            int expectedArgumentCount, String source, int bodySourceStart, MethodHandle handle,
+            MethodHandle callMethod, MethodHandle debugInfo) {
+        return new CompiledFunction(functionName, functionFlags, expectedArgumentCount, source,
+                bodySourceStart, handle, callMethod, debugInfo);
     }
 
     /**
      * Returns a new {@link ScriptBody} object.
      * 
-     * @param sourceFile
-     *            the source file location
+     * @param sourceName
+     *            the source name
+     * @param sourcePath
+     *            the source path
      * @param isStrict
      *            the strict mode flag
      * @param initialization
@@ -60,16 +91,62 @@ public final class RuntimeInfo {
      *            the code method handle
      * @return the new script object
      */
-    public static ScriptBody newScriptBody(String sourceFile, boolean isStrict,
+    public static ScriptBody newScriptBody(String sourceName, String sourcePath, boolean isStrict,
             MethodHandle initialization, MethodHandle evalinitialization, MethodHandle handle) {
-        return new CompiledScriptBody(sourceFile, isStrict, initialization, evalinitialization,
-                handle);
+        return new CompiledScriptBody(sourceName, sourcePath, isStrict, initialization,
+                evalinitialization, handle, null);
+    }
+
+    /**
+     * Returns a new {@link ScriptBody} object.
+     * 
+     * @param sourceName
+     *            the source name
+     * @param sourcePath
+     *            the source path
+     * @param isStrict
+     *            the strict mode flag
+     * @param initialization
+     *            the initialization method handle
+     * @param evalinitialization
+     *            the eval-initialization method handle
+     * @param handle
+     *            the code method handle
+     * @param debugInfo
+     *            the debug info method handle
+     * @return the new script object
+     */
+    public static ScriptBody newScriptBody(String sourceName, String sourcePath, boolean isStrict,
+            MethodHandle initialization, MethodHandle evalinitialization, MethodHandle handle,
+            MethodHandle debugInfo) {
+        return new CompiledScriptBody(sourceName, sourcePath, isStrict, initialization,
+                evalinitialization, handle, debugInfo);
+    }
+
+    /**
+     * Returns the source object for the {@link ScriptBody} element.
+     * 
+     * @param scriptBody
+     *            the script body
+     * @return the source object
+     */
+    public static Source toSource(ScriptBody scriptBody) {
+        // TODO: default method on ScriptBody
+        return new Source(scriptBody.sourceFile() != null ? Paths.get(scriptBody.sourceFile())
+                : null, scriptBody.sourceName(), 1);
     }
 
     /**
      * Compiled script body information
      */
     public interface ScriptBody {
+        /**
+         * Returns the source name descriptor.
+         * 
+         * @return the source name descriptor
+         */
+        String sourceName();
+
         /**
          * Returns the source file location.
          * 
@@ -123,22 +200,39 @@ public final class RuntimeInfo {
          * @return the evaluation result
          */
         Object evaluate(ExecutionContext cx);
+
+        /**
+         * Returns the debug information or {@code null} if not available.
+         * 
+         * @return the debug information
+         */
+        DebugInfo debugInfo();
     }
 
     private static final class CompiledScriptBody implements ScriptBody {
+        private final String sourceName;
         private final String sourceFile;
         private final boolean isStrict;
         private final MethodHandle initialization;
         private final MethodHandle evalinitialization;
         private final MethodHandle handle;
+        private final MethodHandle debugInfo;
 
-        CompiledScriptBody(String sourceFile, boolean isStrict, MethodHandle initialization,
-                MethodHandle evalinitialization, MethodHandle handle) {
+        CompiledScriptBody(String sourceName, String sourceFile, boolean isStrict,
+                MethodHandle initialization, MethodHandle evalinitialization, MethodHandle handle,
+                MethodHandle debugInfo) {
+            this.sourceName = sourceName;
             this.sourceFile = sourceFile;
             this.isStrict = isStrict;
             this.initialization = initialization;
             this.evalinitialization = evalinitialization;
             this.handle = handle;
+            this.debugInfo = debugInfo;
+        }
+
+        @Override
+        public String sourceName() {
+            return sourceName;
         }
 
         @Override
@@ -186,6 +280,20 @@ public final class RuntimeInfo {
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        @Override
+        public DebugInfo debugInfo() {
+            if (debugInfo != null) {
+                try {
+                    return (DebugInfo) debugInfo.invokeExact();
+                } catch (RuntimeException | Error e) {
+                    throw e;
+                } catch (Throwable e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return null;
         }
     }
 
@@ -306,6 +414,11 @@ public final class RuntimeInfo {
      * Compiled function information
      */
     public interface Function {
+        /**
+         * Returns the function's name.
+         * 
+         * @return the function name
+         */
         String functionName();
 
         /**
@@ -406,6 +519,13 @@ public final class RuntimeInfo {
          * @return the method handle for tail calls
          */
         MethodHandle handle();
+
+        /**
+         * Returns the debug information or {@code null} if not available.
+         * 
+         * @return the debug information
+         */
+        DebugInfo debugInfo();
     }
 
     private static final class CompiledFunction implements Function {
@@ -416,9 +536,11 @@ public final class RuntimeInfo {
         private final int bodySourceStart;
         private final MethodHandle handle;
         private final MethodHandle callMethod;
+        private final MethodHandle debugInfo;
 
         CompiledFunction(String functionName, int functionFlags, int expectedArgumentCount,
-                String source, int bodySourceStart, MethodHandle handle, MethodHandle callMethod) {
+                String source, int bodySourceStart, MethodHandle handle, MethodHandle callMethod,
+                MethodHandle debugInfo) {
             this.functionName = functionName;
             this.functionFlags = functionFlags;
             this.expectedArgumentCount = expectedArgumentCount;
@@ -426,6 +548,7 @@ public final class RuntimeInfo {
             this.bodySourceStart = bodySourceStart;
             this.handle = handle;
             this.callMethod = callMethod;
+            this.debugInfo = debugInfo;
         }
 
         @Override
@@ -501,6 +624,20 @@ public final class RuntimeInfo {
         @Override
         public MethodHandle callMethod() {
             return callMethod;
+        }
+
+        @Override
+        public DebugInfo debugInfo() {
+            if (debugInfo != null) {
+                try {
+                    return (DebugInfo) debugInfo.invokeExact();
+                } catch (RuntimeException | Error e) {
+                    throw e;
+                } catch (Throwable e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return null;
         }
     }
 }

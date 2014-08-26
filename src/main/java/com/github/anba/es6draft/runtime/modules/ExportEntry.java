@@ -24,6 +24,7 @@ public final class ExportEntry {
     private final String exportName;
 
     public ExportEntry(String moduleRequest, String importName, String localName, String exportName) {
+        // FIXME: change to String->Name
         this.moduleRequest = moduleRequest;
         this.importName = importName;
         this.localName = localName;

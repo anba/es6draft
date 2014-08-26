@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.ExecutionContext.newEvalExecution
 
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -42,6 +41,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -59,8 +59,8 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
 
         Set<CompatibilityOption> compatibilityOptions = CompatibilityOption.WebCompatibility();
         // This is a terrible hack to ensure bindings are properly resolved
-        Set<Parser.Option> parserOptions = EnumSet.of(Parser.Option.EvalScript);
-        Set<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
+        EnumSet<Parser.Option> parserOptions = EnumSet.of(Parser.Option.EvalScript);
+        EnumSet<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
         ScriptLoader scriptLoader = new ScriptLoader(compatibilityOptions, parserOptions,
                 compilerOptions);
 
@@ -92,7 +92,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
 
     @Override
     public Object eval(String script, ScriptContext context) throws javax.script.ScriptException {
-        return eval(new StringReader(script), context);
+        return eval(script(script, context), context);
     }
 
     @Override
@@ -102,7 +102,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
 
     @Override
     public CompiledScript compile(String script) throws javax.script.ScriptException {
-        return compile(new StringReader(script));
+        return new CompiledScriptImpl(this, script(script, context));
     }
 
     @Override
@@ -138,11 +138,28 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         return getInterface((ScriptObject) thisValue, clazz);
     }
 
-    Script script(Reader reader, ScriptContext context) throws javax.script.ScriptException {
+    private Source createSource(ScriptContext context) {
         String sourceName = Objects.toString(context.getAttribute(FILENAME), "<eval>");
-        int sourceLine = 1;
+        return new Source(sourceName, 1);
+    }
+
+    private Script script(String sourceCode, ScriptContext context)
+            throws javax.script.ScriptException {
+        Source source = createSource(context);
         try {
-            return scriptLoader.script(sourceName, sourceLine, reader);
+            return scriptLoader.script(source, sourceCode);
+        } catch (ParserException e) {
+            throw new javax.script.ScriptException(e.getMessage(), e.getFile(), e.getLine(),
+                    e.getColumn());
+        } catch (CompilationException e) {
+            throw new javax.script.ScriptException(e);
+        }
+    }
+
+    private Script script(Reader reader, ScriptContext context) throws javax.script.ScriptException {
+        Source source = createSource(context);
+        try {
+            return scriptLoader.script(source, reader);
         } catch (ParserException e) {
             throw new javax.script.ScriptException(e.getMessage(), e.getFile(), e.getLine(),
                     e.getColumn());
@@ -157,8 +174,8 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
             ExecutionContext cx = realm.defaultContext();
             LexicalEnvironment<ScriptContextEnvironmentRecord> lexEnv = new LexicalEnvironment<>(
                     realm.getGlobalEnv(), new ScriptContextEnvironmentRecord(cx, context));
-            script.getScriptBody().evalDeclarationInstantiation(cx, lexEnv, lexEnv, true);
-            ExecutionContext evalCxt = newEvalExecutionContext(cx, lexEnv, lexEnv);
+            ExecutionContext evalCxt = newEvalExecutionContext(cx, script, lexEnv, lexEnv);
+            script.getScriptBody().evalDeclarationInstantiation(evalCxt, lexEnv, lexEnv, true);
             Object result = script.evaluate(evalCxt);
             return TypeConverter.toJava(result);
         } catch (ScriptException e) {

@@ -370,7 +370,7 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(IdentifierName node, V value) {
-        visit((Expression) node, value);
+        visit((Node) node, value);
     }
 
     @Override

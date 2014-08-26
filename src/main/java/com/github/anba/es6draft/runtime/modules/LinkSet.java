@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -35,7 +34,7 @@ public final class LinkSet {
     private final Loader loader;
 
     /** [[Loads]] */
-    private final List<Load> loads;
+    private final ArrayList<Load> loads;
 
     /** [[Done]] */
     private final PromiseObject done;
@@ -196,7 +195,7 @@ public final class LinkSet {
         /* step 1 */
         Loader loader = linkSet.loader;
         /* step 2 */
-        List<Load> loads = new ArrayList<>(linkSet.loads);
+        ArrayList<Load> loads = new ArrayList<>(linkSet.loads);
         /* step 3 */
         for (Load load : loads) {
             /* step 3a */

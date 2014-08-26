@@ -9,6 +9,7 @@ package com.github.anba.es6draft.compiler;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ExpectedArgumentCount;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -27,16 +28,36 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo.FunctionFlags;
  */
 final class RuntimeInfoGenerator {
     private static final class Methods {
+        // class: DebugInfo
+        static final MethodDesc DebugInfo_init = MethodDesc.create(MethodType.Special,
+                Types.DebugInfo, "<init>", Type.getMethodType(Type.VOID_TYPE));
+
+        static final MethodDesc DebugInfo_addMethod = MethodDesc.create(MethodType.Virtual,
+                Types.DebugInfo, "addMethod",
+                Type.getMethodType(Type.VOID_TYPE, Types.Class, Types.String));
+
         // class: RuntimeInfo
         static final MethodDesc RTI_newScriptBody = MethodDesc.create(MethodType.Static,
                 Types.RuntimeInfo, "newScriptBody", Type.getMethodType(
-                        Types.RuntimeInfo$ScriptBody, Types.String, Type.BOOLEAN_TYPE,
-                        Types.MethodHandle, Types.MethodHandle, Types.MethodHandle));
+                        Types.RuntimeInfo$ScriptBody, Types.String, Types.String,
+                        Type.BOOLEAN_TYPE, Types.MethodHandle, Types.MethodHandle,
+                        Types.MethodHandle));
+
+        static final MethodDesc RTI_newScriptBodyDebug = MethodDesc.create(MethodType.Static,
+                Types.RuntimeInfo, "newScriptBody", Type.getMethodType(
+                        Types.RuntimeInfo$ScriptBody, Types.String, Types.String,
+                        Type.BOOLEAN_TYPE, Types.MethodHandle, Types.MethodHandle,
+                        Types.MethodHandle, Types.MethodHandle));
 
         static final MethodDesc RTI_newFunction = MethodDesc.create(MethodType.Static,
                 Types.RuntimeInfo, "newFunction", Type.getMethodType(Types.RuntimeInfo$Function,
                         Types.String, Type.INT_TYPE, Type.INT_TYPE, Types.String, Type.INT_TYPE,
                         Types.MethodHandle, Types.MethodHandle));
+
+        static final MethodDesc RTI_newFunctionDebug = MethodDesc.create(MethodType.Static,
+                Types.RuntimeInfo, "newFunction", Type.getMethodType(Types.RuntimeInfo$Function,
+                        Types.String, Type.INT_TYPE, Type.INT_TYPE, Types.String, Type.INT_TYPE,
+                        Types.MethodHandle, Types.MethodHandle, Types.MethodHandle));
     }
 
     private final CodeGenerator codegen;
@@ -82,7 +103,10 @@ final class RuntimeInfoGenerator {
                 functionFlags |= FunctionFlags.Static.getValue();
             }
         }
-        if (node instanceof LegacyGeneratorDeclaration || node instanceof LegacyGeneratorExpression) {
+        if (node instanceof LegacyGeneratorDeclaration
+                || node instanceof LegacyGeneratorExpression
+                || (node instanceof GeneratorComprehension && ((GeneratorComprehension) node)
+                        .getComprehension() instanceof LegacyComprehension)) {
             functionFlags |= FunctionFlags.LegacyGenerator.getValue();
         }
         if (legacy) {
@@ -135,7 +159,13 @@ final class RuntimeInfoGenerator {
         mv.iconst(node.getHeaderSource().length());
         mv.handle(codegen.methodDesc(node, FunctionName.Code));
         mv.handle(codegen.methodDesc(node, FunctionName.Call));
-        mv.invoke(Methods.RTI_newFunction);
+        if (codegen.isEnabled(Compiler.Option.DebugInfo)) {
+            debugInfo(node);
+            mv.handle(codegen.methodDesc(node, FunctionName.DebugInfo));
+            mv.invoke(Methods.RTI_newFunctionDebug);
+        } else {
+            mv.invoke(Methods.RTI_newFunction);
+        }
         mv.areturn();
 
         mv.end();
@@ -145,14 +175,83 @@ final class RuntimeInfoGenerator {
         InstructionVisitor mv = new InstructionVisitor(codegen.newMethod(node, ScriptName.RTI));
         mv.begin();
 
-        mv.aconst(node.getSourceName());
+        mv.aconst(node.getSource().getName());
+        mv.aconst(Objects.toString(node.getSource().getFile(), null));
         mv.iconst(IsStrict(node));
         mv.handle(codegen.methodDesc(node, ScriptName.Init));
         mv.handle(codegen.methodDesc(node, ScriptName.EvalInit));
         mv.handle(codegen.methodDesc(node, ScriptName.Code));
-        mv.invoke(Methods.RTI_newScriptBody);
+        if (codegen.isEnabled(Compiler.Option.DebugInfo)) {
+            debugInfo(node);
+            mv.handle(codegen.methodDesc(node, ScriptName.DebugInfo));
+            mv.invoke(Methods.RTI_newScriptBodyDebug);
+        } else {
+            mv.invoke(Methods.RTI_newScriptBody);
+        }
         mv.areturn();
 
+        mv.end();
+    }
+
+    private void debugInfo(FunctionNode node) {
+        InstructionVisitor mv = new InstructionVisitor(codegen.newMethod(node,
+                FunctionName.DebugInfo));
+        mv.begin();
+
+        mv.anew(Types.DebugInfo);
+        mv.dup();
+        mv.invoke(Methods.DebugInfo_init);
+
+        mv.dup();
+        MethodDesc callDesc = codegen.methodDesc(node, FunctionName.Call);
+        mv.aconst(Type.getObjectType(callDesc.owner));
+        mv.aconst(callDesc.name);
+        mv.invoke(Methods.DebugInfo_addMethod);
+
+        mv.dup();
+        MethodDesc initDesc = codegen.methodDesc(node, FunctionName.Init);
+        mv.aconst(Type.getObjectType(initDesc.owner));
+        mv.aconst(initDesc.name);
+        mv.invoke(Methods.DebugInfo_addMethod);
+
+        mv.dup();
+        MethodDesc codeDesc = codegen.methodDesc(node, FunctionName.Code);
+        mv.aconst(Type.getObjectType(codeDesc.owner));
+        mv.aconst(codeDesc.name);
+        mv.invoke(Methods.DebugInfo_addMethod);
+
+        mv.areturn();
+        mv.end();
+    }
+
+    private void debugInfo(Script node) {
+        InstructionVisitor mv = new InstructionVisitor(
+                codegen.newMethod(node, ScriptName.DebugInfo));
+        mv.begin();
+
+        mv.anew(Types.DebugInfo);
+        mv.dup();
+        mv.invoke(Methods.DebugInfo_init);
+
+        mv.dup();
+        MethodDesc initDesc = codegen.methodDesc(node, ScriptName.Init);
+        mv.aconst(Type.getObjectType(initDesc.owner));
+        mv.aconst(initDesc.name);
+        mv.invoke(Methods.DebugInfo_addMethod);
+
+        mv.dup();
+        MethodDesc evalInitDesc = codegen.methodDesc(node, ScriptName.EvalInit);
+        mv.aconst(Type.getObjectType(evalInitDesc.owner));
+        mv.aconst(evalInitDesc.name);
+        mv.invoke(Methods.DebugInfo_addMethod);
+
+        mv.dup();
+        MethodDesc codeDesc = codegen.methodDesc(node, ScriptName.Code);
+        mv.aconst(Type.getObjectType(codeDesc.owner));
+        mv.aconst(codeDesc.name);
+        mv.invoke(Methods.DebugInfo_addMethod);
+
+        mv.areturn();
         mv.end();
     }
 }

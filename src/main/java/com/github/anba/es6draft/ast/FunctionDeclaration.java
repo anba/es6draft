@@ -60,7 +60,7 @@ public final class FunctionDeclaration extends Declaration implements FunctionDe
 
     @Override
     public String getFunctionName() {
-        return identifier.getName();
+        return identifier.getName().getIdentifier();
     }
 
     @Override

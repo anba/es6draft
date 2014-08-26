@@ -25,7 +25,7 @@ final class Code {
     private static final boolean EVALUATE_SIZE = false;
     private static final int METHOD_LIMIT = 1 << 12;
 
-    private final List<ClassCode> classes = new ArrayList<>();
+    private final ArrayList<ClassCode> classes = new ArrayList<>();
     private final ClassCode mainClass;
     private ExternConstantPool extern = null;
     private ClassCode currentClass;
@@ -195,6 +195,10 @@ final class Code {
                 mv = new StackMethodVisitor(mv);
             }
             return new MethodCode(this, access, methodName, methodDescriptor, mv);
+        }
+
+        void addField(int access, String fieldName, String fieldDescriptor, String signature) {
+            classWriter.visitField(access, fieldName, fieldDescriptor, signature, null).visitEnd();
         }
     }
 

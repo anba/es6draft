@@ -214,6 +214,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         /* step 2 */
         OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
-        return FunctionInitialize(f, kind, function.isStrict(), function, scope);
+        return FunctionInitialize(f, kind, function.isStrict(), function, scope,
+                cx.getCurrentScript());
     }
 }

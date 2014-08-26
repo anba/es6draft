@@ -16,6 +16,7 @@ import java.util.List;
 import com.github.anba.es6draft.ast.BlockStatement;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.SwitchStatement;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -126,7 +127,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
         /* steps 1-3 */
         for (Declaration d : declarations) {
             if (isFunctionDeclaration(d)) {
-                String fn = BoundName(d);
+                Name fn = BoundName(d);
 
                 // FIXME: spec bug - CreateMutableBinding not called (bug 3029)
                 mv.load(envRec);
@@ -143,7 +144,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
                 // stack: [envRec, fo] -> []
                 initializeBinding(fn, mv);
             } else {
-                for (String dn : BoundNames(d)) {
+                for (Name dn : BoundNames(d)) {
                     mv.load(envRec);
                     if (IsConstantDeclaration(d)) {
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)

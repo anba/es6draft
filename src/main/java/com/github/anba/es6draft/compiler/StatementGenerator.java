@@ -18,6 +18,7 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
@@ -128,6 +129,11 @@ final class StatementGenerator extends
                 MethodType.Interface, Types.EnvironmentRecord, "createImmutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String));
 
+        // class: GeneratorObject
+        static final MethodDesc GeneratorObject_isLegacyGenerator = MethodDesc.create(
+                MethodType.Virtual, Types.GeneratorObject, "isLegacyGenerator",
+                Type.getMethodType(Type.BOOLEAN_TYPE));
+
         // class: Iterator
         static final MethodDesc Iterator_hasNext = MethodDesc.create(MethodType.Interface,
                 Types.Iterator, "hasNext", Type.getMethodType(Type.BOOLEAN_TYPE));
@@ -221,9 +227,9 @@ final class StatementGenerator extends
      * @param mv
      *            the statement visitor
      */
-    private void createImmutableBinding(String name, StatementVisitor mv) {
+    private void createImmutableBinding(Name name, StatementVisitor mv) {
         mv.dup();
-        mv.aconst(name);
+        mv.aconst(name.getIdentifier());
         mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
     }
 
@@ -237,9 +243,9 @@ final class StatementGenerator extends
      * @param mv
      *            the statement visitor
      */
-    private void createMutableBinding(String name, boolean deletable, StatementVisitor mv) {
+    private void createMutableBinding(Name name, boolean deletable, StatementVisitor mv) {
         mv.dup();
-        mv.aconst(name);
+        mv.aconst(name.getIdentifier());
         mv.iconst(deletable);
         mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
     }
@@ -336,7 +342,7 @@ final class StatementGenerator extends
     @Override
     public Completion visit(ClassDeclaration node, StatementVisitor mv) {
         /* step 1 */
-        String className = node.getName().getName();
+        String className = node.getName().getName().getIdentifier();
         /* steps 2-3 */
         ClassDefinitionEvaluation(node, className, mv);
         /* steps 4-6 */
@@ -504,7 +510,7 @@ final class StatementGenerator extends
             IterationKind iterationKind, StatementVisitor mv) {
         Label lblFail = new Label();
 
-        List<String> tdzNames;
+        List<Name> tdzNames;
         if (lhs instanceof Expression || lhs instanceof VariableStatement) {
             tdzNames = null;
         } else {
@@ -549,7 +555,7 @@ final class StatementGenerator extends
      * @return the value type of the expression
      */
     private <FORSTATEMENT extends IterationStatement & ScopedNode> ValType ForInOfExpressionEvaluation(
-            FORSTATEMENT node, List<String> tdzNames, Expression expr, IterationKind iterationKind,
+            FORSTATEMENT node, List<Name> tdzNames, Expression expr, IterationKind iterationKind,
             Label lblFail, StatementVisitor mv) {
         /* steps 1-2 */
         if (tdzNames != null) {
@@ -563,7 +569,7 @@ final class StatementGenerator extends
                     mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
                     // stack: [TDZ, TDZRec] -> [TDZ]
-                    for (String name : tdzNames) {
+                    for (Name name : tdzNames) {
                         // FIXME: spec bug (CreateMutableBinding concrete method of `TDZ`)
                         createMutableBinding(name, false, mv);
                     }
@@ -607,6 +613,10 @@ final class StatementGenerator extends
             Label l0 = new Label(), l1 = new Label();
             mv.dup();
             mv.instanceOf(Types.GeneratorObject);
+            mv.ifeq(l0);
+            mv.dup();
+            mv.checkcast(Types.GeneratorObject);
+            mv.invoke(Methods.GeneratorObject_isLegacyGenerator);
             mv.ifeq(l0);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_iterate);
@@ -820,7 +830,6 @@ final class StatementGenerator extends
             mv.aconst(name);
             if (exception != null) {
                 mv.newarray(1, Types.Object);
-
                 mv.dup();
                 mv.iconst(0);
                 mv.load(exception);
@@ -853,6 +862,7 @@ final class StatementGenerator extends
             }
         } else if (lhs instanceof VariableStatement) {
             /* step 3g */
+            assert ((VariableStatement) lhs).getElements().size() == 1;
             VariableDeclaration varDecl = ((VariableStatement) lhs).getElements().get(0);
             Binding binding = varDecl.getBinding();
             // 12.2.4.2.2 Runtime Semantics: BindingInitialization :: ForBinding
@@ -866,6 +876,7 @@ final class StatementGenerator extends
             LexicalDeclaration lexDecl = (LexicalDeclaration) lhs;
             assert lexDecl.getElements().size() == 1;
             LexicalBinding lexicalBinding = lexDecl.getElements().get(0);
+            boolean isConst = IsConstantDeclaration(lexDecl);
 
             // create new declarative lexical environment
             // stack: [nextValue] -> [nextValue, iterEnv]
@@ -877,8 +888,8 @@ final class StatementGenerator extends
                 mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
                 // stack: [iterEnv, nextValue, envRec] -> [iterEnv, envRec, nextValue]
-                for (String name : BoundNames(lexicalBinding.getBinding())) {
-                    if (IsConstantDeclaration(lexDecl)) {
+                for (Name name : BoundNames(lexicalBinding.getBinding())) {
+                    if (isConst) {
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
                         createImmutableBinding(name, mv);
                     } else {
@@ -935,7 +946,7 @@ final class StatementGenerator extends
         } else {
             assert head instanceof LexicalDeclaration;
             LexicalDeclaration lexDecl = (LexicalDeclaration) head;
-            List<String> boundNames = BoundNames(lexDecl);
+            List<Name> boundNames = BoundNames(lexDecl);
             boolean isConst = IsConstantDeclaration(lexDecl);
             perIterationsLets = !isConst && !boundNames.isEmpty();
 
@@ -945,7 +956,7 @@ final class StatementGenerator extends
                 mv.dup();
                 mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
-                for (String dn : boundNames) {
+                for (Name dn : boundNames) {
                     if (isConst) {
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `loopEnv`)
                         createImmutableBinding(dn, mv);
@@ -1055,7 +1066,7 @@ final class StatementGenerator extends
 
         /* B.3.2  Web Legacy Compatibility for Block-Level Function Declarations */
         if (node.isLegacyBlockScoped()) {
-            mv.aconst(node.getIdentifier().getName());
+            mv.aconst(node.getIdentifier().getName().toString());
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_initializeFunctionBlockBinding);
         }
@@ -1181,7 +1192,7 @@ final class StatementGenerator extends
                 mv.dup();
 
                 // stack: [env, envRec, envRec] -> [env, envRec, envRec]
-                for (String name : BoundNames(binding.getBinding())) {
+                for (Name name : BoundNames(binding.getBinding())) {
                     createMutableBinding(name, false, mv);
                 }
 
@@ -1659,7 +1670,7 @@ final class StatementGenerator extends
             /* step 3 */
             // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
             // [catchEnv, ex, envRec] -> [catchEnv, envRec, ex]
-            for (String name : BoundNames(catchParameter)) {
+            for (Name name : BoundNames(catchParameter)) {
                 createMutableBinding(name, false, mv);
             }
             mv.swap();
@@ -1716,7 +1727,7 @@ final class StatementGenerator extends
             /* step 3 */
             // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
             // [catchEnv, ex, envRec] -> [catchEnv, envRec, ex]
-            for (String name : BoundNames(catchParameter)) {
+            for (Name name : BoundNames(catchParameter)) {
                 createMutableBinding(name, false, mv);
             }
             mv.swap();

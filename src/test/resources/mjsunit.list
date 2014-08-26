@@ -16,7 +16,7 @@ harmony/numeric-literals.js
 harmony/typedarrays.js
 
 # V8 does not implement %TypedArray% prototype object
-harmony/typed-array-iterator.js
+es6/typed-array-iterator.js
 
 # invalid test `function f(x){function x(){}}` is valid syntax
 harmony/block-conflicts.js
@@ -28,13 +28,13 @@ harmony/block-early-errors.js
 harmony/block-let-declaration.js
 
 # V8 generators: missing type checks in v8-implementation
-harmony/generators-iteration.js
+es6/generators-iteration.js
 
 # AssignmentExpression optional in YieldStatement
-harmony/generators-parsing.js
+es6/generators-parsing.js
 
 # non-strict equality fails when comparing symbols and primitive values against each other
-harmony/iteration-semantics.js
+es6/iteration-semantics.js
 
 # modules not yet enabled
 harmony/module-linking.js
@@ -53,11 +53,15 @@ regress/regress-builtinbust-7.js
 
 # TODO: Add new v8-compat mode?
 # .caller and .arguments in sloppy generator functions are poison-pilled in V8
-harmony/generators-poisoned-properties.js
-harmony/generators-runtime.js
+es6/generators-poisoned-properties.js
+es6/generators-runtime.js
 
 # direct eval() and lexical declarations
 regress/regress-1213575.js
+
+# unscopables
+es6/unscopables.js
+harmony/proxies-with-unscopables.js
 
 
 ###################
@@ -250,6 +254,9 @@ regexp-string-methods.js
 
 # Function.prototype.{arguments,caller} now configurable=true for bound functions
 function-bind.js
+
+# "get " prefix for getter accessor function names
+object-literal.js
 
 
 #######################################

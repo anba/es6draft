@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -127,7 +128,7 @@ public final class ModuleLinking {
         /* step 3 */
         for (Entry<Load, ModuleLinkage> pair : unlinked.entrySet()) {
             LinkedHashMap<String, ModuleLinkage> resolvedDeps = new LinkedHashMap<>();
-            List<Load> unlinkedDeps = new ArrayList<>();
+            ArrayList<Load> unlinkedDeps = new ArrayList<>();
             for (Dependency dep : pair.getKey().getDependencies()) {
                 String requestName = dep.getModuleName();
                 String normalizedName = dep.getNormalizedModuleName();
@@ -259,9 +260,9 @@ public final class ModuleLinking {
             return module.getExportDefinitions();
         }
         /* step 2 */
-        List<ExportDefinition> defs = new ArrayList<>();
+        ArrayList<ExportDefinition> defs = new ArrayList<>();
         /* step 3 */
-        Set<String> boundNames = module.getBoundNames();
+        Set<Name> boundNames = module.getBoundNames();
         /* step 4 */
         for (ExportEntry entry : module.getKnownExportEntries()) {
             String modReq = entry.getModuleRequest();
@@ -407,7 +408,7 @@ public final class ModuleLinking {
         /* step 1 */
         List<ImportEntry> entries = module.getImportEntries();
         /* step 2 */
-        List<ImportDefinition> defs = new ArrayList<>();
+        ArrayList<ImportDefinition> defs = new ArrayList<>();
         /* step 3 */
         for (ImportEntry entry : entries) {
             String modReq = entry.getModuleRequest();

@@ -25,6 +25,7 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.types.Callable;
 
 /**
@@ -55,9 +56,9 @@ public class Test262GlobalObject extends ShellGlobalObject {
     /**
      * Parses, compiles and executes the javascript file.
      * 
-     * @param fileName
-     *            the file name for the script file
-     * @param source
+     * @param file
+     *            the script source file
+     * @param sourceCode
      *            the source code
      * @param sourceLine
      *            the source line offset
@@ -66,9 +67,10 @@ public class Test262GlobalObject extends ShellGlobalObject {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    void eval(Path fileName, String source, int sourceLine) throws ParserException,
+    void eval(Path file, String sourceCode, int sourceLine) throws ParserException,
             CompilationException {
-        Script script = getScriptLoader().script(fileName.toString(), sourceLine, source);
+        Source source = new Source(file, file.getFileName().toString(), sourceLine);
+        Script script = getScriptLoader().script(source, sourceCode);
         Scripts.ScriptEvaluation(script, getRealm(), false);
     }
 

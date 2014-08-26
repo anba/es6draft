@@ -20,6 +20,7 @@ import java.util.Set;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.Module;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -63,7 +64,7 @@ public final class ModuleEvaluation {
         @Override
         public ModuleObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object loadArg = args.length > 0 ? args[0] : null;
+            Object loadArg = argument(args, 0, null);
             assert loadArg instanceof Load;
             Load load = (Load) loadArg;
             /* step 1 */
@@ -162,14 +163,14 @@ public final class ModuleEvaluation {
         /* step 1 */
         List<Declaration> declarations = LexicallyScopedDeclarations(body);
         /* step 2 */
-        List<FunctionNode> functionsToInitialize = new ArrayList<>();
+        ArrayList<FunctionNode> functionsToInitialize = new ArrayList<>();
         /* step 3 */
         for (Declaration d : declarations) {
-            for (String dn : BoundNames(d)) {
+            for (Name dn : BoundNames(d)) {
                 if (IsConstantDeclaration(d)) {
-                    envRec.createImmutableBinding(dn);
+                    envRec.createImmutableBinding(dn.getIdentifier());
                 } else {
-                    envRec.createMutableBinding(dn, false);
+                    envRec.createMutableBinding(dn.getIdentifier(), false);
                 }
             }
             if (d instanceof FunctionNode) {

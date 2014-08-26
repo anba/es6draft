@@ -20,11 +20,11 @@ abstract class ListSubMethod<NODE extends Node> extends SubMethod<NODE> {
         ELEMENT map(NODE node, int size, int index);
     }
 
-    private static final <NODE extends Node, ELEMENT> List<ELEMENT> from(List<NODE> nodes,
+    private static final <NODE extends Node, ELEMENT> ArrayList<ELEMENT> from(List<NODE> nodes,
             NodeElementMapper<NODE, ELEMENT> mapper) {
         CodeSizeVisitor visitor = new CodeSizeVisitor();
         CodeSizeHandler handler = new EmptyHandler();
-        List<ELEMENT> list = new ArrayList<>(nodes.size());
+        ArrayList<ELEMENT> list = new ArrayList<>(nodes.size());
         for (int i = 0, len = nodes.size(); i < len; i++) {
             NODE property = nodes.get(i);
             int size = property.accept(visitor, handler);
@@ -37,8 +37,8 @@ abstract class ListSubMethod<NODE extends Node> extends SubMethod<NODE> {
             int oldSize, List<NODE> oldNodes, NodeElementMapper<NODE, ELEMENT> mapper,
             Conflater<ELEMENT, NODE> conflater, int maxElementSize, int maxAccSize,
             int maxConflateSize) {
-        List<NODE> newNodes = new ArrayList<>(oldNodes);
-        List<ELEMENT> elements = from(newNodes, mapper);
+        ArrayList<NODE> newNodes = new ArrayList<>(oldNodes);
+        ArrayList<ELEMENT> elements = from(newNodes, mapper);
         int accSize = oldSize;
 
         // replace single big elements with method-expressions

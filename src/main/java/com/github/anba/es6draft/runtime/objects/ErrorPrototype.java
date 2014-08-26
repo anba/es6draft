@@ -16,7 +16,6 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -330,7 +329,7 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
     }
 
     private static ExoticArray getStackTrace(ExecutionContext cx, ErrorObject e) {
-        List<OrdinaryObject> list = new ArrayList<>();
+        ArrayList<OrdinaryObject> list = new ArrayList<>();
         for (StackTraceElement element : new StackTraceElementIterable(e)) {
             OrdinaryObject elem = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             CreateDataProperty(cx, elem, "methodName", getMethodName(element));

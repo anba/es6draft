@@ -72,8 +72,8 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
     @Override
     public RegExpObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object pattern = args.length > 0 ? args[0] : UNDEFINED;
-        Object flags = args.length > 1 ? args[1] : UNDEFINED;
+        Object pattern = argument(args, 0);
+        Object flags = argument(args, 1);
 
         /* steps 1-2 (omitted) */
         RegExpObject obj;

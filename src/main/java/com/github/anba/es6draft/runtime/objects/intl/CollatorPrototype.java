@@ -161,8 +161,8 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
         public Integer call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof CollatorObject;
             ExecutionContext calleeContext = calleeContext();
-            Object arg0 = args.length > 0 ? args[0] : UNDEFINED;
-            Object arg1 = args.length > 1 ? args[1] : UNDEFINED;
+            Object arg0 = argument(args, 0);
+            Object arg1 = argument(args, 1);
             String x = ToFlatString(calleeContext, arg0);
             String y = ToFlatString(calleeContext, arg1);
             return CompareStrings(calleeContext, (CollatorObject) thisValue, x, y);

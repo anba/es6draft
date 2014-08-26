@@ -20,9 +20,9 @@ import com.github.anba.es6draft.compiler.Code.ClassCode;
 
 /**
  * {@link MethodVisitor} implementation which delegates constant loads to a {@link ConstantPool}
- * instance
+ * instance.
  */
-class ConstantPoolMethodVisitor extends MethodVisitor {
+final class ConstantPoolMethodVisitor extends MethodVisitor {
     private final InlineConstantPool constantPool;
 
     public ConstantPoolMethodVisitor(MethodVisitor mv, InlineConstantPool constantPool) {

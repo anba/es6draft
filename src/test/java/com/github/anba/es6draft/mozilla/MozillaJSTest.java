@@ -209,7 +209,7 @@ public class MozillaJSTest {
     private void scriptConditions(ExecutionContext cx, MozTestGlobalObject global) {
         for (Entry<Condition, String> entry : moztest.conditions) {
             String code = condition(entry.getValue());
-            boolean value = ToBoolean(global.evaluate(cx, code, Undefined.UNDEFINED));
+            boolean value = ToBoolean(global.evaluate(cx, cx, code, Undefined.UNDEFINED));
             if (!value) {
                 continue;
             }

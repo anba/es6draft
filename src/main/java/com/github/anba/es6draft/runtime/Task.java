@@ -15,6 +15,8 @@ package com.github.anba.es6draft.runtime;
  * Interface for {@link Task} objects
  */
 public interface Task {
+    // TODO: Rename to Job...
+
     /**
      * Executes the action for this task.
      */

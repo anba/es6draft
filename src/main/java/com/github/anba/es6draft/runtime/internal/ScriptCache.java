@@ -20,21 +20,26 @@ import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 
 /**
- * Simple cache for compiled js-files
+ * Simple cache for compiled script files.
  */
 public final class ScriptCache {
-    private static final int MAX_SIZE = 10;
-    private Map<CacheKey, Script> cache = Collections.synchronizedMap(new Cache());
+    private static final int DEFAULT_MAX_SIZE = 10;
+    private static final int DEFAULT_INITIAL_CAPACITY = 16;
+    private static final float DEFAULT_LOAD_FACTOR = .75f;
+    private final Map<CacheKey, Script> cache;
 
     @SuppressWarnings("serial")
     private static final class Cache extends LinkedHashMap<CacheKey, Script> {
-        Cache() {
-            super(16, .75f, true);
+        private final int maxSize;
+
+        Cache(int maxSize, int initialCapacity, float loadFactor) {
+            super(initialCapacity, loadFactor, true);
+            this.maxSize = maxSize;
         }
 
         @Override
         protected boolean removeEldestEntry(Map.Entry<CacheKey, Script> eldest) {
-            return size() > MAX_SIZE;
+            return size() > maxSize;
         }
     }
 
@@ -47,7 +52,7 @@ public final class ScriptCache {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj.getClass() != CacheKey.class) {
+            if (obj == null || obj.getClass() != CacheKey.class) {
                 return false;
             }
             CacheKey other = (CacheKey) obj;
@@ -62,6 +67,37 @@ public final class ScriptCache {
 
     private CacheKey keyFor(URI uri) {
         return new CacheKey(uri);
+    }
+
+    /**
+     * Constructs a new {@link ScriptCache} object.
+     */
+    public ScriptCache() {
+        this(DEFAULT_MAX_SIZE, DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR);
+    }
+
+    /**
+     * Constructs a new {@link ScriptCache} object.
+     * 
+     * @param maxSize
+     *            the maximum size
+     */
+    public ScriptCache(int maxSize) {
+        this(maxSize, DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR);
+    }
+
+    /**
+     * Constructs a new {@link ScriptCache} object.
+     * 
+     * @param maxSize
+     *            the maximum capacity
+     * @param initialCapacity
+     *            the initial capacity
+     * @param loadFactor
+     *            the load factor
+     */
+    public ScriptCache(int maxSize, int initialCapacity, float loadFactor) {
+        this.cache = Collections.synchronizedMap(new Cache(maxSize, initialCapacity, loadFactor));
     }
 
     /**
@@ -85,9 +121,8 @@ public final class ScriptCache {
         if (cache.containsKey(cacheKey)) {
             return cache.get(cacheKey);
         }
-        String sourceName = file.getFileName().toString();
-        int sourceLine = 1;
-        Script script = scriptLoader.script(sourceName, sourceLine, file);
+        Source source = new Source(file, file.getFileName().toString(), 1);
+        Script script = scriptLoader.script(source, file);
         cache.put(cacheKey, script);
         return script;
     }
@@ -115,9 +150,8 @@ public final class ScriptCache {
         if (cache.containsKey(cacheKey)) {
             return cache.get(cacheKey);
         }
-        String sourceName = file.getFile();
-        int sourceLine = 1;
-        Script script = scriptLoader.script(sourceName, sourceLine, file);
+        Source source = new Source(file.getPath(), 1);
+        Script script = scriptLoader.script(source, file);
         cache.put(cacheKey, script);
         return script;
     }

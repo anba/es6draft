@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
-import java.nio.file.Path;
 import java.util.*;
 
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
@@ -19,6 +18,7 @@ import com.github.anba.es6draft.ast.MethodDefinition.MethodType;
 import com.github.anba.es6draft.ast.scope.BlockScope;
 import com.github.anba.es6draft.ast.scope.FunctionScope;
 import com.github.anba.es6draft.ast.scope.ModuleScope;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.ast.scope.ScriptScope;
 import com.github.anba.es6draft.ast.scope.TopLevelScope;
@@ -28,6 +28,7 @@ import com.github.anba.es6draft.regexp.RegExpParser;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.SmallArrayList;
+import com.github.anba.es6draft.runtime.internal.Source;
 
 /**
  * Parser for ECMAScript6 source code
@@ -45,9 +46,7 @@ public final class Parser {
     private static final List<Binding> NO_INHERITED_BINDING = Collections.emptyList();
     private static final Set<String> EMPTY_LABEL_SET = Collections.emptySet();
 
-    private final Path sourceFile;
-    private final String sourceName;
-    private final int sourceLine;
+    private final Source source;
     private final EnumSet<CompatibilityOption> options;
     private final EnumSet<Option> parserOptions;
     private TokenStream ts;
@@ -84,6 +83,23 @@ public final class Parser {
             case GeneratorComprehension:
             case Method:
                 return true;
+            case Module:
+            case Script:
+            default:
+                return false;
+            }
+        }
+
+        final boolean isLexical() {
+            switch (this) {
+            case ArrowFunction:
+            case AsyncArrowFunction:
+            case GeneratorComprehension:
+                return true;
+            case AsyncFunction:
+            case Function:
+            case Generator:
+            case Method:
             case Module:
             case Script:
             default:
@@ -144,7 +160,7 @@ public final class Parser {
                 assert kind.isFunction();
                 this.scriptContext = null;
                 this.modContext = null;
-                this.funContext = new FunctionContext(parent.scopeContext);
+                this.funContext = new FunctionContext(parent.scopeContext, !kind.isLexical());
                 this.topContext = funContext;
             }
             this.scopeContext = topContext;
@@ -197,14 +213,68 @@ public final class Parser {
         }
     }
 
+    private static final class NameSet extends AbstractSet<Name> implements Set<Name> {
+        private final HashMap<Name, Name> map;
+
+        public NameSet() {
+            map = new HashMap<>();
+        }
+
+        public NameSet(Collection<Name> c) {
+            map = new HashMap<>(Math.max((int) (c.size() / 0.75f) + 1, 16));
+            addAll(c);
+        }
+
+        @Override
+        public Iterator<Name> iterator() {
+            return map.keySet().iterator();
+        }
+
+        @Override
+        public int size() {
+            return map.size();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return map.isEmpty();
+        }
+
+        @Override
+        public boolean add(Name e) {
+            return map.put(e, e) == null;
+        }
+
+        @Override
+        public void clear() {
+            map.clear();
+        }
+
+        @Override
+        public boolean contains(Object o) {
+            return map.containsKey(o);
+        }
+
+        @Override
+        public boolean remove(Object o) {
+            return map.remove(o) != null;
+        }
+
+        public Name get(Object o) {
+            return map.get(o);
+        }
+    }
+
     private static final class FunctionContext extends TopContext implements FunctionScope {
         FunctionNode node = null;
-        HashSet<String> parameterNames = null;
+        NameSet parameterNames = null;
         boolean needsArguments = false;
         boolean superReference = false;
+        final Name arguments;
 
-        FunctionContext(ScopeContext enclosing) {
+        FunctionContext(ScopeContext enclosing, boolean hasArguments) {
             super(enclosing);
+            arguments = hasArguments ? new Name("arguments") : null;
         }
 
         @Override
@@ -213,8 +283,13 @@ public final class Parser {
         }
 
         @Override
-        public Set<String> parameterNames() {
+        public Set<Name> parameterNames() {
             return parameterNames;
+        }
+
+        @Override
+        public Name arguments() {
+            return arguments;
         }
 
         @Override
@@ -233,14 +308,25 @@ public final class Parser {
         }
 
         @Override
-        public boolean isDeclared(String name) {
-            if ("arguments".equals(name) && node.getThisMode() != FunctionNode.ThisMode.Lexical) {
+        public boolean isDeclared(Name name) {
+            if (arguments != null && arguments.equals(name)) {
                 return true;
             }
             if (parameterNames.contains(name)) {
                 return true;
             }
             return super.isDeclared(name);
+        }
+
+        @Override
+        public Name getDeclaredName(Name name) {
+            if (arguments != null && arguments.equals(name)) {
+                return arguments;
+            }
+            if (parameterNames.contains(name)) {
+                return parameterNames.get(name);
+            }
+            return super.getDeclaredName(name);
         }
     }
 
@@ -313,7 +399,7 @@ public final class Parser {
         }
 
         @Override
-        public Set<String> lexicallyDeclaredNames() {
+        public Set<Name> lexicallyDeclaredNames() {
             return emptyIfNull(lexDeclaredNames);
         }
 
@@ -323,7 +409,7 @@ public final class Parser {
         }
 
         @Override
-        public Set<String> varDeclaredNames() {
+        public Set<Name> varDeclaredNames() {
             return emptyIfNull(varDeclaredNames);
         }
 
@@ -333,7 +419,7 @@ public final class Parser {
         }
 
         @Override
-        public boolean isDeclared(String name) {
+        public boolean isDeclared(Name name) {
             if (varDeclaredNames != null && varDeclaredNames.contains(name)) {
                 return true;
             }
@@ -341,6 +427,17 @@ public final class Parser {
                 return true;
             }
             return false;
+        }
+
+        @Override
+        public Name getDeclaredName(Name name) {
+            if (varDeclaredNames != null && varDeclaredNames.contains(name)) {
+                return varDeclaredNames.get(name);
+            }
+            if (lexDeclaredNames != null && lexDeclaredNames.contains(name)) {
+                return lexDeclaredNames.get(name);
+            }
+            return null;
         }
     }
 
@@ -357,7 +454,7 @@ public final class Parser {
         }
 
         @Override
-        public Set<String> lexicallyDeclaredNames() {
+        public Set<Name> lexicallyDeclaredNames() {
             return emptyIfNull(lexDeclaredNames);
         }
 
@@ -367,8 +464,46 @@ public final class Parser {
         }
 
         @Override
-        public boolean isDeclared(String name) {
+        public boolean isDeclared(Name name) {
             return lexDeclaredNames != null && lexDeclaredNames.contains(name);
+        }
+
+        @Override
+        public Name getDeclaredName(Name name) {
+            return lexDeclaredNames != null ? lexDeclaredNames.get(name) : null;
+        }
+    }
+
+    private static final class CatchContext extends ScopeContext implements BlockScope {
+        ScopedNode node = null;
+
+        CatchContext(ScopeContext parent) {
+            super(parent);
+        }
+
+        @Override
+        public ScopedNode getNode() {
+            return node;
+        }
+
+        @Override
+        public Set<Name> lexicallyDeclaredNames() {
+            return emptyIfNull(lexDeclaredNames);
+        }
+
+        @Override
+        public List<Declaration> lexicallyScopedDeclarations() {
+            return emptyIfNull(lexScopedDeclarations);
+        }
+
+        @Override
+        public boolean isDeclared(Name name) {
+            return lexDeclaredNames != null && lexDeclaredNames.contains(name);
+        }
+
+        @Override
+        public Name getDeclaredName(Name name) {
+            return lexDeclaredNames != null ? lexDeclaredNames.get(name) : null;
         }
     }
 
@@ -385,18 +520,23 @@ public final class Parser {
         }
 
         @Override
-        public boolean isDeclared(String name) {
+        public boolean isDeclared(Name name) {
             return false;
+        }
+
+        @Override
+        public Name getDeclaredName(Name name) {
+            return null;
         }
     }
 
     private abstract static class ScopeContext implements Scope {
         final ScopeContext parent;
 
-        HashSet<String> varDeclaredNames = null;
-        HashSet<String> lexDeclaredNames = null;
+        NameSet varDeclaredNames = null;
+        NameSet lexDeclaredNames = null;
         List<Declaration> lexScopedDeclarations = null;
-        HashSet<String> forbiddenLexNames = null;
+        NameSet forbiddenLexNames = null;
 
         ScopeContext(ScopeContext parent) {
             this.parent = parent;
@@ -416,15 +556,11 @@ public final class Parser {
             return sb.toString();
         }
 
-        boolean allowVarDeclaredName(String name) {
+        boolean allowVarDeclaredName(Name name) {
             return lexDeclaredNames == null || !lexDeclaredNames.contains(name);
         }
 
-        boolean isForbiddenLexName(String name) {
-            return forbiddenLexNames != null && forbiddenLexNames.contains(name);
-        }
-
-        void addVarDeclaredNames(HashSet<String> names) {
+        void addVarDeclaredNames(NameSet names) {
             if (varDeclaredNames == null) {
                 varDeclaredNames = names;
             } else {
@@ -432,17 +568,17 @@ public final class Parser {
             }
         }
 
-        boolean addVarDeclaredName(String name) {
+        boolean addVarDeclaredName(Name name) {
             if (varDeclaredNames == null) {
-                varDeclaredNames = new HashSet<>();
+                varDeclaredNames = new NameSet();
             }
             varDeclaredNames.add(name);
             return lexDeclaredNames == null || !lexDeclaredNames.contains(name);
         }
 
-        boolean addLexDeclaredName(String name) {
+        boolean addLexDeclaredName(Name name) {
             if (lexDeclaredNames == null) {
-                lexDeclaredNames = new HashSet<>();
+                lexDeclaredNames = new NameSet();
             }
             return lexDeclaredNames.add(name)
                     && (varDeclaredNames == null || !varDeclaredNames.contains(name))
@@ -526,17 +662,9 @@ public final class Parser {
         NativeCall,
     }
 
-    public Parser(String sourceName, int sourceLine, Set<CompatibilityOption> compatOptions,
-            EnumSet<Option> parserOptions) {
-        this(null, sourceName, sourceLine, compatOptions, parserOptions);
-    }
-
-    public Parser(Path sourceFile, String sourceName, int sourceLine,
-            Set<CompatibilityOption> compatOptions, EnumSet<Option> parserOptions) {
-        this.sourceFile = sourceFile;
-        this.sourceName = sourceName;
-        this.sourceLine = sourceLine;
-        this.options = EnumSet.copyOf(compatOptions);
+    public Parser(Source source, Set<CompatibilityOption> options, EnumSet<Option> parserOptions) {
+        this.source = source;
+        this.options = EnumSet.copyOf(options);
         this.parserOptions = EnumSet.copyOf(parserOptions);
         context = new ParseContext();
         context.strictMode = this.parserOptions.contains(Option.Strict) ? StrictMode.Strict
@@ -551,11 +679,11 @@ public final class Parser {
     }
 
     String getSourceName() {
-        return sourceName;
+        return source.getName();
     }
 
     int getSourceLine() {
-        return sourceLine;
+        return source.getLine();
     }
 
     boolean isEnabled(CompatibilityOption option) {
@@ -609,11 +737,22 @@ public final class Parser {
         return exitScopeContext();
     }
 
+    private CatchContext enterCatchContext(Binding binding) {
+        CatchContext cx = new CatchContext(context.scopeContext);
+        context.scopeContext = cx;
+        addLexDeclaredName(binding);
+        return cx;
+    }
+
+    private ScopeContext exitCatchContext() {
+        return exitScopeContext();
+    }
+
     private ScopeContext exitScopeContext() {
         ScopeContext scope = context.scopeContext;
         ScopeContext parent = scope.parent;
         assert parent != null : "exitScopeContext() on top-level";
-        HashSet<String> varDeclaredNames = scope.varDeclaredNames;
+        NameSet varDeclaredNames = scope.varDeclaredNames;
         if (varDeclaredNames != null) {
             parent.addVarDeclaredNames(varDeclaredNames);
             scope.varDeclaredNames = null;
@@ -621,7 +760,7 @@ public final class Parser {
         return context.scopeContext = parent;
     }
 
-    private static String BoundName(BindingIdentifier binding) {
+    private static Name BoundName(BindingIdentifier binding) {
         return binding.getName();
     }
 
@@ -638,7 +777,7 @@ public final class Parser {
     }
 
     private <DECLARATION extends Declaration & FunctionNode> void addDeclaration(DECLARATION decl,
-            String name) {
+            Name name) {
         ParseContext parentContext = context.parent;
         ScopeContext parentScope = parentContext.scopeContext;
         TopContext topScope = parentContext.topContext;
@@ -692,17 +831,17 @@ public final class Parser {
     }
 
     private void addVarDeclaredName(BindingIdentifier bindingIdentifier) {
-        String name = BoundName(bindingIdentifier);
+        Name name = BoundName(bindingIdentifier);
         addVarDeclaredName(bindingIdentifier, name);
     }
 
     private void addVarDeclaredName(BindingPattern bindingPattern) {
-        for (String name : BoundNames(bindingPattern)) {
+        for (Name name : BoundNames(bindingPattern)) {
             addVarDeclaredName(bindingPattern, name);
         }
     }
 
-    private void addVarDeclaredName(Binding binding, String name) {
+    private void addVarDeclaredName(Binding binding, Name name) {
         ScopeContext scope = context.scopeContext;
         if (!scope.addVarDeclaredName(name)) {
             reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
@@ -710,7 +849,7 @@ public final class Parser {
         for (ScopeContext parent; (parent = scope.parent) != null; scope = parent) {
             if (!parent.allowVarDeclaredName(name)) {
                 if (isEnabled(CompatibilityOption.CatchVarStatement)
-                        && scope.isForbiddenLexName(name)) {
+                        && parent instanceof CatchContext) {
                     continue;
                 }
                 reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
@@ -728,17 +867,17 @@ public final class Parser {
     }
 
     private void checkVarDeclaredName(BindingIdentifier bindingIdentifier) {
-        String name = BoundName(bindingIdentifier);
+        Name name = BoundName(bindingIdentifier);
         checkVarDeclaredName(bindingIdentifier, name);
     }
 
     private void checkVarDeclaredName(BindingPattern bindingPattern) {
-        for (String name : BoundNames(bindingPattern)) {
+        for (Name name : BoundNames(bindingPattern)) {
             checkVarDeclaredName(bindingPattern, name);
         }
     }
 
-    private void checkVarDeclaredName(Binding binding, String name) {
+    private void checkVarDeclaredName(Binding binding, Name name) {
         ScopeContext scope = context.scopeContext;
         for (ScopeContext parent; (parent = scope.parent) != null; scope = parent) {
             if (!parent.allowVarDeclaredName(name)) {
@@ -771,17 +910,17 @@ public final class Parser {
     }
 
     private void addLexDeclaredName(BindingIdentifier bindingIdentifier) {
-        String name = BoundName(bindingIdentifier);
+        Name name = BoundName(bindingIdentifier);
         addLexDeclaredName(bindingIdentifier, name);
     }
 
     private void addLexDeclaredName(BindingPattern bindingPattern) {
-        for (String name : BoundNames(bindingPattern)) {
+        for (Name name : BoundNames(bindingPattern)) {
             addLexDeclaredName(bindingPattern, name);
         }
     }
 
-    private void addLexDeclaredName(Binding binding, String name) {
+    private void addLexDeclaredName(Binding binding, Name name) {
         ScopeContext scope = context.scopeContext;
         if (!scope.addLexDeclaredName(name)) {
             reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
@@ -794,8 +933,8 @@ public final class Parser {
         }
     }
 
-    private HashSet<String> lexicalNames(List<Binding> bindings) {
-        HashSet<String> names = new HashSet<>();
+    private NameSet lexicalNames(List<Binding> bindings) {
+        NameSet names = new NameSet();
         for (Binding binding : bindings) {
             if (binding instanceof BindingIdentifier) {
                 names.add(BoundName((BindingIdentifier) binding));
@@ -807,30 +946,9 @@ public final class Parser {
         return names;
     }
 
-    private void removeLexDeclaredNames(List<Binding> bindings) {
-        for (Binding binding : bindings) {
-            removeLexDeclaredName(binding);
-        }
-    }
-
-    private void removeLexDeclaredName(Binding binding) {
-        HashSet<String> lexDeclaredNames = context.scopeContext.lexDeclaredNames;
-        if (binding instanceof BindingIdentifier) {
-            BindingIdentifier bindingIdentifier = (BindingIdentifier) binding;
-            String name = BoundName(bindingIdentifier);
-            lexDeclaredNames.remove(name);
-        } else {
-            assert binding instanceof BindingPattern;
-            BindingPattern bindingPattern = (BindingPattern) binding;
-            for (String name : BoundNames(bindingPattern)) {
-                lexDeclaredNames.remove(name);
-            }
-        }
-    }
-
-    private void addExportedBindings(long sourcePosition, List<String> bindings) {
-        for (String binding : bindings) {
-            addExportedBindings(sourcePosition, binding);
+    private void addExportedBindings(long sourcePosition, List<Name> bindings) {
+        for (Name binding : bindings) {
+            addExportedBindings(sourcePosition, binding.getIdentifier());
         }
     }
 
@@ -847,7 +965,7 @@ public final class Parser {
         context.modContext.addModuleRequest(moduleSpecifier);
     }
 
-    private void addLabel(long sourcePosition, HashSet<String> labelSet, String label) {
+    private void addLabel(long sourcePosition, LinkedHashSet<String> labelSet, String label) {
         if ((context.labelSet != null && context.labelSet.containsKey(label))
                 || !labelSet.add(label)) {
             reportSyntaxError(sourcePosition, Messages.Key.DuplicateLabel, label);
@@ -925,7 +1043,7 @@ public final class Parser {
     }
 
     private static void setFunctionName(BindingIdentifier identifier, Expression expr) {
-        setFunctionName(identifier.getName(), expr);
+        setFunctionName(identifier.getName().getIdentifier(), expr);
     }
 
     private static void setFunctionName(IdentifierReference identifier, Expression expr) {
@@ -963,9 +1081,7 @@ public final class Parser {
     }
 
     private void propagateNeedsArguments() {
-        assert context.kind == ContextKind.ArrowFunction
-                || context.kind == ContextKind.AsyncArrowFunction
-                || context.kind == ContextKind.GeneratorComprehension;
+        assert context.kind.isLexical();
         if (context.funContext.directEval || context.funContext.needsArguments) {
             ParseContext cx = context.findSuperContext();
             if (cx.kind.isFunction()) {
@@ -984,7 +1100,7 @@ public final class Parser {
 
     private static <T> List<T> merge(List<T> list1, List<T> list2) {
         if (!(list1.isEmpty() || list2.isEmpty())) {
-            List<T> merged = new ArrayList<>();
+            List<T> merged = new ArrayList<>(list1.size() + list2.size());
             merged.addAll(list1);
             merged.addAll(list2);
             return merged;
@@ -1079,7 +1195,7 @@ public final class Parser {
     private ParserEOFException reportEofError(long sourcePosition, Messages.Key messageKey,
             String... args) {
         int line = toLine(sourcePosition), column = toColumn(sourcePosition);
-        throw new ParserEOFException(sourceName, line, column, messageKey, args);
+        throw new ParserEOFException(getSourceName(), line, column, messageKey, args);
     }
 
     /**
@@ -1098,7 +1214,7 @@ public final class Parser {
     private ParserException reportError(ExceptionType type, long sourcePosition,
             Messages.Key messageKey, String... args) {
         int line = toLine(sourcePosition), column = toColumn(sourcePosition);
-        throw new ParserException(type, sourceName, line, column, messageKey, args);
+        throw new ParserException(type, getSourceName(), line, column, messageKey, args);
     }
 
     /**
@@ -1146,6 +1262,21 @@ public final class Parser {
     }
 
     /**
+     * Report syntax error from the node's begin source-position.
+     * 
+     * @param node
+     *            the node which could not be parsed without errors
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the parser exception
+     */
+    private ParserException reportSyntaxError(Node node, Messages.Key messageKey, Name name) {
+        throw reportSyntaxError(node.getBeginPosition(), messageKey, name.toString());
+    }
+
+    /**
      * Report (or store) strict-mode parser error with the given type and position.
      * 
      * @param type
@@ -1162,7 +1293,7 @@ public final class Parser {
         if (context.strictMode == StrictMode.Unknown) {
             if (context.strictError == null) {
                 int line = toLine(sourcePosition), column = toColumn(sourcePosition);
-                context.strictError = new ParserException(type, sourceName, line, column,
+                context.strictError = new ParserException(type, getSourceName(), line, column,
                         messageKey, args);
             }
         } else if (context.strictMode == StrictMode.Strict) {
@@ -1209,6 +1340,21 @@ public final class Parser {
      */
     void reportStrictModeSyntaxError(Messages.Key messageKey, String... args) {
         reportStrictModeError(ExceptionType.SyntaxError, ts.sourcePosition(), messageKey, args);
+    }
+
+    /**
+     * Report (or store) strict-mode syntax error from the node's source-position.
+     * 
+     * @param node
+     *            the node which could not be parsed without errors
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     */
+    private void reportStrictModeSyntaxError(Node node, Messages.Key messageKey, Name name) {
+        reportStrictModeError(ExceptionType.SyntaxError, node.getBeginPosition(), messageKey,
+                name.toString());
     }
 
     /**
@@ -1438,8 +1584,8 @@ public final class Parser {
         boolean strict = (context.strictMode == StrictMode.Strict);
 
         ScriptContext scope = context.scriptContext;
-        Script script = new Script(beginSource(), ts.endPosition(), sourceFile, sourceName, scope,
-                statements, options, parserOptions, strict);
+        Script script = new Script(beginSource(), ts.endPosition(), source, scope, statements,
+                options, parserOptions, strict);
         scope.node = script;
 
         return script;
@@ -1470,8 +1616,8 @@ public final class Parser {
             boolean strict = (context.strictMode == StrictMode.Strict);
 
             ScriptContext scope = context.scriptContext;
-            Script script = new Script(beginSource(), ts.endPosition(), sourceFile, sourceName,
-                    scope, statements, options, parserOptions, strict);
+            Script script = new Script(beginSource(), ts.endPosition(), source, scope, statements,
+                    options, parserOptions, strict);
             scope.node = script;
 
             return script;
@@ -1501,8 +1647,8 @@ public final class Parser {
             assert context.assertLiteralsUnchecked(0);
 
             ModuleContext scope = context.modContext;
-            Module module = new Module(beginSource(), ts.endPosition(), sourceName, scope,
-                    statements, options, parserOptions);
+            Module module = new Module(beginSource(), ts.endPosition(), source, scope, statements,
+                    options, parserOptions);
             scope.node = module;
 
             return module;
@@ -1717,7 +1863,7 @@ public final class Parser {
         BindingIdentifier localName;
         if (importSpecifierFollowSet(peek())) {
             BindingIdentifier binding = importedBinding();
-            importName = binding.getName();
+            importName = binding.getName().getIdentifier();
             localName = binding;
         } else {
             importName = identifierName();
@@ -2274,8 +2420,8 @@ public final class Parser {
         return bindingElement();
     }
 
-    private static String containsAny(HashSet<String> set, List<String> list) {
-        for (String element : list) {
+    private static Name containsAny(NameSet set, List<Name> list) {
+        for (Name element : list) {
             if (set.contains(element)) {
                 return element;
             }
@@ -2283,20 +2429,20 @@ public final class Parser {
         return null;
     }
 
-    private void checkFormalParameterRedeclaration(FunctionNode node, List<String> boundNames,
-            HashSet<String> declaredNames) {
+    private void checkFormalParameterRedeclaration(FunctionNode node, List<Name> boundNames,
+            NameSet declaredNames) {
         if (!(declaredNames == null || declaredNames.isEmpty())) {
-            String redeclared = containsAny(declaredNames, boundNames);
+            Name redeclared = containsAny(declaredNames, boundNames);
             if (redeclared != null) {
                 reportSyntaxError(node, Messages.Key.FormalParameterRedeclaration, redeclared);
             }
         }
     }
 
-    private static String findDuplicate(HashSet<String> set, List<String> list) {
+    private static Name findDuplicate(NameSet set, List<Name> list) {
         assert list.size() > set.size();
-        HashSet<String> copy = new HashSet<>(set);
-        for (String element : list) {
+        NameSet copy = new NameSet(set);
+        for (Name element : list) {
             if (!copy.remove(element)) {
                 return element;
             }
@@ -2305,20 +2451,20 @@ public final class Parser {
         return null;
     }
 
-    private void checkFormalParameterDuplication(FunctionNode node, List<String> boundNames,
-            HashSet<String> names) {
+    private void checkFormalParameterDuplication(FunctionNode node, List<Name> boundNames,
+            NameSet names) {
         boolean hasDuplicates = (boundNames.size() != names.size());
         if (hasDuplicates) {
-            String duplicate = findDuplicate(names, boundNames);
+            Name duplicate = findDuplicate(names, boundNames);
             reportSyntaxError(node, Messages.Key.DuplicateFormalParameter, duplicate);
         }
     }
 
-    private void checkFormalParameterDuplicationStrict(FunctionNode node, List<String> boundNames,
-            HashSet<String> names) {
+    private void checkFormalParameterDuplicationStrict(FunctionNode node, List<Name> boundNames,
+            NameSet names) {
         boolean hasDuplicates = (boundNames.size() != names.size());
         if (hasDuplicates) {
-            String duplicate = findDuplicate(names, boundNames);
+            Name duplicate = findDuplicate(names, boundNames);
             reportStrictModeSyntaxError(node, Messages.Key.DuplicateFormalParameter, duplicate);
         }
     }
@@ -2334,8 +2480,8 @@ public final class Parser {
 
         FunctionContext scope = context.funContext;
         FormalParameterList parameters = function.getParameters();
-        List<String> boundNames = BoundNames(parameters);
-        scope.parameterNames = new HashSet<>(boundNames);
+        List<Name> boundNames = BoundNames(parameters);
+        scope.parameterNames = new NameSet(boundNames);
 
         boolean strict = (context.strictMode != StrictMode.NonStrict);
         boolean simple = IsSimpleParameterList(parameters);
@@ -2359,8 +2505,8 @@ public final class Parser {
      * @param simple
      *            the flag to describe simple parameter lists
      */
-    private void strictFormalParameters_EarlyErrors(FunctionNode node, List<String> boundNames,
-            HashSet<String> names, boolean simple) {
+    private void strictFormalParameters_EarlyErrors(FunctionNode node, List<Name> boundNames,
+            NameSet names, boolean simple) {
         checkFormalParameterDuplicationStrict(node, boundNames, names);
         formalParameters_EarlyErrors(node, boundNames, names, simple);
     }
@@ -2377,8 +2523,8 @@ public final class Parser {
      * @param simple
      *            the flag to describe simple parameter lists
      */
-    private void formalParameters_EarlyErrors(FunctionNode node, List<String> boundNames,
-            HashSet<String> names, boolean simple) {
+    private void formalParameters_EarlyErrors(FunctionNode node, List<Name> boundNames,
+            NameSet names, boolean simple) {
         if (!simple) {
             checkFormalParameterDuplication(node, boundNames, names);
         }
@@ -2544,8 +2690,8 @@ public final class Parser {
 
         FunctionContext scope = context.funContext;
         FormalParameterList parameters = function.getParameters();
-        List<String> boundNames = BoundNames(parameters);
-        scope.parameterNames = new HashSet<>(boundNames);
+        List<Name> boundNames = BoundNames(parameters);
+        scope.parameterNames = new NameSet(boundNames);
 
         boolean simple = IsSimpleParameterList(parameters);
         checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
@@ -2806,8 +2952,8 @@ public final class Parser {
 
         FunctionContext scope = context.funContext;
         FormalParameterList parameters = method.getParameters();
-        List<String> boundNames = BoundNames(parameters);
-        scope.parameterNames = new HashSet<>(boundNames);
+        List<Name> boundNames = BoundNames(parameters);
+        scope.parameterNames = new NameSet(boundNames);
 
         boolean simple = IsSimpleParameterList(parameters);
         switch (method.getType()) {
@@ -2839,8 +2985,8 @@ public final class Parser {
      * @param names
      *            the set of names to validate
      */
-    private void propertySetParameterList_EarlyErrors(FunctionNode node, List<String> boundNames,
-            HashSet<String> names) {
+    private void propertySetParameterList_EarlyErrors(FunctionNode node, List<Name> boundNames,
+            NameSet names) {
         checkFormalParameterDuplication(node, boundNames, names);
     }
 
@@ -3019,8 +3165,8 @@ public final class Parser {
 
         FunctionContext scope = context.funContext;
         FormalParameterList parameters = generator.getParameters();
-        List<String> boundNames = BoundNames(parameters);
-        scope.parameterNames = new HashSet<>(boundNames);
+        List<Name> boundNames = BoundNames(parameters);
+        scope.parameterNames = new NameSet(boundNames);
 
         boolean strict = (context.strictMode != StrictMode.NonStrict);
         boolean simple = IsSimpleParameterList(parameters);
@@ -3315,7 +3461,7 @@ public final class Parser {
                 prototypeMethods.add(method);
             }
             if (className != null) {
-                method.setClassName(className.getName());
+                method.setClassName(className.getName().getIdentifier());
             }
             methods.add(method);
         }
@@ -3496,8 +3642,8 @@ public final class Parser {
 
         FunctionContext scope = context.funContext;
         FormalParameterList parameters = function.getParameters();
-        List<String> boundNames = BoundNames(parameters);
-        scope.parameterNames = new HashSet<>(boundNames);
+        List<Name> boundNames = BoundNames(parameters);
+        scope.parameterNames = new NameSet(boundNames);
 
         boolean strict = (context.strictMode != StrictMode.NonStrict);
         boolean simple = IsSimpleParameterList(parameters);
@@ -3619,8 +3765,8 @@ public final class Parser {
 
         FunctionContext scope = context.funContext;
         FormalParameterList parameters = function.getParameters();
-        List<String> boundNames = BoundNames(parameters);
-        scope.parameterNames = new HashSet<>(boundNames);
+        List<Name> boundNames = BoundNames(parameters);
+        scope.parameterNames = new NameSet(boundNames);
 
         boolean simple = IsSimpleParameterList(parameters);
         checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
@@ -3727,7 +3873,7 @@ public final class Parser {
     private Statement statement(boolean allowFunction) {
         switch (token()) {
         case LC:
-            return block(NO_INHERITED_BINDING, false);
+            return block(NO_INHERITED_BINDING);
         case VAR:
             return variableStatement();
         case SEMI:
@@ -3800,28 +3946,18 @@ public final class Parser {
      * 
      * @param inherited
      *            the list of inherited lexical bindings
-     * @param catchBlock
-     *            {@code true} if parsing a catch-node block statement
      * @return the parsed block statement
      */
-    private BlockStatement block(List<Binding> inherited, boolean catchBlock) {
+    private BlockStatement block(List<Binding> inherited) {
         long begin = ts.beginPosition();
         consume(Token.LC);
         BlockContext scope = enterBlockContext();
         if (!inherited.isEmpty()) {
-            if (catchBlock) {
-                scope.forbiddenLexNames = lexicalNames(inherited);
-            } else {
-                addLexDeclaredNames(inherited);
-            }
+            scope.forbiddenLexNames = lexicalNames(inherited);
         }
         List<StatementListItem> list = statementList(Token.RC);
         if (!inherited.isEmpty()) {
-            if (catchBlock) {
-                scope.forbiddenLexNames = null;
-            } else {
-                removeLexDeclaredNames(inherited);
-            }
+            scope.forbiddenLexNames = null;
         }
         exitBlockContext();
         consume(Token.RC);
@@ -5178,7 +5314,7 @@ public final class Parser {
             case FUNCTION:
                 if (isEnabled(CompatibilityOption.LabelledFunctionDeclaration)) {
                     assert !labelSet.isEmpty();
-                    return labelledFunctionStatement(allowFunction);
+                    return labelledFunctionStatement(labelSet, allowFunction);
                 }
                 break labels;
             case LET:
@@ -5234,7 +5370,8 @@ public final class Parser {
      *            {@code true} if labelled function statements are allowed
      * @return the labelled function statement
      */
-    private LabelledFunctionStatement labelledFunctionStatement(boolean allowFunction) {
+    private LabelledFunctionStatement labelledFunctionStatement(Set<String> labelSet,
+            boolean allowFunction) {
         if (!allowFunction) {
             reportSyntaxError(Messages.Key.InvalidToken, token().toString());
         } else if (context.strictMode != StrictMode.NonStrict) {
@@ -5242,7 +5379,7 @@ public final class Parser {
         }
         long begin = ts.beginPosition();
         Declaration function = functionDeclarationWithRetry(false);
-        return new LabelledFunctionStatement(begin, ts.endPosition(), function);
+        return new LabelledFunctionStatement(begin, ts.endPosition(), labelSet, function);
     }
 
     /**
@@ -5292,7 +5429,7 @@ public final class Parser {
         List<GuardedCatchNode> guardedCatchNodes = emptyList();
         long begin = ts.beginPosition();
         consume(Token.TRY);
-        tryBlock = block(NO_INHERITED_BINDING, false);
+        tryBlock = block(NO_INHERITED_BINDING);
         Token tok = token();
         if (tok == Token.CATCH) {
             if (isEnabled(CompatibilityOption.GuardedCatch)) {
@@ -5302,7 +5439,7 @@ public final class Parser {
                     consume(Token.CATCH);
                     consume(Token.LP);
                     Binding catchParameter = binding();
-                    BlockContext catchScope = enterBlockContext(catchParameter);
+                    CatchContext catchScope = enterCatchContext(catchParameter);
 
                     Expression guard;
                     if (token() == Token.IF) {
@@ -5318,9 +5455,9 @@ public final class Parser {
                     // fulfill the early error restriction that the BoundNames of CatchParameter
                     // must not also occur in either the LexicallyDeclaredNames or the
                     // VarDeclaredNames of CatchBlock
-                    BlockStatement catchBlock = block(singletonList(catchParameter), true);
+                    BlockStatement catchBlock = block(singletonList(catchParameter));
 
-                    exitBlockContext();
+                    exitCatchContext();
                     if (guard != null) {
                         GuardedCatchNode guardedCatchNode = new GuardedCatchNode(beginCatch,
                                 ts.endPosition(), catchScope, catchParameter, guard, catchBlock);
@@ -5337,16 +5474,16 @@ public final class Parser {
                 consume(Token.CATCH);
                 consume(Token.LP);
                 Binding catchParameter = binding();
-                BlockContext catchScope = enterBlockContext(catchParameter);
+                CatchContext catchScope = enterCatchContext(catchParameter);
                 consume(Token.RP);
 
                 // CatchBlock receives a list of non-available lexical declarable names to
                 // fulfill the early error restriction that the BoundNames of CatchParameter
                 // must not also occur in either the LexicallyDeclaredNames or the
                 // VarDeclaredNames of CatchBlock
-                BlockStatement catchBlock = block(singletonList(catchParameter), true);
+                BlockStatement catchBlock = block(singletonList(catchParameter));
 
-                exitBlockContext();
+                exitCatchContext();
                 catchNode = new CatchNode(beginCatch, ts.endPosition(), catchScope, catchParameter,
                         catchBlock);
                 catchScope.node = catchNode;
@@ -5354,11 +5491,11 @@ public final class Parser {
 
             if (token() == Token.FINALLY) {
                 consume(Token.FINALLY);
-                finallyBlock = block(NO_INHERITED_BINDING, false);
+                finallyBlock = block(NO_INHERITED_BINDING);
             }
         } else {
             consume(Token.FINALLY);
-            finallyBlock = block(NO_INHERITED_BINDING, false);
+            finallyBlock = block(NO_INHERITED_BINDING);
         }
 
         return new TryStatement(begin, ts.endPosition(), tryBlock, catchNode, guardedCatchNodes,
@@ -5416,7 +5553,7 @@ public final class Parser {
             return new ExpressionStatement(begin, ts.endPosition(), letExpression);
         } else {
             BlockContext scope = enterBlockContext(bindings);
-            BlockStatement letBlock = block(bindings, false);
+            BlockStatement letBlock = block(bindings);
             exitBlockContext();
 
             LetStatement block = new LetStatement(begin, ts.endPosition(), scope, lexicalBindings,
@@ -5449,7 +5586,6 @@ public final class Parser {
                 initializer = initializer(true);
             }
         }
-
         return new LexicalBinding(begin, ts.endPosition(), binding, initializer);
     }
 
@@ -5964,8 +6100,9 @@ public final class Parser {
     private SpreadElement arrowFunctionRestParameter() {
         long begin = ts.beginPosition();
         consume(Token.TRIPLE_DOT);
-        String ident = bindingIdentifierArrowRestParameter().getName();
-        IdentifierName identifier = new IdentifierName(ts.beginPosition(), ts.endPosition(), ident);
+        String ident = bindingIdentifierArrowRestParameter().getName().getIdentifier();
+        IdentifierReference identifier = new IdentifierReference(ts.beginPosition(),
+                ts.endPosition(), ident);
         SpreadElement spread = new SpreadElement(begin, ts.endPosition(), identifier);
         if (!(token() == Token.RP && LOOKAHEAD(Token.ARROW))) {
             reportSyntaxError(spread, Messages.Key.InvalidSpreadExpression);
@@ -6584,7 +6721,7 @@ public final class Parser {
             scope.node = generator;
 
             // generator comprehensions have no named parameters
-            scope.parameterNames = new HashSet<>();
+            scope.parameterNames = new NameSet();
 
             propagateNeedsArguments();
 
@@ -6629,7 +6766,7 @@ public final class Parser {
             scope.node = generator;
 
             // generator comprehensions have no named parameters
-            scope.parameterNames = new HashSet<>();
+            scope.parameterNames = new NameSet();
 
             propagateNeedsArguments();
 
@@ -6672,7 +6809,7 @@ public final class Parser {
      */
     private void regularExpressionLiteral_EarlyErrors(long sourcePos, String pattern, String flags) {
         // parse to validate regular expression, but ignore actual result
-        RegExpParser.parse(pattern, flags, sourceName, toLine(sourcePos), toColumn(sourcePos));
+        RegExpParser.parse(pattern, flags, getSourceName(), toLine(sourcePos), toColumn(sourcePos));
     }
 
     /**
@@ -7344,7 +7481,7 @@ public final class Parser {
         if (async) {
             return expr instanceof CallExpression
                     && ((CallExpression) expr).getBase() instanceof IdentifierReference
-                    && expr.getParentheses() == 0;
+                    && !expr.isParenthesized();
         }
         return expr instanceof IdentifierReference || expr.isParenthesized();
     }

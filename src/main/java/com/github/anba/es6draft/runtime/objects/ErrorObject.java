@@ -52,7 +52,7 @@ public final class ErrorObject extends OrdinaryObject {
         if (!(thread instanceof GeneratorThread)) {
             return Collections.emptyList();
         }
-        List<StackTraceElement[]> stackTraces = new ArrayList<>();
+        ArrayList<StackTraceElement[]> stackTraces = new ArrayList<>();
         do {
             thread = ((GeneratorThread) thread).getParent();
             stackTraces.add(thread.getStackTrace());

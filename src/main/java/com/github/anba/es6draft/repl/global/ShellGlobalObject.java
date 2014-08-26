@@ -34,6 +34,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
@@ -114,10 +115,9 @@ public abstract class ShellGlobalObject extends GlobalObject {
         return baseDir.resolve(script.getParent().resolve(file));
     }
 
-    protected final Path relativePathToScript(Path file) {
-        Script currentScript = getRealm().getScriptContext().getCurrentScript();
-        String sourceFile = currentScript.getScriptBody().sourceFile();
-        return baseDir.resolve(Paths.get(sourceFile).getParent().resolve(file));
+    protected final Path relativePathToScript(ExecutionContext caller, Path file) {
+        Source source = getRealm().sourceInfo(caller);
+        return baseDir.resolve(source.getFile().getParent().resolve(file));
     }
 
     /**
@@ -136,7 +136,8 @@ public abstract class ShellGlobalObject extends GlobalObject {
      */
     public void eval(Path fileName, Path file) throws IOException, ParserException,
             CompilationException {
-        Script script = getScriptLoader().script(fileName.toString(), 1, file);
+        Source source = new Source(file, fileName.toString(), 1);
+        Script script = getScriptLoader().script(source, file);
         Scripts.ScriptEvaluation(script, getRealm(), false);
     }
 

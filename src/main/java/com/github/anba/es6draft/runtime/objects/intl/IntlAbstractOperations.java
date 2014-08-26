@@ -846,7 +846,7 @@ public final class IntlAbstractOperations {
      */
     public static List<String> LookupSupportedLocales(ExecutionContext cx,
             Set<String> availableLocales, Set<String> requestedLocales) {
-        List<String> subset = new ArrayList<>();
+        ArrayList<String> subset = new ArrayList<>();
         for (String locale : requestedLocales) {
             String noExtensionsLocale = UnicodeLocaleExtSequence(locale)[0];
             String availableLocale = BestAvailableLocale(availableLocales, noExtensionsLocale);
@@ -872,7 +872,7 @@ public final class IntlAbstractOperations {
             Set<String> availableLocales, Set<String> requestedLocales) {
         LocaleMatcher matcher = CreateDefaultMatcher();
         Map<String, LocaleEntry> map = GetMaximizedLocales(matcher, availableLocales);
-        List<String> subset = new ArrayList<>();
+        ArrayList<String> subset = new ArrayList<>();
         for (String locale : requestedLocales) {
             String noExtensionsLocale = UnicodeLocaleExtSequence(locale)[0];
             Entry<String, Double> availableLocaleMatch = BestFitAvailableLocale(matcher, map,

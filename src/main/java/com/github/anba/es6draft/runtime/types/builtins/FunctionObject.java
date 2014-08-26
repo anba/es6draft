@@ -16,6 +16,8 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.compiler.CompiledScript;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -79,6 +81,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /** [[MethodName]] */
     private Object /* String|ExoticSymbol */methodName;
 
+    private Script script;
     private String source;
     private MethodHandle callMethod;
     private MethodHandle tailCallMethod;
@@ -277,7 +280,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         /* steps 4-6 */
         FunctionObject clone = allocateNew();
         if (isInitialized()) {
-            clone.initialize(getFunctionKind(), isStrict(), getCode(), getEnvironment());
+            clone.initialize(getFunctionKind(), isStrict(), getCode(), getEnvironment(),
+                    getScript());
         }
         /* step 7 */
         assert clone.isExtensible() : "cloned function not extensible";
@@ -340,11 +344,14 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      *            the function code
      * @param scope
      *            the function scope
+     * @param script
+     *            the script object
      */
     protected final void initialize(FunctionKind kind, boolean strict,
-            RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
+            RuntimeInfo.Function function, LexicalEnvironment<?> scope, Script script) {
         assert this.function == null && function != null : "function object already initialized";
         assert this.functionKind == kind : String.format("%s != %s", functionKind, kind);
+        assert script instanceof CompiledScript : "Script=" + script;
         /* step 6 */
         this.strict = strict;
         /* step 7 */
@@ -361,6 +368,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         } else {
             this.thisMode = ThisMode.Global;
         }
+        this.script = script;
     }
 
     /**
@@ -400,7 +408,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     protected boolean infallibleDefineOwnProperty(String propertyKey, PropertyDescriptor desc) {
-        // Similar to ordinaryDefineOwnProperty(), except infallible ordinaryGetOwnProperty() used.
+        // Same as ordinaryDefineOwnProperty(), except infallible ordinaryGetOwnProperty() is used.
         /* step 1 */
         Property current = ordinaryGetOwnProperty(propertyKey);
         /* step 2 */
@@ -489,6 +497,15 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      */
     public final RuntimeInfo.Function getCode() {
         return function;
+    }
+
+    /**
+     * Returns the script.
+     * 
+     * @return the script
+     */
+    public Script getScript() {
+        return script;
     }
 
     /**

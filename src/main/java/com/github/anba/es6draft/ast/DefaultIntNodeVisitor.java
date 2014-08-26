@@ -371,7 +371,7 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     @Override
     public int visit(IdentifierName node, V value) {
-        return visit((Expression) node, value);
+        return visit((Node) node, value);
     }
 
     @Override

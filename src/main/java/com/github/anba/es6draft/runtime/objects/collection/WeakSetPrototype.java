@@ -143,7 +143,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
             /* step 6 */
             WeakHashMap<ScriptObject, Boolean> entries = s.getWeakSetData();
             /* steps 7-8 */
-            return entries.remove(value);
+            return entries.remove(value) != null;
         }
 
         /**

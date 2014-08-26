@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -34,8 +33,23 @@ public final class SourceBuilder {
     private static final int MAX_STACK_DEPTH = 5;
     private static final int MAX_OBJECT_PROPERTIES = 30;
     private static final int MAX_ARRAY_PROPERTIES = 80;
+    private static final SourceBuilder INSTANCE = new SourceBuilder(false);
 
-    private SourceBuilder() {
+    private final boolean colored;
+    private final int maxStackDepth;
+    private final int maxObjectProperties;
+    private final int maxArrayProperties;
+
+    SourceBuilder(boolean colored) {
+        this(colored, MAX_STACK_DEPTH, MAX_OBJECT_PROPERTIES, MAX_ARRAY_PROPERTIES);
+    }
+
+    SourceBuilder(boolean colored, int maxStackDepth, int maxObjectProperties,
+            int maxArrayProperties) {
+        this.colored = colored;
+        this.maxStackDepth = maxStackDepth;
+        this.maxObjectProperties = maxObjectProperties;
+        this.maxArrayProperties = maxArrayProperties;
     }
 
     private enum AnsiAttribute {
@@ -77,8 +91,7 @@ public final class SourceBuilder {
         ;
         /* @formatter:on */
 
-        private final int on;
-        private final int off;
+        final int on, off;
 
         private Style(AnsiAttribute on, AnsiAttribute off) {
             this(on.code, off.code);
@@ -94,10 +107,6 @@ public final class SourceBuilder {
         }
     }
 
-    public enum Mode {
-        Simple, Color
-    }
-
     /**
      * Returns the simple mode, source representation for {@code val}.
      * 
@@ -108,27 +117,24 @@ public final class SourceBuilder {
      * @return the source representation of the value
      */
     public static String ToSource(ExecutionContext cx, Object val) {
-        return ToSource(Mode.Simple, cx, val);
+        return INSTANCE.toSource(cx, val);
     }
 
     /**
      * Returns the source representation for {@code val}.
      * 
-     * @param mode
-     *            the source representation mode
      * @param cx
      *            the execution context
      * @param val
      *            the value
      * @return the source representation of the value
      */
-    public static String ToSource(Mode mode, ExecutionContext cx, Object val) {
+    String toSource(ExecutionContext cx, Object val) {
         HashSet<ScriptObject> stack = new HashSet<>();
-        return toSource(mode, cx, stack, val);
+        return toSource(cx, stack, val);
     }
 
-    private static String toSource(Mode mode, ExecutionContext cx, Set<ScriptObject> stack,
-            Object value) {
+    private String toSource(ExecutionContext cx, HashSet<ScriptObject> stack, Object value) {
         if (Type.isObject(value)) {
             ScriptObject objValue = Type.objectValue(value);
             Object toSource = Get(cx, objValue, "toSource");
@@ -136,18 +142,18 @@ public final class SourceBuilder {
                 return ToFlatString(cx, ((Callable) toSource).call(cx, objValue));
             }
         }
-        return format(mode, source(mode, cx, stack, value), style(stack, value));
+        return format(source(cx, stack, value), style(stack, value));
     }
 
-    private static String format(Mode mode, String source, Style style) {
-        if (mode == Mode.Simple || style == null) {
+    private String format(String source, Style style) {
+        if (!colored || style == null) {
             return source;
         }
         return String.format("\u001B[%dm%s\u001B[%d;%dm", style.on, source,
                 AnsiAttribute.Reset.code, style.off);
     }
 
-    private static Style style(Set<ScriptObject> stack, Object value) {
+    private static Style style(HashSet<ScriptObject> stack, Object value) {
         switch (Type.of(value)) {
         case Undefined:
             return Style.Undefined;
@@ -179,8 +185,7 @@ public final class SourceBuilder {
         }
     }
 
-    private static String source(Mode mode, ExecutionContext cx, Set<ScriptObject> stack,
-            Object value) {
+    private String source(ExecutionContext cx, HashSet<ScriptObject> stack, Object value) {
         switch (Type.of(value)) {
         case Null:
             return "null";
@@ -197,7 +202,7 @@ public final class SourceBuilder {
             if (IsCallable(objValue)) {
                 return ((Callable) objValue).toSource(Callable.SourceSelector.Function);
             }
-            if (stack.contains(objValue) || stack.size() > MAX_STACK_DEPTH) {
+            if (stack.contains(objValue) || stack.size() > maxStackDepth) {
                 return "« ... »";
             }
             stack.add(objValue);
@@ -207,9 +212,9 @@ public final class SourceBuilder {
                 } else if (objValue instanceof RegExpObject) {
                     return RegExpPrototype.Properties.toString(cx, value).toString();
                 } else if (objValue instanceof ExoticArray) {
-                    return arrayToSource(mode, cx, stack, objValue);
+                    return arrayToSource(cx, stack, objValue);
                 } else {
-                    return objectToSource(mode, cx, stack, objValue);
+                    return objectToSource(cx, stack, objValue);
                 }
             } finally {
                 stack.remove(objValue);
@@ -223,20 +228,20 @@ public final class SourceBuilder {
     private static final Pattern namePattern = Pattern
             .compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*");
 
-    private static String propertyKeyToSource(Mode mode, Object key) {
+    private String propertyKeyToSource(Object key) {
         if (key instanceof String) {
             String s = (String) key;
             if (namePattern.matcher(s).matches()) {
                 return s;
             }
-            return format(mode, Strings.quote(s), Style.String);
+            return format(Strings.quote(s), Style.String);
         }
         assert key instanceof Symbol;
         String description = ((Symbol) key).getDescription();
         if (description == null) {
             description = "Symbol()";
         }
-        return format(mode, String.format("[%s]", description), Style.Symbol);
+        return format(String.format("[%s]", description), Style.Symbol);
     }
 
     private static Property getOwnProperty(ExecutionContext cx, ScriptObject object, Object key) {
@@ -251,7 +256,7 @@ public final class SourceBuilder {
         }
     }
 
-    private static String accessorToSource(Mode mode, Property accessor) {
+    private String accessorToSource(Property accessor) {
         String description;
         if (accessor.getGetter() != null && accessor.getSetter() != null) {
             description = "[Getter/Setter]";
@@ -262,28 +267,28 @@ public final class SourceBuilder {
         } else {
             description = "[]";
         }
-        return format(mode, description, Style.Special);
+        return format(description, Style.Special);
     }
 
-    private static String objectToSource(Mode mode, ExecutionContext cx, Set<ScriptObject> stack,
+    private String objectToSource(ExecutionContext cx, HashSet<ScriptObject> stack,
             ScriptObject object) {
         Iterator<?> keys = object.ownKeys(cx);
         if (!keys.hasNext()) {
             return "{}";
         }
         StringBuilder properties = new StringBuilder();
-        for (int i = 0; keys.hasNext() && i < MAX_OBJECT_PROPERTIES;) {
+        for (int i = 0; keys.hasNext() && i < maxObjectProperties;) {
             Object k = ToPropertyKey(cx, keys.next());
-            String key = propertyKeyToSource(mode, k);
+            String key = propertyKeyToSource(k);
             Property prop = getOwnProperty(cx, object, k);
             if (prop == null || !prop.isEnumerable()) {
                 continue;
             }
             String value;
             if (prop.isDataDescriptor()) {
-                value = toSource(mode, cx, stack, prop.getValue());
+                value = toSource(cx, stack, prop.getValue());
             } else {
-                value = accessorToSource(mode, prop);
+                value = accessorToSource(prop);
             }
             properties.append(", ").append(key).append(": ").append(value);
             i += 1;
@@ -295,16 +300,16 @@ public final class SourceBuilder {
         return properties.toString();
     }
 
-    private static String arrayToSource(Mode mode, ExecutionContext cx, Set<ScriptObject> stack,
+    private String arrayToSource(ExecutionContext cx, HashSet<ScriptObject> stack,
             ScriptObject array) {
         long len = ToUint32(cx, Get(cx, array, "length"));
         if (len <= 0) {
             return "[]";
         }
-        int viewLen = (int) Math.min(len, MAX_ARRAY_PROPERTIES);
+        int viewLen = (int) Math.min(len, maxArrayProperties);
         StringBuilder properties = new StringBuilder();
         for (int index = 0; index < viewLen; ++index) {
-            String value = toSource(mode, cx, stack, Get(cx, array, index));
+            String value = toSource(cx, stack, Get(cx, array, index));
             properties.append(", ").append(value);
         }
         if (viewLen < len) {

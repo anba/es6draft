@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -63,7 +62,7 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
     @Override
     public ErrorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object message = args.length > 0 ? args[0] : UNDEFINED;
+        Object message = argument(args, 0);
 
         /* step 1 (omitted) */
         /* steps 2-4 */

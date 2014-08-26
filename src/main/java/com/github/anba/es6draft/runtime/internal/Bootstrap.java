@@ -134,15 +134,15 @@ public final class Bootstrap {
         } else if (function instanceof NativeFunction) {
             MethodHandle mh = ((NativeFunction) function).getCallMethod();
             test = MethodHandles.insertArguments(testNativeFunctionMH, 1, mh);
-            target = MethodHandles.dropArguments(mh, 0, Callable.class, ExecutionContext.class);
+            target = MethodHandles.dropArguments(mh, 0, NativeFunction.class);
         } else if (function instanceof NativeTailCallFunction) {
             MethodHandle mh = ((NativeTailCallFunction) function).getCallMethod();
             test = MethodHandles.insertArguments(testNativeTailCallFunctionMH, 1, mh);
-            target = MethodHandles.dropArguments(mh, 0, Callable.class);
+            target = MethodHandles.dropArguments(mh, 0, NativeTailCallFunction.class);
         } else if (function instanceof NativeConstructor) {
             MethodHandle mh = ((NativeConstructor) function).getCallMethod();
             test = MethodHandles.insertArguments(testNativeConstructorMH, 1, mh);
-            target = MethodHandles.dropArguments(mh, 0, Callable.class, ExecutionContext.class);
+            target = MethodHandles.dropArguments(mh, 0, NativeConstructor.class);
         } else {
             target = test = null;
         }

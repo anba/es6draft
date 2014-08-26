@@ -18,6 +18,7 @@ import java.util.Set;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.BlockScope;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.runtime.internal.SmallArrayList;
 import com.github.anba.es6draft.runtime.modules.ExportEntry;
 import com.github.anba.es6draft.runtime.modules.ImportEntry;
@@ -71,12 +72,12 @@ public final class StaticSemantics {
      *            the binding node
      * @return the bound names
      */
-    public static List<String> BoundNames(Binding node) {
+    public static List<Name> BoundNames(Binding node) {
         if (node instanceof BindingIdentifier) {
             return singletonList(((BindingIdentifier) node).getName());
         }
         assert node instanceof BindingPattern;
-        return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
+        return node.accept(BoundNames.INSTANCE, new SmallArrayList<Name>());
     }
 
     /**
@@ -90,8 +91,8 @@ public final class StaticSemantics {
      *            the formal parameters list
      * @return the bound names
      */
-    public static List<String> BoundNames(FormalParameterList node) {
-        return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
+    public static List<Name> BoundNames(FormalParameterList node) {
+        return node.accept(BoundNames.INSTANCE, new SmallArrayList<Name>());
     }
 
     /**
@@ -107,8 +108,8 @@ public final class StaticSemantics {
      *            the declaration node
      * @return the bound names
      */
-    public static List<String> BoundNames(Declaration node) {
-        return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
+    public static List<Name> BoundNames(Declaration node) {
+        return node.accept(BoundNames.INSTANCE, new SmallArrayList<Name>());
     }
 
     /**
@@ -118,8 +119,8 @@ public final class StaticSemantics {
      *            the variable statement
      * @return the bound names
      */
-    public static List<String> BoundNames(VariableStatement node) {
-        return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
+    public static List<Name> BoundNames(VariableStatement node) {
+        return node.accept(BoundNames.INSTANCE, new SmallArrayList<Name>());
     }
 
     /**
@@ -129,8 +130,8 @@ public final class StaticSemantics {
      *            the import declaration
      * @return the bound names
      */
-    public static List<String> BoundNames(ImportDeclaration node) {
-        return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
+    public static List<Name> BoundNames(ImportDeclaration node) {
+        return node.accept(BoundNames.INSTANCE, new SmallArrayList<Name>());
     }
 
     /**
@@ -140,8 +141,8 @@ public final class StaticSemantics {
      *            the export declaration
      * @return the bound names
      */
-    public static List<String> BoundNames(ExportDeclaration node) {
-        return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
+    public static List<Name> BoundNames(ExportDeclaration node) {
+        return node.accept(BoundNames.INSTANCE, new SmallArrayList<Name>());
     }
 
     /**
@@ -268,7 +269,8 @@ public final class StaticSemantics {
         for (FormalParameter formal : formals) {
             if (formal instanceof BindingRestElement) {
                 break;
-            } else if (HasInitializer((BindingElement) formal)) {
+            }
+            if (HasInitializer((BindingElement) formal)) {
                 break;
             }
             count += 1;
@@ -481,9 +483,11 @@ public final class StaticSemantics {
         for (FormalParameter formal : formals) {
             if (formal instanceof BindingRestElement) {
                 return false;
-            } else if (HasInitializer((BindingElement) formal)) {
+            }
+            if (HasInitializer((BindingElement) formal)) {
                 return false;
-            } else if (((BindingElement) formal).getBinding() instanceof BindingPattern) {
+            }
+            if (((BindingElement) formal).getBinding() instanceof BindingPattern) {
                 return false;
             }
         }
@@ -556,11 +560,14 @@ public final class StaticSemantics {
                 return false;
             }
             return true;
-        } else if (lhs instanceof ElementAccessor) {
+        }
+        if (lhs instanceof ElementAccessor) {
             return true;
-        } else if (lhs instanceof PropertyAccessor) {
+        }
+        if (lhs instanceof PropertyAccessor) {
             return true;
-        } else if (lhs instanceof SuperExpression) {
+        }
+        if (lhs instanceof SuperExpression) {
             SuperExpression superExpr = (SuperExpression) lhs;
             if (superExpr.getType() == SuperExpression.Type.ElementAccessor
                     || superExpr.getType() == SuperExpression.Type.PropertyAccessor) {
@@ -625,7 +632,7 @@ public final class StaticSemantics {
      *            the block statement node
      * @return the set of lexically declared names
      */
-    public static Set<String> LexicallyDeclaredNames(BlockStatement node) {
+    public static Set<Name> LexicallyDeclaredNames(BlockStatement node) {
         return node.getScope().lexicallyDeclaredNames();
     }
 
@@ -636,7 +643,7 @@ public final class StaticSemantics {
      *            the switch statement node
      * @return the list of lexically scoped declarations
      */
-    public static Set<String> LexicallyDeclaredNames(SwitchStatement node) {
+    public static Set<Name> LexicallyDeclaredNames(SwitchStatement node) {
         return node.getScope().lexicallyDeclaredNames();
     }
 
@@ -647,7 +654,7 @@ public final class StaticSemantics {
      *            the block scope
      * @return the set of lexically declared names
      */
-    public static Set<String> LexicallyDeclaredNames(BlockScope scope) {
+    public static Set<Name> LexicallyDeclaredNames(BlockScope scope) {
         return scope.lexicallyDeclaredNames();
     }
 
@@ -662,7 +669,7 @@ public final class StaticSemantics {
      *            the script node
      * @return the set of lexically declared names
      */
-    public static Set<String> LexicallyDeclaredNames(FunctionNode node) {
+    public static Set<Name> LexicallyDeclaredNames(FunctionNode node) {
         return node.getScope().lexicallyDeclaredNames();
     }
 
@@ -673,7 +680,7 @@ public final class StaticSemantics {
      *            the script node
      * @return the set of lexically declared names
      */
-    public static Set<String> LexicallyDeclaredNames(Script node) {
+    public static Set<Name> LexicallyDeclaredNames(Script node) {
         return node.getScope().lexicallyDeclaredNames();
     }
 
@@ -693,7 +700,7 @@ public final class StaticSemantics {
      *            the function node
      * @return the set of variable declared names
      */
-    public static Set<String> VarDeclaredNames(FunctionNode node) {
+    public static Set<Name> VarDeclaredNames(FunctionNode node) {
         return node.getScope().varDeclaredNames();
     }
 
@@ -704,7 +711,7 @@ public final class StaticSemantics {
      *            the script node
      * @return the set of variable declared names
      */
-    public static Set<String> VarDeclaredNames(Script node) {
+    public static Set<Name> VarDeclaredNames(Script node) {
         return node.getScope().varDeclaredNames();
     }
 
@@ -741,8 +748,8 @@ public final class StaticSemantics {
      *            the module node
      * @return the set of declared names
      */
-    public static Set<String> DeclaredNames(Module node) {
-        HashSet<String> names = new HashSet<>();
+    public static Set<Name> DeclaredNames(Module node) {
+        HashSet<Name> names = new HashSet<>();
         names.addAll(LexicallyDeclaredNames(node));
         names.addAll(VarDeclaredNames(node));
         return names;
@@ -788,13 +795,15 @@ public final class StaticSemantics {
                     ExportEntriesForModule(exportDecl.getExportsClause(), null, entries);
                     break;
                 case Variable:
-                    for (String name : BoundNames(exportDecl.getVariableStatement())) {
-                        entries.add(new ExportEntry(null, null, name, name));
+                    for (Name name : BoundNames(exportDecl.getVariableStatement())) {
+                        String id = name.getIdentifier();
+                        entries.add(new ExportEntry(null, null, id, id));
                     }
                     break;
                 case Declaration:
-                    for (String name : BoundNames(exportDecl.getDeclaration())) {
-                        entries.add(new ExportEntry(null, null, name, name));
+                    for (Name name : BoundNames(exportDecl.getDeclaration())) {
+                        String id = name.getIdentifier();
+                        entries.add(new ExportEntry(null, null, id, id));
                     }
                     break;
                 case Default:
@@ -832,8 +841,8 @@ public final class StaticSemantics {
      *            the module node
      * @return the list of imported bindings
      */
-    public static List<String> ImportedBindings(Module node) {
-        ArrayList<String> bindings = new ArrayList<>();
+    public static List<Name> ImportedBindings(Module node) {
+        ArrayList<Name> bindings = new ArrayList<>();
         for (ModuleItem item : node.getStatements()) {
             if (item instanceof ImportDeclaration) {
                 item.accept(BoundNames.INSTANCE, bindings);
@@ -864,7 +873,7 @@ public final class StaticSemantics {
                 case ModuleImport: {
                     ModuleImport moduleImport = importDecl.getModuleImport();
                     String module = moduleImport.getModuleSpecifier();
-                    String localName = moduleImport.getImportedBinding().getName();
+                    String localName = moduleImport.getImportedBinding().getName().getIdentifier();
                     entries.add(new ImportEntry(module, "default", localName));
                     break;
                 }
@@ -891,12 +900,12 @@ public final class StaticSemantics {
     private static void ImportEntriesForModule(ImportClause node, String module,
             List<ImportEntry> entries) {
         if (node.getDefaultEntry() != null) {
-            String localName = node.getDefaultEntry().getName();
+            String localName = node.getDefaultEntry().getName().getIdentifier();
             entries.add(new ImportEntry(module, "default", localName));
         }
         for (ImportSpecifier specifier : node.getNamedImports()) {
             String importName = specifier.getImportName();
-            String localName = specifier.getLocalName().getName();
+            String localName = specifier.getLocalName().getName().getIdentifier();
             entries.add(new ImportEntry(module, importName, localName));
         }
     }
@@ -938,7 +947,7 @@ public final class StaticSemantics {
      *            the module node
      * @return the set of lexically declared names
      */
-    public static Set<String> LexicallyDeclaredNames(Module node) {
+    public static Set<Name> LexicallyDeclaredNames(Module node) {
         return node.getScope().lexicallyDeclaredNames();
     }
 
@@ -978,7 +987,7 @@ public final class StaticSemantics {
      *            the module node
      * @return the set of variable declared names
      */
-    public static Set<String> VarDeclaredNames(Module node) {
+    public static Set<Name> VarDeclaredNames(Module node) {
         return node.getScope().varDeclaredNames();
     }
 
@@ -1110,7 +1119,8 @@ public final class StaticSemantics {
         }
         if (IsTailCallExpression(expr)) {
             return singleton(expr);
-        } else if (expr instanceof ConditionalExpression || IsLogicalExpression(expr)) {
+        }
+        if (expr instanceof ConditionalExpression || IsLogicalExpression(expr)) {
             HashSet<Expression> tail = new HashSet<>(8);
             for (ArrayDeque<Expression> queue = new ArrayDeque<>(singleton(expr)); !queue.isEmpty();) {
                 Expression e = queue.remove();
@@ -1127,9 +1137,8 @@ public final class StaticSemantics {
                 }
             }
             return tail;
-        } else {
-            return emptySet();
         }
+        return emptySet();
     }
 
     private static boolean IsLogicalExpression(Expression expr) {
@@ -1146,8 +1155,6 @@ public final class StaticSemantics {
                 || (expr instanceof SuperExpression && ((SuperExpression) expr).getType() == SuperExpression.Type.CallExpression)
                 || expr instanceof NewExpression;
     }
-
-    //
 
     private static <T> T last(List<T> list) {
         assert !list.isEmpty();

@@ -187,7 +187,7 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
         public String call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof DateTimeFormatObject;
             ExecutionContext calleeContext = calleeContext();
-            Object date = args.length > 0 ? args[0] : UNDEFINED;
+            Object date = argument(args, 0);
             if (Type.isUndefined(date)) {
                 date = DateConstructor.Properties.now(calleeContext, null);
             }

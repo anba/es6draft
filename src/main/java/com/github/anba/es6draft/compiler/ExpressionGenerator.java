@@ -19,6 +19,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.ast.scope.TopLevelScope;
 import com.github.anba.es6draft.ast.scope.WithScope;
@@ -401,9 +402,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      * @param mv
      *            the expression visitor
      */
-    private void createMutableBinding(String name, boolean deletable, ExpressionVisitor mv) {
+    private void createMutableBinding(Name name, boolean deletable, ExpressionVisitor mv) {
         mv.dup();
-        mv.aconst(name);
+        mv.aconst(name.getIdentifier());
         mv.iconst(deletable);
         mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
     }
@@ -412,7 +413,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         return type == ValType.Reference && !(base instanceof IdentifierReference);
     }
 
-    private static boolean isEnclosedByWithStatement(String name, ExpressionVisitor mv) {
+    private static boolean isEnclosedByWithStatement(Name name, ExpressionVisitor mv) {
         for (Scope scope = mv.getScope();;) {
             if (scope instanceof WithScope) {
                 return true;
@@ -490,7 +491,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 EvaluateCallPropRef(call, lhs, type, arguments, mv);
             } else {
                 IdentifierReference ident = (IdentifierReference) base;
-                if (isEnclosedByWithStatement(ident.getName(), mv)) {
+                Name name = ident.toName();
+                if (isEnclosedByWithStatement(name, mv)) {
                     EvaluateCallWithIdentRef(call, ident, type, arguments, directEval, mv);
                 } else {
                     EvaluateCallIdentRef(call, ident, type, arguments, directEval, mv);
@@ -1019,7 +1021,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         if (elisionWidth != 0) {
             mv.iconst(elisionWidth);
             mv.add(Type.INT_TYPE);
-            elisionWidth = 0;
         }
     }
 
@@ -1952,7 +1953,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     @Override
     public ValType visit(ClassExpression node, ExpressionVisitor mv) {
         /* steps 1-2 */
-        String className = node.getName() != null ? node.getName().getName() : null;
+        String className = node.getName() != null ? node.getName().getName().getIdentifier() : null;
         /* steps 3-4 */
         ClassDefinitionEvaluation(node, className, mv);
         /* step 5 */
@@ -2207,7 +2208,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 mv.dup();
 
                 // stack: [env, envRec, envRec] -> [env, envRec, envRec]
-                for (String name : BoundNames(binding.getBinding())) {
+                for (Name name : BoundNames(binding.getBinding())) {
                     createMutableBinding(name, false, mv);
                 }
 

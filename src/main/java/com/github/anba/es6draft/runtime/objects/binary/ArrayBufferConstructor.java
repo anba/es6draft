@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -453,7 +452,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     @Override
     public ArrayBufferObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object length = args.length > 0 ? args[0] : UNDEFINED;
+        Object length = argument(args, 0);
         /* step 1 (omitted) */
         /* step 2 */
         if (!(thisValue instanceof ArrayBufferObject)) {

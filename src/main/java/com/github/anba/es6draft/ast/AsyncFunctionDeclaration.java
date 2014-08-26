@@ -56,7 +56,7 @@ public final class AsyncFunctionDeclaration extends Declaration implements Async
 
     @Override
     public String getFunctionName() {
-        return identifier.getName();
+        return identifier.getName().getIdentifier();
     }
 
     @Override

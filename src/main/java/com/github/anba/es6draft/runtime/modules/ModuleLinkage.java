@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.github.anba.es6draft.ast.Module;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
@@ -41,7 +42,7 @@ public final class ModuleLinkage {
     private final LexicalEnvironment<DeclarativeEnvironmentRecord> environment;
 
     /** [[LinkErrors]] */
-    private final List<ScriptException> linkErrors;
+    private final ArrayList<ScriptException> linkErrors;
 
     /** [[ExportDefinitions]] */
     private List<ExportDefinition> exportDefinitions;
@@ -100,7 +101,7 @@ public final class ModuleLinkage {
      * 
      * @return the set of the module's bound names
      */
-    public Set<String> getBoundNames() {
+    public Set<Name> getBoundNames() {
         assert body != null;
         return DeclaredNames(body);
     }

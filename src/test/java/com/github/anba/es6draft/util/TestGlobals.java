@@ -31,6 +31,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
@@ -112,7 +113,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
                 getCompilerOptions());
         ArrayList<Script> scripts = new ArrayList<>();
         for (String scriptName : toStrings(scriptNames)) {
-            Script script = scriptLoader.script(scriptName, 1,
+            Script script = scriptLoader.script(new Source(scriptName, 1),
                     Resources.resource(scriptName, basedir));
             scripts.add(script);
         }

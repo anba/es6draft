@@ -20,7 +20,7 @@ public interface BlockScope extends Scope {
      * 
      * @return the lexically declared names
      */
-    Set<String> lexicallyDeclaredNames();
+    Set<Name> lexicallyDeclaredNames();
 
     /**
      * Returns the list of lexically scoped declarations.

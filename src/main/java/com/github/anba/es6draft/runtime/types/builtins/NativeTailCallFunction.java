@@ -23,7 +23,7 @@ public final class NativeTailCallFunction extends BuiltinFunction {
     // (ExecutionContext, Object, Object[]) -> Object
     private final MethodHandle mh;
 
-    // (Object, Object[]) -> Object
+    // (ExecutionContext, Object, Object[]) -> Object
     private final MethodHandle tmh;
 
     /**
@@ -50,8 +50,6 @@ public final class NativeTailCallFunction extends BuiltinFunction {
     }
 
     private static MethodHandle tailCallAdapter(MethodHandle mh) {
-        mh = MethodHandles.dropArguments(mh, 0, ExecutionContext.class);
-
         MethodHandle result = TailCallInvocation.getTailCallHandler();
         result = MethodHandles.dropArguments(result, 2, Object.class, Object[].class);
         result = MethodHandles.foldArguments(result, mh);
@@ -87,7 +85,7 @@ public final class NativeTailCallFunction extends BuiltinFunction {
     @Override
     public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
             throws Throwable {
-        return tmh.invokeExact(thisValue, args);
+        return tmh.invokeExact(callerContext, thisValue, args);
     }
 
     @Override

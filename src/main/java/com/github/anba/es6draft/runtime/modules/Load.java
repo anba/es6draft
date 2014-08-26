@@ -62,7 +62,7 @@ public final class Load {
     private final String name;
 
     /** [[LinkSets]] */
-    private final List<LinkSet> linkSets;
+    private final ArrayList<LinkSet> linkSets;
 
     /** [[Metadata]] */
     private final Object metadata;
@@ -141,7 +141,7 @@ public final class Load {
      * @return the sorted list of link sets
      */
     public List<LinkSet> getSortedLinkSets() {
-        List<LinkSet> sorted = new ArrayList<>(linkSets);
+        ArrayList<LinkSet> sorted = new ArrayList<>(linkSets);
         Collections.sort(sorted, LinkSet.comparator());
         return sorted;
     }

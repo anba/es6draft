@@ -843,20 +843,26 @@ public final class Properties {
 
     private static <OWNER> MethodHandle getInstanceMethodHandle(ExecutionContext cx,
             Converter converter, MethodHandle unreflect, OWNER owner) {
-        final int fixedArguments = 0;
         // var-args collector flag is not preserved when applying method handle combinators
         boolean varargs = unreflect.isVarargsCollector();
-
         MethodHandle handle = unreflect.bindTo(owner);
+        boolean callerContext = isCallerSensitive(handle);
+        final int fixedArguments = callerContext ? 1 : 0;
+
         handle = bindContext(handle, cx);
-        handle = convertTypes(handle, fixedArguments, varargs, converter);
+        handle = convertArgumentsAndReturn(handle, fixedArguments, varargs, converter);
         handle = catchExceptions(handle, converter);
         handle = toCanonical(handle, fixedArguments, varargs, null);
-        handle = MethodHandles.dropArguments(handle, 0, Object.class);
+        if (!callerContext) {
+            handle = MethodHandles.dropArguments(handle, 0, ExecutionContext.class, Object.class);
+        } else {
+            handle = MethodHandles.dropArguments(handle, 1, Object.class);
+        }
 
-        assert handle.type().parameterCount() == 2;
-        assert handle.type().parameterType(0) == Object.class;
-        assert handle.type().parameterType(1) == Object[].class;
+        assert handle.type().parameterCount() == 3;
+        assert handle.type().parameterType(0) == ExecutionContext.class;
+        assert handle.type().parameterType(1) == Object.class;
+        assert handle.type().parameterType(2) == Object[].class;
         assert handle.type().returnType() == Object.class;
 
         return handle;
@@ -864,25 +870,25 @@ public final class Properties {
 
     private static MethodHandle getStaticMethodHandle(ExecutionContext cx, Converter converter,
             MethodHandle unreflect) {
-        final int fixedArguments = 1;
         // var-args collector flag is not preserved when applying method handle combinators
         boolean varargs = unreflect.isVarargsCollector();
-
         MethodHandle handle = unreflect;
+        boolean callerContext = isCallerSensitive(handle);
+        final int fixedArguments = callerContext ? 2 : 1;
+
         handle = bindContext(handle, cx);
-        if (handle.type().parameterCount() == 0) {
-            handle = MethodHandles.dropArguments(handle, 0, Object.class);
-        } else if (handle.type().parameterType(0) != Object.class) {
-            handle = MethodHandles.filterArguments(handle, 0,
-                    converter.filterFor(handle.type().parameterType(0)));
-        }
-        handle = convertTypes(handle, fixedArguments, varargs, converter);
+        handle = convertThis(handle, converter);
+        handle = convertArgumentsAndReturn(handle, fixedArguments, varargs, converter);
         handle = catchExceptions(handle, converter);
         handle = toCanonical(handle, fixedArguments, varargs, null);
+        if (!callerContext) {
+            handle = MethodHandles.dropArguments(handle, 0, ExecutionContext.class);
+        }
 
-        assert handle.type().parameterCount() == 2;
-        assert handle.type().parameterType(0) == Object.class;
-        assert handle.type().parameterType(1) == Object[].class;
+        assert handle.type().parameterCount() == 3;
+        assert handle.type().parameterType(0) == ExecutionContext.class;
+        assert handle.type().parameterType(1) == Object.class;
+        assert handle.type().parameterType(2) == Object[].class;
         assert handle.type().returnType() == Object.class;
 
         return handle;
@@ -896,7 +902,22 @@ public final class Properties {
         return handle;
     }
 
-    private static MethodHandle convertTypes(MethodHandle handle, int fixedArguments,
+    private static boolean isCallerSensitive(MethodHandle handle) {
+        MethodType type = handle.type();
+        return type.parameterCount() > 1 && ExecutionContext.class.equals(type.parameterType(1));
+    }
+
+    private static MethodHandle convertThis(MethodHandle handle, Converter converter) {
+        if (handle.type().parameterCount() == 0) {
+            handle = MethodHandles.dropArguments(handle, 0, Object.class);
+        } else if (handle.type().parameterType(0) != Object.class) {
+            handle = MethodHandles.filterArguments(handle, 0,
+                    converter.filterFor(handle.type().parameterType(0)));
+        }
+        return handle;
+    }
+
+    private static MethodHandle convertArgumentsAndReturn(MethodHandle handle, int fixedArguments,
             boolean varargs, Converter converter) {
         MethodType type = handle.type();
         int pcount = type.parameterCount();
@@ -933,25 +954,6 @@ public final class Properties {
         return MethodHandles.catchException(handle, Exception.class, thrower);
     }
 
-    private static MethodHandle getStaticMethodHandle(Lookup lookup, Method method)
-            throws IllegalAccessException {
-        // check: (ExecutionContext, Object, Object[]) -> Object
-        MethodHandle handle = lookup.unreflect(method);
-        switch (staticMethodKind(handle.type())) {
-        case ObjectArray:
-            // Already in (ExecutionContext, Object, Object[]) -> Object form
-            return handle;
-        case Spreader:
-            // Convert (ExecutionContext, Object, ...) -> Object handle
-            final int fixedArguments = 2;
-            boolean varargs = handle.isVarargsCollector();
-            return toCanonical(handle, fixedArguments, varargs, method);
-        case Invalid:
-        default:
-            throw new IllegalArgumentException(handle.toString());
-        }
-    }
-
     private static MethodHandle toCanonical(MethodHandle handle, int fixedArguments,
             boolean varargs, Method method) {
         MethodType type = handle.type();
@@ -962,6 +964,52 @@ public final class Properties {
         spreader = MethodHandles.insertArguments(spreader, 0, handle);
         spreader = MethodHandles.filterArguments(spreader, fixedArguments, filter);
         return spreader;
+    }
+
+    private static MethodHandle getStaticMethodHandle(Lookup lookup, Method method)
+            throws IllegalAccessException {
+        MethodHandle handle = lookup.unreflect(method);
+        MethodType type = handle.type();
+        Class<?>[] params = type.parameterArray();
+        int p = 0, pcount = type.parameterCount();
+        boolean callerContext = false;
+
+        // First three parameters are (ExecutionContext, ExecutionContext?, Object=ThisValue)
+        if (!(p < pcount && ExecutionContext.class.equals(params[p++]))) {
+            throw new IllegalArgumentException(type.toString());
+        }
+        if (p < pcount && ExecutionContext.class.equals(params[p])) {
+            callerContext = true;
+            p++;
+        }
+        if (!(p < pcount && Object.class.equals(params[p++]))) {
+            throw new IllegalArgumentException(type.toString());
+        }
+        // Always required to return Object (for now at least)
+        if (!Object.class.equals(type.returnType())) {
+            throw new IllegalArgumentException(type.toString());
+        }
+        // Collect remaining arguments into Object[]
+        if (!(p + 1 == pcount && Object[].class.equals(params[p]))) {
+            // Otherwise all trailing arguments need to be of type Object or Object[]
+            for (; p < pcount; ++p) {
+                if (Object.class.equals(params[p])) {
+                    continue;
+                }
+                if (p + 1 == pcount && Object[].class.equals(params[p])) {
+                    continue;
+                }
+                throw new IllegalArgumentException(type.toString());
+            }
+            // Convert to (ExecutionContext, Object, ...) -> Object handle
+            final int fixedArguments = callerContext ? 3 : 2;
+            boolean varargs = handle.isVarargsCollector();
+            handle = toCanonical(handle, fixedArguments, varargs, method);
+        }
+        if (!callerContext) {
+            handle = MethodHandles.dropArguments(handle, 1, ExecutionContext.class);
+        }
+        return handle;
     }
 
     private static MethodHandle getComputedValueMethodHandle(Lookup lookup, Method method)
@@ -1126,8 +1174,9 @@ public final class Properties {
         for (Entry<Function, MethodHandle> entry : layout.functions.entrySet()) {
             Function function = entry.getKey();
             String name = function.name();
+            MethodHandle mh = MethodHandles.insertArguments(entry.getValue(), 0, cx);
             NativeFunction fun = new NativeFunction(cx.getRealm(), name, function.arity(),
-                    function.nativeId(), MethodHandles.insertArguments(entry.getValue(), 0, cx));
+                    function.nativeId(), mh);
             defineProperty(cx, target, name, function.symbol(), function.attributes(), fun);
         }
     }
@@ -1137,8 +1186,9 @@ public final class Properties {
         for (Entry<Function, MethodHandle> entry : layout.tcfunctions.entrySet()) {
             Function function = entry.getKey();
             String name = function.name();
+            MethodHandle mh = MethodHandles.insertArguments(entry.getValue(), 0, cx);
             NativeTailCallFunction fun = new NativeTailCallFunction(cx.getRealm(), name,
-                    function.arity(), MethodHandles.insertArguments(entry.getValue(), 0, cx));
+                    function.arity(), mh);
             defineProperty(cx, target, name, function.symbol(), function.attributes(), fun);
         }
     }
@@ -1149,8 +1199,8 @@ public final class Properties {
         EnumMap<BuiltinSymbol, PropertyDescriptor> symbolProps = new EnumMap<>(BuiltinSymbol.class);
         for (Entry<Accessor, MethodHandle> entry : layout.accessors.entrySet()) {
             Accessor accessor = entry.getKey();
-            NativeFunction fun = createAccessor(cx, accessor,
-                    MethodHandles.insertArguments(entry.getValue(), 0, cx));
+            MethodHandle mh = MethodHandles.insertArguments(entry.getValue(), 0, cx);
+            NativeFunction fun = createAccessor(cx, accessor, mh);
             PropertyDescriptor desc = createAccessorDescriptor(accessor, stringProps, symbolProps);
             assert isCompatibleDescriptor(accessor, desc);
             if (accessor.type() == Accessor.Type.Getter) {
@@ -1196,41 +1246,6 @@ public final class Properties {
             resolvedValue = value;
         }
         return resolvedValue;
-    }
-
-    private enum StaticMethodKind {
-        Invalid, Spreader, ObjectArray
-    }
-
-    private static StaticMethodKind staticMethodKind(MethodType type) {
-        int pcount = type.parameterCount();
-        if (pcount < 2)
-            return StaticMethodKind.Invalid;
-        Class<?>[] params = type.parameterArray();
-        int p = 0;
-        // first two parameters are (ExecutionContext, Object=ThisValue)
-        if (!(ExecutionContext.class.equals(params[p++]) && Object.class.equals(params[p++]))) {
-            return StaticMethodKind.Invalid;
-        }
-        // always required to return Object (for now at least)
-        if (!Object.class.equals(type.returnType())) {
-            return StaticMethodKind.Invalid;
-        }
-        if (p + 1 == pcount && Object[].class.equals(params[p])) {
-            // (Realm, Object, Object[]) case
-            return StaticMethodKind.ObjectArray;
-        }
-        // otherwise all trailing arguments need to be of type Object or Object[]
-        for (; p < pcount; ++p) {
-            if (Object.class.equals(params[p])) {
-                continue;
-            }
-            if (p + 1 == pcount && Object[].class.equals(params[p])) {
-                continue;
-            }
-            return StaticMethodKind.Invalid;
-        }
-        return StaticMethodKind.Spreader;
     }
 
     private static Object[] methodDefaults(Method method, int fixedArguments, int actual) {

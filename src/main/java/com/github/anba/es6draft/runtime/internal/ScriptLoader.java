@@ -147,92 +147,44 @@ public final class ScriptLoader {
     /**
      * Parses the javascript script source.
      * 
-     * @param sourceName
-     *            the script source name
-     * @param sourceLine
-     *            the script start line
      * @param source
-     *            the source
+     *            the script source descriptor
+     * @param sourceCode
+     *            the source code
      * @return the parsed script node
      * @throws ParserException
      *             if the source contains any syntax errors
      */
-    public com.github.anba.es6draft.ast.Script parseScript(String sourceName, int sourceLine,
-            String source) throws ParserException {
-        Parser parser = new Parser(sourceName, sourceLine, options, parserOptions);
-        return parser.parseScript(source);
-    }
-
-    /**
-     * Parses the javascript script source.
-     * 
-     * @param sourceFile
-     *            the script source file
-     * @param sourceName
-     *            the script source name
-     * @param sourceLine
-     *            the script start line
-     * @param source
-     *            the source
-     * @return the parsed script node
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     */
-    public com.github.anba.es6draft.ast.Script parseScript(Path sourceFile, String sourceName,
-            int sourceLine, String source) throws ParserException {
-        Parser parser = new Parser(sourceFile, sourceName, sourceLine, options, parserOptions);
-        return parser.parseScript(source);
+    public com.github.anba.es6draft.ast.Script parseScript(Source source, String sourceCode)
+            throws ParserException {
+        Parser parser = new Parser(source, options, parserOptions);
+        return parser.parseScript(sourceCode);
     }
 
     /**
      * Parses the javascript module source.
      * 
-     * @param sourceName
-     *            the script source name
-     * @param sourceLine
-     *            the script start line
      * @param source
-     *            the source
+     *            the script source descriptor
+     * @param sourceCode
+     *            the source code
      * @return the parsed script node
      * @throws ParserException
      *             if the source contains any syntax errors
      */
-    public com.github.anba.es6draft.ast.Module parseModule(String sourceName, int sourceLine,
-            String source) throws ParserException {
-        Parser parser = new Parser(sourceName, sourceLine, options, parserOptions);
-        return parser.parseModule(source);
-    }
-
-    /**
-     * Parses the javascript module source.
-     * 
-     * @param sourceFile
-     *            the script source file
-     * @param sourceName
-     *            the script source name
-     * @param sourceLine
-     *            the script start line
-     * @param source
-     *            the source
-     * @return the parsed script node
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     */
-    public com.github.anba.es6draft.ast.Module parseModule(Path sourceFile, String sourceName,
-            int sourceLine, String source) throws ParserException {
-        Parser parser = new Parser(sourceFile, sourceName, sourceLine, options, parserOptions);
-        return parser.parseModule(source);
+    public com.github.anba.es6draft.ast.Module parseModule(Source source, String sourceCode)
+            throws ParserException {
+        Parser parser = new Parser(source, options, parserOptions);
+        return parser.parseModule(sourceCode);
     }
 
     /**
      * Parses and compiles the javascript eval-script.
      * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
      * @param source
-     *            the source string
+     *            the script source descriptor
+     * @param sourceCode
+     *            the source code
      * @param evalOptions
      *            the eval parser options
      * @return the compiled script
@@ -241,10 +193,10 @@ public final class ScriptLoader {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script evalScript(String sourceName, int sourceLine, String source,
-            EnumSet<Parser.Option> evalOptions) throws ParserException, CompilationException {
-        Parser parser = new Parser(sourceName, sourceLine, options, evalOptions);
-        com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(source);
+    public Script evalScript(Source source, String sourceCode, EnumSet<Parser.Option> evalOptions)
+            throws ParserException, CompilationException {
+        Parser parser = new Parser(source, options, evalOptions);
+        com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(sourceCode);
         if (parsedScript.getStatements().isEmpty()) {
             return null;
         }
@@ -254,10 +206,8 @@ public final class ScriptLoader {
     /**
      * Parses and compiles the javascript function.
      * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
+     * @param source
+     *            the script source descriptor
      * @param formals
      *            the formal parameters
      * @param bodyText
@@ -268,9 +218,9 @@ public final class ScriptLoader {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public CompiledFunction function(String sourceName, int sourceLine, String formals,
-            String bodyText) throws ParserException, CompilationException {
-        Parser parser = new Parser(sourceName, sourceLine, options, parserOptions);
+    public CompiledFunction function(Source source, String formals, String bodyText)
+            throws ParserException, CompilationException {
+        Parser parser = new Parser(source, options, parserOptions);
         FunctionDefinition functionDef = parser.parseFunction(formals, bodyText);
         return compile(functionDef, nextFunctionName());
     }
@@ -278,10 +228,8 @@ public final class ScriptLoader {
     /**
      * Parses and compiles the javascript generator function.
      * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
+     * @param source
+     *            the script source descriptor
      * @param formals
      *            the formal parameters
      * @param bodyText
@@ -292,9 +240,9 @@ public final class ScriptLoader {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public CompiledFunction generator(String sourceName, int sourceLine, String formals,
-            String bodyText) throws ParserException, CompilationException {
-        Parser parser = new Parser(sourceName, sourceLine, options, parserOptions);
+    public CompiledFunction generator(Source source, String formals, String bodyText)
+            throws ParserException, CompilationException {
+        Parser parser = new Parser(source, options, parserOptions);
         GeneratorDefinition generatorDef = parser.parseGenerator(formals, bodyText);
         return compile(generatorDef, nextFunctionName());
     }
@@ -302,10 +250,8 @@ public final class ScriptLoader {
     /**
      * Parses and compiles the javascript file.
      * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
+     * @param source
+     *            the script source descriptor
      * @param file
      *            the script file URL
      * @return the compiled script
@@ -316,18 +262,16 @@ public final class ScriptLoader {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script script(String sourceName, int sourceLine, URL file) throws IOException,
-            ParserException, CompilationException {
-        return script(sourceName, sourceLine, newReader(file.openStream()));
+    public Script script(Source source, URL file) throws IOException, ParserException,
+            CompilationException {
+        return script(source, newReader(file.openStream()));
     }
 
     /**
      * Parses and compiles the javascript file.
      * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
+     * @param source
+     *            the script source descriptor
      * @param stream
      *            the source
      * @return the compiled script
@@ -338,18 +282,16 @@ public final class ScriptLoader {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script script(String sourceName, int sourceLine, InputStream stream) throws IOException,
-            ParserException, CompilationException {
-        return script(sourceName, sourceLine, newReader(stream));
+    public Script script(Source source, InputStream stream) throws IOException, ParserException,
+            CompilationException {
+        return script(source, newReader(stream));
     }
 
     /**
      * Parses and compiles the javascript file.
      * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
+     * @param source
+     *            the script source descriptor
      * @param reader
      *            the source
      * @return the compiled script
@@ -360,45 +302,16 @@ public final class ScriptLoader {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script script(String sourceName, int sourceLine, Reader reader) throws IOException,
-            ParserException, CompilationException {
-        try (Reader r = reader) {
-            String source = readFully(reader);
-            com.github.anba.es6draft.ast.Script parsedScript = parseScript(sourceName, sourceLine,
-                    source);
-            return load(parsedScript, nextScriptName());
-        }
-    }
-
-    /**
-     * Parses and compiles the javascript file.
-     * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
-     * @param source
-     *            the source
-     * @return the compiled script
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
-     */
-    public Script script(String sourceName, int sourceLine, String source) throws ParserException,
+    public Script script(Source source, Reader reader) throws IOException, ParserException,
             CompilationException {
-        com.github.anba.es6draft.ast.Script parsedScript = parseScript(sourceName, sourceLine,
-                source);
-        return load(parsedScript, nextScriptName());
+        return script(source, readFully(reader));
     }
 
     /**
      * Parses and compiles the javascript file.
      * 
-     * @param sourceName
-     *            the source name
-     * @param sourceLine
-     *            the source start line number
+     * @param source
+     *            the script source descriptor
      * @param file
      *            the script file path
      * @return the compiled script
@@ -409,14 +322,30 @@ public final class ScriptLoader {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script script(String sourceName, int sourceLine, Path file) throws IOException,
-            ParserException, CompilationException {
+    public Script script(Source source, Path file) throws IOException, ParserException,
+            CompilationException {
         if (!file.isAbsolute()) {
             throw new IllegalArgumentException(String.format("'%s' is not an absolute path", file));
         }
-        String source = readFully(file);
-        com.github.anba.es6draft.ast.Script parsedScript = parseScript(file, sourceName,
-                sourceLine, source);
+        return script(source, readFully(file));
+    }
+
+    /**
+     * Parses and compiles the javascript file.
+     * 
+     * @param source
+     *            the script source descriptor
+     * @param sourceCode
+     *            the source code
+     * @return the compiled script
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
+     */
+    public Script script(Source source, String sourceCode) throws ParserException,
+            CompilationException {
+        com.github.anba.es6draft.ast.Script parsedScript = parseScript(source, sourceCode);
         return load(parsedScript, nextScriptName());
     }
 
@@ -563,12 +492,16 @@ public final class ScriptLoader {
     }
 
     private static String readFully(Reader reader) throws IOException {
-        StringBuilder sb = new StringBuilder(4096);
-        char cbuf[] = new char[4096];
-        for (int len; (len = reader.read(cbuf)) != -1;) {
-            sb.append(cbuf, 0, len);
+        try {
+            StringBuilder sb = new StringBuilder(4096);
+            char cbuf[] = new char[4096];
+            for (int len; (len = reader.read(cbuf)) != -1;) {
+                sb.append(cbuf, 0, len);
+            }
+            return sb.toString();
+        } finally {
+            reader.close();
         }
-        return sb.toString();
     }
 
     private static String readFully(Path p) throws IOException {

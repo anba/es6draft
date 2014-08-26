@@ -12,6 +12,7 @@ import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.FunctionScope;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 
@@ -21,12 +22,14 @@ import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 final class FunctionDeclarationCollector extends DefaultVoidNodeVisitor<Void> {
     private final ArrayList<FunctionDeclaration> declarations = new ArrayList<>();
     private final FunctionScope topScope;
+    private final boolean catchVar;
 
-    private FunctionDeclarationCollector(FunctionNode f) {
+    private FunctionDeclarationCollector(FunctionNode f, boolean catchVar) {
         topScope = f.getScope();
+        this.catchVar = catchVar;
     }
 
-    static List<FunctionDeclaration> functionDeclarations(FunctionNode f) {
+    static List<FunctionDeclaration> findFunctionDeclarations(FunctionNode f, boolean catchVar) {
         List<StatementListItem> statements = f.getStatements();
         if (statements == null) {
             assert (f instanceof ArrowFunction && ((ArrowFunction) f).getExpression() != null)
@@ -34,7 +37,7 @@ final class FunctionDeclarationCollector extends DefaultVoidNodeVisitor<Void> {
                     || f instanceof GeneratorComprehension;
             return Collections.emptyList();
         }
-        FunctionDeclarationCollector collector = new FunctionDeclarationCollector(f);
+        FunctionDeclarationCollector collector = new FunctionDeclarationCollector(f, catchVar);
         collector.forEach(statements, null);
         return collector.declarations;
     }
@@ -56,7 +59,7 @@ final class FunctionDeclarationCollector extends DefaultVoidNodeVisitor<Void> {
 
     @Override
     public void visit(FunctionDeclaration node, Void ignore) {
-        String name = node.getIdentifier().getName();
+        Name name = node.getIdentifier().getName();
         Scope enclosingScope = node.getScope().getEnclosingScope();
         FunctionScope topScope = this.topScope;
         if (enclosingScope == topScope) {
@@ -70,6 +73,11 @@ final class FunctionDeclarationCollector extends DefaultVoidNodeVisitor<Void> {
             // See 13.11.1 Static Semantics: Early Errors
             if (scope.isDeclared(name)) {
                 // Found a block scoped, lexical declaration - cannot declare function as var.
+                if (catchVar
+                        && (scope.getNode() instanceof CatchNode || scope.getNode() instanceof GuardedCatchNode)) {
+                    // Unless "B.3.5 VariableStatements in Catch blocks" applies
+                    continue;
+                }
                 return;
             }
         }

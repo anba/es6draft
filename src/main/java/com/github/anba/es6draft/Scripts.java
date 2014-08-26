@@ -40,14 +40,14 @@ public final class Scripts {
         RuntimeInfo.ScriptBody scriptBody = script.getScriptBody();
         /* step 3 */
         LexicalEnvironment<GlobalEnvironmentRecord> globalEnv = realm.getGlobalEnv();
-        /* steps 4-5 */
-        scriptBody.globalDeclarationInstantiation(realm.defaultContext(), globalEnv, globalEnv,
-                deletableBindings);
-        /* steps 6-10 */
+        /* steps 6-10 (moved) */
         ExecutionContext scriptCxt = newScriptExecutionContext(realm, script);
         ExecutionContext oldScriptContext = realm.getScriptContext();
         try {
             realm.setScriptContext(scriptCxt);
+            /* steps 4-5 */
+            scriptBody.globalDeclarationInstantiation(scriptCxt, globalEnv, globalEnv,
+                    deletableBindings);
             /* steps 11-16 */
             Object result = script.evaluate(scriptCxt);
             /* step 17 */

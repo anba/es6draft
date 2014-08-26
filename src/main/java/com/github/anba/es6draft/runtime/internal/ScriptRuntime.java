@@ -31,13 +31,13 @@ import java.util.Iterator;
 
 import org.mozilla.javascript.ConsString;
 
+import com.github.anba.es6draft.compiler.CompiledScript;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
@@ -344,11 +344,11 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the template call site object
      */
-    public static ExoticArray GetTemplateCallSite(String key, MethodHandle handle,
-            ExecutionContext cx) {
-        Realm realm = cx.getRealm();
+    public static ExoticArray GetTemplateCallSite(int key, MethodHandle handle, ExecutionContext cx) {
+        assert cx.getCurrentScript() instanceof CompiledScript : cx.getCurrentScript();
+        CompiledScript script = (CompiledScript) cx.getCurrentScript();
         /* step 1 */
-        ExoticArray callSite = realm.getTemplateCallSite(key);
+        ExoticArray callSite = script.getTemplateCallSite(key);
         if (callSite != null) {
             return callSite;
         }
@@ -375,7 +375,7 @@ public final class ScriptRuntime {
         siteObj.defineOwnProperty(cx, "raw", new PropertyDescriptor(rawObj, false, false, false));
         SetIntegrityLevel(cx, siteObj, IntegrityLevel.Frozen);
         /* step 12 */
-        realm.addTemplateCallSite(key, siteObj);
+        script.addTemplateCallSite(key, siteObj);
         /* step 13 */
         return siteObj;
     }
@@ -2463,6 +2463,7 @@ public final class ScriptRuntime {
     private static final MethodHandle DefaultConstructorMH, DefaultConstructorCallMH;
     private static final String DefaultConstructorSource;
     private static final int DefaultConstructorSourceBody;
+    private static final boolean DefaultConstructorArguments = false;
     static {
         MethodLookup lookup = new MethodLookup(MethodHandles.publicLookup());
         DefaultConstructorMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
@@ -2480,11 +2481,15 @@ public final class ScriptRuntime {
 
         envRec.createMutableBinding("args", false);
         envRec.initializeBinding("args", UNDEFINED);
-        envRec.createImmutableBinding("arguments");
+        if (DefaultConstructorArguments) {
+            envRec.createImmutableBinding("arguments");
+        }
 
         cx.resolveBinding("args", true).putValue(createRestArray(asList(args).iterator(), cx), cx);
 
-        envRec.initializeBinding("arguments", CreateUnmappedArgumentsObject(cx, args));
+        if (DefaultConstructorArguments) {
+            envRec.initializeBinding("arguments", CreateUnmappedArgumentsObject(cx, args));
+        }
     }
 
     public static Object DefaultConstructor(ExecutionContext cx) {
@@ -2510,6 +2515,7 @@ public final class ScriptRuntime {
     private static final MethodHandle DefaultEmptyConstructorMH, DefaultEmptyConstructorCallMH;
     private static final String DefaultEmptyConstructorSource;
     private static final int DefaultEmptyConstructorSourceBody;
+    private static final boolean DefaultEmptyConstructorArguments = false;
     static {
         MethodLookup lookup = new MethodLookup(MethodHandles.publicLookup());
         DefaultEmptyConstructorMH = lookup.findStatic(ScriptRuntime.class,
@@ -2526,10 +2532,11 @@ public final class ScriptRuntime {
 
     private static void DefaultEmptyConstructorInit(ExecutionContext cx, FunctionObject f,
             Object[] args) {
-        EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
-
-        envRec.createImmutableBinding("arguments");
-        envRec.initializeBinding("arguments", CreateUnmappedArgumentsObject(cx, args));
+        if (DefaultEmptyConstructorArguments) {
+            EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
+            envRec.createImmutableBinding("arguments");
+            envRec.initializeBinding("arguments", CreateUnmappedArgumentsObject(cx, args));
+        }
     }
 
     public static Object DefaultEmptyConstructor(ExecutionContext cx) {

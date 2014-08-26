@@ -1129,7 +1129,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      *            the match result
      * @return the match groups
      */
-    public static String[] groups(MatchResult matchResult) {
+    /*package*/static String[] groups(MatchResult matchResult) {
         return groups(matchResult, matchResult.groupCount());
     }
 

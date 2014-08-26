@@ -63,14 +63,14 @@ final class IntlDataTools {
         List<String> lines = Files.readAllLines(langSubtagReg, StandardCharsets.UTF_8);
         ArrayDeque<String> stack = new ArrayDeque<>(lines);
 
-        List<Record> language = new ArrayList<>();
-        List<Record> region = new ArrayList<>();
-        List<Record> grandfathered = new ArrayList<>();
-        List<Record> redundant = new ArrayList<>();
+        ArrayList<Record> language = new ArrayList<>();
+        ArrayList<Record> region = new ArrayList<>();
+        ArrayList<Record> grandfathered = new ArrayList<>();
+        ArrayList<Record> redundant = new ArrayList<>();
 
-        List<Record> extlang = new ArrayList<>();
-        List<Record> script = new ArrayList<>();
-        List<Record> variant = new ArrayList<>();
+        ArrayList<Record> extlang = new ArrayList<>();
+        ArrayList<Record> script = new ArrayList<>();
+        ArrayList<Record> variant = new ArrayList<>();
 
         // skip first two lines (file date + %% separator)
         stack.pop();

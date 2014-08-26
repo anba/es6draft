@@ -43,8 +43,8 @@ public final class AsyncAbstractOperations {
      * @return the new promise object
      */
     public static PromiseObject Spawn(ExecutionContext cx, OrdinaryAsyncFunction functionObject) {
-        GeneratorObject generator = ObjectCreate(cx,
-                cx.getIntrinsic(Intrinsics.GeneratorPrototype), GeneratorObjectAllocator.INSTANCE);
+        GeneratorObject generator = ObjectCreate(cx, Intrinsics.GeneratorPrototype,
+                GeneratorObjectAllocator.INSTANCE);
         GeneratorStart(cx, generator, functionObject.getCode());
         Callable executor = new SpawnExecutor(cx.getRealm(), generator);
         return PromiseNew(cx, executor);
@@ -83,8 +83,8 @@ public final class AsyncAbstractOperations {
         @Override
         public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object resolve = getArgument(args, 0);
-            Object reject = getArgument(args, 1);
+            Object resolve = argument(args, 0);
+            Object reject = argument(args, 1);
             assert IsCallable(resolve) : "resolve not callable";
             assert IsCallable(reject) : "reject not callable";
             InitialStep(calleeContext, generator, (Callable) resolve, (Callable) reject);
@@ -192,7 +192,7 @@ public final class AsyncAbstractOperations {
         @Override
         public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object value = getArgument(args, 0);
+            Object value = argument(args, 0);
             Step(calleeContext, asyncState, action, value);
             return UNDEFINED;
         }

@@ -6,13 +6,13 @@
  */
 package com.github.anba.es6draft.ast;
 
-import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.scope.ScriptScope;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.Source;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1>
@@ -21,8 +21,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
  * </ul>
  */
 public final class Script extends AstNode implements TopLevelNode<StatementListItem>, ScopedNode {
-    private final Path sourceFile;
-    private final String sourceName;
+    private final Source source;
     private final ScriptScope scope;
     private List<StatementListItem> statements;
     private final EnumSet<CompatibilityOption> options;
@@ -30,13 +29,11 @@ public final class Script extends AstNode implements TopLevelNode<StatementListI
     private final boolean strict;
     private boolean syntheticNodes;
 
-    public Script(long beginPosition, long endPosition, Path sourceFile, String sourceName,
-            ScriptScope scope, List<StatementListItem> statements,
-            EnumSet<CompatibilityOption> options, EnumSet<Parser.Option> parserOptions,
-            boolean strict) {
+    public Script(long beginPosition, long endPosition, Source source, ScriptScope scope,
+            List<StatementListItem> statements, EnumSet<CompatibilityOption> options,
+            EnumSet<Parser.Option> parserOptions, boolean strict) {
         super(beginPosition, endPosition);
-        this.sourceFile = sourceFile;
-        this.sourceName = sourceName;
+        this.source = source;
         this.scope = scope;
         this.statements = statements;
         this.options = options;
@@ -44,12 +41,8 @@ public final class Script extends AstNode implements TopLevelNode<StatementListI
         this.strict = strict;
     }
 
-    public Path getSourceFile() {
-        return sourceFile;
-    }
-
-    public String getSourceName() {
-        return sourceName;
+    public Source getSource() {
+        return source;
     }
 
     @Override

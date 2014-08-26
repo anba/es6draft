@@ -46,6 +46,12 @@ tests/generators/es6-syntax.js
 # ES6: SpiderMonkey bug 1022967
 tests/arguments/defaults-call-function.js
 
+# ES6: new WeakSet(1) -> implicit ToObject? (https://bugs.ecmascript.org/show_bug.cgi?id=3111)
+tests/collections/WeakSet-error.js
+
+# ES6: SpiderMonkey bug 1041341
+tests/basic/destructuring-rest.js
+
 
 ###################
 # Misc issues     #
@@ -388,6 +394,7 @@ tests/pic/watch2a.js
 tests/pic/watch3.js
 tests/pic/watch3a.js
 tests/pic/watch4.js
+tests/pic/watch5.js
 
 
 #######################################

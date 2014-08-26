@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.modules.Loader.CreateLoader;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static java.util.Arrays.asList;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -68,7 +67,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
     @Override
     public LoaderObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object options = args.length > 0 ? args[0] : UNDEFINED;
+        Object options = argument(args, 0);
         /* steps 2-3 */
         if (!(thisValue instanceof LoaderObject)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);

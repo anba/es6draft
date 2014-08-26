@@ -149,14 +149,14 @@ public enum CompatibilityOption {
     ExtendedPrecision,
 
     /**
-     * Moz-Extension: 8 and 9 in legacy octal integer literal are reported as errors
-     */
-    StrictLegacyOctalIntegerLiteral,
-
-    /**
      * Moz-Extension: Implicit strict functions include <tt>"use strict;"</tt> directive in source
      */
     ImplicitStrictDirective,
+
+    /**
+     * Moz-Extension: 8 and 9 in legacy octal integer literal are reported as errors
+     */
+    StrictLegacyOctalIntegerLiteral,
 
     /**
      * ES7-Extension: Async Function Definitions

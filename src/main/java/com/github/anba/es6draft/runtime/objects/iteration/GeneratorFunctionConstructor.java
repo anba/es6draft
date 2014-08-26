@@ -15,20 +15,21 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.M
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.SetFunctionName;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.FunctionAllocate;
 
+import java.util.Objects;
+
+import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.compiler.CompiledScript;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initializable;
-import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.*;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -96,11 +97,12 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         }
 
         /* steps 8-10 */
+        Source source = generatorSource(callerContext);
+        Script script = new GeneratorScript(source);
         RuntimeInfo.Function function;
         try {
             ScriptLoader scriptLoader = calleeContext.getRealm().getScriptLoader();
-            function = scriptLoader.generator("<GeneratorFunction>", 1, p.toString(), bodyText)
-                    .getFunction();
+            function = scriptLoader.generator(source, p.toString(), bodyText).getFunction();
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(calleeContext);
         }
@@ -127,7 +129,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
             throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
         /* steps 19-20 */
-        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, strict, function, scope);
+        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, strict, function, scope, script);
         /* step 21 */
         OrdinaryObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
         /* step 22 */
@@ -195,6 +197,70 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
             ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue, Intrinsics.Generator);
             /* step 4 */
             return FunctionAllocate(cx, proto, false, FunctionKind.Normal);
+        }
+    }
+
+    private Source generatorSource(ExecutionContext caller) {
+        Source baseSource = getRealm().sourceInfo(caller);
+        String sourceName;
+        if (baseSource != null) {
+            sourceName = String.format("<GeneratorFunction> (%s)", baseSource.getName());
+        } else {
+            sourceName = "<GeneratorFunction>";
+        }
+        return new Source(baseSource, sourceName, 1);
+    }
+
+    private static final class GeneratorScript extends CompiledScript {
+        protected GeneratorScript(Source source) {
+            super(new GeneratorScriptBody(source));
+        }
+    }
+
+    private static final class GeneratorScriptBody implements RuntimeInfo.ScriptBody {
+        private final Source source;
+
+        GeneratorScriptBody(Source source) {
+            this.source = source;
+        }
+
+        @Override
+        public String sourceName() {
+            return source.getName();
+        }
+
+        @Override
+        public String sourceFile() {
+            return Objects.toString(source.getFile(), null);
+        }
+
+        @Override
+        public boolean isStrict() {
+            throw new IllegalStateException();
+        }
+
+        @Override
+        public void globalDeclarationInstantiation(ExecutionContext cx,
+                LexicalEnvironment<GlobalEnvironmentRecord> globalEnv,
+                LexicalEnvironment<?> lexicalEnv, boolean deletableBindings) {
+            throw new IllegalStateException();
+        }
+
+        @Override
+        public void evalDeclarationInstantiation(ExecutionContext cx,
+                LexicalEnvironment<?> variableEnv, LexicalEnvironment<?> lexicalEnv,
+                boolean deletableBindings) {
+            throw new IllegalStateException();
+        }
+
+        @Override
+        public Object evaluate(ExecutionContext cx) {
+            throw new IllegalStateException();
+        }
+
+        @Override
+        public DebugInfo debugInfo() {
+            return null;
         }
     }
 }

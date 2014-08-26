@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ConstructTailC
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
+import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -146,11 +147,13 @@ public class OrdinaryFunction extends FunctionObject {
      *            the function code
      * @param scope
      *            the lexical environment
+     * @param script
+     *            the script object
      * @return the function object
      */
     /*package*/static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialize(FUNCTION f,
             FunctionKind kind, boolean strict, RuntimeInfo.Function function,
-            LexicalEnvironment<?> scope) {
+            LexicalEnvironment<?> scope, Script script) {
         /* step 1 */
         int len = function.expectedArgumentCount();
         /* step 2 (not applicable) */
@@ -161,7 +164,7 @@ public class OrdinaryFunction extends FunctionObject {
             f.addRestrictedFunctionProperties();
         }
         /* steps 6-12 */
-        f.initialize(kind, strict, function, scope);
+        f.initialize(kind, strict, function, scope, script);
         /* step 13 */
         return f;
     }
@@ -183,11 +186,13 @@ public class OrdinaryFunction extends FunctionObject {
      *            the function code
      * @param scope
      *            the lexical environment
+     * @param script
+     *            the script object
      * @return the function object
      */
     public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialize(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, boolean strict,
-            RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
+            RuntimeInfo.Function function, LexicalEnvironment<?> scope, Script script) {
         /* step 1 */
         int len = function.expectedArgumentCount();
         /* step 2 (not applicable) */
@@ -198,7 +203,7 @@ public class OrdinaryFunction extends FunctionObject {
             f.addRestrictedFunctionProperties(cx);
         }
         /* steps 6-12 */
-        f.initialize(kind, strict, function, scope);
+        f.initialize(kind, strict, function, scope, script);
         /* step 13 */
         return f;
     }
@@ -247,7 +252,8 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 2 */
         OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
-        return FunctionInitialize(f, kind, function.isStrict(), function, scope);
+        return FunctionInitialize(f, kind, function.isStrict(), function, scope,
+                cx.getCurrentScript());
     }
 
     /**

@@ -74,9 +74,10 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object value = args.length > 0 ? args[0] : UNDEFINED;
+        Object value = argument(args, 0);
         /* step 1 */
         if (Type.isUndefinedOrNull(value)) {
+            // TODO: spec issue - change to OrdinaryCreateFromConstructor()? (bug 3136)
             return ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
         }
         /* step 2 */
@@ -649,7 +650,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         /* steps 3-8 */
         Iterator<?> keys = obj.ownKeys(cx);
         /* step 9 */
-        List<String> nameList = new ArrayList<>();
+        ArrayList<String> nameList = new ArrayList<>();
         /* step 10 */
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());
@@ -676,7 +677,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         /* steps 3-8 */
         Iterator<?> keys = obj.ownKeys(cx);
         /* step 9 */
-        List<Symbol> nameList = new ArrayList<>();
+        ArrayList<Symbol> nameList = new ArrayList<>();
         /* step 10 */
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());

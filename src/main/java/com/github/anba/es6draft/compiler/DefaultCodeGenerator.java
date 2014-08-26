@@ -16,6 +16,7 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
@@ -1078,6 +1079,20 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         if (hasOwnName != null) {
             mv.mark(hasOwnName);
         }
+    }
+
+    /**
+     * stack: [function] {@literal ->} [function]
+     * 
+     * @param node
+     *            the function or class node
+     * @param name
+     *            the new function name
+     * @param mv
+     *            the expression visitor
+     */
+    protected static void SetFunctionName(Node node, Name name, ExpressionVisitor mv) {
+        SetFunctionName(node, name.getIdentifier(), mv);
     }
 
     /**

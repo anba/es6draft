@@ -9,7 +9,7 @@ package com.github.anba.es6draft.compiler;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 
 /**
- *
+ * Abstract base class for compiled functions.
  */
 public abstract class CompiledFunction {
     private final RuntimeInfo.Function function;
@@ -18,7 +18,12 @@ public abstract class CompiledFunction {
         this.function = function;
     }
 
-    public RuntimeInfo.Function getFunction() {
+    /**
+     * Returns the runtime information for this function.
+     * 
+     * @return the runtime information object
+     */
+    public final RuntimeInfo.Function getFunction() {
         return function;
     }
 }

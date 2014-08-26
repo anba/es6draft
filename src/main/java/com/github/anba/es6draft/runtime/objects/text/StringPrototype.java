@@ -722,7 +722,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             int len = requestedLocales.size();
             String requestedLocale = len > 0 ? requestedLocales.iterator().next()
                     : DefaultLocale(cx.getRealm());
-            Set<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
+            HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
             // FIXME: spec issue? spec should just call LookupSupportedLocales abstract operation..
             List<String> supportedLocales = LookupSupportedLocales(cx, availableLocales,
                     Collections.singleton(requestedLocale));
@@ -773,7 +773,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             int len = requestedLocales.size();
             String requestedLocale = len > 0 ? requestedLocales.iterator().next()
                     : DefaultLocale(cx.getRealm());
-            Set<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
+            HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
             // FIXME: spec issue? spec should just call LookupSupportedLocales abstract operation..
             List<String> supportedLocales = LookupSupportedLocales(cx, availableLocales,
                     Collections.singleton(requestedLocale));

@@ -15,11 +15,11 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.VarScopedDeclar
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
@@ -57,27 +57,27 @@ final class DeclarationBindingInstantiation {
         LexicalEnvironment<GlobalEnvironmentRecord> env = globalEnv;
         GlobalEnvironmentRecord envRec = env.getEnvRec();
 
-        for (String name : VarDeclaredNames(script)) {
-            if (envRec.hasLexicalDeclaration(name)) {
-                throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
+        for (Name name : VarDeclaredNames(script)) {
+            if (envRec.hasLexicalDeclaration(name.getIdentifier())) {
+                throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name.getIdentifier());
             }
         }
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
-        Set<String> declaredVarNames = new HashSet<>();
+        HashSet<Name> declaredVarNames = new HashSet<>();
         for (StatementListItem d : varDeclarations) {
             assert d instanceof VariableStatement;
-            for (String vn : BoundNames((VariableStatement) d)) {
-                boolean vnDefinable = envRec.canDeclareGlobalVar(vn);
+            for (Name vn : BoundNames((VariableStatement) d)) {
+                boolean vnDefinable = envRec.canDeclareGlobalVar(vn.getIdentifier());
                 if (!vnDefinable) {
-                    throw newTypeError(cx, Messages.Key.InvalidDeclaration, vn);
+                    throw newTypeError(cx, Messages.Key.InvalidDeclaration, vn.getIdentifier());
                 }
                 if (!declaredVarNames.contains(vn)) {
                     declaredVarNames.add(vn);
                 }
             }
         }
-        for (String vn : declaredVarNames) {
-            envRec.createGlobalVarBinding(vn, deletableBindings);
+        for (Name vn : declaredVarNames) {
+            envRec.createGlobalVarBinding(vn.getIdentifier(), deletableBindings);
         }
     }
 
@@ -104,12 +104,12 @@ final class DeclarationBindingInstantiation {
         // boolean strict = script.isStrict();
         for (StatementListItem d : VarScopedDeclarations(script)) {
             assert d instanceof VariableStatement;
-            for (String dn : BoundNames((VariableStatement) d)) {
-                boolean varAlreadyDeclared = envRec.hasBinding(dn);
+            for (Name dn : BoundNames((VariableStatement) d)) {
+                boolean varAlreadyDeclared = envRec.hasBinding(dn.getIdentifier());
                 if (!varAlreadyDeclared) {
-                    envRec.createMutableBinding(dn, deletableBindings);
+                    envRec.createMutableBinding(dn.getIdentifier(), deletableBindings);
                     // envRec.setMutableBinding(dn, UNDEFINED, strict);
-                    envRec.initializeBinding(dn, UNDEFINED);
+                    envRec.initializeBinding(dn.getIdentifier(), UNDEFINED);
                 }
             }
         }

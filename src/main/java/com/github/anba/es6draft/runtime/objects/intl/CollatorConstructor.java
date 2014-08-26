@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.*;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static java.util.Arrays.asList;
 
 import java.util.ArrayList;
@@ -176,7 +175,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
 
         private List<String> getCollationInfo() {
             String[] values = Collator.getKeywordValuesForLocale("collation", locale, false);
-            List<String> result = new ArrayList<>(values.length);
+            ArrayList<String> result = new ArrayList<>(values.length);
             result.add(null); // null must be first value, cf. 10.2.3
             for (int i = 0, len = values.length; i < len; ++i) {
                 CollationType type = CollationType.forName(values[i]);
@@ -331,8 +330,8 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object locales = args.length > 0 ? args[0] : UNDEFINED;
-        Object options = args.length > 1 ? args[1] : UNDEFINED;
+        Object locales = argument(args, 0);
+        Object options = argument(args, 1);
         if (Type.isUndefined(thisValue) || thisValue == calleeContext.getIntrinsic(Intrinsics.Intl)) {
             return construct(calleeContext, args);
         }
@@ -349,8 +348,8 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
      */
     @Override
     public CollatorObject construct(ExecutionContext callerContext, Object... args) {
-        Object locales = args.length > 0 ? args[0] : UNDEFINED;
-        Object options = args.length > 1 ? args[1] : UNDEFINED;
+        Object locales = argument(args, 0);
+        Object options = argument(args, 1);
         CollatorObject obj = new CollatorObject(callerContext.getRealm());
         obj.setPrototype(callerContext.getIntrinsic(Intrinsics.Intl_CollatorPrototype));
         InitializeCollator(callerContext, obj, locales, options);

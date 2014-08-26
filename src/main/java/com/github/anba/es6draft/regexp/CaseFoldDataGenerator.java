@@ -55,8 +55,8 @@ final class CaseFoldDataGenerator {
             int toUpper = Character.toUpperCase(codePoint);
             int caseFold = Character.toLowerCase(toUpper);
             int foldUpper = Character.toUpperCase(caseFold);
-            if (toUpper == caseFold) {
-                // skip if no case fold
+            if (toUpper == caseFold || !isCommonOrSimpleCaseFold(codePoint)) {
+                // skip if no case fold or neither common nor simple case fold
                 continue;
             }
             assert Character.toLowerCase(foldUpper) == caseFold;
@@ -75,8 +75,8 @@ final class CaseFoldDataGenerator {
             int toUpper = Character.toUpperCase(codePoint);
             int caseFold = Character.toLowerCase(toUpper);
             int foldUpper = Character.toUpperCase(caseFold);
-            if (toUpper == caseFold) {
-                // skip if no case fold
+            if (toUpper == caseFold || !isCommonOrSimpleCaseFold(codePoint)) {
+                // skip if no case fold or neither common nor simple case fold
                 continue;
             }
             assert Character.toLowerCase(foldUpper) == caseFold;
@@ -97,8 +97,8 @@ final class CaseFoldDataGenerator {
             int toUpper = Character.toUpperCase(codePoint);
             int caseFold = Character.toLowerCase(toUpper);
             int foldUpper = Character.toUpperCase(caseFold);
-            if (toUpper == caseFold) {
-                // skip if no case fold
+            if (toUpper == caseFold || !isCommonOrSimpleCaseFold(codePoint)) {
+                // skip if no case fold or neither common nor simple case fold
                 continue;
             }
             assert Character.toLowerCase(foldUpper) == caseFold;
@@ -109,6 +109,16 @@ final class CaseFoldDataGenerator {
                 addIfStatement1(code, codePoint, foldUpper);
                 addIfStatement1(code, foldUpper, toUpper);
             }
+        }
+    }
+
+    private static boolean isCommonOrSimpleCaseFold(int codePoint) {
+        switch (codePoint) {
+        case 0x0130:
+        case 0x0131:
+            return false;
+        default:
+            return true;
         }
     }
 
@@ -283,7 +293,7 @@ final class CaseFoldDataGenerator {
                     codePoint, 16);
 
             // check for duplicates
-            List<Integer> out = new ArrayList<>();
+            ArrayList<Integer> out = new ArrayList<>();
             out.add(codePoint);
             if (codePoint != toUpper) {
                 out.add(toUpper);

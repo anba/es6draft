@@ -44,13 +44,13 @@ public final class ModuleLinkingGroups {
         /* step 7 */
         List<List<Load>> dynamicGroups = newList(dynamicGroupCount);
         /* step 8 */
-        Set<String> visited = new HashSet<>();
+        HashSet<String> visited = new HashSet<>();
         /* step 9 */
         for (Load load : start) {
             BuildLinkageGroups(load, declarativeGroups, dynamicGroups, visited);
         }
         /* step 10 */
-        List<List<Load>> groups = new ArrayList<>();
+        ArrayList<List<Load>> groups = new ArrayList<>();
         /* step 11 */
         return groups;
     }
@@ -82,7 +82,7 @@ public final class ModuleLinkingGroups {
     }
 
     private static <T> List<List<T>> newList(int count) {
-        List<List<T>> list = new ArrayList<>(count);
+        ArrayList<List<T>> list = new ArrayList<>(count);
         for (int i = 0; i < count; ++i) {
             list.add(new ArrayList<T>());
         }

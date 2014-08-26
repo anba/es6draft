@@ -29,6 +29,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.objects.reflect.LoaderObject;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -149,9 +150,9 @@ public final class ModuleLoading {
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object resolve = args.length > 0 ? args[0] : UNDEFINED;
+            Object resolve = argument(args, 0);
             @SuppressWarnings("unused")
-            Object reject = args.length > 1 ? args[1] : UNDEFINED;
+            Object reject = argument(args, 1);
             /* step 1 */
             Loader loader = this.loader;
             /* step 2 */
@@ -202,7 +203,7 @@ public final class ModuleLoading {
         @Override
         public Load call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object nameArg = args.length > 0 ? args[0] : UNDEFINED;
+            Object nameArg = argument(args, 0);
             /* step 1 */
             Loader loader = this.loader;
             /* steps 2-3 */
@@ -356,7 +357,7 @@ public final class ModuleLoading {
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object address = args.length > 0 ? args[0] : UNDEFINED;
+            Object address = argument(args, 0);
             /* step 1 */
             Loader loader = this.loader;
             /* step 2 */
@@ -445,7 +446,7 @@ public final class ModuleLoading {
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object source = args.length > 0 ? args[0] : UNDEFINED;
+            Object source = argument(args, 0);
             /* step 1 */
             Loader loader = this.loader;
             /* step 2 */
@@ -499,7 +500,7 @@ public final class ModuleLoading {
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object source = args.length > 0 ? args[0] : UNDEFINED;
+            Object source = argument(args, 0);
             /* step 1 */
             Loader loader = this.loader;
             /* step 2 */
@@ -556,7 +557,7 @@ public final class ModuleLoading {
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object instantiateResult = args.length > 0 ? args[0] : UNDEFINED;
+            Object instantiateResult = argument(args, 0);
             /* step 1 */
             Loader loader = this.loader;
             /* step 2 */
@@ -572,7 +573,7 @@ public final class ModuleLoading {
                 Module body;
                 try {
                     body = calleeContext.getRealm().getScriptLoader()
-                            .parseModule("<module>", 1, load.getSource());
+                            .parseModule(new Source("<module>", 1), load.getSource());
                 } catch (ParserException e) {
                     throw e.toScriptException(calleeContext);
                 }
@@ -627,7 +628,7 @@ public final class ModuleLoading {
         @Override
         public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object exc = args.length > 0 ? args[0] : UNDEFINED;
+            Object exc = argument(args, 0);
             /* step 1 */
             Load load = this.load;
             /* steps 2-4 */
@@ -712,7 +713,7 @@ public final class ModuleLoading {
         public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             @SuppressWarnings("unused")
             ExecutionContext calleeContext = calleeContext();
-            Object depLoadArg = args.length > 0 ? args[0] : null;
+            Object depLoadArg = argument(args, 0, null);
             assert depLoadArg instanceof Load;
             Load depLoad = (Load) depLoadArg;
             /* step 1 */
@@ -852,8 +853,8 @@ public final class ModuleLoading {
         @Override
         public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object resolveArg = args.length > 0 ? args[0] : UNDEFINED;
-            Object rejectArg = args.length > 1 ? args[1] : UNDEFINED;
+            Object resolveArg = argument(args, 0);
+            Object rejectArg = argument(args, 1);
             assert IsCallable(resolveArg) && IsCallable(rejectArg);
             Callable resolve = (Callable) resolveArg;
             @SuppressWarnings("unused")
@@ -902,7 +903,7 @@ public final class ModuleLoading {
     // FIXME: missing definition in spec
     private static List<String> IterableToArray(ExecutionContext cx, Object iterable) {
         Iterator<?> iterator = FromScriptIterator(cx, GetIterator(cx, iterable));
-        List<String> array = new ArrayList<>();
+        ArrayList<String> array = new ArrayList<>();
         while (iterator.hasNext()) {
             Object value = iterator.next();
             array.add(ToFlatString(cx, value));

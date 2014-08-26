@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.objects.collection;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -63,7 +62,7 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
     @Override
     public SetObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object iterable = args.length > 0 ? args[0] : UNDEFINED;
+        Object iterable = argument(args, 0);
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {

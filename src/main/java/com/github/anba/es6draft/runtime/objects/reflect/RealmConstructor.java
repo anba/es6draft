@@ -70,15 +70,17 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
     /**
      * Abstract Operation: IndirectEval (realm, source)
      * 
+     * @param caller
+     *            the caller context
      * @param realm
      *            the realm instance
      * @param source
      *            the source string
      * @return the evaluation result
      */
-    public static Object IndirectEval(Realm realm, Object source) {
+    public static Object IndirectEval(ExecutionContext caller, Realm realm, Object source) {
         // TODO: not yet specified
-        return Eval.indirectEval(realm.defaultContext(), source);
+        return Eval.indirectEval(realm.defaultContext(), caller, source);
     }
 
     /**
@@ -102,8 +104,8 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         ScriptObject newGlobal;
         if (args.length != 0) {
             /* step 4 */
-            Object target = getArgument(args, 0);
-            Object handler = getArgument(args, 1);
+            Object target = argument(args, 0);
+            Object handler = argument(args, 1);
             newGlobal = ProxyCreate(calleeContext, target, handler);
         } else {
             /* step 5 */

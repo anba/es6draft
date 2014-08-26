@@ -22,6 +22,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.internal.TaskSource;
 import com.github.anba.es6draft.runtime.types.Callable;
 
@@ -137,19 +138,20 @@ public final class WindowTimers implements TaskSource {
 
     private final class ScriptedTimerTask extends TimerTask {
         private final ExecutionContext cx;
-        private final String source;
+        private final String sourceCode;
 
-        ScriptedTimerTask(long delay, boolean interval, ExecutionContext cx, String source) {
+        ScriptedTimerTask(long delay, boolean interval, ExecutionContext cx, String sourceCode) {
             super(delay, interval);
             this.cx = cx;
-            this.source = source;
+            this.sourceCode = sourceCode;
         }
 
         @Override
         protected void executeInner() {
+            Source source = new Source(cx.getRealm().sourceInfo(cx), "<Timer>", 1);
             Script script;
             try {
-                script = cx.getRealm().getScriptLoader().script("<Timer>", 1, source);
+                script = cx.getRealm().getScriptLoader().script(source, sourceCode);
             } catch (ParserException | CompilationException e) {
                 throw e.toScriptException(cx);
             }

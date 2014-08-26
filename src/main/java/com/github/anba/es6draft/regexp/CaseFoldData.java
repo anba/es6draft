@@ -223,6 +223,18 @@ final class CaseFoldData {
         parser.appendCharacter(0x1e9e);
     }
 
+    public static final boolean hasRestrictedUnicodeCaseFold(int codePoint) {
+        switch (codePoint) {
+        case 0x0049:
+        case 0x0069:
+        case 0x0130:
+        case 0x0131:
+            return true;
+        default:
+            return false;
+        }
+    }
+
     /*
      * !Generated method!
      */
@@ -234,12 +246,6 @@ final class CaseFoldData {
                 && !((startChar <= 0x039c && 0x039c <= endChar) || (startChar <= 0x03bc && 0x03bc <= endChar))) {
             parser.appendCharacter(0x039c);
             parser.appendCharacter(0x03bc);
-        }
-        if (startChar <= 0x0131
-                && 0x0131 <= endChar
-                && !((startChar <= 0x0049 && 0x0049 <= endChar) || (startChar <= 0x0069 && 0x0069 <= endChar))) {
-            parser.appendCharacter(0x0049);
-            parser.appendCharacter(0x0069);
         }
         if (startChar <= 0x017f
                 && 0x017f <= endChar
@@ -339,17 +345,6 @@ final class CaseFoldData {
         }
 
         // Type 2
-        if (startChar <= 0x0130
-                && 0x0130 <= endChar
-                && !((startChar <= 0x0049 && 0x0049 <= endChar) || (startChar <= 0x0069 && 0x0069 <= endChar))) {
-            parser.appendCharacter(0x0049);
-            parser.appendCharacter(0x0069);
-        }
-        if (startChar <= 0x0049
-                && 0x0049 <= endChar
-                && !((startChar <= 0x0130 && 0x0130 <= endChar) || (startChar <= 0x0069 && 0x0069 <= endChar))) {
-            parser.appendCharacter(0x0130);
-        }
         if (startChar <= 0x03f4
                 && 0x03f4 <= endChar
                 && !((startChar <= 0x0398 && 0x0398 <= endChar) || (startChar <= 0x03b8 && 0x03b8 <= endChar))) {

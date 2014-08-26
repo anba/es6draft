@@ -40,7 +40,7 @@ public interface TopLevelScope extends Scope {
      * 
      * @return the lexically declared names
      */
-    Set<String> lexicallyDeclaredNames();
+    Set<Name> lexicallyDeclaredNames();
 
     /**
      * Returns the list of lexically scoped declarations.
@@ -54,7 +54,7 @@ public interface TopLevelScope extends Scope {
      * 
      * @return the variables declared names
      */
-    Set<String> varDeclaredNames();
+    Set<Name> varDeclaredNames();
 
     /**
      * Returns the list of variable scoped declarations.

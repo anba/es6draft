@@ -19,6 +19,7 @@ import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.ast.LegacyGeneratorDeclaration;
 import com.github.anba.es6draft.ast.StatementListItem;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
@@ -104,7 +105,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void hasBinding(Variable<? extends EnvironmentRecord> envRec, String name,
+    protected void hasBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
             InstructionVisitor mv) {
         mv.load(envRec);
         hasBinding(name, mv);
@@ -120,8 +121,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void hasBinding(String name, InstructionVisitor mv) {
-        mv.aconst(name);
+    protected void hasBinding(Name name, InstructionVisitor mv) {
+        mv.aconst(name.getIdentifier());
         mv.invoke(Methods.EnvironmentRecord_hasBinding);
     }
 
@@ -139,7 +140,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void createMutableBinding(Variable<? extends EnvironmentRecord> envRec, String name,
+    protected void createMutableBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
             boolean deletable, InstructionVisitor mv) {
         mv.load(envRec);
         createMutableBinding(name, deletable, mv);
@@ -157,8 +158,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void createMutableBinding(String name, boolean deletable, InstructionVisitor mv) {
-        mv.aconst(name);
+    protected void createMutableBinding(Name name, boolean deletable, InstructionVisitor mv) {
+        mv.aconst(name.getIdentifier());
         mv.iconst(deletable);
         mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
     }
@@ -177,10 +178,10 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void createMutableBinding(Variable<? extends EnvironmentRecord> envRec, String name,
+    protected void createMutableBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
             Variable<Boolean> deletable, InstructionVisitor mv) {
         mv.load(envRec);
-        mv.aconst(name);
+        mv.aconst(name.getIdentifier());
         mv.load(deletable);
         mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
     }
@@ -198,7 +199,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     protected void createImmutableBinding(Variable<? extends EnvironmentRecord> envRec,
-            String name, InstructionVisitor mv) {
+            Name name, InstructionVisitor mv) {
         mv.load(envRec);
         createImmutableBinding(name, mv);
     }
@@ -213,8 +214,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void createImmutableBinding(String name, InstructionVisitor mv) {
-        mv.aconst(name);
+    protected void createImmutableBinding(Name name, InstructionVisitor mv) {
+        mv.aconst(name.getIdentifier());
         mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
     }
 
@@ -232,10 +233,10 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void initializeBinding(Variable<? extends EnvironmentRecord> envRec, String name,
+    protected void initializeBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
             Variable<?> value, InstructionVisitor mv) {
         mv.load(envRec);
-        mv.aconst(name);
+        mv.aconst(name.getIdentifier());
         mv.load(value);
         mv.invoke(Methods.EnvironmentRecord_initializeBinding);
     }
@@ -252,7 +253,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void initializeBinding(Variable<? extends EnvironmentRecord> envRec, String name,
+    protected void initializeBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
             InstructionVisitor mv) {
         mv.load(envRec);
         mv.swap();
@@ -269,8 +270,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void initializeBinding(String name, InstructionVisitor mv) {
-        mv.aconst(name);
+    protected void initializeBinding(Name name, InstructionVisitor mv) {
+        mv.aconst(name.getIdentifier());
         mv.swap();
         mv.invoke(Methods.EnvironmentRecord_initializeBinding);
     }
@@ -289,7 +290,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void setMutableBinding(Variable<? extends EnvironmentRecord> envRec, String name,
+    protected void setMutableBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
             boolean strict, InstructionVisitor mv) {
         mv.load(envRec);
         mv.swap();
@@ -308,8 +309,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void setMutableBinding(String name, boolean strict, InstructionVisitor mv) {
-        mv.aconst(name);
+    protected void setMutableBinding(Name name, boolean strict, InstructionVisitor mv) {
+        mv.aconst(name.getIdentifier());
         mv.swap();
         mv.iconst(strict);
         mv.invoke(Methods.EnvironmentRecord_setMutableBinding);
@@ -329,10 +330,10 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void getBindingValue(Variable<? extends EnvironmentRecord> envRec, String name,
+    protected void getBindingValue(Variable<? extends EnvironmentRecord> envRec, Name name,
             boolean strict, InstructionVisitor mv) {
         mv.load(envRec);
-        mv.aconst(name);
+        mv.aconst(name.getIdentifier());
         mv.iconst(strict);
         mv.invoke(Methods.EnvironmentRecord_getBindingValue);
     }
@@ -545,7 +546,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the function declaration node
      * @return the bound name of the function declaration
      */
-    protected static String BoundName(Declaration d) {
+    protected static Name BoundName(Declaration d) {
         return getFunctionName(d).getName();
     }
 

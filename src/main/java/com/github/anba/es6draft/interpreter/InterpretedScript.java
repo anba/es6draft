@@ -14,10 +14,10 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
  * 
  */
 public final class InterpretedScript implements Script {
-    private final RuntimeInfo.ScriptBody scriptBody;
+    private final InterpretedScriptBody scriptBody;
 
-    InterpretedScript(RuntimeInfo.ScriptBody scriptBody) {
-        this.scriptBody = scriptBody;
+    InterpretedScript(com.github.anba.es6draft.ast.Script parsedScript) {
+        this.scriptBody = new InterpretedScriptBody(parsedScript);
     }
 
     @Override

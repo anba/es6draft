@@ -34,6 +34,9 @@ feature/DefaultParameters/Error_SetAccessor.js
 # Wrong Array subclass in test case (Traceur limitation)
 feature/ArrayExtras/From.js
 
+# Destructuring boxing (rev27?)
+feature/Destructuring/ValueTypes.js
+
 
 ############################################
 # Implementation specific differences      #
@@ -78,9 +81,9 @@ feature/Classes/ClassNameBinding.js
 #######################################
 
 # module syntax
-feature/AsyncFunctions/Export.js
+feature/AsyncFunctions/Export.module.js
 feature/Syntax/Error_WithInModule.module.js
-feature/TemplateLiterals/InModule.js
+feature/TemplateLiterals/InModule.module.js
 
 # Type declaration syntax
 feature/Classes/Types.js

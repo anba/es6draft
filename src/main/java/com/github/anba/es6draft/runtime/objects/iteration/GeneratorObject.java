@@ -74,6 +74,16 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
+     * Returns {@code true} for legacy generator objects.
+     * 
+     * @return {@code true} if legacy generator object
+     */
+    public boolean isLegacyGenerator() {
+        return code != null
+                && RuntimeInfo.FunctionFlags.LegacyGenerator.isSet(code.functionFlags());
+    }
+
+    /**
      * Proceeds to the "suspendedYield" generator state.
      */
     private void suspend() {
@@ -324,9 +334,12 @@ public final class GeneratorObject extends OrdinaryObject {
             Object result;
             try {
                 result = evaluate(genObject.code.handle(), genObject.context, getResumptionPoint());
+            } catch (RuntimeException | Error e) {
+                genObject.close();
+                throw e;
             } catch (Throwable t) {
                 genObject.close();
-                throw t;
+                throw new RuntimeException(t);
             }
             if (result instanceof ResumptionPoint) {
                 genObject.suspend();
@@ -339,14 +352,9 @@ public final class GeneratorObject extends OrdinaryObject {
             return CreateIterResultObject(cx, result, true);
         }
 
-        private Object evaluate(MethodHandle handle, ExecutionContext cx, ResumptionPoint point) {
-            try {
-                return handle.invokeExact(cx, point);
-            } catch (RuntimeException | Error e) {
-                throw e;
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
+        private static Object evaluate(MethodHandle handle, ExecutionContext cx,
+                ResumptionPoint point) throws Throwable {
+            return handle.invokeExact(cx, point);
         }
     }
 
@@ -431,7 +439,7 @@ public final class GeneratorObject extends OrdinaryObject {
             });
         }
 
-        private Object evaluate(MethodHandle handle, ExecutionContext cx) throws Throwable {
+        private static Object evaluate(MethodHandle handle, ExecutionContext cx) throws Throwable {
             return handle.invokeExact(cx, (ResumptionPoint) null);
         }
 

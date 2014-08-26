@@ -63,7 +63,7 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
     @Override
     public Symbol call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object description = args.length > 0 ? args[0] : UNDEFINED;
+        Object description = argument(args, 0);
         /* steps 1-3 */
         String descString = Type.isUndefined(description) ? null : ToFlatString(calleeContext,
                 description);

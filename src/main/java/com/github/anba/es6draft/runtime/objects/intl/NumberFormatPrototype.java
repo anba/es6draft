@@ -181,7 +181,7 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
         public String call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof NumberFormatObject;
             ExecutionContext calleeContext = calleeContext();
-            Object value = args.length > 0 ? args[0] : UNDEFINED;
+            Object value = argument(args, 0);
             double x = ToNumber(calleeContext, value);
             return FormatNumber(calleeContext, (NumberFormatObject) thisValue, x);
         }

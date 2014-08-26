@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.*;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static java.util.Arrays.asList;
 
 import java.util.HashSet;
@@ -310,8 +309,8 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object locales = args.length > 0 ? args[0] : UNDEFINED;
-        Object options = args.length > 1 ? args[1] : UNDEFINED;
+        Object locales = argument(args, 0);
+        Object options = argument(args, 1);
         if (Type.isUndefined(thisValue) || thisValue == calleeContext.getIntrinsic(Intrinsics.Intl)) {
             return construct(calleeContext, args);
         }
@@ -328,8 +327,8 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
      */
     @Override
     public NumberFormatObject construct(ExecutionContext callerContext, Object... args) {
-        Object locales = args.length > 0 ? args[0] : UNDEFINED;
-        Object options = args.length > 1 ? args[1] : UNDEFINED;
+        Object locales = argument(args, 0);
+        Object options = argument(args, 1);
         NumberFormatObject obj = new NumberFormatObject(callerContext.getRealm());
         obj.setPrototype(callerContext.getIntrinsic(Intrinsics.Intl_NumberFormatPrototype));
         InitializeNumberFormat(callerContext, obj, locales, options);

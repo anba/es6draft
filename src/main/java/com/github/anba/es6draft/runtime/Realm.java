@@ -17,15 +17,17 @@ import java.security.SecureRandom;
 import java.text.Collator;
 import java.text.DecimalFormatSymbols;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Random;
 import java.util.TimeZone;
 
+import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.objects.*;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
@@ -75,7 +77,6 @@ import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.github.anba.es6draft.runtime.types.builtins.TypeErrorThrower;
 
@@ -138,12 +139,9 @@ public final class Realm {
 
     private final SecureRandom random = new SecureRandom();
 
-    // TODO: move into function source object
-    private final HashMap<String, ExoticArray> templateCallSites = new HashMap<>();
-
     private Realm(World<? extends GlobalObject> world) {
         this.world = world;
-        this.defaultContext = newScriptExecutionContext(this, null);
+        this.defaultContext = newScriptExecutionContext(this, new RealmScript());
         this.globalObject = world.getAllocator().newInstance(this);
         this.globalThis = world.getAllocator().newInstance(this); // TODO: yuk...
         this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
@@ -168,7 +166,7 @@ public final class Realm {
 
     private Realm(World<? extends GlobalObject> world, RealmObject realmObject) {
         this.world = world;
-        this.defaultContext = newScriptExecutionContext(this, null);
+        this.defaultContext = newScriptExecutionContext(this, new RealmScript());
         this.globalObject = world.getAllocator().newInstance(this);
         this.globalThis = ObjectCreate(defaultContext, (ScriptObject) null);
         this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
@@ -190,7 +188,7 @@ public final class Realm {
     private Realm(World<? extends GlobalObject> world, RealmObject realmObject,
             ScriptObject globalThis) {
         this.world = world;
-        this.defaultContext = newScriptExecutionContext(this, null);
+        this.defaultContext = newScriptExecutionContext(this, new RealmScript());
         this.globalObject = world.getAllocator().newInstance(this);
         this.globalThis = globalThis;
         this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
@@ -204,6 +202,48 @@ public final class Realm {
 
         // Store reference to built-in eval
         builtinEval = (Callable) Get(defaultContext, globalObject, "eval");
+    }
+
+    private static final class RealmScript implements Script {
+        @Override
+        public RuntimeInfo.ScriptBody getScriptBody() {
+            return null;
+        }
+
+        @Override
+        public Object evaluate(ExecutionContext cx) {
+            throw new IllegalStateException();
+        }
+    }
+
+    /**
+     * Returns the source info from the caller execution context. If no applicable source is
+     * attached to the caller context, the source from the most recent script execution on this
+     * realm is returned.
+     * 
+     * @param caller
+     *            the caller context
+     * @return the source info or {@code null} if not available
+     */
+    public Source sourceInfo(ExecutionContext caller) {
+        Script callerScript = caller.getCurrentScript();
+        if (hasSourceInfo(callerScript)) {
+            return RuntimeInfo.toSource(callerScript.getScriptBody());
+        }
+        ExecutionContext scriptContext = getScriptContext();
+        if (scriptContext != null) {
+            Script currentScript = scriptContext.getCurrentScript();
+            if (hasSourceInfo(currentScript)) {
+                return RuntimeInfo.toSource(currentScript.getScriptBody());
+            }
+        }
+        // Neither caller nor realm has source info available, return null
+        return null;
+    }
+
+    private static boolean hasSourceInfo(Script script) {
+        assert script == null || script.getScriptBody() != null || script instanceof RealmScript;
+        return script != null && script.getScriptBody() != null;
     }
 
     /**
@@ -450,29 +490,6 @@ public final class Realm {
      */
     public void enqueuePromiseTask(Task task) {
         world.enqueuePromiseTask(task);
-    }
-
-    /**
-     * Returns the template call-site object for {@code key}.
-     * 
-     * @param key
-     *            the template literal key
-     * @return the call-site object
-     */
-    public ExoticArray getTemplateCallSite(String key) {
-        return templateCallSites.get(key);
-    }
-
-    /**
-     * Stores the template call-site object.
-     * 
-     * @param key
-     *            the template literal key
-     * @param callSite
-     *            the call-site object
-     */
-    public void addTemplateCallSite(String key, ExoticArray callSite) {
-        templateCallSites.put(key, callSite);
     }
 
     /**

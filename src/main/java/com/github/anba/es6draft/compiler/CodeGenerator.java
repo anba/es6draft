@@ -8,13 +8,10 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 import static com.github.anba.es6draft.semantics.StaticSemantics.TemplateStrings;
-import static com.github.anba.es6draft.semantics.StaticSemantics.VarDeclaredNames;
 
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,8 +32,6 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
-import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
-import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord.Binding;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
@@ -60,26 +55,11 @@ final class CodeGenerator {
                 Types.CompiledScript, "<init>",
                 Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$ScriptBody));
 
-        // class: DeclarativeEnvironmentRecord
-        static final MethodDesc DeclarativeEnvironmentRecord_getBinding = MethodDesc.create(
-                MethodType.Virtual, Types.DeclarativeEnvironmentRecord, "getBinding",
-                Type.getMethodType(Types.DeclarativeEnvironmentRecord$Binding, Types.String));
-
-        // class: ExecutionContext
-        static final MethodDesc ExecutionContext_getVariableEnvironment = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "getVariableEnvironment",
-                Type.getMethodType(Types.LexicalEnvironment));
-
-        // class: LexicalEnvironment
-        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
-                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
-                Type.getMethodType(Types.EnvironmentRecord));
-
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_GetTemplateCallSite = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "GetTemplateCallSite", Type
-                        .getMethodType(Types.ExoticArray, Types.String, Types.MethodHandle,
-                                Types.ExecutionContext));
+                MethodType.Static, Types.ScriptRuntime, "GetTemplateCallSite", Type.getMethodType(
+                        Types.ExoticArray, Type.INT_TYPE, Types.MethodHandle,
+                        Types.ExecutionContext));
     }
 
     private static final class MethodDescriptors {
@@ -117,6 +97,7 @@ final class CodeGenerator {
         static final String FunctionNode_Init = Type.getMethodDescriptor(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.FunctionObject, Types.Object_);
         static final String FunctionNode_RTI = Type.getMethodDescriptor(Types.RuntimeInfo$Function);
+        static final String FunctionNode_DebugInfo = Type.getMethodDescriptor(Types.DebugInfo);
 
         static final String Script_Code = Type.getMethodDescriptor(Types.Object,
                 Types.ExecutionContext);
@@ -127,6 +108,7 @@ final class CodeGenerator {
                 Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
                 Type.BOOLEAN_TYPE);
         static final String Script_RTI = Type.getMethodDescriptor(Types.RuntimeInfo$ScriptBody);
+        static final String Script_DebugInfo = Type.getMethodDescriptor(Types.DebugInfo);
     }
 
     private static final boolean INCLUDE_SOURCE = true;
@@ -166,12 +148,12 @@ final class CodeGenerator {
     }
 
     // template strings
-    private final HashMap<TemplateLiteral, String> templateKeys = new HashMap<>();
+    private final HashMap<TemplateLiteral, Integer> templateKeys = new HashMap<>();
 
-    private String templateKey(TemplateLiteral template) {
-        String key = templateKeys.get(template);
+    private int templateKey(TemplateLiteral template) {
+        Integer key = templateKeys.get(template);
         if (key == null) {
-            templateKeys.put(template, key = UUID.randomUUID().toString());
+            templateKeys.put(template, key = templateKeys.size());
         }
         return key;
     }
@@ -179,11 +161,11 @@ final class CodeGenerator {
     /* ----------------------------------------------------------------------------------------- */
 
     enum ScriptName {
-        Code, Init, EvalInit, RTI
+        Code, Init, EvalInit, RTI, DebugInfo
     }
 
     enum FunctionName {
-        Call, Code, Init, RTI
+        Call, Code, Init, RTI, DebugInfo
     }
 
     /**
@@ -206,6 +188,8 @@ final class CodeGenerator {
             return "!script_evalinit";
         case RTI:
             return "!script_rti";
+        case DebugInfo:
+            return "!script_dbg";
         default:
             throw new IllegalStateException();
         }
@@ -222,7 +206,7 @@ final class CodeGenerator {
     private String methodName(TopLevelNode<?> topLevel, StatementListMethod node) {
         String baseName;
         if (topLevel instanceof FunctionNode) {
-            baseName = methodName((FunctionNode) topLevel, FunctionName.Call);
+            baseName = methodName((FunctionNode) topLevel, FunctionName.Code);
         } else {
             assert topLevel instanceof Script;
             baseName = methodName((Script) topLevel, ScriptName.Code);
@@ -276,6 +260,8 @@ final class CodeGenerator {
             return insertMarker("", fname, "_init");
         case RTI:
             return insertMarker("!", fname, "_rti");
+        case DebugInfo:
+            return insertMarker("!", fname, "_dbg");
         default:
             throw new IllegalStateException();
         }
@@ -354,6 +340,8 @@ final class CodeGenerator {
             return MethodDescriptors.FunctionNode_Init;
         case RTI:
             return MethodDescriptors.FunctionNode_RTI;
+        case DebugInfo:
+            return MethodDescriptors.FunctionNode_DebugInfo;
         default:
             throw new IllegalStateException();
         }
@@ -369,6 +357,8 @@ final class CodeGenerator {
             return MethodDescriptors.Script_EvalInit;
         case RTI:
             return MethodDescriptors.Script_RTI;
+        case DebugInfo:
+            return MethodDescriptors.Script_DebugInfo;
         default:
             throw new IllegalStateException();
         }
@@ -514,7 +504,7 @@ final class CodeGenerator {
         assert isCompiled(node);
 
         // GetTemplateCallSite
-        mv.aconst(templateKey(node));
+        mv.iconst(templateKey(node));
         mv.handle(methodDesc(node));
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_GetTemplateCallSite);
@@ -719,43 +709,6 @@ final class CodeGenerator {
         body.end();
 
         return body.hasTailCalls();
-    }
-
-    @SuppressWarnings("unused")
-    private void createVariableBindings(FunctionNode node, StatementVisitor body) {
-        if (node.getScope().isDynamic()) {
-            // Don't create bindings for non-strict functions with direct eval calls
-            return;
-        }
-        Set<String> varDeclaredNames = VarDeclaredNames(node);
-        Set<String> parameterNames = node.getScope().parameterNames();
-        int size = varDeclaredNames.size() + parameterNames.size();
-        if (size == 0 || size > 5) {
-            // Don't create more than five bindings
-            return;
-        }
-        HashMap<String, Variable<DeclarativeEnvironmentRecord.Binding>> variables = new HashMap<>();
-        body.loadExecutionContext();
-        body.invoke(Methods.ExecutionContext_getVariableEnvironment);
-        body.invoke(Methods.LexicalEnvironment_getEnvRec);
-        body.checkcast(Types.DeclarativeEnvironmentRecord);
-        for (String name : parameterNames) {
-            variables.put(name, createBinding(name, body));
-        }
-        for (String name : varDeclaredNames) {
-            variables.put(name, createBinding(name, body));
-        }
-        body.pop();
-        body.setVariables(variables);
-    }
-
-    private Variable<Binding> createBinding(String name, StatementVisitor body) {
-        Variable<Binding> variable = body.newVariable(name, Binding.class);
-        body.dup();
-        body.aconst(name);
-        body.invoke(Methods.DeclarativeEnvironmentRecord_getBinding);
-        body.store(variable);
-        return variable;
     }
 
     private boolean conciseAsyncFunctionBody(AsyncArrowFunction node) {

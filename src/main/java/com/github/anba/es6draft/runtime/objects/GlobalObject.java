@@ -168,6 +168,8 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          * 
          * @param cx
          *            the execution context
+         * @param caller
+         *            the caller context
          * @param thisValue
          *            the function this-value
          * @param args
@@ -175,8 +177,9 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          * @return the evaluation result
          */
         @Function(name = "eval", arity = 1)
-        public static Object eval(ExecutionContext cx, Object thisValue, Object... args) {
-            return indirectEval(cx, args);
+        public static Object eval(ExecutionContext cx, ExecutionContext caller, Object thisValue,
+                Object... args) {
+            return indirectEval(cx, caller, args);
         }
 
         /**

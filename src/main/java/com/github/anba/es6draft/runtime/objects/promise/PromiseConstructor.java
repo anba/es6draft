@@ -76,7 +76,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
     @Override
     public PromiseObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object executor = args.length > 0 ? args[0] : UNDEFINED;
+        Object executor = argument(args, 0);
         /* steps 2-3 */
         if (!(thisValue instanceof PromiseObject)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
@@ -445,7 +445,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object x = args.length > 0 ? args[0] : UNDEFINED;
+            Object x = argument(args, 0);
             /* steps 1-2 */
             if (!alreadyCalled.compareAndSet(false, true)) {
                 return UNDEFINED;

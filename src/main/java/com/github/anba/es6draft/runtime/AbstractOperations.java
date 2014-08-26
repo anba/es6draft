@@ -713,12 +713,12 @@ public final class AbstractOperations {
      */
     public static double CanonicalNumericIndexString(String value) {
         /* step 1 (not applicable) */
-        /* step 3 */
-        double n = ToNumber(value);
         /* step 2 */
-        if (n == 0 && Double.compare(n, -0d) == 0) {
+        if ("-0".equals(value)) {
             return Double.NEGATIVE_INFINITY;
         }
+        /* step 3 */
+        double n = ToNumber(value);
         // FIXME: spec issue https://bugs.ecmascript.org/show_bug.cgi?id=2049
         // FIXME: not resolved in rev26 - reopen bug report!
         /* step 4 */
@@ -3027,7 +3027,7 @@ public final class AbstractOperations {
     public static List<Object> GetOwnEnumerablePropertyKeys(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
         Iterator<?> keys = obj.ownKeys(cx);
-        List<Object> nameList = new ArrayList<>();
+        ArrayList<Object> nameList = new ArrayList<>();
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());
             Property desc;

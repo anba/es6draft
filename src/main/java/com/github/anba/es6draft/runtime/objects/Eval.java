@@ -23,6 +23,7 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Type;
 
@@ -83,11 +84,14 @@ public final class Eval {
      * 
      * @param cx
      *            the execution context
+     * @param caller
+     *            the caller context
      * @param arguments
      *            the arguments
      * @return the evaluation result
      */
-    public static Object indirectEval(ExecutionContext cx, Object... arguments) {
+    public static Object indirectEval(ExecutionContext cx, ExecutionContext caller,
+            Object... arguments) {
         Object source;
         Callable indirectEval = cx.getRealm().getIndirectEval();
         if (indirectEval != null) {
@@ -95,7 +99,7 @@ public final class Eval {
         } else {
             source = arguments.length > 0 ? arguments[0] : UNDEFINED;
         }
-        return indirectEval(cx, source);
+        return indirectEval(cx, caller, source);
     }
 
     /**
@@ -103,13 +107,16 @@ public final class Eval {
      * 
      * @param cx
      *            the execution context
+     * @param caller
+     *            the caller context
      * @param source
      *            the source string
      * @return the evaluation result
      */
-    public static Object indirectEval(ExecutionContext cx, Object source) {
+    public static Object indirectEval(ExecutionContext cx, ExecutionContext caller, Object source) {
         // TODO: let's assume for now that this is the no-hook entry point (probably rename method)
-        return eval(cx, source, EvalFlags.GlobalCode.getValue() | EvalFlags.GlobalScope.getValue());
+        return eval(cx, caller, source,
+                EvalFlags.GlobalCode.getValue() | EvalFlags.GlobalScope.getValue());
     }
 
     /**
@@ -133,10 +140,11 @@ public final class Eval {
         } else {
             source = arguments.length > 0 ? arguments[0] : UNDEFINED;
         }
-        return eval(cx, source, flags | EvalFlags.Direct.getValue());
+        return eval(cx, cx, source, flags | EvalFlags.Direct.getValue());
     }
 
-    private static Object eval(ExecutionContext cx, Object source, int flags) {
+    private static Object eval(ExecutionContext cx, ExecutionContext caller, Object source,
+            int flags) {
         boolean direct = EvalFlags.Direct.isSet(flags);
         boolean strictCaller = EvalFlags.Strict.isSet(flags);
         boolean globalCode = EvalFlags.GlobalCode.isSet(flags);
@@ -148,8 +156,8 @@ public final class Eval {
             return source;
         }
         /* step 2 */
-        Script script = script(cx, Type.stringValue(source), strictCaller, globalCode, direct,
-                globalScope, withStatement);
+        Script script = script(cx, caller, Type.stringValue(source), strictCaller, globalCode,
+                direct, globalScope, withStatement);
         /* step 3 */
         if (script == null) {
             return UNDEFINED;
@@ -207,10 +215,10 @@ public final class Eval {
             lexEnv = LexicalEnvironment.newDeclarativeEnvironment(lexEnv);
             // end-modification
         }
+        /* steps 17-20 (moved) */
+        ExecutionContext evalCxt = newEvalExecutionContext(cx, script, varEnv, lexEnv);
         /* steps 15-16 */
-        script.getScriptBody().evalDeclarationInstantiation(cx, varEnv, lexEnv, true);
-        /* steps 17-20 */
-        ExecutionContext evalCxt = newEvalExecutionContext(cx, varEnv, lexEnv);
+        script.getScriptBody().evalDeclarationInstantiation(evalCxt, varEnv, lexEnv, true);
         /* steps 21-25 */
         Object result = script.evaluate(evalCxt);
         /* step 26 */
@@ -244,18 +252,20 @@ public final class Eval {
         lexicalEnv = LexicalEnvironment.newDeclarativeEnvironment(lexicalEnv);
         // end-modification
 
+        /* steps 6-9 (moved) */
+        ExecutionContext progCxt = newEvalExecutionContext(cx, script, variableEnv, lexicalEnv);
         /* steps 4-5 */
-        scriptBody.globalDeclarationInstantiation(cx, variableEnv, lexicalEnv, deletableBindings);
-        /* steps 6-9 */
-        ExecutionContext progCxt = newEvalExecutionContext(cx, variableEnv, lexicalEnv);
+        scriptBody.globalDeclarationInstantiation(progCxt, variableEnv, lexicalEnv,
+                deletableBindings);
         /* steps 10-14 */
         Object result = script.evaluate(progCxt);
         /* step 15 */
         return result;
     }
 
-    private static Script script(ExecutionContext cx, CharSequence source, boolean strict,
-            boolean globalCode, boolean directEval, boolean globalScope, boolean withStatement) {
+    private static Script script(ExecutionContext cx, ExecutionContext caller,
+            CharSequence sourceCode, boolean strict, boolean globalCode, boolean directEval,
+            boolean globalScope, boolean withStatement) {
         try {
             Realm realm = cx.getRealm();
             EnumSet<Parser.Option> options = EnumSet.of(Parser.Option.EvalScript);
@@ -274,19 +284,21 @@ public final class Eval {
             if (withStatement) {
                 options.add(Parser.Option.EnclosedByWithStatement);
             }
-            String sourceName;
-            ExecutionContext scriptContext = cx.getRealm().getScriptContext();
-            if (scriptContext != null) {
-                Script currentScript = scriptContext.getCurrentScript();
-                sourceName = String.format("<eval> (%s)", currentScript.getScriptBody()
-                        .sourceFile());
-            } else {
-                // eval call crossing realm boundaries, include source file information here?
-                sourceName = "<eval>";
-            }
-            return realm.getScriptLoader().evalScript(sourceName, 1, source.toString(), options);
+            Source source = evalSource(realm, caller);
+            return realm.getScriptLoader().evalScript(source, sourceCode.toString(), options);
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         }
+    }
+
+    private static Source evalSource(Realm realm, ExecutionContext caller) {
+        Source baseSource = realm.sourceInfo(caller);
+        String sourceName;
+        if (baseSource != null) {
+            sourceName = String.format("<eval> (%s)", baseSource.getName());
+        } else {
+            sourceName = "<eval>";
+        }
+        return new Source(baseSource, sourceName, 1);
     }
 }

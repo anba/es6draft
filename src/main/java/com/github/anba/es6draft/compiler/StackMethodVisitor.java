@@ -17,7 +17,7 @@ import org.objectweb.asm.Type;
 import com.github.anba.es6draft.compiler.InstructionVisitor.VariablesView;
 
 /**
- * Basic stack type information tracking, complex control instructions are not supported
+ * Basic stack type information tracking, complex control instructions are not supported.
  */
 final class StackMethodVisitor extends MethodVisitor {
     private static final int MIN_STACK_SIZE = 8;

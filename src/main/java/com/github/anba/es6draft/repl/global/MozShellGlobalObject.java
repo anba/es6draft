@@ -29,6 +29,7 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -85,9 +86,9 @@ public class MozShellGlobalObject extends ShellGlobalObject {
         includeNative(getScriptURL(LEGACY_SCRIPT));
     }
 
-    private Object evaluate(Realm realm, String source, String sourceName, int sourceLine) {
+    private Object evaluate(Realm realm, Source source, String sourceCode) {
         try {
-            Script script = getScriptLoader().script(sourceName, sourceLine, source);
+            Script script = getScriptLoader().script(source, sourceCode);
             return Scripts.ScriptEvaluation(script, realm, false);
         } catch (ParserException | CompilationException e) {
             // create a script exception from the requested code realm, not from the caller's realm!
@@ -100,14 +101,16 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * 
      * @param cx
      *            the execution context
+     * @param caller
+     *            the caller execution context
      * @param filename
      *            the file path
      * @return the result value
      *
      **/
     @Function(name = "loadRelativeToScript", arity = 1)
-    public Object loadRelativeToScript(ExecutionContext cx, String filename) {
-        return load(cx, Paths.get(filename), relativePathToScript(Paths.get(filename)));
+    public Object loadRelativeToScript(ExecutionContext cx, ExecutionContext caller, String filename) {
+        return load(cx, Paths.get(filename), relativePathToScript(caller, Paths.get(filename)));
     }
 
     /**
@@ -115,6 +118,8 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      *
      * @param cx
      *            the execution context
+     * @param caller
+     *            the caller context
      * @param code
      *            the source code to evaluate
      * @param options
@@ -122,12 +127,12 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @return the eval result value
      **/
     @Function(name = "evaluate", arity = 2)
-    public Object evaluate(ExecutionContext cx, Object code, Object options) {
+    public Object evaluate(ExecutionContext cx, ExecutionContext caller, Object code, Object options) {
         if (!(Type.isString(code) && (Type.isUndefined(options) || Type.isObject(options)))) {
             throw newError(cx, "invalid arguments");
         }
 
-        String source = Type.stringValue(code).toString();
+        String sourceCode = Type.stringValue(code).toString();
         String sourceName = "@evaluate";
         int sourceLine = 1;
         boolean noScriptRval = false;
@@ -157,7 +162,8 @@ public class MozShellGlobalObject extends ShellGlobalObject {
         }
 
         try {
-            Object result = evaluate(global.getRealm(), source, sourceName, sourceLine);
+            Source source = new Source(cx.getRealm().sourceInfo(caller), sourceName, sourceLine);
+            Object result = evaluate(global.getRealm(), source, sourceCode);
             return (!noScriptRval ? result : UNDEFINED);
         } catch (ScriptException | StackOverflowError e) {
             throw e;
@@ -274,6 +280,8 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      *
      * @param cx
      *            the execution context
+     * @param caller
+     *            the caller context
      * @param s
      *            the source to evaluate
      * @param o
@@ -281,7 +289,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @return the eval result value
      **/
     @Function(name = "evalcx", arity = 1)
-    public Object evalcx(ExecutionContext cx, String s, Object o) {
+    public Object evalcx(ExecutionContext cx, ExecutionContext caller, String s, Object o) {
         ScriptObject global;
         if (Type.isUndefinedOrNull(o)) {
             global = newGlobal(cx);
@@ -294,7 +302,8 @@ public class MozShellGlobalObject extends ShellGlobalObject {
         if (!(global instanceof GlobalObject)) {
             throw newError(cx, "invalid global argument");
         }
-        return evaluate(((GlobalObject) global).getRealm(), s, "evalcx", 1);
+        Source source = new Source(cx.getRealm().sourceInfo(caller), "evalcx", 1);
+        return evaluate(((GlobalObject) global).getRealm(), source, s);
     }
 
     /**
@@ -443,7 +452,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @return the maximum number of allowed function arguments
      **/
     @Function(name = "getMaxArgs", arity = 0)
-    public double getMaxArgs() {
+    public int getMaxArgs() {
         return FunctionPrototype.getMaxArguments();
     }
 

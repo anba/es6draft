@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import static com.github.anba.es6draft.compiler.FunctionDeclarationCollector.functionDeclarations;
+import static com.github.anba.es6draft.compiler.FunctionDeclarationCollector.findFunctionDeclarations;
 import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.util.ArrayList;
@@ -26,6 +26,7 @@ import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -178,8 +179,8 @@ final class FunctionDeclarationInstantiationGenerator extends
         /* step 3 */
         FormalParameterList formals = function.getParameters();
         /* step 4 */
-        List<String> parameterNames = BoundNames(formals);
-        HashSet<String> parameterNamesSet = new HashSet<>(parameterNames);
+        List<Name> parameterNames = BoundNames(formals);
+        HashSet<Name> parameterNamesSet = new HashSet<>(parameterNames);
         /* step 5 */
         boolean hasDuplicates = parameterNames.size() != parameterNamesSet.size();
         /* step 6 */
@@ -191,13 +192,13 @@ final class FunctionDeclarationInstantiationGenerator extends
         // invariant: hasParameterExpressions => !simpleParameterList
         assert !hasParameterExpressions || !simpleParameterList;
         /* step 8 */
-        Set<String> varNames = VarDeclaredNames(function); // unordered set!
+        Set<Name> varNames = VarDeclaredNames(function); // unordered set!
         /* step 9 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(function);
         /* step 10 */
-        Set<String> lexicalNames = LexicallyDeclaredNames(function); // unordered set!
+        Set<Name> lexicalNames = LexicallyDeclaredNames(function); // unordered set!
         /* step 11 */
-        HashSet<String> functionNames = new HashSet<>();
+        HashSet<Name> functionNames = new HashSet<>();
         /* step 12 */
         ArrayList<Declaration> functionsToInitialize = new ArrayList<>();
         /* step 13 */
@@ -205,7 +206,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             if (!(item instanceof VariableStatement)) {
                 assert isFunctionDeclaration(item);
                 Declaration d = (Declaration) item;
-                String fn = BoundName(d);
+                Name fn = BoundName(d);
                 if (!functionNames.contains(fn)) {
                     functionNames.add(fn);
                     functionsToInitialize.add(d);
@@ -215,23 +216,24 @@ final class FunctionDeclarationInstantiationGenerator extends
         /* step 14 */
         // Optimization: Skip 'arguments' allocation if not referenced in function
         boolean argumentsObjectNeeded = function.getScope().needsArguments();
+        Name arguments = function.getScope().arguments();
         /* step 15 */
         if (function.getThisMode() == FunctionNode.ThisMode.Lexical) {
             argumentsObjectNeeded = false;
         }
         /* step 16 */
-        else if (parameterNamesSet.contains("arguments")) {
+        else if (parameterNamesSet.contains(arguments)) {
             argumentsObjectNeeded = false;
         }
         /* step 17 */
         else if (!hasParameterExpressions) {
-            if (functionNames.contains("arguments") || lexicalNames.contains("arguments")) {
+            if (functionNames.contains(arguments) || lexicalNames.contains(arguments)) {
                 argumentsObjectNeeded = false;
             }
         }
         /* step 18 */
-        HashSet<String> bindings = new HashSet<>();
-        for (String paramName : parameterNames) {
+        HashSet<Name> bindings = new HashSet<>();
+        for (Name paramName : parameterNames) {
             boolean alreadyDeclared = bindings.contains(paramName);
             if (!alreadyDeclared) {
                 bindings.add(paramName);
@@ -255,13 +257,13 @@ final class FunctionDeclarationInstantiationGenerator extends
                 CreateLegacyArguments(argumentsObj, mv);
             }
             if (strict) {
-                createImmutableBinding(envRec, "arguments", mv);
+                createImmutableBinding(envRec, arguments, mv);
             } else {
-                createMutableBinding(envRec, "arguments", false, mv);
+                createMutableBinding(envRec, arguments, false, mv);
             }
-            initializeBinding(envRec, "arguments", argumentsObj, mv);
-            parameterNames.add("arguments");
-            parameterNamesSet.add("arguments");
+            initializeBinding(envRec, arguments, argumentsObj, mv);
+            parameterNames.add(arguments);
+            parameterNamesSet.add(arguments);
         } else if (legacy) {
             if (!simpleParameterList) {
                 CreateLegacyArguments(mv);
@@ -280,7 +282,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             }
         }
         /* steps 23-24 */
-        HashSet<String> instantiatedVarNames;
+        HashSet<Name> instantiatedVarNames;
         Variable<LexicalEnvironment<?>> bodyEnv;
         Variable<EnvironmentRecord> bodyEnvRec;
         if (!hasParameterExpressions) {
@@ -289,7 +291,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             bodyEnvRec = envRec;
             instantiatedVarNames = new HashSet<>(parameterNames);
             /* step 23.d */
-            for (String varName : varNames) {
+            for (Name varName : varNames) {
                 if (!instantiatedVarNames.contains(varName)) {
                     instantiatedVarNames.add(varName);
                     createMutableBinding(bodyEnvRec, varName, false, mv);
@@ -309,7 +311,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             /* step 24.f */
             instantiatedVarNames = new HashSet<>();
             /* step 24.g */
-            for (String varName : varNames) {
+            for (Name varName : varNames) {
                 if (!instantiatedVarNames.contains(varName)) {
                     instantiatedVarNames.add(varName);
                     createMutableBinding(bodyEnvRec, varName, false, mv);
@@ -326,8 +328,9 @@ final class FunctionDeclarationInstantiationGenerator extends
         /* B.3.3 Block-Level Function Declarations Web Legacy Compatibility Semantics */
         if (block) {
             // Find all function declarations
-            for (FunctionDeclaration f : functionDeclarations(function)) {
-                String fname = f.getIdentifier().getName();
+            boolean catchVar = codegen.isEnabled(CompatibilityOption.CatchVarStatement);
+            for (FunctionDeclaration f : findFunctionDeclarations(function, catchVar)) {
+                Name fname = f.getIdentifier().getName();
                 if (!instantiatedVarNames.contains(fname)) {
                     instantiatedVarNames.add(fname);
                     createMutableBinding(bodyEnvRec, fname, false, mv);
@@ -341,7 +344,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         /* step 26 */
         for (Declaration d : lexDeclarations) {
             assert !isFunctionDeclaration(d);
-            for (String dn : BoundNames(d)) {
+            for (Name dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
                     createImmutableBinding(bodyEnvRec, dn, mv);
                 } else {
@@ -351,7 +354,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
         /* step 27 */
         for (Declaration f : functionsToInitialize) {
-            String fn = BoundName(f);
+            Name fn = BoundName(f);
 
             // stack: [] -> [fo]
             InstantiateFunctionObject(context, bodyEnv, f, mv);
@@ -454,13 +457,13 @@ final class FunctionDeclarationInstantiationGenerator extends
         assert IsSimpleParameterList(formals);
         List<FormalParameter> list = formals.getFormals();
         int numberOfParameters = list.size();
-        Set<String> mappedNames = new HashSet<>();
+        HashSet<String> mappedNames = new HashSet<>();
         String[] names = new String[numberOfParameters];
         for (int index = numberOfParameters - 1; index >= 0; --index) {
             assert list.get(index) instanceof BindingElement;
             BindingElement formal = (BindingElement) list.get(index);
             assert formal.getBinding() instanceof BindingIdentifier;
-            String name = ((BindingIdentifier) formal.getBinding()).getName();
+            String name = ((BindingIdentifier) formal.getBinding()).getName().getIdentifier();
             if (!mappedNames.contains(name)) {
                 mappedNames.add(name);
                 names[index] = name;

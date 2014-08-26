@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.Realm;
  * </ul>
  */
 public final class NativeFunction extends BuiltinFunction {
-    // (Object, Object[]) -> Object
+    // (ExecutionContext, Object, Object[]) -> Object
     private final MethodHandle mh;
 
     private final NativeFunctionId id;
@@ -96,7 +96,7 @@ public final class NativeFunction extends BuiltinFunction {
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         try {
-            return mh.invokeExact(thisValue, args);
+            return mh.invokeExact(callerContext, thisValue, args);
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable e) {

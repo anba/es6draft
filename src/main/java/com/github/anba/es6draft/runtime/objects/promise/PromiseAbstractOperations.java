@@ -128,7 +128,7 @@ public final class PromiseAbstractOperations {
         @Override
         public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object reason = args.length > 0 ? args[0] : UNDEFINED;
+            Object reason = argument(args, 0);
             /* step 1 (not applicable) */
             /* step 2 */
             PromiseObject promise = this.promise;
@@ -173,7 +173,7 @@ public final class PromiseAbstractOperations {
         @Override
         public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object resolution = args.length > 0 ? args[0] : UNDEFINED;
+            Object resolution = argument(args, 0);
             /* step 1 (not applicable) */
             /* step 2 */
             PromiseObject promise = this.promise;
@@ -330,8 +330,8 @@ public final class PromiseAbstractOperations {
         @Override
         public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            Object resolve = args.length > 0 ? args[0] : UNDEFINED;
-            Object reject = args.length > 1 ? args[1] : UNDEFINED;
+            Object resolve = argument(args, 0);
+            Object reject = argument(args, 1);
             /* step 1 (not applicable) */
             /* step 2 (omitted) */
             /* step 3 */

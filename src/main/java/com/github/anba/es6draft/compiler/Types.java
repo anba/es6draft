@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.DebugInfo;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
@@ -138,6 +139,7 @@ final class Types {
     static final Type OrdinaryObject = Type.getType(OrdinaryObject.class);
 
     // runtime.internal
+    static final Type DebugInfo = Type.getType(DebugInfo.class);
     static final Type ResumptionPoint = Type.getType(ResumptionPoint.class);
     static final Type ReturnValue = Type.getType(ReturnValue.class);
     static final Type RuntimeInfo = Type.getType(RuntimeInfo.class);

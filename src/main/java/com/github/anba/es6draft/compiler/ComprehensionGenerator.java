@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyDeclar
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
@@ -25,6 +24,7 @@ import com.github.anba.es6draft.ast.LegacyComprehension;
 import com.github.anba.es6draft.ast.LegacyComprehensionFor;
 import com.github.anba.es6draft.ast.LegacyComprehensionFor.IterationKind;
 import com.github.anba.es6draft.ast.Node;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
@@ -46,6 +46,11 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
                 MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
+
+        // class: GeneratorObject
+        static final MethodDesc GeneratorObject_isLegacyGenerator = MethodDesc.create(
+                MethodType.Virtual, Types.GeneratorObject, "isLegacyGenerator",
+                Type.getMethodType(Type.BOOLEAN_TYPE));
 
         // class: Iterator
         static final MethodDesc Iterator_hasNext = MethodDesc.create(MethodType.Interface,
@@ -103,13 +108,13 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
      */
     @Override
     public Void visit(Comprehension node, ExpressionVisitor mv) {
-        List<Node> list = new ArrayList<>(node.getList().size() + 1);
+        ArrayList<Node> list = new ArrayList<>(node.getList().size() + 1);
         list.addAll(node.getList());
         list.add(node.getExpression());
         elements = list.iterator();
 
         // create variables early for the sake of generating useful local variable maps
-        List<Variable<Iterator<?>>> iters = new ArrayList<>();
+        ArrayList<Variable<Iterator<?>>> iters = new ArrayList<>();
         for (Node e : list) {
             if (e instanceof ComprehensionFor || e instanceof LegacyComprehensionFor) {
                 Variable<Iterator<?>> iter = mv.newVariable("iter", Iterator.class).uncheckedCast();
@@ -138,14 +143,14 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
             mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
             // stack: [env, envRec] -> [env]
-            for (String name : LexicallyDeclaredNames(node.getScope())) {
+            for (Name name : LexicallyDeclaredNames(node.getScope())) {
                 mv.dup();
-                mv.aconst(name);
+                mv.aconst(name.getIdentifier());
                 mv.iconst(false);
                 mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
 
                 mv.dup();
-                mv.aconst(name);
+                mv.aconst(name.getIdentifier());
                 mv.loadUndefined();
                 mv.invoke(Methods.EnvironmentRecord_initializeBinding);
             }
@@ -226,9 +231,9 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
             mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
             // stack: [forEnv, nextValue, envRec] -> [forEnv, envRec, nextValue]
-            for (String name : BoundNames(node.getBinding())) {
+            for (Name name : BoundNames(node.getBinding())) {
                 mv.dup();
-                mv.aconst(name);
+                mv.aconst(name.getIdentifier());
                 mv.iconst(false);
                 mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
             }
@@ -294,6 +299,10 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
             Label l0 = new Label(), l1 = new Label();
             mv.dup();
             mv.instanceOf(Types.GeneratorObject);
+            mv.ifeq(l0);
+            mv.dup();
+            mv.checkcast(Types.GeneratorObject);
+            mv.invoke(Methods.GeneratorObject_isLegacyGenerator);
             mv.ifeq(l0);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_iterate);

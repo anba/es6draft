@@ -57,7 +57,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
 
         static List<StatementElement> from(List<StatementListItem> statements,
                 Map<StatementListItem, Integer> codeSizes) {
-            List<StatementElement> list = new ArrayList<>(statements.size());
+            ArrayList<StatementElement> list = new ArrayList<>(statements.size());
             for (int i = 0, len = statements.size(); i < len; i++) {
                 StatementListItem stmt = statements.get(i);
                 int size = codeSizes.get(stmt);
@@ -191,7 +191,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
             DefaultVoidNodeVisitor<Entry<StatementListItem, StatementListMethod>> {
         private List<StatementListItem> updateStatements(List<StatementListItem> statements,
                 Entry<StatementListItem, StatementListMethod> entry) {
-            List<StatementListItem> newStatements = new ArrayList<>(statements);
+            ArrayList<StatementListItem> newStatements = new ArrayList<>(statements);
             int index = newStatements.indexOf(entry.getKey());
             assert index != -1;
 
@@ -252,10 +252,10 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
 
     private static final class FindExportableStatement extends
             DefaultNodeVisitor<Boolean, ArrayDeque<Node>> {
-        RangeArrayList<StatementListItem> exportable = new RangeArrayList<>();
-        RangeArrayList<Node> parents = new RangeArrayList<>();
-        HashSet<Node> nonExportable = new HashSet<>();
-        Map<StatementListItem, Integer> codeSizes;
+        final RangeArrayList<StatementListItem> exportable = new RangeArrayList<>();
+        final RangeArrayList<Node> parents = new RangeArrayList<>();
+        final HashSet<Node> nonExportable = new HashSet<>();
+        final Map<StatementListItem, Integer> codeSizes;
 
         public FindExportableStatement(Map<StatementListItem, Integer> codeSizes) {
             this.codeSizes = codeSizes;

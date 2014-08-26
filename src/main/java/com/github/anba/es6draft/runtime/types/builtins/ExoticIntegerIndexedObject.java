@@ -254,7 +254,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
      * @param keys
      *            the property keys
      */
-    private void addIntegerIndices(ExecutionContext cx, List<? super String> keys) {
+    private void addIntegerIndices(ExecutionContext cx, ArrayList<? super String> keys) {
         for (long i = 0, length = getLength(cx); i < length; ++i) {
             keys.add(Long.toString(i));
         }

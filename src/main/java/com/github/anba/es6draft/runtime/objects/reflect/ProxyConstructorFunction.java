@@ -71,8 +71,8 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
      */
     @Override
     public ExoticProxy construct(ExecutionContext callerContext, Object... args) {
-        Object target = args.length > 0 ? args[0] : UNDEFINED;
-        Object handler = args.length > 1 ? args[1] : UNDEFINED;
+        Object target = argument(args, 0);
+        Object handler = argument(args, 1);
         /* step 1 */
         return ProxyCreate(callerContext, target, handler);
     }
@@ -133,18 +133,18 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
         private Ref<ExoticProxy> revokableProxy;
 
         public ProxyRevocationFunction(Realm realm, ExoticProxy revokableProxy) {
-            this(realm, new Ref<>(revokableProxy), null);
+            this(realm, new Ref<>(revokableProxy));
             createDefaultFunctionProperties(ANONYMOUS, 0);
         }
 
-        private ProxyRevocationFunction(Realm realm, Ref<ExoticProxy> revokableProxy, Void ignore) {
+        private ProxyRevocationFunction(Realm realm, Ref<ExoticProxy> revokableProxy) {
             super(realm, ANONYMOUS);
             this.revokableProxy = revokableProxy;
         }
 
         @Override
         public ProxyRevocationFunction clone() {
-            return new ProxyRevocationFunction(getRealm(), revokableProxy, null);
+            return new ProxyRevocationFunction(getRealm(), revokableProxy);
         }
 
         @Override

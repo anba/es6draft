@@ -44,38 +44,10 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
      * @param name
      *            the function name
      */
-    public BuiltinFunction(Realm realm, String name) {
+    protected BuiltinFunction(Realm realm, String name) {
         super(realm);
         this.realm = realm;
         this.name = name;
-    }
-
-    /**
-     * Returns the i-th argument or {@code undefined} if the argument index is out of bounds.
-     * 
-     * @param arguments
-     *            the function arguments
-     * @param index
-     *            the argument index
-     * @return the requested argument or undefined if not present
-     */
-    protected static final Object getArgument(Object[] arguments, int index) {
-        return arguments.length > index ? arguments[index] : UNDEFINED;
-    }
-
-    /**
-     * Returns the i-th argument or {@code defaultValue} if the argument index is out of bounds.
-     * 
-     * @param arguments
-     *            the function arguments
-     * @param index
-     *            the argument index
-     * @param defaultValue
-     *            the default value for absent arguments
-     * @return the requested argument or <var>defaultValue</var> if not present
-     */
-    protected static final Object getArgument(Object[] arguments, int index, Object defaultValue) {
-        return arguments.length > index ? arguments[index] : defaultValue;
     }
 
     /**
@@ -201,7 +173,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     @Override
-    public Realm getRealm(ExecutionContext cx) {
+    public final Realm getRealm(ExecutionContext cx) {
         /* 7.3.21 GetFunctionRealm ( obj ) Abstract Operation */
         return realm;
     }

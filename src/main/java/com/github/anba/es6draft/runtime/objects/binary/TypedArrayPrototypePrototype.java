@@ -21,7 +21,6 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -545,8 +544,8 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
             @Override
             public int compare(Double x, Double y) {
-                double c = ToInteger(cx, comparefn.call(cx, UNDEFINED, x, y));
-                return (c == 0 ? 0 : c < 0 ? -1 : 1);
+                double c = ToNumber(cx, comparefn.call(cx, UNDEFINED, x, y));
+                return (c < 0 ? -1 : c > 0 ? 1 : 0);
             }
         }
 
@@ -810,7 +809,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 throw newTypeError(cx, Messages.Key.NotConstructor);
             }
             /* steps 13, 15 */
-            List<Object> kept = new ArrayList<>();
+            ArrayList<Object> kept = new ArrayList<>();
             /* steps 14, 16 */
             for (long k = 0; k < len; ++k) {
                 long pk = k;
