@@ -16,7 +16,7 @@ const {
   assertNotSame(revoke, revokeClone);
   assertSame(0, proxy.prop);
   revokeClone();
-  assertThrows(() => proxy.prop, TypeError);
+  assertThrows(TypeError, () => proxy.prop);
 }
 
 // Call revoke, then cloned revoke
@@ -25,7 +25,7 @@ const {
   let revokeClone = revoke.toMethod({});
   revoke();
   revokeClone();
-  assertThrows(() => proxy.prop, TypeError);
+  assertThrows(TypeError, () => proxy.prop);
 }
 
 // Call cloned revoke, then revoke
@@ -34,5 +34,5 @@ const {
   let revokeClone = revoke.toMethod({});
   revokeClone();
   revoke();
-  assertThrows(() => proxy.prop, TypeError);
+  assertThrows(TypeError, () => proxy.prop);
 }

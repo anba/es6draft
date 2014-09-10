@@ -15,13 +15,13 @@ const {
 const invalidHints = [void 0, null, true, 0, -1, +1, 1.43, NaN, {}, []];
 for (let hint of invalidHints) {
   let d = new Date();
-  assertThrows(() => d[Symbol.toPrimitive](hint), TypeError);
+  assertThrows(TypeError, () => d[Symbol.toPrimitive](hint));
 }
 
 const invalidHintsString = ["", "Number", "String", "stringstring"];
 for (let hint of invalidHintsString) {
   let d = new Date();
-  assertThrows(() => d[Symbol.toPrimitive](hint), TypeError);
+  assertThrows(TypeError, () => d[Symbol.toPrimitive](hint));
 }
 
 const noToStringForHint = [
@@ -30,7 +30,7 @@ const noToStringForHint = [
 ];
 for (let hint of noToStringForHint) {
   let d = new Date();
-  assertThrows(() => d[Symbol.toPrimitive](hint), TypeError);
+  assertThrows(TypeError, () => d[Symbol.toPrimitive](hint));
 }
 
 const validHints = ["default", "string", "number"];

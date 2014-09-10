@@ -737,10 +737,9 @@ public final class Parser {
         return exitScopeContext();
     }
 
-    private CatchContext enterCatchContext(Binding binding) {
+    private CatchContext enterCatchContext() {
         CatchContext cx = new CatchContext(context.scopeContext);
         context.scopeContext = cx;
-        addLexDeclaredName(binding);
         return cx;
     }
 
@@ -2070,7 +2069,8 @@ public final class Parser {
      */
     private ExportSpecifier exportSpecifier(boolean noReference) {
         long begin = ts.beginPosition();
-        String importName, localName, exportName;
+        Name localName;
+        String importName, exportName;
         if (noReference) {
             String sourceName = identifierName();
             if (isName("as")) {
@@ -2083,12 +2083,12 @@ public final class Parser {
             localName = null;
         } else {
             importName = null;
-            localName = identifierReference().getName();
+            localName = identifierReference().toName();
             if (isName("as")) {
                 consume("as");
                 exportName = identifierName();
             } else {
-                exportName = localName;
+                exportName = localName.getIdentifier();
             }
         }
 
@@ -3334,15 +3334,12 @@ public final class Parser {
             }
             consume(Token.LC);
             BlockContext scope = enterBlockContext(name);
-            List<MethodDefinition> methods = newList();
-            List<MethodDefinition> staticMethods = newList();
-            List<MethodDefinition> prototypeMethods = newList();
-            classBody(name, methods, staticMethods, prototypeMethods);
+            List<MethodDefinition> methods = classBody(name);
             exitBlockContext();
             consume(Token.RC);
 
             ClassDeclaration decl = new ClassDeclaration(begin, ts.endPosition(), scope, name,
-                    heritage, methods, staticMethods, prototypeMethods);
+                    heritage, methods);
             scope.node = decl;
             addLexDeclaredName(name);
             addLexScopedDeclaration(decl);
@@ -3385,17 +3382,14 @@ public final class Parser {
             if (name != null) {
                 scope = enterBlockContext(name);
             }
-            List<MethodDefinition> methods = newList();
-            List<MethodDefinition> staticMethods = newList();
-            List<MethodDefinition> prototypeMethods = newList();
-            classBody(name, methods, staticMethods, prototypeMethods);
+            List<MethodDefinition> methods = classBody(name);
             if (name != null) {
                 exitBlockContext();
             }
             consume(Token.RC);
 
             ClassExpression expr = new ClassExpression(begin, ts.endPosition(), scope, name,
-                    heritage, methods, staticMethods, prototypeMethods);
+                    heritage, methods);
             if (name != null) {
                 scope.node = expr;
             }
@@ -3437,15 +3431,12 @@ public final class Parser {
      * 
      * @param className
      *            the class' name if present, otherwise {@code null}
-     * @param methods
-     *            the list to hold all methods in source order
-     * @param staticMethods
-     *            the list to hold static methods
-     * @param prototypeMethods
-     *            the list to hold prototype methods
+     * @return the class methods in source order
      */
-    private void classBody(BindingIdentifier className, List<MethodDefinition> methods,
-            List<MethodDefinition> staticMethods, List<MethodDefinition> prototypeMethods) {
+    private List<MethodDefinition> classBody(BindingIdentifier className) {
+        List<MethodDefinition> methods = newList();
+        List<MethodDefinition> staticMethods = newList();
+        List<MethodDefinition> prototypeMethods = newList();
         while (token() != Token.RC) {
             if (token() == Token.SEMI) {
                 consume(Token.SEMI);
@@ -3468,6 +3459,8 @@ public final class Parser {
 
         classBody_EarlyErrors(className, staticMethods, true);
         classBody_EarlyErrors(className, prototypeMethods, false);
+
+        return methods;
     }
 
     /**
@@ -4940,7 +4933,7 @@ public final class Parser {
         }
         consume(Token.LP);
 
-        boolean lexicalBinding = false, isLetIdentifier = false;
+        boolean isLetIdentifier = false;
         BlockContext lexBlockContext = null;
         Node head;
         switch (token()) {
@@ -4953,15 +4946,13 @@ public final class Parser {
             head = varStmt;
             break;
         case CONST:
-            lexicalBinding = true;
-            head = forDeclaration();
             lexBlockContext = enterBlockContext();
+            head = forDeclaration();
             break;
         case LET:
             if (lexicalBindingFirstSet(peek())) {
-                lexicalBinding = true;
-                head = forDeclaration();
                 lexBlockContext = enterBlockContext();
+                head = forDeclaration();
                 break;
             }
             // 'let' as identifier, e.g. `for (let in "") {}` or `for (let.prop in "") {}`
@@ -4995,7 +4986,23 @@ public final class Parser {
             checkVarDeclaredName(varStmt.getElements().get(0).getBinding());
         }
 
-        if (lexicalBinding) {
+        if (head instanceof VariableStatement) {
+            VariableStatement varStmt = (VariableStatement) head;
+            assert varStmt.getElements().size() == 1;
+            assert varStmt.getElements().get(0).getInitializer() == null;
+            Binding binding = varStmt.getElements().get(0).getBinding();
+            if (binding instanceof BindingPattern) {
+                List<Name> boundNames = BoundNames((Binding) binding);
+                NameSet names = new NameSet(boundNames);
+                boolean hasDuplicates = (boundNames.size() != names.size());
+                if (hasDuplicates) {
+                    Name duplicate = findDuplicate(names, boundNames);
+                    reportSyntaxError(binding, Messages.Key.VariableRedeclaration, duplicate);
+                }
+            }
+        }
+
+        if (lexBlockContext != null) {
             LexicalDeclaration lexDecl = (LexicalDeclaration) head;
             assert lexDecl.getElements().size() == 1;
             assert lexDecl.getElements().get(0).getInitializer() == null;
@@ -5007,7 +5014,7 @@ public final class Parser {
         Statement stmt = statement(false);
         exitIteration();
 
-        if (lexicalBinding) {
+        if (lexBlockContext != null) {
             exitBlockContext();
         }
 
@@ -5438,8 +5445,9 @@ public final class Parser {
                     long beginCatch = ts.beginPosition();
                     consume(Token.CATCH);
                     consume(Token.LP);
+                    CatchContext catchScope = enterCatchContext();
                     Binding catchParameter = binding();
-                    CatchContext catchScope = enterCatchContext(catchParameter);
+                    addLexDeclaredName(catchParameter);
 
                     Expression guard;
                     if (token() == Token.IF) {
@@ -5473,8 +5481,9 @@ public final class Parser {
                 long beginCatch = ts.beginPosition();
                 consume(Token.CATCH);
                 consume(Token.LP);
+                CatchContext catchScope = enterCatchContext();
                 Binding catchParameter = binding();
-                CatchContext catchScope = enterCatchContext(catchParameter);
+                addLexDeclaredName(catchParameter);
                 consume(Token.RP);
 
                 // CatchBlock receives a list of non-available lexical declarable names to
@@ -5948,8 +5957,6 @@ public final class Parser {
      *     CoverParenthesizedExpressionAndArrowParameterList<span><sub>[?Yield]</sub></span>
      * Literal :
      *     NullLiteral
-     *     ValueLiteral
-     * ValueLiteral :
      *     BooleanLiteral
      *     NumericLiteral
      *     StringLiteral
@@ -5989,7 +5996,7 @@ public final class Parser {
         case CLASS:
             return classExpression();
         case LP:
-            if (LOOKAHEAD(Token.FOR)) {
+            if (LOOKAHEAD(Token.FOR) && isEnabled(CompatibilityOption.Comprehension)) {
                 return generatorComprehension();
             } else {
                 return coverParenthesizedExpressionAndArrowParameterList();
@@ -6122,7 +6129,7 @@ public final class Parser {
      * @return the parsed array initializer
      */
     private ArrayInitializer arrayInitializer() {
-        if (LOOKAHEAD(Token.FOR)) {
+        if (LOOKAHEAD(Token.FOR) && isEnabled(CompatibilityOption.Comprehension)) {
             return arrayComprehension();
         } else {
             long begin = ts.beginPosition();
@@ -6211,7 +6218,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.4.2] Array Comprehension</strong>
+     * <strong>Array Comprehension</strong>
      * 
      * <pre>
      * ArrayComprehension<span><sub>[Yield]</sub></span> :
@@ -6230,7 +6237,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.4.2] Array Comprehension</strong>
+     * <strong>Array Comprehension</strong>
      * 
      * <pre>
      * Comprehension<span><sub>[Yield]</sub></span> :
@@ -6267,7 +6274,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.4.2] Array Comprehension</strong>
+     * <strong>Array Comprehension</strong>
      * 
      * <pre>
      * ComprehensionFor<span><sub>[Yield]</sub></span> :
@@ -6294,7 +6301,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.4.2] Array Comprehension</strong>
+     * <strong>Array Comprehension</strong>
      * 
      * <pre>
      * ForBinding<span><sub>[Yield]</sub></span> :
@@ -6311,7 +6318,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.4.2] Array Comprehension</strong>
+     * <strong>Array Comprehension</strong>
      * 
      * <pre>
      * ComprehensionIf<span><sub>[Yield]</sub></span> :
@@ -6330,7 +6337,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.4.2] Array Comprehension</strong>
+     * <strong>Array Comprehension</strong>
      * 
      * <pre>
      * LegacyArrayComprehension<span><sub>[Yield]</sub></span> :
@@ -6348,7 +6355,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.4.2] Array Comprehension</strong>
+     * <strong>Array Comprehension</strong>
      * 
      * <pre>
      * LegacyComprehension<span><sub>[Yield]</sub></span> :
@@ -6809,7 +6816,8 @@ public final class Parser {
      */
     private void regularExpressionLiteral_EarlyErrors(long sourcePos, String pattern, String flags) {
         // parse to validate regular expression, but ignore actual result
-        RegExpParser.parse(pattern, flags, getSourceName(), toLine(sourcePos), toColumn(sourcePos));
+        RegExpParser.parse(pattern, flags, getSourceName(), toLine(sourcePos), toColumn(sourcePos),
+                isEnabled(CompatibilityOption.WebRegularExpressions));
     }
 
     /**
@@ -7208,7 +7216,7 @@ public final class Parser {
         case NOT:
             return UnaryExpression.Operator.NOT;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -7422,7 +7430,6 @@ public final class Parser {
                     // async BindingIdentifier => ConciseBody
                     consume(Token.ASYNC);
                     // Parse in this context, but ignore result (escaped yield)
-                    // TODO: add test case
                     bindingIdentifier();
                     assert context.countLiterals() == oldCount;
                     Token tok = token();
@@ -7515,7 +7522,7 @@ public final class Parser {
         case ASSIGN_EXP:
             return AssignmentExpression.Operator.ASSIGN_EXP;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 

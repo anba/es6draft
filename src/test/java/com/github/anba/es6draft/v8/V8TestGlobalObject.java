@@ -8,22 +8,21 @@ package com.github.anba.es6draft.v8;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
-import java.nio.file.Path;
-
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.util.TestInfo;
 
 /**
  * 
  */
 public final class V8TestGlobalObject extends V8ShellGlobalObject {
-    protected V8TestGlobalObject(Realm realm, ShellConsole console, Path baseDir, Path script,
+    protected V8TestGlobalObject(Realm realm, ShellConsole console, TestInfo test,
             ScriptCache scriptCache) {
-        super(realm, console, baseDir, script, scriptCache);
+        super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
     }
 
     @Override
@@ -37,21 +36,18 @@ public final class V8TestGlobalObject extends V8ShellGlobalObject {
      * 
      * @param console
      *            the console object
-     * @param baseDir
-     *            the base directory
-     * @param script
-     *            the main script file
+     * @param test
+     *            the test descriptor
      * @param scriptCache
      *            the script cache
      * @return the object allocator to construct new global object instances
      */
-    public static ObjectAllocator<V8TestGlobalObject> newTestGlobalObjectAllocator(
-            final ShellConsole console, final Path baseDir, final Path script,
-            final ScriptCache scriptCache) {
+    public static ObjectAllocator<V8TestGlobalObject> newGlobalObjectAllocator(
+            final ShellConsole console, final TestInfo test, final ScriptCache scriptCache) {
         return new ObjectAllocator<V8TestGlobalObject>() {
             @Override
             public V8TestGlobalObject newInstance(Realm realm) {
-                return new V8TestGlobalObject(realm, console, baseDir, script, scriptCache);
+                return new V8TestGlobalObject(realm, console, test, scriptCache);
             }
         };
     }

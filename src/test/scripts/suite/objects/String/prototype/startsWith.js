@@ -11,10 +11,10 @@ const {
   assertTrue,
 } = Assert;
 
-// step 1: CheckObjectCoercible()
+// step 1: RequireObjectCoercible()
 {
-  assertThrows(() => String.prototype.startsWith.call(null), TypeError);
-  assertThrows(() => String.prototype.startsWith.call(void 0), TypeError);
+  assertThrows(TypeError, () => String.prototype.startsWith.call(null));
+  assertThrows(TypeError, () => String.prototype.startsWith.call(void 0));
 }
 
 // steps 2-4: ToString() and then RegExp check
@@ -23,7 +23,7 @@ const {
   let noToString = new class {
     toString() { throw new XError }
   };
-  assertThrows(() => String.prototype.startsWith.call(noToString, /./), XError);
+  assertThrows(XError, () => String.prototype.startsWith.call(noToString, /./));
 }
 
 // step 4: RegExp check uses Symbol.isRegExp
@@ -31,8 +31,8 @@ const {
   class MyRegExp {
     get [Symbol.isRegExp]() { return true }
   }
-  assertThrows(() => "".startsWith(/./), TypeError);
-  assertThrows(() => "".startsWith(new MyRegExp), TypeError);
+  assertThrows(TypeError, () => "".startsWith(/./));
+  assertThrows(TypeError, () => "".startsWith(new MyRegExp));
 
   // temporarily remove `RegExp.prototype[Symbol.isRegExp]`
   let isRegExpDesc = Object.getOwnPropertyDescriptor(RegExp.prototype, Symbol.isRegExp);

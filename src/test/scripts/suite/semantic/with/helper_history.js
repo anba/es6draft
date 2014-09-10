@@ -7,29 +7,26 @@
 
 function HasBindingFail({hidden, object}, property) {
   return [
-    {name: "getOwnPropertyDescriptor", target: object, property: property, result: void 0},
-    {name: "getPrototypeOf", target: object, result: Object.getPrototypeOf(hidden)},
+    {name: "has", target: object, property: property, result: false},
   ];
 }
 
 function HasBindingSuccess({hidden, object}, property) {
   return [
-    {name: "getOwnPropertyDescriptor", target: object, property: property, result: Object.getOwnPropertyDescriptor(hidden, property)},
-    {name: "getOwnPropertyDescriptor", target: object, property: Symbol.unscopables, result: Object.getOwnPropertyDescriptor(hidden, Symbol.unscopables)},
+    {name: "has", target: object, property: property, result: true},
+    {name: "get", target: object, property: Symbol.unscopables, receiver: object, result: hidden[Symbol.unscopables]},
   ];
 }
 
 function GetBindingValueFail({hidden, object}, property) {
   return [
-    {name: "getOwnPropertyDescriptor", target: object, property: property, result: void 0},
-    {name: "getPrototypeOf", target: object, result: Object.getPrototypeOf(hidden)},
+    {name: "has", target: object, property: property, result: false},
   ];
 }
 
 function GetBindingValueSuccess({hidden, object}, property) {
   return [
-    {name: "getOwnPropertyDescriptor", target: object, property: property, result: Object.getOwnPropertyDescriptor(hidden, property)},
-    {name: "getOwnPropertyDescriptor", target: object, property: Symbol.unscopables, result: Object.getOwnPropertyDescriptor(hidden, Symbol.unscopables)},
+    {name: "has", target: object, property: property, result: true},
   ];
 }
 
@@ -41,16 +38,13 @@ function GetValue({hidden, object}, property, value) {
 
 function BindingNotIntercepted({hidden, object}, {hidden: blackListHidden, object: blackListObject}, property) {
   return [
-    {name: "get", target: object, property: Symbol.unscopables, receiver: object, result: blackListObject},
-    {name: "getOwnPropertyDescriptor", target: blackListObject, property: property, result: Object.getOwnPropertyDescriptor(blackListHidden, property)},
+    {name: "get", target: blackListObject, property: property, receiver: blackListObject, result: void 0},
   ];
 }
 
 function BindingIntercepted({hidden, object}, {hidden: blackListHidden, object: blackListObject}, property) {
   return [
-    {name: "get", target: object, property: Symbol.unscopables, receiver: object, result: blackListObject},
-    {name: "getOwnPropertyDescriptor", target: blackListObject, property: property, result: Object.getOwnPropertyDescriptor(blackListHidden, property)},
-    {name: "getPrototypeOf", target: object, result: Object.getPrototypeOf(hidden)},
+    {name: "get", target: blackListObject, property: property, receiver: blackListObject, result: blackListHidden[property]},
   ];
 }
 

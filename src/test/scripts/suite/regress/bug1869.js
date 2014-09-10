@@ -6,11 +6,14 @@
  */
 
 const {
-  assertThrows
+  assertSame, assertEquals, assertThrows
 } = Assert;
 
 // Implicit ToObject() conversion in destructuring still present for some productions
 // https://bugs.ecmascript.org/show_bug.cgi?id=1869
 
-assertThrows(() => { var [head, ...tail] = "123" }, TypeError);
-assertThrows(() => { for (var [head, ...tail] of "123") ; }, TypeError);
+var [head, ...tail] = "123";
+assertSame("1", head);
+assertEquals(["2", "3"], tail);
+
+assertThrows(TypeError, () => { for (var [head, ...tail] of "123") ; });

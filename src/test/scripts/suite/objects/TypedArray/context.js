@@ -19,5 +19,5 @@ foreignRealm.eval(`
 `);
 
 let int8Array = Int8Array[Symbol.create]();
-assertThrows(() => int8Array[0], TypeError);
-assertThrows(() => foreignRealm.global.indexedAccess(int8Array), foreignRealm.global.TypeError);
+assertThrows(TypeError, () => int8Array[0]);
+assertThrows(foreignRealm.global.TypeError, () => foreignRealm.global.indexedAccess(int8Array));

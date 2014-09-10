@@ -12,4 +12,4 @@ const {
 // 21.2.3.3 - RegExpAlloc: Invalid assertion in step 1
 // https://bugs.ecmascript.org/show_bug.cgi?id=1925
 
-assertThrows(() => RegExp[Symbol.create].call({}), TypeError);
+assertThrows(TypeError, () => RegExp[Symbol.create].call({}));

@@ -6,7 +6,6 @@
  */
 
 const {
-  assertSame, assertThrows
 } = Assert;
 
 // 12.13.4, 13.2.2.3, 13.2.1.6, 13.2.3.5, 13.2.3.6: Missing HasOwnProperty("name") check for anonymous class expression

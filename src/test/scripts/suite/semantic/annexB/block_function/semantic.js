@@ -41,7 +41,7 @@ const {
 
   function f5a() {
     { function g() {} }
-    assertThrows(() => g, ReferenceError);
+    assertThrows(ReferenceError, () => g);
     return;
     const g = 0;
   }
@@ -49,7 +49,7 @@ const {
 
   function f5b() {
     { function g() {} }
-    assertThrows(() => g, ReferenceError);
+    assertThrows(ReferenceError, () => g);
     return;
     let g = 0;
   }

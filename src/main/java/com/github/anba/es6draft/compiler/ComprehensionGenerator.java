@@ -331,7 +331,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
         if (node.getBinding() instanceof BindingPattern) {
             // ToObject(...)
-            ToObject(ValType.Any, mv);
+            ToObject(node.getBinding(), ValType.Any, mv);
         }
 
         // stack: [nextValue] -> []

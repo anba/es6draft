@@ -35,18 +35,4 @@ public interface ClassDefinition extends ScopedNode {
      * @return the list of class methods
      */
     List<MethodDefinition> getMethods();
-
-    /**
-     * Returns the list of static class methods.
-     * 
-     * @return the list of static class methods
-     */
-    List<MethodDefinition> getStaticMethods();
-
-    /**
-     * Returns the list of prototype class methods.
-     * 
-     * @return the list of prototype class methods
-     */
-    List<MethodDefinition> getPrototypeMethods();
 }

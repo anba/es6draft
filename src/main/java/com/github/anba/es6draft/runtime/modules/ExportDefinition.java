@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
+import com.github.anba.es6draft.ast.scope.Name;
+
 public final class ExportDefinition {
     /** [[Module]] */
     final ModuleLinkage module;
@@ -14,7 +16,7 @@ public final class ExportDefinition {
     final String importName;
 
     /** [[LocalName]] */
-    final String localName;
+    final Name localName;
 
     /** [[ExportName]] */
     final String exportName;
@@ -22,7 +24,7 @@ public final class ExportDefinition {
     /** [[Explicit]] */
     final boolean explicit;
 
-    public ExportDefinition(ModuleLinkage module, String importName, String localName,
+    public ExportDefinition(ModuleLinkage module, String importName, Name localName,
             String exportName, boolean explicit) {
         this.module = module;
         this.importName = importName;

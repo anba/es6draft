@@ -11,7 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResu
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -128,7 +128,7 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.IteratorPrototype;
 
         /**
          * 23.1.5.2.1 %MapIteratorPrototype%.next( )
@@ -175,7 +175,7 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
                     result = e.getValue();
                 } else {
                     assert itemKind == MapIterationKind.KeyValue;
-                    ExoticArray array = ArrayCreate(cx, 2);
+                    ArrayObject array = ArrayCreate(cx, 2);
                     CreateDataProperty(cx, array, 0, e.getKey());
                     CreateDataProperty(cx, array, 1, e.getValue());
                     result = array;
@@ -184,6 +184,7 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
             }
             /* step 11 */
             o.map = null;
+            o.iterator = null;
             /* step 12 */
             return CreateIterResultObject(cx, UNDEFINED, true);
         }

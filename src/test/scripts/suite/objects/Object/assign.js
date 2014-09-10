@@ -21,24 +21,28 @@ const {
 
 assertBuiltinFunction(Object.assign, "assign", 2);
 
-// Calls ToObject() for target and source
+// Calls ToObject() only on target
 {
-  assertThrows(() => Object.assign(null, null), TypeError);
-  assertThrows(() => Object.assign(null, {}), TypeError);
-  assertThrows(() => Object.assign({}, null), TypeError);
+  assertThrows(TypeError, () => Object.assign(null));
+  assertThrows(TypeError, () => Object.assign(null, void 0));
+  assertThrows(TypeError, () => Object.assign(null, null));
+  assertThrows(TypeError, () => Object.assign(null, {}));
   assertInstanceOf(Boolean, Object.assign(true, {}));
   assertInstanceOf(Number, Object.assign(1, {}));
   assertInstanceOf(String, Object.assign("string", {}));
   assertInstanceOf(Symbol, Object.assign(Symbol.create, {}));
   let o = {};
+  assertSame(o, Object.assign(o));
+  assertSame(o, Object.assign(o, void 0));
+  assertSame(o, Object.assign(o, null));
   assertSame(o, Object.assign(o, {}));
 }
 
 // Invokes [[OwnPropertyKeys]] on ToObject(source)
 {
-  assertThrows(() => Object.assign(null, new Proxy({}, {
+  assertThrows(TypeError, () => Object.assign(null, new Proxy({}, {
     ownKeys: () => fail `ToObject(target) succeeded`
-  })), TypeError);
+  })));
 
   let ownKeysCalled = false;
   Object.assign({}, new Proxy({}, {
@@ -138,7 +142,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
   let source = {a: 1};
   let target = {a: 0};
   Object.defineProperty(target, "a", {writable: false});
-  assertThrows(() => Object.assign(target, source), TypeError);
+  assertThrows(TypeError, () => Object.assign(target, source));
   assertDataProperty(target, "a", {value: 0, writable: false, enumerable: true, configurable: true});
 }
 
@@ -162,7 +166,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
   assertFalse("b" in target);
 }
 
-// Properties created during traversal are copied - Proxy edition
+// Properties created during traversal are copied - Proxy edition (1)
 {
   let hasB = false;
   let source = new Proxy({
@@ -172,6 +176,88 @@ assertBuiltinFunction(Object.assign, "assign", 2);
       0: {get() { return "a" }},
       1: {get() { source.b = 2; return "b" }},
     })
+  });
+  let target = Object.assign({}, source);
+  assertTrue("a" in target);
+  assertTrue("b" in target);
+  assertTrue(hasB);
+}
+
+// Properties created during traversal are copied - Proxy edition (2)
+{
+  let hasB = false;
+  let source = new Proxy({
+    get a() { hasB = "b" in this },
+  }, {
+    getOwnPropertyDescriptor(t, pk) {
+      if (pk === "a") {
+        source.b = 2;
+      }
+      return Reflect.getOwnPropertyDescriptor(t, pk);
+    },
+    ownKeys: () => ["a", "b"]
+  });
+  let target = Object.assign({}, source);
+  assertTrue("a" in target);
+  assertTrue("b" in target);
+  assertTrue(hasB);
+}
+
+// Properties created during traversal are copied - Proxy edition (3)
+{
+  let hasB = false;
+  let source = new Proxy({
+    get a() { hasB = "b" in this },
+  }, {
+    getOwnPropertyDescriptor(t, pk) {
+      let desc = Reflect.getOwnPropertyDescriptor(t, pk);
+      if (pk === "a") {
+        source.b = 2;
+      }
+      return desc;
+    },
+    ownKeys: () => ["a", "b"]
+  });
+  let target = Object.assign({}, source);
+  assertTrue("a" in target);
+  assertTrue("b" in target);
+  assertTrue(hasB);
+}
+
+// Properties created during traversal are copied - Proxy edition (4)
+{
+  let hasB = false;
+  let source = new Proxy({
+    get a() { hasB = "b" in this },
+  }, {
+    get(t, pk, r) {
+      if (pk === "a") {
+        source.b = 2;
+      }
+      return Reflect.get(t, pk, r);
+    },
+    ownKeys: () => ["a", "b"]
+  });
+  let target = Object.assign({}, source);
+  assertTrue("a" in target);
+  assertTrue("b" in target);
+  assertTrue(hasB);
+}
+
+// Properties created during traversal are copied - Proxy edition (5)
+{
+  let hasB = false;
+  let source = new Proxy({
+    get a() { hasB = "b" in this },
+  }, {
+    get(t, pk, r) {
+      let v = Reflect.get(t, pk, r);
+      if (pk === "a") {
+        source.b = 2;
+      }
+      return v;
+    },
+    ownKeys: () => ["a", "b"]
   });
   let target = Object.assign({}, source);
   assertTrue("a" in target);
@@ -244,7 +330,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
     },
     ownKeys: () => ["b", "a"]
   });
-  assertThrows(() => Object.assign({}, source), ErrorB);
+  assertThrows(ErrorB, () => Object.assign({}, source));
   assertSame("ba", log);
 }
 
@@ -259,7 +345,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
   }, {
     ownKeys: () => ["b", "a"]
   });
-  assertThrows(() => Object.assign({}, source), ErrorB);
+  assertThrows(ErrorB, () => Object.assign({}, source));
   assertSame("ba", log);
 }
 
@@ -275,7 +361,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
     set a(v) { log += "a"; throw new ErrorA },
     set b(v) { log += "b"; throw new ErrorB },
   };
-  assertThrows(() => Object.assign(target, source), ErrorB);
+  assertThrows(ErrorB, () => Object.assign(target, source));
   assertSame("ba", log);
 }
 
@@ -294,7 +380,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
   let target = {
     set a(v) { throw new ErrorSet }
   };
-  assertThrows(() => Object.assign({}, source), ErrorGetOwnProperty);
+  assertThrows(ErrorGetOwnProperty, () => Object.assign({}, source));
 }
 
 // Exceptions in Iterator directly stop property traversal (1)
@@ -305,7 +391,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
 //       get length() { throw new ErrorLength }
 //     })
 //   });
-//   assertThrows(() => Object.assign({}, source), ErrorLength);
+//   assertThrows(ErrorLength, () => Object.assign({}, source));
 // }
 
 // Exceptions in Iterator directly stop property traversal (2)
@@ -316,7 +402,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
       0: {get() { throw new ErrorZero }},
     })
   });
-  assertThrows(() => Object.assign({}, source), ErrorZero);
+  assertThrows(ErrorZero, () => Object.assign({}, source));
 }
 
 // Exceptions in Iterator directly stop property traversal (3)
@@ -329,7 +415,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
 //       get 0() { throw new ErrorZero },
 //     })
 //   });
-//   assertThrows(() => Object.assign({}, source), ErrorLength);
+//   assertThrows(ErrorLength, () => Object.assign({}, source));
 // }
 
 // Exceptions in Iterator directly stop property traversal (4)
@@ -342,7 +428,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
       1: {get() { throw new ErrorOne }},
     })
   });
-  assertThrows(() => Object.assign({}, source), ErrorZero);
+  assertThrows(ErrorZero, () => Object.assign({}, source));
 }
 
 // Exceptions in Iterator directly stop property traversal (5)
@@ -358,6 +444,6 @@ assertBuiltinFunction(Object.assign, "assign", 2);
       1: {get() { throw new ErrorOne }},
     })
   });
-  assertThrows(() => Object.assign({}, source), ErrorOne);
-  assertTrue(getterCalled);
+  assertThrows(ErrorOne, () => Object.assign({}, source));
+  assertFalse(getterCalled);
 }

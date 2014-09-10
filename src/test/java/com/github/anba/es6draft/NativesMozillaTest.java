@@ -12,8 +12,8 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -34,6 +34,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.Parallelized;
@@ -62,8 +63,15 @@ public final class NativesMozillaTest {
         @Override
         protected ObjectAllocator<MozNativeTestGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
-            return MozNativeTestGlobalObject.newTestGlobalObjectAllocator(console,
-                    test.getBaseDir(), test.getScript(), scriptCache);
+            return MozNativeTestGlobalObject.newGlobalObjectAllocator(console, test, scriptCache);
+        }
+
+        @Override
+        protected Set<CompatibilityOption> getOptions() {
+            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            options.add(CompatibilityOption.Comprehension);
+            options.add(CompatibilityOption.Realm);
+            return options;
         }
 
         @Override
@@ -117,9 +125,9 @@ public final class NativesMozillaTest {
     }
 
     public static final class MozNativeTestGlobalObject extends MozShellGlobalObject {
-        protected MozNativeTestGlobalObject(Realm realm, ShellConsole console, Path baseDir,
-                Path script, ScriptCache scriptCache) {
-            super(realm, console, baseDir, script, scriptCache);
+        protected MozNativeTestGlobalObject(Realm realm, ShellConsole console, TestInfo test,
+                ScriptCache scriptCache) {
+            super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
         }
 
         @Override
@@ -138,14 +146,12 @@ public final class NativesMozillaTest {
             includeNative(getScriptURL("typed-array.js"));
         }
 
-        public static ObjectAllocator<MozNativeTestGlobalObject> newTestGlobalObjectAllocator(
-                final ShellConsole console, final Path baseDir, final Path script,
-                final ScriptCache scriptCache) {
+        public static ObjectAllocator<MozNativeTestGlobalObject> newGlobalObjectAllocator(
+                final ShellConsole console, final TestInfo test, final ScriptCache scriptCache) {
             return new ObjectAllocator<MozNativeTestGlobalObject>() {
                 @Override
                 public MozNativeTestGlobalObject newInstance(Realm realm) {
-                    return new MozNativeTestGlobalObject(realm, console, baseDir, script,
-                            scriptCache);
+                    return new MozNativeTestGlobalObject(realm, console, test, scriptCache);
                 }
             };
         }

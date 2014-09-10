@@ -139,7 +139,7 @@ assertSame("2", `${1, 2}`);
 assertSame("ToString", `${{toString(){ return "ToString" }}}`);
 assertSame("[object Object]", `${{valueOf(){ return "ValueOf" }}}`);
 assertSame("ValueOf", `${{valueOf(){ return "ValueOf" }, __proto__: null}}`);
-assertThrows(() => `${{__proto__: null}}`, TypeError);
+assertThrows(TypeError, () => `${{__proto__: null}}`);
 
 assertSame("ToString", `${{toString(){ return "ToString" }, valueOf(){ return "ValueOf" }}}`);
 

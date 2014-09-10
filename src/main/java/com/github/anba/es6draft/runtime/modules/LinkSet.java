@@ -93,14 +93,14 @@ public final class LinkSet {
      * @return the new linkset record
      */
     public static LinkSet CreateLinkSet(ExecutionContext cx, Loader loader, Load startingLoad) {
-        /* steps 1-2 (not applicable) */
-        /* steps 3-4 */
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
         PromiseCapability<PromiseObject> promiseCapability = PromiseBuiltinCapability(cx);
-        /* steps 5-10 */
+        /* step 4 */
         LinkSet linkSet = new LinkSet(loader, promiseCapability);
-        /* step 6 */
+        /* step 5 */
         AddLoadToLinkSet(linkSet, startingLoad);
-        /* step 7 */
+        /* step 6 */
         return linkSet;
     }
 

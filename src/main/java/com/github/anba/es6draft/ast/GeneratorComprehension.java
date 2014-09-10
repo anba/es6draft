@@ -12,11 +12,7 @@ import java.util.List;
 import com.github.anba.es6draft.ast.scope.FunctionScope;
 
 /**
- * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.2 Primary Expression</h2>
- * <ul>
- * <li>12.2.7 Generator Comprehensions
- * </ul>
+ * Extension: Array and Generator Comprehension
  */
 public final class GeneratorComprehension extends Expression implements FunctionNode {
     private final FunctionScope scope;

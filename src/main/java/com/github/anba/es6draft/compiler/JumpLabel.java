@@ -18,28 +18,12 @@ abstract class JumpLabel extends Label {
      * Label for {@code break} statements
      */
     static final class BreakLabel extends JumpLabel {
-        /**
-         * Returns {@code true} if this label is used, otherwise {@code false}.
-         * 
-         * @return {@code true} if this label is used
-         */
-        boolean isUsed() {
-            return used;
-        }
     }
 
     /**
      * Label for {@code continue} statements
      */
     static final class ContinueLabel extends JumpLabel {
-        /**
-         * Returns {@code true} if this label is used, otherwise {@code false}.
-         * 
-         * @return {@code true} if this label is used
-         */
-        boolean isUsed() {
-            return used;
-        }
     }
 
     /**
@@ -76,5 +60,14 @@ abstract class JumpLabel extends Label {
     final JumpLabel mark() {
         used = true;
         return this;
+    }
+
+    /**
+     * Returns {@code true} if this label is used, otherwise {@code false}.
+     * 
+     * @return {@code true} if this label is used
+     */
+    final boolean isUsed() {
+        return used;
     }
 }

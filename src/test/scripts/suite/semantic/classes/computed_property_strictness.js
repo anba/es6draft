@@ -30,7 +30,7 @@ function strictEvalSemantics() {
 strictEvalSemantics();
 
 // Strict identifier resolution
-assertThrows(() => new class {[unresolvedIdentifier](){ }}, ReferenceError);
+assertThrows(ReferenceError, () => new class {[unresolvedIdentifier](){ }});
 
 // Strict property assignment
-assertThrows(() => new class {[Object.freeze({}).prop = 0](){ }}, TypeError);
+assertThrows(TypeError, () => new class {[Object.freeze({}).prop = 0](){ }});

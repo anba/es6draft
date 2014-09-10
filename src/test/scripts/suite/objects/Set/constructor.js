@@ -18,10 +18,10 @@ new Set(null);
 
 // TypeError for non-iterable
 for (let nonIterable of [0, 1, 0.5, 0 / 0, true, false, Symbol.create, Symbol()]) {
-  assertThrows(() => new Set(nonIterable), TypeError);
+  assertThrows(TypeError, () => new Set(nonIterable));
 }
 for (let nonIterable of [{}, {a: 0}, /(?:)/, new Date, () => {}]) {
-  assertThrows(() => new Set(nonIterable), TypeError);
+  assertThrows(TypeError, () => new Set(nonIterable));
 }
 
 // No TypeError for iterable

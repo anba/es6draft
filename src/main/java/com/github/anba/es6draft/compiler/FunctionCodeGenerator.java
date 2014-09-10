@@ -10,6 +10,8 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 
 import org.objectweb.asm.Type;
 
+import com.github.anba.es6draft.ast.FunctionDeclaration;
+import com.github.anba.es6draft.ast.FunctionExpression;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.GeneratorComprehension;
 import com.github.anba.es6draft.compiler.Code.MethodCode;
@@ -510,6 +512,8 @@ final class FunctionCodeGenerator {
     }
 
     private boolean isLegacy(FunctionNode node) {
-        return !IsStrict(node) && codegen.isEnabled(CompatibilityOption.FunctionPrototype);
+        return !IsStrict(node)
+                && (node instanceof FunctionDeclaration || node instanceof FunctionExpression)
+                && codegen.isEnabled(CompatibilityOption.FunctionPrototype);
     }
 }

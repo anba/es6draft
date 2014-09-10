@@ -7,7 +7,6 @@
 
 const {
   assertSame,
-  assertThrows,
   assertTrue,
   assertFalse,
   assertEquals,

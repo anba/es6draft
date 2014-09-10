@@ -17,7 +17,7 @@ function assertObjectFrom(realm, object) {
 }
 
 function assertThrowsTypeErrorFrom(realm, fn) {
-  return assertThrows(fn, realm.global.TypeError);
+  return assertThrows(realm.global.TypeError, fn);
 }
 
 // 25.3.3.2 GeneratorResume

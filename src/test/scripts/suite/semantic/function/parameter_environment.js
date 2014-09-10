@@ -54,13 +54,13 @@ const {
   }
   f7();
 
-  assertThrows(function f8(a = b, b = 0) { }, ReferenceError);
+  assertThrows(ReferenceError, function f8(a = b, b = 0) { });
 
-  assertThrows(function f9(a = b, b = 0) { "use strict" }, ReferenceError);
+  assertThrows(ReferenceError, function f9(a = b, b = 0) { "use strict" });
 
-  assertThrows(function f10(a = (b = 1), b = 0) { }, ReferenceError);
+  assertThrows(ReferenceError, function f10(a = (b = 1), b = 0) { });
 
-  assertThrows(function f11(a = (b = 1), b = 0) { "use strict" }, ReferenceError);
+  assertThrows(ReferenceError, function f11(a = (b = 1), b = 0) { "use strict" });
 
   function f12(a = 0, f = () => a) {
     assertSame(0, f());
@@ -189,14 +189,14 @@ const {
 
 // functions with initializers, patterns and rest always get a strict-mode arguments object (callee, caller)
 {
-  assertThrows(function(a = 0) { arguments.callee }, TypeError);
-  assertThrows(function(a = 0) { arguments.caller }, TypeError);
-  assertThrows(function([a]) { arguments.callee }, TypeError);
-  assertThrows(function([a]) { arguments.caller }, TypeError);
-  assertThrows(function({a}) { arguments.callee }, TypeError);
-  assertThrows(function({a}) { arguments.caller }, TypeError);
-  assertThrows(function(...a) { arguments.callee }, TypeError);
-  assertThrows(function(...a) { arguments.caller }, TypeError);
+  assertThrows(TypeError, function(a = 0) { arguments.callee });
+  assertThrows(TypeError, function(a = 0) { arguments.caller });
+  assertThrows(TypeError, function([a]) { arguments.callee });
+  assertThrows(TypeError, function([a]) { arguments.caller });
+  assertThrows(TypeError, function({a}) { arguments.callee });
+  assertThrows(TypeError, function({a}) { arguments.caller });
+  assertThrows(TypeError, function(...a) { arguments.callee });
+  assertThrows(TypeError, function(...a) { arguments.caller });
 }
 
 // eval tests
@@ -255,7 +255,7 @@ const {
   }
   evalParamNameVar();
 
-  assertThrows(function(_ = eval("var a = 0"), a = 1){ }, ReferenceError);
+  assertThrows(ReferenceError, function(_ = eval("var a = 0"), a = 1){ });
 
   function noAccessToDynamic(f = () => a) {
     assertSame(99, a);

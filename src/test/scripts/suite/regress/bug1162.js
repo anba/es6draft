@@ -12,7 +12,7 @@ const {
 // 9.3.12 (OrdinaryHasInstance): non-callable objects and bound functions
 // https://bugs.ecmascript.org/show_bug.cgi?id=1162
 
-assertThrows(() => [] instanceof {}, TypeError);
+assertThrows(TypeError, () => [] instanceof {});
 
 function F() {}
 assertTrue((new F) instanceof F.bind(null));

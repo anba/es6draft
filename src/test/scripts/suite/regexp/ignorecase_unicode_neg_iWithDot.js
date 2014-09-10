@@ -26,9 +26,9 @@ const supplementary = {
 const basic = {
   transformers: [
     ...supplementary.transformers,
-    Transformers.charClass.negated.toIdentityEscape,
+    // Transformers.charClass.negated.toIdentityEscape,
     Transformers.charClass.negated.toUnicodeEscape,
-    Transformers.charClassRange.negated.toIdentityEscape,
+    // Transformers.charClassRange.negated.toIdentityEscape,
     Transformers.charClassRange.negated.toUnicodeEscape,
   ]
 };
@@ -37,9 +37,9 @@ const basic = {
 const latin = {
   transformers: [
     ...basic.transformers,
-    Transformers.charClass.negated.toOctalEscape,
+    // Transformers.charClass.negated.toOctalEscape,
     Transformers.charClass.negated.toHexEscape,
-    Transformers.charClassRange.negated.toOctalEscape,
+    // Transformers.charClassRange.negated.toOctalEscape,
     Transformers.charClassRange.negated.toHexEscape,
   ]
 };

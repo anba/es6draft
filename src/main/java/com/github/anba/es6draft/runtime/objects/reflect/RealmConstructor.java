@@ -13,7 +13,7 @@ import static com.github.anba.es6draft.runtime.Realm.SetDefaultGlobalBindings;
 import static com.github.anba.es6draft.runtime.internal.Errors.newError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticProxy.ProxyCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ProxyObject.ProxyCreate;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -39,10 +39,10 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
  * <h1>26 Reflection</h1><br>
- * <h2>26.2 Realm Objects</h2>
+ * <h2>26.? Realm Objects</h2>
  * <ul>
- * <li>26.2.1 The Reflect.Realm Constructor
- * <li>26.2.2 Properties of the Reflect.Realm Constructor
+ * <li>26.?.1 The Reflect.Realm Constructor
+ * <li>26.?.2 Properties of the Reflect.Realm Constructor
  * </ul>
  */
 public final class RealmConstructor extends BuiltinConstructor implements Initializable {
@@ -58,7 +58,6 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 
@@ -84,7 +83,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 26.2.1.1 Reflect.Realm ( [ target , handler ] )
+     * 26.?.1.1 Reflect.Realm ( [ target , handler ] )
      */
     @Override
     public RealmObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -155,7 +154,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 26.2.1.2 new Reflect.Realm ( ... argumentsList )
+     * 26.?.1.2 new Reflect.Realm ( ... argumentsList )
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -163,7 +162,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 26.2.2 Properties of the Reflect.Realm Constructor
+     * 26.?.2 Properties of the Reflect.Realm Constructor
      */
     public enum Properties {
         ;
@@ -180,14 +179,14 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         public static final String name = "Realm";
 
         /**
-         * 26.2.2.1 Reflect.Realm.prototype
+         * 26.?.2.1 Reflect.Realm.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.RealmPrototype;
 
         /**
-         * 26.2.2.2 Reflect.Realm [ @@create ] ( )
+         * 26.?.2.2 Reflect.Realm [ @@create ] ( )
          * 
          * @param cx
          *            the execution context

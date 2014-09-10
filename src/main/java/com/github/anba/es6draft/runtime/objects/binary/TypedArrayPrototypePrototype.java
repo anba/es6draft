@@ -14,7 +14,7 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.CreateArrayIterator;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CloneArrayBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
-import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsNeuteredBuffer;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsDetachedBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -100,8 +100,8 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 if (buffer == null) {
                     throw newTypeError(cx, Messages.Key.UninitializedObject);
                 }
-                if (IsNeuteredBuffer(buffer)) {
-                    throw newTypeError(cx, Messages.Key.BufferNeutered);
+                if (IsDetachedBuffer(buffer)) {
+                    throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
                 return typedArray;
             }
@@ -146,7 +146,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             /* steps 1-5 */
             ArrayBufferView view = thisArrayBufferView(cx, thisValue);
             /* steps 6-8 */
-            return IsNeuteredBuffer(view.getBuffer()) ? 0 : view.getByteLength();
+            return IsDetachedBuffer(view.getBuffer()) ? 0 : view.getByteLength();
         }
 
         /**
@@ -163,7 +163,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             /* steps 1-5 */
             ArrayBufferView view = thisArrayBufferView(cx, thisValue);
             /* steps 6-8 */
-            return IsNeuteredBuffer(view.getBuffer()) ? 0 : view.getByteOffset();
+            return IsDetachedBuffer(view.getBuffer()) ? 0 : view.getByteOffset();
         }
 
         /**
@@ -186,7 +186,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 throw newTypeError(cx, Messages.Key.UninitializedObject);
             }
             /* step 7 */
-            if (IsNeuteredBuffer(buffer)) {
+            if (IsDetachedBuffer(buffer)) {
                 return 0;
             }
             /* steps 8-9 */
@@ -219,57 +219,56 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 if (targetBuffer == null) {
                     throw newTypeError(cx, Messages.Key.UninitializedObject);
                 }
-                // FIXME: spec bug - missing neutered buffer check (bug 3045)
-                if (IsNeuteredBuffer(targetBuffer)) {
-                    throw newTypeError(cx, Messages.Key.BufferNeutered);
-                }
                 /* step 8 */
+                if (IsDetachedBuffer(targetBuffer)) {
+                    throw newTypeError(cx, Messages.Key.BufferDetached);
+                }
+                /* step 9 */
                 long targetLength = target.getArrayLength();
-                /* steps 9-10 */
+                /* steps 10-11 */
                 double targetOffset = (offset == UNDEFINED ? 0 : ToInteger(cx, offset));
-                /* step 11 */
+                /* step 12 */
                 if (targetOffset < 0) {
                     throw newRangeError(cx, Messages.Key.InvalidByteOffset);
                 }
-                /* steps 12, 14 */
+                /* steps 13, 15 */
                 ElementType targetType = target.getElementType();
-                /* step 13 */
+                /* step 14 */
                 int targetElementSize = targetType.size();
-                /* step 15 */
+                /* step 16 */
                 long targetByteOffset = target.getByteOffset();
-                /* steps 16-17 */
+                /* steps 17-18 */
                 ScriptObject src = ToObject(cx, array);
-                /* step 18 */
-                Object srcLen = Get(cx, src, "length");
                 /* step 19 */
+                Object srcLen = Get(cx, src, "length");
+                /* step 20 */
                 double numberLength = ToNumber(cx, srcLen);
-                /* steps 20-21 */
+                /* steps 21-22 */
                 double srcLength = ToInteger(numberLength);// TODO: spec bug - call ToLength()?
-                /* step 22 */
+                /* step 23 */
                 if (numberLength != srcLength || srcLength < 0) {
                     throw newRangeError(cx, Messages.Key.InvalidByteLength);
                 }
-                /* step 23 */
+                /* step 24 */
                 if (srcLength + targetOffset > targetLength) {
                     throw newRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
                 }
-                /* step 24 */
+                /* step 25 */
                 long targetByteIndex = (long) (targetOffset * targetElementSize + targetByteOffset);
-                /* step 26 */
+                /* step 27 */
                 long limit = (long) (targetByteIndex + targetElementSize
                         * Math.min(srcLength, targetLength - targetOffset));
-                /* steps 25, 27 */
+                /* steps 26, 28 */
                 for (long k = 0; targetByteIndex < limit; ++k, targetByteIndex += targetElementSize) {
                     long pk = k;
                     Object kValue = Get(cx, src, pk);
                     double kNumber = ToNumber(cx, kValue);
-                    // FIXME: spec bug - missing neutered buffer check (bug 3045)
-                    if (IsNeuteredBuffer(targetBuffer)) {
-                        throw newTypeError(cx, Messages.Key.BufferNeutered);
+                    if (IsDetachedBuffer(targetBuffer)) {
+                        throw newTypeError(cx, Messages.Key.BufferDetached);
                     }
                     SetValueInBuffer(targetBuffer, targetByteIndex, targetType, kNumber);
                 }
-                /* step 28 */
+                /* step 29 */
                 return UNDEFINED;
             } else {
                 // 22.2.3.23
@@ -289,8 +288,8 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                     throw newTypeError(cx, Messages.Key.UninitializedObject);
                 }
                 /* step 11 */
-                if (IsNeuteredBuffer(targetBuffer)) {
-                    throw newTypeError(cx, Messages.Key.BufferNeutered);
+                if (IsDetachedBuffer(targetBuffer)) {
+                    throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
                 /* step 13 */
                 ArrayBufferObject srcBuffer = typedArray.getBuffer();
@@ -299,8 +298,8 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                     throw newTypeError(cx, Messages.Key.UninitializedObject);
                 }
                 /* step 15 */
-                if (IsNeuteredBuffer(srcBuffer)) {
-                    throw newTypeError(cx, Messages.Key.BufferNeutered);
+                if (IsDetachedBuffer(srcBuffer)) {
+                    throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
                 /* step 12 */
                 long targetLength = target.getArrayLength();
@@ -326,8 +325,8 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 long srcByteIndex;
                 if (SameValue(srcBuffer, targetBuffer)) {
                     srcBuffer = CloneArrayBuffer(cx, srcBuffer, srcByteOffset);
-                    if (IsNeuteredBuffer(targetBuffer)) {
-                        throw newTypeError(cx, Messages.Key.BufferNeutered);
+                    if (IsDetachedBuffer(targetBuffer)) {
+                        throw newTypeError(cx, Messages.Key.BufferDetached);
                     }
                     srcByteIndex = 0;
                 } else {
@@ -536,15 +535,20 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         private static final class FunctionComparator implements Comparator<Double> {
             private final ExecutionContext cx;
             private final Callable comparefn;
+            private final ArrayBufferObject buffer;
 
-            FunctionComparator(ExecutionContext cx, Callable comparefn) {
+            FunctionComparator(ExecutionContext cx, Callable comparefn, ArrayBufferObject buffer) {
                 this.cx = cx;
                 this.comparefn = comparefn;
+                this.buffer = buffer;
             }
 
             @Override
             public int compare(Double x, Double y) {
                 double c = ToNumber(cx, comparefn.call(cx, UNDEFINED, x, y));
+                if (IsDetachedBuffer(buffer)) {
+                    throw newTypeError(cx, Messages.Key.BufferDetached);
+                }
                 return (c < 0 ? -1 : c > 0 ? 1 : 0);
             }
         }
@@ -606,7 +610,8 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 if (!IsCallable(comparefn)) {
                     throw newTypeError(cx, Messages.Key.NotCallable);
                 }
-                Comparator<Double> comparator = new FunctionComparator(cx, (Callable) comparefn);
+                Comparator<Double> comparator = new FunctionComparator(cx, (Callable) comparefn,
+                        obj.getBuffer());
                 array = toDoubleArray(elements);
                 try {
                     Arrays.sort(array, comparator);
@@ -938,7 +943,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.5 %TypedArray%.prototype.copyWithin (target, start, end = this.length )
+         * 22.2.3.5 %TypedArray%.prototype.copyWithin (target, start [, end ] )
          * 
          * @param cx
          *            the execution context
@@ -971,9 +976,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Function(name = "entries", arity = 0)
         public static Object entries(ExecutionContext cx, Object thisValue) {
-            /* steps 1-7 */
+            /* steps 1-5 */
             TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            /* step 8 */
+            /* step 6 */
             return CreateArrayIterator(cx, array, ArrayIterationKind.KeyValue);
         }
 
@@ -988,9 +993,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Function(name = "keys", arity = 0)
         public static Object keys(ExecutionContext cx, Object thisValue) {
-            /* steps 1-7 */
+            /* steps 1-5 */
             TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            /* step 8 */
+            /* step 6 */
             return CreateArrayIterator(cx, array, ArrayIterationKind.Key);
         }
 
@@ -1007,9 +1012,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "values", arity = 0)
         @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
         public static Object values(ExecutionContext cx, Object thisValue) {
-            /* steps 1-7 */
+            /* steps 1-5 */
             TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            /* step 8 */
+            /* step 6 */
             return CreateArrayIterator(cx, array, ArrayIterationKind.Value);
         }
 

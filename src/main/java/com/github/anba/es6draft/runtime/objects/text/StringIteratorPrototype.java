@@ -98,7 +98,7 @@ public final class StringIteratorPrototype extends OrdinaryObject implements Ini
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.IteratorPrototype;
 
         /**
          * 21.1.5.2.1 %StringIteratorPrototype%.next( )

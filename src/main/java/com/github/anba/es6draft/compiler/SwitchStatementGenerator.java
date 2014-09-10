@@ -432,7 +432,7 @@ final class SwitchStatementGenerator extends
         } else {
             assert switchValue.getType().equals(Types.Object);
 
-            // test for string-ness: type is java.lang.CharSequence
+            // test for string: type is java.lang.CharSequence
             mv.load(switchValue);
             mv.instanceOf(Types.CharSequence);
             mv.ifeq(switchDefault);
@@ -520,7 +520,7 @@ final class SwitchStatementGenerator extends
             Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
         Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
         if (switchValue.getType().equals(Types.CharSequence)) {
-            // test for char-ness: value is char (string with only one character)
+            // test for char: value is character (string with only one character)
             mv.load(switchValue);
             mv.invoke(Methods.CharSequence_length);
             mv.iconst(1);
@@ -533,12 +533,12 @@ final class SwitchStatementGenerator extends
         } else {
             assert switchValue.getType().equals(Types.Object);
 
-            // test for char-ness: type is java.lang.CharSequence
+            // test for char: type is java.lang.CharSequence
             mv.load(switchValue);
             mv.instanceOf(Types.CharSequence);
             mv.ifeq(switchDefault);
 
-            // test for char-ness: value is char (string with only one character)
+            // test for char: value is character (string with only one character)
             mv.enterVariableScope();
             Variable<CharSequence> switchValueChar = mv.newVariable("switchValueChar",
                     CharSequence.class);
@@ -601,7 +601,7 @@ final class SwitchStatementGenerator extends
         if (switchValue.getType().equals(Type.INT_TYPE)) {
             mv.load(switchValue);
         } else if (switchValue.getType().equals(Type.LONG_TYPE)) {
-            // test for int-ness: value is integer
+            // test for int: value is integer
             mv.load(switchValue);
             mv.dup2();
             mv.cast(Type.LONG_TYPE, Type.INT_TYPE);
@@ -612,7 +612,7 @@ final class SwitchStatementGenerator extends
             mv.load(switchValue);
             mv.cast(Type.LONG_TYPE, Type.INT_TYPE);
         } else if (switchValue.getType().equals(Type.DOUBLE_TYPE)) {
-            // test for int-ness: value is integer
+            // test for int: value is integer
             mv.load(switchValue);
             mv.dup2();
             mv.cast(Type.DOUBLE_TYPE, Type.INT_TYPE);
@@ -625,12 +625,12 @@ final class SwitchStatementGenerator extends
         } else {
             assert switchValue.getType().equals(Types.Object);
 
-            // test for int-ness: type is java.lang.Number
+            // test for int: type is java.lang.Number
             mv.load(switchValue);
             mv.instanceOf(Types.Number);
             mv.ifeq(switchDefault);
 
-            // test for int-ness: value is integer
+            // test for int: value is integer
             mv.enterVariableScope();
             Variable<Double> switchValueNum = mv.newVariable("switchValueNum", double.class);
             mv.load(switchValue);

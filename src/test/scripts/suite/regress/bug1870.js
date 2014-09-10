@@ -22,7 +22,7 @@ const {
     }
   };
 
-  assertThrows(() => { for (let v of iter) ; }, TypeError);
+  assertThrows(TypeError, () => { for (let v of iter) ; });
   assertTrue(called);
 }
 
@@ -36,6 +36,6 @@ const {
     }
   };
 
-  assertThrows(() => { [for (v of iter) v] }, TypeError);
+  assertThrows(TypeError, () => { [for (v of iter) v] });
   assertTrue(called);
 }

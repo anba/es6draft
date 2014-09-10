@@ -35,9 +35,9 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.github.anba.es6draft.runtime.types.builtins.StringObject;
 
 /**
  * <h1>24 Structured Data</h1><br>
@@ -134,10 +134,10 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             if (Type.isObject(replacer)) {
                 if (IsCallable(replacer)) {
                     replacerFunction = (Callable) replacer;
-                } else if (replacer instanceof ExoticArray) {
+                } else if (replacer instanceof ArrayObject) {
                     // https://bugs.ecmascript.org/show_bug.cgi?id=170
                     propertyList = new LinkedHashSet<>();
-                    ExoticArray objReplacer = (ExoticArray) replacer;
+                    ArrayObject objReplacer = (ArrayObject) replacer;
                     long len = ToLength(cx, Get(cx, objReplacer, "length"));
                     for (long i = 0; i < len; ++i) {
                         String item = null;
@@ -148,7 +148,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                             item = ToString(Type.numberValue(v));
                         } else if (Type.isObject(v)) {
                             ScriptObject o = Type.objectValue(v);
-                            if (o instanceof ExoticString || o instanceof NumberObject) {
+                            if (o instanceof StringObject || o instanceof NumberObject) {
                                 item = ToFlatString(cx, v);
                             }
                         }
@@ -163,7 +163,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 ScriptObject o = Type.objectValue(space);
                 if (o instanceof NumberObject) {
                     space = ToNumber(cx, space);
-                } else if (o instanceof ExoticString) {
+                } else if (o instanceof StringObject) {
                     space = ToString(cx, space);
                 }
             }
@@ -219,7 +219,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         /* step 3 */
         if (Type.isObject(val)) {
             ScriptObject objVal = Type.objectValue(val);
-            if (objVal instanceof ExoticArray) {
+            if (objVal instanceof ArrayObject) {
                 /* step 3.a */
                 long len = ToLength(cx, Get(cx, objVal, "length"));
                 for (long i = 0; i < len; ++i) {
@@ -291,7 +291,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             ScriptObject o = Type.objectValue(value);
             if (o instanceof NumberObject) {
                 value = ToNumber(cx, value);
-            } else if (o instanceof ExoticString) {
+            } else if (o instanceof StringObject) {
                 value = ToString(cx, value);
             } else if (o instanceof BooleanObject) {
                 BooleanObject bool = (BooleanObject) o;
@@ -314,9 +314,9 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             return isFinite(d) ? ToString(d) : "null";
         case Object:
             if (!IsCallable(value)) {
-                if (value instanceof ExoticArray) {
+                if (value instanceof ArrayObject) {
                     return JA(cx, stack, propertyList, replacerFunction, indent, gap,
-                            (ExoticArray) value);
+                            (ArrayObject) value);
                 } else {
                     return JO(cx, stack, propertyList, replacerFunction, indent, gap,
                             Type.objectValue(value));
@@ -492,7 +492,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      * @return the JSON string
      */
     public static String JA(ExecutionContext cx, Set<ScriptObject> stack, Set<String> propertyList,
-            Callable replacerFunction, String indent, String gap, ExoticArray value) {
+            Callable replacerFunction, String indent, String gap, ArrayObject value) {
         /* step 1 */
         if (stack.contains(value)) {
             throw newTypeError(cx, Messages.Key.JSONCyclicValue);

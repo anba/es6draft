@@ -71,7 +71,7 @@ public final class TypedArrayPrototype extends OrdinaryObject implements Initial
             createProperties(cx, this, Properties_Float64Array.class);
             break;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 

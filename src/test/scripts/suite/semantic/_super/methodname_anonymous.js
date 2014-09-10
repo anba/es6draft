@@ -21,9 +21,9 @@ const {
     b: function() { return super() },
     c: (0, function() { return super() }),
   };
-  assertThrows(() => obj.a(), ReferenceError);
+  assertThrows(ReferenceError, () => obj.a());
   assertSame("B", obj.b());
-  assertThrows(() => obj.c(), ReferenceError);
+  assertThrows(ReferenceError, () => obj.c());
 
   let home = {
     __proto__: {
@@ -37,7 +37,7 @@ const {
   };
   assertSame("A'", obj.a.toMethod(home)());
   assertSame("B'", obj.b.toMethod(home)());
-  assertThrows(() => obj.c.toMethod(home)(), ReferenceError);
+  assertThrows(ReferenceError, () => obj.c.toMethod(home)());
   assertSame("C'", obj.c.toMethod(home, "c")());
 }
 
@@ -53,9 +53,9 @@ const {
     ["b"]: function() { return super() },
     ["c"]: (0, function() { return super() }),
   };
-  assertThrows(() => obj.a(), ReferenceError);
+  assertThrows(ReferenceError, () => obj.a());
   assertSame("B", obj.b());
-  assertThrows(() => obj.c(), ReferenceError);
+  assertThrows(ReferenceError, () => obj.c());
 
   let home = {
     __proto__: {
@@ -69,7 +69,7 @@ const {
   };
   assertSame("A'", obj.a.toMethod(home)());
   assertSame("B'", obj.b.toMethod(home)());
-  assertThrows(() => obj.c.toMethod(home)(), ReferenceError);
+  assertThrows(ReferenceError, () => obj.c.toMethod(home)());
   assertSame("C'", obj.c.toMethod(home, "c")());
 }
 
@@ -86,9 +86,9 @@ const {
     [symB]: function() { return super() },
     [symC]: (0, function() { return super() }),
   };
-  assertThrows(() => obj[symA](), ReferenceError);
+  assertThrows(ReferenceError, () => obj[symA]());
   assertSame("B", obj[symB]());
-  assertThrows(() => obj[symC](), ReferenceError);
+  assertThrows(ReferenceError, () => obj[symC]());
 
   let home = {
     __proto__: {
@@ -100,9 +100,9 @@ const {
     [symB]: () => { fail `called home.b` },
     [symC]: () => { fail `called home.c` },
   };
-  assertThrows(() => obj[symA].toMethod(home)(), TypeError);
+  assertThrows(TypeError, () => obj[symA].toMethod(home)());
   assertSame("A'", obj[symA].toMethod(home, symA)());
   assertSame("B'", obj[symB].toMethod(home)());
-  assertThrows(() => obj[symC].toMethod(home)(), ReferenceError);
+  assertThrows(ReferenceError, () => obj[symC].toMethod(home)());
   assertSame("C'", obj[symC].toMethod(home, symC)());
 }

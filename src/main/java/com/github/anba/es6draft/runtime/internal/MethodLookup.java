@@ -13,7 +13,7 @@ import java.lang.invoke.MethodType;
 /**
  * Wrapper class for {@link MethodHandles.Lookup}.
  */
-final class MethodLookup {
+public final class MethodLookup {
     private final MethodHandles.Lookup lookup;
 
     /**

@@ -87,6 +87,6 @@ assertBuiltinFunction(Promise.resolve, "resolve", 1);
 // Throws TypeError if thisValue is not a Constructor
 {
   for (let v of [undefined, null, true, 0, "", [], {}, () => {}]) {
-    assertThrows(() => Promise.resolve.call(v), TypeError);
+    assertThrows(TypeError, () => Promise.resolve.call(v));
   }
 }

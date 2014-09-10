@@ -11,7 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResu
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -128,7 +128,7 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.IteratorPrototype;
 
         /**
          * 23.2.5.2.1 %SetIteratorPrototype%.next( )
@@ -169,7 +169,7 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
             if (iter.hasNext()) {
                 Entry<Object, Void> e = iter.next();
                 if (itemKind == SetIterationKind.KeyValue) {
-                    ExoticArray result = ArrayCreate(cx, 2);
+                    ArrayObject result = ArrayCreate(cx, 2);
                     CreateDataProperty(cx, result, 0, e.getKey());
                     CreateDataProperty(cx, result, 1, e.getKey());
                     return CreateIterResultObject(cx, result, false);
@@ -178,6 +178,7 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
             }
             /* step 11 */
             o.set = null;
+            o.iterator = null;
             /* step 12 */
             return CreateIterResultObject(cx, UNDEFINED, true);
         }

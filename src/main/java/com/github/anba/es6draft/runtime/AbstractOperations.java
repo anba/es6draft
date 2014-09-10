@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime;
 
+import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.InstanceofOperator;
@@ -16,16 +17,19 @@ import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOp
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor.AllocatePromise;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor.InitializePromise;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.OrdinaryCreateFromConstructor;
+import static com.github.anba.es6draft.runtime.types.builtins.StringObject.StringCreate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 
+import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.DToA;
 import org.mozilla.javascript.StringToNumber;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
@@ -42,8 +46,8 @@ import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperation
 import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.*;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
+import com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.google.doubleconversion.DoubleConversion;
 
@@ -734,7 +738,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.1 CheckObjectCoercible
+     * 7.2.1 RequireObjectCoercible
      * 
      * @param cx
      *            the execution context
@@ -742,7 +746,7 @@ public final class AbstractOperations {
      *            the argument value
      * @return the input argument unless it is either <code>undefined</code> or <code>null</code>
      */
-    public static Object CheckObjectCoercible(ExecutionContext cx, Object value) {
+    public static Object RequireObjectCoercible(ExecutionContext cx, Object value) {
         if (Type.isUndefinedOrNull(value)) {
             throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         }
@@ -1105,27 +1109,22 @@ public final class AbstractOperations {
             return ToNumber(cx, x) == Type.numberValue(y);
         }
         /* step 8 */
-        if (tx == Type.Symbol || ty == Type.Symbol) {
-            // FIXME: spec bug - unnecessary step (bug 3016)
-            return false;
-        }
-        /* step 9 */
         if (tx == Type.Boolean) {
             return EqualityComparison(cx, ToNumber(cx, x), y);
         }
-        /* step 10 */
+        /* step 9 */
         if (ty == Type.Boolean) {
             return EqualityComparison(cx, x, ToNumber(cx, y));
         }
-        /* step 11 */
-        if ((tx == Type.String || tx == Type.Number) && ty == Type.Object) {
+        /* step 10 */
+        if ((tx == Type.String || tx == Type.Number || tx == Type.Symbol) && ty == Type.Object) {
             return EqualityComparison(cx, x, ToPrimitive(cx, y));
         }
-        /* step 12 */
-        if (tx == Type.Object && (ty == Type.String || ty == Type.Number)) {
+        /* step 11 */
+        if (tx == Type.Object && (ty == Type.String || ty == Type.Number || ty == Type.Symbol)) {
             return EqualityComparison(cx, ToPrimitive(cx, x), y);
         }
-        /* step 13 */
+        /* step 12 */
         return false;
     }
 
@@ -2046,14 +2045,6 @@ public final class AbstractOperations {
         return ((Callable) func).call(cx, object, args);
     }
 
-    private static <T> ArrayList<T> toList(Iterator<T> iterator) {
-        ArrayList<T> list = new ArrayList<>();
-        while (iterator.hasNext()) {
-            list.add(iterator.next());
-        }
-        return list;
-    }
-
     /**
      * 7.3.11 SetIntegrityLevel (O, level)
      * 
@@ -2069,17 +2060,15 @@ public final class AbstractOperations {
             IntegrityLevel level) {
         /* steps 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
-        /* steps 3-5 */
-        ArrayList<?> keys = toList(object.ownKeys(cx));
-        /* step 6 */
+        /* steps 3-4 */
+        List<?> keys = object.ownPropertyKeys(cx);
+        /* step 5 */
         ScriptException pendingException = null;
         if (level == IntegrityLevel.Sealed) {
-            /* step 7 */
+            /* step 6 */
             PropertyDescriptor nonConfigurable = new PropertyDescriptor();
             nonConfigurable.setConfigurable(false);
             for (Object key : keys) {
-                // FIXME: spec bug? (missing call to ToPropertyKey()?)
-                key = ToPropertyKey(cx, key);
                 try {
                     if (key instanceof String) {
                         DefinePropertyOrThrow(cx, object, (String) key, nonConfigurable);
@@ -2094,7 +2083,7 @@ public final class AbstractOperations {
                 }
             }
         } else {
-            /* step 8 */
+            /* step 7 */
             PropertyDescriptor nonConfigurable = new PropertyDescriptor();
             nonConfigurable.setConfigurable(false);
             PropertyDescriptor nonConfigurableWritable = new PropertyDescriptor();
@@ -2102,8 +2091,6 @@ public final class AbstractOperations {
             nonConfigurableWritable.setWritable(false);
             for (Object key : keys) {
                 try {
-                    // FIXME: spec bug? (missing call to ToPropertyKey()?)
-                    key = ToPropertyKey(cx, key);
                     Property currentDesc;
                     if (key instanceof String) {
                         currentDesc = object.getOwnProperty(cx, (String) key);
@@ -2132,11 +2119,11 @@ public final class AbstractOperations {
                 }
             }
         }
-        /* step 9 */
+        /* step 8 */
         if (pendingException != null) {
             throw pendingException;
         }
-        /* step 10 */
+        /* step 9 */
         return object.preventExtensions(cx);
     }
 
@@ -2161,18 +2148,16 @@ public final class AbstractOperations {
         if (status) {
             return false;
         }
-        /* steps 7-9 */
-        ArrayList<?> keys = toList(object.ownKeys(cx));
-        /* step 10 */
+        /* steps 7-8 */
+        List<?> keys = object.ownPropertyKeys(cx);
+        /* step 9 */
         ScriptException pendingException = null;
-        /* step 11 */
+        /* step 10 */
         boolean configurable = false;
-        /* step 12 */
+        /* step 11 */
         boolean writable = false;
+        /* step 12 */
         for (Object key : keys) {
-            // FIXME: spec bug? (missing call to ToPropertyKey()?)
-            key = ToPropertyKey(cx, key);
-            /* step 13 */
             try {
                 Property currentDesc;
                 if (key instanceof String) {
@@ -2193,19 +2178,19 @@ public final class AbstractOperations {
                 }
             }
         }
-        /* step 14 */
+        /* step 13 */
         if (pendingException != null) {
             throw pendingException;
         }
-        /* step 15 */
+        /* step 14 */
         if (level == IntegrityLevel.Frozen && writable) {
             return false;
         }
-        /* step 16 */
+        /* step 15 */
         if (configurable) {
             return false;
         }
-        /* step 17 */
+        /* step 16 */
         return true;
     }
 
@@ -2220,10 +2205,10 @@ public final class AbstractOperations {
      *            the array elements
      * @return the array object
      */
-    public static <T> ExoticArray CreateArrayFromList(ExecutionContext cx, List<T> elements) {
+    public static <T> ArrayObject CreateArrayFromList(ExecutionContext cx, List<T> elements) {
         /* step 1 (not applicable) */
         /* step 2 */
-        ExoticArray array = ArrayCreate(cx, 0);
+        ArrayObject array = ArrayCreate(cx, 0);
         /* step 3 */
         int n = 0;
         /* step 4 */
@@ -2246,9 +2231,9 @@ public final class AbstractOperations {
      * @return the array elements
      */
     public static Object[] CreateListFromArrayLike(ExecutionContext cx, Object obj) {
-        if (obj instanceof ExoticArray) {
+        if (obj instanceof ArrayObject) {
             // Fast-path for dense arrays
-            ExoticArray array = (ExoticArray) obj;
+            ArrayObject array = (ArrayObject) obj;
             if (array.isDenseArray()) {
                 long len = array.getLength();
                 if (len == 0) {
@@ -2261,31 +2246,103 @@ public final class AbstractOperations {
                 return array.toArray();
             }
         }
-        /* step 1 (not applicable) */
-        /* step 2 */
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
         if (!Type.isObject(obj)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject object = Type.objectValue(obj);
-        /* step 3 */
+        /* step 4 */
         Object len = Get(cx, object, "length");
-        /* steps 4-5 */
+        /* steps 5-6 */
         long n = ToLength(cx, len);
         // CreateListFromArrayLike() is (currently) only used for argument arrays
         if (n > FunctionPrototype.getMaxArguments()) {
             throw newRangeError(cx, Messages.Key.FunctionTooManyArguments);
         }
         int length = (int) n;
-        /* step 6 */
+        /* step 7 */
         Object[] list = new Object[length];
-        /* steps 7-8 */
+        /* steps 8-9 */
         for (int index = 0; index < length; ++index) {
             int indexName = index;
             Object next = Get(cx, object, indexName);
             list[index] = next;
         }
-        /* step 9 */
+        /* step 10 */
         return list;
+    }
+
+    /**
+     * 7.3.14 CreateListFromArrayLike (obj)
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the array-like object
+     * @param elementTypes
+     *            the set of allowed element types
+     * @return the array elements
+     */
+    public static List<Object> CreateListFromArrayLike(ExecutionContext cx, Object obj,
+            EnumSet<Type> elementTypes) {
+        assert elementTypes.size() == 2 && elementTypes.contains(Type.String)
+                && elementTypes.contains(Type.Symbol) : elementTypes;
+        if (obj instanceof ArrayObject) {
+            // Fast-path for dense arrays
+            ArrayObject array = (ArrayObject) obj;
+            if (array.isDenseArray()) {
+                long len = array.getLength();
+                if (len == 0) {
+                    return Collections.emptyList();
+                }
+                Object[] list = array.toArray();
+                for (int index = 0, length = list.length; index < length; ++index) {
+                    Object next = list[index];
+                    if (next instanceof String || next instanceof Symbol) {
+                        // list[index] = next;
+                    } else if (next instanceof ConsString) {
+                        // enforce flat string
+                        list[index] = ((ConsString) next).toString();
+                    } else {
+                        throw newTypeError(cx, Messages.Key.ProxyPropertyKey, Type.of(next)
+                                .toString());
+                    }
+                }
+                return Arrays.asList(list);
+            }
+        }
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        if (!Type.isObject(obj)) {
+            throw newTypeError(cx, Messages.Key.NotObjectType);
+        }
+        ScriptObject object = Type.objectValue(obj);
+        /* step 4 */
+        Object len = Get(cx, object, "length");
+        /* steps 5-6 */
+        long n = ToLength(cx, len);
+        if (n > Integer.MAX_VALUE) {
+            throw newInternalError(cx, Messages.Key.OutOfMemory);
+        }
+        int length = (int) n;
+        /* step 7 */
+        Object[] list = new Object[length];
+        /* steps 8-9 */
+        for (int index = 0; index < length; ++index) {
+            int indexName = index;
+            Object next = Get(cx, object, indexName);
+            if (next instanceof String || next instanceof Symbol) {
+                list[index] = next;
+            } else if (next instanceof ConsString) {
+                // enforce flat string
+                list[index] = ((ConsString) next).toString();
+            } else {
+                throw newTypeError(cx, Messages.Key.ProxyPropertyKey, Type.of(next).toString());
+            }
+        }
+        /* step 10 */
+        return Arrays.asList(list);
     }
 
     /**
@@ -2305,8 +2362,8 @@ public final class AbstractOperations {
             return false;
         }
         /* step 2 */
-        if (c instanceof ExoticBoundFunction) {
-            Callable bc = ((ExoticBoundFunction) c).getBoundTargetFunction();
+        if (c instanceof BoundFunctionObject) {
+            Callable bc = ((BoundFunctionObject) c).getBoundTargetFunction();
             return InstanceofOperator(o, bc, cx);
         }
         /* step 3 */
@@ -2369,19 +2426,20 @@ public final class AbstractOperations {
      * @return the new allocated object
      */
     public static ScriptObject CreateFromConstructor(ExecutionContext cx, Constructor f) {
-        /* steps 1-2 */
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
         Callable creator = GetMethod(cx, f, BuiltinSymbol.create.get());
-        /* step 3 */
+        /* step 4 */
         if (creator == null) {
             return null;
         }
-        /* steps 4-5 */
+        /* steps 5-6 */
         Object obj = creator.call(cx, f);
-        /* step 6 */
+        /* step 7 */
         if (!Type.isObject(obj)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
-        /* step 7 */
+        /* step 8 */
         return Type.objectValue(obj);
     }
 
@@ -2532,22 +2590,21 @@ public final class AbstractOperations {
      */
     public static List<String> EnumerableOwnNames(ExecutionContext cx, ScriptObject object) {
         /* step 1 (not applicable) */
-        /* steps 2-5 */
-        Iterator<?> ownKeys = object.ownKeys(cx);
-        /* step 6 */
+        /* steps 2-3 */
+        List<?> ownKeys = object.ownPropertyKeys(cx);
+        /* step 4 */
         ArrayList<String> names = new ArrayList<>();
-        /* steps 7-8 */
-        while (ownKeys.hasNext()) {
-            Object key = ownKeys.next();
-            if (Type.isString(key)) {
-                String skey = Type.stringValue(key).toString();
+        /* step 5 */
+        for (Object key : ownKeys) {
+            if (key instanceof String) {
+                String skey = (String) key;
                 Property desc = object.getOwnProperty(cx, skey);
                 if (desc != null && desc.isEnumerable()) {
                     names.add(skey);
                 }
             }
         }
-        /* step 9 */
+        /* step 6 */
         return names;
     }
 
@@ -2713,13 +2770,12 @@ public final class AbstractOperations {
      *            the value to pass to the throw() function
      * @return the next value from the iterator
      */
-    public static ScriptObject IteratorReturn(ExecutionContext cx, ScriptObject iterator,
-            Object value) {
+    public static Object IteratorReturn(ExecutionContext cx, ScriptObject iterator, Object value) {
         Object result = Invoke(cx, iterator, "return", value);
         if (!Type.isObject(result)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
-        return Type.objectValue(result);
+        return IteratorValue(cx, Type.objectValue(result));
     }
 
     /**
@@ -2731,15 +2787,9 @@ public final class AbstractOperations {
      *            the script iterator object
      * @param value
      *            the value to pass to the throw() function
-     * @return the next value from the iterator
      */
-    public static ScriptObject IteratorThrow(ExecutionContext cx, ScriptObject iterator,
-            Object value) {
-        Object result = Invoke(cx, iterator, "throw", value);
-        if (!Type.isObject(result)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        return Type.objectValue(result);
+    public static void IteratorThrow(ExecutionContext cx, ScriptObject iterator, Object value) {
+        Invoke(cx, iterator, "throw", value);
     }
 
     /**
@@ -2797,7 +2847,38 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.7 CreateIterResultObject (value, done)
+     * 7.4.7 IteratorClose( iterator, completion )
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the script iterator object
+     * @param isThrowCompletion
+     *            {@code true} if the completion is Throw
+     */
+    public static void IteratorClose(ExecutionContext cx, ScriptObject iterator,
+            boolean isThrowCompletion) {
+        /* step 1 (not applicable) */
+        /* step 2 (not applicable) */
+        /* steps 3-4 */
+        // FIXME: spec issue - change to GetMethod to avoid Has+Get?
+        boolean hasReturn = HasProperty(cx, iterator, "return");
+        /* step 5 */
+        if (hasReturn) {
+            if (isThrowCompletion) {
+                try {
+                    Invoke(cx, iterator, "return");
+                } catch (ScriptException e) {
+                    // ignore
+                }
+            } else {
+                Invoke(cx, iterator, "return");
+            }
+        }
+    }
+
+    /**
+     * 7.4.8 CreateIterResultObject (value, done)
      * 
      * @param cx
      *            the execution context
@@ -2821,7 +2902,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.8 CreateListIterator (list)
+     * 7.4.9 CreateListIterator (list)
      * 
      * @param <T>
      *            the element type
@@ -2836,7 +2917,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.8 CreateListIterator (list)
+     * 7.4.9 CreateListIterator (list)
      * 
      * @param <T>
      *            the element type
@@ -2851,7 +2932,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.9 CreateEmptyIterator ( )
+     * 7.4.10 CreateEmptyIterator ( )
      * 
      * @param cx
      *            the execution context
@@ -2865,7 +2946,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.10 CreateCompoundIterator ( iterator1, iterator2 )
+     * 7.4.11 CreateCompoundIterator ( iterator1, iterator2 )
      * 
      * @param <T>
      *            the element type
@@ -3006,8 +3087,7 @@ public final class AbstractOperations {
     public static List<String> GetOwnPropertyNames(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
         ArrayList<String> nameList = new ArrayList<>();
-        for (Iterator<?> keys = obj.ownKeys(cx); keys.hasNext();) {
-            Object key = ToPropertyKey(cx, keys.next());
+        for (Object key : obj.ownPropertyKeys(cx)) {
             if (key instanceof String) {
                 nameList.add((String) key);
             }
@@ -3026,10 +3106,8 @@ public final class AbstractOperations {
      */
     public static List<Object> GetOwnEnumerablePropertyKeys(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
-        Iterator<?> keys = obj.ownKeys(cx);
         ArrayList<Object> nameList = new ArrayList<>();
-        while (keys.hasNext()) {
-            Object key = ToPropertyKey(cx, keys.next());
+        for (Object key : obj.ownPropertyKeys(cx)) {
             Property desc;
             if (key instanceof String) {
                 desc = obj.getOwnProperty(cx, (String) key);

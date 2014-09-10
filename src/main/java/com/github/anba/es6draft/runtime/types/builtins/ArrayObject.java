@@ -32,7 +32,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>9.4.2 Array Exotic Objects
  * </ul>
  */
-public final class ExoticArray extends OrdinaryObject {
+public final class ArrayObject extends OrdinaryObject {
     /** [[ArrayInitializationState]] */
     private boolean initialized = false;
     private boolean hasIndexedAccessors = false;
@@ -45,7 +45,7 @@ public final class ExoticArray extends OrdinaryObject {
      * @param realm
      *            the realm object
      */
-    public ExoticArray(Realm realm) {
+    public ArrayObject(Realm realm) {
         super(realm);
     }
 
@@ -283,11 +283,11 @@ public final class ExoticArray extends OrdinaryObject {
      *            the prototype object
      * @return the new array object
      */
-    public static ExoticArray ArrayCreate(ExecutionContext cx, ScriptObject proto) {
+    public static ArrayObject ArrayCreate(ExecutionContext cx, ScriptObject proto) {
         assert proto != null;
         /* steps 1-3 (not applicable) */
         /* steps 4-6, 8 (implicit) */
-        ExoticArray array = new ExoticArray(cx.getRealm());
+        ArrayObject array = new ArrayObject(cx.getRealm());
         /* step 7 */
         array.setPrototype(proto);
         /* step 9 (not applicable) */
@@ -309,7 +309,7 @@ public final class ExoticArray extends OrdinaryObject {
      *            the array length
      * @return the new array object
      */
-    public static ExoticArray ArrayCreate(ExecutionContext cx, long length) {
+    public static ArrayObject ArrayCreate(ExecutionContext cx, long length) {
         return ArrayCreate(cx, length, cx.getIntrinsic(Intrinsics.ArrayPrototype));
     }
 
@@ -324,18 +324,18 @@ public final class ExoticArray extends OrdinaryObject {
      *            the prototype object
      * @return the new array object
      */
-    public static ExoticArray ArrayCreate(ExecutionContext cx, long length, ScriptObject proto) {
+    public static ArrayObject ArrayCreate(ExecutionContext cx, long length, ScriptObject proto) {
         assert proto != null;
         /* steps 1-2 */
         assert length >= 0;
         /* step 3 (not applicable) */
         /* step 11 (moved) */
         if (length > 0xFFFF_FFFFL) {
-            // enfore array index invariant
+            // enforce array index invariant
             throw newRangeError(cx, Messages.Key.InvalidArrayLength);
         }
         /* steps 4-6, 8 (implicit) */
-        ExoticArray array = new ExoticArray(cx.getRealm());
+        ArrayObject array = new ArrayObject(cx.getRealm());
         /* step 7 */
         array.setPrototype(proto);
         /* step 9 */
@@ -359,8 +359,8 @@ public final class ExoticArray extends OrdinaryObject {
      *            the element values
      * @return the new array object
      */
-    public static ExoticArray DenseArrayCreate(ExecutionContext cx, Object[] values) {
-        ExoticArray array = ArrayCreate(cx, values.length);
+    public static ArrayObject DenseArrayCreate(ExecutionContext cx, Object[] values) {
+        ArrayObject array = ArrayCreate(cx, values.length);
         IndexedMap<Property> indexed = array.indexedProperties();
         for (int i = 0, len = values.length; i < len; ++i) {
             indexed.put(i, new Property(values[i], true, true, true));
@@ -379,8 +379,8 @@ public final class ExoticArray extends OrdinaryObject {
      *            the element values
      * @return the new array object
      */
-    public static ExoticArray SparseArrayCreate(ExecutionContext cx, Object[] values) {
-        ExoticArray array = ArrayCreate(cx, values.length);
+    public static ArrayObject SparseArrayCreate(ExecutionContext cx, Object[] values) {
+        ArrayObject array = ArrayCreate(cx, values.length);
         IndexedMap<Property> indexed = array.indexedProperties();
         for (int i = 0, len = values.length; i < len; ++i) {
             if (values[i] != null) {
@@ -401,7 +401,7 @@ public final class ExoticArray extends OrdinaryObject {
      *            the property descriptor
      * @return {@code true} on success
      */
-    public static boolean ArraySetLength(ExecutionContext cx, ExoticArray array,
+    public static boolean ArraySetLength(ExecutionContext cx, ArrayObject array,
             PropertyDescriptor desc) {
         /* step 1 */
         if (!desc.hasValue()) {
@@ -460,7 +460,7 @@ public final class ExoticArray extends OrdinaryObject {
         return true;
     }
 
-    private static long ArraySetLength(ExoticArray array, long newLen, long oldLen) {
+    private static long ArraySetLength(ArrayObject array, long newLen, long oldLen) {
         IndexedMap<Property> indexed = array.indexedProperties();
         long lastIndex;
         if (indexed.isSparse()) {

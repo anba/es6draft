@@ -45,7 +45,7 @@ assertBuiltinFunction(Object.defineProperty, "defineProperty", 3);
 // Symbol valued property keys (2)
 {
   let key = Symbol();
-  assertThrows(() => Object.defineProperty({}, key, {value: 1, get(){}}), TypeError);
-  assertThrows(() => Object.defineProperty({}, key, {value: 1, set(){}}), TypeError);
-  assertThrows(() => Object.defineProperty({}, key, {value: 1, get(){}, set(){}}), TypeError);
+  assertThrows(TypeError, () => Object.defineProperty({}, key, {value: 1, get(){}}));
+  assertThrows(TypeError, () => Object.defineProperty({}, key, {value: 1, set(){}}));
+  assertThrows(TypeError, () => Object.defineProperty({}, key, {value: 1, get(){}, set(){}}));
 }

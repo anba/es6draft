@@ -296,8 +296,8 @@ final class StackMethodVisitor extends MethodVisitor {
     }
 
     private static boolean isOrdinaryObject(Type type) {
-        return Types.OrdinaryObject.equals(type) || Types.ExoticArray.equals(type)
-                || Types.ExoticArguments.equals(type) || Types.ExoticLegacyArguments.equals(type)
+        return Types.OrdinaryObject.equals(type) || Types.ArrayObject.equals(type)
+                || Types.ArgumentsObject.equals(type) || Types.LegacyArgumentsObject.equals(type)
                 || Types.RegExpObject.equals(type) || Types.GeneratorObject.equals(type);
     }
 

@@ -24,7 +24,6 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -69,13 +68,11 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         static final MethodDesc AbstractOperations_IteratorReturn = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "IteratorReturn", Type.getMethodType(
-                        Types.ScriptObject, Types.ExecutionContext, Types.ScriptObject,
-                        Types.Object));
+                        Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.Object));
 
         static final MethodDesc AbstractOperations_IteratorThrow = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "IteratorThrow", Type.getMethodType(
-                        Types.ScriptObject, Types.ExecutionContext, Types.ScriptObject,
-                        Types.Object));
+                        Type.VOID_TYPE, Types.ExecutionContext, Types.ScriptObject, Types.Object));
 
         static final MethodDesc AbstractOperations_IteratorValue = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "IteratorValue",
@@ -977,7 +974,42 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [Object] {@literal ->} [String|ExoticSymbol]
+     * stack: [Object] {@literal ->} [ScriptObject]
+     * 
+     * @param node
+     *            the current node
+     * @param from
+     *            the input value type
+     * @param mv
+     *            the expression visitor
+     */
+    protected final void ToObject(Node node, ValType from, ExpressionVisitor mv) {
+        assert from != ValType.Reference;
+        switch (from) {
+        case Number:
+        case Number_int:
+        case Number_uint:
+        case Boolean:
+            mv.toBoxed(from);
+            break;
+        case Object:
+            return;
+        case Undefined:
+        case Null:
+        case String:
+        case Any:
+        default:
+            break;
+        }
+
+        mv.lineInfo(node);
+        mv.loadExecutionContext();
+        mv.swap();
+        mv.invoke(Methods.AbstractOperations_ToObject);
+    }
+
+    /**
+     * stack: [Object] {@literal ->} [String|Symbol]
      * 
      * @param from
      *            the input value type
@@ -1312,7 +1344,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.lineInfo(node);
         if (mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume)) {
             assert mv.hasStack();
-            Label iteratorNext = new Label(), iteratorThrow = new Label(), iteratorReturn = new Label(), iteratorComplete = new Label();
+            Label iteratorNext = new Label();
             Label done = new Label();
 
             mv.enterVariableScope();
@@ -1320,53 +1352,36 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             Variable<ScriptObject> innerResult = mv.newVariable("innerResult", ScriptObject.class);
             Variable<Object> received = mv.newVariable("received", Object.class);
 
-            /* steps 4-5 */
+            /* steps 3-4 */
             // stack: [value] -> []
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getIteratorObject);
             mv.store(iterator);
 
-            /* step 6 */
+            /* step 5 */
             // stack: [] -> []
             mv.loadUndefined();
             mv.store(received);
 
-            /* step 7a */
-            // stack: [] -> [innerResult]
+            /* step 6a (empty) */
+
+            /* step 6b */
+            // stack: [] -> []
             mv.mark(iteratorNext);
             mv.loadExecutionContext();
             mv.load(iterator);
             mv.load(received);
             mv.invoke(Methods.AbstractOperations_IteratorNext);
-            mv.goToAndSetStack(iteratorComplete, iteratorNext);
-
-            /* step 7b (I) */
-            // stack: [] -> [innerResult]
-            mv.mark(iteratorThrow);
-            mv.loadExecutionContext();
-            mv.load(iterator);
-            mv.load(received);
-            mv.invoke(Methods.AbstractOperations_IteratorThrow);
-            mv.goToAndSetStack(iteratorComplete, iteratorThrow);
-
-            /* step 7? */
-            // stack: [] -> [innerResult]
-            mv.mark(iteratorReturn);
-            mv.loadExecutionContext();
-            mv.load(iterator);
-            mv.load(received);
-            mv.invoke(Methods.AbstractOperations_IteratorReturn);
-
-            /* steps 7c-7d */
-            // stack: [innerResult] -> [done]
-            mv.mark(iteratorComplete);
             mv.store(innerResult);
+
+            /* steps 6f-6g */
+            // stack: [] -> []
             mv.loadExecutionContext();
             mv.load(innerResult);
             mv.invoke(Methods.AbstractOperations_IteratorComplete);
             mv.ifne(done);
 
-            /* step 7f */
+            /* step 6i */
             // stack: [] -> [Object(innerResult)]
             // force stack top to Object-type
             mv.load(innerResult);
@@ -1374,15 +1389,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.newResumptionPoint();
             mv.store(received);
 
-            /* step 7b (II) */
+            /* step 6c */
             Label isException = new Label();
             mv.load(received);
             mv.instanceOf(Types.ScriptException);
             mv.ifeq(isException);
             {
-                mv.load(received);
-                mv.checkcast(Types.ScriptException);
-
                 Label hasThrow = new Label();
                 mv.loadExecutionContext();
                 mv.load(iterator);
@@ -1390,23 +1402,25 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 mv.invoke(Methods.AbstractOperations_HasProperty);
                 mv.ifeq(hasThrow);
                 {
+                    mv.loadExecutionContext();
+                    mv.load(iterator);
+                    mv.load(received);
+                    mv.checkcast(Types.ScriptException);
                     mv.invoke(Methods.ScriptException_getValue);
-                    mv.store(received);
-                    mv.goTo(iteratorThrow);
+                    mv.invoke(Methods.AbstractOperations_IteratorThrow);
                 }
                 mv.mark(hasThrow);
+                mv.load(received);
+                mv.checkcast(Types.ScriptException);
                 mv.athrow();
             }
             mv.mark(isException);
 
-            // FIXME: spec bug - unhandled return completion (bug 3033)
+            /* step 6d */
             mv.load(received);
             mv.instanceOf(Types.ReturnValue);
             mv.ifeq(iteratorNext);
             {
-                mv.load(received);
-                mv.checkcast(Types.ReturnValue);
-
                 Label hasReturn = new Label();
                 mv.loadExecutionContext();
                 mv.load(iterator);
@@ -1414,15 +1428,22 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 mv.invoke(Methods.AbstractOperations_HasProperty);
                 mv.ifeq(hasReturn);
                 {
+                    mv.loadExecutionContext();
+                    mv.load(iterator);
+                    mv.load(received);
+                    mv.checkcast(Types.ReturnValue);
                     mv.invoke(Methods.ReturnValue_getValue);
-                    mv.store(received);
-                    mv.goTo(iteratorReturn);
+                    mv.invoke(Methods.AbstractOperations_IteratorReturn);
+                    popStackAndReturn(mv);
                 }
                 mv.mark(hasReturn);
+                mv.load(received);
+                mv.checkcast(Types.ReturnValue);
+                mv.invoke(Methods.ReturnValue_getValue);
                 popStackAndReturn(mv);
             }
 
-            /* step 7e */
+            /* step 6h */
             mv.mark(done);
             mv.loadExecutionContext();
             mv.load(innerResult);
@@ -1483,6 +1504,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.ifeq(isReturn);
             {
                 mv.checkcast(Types.ReturnValue);
+                mv.invoke(Methods.ReturnValue_getValue);
                 popStackAndReturn(mv);
             }
             mv.mark(isReturn);
@@ -1496,19 +1518,18 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     private void popStackAndReturn(ExpressionVisitor mv) {
         // stack: [..., returnValue] -> [returnValue]
         Type[] stack = mv.getStack();
-        assert stack.length != 0 && stack[stack.length - 1].equals(Types.ReturnValue);
+        assert stack.length != 0 && stack[stack.length - 1].equals(Types.Object);
         if (stack.length > 1) {
             // pop all remaining entries from stack before emitting return instruction
             mv.enterVariableScope();
-            Variable<ReturnValue> returnValue = mv.newVariable("returnValue", ReturnValue.class);
+            Variable<Object> returnValue = mv.newVariable("returnValue", Object.class);
             mv.store(returnValue);
-            for (int i = 0; i < stack.length - 1; ++i) {
+            for (int i = stack.length - 2; i >= 0; --i) {
                 mv.pop(stack[i]);
             }
             mv.load(returnValue);
             mv.exitVariableScope();
         }
-        mv.invoke(Methods.ReturnValue_getValue);
         mv.returnCompletion();
     }
 }

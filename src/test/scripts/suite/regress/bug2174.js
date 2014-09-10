@@ -21,4 +21,4 @@ Object.defineProperty(buf, "constructor", {
 });
 var s = new Int8Array(buf);
 var t = Int8Array[Symbol.create]();
-assertThrows(() => Int8Array.call(t, s), TypeError);
+assertThrows(TypeError, () => Int8Array.call(t, s));

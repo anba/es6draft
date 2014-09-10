@@ -68,7 +68,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
             case InternalError:
                 return Intrinsics.InternalErrorPrototype;
             default:
-                throw new IllegalStateException();
+                throw new AssertionError();
             }
         }
     }
@@ -90,7 +90,6 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         switch (type) {
         case EvalError:
             createProperties(cx, this, EvalErrorConstructorProperties.class);
@@ -114,7 +113,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
             createProperties(cx, this, InternalErrorConstructorProperties.class);
             break;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 

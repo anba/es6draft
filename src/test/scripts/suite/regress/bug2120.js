@@ -6,8 +6,7 @@
  */
 
 const {
-  assertSame, assertThrows,
-  fail
+  assertSame, fail
 } = Assert;
 
 //  21.1.5.1 CreateStringIterator: ToString instead of ToObject

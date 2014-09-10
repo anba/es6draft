@@ -90,10 +90,27 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     protected final ExecutionContext cx;
-    private final HashMap<String, Binding> bindings = new HashMap<>();
+    private final HashMap<String, Binding> bindings;
 
     public DeclarativeEnvironmentRecord(ExecutionContext cx) {
         this.cx = cx;
+        this.bindings = new HashMap<>();
+    }
+
+    DeclarativeEnvironmentRecord(DeclarativeEnvironmentRecord source) {
+        this.cx = source.cx;
+        this.bindings = source.cloneBindings();
+    }
+
+    private HashMap<String, Binding> cloneBindings() {
+        HashMap<String, Binding> newBindings = new HashMap<>();
+        for (Map.Entry<String, Binding> entry : bindings.entrySet()) {
+            String name = entry.getKey();
+            Binding binding = entry.getValue();
+            assert binding.value != null : "binding not initialized: " + name;
+            newBindings.put(name, binding.clone());
+        }
+        return newBindings;
     }
 
     public final Binding getBinding(String name) {
@@ -122,22 +139,6 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
             sb.append(',');
         }
         return sb.append('\n').append('}').toString();
-    }
-
-    /**
-     * Copies this record's bindings to {@code target}.
-     * 
-     * @param target
-     *            the target record
-     */
-    void copyBindings(DeclarativeEnvironmentRecord target) {
-        assert target.bindings.isEmpty() : "target bindings not empty";
-        for (Map.Entry<String, Binding> entry : bindings.entrySet()) {
-            String name = entry.getKey();
-            Binding binding = entry.getValue();
-            assert binding.value != null : "binding already initialized: " + name;
-            target.bindings.put(name, binding.clone());
-        }
     }
 
     @Override
@@ -203,7 +204,10 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         Binding b = bindings.get(name);
         /* step 1 (omitted) */
         /* step 2 */
-        assert b != null : "binding not found: " + name; // FIXME: spec bug (bug 159)
+        // assert b != null : "binding not found: " + name; // FIXME: spec bug (bug 159)
+        if (b == null) {
+            throw newReferenceError(cx, Messages.Key.UnresolvableReference, name);
+        }
         /* steps 3-6 */
         if (b.value == null) {
             throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);

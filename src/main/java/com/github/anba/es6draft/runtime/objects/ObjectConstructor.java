@@ -15,7 +15,6 @@ import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToProper
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -34,8 +33,8 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -59,7 +58,6 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 
@@ -442,9 +440,9 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         public static Object keys(ExecutionContext cx, Object thisValue, Object o) {
             /* steps 1-2 */
             ScriptObject obj = ToObject(cx, o);
-            /* steps 3-10 */
+            /* steps 3-4 */
             List<String> nameList = EnumerableOwnNames(cx, obj);
-            /* step 11 */
+            /* step 5 */
             return CreateArrayFromList(cx, nameList);
         }
 
@@ -491,16 +489,18 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
             }
             /* steps 4-5 */
             for (Object nextSource : sources) {
-                /* steps 5.a-5.b */
+                /* step 5.a */
+                if (Type.isUndefinedOrNull(nextSource)) {
+                    continue;
+                }
+                /* step 5.b.i-5.b.ii */
                 ScriptObject from = ToObject(cx, nextSource);
-                /* steps 5.c-5.h */
-                Iterator<?> keys = from.ownKeys(cx);
-                /* step 5.i */
+                /* steps 5.b.iii-5.b.iv */
+                List<?> keys = from.ownPropertyKeys(cx);
+                /* step 5.c */
                 ScriptException pendingException = null;
-                /* step 5.j */
-                while (keys.hasNext()) {
-                    // FIXME: missing ToPropertyKey() call in specification
-                    Object nextKey = ToPropertyKey(cx, keys.next());
+                /* step 5.d */
+                for (Object nextKey : keys) {
                     try {
                         Property desc;
                         if (nextKey instanceof String) {
@@ -518,7 +518,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                         }
                     }
                 }
-                /* step 5.k */
+                /* step 5.e */
                 if (pendingException != null) {
                     throw pendingException;
                 }
@@ -544,7 +544,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object o,
                 Object proto) {
             /* steps 1-2 */
-            CheckObjectCoercible(cx, o);
+            RequireObjectCoercible(cx, o);
             /* step 3 */
             if (!Type.isObjectOrNull(proto)) {
                 throw newTypeError(cx, Messages.Key.NotObjectOrNull);
@@ -592,14 +592,13 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         ScriptObject obj = Type.objectValue(o);
         /* step 2 */
         ScriptObject props = ToObject(cx, properties);
-        /* step 3 (empty) */
-        // FIXME: spec bug - variable not used
-        /* step 10 */
+        /* steps 3-4 */
+        List<?> keys = props.ownPropertyKeys(cx);
+        /* step 5 */
         ArrayList<PropertyDescriptor> descriptors = new ArrayList<>();
         ArrayList<Object> names = new ArrayList<>();
-        /* steps 4-9, 11 */
-        for (Iterator<?> keysArray = props.ownKeys(cx); keysArray.hasNext();) {
-            Object nextKey = ToPropertyKey(cx, keysArray.next());
+        /* step 6 */
+        for (Object nextKey : keys) {
             Property propDesc;
             if (nextKey instanceof String) {
                 propDesc = props.getOwnProperty(cx, (String) nextKey);
@@ -613,9 +612,9 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                 names.add(nextKey);
             }
         }
-        /* step 12 */
+        /* step 7 */
         ScriptException pendingException = null;
-        /* step 13 */
+        /* step 8 */
         for (int i = 0, size = names.size(); i < size; ++i) {
             Object p = names.get(i);
             PropertyDescriptor desc = descriptors.get(i);
@@ -627,11 +626,11 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                 }
             }
         }
-        /* step 14 */
+        /* step 9 */
         if (pendingException != null) {
             throw pendingException;
         }
-        /* step 15 */
+        /* step 10 */
         return obj;
     }
 
@@ -644,21 +643,20 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
      *            the script object
      * @return the own string-valued property keys of <var>o</var>
      */
-    public static ExoticArray GetOwnPropertyNames(ExecutionContext cx, Object o) {
+    public static ArrayObject GetOwnPropertyNames(ExecutionContext cx, Object o) {
         /* steps 1-2 */
         ScriptObject obj = ToObject(cx, o);
-        /* steps 3-8 */
-        Iterator<?> keys = obj.ownKeys(cx);
-        /* step 9 */
+        /* steps 3-4 */
+        List<?> keys = obj.ownPropertyKeys(cx);
+        /* step 5 */
         ArrayList<String> nameList = new ArrayList<>();
-        /* step 10 */
-        while (keys.hasNext()) {
-            Object key = ToPropertyKey(cx, keys.next());
+        /* step 6 */
+        for (Object key : keys) {
             if (key instanceof String) {
                 nameList.add((String) key);
             }
         }
-        /* step 11 */
+        /* step 7 */
         return CreateArrayFromList(cx, nameList);
     }
 
@@ -671,21 +669,20 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
      *            the script object
      * @return the own symbol-valued property keys of <var>o</var>
      */
-    public static ExoticArray GetOwnPropertySymbols(ExecutionContext cx, Object o) {
+    public static ArrayObject GetOwnPropertySymbols(ExecutionContext cx, Object o) {
         /* steps 1-2 */
         ScriptObject obj = ToObject(cx, o);
-        /* steps 3-8 */
-        Iterator<?> keys = obj.ownKeys(cx);
-        /* step 9 */
+        /* steps 3-4 */
+        List<?> keys = obj.ownPropertyKeys(cx);
+        /* step 5 */
         ArrayList<Symbol> nameList = new ArrayList<>();
-        /* step 10 */
-        while (keys.hasNext()) {
-            Object key = ToPropertyKey(cx, keys.next());
+        /* step 6 */
+        for (Object key : keys) {
             if (key instanceof Symbol) {
                 nameList.add((Symbol) key);
             }
         }
-        /* step 11 */
+        /* step 7 */
         return CreateArrayFromList(cx, nameList);
     }
 }

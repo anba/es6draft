@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.mozilla;
 
-import static com.github.anba.es6draft.mozilla.MozTestGlobalObject.newTestGlobalObjectAllocator;
+import static com.github.anba.es6draft.mozilla.MozTestGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
@@ -19,9 +19,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,6 +45,7 @@ import org.junit.runners.model.MultipleFailureException;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.types.Undefined;
@@ -62,7 +65,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StopExecutionHandle
  */
 @RunWith(Parallelized.class)
 @TestConfiguration(name = "mozilla.test.jstests", file = "resource:/test-configuration.properties")
-public class MozillaJSTest {
+public final class MozillaJSTest {
     private static final Configuration configuration = loadConfiguration(MozillaJSTest.class);
 
     @Parameters(name = "{0}")
@@ -82,8 +85,14 @@ public class MozillaJSTest {
         @Override
         protected ObjectAllocator<MozTestGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
-            return newTestGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
-                    scriptCache);
+            return newGlobalObjectAllocator(console, test, scriptCache);
+        }
+
+        @Override
+        protected Set<CompatibilityOption> getOptions() {
+            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            options.add(CompatibilityOption.Comprehension);
+            return options;
         }
     };
 
@@ -119,7 +128,7 @@ public class MozillaJSTest {
     @Parameter(0)
     public MozTest moztest;
 
-    private static class MozTest extends TestInfo {
+    private static final class MozTest extends TestInfo {
         List<Entry<Condition, String>> conditions = new ArrayList<>();
         boolean random = false;
         boolean expect = true;
@@ -242,7 +251,7 @@ public class MozillaJSTest {
         return sb.toString();
     }
 
-    private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
+    private static final class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
         private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
 
         private final Path basedir;

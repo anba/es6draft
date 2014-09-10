@@ -6,17 +6,12 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 
 /**
@@ -88,9 +83,8 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
-     * Creates the default function properties, i.e. 'name' and 'length', initializes the
-     * [[Prototype]] to the <code>%FunctionPrototype%</code> object and calls
-     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, Callable, Realm)}.
+     * Creates the default function properties, i.e. 'name' and 'length', and initializes the
+     * [[Prototype]] slot to the <code>%FunctionPrototype%</code> object.
      * 
      * @param name
      *            the function name
@@ -98,22 +92,6 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
      *            the function arity
      */
     protected final void createDefaultFunctionProperties(String name, int arity) {
-        createDefaultFunctionProperties(name, arity, realm.getThrowTypeError());
-    }
-
-    /**
-     * Creates the default function properties, i.e. 'name' and 'length', initializes the
-     * [[Prototype]] to the <code>%FunctionPrototype%</code> object and calls
-     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, Callable, Realm)}.
-     * 
-     * @param name
-     *            the function name
-     * @param arity
-     *            the function arity
-     * @param thrower
-     *            the thrower function object
-     */
-    protected final void createDefaultFunctionProperties(String name, int arity, Callable thrower) {
         ExecutionContext cx = realm.defaultContext();
         // Function.prototype is the [[Prototype]] for built-in functions, cf. 17
         setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
@@ -123,19 +101,6 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         if (!name.isEmpty()) {
             defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, true));
         }
-        // 9.3.2 CreateBuiltinFunction Abstract Operation, step 5
-        AddRestrictedFunctionProperties(cx, this, thrower);
-    }
-
-    /**
-     * Calls
-     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, Callable, Realm)}.
-     * 
-     * @param cx
-     *            the execution context
-     */
-    protected final void addRestrictedFunctionProperties(ExecutionContext cx) {
-        AddRestrictedFunctionProperties(cx, this, realm.getThrowTypeError());
     }
 
     @Override
@@ -145,7 +110,6 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     public final BuiltinFunction clone(ExecutionContext cx) {
         BuiltinFunction f = clone();
         f.setPrototype(getPrototype());
-        AddRestrictedFunctionProperties(cx, f, realm.getThrowTypeError());
         return f;
     }
 
@@ -187,25 +151,26 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         return call(callerContext, thisValue, args);
     }
 
-    /**
-     * 9.2.3 [[GetOwnProperty]] (P)
-     */
-    @Override
-    protected Property getProperty(ExecutionContext cx, String propertyKey) {
-        /* steps 1-2 */
-        Property v = super.getProperty(cx, propertyKey);
-        /* step 3 */
-        if (v != null && v.isDataDescriptor()) {
-            // TODO: spec bug? [[GetOwnProperty]] override necessary, cf.
-            // AddRestrictedFunctionProperties (Bug 1223)
-            if ("caller".equals(propertyKey) && isStrictFunction(v.getValue())
-                    && getRealm().isEnabled(CompatibilityOption.FunctionPrototype)) {
-                PropertyDescriptor desc = v.toPropertyDescriptor();
-                desc.setValue(NULL);
-                v = desc.toProperty();
-            }
-        }
-        /* step 4 */
-        return v;
-    }
+    // TODO: spec bug? [[GetOwnProperty]] override necessary, cf.
+    // AddRestrictedFunctionProperties (Bug 1223)
+
+    // /**
+    // * 9.2.3 [[GetOwnProperty]] (P)
+    // */
+    // @Override
+    // protected Property getProperty(ExecutionContext cx, String propertyKey) {
+    // /* steps 1-2 */
+    // Property v = super.getProperty(cx, propertyKey);
+    // /* step 3 */
+    // if (v != null && v.isDataDescriptor()) {
+    // if ("caller".equals(propertyKey) && isStrictFunction(v.getValue())
+    // && getRealm().isEnabled(CompatibilityOption.FunctionPrototype)) {
+    // PropertyDescriptor desc = v.toPropertyDescriptor();
+    // desc.setValue(NULL);
+    // v = desc.toProperty();
+    // }
+    // }
+    // /* step 4 */
+    // return v;
+    // }
 }

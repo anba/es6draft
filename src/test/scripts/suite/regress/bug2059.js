@@ -12,4 +12,4 @@ const {
 // 24.1.2.1 ArrayBuffer(): argument validation accepts Infinity
 // https://bugs.ecmascript.org/show_bug.cgi?id=2059
 
-assertThrows(() => new ArrayBuffer(Infinity), RangeError);
+assertThrows(RangeError, () => new ArrayBuffer(Infinity));

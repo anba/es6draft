@@ -76,7 +76,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
         case 2:
             return thd;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -97,7 +97,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
             thd = e;
             return;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -181,7 +181,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
             case 2:
                 break;
             default:
-                throw new IllegalStateException();
+                throw new AssertionError();
             }
         }
         uncheckedSet(index, element);
@@ -210,7 +210,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
                 thd = null;
                 break;
             default:
-                throw new IllegalStateException();
+                throw new AssertionError();
             }
         }
         modCount++;
@@ -268,7 +268,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
         Object[] array = new Object[size];
         switch (size) {
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         case 3:
             array[2] = thd;
         case 2:

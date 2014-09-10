@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +22,7 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.MethodLookup;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -42,19 +42,14 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     protected static final MethodHandle uninitializedGeneratorMH;
     protected static final MethodHandle uninitializedAsyncFunctionMH;
     static {
-        Lookup lookup = MethodHandles.lookup();
-        try {
-            MethodHandle mh = lookup.findStatic(FunctionObject.class,
-                    "uninitializedFunctionObject",
-                    MethodType.methodType(Object.class, ExecutionContext.class));
-            mh = MethodHandles.dropArguments(mh, 1, Object.class, Object[].class);
-            uninitializedFunctionMH = MethodHandles.dropArguments(mh, 0, OrdinaryFunction.class);
-            uninitializedGeneratorMH = MethodHandles.dropArguments(mh, 0, OrdinaryGenerator.class);
-            uninitializedAsyncFunctionMH = MethodHandles.dropArguments(mh, 0,
-                    OrdinaryAsyncFunction.class);
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new IllegalStateException(e);
-        }
+        MethodHandle mh = MethodLookup.findStatic(MethodHandles.lookup(),
+                "uninitializedFunctionObject",
+                MethodType.methodType(Object.class, ExecutionContext.class));
+        mh = MethodHandles.dropArguments(mh, 1, Object.class, Object[].class);
+        uninitializedFunctionMH = MethodHandles.dropArguments(mh, 0, OrdinaryFunction.class);
+        uninitializedGeneratorMH = MethodHandles.dropArguments(mh, 0, OrdinaryGenerator.class);
+        uninitializedAsyncFunctionMH = MethodHandles.dropArguments(mh, 0,
+                OrdinaryAsyncFunction.class);
     }
 
     @SuppressWarnings("unused")
@@ -79,8 +74,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /** [[HomeObject]] */
     private ScriptObject homeObject;
     /** [[MethodName]] */
-    private Object /* String|ExoticSymbol */methodName;
+    private Object /* String|Symbol */methodName;
 
+    private boolean isClone;
     private Script script;
     private String source;
     private MethodHandle callMethod;
@@ -122,9 +118,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * @return {@code true} if legacy properties are supported
      */
     private final boolean isLegacy() {
-        // TODO: 'caller' and 'arguments' properties are never updated for generator functions
         // Uninitialized and non-strict functions have legacy support
-        return !(isInitialized() && strict)
+        return !(isInitialized() && strict) && !isClone
+                && (functionKind == FunctionKind.Normal && this instanceof OrdinaryFunction)
                 && realm.isEnabled(CompatibilityOption.FunctionPrototype);
     }
 
@@ -184,7 +180,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * @param arguments
      *            the new arguments value
      */
-    public final void setLegacyArguments(ExoticLegacyArguments arguments) {
+    public final void setLegacyArguments(LegacyArgumentsObject arguments) {
         this.arguments.setValue(arguments);
     }
 
@@ -279,6 +275,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         /* steps 1-3 (not applicable) */
         /* steps 4-6 */
         FunctionObject clone = allocateNew();
+        clone.isClone = true;
         if (isInitialized()) {
             clone.initialize(getFunctionKind(), isStrict(), getCode(), getEnvironment(),
                     getScript());
@@ -287,11 +284,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         assert clone.isExtensible() : "cloned function not extensible";
         /* step 8 (not applicable) */
         /* step 9 */
-        if (isStrict()) {
-            assert isInitialized() : "uninitialized, strict-mode function";
-            clone.addRestrictedFunctionProperties();
-        }
-        /* step 10 */
         return clone;
     }
 
@@ -371,43 +363,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         this.script = script;
     }
 
-    /**
-     * 9.2.8 AddRestrictedFunctionProperties ( F, realm ) Abstract Operation
-     */
-    protected final void addRestrictedFunctionProperties() {
-        // Modified AddRestrictedFunctionProperties() to bypass .caller and .arguments properties
-        // from FunctionObject
-
-        /* step 1 */
-        Callable thrower = realm.getThrowTypeError();
-        /* step 2 */
-        infallibleDefineOwnProperty("caller", new PropertyDescriptor(thrower, thrower, false, true));
-        /* step 3 */
-        infallibleDefineOwnProperty("arguments", new PropertyDescriptor(thrower, thrower, false,
-                true));
-    }
-
-    /**
-     * 9.2.8 AddRestrictedFunctionProperties ( F, realm ) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     */
-    protected final void addRestrictedFunctionProperties(ExecutionContext cx) {
-        // Modified AddRestrictedFunctionProperties() to bypass .caller and .arguments properties
-        // from FunctionObject
-
-        /* step 1 */
-        Callable thrower = realm.getThrowTypeError();
-        /* step 2 */
-        ordinaryDefinePropertyOrThrow(cx, "caller", new PropertyDescriptor(thrower, thrower, false,
-                true));
-        /* step 3 */
-        ordinaryDefinePropertyOrThrow(cx, "arguments", new PropertyDescriptor(thrower, thrower,
-                false, true));
-    }
-
-    protected boolean infallibleDefineOwnProperty(String propertyKey, PropertyDescriptor desc) {
+    protected final boolean infallibleDefineOwnProperty(String propertyKey, PropertyDescriptor desc) {
         // Same as ordinaryDefineOwnProperty(), except infallible ordinaryGetOwnProperty() is used.
         /* step 1 */
         Property current = ordinaryGetOwnProperty(propertyKey);
@@ -415,15 +371,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         boolean extensible = isExtensible();
         /* step 3 */
         return ValidateAndApplyPropertyDescriptor(this, propertyKey, extensible, desc, current);
-    }
-
-    private void ordinaryDefinePropertyOrThrow(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
-        // See DefinePropertyOrThrow() abstract operation
-        boolean success = infallibleDefineOwnProperty(propertyKey, desc);
-        if (!success) {
-            throw newTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey);
-        }
     }
 
     /**
@@ -504,7 +451,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * 
      * @return the script
      */
-    public Script getScript() {
+    public final Script getScript() {
         return script;
     }
 
@@ -518,7 +465,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     @Override
-    public Realm getRealm(ExecutionContext cx) {
+    public final Realm getRealm(ExecutionContext cx) {
         /* 7.3.21 GetFunctionRealm ( obj ) Abstract Operation */
         return realm;
     }

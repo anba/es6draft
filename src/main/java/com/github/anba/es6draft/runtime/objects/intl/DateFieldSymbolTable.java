@@ -105,7 +105,7 @@ final class DateFieldSymbolTable {
             case Invalid:
                 return "<invalid>";
             default:
-                throw new IllegalStateException();
+                throw new AssertionError();
             }
         }
 
@@ -442,7 +442,7 @@ final class DateFieldSymbolTable {
             case Timezone:
                 return "timeZoneName";
             default:
-                throw new IllegalStateException();
+                throw new AssertionError();
             }
         }
 

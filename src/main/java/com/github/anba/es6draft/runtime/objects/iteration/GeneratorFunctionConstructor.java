@@ -60,7 +60,6 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 

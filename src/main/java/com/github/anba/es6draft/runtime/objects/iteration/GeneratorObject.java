@@ -130,11 +130,6 @@ public final class GeneratorObject extends OrdinaryObject {
      * @see GeneratorAbstractOperations#GeneratorResume(ExecutionContext, Object, Object)
      */
     ScriptObject resume(ExecutionContext cx, Object value) {
-        GeneratorState state = this.state;
-        if (state == null) {
-            // uninitialized generator object
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
         switch (state) {
         case Executing:
             throw newTypeError(cx, Messages.Key.GeneratorExecuting);
@@ -158,20 +153,15 @@ public final class GeneratorObject extends OrdinaryObject {
      * @return the iterator result object
      * @see GeneratorPrototype.Properties#_return(ExecutionContext, Object, Object)
      */
-    Object _return(ExecutionContext cx, Object value) {
-        GeneratorState state = this.state;
-        if (state == null) {
-            // uninitialized generator object
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
+    ScriptObject _return(ExecutionContext cx, Object value) {
         switch (state) {
         case Executing:
             throw newTypeError(cx, Messages.Key.GeneratorExecuting);
         case Completed:
-            return value;
+            return CreateIterResultObject(cx, value, true);
         case SuspendedStart:
             close();
-            return value;
+            return CreateIterResultObject(cx, value, true);
         case SuspendedYield:
         default:
             this.state = GeneratorState.Executing;
@@ -188,11 +178,6 @@ public final class GeneratorObject extends OrdinaryObject {
      * @see GeneratorPrototype.Properties#_throw(ExecutionContext, Object, Object)
      */
     ScriptObject _throw(ExecutionContext cx, Object value) {
-        GeneratorState state = this.state;
-        if (state == null) {
-            // uninitialized generator object
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
         switch (state) {
         case Executing:
             throw newTypeError(cx, Messages.Key.GeneratorExecuting);
@@ -254,7 +239,7 @@ public final class GeneratorObject extends OrdinaryObject {
          *            the return value
          * @return the iterator result object
          */
-        Object _return(ExecutionContext cx, ReturnValue value);
+        ScriptObject _return(ExecutionContext cx, ReturnValue value);
 
         /**
          * Resumes generator execution with an exception.
@@ -304,7 +289,7 @@ public final class GeneratorObject extends OrdinaryObject {
         }
 
         @Override
-        public Object _return(ExecutionContext cx, ReturnValue value) {
+        public ScriptObject _return(ExecutionContext cx, ReturnValue value) {
             assert resumptionPoint != null && value != null;
             resumptionPoint.getStack()[0] = value;
             return execute(cx);
@@ -385,7 +370,7 @@ public final class GeneratorObject extends OrdinaryObject {
         }
 
         @Override
-        public Object _return(ExecutionContext cx, ReturnValue value) {
+        public ScriptObject _return(ExecutionContext cx, ReturnValue value) {
             resume0(value);
             return execute0(cx);
         }

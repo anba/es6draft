@@ -24,17 +24,17 @@ assertFalse(forInNull);
 
 // undefined and null are not ignored in for-of
 let forOfUndefined = false;
-assertThrows(() => { for (let k of void 0) forOfUndefined = true; }, TypeError);
+assertThrows(TypeError, () => { for (let k of void 0) forOfUndefined = true; });
 assertFalse(forOfUndefined);
 
 let forOfNull = false;
-assertThrows(() => { for (let k of null) forOfNull = true; }, TypeError);
+assertThrows(TypeError, () => { for (let k of null) forOfNull = true; });
 assertFalse(forOfNull);
 
 
 // undefined and null are not ignored in comprehension
-assertThrows(() => [for (k of void 0) k], TypeError);
-assertThrows(() => [for (k of null) k], TypeError);
-assertThrows(() => (for (k of void 0) k).next(), TypeError);
-assertThrows(() => (for (k of null) k).next(), TypeError);
+assertThrows(TypeError, () => [for (k of void 0) k]);
+assertThrows(TypeError, () => [for (k of null) k]);
+assertThrows(TypeError, () => (for (k of void 0) k).next());
+assertThrows(TypeError, () => (for (k of null) k).next());
 

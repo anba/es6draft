@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.test262;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.test262.Test262GlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.matchers.ErrorMessageMatcher.hasErrorMessage;
@@ -42,7 +41,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
@@ -140,8 +138,7 @@ public final class Test262Strict {
         preambleLines = 2;
 
         global = globals.newGlobal(new Test262Console(), test);
-        ExecutionContext cx = global.getRealm().defaultContext();
-        exceptionHandler.setExecutionContext(cx);
+        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
 
         if (!test.isNegative()) {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
@@ -152,7 +149,7 @@ public final class Test262Strict {
                     .or(instanceOf(Test262AssertionError.class)));
             String errorType = test.getErrorType();
             if (errorType != null) {
-                expected.expect(hasErrorMessage(cx,
+                expected.expect(hasErrorMessage(global.getRealm().defaultContext(),
                         matchesPattern(errorType, Pattern.CASE_INSENSITIVE)));
             }
         }
@@ -221,14 +218,14 @@ public final class Test262Strict {
         return object;
     }
 
-    public static class AsyncHelper {
+    public static final class AsyncHelper {
         boolean doneCalled = false;
 
         @Properties.Function(name = "$DONE", arity = 0)
-        public void done(Object argument) {
+        public void done(boolean argument) {
             assertFalse(doneCalled);
             doneCalled = true;
-            if (ToBoolean(argument)) {
+            if (argument) {
                 throw new Test262AssertionError(argument);
             }
         }

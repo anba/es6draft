@@ -15,4 +15,4 @@ const {
 assertSame(0, 2 - {valueOf(){ return 2 }, toString(){ return 1 }});
 assertSame(0, 2 - {valueOf(){ return 2 }, toString(){ return {} }});
 assertSame(1, 2 - {valueOf(){ return {} }, toString(){ return 1 }});
-assertThrows(() => 2 - {valueOf(){ return {} }, toString(){ return {} }}, TypeError);
+assertThrows(TypeError, () => 2 - {valueOf(){ return {} }, toString(){ return {} }});

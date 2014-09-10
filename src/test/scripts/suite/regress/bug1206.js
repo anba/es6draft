@@ -15,11 +15,11 @@ const {
 let f1 = Object.defineProperty(function(){}, Symbol.create, {
   value: {}
 });
-assertThrows(() => new f1, TypeError);
+assertThrows(TypeError, () => new f1);
 
 let f2 = Object.defineProperty(function(){}, Symbol.create, {
   value() {
     return null;
   }
 });
-assertThrows(() => new f2, TypeError);
+assertThrows(TypeError, () => new f2);

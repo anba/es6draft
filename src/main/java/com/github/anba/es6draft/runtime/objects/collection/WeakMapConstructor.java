@@ -47,7 +47,6 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 
@@ -87,7 +86,7 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
                 throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "set");
             }
             adder = (Callable) _adder;
-            iter = GetIterator(calleeContext, iterable);
+            iter = GetIterator(calleeContext, ToObject(calleeContext, iterable));
         }
 
         /* steps 8-9 */

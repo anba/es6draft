@@ -21,8 +21,8 @@ let nonEmptyArray = [1];
 emptyArray.constructor = Ctor;
 nonEmptyArray.constructor = Ctor;
 
-assertThrows(() => emptyArray.concat({}), TypeError);
-assertThrows(() => nonEmptyArray.concat(), TypeError);
-assertThrows(() => nonEmptyArray.filter(() => true), TypeError);
-assertThrows(() => nonEmptyArray.map(v => v), TypeError);
-assertThrows(() => nonEmptyArray.splice(0), TypeError);
+assertThrows(TypeError, () => emptyArray.concat({}));
+assertThrows(TypeError, () => nonEmptyArray.concat());
+assertThrows(TypeError, () => nonEmptyArray.filter(() => true));
+assertThrows(TypeError, () => nonEmptyArray.map(v => v));
+assertThrows(TypeError, () => nonEmptyArray.splice(0));

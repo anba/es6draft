@@ -30,8 +30,8 @@ assertBuiltinFunction(Object.getOwnPropertyDescriptor, "getOwnPropertyDescriptor
   for (let v of primitives) {
     Object.getOwnPropertyDescriptor(v);
   }
-  assertThrows(() => Object.getOwnPropertyDescriptor(void 0), TypeError);
-  assertThrows(() => Object.getOwnPropertyDescriptor(null), TypeError);
+  assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(void 0));
+  assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(null));
 
   // wrapped primitives do not have own properties...
   for (let [v, p] of [for (v of primitives) for (p of ["valueOf", "toString"]) [v, p]]) {

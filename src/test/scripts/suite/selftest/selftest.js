@@ -112,13 +112,13 @@ for (let [a, b] of [for (a of values) for (b of values) if (!Object.is(a, b)) [a
   fail("assertSame() failure");
 }
 
-assertThrows(() => {throw new Error}, Error);
-assertThrows(() => {throw new TypeError}, TypeError);
-assertThrows(() => {throw new Date}, Date);
-assertThrows(() => {Object.create(1)}, TypeError);
+assertThrows(Error, () => {throw new Error});
+assertThrows(TypeError, () => {throw new TypeError});
+assertThrows(Date, () => {throw new Date});
+assertThrows(TypeError, () => {Object.create(1)});
 L1: {
   try {
-    assertThrows(() => {}, Error);
+    assertThrows(Error, () => {});
   } catch(e) {
     if (e instanceof AssertionError) break L1;
   }

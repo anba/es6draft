@@ -19,11 +19,11 @@ const {
     return Object.setPrototypeOf(Promise.bind(boundThis), Promise);
   }
 
-  assertThrows(() => BoundPromise().all([]), TypeError);
-  assertThrows(() => BoundPromise().race([]), TypeError);
-  assertThrows(() => BoundPromise().reject(0), TypeError);
-  assertThrows(() => BoundPromise().resolve(0), TypeError);
-  assertThrows(() => { let p = new Promise(() => {}); p.constructor = BoundPromise(); p.then() }, TypeError);
+  assertThrows(TypeError, () => BoundPromise().all([]));
+  assertThrows(TypeError, () => BoundPromise().race([]));
+  assertThrows(TypeError, () => BoundPromise().reject(0));
+  assertThrows(TypeError, () => BoundPromise().resolve(0));
+  assertThrows(TypeError, () => { let p = new Promise(() => {}); p.constructor = BoundPromise(); p.then() });
 }
 
 // 25.4.1.5.1 CreatePromiseCapabilityRecord, steps 8
@@ -33,9 +33,9 @@ const {
     const boundThis = Promise[Symbol.create]();
     return Object.setPrototypeOf(Promise.bind(boundThis), Promise);
   }
-  assertThrows(() => BoundPromise().all([]), TypeError);
-  assertThrows(() => BoundPromise().race([]), TypeError);
-  assertThrows(() => BoundPromise().reject(0), TypeError);
-  assertThrows(() => BoundPromise().resolve(0), TypeError);
-  assertThrows(() => { let p = new Promise(() => {}); p.constructor = BoundPromise(); p.then() }, TypeError);
+  assertThrows(TypeError, () => BoundPromise().all([]));
+  assertThrows(TypeError, () => BoundPromise().race([]));
+  assertThrows(TypeError, () => BoundPromise().reject(0));
+  assertThrows(TypeError, () => BoundPromise().resolve(0));
+  assertThrows(TypeError, () => { let p = new Promise(() => {}); p.constructor = BoundPromise(); p.then() });
 }

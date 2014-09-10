@@ -34,8 +34,12 @@ feature/DefaultParameters/Error_SetAccessor.js
 # Wrong Array subclass in test case (Traceur limitation)
 feature/ArrayExtras/From.js
 
-# Destructuring boxing (rev27?)
-feature/Destructuring/ValueTypes.js
+# Array.prototype.{find, findIndex} don't skip holes
+feature/ArrayExtras/Find.js
+feature/ArrayExtras/FindIndex.js
+
+# yield* no longer performs complete error recovery
+feature/Yield/GeneratorReturn.js
 
 
 ############################################
@@ -49,6 +53,9 @@ feature/Yield/GeneratorThrow.js
 
 # actually runtime exception
 feature/Scope/Error_BlockBinding1.js
+
+# unicode regular expressions are transformed in traceur
+feature/RegularExpression/Simple.js
 
 
 #######################################

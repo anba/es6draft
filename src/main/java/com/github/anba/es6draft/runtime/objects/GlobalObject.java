@@ -878,7 +878,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                     }
                 }
             }
-            return (sb != null ? sb.toString() : s);
+            return sb != null ? sb.toString() : s;
         }
 
         /**
@@ -929,7 +929,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                     return null;
                 } else if (c0 <= 0b11011111) {
                     // two byte sequence
-                    if (!((i + 2 + 3 < len)))
+                    if (!(i + 2 + 3 < len))
                         return null;
                     int c1 = readByte(s, i + 3);
                     if (c1 < 0x80 || c1 > 0xBF)
@@ -938,7 +938,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                     i += 6;
                 } else if (c0 <= 0b11101111) {
                     // three byte sequence
-                    if (!((i + 2 + 6 < len)))
+                    if (!(i + 2 + 6 < len))
                         return null;
                     int c1 = readByte(s, i + 3);
                     int c2 = readByte(s, i + 6);
@@ -952,7 +952,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                     i += 9;
                 } else if (c0 <= 0b11110100) {
                     // four byte sequence
-                    if (!((i + 2 + 9 < len)))
+                    if (!(i + 2 + 9 < len))
                         return null;
                     int c1 = readByte(s, i + 3);
                     int c2 = readByte(s, i + 6);

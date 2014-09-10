@@ -13,5 +13,5 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=2956
 
 class MyError extends Error {}
-assertThrows(() => "a".replace("b", {toString(){ throw new MyError }}), MyError);
-assertThrows(() => "a".replace(/b/, {toString(){ throw new MyError }}), MyError);
+assertThrows(MyError, () => "a".replace("b", {toString(){ throw new MyError }}));
+assertThrows(MyError, () => "a".replace(/b/, {toString(){ throw new MyError }}));

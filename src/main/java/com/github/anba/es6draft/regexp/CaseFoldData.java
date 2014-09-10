@@ -84,7 +84,7 @@ final class CaseFoldData {
      */
     public static final int[] allCaseFoldData() {
         /*
-         * Format: (codeUnit:31:16) + (foldCodeUnit:0:15)
+         * Format: (codeUnit:16:31) + (foldCodeUnit:0:15)
          */
         int index = 0;
         int[] data = new int[0x80F];

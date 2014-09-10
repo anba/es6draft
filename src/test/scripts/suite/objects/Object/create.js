@@ -48,15 +48,15 @@ assertBuiltinFunction(Object.create, "create", 2);
 // Symbol valued property keys (2)
 {
   let key = Symbol();
-  assertThrows(() => Object.create(null, {
+  assertThrows(TypeError, () => Object.create(null, {
     [key]: {value: 1, get(){}}
-  }), TypeError);
-  assertThrows(() => Object.create(null, {
+  }));
+  assertThrows(TypeError, () => Object.create(null, {
     [key]: {value: 1, set(){}}
-  }), TypeError);
-  assertThrows(() => Object.create(null, {
+  }));
+  assertThrows(TypeError, () => Object.create(null, {
     [key]: {value: 1, get(){}, set(){}}
-  }), TypeError);
+  }));
 }
 
 // Intermediate exceptions during install do not stop property traversal, first exception is reported
@@ -69,7 +69,7 @@ assertBuiltinFunction(Object.create, "create", 2);
     get: () => ({value: value++}),
     ownKeys: () => ["a", "a", "a"]
   });
-  assertThrows(() => Object.create(null, props), TypeError);
+  assertThrows(TypeError, () => Object.create(null, props));
   assertSame(3, value);
 }
 
@@ -81,7 +81,7 @@ assertBuiltinFunction(Object.create, "create", 2);
     get a() { value++; throw new MyError },
     get b() { value++; throw new MyError },
   };
-  assertThrows(() => Object.create(null, props), MyError);
+  assertThrows(MyError, () => Object.create(null, props));
   assertSame(1, value);
 }
 
@@ -92,6 +92,6 @@ assertBuiltinFunction(Object.create, "create", 2);
     get a() { value++; return {value: void 0, get: void 0} },
     get b() { value++; return {value: void 0, get: void 0} },
   };
-  assertThrows(() => Object.create(null, props), TypeError);
+  assertThrows(TypeError, () => Object.create(null, props));
   assertSame(1, value);
 }

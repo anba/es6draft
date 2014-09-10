@@ -58,7 +58,7 @@ final class CodeGenerator {
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_GetTemplateCallSite = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "GetTemplateCallSite", Type.getMethodType(
-                        Types.ExoticArray, Type.INT_TYPE, Types.MethodHandle,
+                        Types.ArrayObject, Type.INT_TYPE, Types.MethodHandle,
                         Types.ExecutionContext));
     }
 
@@ -69,7 +69,7 @@ final class CodeGenerator {
                 Types.ExecutionContext, Types.Object);
 
         static final String SpreadElementMethod = Type.getMethodDescriptor(Type.INT_TYPE,
-                Types.ExecutionContext, Types.ExoticArray, Type.INT_TYPE);
+                Types.ExecutionContext, Types.ArrayObject, Type.INT_TYPE);
 
         static final String PropertyDefinitionsMethod = Type.getMethodDescriptor(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.OrdinaryObject);
@@ -191,7 +191,7 @@ final class CodeGenerator {
         case DebugInfo:
             return "!script_dbg";
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -263,7 +263,7 @@ final class CodeGenerator {
         case DebugInfo:
             return insertMarker("!", fname, "_dbg");
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -343,7 +343,7 @@ final class CodeGenerator {
         case DebugInfo:
             return MethodDescriptors.FunctionNode_DebugInfo;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -360,7 +360,7 @@ final class CodeGenerator {
         case DebugInfo:
             return MethodDescriptors.Script_DebugInfo;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -1061,7 +1061,7 @@ final class CodeGenerator {
         public void begin() {
             super.begin();
             setParameterName("cx", 0, Types.ExecutionContext);
-            setParameterName("array", 1, Types.ExoticArray);
+            setParameterName("array", 1, Types.ArrayObject);
             setParameterName("index", 2, Type.INT_TYPE);
         }
     }

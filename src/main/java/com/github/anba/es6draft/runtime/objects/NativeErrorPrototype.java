@@ -80,7 +80,7 @@ public final class NativeErrorPrototype extends OrdinaryObject implements Initia
             createProperties(cx, this, InternalErrorPrototypeProperties.class);
             break;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 

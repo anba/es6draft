@@ -304,4 +304,15 @@ public final class World<GLOBAL extends GlobalObject> {
         global.initializeFirstRealmGlobal();
         return global;
     }
+
+    /**
+     * Creates a new global object.
+     * 
+     * @param realm
+     *            the realm instance
+     * @return the new global object
+     */
+    /*package*/GLOBAL newGlobal(Realm realm) {
+        return getAllocator().newInstance(realm);
+    }
 }

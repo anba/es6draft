@@ -47,7 +47,6 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 

@@ -434,7 +434,7 @@ final class TokenStream {
             int c = input.get();
             if (!isIdentifierPart(c)) {
                 if (c == '\\' && match('u')) {
-                    readUnicode();
+                    readUnicodeEscape();
                     throw error(Messages.Key.UnicodeEscapeInRegExpFlags);
                 }
                 input.unget(c);
@@ -470,10 +470,11 @@ final class TokenStream {
      * TemplateCharacters ::
      *     TemplateCharacter TemplateCharacters<span><sub>opt</sub></span>
      * TemplateCharacter ::
-     *     SourceCharacter but not one of ` or \ or $ 
-     *     $ [LA &#x2209; { ]
+     *     $ [LA &#x2260; { ]
      *     \ EscapeSequence
      *     LineContinuation
+     *     LineTerminatorSequence
+     *     SourceCharacter but not one of ` or \ or $ or LineTerminator
      * </pre>
      * 
      * @param startToken
@@ -606,7 +607,7 @@ final class TokenStream {
             }
             break;
         case 'u':
-            c = readUnicode();
+            c = readUnicodeEscape();
             break;
         case '0':
             if (isDecimalDigit(input.peek(0))) {
@@ -974,7 +975,7 @@ final class TokenStream {
             return Token.TEMPLATE;
         case '\\':
             mustMatch('u');
-            c = readUnicode();
+            c = readUnicodeEscape();
             if (isIdentifierStart(c)) {
                 return readIdentifier(c, true);
             }
@@ -1273,7 +1274,7 @@ final class TokenStream {
             } else if (c == '\\') {
                 hasEscape = true;
                 mustMatch('u');
-                c = readUnicode();
+                c = readUnicodeEscape();
                 if (!isIdentifierPart(c)) {
                     throw error(Messages.Key.InvalidUnicodeEscapedIdentifierPart);
                 }
@@ -1302,7 +1303,7 @@ final class TokenStream {
      * 
      * @return the unicode escape sequence value
      */
-    private int readUnicode() {
+    private int readUnicodeEscape() {
         TokenStreamInput input = this.input;
         int c = input.getChar();
         if (c == '{') {
@@ -1638,7 +1639,7 @@ final class TokenStream {
      * <pre>
      * EscapeSequence ::
      *     CharacterEscapeSequence
-     *     OctalEscapeSequence
+     *     LegacyOctalEscapeSequence
      *     HexEscapeSequence
      *     UnicodeEscapeSequence
      * </pre>
@@ -1675,14 +1676,14 @@ final class TokenStream {
             }
             break;
         case 'u':
-            c = readUnicode();
+            c = readUnicodeEscape();
             break;
         case '0':
             if (isDecimalDigit(input.peek(0))) {
                 if (!isEnabled(CompatibilityOption.OctalEscapeSequence)) {
                     throw error(Messages.Key.InvalidNULLEscape);
                 }
-                c = readOctalEscape(c);
+                c = readLegacyOctalEscape(c);
             } else {
                 c = '\0';
             }
@@ -1697,7 +1698,7 @@ final class TokenStream {
             if (!isEnabled(CompatibilityOption.OctalEscapeSequence)) {
                 throw error(Messages.Key.StrictModeOctalEscapeSequence);
             }
-            c = readOctalEscape(c);
+            c = readLegacyOctalEscape(c);
             break;
         case '8':
         case '9':
@@ -1719,9 +1720,9 @@ final class TokenStream {
      * <strong>[B.1.2] String Literals</strong>
      * 
      * <pre>
-     * OctalEscapeSequence ::
-     *     OctalDigit [lookahead &#x2209; DecimalDigit]
-     *     ZeroToThree OctalDigit [lookahead &#x2209; DecimalDigit]
+     * LegacyOctalEscapeSequence ::
+     *     OctalDigit [lookahead &#x2209; OctalDigit]
+     *     ZeroToThree OctalDigit [lookahead &#x2209; OctalDigit]
      *     FourToSeven OctalDigit
      *     ZeroToThree OctalDigit OctalDigit
      * ZeroToThree :: one of
@@ -1734,7 +1735,7 @@ final class TokenStream {
      *            the start character of the octal escape sequence
      * @return the octal escape value
      */
-    private int readOctalEscape(int c) {
+    private int readLegacyOctalEscape(int c) {
         assert '0' <= c && c <= '7';
         parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalEscapeSequence);
         int d = (c - '0');
@@ -1752,11 +1753,6 @@ final class TokenStream {
         } else {
             input.ungetChar(c);
         }
-        if (c == '8' || c == '9') {
-            // FIXME: spec bug? behaviour for non-octal decimal digits?
-            // "[0-7] [8-9]" and "[0-3] [0-7] [8-9]" errors per spec (lookahead restriction B.1.2),
-            // web compliance requires to ignore trailing [8-9].
-        }
         return d;
     }
 
@@ -1769,6 +1765,7 @@ final class TokenStream {
      *     BinaryIntegerLiteral
      *     OctalIntegerLiteral
      *     HexIntegerLiteral
+     *     LegacyOctalIntegerLiteral
      * </pre>
      * 
      * @param c

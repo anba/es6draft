@@ -14,8 +14,8 @@ const {
 
 let stringIterator = String.prototype[Symbol.iterator];
 
-assertThrows(() => stringIterator.call(void 0), TypeError);
-assertThrows(() => stringIterator.call(null), TypeError);
+assertThrows(TypeError, () => stringIterator.call(void 0));
+assertThrows(TypeError, () => stringIterator.call(null));
 
 let toStringCalled = 0;
 stringIterator.call({

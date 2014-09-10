@@ -75,7 +75,7 @@ function toEnumerator(iter) {
 
 {
   function testIter(fn, result = void 0, handler = () => {}) {
-    let throwCalled = false, nextCallCount = 0;
+    let returnCalled = false, nextCallCount = 0, argsLength = -1;
     let iter = {
       [Symbol.iterator]() {
         return this;
@@ -84,15 +84,18 @@ function toEnumerator(iter) {
         nextCallCount += 1;
         return {value: 0, done: false};
       },
-      throw(...args) {
-        assertSame(1, args.length);
-        throwCalled = true;
+      return(...args) {
+        // Exception within close action are ignored!
+        // assertSame(1, args.length);
+        argsLength = args.length;
+        returnCalled = true;
         handler(args[0]);
       }
     };
     let rval;
     try { fn(iter); } catch (e) { rval = e; }
-    assertTrue(throwCalled);
+    assertTrue(returnCalled);
+    assertSame(0, argsLength);
     assertSame(1, nextCallCount);
     assertSame(result, rval);
   }
@@ -106,12 +109,12 @@ function toEnumerator(iter) {
       let gen = g(iter);
       assertEquals({value: ival, done: false}, gen.next());
       gen.throw(-1);
-    }, -2, e => { throw e * 2 });
+    }, -1, e => { throw -2 });
   }
 
   // throw
   testIter(iter => { for (let v in toEnumerator(iter)) throw 123; }, 123);
-  testIter(iter => { for (let v in toEnumerator(iter)) throw 123; }, 123 * 2, e => { throw e * 2 });
+  testIter(iter => { for (let v in toEnumerator(iter)) throw 123; }, 123, e => { throw 456 });
 
   // yield, no expression
   testGen(function* g(iter) { for (let v in toEnumerator(iter)) yield; throw new Error("unreachable"); }, void 0);

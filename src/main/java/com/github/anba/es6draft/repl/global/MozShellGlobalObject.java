@@ -35,7 +35,7 @@ import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
+import com.github.anba.es6draft.runtime.types.builtins.ProxyObject;
 
 /**
  * Global object class with support for some moz-shell functions
@@ -465,6 +465,6 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      **/
     @Function(name = "isProxy", arity = 1)
     public boolean isProxy(Object p) {
-        return (p instanceof ExoticProxy || p instanceof WrapperProxy);
+        return (p instanceof ProxyObject || p instanceof WrapperProxy);
     }
 }

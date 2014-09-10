@@ -271,7 +271,7 @@ public final class ModuleLinking {
             if (entry.getModuleRequest() == null && entry.getLocalName() != null
                     && !boundNames.contains(entry.getLocalName())) {
                 ScriptException error = newReferenceError(cx, Messages.Key.ModulesUnresolvedExport,
-                        entry.getLocalName());
+                        entry.getLocalName().getIdentifier());
                 module.getLinkErrors().add(error);
             }
             // FIXME: spec bug? - otherwise take these steps?

@@ -14,7 +14,7 @@ const {
 // 0660;ARABIC-INDIC DIGIT ZERO;Nd;
 // 104A0;OSMANYA DIGIT ZERO;Nd;
 
-// Word bound detection works correctly in non-unicode mode
+// Word boundary detection works correctly in non-unicode mode
 assertTrue(/A\b/.test("A\u00B5"));
 assertFalse(/A\B/.test("A\u00B5"));
 assertTrue(/A\b/.test("A\u00C0"));
@@ -25,7 +25,7 @@ assertTrue(/A\b/.test("A\u{104A0}"));
 assertFalse(/A\B/.test("A\u{104A0}"));
 
 
-// Word bound detection incorrectly accepts digits and letters outside of [0-9A-Za-z] in unicode mode
+// Word boundary detection incorrectly accepts digits and letters outside of [0-9A-Za-z] in unicode mode
 assertFalse(/A\b/u.test("A\u00B5"));
 assertTrue(/A\B/u.test("A\u00B5"));
 assertFalse(/A\b/u.test("A\u00C0"));

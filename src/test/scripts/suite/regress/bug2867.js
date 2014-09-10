@@ -16,4 +16,4 @@ function tryDeleteCaller() {
   "use strict";
   delete arguments.caller;
 }
-assertThrows(() => tryDeleteCaller(), TypeError);
+assertThrows(TypeError, () => tryDeleteCaller());

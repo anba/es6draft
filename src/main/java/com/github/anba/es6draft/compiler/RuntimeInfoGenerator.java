@@ -68,7 +68,6 @@ final class RuntimeInfoGenerator {
 
     private int functionFlags(FunctionNode node, boolean tailCall) {
         boolean strict = IsStrict(node);
-        boolean legacy = !strict && codegen.isEnabled(CompatibilityOption.FunctionPrototype);
         int functionFlags = 0;
         if (strict) {
             functionFlags |= FunctionFlags.Strict.getValue();
@@ -109,7 +108,7 @@ final class RuntimeInfoGenerator {
                         .getComprehension() instanceof LegacyComprehension)) {
             functionFlags |= FunctionFlags.LegacyGenerator.getValue();
         }
-        if (legacy) {
+        if (isLegacy(node)) {
             functionFlags |= FunctionFlags.Legacy.getValue();
         }
         if (hasScopedName(node)) {
@@ -126,6 +125,12 @@ final class RuntimeInfoGenerator {
             functionFlags |= FunctionFlags.TailCall.getValue();
         }
         return functionFlags;
+    }
+
+    private boolean isLegacy(FunctionNode node) {
+        return !IsStrict(node)
+                && (node instanceof FunctionDeclaration || node instanceof FunctionExpression)
+                && codegen.isEnabled(CompatibilityOption.FunctionPrototype);
     }
 
     private static boolean hasScopedName(FunctionNode node) {

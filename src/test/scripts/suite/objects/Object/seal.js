@@ -97,7 +97,7 @@ assertBuiltinFunction(Object.seal, "seal", 1);
     },
     ownKeys: () => ["a", "b"]
   });
-  assertThrows(() => Object.seal(o), MyError);
+  assertThrows(MyError, () => Object.seal(o));
   assertSame(2, count);
   assertDataProperty(o, "a", {value: 1, writable: true, enumerable: true, configurable: true});
   assertDataProperty(o, "b", {value: 2, writable: true, enumerable: true, configurable: false});
@@ -119,7 +119,7 @@ assertBuiltinFunction(Object.seal, "seal", 1);
     },
     ownKeys: () => { throw new MyError }
   });
-  assertThrows(() => Object.seal(o), MyError);
+  assertThrows(MyError, () => Object.seal(o));
   assertSame(0, count);
   assertDataProperty(o, "a", {value: 1, writable: true, enumerable: true, configurable: true});
   assertDataProperty(o, "b", {value: 2, writable: true, enumerable: true, configurable: true});

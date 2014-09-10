@@ -43,7 +43,7 @@ for (let constructor of [MyConstructor, Int8Array]) {
 
   // [[DefineOwnProperty]]
   for (let p of integerIndexedProperties) {
-    assertThrows(() => Reflect.defineProperty(create(), p, {value: 0}), TypeError);
+    assertThrows(TypeError, () => Reflect.defineProperty(create(), p, {value: 0}));
   }
   for (let p of notIntegerIndexedProperties) {
     assertTrue(Reflect.defineProperty(create(), p, {value: 0}));
@@ -53,7 +53,7 @@ for (let constructor of [MyConstructor, Int8Array]) {
   // - Throw TypeError for integer indexed properties
   // - No TypeError if property is not integer indexed
   for (let p of integerIndexedProperties) {
-    assertThrows(() => Reflect.getOwnPropertyDescriptor(create(), p), TypeError);
+    assertThrows(TypeError, () => Reflect.getOwnPropertyDescriptor(create(), p));
   }
   for (let p of notIntegerIndexedProperties) {
     assertUndefined(Reflect.getOwnPropertyDescriptor(create(), p));
@@ -63,7 +63,7 @@ for (let constructor of [MyConstructor, Int8Array]) {
   // - Throw TypeError for integer indexed properties
   // - No TypeError if property is not integer indexed
   for (let p of integerIndexedProperties) {
-    assertThrows(() => Reflect.has(create(), p), TypeError);
+    assertThrows(TypeError, () => Reflect.has(create(), p));
   }
   for (let p of notIntegerIndexedProperties) {
     assertFalse(Reflect.has(create(), p));
@@ -73,7 +73,7 @@ for (let constructor of [MyConstructor, Int8Array]) {
   // - Throw TypeError for integer indexed properties
   // - No TypeError if property is not integer indexed
   for (let p of integerIndexedProperties) {
-    assertThrows(() => Reflect.get(create(), p), TypeError);
+    assertThrows(TypeError, () => Reflect.get(create(), p));
   }
   for (let p of notIntegerIndexedProperties) {
     assertUndefined(Reflect.get(create(), p));
@@ -83,7 +83,7 @@ for (let constructor of [MyConstructor, Int8Array]) {
   // - Throw TypeError for integer indexed properties
   // - No TypeError if property is not integer indexed
   for (let p of integerIndexedProperties) {
-    assertThrows(() => Reflect.set(create(), p, 0), TypeError);
+    assertThrows(TypeError, () => Reflect.set(create(), p, 0));
   }
   for (let p of notIntegerIndexedProperties) {
     assertTrue(Reflect.set(create(), p, 0));
@@ -93,7 +93,7 @@ for (let constructor of [MyConstructor, Int8Array]) {
   // - Throw TypeError for integer indexed properties
   // - No TypeError if property is not integer indexed
   for (let p of integerIndexedProperties) {
-    assertThrows(() => Reflect.deleteProperty(create(), p), TypeError);
+    assertThrows(TypeError, () => Reflect.deleteProperty(create(), p));
   }
   for (let p of notIntegerIndexedProperties) {
     assertTrue(Reflect.deleteProperty(create(), p));
@@ -103,15 +103,15 @@ for (let constructor of [MyConstructor, Int8Array]) {
   // - Throw TypeError for integer indexed properties
   // - No TypeError if property is not integer indexed
   for (let p of integerIndexedProperties) {
-    assertThrows(() => create().hasOwnProperty(p), TypeError);
+    assertThrows(TypeError, () => create().hasOwnProperty(p));
   }
   for (let p of notIntegerIndexedProperties) {
     assertFalse(create().hasOwnProperty(p));
   }
 
   // [[Enumerate]]
-  assertThrows(() => Reflect.enumerate(create()), TypeError);
+  assertThrows(TypeError, () => Reflect.enumerate(create()));
 
   // [[OwnPropertyKeys]]
-  assertThrows(() => Reflect.ownKeys(create()), TypeError);
+  assertThrows(TypeError, () => Reflect.ownKeys(create()));
 }

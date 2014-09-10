@@ -39,7 +39,7 @@ const {
 
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
-const ThrowTypeError = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller").get;
+const ThrowTypeError = Object.getOwnPropertyDescriptor(Function.prototype, "caller").get;
 
 function IsCallable(o) {
   try {
@@ -139,7 +139,7 @@ function assertNotSame(expected, actual, message = "") {
   }
 }
 
-function assertThrows(f, expected, message = "") {
+function assertThrows(expected, f, message = "") {
   try {
     f();
   } catch (e) {
@@ -152,7 +152,7 @@ function assertThrows(f, expected, message = "") {
 }
 
 function assertSyntaxError(code, message = "") {
-  return assertThrows(() => Function(code), SyntaxError, message);
+  return assertThrows(SyntaxError, () => Function(code), message);
 }
 
 function assertTrue(actual, message = "") {
@@ -231,8 +231,8 @@ function assertBuiltinFunction(fun, name, arity) {
     // anonymous function
     assertFalse($CallFunction(Object_prototype_hasOwnProperty, fun, "name"));
   }
-  assertAccessorProperty(fun, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
-  assertAccessorProperty(fun, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
+  assertUndefined(Object_getOwnPropertyDescriptor(fun, "arguments"));
+  assertUndefined(Object_getOwnPropertyDescriptor(fun, "caller"));
 }
 
 function assertNativeFunction(fun, name, arity) {
@@ -248,8 +248,8 @@ function assertBuiltinConstructor(fun, name, arity) {
   assertSame(Function.prototype, Object_getPrototypeOf(fun), `${name}.[[Prototype]]`);
   assertDataProperty(fun, "length", {value: arity, writable: false, enumerable: false, configurable: true});
   assertDataProperty(fun, "name", {value: name, writable: false, enumerable: false, configurable: true});
-  assertAccessorProperty(fun, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
-  assertAccessorProperty(fun, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
+  assertUndefined(Object_getOwnPropertyDescriptor(fun, "arguments"));
+  assertUndefined(Object_getOwnPropertyDescriptor(fun, "caller"));
 }
 
 function assertBuiltinPrototype(o, proto = Object.prototype) {

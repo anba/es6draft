@@ -13,5 +13,5 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=2829
 
 let indexedDesc = {value: 0, writable: true, enumerable: true, configurable: false};
-assertThrows(() => Reflect.defineProperty(Int8Array[Symbol.create](), "0", indexedDesc), TypeError);
-assertThrows(() => Reflect.defineProperty(Int8Array[Symbol.create](), "1", indexedDesc), TypeError);
+assertThrows(TypeError, () => Reflect.defineProperty(Int8Array[Symbol.create](), "0", indexedDesc));
+assertThrows(TypeError, () => Reflect.defineProperty(Int8Array[Symbol.create](), "1", indexedDesc));

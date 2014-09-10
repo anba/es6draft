@@ -31,7 +31,7 @@ import com.github.anba.es6draft.runtime.types.Callable;
 /**
  * Global object for test262 tests, includes all necessary global function definitions.
  */
-public class Test262GlobalObject extends ShellGlobalObject {
+public final class Test262GlobalObject extends ShellGlobalObject {
     private final Test262Info test;
 
     public Test262GlobalObject(Realm realm, ShellConsole console, Test262Info test,
@@ -41,7 +41,15 @@ public class Test262GlobalObject extends ShellGlobalObject {
     }
 
     /**
-     * Returns an object to allocate new instances of this class
+     * Returns an object to allocate new instances of this class.
+     * 
+     * @param console
+     *            the console object
+     * @param test
+     *            the test descriptor
+     * @param scriptCache
+     *            the script cache
+     * @return the object allocator to construct new global object instances
      */
     public static ObjectAllocator<Test262GlobalObject> newGlobalObjectAllocator(
             final ShellConsole console, final Test262Info test, final ScriptCache scriptCache) {

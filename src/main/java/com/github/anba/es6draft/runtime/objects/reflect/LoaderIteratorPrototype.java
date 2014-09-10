@@ -11,7 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResu
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -28,14 +28,14 @@ import com.github.anba.es6draft.runtime.modules.ModuleLinkage;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>26 Reflection</h1><br>
- * <h2>26.3 Loader Objects</h2>
+ * <h2>26.2 Loader Objects</h2>
  * <ul>
- * <li>26.3.5 Loader Iterator Objects
+ * <li>26.2.5 Loader Iterator Objects
  * </ul>
  */
 public final class LoaderIteratorPrototype extends OrdinaryObject implements Initializable {
@@ -59,7 +59,7 @@ public final class LoaderIteratorPrototype extends OrdinaryObject implements Ini
     }
 
     /**
-     * 26.3.5.3 Properties of Loader Iterator Instances
+     * 26.2.5.3 Properties of Loader Iterator Instances
      */
     private static final class LoaderIterator extends OrdinaryObject {
         /** [[Loader]] */
@@ -89,7 +89,7 @@ public final class LoaderIteratorPrototype extends OrdinaryObject implements Ini
     }
 
     /**
-     * 26.3.5.1 CreateLoaderIterator Abstract Operation
+     * 26.2.5.1 CreateLoaderIterator Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -116,16 +116,16 @@ public final class LoaderIteratorPrototype extends OrdinaryObject implements Ini
     }
 
     /**
-     * 26.3.5.2 The %LoaderIteratorPrototype% Object
+     * 26.2.5.2 The %LoaderIteratorPrototype% Object
      */
     public enum Properties {
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.IteratorPrototype;
 
         /**
-         * 26.3.5.2.1 %LoaderIteratorPrototype%.next( )
+         * 26.2.5.2.1 %LoaderIteratorPrototype%.next( )
          * 
          * @param cx
          *            the execution context
@@ -169,7 +169,7 @@ public final class LoaderIteratorPrototype extends OrdinaryObject implements Ini
                 } else {
                     // FIXME: spec bug? need to protect against returning half-init modules?
                     assert itemKind == LoaderIterationKind.KeyValue;
-                    ExoticArray array = ArrayCreate(cx, 2);
+                    ArrayObject array = ArrayCreate(cx, 2);
                     CreateDataProperty(cx, array, 0, e.getKey());
                     CreateDataProperty(cx, array, 1, e.getValue().getModuleObject());
                     result = array;
@@ -183,7 +183,7 @@ public final class LoaderIteratorPrototype extends OrdinaryObject implements Ini
         }
 
         /**
-         * 26.3.5.2.2 %LoaderIteratorPrototype% [ @@iterator ] ( )
+         * 26.2.5.2.2 %LoaderIteratorPrototype% [ @@iterator ] ( )
          * 
          * @param cx
          *            the execution context
@@ -197,7 +197,7 @@ public final class LoaderIteratorPrototype extends OrdinaryObject implements Ini
         }
 
         /**
-         * 26.3.5.2.3 %LoaderIteratorPrototype% [ @@toStringTag ]
+         * 26.2.5.2.3 %LoaderIteratorPrototype% [ @@toStringTag ]
          */
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Loader Iterator";

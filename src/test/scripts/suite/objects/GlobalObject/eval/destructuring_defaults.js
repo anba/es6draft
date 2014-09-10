@@ -12,28 +12,25 @@ const {
 const global = this;
 
 
-// Destructuring default values in Catch are evaluated in the surrounding
-// lexical environment, not in the lexical environment of the Catch node
+// Destructuring default values in Catch are evaluated in the lexical environment of the Catch node
 try {
   throw {}
 } catch ({a = eval("let letInCatch = 0;")}) {
 }
-assertSame("number", typeof letInCatch);
+assertSame("undefined", typeof letInCatch);
 assertFalse("letInCatch" in global);
 assertUndefined(global["letInCatch"]);
 
 
-// Destructuring default values in ForOfStatement are evaluated in the surrounding
-// lexical environment, not in the lexical environment of the ForOfStatement node
+// Destructuring default values in ForOfStatement are evaluated in the lexical environment of the ForOfStatement node
 for (let {a = eval("let letInForOf = 0;")} of [{}]) {
 }
-assertSame("number", typeof letInForOf);
+assertSame("undefined", typeof letInForOf);
 assertFalse("letInForOf" in global);
 assertUndefined(global["letInForOf"]);
 
 
-// Destructuring default values in ForInStatement are evaluated in the surrounding
-// lexical environment, not in the lexical environment of the ForInStatement node
+// Destructuring default values in ForInStatement are evaluated in the lexical environment of the ForInStatement node
 var proxy = new Proxy({}, {
   *enumerate() {
     yield {};
@@ -41,7 +38,7 @@ var proxy = new Proxy({}, {
 });
 for (let {a = eval("let letInForIn = 0;")} in proxy) {
 }
-assertSame("number", typeof letInForIn);
+assertSame("undefined", typeof letInForIn);
 assertFalse("letInForIn" in global);
 assertUndefined(global["letInForIn"]);
 

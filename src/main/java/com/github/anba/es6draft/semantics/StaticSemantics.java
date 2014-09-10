@@ -797,18 +797,18 @@ public final class StaticSemantics {
                 case Variable:
                     for (Name name : BoundNames(exportDecl.getVariableStatement())) {
                         String id = name.getIdentifier();
-                        entries.add(new ExportEntry(null, null, id, id));
+                        entries.add(new ExportEntry(null, null, name, id));
                     }
                     break;
                 case Declaration:
                     for (Name name : BoundNames(exportDecl.getDeclaration())) {
                         String id = name.getIdentifier();
-                        entries.add(new ExportEntry(null, null, id, id));
+                        entries.add(new ExportEntry(null, null, name, id));
                     }
                     break;
                 case Default:
                 default:
-                    entries.add(new ExportEntry(null, null, "default", "default"));
+                    entries.add(new ExportEntry(null, null, new Name("default"), "default"));
                     break;
                 }
             }

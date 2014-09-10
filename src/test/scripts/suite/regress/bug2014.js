@@ -13,4 +13,4 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=2014
 
 let proxy = new Proxy({}, {getPrototypeOf() { return 0 }});
-assertThrows(() => Object.getPrototypeOf(proxy), TypeError);
+assertThrows(TypeError, () => Object.getPrototypeOf(proxy));

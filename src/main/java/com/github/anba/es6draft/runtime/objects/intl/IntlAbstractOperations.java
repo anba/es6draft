@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects.intl;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 
@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.objects.intl.LanguageTagParser.LanguageT
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.ibm.icu.util.LocaleMatcher;
 import com.ibm.icu.util.LocalePriorityList;
 import com.ibm.icu.util.TimeZone;
@@ -918,7 +918,7 @@ public final class IntlAbstractOperations {
         } else {
             subset = LookupSupportedLocales(cx, availableLocales, requestedLocales);
         }
-        ExoticArray array = ArrayCreate(cx, subset.size());
+        ArrayObject array = ArrayCreate(cx, subset.size());
         for (int i = 0, size = subset.size(); i < size; ++i) {
             String key = Integer.toString(i);
             Object value = subset.get(i);

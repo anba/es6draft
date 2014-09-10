@@ -142,7 +142,6 @@ final class PropertyGenerator extends
     public ValType visit(MethodDefinition node, ExpressionVisitor mv) {
         codegen.compile(node);
 
-        // Runtime Semantics: Evaluation -> MethodDefinition
         // stack: [<object>]
 
         String propName = PropName(node);
@@ -170,8 +169,7 @@ final class PropertyGenerator extends
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionSetter);
                 break;
             default:
-                assert false : "invalid method type";
-                throw new IllegalStateException();
+                throw new AssertionError("invalid method type");
             }
         } else {
             mv.aconst(propName);
@@ -195,8 +193,7 @@ final class PropertyGenerator extends
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionSetter_String);
                 break;
             default:
-                assert false : "invalid method type";
-                throw new IllegalStateException();
+                throw new AssertionError("invalid method type");
             }
         }
 
@@ -229,7 +226,6 @@ final class PropertyGenerator extends
      */
     @Override
     public ValType visit(PropertyValueDefinition node, ExpressionVisitor mv) {
-        // Runtime Semantics: Evaluation -> Property Definition Evaluation
         // stack: [<object>]
 
         PropertyName propertyName = node.getPropertyName();

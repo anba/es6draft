@@ -29,7 +29,7 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
  * <li>9.4.4 Arguments Exotic Objects
  * </ul>
  */
-public final class ExoticArguments extends OrdinaryObject {
+public final class ArgumentsObject extends OrdinaryObject {
     /** [[ParameterMap]] */
     private ParameterMap parameterMap = null;
 
@@ -39,7 +39,7 @@ public final class ExoticArguments extends OrdinaryObject {
      * @param realm
      *            the realm object
      */
-    public ExoticArguments(Realm realm) {
+    public ArgumentsObject(Realm realm) {
         super(realm);
     }
 
@@ -232,12 +232,12 @@ public final class ExoticArguments extends OrdinaryObject {
      *            the function arguments
      * @return the strict mode arguments object
      */
-    public static ExoticArguments CreateUnmappedArgumentsObject(ExecutionContext cx,
+    public static ArgumentsObject CreateUnmappedArgumentsObject(ExecutionContext cx,
             Object[] argumentsList) {
         /* step 1 */
         int len = argumentsList.length;
         /* steps 2-3 */
-        ExoticArguments obj = new ExoticArguments(cx.getRealm());
+        ArgumentsObject obj = new ArgumentsObject(cx.getRealm());
         obj.setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
         /* step 4 */
         obj.properties().put("length", new Property(len, true, false, true));
@@ -277,14 +277,14 @@ public final class ExoticArguments extends OrdinaryObject {
      *            the current lexical environment
      * @return the mapped arguments object
      */
-    public static ExoticArguments CreateMappedArgumentsObject(ExecutionContext cx,
+    public static ArgumentsObject CreateMappedArgumentsObject(ExecutionContext cx,
             FunctionObject func, String[] formals, Object[] argumentsList,
             LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
         /* step 1 (not applicable) */
         /* step 2 */
         int len = argumentsList.length;
         /* steps 3-11 */
-        ExoticArguments obj = new ExoticArguments(cx.getRealm());
+        ArgumentsObject obj = new ArgumentsObject(cx.getRealm());
         obj.setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
         /* steps 12-13 (not applicable) */
         /* steps 14-15 */

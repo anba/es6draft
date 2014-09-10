@@ -42,7 +42,7 @@ const {
     executor(() => { resolveCalled = true }, () => fail `reject called`);
     executor(void 0, void 0);
   }
-  assertThrows(() => Promise.resolve.call(F), TypeError);
+  assertThrows(TypeError, () => Promise.resolve.call(F));
   assertTrue(called);
   assertFalse(resolveCalled);
 }

@@ -60,6 +60,10 @@ final class BindingInitializationGenerator {
                 MethodType.Static, Types.AbstractOperations, "Get", Type.getMethodType(
                         Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.String));
 
+        static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "ToObject",
+                Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
+
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
                 MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
@@ -73,11 +77,7 @@ final class BindingInitializationGenerator {
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_createRestArray = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "createRestArray",
-                Type.getMethodType(Types.ExoticArray, Types.Iterator, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "ensureObject",
-                Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
+                Type.getMethodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_getIterator = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "getIterator",
@@ -225,6 +225,13 @@ final class BindingInitializationGenerator {
     private static void PutValue(ExpressionVisitor mv) {
         mv.loadExecutionContext();
         mv.invoke(Methods.Reference_putValue);
+    }
+
+    private static void ToObject(Node node, ExpressionVisitor mv) {
+        mv.lineInfo(node);
+        mv.loadExecutionContext();
+        mv.swap();
+        mv.invoke(Methods.AbstractOperations_ToObject);
     }
 
     private enum EnvironmentType {
@@ -501,11 +508,10 @@ final class BindingInitializationGenerator {
                     mv.mark(undef);
                 }
 
+                // FIXME: spec bug - ToObject not applied for iterator value
                 // step 7
                 // stack: [(env), (env), v'] -> [(env), (env), v']
-                mv.lineInfo(binding);
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_ensureObject);
+                ToObject(binding, mv);
 
                 // step 8
                 // stack: [(env), (env), v'] -> [(env)]
@@ -595,11 +601,10 @@ final class BindingInitializationGenerator {
             }
 
             if (binding instanceof BindingPattern) {
+                // FIXME: spec bug - ToObject not applied for iterator value
                 // step 4
                 // stack: [(env), (env), v'] -> [(env), (env), v']
-                mv.lineInfo(binding);
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_ensureObject);
+                ToObject(binding, mv);
             }
 
             // step 5

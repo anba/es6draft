@@ -91,7 +91,7 @@ public class SuperExpression extends LeftHandSideExpression {
         case PropertyAccessor:
             return new SuperExpressionValue(getBeginPosition(), getEndPosition(), name);
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 

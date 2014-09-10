@@ -12,8 +12,8 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -34,6 +34,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.Parallelized;
@@ -62,8 +63,15 @@ public final class NativesV8Test {
         @Override
         protected ObjectAllocator<V8NativeTestGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
-            return V8NativeTestGlobalObject.newTestGlobalObjectAllocator(console,
-                    test.getBaseDir(), test.getScript(), scriptCache);
+            return V8NativeTestGlobalObject.newGlobalObjectAllocator(console, test, scriptCache);
+        }
+
+        @Override
+        protected Set<CompatibilityOption> getOptions() {
+            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            options.add(CompatibilityOption.Comprehension);
+            options.add(CompatibilityOption.Realm);
+            return options;
         }
 
         @Override
@@ -117,9 +125,9 @@ public final class NativesV8Test {
     }
 
     public static final class V8NativeTestGlobalObject extends V8ShellGlobalObject {
-        protected V8NativeTestGlobalObject(Realm realm, ShellConsole console, Path baseDir,
-                Path script, ScriptCache scriptCache) {
-            super(realm, console, baseDir, script, scriptCache);
+        protected V8NativeTestGlobalObject(Realm realm, ShellConsole console, TestInfo test,
+                ScriptCache scriptCache) {
+            super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
         }
 
         @Override
@@ -136,14 +144,12 @@ public final class NativesV8Test {
             includeNative(getScriptURL("typed-array.js"));
         }
 
-        public static ObjectAllocator<V8NativeTestGlobalObject> newTestGlobalObjectAllocator(
-                final ShellConsole console, final Path baseDir, final Path script,
-                final ScriptCache scriptCache) {
+        public static ObjectAllocator<V8NativeTestGlobalObject> newGlobalObjectAllocator(
+                final ShellConsole console, final TestInfo test, final ScriptCache scriptCache) {
             return new ObjectAllocator<V8NativeTestGlobalObject>() {
                 @Override
                 public V8NativeTestGlobalObject newInstance(Realm realm) {
-                    return new V8NativeTestGlobalObject(realm, console, baseDir, script,
-                            scriptCache);
+                    return new V8NativeTestGlobalObject(realm, console, test, scriptCache);
                 }
             };
         }

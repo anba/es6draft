@@ -12,4 +12,4 @@ const {
 // 24.2.2.1, DataView: Ensure [[ArrayBufferData]] is not undefined in step 6
 // https://bugs.ecmascript.org/show_bug.cgi?id=2050
 
-assertThrows(() => new DataView(ArrayBuffer[Symbol.create]()), TypeError);
+assertThrows(TypeError, () => new DataView(ArrayBuffer[Symbol.create]()));

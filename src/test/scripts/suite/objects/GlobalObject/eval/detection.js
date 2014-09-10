@@ -11,28 +11,28 @@ const {
 
 loadRelativeToScript("../../../lib/recorder.js");
 
-function HasBinding(name) {
-  return `get:Symbol(Symbol.unscopables);has:${name};`;
-}
-
-function GetBindingValue(name) {
-  return `has:${name};get:${name};`;
-}
-
 function HasBindingFail(name) {
-  return `getOwnPropertyDescriptor:${name};getPrototypeOf:`;
+  return `has:${name};`;
 }
 
 function HasBindingSuccess(name) {
-  return `getOwnPropertyDescriptor:${name};getOwnPropertyDescriptor:Symbol(Symbol.unscopables);`;
+  return `has:${name};get:Symbol(Symbol.unscopables);`;
 }
 
 function GetBindingValueFail(name) {
-  return `getOwnPropertyDescriptor:${name};getPrototypeOf:`;
+  return `has:${name};`;
 }
 
 function GetBindingValueSuccess(name) {
-  return `getOwnPropertyDescriptor:${name};getOwnPropertyDescriptor:Symbol(Symbol.unscopables);get:${name};`;
+  return `has:${name};get:${name};`;
+}
+
+function ProtoCheck() {
+  return `get:Symbol(Symbol.unscopables);`;
+}
+
+function ProtoGet(name) {
+  return `get:${name};`;
 }
 
 function CreatePrototype() {
@@ -64,7 +64,7 @@ const global = this;
   with (object) {
     eval("");
   }
-  assertSame(CreatePrototype() + HasBindingFail("eval") + HasBindingSuccess("eval") + GetBindingValueFail("eval") + GetBindingValueSuccess("eval"), record());
+  assertSame(CreatePrototype() + HasBindingFail("eval") + HasBindingSuccess("eval") + ProtoCheck() + GetBindingValueFail("eval") + GetBindingValueSuccess("eval") + ProtoGet("eval"), record());
 }
 
 {
@@ -82,5 +82,5 @@ const global = this;
   with (object) {
     eval("");
   }
-  assertSame(CreatePrototype() + HasBindingFail("eval") + HasBindingSuccess("eval") + GetBindingValueFail("eval") + GetBindingValueSuccess("eval"), record());
+  assertSame(CreatePrototype() + HasBindingFail("eval") + HasBindingSuccess("eval") + ProtoCheck() + GetBindingValueFail("eval") + GetBindingValueSuccess("eval") + ProtoGet("eval"), record());
 }

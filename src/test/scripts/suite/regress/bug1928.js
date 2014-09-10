@@ -12,4 +12,4 @@ const {
 // 24.3.3, Str operation, step 5c: Initialisation state of [[BooleanData]] unchecked
 // https://bugs.ecmascript.org/show_bug.cgi?id=1928
 
-assertThrows(() => JSON.stringify(Boolean[Symbol.create]()), TypeError);
+assertThrows(TypeError, () => JSON.stringify(Boolean[Symbol.create]()));

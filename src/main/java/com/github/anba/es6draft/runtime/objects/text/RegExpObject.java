@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.objects.text;
 
+import java.util.Objects;
+
 import com.github.anba.es6draft.regexp.RegExpMatcher;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -80,5 +82,10 @@ public final class RegExpObject extends OrdinaryObject {
     public RegExpMatcher getRegExpMatcher() {
         assert regExpMatcher != null;
         return regExpMatcher;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s, matcher={%s}", super.toString(), Objects.toString(regExpMatcher));
     }
 }

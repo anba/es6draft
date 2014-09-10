@@ -12,9 +12,9 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>26 Reflection</h1><br>
- * <h2>26.3 Loader Objects</h2>
+ * <h2>26.2 Loader Objects</h2>
  * <ul>
- * <li>26.3.4 Properties of Reflect.Loader Instances
+ * <li>26.2.4 Properties of Reflect.Loader Instances
  * </ul>
  */
 public class LoaderObject extends OrdinaryObject {

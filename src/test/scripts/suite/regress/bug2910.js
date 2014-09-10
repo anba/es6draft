@@ -9,13 +9,13 @@ const {
   assertSame, assertThrows
 } = Assert;
 
-// 24.2.4.2, 24.2.4.3: Missing checks for neutered buffers in DataView accessors
+// 24.2.4.2, 24.2.4.3: Missing checks for detached buffers in DataView accessors
 // https://bugs.ecmascript.org/show_bug.cgi?id=2910
 
 let dv = DataView[Symbol.create]();
-assertThrows(() => dv.byteLength, TypeError);
-assertThrows(() => dv.byteOffset, TypeError);
-assertThrows(() => dv.buffer, TypeError);
+assertThrows(TypeError, () => dv.byteLength);
+assertThrows(TypeError, () => dv.byteOffset);
+assertThrows(TypeError, () => dv.buffer);
 
 let buf = new ArrayBuffer(10);
 DataView.call(dv, buf, 2, 6);
@@ -23,9 +23,9 @@ assertSame(6, dv.byteLength);
 assertSame(2, dv.byteOffset);
 assertSame(buf, dv.buffer);
 
-// Internal API call to neuter buffer
-neuterArrayBuffer(buf);
+// Internal API call to detach buffer
+detachArrayBuffer(buf);
 
-assertThrows(() => dv.byteLength, TypeError);
-assertThrows(() => dv.byteOffset, TypeError);
+assertThrows(TypeError, () => dv.byteLength);
+assertThrows(TypeError, () => dv.byteOffset);
 assertSame(buf, dv.buffer);

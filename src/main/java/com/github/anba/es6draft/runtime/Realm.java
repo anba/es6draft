@@ -8,16 +8,15 @@ package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToPropertyKey;
 import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecutionContext;
 import static com.github.anba.es6draft.runtime.LexicalEnvironment.newGlobalEnvironment;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import java.security.SecureRandom;
 import java.text.Collator;
 import java.text.DecimalFormatSymbols;
 import java.util.EnumMap;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Random;
 import java.util.TimeZone;
@@ -52,6 +51,7 @@ import com.github.anba.es6draft.runtime.objects.intl.NumberFormatPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionConstructor;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorPrototype;
+import com.github.anba.es6draft.runtime.objects.iteration.IteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.number.MathObject;
 import com.github.anba.es6draft.runtime.objects.number.NumberConstructor;
 import com.github.anba.es6draft.runtime.objects.number.NumberPrototype;
@@ -142,8 +142,8 @@ public final class Realm {
     private Realm(World<? extends GlobalObject> world) {
         this.world = world;
         this.defaultContext = newScriptExecutionContext(this, new RealmScript());
-        this.globalObject = world.getAllocator().newInstance(this);
-        this.globalThis = world.getAllocator().newInstance(this); // TODO: yuk...
+        this.globalObject = world.newGlobal(this);
+        this.globalThis = world.newGlobal(this); // TODO: yuk...
         this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
         this.realmObject = new RealmObject(this);
 
@@ -167,7 +167,7 @@ public final class Realm {
     private Realm(World<? extends GlobalObject> world, RealmObject realmObject) {
         this.world = world;
         this.defaultContext = newScriptExecutionContext(this, new RealmScript());
-        this.globalObject = world.getAllocator().newInstance(this);
+        this.globalObject = world.newGlobal(this);
         this.globalThis = ObjectCreate(defaultContext, (ScriptObject) null);
         this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
         this.realmObject = realmObject;
@@ -189,7 +189,7 @@ public final class Realm {
             ScriptObject globalThis) {
         this.world = world;
         this.defaultContext = newScriptExecutionContext(this, new RealmScript());
-        this.globalObject = world.getAllocator().newInstance(this);
+        this.globalObject = world.newGlobal(this);
         this.globalThis = globalThis;
         this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
         this.realmObject = realmObject;
@@ -589,8 +589,7 @@ public final class Realm {
         GlobalObject globalObject = realm.getGlobalObject();
         assert globalThis != null && globalObject != null;
         /* step 2 */
-        for (Iterator<?> keys = globalObject.ownKeys(cx); keys.hasNext();) {
-            Object key = ToPropertyKey(cx, keys.next());
+        for (Object key : globalObject.ownPropertyKeys(cx)) {
             if (key instanceof String) {
                 String propertyKey = (String) key;
                 Property prop = globalObject.getOwnProperty(cx, propertyKey);
@@ -702,6 +701,8 @@ public final class Realm {
         functionConstructor.initialize(defaultContext);
         functionPrototype.initialize(defaultContext);
 
+        AddRestrictedFunctionProperties(defaultContext, functionPrototype, realm);
+
         // Object.prototype.toString is also an intrinsic
         Object objectPrototypeToString = Get(defaultContext, objectPrototype, "toString");
         intrinsics.put(Intrinsics.ObjProto_toString, (OrdinaryObject) objectPrototypeToString);
@@ -740,6 +741,7 @@ public final class Realm {
         ErrorConstructor errorConstructor = new ErrorConstructor(realm);
         ErrorPrototype errorPrototype = new ErrorPrototype(realm);
         JSONObject jsonObject = new JSONObject(realm);
+        IteratorPrototype iteratorPrototype = new IteratorPrototype(realm);
 
         // registration phase
         intrinsics.put(Intrinsics.Array, arrayConstructor);
@@ -762,6 +764,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.Error, errorConstructor);
         intrinsics.put(Intrinsics.ErrorPrototype, errorPrototype);
         intrinsics.put(Intrinsics.JSON, jsonObject);
+        intrinsics.put(Intrinsics.IteratorPrototype, iteratorPrototype);
 
         // initialization phase
         arrayConstructor.initialize(defaultContext);
@@ -784,6 +787,7 @@ public final class Realm {
         errorConstructor.initialize(defaultContext);
         errorPrototype.initialize(defaultContext);
         jsonObject.initialize(defaultContext);
+        iteratorPrototype.initialize(defaultContext);
 
         // Array.prototype.values is also an intrinsic
         Object arrayPrototypeValues = Get(defaultContext, arrayPrototype, "values");
@@ -927,8 +931,6 @@ public final class Realm {
         LoaderConstructor loaderConstructor = new LoaderConstructor(realm);
         LoaderPrototype loaderPrototype = new LoaderPrototype(realm);
         LoaderIteratorPrototype loaderIteratorPrototype = new LoaderIteratorPrototype(realm);
-        RealmConstructor realmConstructor = new RealmConstructor(realm);
-        RealmPrototype realmPrototype = new RealmPrototype(realm);
         SystemObject systemObject = new SystemObject(realm);
 
         // registration phase
@@ -937,19 +939,27 @@ public final class Realm {
         intrinsics.put(Intrinsics.Loader, loaderConstructor);
         intrinsics.put(Intrinsics.LoaderPrototype, loaderPrototype);
         intrinsics.put(Intrinsics.LoaderIteratorPrototype, loaderIteratorPrototype);
-        intrinsics.put(Intrinsics.Realm, realmConstructor);
-        intrinsics.put(Intrinsics.RealmPrototype, realmPrototype);
         intrinsics.put(Intrinsics.System, systemObject);
 
         // initialization phase
         proxy.initialize(defaultContext);
-        reflect.initialize(defaultContext);
         loaderConstructor.initialize(defaultContext);
         loaderPrototype.initialize(defaultContext);
         loaderIteratorPrototype.initialize(defaultContext);
-        realmConstructor.initialize(defaultContext);
-        realmPrototype.initialize(defaultContext);
         systemObject.initialize(defaultContext);
+
+        if (realm.isEnabled(CompatibilityOption.Realm)) {
+            RealmConstructor realmConstructor = new RealmConstructor(realm);
+            RealmPrototype realmPrototype = new RealmPrototype(realm);
+
+            intrinsics.put(Intrinsics.Realm, realmConstructor);
+            intrinsics.put(Intrinsics.RealmPrototype, realmPrototype);
+
+            realmConstructor.initialize(defaultContext);
+            realmPrototype.initialize(defaultContext);
+        }
+
+        reflect.initialize(defaultContext);
     }
 
     /**

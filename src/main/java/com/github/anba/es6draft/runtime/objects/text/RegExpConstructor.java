@@ -56,7 +56,6 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
         createProperties(cx, this, RegExpStatics.class);
     }
@@ -177,7 +176,8 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         /* steps 7-8 */
         RegExpMatcher matcher;
         try {
-            matcher = RegExpParser.parse(p, f, "<regexp>", 1, 1);
+            matcher = RegExpParser.parse(p, f, "<regexp>", 1, 1,
+                    cx.getRealm().isEnabled(CompatibilityOption.WebRegularExpressions));
         } catch (ParserException e) {
             throw e.toScriptException(cx);
         }

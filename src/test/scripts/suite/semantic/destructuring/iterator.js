@@ -6,7 +6,7 @@
  */
 
 const {
-  assertSame, assertThrows
+  assertSame
 } = Assert;
 
 function countIter(iterable) {

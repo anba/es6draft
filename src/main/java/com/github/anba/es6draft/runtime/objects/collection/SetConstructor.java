@@ -47,7 +47,6 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 

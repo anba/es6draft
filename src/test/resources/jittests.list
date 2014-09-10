@@ -52,6 +52,9 @@ tests/collections/WeakSet-error.js
 # ES6: SpiderMonkey bug 1041341
 tests/basic/destructuring-rest.js
 
+# ES6: IteratorPrototype object
+tests/for-of/string-iterator-surfaces.js
+
 
 ###################
 # Misc issues     #
@@ -495,6 +498,9 @@ tests/basic/track-allocation-sites.js
 tests/basic/bug1035287-track-allocation-sites-recursion.js
 # evalReturningScope
 tests/basic/bug673569.js
+# cacheEntry
+tests/basic/bug1057571.js
+tests/basic/bug1061534.js
 
 
 #######################################

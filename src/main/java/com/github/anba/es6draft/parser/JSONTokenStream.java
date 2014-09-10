@@ -20,16 +20,66 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  * </ul>
  */
 final class JSONTokenStream {
+    private final JSONParser parser;
     private final TokenStreamInput input;
+
+    /** current line number */
+    private int line;
+    /** start position of current line */
+    private int linestart;
+
     // token data
+    /** current token in stream */
     private Token current;
+    /** start line/column info for current token */
+    private long sourcePosition;
+
     // literal data
     private StrBuffer buffer = new StrBuffer();
     private double number = 0;
 
-    public JSONTokenStream(TokenStreamInput input) {
+    public JSONTokenStream(JSONParser parser, TokenStreamInput input) {
+        this.parser = parser;
         this.input = input;
+        this.line = 1;
+        this.linestart = input.position();
         this.current = scanToken();
+    }
+
+    /**
+     * Updates line state information for line breaks within literals, does <strong>not</strong> set
+     * the {@link #hasLineTerminator} flag.
+     */
+    private void incrementLine() {
+        line += 1;
+        linestart = input.position();
+    }
+
+    /**
+     * Returns the encoded line/column information of the current source position.
+     * 
+     * @return the current line/column information
+     */
+    public long sourcePosition() {
+        return sourcePosition;
+    }
+
+    /**
+     * Returns the current line number.
+     * 
+     * @return the line number
+     */
+    public int getLine() {
+        return line;
+    }
+
+    /**
+     * Returns the current column number.
+     * 
+     * @return the column number
+     */
+    public int getColumn() {
+        return input.position() - linestart;
     }
 
     /**
@@ -81,13 +131,20 @@ final class JSONTokenStream {
             if (c == TokenStreamInput.EOF) {
                 return Token.EOF;
             } else if (c <= 0x20) {
-                if (c == 0x09 || c == 0x0A || c == 0x0D || c == 0x20) {
+                switch (c) {
+                case 0x0D:
+                    input.match('\n');
+                case 0x0A:
+                    incrementLine();
+                case 0x09:
+                case 0x20:
                     // skip over whitespace
                     continue;
                 }
             }
             break;
         }
+        sourcePosition = ((long) (input.position() - linestart) << 32) | line;
 
         switch (c) {
         case '"':
@@ -375,6 +432,7 @@ final class JSONTokenStream {
      * @return the parser exception
      */
     private ParserException error(Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, "<json>", 1, 1, messageKey, args);
+        throw new ParserException(ExceptionType.SyntaxError, parser.getSourceName(), getLine(),
+                getColumn(), messageKey, args);
     }
 }

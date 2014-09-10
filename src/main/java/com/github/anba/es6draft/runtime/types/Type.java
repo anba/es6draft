@@ -40,6 +40,27 @@ public enum Type {
     /** 6.1.7 The Object Type */
     Object;
 
+    @Override
+    public String toString() {
+        switch (this) {
+        case Undefined:
+            return "undefined";
+        case Null:
+            return "null";
+        case Boolean:
+            return "boolean";
+        case Number:
+            return "number";
+        case String:
+            return "string";
+        case Symbol:
+            return "symbol";
+        case Object:
+        default:
+            return "object";
+        }
+    }
+
     /**
      * Returns the {@link Type} of the input parameter.
      * 

@@ -10,14 +10,14 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.IsInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
-import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsNeuteredBuffer;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsDetachedBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticIntegerIndexedObject;
+import com.github.anba.es6draft.runtime.types.builtins.IntegerIndexedObject;
 
 /**
  * <h1>22 Indexed Collections</h1><br>
@@ -26,7 +26,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticIntegerIndexedObjec
  * <li>22.2.7 Properties of TypedArray instances
  * </ul>
  */
-public final class TypedArrayObject extends ExoticIntegerIndexedObject implements ArrayBufferView {
+public final class TypedArrayObject extends IntegerIndexedObject implements ArrayBufferView {
     /** [[ViewedArrayBuffer]] */
     private ArrayBufferObject buffer;
 
@@ -86,8 +86,8 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 5 */
-        if (IsNeuteredBuffer(buffer)) {
-            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        if (IsDetachedBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
         }
         /* steps 6-7 */
         if (!IsInteger(index)) {
@@ -116,8 +116,8 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 5 */
-        if (IsNeuteredBuffer(buffer)) {
-            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        if (IsDetachedBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
         }
         /* steps 6-7 */
         if (!IsInteger(index)) {
@@ -157,8 +157,8 @@ public final class TypedArrayObject extends ExoticIntegerIndexedObject implement
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 7 */
-        if (IsNeuteredBuffer(buffer)) {
-            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        if (IsDetachedBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
         }
         /* steps 8-9 */
         if (!IsInteger(index)) {

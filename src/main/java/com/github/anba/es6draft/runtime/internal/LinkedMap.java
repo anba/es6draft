@@ -15,7 +15,7 @@ import java.util.NoSuchElementException;
 /**
  * Simple double-linked map implementation without fail-fast iterator.
  */
-public class LinkedMap<KEY, VALUE> {
+public class LinkedMap<KEY, VALUE> implements Iterable<Map.Entry<KEY, VALUE>> {
     @SuppressWarnings("serial")
     private static final class Entry<KEY, VALUE> extends SimpleEntry<KEY, VALUE> {
         private Entry<KEY, VALUE> prev, next;
@@ -157,6 +157,7 @@ public class LinkedMap<KEY, VALUE> {
      * 
      * @return an iterator over this map
      */
+    @Override
     public Iterator<Map.Entry<KEY, VALUE>> iterator() {
         return new Iterator<Map.Entry<KEY, VALUE>>() {
             private Entry<KEY, VALUE> cursor = head;

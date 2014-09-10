@@ -19,12 +19,12 @@ for (let key of primitives) {
   assertFalse(wm.delete(key));
   assertFalse(wm.has(key));
   assertUndefined(wm.get(key));
-  assertThrows(() => wm.set(key, null), TypeError);
+  assertThrows(TypeError, () => wm.set(key, null));
 }
 
 let ws = new WeakSet();
 for (let key of primitives) {
   assertFalse(ws.delete(key));
   assertFalse(ws.has(key));
-  assertThrows(() => ws.add(key), TypeError);
+  assertThrows(TypeError, () => ws.add(key));
 }

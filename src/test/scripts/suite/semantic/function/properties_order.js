@@ -50,7 +50,7 @@ const {
   let f = (0, function(){"use strict"});
   let keys = Object.getOwnPropertyNames(f);
 
-  assertEquals(["length", "caller", "arguments", "prototype"], keys);
+  assertEquals(["length", "prototype"], keys);
 }
 
 // [[OwnPropertyKeys]] for strict function, implicitly named function
@@ -58,7 +58,7 @@ const {
   let f = function(){"use strict"};
   let keys = Object.getOwnPropertyNames(f);
 
-  assertEquals(["length", "caller", "arguments", "prototype", "name"], keys);
+  assertEquals(["length", "prototype", "name"], keys);
 }
 
 // [[OwnPropertyKeys]] for strict function, explicitly named function
@@ -66,5 +66,5 @@ const {
   let f = function F(){"use strict"};
   let keys = Object.getOwnPropertyNames(f);
 
-  assertEquals(["length", "caller", "arguments", "prototype", "name"], keys);
+  assertEquals(["length", "prototype", "name"], keys);
 }

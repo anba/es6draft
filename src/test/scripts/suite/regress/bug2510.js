@@ -21,7 +21,7 @@ function outer() {
   }
 }
 
-assertThrows(outer, ReferenceError);
+assertThrows(ReferenceError, outer);
 
 // No ReferenceError when [[HomeObject]] is set
 outer.toMethod({})();

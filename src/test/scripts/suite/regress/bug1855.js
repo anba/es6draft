@@ -15,5 +15,5 @@ const {
 let target = {};
 let proxy = new Proxy(target, {preventExtensions(){ return false }});
 assertTrue(Object.isExtensible(target));
-assertThrows(() => Object.preventExtensions(proxy), TypeError);
+assertThrows(TypeError, () => Object.preventExtensions(proxy));
 assertTrue(Object.isExtensible(target));

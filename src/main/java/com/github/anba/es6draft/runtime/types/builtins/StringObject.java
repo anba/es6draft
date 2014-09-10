@@ -26,7 +26,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>9.4.3 String Exotic Objects
  * </ul>
  */
-public final class ExoticString extends OrdinaryObject {
+public final class StringObject extends OrdinaryObject {
     /** [[StringData]] */
     private CharSequence stringData = null;
 
@@ -36,7 +36,7 @@ public final class ExoticString extends OrdinaryObject {
      * @param realm
      *            the realm object
      */
-    public ExoticString(Realm realm) {
+    public StringObject(Realm realm) {
         super(realm);
     }
 
@@ -68,30 +68,6 @@ public final class ExoticString extends OrdinaryObject {
     public void setStringData(CharSequence stringData) {
         assert this.stringData == null;
         this.stringData = stringData;
-    }
-
-    /**
-     * If {@code p} is a string index, its integer value is returned. Otherwise {@code -1} is
-     * returned.
-     * 
-     * @param p
-     *            the property key
-     * @return the string index or {@code -1}
-     */
-    public static int toStringIndex(long p) {
-        return 0 <= p && p < 0x7FFF_FFFFL ? (int) p : -1;
-    }
-
-    /**
-     * If {@code p} is a string index, its integer value is returned. Otherwise {@code -1} is
-     * returned.
-     * 
-     * @param p
-     *            the property key
-     * @return the string index or {@code -1}
-     */
-    public static int toStringIndex(String p) {
-        return Strings.toIndex(p);
     }
 
     /**
@@ -129,7 +105,7 @@ public final class ExoticString extends OrdinaryObject {
         }
         int index = (int) propertyKey;
         /* step 13 */
-        CharSequence resultStr = str.subSequence(index, index + 1);
+        String resultStr = String.valueOf(str.charAt(index));
         /* step 14 */
         return new Property(resultStr, false, true, false);
     }
@@ -183,7 +159,7 @@ public final class ExoticString extends OrdinaryObject {
 
     @Override
     protected boolean isEnumerableOwnProperty(String key) {
-        int index = toStringIndex(key);
+        int index = Strings.toStringIndex(key);
         if (0 <= index && index < getStringDataOrEmpty().length() && !ordinaryHasOwnProperty(index)) {
             return true;
         }
@@ -197,11 +173,11 @@ public final class ExoticString extends OrdinaryObject {
      *            the execution context
      * @param prototype
      *            the prototype object
-     * @return the new string exotic object
+     * @return the new string object
      */
-    public static ExoticString StringCreate(ExecutionContext cx, ScriptObject prototype) {
+    public static StringObject StringCreate(ExecutionContext cx, ScriptObject prototype) {
         /* steps 1-5, 7 (implicit) */
-        ExoticString obj = new ExoticString(cx.getRealm());
+        StringObject obj = new StringObject(cx.getRealm());
         /* step 6 */
         obj.setPrototype(prototype);
         /* step 8 */
@@ -215,10 +191,10 @@ public final class ExoticString extends OrdinaryObject {
      *            the execution context
      * @param stringData
      *            the string value
-     * @return the new string exotic object
+     * @return the new string object
      */
-    public static ExoticString StringCreate(ExecutionContext cx, CharSequence stringData) {
-        ExoticString obj = StringCreate(cx, cx.getIntrinsic(Intrinsics.StringPrototype));
+    public static StringObject StringCreate(ExecutionContext cx, CharSequence stringData) {
+        StringObject obj = StringCreate(cx, cx.getIntrinsic(Intrinsics.StringPrototype));
         DefinePropertyOrThrow(cx, obj, "length", new PropertyDescriptor(stringData.length(), false,
                 false, false));
         obj.setStringData(stringData);

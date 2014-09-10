@@ -19,12 +19,12 @@ for (let builtin of [Object.prototype.toString, Array.prototype.join, Function])
 
   // Throw TypeError if newHome is not Object
   for (let value of [void 0, null, true, false, 0, 1, 1.5, "", "abc", Symbol()]) {
-    assertThrows(() => builtin.toMethod(value), TypeError);
+    assertThrows(TypeError, () => builtin.toMethod(value));
   }
 
   // Call ToPropertyKey if methodName was passed
   class Err extends Error { }
-  assertThrows(() => builtin.toMethod({}, {toString(){ throw new Err }}), Err);
+  assertThrows(Err, () => builtin.toMethod({}, {toString(){ throw new Err }}));
 
   let clone1 = builtin.toMethod({});
   assertSame("function", typeof clone1);

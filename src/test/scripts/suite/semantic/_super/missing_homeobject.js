@@ -11,8 +11,8 @@ const {
 
 // ReferenceError thrown on function entry if [[HomeObject]] not present
 
-assertThrows(() => function(){ throw 0; super.x }(), ReferenceError);
-assertThrows(() => function(a = (() => { throw 0 })){ super.x }(), ReferenceError);
+assertThrows(ReferenceError, () => function(){ throw 0; super.x }());
+assertThrows(ReferenceError, () => function(a = (() => { throw 0 })){ super.x }());
 
-assertThrows(() => function*(){ throw 0; super.x }(), ReferenceError);
-assertThrows(() => function*(a = (() => { throw 0 })){ super.x }(), ReferenceError);
+assertThrows(ReferenceError, () => function*(){ throw 0; super.x }());
+assertThrows(ReferenceError, () => function*(a = (() => { throw 0 })){ super.x }());

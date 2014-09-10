@@ -15,12 +15,24 @@ const {
 {
   let {proxy, revoke} = Proxy.revocable(
     function() { fail `trap not called` },
-    {apply() { return 123 }}
+    {
+      apply() { fail `apply called` },
+      construct() { fail `construct called` },
+    }
   );
-  // Call toMethod on a bound function because that's the only code path where
-  // GetFunctionRealm is not followed by another MOP.
-  let bound = Function.prototype.bind.call(proxy, null);
-  assertSame(123, bound());
+  let foreignRealm = new Reflect.Realm();
+  let foreignArray = foreignRealm.global.Array;
+  function callArrayMap() {
+    let array = [];
+    array.constructor = proxy;
+    return foreignArray.prototype.map.call(array, () => {});
+  }
+
+  // Proxy as constructor is from wrong realm, Array.prototype.map creates result array from own realm
+  assertSame(foreignArray.prototype, Reflect.getPrototypeOf(callArrayMap()));
+
   revoke();
-  assertThrows(() => bound.toMethod({}), TypeError);
+
+  // Revoked proxy realm defaults to current realm, that leads to calling proxy[[Construct]] on the revoked proxy
+  assertThrows(foreignRealm.global.TypeError, callArrayMap);
 }

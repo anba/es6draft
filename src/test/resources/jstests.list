@@ -59,8 +59,8 @@ ecma_6/Symbol/property-reflection.js
 # computed property names in accessors
 ecma_6/Class/compPropNames.js
 
-# Object.assign pending update for null/undefined sources in rev27
-ecma_6/Object/assign.js
+# yield* no longer performs complete error recovery
+ecma_6/Generators/iteration.js
 
 
 ####################################
@@ -477,7 +477,6 @@ js1_5/Regress/regress-103602.js
 js1_8_5/extensions/regress-696109.js
 
 # Duplicate property definitions in object literal are allowed
-ecma_5/eval/strict-eval-json-object-repeated-property-name.js
 ecma_5/strict/11.1.5.js
 
 

@@ -46,7 +46,35 @@ public final class GeneratorAbstractOperations {
     }
 
     /**
-     * 25.3.3.2 GeneratorResume (generator, value)
+     * 25.3.3.2 GeneratorValidate ( generator )
+     * 
+     * @param cx
+     *            the execution context
+     * @param generator
+     *            the generator object
+     * @return the generator object
+     */
+    public static GeneratorObject GeneratorValidate(ExecutionContext cx, Object generator) {
+        /* step 1 */
+        if (!Type.isObject(generator)) {
+            throw newTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* step 2 */
+        if (!(generator instanceof GeneratorObject)) {
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        GeneratorObject gen = (GeneratorObject) generator;
+        /* step 3 (not applicable) */
+        /* steps 4-5 */
+        if (gen.getState() == null) {
+            throw newTypeError(cx, Messages.Key.UninitializedObject);
+        }
+        /* step 6 */
+        return gen;
+    }
+
+    /**
+     * 25.3.3.3 GeneratorResume (generator, value)
      * 
      * @param cx
      *            the execution context
@@ -57,20 +85,55 @@ public final class GeneratorAbstractOperations {
      * @return the iterator result object
      */
     public static ScriptObject GeneratorResume(ExecutionContext cx, Object generator, Object value) {
-        /* step 1 */
-        if (!Type.isObject(generator)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* step 2 */
-        if (!(generator instanceof GeneratorObject)) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-        /* steps 3-15 */
-        return ((GeneratorObject) generator).resume(cx, value);
+        /* steps 1-2 */
+        GeneratorObject gen = GeneratorValidate(cx, generator);
+        /* steps 3-12 */
+        return gen.resume(cx, value);
     }
 
     /**
-     * 25.3.3.3 GeneratorYield (iterNextObj)
+     * 25.3.3.4 GeneratorResumeAbrupt(generator, abruptCompletion)
+     * <p>
+     * GeneratorReturn(generator, value)
+     * 
+     * @param cx
+     *            the execution context
+     * @param generator
+     *            the generator object
+     * @param value
+     *            the return value
+     * @return the iterator result object
+     */
+    public static ScriptObject GeneratorReturn(ExecutionContext cx, Object generator, Object value) {
+        /* steps 1-2 */
+        GeneratorObject gen = GeneratorValidate(cx, generator);
+        /* steps 4-13 */
+        return gen._return(cx, value);
+    }
+
+    /**
+     * 25.3.3.4 GeneratorResumeAbrupt(generator, abruptCompletion)
+     * <p>
+     * GeneratorThrow(generator, exception)
+     * 
+     * @param cx
+     *            the execution context
+     * @param generator
+     *            the generator object
+     * @param exception
+     *            the exception value
+     * @return the iterator result object
+     */
+    public static ScriptObject GeneratorThrow(ExecutionContext cx, Object generator,
+            Object exception) {
+        /* steps 1-2 */
+        GeneratorObject gen = GeneratorValidate(cx, generator);
+        /* steps 4-13 */
+        return gen._throw(cx, exception);
+    }
+
+    /**
+     * 25.3.3.5 GeneratorYield (iterNextObj)
      * 
      * @param genContext
      *            the execution context
@@ -88,58 +151,5 @@ public final class GeneratorAbstractOperations {
         assert generator != null;
         /* steps 5-11 */
         return generator.yield(iterNextObj);
-    }
-
-    /**
-     * 25.3.3.3 GeneratorResumeAbrupt(generator, abruptCompletion)
-     * <p>
-     * GeneratorReturn(generator, value)
-     * 
-     * @param cx
-     *            the execution context
-     * @param generator
-     *            the generator object
-     * @param value
-     *            the return value
-     * @return the iterator result object
-     */
-    public static Object GeneratorReturn(ExecutionContext cx, Object generator, Object value) {
-        /* steps 1-2 */
-        if (!Type.isObject(generator)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* step 3 */
-        if (!(generator instanceof GeneratorObject)) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-        /* steps 4-18 */
-        return ((GeneratorObject) generator)._return(cx, value);
-    }
-
-    /**
-     * 25.3.3.3 GeneratorResumeAbrupt(generator, abruptCompletion)
-     * <p>
-     * GeneratorThrow(generator, exception)
-     * 
-     * @param cx
-     *            the execution context
-     * @param generator
-     *            the generator object
-     * @param exception
-     *            the exception value
-     * @return the iterator result object
-     */
-    public static ScriptObject GeneratorThrow(ExecutionContext cx, Object generator,
-            Object exception) {
-        /* steps 1-2 */
-        if (!Type.isObject(generator)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* step 3 */
-        if (!(generator instanceof GeneratorObject)) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-        /* steps 4-18 */
-        return ((GeneratorObject) generator)._throw(cx, exception);
     }
 }

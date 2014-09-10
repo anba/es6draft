@@ -10,7 +10,6 @@ import java.util.BitSet;
 
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.internal.Strings;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
@@ -43,18 +42,6 @@ final class ParameterMap {
      */
     static int toArgumentIndex(long p) {
         return 0 <= p && p < MAX_LENGTH ? (int) p : -1;
-    }
-
-    /**
-     * Returns a non-negative integer if {@code p} is a valid argument index, otherwise
-     * <code>-1</code>.
-     * 
-     * @param p
-     *            the property key
-     * @return the integer index or {@code -1}
-     */
-    static int toArgumentIndex(String p) {
-        return Strings.toIndex(p);
     }
 
     /**

@@ -59,9 +59,15 @@ es6/generators-runtime.js
 # direct eval() and lexical declarations
 regress/regress-1213575.js
 
-# unscopables
+# unscopables as accessor not valid in V8
 es6/unscopables.js
+
+# GetBindingValue invokes HasBinding for Object Environment Records, not supported in V8
 harmony/proxies-with-unscopables.js
+
+# Array.prototype.{find, findIndex} don't skip holes
+harmony/array-find.js
+harmony/array-findIndex.js
 
 
 ###################
@@ -196,6 +202,7 @@ regress/d8-readbuffer.js
 # Object.observe
 regress/regress-3315.js
 regress/regress-356589.js
+harmony/regress/regress-405844.js
 
 
 ###############################################################

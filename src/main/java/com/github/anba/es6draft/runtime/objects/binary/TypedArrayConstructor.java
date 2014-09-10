@@ -58,7 +58,6 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         switch (elementType) {
         case Int8:
             createProperties(cx, this, Properties_Int8Array.class);
@@ -88,7 +87,7 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
             createProperties(cx, this, Properties_Float64Array.class);
             break;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 

@@ -23,18 +23,9 @@
   <!-- Intl.v2 changes -->
   <test id="12.3.3">'timeZone' defaults to host environment timezone, if not specified</test>
 
-  <!-- current draft issues -->
-  <test id="S10.2.1_A4_T1">declaration and parameter binding broken in current draft</test>
-
   <!-- ES6 changes -->
   <test id="S12.1_A4_T2">ES6-change: `PropertyDefinition ::= IdentifierName` is a valid production</test>
   <test id="S12.6.4_A15">ES6-change: `PropertyDefinition ::= IdentifierName` is a valid production</test>
-  <test id="12.14-1">ES6-change: Early Error if BoundNames of CatchParameter occurs in VarDeclaredNames
-    of Block
-  </test>
-  <test id="12.14-2">ES6-change: Early Error if BoundNames of CatchParameter occurs in VarDeclaredNames
-    of Block
-  </test>
   <test id="15.2.3.7-6-a-93-3">ES6-change: Object.defineProperties no longer stops at first exception</test>
   <test id="15.2.3.7-6-a-93-4">ES6-change: Object.defineProperties no longer stops at first exception</test>
   <test id="15.9.1.15-1">ES6-change: ISO date without timezone specifier now defaults to local time</test>
@@ -416,16 +407,6 @@
   <test id="15.3.5.4_2-59gs">ES6-change: tail-call support</test>
 
   <!-- rev26 changes -->
-  <test id="S13.2.3_A1">ES6-change: 'caller' property of strict mode Functions is configurable=true</test>
-  <test id="13.2-29-s">ES6-change: 'caller' property of strict mode Functions is configurable=true</test>
-  <test id="13.2-30-s">ES6-change: 'caller' property of strict mode Functions is configurable=true</test>
-  <test id="13.2-31-s">ES6-change: 'caller' property of strict mode Functions is configurable=true</test>
-  <test id="13.2-32-s">ES6-change: 'caller' property of strict mode Functions is configurable=true</test>
-  <test id="13.2-33-s">ES6-change: 'arguments' property of strict mode Functions is configurable=true</test>
-  <test id="13.2-34-s">ES6-change: 'arguments' property of strict mode Functions is configurable=true</test>
-  <test id="13.2-35-s">ES6-change: 'arguments' property of strict mode Functions is configurable=true</test>
-  <test id="13.2-36-s">ES6-change: 'arguments' property of strict mode Functions is configurable=true</test>
-  <test id="15.3.4.5-20-5">ES6-change: 'caller' property of bound functions is configurable=true</test>
   <test id="11.1.5-2gs">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
   <test id="11.1.5-4-4-a-1-s">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
   <test id="11.1.5_4-4-b-1">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
@@ -436,6 +417,23 @@
   <test id="11.1.5_4-4-d-2">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
   <test id="11.1.5_4-4-d-3">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
   <test id="11.1.5_4-4-d-4">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
+
+  <!-- rev27 changes -->
+  <test id="S13.2.3_A1">ES6-change: 'caller' and 'argument' properties not added to strict mode Functions</test>
+  <test id="13.2-29-s">ES6-change: 'caller' property not added to strict mode Functions</test>
+  <test id="13.2-30-s">ES6-change: 'caller' property not added to strict mode Functions</test>
+  <test id="13.2-31-s">ES6-change: 'caller' property not added to strict mode Functions</test>
+  <test id="13.2-32-s">ES6-change: 'caller' property not added to strict mode Functions</test>
+  <test id="13.2-33-s">ES6-change: 'arguments' property not added to strict mode Functions</test>
+  <test id="13.2-34-s">ES6-change: 'arguments' property not added to strict mode Functions</test>
+  <test id="13.2-35-s">ES6-change: 'arguments' property not added to strict mode Functions</test>
+  <test id="13.2-36-s">ES6-change: 'arguments' property not added to strict mode Functions</test>
+  <test id="15.3.4.5-20-1">ES6-change: 'caller' property not added to bound function</test>
+  <test id="15.3.4.5-20-4">ES6-change: 'caller' property not added to bound function</test>
+  <test id="15.3.4.5-20-5">ES6-change: 'caller' property not added to bound function</test>
+  <test id="15.3.4.5-21-1">ES6-change: 'arguments' property not added to bound function</test>
+  <test id="15.3.4.5-21-4">ES6-change: 'arguments' property not added to bound function</test>
+  <test id="15.3.4.5-21-5">ES6-change: 'arguments' property not added to bound function</test>
 
   <test id="Sbp_A1_T1">ES6-change: function declaration in block</test>
   <test id="Sbp_A2_T1">ES6-change: function declaration in block</test>

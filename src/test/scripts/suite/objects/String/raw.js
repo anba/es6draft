@@ -16,9 +16,9 @@ const {
 assertDataProperty(String, "raw", {enumerable: false, configurable: true, writable: true, value: String.raw});
 assertBuiltinFunction(String.raw, "raw", 1);
 
-assertThrows(() => { String.raw() }, TypeError);
-assertThrows(() => { String.raw(null) }, TypeError);
-assertThrows(() => { String.raw({}) }, TypeError);
+assertThrows(TypeError, () => { String.raw() });
+assertThrows(TypeError, () => { String.raw(null) });
+assertThrows(TypeError, () => { String.raw({}) });
 
 {
   let getterCalled = false;

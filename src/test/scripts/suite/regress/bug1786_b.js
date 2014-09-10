@@ -26,4 +26,4 @@ function triggerAssertion(global, callCounter, code) {
 }
 
 // 10.2.1.4.16, step 3
-assertThrows(() => triggerAssertion(this, 1, "var foo = 0"), TypeError);
+assertThrows(TypeError, () => triggerAssertion(this, 1, "var foo = 0"));

@@ -9,8 +9,6 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
-import java.util.Objects;
-
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
@@ -46,6 +44,26 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
     @Override
     public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
+    }
+
+    /**
+     * 19.4.3.3 SymbolDescriptiveString ( sym ) Abstract Operation
+     * 
+     * @param sym
+     *            the symbol value
+     * @return the descriptive string
+     */
+    public static String SymbolDescriptiveString(Symbol sym) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        String desc = sym.getDescription();
+        /* step 3 */
+        if (desc == null) {
+            desc = "";
+        }
+        /* step 4 (not applicable) */
+        /* steps 5-6 */
+        return "Symbol(" + desc + ")";
     }
 
     /**
@@ -95,10 +113,8 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
         public static Object toString(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
             Symbol sym = thisSymbolValue(cx, thisValue);
-            /* steps 4-6 */
-            String desc = Objects.toString(sym.getDescription(), "");
-            /* steps 7-8 */
-            return "Symbol(" + desc + ")";
+            /* step 4 */
+            return SymbolDescriptiveString(sym);
         }
 
         /**

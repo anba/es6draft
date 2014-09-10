@@ -22,5 +22,5 @@ const values = [
 ];
 
 for (let v of values) {
-  assertThrows(() => RegExp(v, "u"), SyntaxError);
+  assertThrows(SyntaxError, () => RegExp(v, "u"));
 }

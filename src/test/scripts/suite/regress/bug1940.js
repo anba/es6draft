@@ -16,6 +16,6 @@ const TypedArray = Object.getPrototypeOf(Int8Array);
 
 {
   let ta = Int8Array[Symbol.create]();
-  assertThrows(() => Int8Array.call(ta, {get length() {TypedArray.call(ta, 0); return 10}}), TypeError);
+  assertThrows(TypeError, () => Int8Array.call(ta, {get length() {TypedArray.call(ta, 0); return 10}}));
   assertSame(0, ta.length);
 }

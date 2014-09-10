@@ -42,7 +42,7 @@ const {
       test: RegExp.prototype.test,
       exec(v, ...more) { throw new ExecCalledError }
     };
-    assertThrows(() => object.test(value), TypeError);
+    assertThrows(TypeError, () => object.test(value));
   }
 }
 
@@ -75,7 +75,7 @@ const {
     let object = Object.assign(/abc/, {
       exec(v, ...more) { throw new ExecCalledError }
     });
-    assertThrows(() => object.test(value), TypeError);
+    assertThrows(TypeError, () => object.test(value));
   }
 }
 
@@ -109,7 +109,7 @@ const {
     RegExp.prototype.exec = function exec(v, ...more) {
       throw new ExecCalledError
     };
-    assertThrows(() => object.test(value), TypeError);
+    assertThrows(TypeError, () => object.test(value));
   }
 
   RegExp.prototype.exec = RegExp_prototype_exec;
@@ -136,8 +136,8 @@ const {
     }
   } = new Reflect.Realm().global;
 
-  assertThrows(() => ({__proto__: RegExp.prototype, exec: foreignExec}).test(), foreignTypeError);
-  assertThrows(() => Object.assign(RegExp[Symbol.create](), {exec: foreignExec}).test(), foreignTypeError);
+  assertThrows(foreignTypeError, () => ({__proto__: RegExp.prototype, exec: foreignExec}).test());
+  assertThrows(foreignTypeError, () => Object.assign(RegExp[Symbol.create](), {exec: foreignExec}).test());
 }
 
 // Test TypeError realm when replacing RegExp.prototype.exec with foreign exec function (2)
@@ -153,7 +153,7 @@ const {
 
   const RegExp_prototype_exec = RegExp.prototype.exec;
   RegExp.prototype.exec = foreignExec;
-  assertThrows(() => ({__proto__: RegExp.prototype}).test(), foreignTypeError);
-  assertThrows(() => RegExp[Symbol.create]().test(), foreignTypeError);
+  assertThrows(foreignTypeError, () => ({__proto__: RegExp.prototype}).test());
+  assertThrows(foreignTypeError, () => RegExp[Symbol.create]().test());
   RegExp.prototype.exec = RegExp_prototype_exec;
 }

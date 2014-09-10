@@ -13,7 +13,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -118,7 +118,7 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.IteratorPrototype;
 
         /**
          * 22.1.5.2.1 %ArrayIteratorPrototype%.next( )
@@ -176,7 +176,7 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
                 } else {
                     /* step 16 */
                     assert itemKind == ArrayIterationKind.KeyValue;
-                    ExoticArray _result = ArrayCreate(cx, 2);
+                    ArrayObject _result = ArrayCreate(cx, 2);
                     CreateDataProperty(cx, _result, 0, (Long) index);
                     CreateDataProperty(cx, _result, 1, elementValue);
                     result = _result;

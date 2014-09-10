@@ -126,34 +126,30 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
 
         /* steps 1-3 */
         for (Declaration d : declarations) {
-            if (isFunctionDeclaration(d)) {
-                Name fn = BoundName(d);
-
-                // FIXME: spec bug - CreateMutableBinding not called (bug 3029)
-                mv.load(envRec);
-                createMutableBinding(fn, false, mv);
-
-                // stack: [] -> [envRec, env, cx]
-                mv.load(envRec);
-                mv.load(env);
-                mv.loadExecutionContext();
-
-                // stack: [envRec, env, cx] -> [envRec, fo]
-                InstantiateFunctionObject(d, mv);
-
-                // stack: [envRec, fo] -> []
-                initializeBinding(fn, mv);
-            } else {
+            if (!isFunctionDeclaration(d)) {
                 for (Name dn : BoundNames(d)) {
-                    mv.load(envRec);
                     if (IsConstantDeclaration(d)) {
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
-                        createImmutableBinding(dn, mv);
+                        createImmutableBinding(envRec, dn, mv);
                     } else {
                         // FIXME: spec bug (CreateMutableBinding concrete method of `env`)
-                        createMutableBinding(dn, false, mv);
+                        createMutableBinding(envRec, dn, false, mv);
                     }
                 }
+            } else {
+                Name fn = BoundName(d);
+
+                createMutableBinding(envRec, fn, false, mv);
+
+                // stack: [] -> [envRec, name]
+                mv.load(envRec);
+                mv.aconst(fn.getIdentifier());
+
+                // stack: [envRec, name] -> [envRec, name, fo]
+                InstantiateFunctionObject(mv.executionContext(), env, d, mv);
+
+                // stack: [envRec, name, fo] -> []
+                initializeBinding(mv);
             }
         }
 

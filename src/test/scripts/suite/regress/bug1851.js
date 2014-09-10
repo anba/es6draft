@@ -15,6 +15,6 @@ const {
 
 let f = Function[Symbol.create]();
 Object.defineProperty(f, "prototype", {get() { return String.prototype }});
-assertThrows(() => Function.call(f, "return 1"), TypeError);
+assertThrows(TypeError, () => Function.call(f, "return 1"));
 assertSame(1, f());
 assertSame(String.prototype, Object.getPrototypeOf(new f));

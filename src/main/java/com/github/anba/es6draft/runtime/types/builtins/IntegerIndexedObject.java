@@ -26,14 +26,14 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>9.4.5 Integer Indexed Exotic Objects
  * </ul>
  */
-public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
+public abstract class IntegerIndexedObject extends OrdinaryObject {
     /**
      * Constructs a new Integer Indexed object.
      * 
      * @param realm
      *            the realm object
      */
-    public ExoticIntegerIndexedObject(Realm realm) {
+    public IntegerIndexedObject(Realm realm) {
         super(realm);
     }
 

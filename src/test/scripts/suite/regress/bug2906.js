@@ -15,7 +15,7 @@ const {
 let lengthCalled = false;
 let ta = Int8Array[Symbol.create]();
 
-assertThrows(() => {
+assertThrows(TypeError, () => {
   Int8Array.call(ta, {
     get length() {
       assertFalse(lengthCalled);
@@ -24,7 +24,7 @@ assertThrows(() => {
       return 0;
     }
   });
-}, TypeError);
+});
 
 assertTrue(lengthCalled);
 assertSame(1, ta.length);

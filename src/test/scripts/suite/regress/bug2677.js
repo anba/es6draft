@@ -14,9 +14,9 @@ const {
 
 let f = Function[Symbol.create]();
 Object.preventExtensions(f);
-assertThrows(() => Function.call(f, ""), TypeError);
+assertThrows(TypeError, () => Function.call(f, ""));
 
 const GeneratorFunction = (function*(){}).constructor;
 let g = GeneratorFunction[Symbol.create]();
 Object.preventExtensions(g);
-assertThrows(() => GeneratorFunction.call(g, ""), TypeError);
+assertThrows(TypeError, () => GeneratorFunction.call(g, ""));

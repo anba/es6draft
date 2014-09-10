@@ -7,7 +7,6 @@
 
 const {
   assertSame,
-  assertThrows
 } = Assert;
 
 // 15.5.4.11: String.prototype.replace calls function even if no match was found

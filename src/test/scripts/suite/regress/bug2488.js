@@ -22,5 +22,5 @@ assertFalse(Reflect.isExtensible(str));
 assertUndefined(Reflect.getOwnPropertyDescriptor(str, "0"));
 
 // Initialize string object and retrieve "0" property
-assertThrows(() => String.call(str, "A"), TypeError);
+assertThrows(TypeError, () => String.call(str, "A"));
 assertUndefined(Reflect.getOwnPropertyDescriptor(str, "0"));

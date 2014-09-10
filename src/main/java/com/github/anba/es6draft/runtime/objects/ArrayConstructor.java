@@ -10,7 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -26,8 +26,8 @@ import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
 /**
  * <h1>22 Indexed Collections</h1><br>
@@ -50,7 +50,6 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 
@@ -65,13 +64,13 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
      * 22.1.1.3 Array (...items )
      */
     @Override
-    public ExoticArray call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public ArrayObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         int numberOfArgs = args.length;
         if (numberOfArgs == 0) {
             // [22.1.1.1]
             /* steps 1-6 */
-            ExoticArray array = initOrCreateArray(calleeContext, thisValue, 0);
+            ArrayObject array = initOrCreateArray(calleeContext, thisValue, 0);
             /* steps 7-8 */
             Put(calleeContext, array, "length", 0, true);
             /* step 9 */
@@ -79,7 +78,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         } else if (numberOfArgs == 1) {
             // [22.1.1.2]
             /* steps 1-6 */
-            ExoticArray array = initOrCreateArray(calleeContext, thisValue, 0);
+            ArrayObject array = initOrCreateArray(calleeContext, thisValue, 0);
             Object len = args[0];
             /* steps 7-8 */
             long intLen;
@@ -100,7 +99,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         } else {
             // [22.1.1.3]
             /* steps 1-6 */
-            ExoticArray array = initOrCreateArray(calleeContext, thisValue, numberOfArgs);
+            ArrayObject array = initOrCreateArray(calleeContext, thisValue, numberOfArgs);
             /* steps 7-9 */
             for (int k = 0; k < numberOfArgs; ++k) {
                 int pk = k;
@@ -114,12 +113,12 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         }
     }
 
-    private ExoticArray initOrCreateArray(ExecutionContext cx, Object thisValue, int length) {
+    private ArrayObject initOrCreateArray(ExecutionContext cx, Object thisValue, int length) {
         /* [22.1.1.1] steps 3-6 */
         /* [22.1.1.2] steps 3-6 */
         /* [22.1.1.3] steps 3-6 */
-        if (thisValue instanceof ExoticArray) {
-            ExoticArray array = (ExoticArray) thisValue;
+        if (thisValue instanceof ArrayObject) {
+            ArrayObject array = (ArrayObject) thisValue;
             if (array.initialize()) {
                 return array;
             }
@@ -174,7 +173,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         @Function(name = "isArray", arity = 1)
         public static Object isArray(ExecutionContext cx, Object thisValue, Object arg) {
             /* steps 1-3 */
-            return arg instanceof ExoticArray;
+            return arg instanceof ArrayObject;
         }
 
         /**

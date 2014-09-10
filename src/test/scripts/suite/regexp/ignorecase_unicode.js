@@ -58,11 +58,11 @@ const basic = {
   flags: [...supplementary.flags],
   transformers: [
     ...supplementary.transformers,
-    Transformers.toIdentityEscape,
+    // Transformers.toIdentityEscape,
     Transformers.toUnicodeEscape,
-    Transformers.charClass.toIdentityEscape,
+    // Transformers.charClass.toIdentityEscape,
     Transformers.charClass.toUnicodeEscape,
-    Transformers.charClassRange.toIdentityEscape,
+    // Transformers.charClassRange.toIdentityEscape,
     Transformers.charClassRange.toUnicodeEscape,
   ]
 };
@@ -72,11 +72,11 @@ const latin = {
   flags: [...basic.flags],
   transformers: [
     ...basic.transformers,
-    Transformers.toOctalEscape,
+    // Transformers.toOctalEscape,
     Transformers.toHexEscape,
-    Transformers.charClass.toOctalEscape,
+    // Transformers.charClass.toOctalEscape,
     Transformers.charClass.toHexEscape,
-    Transformers.charClassRange.toOctalEscape,
+    // Transformers.charClassRange.toOctalEscape,
     Transformers.charClassRange.toHexEscape,
   ]
 };

@@ -18,19 +18,19 @@ function HasBindingIntercepted(name) {
 }
 
 function HasBindingFail(name) {
-  return `getOwnPropertyDescriptor:${name};getPrototypeOf:`;
+  return `has:${name};`;
 }
 
 function HasBindingSuccess(name) {
-  return `getOwnPropertyDescriptor:${name};getOwnPropertyDescriptor:Symbol(Symbol.unscopables);`;
+  return `has:${name};get:Symbol(Symbol.unscopables);`;
 }
 
 function GetBindingValueFail(name) {
-  return `getOwnPropertyDescriptor:${name};getPrototypeOf:`;
+  return `has:${name};`;
 }
 
 function GetBindingValueSuccess(name) {
-  return `getOwnPropertyDescriptor:${name};getOwnPropertyDescriptor:Symbol(Symbol.unscopables);`;
+  return `has:${name};`;
 }
 
 function GetValue(name) {
@@ -38,9 +38,9 @@ function GetValue(name) {
 }
 
 function BindingNotIntercepted() {
-  return `get:Symbol(Symbol.unscopables);`;
+  return ``;
 }
 
 function BindingIntercepted() {
-  return `get:Symbol(Symbol.unscopables);getPrototypeOf:`;
+  return ``;
 }

@@ -20,5 +20,5 @@ function create(c, f, ...args) {
 
 let GeneratorFunction = function*(){}.constructor;
 
-assertThrows(() => create(Function, f => { Object.defineProperty(f, "prototype", {}) }), TypeError);
-assertThrows(() => create(GeneratorFunction, f => { Object.defineProperty(f, "prototype", {}) }), TypeError);
+assertThrows(TypeError, () => create(Function, f => { Object.defineProperty(f, "prototype", {}) }));
+assertThrows(TypeError, () => create(GeneratorFunction, f => { Object.defineProperty(f, "prototype", {}) }));

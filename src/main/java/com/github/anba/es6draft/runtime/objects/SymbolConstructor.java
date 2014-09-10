@@ -48,7 +48,6 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 

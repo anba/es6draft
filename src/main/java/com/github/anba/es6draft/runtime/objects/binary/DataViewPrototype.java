@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsNeuteredBuffer;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsDetachedBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.DataViewConstructor.GetViewValue;
 import static com.github.anba.es6draft.runtime.objects.binary.DataViewConstructor.SetViewValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -72,8 +72,8 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
                 if (buffer == null) {
                     throw newTypeError(cx, Messages.Key.UninitializedObject);
                 }
-                if (IsNeuteredBuffer(buffer)) {
-                    throw newTypeError(cx, Messages.Key.BufferNeutered);
+                if (IsDetachedBuffer(buffer)) {
+                    throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
                 return view;
             }

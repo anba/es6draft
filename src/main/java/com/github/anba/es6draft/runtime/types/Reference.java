@@ -17,7 +17,7 @@ import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord.Binding;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
+import com.github.anba.es6draft.runtime.internal.Strings;
 
 /**
  * <h1>6 ECMAScript Data Types and Values</h1><br>
@@ -438,8 +438,8 @@ public abstract class Reference<BASE, NAME> {
         public void putValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
-            ScriptObject base = (hasPrimitiveBase() ? ToObject(cx, getBase())
-                    : (ScriptObject) getBase());
+            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
+                    : (ScriptObject) getBase();
             boolean succeeded = base.set(cx, referencedName, w, getThisValue(cx));
             if (!succeeded && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
@@ -447,17 +447,15 @@ public abstract class Reference<BASE, NAME> {
         }
 
         private Object GetValuePrimitive(ExecutionContext cx) {
-            if (type == Type.String) {
-                int index = ExoticString.toStringIndex(referencedName);
-                if (index >= 0) {
-                    CharSequence str = Type.stringValue(getBase());
-                    int len = str.length();
-                    if (index < len) {
-                        return str.subSequence(index, index + 1);
-                    }
+            long refName = referencedName;
+            if (type == Type.String && 0 <= refName && refName < 0x7FFF_FFFFL) {
+                int index = (int) refName;
+                CharSequence str = Type.stringValue(getBase());
+                if (index < str.length()) {
+                    return String.valueOf(str.charAt(index));
                 }
             }
-            return getPrimitiveBaseProto(cx).get(cx, referencedName, getBase());
+            return getPrimitiveBaseProto(cx).get(cx, refName, getBase());
         }
     }
 
@@ -503,8 +501,8 @@ public abstract class Reference<BASE, NAME> {
         public void putValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
-            ScriptObject base = (hasPrimitiveBase() ? ToObject(cx, getBase())
-                    : (ScriptObject) getBase());
+            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
+                    : (ScriptObject) getBase();
             boolean succeeded = base.set(cx, getReferencedName(), w, getThisValue(cx));
             if (!succeeded && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
@@ -517,12 +515,11 @@ public abstract class Reference<BASE, NAME> {
                     CharSequence str = Type.stringValue(getBase());
                     return str.length();
                 }
-                int index = ExoticString.toStringIndex(getReferencedName());
+                int index = Strings.toStringIndex(getReferencedName());
                 if (index >= 0) {
                     CharSequence str = Type.stringValue(getBase());
-                    int len = str.length();
-                    if (index < len) {
-                        return str.subSequence(index, index + 1);
+                    if (index < str.length()) {
+                        return String.valueOf(str.charAt(index));
                     }
                 }
             }
@@ -572,8 +569,8 @@ public abstract class Reference<BASE, NAME> {
         public void putValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
-            ScriptObject base = (hasPrimitiveBase() ? ToObject(cx, getBase())
-                    : (ScriptObject) getBase());
+            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
+                    : (ScriptObject) getBase();
             boolean succeeded = base.set(cx, getReferencedName(), w, getThisValue(cx));
             if (!succeeded && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()

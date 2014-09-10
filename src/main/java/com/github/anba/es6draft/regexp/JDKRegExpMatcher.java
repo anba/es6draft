@@ -37,4 +37,9 @@ final class JDKRegExpMatcher implements RegExpMatcher {
     public JDKMatchState matcher(String s) {
         return new JDKMatchState(getPattern().matcher(s), negativeLAGroups);
     }
+
+    @Override
+    public String toString() {
+        return String.format("regex=%s, flags=%d", regex, flags);
+    }
 }

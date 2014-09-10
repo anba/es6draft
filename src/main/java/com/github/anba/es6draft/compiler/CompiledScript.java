@@ -11,14 +11,14 @@ import java.util.HashMap;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 
 /**
  * Abstract base class for compiled scripts.
  */
 public abstract class CompiledScript implements Script {
     private final RuntimeInfo.ScriptBody scriptBody;
-    private HashMap<Integer, ExoticArray> templateCallSites;
+    private HashMap<Integer, ArrayObject> templateCallSites;
 
     protected CompiledScript(RuntimeInfo.ScriptBody scriptBody) {
         this.scriptBody = scriptBody;
@@ -41,7 +41,7 @@ public abstract class CompiledScript implements Script {
      *            the template literal key
      * @return the call-site object
      */
-    public final ExoticArray getTemplateCallSite(int key) {
+    public final ArrayObject getTemplateCallSite(int key) {
         return templateCallSites != null ? templateCallSites.get(key) : null;
     }
 
@@ -53,7 +53,7 @@ public abstract class CompiledScript implements Script {
      * @param callSite
      *            the call-site object
      */
-    public final void addTemplateCallSite(int key, ExoticArray callSite) {
+    public final void addTemplateCallSite(int key, ArrayObject callSite) {
         if (templateCallSites == null) {
             templateCallSites = new HashMap<>();
         }

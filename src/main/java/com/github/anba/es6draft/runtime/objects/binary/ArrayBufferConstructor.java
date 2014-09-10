@@ -58,7 +58,6 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 
@@ -168,31 +167,31 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.2 IsNeuteredBuffer( arrayBuffer )
+     * 24.1.1.2 IsDetachedBuffer( arrayBuffer )
      * 
      * @param arrayBuffer
      *            the array buffer object
-     * @return {@code true} if the array buffer is neutered
+     * @return {@code true} if the array buffer is detached
      */
-    public static boolean IsNeuteredBuffer(ArrayBufferObject arrayBuffer) {
+    public static boolean IsDetachedBuffer(ArrayBufferObject arrayBuffer) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
-        return arrayBuffer.isNeutered();
+        return arrayBuffer.isDetached();
     }
 
     /**
-     * 24.1.1.3 NeuterArrayBuffer( arrayBuffer )
+     * 24.1.1.3 DetachArrayBuffer( arrayBuffer )
      * 
      * @param cx
      *            the execution context
      * @param arrayBuffer
      *            the array buffer object
      */
-    public static void NeuterArrayBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer) {
-        // TODO: Perform any checks here? E.g. initialized or already neutered?
+    public static void DetachArrayBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer) {
+        // TODO: Perform any checks here? E.g. initialized or already detached?
         /* step 1 (not applicable) */
         /* steps 2-3 */
-        arrayBuffer.neuter();
+        arrayBuffer.detach();
         /* step 4 (return) */
     }
 
@@ -244,8 +243,8 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 4 */
-        if (IsNeuteredBuffer(srcBuffer)) {
-            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        if (IsDetachedBuffer(srcBuffer)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
         }
         /* step 5 */
         long srcLength = srcBuffer.getByteLength();
@@ -262,8 +261,8 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         /* step 11 */
         ArrayBufferObject targetBuffer = AllocateArrayBuffer(cx, bufferConstructor);
         /* steps 12-13 */
-        if (IsNeuteredBuffer(srcBuffer)) {
-            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        if (IsDetachedBuffer(srcBuffer)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
         }
         /* step 14 */
         assert srcBlock == srcBuffer.getData();
@@ -311,7 +310,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         /* step 1 */
         assert arrayBuffer.isInitialized() : "ArrayBuffer not initialized";
         /* step 2 */
-        assert !IsNeuteredBuffer(arrayBuffer) : "ArrayBuffer is neutered";
+        assert !IsDetachedBuffer(arrayBuffer) : "ArrayBuffer is detached";
         /* steps 3-4 */
         assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
         /* step 5 */
@@ -352,7 +351,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
             return (long) block.getInt(index);
 
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -392,7 +391,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         /* step 1 */
         assert arrayBuffer.isInitialized() : "ArrayBuffer not initialized";
         /* step 2 */
-        assert !IsNeuteredBuffer(arrayBuffer) : "ArrayBuffer is neutered";
+        assert !IsDetachedBuffer(arrayBuffer) : "ArrayBuffer is detached";
         /* steps 3-4 */
         assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
         /* step 5 (not applicable) */
@@ -442,7 +441,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
             return;
 
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 

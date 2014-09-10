@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.promise;
 
-import static com.github.anba.es6draft.repl.global.SimpleShellGlobalObject.newGlobalObjectAllocator;
+import static com.github.anba.es6draft.TestGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
 import static org.junit.Assert.assertFalse;
@@ -15,6 +15,8 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -28,10 +30,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.github.anba.es6draft.TestGlobalObject;
 import com.github.anba.es6draft.repl.WindowTimers;
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.repl.global.SimpleShellGlobalObject;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -57,13 +60,20 @@ public class PromiseUnwrappingTest {
     }
 
     @ClassRule
-    public static TestGlobals<SimpleShellGlobalObject, TestInfo> globals = new TestGlobals<SimpleShellGlobalObject, TestInfo>(
+    public static TestGlobals<TestGlobalObject, TestInfo> globals = new TestGlobals<TestGlobalObject, TestInfo>(
             configuration) {
         @Override
-        protected ObjectAllocator<SimpleShellGlobalObject> newAllocator(ShellConsole console,
+        protected ObjectAllocator<TestGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
-                    scriptCache);
+            return newGlobalObjectAllocator(console, test, scriptCache);
+        }
+
+        @Override
+        protected Set<CompatibilityOption> getOptions() {
+            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            // TODO: replace/move tests which require es7 extensions
+            options.add(CompatibilityOption.Realm);
+            return options;
         }
     };
 
@@ -79,7 +89,7 @@ public class PromiseUnwrappingTest {
     @Parameter(0)
     public TestInfo test;
 
-    private SimpleShellGlobalObject global;
+    private TestGlobalObject global;
     private AsyncHelper async;
     private WindowTimers timers;
 

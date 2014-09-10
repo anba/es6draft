@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.mozilla;
 
-import static com.github.anba.es6draft.mozilla.MozTestGlobalObject.newTestGlobalObjectAllocator;
+import static com.github.anba.es6draft.mozilla.MozTestGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
 import static com.github.anba.es6draft.util.matchers.ErrorMessageMatcher.hasErrorMessage;
@@ -57,7 +57,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StopExecutionHandle
  */
 @RunWith(Parallelized.class)
 @TestConfiguration(name = "mozilla.test.jittests", file = "resource:/test-configuration.properties")
-public class MozillaJitTest {
+public final class MozillaJitTest {
     private static final Configuration configuration = loadConfiguration(MozillaJitTest.class);
 
     @Parameters(name = "{0}")
@@ -77,8 +77,7 @@ public class MozillaJitTest {
         @Override
         protected ObjectAllocator<MozTestGlobalObject> newAllocator(ShellConsole console,
                 MozTest test, ScriptCache scriptCache) {
-            return newTestGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
-                    scriptCache);
+            return newGlobalObjectAllocator(console, test, scriptCache);
         }
     };
 
@@ -103,7 +102,7 @@ public class MozillaJitTest {
     @Parameter(0)
     public MozTest moztest;
 
-    private static class MozTest extends TestInfo {
+    private static final class MozTest extends TestInfo {
         String error = null;
 
         public MozTest(Path basedir, Path script) {
@@ -155,7 +154,7 @@ public class MozillaJitTest {
         global.getRealm().getWorld().runEventLoop();
     }
 
-    private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
+    private static final class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
         private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
         private final Path basedir;
 

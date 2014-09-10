@@ -14,6 +14,8 @@ import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
 
+import java.util.List;
+
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
@@ -55,7 +57,8 @@ public final class Reflect extends OrdinaryObject implements Initializable {
     @Override
     public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
-        createProperties(cx, this, AdditionalProperties.class);
+        createProperties(cx, this, RealmProperty.class);
+        createProperties(cx, this, ParseProperty.class);
     }
 
     /**
@@ -72,12 +75,6 @@ public final class Reflect extends OrdinaryObject implements Initializable {
          */
         @Value(name = "Loader")
         public static final Intrinsics Loader = Intrinsics.Loader;
-
-        /**
-         * Realm ( . . . )
-         */
-        @Value(name = "Realm")
-        public static final Intrinsics Realm = Intrinsics.Realm;
 
         /**
          * 26.1.1 Reflect.apply ( target, thisArgument, argumentsList )
@@ -447,13 +444,15 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         public static Object ownKeys(ExecutionContext cx, Object thisValue, Object target) {
             /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
-            /* step 3 */
-            return obj.ownPropertyKeys(cx);
+            /* steps 3-4 */
+            List<?> keys = obj.ownPropertyKeys(cx);
+            /* step 5 */
+            return CreateArrayFromList(cx, keys);
         }
     }
 
     @CompatibilityExtension(CompatibilityOption.ReflectParse)
-    public enum AdditionalProperties {
+    public enum ParseProperty {
         ;
 
         /**
@@ -482,5 +481,16 @@ public final class Reflect extends OrdinaryObject implements Initializable {
             }
             return ReflectParser.parse(cx, source, opts);
         }
+    }
+
+    @CompatibilityExtension(CompatibilityOption.Realm)
+    public enum RealmProperty {
+        ;
+
+        /**
+         * Realm ( . . . )
+         */
+        @Value(name = "Realm")
+        public static final Intrinsics Realm = Intrinsics.Realm;
     }
 }

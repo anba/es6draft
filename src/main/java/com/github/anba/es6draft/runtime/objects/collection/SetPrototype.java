@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.objects.collection.SetIteratorPrototype.CreateSetIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.util.Iterator;
 import java.util.Map.Entry;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -187,8 +186,7 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
             /* step 7 */
             LinkedMap<Object, Void> entries = s.getSetData();
             /* step 8 */
-            for (Iterator<Entry<Object, Void>> iter = entries.iterator(); iter.hasNext();) {
-                Entry<Object, Void> e = iter.next();
+            for (Entry<Object, Void> e : entries) {
                 callback.call(cx, thisArg, e.getKey(), e.getKey(), s);
             }
             /* step 9 */

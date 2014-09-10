@@ -6,14 +6,16 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
+import com.github.anba.es6draft.ast.scope.Name;
+
 public final class ExportBinding {
     /** [[Module]] */
     final ModuleLinkage module;
 
     /** [[LocalName]] */
-    final String localName;
+    final Name localName;
 
-    public ExportBinding(ModuleLinkage module, String localName) {
+    public ExportBinding(ModuleLinkage module, Name localName) {
         this.module = module;
         this.localName = localName;
     }

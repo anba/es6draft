@@ -34,6 +34,11 @@ public enum CompatibilityOption {
     HTMLComments,
 
     /**
+     * B.1.4 Regular Expressions Patterns
+     */
+    WebRegularExpressions,
+
+    /**
      * B.2.1 Additional Properties of the Global Object
      */
     GlobalObject,
@@ -164,14 +169,26 @@ public enum CompatibilityOption {
     AsyncFunction,
 
     /**
+     * ES7-Extension: Array and Generator Comprehension
+     */
+    Comprehension,
+
+    /**
      * ES7-Extension: Exponentiation operator {@code **}
      */
     Exponentiation,
 
     /**
+     * ES7-Extension: Realm Objects
+     */
+    Realm,
+
+    /**
      * ES7-Extension: Array.prototype.contains
      */
-    ArrayContains;
+    ArrayContains,
+
+    ;
 
     /**
      * Returns a set of all options for strict-compatibility.

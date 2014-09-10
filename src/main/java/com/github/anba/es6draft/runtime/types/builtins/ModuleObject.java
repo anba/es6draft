@@ -30,7 +30,7 @@ import com.github.anba.es6draft.runtime.types.Symbol;
  * <li>9.4.6 Module Exotic Objects
  * </ul>
  */
-public final class ExoticModule extends OrdinaryObject {
+public final class ModuleObject extends OrdinaryObject {
     /** [[ModuleEnvironment]] */
     private final LexicalEnvironment<?> moduleEnvironment;
     /** [[Exports]] */
@@ -48,7 +48,7 @@ public final class ExoticModule extends OrdinaryObject {
      * @param exports
      *            the list of exported bindings
      */
-    public ExoticModule(Realm realm, LexicalEnvironment<?> moduleEnvironment, List<String> exports) {
+    public ModuleObject(Realm realm, LexicalEnvironment<?> moduleEnvironment, List<String> exports) {
         super(realm);
         this.moduleEnvironment = moduleEnvironment;
         this.exports = exports;
@@ -272,10 +272,10 @@ public final class ExoticModule extends OrdinaryObject {
      *            the exported bindings
      * @return the new module object
      */
-    public static ExoticModule ModuleObjectCreate(ExecutionContext cx,
+    public static ModuleObject ModuleObjectCreate(ExecutionContext cx,
             LexicalEnvironment<?> environment, List<String> exports) {
         /* steps 1-2 (not applicable) */
         /* steps 3-7 */
-        return new ExoticModule(cx.getRealm(), environment, exports);
+        return new ModuleObject(cx.getRealm(), environment, exports);
     }
 }

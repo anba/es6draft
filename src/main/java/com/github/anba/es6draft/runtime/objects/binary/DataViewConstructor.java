@@ -14,7 +14,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
-import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsNeuteredBuffer;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsDetachedBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -54,7 +54,6 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 
@@ -112,8 +111,8 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 11 */
-        if (IsNeuteredBuffer(buffer)) {
-            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        if (IsDetachedBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
         }
         /* step 12 */
         long viewOffset = dataView.getByteOffset();
@@ -172,8 +171,8 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 11 */
-        if (IsNeuteredBuffer(buffer)) {
-            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        if (IsDetachedBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
         }
         /* step 11 */
         long viewOffset = dataView.getByteOffset();

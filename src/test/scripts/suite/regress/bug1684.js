@@ -12,5 +12,5 @@ const {
 // 15.14.1.1, 15.15.1.1: Missing ToObject() calls in {Weak}Map constructor
 // https://bugs.ecmascript.org/show_bug.cgi?id=1684
 
-assertThrows(() => new Map([0]), TypeError);
-assertThrows(() => new WeakMap([0]), TypeError);
+assertThrows(TypeError, () => new Map([0]));
+assertThrows(TypeError, () => new WeakMap([0]));

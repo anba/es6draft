@@ -31,7 +31,7 @@ public final class PropertyDefinitionsMethod extends PropertyDefinition {
 
     @Override
     public PropertyName getPropertyName() {
-        throw new IllegalStateException();
+        throw new AssertionError();
     }
 
     @Override

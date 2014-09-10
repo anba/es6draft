@@ -8,10 +8,12 @@ package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
 import java.util.HashSet;
 import java.util.Set;
 
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -74,10 +76,12 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     public void createMutableBinding(String name, boolean deletable) {
         /* steps 1-2 (omitted) */
         /* step 3-4 */
-        // FIXME: spec bug - dead store (bug 3021)
-        @SuppressWarnings("unused")
         boolean alreadyThere = declRec.hasBinding(name);
         /* step 5 */
+        if (alreadyThere) {
+            throw newTypeError(cx, Messages.Key.VariableRedeclaration, name);
+        }
+        /* step 6 */
         declRec.createMutableBinding(name, deletable);
     }
 
@@ -88,10 +92,12 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     public void createImmutableBinding(String name) {
         /* steps 1-2 (omitted) */
         /* step 3-4 */
-        // FIXME: spec bug - dead store (bug 3021)
-        @SuppressWarnings("unused")
         boolean alreadyThere = declRec.hasBinding(name);
         /* step 5 */
+        if (alreadyThere) {
+            throw newTypeError(cx, Messages.Key.VariableRedeclaration, name);
+        }
+        /* step 6 */
         declRec.createImmutableBinding(name);
     }
 

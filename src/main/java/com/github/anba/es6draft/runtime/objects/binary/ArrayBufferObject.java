@@ -25,7 +25,7 @@ public final class ArrayBufferObject extends OrdinaryObject {
     /** [[ArrayBufferByteLength]] */
     private long byteLength = 0;
 
-    private boolean neutered = false;
+    private boolean detached = false;
 
     /**
      * Constructs a new ArrayBuffer object.
@@ -79,21 +79,21 @@ public final class ArrayBufferObject extends OrdinaryObject {
     }
 
     /**
-     * Neuters this array buffer object.
+     * Detaches this array buffer object.
      */
-    public void neuter() {
+    public void detach() {
         data = null;
         byteLength = 0;
-        neutered = true;
+        detached = true;
     }
 
     /**
-     * Returns {@code true} if this array buffer object has been neutered.
+     * Returns {@code true} if this array buffer object has been detached.
      * 
-     * @return {@code true} if this array buffer object is neutered
+     * @return {@code true} if this array buffer object is detached
      */
-    public boolean isNeutered() {
-        return neutered;
+    public boolean isDetached() {
+        return detached;
     }
 
     /**
@@ -102,6 +102,6 @@ public final class ArrayBufferObject extends OrdinaryObject {
      * @return {@code true} if this array buffer object is initialized
      */
     /* package */boolean isInitialized() {
-        return neutered || data != null;
+        return detached || data != null;
     }
 }

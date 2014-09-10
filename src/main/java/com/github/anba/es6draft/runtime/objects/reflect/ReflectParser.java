@@ -10,7 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.RegExpCreate;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Type.isUndefinedOrNull;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.DenseArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.DenseArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
 import static com.github.anba.es6draft.semantics.StaticSemantics.Substitutions;
@@ -42,7 +42,7 @@ import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -408,7 +408,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         return identifier;
     }
 
-    private ExoticArray createList(List<? extends Node> nodes, Void value) {
+    private ArrayObject createList(List<? extends Node> nodes, Void value) {
         Object[] values = new Object[nodes.size()];
         int index = 0;
         for (Node node : nodes) {
@@ -417,7 +417,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         return DenseArrayCreate(cx, values);
     }
 
-    private ExoticArray createListFromValues(List<? extends Object> values) {
+    private ArrayObject createListFromValues(List<? extends Object> values) {
         return DenseArrayCreate(cx, values.toArray());
     }
 
@@ -550,7 +550,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     private Object createFunctionBody(FunctionNode node, Void value) {
         // FunctionBody is materalized as BlockStatement
-        ExoticArray body = createList(node.getStatements(), value);
+        ArrayObject body = createList(node.getStatements(), value);
         if (hasBuilder(Type.BlockStatement)) {
             return call(Type.BlockStatement, node, body);
         }
@@ -591,8 +591,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         } else {
             id = node.getPropertyName().accept(this, value);
         }
-        ExoticArray params = createList(getParameterBindings(node.getParameters()), value);
-        ExoticArray defaults = createList(getParameterDefaults(node.getParameters()), value);
+        ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
+        ArrayObject defaults = createList(getParameterDefaults(node.getParameters()), value);
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
         Object body = createFunctionBody(node, value);
         // TODO: async functions
@@ -628,8 +628,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(ArrayAssignmentPattern node, Void value) {
-        ExoticArray elements = createList(getAssignmentElements(node.getElements()), value);
-        ExoticArray defaults = createList(getAssignmentDefaults(node.getElements()), value);
+        ArrayObject elements = createList(getAssignmentElements(node.getElements()), value);
+        ArrayObject defaults = createList(getAssignmentDefaults(node.getElements()), value);
         Object rest = acceptOrNull(getRestAssignment(node.getElements()), value);
         if (hasBuilder(Type.ArrayPattern)) {
             return call(Type.ArrayPattern, node, elements);
@@ -643,8 +643,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(ArrayBindingPattern node, Void value) {
-        ExoticArray elements = createList(getBindingElements(node.getElements()), value);
-        ExoticArray defaults = createList(getBindingDefaults(node.getElements()), value);
+        ArrayObject elements = createList(getBindingElements(node.getElements()), value);
+        ArrayObject defaults = createList(getBindingDefaults(node.getElements()), value);
         Object rest = acceptOrNull(getRestBinding(node.getElements()), value);
         if (hasBuilder(Type.ArrayPattern)) {
             return call(Type.ArrayPattern, node, elements);
@@ -672,7 +672,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(ArrayLiteral node, Void value) {
-        ExoticArray elements = createList(node.getElements(), value);
+        ArrayObject elements = createList(node.getElements(), value);
         if (hasBuilder(Type.ArrayExpression)) {
             return call(Type.ArrayExpression, node, elements);
         }
@@ -684,8 +684,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(ArrowFunction node, Void value) {
         Object id = NULL;
-        ExoticArray params = createList(getParameterBindings(node.getParameters()), value);
-        ExoticArray defaults = createList(getParameterDefaults(node.getParameters()), value);
+        ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
+        ArrayObject defaults = createList(getParameterDefaults(node.getParameters()), value);
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
         Object body;
         if (node.getExpression() == null) {
@@ -763,8 +763,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(AsyncArrowFunction node, Void value) {
         Object id = NULL;
-        ExoticArray params = createList(getParameterBindings(node.getParameters()), value);
-        ExoticArray defaults = createList(getParameterDefaults(node.getParameters()), value);
+        ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
+        ArrayObject defaults = createList(getParameterDefaults(node.getParameters()), value);
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
         Object body;
         if (node.getExpression() == null) {
@@ -792,8 +792,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(AsyncFunctionDeclaration node, Void value) {
         Object id = node.getIdentifier().accept(this, value);
-        ExoticArray params = createList(getParameterBindings(node.getParameters()), value);
-        ExoticArray defaults = createList(getParameterDefaults(node.getParameters()), value);
+        ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
+        ArrayObject defaults = createList(getParameterDefaults(node.getParameters()), value);
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
         Object body = createFunctionBody(node, value);
         // TODO: flag for async
@@ -816,8 +816,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(AsyncFunctionExpression node, Void value) {
         Object id = acceptOrNull(node.getIdentifier(), value);
-        ExoticArray params = createList(getParameterBindings(node.getParameters()), value);
-        ExoticArray defaults = createList(getParameterDefaults(node.getParameters()), value);
+        ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
+        ArrayObject defaults = createList(getParameterDefaults(node.getParameters()), value);
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
         Object body = createFunctionBody(node, value);
         // TODO: flag for async
@@ -925,7 +925,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(BlockStatement node, Void value) {
-        ExoticArray body = createList(node.getStatements(), value);
+        ArrayObject body = createList(node.getStatements(), value);
         if (hasBuilder(Type.BlockStatement)) {
             return call(Type.BlockStatement, node, body);
         }
@@ -953,7 +953,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(CallExpression node, Void value) {
         Object callee = node.getBase().accept(this, value);
-        ExoticArray arguments = createList(node.getArguments(), value);
+        ArrayObject arguments = createList(node.getArguments(), value);
         if (hasBuilder(Type.CallExpression)) {
             return call(Type.CallExpression, node, callee, arguments);
         }
@@ -1012,7 +1012,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(CommaExpression node, Void value) {
-        ExoticArray expressions = createList(node.getOperands(), value);
+        ArrayObject expressions = createList(node.getOperands(), value);
         if (hasBuilder(Type.SequenceExpression)) {
             return call(Type.SequenceExpression, node, expressions);
         }
@@ -1025,7 +1025,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     public Object visit(Comprehension node, Void value) {
         // multiple filters possible in Comprehension, single element 'filter' useless here...
         Object body = node.getExpression().accept(this, value);
-        ExoticArray blocks = createList(node.getList(), value);
+        ArrayObject blocks = createList(node.getList(), value);
         Object filter = NULL;
         OrdinaryObject expression = createEmptyNode();
         addProperty(expression, "body", body);
@@ -1176,7 +1176,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
             declaration = node.getVariableStatement().accept(this, value);
             break;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
 
         OrdinaryObject exportDecl = createModuleItem(node, Type.ExportDeclaration);
@@ -1189,8 +1189,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(ExportSpecifier node, Void value) {
-        Object id = createIdentifier(node.getLocalName() != null ? node.getLocalName() : node
-                .getImportName());
+        Object id = createIdentifier(node.getLocalName() != null ? node.getLocalName()
+                .getIdentifier() : node.getImportName());
         Object name = createIdentifier(node.getExportName());
         OrdinaryObject exportSpec = createNode(node, Type.ExportSpecifier);
         addProperty(exportSpec, "id", id);
@@ -1305,8 +1305,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(FunctionDeclaration node, Void value) {
         Object id = node.getIdentifier().accept(this, value);
-        ExoticArray params = createList(getParameterBindings(node.getParameters()), value);
-        ExoticArray defaults = createList(getParameterDefaults(node.getParameters()), value);
+        ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
+        ArrayObject defaults = createList(getParameterDefaults(node.getParameters()), value);
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
         Object body = createFunctionBody(node, value);
         boolean generator = false;
@@ -1328,8 +1328,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(FunctionExpression node, Void value) {
         Object id = acceptOrNull(node.getIdentifier(), value);
-        ExoticArray params = createList(getParameterBindings(node.getParameters()), value);
-        ExoticArray defaults = createList(getParameterDefaults(node.getParameters()), value);
+        ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
+        ArrayObject defaults = createList(getParameterDefaults(node.getParameters()), value);
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
         Object body = createFunctionBody(node, value);
         boolean generator = false;
@@ -1365,8 +1365,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(GeneratorDeclaration node, Void value) {
         Object id = node.getIdentifier().accept(this, value);
-        ExoticArray params = createList(getParameterBindings(node.getParameters()), value);
-        ExoticArray defaults = createList(getParameterDefaults(node.getParameters()), value);
+        ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
+        ArrayObject defaults = createList(getParameterDefaults(node.getParameters()), value);
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
         Object body = createFunctionBody(node, value);
         boolean generator = true;
@@ -1388,8 +1388,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(GeneratorExpression node, Void value) {
         Object id = acceptOrNull(node.getIdentifier(), value);
-        ExoticArray params = createList(getParameterBindings(node.getParameters()), value);
-        ExoticArray defaults = createList(getParameterDefaults(node.getParameters()), value);
+        ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
+        ArrayObject defaults = createList(getParameterDefaults(node.getParameters()), value);
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
         Object body = createFunctionBody(node, value);
         boolean generator = true;
@@ -1482,7 +1482,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
             source = createLiteral(node.getModuleSpecifier());
             break;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
         OrdinaryObject importDecl = createModuleItem(node, Type.ImportDeclaration);
         addProperty(importDecl, "specifiers", specifiers);
@@ -1554,7 +1554,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
             qualifiers = qualifiers.subList(0, qualifiers.size() - 1);
         }
         Object body = node.getExpression().accept(this, value);
-        ExoticArray blocks = createList(qualifiers, value);
+        ArrayObject blocks = createList(qualifiers, value);
         Object filter = acceptOrNull(ifQualifier, value);
         OrdinaryObject expression = createEmptyNode();
         addProperty(expression, "body", body);
@@ -1592,7 +1592,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(LetExpression node, Void value) {
-        ExoticArray head = createList(node.getBindings(), value);
+        ArrayObject head = createList(node.getBindings(), value);
         Object body = node.getExpression().accept(this, value);
         if (hasBuilder(Type.LetExpression)) {
             return call(Type.LetExpression, node, head, body);
@@ -1605,7 +1605,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(LetStatement node, Void value) {
-        ExoticArray head = createList(node.getBindings(), value);
+        ArrayObject head = createList(node.getBindings(), value);
         Object body = node.getStatement().accept(this, value);
         if (hasBuilder(Type.LetStatement)) {
             return call(Type.LetStatement, node, head, body);
@@ -1631,7 +1631,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(LexicalDeclaration node, Void value) {
-        ExoticArray declarations = createList(node.getElements(), value);
+        ArrayObject declarations = createList(node.getElements(), value);
         String kind = node.getType() == LexicalDeclaration.Type.Const ? "const" : "let";
         if (hasBuilder(Type.VariableDeclaration)) {
             return call(Type.VariableDeclaration, node, kind, declarations);
@@ -1663,7 +1663,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(Module node, Void value) {
-        ExoticArray body = createList(node.getStatements(), value);
+        ArrayObject body = createList(node.getStatements(), value);
         if (hasBuilder(Type.Program)) {
             return call(Type.Program, node, body);
         }
@@ -1680,7 +1680,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(NativeCallExpression node, Void value) {
         Object callee = node.getBase().accept(this, value);
-        ExoticArray arguments = createList(node.getArguments(), value);
+        ArrayObject arguments = createList(node.getArguments(), value);
         OrdinaryObject expression = createExpression(node, Type.CallExpression);
         addProperty(expression, "callee", callee);
         addProperty(expression, "arguments", arguments);
@@ -1691,7 +1691,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(NewExpression node, Void value) {
         Object callee = node.getExpression().accept(this, value);
-        ExoticArray arguments = createList(node.getArguments(), value);
+        ArrayObject arguments = createList(node.getArguments(), value);
         if (hasBuilder(Type.NewExpression)) {
             return call(Type.NewExpression, node, callee, arguments);
         }
@@ -1713,7 +1713,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(ObjectAssignmentPattern node, Void value) {
-        ExoticArray properties = createList(node.getProperties(), value);
+        ArrayObject properties = createList(node.getProperties(), value);
         if (hasBuilder(Type.ObjectPattern)) {
             return call(Type.ObjectPattern, node, properties);
         }
@@ -1724,7 +1724,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(ObjectBindingPattern node, Void value) {
-        ExoticArray properties = createList(node.getProperties(), value);
+        ArrayObject properties = createList(node.getProperties(), value);
         if (hasBuilder(Type.ObjectPattern)) {
             return call(Type.ObjectPattern, node, properties);
         }
@@ -1735,7 +1735,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(ObjectLiteral node, Void value) {
-        ExoticArray properties = createList(node.getProperties(), value);
+        ArrayObject properties = createList(node.getProperties(), value);
         if (hasBuilder(Type.ObjectExpression)) {
             return call(Type.ObjectExpression, node, properties);
         }
@@ -1826,7 +1826,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(Script node, Void value) {
-        ExoticArray body = createList(node.getStatements(), value);
+        ArrayObject body = createList(node.getStatements(), value);
         if (hasBuilder(Type.Program)) {
             return call(Type.Program, node, body);
         }
@@ -1882,7 +1882,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
             break;
         }
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
         OrdinaryObject expression = createExpression(node, Type.SuperExpression);
         addProperty(expression, "property", property);
@@ -1900,7 +1900,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(SwitchClause node, Void value) {
         Object test = acceptOrNull(node.getExpression(), value);
-        ExoticArray consequent = createList(node.getStatements(), value);
+        ArrayObject consequent = createList(node.getStatements(), value);
         if (hasBuilder(Type.SwitchCase)) {
             return call(Type.SwitchCase, node, test, consequent);
         }
@@ -1914,7 +1914,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     public Object visit(SwitchStatement node, Void value) {
         Object switchStatement;
         Object discriminant = node.getExpression().accept(this, value);
-        ExoticArray cases = createList(node.getClauses(), value);
+        ArrayObject cases = createList(node.getClauses(), value);
         boolean lexical = !LexicallyScopedDeclarations(node).isEmpty();
         if (hasBuilder(Type.SwitchStatement)) {
             switchStatement = call(Type.SwitchStatement, node, discriminant, cases, lexical);
@@ -2007,7 +2007,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     public Object visit(TryStatement node, Void value) {
         Object block = node.getTryBlock().accept(this, value);
         Object handler = acceptOrNull(node.getCatchNode(), value);
-        ExoticArray guardedHandlers = createList(node.getGuardedCatchNodes(), value);
+        ArrayObject guardedHandlers = createList(node.getGuardedCatchNodes(), value);
         Object finalizer = acceptOrNull(node.getFinallyBlock(), value);
         if (hasBuilder(Type.TryStatement)) {
             return call(Type.TryStatement, node, block, guardedHandlers, handler, finalizer);
@@ -2062,7 +2062,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(VariableStatement node, Void value) {
-        ExoticArray declarations = createList(node.getElements(), value);
+        ArrayObject declarations = createList(node.getElements(), value);
         String kind = "var";
         if (hasBuilder(Type.VariableDeclaration)) {
             return call(Type.VariableDeclaration, node, kind, declarations);

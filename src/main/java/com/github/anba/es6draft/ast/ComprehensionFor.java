@@ -9,12 +9,7 @@ package com.github.anba.es6draft.ast;
 import com.github.anba.es6draft.ast.scope.BlockScope;
 
 /**
- * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.2 Primary Expression</h2><br>
- * <h3>12.2.4 Array Initializer</h3>
- * <ul>
- * <li>12.2.4.2 Array Comprehension
- * </ul>
+ * Extension: Array and Generator Comprehension
  */
 public final class ComprehensionFor extends ComprehensionQualifier implements ScopedNode {
     private final BlockScope scope;

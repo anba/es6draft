@@ -22,7 +22,7 @@ const {
       return {value: 1, writable: true, enumerable: true, configurable: false};
     }
   });
-  assertThrows(() => Object.getOwnPropertyDescriptor(p1, propertyName), TypeError);
+  assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(p1, propertyName));
 
   // Getters mutating property descriptor record have no effect
   let p2 = new Proxy(target, {

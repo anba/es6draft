@@ -17,7 +17,7 @@ function f() {
   return;
   let foo;
 }
-assertThrows(f, ReferenceError);
+assertThrows(ReferenceError, f);
 
 function g() {
   "use strict";
@@ -25,4 +25,4 @@ function g() {
   return;
   let foo;
 }
-assertThrows(g, ReferenceError);
+assertThrows(ReferenceError, g);

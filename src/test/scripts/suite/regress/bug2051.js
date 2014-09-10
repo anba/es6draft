@@ -16,7 +16,7 @@ let buffer = new ArrayBuffer(10);
 buffer.constructor = function(len) {
   return new ArrayBuffer(5);
 };
-assertThrows(() => buffer.slice(), TypeError);
+assertThrows(TypeError, () => buffer.slice());
 
 buffer.constructor = function(len) {
   return new ArrayBuffer(15);

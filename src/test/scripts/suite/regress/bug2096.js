@@ -12,4 +12,4 @@ const {
 // 7.4.7.1 ListIterator next( ): Invalid assertion in step 2
 // https://bugs.ecmascript.org/show_bug.cgi?id=2096
 
-assertThrows(() => Reflect.enumerate({}).next.call({}), TypeError);
+assertThrows(TypeError, () => Reflect.enumerate({}).next.call({}));

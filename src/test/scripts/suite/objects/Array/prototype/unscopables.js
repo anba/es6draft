@@ -23,7 +23,7 @@ const ArrayPrototypeUnscopablesNames = [
 const ArrayPrototypeUnscopables = Array.prototype[Symbol.unscopables];
 
 assertSame("object", typeof ArrayPrototypeUnscopables);
-assertSame(Object.prototype, Object.getPrototypeOf(ArrayPrototypeUnscopables));
+assertSame(null, Object.getPrototypeOf(ArrayPrototypeUnscopables));
 assertTrue(Object.isExtensible(ArrayPrototypeUnscopables));
 
 for (let name of ArrayPrototypeUnscopablesNames) {

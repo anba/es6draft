@@ -8,22 +8,21 @@ package com.github.anba.es6draft.mozilla;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
-import java.nio.file.Path;
-
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.util.TestInfo;
 
 /**
  *
  */
-public class MozTestGlobalObject extends MozShellGlobalObject {
-    protected MozTestGlobalObject(Realm realm, ShellConsole console, Path baseDir, Path script,
+public final class MozTestGlobalObject extends MozShellGlobalObject {
+    protected MozTestGlobalObject(Realm realm, ShellConsole console, TestInfo test,
             ScriptCache scriptCache) {
-        super(realm, console, baseDir, script, scriptCache);
+        super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
     }
 
     @Override
@@ -37,21 +36,18 @@ public class MozTestGlobalObject extends MozShellGlobalObject {
      * 
      * @param console
      *            the console object
-     * @param baseDir
-     *            the base directory
-     * @param script
-     *            the main script file
+     * @param test
+     *            the test descriptor
      * @param scriptCache
      *            the script cache
      * @return the object allocator to construct new global object instances
      */
-    public static ObjectAllocator<MozTestGlobalObject> newTestGlobalObjectAllocator(
-            final ShellConsole console, final Path baseDir, final Path script,
-            final ScriptCache scriptCache) {
+    public static ObjectAllocator<MozTestGlobalObject> newGlobalObjectAllocator(
+            final ShellConsole console, final TestInfo test, final ScriptCache scriptCache) {
         return new ObjectAllocator<MozTestGlobalObject>() {
             @Override
             public MozTestGlobalObject newInstance(Realm realm) {
-                return new MozTestGlobalObject(realm, console, baseDir, script, scriptCache);
+                return new MozTestGlobalObject(realm, console, test, scriptCache);
             }
         };
     }

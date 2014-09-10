@@ -69,37 +69,37 @@ const {
 
 // Abrupt completion in 3.f.iii.2 intercepted
 {
-  let throwCalled = false, nextCalled = false;
+  let returnCalled = false, nextCalled = false;
   let iter = {
     [Symbol.iterator]() { return this; },
     next() {
       nextCalled = true;
       return {value: null, done: false};
     },
-    throw() { throwCalled = true; }
+    return() { returnCalled = true; }
   };
-  assertThrows(() => {
+  assertThrows(TypeError, () => {
     let v;
     for ({v} of iter) fail `loop body entered`
-  }, TypeError);
+  });
   assertTrue(nextCalled);
-  assertTrue(throwCalled);
+  assertTrue(returnCalled);
 }
 
 // Abrupt completion in 3.h.iv intercepted
 {
-  let throwCalled = false, nextCalled = false;
+  let returnCalled = false, nextCalled = false;
   let iter = {
     [Symbol.iterator]() { return this; },
     next() {
       nextCalled = true;
       return {value: null, done: false};
     },
-    throw() { throwCalled = true; }
+    return() { returnCalled = true; }
   };
-  assertThrows(() => {
+  assertThrows(TypeError, () => {
     for (let {v} of iter) fail `loop body entered`
-  }, TypeError);
+  });
   assertTrue(nextCalled);
-  assertTrue(throwCalled);
+  assertTrue(returnCalled);
 }

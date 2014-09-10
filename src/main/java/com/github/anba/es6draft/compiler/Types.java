@@ -41,10 +41,10 @@ import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Undefined;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticLegacyArguments;
+import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.LegacyArgumentsObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
@@ -129,10 +129,10 @@ final class Types {
     static final Type Undefined = Type.getType(Undefined.class);
 
     // runtime.types.builtins
-    static final Type ExoticArguments = Type.getType(ExoticArguments.class);
-    static final Type ExoticLegacyArguments = Type.getType(ExoticLegacyArguments.class);
-    static final Type ExoticArray = Type.getType(ExoticArray.class);
+    static final Type ArgumentsObject = Type.getType(ArgumentsObject.class);
+    static final Type ArrayObject = Type.getType(ArrayObject.class);
     static final Type FunctionObject = Type.getType(FunctionObject.class);
+    static final Type LegacyArgumentsObject = Type.getType(LegacyArgumentsObject.class);
     static final Type OrdinaryAsyncFunction = Type.getType(OrdinaryAsyncFunction.class);
     static final Type OrdinaryGenerator = Type.getType(OrdinaryGenerator.class);
     static final Type OrdinaryFunction = Type.getType(OrdinaryFunction.class);

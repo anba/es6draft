@@ -22,10 +22,10 @@ assertEquals({value: "a", done: false}, listIter.next.call(listIter));
 assertEquals({value: "0", done: false}, compoundIter.next.call(compoundIter));
 
 // Does not work on different instance
-assertThrows(() => listIter.next.call(compoundIter), TypeError);
-assertThrows(() => compoundIter.next.call(listIter), TypeError);
-assertThrows(() => listIter.next.call(otherListIter), TypeError);
-assertThrows(() => compoundIter.next.call(otherCompoundIter), TypeError);
+assertThrows(TypeError, () => listIter.next.call(compoundIter));
+assertThrows(TypeError, () => compoundIter.next.call(listIter));
+assertThrows(TypeError, () => listIter.next.call(otherListIter));
+assertThrows(TypeError, () => compoundIter.next.call(otherCompoundIter));
 
 // Drain iters
 assertEquals({value: "b", done: false}, listIter.next.call(listIter));

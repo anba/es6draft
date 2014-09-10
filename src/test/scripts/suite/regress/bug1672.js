@@ -17,7 +17,7 @@ assertSame(10, new Int8Array(10, 0).length);
 assertSame(10, new Int8Array("10").length);
 
 // Throw error when attempting to initialize with uninitialized object
-assertThrows(() => new Int8Array(Int8Array[Symbol.create]()), TypeError);
+assertThrows(TypeError, () => new Int8Array(Int8Array[Symbol.create]()));
 
 // Copied typed array starts from byteOffset, copy contains same content
 {
@@ -56,9 +56,9 @@ assertSame(0, new Int8Array({length: -1}).length);
 assertSame(4, new Int8Array({length: 1, 0: 4})[0]);
 
 // Throw error when attempting to initialize with uninitialized object
-assertThrows(() => new Int8Array(ArrayBuffer[Symbol.create]()), TypeError);
+assertThrows(TypeError, () => new Int8Array(ArrayBuffer[Symbol.create]()));
 
 // Throw RangeError when (byteLength - byteOffset) < 0
 assertSame(1, new Int32Array(new ArrayBuffer(4), 0).length);
 assertSame(0, new Int32Array(new ArrayBuffer(4), 4).length);
-assertThrows(() => new Int32Array(new ArrayBuffer(4), 8), RangeError);
+assertThrows(RangeError, () => new Int32Array(new ArrayBuffer(4), 8));

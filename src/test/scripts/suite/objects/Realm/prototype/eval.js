@@ -19,7 +19,7 @@ assertBuiltinFunction(evalFn, "eval", 1);
 {
   let primitives = [void 0, true, false, 0, 1, 0.1, 0 / 0, "", "abc", Symbol()];
   for (let v of primitives) {
-    assertThrows(() => evalFn.call(v), TypeError);
+    assertThrows(TypeError, () => evalFn.call(v));
   }
 }
 
@@ -27,13 +27,13 @@ assertBuiltinFunction(evalFn, "eval", 1);
 {
   let objects = [{}, [], Object, Object.create, function(){}, () => {}];
   for (let v of objects) {
-    assertThrows(() => evalFn.call(v), TypeError);
+    assertThrows(TypeError, () => evalFn.call(v));
   }
 }
 
 // steps 3-4 - TypeError if thisValue is an uninitialized Realm object
 {
-  assertThrows(() => evalFn.call(Reflect.Realm[Symbol.create]()), TypeError);
+  assertThrows(TypeError, () => evalFn.call(Reflect.Realm[Symbol.create]()));
 }
 
 // step 5 - Evaluates an eval script in the given realm (TODO)

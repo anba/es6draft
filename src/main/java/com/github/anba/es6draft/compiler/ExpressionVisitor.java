@@ -9,12 +9,16 @@ package com.github.anba.es6draft.compiler;
 import static com.github.anba.es6draft.semantics.StaticSemantics.TailCallNodes;
 import static java.util.Collections.emptySet;
 
+import java.lang.invoke.CallSite;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.Expression;
@@ -24,6 +28,7 @@ import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
+import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 
 /**
  * 
@@ -95,6 +100,15 @@ abstract class ExpressionVisitor extends InstructionVisitor {
      */
     void updateInfo(ExpressionVisitor nested) {
         hasTailCalls |= nested.hasTailCalls;
+    }
+
+    /**
+     * Returns the execution context.
+     * 
+     * @return the execution context
+     */
+    Variable<ExecutionContext> executionContext() {
+        return executionContext;
     }
 
     /**
@@ -230,6 +244,22 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         private final Label resumeSwitch = new Label(), startBody = new Label();
     }
 
+    private static final class RuntimeBootstrap {
+        static final boolean ENABLED = true;
+        static final Object[] EMPTY_BSM_ARGS = new Object[] {};
+        static final String STACK = "rt:stack";
+        static final String LOCALS = "rt:locals";
+
+        private static final Handle BOOTSTRAP;
+        static {
+            java.lang.invoke.MethodType mt = java.lang.invoke.MethodType.methodType(CallSite.class,
+                    MethodHandles.Lookup.class, String.class, java.lang.invoke.MethodType.class);
+            BOOTSTRAP = new Handle(Opcodes.H_INVOKESTATIC,
+                    org.objectweb.asm.Type.getInternalName(ScriptRuntime.class),
+                    "runtimeBootstrap", mt.toMethodDescriptorString());
+        }
+    }
+
     /**
      * Generate prologue code for generator functions.
      * 
@@ -299,39 +329,56 @@ abstract class ExpressionVisitor extends InstructionVisitor {
 
         // (1) Save stack
         Type[] stack = state.stack;
-        newarray(stack.length, Types.Object);
-        for (int i = 0, sp = stack.length - 1; i < stack.length; ++i, --sp) {
-            Type t = stack[sp];
-            // stack: [?, array] -> [array, array, ?]
-            if (t.getSize() == 1) {
-                dupX1();
+        if (RuntimeBootstrap.ENABLED) {
+            invokedynamic(RuntimeBootstrap.STACK, Type.getMethodDescriptor(Types.Object_, stack),
+                    RuntimeBootstrap.BOOTSTRAP, RuntimeBootstrap.EMPTY_BSM_ARGS);
+        } else {
+            newarray(stack.length, Types.Object);
+            for (int i = 0, sp = stack.length - 1; i < stack.length; ++i, --sp) {
+                Type t = stack[sp];
+                // stack: [?, array] -> [array, array, ?]
+                if (t.getSize() == 1) {
+                    dupX1();
+                    swap();
+                } else {
+                    dup();
+                    swap2();
+                }
+                // stack: [array, array, ?] -> [array, array, boxed(?)]
+                toBoxed(t);
+                // stack: [array, array, boxed(?)] -> [array, array, index, boxed(?)]
+                iconst(i);
                 swap();
-            } else {
-                dup();
-                swap2();
+                // stack: [array, array, index, boxed(?)] -> [array]
+                astore(Types.Object);
             }
-            // stack: [array, array, ?] -> [array, array, boxed(?)]
-            toBoxed(t);
-            // stack: [array, array, boxed(?)] -> [array, array, index, boxed(?)]
-            iconst(i);
-            swap();
-            // stack: [array, array, index, boxed(?)] -> [array]
-            astore(Types.Object);
         }
         assert getStack().length == 1 && getStack()[0].equals(Types.Object_) : Arrays
                 .toString(getStack());
 
         // (2) Save locals
         VariablesView locals = state.locals;
-        newarray(locals.getVariableCount(), Types.Object);
-        for (int i = 0, slot = 0; slot != -1; ++i, slot = locals.getNextActiveSlot(slot)) {
-            Type t = locals.getVariable(slot);
-            // stack: [array] -> [array, index, v]
-            dup();
-            iconst(i);
-            load(slot, t);
-            toBoxed(t);
-            astore(Types.Object);
+        if (RuntimeBootstrap.ENABLED) {
+            Type[] llocals = new Type[locals.getInitializedVariableCount()];
+            for (int i = 0, slot = 0; slot != -1; ++i, slot = locals.getNextInitializedSlot(slot)) {
+                Type t = locals.getVariable(slot);
+                llocals[i] = t;
+                load(slot, t);
+            }
+            invokedynamic(RuntimeBootstrap.LOCALS,
+                    Type.getMethodDescriptor(Types.Object_, llocals), RuntimeBootstrap.BOOTSTRAP,
+                    RuntimeBootstrap.EMPTY_BSM_ARGS);
+        } else {
+            newarray(locals.getInitializedVariableCount(), Types.Object);
+            for (int i = 0, slot = 0; slot != -1; ++i, slot = locals.getNextInitializedSlot(slot)) {
+                Type t = locals.getVariable(slot);
+                // stack: [array] -> [array, index, v]
+                dup();
+                iconst(i);
+                load(slot, t);
+                toBoxed(t);
+                astore(Types.Object);
+            }
         }
 
         // stack: [stack, locals] -> [r, r, stack, locals]
@@ -371,19 +418,12 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         VariablesView variables = state.locals;
         // manually restore locals type information
         restoreVariables(variables);
-        for (int i = 0, slot = 0; slot != -1; ++i, slot = variables.getNextActiveSlot(slot)) {
+        for (int i = 0, slot = 0; slot != -1; ++i, slot = variables.getNextInitializedSlot(slot)) {
             Type t = variables.getVariable(slot);
             // stack: [<locals>] -> [<locals>, value]
             dup();
-            aload(i, Types.Object);
-            // stack: [<locals>, value] -> [<locals>, value']
-            if (t.getSort() < Type.ARRAY) {
-                checkcast(getWrapper(t));
-                toUnboxed(t);
-            } else if (!Types.Object.equals(t)) {
-                checkcast(t);
-            }
-            // stack: [r, <locals>, value'] -> [<locals>]
+            loadFromArray(i, t);
+            // stack: [r, <locals>, value] -> [r, <locals>]
             store(slot, t);
         }
         // stack: [r, <locals>] -> [r]
@@ -396,31 +436,48 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         // stack: [r] -> [<stack>]
         invoke(Methods.ResumptionPoint_getStack);
         Type[] stack = state.stack;
-        for (int i = stack.length - 1, sp = 0; i >= 0; --i, ++sp) {
-            Type t = stack[sp];
-            // stack: [<stack>] -> [<stack>, value]
-            dup();
-            aload(i, Types.Object);
-            // stack: [<stack>, value] -> [<stack>, value']
-            if (t.getSort() < Type.ARRAY) {
-                checkcast(getWrapper(t));
-                toUnboxed(t);
-            } else if (!Types.Object.equals(t)) {
-                checkcast(t);
+        if (stack.length == 1) {
+            // stack: [<stack>] -> [v]
+            loadFromArray(0, stack[0]);
+        } else {
+            enterVariableScope();
+            Variable<Object[]> stackContent = newVariable("stack", Object[].class);
+            // stack: [<stack>] -> []
+            store(stackContent);
+            for (int i = stack.length - 1, sp = 0; i >= 0; --i, ++sp) {
+                Type t = stack[sp];
+                // stack: [] -> [<stack>]
+                load(stackContent);
+                // stack: [<stack>] -> [value]
+                loadFromArray(i, t);
             }
-            // stack: [<stack>, value'] -> [value', <stack>]
-            if (t.getSize() == 1) {
-                swap();
-            } else {
-                swap1_2();
-            }
+            // Set to null to avoid leaking the saved stack
+            aconst(null);
+            store(stackContent);
+            exitVariableScope();
         }
-        // stack: [<stack>] -> []
-        pop();
 
         assert Arrays.deepEquals(stack, getStack()) : String.format("%s != %s",
                 Arrays.toString(stack), Arrays.toString(getStack()));
 
         goTo(state.instruction);
+    }
+
+    /**
+     * stack: [array] {@literal ->} [value]
+     * 
+     * @param index
+     *            array index
+     * @param type
+     *            array element type
+     */
+    private void loadFromArray(int index, Type type) {
+        aload(index, Types.Object);
+        if (type.getSort() < Type.ARRAY) {
+            checkcast(getWrapper(type));
+            toUnboxed(type);
+        } else if (!Types.Object.equals(type)) {
+            checkcast(type);
+        }
     }
 }

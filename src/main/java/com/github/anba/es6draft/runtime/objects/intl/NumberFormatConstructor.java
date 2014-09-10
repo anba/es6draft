@@ -130,7 +130,6 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 

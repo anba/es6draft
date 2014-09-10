@@ -15,4 +15,4 @@ const {
 function testBindingException() {
   for (let {} of [null]) fail `loop body entered`;
 }
-assertThrows(testBindingException, TypeError);
+assertThrows(TypeError, testBindingException);

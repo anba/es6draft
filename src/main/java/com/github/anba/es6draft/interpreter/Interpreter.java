@@ -13,7 +13,7 @@ import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Reference.GetValue;
 import static com.github.anba.es6draft.runtime.types.Reference.PutValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
@@ -33,7 +33,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -645,7 +645,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
                 break;
             case ASSIGN:
             default:
-                throw new IllegalStateException();
+                throw new AssertionError();
             }
             PutValue(lref, rval, cx);
             return rval;
@@ -715,7 +715,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         case AND:
         case OR:
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -758,7 +758,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         case VOID:
             return _void(GetValue(val, cx), cx);
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -836,7 +836,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     @Override
     public Object visit(ArrayLiteral node, ExecutionContext cx) {
-        ExoticArray array = ArrayCreate(cx, 0);
+        ArrayObject array = ArrayCreate(cx, 0);
         int nextIndex = 0;
         for (Expression element : node.getElements()) {
             if (element instanceof Elision) {

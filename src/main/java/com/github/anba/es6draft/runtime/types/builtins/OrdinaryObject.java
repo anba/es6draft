@@ -1412,7 +1412,7 @@ public class OrdinaryObject implements ScriptObject {
             ScriptIterator<Object> {
         private final ExecutionContext cx;
         private OrdinaryObject obj;
-        private HashSet<Object> visitedKeys = new HashSet<>();
+        private final HashSet<Object> visitedKeys = new HashSet<>();
         private Iterator<String> keys;
         private Iterator<?> protoKeys;
         private ScriptObject scriptIter;
@@ -1478,8 +1478,8 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 9.1.12 [[OwnPropertyKeys]] ( ) */
     @Override
-    public final ExoticArray ownPropertyKeys(ExecutionContext cx) {
-        return CreateArrayFromList(cx, getOwnPropertyKeys(cx));
+    public final List<?> ownPropertyKeys(ExecutionContext cx) {
+        return getOwnPropertyKeys(cx);
     }
 
     /** 9.1.12 [[OwnPropertyKeys]] ( ) */

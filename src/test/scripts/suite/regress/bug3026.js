@@ -6,7 +6,6 @@
  */
 
 const {
-  assertThrows, fail
 } = Assert;
 
 // 9.5.12 [[OwnPropertyKeys]] ( ): Missing type check / conversion for property keys in step 20

@@ -12,12 +12,12 @@ const {
 // 23.1.5.1 CreateMapIterator: Missing initialisation check
 // https://bugs.ecmascript.org/show_bug.cgi?id=2396
 
-assertThrows(() => Map[Symbol.create]().entries(), TypeError);
-assertThrows(() => Map[Symbol.create]().keys(), TypeError);
-assertThrows(() => Map[Symbol.create]().values(), TypeError);
-assertThrows(() => Map[Symbol.create]()[Symbol.iterator](), TypeError);
+assertThrows(TypeError, () => Map[Symbol.create]().entries());
+assertThrows(TypeError, () => Map[Symbol.create]().keys());
+assertThrows(TypeError, () => Map[Symbol.create]().values());
+assertThrows(TypeError, () => Map[Symbol.create]()[Symbol.iterator]());
 
-assertThrows(() => Set[Symbol.create]().entries(), TypeError);
-assertThrows(() => Set[Symbol.create]().keys(), TypeError);
-assertThrows(() => Set[Symbol.create]().values(), TypeError);
-assertThrows(() => Set[Symbol.create]()[Symbol.iterator](), TypeError);
+assertThrows(TypeError, () => Set[Symbol.create]().entries());
+assertThrows(TypeError, () => Set[Symbol.create]().keys());
+assertThrows(TypeError, () => Set[Symbol.create]().values());
+assertThrows(TypeError, () => Set[Symbol.create]()[Symbol.iterator]());

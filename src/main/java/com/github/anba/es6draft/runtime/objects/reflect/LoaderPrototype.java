@@ -23,11 +23,11 @@ import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initializable;
-import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.*;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.AliasFunction;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -51,9 +51,9 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>26 Reflection</h1><br>
- * <h2>26.3 Loader Objects</h2>
+ * <h2>26.2 Loader Objects</h2>
  * <ul>
- * <li>26.3.3 Properties of the Reflect.Loader Prototype Object
+ * <li>26.2.3 Properties of the Reflect.Loader Prototype Object
  * </ul>
  */
 public final class LoaderPrototype extends OrdinaryObject implements Initializable {
@@ -70,10 +70,11 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
     @Override
     public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
+        createProperties(cx, this, RealmProperty.class);
     }
 
     /**
-     * 26.3.3 Properties of the Reflect.Loader Prototype Object
+     * 26.2.3 Properties of the Reflect.Loader Prototype Object
      */
     public enum Properties {
         ;
@@ -102,32 +103,13 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 26.3.3.1 Reflect.Loader.prototype.constructor
+         * 26.2.3.1 Reflect.Loader.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Loader;
 
         /**
-         * 26.3.3.13 get Reflect.Loader.prototype.realm
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the realm object
-         */
-        @Accessor(name = "realm", type = Accessor.Type.Getter)
-        public static Object realm(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
-            LoaderObject loader = thisLoader(cx, thisValue);
-            /* step 3 */
-            Loader loaderRecord = loader.getLoader();
-            /* step 4 */
-            return loaderRecord.getRealm().getRealmObject();
-        }
-
-        /**
-         * 26.3.3.6 get Reflect.Loader.prototype.global
+         * 26.2.3.6 get Reflect.Loader.prototype.global
          * 
          * @param cx
          *            the execution context
@@ -146,7 +128,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.2 Reflect.Loader.prototype.define ( name, source, options = undefined )
+         * 26.2.3.2 Reflect.Loader.prototype.define ( name, source, options = undefined )
          * 
          * @param cx
          *            the execution context
@@ -188,7 +170,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.10 Reflect.Loader.prototype.load ( name, options = undefined )
+         * 26.2.3.10 Reflect.Loader.prototype.load ( name, options = undefined )
          * 
          * @param cx
          *            the execution context
@@ -215,7 +197,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.11 Reflect.Loader.prototype.module ( source [, options ] )
+         * 26.2.3.11 Reflect.Loader.prototype.module ( source [, options ] )
          * 
          * @param cx
          *            the execution context
@@ -254,7 +236,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.8 Reflect.Loader.prototype.import ( name, options = undefined )
+         * 26.2.3.8 Reflect.Loader.prototype.import ( name, options = undefined )
          * 
          * @param cx
          *            the execution context
@@ -282,7 +264,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.12 newModule ( obj )
+         * 26.2.3.12 newModule ( obj )
          * 
          * @param cx
          *            the execution context
@@ -317,7 +299,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.5 Reflect.Loader.prototype.get ( name )
+         * 26.2.3.5 Reflect.Loader.prototype.get ( name )
          * 
          * @param cx
          *            the execution context
@@ -347,7 +329,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.7 Reflect.Loader.prototype.has ( name )
+         * 26.2.3.7 Reflect.Loader.prototype.has ( name )
          * 
          * @param cx
          *            the execution context
@@ -370,7 +352,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.14 Reflect.Loader.prototype.set ( name, module )
+         * 26.2.3.14 Reflect.Loader.prototype.set ( name, module )
          * 
          * @param cx
          *            the execution context
@@ -403,7 +385,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.3 Reflect.Loader.prototype.delete ( name )
+         * 26.2.3.3 Reflect.Loader.prototype.delete ( name )
          * 
          * @param cx
          *            the execution context
@@ -426,8 +408,8 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.4 Reflect.Loader.prototype.entries ( )<br>
-         * 26.3.3.16 Reflect.Loader.prototype[@@iterator] ( )
+         * 26.2.3.4 Reflect.Loader.prototype.entries ( )<br>
+         * 26.2.3.16 Reflect.Loader.prototype[@@iterator] ( )
          * 
          * @param cx
          *            the execution context
@@ -445,7 +427,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.9 Reflect.Loader.prototype.keys ( )
+         * 26.2.3.9 Reflect.Loader.prototype.keys ( )
          * 
          * @param cx
          *            the execution context
@@ -462,7 +444,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.15 Reflect.Loader.prototype.values ( )
+         * 26.2.3.15 Reflect.Loader.prototype.values ( )
          * 
          * @param cx
          *            the execution context
@@ -479,16 +461,16 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.17 Reflect.Loader.prototype [ @@toStringTag ]
+         * 26.2.3.17 Reflect.Loader.prototype [ @@toStringTag ]
          */
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "Reflect.Loader";
 
         /**
-         * 26.3.3.18 Loader Pipeline Hook Properties
+         * 26.2.3.18 Loader Pipeline Hook Properties
          * <p>
-         * 26.3.3.18.1 Reflect.Loader.prototype.normalize ( name, refererName, refererAddress )
+         * 26.2.3.18.1 Reflect.Loader.prototype.normalize ( name, referrerName, referrerAddress )
          * 
          * @param cx
          *            the execution context
@@ -496,23 +478,23 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
          *            the function this-value
          * @param name
          *            the module name
-         * @param refererName
-         *            the referer name
-         * @param refererAddress
-         *            the referer address
+         * @param referrerName
+         *            the referrer name
+         * @param referrerAddress
+         *            the referrer address
          * @return the normalized module name
          */
         @Function(name = "normalize", arity = 3)
         public static Object normalize(ExecutionContext cx, Object thisValue, Object name,
-                Object refererName, Object refererAddress) {
+                Object referrerName, Object referrerAddress) {
             /* step 1 */
             return name;
         }
 
         /**
-         * 26.3.3.18 Loader Pipeline Hook Properties
+         * 26.2.3.18 Loader Pipeline Hook Properties
          * <p>
-         * 26.3.3.18.2 Reflect.Loader.prototype.locate (loadRequest)
+         * 26.2.3.18.2 Reflect.Loader.prototype.locate (loadRequest)
          * 
          * @param cx
          *            the execution context
@@ -533,9 +515,9 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.18 Loader Pipeline Hook Properties
+         * 26.2.3.18 Loader Pipeline Hook Properties
          * <p>
-         * 26.3.3.18.3 Reflect.Loader.prototype.fetch (loadRequest)
+         * 26.2.3.18.3 Reflect.Loader.prototype.fetch (loadRequest)
          * 
          * @param cx
          *            the execution context
@@ -552,9 +534,9 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.18 Loader Pipeline Hook Properties
+         * 26.2.3.18 Loader Pipeline Hook Properties
          * <p>
-         * 26.3.3.18.4 Reflect.Loader.prototype.translate ( loadRequest )
+         * 26.2.3.18.4 Reflect.Loader.prototype.translate ( loadRequest )
          * 
          * @param cx
          *            the execution context
@@ -575,9 +557,9 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 26.3.3.18 Loader Pipeline Hook Properties
+         * 26.2.3.18 Loader Pipeline Hook Properties
          * <p>
-         * 26.3.3.18.5 Reflect.Loader.prototype.instantiate (loadRequest)
+         * 26.2.3.18.5 Reflect.Loader.prototype.instantiate (loadRequest)
          * 
          * @param cx
          *            the execution context
@@ -615,6 +597,53 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         @Override
         public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             return UNDEFINED;
+        }
+    }
+
+    /**
+     * Additional Properties of the Reflect.Loader Prototype Object
+     */
+    @CompatibilityExtension(CompatibilityOption.Realm)
+    public enum RealmProperty {
+        ;
+
+        /**
+         * Abstract Operation: thisLoader(value)
+         * 
+         * @param cx
+         *            the execution context
+         * @param value
+         *            the argument value
+         * @return the loader object
+         */
+        private static LoaderObject thisLoader(ExecutionContext cx, Object value) {
+            if (value instanceof LoaderObject) {
+                LoaderObject loader = (LoaderObject) value;
+                if (loader.getLoader() != null) {
+                    return loader;
+                }
+                throw newTypeError(cx, Messages.Key.UninitializedObject);
+            }
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+
+        /**
+         * 26.2.3.13 get Reflect.Loader.prototype.realm
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the realm object
+         */
+        @Accessor(name = "realm", type = Accessor.Type.Getter)
+        public static Object realm(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
+            LoaderObject loader = thisLoader(cx, thisValue);
+            /* step 3 */
+            Loader loaderRecord = loader.getLoader();
+            /* step 4 */
+            return loaderRecord.getRealm().getRealmObject();
         }
     }
 

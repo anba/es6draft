@@ -6,7 +6,7 @@
  */
 
 const {
-  assertSame
+  assertSame, assertUndefined
 } = Assert;
 
 // 9.2.8 AddRestrictedFunctionProperties: Use %ThrowTypeError% from function's [[Realm]]?
@@ -18,7 +18,8 @@ const {
   let clone = Function.prototype.toMethod.call(f, {})
   assertSame(Object.getPrototypeOf(f), Object.getPrototypeOf(clone));
 
-  let foreignThrower = Object.getOwnPropertyDescriptor(f, "caller").get;
-  let cloneThrower = Object.getOwnPropertyDescriptor(clone, "caller").get;
-  assertSame(foreignThrower, cloneThrower);
+  let foreignThrower = Object.getOwnPropertyDescriptor(f, "caller");
+  let cloneThrower = Object.getOwnPropertyDescriptor(clone, "caller");
+  assertUndefined(foreignThrower);
+  assertUndefined(cloneThrower);
 }

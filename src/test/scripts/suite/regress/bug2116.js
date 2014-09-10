@@ -13,9 +13,9 @@ const {
 // 9.5.15 [[Construct]], 9.5.16 ProxyCreate: Only set [[Construct]] when target is constructor?
 // https://bugs.ecmascript.org/show_bug.cgi?id=2116
 
-assertThrows(() => new (new Proxy({}, {})), TypeError);
-assertThrows(() => new (new Proxy(() => {}, {})), TypeError);
-assertThrows(() => new (new Proxy({m(){}}.m, {})), TypeError);
+assertThrows(TypeError, () => new (new Proxy({}, {})));
+assertThrows(TypeError, () => new (new Proxy(() => {}, {})));
+assertThrows(TypeError, () => new (new Proxy({m(){}}.m, {})));
 
 function IsConstructor(o) {
   try {

@@ -44,7 +44,7 @@ class InstructionVisitor extends InstructionAdapter {
          *            the variable index slot
          * @return the next active slot
          */
-        int getNextActiveSlot(int slot);
+        int getNextInitializedSlot(int slot);
 
         /**
          * Returns the number of variables.
@@ -52,6 +52,13 @@ class InstructionVisitor extends InstructionAdapter {
          * @return the total variable count
          */
         int getVariableCount();
+
+        /**
+         * Returns the number of initialized variables.
+         * 
+         * @return the total variable count
+         */
+        int getInitializedVariableCount();
     }
 
     private static final class Variables implements VariablesView {
@@ -89,7 +96,7 @@ class InstructionVisitor extends InstructionAdapter {
         }
 
         @Override
-        public int getNextActiveSlot(int slot) {
+        public int getNextInitializedSlot(int slot) {
             assert 0 <= slot && slot <= types.length : String.format("slot=%d not in [%d, %d]",
                     slot, 0, types.length);
             assert variables.get(slot) && active.get(slot) && types[slot] != null
@@ -106,6 +113,11 @@ class InstructionVisitor extends InstructionAdapter {
                 count += types[i] != null && types[i] != RESERVED ? 1 : 0;
             }
             return count;
+        }
+
+        @Override
+        public int getInitializedVariableCount() {
+            return active.cardinality();
         }
 
         VariablesView view() {
@@ -340,7 +352,7 @@ class InstructionVisitor extends InstructionAdapter {
             case VirtualInterface:
                 return Opcodes.H_INVOKEVIRTUAL;
             default:
-                throw new IllegalStateException();
+                throw new AssertionError();
             }
         }
     }
@@ -919,7 +931,7 @@ class InstructionVisitor extends InstructionAdapter {
             getstatic(field.owner, field.name, field.desc);
             break;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -938,7 +950,7 @@ class InstructionVisitor extends InstructionAdapter {
             putstatic(field.owner, field.name, field.desc);
             break;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -972,7 +984,7 @@ class InstructionVisitor extends InstructionAdapter {
             invokevirtual(method.owner, method.name, method.desc, true);
             break;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 

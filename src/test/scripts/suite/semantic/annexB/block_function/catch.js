@@ -6,7 +6,7 @@
  */
 
 const {
-  assertSame, assertUndefined, assertThrows, assertSyntaxError
+  assertSame, assertUndefined, assertSyntaxError
 } = Assert;
 
 // B.3.3  Block-Level Function Declarations Web Legacy Compatibility Semantics

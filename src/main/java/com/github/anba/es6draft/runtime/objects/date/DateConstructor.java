@@ -50,7 +50,6 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 

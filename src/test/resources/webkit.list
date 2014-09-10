@@ -135,6 +135,9 @@ js/script-tests/Object-getOwnPropertyNames.js
 # Object.getPrototypeOf() works with primitives
 js/script-tests/prototypes.js
 
+# restricted properties only present on Function.prototype
+js/script-tests/strict-throw-type-error.js
+
 
 #######################################
 # ES6 related syntax changes          #

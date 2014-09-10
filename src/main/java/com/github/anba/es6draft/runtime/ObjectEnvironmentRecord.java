@@ -64,35 +64,30 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasBinding(String name) {
-        // FIXME: spec bug - only consult @@unscopables if withEnvironment is true? (bug 3020)
-        if (!withEnvironment) {
-            return HasProperty(cx, bindings, name);
-        }
         /* step 1 (omitted) */
         /* step 2 */
         ScriptObject bindings = this.bindings;
-        /* step 3 */
-        while (bindings != null) {
-            boolean hasOwn = HasOwnProperty(cx, bindings, name);
-            if (hasOwn) {
-                boolean hasUnscopables = HasOwnProperty(cx, bindings,
-                        BuiltinSymbol.unscopables.get());
-                if (!hasUnscopables) {
-                    return true;
-                }
-                Object unscopables = Get(cx, bindings, BuiltinSymbol.unscopables.get());
-                if (!Type.isObject(unscopables)) {
-                    return true;
-                }
-                boolean isBlocked = HasOwnProperty(cx, Type.objectValue(unscopables), name);
-                if (!isBlocked) {
-                    return true;
-                }
-            }
-            bindings = bindings.getPrototypeOf(cx);
+        /* steps 3-4 */
+        boolean foundBinding = HasProperty(cx, bindings, name);
+        /* step 5 */
+        if (!foundBinding) {
+            return false;
         }
-        /* step 4 */
-        return false;
+        /* step 6 */
+        if (!withEnvironment) {
+            return true;
+        }
+        /* steps 7-8 */
+        Object unscopables = Get(cx, bindings, BuiltinSymbol.unscopables.get());
+        /* step 9 */
+        if (Type.isObject(unscopables)) {
+            Object blocked = Get(cx, Type.objectValue(unscopables), name);
+            if (!Type.isUndefined(blocked)) {
+                return false;
+            }
+        }
+        /* step 10 */
+        return true;
     }
 
     /**
@@ -144,46 +139,20 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public Object getBindingValue(String name, boolean strict) {
-        // FIXME: spec bug - only consult @@unscopables if withEnvironment is true? (bug 3020)
-        if (!withEnvironment) {
-            boolean value = HasProperty(cx, bindings, name);
-            if (!value) {
-                if (!strict) {
-                    return UNDEFINED;
-                }
-                throw newReferenceError(cx, Messages.Key.UnresolvableReference, name);
-            }
-            return Get(cx, bindings, name);
-        }
         /* step 1 (omitted) */
         /* step 2 */
-        ScriptObject bindingsThis = this.bindings;
-        /* step 3 */
-        ScriptObject bindings = bindingsThis;
-        /* step 4 */
-        while (bindings != null) {
-            boolean hasOwn = HasOwnProperty(cx, bindings, name);
-            if (hasOwn) {
-                boolean hasUnscopables = HasOwnProperty(cx, bindings,
-                        BuiltinSymbol.unscopables.get());
-                boolean isBlocked = false;
-                if (hasUnscopables) {
-                    Object unscopables = Get(cx, bindings, BuiltinSymbol.unscopables.get());
-                    if (Type.isObject(unscopables)) {
-                        isBlocked = HasOwnProperty(cx, Type.objectValue(unscopables), name);
-                    }
-                }
-                if (!isBlocked) {
-                    return bindings.get(cx, name, bindingsThis);
-                }
-            }
-            bindings = bindings.getPrototypeOf(cx);
-        }
+        ScriptObject bindings = this.bindings;
+        /* steps 3-4 */
+        boolean foundBinding = HasProperty(cx, bindings, name);
         /* step 5 */
-        if (!strict) {
-            return UNDEFINED;
+        if (!foundBinding) {
+            if (!strict) {
+                return UNDEFINED;
+            }
+            throw newReferenceError(cx, Messages.Key.UnresolvableReference, name);
         }
-        throw newReferenceError(cx, Messages.Key.UnresolvableReference, name);
+        /* step 6 */
+        return Get(cx, bindings, name);
     }
 
     /**

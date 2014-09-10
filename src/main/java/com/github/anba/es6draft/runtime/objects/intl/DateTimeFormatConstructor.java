@@ -224,7 +224,6 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 

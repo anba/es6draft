@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CopyDataBlockBytes;
-import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsNeuteredBuffer;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsDetachedBuffer;
 
 import java.nio.ByteBuffer;
 
@@ -76,8 +76,8 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
                 if (!buffer.isInitialized()) {
                     throw newTypeError(cx, Messages.Key.UninitializedObject);
                 }
-                if (IsNeuteredBuffer(buffer)) {
-                    throw newTypeError(cx, Messages.Key.BufferNeutered);
+                if (IsDetachedBuffer(buffer)) {
+                    throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
                 return buffer;
             }
@@ -150,31 +150,31 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
             /* steps 17-20 */
             ArrayBufferObject _new = thisArrayBufferObject(cx,
                     ((Constructor) ctor).construct(cx, newLen));
-            // FIXME: spec bug - check new buffer not same instance as old buffer (bug 3046)
+            /* step 21 */
+            if (IsDetachedBuffer(_new)) {
+                throw newTypeError(cx, Messages.Key.BufferDetached);
+            }
+            /* step 22 */
             if (_new == obj) {
                 // TODO: better error message
                 throw newTypeError(cx, Messages.Key.BufferInvalid);
             }
-            // FIXME: spec bug - check for neutered buffer (bug 3060)
-            if (IsNeuteredBuffer(_new)) {
-                throw newTypeError(cx, Messages.Key.BufferNeutered);
-            }
-            /* step 21 */
+            /* step 23 */
             if (_new.getByteLength() < newLen) {
                 // FIXME: spec bug - throw RangeError instead of TypeError?
                 throw newTypeError(cx, Messages.Key.InvalidBufferSize);
             }
-            /* steps 22-23 */
-            if (IsNeuteredBuffer(obj)) {
-                throw newTypeError(cx, Messages.Key.BufferNeutered);
+            /* steps 24-25 */
+            if (IsDetachedBuffer(obj)) {
+                throw newTypeError(cx, Messages.Key.BufferDetached);
             }
-            /* step 24 */
+            /* step 26 */
             ByteBuffer fromBuf = obj.getData();
-            /* step 25 */
-            ByteBuffer toBuf = _new.getData();
-            /* steps 26 */
-            CopyDataBlockBytes(toBuf, 0, fromBuf, first, newLen);
             /* step 27 */
+            ByteBuffer toBuf = _new.getData();
+            /* steps 28 */
+            CopyDataBlockBytes(toBuf, 0, fromBuf, first, newLen);
+            /* step 29 */
             return _new;
         }
 

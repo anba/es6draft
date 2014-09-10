@@ -214,15 +214,29 @@ public final class Strings {
     }
 
     /**
-     * If {@code s} is an integer indexed property key less than {@code 2}<span><sup>{@code 31}
-     * </sup></span>{@code -1} ({@code 0x7FFFFFF}), its integer value is returned. Otherwise
-     * {@code -1} is returned.
+     * If {@code s} is an argument index less than {@code 2}<span><sup>{@code 31}</sup></span>
+     * {@code -1} ({@code 0x7FFFFFF}), its integer value is returned. Otherwise {@code -1} is
+     * returned.
      * 
      * @param s
      *            the property key
      * @return the integer index or {@code -1}
      */
-    public static int toIndex(String s) {
+    public static int toArgumentIndex(String s) {
+        // "2147483647".length == 10
+        return (int) toIndex(s, 10, 0x7FFF_FFFFL);
+    }
+
+    /**
+     * If {@code s} is a string index less than {@code 2}<span><sup>{@code 31}</sup></span>
+     * {@code -1} ({@code 0x7FFFFFF}), its integer value is returned. Otherwise {@code -1} is
+     * returned.
+     * 
+     * @param s
+     *            the property key
+     * @return the integer index or {@code -1}
+     */
+    public static int toStringIndex(String s) {
         // "2147483647".length == 10
         return (int) toIndex(s, 10, 0x7FFF_FFFFL);
     }
@@ -249,7 +263,7 @@ public final class Strings {
      *            the property key
      * @return the integer index or {@code -1}
      */
-    static long toLargeIndex(String propertyKey) {
+    static long toIndex(String propertyKey) {
         // "9007199254740991".length == 16
         return toIndex(propertyKey, 16, 0x1F_FFFF_FFFF_FFFFL);
     }

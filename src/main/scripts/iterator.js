@@ -229,23 +229,17 @@ function MakeLegacyIterator() {
 // (internal) BuiltinIterator object
 function MakeBuiltinIterator(ctor) {
   const iterSym = Symbol("iter");
-  const closedSym = Symbol("closed");
 
   class BuiltinIterator extends Iterator {
     constructor(obj, iterF) {
       Object_defineProperty(this, iterSym, {__proto__: null, value: %CallFunction(iterF, obj)});
-      Object_defineProperty(this, closedSym, {__proto__: null, value: false, configurable: true});
     }
 
     next() {
-      if (!this[closedSym]) {
-        var next = this[iterSym].next();
-        if (Object(next) === next && next.done) {
-          Object_defineProperty(this, closedSym, {__proto__: null, value: true, configurable: false});
-        }
-        return next;
+      if (this === BuiltinIterator.prototype) {
+        return {value: void 0, done: true};
       }
-      return {value: void 0, done: true};
+      return this[iterSym].next();
     }
 
     get [toStringTagSym]() {
@@ -254,10 +248,6 @@ function MakeBuiltinIterator(ctor) {
 
     [mozIteratorSym]() {
       return this;
-    }
-
-    get [closedSym]() {
-      return true;
     }
 
     static [createSym]() {
@@ -271,7 +261,6 @@ function MakeBuiltinIterator(ctor) {
     next: {enumerable: false},
     [toStringTagSym]: {enumerable: false},
     [mozIteratorSym]: {enumerable: false},
-    [closedSym]: {enumerable: false},
   });
 
   Object.defineProperties(BuiltinIterator, {

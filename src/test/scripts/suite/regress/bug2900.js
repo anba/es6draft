@@ -6,7 +6,7 @@
  */
 
 const {
-  assertSame, assertNotSame
+  assertSame, assertNotSame, assertUndefined
 } = Assert;
 
 // 19.2.3.2 Function.prototype.bind: Incorrect argument to BoundFunctionTargetRealm
@@ -28,14 +28,14 @@ let foreignFn = foreignRealm.eval(`
 `);
 let fn = function G() { };
 
-function GetThrowTypeError(f) {
-  return Object.getOwnPropertyDescriptor(f, "caller").get;
+function GetCaller(f) {
+  return Object.getOwnPropertyDescriptor(f, "caller");
 }
 
 // bind this Realm function
-assertSame(ThrowTypeError, GetThrowTypeError(Function.prototype.bind.call(fn)));
-assertSame(ThrowTypeError, GetThrowTypeError(foreignFunction.prototype.bind.call(fn)));
+assertUndefined(GetCaller(Function.prototype.bind.call(fn)));
+assertUndefined(GetCaller(foreignFunction.prototype.bind.call(fn)));
 
 // bind foreign Realm function
-assertSame(foreignThrowTypeError, GetThrowTypeError(Function.prototype.bind.call(foreignFn)));
-assertSame(foreignThrowTypeError, GetThrowTypeError(foreignFunction.prototype.bind.call(foreignFn)));
+assertUndefined(GetCaller(Function.prototype.bind.call(foreignFn)));
+assertUndefined(GetCaller(foreignFunction.prototype.bind.call(foreignFn)));

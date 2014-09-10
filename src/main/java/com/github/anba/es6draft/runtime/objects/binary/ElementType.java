@@ -102,7 +102,7 @@ public enum ElementType {
         case Float64:
             return "Float64Array";
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 

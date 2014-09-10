@@ -6,14 +6,12 @@
  */
 
 const {
-  assertAccessorProperty
+  assertUndefined
 } = Assert;
 
 // 9.2.6.1 CreateBuiltinFunction: Add call to AddRestrictedFunctionProperties?
 // https://bugs.ecmascript.org/show_bug.cgi?id=2064
 
-const ThrowTypeError = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller").get;
-
 let builtin = Object.create;
-assertAccessorProperty(builtin, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
-assertAccessorProperty(builtin, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
+assertUndefined(Object.getOwnPropertyDescriptor(builtin, "caller"));
+assertUndefined(Object.getOwnPropertyDescriptor(builtin, "arguments"));

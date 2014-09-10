@@ -159,13 +159,9 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 2 (not applicable) */
         /* steps 3-4 */
         f.infallibleDefineOwnProperty("length", new PropertyDescriptor(len, false, false, true));
-        /* step 5 */
-        if (strict) {
-            f.addRestrictedFunctionProperties();
-        }
-        /* steps 6-12 */
+        /* steps 5-11 */
         f.initialize(kind, strict, function, scope, script);
-        /* step 13 */
+        /* step 12 */
         return f;
     }
 
@@ -198,13 +194,9 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 2 (not applicable) */
         /* steps 3-4 */
         DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, true));
-        /* step 5 */
-        if (strict) {
-            f.addRestrictedFunctionProperties(cx);
-        }
-        /* steps 6-12 */
+        /* steps 5-11 */
         f.initialize(kind, strict, function, scope, script);
-        /* step 13 */
+        /* step 12 */
         return f;
     }
 
@@ -267,29 +259,12 @@ public class OrdinaryFunction extends FunctionObject {
      *            the realm object
      */
     public static void AddRestrictedFunctionProperties(ExecutionContext cx, Callable f, Realm realm) {
-        /* step 1 */
+        /* steps 1-2 */
         Callable thrower = realm.getThrowTypeError();
-        /* steps 2-4 */
-        AddRestrictedFunctionProperties(cx, f, thrower);
-    }
-
-    /**
-     * 9.2.8 AddRestrictedFunctionProperties ( F, realm ) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param f
-     *            the function object
-     * @param thrower
-     *            the thrower function object
-     */
-    public static void AddRestrictedFunctionProperties(ExecutionContext cx, Callable f,
-            Callable thrower) {
-        /* step 1 (not applicable) */
-        /* steps 2-3 */
+        /* steps 3-4 */
         DefinePropertyOrThrow(cx, f, "caller",
                 new PropertyDescriptor(thrower, thrower, false, true));
-        /* step 4 */
+        /* steps 5-6 */
         DefinePropertyOrThrow(cx, f, "arguments", new PropertyDescriptor(thrower, thrower, false,
                 true));
     }
@@ -404,18 +379,14 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 1 */
         assert f.isExtensible() : "function is not extensible";
         assert !f.ordinaryHasOwnProperty("name") : "function has 'name' property";
-        /* step 2 (implicit) */
-        /* step 3 (not applicable) */
-        /* step 4 */
+        /* steps 2-3 (implicit) */
+        /* step 4 (not applicable) */
+        /* step 5 */
         if (prefix != null) {
             name = prefix + " " + name;
         }
-        /* step 5 */
-        boolean success = f.infallibleDefineOwnProperty("name", new PropertyDescriptor(name, false,
-                false, true));
         /* step 6 */
-        assert success;
-        /* step 7 (return) */
+        f.infallibleDefineOwnProperty("name", new PropertyDescriptor(name, false, false, true));
     }
 
     /**
@@ -441,11 +412,19 @@ public class OrdinaryFunction extends FunctionObject {
      *            the function name prefix
      */
     public static void SetFunctionName(FunctionObject f, Symbol name, String prefix) {
-        /* step 3 */
+        /* step 1 */
+        assert f.isExtensible() : "function is not extensible";
+        assert !f.ordinaryHasOwnProperty("name") : "function has 'name' property";
+        /* steps 2-3 (implicit) */
+        /* step 4 */
         String description = name.getDescription();
         String sname = description == null ? "" : "[" + description + "]";
-        /* steps 1-2, 4-7 */
-        SetFunctionName(f, sname, prefix);
+        /* step 5 */
+        if (prefix != null) {
+            sname = prefix + " " + sname;
+        }
+        /* step 6 */
+        f.infallibleDefineOwnProperty("name", new PropertyDescriptor(sname, false, false, true));
     }
 
     /**
@@ -460,18 +439,18 @@ public class OrdinaryFunction extends FunctionObject {
      * @param prefix
      *            the function name prefix
      */
-    public static void SetFunctionName(ExecutionContext cx, ExoticBoundFunction f, String name,
+    public static void SetFunctionName(ExecutionContext cx, BoundFunctionObject f, String name,
             String prefix) {
         /* step 1 */
         assert f.isExtensible() : "function is not extensible";
         assert !f.ordinaryHasOwnProperty("name") : "function has 'name' property";
-        /* step 2 (implicit) */
-        /* step 3 (not applicable) */
-        /* step 4 */
+        /* steps 2-3 (implicit) */
+        /* step 4 (not applicable) */
+        /* step 5 */
         if (prefix != null) {
             name = prefix + " " + name;
         }
-        /* step 5 */
+        /* step 6 */
         DefinePropertyOrThrow(cx, f, "name", new PropertyDescriptor(name, false, false, true));
     }
 
@@ -503,7 +482,7 @@ public class OrdinaryFunction extends FunctionObject {
                 clone.toMethod(function.getMethodName(), newHome);
             }
         }
-        /* step 10 */
+        /* step 9 */
         return clone;
     }
 

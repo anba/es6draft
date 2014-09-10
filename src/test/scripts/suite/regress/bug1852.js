@@ -14,4 +14,4 @@ const {
 
 let fn = Function[Symbol.create]();
 Object.defineProperty(fn, "length", {value: null});
-assertThrows(() => Function.call(fn, ""), TypeError);
+assertThrows(TypeError, () => Function.call(fn, ""));

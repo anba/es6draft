@@ -13,7 +13,7 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.strictEqualityComparison;
 import static com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.CreateArrayIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -167,7 +167,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 3 */
             ScriptObject a = null;
             /* step 4 */
-            if (o instanceof ExoticArray) {
+            if (o instanceof ArrayObject) {
                 Object c = Get(cx, o, "constructor");
                 if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, 0);
@@ -229,7 +229,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 return ToBoolean(spreadable);
             }
             /* step 5 */
-            if (o instanceof ExoticArray) {
+            if (o instanceof ArrayObject) {
                 return true;
             }
             /* step 6 */
@@ -528,7 +528,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 13 */
             ScriptObject a = null;
             /* step 14 */
-            if (o instanceof ExoticArray) {
+            if (o instanceof ArrayObject) {
                 Object c = Get(cx, o, "constructor");
                 if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, count);
@@ -719,7 +719,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 12 */
             ScriptObject a = null;
             /* step 13 */
-            if (o instanceof ExoticArray) {
+            if (o instanceof ArrayObject) {
                 Object c = Get(cx, o, "constructor");
                 if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, actualDeleteCount);
@@ -1236,7 +1236,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 8 */
             ScriptObject a = null;
             /* step 9 */
-            if (o instanceof ExoticArray) {
+            if (o instanceof ArrayObject) {
                 Object c = Get(cx, o, "constructor");
                 if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, len);
@@ -1291,7 +1291,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 8 */
             ScriptObject a = null;
             /* step 9 */
-            if (o instanceof ExoticArray) {
+            if (o instanceof ArrayObject) {
                 Object c = Get(cx, o, "constructor");
                 if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, 0);
@@ -1550,13 +1550,10 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* steps 8-9 */
             for (long k = 0; k < len; ++k) {
                 long pk = k;
-                boolean kpresent = HasProperty(cx, o, pk);
-                if (kpresent) {
-                    Object kvalue = Get(cx, o, pk);
-                    Object testResult = pred.call(cx, thisArg, kvalue, k, o);
-                    if (ToBoolean(testResult)) {
-                        return kvalue;
-                    }
+                Object kvalue = Get(cx, o, pk);
+                Object testResult = pred.call(cx, thisArg, kvalue, k, o);
+                if (ToBoolean(testResult)) {
+                    return kvalue;
                 }
             }
             /* step 10 */
@@ -1619,13 +1616,10 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* steps 8-9 */
             for (long k = 0; k < len; ++k) {
                 long pk = k;
-                boolean kpresent = HasProperty(cx, o, pk);
-                if (kpresent) {
-                    Object kvalue = Get(cx, o, pk);
-                    Object testResult = pred.call(cx, thisArg, kvalue, k, o);
-                    if (ToBoolean(testResult)) {
-                        return k;
-                    }
+                Object kvalue = Get(cx, o, pk);
+                Object testResult = pred.call(cx, thisArg, kvalue, k, o);
+                if (ToBoolean(testResult)) {
+                    return k;
                 }
             }
             /* step 10 */
@@ -1696,7 +1690,8 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object unscopables(ExecutionContext cx) {
             /* step 1 */
-            OrdinaryObject blackList = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            // FIXME: spec bug - don't inherit from %ObjectPrototype%
+            OrdinaryObject blackList = ObjectCreate(cx, (ScriptObject) null);
             /* steps 2-8 */
             boolean status = true;
             status &= CreateDataProperty(cx, blackList, "copyWithin", true);

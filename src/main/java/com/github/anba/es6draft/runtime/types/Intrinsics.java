@@ -112,22 +112,6 @@ public enum Intrinsics {/* @formatter:off */
     /** Intrinsic: <tt>%URIErrorPrototype%</tt> */
     URIErrorPrototype,
 
-    // not yet (?) in spec
-    /** Intrinsic: <tt>%Symbol%</tt> */
-    Symbol,
-    /** Intrinsic: <tt>%SymbolPrototype%</tt> */
-    SymbolPrototype,
-    /** Intrinsic: <tt>%Math%</tt> */
-    Math,
-    /** Intrinsic: <tt>%JSON%</tt> */
-    JSON,
-    /** Intrinsic: <tt>%Proxy%</tt> */
-    Proxy,
-    /** Intrinsic: <tt>%Reflect%</tt> */
-    Reflect,
-    /** Intrinsic: <tt>%System%</tt> */
-    System,
-
     // binary module
     /** Intrinsic: <tt>%ArrayBuffer%</tt> */
     ArrayBuffer,
@@ -141,12 +125,6 @@ public enum Intrinsics {/* @formatter:off */
     Int8Array,
     /** Intrinsic: <tt>%Int8ArrayPrototype%</tt> */
     Int8ArrayPrototype,
-    /** Intrinsic: <tt>%DataView%</tt> */
-    DataView,
-    /** Intrinsic: <tt>%DataViewPrototype%</tt> */
-    DataViewPrototype,
-
-    // not yet (?) in spec
     /** Intrinsic: <tt>%Uint8Array%</tt> */
     Uint8Array,
     /** Intrinsic: <tt>%Uint8ArrayPrototype%</tt> */
@@ -179,6 +157,10 @@ public enum Intrinsics {/* @formatter:off */
     Float64Array,
     /** Intrinsic: <tt>%Float64ArrayPrototype%</tt> */
     Float64ArrayPrototype,
+    /** Intrinsic: <tt>%DataView%</tt> */
+    DataView,
+    /** Intrinsic: <tt>%DataViewPrototype%</tt> */
+    DataViewPrototype,
 
     // Promise Objects
     /** Intrinsic: <tt>%Promise%</tt> */
@@ -186,17 +168,33 @@ public enum Intrinsics {/* @formatter:off */
     /** Intrinsic: <tt>%PromisePrototype%</tt> */
     PromisePrototype,
 
-    // Loader, Module, Realm Objects
+    // Loader, Module
     /** Intrinsic: <tt>%Loader%</tt> */
     Loader,
     /** Intrinsic: <tt>%LoaderPrototype%</tt> */
     LoaderPrototype,
     /** Intrinsic: <tt>%LoaderIteratorPrototype%</tt> */
     LoaderIteratorPrototype,
-    /** Intrinsic: <tt>%Realm%</tt> */
-    Realm,
-    /** Intrinsic: <tt>%RealmPrototype%</tt> */
-    RealmPrototype,
+
+    // Other
+    /** Intrinsic: <tt>%Symbol%</tt> */
+    Symbol,
+    /** Intrinsic: <tt>%IteratorPrototype%</tt> */
+    IteratorPrototype,
+
+    // not yet (?) in spec
+    /** Intrinsic: <tt>%SymbolPrototype%</tt> */
+    SymbolPrototype,
+    /** Intrinsic: <tt>%Math%</tt> */
+    Math,
+    /** Intrinsic: <tt>%JSON%</tt> */
+    JSON,
+    /** Intrinsic: <tt>%Proxy%</tt> */
+    Proxy,
+    /** Intrinsic: <tt>%Reflect%</tt> */
+    Reflect,
+    /** Intrinsic: <tt>%System%</tt> */
+    System,
 
     // Internationalization API
     /** Intrinsic: <tt>%Intl%</tt> */
@@ -224,8 +222,16 @@ public enum Intrinsics {/* @formatter:off */
     /** Intrinsic: <tt>%LegacyGeneratorPrototype%</tt> */
     LegacyGeneratorPrototype,
 
+    // ES7 extension: Realm Objects
+    /** Intrinsic: <tt>%Realm%</tt> */
+    Realm,
+    /** Intrinsic: <tt>%RealmPrototype%</tt> */
+    RealmPrototype,
+
     /* @formatter:on */
     ;
+
+    // TODO: add %ReturnUndefined% intrinsic
 
     /**
      * Returns the intrinsic key.

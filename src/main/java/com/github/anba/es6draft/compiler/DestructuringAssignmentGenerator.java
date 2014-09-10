@@ -38,6 +38,10 @@ final class DestructuringAssignmentGenerator {
                 MethodType.Static, Types.AbstractOperations, "Get", Type.getMethodType(
                         Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.String));
 
+        static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "ToObject",
+                Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
+
         // class: Reference
         static final MethodDesc Reference_putValue = MethodDesc.create(MethodType.Virtual,
                 Types.Reference, "putValue",
@@ -46,11 +50,7 @@ final class DestructuringAssignmentGenerator {
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_createRestArray = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "createRestArray",
-                Type.getMethodType(Types.ExoticArray, Types.Iterator, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "ensureObject",
-                Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
+                Type.getMethodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_getIterator = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "getIterator",
@@ -84,6 +84,13 @@ final class DestructuringAssignmentGenerator {
         assert type == ValType.Reference : "lhs is not reference: " + type;
         mv.loadExecutionContext();
         mv.invoke(Methods.Reference_putValue);
+    }
+
+    private static void ToObject(Node node, ExpressionVisitor mv) {
+        mv.lineInfo(node);
+        mv.loadExecutionContext();
+        mv.swap();
+        mv.invoke(Methods.AbstractOperations_ToObject);
     }
 
     private abstract static class RuntimeSemantics<V> extends DefaultVoidNodeVisitor<V> {
@@ -231,9 +238,7 @@ final class DestructuringAssignmentGenerator {
 
             if (target instanceof AssignmentPattern) {
                 // stack: [v'] -> [v']
-                mv.lineInfo(target);
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_ensureObject);
+                ToObject(target, mv);
 
                 // stack: [v'] -> []
                 DestructuringAssignmentEvaluation((AssignmentPattern) target);
@@ -308,9 +313,7 @@ final class DestructuringAssignmentGenerator {
             // steps 4-6
             if (target instanceof AssignmentPattern) {
                 // stack: [v'] -> [v']
-                mv.lineInfo(target);
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_ensureObject);
+                ToObject(target, mv);
 
                 // stack: [v'] -> []
                 DestructuringAssignmentEvaluation((AssignmentPattern) target);

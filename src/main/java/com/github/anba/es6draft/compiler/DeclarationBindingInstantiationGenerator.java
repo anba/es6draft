@@ -198,8 +198,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void createImmutableBinding(Variable<? extends EnvironmentRecord> envRec,
-            Name name, InstructionVisitor mv) {
+    protected void createImmutableBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
+            InstructionVisitor mv) {
         mv.load(envRec);
         createImmutableBinding(name, mv);
     }
@@ -244,35 +244,43 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link EnvironmentRecord#initializeBinding(String, Object)}
      * <p>
-     * stack: [obj] {@literal ->} []
+     * stack: [envRec, name, obj] {@literal ->} []
      * 
-     * @param envRec
-     *            the variable which holds the environment record
-     * @param name
-     *            the binding name
      * @param mv
      *            the instruction visitor
      */
-    protected void initializeBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
-            InstructionVisitor mv) {
-        mv.load(envRec);
-        mv.swap();
-        initializeBinding(name, mv);
+    protected void initializeBinding(InstructionVisitor mv) {
+        mv.invoke(Methods.EnvironmentRecord_initializeBinding);
     }
 
     /**
-     * Emit function call for: {@link EnvironmentRecord#initializeBinding(String, Object)}
+     * Emit fused function call for: {@link EnvironmentRecord#getBindingValue(String, boolean)} and
+     * {@link EnvironmentRecord#initializeBinding(String, Object)}
      * <p>
-     * stack: [envRec, obj] {@literal ->} []
+     * stack: [] {@literal ->} []
      * 
+     * @param targetEnvRec
+     *            the variable which holds the target environment record
+     * @param sourceEnvRec
+     *            the variable which holds the source environment record
      * @param name
      *            the binding name
+     * @param strict
+     *            the strict-mode flag
      * @param mv
      *            the instruction visitor
      */
-    protected void initializeBinding(Name name, InstructionVisitor mv) {
+    protected void initializeBindingFrom(Variable<? extends EnvironmentRecord> targetEnvRec,
+            Variable<? extends EnvironmentRecord> sourceEnvRec, Name name, boolean strict,
+            InstructionVisitor mv) {
+        mv.load(targetEnvRec);
         mv.aconst(name.getIdentifier());
-        mv.swap();
+        {
+            mv.load(sourceEnvRec);
+            mv.aconst(name.getIdentifier());
+            mv.iconst(strict);
+            mv.invoke(Methods.EnvironmentRecord_getBindingValue);
+        }
         mv.invoke(Methods.EnvironmentRecord_initializeBinding);
     }
 
@@ -291,51 +299,12 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     protected void setMutableBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
-            boolean strict, InstructionVisitor mv) {
+            Variable<?> value, boolean strict, InstructionVisitor mv) {
         mv.load(envRec);
-        mv.swap();
-        setMutableBinding(name, strict, mv);
-    }
-
-    /**
-     * Emit function call for: {@link EnvironmentRecord#setMutableBinding(String, Object, boolean)}
-     * <p>
-     * stack: [envRec, obj] {@literal ->} []
-     * 
-     * @param name
-     *            the binding name
-     * @param strict
-     *            the strict-mode flag
-     * @param mv
-     *            the instruction visitor
-     */
-    protected void setMutableBinding(Name name, boolean strict, InstructionVisitor mv) {
         mv.aconst(name.getIdentifier());
-        mv.swap();
+        mv.load(value);
         mv.iconst(strict);
         mv.invoke(Methods.EnvironmentRecord_setMutableBinding);
-    }
-
-    /**
-     * Emit function call for: {@link EnvironmentRecord#getBindingValue(String, boolean)}
-     * <p>
-     * stack: [] {@literal ->} [obj]
-     * 
-     * @param envRec
-     *            the variable which holds the environment record
-     * @param name
-     *            the binding name
-     * @param strict
-     *            the strict-mode flag
-     * @param mv
-     *            the instruction visitor
-     */
-    protected void getBindingValue(Variable<? extends EnvironmentRecord> envRec, Name name,
-            boolean strict, InstructionVisitor mv) {
-        mv.load(envRec);
-        mv.aconst(name.getIdentifier());
-        mv.iconst(strict);
-        mv.invoke(Methods.EnvironmentRecord_getBindingValue);
     }
 
     /**

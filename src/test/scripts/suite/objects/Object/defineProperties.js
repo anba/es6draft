@@ -48,15 +48,15 @@ assertBuiltinFunction(Object.defineProperties, "defineProperties", 2);
 // Symbol valued property keys (2)
 {
   let key = Symbol();
-  assertThrows(() => Object.defineProperties({}, {
+  assertThrows(TypeError, () => Object.defineProperties({}, {
     [key]: {value: 1, get(){}}
-  }), TypeError);
-  assertThrows(() => Object.defineProperties({}, {
+  }));
+  assertThrows(TypeError, () => Object.defineProperties({}, {
     [key]: {value: 1, set(){}}
-  }), TypeError);
-  assertThrows(() => Object.defineProperties({}, {
+  }));
+  assertThrows(TypeError, () => Object.defineProperties({}, {
     [key]: {value: 1, get(){}, set(){}}
-  }), TypeError);
+  }));
 }
 
 // Intermediate exceptions during install do not stop property traversal, first exception is reported (1)
@@ -70,7 +70,7 @@ assertBuiltinFunction(Object.defineProperties, "defineProperties", 2);
     ownKeys: () => ["a", "a", "a"]
   });
   let o = {};
-  assertThrows(() => Object.defineProperties(o, props), TypeError);
+  assertThrows(TypeError, () => Object.defineProperties(o, props));
   assertSame(3, value);
   assertDataProperty(o, "a", {value: 0, writable: false, enumerable: false, configurable: false});
 }
@@ -85,7 +85,7 @@ assertBuiltinFunction(Object.defineProperties, "defineProperties", 2);
   }, {
     ownKeys: () => ["a", "b"]
   });
-  assertThrows(() => Object.defineProperties(o, props), TypeError);
+  assertThrows(TypeError, () => Object.defineProperties(o, props));
   assertDataProperty(o, "a", {value: 0, writable: false, enumerable: true, configurable: false});
   assertDataProperty(o, "b", {value: 1, writable: false, enumerable: false, configurable: false});
 }
@@ -98,7 +98,7 @@ assertBuiltinFunction(Object.defineProperties, "defineProperties", 2);
     get a() { value++; throw new MyError },
     get b() { value++; throw new MyError },
   };
-  assertThrows(() => Object.defineProperties({}, props), MyError);
+  assertThrows(MyError, () => Object.defineProperties({}, props));
   assertSame(1, value);
 }
 
@@ -109,6 +109,6 @@ assertBuiltinFunction(Object.defineProperties, "defineProperties", 2);
     get a() { value++; return {value: void 0, get: void 0} },
     get b() { value++; return {value: void 0, get: void 0} },
   };
-  assertThrows(() => Object.defineProperties({}, props), TypeError);
+  assertThrows(TypeError, () => Object.defineProperties({}, props));
   assertSame(1, value);
 }

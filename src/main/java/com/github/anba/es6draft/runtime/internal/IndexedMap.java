@@ -762,7 +762,7 @@ public final class IndexedMap<VALUE> {
      * @return the integer index or {@code -1}
      */
     public static long toIndex(String propertyKey) {
-        return Strings.toLargeIndex(propertyKey);
+        return Strings.toIndex(propertyKey);
     }
 
     /**

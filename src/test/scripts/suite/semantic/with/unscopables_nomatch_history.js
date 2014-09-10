@@ -69,7 +69,6 @@ loadRelativeToScript("helper_history.js");
     ...HasBindingSuccess(lookup, "property"),
     ...BindingNotIntercepted(lookup, lookupBlackList, "property"),
     ...GetBindingValueSuccess(lookup, "property"),
-    ...BindingNotIntercepted(lookup, lookupBlackList, "property"),
     ...GetValue(lookup, "property", void 0),
   ], history);
   assertSame(1, getterCalled);
@@ -94,12 +93,10 @@ loadRelativeToScript("helper_history.js");
     ...HasBindingSuccess(lookup, "property"),
     ...BindingNotIntercepted(lookup, lookupBlackList, "property"),
     ...GetBindingValueSuccess(lookup, "property"),
-    ...BindingNotIntercepted(lookup, lookupBlackList, "property"),
     ...GetValue(lookup, "property", void 0),
     ...HasBindingSuccess(lookup, "property"),
     ...BindingNotIntercepted(lookup, lookupBlackList, "property"),
     ...GetBindingValueSuccess(lookup, "property"),
-    ...BindingNotIntercepted(lookup, lookupBlackList, "property"),
     ...GetValue(lookup, "property", void 0),
   ], history);
   assertSame(2, getterCalled);

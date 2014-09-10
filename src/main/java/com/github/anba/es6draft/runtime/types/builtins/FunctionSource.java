@@ -57,13 +57,11 @@ final class FunctionSource {
             // ArrowFunction, GeneratorComprehension, AsyncArrowFunction
             if (generator) {
                 // Display generator comprehension as generator function.
-                source.append("function* ").append(name).append(parameters);
-            } else {
-                if (async) {
-                    source.append("async ");
-                }
-                source.append(parameters);
+                source.append("function* ").append(name);
+            } else if (async) {
+                source.append("async ");
             }
+            source.append(parameters);
         } else if (RuntimeInfo.FunctionFlags.Declaration.isSet(flags)) {
             // FunctionDeclaration, (Legacy)GeneratorDeclaration, AsyncFunctionDeclaration
             if (async) {

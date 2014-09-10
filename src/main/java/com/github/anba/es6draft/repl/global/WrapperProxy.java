@@ -11,13 +11,13 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListIter
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptArray;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static java.util.Collections.emptyIterator;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -30,7 +30,6 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
 /**
  * Wrapper-Proxy for shell tests
@@ -531,7 +530,7 @@ class WrapperProxy implements ScriptObject {
         private final ScriptObject proxyTarget;
         private final Iterator<?> targetKeys;
         private final Iterator<?> protoKeys;
-        private HashSet<Object> visitedKeys = new HashSet<>();
+        private final HashSet<Object> visitedKeys = new HashSet<>();
 
         AppendIterator(ExecutionContext cx, ScriptObject proxyTarget, ScriptObject proto) {
             this.cx = cx;
@@ -566,7 +565,7 @@ class WrapperProxy implements ScriptObject {
      * [[OwnPropertyKeys]] ()
      */
     @Override
-    public ExoticArray ownPropertyKeys(ExecutionContext cx) {
+    public List<?> ownPropertyKeys(ExecutionContext cx) {
         return proxyTarget.ownPropertyKeys(cx);
     }
 
@@ -575,6 +574,6 @@ class WrapperProxy implements ScriptObject {
      */
     @Override
     public Iterator<?> ownKeys(ExecutionContext cx) {
-        return FromScriptArray(cx, ownPropertyKeys(cx));
+        return proxyTarget.ownKeys(cx);
     }
 }

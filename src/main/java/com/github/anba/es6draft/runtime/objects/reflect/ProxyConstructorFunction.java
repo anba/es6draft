@@ -10,7 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProp
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticProxy.ProxyCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ProxyObject.ProxyCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -25,8 +25,8 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.github.anba.es6draft.runtime.types.builtins.ProxyObject;
 
 /**
  * <h1>26 Reflection</h1><br>
@@ -49,7 +49,6 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 
@@ -62,7 +61,7 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
      * 26.5.1.1 Proxy (target, handler)
      */
     @Override
-    public ExoticProxy call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public ProxyObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         throw newTypeError(calleeContext(), Messages.Key.ProxyNew);
     }
 
@@ -70,7 +69,7 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
      * 26.5.1.2 new Proxy ( target, handler )
      */
     @Override
-    public ExoticProxy construct(ExecutionContext callerContext, Object... args) {
+    public ProxyObject construct(ExecutionContext callerContext, Object... args) {
         Object target = argument(args, 0);
         Object handler = argument(args, 1);
         /* step 1 */
@@ -111,7 +110,7 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
         public static Object revocable(ExecutionContext cx, Object thisValue, Object target,
                 Object handler) {
             /* steps 1-2 */
-            ExoticProxy p = ProxyCreate(cx, target, handler);
+            ProxyObject p = ProxyCreate(cx, target, handler);
             /* steps 3-4 */
             ProxyRevocationFunction revoker = new ProxyRevocationFunction(cx.getRealm(), p);
             /* step 5 */
@@ -130,14 +129,14 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
      */
     private static final class ProxyRevocationFunction extends BuiltinFunction {
         /** [[RevokableProxy]] */
-        private Ref<ExoticProxy> revokableProxy;
+        private Ref<ProxyObject> revokableProxy;
 
-        public ProxyRevocationFunction(Realm realm, ExoticProxy revokableProxy) {
+        public ProxyRevocationFunction(Realm realm, ProxyObject revokableProxy) {
             this(realm, new Ref<>(revokableProxy));
             createDefaultFunctionProperties(ANONYMOUS, 0);
         }
 
-        private ProxyRevocationFunction(Realm realm, Ref<ExoticProxy> revokableProxy) {
+        private ProxyRevocationFunction(Realm realm, Ref<ProxyObject> revokableProxy) {
             super(realm, ANONYMOUS);
             this.revokableProxy = revokableProxy;
         }
@@ -150,7 +149,7 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
         @Override
         public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             /* step 1 */
-            Ref<ExoticProxy> p = revokableProxy;
+            Ref<ProxyObject> p = revokableProxy;
             /* step 2 */
             if (p == null || p.get() == null) {
                 return UNDEFINED;

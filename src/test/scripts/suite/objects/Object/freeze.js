@@ -101,7 +101,7 @@ assertBuiltinFunction(Object.freeze, "freeze", 1);
     },
     ownKeys: () => ["a", "b"]
   });
-  assertThrows(() => Object.freeze(o), MyError);
+  assertThrows(MyError, () => Object.freeze(o));
   assertSame(2, count);
   assertDataProperty(o, "a", {value: 1, writable: true, enumerable: true, configurable: true});
   assertDataProperty(o, "b", {value: 2, writable: false, enumerable: true, configurable: false});
@@ -129,7 +129,7 @@ assertBuiltinFunction(Object.freeze, "freeze", 1);
     },
     ownKeys: () => ["a", "b"]
   });
-  assertThrows(() => Object.freeze(o), MyError);
+  assertThrows(MyError, () => Object.freeze(o));
   assertSame(1, count);
   assertDataProperty(o, "a", {value: 1, writable: true, enumerable: true, configurable: true});
   assertDataProperty(o, "b", {value: 2, writable: false, enumerable: true, configurable: false});
@@ -151,7 +151,7 @@ assertBuiltinFunction(Object.freeze, "freeze", 1);
     },
     ownKeys: () => { throw new MyError }
   });
-  assertThrows(() => Object.freeze(o), MyError);
+  assertThrows(MyError, () => Object.freeze(o));
   assertSame(0, count);
   assertDataProperty(o, "a", {value: 1, writable: true, enumerable: true, configurable: true});
   assertDataProperty(o, "b", {value: 2, writable: true, enumerable: true, configurable: true});

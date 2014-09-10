@@ -11,7 +11,7 @@ const {
 
 // stub for Assert.assertSyntaxError
 function assertSyntaxError(source) {
-  return assertThrows(() => parseModule(source), SyntaxError);
+  return assertThrows(SyntaxError, () => parseModule(source));
 }
 
 function assertNoSyntaxError(source) {

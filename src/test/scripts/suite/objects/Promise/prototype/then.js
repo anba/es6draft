@@ -17,7 +17,7 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
 // .then() called with value where IsPromise(value) = false, value is not a Promise Object
 {
   for (let value of [void 0, null, 0, true, "", {}, [], () => {}]) {
-    assertThrows(() => Promise.prototype.then.call(value), TypeError);
+    assertThrows(TypeError, () => Promise.prototype.then.call(value));
   }
 }
 
@@ -29,16 +29,16 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
   let onRejected = () => {};
 
   // Test with and without arguments
-  assertThrows(() => uninitPromise.then(), TypeError);
-  assertThrows(() => uninitPromise.then(onFulfilled, onRejected), TypeError);
-  assertThrows(() => uninitPromise.then(0, 0), TypeError);
+  assertThrows(TypeError, () => uninitPromise.then());
+  assertThrows(TypeError, () => uninitPromise.then(onFulfilled, onRejected));
+  assertThrows(TypeError, () => uninitPromise.then(0, 0));
 
   // Test .constructor property is not accessed before IsPromise() check
   class ConstructorAccessed extends Error {}
   let uninitPromiseWithConstructor = Object.defineProperty(Promise[Symbol.create](), "constructor", {
     get() { throw new ConstructorAccessed }, configurable: true
   });
-  assertThrows(() => uninitPromiseWithConstructor.then(), TypeError);
+  assertThrows(TypeError, () => uninitPromiseWithConstructor.then());
 }
 
 // Accesses .constructor property
@@ -47,14 +47,14 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
   let promiseWithConstructor = Object.defineProperty(new Promise(() => {}), "constructor", {
     get() { throw new ConstructorAccessed }, configurable: true
   });
-  assertThrows(() => promiseWithConstructor.then(), ConstructorAccessed);
+  assertThrows(ConstructorAccessed, () => promiseWithConstructor.then());
 }
 
 // .constructor property is not a Constructor object
 {
   for (let constructor of [null, void 0, 0, "", () => {}, {}, []]) {
     let promise = Object.assign(new Promise(() => {}), {constructor});
-    assertThrows(() => promise.then(), TypeError);
+    assertThrows(TypeError, () => promise.then());
   }
 }
 
@@ -66,7 +66,7 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
     return {};
   }
   promise.constructor = Constructor;
-  assertThrows(() => promise.then(), TypeError);
+  assertThrows(TypeError, () => promise.then());
 }
 
 // Throws TypeError if executor is called multiple times (1)
@@ -75,7 +75,7 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
   function Constructor(executor) {
     // call executor() twice, second call triggers TypeError
     executor(() => {}, () => {});
-    assertThrows(() => executor(() => {}, () => {}), TypeError);
+    assertThrows(TypeError, () => executor(() => {}, () => {}));
     return this;
   }
   promise.constructor = Constructor;
@@ -88,11 +88,11 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
   function Constructor(executor) {
     // call executor() twice, second call triggers TypeError
     executor(null, null);
-    assertThrows(() => executor(() => {}, () => {}), TypeError);
+    assertThrows(TypeError, () => executor(() => {}, () => {}));
     return this;
   }
   promise.constructor = Constructor;
-  assertThrows(() => promise.then(), TypeError);
+  assertThrows(TypeError, () => promise.then());
 }
 
 // Throws TypeError if executor is called multiple times (3)

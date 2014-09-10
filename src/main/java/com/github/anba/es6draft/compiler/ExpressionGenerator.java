@@ -37,9 +37,10 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.runtime.internal.Bootstrap;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.NativeCalls;
 import com.github.anba.es6draft.runtime.objects.Eval.EvalFlags;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 
 /**
  *
@@ -79,18 +80,18 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 MethodType.Virtual, Types.ExecutionContext, "resolveThisBinding",
                 Type.getMethodType(Types.Object));
 
-        // class: ExoticArray
-        static final MethodDesc ExoticArray_ArrayCreate = MethodDesc.create(MethodType.Static,
-                Types.ExoticArray, "ArrayCreate",
-                Type.getMethodType(Types.ExoticArray, Types.ExecutionContext, Type.LONG_TYPE));
+        // class: ArrayObject
+        static final MethodDesc ArrayObject_ArrayCreate = MethodDesc.create(MethodType.Static,
+                Types.ArrayObject, "ArrayCreate",
+                Type.getMethodType(Types.ArrayObject, Types.ExecutionContext, Type.LONG_TYPE));
 
-        static final MethodDesc ExoticArray_DenseArrayCreate = MethodDesc.create(MethodType.Static,
-                Types.ExoticArray, "DenseArrayCreate",
-                Type.getMethodType(Types.ExoticArray, Types.ExecutionContext, Types.Object_));
+        static final MethodDesc ArrayObject_DenseArrayCreate = MethodDesc.create(MethodType.Static,
+                Types.ArrayObject, "DenseArrayCreate",
+                Type.getMethodType(Types.ArrayObject, Types.ExecutionContext, Types.Object_));
 
-        static final MethodDesc ExoticArray_SparseArrayCreate = MethodDesc.create(
-                MethodType.Static, Types.ExoticArray, "SparseArrayCreate",
-                Type.getMethodType(Types.ExoticArray, Types.ExecutionContext, Types.Object_));
+        static final MethodDesc ArrayObject_SparseArrayCreate = MethodDesc.create(
+                MethodType.Static, Types.ArrayObject, "SparseArrayCreate",
+                Type.getMethodType(Types.ArrayObject, Types.ExecutionContext, Types.Object_));
 
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
@@ -154,7 +155,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         static final MethodDesc ScriptRuntime_ArrayAccumulationSpreadElement = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "ArrayAccumulationSpreadElement", Type
-                        .getMethodType(Type.INT_TYPE, Types.ExoticArray, Type.INT_TYPE,
+                        .getMethodType(Type.INT_TYPE, Types.ArrayObject, Type.INT_TYPE,
                                 Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_CheckCallable = MethodDesc.create(MethodType.Static,
@@ -163,7 +164,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         static final MethodDesc ScriptRuntime_defineProperty__int = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "defineProperty", Type.getMethodType(
-                        Type.VOID_TYPE, Types.ExoticArray, Type.INT_TYPE, Types.Object,
+                        Type.VOID_TYPE, Types.ArrayObject, Type.INT_TYPE, Types.Object,
                         Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_directEvalFallbackArguments = MethodDesc.create(
@@ -178,10 +179,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         static final MethodDesc ScriptRuntime_directEvalFallbackHook = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "directEvalFallbackHook",
                 Type.getMethodType(Types.Callable, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "ensureObject",
-                Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateArrowFunction = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateArrowFunction", Type
@@ -774,23 +771,25 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.goTo(afterCall);
         mv.mark(notEval);
 
-        // direct-eval fallback hook
-        Label noEvalHook = new Label();
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_directEvalFallbackHook);
-        mv.ifnull(noEvalHook);
-        {
-            // stack: [args, thisValue, func(Callable)] -> [args']
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_directEvalFallbackArguments);
-            // stack: [args'] -> [args', thisValue']
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_directEvalFallbackThisArgument);
-            // stack: [args', thisValue'] -> [args', thisValue', fallback(Callable)]
+        if (codegen.isEnabled(CompatibilityOption.Realm)) {
+            // direct-eval fallback hook
+            Label noEvalHook = new Label();
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_directEvalFallbackHook);
+            mv.ifnull(noEvalHook);
+            {
+                // stack: [args, thisValue, func(Callable)] -> [args']
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_directEvalFallbackArguments);
+                // stack: [args'] -> [args', thisValue']
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_directEvalFallbackThisArgument);
+                // stack: [args', thisValue'] -> [args', thisValue', fallback(Callable)]
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_directEvalFallbackHook);
+            }
+            mv.mark(noEvalHook);
         }
-        mv.mark(noEvalHook);
     }
 
     /**
@@ -905,9 +904,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                     nextIndex += 1;
                 }
                 if (elision == 0) {
-                    mv.invoke(Methods.ExoticArray_DenseArrayCreate);
+                    mv.invoke(Methods.ArrayObject_DenseArrayCreate);
                 } else {
-                    mv.invoke(Methods.ExoticArray_SparseArrayCreate);
+                    mv.invoke(Methods.ArrayObject_SparseArrayCreate);
                 }
                 return ValType.Object;
             }
@@ -917,7 +916,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             int length = node.getElements().size();
             mv.loadExecutionContext();
             mv.lconst(length); // initialize with correct "length"
-            mv.invoke(Methods.ExoticArray_ArrayCreate);
+            mv.invoke(Methods.ArrayObject_ArrayCreate);
 
             int nextIndex = 0;
             for (Expression element : node.getElements()) {
@@ -937,7 +936,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         } else {
             mv.loadExecutionContext();
             mv.lconst(0);
-            mv.invoke(Methods.ExoticArray_ArrayCreate);
+            mv.invoke(Methods.ArrayObject_ArrayCreate);
 
             // stack: [array, nextIndex]
             mv.iconst(0); // nextIndex
@@ -971,7 +970,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     @Override
     public ValType visit(SpreadArrayLiteral node, ExpressionVisitor mv) {
         // stack: [] -> [array, nextIndex]
-        mv.loadParameter(1, ExoticArray.class);
+        mv.loadParameter(1, ArrayObject.class);
         mv.loadParameter(2, int.class);
 
         arrayLiteralWithSpread(node, mv);
@@ -1097,14 +1096,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             if (left instanceof AssignmentPattern) {
                 ValType rtype = evalAndGetValue(right, mv);
 
-                if (rtype != ValType.Object) {
-                    mv.toBoxed(rtype);
-                    mv.lineInfo(left);
-                    mv.loadExecutionContext();
-                    mv.invoke(Methods.ScriptRuntime_ensureObject);
-                }
-
+                ToObject(left, rtype, mv);
                 mv.dup();
+
                 DestructuringAssignment((AssignmentPattern) left, mv);
 
                 return ValType.Object;
@@ -1434,7 +1428,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             }
             case ASSIGN:
             default:
-                throw new IllegalStateException(Objects.toString(node.getOperator(), "<null>"));
+                throw new AssertionError(Objects.toString(node.getOperator(), "<null>"));
             }
         }
     }
@@ -1881,7 +1875,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             return ValType.Any;
         }
         default:
-            throw new IllegalStateException(Objects.toString(node.getOperator(), "<null>"));
+            throw new AssertionError(Objects.toString(node.getOperator(), "<null>"));
         }
     }
 
@@ -2216,7 +2210,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 if (initializer != null) {
                     ValType type = expressionBoxedValue(initializer, mv);
                     if (binding.getBinding() instanceof BindingPattern) {
-                        ToObject(type, mv);
+                        ToObject(binding.getBinding(), type, mv);
                     }
                 } else {
                     assert binding.getBinding() instanceof BindingIdentifier;
@@ -2414,7 +2408,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             return ValType.Reference;
         }
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -2458,7 +2452,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             return GetValue(node, ValType.Reference, mv);
         }
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 
@@ -2679,7 +2673,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             return ValType.Boolean;
         }
         default:
-            throw new IllegalStateException(Objects.toString(node.getOperator(), "<null>"));
+            throw new AssertionError(Objects.toString(node.getOperator(), "<null>"));
         }
     }
 

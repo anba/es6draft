@@ -17,8 +17,8 @@ const {
   class Fn extends Function { constructor() { } }
 
   let fn = new Fn();
-  assertThrows(() => fn(), TypeError);
-  assertThrows(() => new fn, TypeError);
+  assertThrows(TypeError, () => fn());
+  assertThrows(TypeError, () => new fn);
 }
 
 // function object without [[Code]] throws TypeError
@@ -35,6 +35,6 @@ const {
   let fn = new Fn();
   assertFalse(createCalled);
   assertConstructor(fn);
-  assertThrows(() => new fn, TypeError);
+  assertThrows(TypeError, () => new fn);
   assertFalse(createCalled);
 }

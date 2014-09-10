@@ -12,5 +12,5 @@ const {
 // 15.4.3.4: Missing ReturnIfAbrupt step after ToObject in step 1
 // https://bugs.ecmascript.org/show_bug.cgi?id=1656
 
-assertThrows(() => Array.prototype.concat.call(void 0), TypeError);
-assertThrows(() => Array.prototype.concat.call(null), TypeError);
+assertThrows(TypeError, () => Array.prototype.concat.call(void 0));
+assertThrows(TypeError, () => Array.prototype.concat.call(null));

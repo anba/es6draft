@@ -29,6 +29,8 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.types.Undefined;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
  * <h1>18 The Global Object</h1><br>
@@ -112,15 +114,11 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         getEnvironmentRecord(lexEnv, mv);
         mv.store(lexEnvRec);
 
-        // Lexical declarations are always placed into new lexical environment, see Eval#eval()
-        // // begin-modification
-        // for (String name : LexicallyDeclaredNames(evalScript)) {
-        // mv.load(context);
-        // mv.load(lexEnvRec);
-        // mv.aconst(name);
-        // mv.invoke(Methods.ScriptRuntime_bindingNotPresentOrThrow);
-        // }
-        // // end-modification
+        Variable<Undefined> undef = mv.newVariable("undef", Undefined.class);
+        mv.loadUndefined();
+        mv.store(undef);
+
+        Variable<FunctionObject> fo = mv.newVariable("fo", FunctionObject.class);
 
         /* steps 1-2 (not applicable) */
         /* step 3 */
@@ -133,18 +131,19 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                 Declaration f = (Declaration) item;
                 Name fn = BoundName(f);
 
-                // stack: [] -> [fo]
+                // stack: [] -> []
                 InstantiateFunctionObject(context, lexEnv, f, mv);
+                mv.store(fo);
 
                 hasBinding(envRec, fn, mv);
 
                 Label funcAlreadyDeclared = new Label(), after = new Label();
                 mv.ifne(funcAlreadyDeclared);
                 createMutableBinding(envRec, fn, deletableBindings, mv);
-                initializeBinding(envRec, fn, mv);
+                initializeBinding(envRec, fn, fo, mv);
                 mv.goTo(after);
                 mv.mark(funcAlreadyDeclared);
-                setMutableBinding(envRec, fn, strict, mv);
+                setMutableBinding(envRec, fn, fo, strict, mv);
                 mv.mark(after);
             }
         }
@@ -158,15 +157,12 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                     Label varAlreadyDeclared = new Label();
                     mv.ifne(varAlreadyDeclared);
                     createMutableBinding(envRec, dn, deletableBindings, mv);
-                    mv.loadUndefined();
-                    // setMutableBinding(envRec, dn, strict, mv);
-                    initializeBinding(envRec, dn, mv);
+                    initializeBinding(envRec, dn, undef, mv);
                     mv.mark(varAlreadyDeclared);
                 }
             }
         }
 
-        // begin-modification
         for (Declaration d : LexicallyScopedDeclarations(evalScript)) {
             assert !isFunctionDeclaration(d);
             for (Name dn : BoundNames(d)) {
@@ -177,7 +173,6 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                 }
             }
         }
-        // end-modification
 
         mv.areturn();
     }

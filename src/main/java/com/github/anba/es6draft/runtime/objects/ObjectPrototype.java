@@ -25,7 +25,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtensi
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.date.DateObject;
 import com.github.anba.es6draft.runtime.objects.number.NumberObject;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
@@ -36,11 +35,11 @@ import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticLegacyArguments;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
+import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
+import com.github.anba.es6draft.runtime.types.builtins.LegacyArgumentsObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.github.anba.es6draft.runtime.types.builtins.StringObject;
 
 /**
  * <h1>19 Fundamental Objects</h1><br>
@@ -102,11 +101,11 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 4-13 */
             String builtinTag;
-            if (o instanceof ExoticArray) {
+            if (o instanceof ArrayObject) {
                 builtinTag = "Array";
-            } else if (o instanceof ExoticString) {
+            } else if (o instanceof StringObject) {
                 builtinTag = "String";
-            } else if (o instanceof ExoticArguments || o instanceof ExoticLegacyArguments) {
+            } else if (o instanceof ArgumentsObject || o instanceof LegacyArgumentsObject) {
                 builtinTag = "Arguments";
             } else if (o instanceof Callable) {
                 builtinTag = "Function";
@@ -124,26 +123,21 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
                 builtinTag = "Object";
             }
             /* steps 14-15 */
-            boolean hasTag = HasProperty(cx, o, BuiltinSymbol.toStringTag.get());
+            Object ttag = Get(cx, o, BuiltinSymbol.toStringTag.get());
             /* steps 16-17 */
             String tag;
-            if (!hasTag) {
+            if (Type.isUndefined(ttag)) {
                 /* step 16 */
                 tag = builtinTag;
             } else {
                 /* step 17 */
-                try {
-                    Object ttag = Get(cx, o, BuiltinSymbol.toStringTag.get());
-                    if (Type.isString(ttag)) {
-                        tag = Type.stringValue(ttag).toString();
-                    } else {
-                        tag = "???";
-                    }
-                } catch (ScriptException e) {
+                if (!Type.isString(ttag)) {
                     tag = "???";
-                }
-                if (censoredNames.contains(tag) && !builtinTag.equals(tag)) {
-                    tag = "~" + tag;
+                } else {
+                    tag = Type.stringValue(ttag).toString();
+                    if (censoredNames.contains(tag) && !builtinTag.equals(tag)) {
+                        tag = "~" + tag;
+                    }
                 }
             }
             /* step 18 */
@@ -315,7 +309,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
         @Accessor(name = "__proto__", type = Accessor.Type.Setter)
         public static Object setPrototype(ExecutionContext cx, Object thisValue, Object proto) {
             /* steps 1-2 */
-            Object o = CheckObjectCoercible(cx, thisValue);
+            Object o = RequireObjectCoercible(cx, thisValue);
             /* step 3 */
             if (!Type.isObjectOrNull(proto)) {
                 return UNDEFINED;

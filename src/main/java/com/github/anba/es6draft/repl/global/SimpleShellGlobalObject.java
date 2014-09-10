@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.repl.global;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.NeuterArrayBuffer;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.DetachArrayBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 /**
  *
  */
-public final class SimpleShellGlobalObject extends ShellGlobalObject {
+public class SimpleShellGlobalObject extends ShellGlobalObject {
     public SimpleShellGlobalObject(Realm realm, ShellConsole console, Path baseDir, Path script,
             ScriptCache scriptCache) {
         super(realm, console, baseDir, script, scriptCache);
@@ -216,18 +216,18 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
     }
 
     /**
-     * shell-function: {@code neuterArrayBuffer(arrayBuffer)}
+     * shell-function: {@code detachArrayBuffer(arrayBuffer)}
      * 
      * @param cx
      *            the execution context
      * @param arrayBuffer
      *            the array buffer object
      */
-    @Function(name = "neuterArrayBuffer", arity = 1)
-    public void neuterArrayBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer) {
-        // initialized and not already neutered
+    @Function(name = "detachArrayBuffer", arity = 1)
+    public void detachArrayBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer) {
+        // initialized and not already detached
         if (arrayBuffer.getData() != null) {
-            NeuterArrayBuffer(cx, arrayBuffer);
+            DetachArrayBuffer(cx, arrayBuffer);
         }
     }
 

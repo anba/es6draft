@@ -10,7 +10,8 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
+import static com.github.anba.es6draft.runtime.objects.SymbolPrototype.SymbolDescriptiveString;
+import static com.github.anba.es6draft.runtime.types.builtins.StringObject.StringCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -24,8 +25,9 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
+import com.github.anba.es6draft.runtime.types.builtins.StringObject;
 
 /**
  * <h1>21 Text Processing</h1><br>
@@ -48,7 +50,6 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 
@@ -64,23 +65,40 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* step 1 (omitted) */
-        /* steps 2-4 */
-        CharSequence s = args.length > 0 ? ToString(calleeContext, args[0]) : "";
-        /* step 5 */
-        if (thisValue instanceof ExoticString) {
-            ExoticString obj = (ExoticString) thisValue;
-            if (obj.getStringData() == null) {
-                if (!IsExtensible(calleeContext, obj)) {
-                    throw newTypeError(calleeContext, Messages.Key.NotExtensible);
-                }
-                int length = s.length();
-                DefinePropertyOrThrow(calleeContext, obj, "length", new PropertyDescriptor(length,
-                        false, false, false));
-                obj.setStringData(s);
-                return obj;
+        /* steps 2-3 */
+        boolean initializing = thisValue instanceof StringObject
+                && ((StringObject) thisValue).getStringData() == null;
+        /* steps 4-5 */
+        CharSequence s;
+        if (args.length == 0) {
+            /* step 4 */
+            s = "";
+        } else {
+            /* step 5 */
+            Object value = args[0];
+            if (!initializing && Type.isSymbol(value)) {
+                return SymbolDescriptiveString(Type.symbolValue(value));
             }
+            s = ToString(calleeContext, value);
         }
-        /* step 6 */
+        /* step 6 (not applicable) */
+        /* step 7 */
+        if (initializing) {
+            StringObject obj = (StringObject) thisValue;
+            if (obj.getStringData() != null) {
+                // FIXME: spec bug - missing init'ed check (bug 3189)
+                throw newTypeError(calleeContext, Messages.Key.InitializedObject);
+            }
+            if (!IsExtensible(calleeContext, obj)) {
+                throw newTypeError(calleeContext, Messages.Key.NotExtensible);
+            }
+            int length = s.length();
+            DefinePropertyOrThrow(calleeContext, obj, "length", new PropertyDescriptor(length,
+                    false, false, false));
+            obj.setStringData(s);
+            return obj;
+        }
+        /* step 8 */
         return s;
     }
 

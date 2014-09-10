@@ -6,15 +6,16 @@
  */
 package com.github.anba.es6draft.runtime.objects.reflect;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataPropertyOrThrow;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListFromArrayLike;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.Realm.SetDefaultGlobalBindings;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareForTailCall;
 import static com.github.anba.es6draft.runtime.objects.reflect.RealmConstructor.IndirectEval;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
-
-import java.util.Iterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -36,9 +37,9 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>26 Reflection</h1><br>
- * <h2>26.2 Realm Objects</h2>
+ * <h2>26.? Realm Objects</h2>
  * <ul>
- * <li>26.2.3 Properties of the Reflect.Realm Prototype Object
+ * <li>26.?.3 Properties of the Reflect.Realm Prototype Object
  * </ul>
  */
 public final class RealmPrototype extends OrdinaryObject implements Initializable {
@@ -58,7 +59,7 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
     }
 
     /**
-     * 26.2.3 Properties of the Reflect.Realm Prototype Object
+     * 26.?.3 Properties of the Reflect.Realm Prototype Object
      */
     public enum Properties {
         ;
@@ -100,13 +101,13 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 26.2.3.1 Reflect.Realm.prototype.constructor
+         * 26.?.3.1 Reflect.Realm.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Realm;
 
         /**
-         * 26.2.3.2 Reflect.Realm.prototype.eval (source)
+         * 26.?.3.2 Reflect.Realm.prototype.eval (source)
          * 
          * @param cx
          *            the execution context
@@ -128,7 +129,7 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         }
 
         /**
-         * 26.2.3.3 get Reflect.Realm.prototype.global
+         * 26.?.3.3 get Reflect.Realm.prototype.global
          * 
          * @param cx
          *            the execution context
@@ -145,7 +146,7 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         }
 
         /**
-         * 26.2.3.4 get Reflect.Realm.prototype.intrinsics
+         * 26.?.3.4 get Reflect.Realm.prototype.intrinsics
          * 
          * @param cx
          *            the execution context
@@ -172,7 +173,7 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         }
 
         /**
-         * 26.2.3.5 get Reflect.Realm.prototype.stdlib
+         * 26.?.3.5 get Reflect.Realm.prototype.stdlib
          * 
          * @param cx
          *            the execution context
@@ -189,8 +190,7 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             /* step 6 */
             // FIXME: spec bug - props not applicable for Object.defineProperties
             GlobalObject globalObject = realm.getGlobalObject();
-            for (Iterator<?> keys = globalObject.ownKeys(cx); keys.hasNext();) {
-                Object key = ToPropertyKey(cx, keys.next());
+            for (Object key : globalObject.ownPropertyKeys(cx)) {
                 if (key instanceof String) {
                     String propertyKey = (String) key;
                     Property prop = globalObject.getOwnProperty(cx, propertyKey);
@@ -212,16 +212,16 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         }
 
         /**
-         * 26.2.3.6 Reflect.Realm.prototype [ @@toStringTag ]
+         * 26.?.3.6 Reflect.Realm.prototype [ @@toStringTag ]
          */
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "Reflect.Realm";
 
         /**
-         * 26.2.3.7 Realm Subclass Extension Properties
+         * 26.?.3.7 Realm Subclass Extension Properties
          * <p>
-         * 26.2.3.7.1 Reflect.Realm.prototype.directEval ( source )
+         * 26.?.3.7.1 Reflect.Realm.prototype.directEval ( source )
          * 
          * @param cx
          *            the execution context
@@ -238,9 +238,9 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         }
 
         /**
-         * 26.2.3.7 Realm Subclass Extension Properties
+         * 26.?.3.7 Realm Subclass Extension Properties
          * <p>
-         * 26.2.3.7.2 Reflect.Realm.prototype.indirectEval ( source )
+         * 26.?.3.7.2 Reflect.Realm.prototype.indirectEval ( source )
          * 
          * @param cx
          *            the execution context
@@ -262,9 +262,9 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         }
 
         /**
-         * 26.2.3.7 Realm Subclass Extension Properties
+         * 26.?.3.7 Realm Subclass Extension Properties
          * <p>
-         * 26.2.3.7.3 Reflect.Realm.prototype.initGlobal ( )
+         * 26.?.3.7.3 Reflect.Realm.prototype.initGlobal ( )
          * 
          * @param cx
          *            the execution context
@@ -281,9 +281,9 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         }
 
         /**
-         * 26.2.3.7 Realm Subclass Extension Properties
+         * 26.?.3.7 Realm Subclass Extension Properties
          * <p>
-         * 26.2.3.7.4 Reflect.Realm.prototype.nonEval (function, thisValue, argumentsList )
+         * 26.?.3.7.4 Reflect.Realm.prototype.nonEval (function, thisValue, argumentsList )
          * 
          * @param cx
          *            the execution context

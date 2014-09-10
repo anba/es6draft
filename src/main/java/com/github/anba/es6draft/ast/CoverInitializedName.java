@@ -35,16 +35,16 @@ public final class CoverInitializedName extends PropertyDefinition {
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
-        throw new IllegalStateException();
+        throw new AssertionError();
     }
 
     @Override
     public <V> int accept(IntNodeVisitor<V> visitor, V value) {
-        throw new IllegalStateException();
+        throw new AssertionError();
     }
 
     @Override
     public <V> void accept(VoidNodeVisitor<V> visitor, V value) {
-        throw new IllegalStateException();
+        throw new AssertionError();
     }
 }

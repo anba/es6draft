@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
+import com.github.anba.es6draft.ast.scope.Name;
+
 /**
  * 15.2.0.4 Static Semantics: ExportEntries<br>
  * 15.2.2.3 Static Semantics: ExportEntries
@@ -18,13 +20,12 @@ public final class ExportEntry {
     private final String importName;
 
     /** [[LocalName]] */
-    private final String localName;
+    private final Name localName;
 
     /** [[ExportName]] */
     private final String exportName;
 
-    public ExportEntry(String moduleRequest, String importName, String localName, String exportName) {
-        // FIXME: change to String->Name
+    public ExportEntry(String moduleRequest, String importName, Name localName, String exportName) {
         this.moduleRequest = moduleRequest;
         this.importName = importName;
         this.localName = localName;
@@ -54,7 +55,7 @@ public final class ExportEntry {
      * 
      * @return the local name
      */
-    public String getLocalName() {
+    public Name getLocalName() {
         return localName;
     }
 

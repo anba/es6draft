@@ -6,12 +6,12 @@
  */
 
 const {
-  assertSame, assertEquals, assertThrows, assertUndefined
+  assertEquals, assertThrows
 } = Assert;
 
 
-// Lexical environment of Catch is activated after binding initialisation, any reference
-// within destructuring default values refers to the surrounding environment
+// Lexical environment of Catch is activated before binding initialisation, any reference
+// within destructuring default values triggers a ReferenceError in non-strict mode
 function testCatch() {
   var x = 0;
   try {
@@ -20,7 +20,7 @@ function testCatch() {
     return x;
   }
 }
-assertSame(0, testCatch());
+assertThrows(ReferenceError, testCatch);
 
 // Test with nested lexical environment introduced by ArrayComprehension
 function testCatchWithArrayComprehension() {
@@ -31,7 +31,7 @@ function testCatchWithArrayComprehension() {
     return e;
   }
 }
-assertEquals([1], testCatchWithArrayComprehension());
+assertEquals([2], testCatchWithArrayComprehension());
 
 
 // Lexical environment of ForStatement is created before loop-entry, any reference
@@ -40,14 +40,14 @@ function testForLoop() {
   let x = 0;
   for (let {x = x} = {};;) return x;
 }
-assertThrows(strictTestForLoop, ReferenceError);
+assertThrows(ReferenceError, testForLoop);
 
 // Test with nested lexical environment introduced by ArrayComprehension
 function testForLoopWithArrayComprehension() {
   let x = [0];
   for (let {x = [for (x of x) x + 1]} = {};;) return x;
 }
-assertThrows(testForLoopWithArrayComprehension, ReferenceError);
+assertThrows(ReferenceError, testForLoopWithArrayComprehension);
 
 
 // Lexical environment of ForStatement is created before loop-entry, any reference
@@ -57,7 +57,7 @@ function strictTestForLoop() {
   let x = 0;
   for (let {x = x} = {};;) return x;
 }
-assertThrows(strictTestForLoop, ReferenceError);
+assertThrows(ReferenceError, strictTestForLoop);
 
 // Test with nested lexical environment introduced by ArrayComprehension
 function strictTestForLoopWithArrayComprehension() {
@@ -65,20 +65,20 @@ function strictTestForLoopWithArrayComprehension() {
   let x = [0];
   for (let {x = [for (x of x) x + 1]} = {};;) return x;
 }
-assertThrows(strictTestForLoopWithArrayComprehension, ReferenceError);
+assertThrows(ReferenceError, strictTestForLoopWithArrayComprehension);
 
 
-// Lexical environment of ForOfStatement is created after loop-entry, any reference
-// within destructuring default values refers to the surrounding environment
+// Lexical environment of ForOfStatement is created before loop-entry, any reference
+// within destructuring default values triggers a ReferenceError in strict mode
 function testForOfLoop() {
   let x = 0;
   for (let {x = x} of [{}]) return x;
 }
-assertSame(0, testForOfLoop());
+assertThrows(ReferenceError, testForOfLoop);
 
 // Test with nested lexical environment introduced by ArrayComprehension
 function testForOfLoopWithArrayComprehension() {
   let x = [0];
   for (let {x = [for (x of x) x + 1]} of [{}]) return x;
 }
-assertEquals([1], testForOfLoopWithArrayComprehension());
+assertThrows(ReferenceError, testForOfLoopWithArrayComprehension);

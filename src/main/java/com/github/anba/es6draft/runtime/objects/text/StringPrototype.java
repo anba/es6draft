@@ -17,7 +17,7 @@ import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperatio
 import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.RegExpCreate;
 import static com.github.anba.es6draft.runtime.objects.text.StringIteratorPrototype.CreateStringIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,9 +43,9 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.github.anba.es6draft.runtime.types.builtins.StringObject;
 import com.ibm.icu.lang.UCharacter;
 import com.ibm.icu.text.Normalizer;
 import com.ibm.icu.util.ULocale;
@@ -94,14 +94,19 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             if (Type.isString(object)) {
                 return Type.stringValue(object);
             }
-            if (object instanceof ExoticString) {
-                CharSequence s = ((ExoticString) object).getStringData();
+            if (object instanceof StringObject) {
+                CharSequence s = ((StringObject) object).getStringData();
                 if (s != null) {
                     return s;
                 }
                 throw newTypeError(cx, Messages.Key.UninitializedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+
+        private static boolean isRegExp(ExecutionContext cx, Object regexp) {
+            return Type.isObject(regexp)
+                    && ToBoolean(Get(cx, Type.objectValue(regexp), BuiltinSymbol.isRegExp.get()));
         }
 
         @Prototype
@@ -155,7 +160,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "charAt", arity = 1)
         public static Object charAt(ExecutionContext cx, Object thisValue, Object pos) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             CharSequence s = ToString(cx, obj);
             /* steps 4-5 */
@@ -184,7 +189,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "charCodeAt", arity = 1)
         public static Object charCodeAt(ExecutionContext cx, Object thisValue, Object pos) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             CharSequence s = ToString(cx, obj);
             /* steps 4-5 */
@@ -213,7 +218,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "concat", arity = 1)
         public static Object concat(ExecutionContext cx, Object thisValue, Object... args) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             CharSequence s = ToString(cx, obj);
             /* step 4 (omitted) */
@@ -246,7 +251,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         public static Object indexOf(ExecutionContext cx, Object thisValue, Object searchString,
                 Object position) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* steps 4-5 */
@@ -278,7 +283,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         public static Object lastIndexOf(ExecutionContext cx, Object thisValue,
                 Object searchString, Object position) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* steps 4-5 */
@@ -314,7 +319,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "localeCompare", arity = 1)
         public static Object localeCompare(ExecutionContext cx, Object thisValue, Object that,
                 Object locales, Object options) {
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             String s = ToFlatString(cx, obj);
             String t = ToFlatString(cx, that);
 
@@ -342,13 +347,12 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "match", arity = 1)
         public static Object match(ExecutionContext cx, Object thisValue, Object regexp) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             CharSequence s = ToString(cx, obj);
             /* steps 4-6 */
             ScriptObject rx;
-            if (Type.isObject(regexp)
-                    && HasProperty(cx, Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
+            if (isRegExp(cx, regexp)) {
                 rx = Type.objectValue(regexp);
             } else {
                 rx = RegExpCreate(cx, regexp, UNDEFINED);
@@ -374,12 +378,11 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         public static Object replace(ExecutionContext cx, Object thisValue, Object searchValue,
                 Object replaceValue) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String string = ToFlatString(cx, obj);
             /* step 4 */
-            if (Type.isObject(searchValue)
-                    && HasProperty(cx, Type.objectValue(searchValue), BuiltinSymbol.isRegExp.get())) {
+            if (isRegExp(cx, searchValue)) {
                 return Invoke(cx, Type.objectValue(searchValue), "replace", string, replaceValue);
             }
             /* steps 5-6 */
@@ -489,13 +492,12 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "search", arity = 1)
         public static Object search(ExecutionContext cx, Object thisValue, Object regexp) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             CharSequence string = ToString(cx, obj);
             /* steps 4-6 */
             ScriptObject rx;
-            if (Type.isObject(regexp)
-                    && HasProperty(cx, Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
+            if (isRegExp(cx, regexp)) {
                 rx = Type.objectValue(regexp);
             } else {
                 rx = RegExpCreate(cx, regexp, UNDEFINED);
@@ -520,7 +522,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             CharSequence s = ToString(cx, obj);
             /* step 4 */
@@ -557,16 +559,15 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
                 Object limit) {
             // FIXME: spec inconsistent w.r.t. ToString(this value)
             /* steps 1-2 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* step 3 */
-            if (Type.isObject(separator)
-                    && HasProperty(cx, Type.objectValue(separator), BuiltinSymbol.isRegExp.get())) {
+            if (isRegExp(cx, separator)) {
                 return Invoke(cx, Type.objectValue(separator), "split", obj, limit);
             }
             /* steps 4-5 */
             String s = ToFlatString(cx, obj);
             /* step 6 */
-            ExoticArray a = ArrayCreate(cx, 0);
+            ArrayObject a = ArrayCreate(cx, 0);
             /* step 7 */
             int lengthA = 0;
             /* step 8 */
@@ -658,7 +659,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         public static Object substring(ExecutionContext cx, Object thisValue, Object start,
                 Object end) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             CharSequence s = ToString(cx, obj);
             /* step 4 */
@@ -691,7 +692,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "toLowerCase", arity = 0)
         public static Object toLowerCase(ExecutionContext cx, Object thisValue) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* steps 4-9 */
@@ -712,7 +713,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
          */
         @Function(name = "toLocaleLowerCase", arity = 0)
         public static Object toLocaleLowerCase(ExecutionContext cx, Object thisValue, Object locales) {
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             String s = ToFlatString(cx, obj);
 
             // ES5/6
@@ -743,7 +744,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "toUpperCase", arity = 0)
         public static Object toUpperCase(ExecutionContext cx, Object thisValue) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* steps 4-9 */
@@ -763,7 +764,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
          */
         @Function(name = "toLocaleUpperCase", arity = 0)
         public static Object toLocaleUpperCase(ExecutionContext cx, Object thisValue, Object locales) {
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             String s = ToFlatString(cx, obj);
 
             // ES5/6
@@ -794,7 +795,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "trim", arity = 0)
         public static Object trim(ExecutionContext cx, Object thisValue) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* steps 4-5 */
@@ -815,7 +816,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "repeat", arity = 1)
         public static Object repeat(ExecutionContext cx, Object thisValue, Object count) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* steps 4-5 */
@@ -859,12 +860,11 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         public static Object startsWith(ExecutionContext cx, Object thisValue, Object searchString,
                 Object position) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* step 4 */
-            if (Type.isObject(searchString)
-                    && HasProperty(cx, Type.objectValue(searchString), BuiltinSymbol.isRegExp.get())) {
+            if (isRegExp(cx, searchString)) {
                 throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
             }
             /* steps 5-6 */
@@ -902,12 +902,11 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         public static Object endsWith(ExecutionContext cx, Object thisValue, Object searchString,
                 Object endPosition) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* step 4 */
-            if (Type.isObject(searchString)
-                    && HasProperty(cx, Type.objectValue(searchString), BuiltinSymbol.isRegExp.get())) {
+            if (isRegExp(cx, searchString)) {
                 throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
             }
             /* steps 5-6 */
@@ -947,12 +946,11 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         public static Object contains(ExecutionContext cx, Object thisValue, Object searchString,
                 Object position /* = 0 */) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* step 4 */
-            if (Type.isObject(searchString)
-                    && HasProperty(cx, Type.objectValue(searchString), BuiltinSymbol.isRegExp.get())) {
+            if (isRegExp(cx, searchString)) {
                 throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
             }
             /* steps 5-6 */
@@ -983,7 +981,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "codePointAt", arity = 1)
         public static Object codePointAt(ExecutionContext cx, Object thisValue, Object pos) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* steps 4-5 */
@@ -1012,7 +1010,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "normalize", arity = 0)
         public static Object normalize(ExecutionContext cx, Object thisValue, Object form) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* steps 4-6 */
@@ -1047,7 +1045,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* step 4 */
@@ -1079,7 +1077,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         public static Object substr(ExecutionContext cx, Object thisValue, Object start,
                 Object length) {
             /* step 1 */
-            Object obj = CheckObjectCoercible(cx, thisValue);
+            Object obj = RequireObjectCoercible(cx, thisValue);
             /* step 2 */
             String s = ToFlatString(cx, obj);
             /* steps 3-4 */
@@ -1105,7 +1103,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * Abstract operation CreateHTML
+         * B.2.3.2.1 CreateHTML ( string, tag, attribute, value ) Abstract Operation
          * 
          * @param cx
          *            the execution context
@@ -1122,7 +1120,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         private static String CreateHTML(ExecutionContext cx, Object string, String tag,
                 String attribute, Object value) {
             /* step 1 */
-            Object str = CheckObjectCoercible(cx, string);
+            Object str = RequireObjectCoercible(cx, string);
             /* steps 2-3 */
             String s = ToFlatString(cx, str);
             /* steps 4-5 */

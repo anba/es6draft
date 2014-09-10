@@ -52,7 +52,7 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.IteratorPrototype;
 
         /**
          * 25.3.1.1 Generator.prototype.constructor

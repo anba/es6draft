@@ -87,7 +87,7 @@ public final class ModuleLoading {
     }
 
     /**
-     * 15.2.4.2 RequestLoad(loader, request, refererName, refererAddress) Abstract Operation
+     * 15.2.4.2 RequestLoad(loader, request, referrerName, referrerAddress) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -95,17 +95,17 @@ public final class ModuleLoading {
      *            the loader record
      * @param request
      *            the request string
-     * @param refererName
-     *            the referer name
-     * @param refererAddress
-     *            the referer address
+     * @param referrerName
+     *            the referrer name
+     * @param referrerAddress
+     *            the referrer address
      * @return a new promise object
      */
     public static ScriptObject RequestLoad(ExecutionContext cx, Loader loader, String request,
-            Object refererName, Object refererAddress) {
+            Object referrerName, Object referrerAddress) {
         /* steps 1-5 */
-        CallNormalize f = new CallNormalize(cx.getRealm(), loader, request, refererName,
-                refererAddress);
+        CallNormalize f = new CallNormalize(cx.getRealm(), loader, request, referrerName,
+                referrerAddress);
         /* step 6 */
         ScriptObject p = PromiseNew(cx, f);
         /* steps 7-8 */
@@ -123,28 +123,29 @@ public final class ModuleLoading {
         /** [[Request]] */
         private final String request;
         /** [[RefererName]] */
-        private final Object refererName;
+        private final Object referrerName;
         /** [[RefererAddress]] */
-        private final Object refererAddress;
+        private final Object referrerAddress;
 
-        public CallNormalize(Realm realm, Loader loader, String request, Object refererName,
-                Object refererAddress) {
-            this(realm, loader, request, refererName, refererAddress, null);
+        public CallNormalize(Realm realm, Loader loader, String request, Object referrerName,
+                Object referrerAddress) {
+            this(realm, loader, request, referrerName, referrerAddress, null);
             createDefaultFunctionProperties(ANONYMOUS, 2);
         }
 
-        private CallNormalize(Realm realm, Loader loader, String request, Object refererName,
-                Object refererAddress, Void ignore) {
+        private CallNormalize(Realm realm, Loader loader, String request, Object referrerName,
+                Object referrerAddress, Void ignore) {
             super(realm, ANONYMOUS);
             this.loader = loader;
             this.request = request;
-            this.refererName = refererName;
-            this.refererAddress = refererAddress;
+            this.referrerName = referrerName;
+            this.referrerAddress = referrerAddress;
         }
 
         @Override
         public CallNormalize clone() {
-            return new CallNormalize(getRealm(), loader, request, refererName, refererAddress, null);
+            return new CallNormalize(getRealm(), loader, request, referrerName, referrerAddress,
+                    null);
         }
 
         @Override
@@ -158,9 +159,9 @@ public final class ModuleLoading {
             /* step 2 */
             String request = this.request;
             /* step 3 */
-            Object refererName = this.refererName;
+            Object referrerName = this.referrerName;
             /* step 4 */
-            Object refererAddress = this.refererAddress;
+            Object referrerAddress = this.referrerAddress;
             /* step 5 */
             ScriptObject loaderObj = loader.getLoaderObj();
             /* step 6 */
@@ -171,7 +172,7 @@ public final class ModuleLoading {
             }
             /* steps 7-8 */
             Object name = ((Callable) normalizeHook).call(calleeContext, loaderObj, request,
-                    refererName, refererAddress);
+                    referrerName, referrerAddress);
             /* step 9 */
             assert IsCallable(resolve);
             return ((Callable) resolve).call(calleeContext, UNDEFINED, name);
@@ -660,7 +661,7 @@ public final class ModuleLoading {
     public static ScriptObject ProcessLoadDependencies(ExecutionContext cx, Load load,
             Loader loader, Iterable<String> depsList) {
         /* step 1 */
-        Object refererName = load.getNameOrNull();
+        Object referrerName = load.getNameOrNull();
         /* step 2 */
         load.setDependencies(new ArrayList<Load.Dependency>());
         /* step 3 */
@@ -668,7 +669,7 @@ public final class ModuleLoading {
         /* step 4 */
         for (String request : depsList) {
             /* step 4a */
-            ScriptObject p = RequestLoad(cx, loader, request, refererName, load.getAddress());
+            ScriptObject p = RequestLoad(cx, loader, request, referrerName, load.getAddress());
             /* steps 4b-4d */
             AddDependencyLoad f = new AddDependencyLoad(cx.getRealm(), load, request);
             /* step 4e */

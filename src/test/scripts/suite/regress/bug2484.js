@@ -26,4 +26,4 @@ realm.eval(`
 assertSame(realm.global.Number.prototype, Object.getPrototypeOf(realm.global.returnThis.call(1)));
 
 // ReferenceError created in caller's realm
-assertThrows(() => realm.global.noSuperBinding(), ReferenceError);
+assertThrows(ReferenceError, () => realm.global.noSuperBinding());

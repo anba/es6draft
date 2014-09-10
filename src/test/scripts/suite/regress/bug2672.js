@@ -21,7 +21,7 @@ assertEquals([], Array.from({}));
 assertEquals([], Array.from({[Symbol.iterator]: void 0}));
 
 // Throw TypeError if Symbol.iterator is not callable
-assertThrows(() => Array.from({[Symbol.iterator]: null}), TypeError);
-assertThrows(() => Array.from({[Symbol.iterator]: 0}), TypeError);
-assertThrows(() => Array.from({[Symbol.iterator]: 1}), TypeError);
-assertThrows(() => Array.from({[Symbol.iterator]: {}}), TypeError);
+assertThrows(TypeError, () => Array.from({[Symbol.iterator]: null}));
+assertThrows(TypeError, () => Array.from({[Symbol.iterator]: 0}));
+assertThrows(TypeError, () => Array.from({[Symbol.iterator]: 1}));
+assertThrows(TypeError, () => Array.from({[Symbol.iterator]: {}}));

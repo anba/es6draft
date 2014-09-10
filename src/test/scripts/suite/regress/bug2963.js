@@ -9,7 +9,7 @@ const {
   assertThrows, assertTrue, assertFalse
 } = Assert;
 
-// 24.1.1.4 CloneArrayBuffer: Handle neutered buffers after step 3
+// 24.1.1.4 CloneArrayBuffer: Handle detached buffers after step 3
 // https://bugs.ecmascript.org/show_bug.cgi?id=2963
 
 {
@@ -24,13 +24,13 @@ const {
     get() {
       assertFalse(getterCalled);
       getterCalled = true;
-      // Internal API call to neuter array buffer
-      neuterArrayBuffer(buf);
+      // Internal API call to detach array buffer
+      detachArrayBuffer(buf);
       return ArrayBuffer;
     }
   });
 
-  assertThrows(() => ta.set(ta, 0), TypeError);
+  assertThrows(TypeError, () => ta.set(ta, 0));
   assertTrue(getterCalled);
 }
 
@@ -48,14 +48,14 @@ const {
         get() {
           assertFalse(getterCalled);
           getterCalled = true;
-          // Internal API call to neuter array buffer
-          neuterArrayBuffer(buf);
+          // Internal API call to detach array buffer
+          detachArrayBuffer(buf);
           return ArrayBuffer.prototype;
         }
       });
     }
   });
 
-  assertThrows(() => ta.set(ta, 0), TypeError);
+  assertThrows(TypeError, () => ta.set(ta, 0));
   assertTrue(getterCalled);
 }

@@ -14,6 +14,7 @@ import org.joni.Config;
 
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
@@ -47,31 +48,60 @@ public final class RegExpParser {
 
     private final String source;
     private final int length;
-    private final int flags;
-    private final boolean joni;
     private final String sourceFile;
     private final int sourceLine;
     private final int sourceColumn;
+    private final int flags;
+    private final boolean webRegExp;
+    private final boolean joni;
     private final StringBuilder out;
+
     private int pos = 0;
 
     // map of groups created within negative lookahead
     private BitSet negativeLAGroups = new BitSet();
 
-    private RegExpParser(String source, int flags, String sourceFile, int sourceLine,
-            int sourceColumn) {
+    private RegExpParser(String source, String flags, String sourceFile, int sourceLine,
+            int sourceColumn, boolean webRegExp) {
         this.source = source;
         this.length = source.length();
-        this.flags = flags;
-        this.joni = !isUnicode();
         this.sourceFile = sourceFile;
         this.sourceLine = sourceLine;
         this.sourceColumn = sourceColumn;
+        // Call after source information was set
+        this.flags = toFlags(flags);
+        this.webRegExp = webRegExp;
+        // Unicode mode currently not available for joni matcher
+        this.joni = !isUnicode();
         this.out = new StringBuilder(length);
     }
 
     public static RegExpMatcher parse(String pattern, String flags, String sourceFile,
-            int sourceLine, int sourceColumn) throws ParserException {
+            int sourceLine, int sourceColumn, boolean webRegExp) throws ParserException {
+        RegExpParser parser = new RegExpParser(pattern, flags, sourceFile, sourceLine,
+                sourceColumn, webRegExp);
+        parser.pattern();
+
+        // System.out.printf("pattern = %s%n", parser.out.toString());
+
+        if (parser.useJoniRegExp()) {
+            return new JoniRegExpMatcher(parser.out.toString(), parser.flags,
+                    parser.negativeLAGroups);
+        }
+        return new JDKRegExpMatcher(parser.out.toString(), parser.flags, parser.negativeLAGroups);
+    }
+
+    private ParserException error(Messages.Key messageKey, String... args) {
+        throw new ParserException(ExceptionType.SyntaxError, sourceFile, sourceLine, sourceColumn
+                + pos, messageKey, args);
+    }
+
+    private ParserException error(Messages.Key messageKey, int offset, char offending) {
+        throw new ParserException(ExceptionType.SyntaxError, sourceFile, sourceLine, sourceColumn
+                + pos + offset, messageKey, String.valueOf(offending));
+    }
+
+    private int toFlags(String flags) {
         // flags :: g | i | m | u | y
         final int global = 0b00001, ignoreCase = 0b00010, multiline = 0b00100, unicode = 0b01000, sticky = 0b10000;
         int mask = 0b00000;
@@ -79,38 +109,33 @@ public final class RegExpParser {
             char c = flags.charAt(i);
             int flag = (c == 'g' ? global : c == 'i' ? ignoreCase : c == 'm' ? multiline
                     : c == 'u' ? unicode : c == 'y' ? sticky : -1);
-            if (flag != -1 && (mask & flag) == 0) {
+            if (flag == -1) {
+                throw error(Messages.Key.RegExpInvalidFlag, String.valueOf(c));
+            }
+            if ((mask & flag) == 0) {
                 mask |= flag;
             } else {
                 String detail;
-                Messages.Key reason;
                 switch (flag) {
                 case global:
                     detail = "global";
-                    reason = Messages.Key.RegExpDuplicateFlag;
                     break;
                 case ignoreCase:
                     detail = "ignoreCase";
-                    reason = Messages.Key.RegExpDuplicateFlag;
                     break;
                 case multiline:
                     detail = "multiline";
-                    reason = Messages.Key.RegExpDuplicateFlag;
                     break;
                 case unicode:
                     detail = "unicode";
-                    reason = Messages.Key.RegExpDuplicateFlag;
                     break;
                 case sticky:
                     detail = "sticky";
-                    reason = Messages.Key.RegExpDuplicateFlag;
                     break;
                 default:
-                    detail = String.valueOf(c);
-                    reason = Messages.Key.RegExpInvalidFlag;
-                    break;
+                    throw new AssertionError("unreachable");
                 }
-                throw error(sourceFile, sourceLine, sourceColumn, reason, detail);
+                throw error(Messages.Key.RegExpDuplicateFlag, detail);
             }
         }
 
@@ -124,31 +149,21 @@ public final class RegExpParser {
         if ((mask & multiline) != 0) {
             iflags |= Pattern.MULTILINE;
         }
-
-        RegExpParser parser = new RegExpParser(pattern, iflags, sourceFile, sourceLine,
-                sourceColumn);
-        parser.pattern();
-
-        // System.out.printf("pattern = %s%n", parser.out.toString());
-
-        if (parser.useJoniRegExp()) {
-            return new JoniRegExpMatcher(parser.out.toString(), iflags, parser.negativeLAGroups);
-        }
-        return new JDKRegExpMatcher(parser.out.toString(), iflags, parser.negativeLAGroups);
-    }
-
-    private static ParserException error(String file, int line, int column,
-            Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, file, line, column, messageKey, args);
-    }
-
-    private ParserException error(Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, sourceFile, sourceLine, sourceColumn,
-                messageKey, args);
+        return iflags;
     }
 
     private boolean useJoniRegExp() {
         return joni;
+    }
+
+    /**
+     * Returns {@code true} if regular expression patterns support the
+     * {@link CompatibilityOption#WebRegularExpressions} extension.
+     * 
+     * @return {@code true} if patterns are in web-compatibility mode
+     */
+    private boolean isWebRegularExpression() {
+        return webRegExp;
     }
 
     /**
@@ -376,7 +391,6 @@ public final class RegExpParser {
                 reset(startLow);
             }
             if (!Character.isValidCodePoint(c)) {
-                // TODO: always report error if in unicode-mode?
                 // invalid unicode escape sequence, discard parsed characters
                 reset(start);
             }
@@ -411,29 +425,51 @@ public final class RegExpParser {
      *     ClassAtom<span><sub>[?U]</sub></span>
      *     ClassAtom<span><sub>[?U]</sub></span> NonemptyClassRangesNoDash<span><sub>[?U]</sub></span>
      *     ClassAtom<span><sub>[?U]</sub></span> <b>-</b> ClassAtom<span><sub>[?U]</sub></span> ClassRanges<span><sub>[?U]</sub></span>
+     * 
+     *     <span><sub>[+U]</sub></span> ClassAtom<span><sub>[U]</sub></span> <b>-</b> ClassAtom<span><sub>[U]</sub></span> ClassRanges<span><sub>[U]</sub></span>
+     *     <span><sub>[~U]</sub></span> ClassAtomInRange <b>-</b> ClassAtomInRange ClassRanges
      * NonemptyClassRangesNoDash<span><sub>[U]</sub></span> ::
      *     ClassAtom<span><sub>[?U]</sub></span>
      *     ClassAtomNoDash<span><sub>[?U]</sub></span> NonemptyClassRangesNoDash<span><sub>[?U]</sub></span>
      *     ClassAtomNoDash<span><sub>[?U]</sub></span> <b>-</b> ClassAtom<span><sub>[?U]</sub></span> ClassRanges<span><sub>[?U]</sub></span>
+     * 
+     *     <span><sub>[+U]</sub></span> ClassAtomNoDash<span><sub>[U]</sub></span> <b>-</b> ClassAtom<span><sub>[U]</sub></span> ClassRanges<span><sub>[U]</sub></span>
+     *     <span><sub>[~U]</sub></span> ClassAtomNoDashInRange <b>-</b> ClassAtomInRange ClassRanges
      * ClassAtom<span><sub>[U]</sub></span> ::
      *     <b>-</b>
      *     ClassAtomNoDash<span><sub>[?U]</sub></span>
      * ClassAtomNoDash<span><sub>[U]</sub></span> ::
      *     SourceCharacter <b>but not one of \ or ] or -</b>
      *     <b>\</b> ClassEscape<span><sub>[?U]</sub></span>
+     * ClassAtomInRange ::
+     *     <b>-</b>
+     *     ClassAtomNoDashInRange
+     * ClassAtomNoDashInRange ::
+     *     SourceCharacter <b>but not one of \ or ] or -</b>
+     *     <b>\</b> ClassEscape but only if ClassEscape evaluates to a CharSet with exactly one character
+     *     <b>\</b> IdentityEscape
      * ClassEscape<span><sub>[U]</sub></span> ::
      *     DecimalEscape
      *     <b>b</b>
      *     CharacterEscape<span><sub>[?U]</sub></span>
      *     CharacterClassEscape
+     * 
+     *     <span><sub>[+U]</sub></span> DecimalEscape
+     *     <span><sub>[~U]</sub></span> DecimalEscape but only if integer value of DecimalEscape is <= NCapturingParens
+     *     <b>b</b>
+     *     <span><sub>[+U]</sub></span> CharacterEscape<span><sub>[U]</sub></span>
+     *     <span><sub>[+U]</sub></span> CharacterClassEscape
+     *     <span><sub>[~U]</sub></span> CharacterClassEscape
+     *     <span><sub>[~U]</sub></span> CharacterEscape
      * </pre>
      * 
      * @param negation
      *            flag to mark negative character classes
      */
-    private void characterclass(boolean negation) {
+    private void characterClass(boolean negation) {
         final boolean ignoreCase = isIgnoreCase();
         final boolean unicode = isUnicode();
+        final boolean web = isWebRegularExpression();
 
         StringBuilder out = this.out;
         int startLength = out.length();
@@ -489,20 +525,28 @@ public final class RegExpParser {
                 case 'w':
                 case 'W':
                 case 's':
-                case 'S':
+                case 'S': {
                     // class escape (cannot start/end range)
-                    if (inrange)
-                        throw error(Messages.Key.RegExpInvalidCharacterRange);
-                    if (unicode && ignoreCase) {
-                        if (peek(0) == 'w') {
-                            asciiI = true;
+                    if (inrange) {
+                        if (!web || unicode) {
+                            throw error(Messages.Key.RegExpInvalidCharacterRange);
                         }
-                        if (peek(0) == 'W') {
+                        // escape range character "-"
+                        assert out.charAt(out.length() - 1) == '-';
+                        out.setCharAt(out.length() - 1, '\\');
+                        out.append('-');
+                        inrange = false;
+                    }
+                    char classEscape = get();
+                    if (unicode && ignoreCase) {
+                        if (classEscape == 'w') {
+                            asciiI = true;
+                        } else if (classEscape == 'W') {
                             iWithDot = true;
                             dotlessI = true;
                         }
                     }
-                    String escape = appendCharacterClassEscape(get(), true, negation);
+                    String escape = appendCharacterClassEscape(classEscape, true, negation);
                     if (escape != null) {
                         if (additionalClasses == null) {
                             additionalClasses = new StringBuilder();
@@ -511,7 +555,11 @@ public final class RegExpParser {
                         }
                         additionalClasses.append(escape);
                     }
+                    if ((!web || unicode) && peek(0) == '-' && peek(1) != ']') {
+                        throw error(Messages.Key.RegExpInvalidCharacterRange);
+                    }
                     continue charclass;
+                }
 
                 case 'b':
                     // CharacterEscape :: ControlEscape
@@ -553,6 +601,8 @@ public final class RegExpParser {
                         int d = get() & 0x1F;
                         out.append(toControlLetter(d));
                         cv = d;
+                    } else if (!web || unicode) {
+                        throw error(Messages.Key.RegExpInvalidEscape, +2, peek(1));
                     } else {
                         // convert invalid ControlLetter to \\
                         out.append("\\\\");
@@ -567,6 +617,8 @@ public final class RegExpParser {
                     if (x >= 0x00 && x <= 0xff) {
                         appendHexEscapeSequence(x, true);
                         cv = x;
+                    } else if (!web || unicode) {
+                        throw error(Messages.Key.RegExpInvalidEscape, "x");
                     } else {
                         // invalid hex escape sequence, use "x"
                         out.append("x");
@@ -581,6 +633,8 @@ public final class RegExpParser {
                     if (Character.isValidCodePoint(u)) {
                         appendUnicodeEscapeSequence(u, true);
                         cv = u;
+                    } else if (!web || unicode) {
+                        throw error(Messages.Key.RegExpInvalidEscape, "u");
                     } else {
                         // invalid unicode escape sequence, use "u"
                         out.append("u");
@@ -590,6 +644,15 @@ public final class RegExpParser {
                 }
 
                 case '0':
+                    if (!isDecimalDigit(peek(1))) {
+                        mustMatch('0');
+                        out.append('\u0000');
+                        cv = 0;
+                        break classatom;
+                    }
+                    if (!web || unicode) {
+                        throw error(Messages.Key.RegExpInvalidEscape, +2, peek(1));
+                    }
                 case '1':
                 case '2':
                 case '3':
@@ -597,6 +660,9 @@ public final class RegExpParser {
                 case '5':
                 case '6':
                 case '7': {
+                    if (!web || unicode) {
+                        throw error(Messages.Key.RegExpInvalidEscape, +1, peek(0));
+                    }
                     int num = readOctalEscapeSequence();
                     appendOctalEscapeSequence(num, true);
                     cv = num;
@@ -604,6 +670,9 @@ public final class RegExpParser {
                 }
                 case '8':
                 case '9': {
+                    if (!web || unicode) {
+                        throw error(Messages.Key.RegExpInvalidEscape, +1, peek(0));
+                    }
                     char d = get();
                     out.append("\\\\").append(d);
                     cv = d;
@@ -614,9 +683,11 @@ public final class RegExpParser {
                     if (eof()) {
                         throw error(Messages.Key.RegExpTrailingSlash);
                     }
-                    // TODO: need to check next drafts, current draft (rev21) only allows
-                    // IdentityEscape for SyntaxCharacters in unicode-mode
                     int d = get(unicode);
+                    if (unicode ? !isSyntaxCharacter(d) : !web && isIdentifierPartNotJoiner(d)) {
+                        throw error(Messages.Key.RegExpInvalidEscape,
+                                new String(Character.toChars(d)));
+                    }
                     appendIdentityEscape(d, true);
                     cv = d;
                     break classatom;
@@ -751,13 +822,34 @@ public final class RegExpParser {
      *     Assertion<span><sub>[?U]</sub></span>
      *     Atom<span><sub>[?U]</sub></span>
      *     Atom<span><sub>[?U]</sub></span> Quantifier
-     * Assertio<span><sub>[U]</sub></span>n ::
+     * 
+     *     <span><sub>[~U]</sub></span> ExtendedTerm
+     *     <span><sub>[+U]</sub></span> Assertion<span><sub>[U]</sub></span>
+     *     <span><sub>[+U]</sub></span> Atom<span><sub>[U]</sub></span>
+     *     <span><sub>[+U]</sub></span> Atom<span><sub>[U]</sub></span> Quantifier
+     * ExtendedTerm ::
+     *     Assertion
+     *     AtomNoBrace Quantifier
+     *     Atom
+     *     QuantifiableAssertion Quantifier
+     * Assertion<span><sub>[U]</sub></span> ::
      *     <b>^</b>
      *     <b>$</b>
      *     <b>\ b</b>
      *     <b>\ B</b>
      *     <b>( ? =</b> Disjunction<span><sub>[?U]</sub></span> <b>)</b>
      *     <b>( ? !</b> Disjunction<span><sub>[?U]</sub></span> <b>)</b>
+     * 
+     *     <span><sub>[+U]</sub></span> <b>( ? =</b> Disjunction<span><sub>[?U]</sub></span> <b>)</b>
+     *     <span><sub>[+U]</sub></span> <b>( ? !</b> Disjunction<span><sub>[?U]</sub></span> <b>)</b>
+     *     <span><sub>[~U]</sub></span> QuantifiableAssertion
+     * AtomNoBrace ::
+     *     PatternCharacterNoBrace
+     *     <b>.</b>
+     *     <b>\</b> AtomEscape
+     *     CharacterClass
+     *     <b>(</b> Disjunction <b>)</b>
+     *     <b>( ? :</b> Disjunction <b>)</b>
      * Atom<span><sub>[U]</sub></span> ::
      *     PatternCharacter
      *     <b>.</b>
@@ -765,18 +857,36 @@ public final class RegExpParser {
      *     CharacterClass<span><sub>[?U]</sub></span>
      *     <b>(</b> Disjunction<span><sub>[?U]</sub></span> <b>)</b>
      *     <b>( ? :</b> Disjunction<span><sub>[?U]</sub></span> <b>)</b>
-     * PatternCharacter ::
+     * SyntaxCharacter :: <b>one of</b>
+     *     <b>^ $ \ . * + ? ( ) [ ] { } |</b>
+     * PatternCharacterNoBrace ::
      *     SourceCharacter but not one of <b>^ $ \ . * + ? ( ) [ ] { } |</b>
+     * PatternCharacter ::
+     *     SourceCharacter but not SyntaxCharacter
+     * 
+     *     SourceCharacter but not one of <b>^ $ \ . * + ? ( ) [ ] |</b>
+     * QuantifiableAssertion ::
+     *     <b>( ? =</b> Disjunction <b>)</b>
+     *     <b>( ? !</b> Disjunction <b>)</b>
      * AtomEscape<span><sub>[U]</sub></span> ::
      *     DecimalEscape
      *     CharacterEscape<span><sub>[?U]</sub></span>
      *     CharacterClassEscape
+     * 
+     *     <span><sub>[+U]</sub></span> DecimalEscape
+     *     <span><sub>[~U]</sub></span> DecimalEscape but only if the integer value of DecimalEscape is <= NCapturingParens
+     *     <span><sub>[+U]</sub></span> CharacterEscape<span><sub>[U]</sub></span>
+     *     <span><sub>[+U]</sub></span> CharacterClassEscape
+     *     <span><sub>[~U]</sub></span> CharacterClassEscape
+     *     <span><sub>[~U]</sub></span> CharacterEscape
      * CharacterEscape<span><sub>[U]</sub></span> ::
      *     ControlEscape
      *     <b>c</b> ControlLetter
      *     HexEscapeSequence
      *     RegExpUnicodeEscapeSequence<span><sub>[?U]</sub></span>
      *     IdentityEscape<span><sub>[?U]</sub></span>
+     * 
+     *     <span><sub>[~U]</sub></span>LegacyOctalEscapeSequence
      * ControlEscape ::  one of
      *     <b>f n r t v</b>
      * ControlLetter :: one of
@@ -795,6 +905,8 @@ public final class RegExpParser {
      *     <span><sub>[~U]</sub></span> SourceCharacter but not IdentifierPart
      *     <span><sub>[~U]</sub></span> &lt;ZWJ&gt;
      *     <span><sub>[~U]</sub></span> &lt;ZWNJ&gt;
+     * 
+     *     <span><sub>[~U]</sub></span> SourceCharacter <b>but not c</b>
      * DecimalEscape ::
      *     DecimalIntegerLiteral  [LA &#x2209; DecimalDigit]
      * CharacterClassEscape :: one of
@@ -804,6 +916,7 @@ public final class RegExpParser {
     private void pattern() {
         final boolean ignoreCase = isIgnoreCase();
         final boolean unicode = isUnicode();
+        final boolean web = isWebRegularExpression();
         StringBuilder out = this.out;
 
         // map of valid groups
@@ -819,6 +932,8 @@ public final class RegExpParser {
         int negativedepth = 0;
         // map: depth -> negative
         BitSet negativeGroup = new BitSet();
+        // map: depth -> positive
+        BitSet positiveGroup = new BitSet();
         // map: depth -> capturing
         BitSet capturingGroup = new BitSet();
         // stack: groups
@@ -846,6 +961,7 @@ public final class RegExpParser {
                     assert depth == 0;
                     assert negativedepth == 0;
                     assert negativeGroup.isEmpty();
+                    assert positiveGroup.isEmpty();
                     assert capturingGroup.isEmpty();
                     assert groupStackSP == 0;
                     continue term;
@@ -888,6 +1004,8 @@ public final class RegExpParser {
                 case 'B':
                     // Assertion
                     if (unicode) {
+                        // Disable unicode - does not fix all spec violations, but it's better than
+                        // nothing.
                         out.append("(?-u:").append('\\').append(get()).append(")");
                     } else {
                         out.append('\\').append(get());
@@ -909,8 +1027,10 @@ public final class RegExpParser {
                     // CharacterEscape :: c ControlLetter
                     if (isASCIIAlpha(peek(1))) {
                         out.append('\\').append(get()).append(toControlLetter(get()));
+                    } else if (!web || unicode) {
+                        throw error(Messages.Key.RegExpInvalidEscape, +2, peek(1));
                     } else {
-                        // convert invalid ControlLetter to \\
+                        // convert invalid ControlLetter to \
                         out.append("\\\\");
                     }
                     break atom;
@@ -921,6 +1041,8 @@ public final class RegExpParser {
                     int x = readHexEscapeSequence();
                     if (x >= 0x00 && x <= 0xff) {
                         appendHexEscapeSequence(x, false);
+                    } else if (!web || unicode) {
+                        throw error(Messages.Key.RegExpInvalidEscape, "x");
                     } else {
                         // invalid hex escape sequence, use "x"
                         out.append("x");
@@ -933,6 +1055,8 @@ public final class RegExpParser {
                     int u = readUnicodeEscapeSequence();
                     if (Character.isValidCodePoint(u)) {
                         appendUnicodeEscapeSequence(u, false);
+                    } else if (!web || unicode) {
+                        throw error(Messages.Key.RegExpInvalidEscape, "u");
                     } else {
                         // invalid unicode escape sequence, use "u"
                         out.append("u");
@@ -952,6 +1076,9 @@ public final class RegExpParser {
 
                 case '0':
                     // "\0" or octal sequence
+                    if ((!web || unicode) && isDecimalDigit(peek(1))) {
+                        throw error(Messages.Key.RegExpInvalidEscape, +2, peek(1));
+                    }
                     appendOctalEscapeSequence(readOctalEscapeSequence(), false);
                     break atom;
 
@@ -970,6 +1097,9 @@ public final class RegExpParser {
                     if (num > backreflimit) {
                         // invalid backreference -> roll back to start of decimal escape
                         reset(start);
+                        if (!web || unicode) {
+                            throw error(Messages.Key.RegExpInvalidEscape, +1, peek(0));
+                        }
                         if (peek(0) < '8') {
                             // case 1: octal escape sequence
                             appendOctalEscapeSequence(readOctalEscapeSequence(), false);
@@ -997,9 +1127,11 @@ public final class RegExpParser {
                     if (eof()) {
                         throw error(Messages.Key.RegExpTrailingSlash);
                     }
-                    // TODO: need to check next drafts, current draft (rev21) only allows
-                    // IdentityEscape for SyntaxCharacters in unicode-mode
                     int d = get(unicode);
+                    if (unicode ? !isSyntaxCharacter(d) : !web && isIdentifierPartNotJoiner(d)) {
+                        throw error(Messages.Key.RegExpInvalidEscape,
+                                new String(Character.toChars(d)));
+                    }
                     appendIdentityEscape(d, false);
                     break atom;
                 }
@@ -1008,16 +1140,19 @@ public final class RegExpParser {
             }
 
             case '(': {
-                boolean negative = false, capturing = false;
+                boolean negative = false, positive = false, capturing = false;
                 if (match('?')) {
                     // (?=X) or (?!X) or (?:X)
                     char d = eof() ? '\0' : get();
                     switch (d) {
                     case '!':
                         negative = true;
-                        // fall-through
+                        break;
                     case '=':
+                        positive = true;
+                        break;
                     case ':':
+                        // non-capturing
                         break;
                     default:
                         throw error(Messages.Key.RegExpInvalidQuantifier);
@@ -1031,10 +1166,11 @@ public final class RegExpParser {
                 if (capturing) {
                     groups += 1;
                     capturingGroup.set(depth);
-                }
-                if (negative) {
+                } else if (negative) {
                     negativedepth += 1;
                     negativeGroup.set(depth);
+                } else if (positive) {
+                    positiveGroup.set(depth);
                 }
                 if (capturing || negative) {
                     if (groupStackSP == groupStack.length) {
@@ -1053,6 +1189,7 @@ public final class RegExpParser {
                 if (depth == 0) {
                     throw error(Messages.Key.RegExpUnmatchedCharacter, ")");
                 }
+                boolean lookaround = false;
                 if (capturingGroup.get(depth)) {
                     capturingGroup.clear(depth);
                     // update group information after parsing ")"
@@ -1061,8 +1198,7 @@ public final class RegExpParser {
                     if (negativedepth > 0) {
                         negativeLAGroups.set(g);
                     }
-                }
-                if (negativeGroup.get(depth)) {
+                } else if (negativeGroup.get(depth)) {
                     negativeGroup.clear(depth);
                     // invalidate all capturing groups created within the negative lookahead
                     int g = groupStack[--groupStackSP];
@@ -1070,8 +1206,15 @@ public final class RegExpParser {
                         validGroups.clear(v);
                     }
                     negativedepth -= 1;
+                    lookaround = true;
+                } else if (positiveGroup.get(depth)) {
+                    positiveGroup.clear(depth);
+                    lookaround = true;
                 }
                 depth -= 1;
+                if (lookaround && (!web || unicode)) {
+                    continue term;
+                }
                 break atom;
             }
 
@@ -1084,7 +1227,7 @@ public final class RegExpParser {
                     if (negation) {
                         out.append('^');
                     }
-                    characterclass(negation);
+                    characterClass(negation);
                     out.append(']');
                 } else {
                     appendEmptyCharacterClass(negation);
@@ -1095,6 +1238,9 @@ public final class RegExpParser {
             case '*':
             case '+':
             case '?':
+                // quantifier without applicable atom -> error!
+                throw error(Messages.Key.RegExpInvalidQuantifier);
+
             case '{': {
                 if (quantifier((char) c)) {
                     // parsed quantifier, but there was no applicable atom -> error!
@@ -1635,5 +1781,112 @@ public final class RegExpParser {
 
     private static final boolean isASCIIAlphaNumericUnderscore(int c) {
         return (c >= '0' && c <= '9') || ((c | 0x20) >= 'a' && (c | 0x20) <= 'z') || c == '_';
+    }
+
+    private static boolean isDecimalDigit(int c) {
+        return (c >= '0' && c <= '9');
+    }
+
+    /**
+     * <pre>
+     * SyntaxCharacter :: <b>one of</b>
+     *     <b>^ $ \ . * + ? ( ) [ ] { } |</b>
+     * </pre>
+     * 
+     * @param c
+     *            the character to inspect
+     * @return {@code true} if the character is a syntax character
+     */
+    private static final boolean isSyntaxCharacter(int c) {
+        switch (c) {
+        case '^':
+        case '$':
+        case '\\':
+        case '.':
+        case '*':
+        case '+':
+        case '?':
+        case '(':
+        case ')':
+        case '[':
+        case ']':
+        case '{':
+        case '}':
+        case '|':
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * <strong>[11.6] Names and Keywords</strong>
+     * 
+     * <pre>
+     * IdentifierPart ::
+     *     UnicodeIDContinue
+     *     $
+     *     _
+     * UnicodeIDContinue ::
+     *     any Unicode character with the Unicode property "ID_Continue", "Other_ID_Continue", or "Other_ID_Start"
+     * </pre>
+     * 
+     * @param c
+     *            the character to inspect
+     * @return {@code true} if the character is an identifier part character
+     */
+    private static boolean isIdentifierPartNotJoiner(int c) {
+        if (c <= 127) {
+            return ((c | 0x20) >= 'a' && (c | 0x20) <= 'z') || (c >= '0' && c <= '9') || c == '$'
+                    || c == '_';
+        }
+        return isIdentifierPartNotJoinerUnlikely(c);
+    }
+
+    private static boolean isIdentifierPartNotJoinerUnlikely(int c) {
+        // cf. http://www.unicode.org/reports/tr31/ for definition of "ID_Continue"
+        if (c == '\u2E2F') {
+            // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
+            return false;
+        }
+        switch (Character.getType(c)) {
+        case Character.UPPERCASE_LETTER:
+        case Character.LOWERCASE_LETTER:
+        case Character.TITLECASE_LETTER:
+        case Character.MODIFIER_LETTER:
+        case Character.OTHER_LETTER:
+        case Character.LETTER_NUMBER:
+        case Character.NON_SPACING_MARK:
+        case Character.COMBINING_SPACING_MARK:
+        case Character.DECIMAL_DIGIT_NUMBER:
+        case Character.CONNECTOR_PUNCTUATION:
+            return true;
+        }
+        // Additional characters for ID_Continue based on Unicode 5.1.
+        switch (c) {
+        case '\u00B7':
+        case '\u0387':
+        case '\u1369':
+        case '\u136A':
+        case '\u136B':
+        case '\u136C':
+        case '\u136D':
+        case '\u136E':
+        case '\u136F':
+        case '\u1370':
+        case '\u1371':
+        case '\u2118':
+        case '\u212E':
+        case '\u309B':
+        case '\u309C':
+            return true;
+        }
+        // Additional characters for ID_Continue based on Unicode 6.0 (Java 7).
+        // Also applies to Unicode 6.2 (Java 8) and Unicode 7.0 (Current).
+        switch (c) {
+        case '\u19DA':
+            return true;
+        }
+        return false;
     }
 }

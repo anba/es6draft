@@ -12,8 +12,8 @@ const {
 // -0 as property key
 
 assertSame(-0, +"-0");
-assertThrows(() => Object.defineProperty(new Int8Array(0), "-0", {value: 123}), TypeError);
-assertThrows(() => Object.defineProperty(new Int8Array(1), "-0", {value: 123}), TypeError);
+assertThrows(TypeError, () => Object.defineProperty(new Int8Array(0), "-0", {value: 123}));
+assertThrows(TypeError, () => Object.defineProperty(new Int8Array(1), "-0", {value: 123}));
 
 assertSame(-0, +"-0.");
 assertTrue(Reflect.defineProperty(new Int8Array(0), "-0.", {value: 123}));

@@ -7,10 +7,10 @@
 package com.github.anba.es6draft.runtime.types;
 
 import java.util.Iterator;
+import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
 /**
  * <h1>6 ECMAScript Data Types and Values</h1><br>
@@ -306,7 +306,7 @@ public interface ScriptObject {
      *            the execution context
      * @return the properties array object
      */
-    ExoticArray ownPropertyKeys(ExecutionContext cx);
+    List<?> ownPropertyKeys(ExecutionContext cx);
 
     /**
      * [[OwnPropertyKeys]] ( )

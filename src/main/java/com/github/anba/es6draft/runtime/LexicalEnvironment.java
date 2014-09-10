@@ -101,9 +101,8 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      */
     public static LexicalEnvironment<DeclarativeEnvironmentRecord> cloneDeclarativeEnvironment(
             LexicalEnvironment<DeclarativeEnvironmentRecord> e) {
-        LexicalEnvironment<DeclarativeEnvironmentRecord> clone = newDeclarativeEnvironment(e.outer);
-        e.envRec.copyBindings(clone.envRec);
-        return clone;
+        DeclarativeEnvironmentRecord envRec = new DeclarativeEnvironmentRecord(e.envRec);
+        return new LexicalEnvironment<>(e.outer, envRec);
     }
 
     /**

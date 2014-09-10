@@ -11,8 +11,8 @@ import static com.github.anba.es6draft.runtime.internal.Errors.*;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorYield;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CreateUnmappedArgumentsObject;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject.CreateUnmappedArgumentsObject;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction.AsyncFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
@@ -22,6 +22,8 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 import static java.util.Arrays.asList;
 
+import java.lang.invoke.CallSite;
+import java.lang.invoke.ConstantCallSite;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -41,7 +43,7 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
@@ -173,7 +175,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void defineProperty(ExoticArray array, int nextIndex, Object value,
+    public static void defineProperty(ArrayObject array, int nextIndex, Object value,
             ExecutionContext cx) {
         // String propertyName = ToString(ToUint32(nextIndex));
         int propertyName = nextIndex;
@@ -200,7 +202,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the next array index
      */
-    public static int ArrayAccumulationSpreadElement(ExoticArray array, int nextIndex,
+    public static int ArrayAccumulationSpreadElement(ArrayObject array, int nextIndex,
             Object spreadObj, ExecutionContext cx) {
         /* steps 1-2 (cf. generated code) */
         /* steps 2-4 */
@@ -274,9 +276,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.7 Generator Comprehensions
+     * 12.2.? Generator Comprehensions
      * <p>
-     * 12.2.7.2 Runtime Semantics: Evaluation
+     * 12.2.?.2 Runtime Semantics: Evaluation
      * 
      * @param fd
      *            the function runtime info object
@@ -303,7 +305,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.7 Generator Comprehensions
+     * 12.2.? Generator Comprehensions
      * <p>
      * Runtime Semantics: Evaluation
      * 
@@ -332,9 +334,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.9 Template Literals
+     * 12.2.8 Template Literals
      * <p>
-     * 12.2.9.2.2 Runtime Semantics: GetTemplateCallSite
+     * 12.2.8.2.2 Runtime Semantics: GetTemplateCallSite
      * 
      * @param key
      *            the template literal key
@@ -344,11 +346,11 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the template call site object
      */
-    public static ExoticArray GetTemplateCallSite(int key, MethodHandle handle, ExecutionContext cx) {
+    public static ArrayObject GetTemplateCallSite(int key, MethodHandle handle, ExecutionContext cx) {
         assert cx.getCurrentScript() instanceof CompiledScript : cx.getCurrentScript();
         CompiledScript script = (CompiledScript) cx.getCurrentScript();
         /* step 1 */
-        ExoticArray callSite = script.getTemplateCallSite(key);
+        ArrayObject callSite = script.getTemplateCallSite(key);
         if (callSite != null) {
             return callSite;
         }
@@ -358,8 +360,8 @@ public final class ScriptRuntime {
         /* step 4 */
         int count = strings.length >>> 1;
         /* steps 5-6 */
-        ExoticArray siteObj = ArrayCreate(cx, count);
-        ExoticArray rawObj = ArrayCreate(cx, count);
+        ArrayObject siteObj = ArrayCreate(cx, count);
+        ArrayObject rawObj = ArrayCreate(cx, count);
         /* steps 7-8 */
         for (int i = 0, n = strings.length; i < n; i += 2) {
             int index = i >>> 1;
@@ -437,7 +439,7 @@ public final class ScriptRuntime {
             ExecutionContext cx, boolean strict) {
         /* steps 1-6 (generated code) */
         /* step 7 */
-        CheckObjectCoercible(cx, baseValue);
+        RequireObjectCoercible(cx, baseValue);
         /* steps 8-10 */
         return new Reference.PropertyIndexReference(baseValue, propertyNameString, strict);
     }
@@ -493,7 +495,7 @@ public final class ScriptRuntime {
             String propertyNameString, ExecutionContext cx, boolean strict) {
         /* steps 1-6 (generated code) */
         /* step 7 */
-        CheckObjectCoercible(cx, baseValue);
+        RequireObjectCoercible(cx, baseValue);
         /* steps 8-10 */
         return new Reference.PropertyNameReference(baseValue, propertyNameString, strict);
     }
@@ -545,7 +547,7 @@ public final class ScriptRuntime {
             ExecutionContext cx, boolean strict) {
         /* steps 1-6 (generated code) */
         /* step 7 */
-        CheckObjectCoercible(cx, baseValue);
+        RequireObjectCoercible(cx, baseValue);
         /* steps 8-10 */
         Reference<Object, String> ref = new Reference.PropertyIndexReference(baseValue,
                 propertyNameString, strict);
@@ -603,7 +605,7 @@ public final class ScriptRuntime {
             ExecutionContext cx, boolean strict) {
         /* steps 1-6 (generated code) */
         /* step 7 */
-        CheckObjectCoercible(cx, baseValue);
+        RequireObjectCoercible(cx, baseValue);
         /* steps 8-10 */
         Reference<Object, String> ref = new Reference.PropertyNameReference(baseValue,
                 propertyNameString, strict);
@@ -633,7 +635,7 @@ public final class ScriptRuntime {
             ExecutionContext cx, boolean strict) {
         /* steps 1-6 (generated code) */
         /* step 7 */
-        CheckObjectCoercible(cx, baseValue);
+        RequireObjectCoercible(cx, baseValue);
         /* step 8 */
         Object propertyKey = ToPropertyKey(cx, propertyNameValue);
         /* steps 9-10 */
@@ -666,7 +668,7 @@ public final class ScriptRuntime {
             ExecutionContext cx, boolean strict) {
         /* steps 1-6 (generated code) */
         /* step 7 */
-        CheckObjectCoercible(cx, baseValue);
+        RequireObjectCoercible(cx, baseValue);
         /* step 8 */
         Object propertyKey = ToPropertyKey(cx, propertyNameValue);
         /* steps 9-10 */
@@ -878,7 +880,7 @@ public final class ScriptRuntime {
         assert envRec instanceof FunctionEnvironmentRecord;
         Object actualThis = envRec.getThisBinding();
         ScriptObject baseValue = ((FunctionEnvironmentRecord) envRec).getSuperBase();
-        // CheckObjectCoercible(cx.getRealm(), baseValue);
+        // RequireObjectCoercible(cx.getRealm(), baseValue);
         if (baseValue == null) {
             throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         }
@@ -918,7 +920,7 @@ public final class ScriptRuntime {
         assert envRec instanceof FunctionEnvironmentRecord;
         Object actualThis = envRec.getThisBinding();
         ScriptObject baseValue = ((FunctionEnvironmentRecord) envRec).getSuperBase();
-        // CheckObjectCoercible(cx.getRealm(), baseValue);
+        // RequireObjectCoercible(cx.getRealm(), baseValue);
         if (baseValue == null) {
             throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         }
@@ -1311,8 +1313,8 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the array with the remaining elements from <var>iterator</var>
      */
-    public static ExoticArray createRestArray(Iterator<?> iterator, ExecutionContext cx) {
-        ExoticArray result = ArrayCreate(cx, 0);
+    public static ArrayObject createRestArray(Iterator<?> iterator, ExecutionContext cx) {
+        ArrayObject result = ArrayCreate(cx, 0);
         for (int n = 0; iterator.hasNext(); ++n) {
             Object nextValue = iterator.next();
             CreateDataPropertyOrThrow(cx, result, n, nextValue);
@@ -2317,54 +2319,59 @@ public final class ScriptRuntime {
      *             to signal an abrupt Return completion
      */
     public static Object delegatedYield(Object value, ExecutionContext cx) throws ReturnValue {
-        /* steps 1-3 (generated code) */
-        /* steps 4-5 */
+        /* steps 1-2 (generated code) */
+        /* steps 3-4 */
         ScriptObject iterator = GetIterator(cx, ToObject(cx, value));
-        /* step 6 */
-        boolean normalCompletion = true, throwCompletion = false;
+        /* step 5 */
         Object received = UNDEFINED;
-        /* step 7 */
+        /* step 6 */
         for (;;) {
-            ScriptObject innerResult;
-            if (normalCompletion) {
-                /* step 7a */
-                innerResult = IteratorNext(cx, iterator, received);
-            } else if (throwCompletion) {
-                /* step 7b */
-                innerResult = IteratorThrow(cx, iterator, received);
-            } else {
-                // TODO: spec bug - unhandled condition (bug 3033)
-                /* step 7? */
-                innerResult = IteratorReturn(cx, iterator, received);
-            }
-            /* steps 7c-7d */
+            /* step 6a (empty) */
+            /* step 6b */
+            ScriptObject innerResult = IteratorNext(cx, iterator, received);
+            /* steps 6f-6g */
             boolean done = IteratorComplete(cx, innerResult);
-            /* step 7e */
+            /* step 6h */
             if (done) {
                 return IteratorValue(cx, innerResult);
             }
-            /* step 7f */
             try {
+                /* step 6i */
                 received = GeneratorYield(cx, innerResult);
-                normalCompletion = true;
             } catch (ScriptException e) {
+                // FIXME: spec issue - change to GetMethod to avoid Has+Get?
+                /* step 6c */
                 if (HasProperty(cx, iterator, "throw")) {
-                    received = e.getValue();
-                    normalCompletion = false;
-                    throwCompletion = true;
-                } else {
-                    throw e;
+                    IteratorThrow(cx, iterator, e.getValue());
                 }
+                throw e;
             } catch (ReturnValue e) {
+                // FIXME: spec issue - change to GetMethod to avoid Has+Get?
+                /* step 6d */
                 if (HasProperty(cx, iterator, "return")) {
-                    received = e.getValue();
-                    normalCompletion = false;
-                    throwCompletion = false;
-                } else {
-                    throw e;
+                    Object innerReturnValue = IteratorReturn(cx, iterator, e.getValue());
+                    throw new ReturnValue(innerReturnValue);
                 }
+                throw e;
             }
         }
+    }
+
+    public static CallSite runtimeBootstrap(MethodHandles.Lookup caller, String name,
+            MethodType type) {
+        MethodHandle mh = MethodHandles.identity(Object[].class);
+        mh = mh.asCollector(Object[].class, type.parameterCount());
+        if ("rt:stack".equals(name) && type.parameterCount() > 1) {
+            // TODO: remove permute
+            int pc = type.parameterCount();
+            int[] reorder = new int[pc];
+            for (int i = 0; i < pc; ++i) {
+                reorder[i] = pc - 1 - i;
+            }
+            mh = MethodHandles.permuteArguments(mh, mh.type(), reorder);
+        }
+        mh = mh.asType(type);
+        return new ConstantCallSite(mh);
     }
 
     /**

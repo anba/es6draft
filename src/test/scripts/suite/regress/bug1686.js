@@ -13,6 +13,6 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=1686
 
 let ws = new WeakSet();
-assertThrows(() => ws.add(0), TypeError);
+assertThrows(TypeError, () => ws.add(0));
 assertFalse(ws.has(0));
 assertFalse(ws.delete(0));

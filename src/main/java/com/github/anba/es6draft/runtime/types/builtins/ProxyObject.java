@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptArray;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.CompletePropertyDescriptor;
@@ -19,9 +18,11 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.IsC
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -42,7 +43,7 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>9.5 Proxy Object Internal Methods and Internal Slots
  * </ul>
  */
-public class ExoticProxy implements ScriptObject {
+public class ProxyObject implements ScriptObject {
     /** [[ProxyTarget]] */
     private ScriptObject proxyTarget;
     /** [[ProxyHandler]] */
@@ -56,7 +57,7 @@ public class ExoticProxy implements ScriptObject {
      * @param handler
      *            the proxy handler object
      */
-    protected ExoticProxy(ScriptObject target, ScriptObject handler) {
+    protected ProxyObject(ScriptObject target, ScriptObject handler) {
         this.proxyTarget = target;
         this.proxyHandler = handler;
     }
@@ -110,7 +111,7 @@ public class ExoticProxy implements ScriptObject {
         this.proxyTarget = null;
     }
 
-    private static class CallabeExoticProxy extends ExoticProxy implements Callable {
+    private static class CallabeProxyObject extends ProxyObject implements Callable {
         /**
          * Constructs a new Proxy object.
          * 
@@ -119,7 +120,7 @@ public class ExoticProxy implements ScriptObject {
          * @param handler
          *            the proxy handler object
          */
-        public CallabeExoticProxy(ScriptObject target, ScriptObject handler) {
+        public CallabeProxyObject(ScriptObject target, ScriptObject handler) {
             super(target, handler);
         }
 
@@ -128,19 +129,19 @@ public class ExoticProxy implements ScriptObject {
          */
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            /* steps 1-2 */
+            /* steps 1-3 */
             ScriptObject handler = getProxyHandler(callerContext);
-            /* step 3 */
+            /* step 4 */
             ScriptObject target = getProxyTarget();
-            /* steps 4-5 */
+            /* steps 5-6 */
             Callable trap = GetMethod(callerContext, handler, "apply");
-            /* step 6 */
+            /* step 7 */
             if (trap == null) {
                 return ((Callable) target).call(callerContext, thisValue, args);
             }
-            /* step 7 */
-            ExoticArray argArray = CreateArrayFromList(callerContext, Arrays.asList(args));
             /* step 8 */
+            ArrayObject argArray = CreateArrayFromList(callerContext, Arrays.asList(args));
+            /* step 9 */
             return trap.call(callerContext, handler, target, thisValue, argArray);
         }
 
@@ -160,9 +161,8 @@ public class ExoticProxy implements ScriptObject {
         @Override
         public Realm getRealm(ExecutionContext cx) {
             /* 7.3.21 GetFunctionRealm ( obj ) Abstract Operation */
-            // FIXME: spec bug - revoked proxy not handled in 7.3.21 GetFunctionRealm (bug 3018)
             if (isRevoked()) {
-                throw newTypeError(cx, Messages.Key.ProxyRevoked);
+                return cx.getRealm();
             }
             return ((Callable) getProxyTarget()).getRealm(cx);
         }
@@ -176,7 +176,7 @@ public class ExoticProxy implements ScriptObject {
         }
     }
 
-    private static class ConstructorExoticProxy extends CallabeExoticProxy implements Constructor {
+    private static class ConstructorProxyObject extends CallabeProxyObject implements Constructor {
         /**
          * Constructs a new Proxy object.
          * 
@@ -185,7 +185,7 @@ public class ExoticProxy implements ScriptObject {
          * @param handler
          *            the proxy handler object
          */
-        public ConstructorExoticProxy(ScriptObject target, ScriptObject handler) {
+        public ConstructorProxyObject(ScriptObject target, ScriptObject handler) {
             super(target, handler);
         }
 
@@ -194,25 +194,25 @@ public class ExoticProxy implements ScriptObject {
          */
         @Override
         public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-            /* steps 1-2 */
+            /* steps 1-3 */
             ScriptObject handler = getProxyHandler(callerContext);
-            /* step 3 */
+            /* step 4 */
             ScriptObject target = getProxyTarget();
-            /* steps 4-5 */
+            /* steps 5-6 */
             Callable trap = GetMethod(callerContext, handler, "construct");
-            /* step 6 */
+            /* step 7 */
             if (trap == null) {
                 return ((Constructor) target).construct(callerContext, args);
             }
-            /* step 7 */
-            ExoticArray argArray = CreateArrayFromList(callerContext, Arrays.asList(args));
-            /* steps 8-9 */
+            /* step 8 */
+            ArrayObject argArray = CreateArrayFromList(callerContext, Arrays.asList(args));
+            /* steps 9-10 */
             Object newObj = trap.call(callerContext, handler, target, argArray);
-            /* step 10 */
+            /* step 11 */
             if (!Type.isObject(newObj)) {
                 throw newTypeError(callerContext, Messages.Key.NotObjectType);
             }
-            /* step 11 */
+            /* step 12 */
             return Type.objectValue(newObj);
         }
 
@@ -236,7 +236,7 @@ public class ExoticProxy implements ScriptObject {
      *            the proxy handler object
      * @return the new proxy object
      */
-    public static ExoticProxy ProxyCreate(ExecutionContext cx, Object target, Object handler) {
+    public static ProxyObject ProxyCreate(ExecutionContext cx, Object target, Object handler) {
         /* step 1 */
         if (!Type.isObject(target)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
@@ -248,15 +248,15 @@ public class ExoticProxy implements ScriptObject {
         ScriptObject proxyTarget = Type.objectValue(target);
         ScriptObject proxyHandler = Type.objectValue(handler);
         /* steps 3-7 */
-        ExoticProxy proxy;
+        ProxyObject proxy;
         if (IsCallable(proxyTarget)) {
             if (IsConstructor(proxyTarget)) {
-                proxy = new ConstructorExoticProxy(proxyTarget, proxyHandler);
+                proxy = new ConstructorProxyObject(proxyTarget, proxyHandler);
             } else {
-                proxy = new CallabeExoticProxy(proxyTarget, proxyHandler);
+                proxy = new CallabeProxyObject(proxyTarget, proxyHandler);
             }
         } else {
-            proxy = new ExoticProxy(proxyTarget, proxyHandler);
+            proxy = new ProxyObject(proxyTarget, proxyHandler);
         }
         /* step 8 */
         return proxy;
@@ -337,36 +337,36 @@ public class ExoticProxy implements ScriptObject {
      */
     @Override
     public ScriptObject getPrototypeOf(ExecutionContext cx) {
-        /* steps 1-2 */
+        /* steps 1-3 */
         ScriptObject handler = getProxyHandler(cx);
-        /* step 3 */
+        /* step 4 */
         ScriptObject target = getProxyTarget();
-        /* steps 4-5 */
+        /* steps 5-6 */
         Callable trap = GetMethod(cx, handler, "getPrototypeOf");
-        /* step 6 */
+        /* step 7 */
         if (trap == null) {
             return target.getPrototypeOf(cx);
         }
-        /* steps 7-8 */
+        /* steps 8-9 */
         Object handlerProto = trap.call(cx, handler, target);
-        /* step 9 */
+        /* step 10 */
         if (!Type.isObjectOrNull(handlerProto)) {
             throw newTypeError(cx, Messages.Key.NotObjectOrNull);
         }
         ScriptObject handlerProto_ = Type.objectValueOrNull(handlerProto);
-        /* steps 10-11 */
+        /* steps 11-12 */
         boolean extensibleTarget = IsExtensible(cx, target);
-        /* step 12 */
+        /* step 13 */
         if (extensibleTarget) {
             return handlerProto_;
         }
-        /* step 13 */
+        /* steps 14-15 */
         ScriptObject targetProto = target.getPrototypeOf(cx);
-        /* step 14 */
+        /* step 16 */
         if (!SameValue(handlerProto_, targetProto)) {
             throw newTypeError(cx, Messages.Key.ProxySamePrototype);
         }
-        /* step 15 */
+        /* step 17 */
         return handlerProto_;
     }
 
@@ -376,13 +376,13 @@ public class ExoticProxy implements ScriptObject {
     @Override
     public boolean setPrototypeOf(ExecutionContext cx, ScriptObject prototype) {
         /* step 1 (implicit) */
-        /* steps 2-3 */
+        /* steps 2-4 */
         ScriptObject handler = getProxyHandler(cx);
-        /* step 4 */
+        /* step 5 */
         ScriptObject target = getProxyTarget();
-        /* steps 5-6 */
+        /* steps 6-7 */
         Callable trap = GetMethod(cx, handler, "setPrototypeOf");
-        /* step 7 */
+        /* step 8 */
         if (trap == null) {
             return target.setPrototypeOf(cx, prototype);
         }
@@ -411,27 +411,27 @@ public class ExoticProxy implements ScriptObject {
      */
     @Override
     public boolean isExtensible(ExecutionContext cx) {
-        /* steps 1-2 */
+        /* steps 1-3 */
         ScriptObject handler = getProxyHandler(cx);
-        /* step 3 */
+        /* step 4 */
         ScriptObject target = getProxyTarget();
-        /* steps 4-5 */
+        /* steps 5-6 */
         Callable trap = GetMethod(cx, handler, "isExtensible");
-        /* step 6 */
+        /* step 7 */
         if (trap == null) {
             return target.isExtensible(cx);
         }
-        /* step 7 */
+        /* step 8 */
         Object trapResult = trap.call(cx, handler, target);
-        /* steps 8-9 */
+        /* steps 9-10 */
         boolean booleanTrapResult = ToBoolean(trapResult);
-        /* steps 10-11 */
+        /* steps 11-12 */
         boolean targetResult = target.isExtensible(cx);
-        /* step 12 */
+        /* step 13 */
         if (booleanTrapResult != targetResult) {
             throw newTypeError(cx, Messages.Key.ProxyExtensible);
         }
-        /* step 13 */
+        /* step 14 */
         return booleanTrapResult;
     }
 
@@ -440,28 +440,28 @@ public class ExoticProxy implements ScriptObject {
      */
     @Override
     public boolean preventExtensions(ExecutionContext cx) {
-        /* steps 1-2 */
+        /* steps 1-3 */
         ScriptObject handler = getProxyHandler(cx);
-        /* step 3 */
+        /* step 4 */
         ScriptObject target = getProxyTarget();
-        /* steps 4-5 */
+        /* steps 5-6 */
         Callable trap = GetMethod(cx, handler, "preventExtensions");
-        /* step 6 */
+        /* step 7 */
         if (trap == null) {
             return target.preventExtensions(cx);
         }
-        /* step 7 */
+        /* step 8 */
         Object trapResult = trap.call(cx, handler, target);
-        /* steps 8-9 */
+        /* steps 9-10 */
         boolean booleanTrapResult = ToBoolean(trapResult);
-        /* step 10 */
+        /* step 11 */
         if (booleanTrapResult) {
             boolean targetIsExtensible = target.isExtensible(cx);
             if (targetIsExtensible) {
                 throw newTypeError(cx, Messages.Key.ProxyExtensible);
             }
         }
-        /* step 11 */
+        /* step 12 */
         return booleanTrapResult;
     }
 
@@ -500,25 +500,25 @@ public class ExoticProxy implements ScriptObject {
      */
     private Property getOwnProperty(ExecutionContext cx, Object propertyKey) {
         /* step 1 (implicit) */
-        /* steps 2-3 */
+        /* steps 2-4 */
         ScriptObject handler = getProxyHandler(cx);
-        /* step 4 */
+        /* step 5 */
         ScriptObject target = getProxyTarget();
-        /* steps 5-6 */
+        /* steps 6-7 */
         Callable trap = GetMethod(cx, handler, "getOwnPropertyDescriptor");
-        /* step 7 */
+        /* step 8 */
         if (trap == null) {
             return __getOwnProperty(cx, target, propertyKey);
         }
-        /* steps 8-9 */
+        /* steps 9-10 */
         Object trapResultObj = trap.call(cx, handler, target, propertyKey);
-        /* step 10 */
+        /* step 11 */
         if (!(Type.isObject(trapResultObj) || Type.isUndefined(trapResultObj))) {
             throw newTypeError(cx, Messages.Key.ProxyNotObjectOrUndefined);
         }
-        /* steps 11-12 */
+        /* steps 12-13 */
         Property targetDesc = __getOwnProperty(cx, target, propertyKey);
-        /* step 13 */
+        /* step 14 */
         if (Type.isUndefined(trapResultObj)) {
             if (targetDesc == null) {
                 return null;
@@ -536,25 +536,25 @@ public class ExoticProxy implements ScriptObject {
             // need copy because of possible side-effects in IsExtensible()
             targetDesc = targetDesc.clone();
         }
-        /* steps 14-15 */
+        /* steps 15-16 */
         boolean extensibleTarget = IsExtensible(cx, target);
-        /* steps 16-17 */
+        /* steps 17-18 */
         PropertyDescriptor resultDesc = ToPropertyDescriptor(cx, trapResultObj);
-        /* step 18 */
-        CompletePropertyDescriptor(resultDesc);
         /* step 19 */
-        boolean valid = IsCompatiblePropertyDescriptor(extensibleTarget, resultDesc, targetDesc);
+        CompletePropertyDescriptor(resultDesc);
         /* step 20 */
+        boolean valid = IsCompatiblePropertyDescriptor(extensibleTarget, resultDesc, targetDesc);
+        /* step 21 */
         if (!valid) {
             throw newTypeError(cx, Messages.Key.ProxyIncompatibleDescriptor);
         }
-        /* step 21 */
+        /* step 22 */
         if (!resultDesc.isConfigurable()) {
             if (targetDesc == null || targetDesc.isConfigurable()) {
                 throw newTypeError(cx, Messages.Key.ProxyAbsentOrConfigurable);
             }
         }
-        /* step 22 */
+        /* step 23 */
         return resultDesc.toProperty();
     }
 
@@ -598,17 +598,17 @@ public class ExoticProxy implements ScriptObject {
     private boolean defineOwnProperty(ExecutionContext cx, Object propertyKey,
             PropertyDescriptor desc) {
         /* step 1 (implicit) */
-        /* steps 2-3 */
+        /* steps 2-4 */
         ScriptObject handler = getProxyHandler(cx);
-        /* step 4 */
+        /* step 5 */
         ScriptObject target = getProxyTarget();
-        /* steps 5-6 */
+        /* steps 6-7 */
         Callable trap = GetMethod(cx, handler, "defineProperty");
-        /* step 7 */
+        /* step 8 */
         if (trap == null) {
             return __defineOwnProperty(cx, target, propertyKey, desc);
         }
-        /* steps 8-9 */
+        /* step 9 */
         Object descObj = FromPropertyDescriptor(cx, desc);
         /* step 10 */
         Object trapResult = trap.call(cx, handler, target, propertyKey, descObj);
@@ -683,21 +683,21 @@ public class ExoticProxy implements ScriptObject {
      */
     private boolean hasProperty(ExecutionContext cx, Object propertyKey) {
         /* step 1 (implicit) */
-        /* steps 2-3 */
+        /* steps 2-4 */
         ScriptObject handler = getProxyHandler(cx);
-        /* step 4 */
+        /* step 5 */
         ScriptObject target = getProxyTarget();
-        /* steps 5-6 */
+        /* steps 6-7 */
         Callable trap = GetMethod(cx, handler, "has");
-        /* step 7 */
+        /* step 8 */
         if (trap == null) {
             return __hasProperty(cx, target, propertyKey);
         }
-        /* step 8 */
+        /* step 9 */
         Object trapResult = trap.call(cx, handler, target, propertyKey);
-        /* steps 9-10 */
+        /* steps 10-11 */
         boolean booleanTrapResult = ToBoolean(trapResult);
-        /* step 11 */
+        /* step 12 */
         if (!booleanTrapResult) {
             Property targetDesc = __getOwnProperty(cx, target, propertyKey);
             if (targetDesc != null) {
@@ -710,7 +710,7 @@ public class ExoticProxy implements ScriptObject {
                 }
             }
         }
-        /* step 12 */
+        /* step 13 */
         return booleanTrapResult;
     }
 
@@ -751,21 +751,21 @@ public class ExoticProxy implements ScriptObject {
      */
     private Object get(ExecutionContext cx, Object propertyKey, Object receiver) {
         /* step 1 (implicit) */
-        /* steps 2-3 */
+        /* steps 2-4 */
         ScriptObject handler = getProxyHandler(cx);
-        /* step 4 */
+        /* step 5 */
         ScriptObject target = getProxyTarget();
-        /* steps 5-6 */
+        /* steps 6-7 */
         Callable trap = GetMethod(cx, handler, "get");
-        /* step 7 */
+        /* step 8 */
         if (trap == null) {
             return __get(cx, target, propertyKey, receiver);
         }
-        /* steps 8-9 */
+        /* steps 9-10 */
         Object trapResult = trap.call(cx, handler, target, propertyKey, receiver);
-        /* steps 10-11 */
+        /* steps 11-12 */
         Property targetDesc = __getOwnProperty(cx, target, propertyKey);
-        /* step 12 */
+        /* step 13 */
         if (targetDesc != null) {
             if (targetDesc.isDataDescriptor() && !targetDesc.isConfigurable()
                     && !targetDesc.isWritable()) {
@@ -780,7 +780,7 @@ public class ExoticProxy implements ScriptObject {
                 }
             }
         }
-        /* step 13 */
+        /* step 14 */
         return trapResult;
     }
 
@@ -823,27 +823,27 @@ public class ExoticProxy implements ScriptObject {
      */
     private boolean set(ExecutionContext cx, Object propertyKey, Object value, Object receiver) {
         /* step 1 (implicit) */
-        /* steps 2-3 */
+        /* steps 2-4 */
         ScriptObject handler = getProxyHandler(cx);
-        /* step 4 */
+        /* step 5 */
         ScriptObject target = getProxyTarget();
-        /* steps 5-6 */
+        /* steps 6-7 */
         Callable trap = GetMethod(cx, handler, "set");
-        /* step 7 */
+        /* step 8 */
         if (trap == null) {
             return __set(cx, target, propertyKey, value, receiver);
         }
-        /* step 8 */
+        /* step 9 */
         Object trapResult = trap.call(cx, handler, target, propertyKey, value, receiver);
-        /* steps 9-10 */
+        /* steps 10-11 */
         boolean booleanTrapResult = ToBoolean(trapResult);
-        /* step 11 */
+        /* step 12 */
         if (!booleanTrapResult) {
             return false;
         }
-        /* steps 12-13 */
+        /* steps 13-14 */
         Property targetDesc = __getOwnProperty(cx, target, propertyKey);
-        /* step 14 */
+        /* step 15 */
         if (targetDesc != null) {
             if (targetDesc.isDataDescriptor() && !targetDesc.isConfigurable()
                     && !targetDesc.isWritable()) {
@@ -857,7 +857,7 @@ public class ExoticProxy implements ScriptObject {
                 }
             }
         }
-        /* step 15 */
+        /* step 16 */
         return true;
     }
 
@@ -896,35 +896,35 @@ public class ExoticProxy implements ScriptObject {
      */
     private boolean delete(ExecutionContext cx, Object propertyKey) {
         /* step 1 (implicit) */
-        /* steps 2-3 */
+        /* steps 2-4 */
         ScriptObject handler = getProxyHandler(cx);
-        /* step 4 */
+        /* step 5 */
         ScriptObject target = getProxyTarget();
-        /* steps 5-6 */
+        /* steps 6-7 */
         Callable trap = GetMethod(cx, handler, "deleteProperty");
-        /* step 7 */
+        /* step 8 */
         if (trap == null) {
             return __delete(cx, target, propertyKey);
         }
-        /* step 8 */
+        /* step 9 */
         Object trapResult = trap.call(cx, handler, target, propertyKey);
-        /* steps 9-10 */
+        /* steps 10-11 */
         boolean booleanTrapResult = ToBoolean(trapResult);
-        /* step 11 */
+        /* step 12 */
         if (!booleanTrapResult) {
             return false;
         }
-        /* steps 12-13 */
+        /* steps 13-14 */
         Property targetDesc = __getOwnProperty(cx, target, propertyKey);
-        /* step 14 */
+        /* step 15 */
         if (targetDesc == null) {
             return true;
         }
-        /* step 15 */
+        /* step 16 */
         if (!targetDesc.isConfigurable()) {
             throw newTypeError(cx, Messages.Key.ProxyDeleteNonConfigurable);
         }
-        /* step 16 */
+        /* step 17 */
         return true;
     }
 
@@ -933,23 +933,23 @@ public class ExoticProxy implements ScriptObject {
      */
     @Override
     public ScriptObject enumerate(ExecutionContext cx) {
-        /* steps 1-2 */
+        /* steps 1-3 */
         ScriptObject handler = getProxyHandler(cx);
-        /* step 3 */
+        /* step 4 */
         ScriptObject target = getProxyTarget();
-        /* steps 4-5 */
+        /* steps 5-6 */
         Callable trap = GetMethod(cx, handler, "enumerate");
-        /* step 6 */
+        /* step 7 */
         if (trap == null) {
             return target.enumerate(cx);
         }
-        /* steps 7-8 */
+        /* steps 8-9 */
         Object trapResult = trap.call(cx, handler, target);
-        /* step 9 */
+        /* step 10 */
         if (!Type.isObject(trapResult)) {
             throw newTypeError(cx, Messages.Key.ProxyNotObject);
         }
-        /* step 10 */
+        /* step 11 */
         return Type.objectValue(trapResult);
     }
 
@@ -965,40 +965,36 @@ public class ExoticProxy implements ScriptObject {
      * 9.5.12 [[OwnPropertyKeys]] ()
      */
     @Override
-    public ExoticArray ownPropertyKeys(ExecutionContext cx) {
-        /* steps 1-2 */
+    public List<?> ownPropertyKeys(ExecutionContext cx) {
+        /* steps 1-3 */
         ScriptObject handler = getProxyHandler(cx);
-        /* step 3 */
+        /* step 4 */
         ScriptObject target = getProxyTarget();
-        /* steps 4-5 */
+        /* steps 5-6 */
         Callable trap = GetMethod(cx, handler, "ownKeys");
-        /* step 6 */
+        /* step 7 */
         if (trap == null) {
             return target.ownPropertyKeys(cx);
         }
-        /* steps 7-8 */
-        Object trapResult = trap.call(cx, handler, target);
-        /* step 9 */
-        if (!Type.isObject(trapResult)) {
-            throw newTypeError(cx, Messages.Key.ProxyNotObject);
-        }
-        /* step 10 */
-        if (!(trapResult instanceof ExoticArray)) {
-            throw newTypeError(cx, Messages.Key.ProxyOwnKeysNotArray);
-        }
-        ExoticArray keys = (ExoticArray) trapResult;
+        /* step 8 */
+        Object trapResultArray = trap.call(cx, handler, target);
+        /* steps 9-10 */
+        List<Object> trapResult = CreateListFromArrayLike(cx, trapResultArray,
+                EnumSet.of(Type.String, Type.Symbol));
         /* steps 11-12 */
         boolean extensibleTarget = target.isExtensible(cx);
-        /* steps 13-16 */
-        Iterator<?> targetKeys = target.ownKeys(cx);
+        /* steps 13-15 */
+        List<?> targetKeys = target.ownPropertyKeys(cx);
+        /* step 16 */
+        // FIXME: spec bug
+        @SuppressWarnings("unused")
+        int targetLength = targetKeys.size();
         /* step 17 */
         ArrayList<Object> targetConfigurableKeys = new ArrayList<>();
         /* step 18 */
         ArrayList<Object> targetNonConfigurableKeys = new ArrayList<>();
-        /* steps 19-20 */
-        while (targetKeys.hasNext()) {
-            // FIXME: spec bug - missing ToPropertyKey()
-            Object key = ToPropertyKey(cx, targetKeys.next());
+        /* step 19 */
+        for (Object key : targetKeys) {
             Property desc;
             if (key instanceof String) {
                 desc = target.getOwnProperty(cx, (String) key);
@@ -1011,19 +1007,14 @@ public class ExoticProxy implements ScriptObject {
                 targetConfigurableKeys.add(key);
             }
         }
-        /* step 21 */
+        /* step 20 */
         if (extensibleTarget && targetNonConfigurableKeys.isEmpty()) {
-            return keys;
+            return trapResult;
         }
-        /* steps 22-23 */
-        long resultLength = ToLength(cx, Get(cx, keys, "length"));
-        /* step 24 */
+        /* step 21 */
         HashSet<Object> uncheckedResultKeys = new HashSet<>();
         HashMap<Object, Integer> uncheckedDuplicateKeys = null;
-        /* steps 25-26 */
-        for (long n = 0; n < resultLength; ++n) {
-            // TODO: spec issue - need to check key type (String or Symbol)?
-            Object key = Get(cx, keys, n);
+        for (Object key : trapResult) {
             if (!uncheckedResultKeys.add(key)) {
                 // Duplicate key in result set
                 if (uncheckedDuplicateKeys == null) {
@@ -1033,7 +1024,7 @@ public class ExoticProxy implements ScriptObject {
                 uncheckedDuplicateKeys.put(key, (count != null ? count + 1 : 1));
             }
         }
-        /* steps 27 */
+        /* steps 22 */
         for (Object key : targetNonConfigurableKeys) {
             if (!uncheckedResultKeys.remove(key)) {
                 throw newTypeError(cx, Messages.Key.ProxyNotConfigurable);
@@ -1042,11 +1033,11 @@ public class ExoticProxy implements ScriptObject {
                 updateUncheckedWithDuplicates(uncheckedResultKeys, uncheckedDuplicateKeys, key);
             }
         }
-        /* step 28 */
+        /* step 23 */
         if (extensibleTarget) {
-            return keys;
+            return trapResult;
         }
-        /* step 29 */
+        /* step 24 */
         for (Object key : targetConfigurableKeys) {
             if (!uncheckedResultKeys.remove(key)) {
                 throw newTypeError(cx, Messages.Key.NotExtensible);
@@ -1055,12 +1046,12 @@ public class ExoticProxy implements ScriptObject {
                 updateUncheckedWithDuplicates(uncheckedResultKeys, uncheckedDuplicateKeys, key);
             }
         }
-        /* step 30 */
+        /* step 25 */
         if (!uncheckedResultKeys.isEmpty()) {
             throw newTypeError(cx, Messages.Key.ProxyAbsentNotExtensible);
         }
-        /* step 31 */
-        return keys;
+        /* step 26 */
+        return trapResult;
     }
 
     private static void updateUncheckedWithDuplicates(HashSet<Object> uncheckedResultKeys,
@@ -1082,6 +1073,6 @@ public class ExoticProxy implements ScriptObject {
      */
     @Override
     public Iterator<?> ownKeys(ExecutionContext cx) {
-        return FromScriptArray(cx, ownPropertyKeys(cx));
+        return ownPropertyKeys(cx).iterator();
     }
 }

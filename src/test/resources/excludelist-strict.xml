@@ -14,6 +14,16 @@
   <!-- octal escape sequence (https://bugs.ecmascript.org/show_bug.cgi?id=1531) -->
   <test id="S15.5.4.11_A5_T1" />
 
+  <!-- Invalid regular expression pattern in web-mode -->
+  <test id="S7.8.5_A1.4_T1" />
+  <test id="S7.8.5_A1.4_T2" />
+  <test id="S7.8.5_A2.4_T1" />
+  <test id="S7.8.5_A2.4_T2" />
+  <test id="S15.10.2.9_A1_T4" />
+  <test id="S15.10.2.10_A2.1_T3" />
+  <test id="S15.10.2.10_A5.1_T1" />
+  <test id="S15.10.2.13_A1_T16" />
+
   <!-- ES6: poisoned 'caller' inherited from Function.prototype -->
   <test id="10.6-13-a-2" />
   <test id="10.6-13-a-3" />
@@ -39,4 +49,12 @@
   <test id="15.3.5.4_2-91gs" />
   <test id="15.3.5.4_2-92gs" />
   <test id="15.3.5.4_2-93gs" />
+
+  <!-- ES6 changes -->
+  <test id="12.14-1">ES6-change: Early Error if BoundNames of CatchParameter occurs in VarDeclaredNames
+    of Block
+  </test>
+  <test id="12.14-2">ES6-change: Early Error if BoundNames of CatchParameter occurs in VarDeclaredNames
+    of Block
+  </test>
 </excludeList>

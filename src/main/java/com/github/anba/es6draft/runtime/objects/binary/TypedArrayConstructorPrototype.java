@@ -51,7 +51,6 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 
@@ -188,8 +187,8 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 10 */
-        if (IsNeuteredBuffer(srcData)) {
-            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        if (IsDetachedBuffer(srcData)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
         }
         /* steps 11-12 */
         ElementType elementType = array.getElementType();
@@ -221,8 +220,8 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             /* step 21.d */
             data = AllocateArrayBuffer(cx, bufferConstructor);
             /* step 21.e */
-            if (IsNeuteredBuffer(srcData)) {
-                throw newTypeError(cx, Messages.Key.BufferNeutered);
+            if (IsDetachedBuffer(srcData)) {
+                throw newTypeError(cx, Messages.Key.BufferDetached);
             }
             /* steps 21.f-21.g */
             SetArrayBufferData(cx, data, byteLength);
@@ -310,8 +309,8 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             throw newTypeError(cx, Messages.Key.UninitializedObject);
         }
         /* step 4 */
-        if (IsNeuteredBuffer(buffer)) {
-            throw newTypeError(cx, Messages.Key.BufferNeutered);
+        if (IsDetachedBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
         }
         /* step 5 */
         if (!(obj instanceof TypedArrayObject)) {

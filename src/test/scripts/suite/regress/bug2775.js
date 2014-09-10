@@ -15,4 +15,4 @@ const {
 // No infinite recursion
 /(?:)/.exec("");
 
-assertThrows(() => RegExp[Symbol.create]().exec(""), TypeError);
+assertThrows(TypeError, () => RegExp[Symbol.create]().exec(""));

@@ -13,6 +13,7 @@ import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -20,9 +21,9 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 
 /**
- * An {@link ExoticArguments} object with 'special' behaviour for legacy use.
+ * An {@link ArgumentsObject} object with 'special' behaviour for legacy use.
  */
-public final class ExoticLegacyArguments extends OrdinaryObject {
+public final class LegacyArgumentsObject extends OrdinaryObject {
     private final FunctionObject callee;
     private final Object[] arguments;
     private final ParameterMap parameterMap;
@@ -39,7 +40,7 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
      * @param map
      *            the parameter map
      */
-    ExoticLegacyArguments(Realm realm, FunctionObject callee, Object[] arguments, ParameterMap map) {
+    LegacyArgumentsObject(Realm realm, FunctionObject callee, Object[] arguments, ParameterMap map) {
         super(realm, (Void) null);
         this.callee = callee;
         this.arguments = arguments;
@@ -47,7 +48,7 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
     }
 
     /**
-     * Creates a legacy {@link ExoticArguments} object
+     * Creates a legacy {@link ArgumentsObject} object
      * <p>
      * [Called from generated code]
      * 
@@ -63,7 +64,7 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
      *            the current lexical environment
      * @return the legacy arguments object
      */
-    public static ExoticLegacyArguments CreateLegacyArgumentsObject(ExecutionContext cx,
+    public static LegacyArgumentsObject CreateLegacyArgumentsObject(ExecutionContext cx,
             FunctionObject func, Object[] args, String[] formals,
             LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
         ParameterMap map = ParameterMap.create(args.length, formals, env);
@@ -71,7 +72,7 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
     }
 
     /**
-     * Creates a legacy {@link ExoticArguments} object
+     * Creates a legacy {@link ArgumentsObject} object
      * <p>
      * [Called from generated code]
      * 
@@ -85,13 +86,13 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
      *            the arguments object
      * @return the legacy arguments object
      */
-    public static ExoticLegacyArguments CreateLegacyArgumentsObject(ExecutionContext cx,
-            FunctionObject func, Object[] args, ExoticArguments arguments) {
+    public static LegacyArgumentsObject CreateLegacyArgumentsObject(ExecutionContext cx,
+            FunctionObject func, Object[] args, ArgumentsObject arguments) {
         return createLegacyArguments(cx, func, args, arguments.getParameterMap());
     }
 
     /**
-     * Creates a legacy {@link ExoticArguments} object
+     * Creates a legacy {@link ArgumentsObject} object
      * <p>
      * [Called from generated code]
      * 
@@ -103,13 +104,13 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
      *            the function arguments
      * @return the legacy arguments object
      */
-    public static ExoticLegacyArguments CreateLegacyArgumentsObject(ExecutionContext cx,
+    public static LegacyArgumentsObject CreateLegacyArgumentsObject(ExecutionContext cx,
             FunctionObject func, Object[] args) {
         return createLegacyArguments(cx, func, args, null);
     }
 
     /**
-     * Creates a legacy {@link ExoticArguments} object
+     * Creates a legacy {@link ArgumentsObject} object
      * 
      * @param cx
      *            the execution context
@@ -121,9 +122,9 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
      *            the parameter map
      * @return the legacy arguments object
      */
-    private static ExoticLegacyArguments createLegacyArguments(ExecutionContext cx,
+    private static LegacyArgumentsObject createLegacyArguments(ExecutionContext cx,
             FunctionObject func, Object[] args, ParameterMap map) {
-        ExoticLegacyArguments obj = new ExoticLegacyArguments(cx.getRealm(), func, args, map);
+        LegacyArgumentsObject obj = new LegacyArgumentsObject(cx.getRealm(), func, args, map);
         obj.setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
         return obj;
     }
@@ -167,7 +168,7 @@ public final class ExoticLegacyArguments extends OrdinaryObject {
 
     @Override
     protected boolean isEnumerableOwnProperty(String key) {
-        int index = ParameterMap.toArgumentIndex(key);
+        int index = Strings.toArgumentIndex(key);
         return 0 <= index && index < arguments.length;
     }
 

@@ -16,7 +16,7 @@ for (let v of [void 0, 0, 1, 1.4, NaN, "", "abc", Symbol()]) {
   class RE extends RegExp {
     exec() { return v }
   }
-  assertThrows(() => (new RE).test(""), TypeError);
+  assertThrows(TypeError, () => (new RE).test(""));
 }
 
 for (let v of [null]) {

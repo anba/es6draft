@@ -20,19 +20,19 @@ for (let sym of [Symbol.create, Symbol(), Symbol.for("uid")]) {
   assertTrue(!!sym);
 
   // ToNumber
-  assertThrows(() => Number(sym), TypeError);
-  assertThrows(() => (+sym), TypeError);
-  assertThrows(() => (~~sym), TypeError);
-  assertThrows(() => (sym | 0), TypeError);
-  assertThrows(() => (sym < 0), TypeError);
-  assertThrows(() => (sym < ""), TypeError);
+  assertThrows(TypeError, () => Number(sym));
+  assertThrows(TypeError, () => (+sym));
+  assertThrows(TypeError, () => (~~sym));
+  assertThrows(TypeError, () => (sym | 0));
+  assertThrows(TypeError, () => (sym < 0));
+  assertThrows(TypeError, () => (sym < ""));
 
   // ToString
-  assertThrows(() => String(sym), TypeError);
-  assertThrows(() => ("" + sym), TypeError);
-  assertThrows(() => (sym + ""), TypeError);
-  assertThrows(() => ("abc" + sym), TypeError);
-  assertThrows(() => (sym + "abc"), TypeError);
+  assertSame(Symbol.prototype.toString.call(sym), String(sym));
+  assertThrows(TypeError, () => ("" + sym));
+  assertThrows(TypeError, () => (sym + ""));
+  assertThrows(TypeError, () => ("abc" + sym));
+  assertThrows(TypeError, () => (sym + "abc"));
 
   // ToObject
   assertInstanceOf(Symbol, Object(sym));

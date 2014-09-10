@@ -6,7 +6,7 @@
  */
 
 const {
-  assertSame
+  assertEquals
 } = Assert;
 
 // 9.5.12 [[OwnPropertyKeys]]: Mutable keys array can violate object invariants
@@ -17,11 +17,10 @@ let p = new Proxy(o, {
   ownKeys() {
     return Object.defineProperty([], "0", {
       get() {
-        // Alternatively return a different property name here.
         this.length = 0;
         return "prop";
       }, configurable: true
     });
   }
 });
-assertSame(0, Object.getOwnPropertyNames(p).length);
+assertEquals(["prop"], Object.getOwnPropertyNames(p));

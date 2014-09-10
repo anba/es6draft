@@ -15,7 +15,7 @@ import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOp
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.NewPromiseCapability;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseCapability.IfAbruptRejectPromise;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,9 +36,9 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
 /**
  * <h1>25 Control Abstraction Objects</h1><br>
@@ -61,7 +61,6 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
 
     @Override
     public void initialize(ExecutionContext cx) {
-        addRestrictedFunctionProperties(cx);
         createProperties(cx, this, Properties.class);
     }
 
@@ -186,7 +185,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
                 return IfAbruptRejectPromise(cx, e, promiseCapability);
             }
             /* step 6 */
-            ExoticArray values = ArrayCreate(cx, 0);
+            ArrayObject values = ArrayCreate(cx, 0);
             /* step 7 */
             AtomicInteger remainingElementsCount = new AtomicInteger(1);
             /* steps 8-9 */
@@ -407,7 +406,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         private final int index;
 
         /** [[Values]] */
-        private final ExoticArray values;
+        private final ArrayObject values;
 
         /** [[Capabilities]] */
         private final PromiseCapability<?> capabilities;
@@ -418,14 +417,14 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         /** [[AlreadyCalled]] */
         private final AtomicBoolean alreadyCalled;
 
-        public PromiseAllResolveElementFunction(Realm realm, int index, ExoticArray values,
+        public PromiseAllResolveElementFunction(Realm realm, int index, ArrayObject values,
                 PromiseCapability<?> capabilities, AtomicInteger remainingElements,
                 AtomicBoolean alreadyCalled) {
             this(realm, index, values, capabilities, remainingElements, alreadyCalled, null);
             createDefaultFunctionProperties(ANONYMOUS, 1);
         }
 
-        private PromiseAllResolveElementFunction(Realm realm, int index, ExoticArray values,
+        private PromiseAllResolveElementFunction(Realm realm, int index, ArrayObject values,
                 PromiseCapability<?> capabilities, AtomicInteger remainingElements,
                 AtomicBoolean alreadyCalled, Void ignore) {
             super(realm, ANONYMOUS);
@@ -453,7 +452,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* step 3 */
             int index = this.index;
             /* step 4 */
-            ExoticArray values = this.values;
+            ArrayObject values = this.values;
             /* step 5 */
             PromiseCapability<?> promiseCapability = this.capabilities;
             /* step 6 */

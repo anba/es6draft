@@ -149,15 +149,13 @@ public final class Eval {
         boolean strictCaller = EvalFlags.Strict.isSet(flags);
         boolean globalCode = EvalFlags.GlobalCode.isSet(flags);
         boolean globalScope = EvalFlags.GlobalScope.isSet(flags);
-        boolean withStatement = EvalFlags.EnclosedByWithStatement.isSet(flags);
         assert direct || cx == cx.getRealm().defaultContext() : "indirect eval with non-default context";
         /* step 1 */
         if (!Type.isString(source)) {
             return source;
         }
         /* step 2 */
-        Script script = script(cx, caller, Type.stringValue(source), strictCaller, globalCode,
-                direct, globalScope, withStatement);
+        Script script = script(cx, caller, Type.stringValue(source).toString(), flags);
         /* step 3 */
         if (script == null) {
             return UNDEFINED;
@@ -263,29 +261,28 @@ public final class Eval {
         return result;
     }
 
-    private static Script script(ExecutionContext cx, ExecutionContext caller,
-            CharSequence sourceCode, boolean strict, boolean globalCode, boolean directEval,
-            boolean globalScope, boolean withStatement) {
+    private static Script script(ExecutionContext cx, ExecutionContext caller, String sourceCode,
+            int flags) {
         try {
             Realm realm = cx.getRealm();
             EnumSet<Parser.Option> options = EnumSet.of(Parser.Option.EvalScript);
-            if (strict) {
+            if (EvalFlags.Strict.isSet(flags)) {
                 options.add(Parser.Option.Strict);
             }
-            if (!globalCode) {
+            if (!EvalFlags.GlobalCode.isSet(flags)) {
                 options.add(Parser.Option.FunctionCode);
             }
-            if (directEval) {
+            if (EvalFlags.Direct.isSet(flags)) {
                 options.add(Parser.Option.DirectEval);
             }
-            if (!globalScope) {
+            if (!EvalFlags.GlobalScope.isSet(flags)) {
                 options.add(Parser.Option.LocalScope);
             }
-            if (withStatement) {
+            if (EvalFlags.EnclosedByWithStatement.isSet(flags)) {
                 options.add(Parser.Option.EnclosedByWithStatement);
             }
             Source source = evalSource(realm, caller);
-            return realm.getScriptLoader().evalScript(source, sourceCode.toString(), options);
+            return realm.getScriptLoader().evalScript(source, sourceCode, options);
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         }

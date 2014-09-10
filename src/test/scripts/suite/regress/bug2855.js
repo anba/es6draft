@@ -24,12 +24,12 @@ const {
 
   assertSame(fn, argumentsCaller(fn));
 
-  assertThrows(() => GeneratorFunction.call(fn, "'not strict'"), TypeError);
+  assertThrows(TypeError, () => GeneratorFunction.call(fn, "'not strict'"));
   assertSame(fn, argumentsCaller(fn));
 
-  assertThrows(() => GeneratorFunction.call(fn, "'use strict'"), TypeError);
+  assertThrows(TypeError, () => GeneratorFunction.call(fn, "'use strict'"));
   assertSame(fn, argumentsCaller(fn));
 
-  assertThrows(() => GeneratorFunction.call(fn, "'not strict'"), TypeError);
+  assertThrows(TypeError, () => GeneratorFunction.call(fn, "'not strict'"));
   assertSame(fn, argumentsCaller(fn));
 }

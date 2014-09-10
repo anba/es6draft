@@ -24,8 +24,8 @@ assertBuiltinFunction(Object.getOwnPropertySymbols, "getOwnPropertySymbols", 1);
   for (let v of primitives) {
     Object.getOwnPropertySymbols(v);
   }
-  assertThrows(() => Object.getOwnPropertySymbols(void 0), TypeError);
-  assertThrows(() => Object.getOwnPropertySymbols(null), TypeError);
+  assertThrows(TypeError, () => Object.getOwnPropertySymbols(void 0));
+  assertThrows(TypeError, () => Object.getOwnPropertySymbols(null));
 
   // wrapped primitives do not have own symbol-valued properties
   for (let v of primitives) {

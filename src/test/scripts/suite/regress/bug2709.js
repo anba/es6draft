@@ -14,20 +14,20 @@ const {
 
 // Global code, block level
 {
-  assertThrows(() => x, ReferenceError);
+  assertThrows(ReferenceError, () => x);
   let x;
 }
 
 // Function code, non-strict
 (function() {
-  assertThrows(() => x, ReferenceError);
+  assertThrows(ReferenceError, () => x);
   let x;
 })();
 
 // Function code, block level, non-strict
 (function() {
   {
-    assertThrows(() => x, ReferenceError);
+    assertThrows(ReferenceError, () => x);
     let x;
   }
 })();
@@ -35,7 +35,7 @@ const {
 // Function code, strict
 (function() {
   "use strict";
-  assertThrows(() => x, ReferenceError);
+  assertThrows(ReferenceError, () => x);
   let x;
 })();
 
@@ -43,7 +43,7 @@ const {
 (function() {
   "use strict";
   {
-    assertThrows(() => x, ReferenceError);
+    assertThrows(ReferenceError, () => x);
     let x;
   }
 })();

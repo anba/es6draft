@@ -80,6 +80,7 @@ public class TraceurTest {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             options.add(CompatibilityOption.AsyncFunction);
             options.add(CompatibilityOption.Exponentiation);
+            options.add(CompatibilityOption.Comprehension);
             return options;
         }
 
@@ -106,7 +107,7 @@ public class TraceurTest {
     @Parameter(0)
     public TraceurTestInfo test;
 
-    private static class TraceurTestInfo extends TestInfo {
+    private static final class TraceurTestInfo extends TestInfo {
         boolean expect = true;
         boolean async = false;
 
@@ -156,6 +157,8 @@ public class TraceurTest {
             assertFalse(async.doneCalled);
             global.getRealm().getWorld().runEventLoop(timers);
             assertTrue(async.doneCalled);
+        } else {
+            global.getRealm().getWorld().runEventLoop();
         }
     }
 
@@ -165,7 +168,7 @@ public class TraceurTest {
         return object;
     }
 
-    public static class AsyncHelper {
+    public static final class AsyncHelper {
         boolean doneCalled = false;
 
         @Properties.Function(name = "done", arity = 0)
@@ -175,7 +178,7 @@ public class TraceurTest {
         }
     }
 
-    private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
+    private static final class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
         private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*(.*)\\s*");
         private final Path basedir;
 

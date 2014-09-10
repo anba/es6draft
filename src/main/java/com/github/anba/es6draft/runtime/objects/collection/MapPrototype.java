@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.objects.collection.MapIteratorPrototype.CreateMapIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.util.Iterator;
 import java.util.Map.Entry;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -150,8 +149,7 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
             /* step 7 */
             LinkedMap<Object, Object> entries = m.getMapData();
             /* step 8 */
-            for (Iterator<Entry<Object, Object>> iter = entries.iterator(); iter.hasNext();) {
-                Entry<Object, Object> e = iter.next();
+            for (Entry<Object, Object> e : entries) {
                 callback.call(cx, thisArg, e.getValue(), e.getKey(), m);
             }
             /* step 9 */

@@ -9,14 +9,14 @@ const {
   assertSame, assertThrows
 } = Assert;
 
-// 22.2.3.2, 22.2.3.3, 22.2.3.17: Incorrect neutered buffer checks
+// 22.2.3.2, 22.2.3.3, 22.2.3.17: Incorrect detached buffer checks
 // https://bugs.ecmascript.org/show_bug.cgi?id=2908
 
 let ta = Int16Array[Symbol.create]();
-assertThrows(() => ta.byteLength, TypeError);
-assertThrows(() => ta.byteOffset, TypeError);
-assertThrows(() => ta.length, TypeError);
-assertThrows(() => ta.buffer, TypeError);
+assertThrows(TypeError, () => ta.byteLength);
+assertThrows(TypeError, () => ta.byteOffset);
+assertThrows(TypeError, () => ta.length);
+assertThrows(TypeError, () => ta.buffer);
 
 let buf = new ArrayBuffer(10);
 Int16Array.call(ta, buf, 2, 3);
@@ -25,8 +25,8 @@ assertSame(2, ta.byteOffset);
 assertSame(3, ta.length);
 assertSame(buf, ta.buffer);
 
-// Internal API call to neuter buffer
-neuterArrayBuffer(buf);
+// Internal API call to detach buffer
+detachArrayBuffer(buf);
 
 assertSame(0, ta.byteLength);
 assertSame(0, ta.byteOffset);

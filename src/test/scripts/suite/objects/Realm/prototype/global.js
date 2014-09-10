@@ -20,7 +20,7 @@ assertBuiltinFunction(get_global, "get global", 0);
 {
   let primitives = [void 0, true, false, 0, 1, 0.1, 0 / 0, "", "abc", Symbol()];
   for (let v of primitives) {
-    assertThrows(() => get_global.call(v), TypeError);
+    assertThrows(TypeError, () => get_global.call(v));
   }
 }
 
@@ -28,13 +28,13 @@ assertBuiltinFunction(get_global, "get global", 0);
 {
   let objects = [{}, [], Object, Object.create, function(){}, () => {}];
   for (let v of objects) {
-    assertThrows(() => get_global.call(v), TypeError);
+    assertThrows(TypeError, () => get_global.call(v));
   }
 }
 
 // steps 3-4 - TypeError if thisValue is an uninitialized Realm object
 {
-  assertThrows(() => get_global.call(Reflect.Realm[Symbol.create]()), TypeError);
+  assertThrows(TypeError, () => get_global.call(Reflect.Realm[Symbol.create]()));
 }
 
 // step 5 - Return the Realm's [[globalThis]] object

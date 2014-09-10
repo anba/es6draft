@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.parser;
 
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
@@ -15,7 +15,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -32,14 +32,73 @@ public final class JSONParser {
     private boolean parseCalled = false;
     private final JSONTokenStream ts;
     private final ExecutionContext cx;
+    private final String sourceName;
 
     public JSONParser(ExecutionContext cx, String source) {
         this.cx = cx;
-        ts = new JSONTokenStream(new TokenStreamInput(source));
+        this.sourceName = "<json>";
+        ts = new JSONTokenStream(this, new TokenStreamInput(source));
     }
 
-    private void reportParseError(Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, "<json>", 1, 1, messageKey, args);
+    private static int toLine(long sourcePosition) {
+        return (int) sourcePosition;
+    }
+
+    private static int toColumn(long sourcePosition) {
+        return (int) (sourcePosition >>> 32);
+    }
+
+    String getSourceName() {
+        return sourceName;
+    }
+
+    /**
+     * Reports a mismatched token error from tokenstream's current position.
+     * 
+     * @param expected
+     *            the expected token
+     * @param actual
+     *            the actual token in the token stream
+     * @return the parser exception
+     */
+    private ParserException reportTokenMismatch(Token expected, Token actual) {
+        if (actual == Token.EOF) {
+            throw reportEofError(Messages.Key.UnexpectedToken, actual.toString(),
+                    expected.toString());
+        }
+        throw reportSyntaxError(Messages.Key.UnexpectedToken, actual.toString(),
+                expected.toString());
+    }
+
+    /**
+     * Reports a parser eof-error from tokenstream's current position.
+     * 
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the parser exception
+     */
+    private ParserEOFException reportEofError(Messages.Key messageKey, String... args) {
+        long sourcePosition = ts.sourcePosition();
+        int line = toLine(sourcePosition), column = toColumn(sourcePosition);
+        throw new ParserEOFException(getSourceName(), line, column, messageKey, args);
+    }
+
+    /**
+     * Reports a syntax error from tokenstream's current position.
+     * 
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the parser exception
+     */
+    private ParserException reportSyntaxError(Messages.Key messageKey, String... args) {
+        long sourcePosition = ts.sourcePosition();
+        int line = toLine(sourcePosition), column = toColumn(sourcePosition);
+        throw new ParserException(ExceptionType.SyntaxError, getSourceName(), line, column,
+                messageKey, args);
     }
 
     /**
@@ -59,7 +118,7 @@ public final class JSONParser {
      */
     private void consume(Token tok) {
         if (tok != token())
-            reportParseError(Messages.Key.UnexpectedToken, token().toString(), tok.toString());
+            reportTokenMismatch(tok, token());
         Token next = ts.nextToken();
         if (DEBUG)
             System.out.printf("consume(%s) -> %s\n", tok, next);
@@ -148,7 +207,7 @@ public final class JSONParser {
         case LB:
             return jsonArray();
         default:
-            reportParseError(Messages.Key.InvalidToken, tok.toString());
+            reportSyntaxError(Messages.Key.InvalidToken, tok.toString());
             return null;
         }
     }
@@ -208,8 +267,8 @@ public final class JSONParser {
      * 
      * @return the script object represented by the JSON array
      */
-    private ExoticArray jsonArray() {
-        ExoticArray array = ArrayCreate(cx, 0);
+    private ArrayObject jsonArray() {
+        ArrayObject array = ArrayCreate(cx, 0);
         consume(Token.LB);
         if (token() != Token.RB) {
             long index = 0;

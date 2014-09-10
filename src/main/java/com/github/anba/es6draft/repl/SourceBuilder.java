@@ -6,7 +6,10 @@
  */
 package com.github.anba.es6draft.repl;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -19,12 +22,13 @@ import com.github.anba.es6draft.runtime.objects.date.DateObject;
 import com.github.anba.es6draft.runtime.objects.date.DatePrototype;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
 import com.github.anba.es6draft.runtime.objects.text.RegExpPrototype;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 
 /**
  *
@@ -211,7 +215,7 @@ public final class SourceBuilder {
                     return DatePrototype.Properties.toString(cx, value).toString();
                 } else if (objValue instanceof RegExpObject) {
                     return RegExpPrototype.Properties.toString(cx, value).toString();
-                } else if (objValue instanceof ExoticArray) {
+                } else if (objValue instanceof ArrayObject) {
                     return arrayToSource(cx, stack, objValue);
                 } else {
                     return objectToSource(cx, stack, objValue);
@@ -228,7 +232,7 @@ public final class SourceBuilder {
     private static final Pattern namePattern = Pattern
             .compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*");
 
-    private String propertyKeyToSource(Object key) {
+    private String propertyKeyToSource(ExecutionContext cx, Object key) {
         if (key instanceof String) {
             String s = (String) key;
             if (namePattern.matcher(s).matches()) {
@@ -237,11 +241,24 @@ public final class SourceBuilder {
             return format(Strings.quote(s), Style.String);
         }
         assert key instanceof Symbol;
-        String description = ((Symbol) key).getDescription();
-        if (description == null) {
-            description = "Symbol()";
+        return String.format("[%s]", format(symbolDescription(cx, (Symbol) key), Style.Symbol));
+    }
+
+    private static String symbolDescription(ExecutionContext cx, Symbol symbol) {
+        for (BuiltinSymbol builtin : BuiltinSymbol.values()) {
+            if (builtin != BuiltinSymbol.NONE && builtin.get() == symbol) {
+                return symbol.getDescription();
+            }
         }
-        return format(String.format("[%s]", description), Style.Symbol);
+        String registered = cx.getRealm().getSymbolRegistry().getKey(symbol);
+        if (registered != null) {
+            return String.format("Symbol.for(%s)", Strings.quote(registered));
+        }
+        String description = symbol.getDescription();
+        if (description != null) {
+            return String.format("Symbol(%s)", Strings.quote(description));
+        }
+        return "Symbol()";
     }
 
     private static Property getOwnProperty(ExecutionContext cx, ScriptObject object, Object key) {
@@ -278,8 +295,8 @@ public final class SourceBuilder {
         }
         StringBuilder properties = new StringBuilder();
         for (int i = 0; keys.hasNext() && i < maxObjectProperties;) {
-            Object k = ToPropertyKey(cx, keys.next());
-            String key = propertyKeyToSource(k);
+            Object k = keys.next();
+            String key = propertyKeyToSource(cx, k);
             Property prop = getOwnProperty(cx, object, k);
             if (prop == null || !prop.isEnumerable()) {
                 continue;

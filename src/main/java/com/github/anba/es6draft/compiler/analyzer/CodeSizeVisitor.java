@@ -670,7 +670,7 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
         case NewExpression:
             return 10;
         default:
-            throw new IllegalStateException();
+            throw new AssertionError();
         }
     }
 

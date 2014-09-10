@@ -7,12 +7,7 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.2 Primary Expression</h2><br>
- * <h3>12.2.4 Array Initializer</h3>
- * <ul>
- * <li>12.2.4.2 Array Comprehension
- * </ul>
+ * Extension: Array and Generator Comprehension
  */
 public abstract class ComprehensionQualifier extends AstNode {
     protected ComprehensionQualifier(long beginPosition, long endPosition) {

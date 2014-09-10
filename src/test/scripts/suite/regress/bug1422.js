@@ -14,7 +14,7 @@ const {
 
 function F(){}
 Object.defineProperty(F, Symbol.create, {value() { return null }});
-assertThrows(() => new F, TypeError);
+assertThrows(TypeError, () => new F);
 
 let P = new Proxy(function(){}, {construct() { return null }});
-assertThrows(() => new P, TypeError);
+assertThrows(TypeError, () => new P);

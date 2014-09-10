@@ -8,7 +8,7 @@ package com.github.anba.es6draft.v8;
 
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
-import static com.github.anba.es6draft.v8.V8TestGlobalObject.newTestGlobalObjectAllocator;
+import static com.github.anba.es6draft.v8.V8TestGlobalObject.newGlobalObjectAllocator;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
@@ -68,8 +68,7 @@ public class MiniJSUnitTest {
         @Override
         protected ObjectAllocator<V8TestGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
-            return newTestGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
-                    scriptCache);
+            return newGlobalObjectAllocator(console, test, scriptCache);
         }
     };
 

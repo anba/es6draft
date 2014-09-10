@@ -31,8 +31,8 @@ assertBuiltinFunction(Object.getOwnPropertyNames, "getOwnPropertyNames", 1);
   for (let v of primitives) {
     Object.getOwnPropertyNames(v);
   }
-  assertThrows(() => Object.getOwnPropertyNames(void 0), TypeError);
-  assertThrows(() => Object.getOwnPropertyNames(null), TypeError);
+  assertThrows(TypeError, () => Object.getOwnPropertyNames(void 0));
+  assertThrows(TypeError, () => Object.getOwnPropertyNames(null));
 
   // wrapped primitives do not have own properties...
   for (let v of [for (v of primitives) if (typeof v !== "string") v]) {

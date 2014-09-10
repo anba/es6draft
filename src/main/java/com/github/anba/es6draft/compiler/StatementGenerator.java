@@ -111,14 +111,10 @@ final class StatementGenerator extends
 
     private static final class Methods {
         // class: AbstractOperations
-        static final MethodDesc AbstractOperations_HasProperty = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "HasProperty", Type
-                        .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
-                                Types.ScriptObject, Types.String));
-
-        static final MethodDesc AbstractOperations_Invoke = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "Invoke", Type.getMethodType(Types.Object,
-                        Types.ExecutionContext, Types.ScriptObject, Types.String, Types.Object_));
+        static final MethodDesc AbstractOperations_IteratorClose = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "IteratorClose", Type.getMethodType(
+                        Type.VOID_TYPE, Types.ExecutionContext, Types.ScriptObject,
+                        Type.BOOLEAN_TYPE));
 
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
@@ -776,7 +772,7 @@ final class StatementGenerator extends
         mv.catchHandler(handlerCatch, Types.ScriptException);
         mv.store(exception);
 
-        InvokeIfPresent(iterator, "throw", exception, mv);
+        IteratorClose(iterator, true, mv);
 
         mv.load(exception);
         mv.athrow();
@@ -795,7 +791,7 @@ final class StatementGenerator extends
             mv.catchHandler(handlerReturn, Types.ReturnValue);
             mv.store(returnValue);
 
-            InvokeIfPresent(iterator, "return", null, mv);
+            IteratorClose(iterator, false, mv);
 
             mv.load(returnValue);
             mv.athrow();
@@ -806,7 +802,7 @@ final class StatementGenerator extends
         for (TempLabel temp : tempLabels) {
             mv.mark(temp);
 
-            InvokeIfPresent(iterator, "return", null, mv);
+            IteratorClose(iterator, false, mv);
 
             mv.goTo(temp, completion);
         }
@@ -814,34 +810,13 @@ final class StatementGenerator extends
         return Completion.Abrupt; // Return or Break
     }
 
-    private void InvokeIfPresent(Variable<ScriptIterator<?>> iterator, String name,
-            Variable<ScriptException> exception, StatementVisitor mv) {
-        Label hasOwn = new Label();
+    private void IteratorClose(Variable<ScriptIterator<?>> iterator, boolean throwCompletion,
+            StatementVisitor mv) {
         mv.loadExecutionContext();
         mv.load(iterator);
         mv.invoke(Methods.ScriptIterator_getScriptObject);
-        mv.aconst(name);
-        mv.invoke(Methods.AbstractOperations_HasProperty);
-        mv.ifeq(hasOwn);
-        {
-            mv.loadExecutionContext();
-            mv.load(iterator);
-            mv.invoke(Methods.ScriptIterator_getScriptObject);
-            mv.aconst(name);
-            if (exception != null) {
-                mv.newarray(1, Types.Object);
-                mv.dup();
-                mv.iconst(0);
-                mv.load(exception);
-                mv.invoke(Methods.ScriptException_getValue);
-                mv.astore(Types.Object);
-            } else {
-                mv.newarray(0, Types.Object);
-            }
-            mv.invoke(Methods.AbstractOperations_Invoke);
-            mv.pop();
-        }
-        mv.mark(hasOwn);
+        mv.iconst(throwCompletion);
+        mv.invoke(Methods.AbstractOperations_IteratorClose);
     }
 
     private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion ForInOfBodyEvaluationInner(
@@ -882,12 +857,12 @@ final class StatementGenerator extends
             // stack: [nextValue] -> [nextValue, iterEnv]
             newDeclarativeEnvironment(mv);
             {
-                // 13.6.4.4 Runtime Semantics: BindingInstantiation :: ForDeclaration
-                // stack: [nextValue, iterEnv] -> [iterEnv, nextValue, envRec]
-                mv.dupX1();
+                // 13.6.4.6 Runtime Semantics: BindingInstantiation :: ForDeclaration
+                // stack: [nextValue, iterEnv] -> [nextValue, iterEnv, envRec]
+                mv.dup();
                 mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
-                // stack: [iterEnv, nextValue, envRec] -> [iterEnv, envRec, nextValue]
+                // stack: [nextValue, iterEnv, envRec] -> [nextValue, envRec, iterEnv]
                 for (Name name : BoundNames(lexicalBinding.getBinding())) {
                     if (isConst) {
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
@@ -898,18 +873,21 @@ final class StatementGenerator extends
                     }
                 }
                 mv.swap();
-
-                // 12.2.4.2.2 Runtime Semantics: BindingInitialization :: ForBinding
-                if (lexicalBinding.getBinding() instanceof BindingPattern) {
-                    ensureObjectOrThrow(lexicalBinding, ValType.Any, mv);
-                }
-
-                // stack: [iterEnv, envRec, nextValue] -> [iterEnv]
-                BindingInitializationWithEnvironment(lexicalBinding.getBinding(), mv);
             }
-            // stack: [iterEnv] -> []
+            // stack: [nextValue, envRec, iterEnv] -> [nextValue, envRec]
             pushLexicalEnvironment(mv);
             mv.enterScope(node);
+
+            // stack: [nextValue, envRec] -> [envRec, nextValue]
+            mv.swap();
+
+            // 13.6.4.5 Runtime Semantics: BindingInitialization :: ForBinding
+            if (lexicalBinding.getBinding() instanceof BindingPattern) {
+                ensureObjectOrThrow(lexicalBinding, ValType.Any, mv);
+            }
+
+            // stack: [envRec, nextValue] -> []
+            BindingInitializationWithEnvironment(lexicalBinding.getBinding(), mv);
         }
 
         /* step 3i */
@@ -1200,7 +1178,7 @@ final class StatementGenerator extends
                 if (initializer != null) {
                     ValType type = expressionBoxedValue(initializer, mv);
                     if (binding.getBinding() instanceof BindingPattern) {
-                        ToObject(type, mv);
+                        ToObject(binding.getBinding(), type, mv);
                     }
                 } else {
                     assert binding.getBinding() instanceof BindingIdentifier;
@@ -1257,13 +1235,12 @@ final class StatementGenerator extends
             assert binding instanceof BindingPattern;
             /* steps 1-3 */
             ValType type = expressionBoxedValue(initializer, mv);
-            /* step 4 */
-            ensureObjectOrThrow(binding, type, mv);
+            ToObject(binding, type, mv);
         }
-        /* step 5 */
+        /* step 5/4 */
         getEnvironmentRecord(mv);
         mv.swap();
-        /* step 6 */
+        /* step 6/5 */
         BindingInitializationWithEnvironment(binding, mv);
         return Completion.Normal;
     }
@@ -1663,37 +1640,40 @@ final class StatementGenerator extends
         // stack: [ex] -> [ex, catchEnv]
         newDeclarativeEnvironment(mv);
         {
-            // stack: [ex, catchEnv] -> [catchEnv, ex, envRec]
-            mv.dupX1();
+            // stack: [ex, catchEnv] -> [ex, catchEnv, envRec]
+            mv.dup();
             mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
             /* step 3 */
             // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
-            // [catchEnv, ex, envRec] -> [catchEnv, envRec, ex]
+            // [ex, catchEnv, envRec] -> [ex, envRec, catchEnv]
             for (Name name : BoundNames(catchParameter)) {
                 createMutableBinding(name, false, mv);
             }
             mv.swap();
-
-            /* steps 4-5 */
-            // 13.14.3 Runtime Semantics: BindingInitialization :: CatchParameter
-            if (catchParameter instanceof BindingPattern) {
-                ensureObjectOrThrow(catchParameter, ValType.Any, mv);
-            }
-            // stack: [catchEnv, envRec, ex] -> [catchEnv]
-            BindingInitializationWithEnvironment(catchParameter, mv);
         }
-        /* step 6 */
-        // stack: [catchEnv] -> []
+        /* step 4 */
+        // stack: [ex, envRec, catchEnv] -> [ex, envRec]
         pushLexicalEnvironment(mv);
+        mv.enterScope(node);
+
+        // stack: [ex, envRec] -> [envRec, ex]
+        mv.swap();
+
+        /* steps 5-6 */
+        // 13.14.3 Runtime Semantics: BindingInitialization :: CatchParameter
+        if (catchParameter instanceof BindingPattern) {
+            ensureObjectOrThrow(catchParameter, ValType.Any, mv);
+        }
+        // stack: [envRec, ex] -> []
+        BindingInitializationWithEnvironment(catchParameter, mv);
 
         /* step 7 */
-        mv.enterScope(node);
         Completion result = catchBlock.accept(this, mv);
-        mv.exitScope();
 
         /* step 8 */
         // restore previous lexical environment
+        mv.exitScope();
         if (!result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
@@ -1720,33 +1700,36 @@ final class StatementGenerator extends
         // stack: [ex] -> [ex, catchEnv]
         newDeclarativeEnvironment(mv);
         {
-            // stack: [ex, catchEnv] -> [catchEnv, ex, envRec]
-            mv.dupX1();
+            // stack: [ex, catchEnv] -> [ex, catchEnv, envRec]
+            mv.dup();
             mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
             /* step 3 */
             // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
-            // [catchEnv, ex, envRec] -> [catchEnv, envRec, ex]
+            // [ex, catchEnv, envRec] -> [ex, envRec, catchEnv]
             for (Name name : BoundNames(catchParameter)) {
                 createMutableBinding(name, false, mv);
             }
             mv.swap();
-
-            /* steps 4-5 */
-            // 13.14.3 Runtime Semantics: BindingInitialization :: CatchParameter
-            if (catchParameter instanceof BindingPattern) {
-                ensureObjectOrThrow(catchParameter, ValType.Any, mv);
-            }
-            // stack: [catchEnv, envRec, ex] -> [catchEnv]
-            BindingInitializationWithEnvironment(catchParameter, mv);
         }
-        /* step 6 */
-        // stack: [catchEnv] -> []
+        /* step 4 */
+        // stack: [ex, envRec, catchEnv] -> [ex, envRec]
         pushLexicalEnvironment(mv);
+        mv.enterScope(node);
+
+        // stack: [ex, envRec] -> [envRec, ex]
+        mv.swap();
+
+        /* steps 5-6 */
+        // 13.14.3 Runtime Semantics: BindingInitialization :: CatchParameter
+        if (catchParameter instanceof BindingPattern) {
+            ensureObjectOrThrow(catchParameter, ValType.Any, mv);
+        }
+        // stack: [envRec, ex] -> []
+        BindingInitializationWithEnvironment(catchParameter, mv);
 
         /* step 7 */
         Completion result;
-        mv.enterScope(node);
         ToBoolean(expressionValue(node.getGuard(), mv), mv);
         mv.ifeq(l0);
         {
@@ -1759,10 +1742,10 @@ final class StatementGenerator extends
             }
         }
         mv.mark(l0);
-        mv.exitScope();
 
         /* step 8 */
         // restore previous lexical environment
+        mv.exitScope();
         popLexicalEnvironment(mv);
 
         /* step 9 */
@@ -1795,10 +1778,9 @@ final class StatementGenerator extends
             assert binding instanceof BindingPattern;
             /* steps 1-3 */
             ValType type = expressionBoxedValue(initializer, mv);
-            /* step 4 */
-            ensureObjectOrThrow(binding, type, mv);
+            ToObject(binding, type, mv);
         }
-        /* step 5 */
+        /* step 5/4 */
         BindingInitialization(binding, mv);
         return Completion.Normal;
     }
@@ -1874,7 +1856,7 @@ final class StatementGenerator extends
         ValType type = expressionValue(node.getExpression(), mv);
 
         /* steps 2-3 */
-        ToObject(type, mv);
+        ToObject(node, type, mv);
 
         /* steps 4-7 */
         // create new object lexical environment (withEnvironment-flag = true)

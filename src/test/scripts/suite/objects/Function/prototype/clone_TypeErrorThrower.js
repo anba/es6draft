@@ -9,37 +9,37 @@ const {
   assertSame, assertNotSame, assertEquals,
   assertTrue, assertFalse,
   assertDataProperty, assertAccessorProperty,
+  assertUndefined, assertCallable,
 } = Assert;
 
 // %ThrowTypeError% default properties
 {
-  let ThrowTypeError = Object.getOwnPropertyDescriptor(Object, "caller").get;
-  let tte = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller").get;
+  let ThrowTypeError = Object.getOwnPropertyDescriptor(Function.prototype, "caller").get;
+  let tte = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller");
 
-  assertSame(ThrowTypeError, tte);
-  assertAccessorProperty(tte, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
-  assertAccessorProperty(tte, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
-  assertDataProperty(tte, "length", {value: 0, writable: false, enumerable: false, configurable: false});
-  assertFalse(tte.hasOwnProperty("name"));
-  assertEquals(["arguments", "caller", "length"], Object.getOwnPropertyNames(tte).sort());
-  assertEquals([], Object.getOwnPropertySymbols(tte));
-  assertFalse(Object.isExtensible(tte));
-  assertSame(Function.prototype, Object.getPrototypeOf(tte));
+  assertCallable(ThrowTypeError);
+  assertUndefined(tte);
+  assertUndefined(Object.getOwnPropertyDescriptor(ThrowTypeError, "arguments"));
+  assertUndefined(Object.getOwnPropertyDescriptor(ThrowTypeError, "caller"));
+  assertDataProperty(ThrowTypeError, "length", {value: 0, writable: false, enumerable: false, configurable: false});
+  assertFalse(ThrowTypeError.hasOwnProperty("name"));
+  assertEquals(["length"], Object.getOwnPropertyNames(ThrowTypeError).sort());
+  assertEquals([], Object.getOwnPropertySymbols(ThrowTypeError));
+  assertFalse(Object.isExtensible(ThrowTypeError));
+  assertSame(Function.prototype, Object.getPrototypeOf(ThrowTypeError));
 }
 
 // Same realm clone
 {
-  let ThrowTypeError = Object.getOwnPropertyDescriptor(Object, "caller").get;
-  let tte = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller").get;
-  let clone = tte.toMethod({});
+  let ThrowTypeError = Object.getOwnPropertyDescriptor(Function.prototype, "caller").get;
+  let clone = ThrowTypeError.toMethod({});
 
-  assertNotSame(tte, clone);
   assertNotSame(ThrowTypeError, clone);
-  assertAccessorProperty(clone, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
-  assertAccessorProperty(clone, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
+  assertUndefined(Object.getOwnPropertyDescriptor(clone, "arguments"));
+  assertUndefined(Object.getOwnPropertyDescriptor(clone, "caller"));
   assertFalse(clone.hasOwnProperty("length"));
   assertFalse(clone.hasOwnProperty("name"));
-  assertEquals(["arguments", "caller"], Object.getOwnPropertyNames(clone).sort());
+  assertEquals([], Object.getOwnPropertyNames(clone).sort());
   assertEquals([], Object.getOwnPropertySymbols(clone));
   assertTrue(Object.isExtensible(clone));
   assertSame(Function.prototype, Object.getPrototypeOf(clone));
@@ -48,20 +48,18 @@ const {
 // Foreign realm clone
 {
   let realm = new Reflect.Realm();
-  let ThrowTypeError = Object.getOwnPropertyDescriptor(Object, "caller").get;
-  let foreignThrowTypeError = Object.getOwnPropertyDescriptor(realm.global.Object, "caller").get;
-  let tte = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller").get;
-  let clone = realm.global.Function.prototype.toMethod.call(tte, {});
+  let ThrowTypeError = Object.getOwnPropertyDescriptor(Function.prototype, "caller").get;
+  let foreignThrowTypeError = Object.getOwnPropertyDescriptor(realm.global.Function.prototype, "caller").get;
+  let clone = realm.global.Function.prototype.toMethod.call(ThrowTypeError, {});
 
   assertNotSame(ThrowTypeError, foreignThrowTypeError);
-  assertNotSame(tte, clone);
   assertNotSame(ThrowTypeError, clone);
   assertNotSame(foreignThrowTypeError, clone);
-  assertAccessorProperty(clone, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
-  assertAccessorProperty(clone, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: true});
+  assertUndefined(Object.getOwnPropertyDescriptor(clone, "arguments"));
+  assertUndefined(Object.getOwnPropertyDescriptor(clone, "caller"));
   assertFalse(clone.hasOwnProperty("length"));
   assertFalse(clone.hasOwnProperty("name"));
-  assertEquals(["arguments", "caller"], Object.getOwnPropertyNames(clone).sort());
+  assertEquals([], Object.getOwnPropertyNames(clone).sort());
   assertEquals([], Object.getOwnPropertySymbols(clone));
   assertTrue(Object.isExtensible(clone));
   assertSame(Function.prototype, Object.getPrototypeOf(clone));

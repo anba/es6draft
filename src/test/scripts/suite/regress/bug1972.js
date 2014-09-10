@@ -14,8 +14,8 @@ const {
 
 // class MyError extends Error {}
 // 
-// assertThrows(() => Reflect.hasOwn(void 0, {toString(){ throw new MyError }}), TypeError);
-// assertThrows(() => Reflect.hasOwn(null, {toString(){ throw new MyError }}), TypeError);
-// assertThrows(() => Reflect.hasOwn("", {toString(){ throw new MyError }}), MyError);
+// assertThrows(TypeError, () => Reflect.hasOwn(void 0, {toString(){ throw new MyError }}));
+// assertThrows(TypeError, () => Reflect.hasOwn(null, {toString(){ throw new MyError }}));
+// assertThrows(MyError, () => Reflect.hasOwn("", {toString(){ throw new MyError }}));
 
 assertUndefined(Reflect.hasOwn);

@@ -16,4 +16,4 @@ function tryDefineCaller() {
   "use strict";
   Object.defineProperty(arguments, "caller", {value: null});
 }
-assertThrows(() => tryDefineCaller(), TypeError);
+assertThrows(TypeError, () => tryDefineCaller());

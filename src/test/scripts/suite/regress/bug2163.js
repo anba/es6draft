@@ -23,7 +23,7 @@ Object.defineProperty(source.buffer, "constructor", {
 });
 
 let target = Int8Array[Symbol.create]();
-assertThrows(() => Int8Array.call(target, source), MyError);
+assertThrows(MyError, () => Int8Array.call(target, source));
 assertSame(1, accessed);
 assertSame("[object Int8Array]", Object.prototype.toString.call(target));
 
@@ -39,6 +39,6 @@ target.constructor = function Ctor(len) {
 };
 
 // Use %TypedArray%.prototype.map to obtain [[ArrayLength]] value
-assertThrows(() => target.map(() => {}), StopConstructor);
+assertThrows(StopConstructor, () => target.map(() => {}));
 assertSame(1, called);
 }

@@ -18,7 +18,7 @@ for (let w of [{}, {writable: true}, {writable: false}]) {
     for (let c of [{}, {configurable: true}, {configurable: false}]) {
       let d = Object.assign({value: 1}, w, e, c);
       for (let index of [-0, +0, -1, +1]) {
-        assertThrows(() => Reflect.defineProperty(ta, index, d), TypeError);
+        assertThrows(TypeError, () => Reflect.defineProperty(ta, index, d));
       }
     }
   }

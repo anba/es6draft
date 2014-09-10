@@ -130,6 +130,9 @@ fast/js/kde/RegExp.js
 # various new built-in properties
 fast/js/Object-getOwnPropertyNames.js
 
+# restricted properties only present on Function.prototype
+strict-throw-type-error.js
+
 
 #######################################
 # ES6 related syntax changes          #

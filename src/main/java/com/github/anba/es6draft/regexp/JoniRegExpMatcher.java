@@ -62,4 +62,9 @@ final class JoniRegExpMatcher implements RegExpMatcher {
         Matcher matcher = getPattern().matcher(lastInputBytes, 0, lastInputBytes.length - 2);
         return new JoniMatchState(matcher, s, negativeLAGroups);
     }
+
+    @Override
+    public String toString() {
+        return String.format("regex=%s, flags=%d", regex, flags);
+    }
 }

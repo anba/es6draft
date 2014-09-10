@@ -224,6 +224,7 @@ public final class Messages {
         // 21.2 RegExp (Regular Expression) Objects
         RegExpInvalidQuantifier("regexp.invalid_quantifier"),
         RegExpInvalidCharacterRange("regexp.invalid_character_range"),
+        RegExpInvalidEscape("regexp.invalid_escape"),
         RegExpTrailingSlash("regexp.trailing_slash"),
         RegExpUnmatchedCharacter("regexp.unmatched_character"),
         RegExpPatternTooComplex("regexp.pattern_too_complex"),
@@ -246,7 +247,7 @@ public final class Messages {
         // 24.1 Binary Data Objects
         OutOfMemory("binary.out_of_memory"),
         OutOfMemoryVM("binary.out_of_memory_vm"),
-        BufferNeutered("binary.buffer_neutered"),
+        BufferDetached("binary.buffer_detached"),
         BufferInvalid("binary.buffer_invalid"),
         ArrayOffsetOutOfRange("binary.array_offset_out_of_range"),
         InvalidByteLength("binary.invalid_bytelength"),
@@ -275,9 +276,9 @@ public final class Messages {
         ProxyNotConfigurable("proxy.not_configurable"),
         ProxyAbsentOrConfigurable("proxy.absent_or_configurable"),
         ProxyAbsentNotExtensible("proxy.absent_not_extensible"),
-        ProxyOwnKeysNotArray("proxy.own_keys_not_array"),
+        ProxyPropertyKey("proxy.property_key"),
 
-        // # 26.3 Loader Objects
+        // # 26.2 Loader Objects
         LoaderFetchNotImplemented("loader.fetch_not_implemented"),
 
         // Intl

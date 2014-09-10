@@ -32,14 +32,14 @@ import com.github.anba.es6draft.util.TestInfo;
  * {@link http://wiki.ecmascript.org/doku.php?id=test262:test_case_format}
  * 
  */
-class Test262Info extends TestInfo {
+final class Test262Info extends TestInfo {
     private static final Pattern fileNamePattern = Pattern.compile("(.+?)(?:\\.([^.]*)$|$)");
     private static final Pattern tags = Pattern.compile("\\s*\\*\\s*@(\\w+)\\s*(.+)?\\s*");
     private static final Pattern contentPattern;
     static {
         String fileHeader = "(?:\\s*(?://.*)?)*";
         String descriptor = "/\\*\\*?(?<descriptor>(?s:.*?))\\*/\\s*\n";
-        contentPattern = Pattern.compile("(?:" + fileHeader + ")(?:" + descriptor + ")?(?s:.+)");
+        contentPattern = Pattern.compile("(?:" + fileHeader + ")(?:" + descriptor + ")?(?s:.*)");
     }
 
     private String testName, description, errorType;
