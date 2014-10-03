@@ -15,15 +15,16 @@ import java.util.Iterator;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.objects.internal.CompoundIterator.State;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>7 Abstract Operations</h1><br>
  * <h2>7.4 Operations on Iterator Objects</h2><br>
- * <h3>7.4.10 CreateCompoundIterator ( iterator1, iterator2 )</h3>
+ * <h3>7.4.11 CreateCompoundIterator ( iterator1, iterator2 )</h3>
  * <ul>
- * <li>7.4.10.1 CompoundIterator next( )
+ * <li>7.4.11.1 CompoundIterator next( )
  * </ul>
  */
 public final class CompoundIteratorNext extends BuiltinFunction {
@@ -56,13 +57,13 @@ public final class CompoundIteratorNext extends BuiltinFunction {
         }
         /* step 7 (not applicable) */
         /* steps 8-9 */
-        if (compound.isFirstIteratorActive()) {
+        if (compound.getState() == State.First) {
             /* step 9 */
             Iterator<?> iterator1 = compound.getFirstIterator();
             if (iterator1.hasNext()) {
                 return CreateIterResultObject(calleeContext, iterator1.next(), false);
             }
-            compound.setFirstIteratorActive(false);
+            compound.setState(State.Second);
         }
         /* step 10 */
         Iterator<?> iterator2 = compound.getSecondIterator();

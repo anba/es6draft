@@ -113,6 +113,12 @@ public final class Repl {
         return console;
     }
 
+    private static void printStackTrace(Throwable e, Options options) {
+        if (options.stacktrace) {
+            printStackTrace(e, options.stacktraceDepth);
+        }
+    }
+
     private static void printStackTrace(Throwable e, int maxDepth) {
         final int depth = Math.max(maxDepth, 0);
         StackTraceElement[] stackTrace = e.getStackTrace();
@@ -447,17 +453,13 @@ public final class Repl {
     private void handleException(Throwable e) {
         String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
         console.printf("%s%n", message);
-        if (options.stacktrace) {
-            printStackTrace(e, options.stacktraceDepth);
-        }
+        printStackTrace(e, options);
     }
 
     private void handleException(Realm realm, ScriptException e) {
         String message = formatMessage("uncaught_exception", e.getMessage(realm.defaultContext()));
         console.printf("%s%n", message);
-        if (options.stacktrace) {
-            printStackTrace(e, options.stacktraceDepth);
-        }
+        printStackTrace(e, options);
     }
 
     private void handleException(ParserExceptionWithSource exception) {
@@ -474,9 +476,7 @@ public final class Repl {
         console.printf("%s %s: %s%n", sourceInfo, e.getType(), e.getFormattedMessage());
         console.printf("%s %s%n", sourceInfo, offendingLine);
         console.printf("%s %s%n", sourceInfo, marker);
-        if (options.stacktrace) {
-            printStackTrace(e, options.stacktraceDepth);
-        }
+        printStackTrace(e, options);
     }
 
     private static int skipLines(String s, int n) {
@@ -754,46 +754,9 @@ public final class Repl {
         ReplConsole console = this.console;
         Path baseDir = Paths.get("").toAbsolutePath();
         Path script = Paths.get("./.");
-        Set<CompatibilityOption> compatibilityOptions;
-        if (options.strict) {
-            compatibilityOptions = CompatibilityOption.StrictCompatibility();
-        } else if (options.shellMode == ShellMode.Mozilla) {
-            compatibilityOptions = CompatibilityOption.MozCompatibility();
-        } else {
-            compatibilityOptions = CompatibilityOption.WebCompatibility();
-        }
-        if (options.asyncFunctions) {
-            compatibilityOptions.add(CompatibilityOption.AsyncFunction);
-        }
-        if (options.ecmascript7) {
-            compatibilityOptions.addAll(CompatibilityOption.ECMAScript7());
-        }
-        if (options.parser) {
-            compatibilityOptions.add(CompatibilityOption.ReflectParse);
-        }
-        EnumSet<Parser.Option> parserOptions = EnumSet.noneOf(Parser.Option.class);
-        EnumSet<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
-        if (options.debug) {
-            compilerOptions.add(Compiler.Option.Debug);
-        }
-        if (options.fullDebug) {
-            compilerOptions.add(Compiler.Option.FullDebug);
-        }
-        if (options.debugInfo) {
-            compilerOptions.add(Compiler.Option.DebugInfo);
-        }
-        if (options.verifyStack) {
-            compilerOptions.add(Compiler.Option.VerifyStack);
-        }
-        if (options.noResume) {
-            compilerOptions.add(Compiler.Option.NoResume);
-        }
-        if (options.noTailCall) {
-            compilerOptions.add(Compiler.Option.NoTailCall);
-        }
-        if (options.nativeCalls) {
-            parserOptions.add(Parser.Option.NativeCall);
-        }
+        Set<CompatibilityOption> compatibilityOptions = compatibilityOptions(options);
+        EnumSet<Parser.Option> parserOptions = parserOptions(options);
+        EnumSet<Compiler.Option> compilerOptions = compilerOptions(options);
 
         ScriptCache scriptCache = new ScriptCache();
         ObjectAllocator<? extends ShellGlobalObject> allocator;
@@ -858,5 +821,57 @@ public final class Repl {
         }
 
         return realm;
+    }
+
+    private static Set<CompatibilityOption> compatibilityOptions(Options options) {
+        Set<CompatibilityOption> compatibilityOptions;
+        if (options.strict) {
+            compatibilityOptions = CompatibilityOption.StrictCompatibility();
+        } else if (options.shellMode == ShellMode.Mozilla) {
+            compatibilityOptions = CompatibilityOption.MozCompatibility();
+        } else {
+            compatibilityOptions = CompatibilityOption.WebCompatibility();
+        }
+        if (options.asyncFunctions) {
+            compatibilityOptions.add(CompatibilityOption.AsyncFunction);
+        }
+        if (options.ecmascript7) {
+            compatibilityOptions.addAll(CompatibilityOption.ECMAScript7());
+        }
+        if (options.parser) {
+            compatibilityOptions.add(CompatibilityOption.ReflectParse);
+        }
+        return compatibilityOptions;
+    }
+
+    private static EnumSet<Parser.Option> parserOptions(Options options) {
+        EnumSet<Parser.Option> parserOptions = EnumSet.noneOf(Parser.Option.class);
+        if (options.nativeCalls) {
+            parserOptions.add(Parser.Option.NativeCall);
+        }
+        return parserOptions;
+    }
+
+    private static EnumSet<Compiler.Option> compilerOptions(Options options) {
+        EnumSet<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
+        if (options.debug) {
+            compilerOptions.add(Compiler.Option.Debug);
+        }
+        if (options.fullDebug) {
+            compilerOptions.add(Compiler.Option.FullDebug);
+        }
+        if (options.debugInfo) {
+            compilerOptions.add(Compiler.Option.DebugInfo);
+        }
+        if (options.verifyStack) {
+            compilerOptions.add(Compiler.Option.VerifyStack);
+        }
+        if (options.noResume) {
+            compilerOptions.add(Compiler.Option.NoResume);
+        }
+        if (options.noTailCall) {
+            compilerOptions.add(Compiler.Option.NoTailCall);
+        }
+        return compilerOptions;
     }
 }

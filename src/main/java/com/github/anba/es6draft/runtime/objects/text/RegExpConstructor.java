@@ -149,6 +149,27 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
     /**
      * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
+     * 21.2.3.3.1 Runtime Semantics: RegExpAlloc Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor function
+     * @return the new regular expression object
+     */
+    public static RegExpObject RegExpAlloc(ExecutionContext cx, RegExpConstructor constructor) {
+        /* step 1 */
+        RegExpObject obj = OrdinaryCreateFromConstructor(cx, constructor,
+                Intrinsics.RegExpPrototype, RegExpObjectAllocator.INSTANCE);
+        /* steps 2-3 */
+        DefinePropertyOrThrow(cx, obj, "lastIndex", new PropertyDescriptor(UNDEFINED, true, false,
+                false));
+        /* step 4 */
+        return obj;
+    }
+
+    /**
+     * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
      * 21.2.3.3.2 Runtime Semantics: RegExpInitialize Abstract Operation
      * 
      * @param cx
@@ -203,7 +224,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
      */
     public static RegExpObject RegExpCreate(ExecutionContext cx, Object pattern, Object flags) {
         /* steps 1-2 */
-        RegExpObject obj = RegExpAlloc(cx, cx.getIntrinsic(Intrinsics.RegExp));
+        RegExpObject obj = RegExpAlloc(cx, (RegExpConstructor) cx.getIntrinsic(Intrinsics.RegExp));
         /* step 3 */
         return RegExpInitialize(cx, obj, pattern, flags);
     }

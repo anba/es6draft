@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.webkit;
 
 import static com.github.anba.es6draft.repl.global.V8ShellGlobalObject.newGlobalObjectAllocator;
-import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
 import static org.junit.Assume.assumeTrue;
@@ -36,6 +35,7 @@ import org.junit.runners.model.MultipleFailureException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -113,12 +113,8 @@ public class WebKitTest {
         assumeTrue(test.isEnabled());
 
         global = globals.newGlobal(new WebKitTestConsole(collector), test);
-        ExecutionContext cx = global.getRealm().defaultContext();
-        exceptionHandler.setExecutionContext(cx);
-
-        ScriptObject globalThis = global.getRealm().getGlobalThis();
-        createProperties(cx, globalThis, new WebKitNatives(), WebKitNatives.class);
-        globalThis.set(cx, "window", globalThis, globalThis);
+        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
+        install(new WebKitNatives(), WebKitNatives.class);
 
         if (test.expect) {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
@@ -149,7 +145,18 @@ public class WebKitTest {
         global.getRealm().getWorld().runEventLoop();
     }
 
+    private <T> T install(T object, Class<T> clazz) {
+        Realm realm = global.getRealm();
+        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
+        return object;
+    }
+
     public static final class WebKitNatives {
+        @Properties.Value(name = "window")
+        public ScriptObject window(ExecutionContext cx) {
+            return cx.getGlobalObject();
+        }
+
         @Properties.Function(name = "neverInlineFunction", arity = 0)
         public void neverInlineFunction() {
         }

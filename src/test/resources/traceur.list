@@ -76,9 +76,6 @@ feature/Destructuring/ForInLoop.js
 feature/Destructuring/Empty.js
 feature/Destructuring/Rest.js
 
-# Traceur does not support String.prototype.@@iterator
-feature/Spread/Type.js
-
 # SetFunctionName() not supported in traceur
 feature/Classes/ClassNameBinding.js
 

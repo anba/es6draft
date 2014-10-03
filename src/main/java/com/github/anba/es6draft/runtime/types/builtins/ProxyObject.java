@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareForTailCall;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.CompletePropertyDescriptor;
@@ -149,8 +150,24 @@ public class ProxyObject implements ScriptObject {
          * 9.5.13 [[Call]] (thisArgument, argumentsList)
          */
         @Override
-        public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args) {
-            return call(callerContext, thisValue, args);
+        public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
+                throws Throwable {
+            /* steps 1-3 */
+            ScriptObject handler = getProxyHandler(callerContext);
+            /* step 4 */
+            ScriptObject target = getProxyTarget();
+            /* steps 5-6 */
+            Callable trap = GetMethod(callerContext, handler, "apply");
+            /* step 7 */
+            if (trap == null) {
+                return ((Callable) target).tailCall(callerContext, thisValue, args);
+            }
+            /* step 8 */
+            ArrayObject argArray = CreateArrayFromList(callerContext, Arrays.asList(args));
+            /* step 9 */
+            // NB: PrepareForTailCall is necessary to handle the case when trap is this proxy
+            // object, or a bound function instance of this proxy object.
+            return PrepareForTailCall(new Object[] { target, thisValue, argArray }, handler, trap);
         }
 
         @Override
@@ -220,8 +237,28 @@ public class ProxyObject implements ScriptObject {
          * 9.5.14 [[Construct]] Internal Method
          */
         @Override
-        public ScriptObject tailConstruct(ExecutionContext callerContext, Object... args) {
-            return construct(callerContext, args);
+        public Object tailConstruct(ExecutionContext callerContext, Object... args)
+                throws Throwable {
+            /* steps 1-3 */
+            ScriptObject handler = getProxyHandler(callerContext);
+            /* step 4 */
+            ScriptObject target = getProxyTarget();
+            /* steps 5-6 */
+            Callable trap = GetMethod(callerContext, handler, "construct");
+            /* step 7 */
+            if (trap == null) {
+                return ((Constructor) target).tailConstruct(callerContext, args);
+            }
+            /* step 8 */
+            ArrayObject argArray = CreateArrayFromList(callerContext, Arrays.asList(args));
+            /* steps 9-10 */
+            Object newObj = trap.call(callerContext, handler, target, argArray);
+            /* step 11 */
+            if (!Type.isObject(newObj)) {
+                throw newTypeError(callerContext, Messages.Key.NotObjectType);
+            }
+            /* step 12 */
+            return Type.objectValue(newObj);
         }
     }
 
@@ -958,7 +995,24 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public ScriptIterator<?> enumerateKeys(ExecutionContext cx) {
-        return FromScriptIterator(cx, enumerate(cx));
+        /* steps 1-3 */
+        ScriptObject handler = getProxyHandler(cx);
+        /* step 4 */
+        ScriptObject target = getProxyTarget();
+        /* steps 5-6 */
+        Callable trap = GetMethod(cx, handler, "enumerate");
+        /* step 7 */
+        if (trap == null) {
+            return target.enumerateKeys(cx);
+        }
+        /* steps 8-9 */
+        Object trapResult = trap.call(cx, handler, target);
+        /* step 10 */
+        if (!Type.isObject(trapResult)) {
+            throw newTypeError(cx, Messages.Key.ProxyNotObject);
+        }
+        /* step 11 */
+        return FromScriptIterator(cx, Type.objectValue(trapResult));
     }
 
     /**

@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -35,6 +36,8 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
     /** [[BoundArguments]] */
     private Object[] boundArguments;
 
+    private Callable flattenedTargetFunction;
+
     private static final class ConstructorBoundFunctionObject extends BoundFunctionObject implements
             Constructor {
         /**
@@ -53,19 +56,13 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
         @Override
         public ScriptObject construct(ExecutionContext callerContext, Object... extraArgs) {
             /* step 1 */
-            Callable target = getBoundTargetFunction();
+            Callable target = getFlattenedTargetFunction();
             /* step 2 */
             assert IsConstructor(target);
             /* step 3 */
             Object[] boundArgs = getBoundArguments();
             /* step 4 */
-            int argsLen = boundArgs.length + extraArgs.length;
-            if (argsLen > FunctionPrototype.getMaxArguments()) {
-                throw newRangeError(callerContext, Messages.Key.FunctionTooManyArguments);
-            }
-            Object[] args = new Object[argsLen];
-            System.arraycopy(boundArgs, 0, args, 0, boundArgs.length);
-            System.arraycopy(extraArgs, 0, args, boundArgs.length, extraArgs.length);
+            Object[] args = concatArguments(callerContext, boundArgs, extraArgs);
             /* step 5 */
             return ((Constructor) target).construct(callerContext, args);
         }
@@ -74,8 +71,18 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
          * 9.4.1.2 [[Construct]]
          */
         @Override
-        public ScriptObject tailConstruct(ExecutionContext callerContext, Object... args) {
-            return construct(callerContext, args);
+        public Object tailConstruct(ExecutionContext callerContext, Object... extraArgs)
+                throws Throwable {
+            /* step 1 */
+            Callable target = getFlattenedTargetFunction();
+            /* step 2 */
+            assert IsConstructor(target);
+            /* step 3 */
+            Object[] boundArgs = getBoundArguments();
+            /* step 4 */
+            Object[] args = concatArguments(callerContext, boundArgs, extraArgs);
+            /* step 5 */
+            return ((Constructor) target).tailConstruct(callerContext, args);
         }
     }
 
@@ -94,7 +101,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
      * 
      * @return the bound target function
      */
-    public Callable getBoundTargetFunction() {
+    public final Callable getBoundTargetFunction() {
         return boundTargetFunction;
     }
 
@@ -103,7 +110,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
      * 
      * @return the bound this-value
      */
-    public Object getBoundThis() {
+    public final Object getBoundThis() {
         return boundThis;
     }
 
@@ -112,12 +119,16 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
      * 
      * @return the bound function arguments
      */
-    public Object[] getBoundArguments() {
+    public final Object[] getBoundArguments() {
         return boundArguments;
     }
 
+    protected final Callable getFlattenedTargetFunction() {
+        return flattenedTargetFunction;
+    }
+
     @Override
-    public String toSource(SourceSelector selector) {
+    public final String toSource(SourceSelector selector) {
         return FunctionSource.nativeCode(selector, "BoundFunction");
     }
 
@@ -125,21 +136,16 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
      * 9.4.1.1 [[Call]]
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... argumentsList) {
+    public final Object call(ExecutionContext callerContext, Object thisValue,
+            Object... argumentsList) {
         /* step 1 */
         Object[] boundArgs = getBoundArguments();
         /* step 2 */
         Object boundThis = getBoundThis();
         /* step 3 */
-        Callable target = getBoundTargetFunction();
+        Callable target = getFlattenedTargetFunction();
         /* step 4 */
-        int argsLen = boundArgs.length + argumentsList.length;
-        if (argsLen > FunctionPrototype.getMaxArguments()) {
-            throw newRangeError(callerContext, Messages.Key.FunctionTooManyArguments);
-        }
-        Object[] args = new Object[argsLen];
-        System.arraycopy(boundArgs, 0, args, 0, boundArgs.length);
-        System.arraycopy(argumentsList, 0, args, boundArgs.length, argumentsList.length);
+        Object[] args = concatArguments(callerContext, boundArgs, argumentsList);
         /* step 5 */
         return target.call(callerContext, boundThis, args);
     }
@@ -148,12 +154,22 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
      * 9.4.1.1 [[Call]]
      */
     @Override
-    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args) {
-        return call(callerContext, thisValue, args);
+    public final Object tailCall(ExecutionContext callerContext, Object thisValue,
+            Object... argumentsList) throws Throwable {
+        /* step 1 */
+        Object[] boundArgs = getBoundArguments();
+        /* step 2 */
+        Object boundThis = getBoundThis();
+        /* step 3 */
+        Callable target = getFlattenedTargetFunction();
+        /* step 4 */
+        Object[] args = concatArguments(callerContext, boundArgs, argumentsList);
+        /* step 5 */
+        return target.tailCall(callerContext, boundThis, args);
     }
 
     @Override
-    public BoundFunctionObject clone(ExecutionContext cx) {
+    public final BoundFunctionObject clone(ExecutionContext cx) {
         /* step 1 (not applicable) */
         /* steps 2-4 */
         BoundFunctionObject clone;
@@ -164,6 +180,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
         }
         clone.setPrototype(getPrototype());
         clone.boundTargetFunction = boundTargetFunction;
+        clone.flattenedTargetFunction = flattenedTargetFunction;
         clone.boundThis = boundThis;
         clone.boundArguments = boundArguments;
         /* step 5 */
@@ -171,9 +188,24 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
     }
 
     @Override
-    public Realm getRealm(ExecutionContext cx) {
+    public final Realm getRealm(ExecutionContext cx) {
         /* 7.3.21 GetFunctionRealm ( obj ) Abstract Operation */
-        return getBoundTargetFunction().getRealm(cx);
+        return getFlattenedTargetFunction().getRealm(cx);
+    }
+
+    private static final Object[] concatArguments(ExecutionContext callerContext,
+            Object[] boundArgs, Object[] argumentsList) {
+        int argsLen = boundArgs.length + argumentsList.length;
+        if (argsLen > FunctionPrototype.getMaxArguments()) {
+            throw newRangeError(callerContext, Messages.Key.FunctionTooManyArguments);
+        }
+        if (boundArgs.length == 0) {
+            return argumentsList;
+        }
+        Object[] args = new Object[argsLen];
+        System.arraycopy(boundArgs, 0, args, 0, boundArgs.length);
+        System.arraycopy(argumentsList, 0, args, boundArgs.length, argumentsList.length);
+        return args;
     }
 
     /**
@@ -203,12 +235,24 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
         /* step 6 */
         obj.setPrototype(proto);
         /* step 7 (implicit) */
-        /* step 8 */
-        obj.boundTargetFunction = targetFunction;
-        /* step 9 */
-        obj.boundThis = boundThis;
-        /* step 10 */
-        obj.boundArguments = boundArgs;
+        if (targetFunction instanceof BoundFunctionObject) {
+            BoundFunctionObject target = (BoundFunctionObject) targetFunction;
+            /* step 8 */
+            obj.boundTargetFunction = target;
+            obj.flattenedTargetFunction = target.flattenedTargetFunction;
+            /* step 9 */
+            obj.boundThis = target.boundThis;
+            /* step 10 */
+            obj.boundArguments = concatArguments(cx, target.boundArguments, intern(boundArgs));
+        } else {
+            /* step 8 */
+            obj.boundTargetFunction = targetFunction;
+            obj.flattenedTargetFunction = targetFunction;
+            /* step 9 */
+            obj.boundThis = boundThis;
+            /* step 10 */
+            obj.boundArguments = intern(boundArgs);
+        }
         /* step 11 */
         return obj;
     }
@@ -225,5 +269,9 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
     public static BoundFunctionObject BoundFunctionClone(ExecutionContext cx,
             BoundFunctionObject function) {
         return function.clone(cx);
+    }
+
+    private static Object[] intern(Object[] arguments) {
+        return arguments.length > 0 ? arguments : ScriptRuntime.EMPTY_ARRAY;
     }
 }

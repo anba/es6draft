@@ -11,8 +11,7 @@ import org.objectweb.asm.Type;
 import com.github.anba.es6draft.ast.BindingIdentifier;
 import com.github.anba.es6draft.ast.IdentifierReference;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
 
 /**
  * 8.3.1 ResolveBinding(name)
@@ -21,12 +20,12 @@ final class IdentifierResolution {
     private static final class Methods {
         // identifierResolution()
         static final MethodDesc ExecutionContext_resolveBinding = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "resolveBinding",
+                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "resolveBinding",
                 Type.getMethodType(Types.Reference, Types.String, Type.BOOLEAN_TYPE));
 
         // identifierValue()
         static final MethodDesc ExecutionContext_resolveBindingValue = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "resolveBindingValue",
+                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "resolveBindingValue",
                 Type.getMethodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
     }
 

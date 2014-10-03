@@ -738,17 +738,6 @@ public final class IndexedMap<VALUE> {
      *            the property key
      * @return {@code true} if the property key is a valid index
      */
-    public static boolean isIndex(int propertyKey) {
-        return 0 <= propertyKey;
-    }
-
-    /**
-     * Returns {@code true} if the property key is a valid index.
-     * 
-     * @param propertyKey
-     *            the property key
-     * @return {@code true} if the property key is a valid index
-     */
     public static boolean isIndex(long propertyKey) {
         return 0 <= propertyKey && propertyKey < MAX_LENGTH;
     }

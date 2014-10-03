@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime;
 
 import java.util.Set;
 
+import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
@@ -24,6 +25,26 @@ public interface EnvironmentRecord {
      * @return the binding names set
      */
     Set<String> bindingNames();
+
+    /**
+     * @param name
+     *            the binding name
+     * @param strict
+     *            the strict mode flag
+     * @return the binding value
+     */
+    // TODO: add default implementation
+    Object getBindingValueOrNull(String name, boolean strict);
+
+    /**
+     * @param name
+     *            the binding name
+     * @param strict
+     *            the strict mode flag
+     * @return the binding reference
+     */
+    // TODO: add default implementation
+    Reference<? extends EnvironmentRecord, String> getReferenceOrNull(String name, boolean strict);
 
     /**
      * HasBinding(N)

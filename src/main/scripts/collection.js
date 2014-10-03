@@ -258,9 +258,6 @@ const mozIteratorSym = "@@iterator";
 
   class WeakSet {
     constructor(iterable) {
-      if (!%IsUninitializedWeakSet(this)) {
-        return new WeakSet(iterable);
-      }
       if (iterable !== void 0) {
         iterable = iterable[mozIteratorSym]();
       }

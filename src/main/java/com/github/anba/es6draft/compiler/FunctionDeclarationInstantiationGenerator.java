@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.compiler.BindingInitializationGenerator.BindingInitialization;
+import static com.github.anba.es6draft.compiler.BindingInitializationGenerator.BindingInitializationWithEnvironment;
 import static com.github.anba.es6draft.compiler.FunctionDeclarationCollector.findFunctionDeclarations;
 import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
@@ -19,11 +21,10 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.Name;
-import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -43,61 +44,63 @@ final class FunctionDeclarationInstantiationGenerator extends
         DeclarationBindingInstantiationGenerator {
     private static final class Methods {
         // class: Arrays
-        static final MethodDesc Arrays_asList = MethodDesc.create(MethodType.Static, Types.Arrays,
-                "asList", Type.getMethodType(Types.List, Types.Object_));
+        static final MethodDesc Arrays_asList = MethodDesc.create(MethodDesc.Invoke.Static,
+                Types.Arrays, "asList", Type.getMethodType(Types.List, Types.Object_));
 
         // class: ExecutionContext
         static final MethodDesc ExecutionContext_getVariableEnvironment = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "getVariableEnvironment",
+                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "getVariableEnvironment",
                 Type.getMethodType(Types.LexicalEnvironment));
 
         static final MethodDesc ExecutionContext_setEnvironment = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "setEnvironment",
+                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "setEnvironment",
                 Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
         // class: ArgumentsObject
         static final MethodDesc ArgumentsObject_CreateMappedArgumentsObject = MethodDesc.create(
-                MethodType.Static, Types.ArgumentsObject, "CreateMappedArgumentsObject", Type
-                        .getMethodType(Types.ArgumentsObject, Types.ExecutionContext,
-                                Types.FunctionObject, Types.String_, Types.Object_,
-                                Types.LexicalEnvironment));
+                MethodDesc.Invoke.Static, Types.ArgumentsObject, "CreateMappedArgumentsObject",
+                Type.getMethodType(Types.ArgumentsObject, Types.ExecutionContext,
+                        Types.FunctionObject, Types.String_, Types.Object_,
+                        Types.LexicalEnvironment));
 
         static final MethodDesc ArgumentsObject_CreateUnmappedArgumentsObject = MethodDesc.create(
-                MethodType.Static, Types.ArgumentsObject, "CreateUnmappedArgumentsObject",
+                MethodDesc.Invoke.Static, Types.ArgumentsObject,
+                "CreateUnmappedArgumentsObject",
                 Type.getMethodType(Types.ArgumentsObject, Types.ExecutionContext, Types.Object_));
 
         static final MethodDesc LegacyArgumentsObject_CreateLegacyArgumentsObject = MethodDesc
-                .create(MethodType.Static, Types.LegacyArgumentsObject,
+                .create(MethodDesc.Invoke.Static, Types.LegacyArgumentsObject,
                         "CreateLegacyArgumentsObject", Type.getMethodType(
                                 Types.LegacyArgumentsObject, Types.ExecutionContext,
                                 Types.FunctionObject, Types.Object_, Types.String_,
                                 Types.LexicalEnvironment));
 
         static final MethodDesc LegacyArgumentsObject_CreateLegacyArgumentsObjectFrom = MethodDesc
-                .create(MethodType.Static, Types.LegacyArgumentsObject,
+                .create(MethodDesc.Invoke.Static, Types.LegacyArgumentsObject,
                         "CreateLegacyArgumentsObject", Type.getMethodType(
                                 Types.LegacyArgumentsObject, Types.ExecutionContext,
                                 Types.FunctionObject, Types.Object_, Types.ArgumentsObject));
 
         static final MethodDesc LegacyArgumentsObject_CreateLegacyArgumentsObjectUnmapped = MethodDesc
-                .create(MethodType.Static, Types.LegacyArgumentsObject,
+                .create(MethodDesc.Invoke.Static, Types.LegacyArgumentsObject,
                         "CreateLegacyArgumentsObject", Type.getMethodType(
                                 Types.LegacyArgumentsObject, Types.ExecutionContext,
                                 Types.FunctionObject, Types.Object_));
 
         // FunctionObject
         static final MethodDesc FunctionObject_setLegacyArguments = MethodDesc.create(
-                MethodType.Virtual, Types.FunctionObject, "setLegacyArguments",
+                MethodDesc.Invoke.Virtual, Types.FunctionObject, "setLegacyArguments",
                 Type.getMethodType(Type.VOID_TYPE, Types.LegacyArgumentsObject));
 
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_newDeclarativeEnvironment = MethodDesc.create(
-                MethodType.Static, Types.LexicalEnvironment, "newDeclarativeEnvironment",
+                MethodDesc.Invoke.Static, Types.LexicalEnvironment,
+                "newDeclarativeEnvironment",
                 Type.getMethodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
         // class: List
-        static final MethodDesc List_iterator = MethodDesc.create(MethodType.Interface, Types.List,
-                "iterator", Type.getMethodType(Types.Iterator));
+        static final MethodDesc List_iterator = MethodDesc.create(MethodDesc.Invoke.Interface,
+                Types.List, "iterator", Type.getMethodType(Types.Iterator));
     }
 
     private static final int EXECUTION_CONTEXT = 0;
@@ -272,10 +275,11 @@ final class FunctionDeclarationInstantiationGenerator extends
         if (hasParameters) {
             if (hasDuplicates) {
                 /* step 20 */
-                BindingInitialization(function, iterator, mv);
+                BindingInitialization(codegen, function, iterator, mv);
             } else {
                 /* step 21 */
-                BindingInitializationWithEnv(envRec, function, iterator, mv);
+                // stack: [] -> []
+                BindingInitializationWithEnvironment(codegen, envRec, function, iterator, mv);
             }
         }
         /* steps 23-24 */
@@ -362,7 +366,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             setMutableBinding(bodyEnvRec, fn, fo, false, mv);
         }
         /* step 28 */
-        mv.areturn();
+        mv._return();
     }
 
     private void newDeclarativeEnvironment(Variable<LexicalEnvironment<?>> env, ExpressionVisitor mv) {
@@ -376,19 +380,6 @@ final class FunctionDeclarationInstantiationGenerator extends
         mv.loadExecutionContext();
         mv.load(env);
         mv.invoke(Methods.ExecutionContext_setEnvironment);
-    }
-
-    private void BindingInitialization(FunctionNode node, Variable<Iterator<?>> iterator,
-            ExpressionVisitor mv) {
-        // stack: [] -> []
-        new BindingInitializationGenerator(codegen).generate(node, iterator, mv);
-    }
-
-    private void BindingInitializationWithEnv(Variable<? extends EnvironmentRecord> envRec,
-            FunctionNode node, Variable<Iterator<?>> iterator, ExpressionVisitor mv) {
-        // stack: [] -> []
-        new BindingInitializationGenerator(codegen).generateWithEnvironment(node, envRec, iterator,
-                mv);
     }
 
     private void CreateMappedArgumentsObject(Variable<LexicalEnvironment<?>> env,
@@ -472,7 +463,7 @@ final class FunctionDeclarationInstantiationGenerator extends
     }
 
     private void newStringArray(InstructionVisitor mv, String[] strings) {
-        mv.newarray(strings.length, Types.String);
+        mv.anewarray(strings.length, Types.String);
         int index = 0;
         for (String string : strings) {
             mv.astore(index++, string);

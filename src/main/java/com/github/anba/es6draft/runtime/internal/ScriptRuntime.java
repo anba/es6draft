@@ -265,14 +265,40 @@ public final class ScriptRuntime {
      * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      * 
      * @param object
-     *            the new home object
+     *            the script object
      * @param propertyName
      *            the property name
-     * @param f
-     *            the function object
+     * @param value
+     *            the property value
+     * @param cx
+     *            the execution context
      */
-    public static void updateMethod(OrdinaryObject object, Object propertyName, FunctionObject f) {
-        f.updateMethod(propertyName, object);
+    public static void defineMethod(OrdinaryObject object, Object propertyName,
+            FunctionObject value, ExecutionContext cx) {
+        value.toMethod(propertyName, object);
+        DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
+                true));
+    }
+
+    /**
+     * 12.2.5 Object Initializer
+     * <p>
+     * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 
+     * @param object
+     *            the script object
+     * @param propertyName
+     *            the property name
+     * @param value
+     *            the property value
+     * @param cx
+     *            the execution context
+     */
+    public static void defineMethod(OrdinaryObject object, String propertyName,
+            FunctionObject value, ExecutionContext cx) {
+        value.toMethod(propertyName, object);
+        DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
+                true));
     }
 
     /**
@@ -701,7 +727,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the constructor call return value
      */
-    public static Object EvaluateConstructorCall(Object constructor, Object[] args,
+    public static ScriptObject EvaluateConstructorCall(Object constructor, Object[] args,
             ExecutionContext cx) {
         /* steps 1-3/1-3/1-6 (generated code) */
         /* steps 4/6/7 */
@@ -878,14 +904,15 @@ public final class ScriptRuntime {
             throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
         }
         assert envRec instanceof FunctionEnvironmentRecord;
-        Object actualThis = envRec.getThisBinding();
-        ScriptObject baseValue = ((FunctionEnvironmentRecord) envRec).getSuperBase();
+        FunctionEnvironmentRecord fEnvRec = (FunctionEnvironmentRecord) envRec;
+        Object actualThis = fEnvRec.getThisBinding();
+        ScriptObject baseValue = fEnvRec.getSuperBase();
         // RequireObjectCoercible(cx.getRealm(), baseValue);
         if (baseValue == null) {
             throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         }
         if (propertyKey == null) {
-            propertyKey = ((FunctionEnvironmentRecord) envRec).getMethodName();
+            propertyKey = fEnvRec.getMethodName();
             if (propertyKey == null) {
                 throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
             }
@@ -918,13 +945,50 @@ public final class ScriptRuntime {
             throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
         }
         assert envRec instanceof FunctionEnvironmentRecord;
-        Object actualThis = envRec.getThisBinding();
-        ScriptObject baseValue = ((FunctionEnvironmentRecord) envRec).getSuperBase();
+        FunctionEnvironmentRecord fEnvRec = (FunctionEnvironmentRecord) envRec;
+        Object actualThis = fEnvRec.getThisBinding();
+        ScriptObject baseValue = fEnvRec.getSuperBase();
         // RequireObjectCoercible(cx.getRealm(), baseValue);
         if (baseValue == null) {
             throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         }
         return new Reference.SuperNameReference(baseValue, propertyKey, strict, actualThis);
+    }
+
+    /**
+     * 12.3.5 The super Keyword
+     * <p>
+     * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param strict
+     *            the strict mode flag
+     * @return the super reference value
+     */
+    public static Object getSuperReferenceValue(ExecutionContext cx, Object propertyKey,
+            boolean strict) {
+        return MakeSuperReference(cx, propertyKey, strict).getValue(cx);
+    }
+
+    /**
+     * 12.3.5 The super Keyword
+     * <p>
+     * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param strict
+     *            the strict mode flag
+     * @return the super reference value
+     */
+    public static Object getSuperReferenceValue(ExecutionContext cx, String propertyKey,
+            boolean strict) {
+        return MakeSuperReference(cx, propertyKey, strict).getValue(cx);
     }
 
     /**
@@ -989,87 +1053,6 @@ public final class ScriptRuntime {
             }
         }
         return result;
-    }
-
-    /**
-     * 12.5 Unary Operators<br>
-     * 12.5.4 The delete Operator
-     * 
-     * @param ref
-     *            the reference instance
-     * @param cx
-     *            the execution context
-     * @return {@code true} on success
-     */
-    public static boolean delete(Reference<?, ?> ref, ExecutionContext cx) {
-        /* steps 1-3 (generated code) */
-        /* step 4-6 */
-        if (ref.isPropertyReference()) {
-            return deleteProperty(ref, cx);
-        }
-        return deleteBinding(ref, cx);
-    }
-
-    /**
-     * 12.5 Unary Operators<br>
-     * 12.5.4 The delete Operator
-     * 
-     * @param ref
-     *            the reference instance
-     * @param cx
-     *            the execution context
-     * @return {@code true} on success
-     */
-    public static boolean deleteBinding(Reference<?, ?> ref, ExecutionContext cx) {
-        /* steps 1-3 (generated code) */
-        /* step 5 (not applicable) */
-        assert !ref.isPropertyReference();
-        /* step 4 */
-        if (ref.isUnresolvableReference()) {
-            assert !ref.isStrictReference();
-            return true;
-        }
-        /* step 6 */
-        if (ref instanceof Reference.BindingReference) {
-            return false;
-        }
-        assert ref instanceof Reference.IdentifierReference;
-        Reference.IdentifierReference idref = (Reference.IdentifierReference) ref;
-        EnvironmentRecord bindings = idref.getBase();
-        return bindings.deleteBinding(idref.getReferencedName());
-    }
-
-    /**
-     * 12.5 Unary Operators<br>
-     * 12.5.4 The delete Operator
-     * 
-     * @param ref
-     *            the reference instance
-     * @param cx
-     *            the execution context
-     * @return {@code true} on success
-     */
-    public static boolean deleteProperty(Reference<?, ?> ref, ExecutionContext cx) {
-        /* steps 1-3 (generated code) */
-        /* steps 4, 6 (not applicable) */
-        assert ref.isPropertyReference() && !ref.isUnresolvableReference();
-        /* step 5 */
-        if (ref.isSuperReference()) {
-            throw newReferenceError(cx, Messages.Key.SuperDelete);
-        }
-        ScriptObject obj = ToObject(cx, ref.getBase());
-        boolean deleteStatus;
-        Object referencedName = ref.getReferencedName();
-        if (referencedName instanceof String) {
-            deleteStatus = obj.delete(cx, (String) referencedName);
-        } else {
-            deleteStatus = obj.delete(cx, (Symbol) referencedName);
-        }
-        if (!deleteStatus && ref.isStrictReference()) {
-            throw newTypeError(cx, Messages.Key.PropertyNotDeletable, ref.getReferencedName()
-                    .toString());
-        }
-        return deleteStatus;
     }
 
     /**
@@ -1177,25 +1160,6 @@ public final class ScriptRuntime {
      * 12.9 Relational Operators<br>
      * 12.9.3 Runtime Semantics: Evaluation
      * 
-     * @param x
-     *            the left-hand side operand
-     * @param y
-     *            the right-hand side operand
-     * @param leftFirst
-     *            the operation order flag
-     * @param cx
-     *            the execution context
-     * @return the comparison result
-     */
-    public static int relationalComparison(Object x, Object y, boolean leftFirst,
-            ExecutionContext cx) {
-        return RelationalComparison(cx, x, y, leftFirst);
-    }
-
-    /**
-     * 12.9 Relational Operators<br>
-     * 12.9.3 Runtime Semantics: Evaluation
-     * 
      * @param lval
      *            the left-hand side operand
      * @param rval
@@ -1245,36 +1209,6 @@ public final class ScriptRuntime {
         }
         /* step 6 */
         return OrdinaryHasInstance(cx, constructor, obj);
-    }
-
-    /**
-     * 12.10 Equality Operators<br>
-     * 12.10.3 Runtime Semantics: Evaluation
-     * 
-     * @param x
-     *            the left-hand side operand
-     * @param y
-     *            the right-hand side operand
-     * @param cx
-     *            the execution context
-     * @return the operation result
-     */
-    public static boolean equalityComparison(Object x, Object y, ExecutionContext cx) {
-        return EqualityComparison(cx, x, y);
-    }
-
-    /**
-     * 12.10 Equality Operators<br>
-     * 12.10.3 Runtime Semantics: Evaluation
-     * 
-     * @param x
-     *            the left-hand side operand
-     * @param y
-     *            the right-hand side operand
-     * @return the operation result
-     */
-    public static boolean strictEqualityComparison(Object x, Object y) {
-        return StrictEqualityComparison(x, y);
     }
 
     /**
@@ -2359,17 +2293,9 @@ public final class ScriptRuntime {
 
     public static CallSite runtimeBootstrap(MethodHandles.Lookup caller, String name,
             MethodType type) {
+        assert "rt:stack".equals(name) || "rt:locals".equals(name);
         MethodHandle mh = MethodHandles.identity(Object[].class);
         mh = mh.asCollector(Object[].class, type.parameterCount());
-        if ("rt:stack".equals(name) && type.parameterCount() > 1) {
-            // TODO: remove permute
-            int pc = type.parameterCount();
-            int[] reorder = new int[pc];
-            for (int i = 0; i < pc; ++i) {
-                reorder[i] = pc - 1 - i;
-            }
-            mh = MethodHandles.permuteArguments(mh, mh.type(), reorder);
-        }
         mh = mh.asType(type);
         return new ConstantCallSite(mh);
     }

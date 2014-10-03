@@ -20,26 +20,37 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>7 Abstract Operations</h1><br>
  * <h2>7.4 Operations on Iterator Objects</h2>
  * <ul>
- * <li>7.4.10 CreateCompoundIterator ( iterator1, iterator2 )
+ * <li>7.4.11 CreateCompoundIterator ( iterator1, iterator2 )
  * </ul>
  */
 public final class CompoundIterator<T> extends OrdinaryObject {
+    /** [[Iterator1]] */
     private Iterator<T> iterator1;
+
+    /** [[Iterator2]] */
     private Iterator<T> iterator2;
+
+    /** [[IteratorNext]] */
     private CompoundIteratorNext iteratorNext;
-    private boolean firstIteratorActive = true;
+
+    /** [[State]] */
+    private State state = State.First;
 
     public CompoundIterator(Realm realm) {
         super(realm);
     }
 
+    enum State {
+        First, Second
+    }
+
     Iterator<T> getFirstIterator() {
-        assert firstIteratorActive;
+        assert state == State.First;
         return iterator1;
     }
 
     Iterator<T> getSecondIterator() {
-        assert !firstIteratorActive;
+        assert state == State.Second;
         return iterator2;
     }
 
@@ -47,12 +58,12 @@ public final class CompoundIterator<T> extends OrdinaryObject {
         return iteratorNext;
     }
 
-    boolean isFirstIteratorActive() {
-        return firstIteratorActive;
+    State getState() {
+        return state;
     }
 
-    void setFirstIteratorActive(boolean firstIteratorActive) {
-        this.firstIteratorActive = firstIteratorActive;
+    void setState(State state) {
+        this.state = state;
     }
 
     private static final class CompoundIteratorAllocator implements
@@ -66,7 +77,7 @@ public final class CompoundIterator<T> extends OrdinaryObject {
     }
 
     /**
-     * 7.4.10 CreateCompoundIterator ( iterator1, iterator2 )
+     * 7.4.11 CreateCompoundIterator ( iterator1, iterator2 )
      * <p>
      * Returns a new {@link CompoundIterator} object for the internal list {@code iterator}
      * 
@@ -85,7 +96,7 @@ public final class CompoundIterator<T> extends OrdinaryObject {
         /* step 1 */
         @SuppressWarnings("unchecked")
         CompoundIterator<T> iterator = (CompoundIterator<T>) ObjectCreate(cx,
-                Intrinsics.ObjectPrototype, CompoundIteratorAllocator.INSTANCE);
+                Intrinsics.IteratorPrototype, CompoundIteratorAllocator.INSTANCE);
         /* steps 2-4 */
         iterator.iterator1 = iterator1;
         iterator.iterator2 = iterator2;

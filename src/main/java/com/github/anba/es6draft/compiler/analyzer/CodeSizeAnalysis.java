@@ -208,6 +208,16 @@ public final class CodeSizeAnalysis {
         }
 
         @Override
+        public int visit(ClassDeclaration node, Integer size) {
+            return visit(node, size, new ClassDefinitionSubMethod());
+        }
+
+        @Override
+        public int visit(ClassExpression node, Integer size) {
+            return visit(node, size, new ClassDefinitionSubMethod());
+        }
+
+        @Override
         public int visit(CommaExpression node, Integer size) {
             return visit(node, size, new CommaExpressionSubMethod());
         }

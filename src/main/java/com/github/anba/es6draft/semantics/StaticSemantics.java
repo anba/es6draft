@@ -153,12 +153,7 @@ public final class StaticSemantics {
      * @return the constructor method if found, otherwise {@code null}
      */
     public static MethodDefinition ConstructorMethod(ClassDefinition node) {
-        for (MethodDefinition m : node.getMethods()) {
-            if (!m.isStatic() && "constructor".equals(PropName(m))) {
-                return m;
-            }
-        }
-        return null;
+        return node.getConstructor();
     }
 
     /**
@@ -567,12 +562,11 @@ public final class StaticSemantics {
         if (lhs instanceof PropertyAccessor) {
             return true;
         }
-        if (lhs instanceof SuperExpression) {
-            SuperExpression superExpr = (SuperExpression) lhs;
-            if (superExpr.getType() == SuperExpression.Type.ElementAccessor
-                    || superExpr.getType() == SuperExpression.Type.PropertyAccessor) {
-                return true;
-            }
+        if (lhs instanceof SuperElementAccessor) {
+            return true;
+        }
+        if (lhs instanceof SuperPropertyAccessor) {
+            return true;
         }
         return false;
     }
@@ -1150,10 +1144,9 @@ public final class StaticSemantics {
     }
 
     private static boolean IsTailCallExpression(Expression expr) {
-        return expr instanceof CallExpression
-                || expr instanceof TemplateCallExpression
-                || (expr instanceof SuperExpression && ((SuperExpression) expr).getType() == SuperExpression.Type.CallExpression)
-                || expr instanceof NewExpression;
+        return expr instanceof CallExpression || expr instanceof NewExpression
+                || expr instanceof TemplateCallExpression || expr instanceof SuperCallExpression
+                || expr instanceof SuperNewExpression;
     }
 
     private static <T> T last(List<T> list) {

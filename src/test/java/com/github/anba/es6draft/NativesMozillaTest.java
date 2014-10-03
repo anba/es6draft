@@ -143,7 +143,6 @@ public final class NativesMozillaTest {
             includeNative(getScriptURL("source.js"));
             includeNative(getScriptURL("statics.js"));
             includeNative(getScriptURL("string.js"));
-            includeNative(getScriptURL("typed-array.js"));
         }
 
         public static ObjectAllocator<MozNativeTestGlobalObject> newGlobalObjectAllocator(

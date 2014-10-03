@@ -60,6 +60,27 @@ function testFunctions() {
     a: f22 = () => { throw new Error() },
   } = {};
 
+  let f23, f24_, f25;
+  [
+    f23 = function() { throw new Error() },
+    f24_ = function f24() { throw new Error() },
+    f25 = () => { throw new Error() },
+  ] = [];
+
+  let f26, f27_, f28;
+  ({
+    f26 = function() { throw new Error() },
+    f27_ = function f27() { throw new Error() },
+    f28 = () => { throw new Error() },
+  } = {});
+
+  let f29, f30_, f31;
+  ({
+    a: f29 = function() { throw new Error() },
+    a: f30_ = function f30() { throw new Error() },
+    a: f31 = () => { throw new Error() },
+  } = {});
+
   let id1 = "id1", id2 = "id2", id3 = "id3", id4 = "id4", id5 = "id5", id6 = "id6";
   let p = {
     p1: "p.p1",
@@ -308,6 +329,15 @@ function testFunctions() {
   testStackTrace(f20, "f20");
   testStackTrace(f21_, "f21");
   testStackTrace(f22, "f22");
+  testStackTrace(f23, "f23");
+  testStackTrace(f24_, "f24");
+  testStackTrace(f25, "f25");
+  testStackTrace(f26, "f26");
+  testStackTrace(f27_, "f27");
+  testStackTrace(f28, "f28");
+  testStackTrace(f29, "f29");
+  testStackTrace(f30_, "f30");
+  testStackTrace(f31, "f31");
 
   testStackTrace(o1.m1, "m1");
   testStackTrace(() => o1.m2, "get m2");
@@ -556,6 +586,27 @@ function testGenerators() {
     a: f22 = (for (v of 0) v),
   } = {};
 
+  let f23, f24_, f25;
+  [
+    f23 = function*() { throw new Error() },
+    f24_ = function* f24() { throw new Error() },
+    f25 = (for (v of 0) v),
+  ] = [];
+
+  let f26, f27_, f28;
+  ({
+    f26 = function*() { throw new Error() },
+    f27_ = function* f27() { throw new Error() },
+    f28 = (for (v of 0) v),
+  } = {});
+
+  let f29, f30_, f31;
+  ({
+    a: f29 = function*() { throw new Error() },
+    a: f30_ = function* f30() { throw new Error() },
+    a: f31 = (for (v of 0) v),
+  } = {});
+
   let id1 = "id1", id2 = "id2", id3 = "id3", id4 = "id4", id5 = "id5", id6 = "id6";
   let p = {
     p1: "p.p1",
@@ -710,6 +761,15 @@ function testGenerators() {
   testStackTrace(f20, "f20");
   testStackTrace(f21_, "f21");
   testStackTrace(() => f22, "f22");
+  testStackTrace(f23, "f23");
+  testStackTrace(f24_, "f24");
+  testStackTrace(() => f25, "f25");
+  testStackTrace(f26, "f26");
+  testStackTrace(f27_, "f27");
+  testStackTrace(() => f28, "f28");
+  testStackTrace(f29, "f29");
+  testStackTrace(f30_, "f30");
+  testStackTrace(() => f31, "f31");
 
   testStackTrace(o1.m1, "m1");
   testStackTrace(o1.m4, "m4");
@@ -880,6 +940,27 @@ function testAsync() {
     a: f22 = async () => { throw new Error() },
   } = {};
 
+  let f23, f24_, f25;
+  [
+    f23 = async function() { throw new Error() },
+    f24_ = async function f24() { throw new Error() },
+    f25 = async () => { throw new Error() },
+  ] = [];
+
+  let f26, f27_, f28;
+  ({
+    f26 = async function() { throw new Error() },
+    f27_ = async function f27() { throw new Error() },
+    f28 = async () => { throw new Error() },
+  } = {});
+
+  let f29, f30_, f31;
+  ({
+    a: f29 = async function() { throw new Error() },
+    a: f30_ = async function f30() { throw new Error() },
+    a: f31 = async () => { throw new Error() },
+  } = {});
+
   let id1 = "id1", id2 = "id2", id3 = "id3", id4 = "id4", id5 = "id5", id6 = "id6";
   let p = {
     p1: "p.p1",
@@ -1034,6 +1115,15 @@ function testAsync() {
   testStackTrace(f20, "f20");
   testStackTrace(f21_, "f21");
   testStackTrace(f22, "f22");
+  testStackTrace(f23, "f23");
+  testStackTrace(f24_, "f24");
+  testStackTrace(f25, "f25");
+  testStackTrace(f26, "f26");
+  testStackTrace(f27_, "f27");
+  testStackTrace(f28, "f28");
+  testStackTrace(f29, "f29");
+  testStackTrace(f30_, "f30");
+  testStackTrace(f31, "f31");
 
   testStackTrace(o1.m1, "m1");
   testStackTrace(o1.m4, "m4");

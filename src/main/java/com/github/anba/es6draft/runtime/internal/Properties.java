@@ -40,9 +40,9 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.NativeConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
-import com.github.anba.es6draft.runtime.types.builtins.NativeFunction.NativeFunctionId;
 import com.github.anba.es6draft.runtime.types.builtins.NativeTailCallFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -115,7 +115,7 @@ public final class Properties {
          * 
          * @return the native function identifier
          */
-        NativeFunctionId nativeId() default NativeFunctionId.None;
+        Class<?> nativeId() default void.class;
     }
 
     /**
@@ -464,6 +464,39 @@ public final class Properties {
             throw new IllegalArgumentException(c.toString());
         }
 
+        MethodHandle returnHandle(MethodHandle handle, Class<?> returnType) {
+            if (returnType == Double.TYPE || returnType == Integer.TYPE
+                    || returnType == Boolean.TYPE) {
+                return MethodHandles.explicitCastArguments(handle,
+                        handle.type().changeReturnType(Object.class));
+            } else if (returnType == String.class
+                    || ScriptObject.class.isAssignableFrom(returnType)) {
+                return MethodHandles.filterReturnValue(
+                        MethodHandles.explicitCastArguments(handle,
+                                handle.type().changeReturnType(Object.class)), nullFilter());
+            } else if (returnType == Void.TYPE) {
+                return MethodHandles.filterReturnValue(handle,
+                        MethodHandles.constant(Object.class, UNDEFINED));
+            } else if (returnType == Object.class) {
+                return MethodHandles.filterReturnValue(handle, typeFilter());
+            }
+            throw new IllegalArgumentException(returnType.toString());
+        }
+
+        private MethodHandle nullFilter() {
+            MethodHandle fallback = MethodHandles.dropArguments(
+                    MethodHandles.constant(Object.class, NULL), 0, Object.class);
+            return MethodHandles.guardWithTest(isNotNullMH, MethodHandles.identity(Object.class),
+                    fallback);
+        }
+
+        private MethodHandle typeFilter() {
+            MethodHandle fallback = MethodHandles.insertArguments(ThrowTypeErrorMH, 0, cx);
+            fallback = fallback.asType(fallback.type().changeReturnType(Object.class));
+            return MethodHandles.guardWithTest(isTypeMH, MethodHandles.identity(Object.class),
+                    fallback);
+        }
+
         private static final MethodHandle ToBooleanMH, ToNumberMH, ToInt32MH, ToStringMH,
                 ToFlatStringMH, ToObjectMH, ToCallableMH, IsInstanceMH;
         static {
@@ -495,27 +528,30 @@ public final class Properties {
 
         private static final MethodHandle ToBooleanArrayMH, ToStringArrayMH, ToFlatStringArrayMH,
                 ToNumberArrayMH, ToObjectArrayMH, ToCallableArrayMH, ToScriptExceptionMH,
-                ThrowTypeErrorMH;
+                ThrowTypeErrorMH, isNotNullMH, isTypeMH;
         static {
             MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
-            ToStringArrayMH = lookup.findStatic(Converter.class, "ToString", MethodType.methodType(
+            ToStringArrayMH = lookup.findStatic("ToString", MethodType.methodType(
                     CharSequence[].class, ExecutionContext.class, Object[].class));
-            ToFlatStringArrayMH = lookup.findStatic(Converter.class, "ToFlatString",
+            ToFlatStringArrayMH = lookup.findStatic("ToFlatString",
                     MethodType.methodType(String[].class, ExecutionContext.class, Object[].class));
-            ToNumberArrayMH = lookup.findStatic(Converter.class, "ToNumber",
+            ToNumberArrayMH = lookup.findStatic("ToNumber",
                     MethodType.methodType(double[].class, ExecutionContext.class, Object[].class));
-            ToBooleanArrayMH = lookup.findStatic(Converter.class, "ToBoolean",
+            ToBooleanArrayMH = lookup.findStatic("ToBoolean",
                     MethodType.methodType(boolean[].class, Object[].class));
-            ToObjectArrayMH = lookup.findStatic(Converter.class, "ToObject", MethodType.methodType(
+            ToObjectArrayMH = lookup.findStatic("ToObject", MethodType.methodType(
                     ScriptObject[].class, ExecutionContext.class, Object[].class));
             ToCallableArrayMH = lookup
-                    .findStatic(Converter.class, "ToCallable", MethodType.methodType(
-                            Callable[].class, ExecutionContext.class, Object[].class));
-            ToScriptExceptionMH = lookup.findStatic(Converter.class, "ToScriptException",
-                    MethodType.methodType(ScriptException.class, ExecutionContext.class,
-                            Exception.class));
-            ThrowTypeErrorMH = lookup.findStatic(Converter.class, "throwTypeError",
+                    .findStatic("ToCallable", MethodType.methodType(Callable[].class,
+                            ExecutionContext.class, Object[].class));
+            ToScriptExceptionMH = lookup.findStatic("ToScriptException", MethodType.methodType(
+                    ScriptException.class, ExecutionContext.class, Exception.class));
+            ThrowTypeErrorMH = lookup.findStatic("throwTypeError",
                     MethodType.methodType(void.class, ExecutionContext.class, Object.class));
+            isNotNullMH = lookup.findStatic("isNotNull",
+                    MethodType.methodType(boolean.class, Object.class));
+            isTypeMH = lookup.findStatic(Type.class, "isType",
+                    MethodType.methodType(boolean.class, Object.class));
         }
 
         private static boolean[] ToBoolean(Object[] source) {
@@ -580,17 +616,34 @@ public final class Properties {
         private static void throwTypeError(ExecutionContext cx, Object ignore) {
             throw Errors.newTypeError(cx, Messages.Key.IncompatibleObject);
         }
+
+        private static boolean isNotNull(Object o) {
+            return o != null;
+        }
     }
 
     private static <OWNER> void createExternalProperties(ExecutionContext cx, ScriptObject target,
             OWNER owner, Class<OWNER> holder) {
         ObjectLayout layout = externalLayouts.get(holder);
         Converter converter = new Converter(cx);
+        if (layout.values != null) {
+            createExternalValues(cx, target, owner, layout, converter);
+        }
         if (layout.functions != null) {
             createExternalFunctions(cx, target, owner, layout, converter);
         }
         if (layout.accessors != null) {
             createExternalAccessors(cx, target, owner, layout, converter);
+        }
+    }
+
+    private static <OWNER> void createExternalValues(ExecutionContext cx, ScriptObject target,
+            OWNER owner, ObjectLayout layout, Converter converter) {
+        for (Entry<Value, Object> entry : layout.values.entrySet()) {
+            Value val = entry.getKey();
+            assert entry.getValue() instanceof MethodHandle;
+            Object value = resolveValue(cx, converter, (MethodHandle) entry.getValue(), owner);
+            defineProperty(cx, target, val.name(), val.symbol(), val.attributes(), value);
         }
     }
 
@@ -697,6 +750,30 @@ public final class Properties {
         defineProperties(cx, target, stringProps, symbolProps);
     }
 
+    private static <OWNER> Object resolveValue(ExecutionContext cx, Converter converter,
+            MethodHandle handle, OWNER owner) {
+        if (handle.type().parameterCount() == 1) {
+            try {
+                return converter.returnHandle(handle, handle.type().returnType()).invoke(owner);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+        if (handle.type().parameterCount() == 2
+                && handle.type().parameterType(1) == ExecutionContext.class) {
+            try {
+                return converter.returnHandle(handle, handle.type().returnType()).invoke(owner, cx);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+        throw new IllegalArgumentException(handle.type().toString());
+    }
+
     private static void createExternalFunction(ExecutionContext cx, ScriptObject target,
             Function function, MethodHandle handle) {
         String name = function.name();
@@ -728,20 +805,30 @@ public final class Properties {
                     continue;
                 Function function = method.getAnnotation(Function.class);
                 Accessor accessor = method.getAnnotation(Accessor.class);
-                if (function != null && accessor != null) {
-                    throw new IllegalArgumentException();
-                }
+                Value value = method.getAnnotation(Value.class);
                 if (function != null) {
+                    if (accessor != null || value != null) {
+                        throw new IllegalArgumentException();
+                    }
                     if (layout.functions == null) {
                         layout.functions = new LinkedHashMap<>();
                     }
                     layout.functions.put(function, lookup.unreflect(method));
                 }
                 if (accessor != null) {
+                    if (value != null) {
+                        throw new IllegalArgumentException();
+                    }
                     if (layout.accessors == null) {
                         layout.accessors = new LinkedHashMap<>();
                     }
                     layout.accessors.put(accessor, lookup.unreflect(method));
+                }
+                if (value != null) {
+                    if (layout.values == null) {
+                        layout.values = new LinkedHashMap<>();
+                    }
+                    layout.values.put(value, lookup.unreflect(method));
                 }
             }
             return layout;
@@ -931,19 +1018,7 @@ public final class Properties {
             filters[pcount - 1] = converter.arrayFilterFor(params[pcount - 1]);
         }
         handle = MethodHandles.filterArguments(handle, 0, filters);
-
-        Class<?> returnType = type.returnType();
-        if (returnType == Double.TYPE || returnType == Integer.TYPE || returnType == Boolean.TYPE
-                || returnType == String.class || returnType == CharSequence.class
-                || ScriptObject.class.isAssignableFrom(returnType)) {
-            handle = MethodHandles.explicitCastArguments(handle,
-                    handle.type().changeReturnType(Object.class));
-        } else if (returnType == Void.TYPE) {
-            handle = MethodHandles.filterReturnValue(handle,
-                    MethodHandles.constant(Object.class, UNDEFINED));
-        } else if (returnType != Object.class) {
-            throw new IllegalArgumentException(returnType.toString());
-        }
+        handle = converter.returnHandle(handle, type.returnType());
         return handle;
     }
 

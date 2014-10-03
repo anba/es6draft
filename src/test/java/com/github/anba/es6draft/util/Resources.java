@@ -64,6 +64,8 @@ import com.github.anba.es6draft.util.Functional.Function;
  * Resource and configuration loading utility
  */
 public final class Resources {
+    private static final boolean REMOVE_DISABLED_TESTS = false;
+
     private Resources() {
     }
 
@@ -237,7 +239,20 @@ public final class Resources {
         Files.walkFileTree(basedir, cfv);
         List<TEST> tests = cfv.getResult();
         filterTests(tests, basedir, config);
+        if (REMOVE_DISABLED_TESTS) {
+            tests = removeDisabled(tests);
+        }
         return tests;
+    }
+
+    private static <TEST extends TestInfo> List<TEST> removeDisabled(List<TEST> tests) {
+        ArrayList<TEST> actual = new ArrayList<>();
+        for (TEST test : tests) {
+            if (test.isEnabled()) {
+                actual.add(test);
+            }
+        }
+        return actual;
     }
 
     /**
@@ -296,6 +311,7 @@ public final class Resources {
             Matcher matcher = pattern.matcher(filename);
             if (!matcher.matches()) {
                 assert false : "regexp failure";
+                continue;
             }
             String testname = matcher.group(1);
             if (excludes.contains(testname)) {

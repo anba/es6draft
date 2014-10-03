@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.compiler.ClassPropertyGenerator.ClassPropertyEvaluation;
+import static com.github.anba.es6draft.compiler.GeneratorComprehensionGenerator.EvaluateGeneratorComprehension;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 import static com.github.anba.es6draft.semantics.StaticSemantics.TemplateStrings;
 
@@ -21,23 +23,28 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
+import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
-import com.github.anba.es6draft.compiler.Code.MethodCode;
-import com.github.anba.es6draft.compiler.Compiler.Option;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.ExpressionVisitor.GeneratorState;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
+import com.github.anba.es6draft.compiler.assembler.Code;
+import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.Stack;
+import com.github.anba.es6draft.compiler.assembler.Variable;
+import com.github.anba.es6draft.compiler.assembler.Variables;
+import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
 import com.github.anba.es6draft.runtime.internal.JVMNames;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -47,19 +54,19 @@ final class CodeGenerator {
     private static final class Methods {
         // class: CompiledFunction
         static final MethodDesc CompiledFunction_Constructor = MethodDesc.create(
-                MethodType.Special, Types.CompiledFunction, "<init>",
+                MethodDesc.Invoke.Special, Types.CompiledFunction, "<init>",
                 Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$Function));
 
         // class: CompiledScript
-        static final MethodDesc CompiledScript_Constructor = MethodDesc.create(MethodType.Special,
-                Types.CompiledScript, "<init>",
+        static final MethodDesc CompiledScript_Constructor = MethodDesc.create(
+                MethodDesc.Invoke.Special, Types.CompiledScript, "<init>",
                 Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$ScriptBody));
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_GetTemplateCallSite = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "GetTemplateCallSite", Type.getMethodType(
-                        Types.ArrayObject, Type.INT_TYPE, Types.MethodHandle,
-                        Types.ExecutionContext));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "GetTemplateCallSite", Type
+                        .getMethodType(Types.ArrayObject, Type.INT_TYPE, Types.MethodHandle,
+                                Types.ExecutionContext));
     }
 
     private static final class MethodDescriptors {
@@ -73,6 +80,9 @@ final class CodeGenerator {
 
         static final String PropertyDefinitionsMethod = Type.getMethodDescriptor(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.OrdinaryObject);
+
+        static final String MethodDefinitionsMethod = Type.getMethodDescriptor(Type.VOID_TYPE,
+                Types.ExecutionContext, Types.OrdinaryFunction, Types.OrdinaryObject);
 
         static final String ExpressionMethod = Type.getMethodDescriptor(Types.Object,
                 Types.ExecutionContext);
@@ -116,24 +126,30 @@ final class CodeGenerator {
     private static final int MAX_FNAME_LENGTH = 0x400;
 
     private final Code code;
-    private final EnumSet<CompatibilityOption> options;
-    private final EnumSet<Option> compilerOptions;
     private final ExecutorService executor;
+    private final EnumSet<CompatibilityOption> options;
+    private final EnumSet<Parser.Option> parserOptions;
+    private final EnumSet<Compiler.Option> compilerOptions;
 
     private final StatementGenerator stmtgen = new StatementGenerator(this);
     private final ExpressionGenerator exprgen = new ExpressionGenerator(this);
     private final PropertyGenerator propgen = new PropertyGenerator(this);
 
-    CodeGenerator(Code code, ExecutorService executor, EnumSet<CompatibilityOption> options,
-            EnumSet<Option> compilerOptions) {
+    CodeGenerator(Code code, ExecutorService executor, Script script,
+            EnumSet<Compiler.Option> compilerOptions) {
         this.code = code;
-        this.options = options;
-        this.compilerOptions = compilerOptions;
         this.executor = executor;
+        this.options = script.getOptions();
+        this.parserOptions = script.getParserOptions();
+        this.compilerOptions = compilerOptions;
     }
 
     boolean isEnabled(CompatibilityOption option) {
         return options.contains(option);
+    }
+
+    boolean isEnabled(Parser.Option option) {
+        return parserOptions.contains(option);
     }
 
     boolean isEnabled(Compiler.Option option) {
@@ -141,7 +157,7 @@ final class CodeGenerator {
     }
 
     private Future<String> compressed(String source) {
-        if (INCLUDE_SOURCE) {
+        if (INCLUDE_SOURCE && !isEnabled(Parser.Option.NativeFunction)) {
             return executor.submit(SourceCompressor.compress(source));
         }
         return NO_SOURCE;
@@ -226,6 +242,10 @@ final class CodeGenerator {
         return methodName(node, "!propdef");
     }
 
+    private String methodName(MethodDefinitionsMethod node) {
+        return methodName(node, "!mdef");
+    }
+
     private String methodName(ExpressionMethod node) {
         return methodName(node, "!expr");
     }
@@ -306,6 +326,10 @@ final class CodeGenerator {
         return MethodDescriptors.PropertyDefinitionsMethod;
     }
 
+    private String methodDescriptor(MethodDefinitionsMethod node) {
+        return MethodDescriptors.MethodDefinitionsMethod;
+    }
+
     private String methodDescriptor(ExpressionMethod node) {
         return MethodDescriptors.ExpressionMethod;
     }
@@ -372,13 +396,8 @@ final class CodeGenerator {
     private final HashMap<String, String> methodClasses = new HashMap<>(32 * 4);
 
     private MethodCode publicStaticMethod(String methodName, String methodDescriptor) {
-        return publicStaticMethod(methodName, methodDescriptor, false);
-    }
-
-    private MethodCode publicStaticMethod(String methodName, String methodDescriptor, boolean stack) {
         final int access = Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC;
-        stack |= compilerOptions.contains(Compiler.Option.VerifyStack);
-        MethodCode method = code.newMethod(access, methodName, methodDescriptor, stack);
+        MethodCode method = code.newMethod(access, methodName, methodDescriptor);
         // System.out.printf("add <%s, %s>%n", methodName, method.classCode.className);
         assert !methodClasses.containsKey(methodName) : String.format(
                 "method '%s' already compiled", methodName);
@@ -402,6 +421,10 @@ final class CodeGenerator {
         return publicStaticMethod(methodName(node), methodDescriptor(node));
     }
 
+    private MethodCode newMethod(MethodDefinitionsMethod node) {
+        return publicStaticMethod(methodName(node), methodDescriptor(node));
+    }
+
     private MethodCode newMethod(ExpressionMethod node) {
         return publicStaticMethod(methodName(node), methodDescriptor(node));
     }
@@ -414,13 +437,7 @@ final class CodeGenerator {
         return publicStaticMethod(methodName(node), methodDescriptor(node));
     }
 
-    private MethodCode newMethod(FunctionNode node, FunctionName name, boolean stack) {
-        assert name == FunctionName.Code;
-        return publicStaticMethod(methodName(node, name), methodDescriptor(node, name), stack);
-    }
-
     MethodCode newMethod(FunctionNode node, FunctionName name) {
-        assert name != FunctionName.Code;
         return publicStaticMethod(methodName(node, name), methodDescriptor(node, name));
     }
 
@@ -438,55 +455,61 @@ final class CodeGenerator {
 
     MethodDesc methodDesc(TemplateLiteral node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodType.Static, owner(methodName), methodName,
+        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
                 methodDescriptor(node));
     }
 
     MethodDesc methodDesc(StatementListMethod node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodType.Static, owner(methodName), methodName,
+        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
                 methodDescriptor(node));
     }
 
     MethodDesc methodDesc(SpreadElementMethod node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodType.Static, owner(methodName), methodName,
+        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
                 methodDescriptor(node));
     }
 
     MethodDesc methodDesc(PropertyDefinitionsMethod node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodType.Static, owner(methodName), methodName,
+        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
+                methodDescriptor(node));
+    }
+
+    MethodDesc methodDesc(MethodDefinitionsMethod node) {
+        String methodName = methodName(node);
+        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
                 methodDescriptor(node));
     }
 
     MethodDesc methodDesc(ExpressionMethod node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodType.Static, owner(methodName), methodName,
+        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
                 methodDescriptor(node));
     }
 
     MethodDesc methodDesc(BlockStatement node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodType.Static, owner(methodName), methodName,
+        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
                 methodDescriptor(node));
     }
 
     MethodDesc methodDesc(SwitchStatement node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodType.Static, owner(methodName), methodName,
+        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
                 methodDescriptor(node));
     }
 
     MethodDesc methodDesc(FunctionNode node, FunctionName name) {
         String methodName = methodName(node, name);
-        return MethodDesc.create(MethodType.Static, owner(methodName), methodName,
+        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
                 methodDescriptor(node, name));
     }
 
     MethodDesc methodDesc(Script node, ScriptName name) {
         String methodName = methodName(node, name);
-        return MethodDesc.create(MethodType.Static, owner(methodName), methodName,
+        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
                 methodDescriptor(node, name));
     }
 
@@ -517,7 +540,7 @@ final class CodeGenerator {
             body.begin();
 
             List<TemplateCharacters> strings = TemplateStrings(node);
-            body.newarray(strings.size() * 2, Types.String);
+            body.anewarray(strings.size() * 2, Types.String);
             for (int i = 0, size = strings.size(); i < size; ++i) {
                 TemplateCharacters e = strings.get(i);
                 int index = i << 1;
@@ -525,7 +548,7 @@ final class CodeGenerator {
                 body.astore(index + 1, e.getRawValue());
             }
 
-            body.areturn();
+            body._return();
             body.end();
         }
     }
@@ -558,7 +581,7 @@ final class CodeGenerator {
 
         if (!result.isAbrupt()) {
             body.loadCompletionValue();
-            body.areturn();
+            body._return();
         }
         body.end();
     }
@@ -570,7 +593,7 @@ final class CodeGenerator {
         mv.loadThis();
         mv.invoke(methodDesc(node, ScriptName.RTI));
         mv.invoke(Methods.CompiledScript_Constructor);
-        mv.areturn();
+        mv._return();
         mv.end();
     }
 
@@ -594,7 +617,7 @@ final class CodeGenerator {
         mv.loadThis();
         mv.invoke(methodDesc(function, FunctionName.RTI));
         mv.invoke(Methods.CompiledFunction_Constructor);
-        mv.areturn();
+        mv._return();
         mv.end();
     }
 
@@ -634,27 +657,27 @@ final class CodeGenerator {
             new FunctionDeclarationInstantiationGenerator(this).generate(node);
 
             // runtime method
-            boolean tailCalls;
+            boolean tailCall;
             if (node instanceof ArrowFunction && ((ArrowFunction) node).getExpression() != null) {
-                tailCalls = conciseFunctionBody((ArrowFunction) node);
+                tailCall = conciseFunctionBody((ArrowFunction) node);
             } else if (node instanceof AsyncArrowFunction
                     && ((AsyncArrowFunction) node).getExpression() != null) {
-                tailCalls = conciseAsyncFunctionBody((AsyncArrowFunction) node);
+                tailCall = conciseAsyncFunctionBody((AsyncArrowFunction) node);
             } else if (node instanceof GeneratorComprehension) {
-                tailCalls = generatorComprehensionBody((GeneratorComprehension) node);
+                tailCall = generatorComprehensionBody((GeneratorComprehension) node);
             } else if (node.isGenerator()) {
-                tailCalls = generatorBody(node);
+                tailCall = generatorBody(node);
             } else if (node.isAsync()) {
-                tailCalls = asyncFunctionBody(node);
+                tailCall = asyncFunctionBody(node);
             } else {
-                tailCalls = functionBody(node);
+                tailCall = functionBody(node);
             }
 
             // call method
             new FunctionCodeGenerator(this).generate(node);
 
             // runtime-info method
-            new RuntimeInfoGenerator(this).runtimeInfo(node, tailCalls, source);
+            new RuntimeInfoGenerator(this).runtimeInfo(node, tailCall, source);
         }
     }
 
@@ -666,8 +689,8 @@ final class CodeGenerator {
     }
 
     private boolean conciseFunctionBody(ArrowFunction node) {
-        ExpressionVisitor body = new ArrowFunctionVisitor(
-                newMethod(node, FunctionName.Code, false), node);
+        MethodCode method = newMethod(node, FunctionName.Code);
+        ExpressionVisitor body = new ArrowFunctionVisitor(method, node);
         body.lineInfo(node);
         body.begin();
 
@@ -681,20 +704,17 @@ final class CodeGenerator {
         expressionBoxedValue(expression, body);
         body.exitScope();
 
-        body.areturn();
+        body._return();
         body.end();
 
         return body.hasTailCalls();
     }
 
     private boolean functionBody(FunctionNode node) {
-        StatementVisitor body = new FunctionStatementVisitor(newMethod(node, FunctionName.Code,
-                false), node);
+        MethodCode method = newMethod(node, FunctionName.Code);
+        StatementVisitor body = new FunctionStatementVisitor(method, node);
         body.lineInfo(node);
         body.begin();
-
-        // Create fast variable access bindings
-        // createVariableBindings(node, body);
 
         body.enterScope(node);
         Completion result = statements(node.getStatements(), body);
@@ -703,7 +723,7 @@ final class CodeGenerator {
         if (!result.isAbrupt()) {
             // fall-thru, return `undefined` from function
             body.loadUndefined();
-            body.areturn();
+            body._return();
         }
 
         body.end();
@@ -712,11 +732,11 @@ final class CodeGenerator {
     }
 
     private boolean conciseAsyncFunctionBody(AsyncArrowFunction node) {
-        ExpressionVisitor body = new AsyncArrowFunctionVisitor(newMethod(node, FunctionName.Code,
-                true), node);
+        MethodCode method = newMethod(node, FunctionName.Code);
+        AsyncArrowFunctionVisitor body = new AsyncArrowFunctionVisitor(method, node);
         body.lineInfo(node);
         body.begin();
-        Variable<ResumptionPoint> resume = body.getParameter(1, ResumptionPoint.class);
+        Variable<ResumptionPoint> resume = body.getResumeParameter();
         GeneratorState state = null;
         if (body.isResumable() && !isEnabled(Compiler.Option.NoResume)) {
             state = body.prologue(resume);
@@ -726,7 +746,7 @@ final class CodeGenerator {
         expressionBoxedValue(node.getExpression(), body);
         body.exitScope();
 
-        body.areturn();
+        body._return();
         if (state != null) {
             body.epilogue(resume, state);
         }
@@ -741,11 +761,11 @@ final class CodeGenerator {
     }
 
     private boolean generatorBody(FunctionNode node) {
-        StatementVisitor body = new GeneratorStatementVisitor(newMethod(node, FunctionName.Code,
-                true), node);
+        MethodCode method = newMethod(node, FunctionName.Code);
+        GeneratorStatementVisitor body = new GeneratorStatementVisitor(method, node);
         body.lineInfo(node);
         body.begin();
-        Variable<ResumptionPoint> resume = body.getParameter(1, ResumptionPoint.class);
+        Variable<ResumptionPoint> resume = body.getResumeParameter();
         GeneratorState state = null;
         if (body.isResumable() && !isEnabled(Compiler.Option.NoResume)) {
             state = body.prologue(resume);
@@ -758,7 +778,7 @@ final class CodeGenerator {
         if (!result.isAbrupt()) {
             // fall-thru, return `undefined` from function
             body.loadUndefined();
-            body.areturn();
+            body._return();
         }
 
         if (state != null) {
@@ -770,22 +790,22 @@ final class CodeGenerator {
     }
 
     private boolean generatorComprehensionBody(GeneratorComprehension node) {
-        ExpressionVisitor body = new GeneratorComprehensionVisitor(newMethod(node,
-                FunctionName.Code, true), node);
+        MethodCode method = newMethod(node, FunctionName.Code);
+        GeneratorComprehensionVisitor body = new GeneratorComprehensionVisitor(method, node);
         body.lineInfo(node);
         body.begin();
-        Variable<ResumptionPoint> resume = body.getParameter(1, ResumptionPoint.class);
+        Variable<ResumptionPoint> resume = body.getResumeParameter();
         GeneratorState state = null;
         if (body.isResumable() && !isEnabled(Compiler.Option.NoResume)) {
             state = body.prologue(resume);
         }
 
         body.enterScope(node);
-        node.accept(new GeneratorComprehensionGenerator(this), body);
+        EvaluateGeneratorComprehension(this, node, body);
         body.exitScope();
 
         body.loadUndefined();
-        body.areturn();
+        body._return();
 
         if (state != null) {
             body.epilogue(resume, state);
@@ -797,8 +817,8 @@ final class CodeGenerator {
 
     void compile(StatementListMethod node, StatementVisitor mv) {
         if (!isCompiled(node)) {
-            StatementVisitor body = new StatementListMethodStatementVisitor(newMethod(
-                    mv.getTopLevelNode(), node), mv);
+            MethodCode method = newMethod(mv.getTopLevelNode(), node);
+            StatementVisitor body = new StatementListMethodStatementVisitor(method, mv);
             body.lineInfo(node);
             body.nop(); // force line-number entry
             body.begin();
@@ -809,7 +829,7 @@ final class CodeGenerator {
             if (!result.isAbrupt()) {
                 // fall-thru, return `null` sentinel or completion value
                 body.loadCompletionValue();
-                body.areturn();
+                body._return();
             }
 
             body.end();
@@ -821,14 +841,17 @@ final class CodeGenerator {
 
     void compile(SpreadElementMethod node, ExpressionVisitor mv) {
         if (!isCompiled(node)) {
-            ExpressionVisitor body = new SpreadElementMethodVisitor(newMethod(node), mv);
+            MethodCode method = newMethod(node);
+            SpreadElementMethodVisitor body = new SpreadElementMethodVisitor(method, mv);
             body.lineInfo(node);
             body.begin();
 
             body.setScope(mv.getScope());
+            body.loadArrayObject();
+            body.loadArrayIndex();
             expression(node.getExpression(), body);
 
-            body.areturn();
+            body._return();
             body.end();
 
             // propagate state information from nested spread-element-method
@@ -838,35 +861,58 @@ final class CodeGenerator {
 
     void compile(PropertyDefinitionsMethod node, ExpressionVisitor mv) {
         if (!isCompiled(node)) {
-            ExpressionVisitor body = new PropertyDefinitionsMethodVisitor(newMethod(node), mv);
+            MethodCode method = newMethod(node);
+            PropertyDefinitionsMethodVisitor body = new PropertyDefinitionsMethodVisitor(method, mv);
             body.lineInfo(node);
             body.begin();
 
             body.setScope(mv.getScope());
-            Variable<OrdinaryObject> object = body.getParameter(1, OrdinaryObject.class);
+            Variable<OrdinaryObject> object = body.getObjectParameter();
             for (PropertyDefinition property : node.getProperties()) {
                 body.load(object);
                 propertyDefinition(property, body);
             }
 
-            body.areturn();
+            body._return();
             body.end();
 
-            // propagate state information from nested property-definition-method
+            // propagate state information from nested property-definitions-method
+            mv.updateInfo(body);
+        }
+    }
+
+    void compile(ClassDefinition def, MethodDefinitionsMethod node, ExpressionVisitor mv) {
+        if (!isCompiled(node)) {
+            MethodCode method = newMethod(node);
+            MethodDefinitionsMethodVisitor body = new MethodDefinitionsMethodVisitor(method, mv);
+            body.lineInfo(node);
+            body.begin();
+
+            body.setScope(mv.getScope());
+
+            Variable<OrdinaryFunction> function = body.getFunctionParameter();
+            Variable<OrdinaryObject> proto = body.getPrototypeParameter();
+            ClassPropertyEvaluation(this, def, node.getProperties(), function, proto, body);
+
+            body._return();
+            body.end();
+
+            // propagate state information from nested method-definitions-method
             mv.updateInfo(body);
         }
     }
 
     void compile(ExpressionMethod node, ExpressionVisitor mv) {
         if (!isCompiled(node)) {
-            ExpressionVisitor body = new ExpressionMethodVisitor(newMethod(node), mv);
+            MethodCode method = newMethod(node);
+            ExpressionMethodVisitor body = new ExpressionMethodVisitor(method, mv);
             body.lineInfo(node);
             body.begin();
 
             body.setScope(mv.getScope());
             expressionBoxedValue(node.getExpression(), body);
 
-            body.areturn();
+            body._return();
             body.end();
 
             // propagate state information from nested expression-method
@@ -877,15 +923,16 @@ final class CodeGenerator {
     void compile(BlockStatement node, StatementVisitor mv,
             BlockDeclarationInstantiationGenerator generator) {
         if (!isCompiled(node)) {
-            ExpressionVisitor body = new BlockDeclInitMethodGenerator(newMethod(node), mv);
+            MethodCode method = newMethod(node);
+            BlockDeclInitMethodGenerator body = new BlockDeclInitMethodGenerator(method, mv);
             body.lineInfo(node);
             body.begin();
 
             body.setScope(mv.getScope());
-            body.loadParameter(1, LexicalEnvironment.class);
+            body.loadLexicalEnvironment();
             generator.generateMethod(node, body);
 
-            body.areturn();
+            body._return();
             body.end();
         }
     }
@@ -893,15 +940,16 @@ final class CodeGenerator {
     void compile(SwitchStatement node, StatementVisitor mv,
             BlockDeclarationInstantiationGenerator generator) {
         if (!isCompiled(node)) {
-            ExpressionVisitor body = new BlockDeclInitMethodGenerator(newMethod(node), mv);
+            MethodCode method = newMethod(node);
+            BlockDeclInitMethodGenerator body = new BlockDeclInitMethodGenerator(method, mv);
             body.lineInfo(node);
             body.begin();
 
             body.setScope(mv.getScope());
-            body.loadParameter(1, LexicalEnvironment.class);
+            body.loadLexicalEnvironment();
             generator.generateMethod(node, body);
 
-            body.areturn();
+            body._return();
             body.end();
         }
     }
@@ -982,10 +1030,19 @@ final class CodeGenerator {
         }
 
         @Override
+        protected Stack createStack(Variables variables) {
+            return new StackImpl(variables);
+        }
+
+        @Override
         public void begin() {
             super.begin();
             setParameterName("cx", 0, Types.ExecutionContext);
             setParameterName("rp", 1, Types.ResumptionPoint);
+        }
+
+        Variable<ResumptionPoint> getResumeParameter() {
+            return getParameter(1, ResumptionPoint.class);
         }
     }
 
@@ -1020,10 +1077,19 @@ final class CodeGenerator {
         }
 
         @Override
+        protected Stack createStack(Variables variables) {
+            return new StackImpl(variables);
+        }
+
+        @Override
         public void begin() {
             super.begin();
             setParameterName("cx", 0, Types.ExecutionContext);
             setParameterName("rp", 1, Types.ResumptionPoint);
+        }
+
+        Variable<ResumptionPoint> getResumeParameter() {
+            return getParameter(1, ResumptionPoint.class);
         }
     }
 
@@ -1033,10 +1099,19 @@ final class CodeGenerator {
         }
 
         @Override
+        protected Stack createStack(Variables variables) {
+            return new StackImpl(variables);
+        }
+
+        @Override
         public void begin() {
             super.begin();
             setParameterName("cx", 0, Types.ExecutionContext);
             setParameterName("rp", 1, Types.ResumptionPoint);
+        }
+
+        Variable<ResumptionPoint> getResumeParameter() {
+            return getParameter(1, ResumptionPoint.class);
         }
     }
 
@@ -1064,6 +1139,14 @@ final class CodeGenerator {
             setParameterName("array", 1, Types.ArrayObject);
             setParameterName("index", 2, Type.INT_TYPE);
         }
+
+        void loadArrayObject() {
+            loadParameter(1, ArrayObject.class);
+        }
+
+        void loadArrayIndex() {
+            loadParameter(2, int.class);
+        }
     }
 
     private static final class PropertyDefinitionsMethodVisitor extends ExpressionVisitor {
@@ -1077,6 +1160,32 @@ final class CodeGenerator {
             setParameterName("cx", 0, Types.ExecutionContext);
             setParameterName("object", 1, Types.OrdinaryObject);
         }
+
+        Variable<OrdinaryObject> getObjectParameter() {
+            return getParameter(1, OrdinaryObject.class);
+        }
+    }
+
+    private static final class MethodDefinitionsMethodVisitor extends ExpressionVisitor {
+        MethodDefinitionsMethodVisitor(MethodCode method, ExpressionVisitor parent) {
+            super(method, parent);
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", 0, Types.ExecutionContext);
+            setParameterName("F", 1, Types.OrdinaryFunction);
+            setParameterName("proto", 2, Types.OrdinaryObject);
+        }
+
+        Variable<OrdinaryFunction> getFunctionParameter() {
+            return getParameter(1, OrdinaryFunction.class);
+        }
+
+        Variable<OrdinaryObject> getPrototypeParameter() {
+            return getParameter(2, OrdinaryObject.class);
+        }
     }
 
     private static final class BlockDeclInitMethodGenerator extends ExpressionVisitor {
@@ -1089,6 +1198,10 @@ final class CodeGenerator {
             super.begin();
             setParameterName("cx", 0, Types.ExecutionContext);
             setParameterName("env", 1, Types.LexicalEnvironment);
+        }
+
+        void loadLexicalEnvironment() {
+            loadParameter(1, LexicalEnvironment.class);
         }
     }
 }

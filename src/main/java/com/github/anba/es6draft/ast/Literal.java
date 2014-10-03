@@ -17,4 +17,9 @@ public abstract class Literal extends Expression {
     protected Literal(long beginPosition, long endPosition) {
         super(beginPosition, endPosition);
     }
+
+    @Override
+    public Expression emptyCompletion() {
+        return EmptyExpression.EMPTY;
+    }
 }

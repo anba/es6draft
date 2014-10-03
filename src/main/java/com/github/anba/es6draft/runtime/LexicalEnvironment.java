@@ -52,45 +52,6 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * Returns the first {@link EnvironmentRecord} which has a binding for {@code name}.
-     * 
-     * @param lex
-     *            the lexical environment
-     * @param name
-     *            the identifier name
-     * @return the first environment record which has a binding for <var>name</var>
-     */
-    private static EnvironmentRecord getIdentifierRecord(LexicalEnvironment<?> lex, String name) {
-        for (; lex != null; lex = lex.outer) {
-            EnvironmentRecord envRec = lex.envRec;
-            if (envRec.hasBinding(name)) {
-                return envRec;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Retrieves the binding value of the first {@link EnvironmentRecord} which has a binding for
-     * {@code name}, if no such binding exists a ReferenceError is thrown.
-     * 
-     * @param lex
-     *            the lexical environment
-     * @param name
-     *            the identifier name
-     * @param strict
-     *            the strict mode flag
-     * @return the resolved identifier value
-     */
-    static Object getIdentifierValueOrThrow(LexicalEnvironment<?> lex, String name, boolean strict) {
-        EnvironmentRecord envRec = getIdentifierRecord(lex, name);
-        if (envRec != null) {
-            return envRec.getBindingValue(name, strict);
-        }
-        throw newReferenceError(lex.cx, Messages.Key.UnresolvableReference, name);
-    }
-
-    /**
      * Clones the given declarative {@link LexicalEnvironment}.
      * <p>
      * [Called from generated code]
@@ -106,6 +67,28 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
+     * Retrieves the binding value of the first {@link EnvironmentRecord} which has a binding for
+     * {@code name}, if no such binding exists a ReferenceError is thrown.
+     * 
+     * @param lex
+     *            the lexical environment
+     * @param name
+     *            the identifier name
+     * @param strict
+     *            the strict mode flag
+     * @return the resolved identifier value
+     */
+    static Object getIdentifierValueOrThrow(LexicalEnvironment<?> lex, String name, boolean strict) {
+        for (LexicalEnvironment<?> env = lex; env != null; env = env.outer) {
+            Object value = env.envRec.getBindingValueOrNull(name, strict);
+            if (value != null) {
+                return value;
+            }
+        }
+        throw newReferenceError(lex.cx, Messages.Key.UnresolvableReference, name);
+    }
+
+    /**
      * 8.1.2.1 GetIdentifierReference (lex, name, strict) Abstract Operation
      * 
      * @param lex
@@ -116,12 +99,18 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      *            the strict mode flag
      * @return the resolved identifier reference
      */
-    public static Reference<EnvironmentRecord, String> getIdentifierReference(
+    public static Reference<? extends EnvironmentRecord, String> getIdentifierReference(
             LexicalEnvironment<?> lex, String name, boolean strict) {
-        /* steps 2-3, 5 */
-        EnvironmentRecord envRec = getIdentifierRecord(lex, name);
-        /* steps 1, 4 */
-        return new Reference.IdentifierReference(envRec, name, strict);
+        /* steps 2-6 */
+        for (LexicalEnvironment<?> env = lex; env != null; env = env.outer) {
+            Reference<? extends EnvironmentRecord, String> ref = env.envRec.getReferenceOrNull(
+                    name, strict);
+            if (ref != null) {
+                return ref;
+            }
+        }
+        /* step 1 */
+        return new Reference.IdentifierReference<>(null, name, strict);
     }
 
     /**

@@ -4,12 +4,12 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.compiler;
+package com.github.anba.es6draft.compiler.assembler;
 
 import org.objectweb.asm.Label;
 
 /**
- * {@link Label} subclass for line annotations and try-catch handlers
+ * {@link Label} subclass for try-catch handlers.
  */
-final class LocationLabel extends Label {
+public final class TryCatchLabel extends Label {
 }

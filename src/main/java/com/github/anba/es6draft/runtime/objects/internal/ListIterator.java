@@ -6,7 +6,9 @@
  */
 package com.github.anba.es6draft.runtime.objects.internal;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorStep;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorValue;
 
 import java.util.Iterator;
 
@@ -23,11 +25,14 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>7 Abstract Operations</h1><br>
  * <h2>7.4 Operations on Iterator Objects</h2>
  * <ul>
- * <li>7.4.8 CreateListIterator (list)
+ * <li>7.4.9 CreateListIterator (list)
  * </ul>
  */
 public final class ListIterator<T> extends OrdinaryObject {
+    /** [[IteratedList]] and [[ListIteratorNextIndex]] */
     private Iterator<T> iterator;
+
+    /** [[IteratorNext]] */
     private ListIteratorNext iteratorNext;
 
     public ListIterator(Realm realm) {
@@ -52,7 +57,7 @@ public final class ListIterator<T> extends OrdinaryObject {
     }
 
     /**
-     * 7.4.8 CreateListIterator (list)
+     * 7.4.9 CreateListIterator (list)
      * <p>
      * Returns a new {@link ListIterator} object for the internal list {@code iterator}
      * 
@@ -67,7 +72,7 @@ public final class ListIterator<T> extends OrdinaryObject {
     public static <T> ListIterator<T> CreateListIterator(ExecutionContext cx, Iterator<T> iter) {
         /* step 1 */
         @SuppressWarnings("unchecked")
-        ListIterator<T> iterator = (ListIterator<T>) ObjectCreate(cx, Intrinsics.ObjectPrototype,
+        ListIterator<T> iterator = (ListIterator<T>) ObjectCreate(cx, Intrinsics.IteratorPrototype,
                 ListIteratorAllocator.INSTANCE);
         /* steps 2-3 */
         iterator.iterator = iter;
@@ -95,19 +100,6 @@ public final class ListIterator<T> extends OrdinaryObject {
         return new ScriptIteratorImpl(cx, iterator);
     }
 
-    /**
-     * Returns an {@link Iterator} for {@code arrayLike}.
-     * 
-     * @param cx
-     *            the execution context
-     * @param arrayLike
-     *            the array-like script object
-     * @return the iterator object
-     */
-    public static Iterator<?> FromScriptArray(ExecutionContext cx, ScriptObject arrayLike) {
-        return new ArrayIterator(cx, arrayLike);
-    }
-
     private static final class ScriptIteratorImpl extends SimpleIterator<Object> implements
             ScriptIterator<Object> {
         private final ExecutionContext cx;
@@ -130,27 +122,6 @@ public final class ListIterator<T> extends OrdinaryObject {
         @Override
         public ScriptObject getScriptObject() {
             return object;
-        }
-    }
-
-    private static final class ArrayIterator extends SimpleIterator<Object> {
-        private final ExecutionContext cx;
-        private final ScriptObject arrayLike;
-        private final long length;
-        private long index = 0;
-
-        ArrayIterator(ExecutionContext cx, ScriptObject arrayLike) {
-            this.cx = cx;
-            this.arrayLike = arrayLike;
-            this.length = ToLength(cx, Get(cx, arrayLike, "length"));
-        }
-
-        @Override
-        protected Object tryNext() {
-            if (index >= length) {
-                return null;
-            }
-            return Get(cx, arrayLike, index++);
         }
     }
 }

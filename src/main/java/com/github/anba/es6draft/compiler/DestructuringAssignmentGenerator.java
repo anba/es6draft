@@ -11,14 +11,13 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
 import java.util.Iterator;
 
-import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.compiler.assembler.Jump;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.Variable;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
@@ -30,52 +29,60 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 final class DestructuringAssignmentGenerator {
     private static final class Methods {
         // class: AbstractOperations
-        static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "Get", Type.getMethodType(Types.Object,
-                        Types.ExecutionContext, Types.ScriptObject, Types.Object));
+        static final MethodDesc AbstractOperations_Get = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "Get", Type.getMethodType(
+                        Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.Object));
 
         static final MethodDesc AbstractOperations_Get_String = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "Get", Type.getMethodType(
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "Get", Type.getMethodType(
                         Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.String));
 
-        static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "ToObject",
+        static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToObject",
                 Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
 
         // class: Reference
-        static final MethodDesc Reference_putValue = MethodDesc.create(MethodType.Virtual,
-                Types.Reference, "putValue",
+        static final MethodDesc Reference_putValue = MethodDesc.create(
+                MethodDesc.Invoke.Virtual, Types.Reference, "putValue",
                 Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_createRestArray = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "createRestArray",
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "createRestArray",
                 Type.getMethodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getIterator = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "getIterator",
+        static final MethodDesc ScriptRuntime_getIterator = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getIterator",
                 Type.getMethodType(Types.Iterator, Types.ScriptObject, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_iteratorNextAndIgnore = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "iteratorNextAndIgnore",
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "iteratorNextAndIgnore",
                 Type.getMethodType(Type.VOID_TYPE, Types.Iterator));
 
         static final MethodDesc ScriptRuntime_iteratorNextOrUndefined = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "iteratorNextOrUndefined",
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "iteratorNextOrUndefined",
                 Type.getMethodType(Types.Object, Types.Iterator));
 
         // class: Type
-        static final MethodDesc Type_isUndefined = MethodDesc.create(MethodType.Static,
+        static final MethodDesc Type_isUndefined = MethodDesc.create(MethodDesc.Invoke.Static,
                 Types._Type, "isUndefined", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
-    private final CodeGenerator codegen;
-
-    DestructuringAssignmentGenerator(CodeGenerator codegen) {
-        this.codegen = codegen;
+    private DestructuringAssignmentGenerator() {
     }
 
-    public void generate(AssignmentPattern node, ExpressionVisitor mv) {
+    /**
+     * stack: [value] {@literal ->} []
+     * 
+     * @param codegen
+     *            the code generator
+     * @param node
+     *            the assignment pattern node
+     * @param mv
+     *            the expression visitor
+     */
+    static void DestructuringAssignment(CodeGenerator codegen, AssignmentPattern node,
+            ExpressionVisitor mv) {
         DestructuringAssignmentEvaluation init = new DestructuringAssignmentEvaluation(codegen, mv);
         node.accept(init, null);
     }
@@ -225,7 +232,7 @@ final class DestructuringAssignmentGenerator {
 
             // stack: [(lref), v] -> [(lref), v']
             if (initializer != null) {
-                Label undef = new Label();
+                Jump undef = new Jump();
                 mv.dup();
                 mv.invoke(Methods.Type_isUndefined);
                 mv.ifeq(undef);
@@ -299,7 +306,7 @@ final class DestructuringAssignmentGenerator {
             // step 3
             // stack: [v] -> [v']
             if (initializer != null) {
-                Label undef = new Label();
+                Jump undef = new Jump();
                 mv.dup();
                 mv.invoke(Methods.Type_isUndefined);
                 mv.ifeq(undef);

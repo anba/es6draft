@@ -40,7 +40,7 @@ public final class TailCallInvocation {
      * @param argumentsList
      *            the function arguments
      */
-    public TailCallInvocation(Callable function, Object thisValue, Object[] argumentsList) {
+    TailCallInvocation(Callable function, Object thisValue, Object[] argumentsList) {
         this.type = InvokeType.Call;
         this.function = function;
         this.thisValue = thisValue;

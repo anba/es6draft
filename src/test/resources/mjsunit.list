@@ -69,6 +69,12 @@ harmony/proxies-with-unscopables.js
 harmony/array-find.js
 harmony/array-findIndex.js
 
+# v8 does not follow spec
+harmony/regexp-sticky.js
+
+# v8 does not follow spec
+harmony/super.js
+
 
 ###################
 # Misc issues     #
@@ -101,9 +107,6 @@ harmony/proxies.js
 harmony/regress/regress-2219.js
 harmony/regress/regress-2225.js
 harmony/regress/regress-lookup-transition.js
-
-# with-binding lookup uses [[GetOwnProperty]], test proxy does not define trap
-harmony/proxies-with.js
 
 
 ############################################
@@ -175,6 +178,9 @@ string-oom-replace-regexp-global-with-function.js
 # .stack is an own accessor property on error objects in V8
 regress/regress-3404.js
 stack-traces-overflow.js
+
+# v8 restriction test
+regexp-not-sticky-yet.js
 
 
 ############################################
@@ -316,9 +322,6 @@ regress/regress-1119.js
 
 # MethodDefinition syntax not supported
 regress/regress-parse-object-literal.js
-
-# per iteration let bindings in for-statement
-harmony/block-for.js
 
 
 #######################################

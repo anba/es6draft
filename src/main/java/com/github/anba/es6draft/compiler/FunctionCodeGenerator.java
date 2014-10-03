@@ -14,11 +14,11 @@ import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.FunctionExpression;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.GeneratorComprehension;
-import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.TryCatchLabel;
+import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
@@ -33,45 +33,47 @@ final class FunctionCodeGenerator {
     private static final class Methods {
         // ExecutionContext
         static final MethodDesc ExecutionContext_newFunctionExecutionContext = MethodDesc.create(
-                MethodType.Static, Types.ExecutionContext, "newFunctionExecutionContext", Type
-                        .getMethodType(Types.ExecutionContext, Types.ExecutionContext,
-                                Types.FunctionObject, Types.Object));
+                MethodDesc.Invoke.Static, Types.ExecutionContext,
+                "newFunctionExecutionContext", Type.getMethodType(Types.ExecutionContext,
+                        Types.ExecutionContext, Types.FunctionObject, Types.Object));
 
         static final MethodDesc ExecutionContext_getCurrentFunction = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "getCurrentFunction",
+                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "getCurrentFunction",
                 Type.getMethodType(Types.FunctionObject));
 
         // FunctionObject
         static final MethodDesc FunctionObject_getLegacyArguments = MethodDesc.create(
-                MethodType.Virtual, Types.FunctionObject, "getLegacyArguments",
+                MethodDesc.Invoke.Virtual, Types.FunctionObject, "getLegacyArguments",
                 Type.getMethodType(Types.Object));
 
         static final MethodDesc FunctionObject_getLegacyCaller = MethodDesc.create(
-                MethodType.Virtual, Types.FunctionObject, "getLegacyCaller",
+                MethodDesc.Invoke.Virtual, Types.FunctionObject, "getLegacyCaller",
                 Type.getMethodType(Types.Object));
 
         static final MethodDesc FunctionObject_setLegacyCaller = MethodDesc.create(
-                MethodType.Virtual, Types.FunctionObject, "setLegacyCaller",
+                MethodDesc.Invoke.Virtual, Types.FunctionObject, "setLegacyCaller",
                 Type.getMethodType(Type.VOID_TYPE, Types.FunctionObject));
 
         static final MethodDesc FunctionObject_restoreLegacyProperties = MethodDesc.create(
-                MethodType.Virtual, Types.FunctionObject, "restoreLegacyProperties",
+                MethodDesc.Invoke.Virtual, Types.FunctionObject, "restoreLegacyProperties",
                 Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.Object));
 
         // OrdinaryAsyncFunction
         static final MethodDesc OrdinaryAsyncFunction_EvaluateBody = MethodDesc.create(
-                MethodType.Static, Types.OrdinaryAsyncFunction, "EvaluateBody", Type.getMethodType(
-                        Types.PromiseObject, Types.ExecutionContext, Types.OrdinaryAsyncFunction));
+                MethodDesc.Invoke.Static, Types.OrdinaryAsyncFunction, "EvaluateBody", Type
+                        .getMethodType(Types.PromiseObject, Types.ExecutionContext,
+                                Types.OrdinaryAsyncFunction));
 
         // OrdinaryGenerator
         static final MethodDesc OrdinaryGenerator_EvaluateBody = MethodDesc.create(
-                MethodType.Static, Types.OrdinaryGenerator, "EvaluateBody", Type.getMethodType(
-                        Types.GeneratorObject, Types.ExecutionContext, Types.OrdinaryGenerator));
-
-        static final MethodDesc OrdinaryGenerator_EvaluateBodyComprehension = MethodDesc.create(
-                MethodType.Static, Types.OrdinaryGenerator, "EvaluateBodyComprehension", Type
+                MethodDesc.Invoke.Static, Types.OrdinaryGenerator, "EvaluateBody", Type
                         .getMethodType(Types.GeneratorObject, Types.ExecutionContext,
                                 Types.OrdinaryGenerator));
+
+        static final MethodDesc OrdinaryGenerator_EvaluateBodyComprehension = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.OrdinaryGenerator, "EvaluateBodyComprehension",
+                Type.getMethodType(Types.GeneratorObject, Types.ExecutionContext,
+                        Types.OrdinaryGenerator));
     }
 
     private static final int FUNCTION = 0;
@@ -214,8 +216,8 @@ final class FunctionCodeGenerator {
         // (2) Update 'caller' property
         setLegacyCaller(function, callerContext, mv);
 
-        LocationLabel startFinally = new LocationLabel(), endFinally = new LocationLabel();
-        LocationLabel handlerFinally = new LocationLabel();
+        TryCatchLabel startFinally = new TryCatchLabel(), endFinally = new TryCatchLabel();
+        TryCatchLabel handlerFinally = new TryCatchLabel();
         mv.mark(startFinally);
         {
             // (3) Create a new ExecutionContext
@@ -231,7 +233,7 @@ final class FunctionCodeGenerator {
             restoreLegacyProperties(function, oldCaller, oldArguments, mv);
 
             // (7) Return result value
-            mv.areturn(Types.Object);
+            mv._return();
         }
         mv.mark(endFinally);
 
@@ -279,7 +281,7 @@ final class FunctionCodeGenerator {
         evaluateBody(node, calleeContext, mv);
 
         // (4) Return result value
-        mv.areturn(Types.Object);
+        mv._return();
     }
 
     /**
@@ -319,7 +321,7 @@ final class FunctionCodeGenerator {
         mv.invoke(Methods.OrdinaryAsyncFunction_EvaluateBody);
 
         // (4) Return result value
-        mv.areturn(Types.Object);
+        mv._return();
     }
 
     /**
@@ -358,7 +360,7 @@ final class FunctionCodeGenerator {
         mv.invoke(Methods.OrdinaryGenerator_EvaluateBody);
 
         // (4) Return result value
-        mv.areturn(Types.Object);
+        mv._return();
     }
 
     /**
@@ -397,7 +399,7 @@ final class FunctionCodeGenerator {
         mv.invoke(Methods.OrdinaryGenerator_EvaluateBodyComprehension);
 
         // (4) Return result value
-        mv.areturn(Types.Object);
+        mv._return();
     }
 
     /**

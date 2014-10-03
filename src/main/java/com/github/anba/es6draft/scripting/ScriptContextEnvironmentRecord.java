@@ -18,6 +18,7 @@ import javax.script.ScriptContext;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
@@ -35,6 +36,23 @@ final class ScriptContextEnvironmentRecord implements EnvironmentRecord {
     @Override
     public Set<String> bindingNames() {
         return context.getBindings(ScriptContext.ENGINE_SCOPE).keySet();
+    }
+
+    @Override
+    public Object getBindingValueOrNull(String name, boolean strict) {
+        if (hasBinding(name)) {
+            return getBindingValue(name, strict);
+        }
+        return null;
+    }
+
+    @Override
+    public Reference<ScriptContextEnvironmentRecord, String> getReferenceOrNull(String name,
+            boolean strict) {
+        if (hasBinding(name)) {
+            return new Reference.IdentifierReference<>(this, name, strict);
+        }
+        return null;
     }
 
     @Override

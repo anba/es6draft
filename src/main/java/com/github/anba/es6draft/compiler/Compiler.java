@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Formatter;
 import java.util.Locale;
@@ -26,12 +27,17 @@ import com.github.anba.es6draft.ast.FunctionDefinition;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.ast.Script;
+import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.ast.scope.ScriptScope;
-import com.github.anba.es6draft.compiler.Code.ClassCode;
 import com.github.anba.es6draft.compiler.analyzer.CodeSizeAnalysis;
 import com.github.anba.es6draft.compiler.analyzer.CodeSizeException;
+import com.github.anba.es6draft.compiler.assembler.Code;
+import com.github.anba.es6draft.compiler.assembler.Code.ClassCode;
+import com.github.anba.es6draft.compiler.assembler.SimpleTypeTextifier;
+import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.Source;
 
 /**
  *
@@ -65,8 +71,7 @@ public final class Compiler {
         Code code = new Code(clazzName, superClassName, sourceName(script), sourceMap(script));
 
         // generate code
-        CodeGenerator codegen = new CodeGenerator(code, executor, script.getOptions(),
-                compilerOptions);
+        CodeGenerator codegen = new CodeGenerator(code, executor, script, compilerOptions);
         codegen.compile(script);
 
         // finalize
@@ -98,8 +103,7 @@ public final class Compiler {
         Code code = new Code(clazzName, superClassName, "<Function>", null);
 
         // generate code
-        CodeGenerator codegen = new CodeGenerator(code, executor, optionsFrom(function),
-                compilerOptions);
+        CodeGenerator codegen = new CodeGenerator(code, executor, script(function), compilerOptions);
         codegen.compileFunction(function);
 
         // finalize
@@ -143,12 +147,16 @@ public final class Compiler {
         }
     }
 
-    private static EnumSet<CompatibilityOption> optionsFrom(FunctionNode function) {
+    private static Script script(FunctionNode function) {
         Scope enclosingScope = function.getScope().getEnclosingScope();
         if (enclosingScope instanceof ScriptScope) {
-            return ((ScriptScope) enclosingScope).getNode().getOptions();
+            return ((ScriptScope) enclosingScope).getNode();
         }
-        return EnumSet.noneOf(CompatibilityOption.class);
+        // Create a dummy script instance
+        return new Script(0, 0, new Source("<unknown>", 0), null,
+                Collections.<StatementListItem> emptyList(),
+                EnumSet.noneOf(CompatibilityOption.class), EnumSet.noneOf(Parser.Option.class),
+                false);
     }
 
     private static final class CodeLoader extends ClassLoader {

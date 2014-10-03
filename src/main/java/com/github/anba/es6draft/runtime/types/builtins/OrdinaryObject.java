@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -826,9 +827,9 @@ public class OrdinaryObject implements ScriptObject {
     @Override
     public final boolean hasProperty(ExecutionContext cx, long propertyKey) {
         if (IndexedMap.isIndex(propertyKey)) {
-            return hasProp(cx, propertyKey);
+            return has(cx, propertyKey);
         }
-        return hasProp(cx, ToString(propertyKey));
+        return has(cx, ToString(propertyKey));
     }
 
     /**
@@ -838,9 +839,9 @@ public class OrdinaryObject implements ScriptObject {
     public final boolean hasProperty(ExecutionContext cx, String propertyKey) {
         long index = IndexedMap.toIndex(propertyKey);
         if (IndexedMap.isIndex(index)) {
-            return hasProp(cx, index);
+            return has(cx, index);
         }
-        return hasProp(cx, propertyKey);
+        return has(cx, propertyKey);
     }
 
     /**
@@ -848,7 +849,7 @@ public class OrdinaryObject implements ScriptObject {
      */
     @Override
     public final boolean hasProperty(ExecutionContext cx, Symbol propertyKey) {
-        return hasProp(cx, propertyKey);
+        return has(cx, propertyKey);
     }
 
     /**
@@ -860,7 +861,7 @@ public class OrdinaryObject implements ScriptObject {
      *            the property key
      * @return {@code true} if the property was found
      */
-    protected boolean hasProp(ExecutionContext cx, long propertyKey) {
+    protected boolean has(ExecutionContext cx, long propertyKey) {
         /* step 1 (implicit) */
         /* steps 2-3 */
         boolean hasOwn = hasOwnProperty(cx, propertyKey);
@@ -887,7 +888,7 @@ public class OrdinaryObject implements ScriptObject {
      *            the property key
      * @return {@code true} if the property was found
      */
-    protected boolean hasProp(ExecutionContext cx, String propertyKey) {
+    protected boolean has(ExecutionContext cx, String propertyKey) {
         /* step 1 (implicit) */
         /* steps 2-3 */
         boolean hasOwn = hasOwnProperty(cx, propertyKey);
@@ -914,7 +915,7 @@ public class OrdinaryObject implements ScriptObject {
      *            the property key
      * @return {@code true} if the property was found
      */
-    protected boolean hasProp(ExecutionContext cx, Symbol propertyKey) {
+    protected boolean has(ExecutionContext cx, Symbol propertyKey) {
         /* step 1 (implicit) */
         /* steps 2-3 */
         boolean hasOwn = hasOwnProperty(cx, propertyKey);
@@ -1390,14 +1391,22 @@ public class OrdinaryObject implements ScriptObject {
         return keys;
     }
 
+    protected enum Enumerability {
+        Enumerable, NonEnumerable, Deleted;
+
+        static Enumerability isEnumerable(boolean enumerable) {
+            return enumerable ? Enumerable : NonEnumerable;
+        }
+    }
+
     /**
-     * Note: Subclasses need to override this method if they have virtual, enumerable properties.
+     * Subclasses need to override this method if they have virtual, enumerable properties.
      * 
      * @param propertyKey
      *            the property key
-     * @return {@code true} if the property is enumerable
+     * @return the property enumerable status
      */
-    protected boolean isEnumerableOwnProperty(String propertyKey) {
+    protected Enumerability isEnumerableOwnProperty(String propertyKey) {
         Property prop;
         long index = IndexedMap.toIndex(propertyKey);
         if (IndexedMap.isIndex(index)) {
@@ -1405,7 +1414,10 @@ public class OrdinaryObject implements ScriptObject {
         } else {
             prop = ordinaryGetOwnProperty(propertyKey);
         }
-        return prop != null && prop.isEnumerable();
+        if (prop == null) {
+            return Enumerability.Deleted;
+        }
+        return Enumerability.isEnumerable(prop.isEnumerable());
     }
 
     private static final class EnumKeysIterator extends SimpleIterator<Object> implements
@@ -1426,26 +1438,37 @@ public class OrdinaryObject implements ScriptObject {
         @Override
         protected Object tryNext() {
             HashSet<Object> visitedKeys = this.visitedKeys;
-            Iterator<String> keys = this.keys;
-            if (keys != null) {
+            for (Iterator<String> keys; (keys = this.keys) != null;) {
                 assert protoKeys == null;
+                OrdinaryObject obj = this.obj;
                 while (keys.hasNext()) {
                     String key = keys.next();
-                    if (visitedKeys.add(key) && obj.isEnumerableOwnProperty(key)) {
-                        return key;
+                    Enumerability e = obj.isEnumerableOwnProperty(key);
+                    if (e != Enumerability.Deleted) {
+                        if (visitedKeys.add(key) && e == Enumerability.Enumerable) {
+                            return key;
+                        }
                     }
                 }
                 // switch to prototype enumerate
                 ScriptObject proto = obj.getPrototypeOf(cx);
                 if (proto != null) {
                     if (proto instanceof OrdinaryObject) {
-                        this.obj = ((OrdinaryObject) proto);
+                        this.obj = (OrdinaryObject) proto;
                         this.keys = ((OrdinaryObject) proto).getEnumerableKeys(cx).iterator();
-                        return tryNext();
                     } else {
-                        this.obj = null;
-                        this.keys = null;
-                        this.protoKeys = proto.enumerateKeys(cx);
+                        ScriptIterator<?> protoKeys = proto.enumerateKeys(cx);
+                        if (protoKeys instanceof EnumKeysIterator) {
+                            EnumKeysIterator keysIterator = (EnumKeysIterator) protoKeys;
+                            assert keysIterator.visitedKeys.isEmpty();
+                            assert keysIterator.keys != null && keysIterator.protoKeys == null;
+                            this.obj = keysIterator.obj;
+                            this.keys = keysIterator.keys;
+                        } else {
+                            this.obj = null;
+                            this.keys = null;
+                            this.protoKeys = protoKeys;
+                        }
                     }
                 } else {
                     this.obj = null;
@@ -1612,6 +1635,26 @@ public class OrdinaryObject implements ScriptObject {
     /**
      * 9.1.14 OrdinaryCreateFromConstructor (constructor, intrinsicDefaultProto, internalSlotsList)
      * 
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor function
+     * @param intrinsicDefaultProto
+     *            the default prototype
+     * @return the new object
+     */
+    public static final OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx,
+            Constructor constructor, Intrinsics intrinsicDefaultProto) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
+        /* step 4 */
+        return ObjectCreate(cx, proto);
+    }
+
+    /**
+     * 9.1.14 OrdinaryCreateFromConstructor (constructor, intrinsicDefaultProto, internalSlotsList)
+     * 
      * @param <OBJECT>
      *            the object type
      * @param cx
@@ -1626,6 +1669,31 @@ public class OrdinaryObject implements ScriptObject {
      */
     public static final <OBJECT extends OrdinaryObject> OBJECT OrdinaryCreateFromConstructor(
             ExecutionContext cx, Object constructor, Intrinsics intrinsicDefaultProto,
+            ObjectAllocator<OBJECT> allocator) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
+        /* step 4 */
+        return ObjectCreate(cx, proto, allocator);
+    }
+
+    /**
+     * 9.1.14 OrdinaryCreateFromConstructor (constructor, intrinsicDefaultProto, internalSlotsList)
+     * 
+     * @param <OBJECT>
+     *            the object type
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor function
+     * @param intrinsicDefaultProto
+     *            the default prototype
+     * @param allocator
+     *            the object allocator
+     * @return the new object
+     */
+    public static final <OBJECT extends OrdinaryObject> OBJECT OrdinaryCreateFromConstructor(
+            ExecutionContext cx, Constructor constructor, Intrinsics intrinsicDefaultProto,
             ObjectAllocator<OBJECT> allocator) {
         /* step 1 (not applicable) */
         /* steps 2-3 */

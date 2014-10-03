@@ -11,135 +11,127 @@ import static java.util.Collections.singletonList;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
-import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
-import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
-import com.github.anba.es6draft.ast.synthetic.IdentifierReferenceValue;
-import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
-import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
-import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
-import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
-import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
-import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
+import com.github.anba.es6draft.ast.synthetic.*;
 
 /**
  * Returns the estimated byte code size for a {@link Node}
  */
 final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
-    public int startAnalyze(Node node, List<? extends Node> children, CodeSizeHandler value) {
-        return analyze(node, children, 0, 0, value);
+    public int startAnalyze(Node node, List<? extends Node> children, CodeSizeHandler handler) {
+        return analyze(node, children, 0, 0, handler);
     }
 
-    public int startAnalyze(Node node, CodeSizeHandler value) {
-        return node.accept(this, value);
+    public int startAnalyze(Node node, CodeSizeHandler handler) {
+        return node.accept(this, handler);
     }
 
-    private void submit(TopLevelNode<?> node, List<? extends Node> children, CodeSizeHandler value) {
-        value.submit(node, children);
+    private void submit(TopLevelNode<?> node, List<? extends Node> children, CodeSizeHandler handler) {
+        handler.submit(node, children);
     }
 
-    private int reportSize(Node node, int size, CodeSizeHandler value) {
-        return value.reportSize(node, size);
+    private int reportSize(Node node, int size, CodeSizeHandler handler) {
+        return handler.reportSize(node, size);
     }
 
-    private int analyze(Node node, Node child, int nodeSize, CodeSizeHandler value) {
+    private int analyze(Node node, Node child, int nodeSize, CodeSizeHandler handler) {
         int size = nodeSize;
         if (child != null) {
-            size += child.accept(this, value);
+            size += child.accept(this, handler);
         }
-        return reportSize(node, size, value);
+        return reportSize(node, size, handler);
     }
 
-    private int analyze(Node node, Node left, Node right, int nodeSize, CodeSizeHandler value) {
+    private int analyze(Node node, Node left, Node right, int nodeSize, CodeSizeHandler handler) {
         int size = nodeSize;
         if (left != null) {
-            size += left.accept(this, value);
+            size += left.accept(this, handler);
         }
         if (right != null) {
-            size += right.accept(this, value);
+            size += right.accept(this, handler);
         }
-        return reportSize(node, size, value);
+        return reportSize(node, size, handler);
     }
 
     private int analyze(Node node, Node left, Node middle, Node right, int nodeSize,
-            CodeSizeHandler value) {
+            CodeSizeHandler handler) {
         int size = nodeSize;
         if (left != null) {
-            size += left.accept(this, value);
+            size += left.accept(this, handler);
         }
         if (middle != null) {
-            size += middle.accept(this, value);
+            size += middle.accept(this, handler);
         }
         if (right != null) {
-            size += right.accept(this, value);
+            size += right.accept(this, handler);
         }
-        return reportSize(node, size, value);
+        return reportSize(node, size, handler);
     }
 
     private int analyze(Node node, Node left, Node middle, Node right, Node extra, int nodeSize,
-            CodeSizeHandler value) {
+            CodeSizeHandler handler) {
         int size = nodeSize;
         if (left != null) {
-            size += left.accept(this, value);
+            size += left.accept(this, handler);
         }
         if (middle != null) {
-            size += middle.accept(this, value);
+            size += middle.accept(this, handler);
         }
         if (right != null) {
-            size += right.accept(this, value);
+            size += right.accept(this, handler);
         }
         if (extra != null) {
-            size += extra.accept(this, value);
+            size += extra.accept(this, handler);
         }
-        return reportSize(node, size, value);
+        return reportSize(node, size, handler);
     }
 
     private int analyze(Node node, Node left, Node middle, Node right,
-            List<? extends Node> children, int nodeSize, int childFactor, CodeSizeHandler value) {
+            List<? extends Node> children, int nodeSize, int childFactor, CodeSizeHandler handler) {
         int size = nodeSize + childFactor * children.size();
         if (left != null) {
-            size += left.accept(this, value);
+            size += left.accept(this, handler);
         }
         if (middle != null) {
-            size += middle.accept(this, value);
+            size += middle.accept(this, handler);
         }
         if (right != null) {
-            size += right.accept(this, value);
+            size += right.accept(this, handler);
         }
         for (Node child : children) {
-            size += child.accept(this, value);
+            size += child.accept(this, handler);
         }
-        return reportSize(node, size, value);
+        return reportSize(node, size, handler);
     }
 
     private int analyze(Node node, List<? extends Node> children, int nodeSize, int childFactor,
-            CodeSizeHandler value) {
+            CodeSizeHandler handler) {
         int size = nodeSize + childFactor * children.size();
         for (Node child : children) {
-            size += child.accept(this, value);
+            size += child.accept(this, handler);
         }
-        return reportSize(node, size, value);
+        return reportSize(node, size, handler);
     }
 
     private int analyze(Node node, List<? extends Node> children, Node extra, int nodeSize,
-            int childFactor, CodeSizeHandler value) {
+            int childFactor, CodeSizeHandler handler) {
         int size = nodeSize + childFactor * children.size();
         for (Node child : children) {
-            size += child.accept(this, value);
+            size += child.accept(this, handler);
         }
         if (extra != null) {
-            size += extra.accept(this, value);
+            size += extra.accept(this, handler);
         }
-        return reportSize(node, size, value);
+        return reportSize(node, size, handler);
     }
 
     private int analyze(MethodDefinition node, PropertyName child, int nodeSize,
-            CodeSizeHandler value) {
+            CodeSizeHandler handler) {
         int size = nodeSize;
         if (child != null) {
-            size += child.accept(this, value);
+            size += child.accept(this, handler);
         }
         // TODO: reportSize() problematic
-        // return reportSize(node, size, value);
+        // return reportSize(node, size, handler);
         return size;
     }
 
@@ -153,603 +145,626 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     /* ***************************************************************************************** */
 
     @Override
-    public int visit(ArrayAssignmentPattern node, CodeSizeHandler value) {
-        return analyze(node, node.getElements(), 30, 5, value);
+    public int visit(ArrayAssignmentPattern node, CodeSizeHandler handler) {
+        return analyze(node, node.getElements(), 30, 5, handler);
     }
 
     @Override
-    public int visit(ArrayBindingPattern node, CodeSizeHandler value) {
-        return analyze(node, node.getElements(), 30, 5, value);
+    public int visit(ArrayBindingPattern node, CodeSizeHandler handler) {
+        return analyze(node, node.getElements(), 30, 5, handler);
     }
 
     @Override
-    public int visit(ArrayComprehension node, CodeSizeHandler value) {
-        return analyze(node, node.getComprehension(), 25, value);
+    public int visit(ArrayComprehension node, CodeSizeHandler handler) {
+        return analyze(node, node.getComprehension(), 25, handler);
     }
 
     @Override
-    public int visit(ArrayLiteral node, CodeSizeHandler value) {
-        return analyze(node, node.getElements(), 25, 5, value);
+    public int visit(ArrayLiteral node, CodeSizeHandler handler) {
+        return analyze(node, node.getElements(), 25, 5, handler);
     }
 
     @Override
-    public int visit(ArrowFunction node, CodeSizeHandler value) {
+    public int visit(ArrowFunction node, CodeSizeHandler handler) {
         if (node.getExpression() != null) {
-            submit(node, singletonList(node.getExpression()), value);
+            submit(node, singletonList(node.getExpression()), handler);
         } else {
-            submit(node, node.getStatements(), value);
+            submit(node, node.getStatements(), handler);
         }
         return 10;
     }
 
     @Override
-    public int visit(AssignmentElement node, CodeSizeHandler value) {
-        return analyze(node, node.getTarget(), node.getInitializer(), 25, value);
+    public int visit(AssignmentElement node, CodeSizeHandler handler) {
+        return analyze(node, node.getTarget(), node.getInitializer(), 25, handler);
     }
 
     @Override
-    public int visit(AssignmentExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getLeft(), node.getRight(), 10, value);
+    public int visit(AssignmentExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getLeft(), node.getRight(), 10, handler);
     }
 
     @Override
-    public int visit(AssignmentProperty node, CodeSizeHandler value) {
+    public int visit(AssignmentProperty node, CodeSizeHandler handler) {
         return analyze(node, node.getPropertyName(), node.getTarget(), node.getInitializer(), 25,
-                value);
+                handler);
     }
 
     @Override
-    public int visit(AssignmentRestElement node, CodeSizeHandler value) {
-        return analyze(node, node.getTarget(), 25, value);
+    public int visit(AssignmentRestElement node, CodeSizeHandler handler) {
+        return analyze(node, node.getTarget(), 25, handler);
     }
 
     @Override
-    public int visit(AsyncArrowFunction node, CodeSizeHandler value) {
+    public int visit(AsyncArrowFunction node, CodeSizeHandler handler) {
         if (node.getExpression() != null) {
-            submit(node, singletonList(node.getExpression()), value);
+            submit(node, singletonList(node.getExpression()), handler);
         } else {
-            submit(node, node.getStatements(), value);
+            submit(node, node.getStatements(), handler);
         }
         return 10;
     }
 
     @Override
-    public int visit(AsyncFunctionDeclaration node, CodeSizeHandler value) {
-        submit(node, node.getStatements(), value);
+    public int visit(AsyncFunctionDeclaration node, CodeSizeHandler handler) {
+        submit(node, node.getStatements(), handler);
         return 0;
     }
 
     @Override
-    public int visit(AsyncFunctionExpression node, CodeSizeHandler value) {
-        submit(node, node.getStatements(), value);
+    public int visit(AsyncFunctionExpression node, CodeSizeHandler handler) {
+        submit(node, node.getStatements(), handler);
         return 10;
     }
 
     @Override
-    public int visit(AwaitExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getExpression(), 150, value);
+    public int visit(AwaitExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getExpression(), 150, handler);
     }
 
     @Override
-    public int visit(BinaryExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getLeft(), node.getRight(), 20, value);
+    public int visit(BinaryExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getLeft(), node.getRight(), 20, handler);
     }
 
     @Override
-    public int visit(BindingElement node, CodeSizeHandler value) {
-        return analyze(node, node.getBinding(), node.getInitializer(), 25, value);
+    public int visit(BindingElement node, CodeSizeHandler handler) {
+        return analyze(node, node.getBinding(), node.getInitializer(), 25, handler);
     }
 
     @Override
-    public int visit(BindingElision node, CodeSizeHandler value) {
+    public int visit(BindingElision node, CodeSizeHandler handler) {
         return 0;
     }
 
     @Override
-    public int visit(BindingIdentifier node, CodeSizeHandler value) {
+    public int visit(BindingIdentifier node, CodeSizeHandler handler) {
         return 15;
     }
 
     @Override
-    public int visit(BindingProperty node, CodeSizeHandler value) {
+    public int visit(BindingProperty node, CodeSizeHandler handler) {
         return analyze(node, node.getPropertyName(), node.getBinding(), node.getInitializer(), 25,
-                value);
+                handler);
     }
 
     @Override
-    public int visit(BindingRestElement node, CodeSizeHandler value) {
-        return analyze(node, node.getBindingIdentifier(), 25, value);
+    public int visit(BindingRestElement node, CodeSizeHandler handler) {
+        return analyze(node, node.getBindingIdentifier(), 25, handler);
     }
 
     @Override
-    public int visit(BlockStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getStatements(), 15, 0, value);
+    public int visit(BlockStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getStatements(), 15, 0, handler);
     }
 
     @Override
-    public int visit(BooleanLiteral node, CodeSizeHandler value) {
+    public int visit(BooleanLiteral node, CodeSizeHandler handler) {
         return 5;
     }
 
     @Override
-    public int visit(BreakStatement node, CodeSizeHandler value) {
+    public int visit(BreakStatement node, CodeSizeHandler handler) {
         return 5;
     }
 
     @Override
-    public int visit(CallExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getArguments(), node.getBase(), 30, 5, value);
+    public int visit(CallExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getArguments(), node.getBase(), 30, 5, handler);
     }
 
     @Override
-    public int visit(CallSpreadElement node, CodeSizeHandler value) {
-        return analyze(node, node.getExpression(), 10, value);
+    public int visit(CallSpreadElement node, CodeSizeHandler handler) {
+        return analyze(node, node.getExpression(), 10, handler);
     }
 
     @Override
-    public int visit(CatchNode node, CodeSizeHandler value) {
-        return analyze(node, node.getCatchParameter(), node.getCatchBlock(), 35, value);
+    public int visit(CatchNode node, CodeSizeHandler handler) {
+        return analyze(node, node.getCatchParameter(), node.getCatchBlock(), 35, handler);
     }
 
     @Override
-    public int visit(ClassDeclaration node, CodeSizeHandler value) {
-        return analyze(node, node.getMethods(), node.getHeritage(), 50, 10, value);
+    public int visit(ClassDeclaration node, CodeSizeHandler handler) {
+        return analyze(node, node.getProperties(), node.getHeritage(), 50, 10, handler);
     }
 
     @Override
-    public int visit(ClassExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getMethods(), node.getHeritage(), 50, 10, value);
+    public int visit(ClassExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getProperties(), node.getHeritage(), 50, 10, handler);
     }
 
     @Override
-    public int visit(CommaExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getOperands(), 5, 5, value);
+    public int visit(CommaExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getOperands(), 5, 5, handler);
     }
 
     @Override
-    public int visit(Comprehension node, CodeSizeHandler value) {
-        return analyze(node, node.getList(), node.getExpression(), 50, 0, value);
+    public int visit(Comprehension node, CodeSizeHandler handler) {
+        return analyze(node, node.getList(), node.getExpression(), 50, 0, handler);
     }
 
     @Override
-    public int visit(ComprehensionFor node, CodeSizeHandler value) {
-        return analyze(node, node.getBinding(), node.getExpression(), 40, value);
+    public int visit(ComprehensionFor node, CodeSizeHandler handler) {
+        return analyze(node, node.getBinding(), node.getExpression(), 40, handler);
     }
 
     @Override
-    public int visit(ComprehensionIf node, CodeSizeHandler value) {
-        return analyze(node, node.getTest(), 15, value);
+    public int visit(ComprehensionIf node, CodeSizeHandler handler) {
+        return analyze(node, node.getTest(), 15, handler);
     }
 
     @Override
-    public int visit(ComputedPropertyName node, CodeSizeHandler value) {
-        return analyze(node, node.getExpression(), 15, value);
+    public int visit(ComputedPropertyName node, CodeSizeHandler handler) {
+        return analyze(node, node.getExpression(), 15, handler);
     }
 
     @Override
-    public int visit(ConditionalExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getTest(), node.getThen(), node.getOtherwise(), 20, value);
+    public int visit(ConditionalExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getTest(), node.getThen(), node.getOtherwise(), 20, handler);
     }
 
     @Override
-    public int visit(ContinueStatement node, CodeSizeHandler value) {
+    public int visit(ContinueStatement node, CodeSizeHandler handler) {
         return 5;
     }
 
     @Override
-    public int visit(DebuggerStatement node, CodeSizeHandler value) {
+    public int visit(DebuggerStatement node, CodeSizeHandler handler) {
         return 0;
     }
 
     @Override
-    public int visit(DoWhileStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getTest(), node.getStatement(), 25, value);
+    public int visit(DoWhileStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getTest(), node.getStatement(), 25, handler);
     }
 
     @Override
-    public int visit(ElementAccessor node, CodeSizeHandler value) {
-        return analyze(node, node.getBase(), node.getElement(), 10, value);
+    public int visit(ElementAccessor node, CodeSizeHandler handler) {
+        return analyze(node, node.getBase(), node.getElement(), 10, handler);
     }
 
     @Override
-    public int visit(ElementAccessorValue node, CodeSizeHandler value) {
-        return analyze(node, node.getBase(), node.getElement(), 10, value);
+    public int visit(ElementAccessorValue node, CodeSizeHandler handler) {
+        return analyze(node, node.getBase(), node.getElement(), 10, handler);
     }
 
     @Override
-    public int visit(Elision node, CodeSizeHandler value) {
+    public int visit(Elision node, CodeSizeHandler handler) {
         return 0;
     }
 
     @Override
-    public int visit(EmptyStatement node, CodeSizeHandler value) {
+    public int visit(EmptyExpression node, CodeSizeHandler handler) {
         return 0;
     }
 
     @Override
-    public int visit(ExportDeclaration node, CodeSizeHandler value) {
+    public int visit(EmptyStatement node, CodeSizeHandler handler) {
         return 0;
     }
 
     @Override
-    public int visit(ExportSpecifier node, CodeSizeHandler value) {
+    public int visit(ExportDeclaration node, CodeSizeHandler handler) {
         return 0;
     }
 
     @Override
-    public int visit(ExportsClause node, CodeSizeHandler value) {
+    public int visit(ExportSpecifier node, CodeSizeHandler handler) {
         return 0;
     }
 
     @Override
-    public int visit(ExpressionMethod node, CodeSizeHandler value) {
+    public int visit(ExportsClause node, CodeSizeHandler handler) {
+        return 0;
+    }
+
+    @Override
+    public int visit(ExpressionMethod node, CodeSizeHandler handler) {
         return 5;
     }
 
     @Override
-    public int visit(ExpressionStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getExpression(), 5, value);
+    public int visit(ExpressionStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getExpression(), 5, handler);
     }
 
     @Override
-    public int visit(ForEachStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150, value);
+    public int visit(ForEachStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150,
+                handler);
     }
 
     @Override
-    public int visit(ForInStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150, value);
+    public int visit(ForInStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150,
+                handler);
     }
 
     @Override
-    public int visit(FormalParameterList node, CodeSizeHandler value) {
+    public int visit(FormalParameterList node, CodeSizeHandler handler) {
         return 0;
     }
 
     @Override
-    public int visit(ForOfStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150, value);
+    public int visit(ForOfStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150,
+                handler);
     }
 
     @Override
-    public int visit(ForStatement node, CodeSizeHandler value) {
+    public int visit(ForStatement node, CodeSizeHandler handler) {
         return analyze(node, node.getHead(), node.getTest(), node.getStep(), node.getStatement(),
-                30, value);
+                30, handler);
     }
 
     @Override
-    public int visit(FunctionDeclaration node, CodeSizeHandler value) {
-        submit(node, node.getStatements(), value);
+    public int visit(FunctionDeclaration node, CodeSizeHandler handler) {
+        submit(node, node.getStatements(), handler);
         return 0;
     }
 
     @Override
-    public int visit(FunctionExpression node, CodeSizeHandler value) {
-        submit(node, node.getStatements(), value);
+    public int visit(FunctionExpression node, CodeSizeHandler handler) {
+        submit(node, node.getStatements(), handler);
         return 10;
     }
 
     @Override
-    public int visit(GeneratorComprehension node, CodeSizeHandler value) {
-        submit(node, singletonList(node.getComprehension()), value);
+    public int visit(GeneratorComprehension node, CodeSizeHandler handler) {
+        submit(node, singletonList(node.getComprehension()), handler);
         return 10;
     }
 
     @Override
-    public int visit(GeneratorDeclaration node, CodeSizeHandler value) {
-        submit(node, node.getStatements(), value);
+    public int visit(GeneratorDeclaration node, CodeSizeHandler handler) {
+        submit(node, node.getStatements(), handler);
         return 0;
     }
 
     @Override
-    public int visit(GeneratorExpression node, CodeSizeHandler value) {
-        submit(node, node.getStatements(), value);
+    public int visit(GeneratorExpression node, CodeSizeHandler handler) {
+        submit(node, node.getStatements(), handler);
         return 10;
     }
 
     @Override
-    public int visit(GuardedCatchNode node, CodeSizeHandler value) {
+    public int visit(GuardedCatchNode node, CodeSizeHandler handler) {
         return analyze(node, node.getCatchParameter(), node.getGuard(), node.getCatchBlock(), 45,
-                value);
+                handler);
     }
 
     @Override
-    public int visit(IdentifierName node, CodeSizeHandler value) {
+    public int visit(IdentifierName node, CodeSizeHandler handler) {
         return 5;
     }
 
     @Override
-    public int visit(IdentifierReference node, CodeSizeHandler value) {
+    public int visit(IdentifierReference node, CodeSizeHandler handler) {
         return 10;
     }
 
     @Override
-    public int visit(IdentifierReferenceValue node, CodeSizeHandler value) {
+    public int visit(IdentifierReferenceValue node, CodeSizeHandler handler) {
         return 10;
     }
 
     @Override
-    public int visit(IfStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getTest(), node.getOtherwise(), node.getThen(), 10, value);
+    public int visit(IfStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getTest(), node.getOtherwise(), node.getThen(), 10, handler);
     }
 
     @Override
-    public int visit(ImportDeclaration node, CodeSizeHandler value) {
+    public int visit(ImportDeclaration node, CodeSizeHandler handler) {
         return 0;
     }
 
     @Override
-    public int visit(ImportSpecifier node, CodeSizeHandler value) {
+    public int visit(ImportSpecifier node, CodeSizeHandler handler) {
         return 0;
     }
 
     @Override
-    public int visit(ImportClause node, CodeSizeHandler value) {
+    public int visit(ImportClause node, CodeSizeHandler handler) {
         return 0;
     }
 
     @Override
-    public int visit(LabelledFunctionStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getFunction(), 0, value);
+    public int visit(LabelledFunctionStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getFunction(), 0, handler);
     }
 
     @Override
-    public int visit(LabelledStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getStatement(), 15, value);
+    public int visit(LabelledStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getStatement(), 15, handler);
     }
 
     @Override
-    public int visit(LegacyComprehension node, CodeSizeHandler value) {
-        return analyze(node, node.getList(), node.getExpression(), 50, 0, value);
+    public int visit(LegacyComprehension node, CodeSizeHandler handler) {
+        return analyze(node, node.getList(), node.getExpression(), 50, 0, handler);
     }
 
     @Override
-    public int visit(LegacyComprehensionFor node, CodeSizeHandler value) {
-        return analyze(node, node.getBinding(), node.getExpression(), 40, value);
+    public int visit(LegacyComprehensionFor node, CodeSizeHandler handler) {
+        return analyze(node, node.getBinding(), node.getExpression(), 40, handler);
     }
 
     @Override
-    public int visit(LegacyGeneratorDeclaration node, CodeSizeHandler value) {
-        return visit((GeneratorDeclaration) node, value);
+    public int visit(LegacyGeneratorDeclaration node, CodeSizeHandler handler) {
+        return visit((GeneratorDeclaration) node, handler);
     }
 
     @Override
-    public int visit(LegacyGeneratorExpression node, CodeSizeHandler value) {
-        return visit((GeneratorExpression) node, value);
+    public int visit(LegacyGeneratorExpression node, CodeSizeHandler handler) {
+        return visit((GeneratorExpression) node, handler);
     }
 
     @Override
-    public int visit(LetExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getBindings(), node.getExpression(), 25, 5, value);
+    public int visit(LetExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getBindings(), node.getExpression(), 25, 5, handler);
     }
 
     @Override
-    public int visit(LetStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getBindings(), node.getStatement(), 25, 5, value);
+    public int visit(LetStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getBindings(), node.getStatement(), 25, 5, handler);
     }
 
     @Override
-    public int visit(LexicalBinding node, CodeSizeHandler value) {
-        return analyze(node, node.getBinding(), node.getInitializer(), 20, value);
+    public int visit(LexicalBinding node, CodeSizeHandler handler) {
+        return analyze(node, node.getBinding(), node.getInitializer(), 20, handler);
     }
 
     @Override
-    public int visit(LexicalDeclaration node, CodeSizeHandler value) {
-        return analyze(node, node.getElements(), 0, 0, value);
+    public int visit(LexicalDeclaration node, CodeSizeHandler handler) {
+        return analyze(node, node.getElements(), 0, 0, handler);
     }
 
     @Override
-    public int visit(MethodDefinition node, CodeSizeHandler value) {
-        submit(node, node.getStatements(), value);
-        return analyze(node, node.getPropertyName(), 10, value);
+    public int visit(MethodDefinition node, CodeSizeHandler handler) {
+        submit(node, node.getStatements(), handler);
+        return analyze(node, node.getPropertyName(), 10, handler);
     }
 
     @Override
-    public int visit(Module node, CodeSizeHandler value) {
-        return 0;
-    }
-
-    @Override
-    public int visit(ModuleImport node, CodeSizeHandler value) {
-        return 0;
-    }
-
-    @Override
-    public int visit(NativeCallExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getArguments(), node.getBase(), 30, 5, value);
-    }
-
-    @Override
-    public int visit(NewExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getArguments(), node.getExpression(), 15, 5, value);
-    }
-
-    @Override
-    public int visit(NullLiteral node, CodeSizeHandler value) {
-        return 5;
-    }
-
-    @Override
-    public int visit(NumericLiteral node, CodeSizeHandler value) {
-        return 5;
-    }
-
-    @Override
-    public int visit(ObjectAssignmentPattern node, CodeSizeHandler value) {
-        return analyze(node, node.getProperties(), 20, 5, value);
-    }
-
-    @Override
-    public int visit(ObjectBindingPattern node, CodeSizeHandler value) {
-        return analyze(node, node.getProperties(), 20, 5, value);
-    }
-
-    @Override
-    public int visit(ObjectLiteral node, CodeSizeHandler value) {
-        return analyze(node, node.getProperties(), 15, 5, value);
-    }
-
-    @Override
-    public int visit(PropertyAccessor node, CodeSizeHandler value) {
-        return analyze(node, node.getBase(), 10, value);
-    }
-
-    @Override
-    public int visit(PropertyAccessorValue node, CodeSizeHandler value) {
-        return analyze(node, node.getBase(), 10, value);
-    }
-
-    @Override
-    public int visit(PropertyDefinitionsMethod node, CodeSizeHandler value) {
+    public int visit(MethodDefinitionsMethod node, CodeSizeHandler handler) {
         // don't descend into synthetic nodes
         return 10;
     }
 
     @Override
-    public int visit(PropertyNameDefinition node, CodeSizeHandler value) {
-        return 15;
+    public int visit(Module node, CodeSizeHandler handler) {
+        return 0;
     }
 
     @Override
-    public int visit(PropertyValueDefinition node, CodeSizeHandler value) {
-        return analyze(node, node.getPropertyName(), node.getPropertyValue(), 5, value);
+    public int visit(ModuleImport node, CodeSizeHandler handler) {
+        return 0;
     }
 
     @Override
-    public int visit(RegularExpressionLiteral node, CodeSizeHandler value) {
+    public int visit(NativeCallExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getArguments(), node.getBase(), 30, 5, handler);
+    }
+
+    @Override
+    public int visit(NewExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getArguments(), node.getExpression(), 15, 5, handler);
+    }
+
+    @Override
+    public int visit(NullLiteral node, CodeSizeHandler handler) {
+        return 5;
+    }
+
+    @Override
+    public int visit(NumericLiteral node, CodeSizeHandler handler) {
+        return 5;
+    }
+
+    @Override
+    public int visit(ObjectAssignmentPattern node, CodeSizeHandler handler) {
+        return analyze(node, node.getProperties(), 20, 5, handler);
+    }
+
+    @Override
+    public int visit(ObjectBindingPattern node, CodeSizeHandler handler) {
+        return analyze(node, node.getProperties(), 20, 5, handler);
+    }
+
+    @Override
+    public int visit(ObjectLiteral node, CodeSizeHandler handler) {
+        return analyze(node, node.getProperties(), 15, 5, handler);
+    }
+
+    @Override
+    public int visit(PropertyAccessor node, CodeSizeHandler handler) {
+        return analyze(node, node.getBase(), 10, handler);
+    }
+
+    @Override
+    public int visit(PropertyAccessorValue node, CodeSizeHandler handler) {
+        return analyze(node, node.getBase(), 10, handler);
+    }
+
+    @Override
+    public int visit(PropertyDefinitionsMethod node, CodeSizeHandler handler) {
+        // don't descend into synthetic nodes
         return 10;
     }
 
     @Override
-    public int visit(ReturnStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getExpression(), 10, value);
+    public int visit(PropertyNameDefinition node, CodeSizeHandler handler) {
+        return 15;
     }
 
     @Override
-    public int visit(Script node, CodeSizeHandler value) {
+    public int visit(PropertyValueDefinition node, CodeSizeHandler handler) {
+        return analyze(node, node.getPropertyName(), node.getPropertyValue(), 5, handler);
+    }
+
+    @Override
+    public int visit(RegularExpressionLiteral node, CodeSizeHandler handler) {
+        return 10;
+    }
+
+    @Override
+    public int visit(ReturnStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getExpression(), 10, handler);
+    }
+
+    @Override
+    public int visit(Script node, CodeSizeHandler handler) {
         throw new IllegalStateException();
     }
 
     @Override
-    public int visit(SpreadArrayLiteral node, CodeSizeHandler value) {
+    public int visit(SpreadArrayLiteral node, CodeSizeHandler handler) {
         // don't descend into synthetic nodes
         return 10;
     }
 
     @Override
-    public int visit(SpreadElement node, CodeSizeHandler value) {
-        return analyze(node, node.getExpression(), 10, value);
+    public int visit(SpreadElement node, CodeSizeHandler handler) {
+        return analyze(node, node.getExpression(), 10, handler);
     }
 
     @Override
-    public int visit(SpreadElementMethod node, CodeSizeHandler value) {
+    public int visit(SpreadElementMethod node, CodeSizeHandler handler) {
         // don't descend into synthetic nodes
         return 10;
     }
 
     @Override
-    public int visit(StatementListMethod node, CodeSizeHandler value) {
+    public int visit(StatementListMethod node, CodeSizeHandler handler) {
         // don't descend into synthetic nodes
         return 15;
     }
 
     @Override
-    public int visit(StringLiteral node, CodeSizeHandler value) {
+    public int visit(StringLiteral node, CodeSizeHandler handler) {
         return stringSize(node.getValue());
     }
 
     @Override
-    public int visit(SuperExpression node, CodeSizeHandler value) {
-        switch (node.getType()) {
-        case PropertyAccessor:
-            return 10;
-        case ElementAccessor:
-            return analyze(node, node.getExpression(), 15, value);
-        case CallExpression:
-            return analyze(node, node.getArguments(), 25, 5, value);
-        case NewExpression:
-            return 10;
-        default:
-            throw new AssertionError();
-        }
+    public int visit(SuperCallExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getArguments(), 25, 5, handler);
     }
 
     @Override
-    public int visit(SuperExpressionValue node, CodeSizeHandler value) {
-        return visit((SuperExpression) node, value);
+    public int visit(SuperElementAccessor node, CodeSizeHandler handler) {
+        return analyze(node, node.getExpression(), 15, handler);
     }
 
     @Override
-    public int visit(SwitchClause node, CodeSizeHandler value) {
-        return analyze(node, node.getStatements(), node.getExpression(), 15, 0, value);
+    public int visit(SuperElementAccessorValue node, CodeSizeHandler handler) {
+        return visit((SuperElementAccessor) node, handler);
     }
 
     @Override
-    public int visit(SwitchStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getClauses(), node.getExpression(), 100, 0, value);
+    public int visit(SuperNewExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getArguments(), 25, 5, handler);
     }
 
     @Override
-    public int visit(TemplateCallExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getBase(), node.getTemplate(), 30, value);
-    }
-
-    @Override
-    public int visit(TemplateCharacters node, CodeSizeHandler value) {
-        return stringSize(node.getValue()) + stringSize(node.getRawValue());
-    }
-
-    @Override
-    public int visit(TemplateLiteral node, CodeSizeHandler value) {
-        return analyze(node, node.getElements(), 25, 10, value);
-    }
-
-    @Override
-    public int visit(ThisExpression node, CodeSizeHandler value) {
+    public int visit(SuperPropertyAccessor node, CodeSizeHandler handler) {
         return 10;
     }
 
     @Override
-    public int visit(ThrowStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getExpression(), 10, value);
+    public int visit(SuperPropertyAccessorValue node, CodeSizeHandler handler) {
+        return visit((SuperPropertyAccessor) node, handler);
     }
 
     @Override
-    public int visit(TryStatement node, CodeSizeHandler value) {
+    public int visit(SwitchClause node, CodeSizeHandler handler) {
+        return analyze(node, node.getStatements(), node.getExpression(), 15, 0, handler);
+    }
+
+    @Override
+    public int visit(SwitchStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getClauses(), node.getExpression(), 100, 0, handler);
+    }
+
+    @Override
+    public int visit(TemplateCallExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getBase(), node.getTemplate(), 30, handler);
+    }
+
+    @Override
+    public int visit(TemplateCharacters node, CodeSizeHandler handler) {
+        return stringSize(node.getValue()) + stringSize(node.getRawValue());
+    }
+
+    @Override
+    public int visit(TemplateLiteral node, CodeSizeHandler handler) {
+        return analyze(node, node.getElements(), 25, 10, handler);
+    }
+
+    @Override
+    public int visit(ThisExpression node, CodeSizeHandler handler) {
+        return 10;
+    }
+
+    @Override
+    public int visit(ThrowStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getExpression(), 10, handler);
+    }
+
+    @Override
+    public int visit(TryStatement node, CodeSizeHandler handler) {
         return analyze(node, node.getTryBlock(), node.getCatchNode(), node.getFinallyBlock(),
-                node.getGuardedCatchNodes(), 40, 20, value);
+                node.getGuardedCatchNodes(), 40, 20, handler);
     }
 
     @Override
-    public int visit(UnaryExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getOperand(), 20, value);
+    public int visit(UnaryExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getOperand(), 20, handler);
     }
 
     @Override
-    public int visit(VariableDeclaration node, CodeSizeHandler value) {
-        return analyze(node, node.getBinding(), node.getInitializer(), 15, value);
+    public int visit(VariableDeclaration node, CodeSizeHandler handler) {
+        return analyze(node, node.getBinding(), node.getInitializer(), 15, handler);
     }
 
     @Override
-    public int visit(VariableStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getElements(), 0, 0, value);
+    public int visit(VariableStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getElements(), 0, 0, handler);
     }
 
     @Override
-    public int visit(WhileStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getTest(), node.getStatement(), 25, value);
+    public int visit(WhileStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getTest(), node.getStatement(), 25, handler);
     }
 
     @Override
-    public int visit(WithStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getExpression(), node.getStatement(), 25, value);
+    public int visit(WithStatement node, CodeSizeHandler handler) {
+        return analyze(node, node.getExpression(), node.getStatement(), 25, handler);
     }
 
     @Override
-    public int visit(YieldExpression node, CodeSizeHandler value) {
+    public int visit(YieldExpression node, CodeSizeHandler handler) {
         if (node.isDelegatedYield()) {
-            return analyze(node, node.getExpression(), 300, value);
+            return analyze(node, node.getExpression(), 300, handler);
         }
-        return analyze(node, node.getExpression(), 150, value);
+        return analyze(node, node.getExpression(), 150, handler);
     }
 }

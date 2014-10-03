@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.strictEqualityComparison;
 import static com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.CreateArrayIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
@@ -910,7 +909,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object elementk = Get(cx, o, pk);
-                    boolean same = strictEqualityComparison(searchElement, elementk);
+                    boolean same = StrictEqualityComparison(searchElement, elementk);
                     if (same) {
                         return k;
                     }
@@ -991,7 +990,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object elementk = Get(cx, o, pk);
-                    boolean same = strictEqualityComparison(searchElement, elementk);
+                    boolean same = StrictEqualityComparison(searchElement, elementk);
                     if (same) {
                         return k;
                     }

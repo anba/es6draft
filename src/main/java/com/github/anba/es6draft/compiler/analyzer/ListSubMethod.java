@@ -34,7 +34,7 @@ abstract class ListSubMethod<NODE extends Node> extends SubMethod<NODE> {
     }
 
     protected static final <NODE extends Node, ELEMENT extends NodeElement<NODE>> List<NODE> newNodes(
-            int oldSize, List<NODE> oldNodes, NodeElementMapper<NODE, ELEMENT> mapper,
+            int oldSize, List<? extends NODE> oldNodes, NodeElementMapper<NODE, ELEMENT> mapper,
             Conflater<ELEMENT, NODE> conflater, int maxElementSize, int maxAccSize,
             int maxConflateSize) {
         ArrayList<NODE> newNodes = new ArrayList<>(oldNodes);
@@ -52,15 +52,35 @@ abstract class ListSubMethod<NODE extends Node> extends SubMethod<NODE> {
         }
 
         if (accSize > maxAccSize) {
-            // compact multiple elements with inner expressions
-            boolean needsRerun = conflater.conflate(elements, newNodes, maxConflateSize);
-            while (needsRerun) {
-                newNodes = new ArrayList<>(newNodes);
-                elements = from(newNodes, mapper);
-                needsRerun = conflater.conflate(elements, newNodes, maxConflateSize);
-            }
+            newNodes = compact(newNodes, elements, mapper, conflater, maxConflateSize);
         }
+        return newNodes;
+    }
 
+    protected static final <NODE extends Node, ELEMENT extends NodeElement<NODE>> List<NODE> newNodes(
+            int oldSize, List<? extends NODE> oldNodes, NodeElementMapper<NODE, ELEMENT> mapper,
+            Conflater<ELEMENT, NODE> conflater, int maxAccSize, int maxConflateSize) {
+        ArrayList<NODE> newNodes = new ArrayList<>(oldNodes);
+        ArrayList<ELEMENT> elements = from(newNodes, mapper);
+        int accSize = oldSize;
+
+        if (accSize > maxAccSize) {
+            newNodes = compact(newNodes, elements, mapper, conflater, maxConflateSize);
+        }
+        return newNodes;
+    }
+
+    private static final <NODE extends Node, ELEMENT extends NodeElement<NODE>> ArrayList<NODE> compact(
+            ArrayList<NODE> newNodes, ArrayList<ELEMENT> elements,
+            NodeElementMapper<NODE, ELEMENT> mapper, Conflater<ELEMENT, NODE> conflater,
+            int maxConflateSize) {
+        // compact multiple elements with inner expressions
+        boolean needsRerun = conflater.conflate(elements, newNodes, maxConflateSize);
+        while (needsRerun) {
+            newNodes = new ArrayList<>(newNodes);
+            elements = from(newNodes, mapper);
+            needsRerun = conflater.conflate(elements, newNodes, maxConflateSize);
+        }
         return newNodes;
     }
 }

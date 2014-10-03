@@ -19,11 +19,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,7 +43,6 @@ import org.junit.runners.model.MultipleFailureException;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.types.Undefined;
@@ -86,13 +83,6 @@ public final class MozillaJSTest {
         protected ObjectAllocator<MozTestGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
             return newGlobalObjectAllocator(console, test, scriptCache);
-        }
-
-        @Override
-        protected Set<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
-            options.add(CompatibilityOption.Comprehension);
-            return options;
         }
     };
 
@@ -154,11 +144,10 @@ public final class MozillaJSTest {
         assumeTrue(moztest.isEnabled());
 
         global = globals.newGlobal(new MozTestConsole(collector), moztest);
-        ExecutionContext cx = global.getRealm().defaultContext();
-        exceptionHandler.setExecutionContext(cx);
+        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
 
         // apply scripted conditions
-        scriptConditions(cx, global);
+        scriptConditions();
 
         // filter disabled tests (may have changed after applying scripted conditions)
         assumeTrue(moztest.isEnabled());
@@ -215,7 +204,8 @@ public final class MozillaJSTest {
         return files;
     }
 
-    private void scriptConditions(ExecutionContext cx, MozTestGlobalObject global) {
+    private void scriptConditions() {
+        ExecutionContext cx = global.getRealm().defaultContext();
         for (Entry<Condition, String> entry : moztest.conditions) {
             String code = condition(entry.getValue());
             boolean value = ToBoolean(global.evaluate(cx, cx, code, Undefined.UNDEFINED));

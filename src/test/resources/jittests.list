@@ -6,9 +6,6 @@
 #
 
 
-# invalid test, missing TypeError in SpiderMonkey
-tests/proxy/bug897403.js
-
 # https://bugzilla.mozilla.org/show_bug.cgi?id=997973
 # ES6 spec change: TypedArrays must be called with explicit `new`
 tests/basic/bug578041.js
@@ -19,19 +16,11 @@ tests/basic/testSlowNativeWithNullThis.js
 tests/basic/testTypedArrayInit.js
 tests/for-of/typedarrays-6.js
 
-# ES6 spec issue? spread on primitive string
-tests/basic/spread-array.js
-tests/basic/spread-call.js
-tests/basic/spread-call-length.js
-
 # ES6 spec incomplete: integer indices beyond 2^53-1
 tests/basic/typed-array-index-out-of-range.js
 
 # potential ES6 spec bug? for-of over undefined
 tests/for-of/non-iterable.js
-
-# ES6 spec change: destructuring requires objects, does not work with primitives
-tests/basic/bug719750.js
 
 # ES6 spec incomplete for [[OwnPropertyKeys]] on indexed exotic objects
 tests/basic/typed-array-sealed-frozen.js
@@ -43,17 +32,20 @@ tests/basic/spread-call-setcall.js
 # ES6: 'yield' allowed as identifier reference in generator default parameters
 tests/generators/es6-syntax.js
 
-# ES6: SpiderMonkey bug 1022967
+# ES6: SpiderMonkey bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1022967)
 tests/arguments/defaults-call-function.js
 
-# ES6: new WeakSet(1) -> implicit ToObject? (https://bugs.ecmascript.org/show_bug.cgi?id=3111)
+# ES6: new WeakSet performs ToObject on first argument
 tests/collections/WeakSet-error.js
 
-# ES6: SpiderMonkey bug 1041341
+# ES6: SpiderMonkey bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1041341)
 tests/basic/destructuring-rest.js
 
 # ES6: IteratorPrototype object
 tests/for-of/string-iterator-surfaces.js
+
+# ES6: let TDZ in loops (https://bugzilla.mozilla.org/show_bug.cgi?id=1069480)
+tests/basic/letLegacyForOfOrInScope.js
 
 
 ###################
@@ -84,7 +76,6 @@ tests/basic/bug885648.js
 tests/basic/bug942390.js
 tests/basic/testArrayComp1.js
 tests/basic/testArrayComp2.js
-tests/basic/testBrandedVsGeneric.js
 tests/basic/testCustomIterator.js
 
 # emulated Map/Set do not work cross-global
@@ -102,9 +93,6 @@ tests/basic/testCrossCompartmentTransparency.js
 # SpiderMonkey: __proto__ and ArrayBuffer
 tests/auto-regress/bug666599.js
 
-# SpiderMonkey bug resp. derivation in Error.prototype.toString
-tests/basic/error-toString.js
-
 # different Function toSource behaviour
 tests/basic/function-tosource-bug779694.js
 tests/basic/function-tosource-constructor.js
@@ -112,7 +100,6 @@ tests/basic/function-tosource-exprbody.js
 tests/basic/function-tosource-func-proto.js
 tests/basic/function-tosource-genexpr.js
 tests/basic/function-tosource-getset.js
-tests/basic/function-tosource-lambda.js
 tests/basic/function-tosource-strict.js
 tests/basic/testLet.js
 
@@ -129,12 +116,12 @@ tests/basic/testBug604210.js
 tests/basic/testDontClobberScannerError.js
 tests/basic/testErrorReportIn_getPrototypeOf.js
 tests/basic/testInitSingletons.js
-tests/basic/testSlowNativeBail.js
 tests/generators/bug931414.js
 tests/self-hosting/invoke-self-hosted-with-primitive-this.js
 
-# Different Parser strategy
-tests/basic/bug862228.js
+# different error message with toString
+tests/basic/bug882416.js
+tests/basic/bug1054243.js
 
 # Different realm change on function calls
 tests/collections/bug-743101.js
@@ -146,9 +133,6 @@ tests/basic/testStaticsInRegExp.js
 tests/auto-regress/bug743094.js
 tests/basic/bug522136.js
 
-# destructuring difference
-tests/auto-regress/bug532363.js
-
 # rest-parameters vs. arguments object
 tests/arguments/bug844048.js
 
@@ -158,9 +142,6 @@ tests/basic/bug852016.js
 # SpiderMonkey restriction test
 tests/basic/testBug773108.js
 
-# SpiderMonkey restriction test for destructuring with spread
-tests/parser/bug-889628.js
-
 
 ############################################
 # Misc proxy implementation isssues        #
@@ -169,7 +150,9 @@ tests/parser/bug-889628.js
 # Spidermonkey: Proxy vs. __proto__ on global
 tests/auto-regress/bug568855.js
 tests/auto-regress/bug589103.js
-tests/auto-regress/bug609287.js
+
+# SpiderMonkey __proto__ not own property on Object.prototype
+tests/basic/__proto__-not-prototype-mutation.js
 
 # Proxy for RegExp/TypedArray/DataView is not supported
 tests/auto-regress/bug743000.js
@@ -183,34 +166,17 @@ tests/basic/bug807623.js
 tests/auto-regress/bug578015.js
 tests/auto-regress/bug727330.js
 tests/basic/bug763440.js
-tests/basic/testBug579602.js
 tests/for-of/semantics-11.js
 
-# SpiderMonkey does not support [[Origin]] for PropertyDescriptors
+# missing return value in defineProperty trap
 tests/proxy/testDirectProxyDefineProperty2.js
-
-# SpiderMonkey does not support CompletePropertyDescriptor
-tests/proxy/testDirectProxyGetOwnPropertyDescriptor10.js
 
 # Proxy + .iterator in for-in
 tests/basic/testBug771242.js
 
-# SpiderMonkey does not support "ownKeys" trap
-tests/proxy/testDirectProxyGetOwnPropertyNames2.js
-tests/proxy/testDirectProxyGetOwnPropertyNames3.js
+# SpiderMonkey does not allow duplicate property keys in "ownKeys" trap
 tests/proxy/testDirectProxyGetOwnPropertyNames4.js
-tests/proxy/testDirectProxyGetOwnPropertyNames5.js
-tests/proxy/testDirectProxyGetOwnPropertyNames6.js
-tests/proxy/testDirectProxyGetOwnPropertyNames7.js
-tests/proxy/testDirectProxyGetOwnPropertyNames8.js
-tests/proxy/testDirectProxyKeys2.js
-tests/proxy/testDirectProxyKeys3.js
 tests/proxy/testDirectProxyKeys4.js
-tests/proxy/testDirectProxyKeys5.js
-tests/proxy/testDirectProxyKeys6.js
-tests/proxy/testDirectProxyKeys7.js
-tests/proxy/testDirectProxyKeys8.js
-tests/proxy/testDirectProxyKeys9.js
 
 # Proxy gets [[ClassName]] from target object in SM
 tests/basic/array-copyWithin.js
@@ -247,9 +213,7 @@ tests/arrow-functions/arguments-2.js
 tests/arrow-functions/arguments-3.js
 tests/arrow-functions/bug-885067-2.js
 tests/arrow-functions/bug889158.js
-
-# different toString() representation for arrow-functions
-tests/arrow-functions/associativity-3.js
+tests/basic/spread-call-length.js
 
 
 #######################################
@@ -258,9 +222,6 @@ tests/arrow-functions/associativity-3.js
 
 # ES6-change: AddRestrictedFunctionProperties for built-ins (Function.prototype)
 tests/basic/bug675889.js
-
-# ES6-change: AddRestrictedFunctionProperties for built-ins (eval)
-tests/basic/bug745360.js
 
 # RegExp.prototype.{source,ignoreCase,global,multiline} now accessor
 tests/basic/bug750307.js
@@ -274,34 +235,14 @@ tests/for-of/array-iterator-generic.js
 # String.prototype.split changed to use ToLength instead of ToUint32
 tests/basic/bug943126.js
 
-# Missing properties in destructuring throw TypeError
-tests/auto-regress/bug785776.js
-
-# No implicit ToObject() in destructuring
-tests/basic/bug685321-1.js
-tests/basic/bug685321-2.js
-tests/arguments/destructuring-exprbody.js
-tests/basic/testBug714650.js
-
 # contextual .name property for functions
 tests/self-test/assertDeepEq.js
-
-# for-of does not call .next() with undefined as a single argument
-tests/for-of/next-arity.js
 
 # Object.getPrototypeOf() works with primitives
 tests/basic/setPrototypeOf.js
 
 # formal parameter initializers are evaluated in extra scope
 tests/arguments/defaults-scoping.js
-
-# Function.prototype.{arguments, caller} change to configurable=true for strict mode functions
-tests/basic/bug632778-1.js
-tests/basic/bug632778-2.js
-
-# ToNumber(symbol) throws TypeError
-tests/symbol/toNumber.js
-tests/symbol/typed-arrays.js
 
 
 #######################################
@@ -318,20 +259,20 @@ tests/basic/bug678087.js
 # throws early ReferenceError instead of SyntaxError
 tests/basic/function-tosource-exprbody-bug777834.js
 
-# ES6-change: no longer SyntaxError
-tests/basic/testBug775807.js
-
 # ES6-change: let-block scope even in global scope
 tests/basic/bug646968-3.js
 
 # missing const initializer
 tests/auto-regress/bug487570.js
 tests/auto-regress/bug495843.js
+tests/basic/letTDZDelete.js
+tests/basic/letTDZEffectful.js
 
 # let variable must not be redeclared
-tests/arguments/alias-function-closed.js
-tests/arguments/alias-function-not-closed.js
 tests/basic/bug778268.js
+
+# ES6: parameter environment not supported in SM
+tests/arguments/alias-function-closed.js
 
 # ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
 tests/arguments/defaults-bound-to-function.js
@@ -343,11 +284,9 @@ tests/basic/bug-826124.js
 # Declaration directly nested in Statement
 tests/auto-regress/bug771027.js
 tests/basic/bug639797.js
-tests/basic/testBug762473.js
+
+# Annex B extension B.3.3 is not applied for Script
 tests/basic/testDynamicLookup.js
-tests/basic/testFunctionStatementNamedArguments.js
-tests/basic/testFunctionStatementAliasLocals.js
-tests/basic/testWeirdThingsInFunctionConstructor.js
 
 # CallExpression no longer valid LHS
 tests/auto-regress/bug701248.js
@@ -409,9 +348,17 @@ tests/arguments/rest-debugger.js
 tests/auto-regress/bug677587.js
 tests/auto-regress/bug677977.js
 tests/auto-regress/bug720396.js
+tests/auto-regress/bug765483.js
+tests/basic/bug646968-7.js
+tests/basic/bug646968-8.js
 tests/basic/bug713226.js
 tests/basic/bug821340.js
+tests/basic/eif-generator.js
+tests/basic/testBug552248.js
+tests/basic/testBug663789-2.js
 tests/basic/testBug895774.js
+tests/basic/testEvalInFrameEdgeCase.js
+tests/basic/testGCNewbornGenerator.js
 tests/basic/testGeneratorDieButScopeAlive.js
 
 
@@ -446,17 +393,10 @@ tests/basic/testBug616454.js
 # clone
 tests/basic/bug751139.js
 tests/basic/testScriptCloning.js
-# evaluate() with saveFrameChain option
-tests/basic/save-frame-chain.js
-# evaluate() with newContext option
-tests/basic/cross-context-stack-1.js
-tests/basic/bug863084.js
 # decompileThis
 tests/basic/decompile-script.js
 # neuter
 tests/basic/testNeutering.js
-# offThreadCompileScript
-tests/basic/offThreadCompileScript-02.js
 # newGlobal() with principal option
 tests/basic/shell-principals.js
 
@@ -485,10 +425,6 @@ tests/basic/metadata-hook.js
 tests/basic/bug951213.js
 tests/basic/bug951346.js
 tests/basic/bug951632.js
-# getBuildConfiguration
-tests/basic/testOOMInAutoEnterCompartment.js
-# workerThreadCount
-tests/basic/offThreadCompileScript-01.js
 # setJitCompilerOption
 tests/bug953337.js
 tests/basic/bug970643.js
@@ -507,7 +443,7 @@ tests/basic/bug1061534.js
 # Legacy generator issues             #
 #######################################
 
-# for-in does not call GeneratorPrototype#close() finalizer
+# finally-blocks are executed when for-in produces an abrupt completion
 tests/basic/testErrorInFinalizerCalledWhileUnwinding.js
 
 # Function() with legacy generator source code
@@ -527,12 +463,12 @@ tests/basic/testManyVars.js
 # Timeout
 tests/auto-regress/bug583680.js
 tests/auto-regress/bug620637.js
-tests/basic/bug539379.js
 tests/basic/bug632964-regexp.js
 tests/basic/bug826581.js
 tests/basic/math-jit-tests.js
 tests/basic/testBug614653.js
 tests/basic/testBug621202.js
+tests/basic/spread-call.js
 
 # OutOfMemory: Java heap space
 tests/auto-regress/bug690933.js

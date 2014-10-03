@@ -10,11 +10,10 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
-import org.mozilla.javascript.MathImpl;
-
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
+import com.github.anba.es6draft.runtime.internal.MathImpl;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -478,7 +477,8 @@ public final class MathObject extends OrdinaryObject implements Initializable {
          */
         @Function(name = "log2", arity = 1)
         public static Object log2(ExecutionContext cx, Object thisValue, Object x) {
-            return Math.log(ToNumber(cx, x)) / Math.log(2d);
+            // return Math.log(ToNumber(cx, x)) / Math.log(2d);
+            return MathImpl.log2(ToNumber(cx, x));
         }
 
         /**
@@ -585,7 +585,7 @@ public final class MathObject extends OrdinaryObject implements Initializable {
                 return Double.POSITIVE_INFINITY;
             }
             // return Math.log(d + Math.sqrt(d * d - 1.0));
-            return MathImpl.acosh(d);
+            return org.mozilla.javascript.MathImpl.acosh(d);
         }
 
         /**
@@ -606,7 +606,7 @@ public final class MathObject extends OrdinaryObject implements Initializable {
                 return d;
             }
             // return Math.log(d + Math.sqrt(d * d + 1.0));
-            return MathImpl.asinh(d);
+            return org.mozilla.javascript.MathImpl.asinh(d);
         }
 
         /**
@@ -636,7 +636,7 @@ public final class MathObject extends OrdinaryObject implements Initializable {
                 return d;
             }
             // return (Math.log(1.0 + d) - Math.log(1.0 - d)) / 2.0;
-            return MathImpl.atanh(d);
+            return org.mozilla.javascript.MathImpl.atanh(d);
         }
 
         /**

@@ -27,6 +27,7 @@ function throwStmt(expr) Pattern({ type: "ThrowStatement", argument: expr })
 function returnStmt(expr) Pattern({ type: "ReturnStatement", argument: expr })
 function yieldExpr(expr) Pattern({ type: "YieldExpression", argument: expr })
 function lit(val) Pattern({ type: "Literal", value: val })
+function comp(name) Pattern({ type: "ComputedName", name: name })
 function spread(val) Pattern({ type: "SpreadExpression", expression: val})
 var thisExpr = Pattern({ type: "ThisExpression" });
 function funDecl(id, params, body, defaults=[], rest=null) Pattern(
@@ -367,6 +368,14 @@ assertExpr("({'x':1, 'y':2, z:3})", objExpr([{ key: lit("x"), value: lit(1) },
 assertExpr("({'x':1, 'y':2, 3:3})", objExpr([{ key: lit("x"), value: lit(1) },
                                              { key: lit("y"), value: lit(2) },
                                              { key: lit(3), value: lit(3) } ]));
+assertExpr("({__proto__:x})", objExpr([{ type: "PrototypeMutation", value: ident("x") }]));
+assertExpr("({'__proto__':x})", objExpr([{ type: "PrototypeMutation", value: ident("x") }]));
+assertExpr("({['__proto__']:x})", objExpr([{ type: "Property", key: comp(lit("__proto__")), value: ident("x") }]));
+assertExpr("({['__proto__']:q, __proto__() {}, __proto__: null })",
+           objExpr([{ type: "Property", key: comp(lit("__proto__")), value: ident("q") },
+                    { type: "Property", key: ident("__proto__"), method: true },
+                    { type: "PrototypeMutation", value: lit(null) }]));
+
 
 // Bug 571617: eliminate constant-folding
 assertExpr("2 + 3", binExpr("+", lit(2), lit(3)));
@@ -406,6 +415,13 @@ var node = Reflect.parse("a = {[field1]: 5}");
 Pattern({ body: [ { expression: { right: { properties: [ {key: { loc:
     { start: { line: 1, column: 5 }, end: { line: 1, column: 13 }}}}]}}}]}).match(node);
 
+// Bug 1048384 - Getter/setter syntax with computed names
+assertExpr("b = { get [meth]() { } }", aExpr("=", ident("b"),
+              objExpr([{ key: computedName(ident("meth")), value: funExpr(null, [], blockStmt([])),
+                method: false, kind: "get"}])));
+assertExpr("b = { set [meth](a) { } }", aExpr("=", ident("b"),
+              objExpr([{ key: computedName(ident("meth")), value: funExpr(null, [ident("a")],
+                blockStmt([])), method: false, kind: "set"}])));
 
 // statements
 
@@ -658,6 +674,9 @@ testParamPatternCombinations(function(n) ("{a" + n + ":x" + n + "," + "b" + n + 
 testParamPatternCombinations(function(n) ("[x" + n + "," + "y" + n + "," + "z" + n + "]"),
                              function(n) (arrPatt([ident("x" + n), ident("y" + n), ident("z" + n)])));
 
+testParamPatternCombinations(function(n) ("[a" + n + ", ..." + "b" + n + "]"),
+                             function(n) (arrPatt([ident("a" + n), spread(ident("b" + n))])));
+
 
 // destructuring variable declarations
 
@@ -697,6 +716,10 @@ testVarPatternCombinations(function (n) ("{a" + n + ":x" + n + "," + "b" + n + "
 
 testVarPatternCombinations(function(n) ("[x" + n + "," + "y" + n + "," + "z" + n + "] = 0"),
                            function(n) ({ id: arrPatt([ident("x" + n), ident("y" + n), ident("z" + n)]),
+                                          init: lit(0) }));
+
+testVarPatternCombinations(function(n) ("[a" + n + ", ..." + "b" + n + "] = 0"),
+                           function(n) ({ id: arrPatt([ident("a" + n), spread(ident("b" + n))]),
                                           init: lit(0) }));
 
 // destructuring assignment

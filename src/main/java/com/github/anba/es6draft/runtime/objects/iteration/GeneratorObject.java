@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.lang.invoke.MethodHandle;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -284,21 +285,21 @@ public final class GeneratorObject extends OrdinaryObject {
         @Override
         public ScriptObject resume(ExecutionContext cx, Object value) {
             assert resumptionPoint != null && value != null;
-            resumptionPoint.getStack()[0] = value;
+            resumptionPoint.setStackTop(value);
             return execute(cx);
         }
 
         @Override
         public ScriptObject _return(ExecutionContext cx, ReturnValue value) {
             assert resumptionPoint != null && value != null;
-            resumptionPoint.getStack()[0] = value;
+            resumptionPoint.setStackTop(value);
             return execute(cx);
         }
 
         @Override
         public ScriptObject _throw(ExecutionContext cx, ScriptException exception) {
             assert resumptionPoint != null && exception != null;
-            resumptionPoint.getStack()[0] = exception;
+            resumptionPoint.setStackTop(exception);
             return execute(cx);
         }
 
@@ -329,9 +330,9 @@ public final class GeneratorObject extends OrdinaryObject {
             if (result instanceof ResumptionPoint) {
                 genObject.suspend();
                 resumptionPoint = (ResumptionPoint) result;
-                Object[] stack = resumptionPoint.getStack();
-                assert stack.length != 0 && stack[0] instanceof ScriptObject;
-                return (ScriptObject) stack[0];
+                Object stackTop = resumptionPoint.getStackTop();
+                assert stackTop instanceof ScriptObject : Objects.toString(stackTop);
+                return (ScriptObject) stackTop;
             }
             genObject.close();
             return CreateIterResultObject(cx, result, true);
@@ -424,10 +425,6 @@ public final class GeneratorObject extends OrdinaryObject {
             });
         }
 
-        private static Object evaluate(MethodHandle handle, ExecutionContext cx) throws Throwable {
-            return handle.invokeExact(cx, (ResumptionPoint) null);
-        }
-
         private void resume0(Object value) {
             try {
                 in.put(value);
@@ -466,6 +463,10 @@ public final class GeneratorObject extends OrdinaryObject {
                 throw (StackOverflowError) result;
             }
             return CreateIterResultObject(cx, result, true);
+        }
+
+        private static Object evaluate(MethodHandle handle, ExecutionContext cx) throws Throwable {
+            return handle.invokeExact(cx, (ResumptionPoint) null);
         }
     }
 }

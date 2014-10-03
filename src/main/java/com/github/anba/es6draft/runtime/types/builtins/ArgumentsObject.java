@@ -167,6 +167,7 @@ public final class ArgumentsObject extends OrdinaryObject {
         /* steps 5, 7 */
         Object v = super.getValue(cx, propertyKey, receiver);
         /* step 8 */
+        // TODO: spec issue - [[DefineOwnProperty]] already takes care of this.
         if ("caller".equals(propertyKey) && isStrictFunction(v)
                 && cx.getRealm().isEnabled(CompatibilityOption.ArgumentsCaller)) {
             throw newTypeError(cx, Messages.Key.StrictModePoisonPill);

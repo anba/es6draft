@@ -21,9 +21,8 @@ import com.github.anba.es6draft.ast.LegacyGeneratorDeclaration;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -37,54 +36,56 @@ abstract class DeclarationBindingInstantiationGenerator {
     private static final class Methods {
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_hasBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "hasBinding",
+                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "hasBinding",
                 Type.getMethodType(Type.BOOLEAN_TYPE, Types.String));
 
         static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "createMutableBinding",
+                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "createMutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
         static final MethodDesc EnvironmentRecord_createImmutableBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "createImmutableBinding",
+                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "createImmutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String));
 
         static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
+                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "initializeBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
 
         static final MethodDesc EnvironmentRecord_setMutableBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "setMutableBinding",
+                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "setMutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object, Type.BOOLEAN_TYPE));
 
         static final MethodDesc EnvironmentRecord_getBindingValue = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "getBindingValue",
+                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "getBindingValue",
                 Type.getMethodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
 
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
-                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
+                MethodDesc.Invoke.Virtual, Types.LexicalEnvironment, "getEnvRec",
                 Type.getMethodType(Types.EnvironmentRecord));
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_InstantiateAsyncFunctionObject = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "InstantiateAsyncFunctionObject", Type
-                        .getMethodType(Types.OrdinaryAsyncFunction, Types.LexicalEnvironment,
-                                Types.ExecutionContext, Types.RuntimeInfo$Function));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime,
+                "InstantiateAsyncFunctionObject", Type.getMethodType(Types.OrdinaryAsyncFunction,
+                        Types.LexicalEnvironment, Types.ExecutionContext,
+                        Types.RuntimeInfo$Function));
 
         static final MethodDesc ScriptRuntime_InstantiateFunctionObject = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "InstantiateFunctionObject", Type
-                        .getMethodType(Types.OrdinaryFunction, Types.LexicalEnvironment,
-                                Types.ExecutionContext, Types.RuntimeInfo$Function));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstantiateFunctionObject",
+                Type.getMethodType(Types.OrdinaryFunction, Types.LexicalEnvironment,
+                        Types.ExecutionContext, Types.RuntimeInfo$Function));
 
         static final MethodDesc ScriptRuntime_InstantiateGeneratorObject = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "InstantiateGeneratorObject", Type
-                        .getMethodType(Types.OrdinaryGenerator, Types.LexicalEnvironment,
-                                Types.ExecutionContext, Types.RuntimeInfo$Function));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstantiateGeneratorObject",
+                Type.getMethodType(Types.OrdinaryGenerator, Types.LexicalEnvironment,
+                        Types.ExecutionContext, Types.RuntimeInfo$Function));
 
         static final MethodDesc ScriptRuntime_InstantiateLegacyGeneratorObject = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "InstantiateLegacyGeneratorObject", Type
-                        .getMethodType(Types.OrdinaryGenerator, Types.LexicalEnvironment,
-                                Types.ExecutionContext, Types.RuntimeInfo$Function));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime,
+                "InstantiateLegacyGeneratorObject", Type.getMethodType(Types.OrdinaryGenerator,
+                        Types.LexicalEnvironment, Types.ExecutionContext,
+                        Types.RuntimeInfo$Function));
     }
 
     protected final CodeGenerator codegen;

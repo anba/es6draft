@@ -17,26 +17,16 @@ import com.github.anba.es6draft.ast.GeneratorComprehension;
  * </ul>
  */
 final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
-    private boolean initialized = false;
-
-    GeneratorComprehensionGenerator(CodeGenerator codegen) {
+    private GeneratorComprehensionGenerator(CodeGenerator codegen) {
         super(codegen);
     }
 
     /**
      * 12.2.7.2 Runtime Semantics: Evaluation
      */
-    @Override
-    public Void visit(GeneratorComprehension node, ExpressionVisitor mv) {
-        if (initialized) {
-            // nested generator comprehension
-            return visit((Expression) node, mv);
-        }
-        this.initialized = true;
-
-        node.getComprehension().accept(this, mv);
-
-        return null;
+    static void EvaluateGeneratorComprehension(CodeGenerator codegen, GeneratorComprehension node,
+            ExpressionVisitor mv) {
+        node.getComprehension().accept(new GeneratorComprehensionGenerator(codegen), mv);
     }
 
     /**
@@ -46,8 +36,6 @@ final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
      */
     @Override
     protected Void visit(Expression node, ExpressionVisitor mv) {
-        assert initialized : "generator-comprehension generator not initialized";
-
         /* steps 1-3 */
         expressionBoxedValue(node, mv);
         /* step 4 (not applicable) */

@@ -17,11 +17,11 @@ const {
       b: () => "B",
       c: () => "C",
     },
-    a: function a() { return super() },
+    a: function aaa() { return super() },
     b: function() { return super() },
     c: (0, function() { return super() }),
   };
-  assertThrows(ReferenceError, () => obj.a());
+  assertSame("A", obj.a());
   assertSame("B", obj.b());
   assertThrows(ReferenceError, () => obj.c());
 
@@ -49,11 +49,11 @@ const {
       b: () => "B",
       c: () => "C",
     },
-    ["a"]: function a() { return super() },
+    ["a"]: function aaa() { return super() },
     ["b"]: function() { return super() },
     ["c"]: (0, function() { return super() }),
   };
-  assertThrows(ReferenceError, () => obj.a());
+  assertSame("A", obj.a());
   assertSame("B", obj.b());
   assertThrows(ReferenceError, () => obj.c());
 
@@ -82,11 +82,11 @@ const {
       [symB]: () => "B",
       [symC]: () => "C",
     },
-    [symA]: function a() { return super() },
+    [symA]: function aaa() { return super() },
     [symB]: function() { return super() },
     [symC]: (0, function() { return super() }),
   };
-  assertThrows(ReferenceError, () => obj[symA]());
+  assertSame("A", obj[symA]());
   assertSame("B", obj[symB]());
   assertThrows(ReferenceError, () => obj[symC]());
 
@@ -100,8 +100,7 @@ const {
     [symB]: () => { fail `called home.b` },
     [symC]: () => { fail `called home.c` },
   };
-  assertThrows(TypeError, () => obj[symA].toMethod(home)());
-  assertSame("A'", obj[symA].toMethod(home, symA)());
+  assertSame("A'", obj[symA].toMethod(home)());
   assertSame("B'", obj[symB].toMethod(home)());
   assertThrows(ReferenceError, () => obj[symC].toMethod(home)());
   assertSame("C'", obj[symC].toMethod(home, symC)());

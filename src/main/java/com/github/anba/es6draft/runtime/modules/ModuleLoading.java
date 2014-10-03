@@ -903,7 +903,7 @@ public final class ModuleLoading {
 
     // FIXME: missing definition in spec
     private static List<String> IterableToArray(ExecutionContext cx, Object iterable) {
-        Iterator<?> iterator = FromScriptIterator(cx, GetIterator(cx, iterable));
+        Iterator<?> iterator = FromScriptIterator(cx, GetIterator(cx, ToObject(cx, iterable)));
         ArrayList<String> array = new ArrayList<>();
         while (iterator.hasNext()) {
             Object value = iterator.next();

@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
-import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord.Binding;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -108,6 +107,16 @@ public abstract class Reference<BASE, NAME> {
     public abstract Object getThisValue(ExecutionContext cx);
 
     /**
+     * 12.5.4 The delete Operator<br>
+     * Runtime Semantics: Evaluation 12.5.4.2
+     * 
+     * @param cx
+     *            the execution context
+     * @return {@code true} on success
+     */
+    public abstract boolean delete(ExecutionContext cx);
+
+    /**
      * [6.2.3.1] GetValue (V)
      * 
      * @param v
@@ -165,20 +174,23 @@ public abstract class Reference<BASE, NAME> {
      * Reference specialization for binding references.
      */
     public static final class BindingReference extends
-            Reference<DeclarativeEnvironmentRecord.Binding, String> {
-        private final DeclarativeEnvironmentRecord.Binding base;
+            Reference<DeclarativeEnvironmentRecord, String> {
+        private final DeclarativeEnvironmentRecord base;
+        private final DeclarativeEnvironmentRecord.Binding binding;
         private final String referencedName;
         private final boolean strictReference;
 
-        public BindingReference(DeclarativeEnvironmentRecord.Binding base, String referencedName,
+        public BindingReference(DeclarativeEnvironmentRecord base,
+                DeclarativeEnvironmentRecord.Binding binding, String referencedName,
                 boolean strictReference) {
             this.base = base;
+            this.binding = binding;
             this.referencedName = referencedName;
             this.strictReference = strictReference;
         }
 
         @Override
-        public Binding getBase() {
+        public DeclarativeEnvironmentRecord getBase() {
             return base;
         }
 
@@ -214,12 +226,17 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public Object getValue(ExecutionContext cx) {
-            return base.getValue(cx, referencedName, strictReference);
+            return binding.getValue(cx, referencedName);
         }
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            base.setValue(cx, referencedName, w, strictReference);
+            binding.setValue(cx, referencedName, w, strictReference);
+        }
+
+        @Override
+        public boolean delete(ExecutionContext cx) {
+            return false;
         }
 
         @Override
@@ -231,20 +248,20 @@ public abstract class Reference<BASE, NAME> {
     /**
      * Reference specialization for identifier references.
      */
-    public static final class IdentifierReference extends Reference<EnvironmentRecord, String> {
-        private final EnvironmentRecord base;
+    public static final class IdentifierReference<RECORD extends EnvironmentRecord> extends
+            Reference<RECORD, String> {
+        private final RECORD base;
         private final String referencedName;
         private final boolean strictReference;
 
-        public IdentifierReference(EnvironmentRecord base, String referencedName,
-                boolean strictReference) {
+        public IdentifierReference(RECORD base, String referencedName, boolean strictReference) {
             this.base = base;
             this.referencedName = referencedName;
             this.strictReference = strictReference;
         }
 
         @Override
-        public EnvironmentRecord getBase() {
+        public RECORD getBase() {
             return base;
         }
 
@@ -310,6 +327,20 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
+        public boolean delete(ExecutionContext cx) {
+            /* steps 1-3 (generated code) */
+            /* step 4 */
+            if (isUnresolvableReference()) {
+                assert !isStrictReference();
+                return true;
+            }
+            /* step 5 (not applicable) */
+            /* step 6 */
+            EnvironmentRecord bindings = getBase();
+            return bindings.deleteBinding(getReferencedName());
+        }
+
+        @Override
         public EnvironmentRecord getThisValue(ExecutionContext cx) {
             throw new AssertionError();
         }
@@ -353,8 +384,7 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public final boolean hasPrimitiveBase() {
-            return type == Type.Boolean || type == Type.String || type == Type.Symbol
-                    || type == Type.Number;
+            return type != Type.Object;
         }
 
         @Override
@@ -390,8 +420,7 @@ public abstract class Reference<BASE, NAME> {
             case Symbol:
                 return cx.getIntrinsic(Intrinsics.SymbolPrototype);
             default:
-                assert false : "invalid type";
-                return null;
+                throw new AssertionError();
             }
         }
     }
@@ -446,6 +475,20 @@ public abstract class Reference<BASE, NAME> {
             }
         }
 
+        @Override
+        public boolean delete(ExecutionContext cx) {
+            /* steps 1-3 (generated code) */
+            /* steps 4, 6 (not applicable) */
+            /* step 5 */
+            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
+                    : (ScriptObject) getBase();
+            boolean deleteStatus = base.delete(cx, referencedName);
+            if (!deleteStatus && isStrictReference()) {
+                throw newTypeError(cx, Messages.Key.PropertyNotDeletable, getReferencedName());
+            }
+            return deleteStatus;
+        }
+
         private Object GetValuePrimitive(ExecutionContext cx) {
             long refName = referencedName;
             if (type == Type.String && 0 <= refName && refName < 0x7FFF_FFFFL) {
@@ -494,7 +537,7 @@ public abstract class Reference<BASE, NAME> {
                 return GetValuePrimitive(cx);
             }
             /* steps 3, 5.b */
-            return ((ScriptObject) getBase()).get(cx, getReferencedName(), getThisValue(cx));
+            return ((ScriptObject) getBase()).get(cx, referencedName, getThisValue(cx));
         }
 
         @Override
@@ -503,19 +546,33 @@ public abstract class Reference<BASE, NAME> {
 
             ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
                     : (ScriptObject) getBase();
-            boolean succeeded = base.set(cx, getReferencedName(), w, getThisValue(cx));
+            boolean succeeded = base.set(cx, referencedName, w, getThisValue(cx));
             if (!succeeded && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
             }
         }
 
+        @Override
+        public boolean delete(ExecutionContext cx) {
+            /* steps 1-3 (generated code) */
+            /* steps 4, 6 (not applicable) */
+            /* step 5 */
+            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
+                    : (ScriptObject) getBase();
+            boolean deleteStatus = base.delete(cx, referencedName);
+            if (!deleteStatus && isStrictReference()) {
+                throw newTypeError(cx, Messages.Key.PropertyNotDeletable, getReferencedName());
+            }
+            return deleteStatus;
+        }
+
         private Object GetValuePrimitive(ExecutionContext cx) {
             if (type == Type.String) {
-                if ("length".equals(getReferencedName())) {
+                if ("length".equals(referencedName)) {
                     CharSequence str = Type.stringValue(getBase());
                     return str.length();
                 }
-                int index = Strings.toStringIndex(getReferencedName());
+                int index = Strings.toStringIndex(referencedName);
                 if (index >= 0) {
                     CharSequence str = Type.stringValue(getBase());
                     if (index < str.length()) {
@@ -523,7 +580,7 @@ public abstract class Reference<BASE, NAME> {
                     }
                 }
             }
-            return getPrimitiveBaseProto(cx).get(cx, getReferencedName(), getBase());
+            return getPrimitiveBaseProto(cx).get(cx, referencedName, getBase());
         }
     }
 
@@ -562,7 +619,7 @@ public abstract class Reference<BASE, NAME> {
                 return GetValuePrimitive(cx);
             }
             /* steps 3, 5.b */
-            return ((ScriptObject) getBase()).get(cx, getReferencedName(), getThisValue(cx));
+            return ((ScriptObject) getBase()).get(cx, referencedName, getThisValue(cx));
         }
 
         @Override
@@ -571,15 +628,30 @@ public abstract class Reference<BASE, NAME> {
 
             ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
                     : (ScriptObject) getBase();
-            boolean succeeded = base.set(cx, getReferencedName(), w, getThisValue(cx));
+            boolean succeeded = base.set(cx, referencedName, w, getThisValue(cx));
             if (!succeeded && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
                         .toString());
             }
         }
 
+        @Override
+        public boolean delete(ExecutionContext cx) {
+            /* steps 1-3 (generated code) */
+            /* steps 4, 6 (not applicable) */
+            /* step 5 */
+            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
+                    : (ScriptObject) getBase();
+            boolean deleteStatus = base.delete(cx, referencedName);
+            if (!deleteStatus && isStrictReference()) {
+                throw newTypeError(cx, Messages.Key.PropertyNotDeletable, getReferencedName()
+                        .toString());
+            }
+            return deleteStatus;
+        }
+
         private Object GetValuePrimitive(ExecutionContext cx) {
-            return getPrimitiveBaseProto(cx).get(cx, getReferencedName(), getBase());
+            return getPrimitiveBaseProto(cx).get(cx, referencedName, getBase());
         }
     }
 
@@ -645,6 +717,11 @@ public abstract class Reference<BASE, NAME> {
             /* steps 1, 3 (not applicable) */
             /* step 2 */
             return thisValue;
+        }
+
+        @Override
+        public final boolean delete(ExecutionContext cx) {
+            throw newReferenceError(cx, Messages.Key.SuperDelete);
         }
     }
 

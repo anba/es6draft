@@ -20,11 +20,10 @@ import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.ast.scope.Name;
-import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
@@ -42,32 +41,33 @@ final class GlobalDeclarationInstantiationGenerator extends
     private static final class Methods {
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_canDeclareLexicalScopedOrThrow = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "canDeclareLexicalScopedOrThrow", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
-                                Types.GlobalEnvironmentRecord, Types.String));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime,
+                "canDeclareLexicalScopedOrThrow", Type.getMethodType(Type.VOID_TYPE,
+                        Types.ExecutionContext, Types.GlobalEnvironmentRecord, Types.String));
 
         static final MethodDesc ScriptRuntime_canDeclareVarScopedOrThrow = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "canDeclareVarScopedOrThrow", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
-                                Types.GlobalEnvironmentRecord, Types.String));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareVarScopedOrThrow",
+                Type.getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+                        Types.GlobalEnvironmentRecord, Types.String));
 
         static final MethodDesc ScriptRuntime_canDeclareGlobalFunctionOrThrow = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "canDeclareGlobalFunctionOrThrow", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
-                                Types.GlobalEnvironmentRecord, Types.String));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime,
+                "canDeclareGlobalFunctionOrThrow", Type.getMethodType(Type.VOID_TYPE,
+                        Types.ExecutionContext, Types.GlobalEnvironmentRecord, Types.String));
 
         static final MethodDesc ScriptRuntime_canDeclareGlobalVarOrThrow = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "canDeclareGlobalVarOrThrow", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
-                                Types.GlobalEnvironmentRecord, Types.String));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareGlobalVarOrThrow",
+                Type.getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+                        Types.GlobalEnvironmentRecord, Types.String));
 
         // class: GlobalEnvironmentRecord
         static final MethodDesc GlobalEnvironmentRecord_createGlobalVarBinding = MethodDesc.create(
-                MethodType.Virtual, Types.GlobalEnvironmentRecord, "createGlobalVarBinding",
+                MethodDesc.Invoke.Virtual, Types.GlobalEnvironmentRecord,
+                "createGlobalVarBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
         static final MethodDesc GlobalEnvironmentRecord_createGlobalFunctionBinding = MethodDesc
-                .create(MethodType.Virtual, Types.GlobalEnvironmentRecord,
+                .create(MethodDesc.Invoke.Virtual, Types.GlobalEnvironmentRecord,
                         "createGlobalFunctionBinding", Type.getMethodType(Type.VOID_TYPE,
                                 Types.String, Types.Object, Type.BOOLEAN_TYPE));
     }
@@ -207,7 +207,7 @@ final class GlobalDeclarationInstantiationGenerator extends
             createGlobalVarBinding(envRec, vn, deletableBindings, mv);
         }
         /* step 17 */
-        mv.areturn();
+        mv._return();
     }
 
     /**

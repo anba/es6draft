@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyDeclar
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.BindingPattern;
@@ -25,9 +24,9 @@ import com.github.anba.es6draft.ast.LegacyComprehensionFor;
 import com.github.anba.es6draft.ast.LegacyComprehensionFor.IterationKind;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.scope.Name;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.compiler.assembler.Jump;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.Variable;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
@@ -40,45 +39,46 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     private static final class Methods {
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "createMutableBinding",
+                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "createMutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
         static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
+                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "initializeBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
 
         // class: GeneratorObject
         static final MethodDesc GeneratorObject_isLegacyGenerator = MethodDesc.create(
-                MethodType.Virtual, Types.GeneratorObject, "isLegacyGenerator",
+                MethodDesc.Invoke.Virtual, Types.GeneratorObject, "isLegacyGenerator",
                 Type.getMethodType(Type.BOOLEAN_TYPE));
 
         // class: Iterator
-        static final MethodDesc Iterator_hasNext = MethodDesc.create(MethodType.Interface,
-                Types.Iterator, "hasNext", Type.getMethodType(Type.BOOLEAN_TYPE));
+        static final MethodDesc Iterator_hasNext = MethodDesc.create(
+                MethodDesc.Invoke.Interface, Types.Iterator, "hasNext",
+                Type.getMethodType(Type.BOOLEAN_TYPE));
 
-        static final MethodDesc Iterator_next = MethodDesc.create(MethodType.Interface,
+        static final MethodDesc Iterator_next = MethodDesc.create(MethodDesc.Invoke.Interface,
                 Types.Iterator, "next", Type.getMethodType(Types.Object));
 
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
-                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
+                MethodDesc.Invoke.Virtual, Types.LexicalEnvironment, "getEnvRec",
                 Type.getMethodType(Types.EnvironmentRecord));
 
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "ensureObject",
+        static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "ensureObject",
                 Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_enumerate = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "enumerate",
+        static final MethodDesc ScriptRuntime_enumerate = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "enumerate",
                 Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_enumerateValues = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "enumerateValues",
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "enumerateValues",
                 Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "iterate",
+        static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "iterate",
                 Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
     }
 
@@ -86,7 +86,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
     private Iterator<Variable<Iterator<?>>> iterators;
 
-    ComprehensionGenerator(CodeGenerator codegen) {
+    protected ComprehensionGenerator(CodeGenerator codegen) {
         super(codegen);
     }
 
@@ -181,7 +181,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         /* steps 3-4 */
         ToBoolean(type, mv);
         /* steps 5-6 */
-        Label lblTest = new Label();
+        Jump lblTest = new Jump();
         mv.ifeq(lblTest);
         {
             /* step 5a */
@@ -199,7 +199,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
      */
     @Override
     public Void visit(ComprehensionFor node, ExpressionVisitor mv) {
-        Label lblTest = new Label(), lblLoop = new Label();
+        Jump lblTest = new Jump(), lblLoop = new Jump();
 
         /* steps 1-2 */
         expressionBoxedValue(node.getExpression(), mv);
@@ -214,7 +214,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         /* step 5 (not applicable) */
 
         /* step 6 */
-        mv.goToAndSetStack(lblTest);
+        mv.nonDestructiveGoTo(lblTest);
 
         /* steps 9d-9e */
         mv.mark(lblLoop);
@@ -277,12 +277,12 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
      */
     @Override
     public Void visit(LegacyComprehensionFor node, ExpressionVisitor mv) {
-        Label lblTest = new Label(), lblLoop = new Label(), lblFail = new Label();
+        Jump lblTest = new Jump(), lblLoop = new Jump(), lblFail = new Jump();
 
         ValType type = expressionValue(node.getExpression(), mv);
         if (type != ValType.Object) {
             // fail-safe behaviour for null/undefined values in legacy comprehensions
-            Label loopstart = new Label();
+            Jump loopstart = new Jump();
             mv.toBoxed(type);
             mv.dup();
             isUndefinedOrNull(mv);
@@ -296,7 +296,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         if (iterationKind == IterationKind.Enumerate
                 || iterationKind == IterationKind.EnumerateValues) {
             // legacy generator mode, both, for-in and for-each, perform Iterate on generators
-            Label l0 = new Label(), l1 = new Label();
+            Jump l0 = new Jump(), l1 = new Jump();
             mv.dup();
             mv.instanceOf(Types.GeneratorObject);
             mv.ifeq(l0);
@@ -324,7 +324,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         Variable<Iterator<?>> iter = iterators.next();
         mv.store(iter);
 
-        mv.goToAndSetStack(lblTest);
+        mv.nonDestructiveGoTo(lblTest);
         mv.mark(lblLoop);
         mv.load(iter);
         mv.invoke(Methods.Iterator_next);

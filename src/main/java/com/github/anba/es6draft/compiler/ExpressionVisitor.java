@@ -17,7 +17,6 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.objectweb.asm.Handle;
-import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -25,7 +24,12 @@ import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.ScopedNode;
 import com.github.anba.es6draft.ast.scope.Scope;
-import com.github.anba.es6draft.compiler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.assembler.FieldDesc;
+import com.github.anba.es6draft.compiler.assembler.Jump;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.Variable;
+import com.github.anba.es6draft.compiler.assembler.VariablesSnapshot;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
@@ -35,34 +39,37 @@ import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
  */
 abstract class ExpressionVisitor extends InstructionVisitor {
     private static final class Fields {
-        static final FieldDesc Null_NULL = FieldDesc.create(FieldType.Static, Types.Null, "NULL",
-                Types.Null);
+        static final FieldDesc Null_NULL = FieldDesc.create(FieldDesc.Allocation.Static,
+                Types.Null, "NULL", Types.Null);
 
-        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
+        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldDesc.Allocation.Static,
                 Types.Undefined, "UNDEFINED", Types.Undefined);
     }
 
     private static final class Methods {
         // class: ResumptionPoint
-        static final MethodDesc ResumptionPoint_init = MethodDesc.create(MethodType.Special,
-                Types.ResumptionPoint, "<init>",
-                Type.getMethodType(Type.VOID_TYPE, Types.Object_, Types.Object_, Type.INT_TYPE));
+        static final MethodDesc ResumptionPoint_create = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ResumptionPoint, "create", Type.getMethodType(
+                        Types.ResumptionPoint, Types.Object_, Types.Object_, Type.INT_TYPE));
 
-        static final MethodDesc ResumptionPoint_getLocals = MethodDesc.create(MethodType.Virtual,
-                Types.ResumptionPoint, "getLocals", Type.getMethodType(Types.Object_));
+        static final MethodDesc ResumptionPoint_getLocals = MethodDesc.create(
+                MethodDesc.Invoke.Virtual, Types.ResumptionPoint, "getLocals",
+                Type.getMethodType(Types.Object_));
 
-        static final MethodDesc ResumptionPoint_getOffset = MethodDesc.create(MethodType.Virtual,
-                Types.ResumptionPoint, "getOffset", Type.getMethodType(Type.INT_TYPE));
+        static final MethodDesc ResumptionPoint_getOffset = MethodDesc.create(
+                MethodDesc.Invoke.Virtual, Types.ResumptionPoint, "getOffset",
+                Type.getMethodType(Type.INT_TYPE));
 
-        static final MethodDesc ResumptionPoint_getStack = MethodDesc.create(MethodType.Virtual,
-                Types.ResumptionPoint, "getStack", Type.getMethodType(Types.Object_));
+        static final MethodDesc ResumptionPoint_getStack = MethodDesc.create(
+                MethodDesc.Invoke.Virtual, Types.ResumptionPoint, "getStack",
+                Type.getMethodType(Types.Object_));
     }
 
     private static final int CONTEXT_SLOT = 0;
 
     private final boolean strict;
     private final boolean globalCode;
-    private final boolean syntheticMethods;
+    private final boolean syntheticMethod;
     private int classDef = 0;
     private Variable<ExecutionContext> executionContext;
     private Scope scope;
@@ -74,7 +81,9 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         super(method);
         this.strict = parent.isStrict();
         this.globalCode = parent.isGlobalCode();
-        this.syntheticMethods = true;
+        this.syntheticMethod = true;
+        this.classDef = parent.classDef;
+        this.tailCallNodes = parent.tailCallNodes;
     }
 
     protected ExpressionVisitor(MethodCode method, boolean strict, boolean globalCode,
@@ -82,7 +91,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         super(method);
         this.strict = strict;
         this.globalCode = globalCode;
-        this.syntheticMethods = syntheticMethods;
+        this.syntheticMethod = syntheticMethods;
     }
 
     @Override
@@ -141,7 +150,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     }
 
     boolean isResumable() {
-        return !syntheticMethods;
+        return !syntheticMethod;
     }
 
     void enterClassDefinition() {
@@ -198,20 +207,21 @@ abstract class ExpressionVisitor extends InstructionVisitor {
      * Pops the stack's top element and emits a return instruction.
      */
     void returnCompletion() {
-        areturn();
+        _return();
     }
 
     /**
      * Current execution state (locals + stack + ip)
      */
     private static final class ExecutionState {
-        private final VariablesView locals;
+        private final VariablesSnapshot locals;
         private final Type[] stack;
-        private final Label instruction;
+        private final Jump instruction;
         private final int offset;
         private final int line;
 
-        ExecutionState(VariablesView locals, Type[] stack, Label instruction, int offset, int line) {
+        ExecutionState(VariablesSnapshot locals, Type[] stack, Jump instruction, int offset,
+                int line) {
             this.locals = locals;
             this.stack = stack;
             this.instruction = instruction;
@@ -234,18 +244,18 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         if (states == null) {
             states = new ArrayList<>();
         }
-        ExecutionState state = new ExecutionState(getVariables(), getStack(), new Label(),
+        ExecutionState state = new ExecutionState(getVariablesSnapshot(), getStack(), new Jump(),
                 states.size(), getLastLineNumber());
         states.add(state);
         return state;
     }
 
     static final class GeneratorState {
-        private final Label resumeSwitch = new Label(), startBody = new Label();
+        private final Jump resumeSwitch = new Jump(), startBody = new Jump();
     }
 
     private static final class RuntimeBootstrap {
-        static final boolean ENABLED = true;
+        static final boolean ENABLED = false;
         static final Object[] EMPTY_BSM_ARGS = new Object[] {};
         static final String STACK = "rt:stack";
         static final String LOCALS = "rt:locals";
@@ -255,8 +265,8 @@ abstract class ExpressionVisitor extends InstructionVisitor {
             java.lang.invoke.MethodType mt = java.lang.invoke.MethodType.methodType(CallSite.class,
                     MethodHandles.Lookup.class, String.class, java.lang.invoke.MethodType.class);
             BOOTSTRAP = new Handle(Opcodes.H_INVOKESTATIC,
-                    org.objectweb.asm.Type.getInternalName(ScriptRuntime.class),
-                    "runtimeBootstrap", mt.toMethodDescriptorString());
+                    Type.getInternalName(ScriptRuntime.class), "runtimeBootstrap",
+                    mt.toMethodDescriptorString());
         }
     }
 
@@ -293,9 +303,9 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         } else {
             assert !states.isEmpty();
             int count = states.size();
-            Label[] restore = new Label[count];
+            Jump[] restore = new Jump[count];
             for (int i = 0; i < count; ++i) {
-                restore[i] = new Label();
+                restore[i] = new Jump();
             }
             load(resume);
             invoke(Methods.ResumptionPoint_getOffset);
@@ -333,8 +343,8 @@ abstract class ExpressionVisitor extends InstructionVisitor {
             invokedynamic(RuntimeBootstrap.STACK, Type.getMethodDescriptor(Types.Object_, stack),
                     RuntimeBootstrap.BOOTSTRAP, RuntimeBootstrap.EMPTY_BSM_ARGS);
         } else {
-            newarray(stack.length, Types.Object);
-            for (int i = 0, sp = stack.length - 1; i < stack.length; ++i, --sp) {
+            anewarray(stack.length, Types.Object);
+            for (int sp = stack.length - 1; sp >= 0; --sp) {
                 Type t = stack[sp];
                 // stack: [?, array] -> [array, array, ?]
                 if (t.getSize() == 1) {
@@ -347,7 +357,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
                 // stack: [array, array, ?] -> [array, array, boxed(?)]
                 toBoxed(t);
                 // stack: [array, array, boxed(?)] -> [array, array, index, boxed(?)]
-                iconst(i);
+                iconst(sp);
                 swap();
                 // stack: [array, array, index, boxed(?)] -> [array]
                 astore(Types.Object);
@@ -357,38 +367,35 @@ abstract class ExpressionVisitor extends InstructionVisitor {
                 .toString(getStack());
 
         // (2) Save locals
-        VariablesView locals = state.locals;
+        VariablesSnapshot locals = state.locals;
         if (RuntimeBootstrap.ENABLED) {
-            Type[] llocals = new Type[locals.getInitializedVariableCount()];
-            for (int i = 0, slot = 0; slot != -1; ++i, slot = locals.getNextInitializedSlot(slot)) {
-                Type t = locals.getVariable(slot);
-                llocals[i] = t;
-                load(slot, t);
+            int i = 0;
+            Type[] llocals = new Type[locals.getSize()];
+            for (Variable<?> v : locals) {
+                llocals[i++] = v.getType();
+                load(v);
             }
             invokedynamic(RuntimeBootstrap.LOCALS,
                     Type.getMethodDescriptor(Types.Object_, llocals), RuntimeBootstrap.BOOTSTRAP,
                     RuntimeBootstrap.EMPTY_BSM_ARGS);
         } else {
-            newarray(locals.getInitializedVariableCount(), Types.Object);
-            for (int i = 0, slot = 0; slot != -1; ++i, slot = locals.getNextInitializedSlot(slot)) {
-                Type t = locals.getVariable(slot);
+            int i = 0;
+            anewarray(locals.getSize(), Types.Object);
+            for (Variable<?> v : locals) {
                 // stack: [array] -> [array, index, v]
                 dup();
-                iconst(i);
-                load(slot, t);
-                toBoxed(t);
+                iconst(i++);
+                load(v);
+                toBoxed(v.getType());
                 astore(Types.Object);
             }
         }
 
-        // stack: [stack, locals] -> [r, r, stack, locals]
-        anew(Types.ResumptionPoint);
-        dup();
-        swap2();
+        // stack: [stack, locals] -> [r]
         iconst(state.offset);
-        invoke(Methods.ResumptionPoint_init);
+        invoke(Methods.ResumptionPoint_create);
 
-        areturn();
+        _return();
 
         return state;
     }
@@ -415,16 +422,16 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         // (1) Restore locals
         // stack: [r, r] -> [r, <locals>]
         invoke(Methods.ResumptionPoint_getLocals);
-        VariablesView variables = state.locals;
+        VariablesSnapshot variables = state.locals;
         // manually restore locals type information
         restoreVariables(variables);
-        for (int i = 0, slot = 0; slot != -1; ++i, slot = variables.getNextInitializedSlot(slot)) {
-            Type t = variables.getVariable(slot);
+        int index = 0;
+        for (Variable<?> v : variables) {
             // stack: [<locals>] -> [<locals>, value]
             dup();
-            loadFromArray(i, t);
+            loadFromArray(index++, v.getType());
             // stack: [r, <locals>, value] -> [r, <locals>]
-            store(slot, t);
+            store(v);
         }
         // stack: [r, <locals>] -> [r]
         pop();
@@ -444,14 +451,13 @@ abstract class ExpressionVisitor extends InstructionVisitor {
             Variable<Object[]> stackContent = newVariable("stack", Object[].class);
             // stack: [<stack>] -> []
             store(stackContent);
-            for (int i = stack.length - 1, sp = 0; i >= 0; --i, ++sp) {
-                Type t = stack[sp];
+            for (int sp = 0, len = stack.length; sp < len; ++sp) {
                 // stack: [] -> [<stack>]
                 load(stackContent);
                 // stack: [<stack>] -> [value]
-                loadFromArray(i, t);
+                loadFromArray(sp, stack[sp]);
             }
-            // Set to null to avoid leaking the saved stack
+            // Set 'stackContent' variable to null to avoid leaking the saved stack
             aconst(null);
             store(stackContent);
             exitVariableScope();
@@ -474,7 +480,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     private void loadFromArray(int index, Type type) {
         aload(index, Types.Object);
         if (type.getSort() < Type.ARRAY) {
-            checkcast(getWrapper(type));
+            checkcast(wrapper(type));
             toUnboxed(type);
         } else if (!Types.Object.equals(type)) {
             checkcast(type);

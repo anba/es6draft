@@ -6,15 +6,7 @@
  */
 package com.github.anba.es6draft.ast;
 
-import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
-import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
-import com.github.anba.es6draft.ast.synthetic.IdentifierReferenceValue;
-import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
-import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
-import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
-import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
-import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
-import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
+import com.github.anba.es6draft.ast.synthetic.*;
 
 /**
  * Visitor interface for {@link Node} subclasses
@@ -98,6 +90,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(Elision node, V value);
 
+    R visit(EmptyExpression node, V value);
+
     R visit(EmptyStatement node, V value);
 
     R visit(ExportDeclaration node, V value);
@@ -174,6 +168,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(MethodDefinition node, V value);
 
+    R visit(MethodDefinitionsMethod node, V value);
+
     R visit(Module node, V value);
 
     R visit(ModuleImport node, V value);
@@ -212,9 +208,17 @@ public interface NodeVisitor<R, V> {
 
     R visit(StringLiteral node, V value);
 
-    R visit(SuperExpression node, V value);
+    R visit(SuperCallExpression node, V value);
 
-    R visit(SuperExpressionValue node, V value);
+    R visit(SuperElementAccessor node, V value);
+
+    R visit(SuperElementAccessorValue node, V value);
+
+    R visit(SuperNewExpression node, V value);
+
+    R visit(SuperPropertyAccessor node, V value);
+
+    R visit(SuperPropertyAccessorValue node, V value);
 
     R visit(SwitchClause node, V value);
 

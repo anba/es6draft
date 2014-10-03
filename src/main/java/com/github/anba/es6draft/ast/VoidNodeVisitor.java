@@ -6,15 +6,7 @@
  */
 package com.github.anba.es6draft.ast;
 
-import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
-import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
-import com.github.anba.es6draft.ast.synthetic.IdentifierReferenceValue;
-import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
-import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
-import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
-import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
-import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
-import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
+import com.github.anba.es6draft.ast.synthetic.*;
 
 /**
  * Visitor interface for {@link Node} subclasses
@@ -98,6 +90,8 @@ public interface VoidNodeVisitor<V> {
 
     void visit(Elision node, V value);
 
+    void visit(EmptyExpression node, V value);
+
     void visit(EmptyStatement node, V value);
 
     void visit(ExportDeclaration node, V value);
@@ -174,6 +168,8 @@ public interface VoidNodeVisitor<V> {
 
     void visit(MethodDefinition node, V value);
 
+    void visit(MethodDefinitionsMethod node, V value);
+
     void visit(Module node, V value);
 
     void visit(ModuleImport node, V value);
@@ -212,9 +208,17 @@ public interface VoidNodeVisitor<V> {
 
     void visit(StringLiteral node, V value);
 
-    void visit(SuperExpression node, V value);
+    void visit(SuperCallExpression node, V value);
 
-    void visit(SuperExpressionValue node, V value);
+    void visit(SuperElementAccessor node, V value);
+
+    void visit(SuperElementAccessorValue node, V value);
+
+    void visit(SuperNewExpression node, V value);
+
+    void visit(SuperPropertyAccessor node, V value);
+
+    void visit(SuperPropertyAccessorValue node, V value);
 
     void visit(SwitchClause node, V value);
 

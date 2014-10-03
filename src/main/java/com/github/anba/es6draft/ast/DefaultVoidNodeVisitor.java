@@ -6,15 +6,7 @@
  */
 package com.github.anba.es6draft.ast;
 
-import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
-import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
-import com.github.anba.es6draft.ast.synthetic.IdentifierReferenceValue;
-import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
-import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
-import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
-import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
-import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
-import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
+import com.github.anba.es6draft.ast.synthetic.*;
 
 /**
  * Default implementation for {@link VoidNodeVisitor}.
@@ -284,6 +276,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(EmptyExpression node, V value) {
+        visit((Expression) node, value);
+    }
+
+    @Override
     public void visit(EmptyStatement node, V value) {
         visit((Statement) node, value);
     }
@@ -474,6 +471,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(MethodDefinitionsMethod node, V value) {
+        visit((PropertyDefinition) node, value);
+    }
+
+    @Override
     public void visit(Module node, V value) {
         visit((Node) node, value);
     }
@@ -569,13 +571,33 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
-    public void visit(SuperExpression node, V value) {
+    public void visit(SuperCallExpression node, V value) {
         visit((Expression) node, value);
     }
 
     @Override
-    public void visit(SuperExpressionValue node, V value) {
-        visit((SuperExpression) node, value);
+    public void visit(SuperElementAccessor node, V value) {
+        visit((Expression) node, value);
+    }
+
+    @Override
+    public void visit(SuperElementAccessorValue node, V value) {
+        visit((SuperElementAccessor) node, value);
+    }
+
+    @Override
+    public void visit(SuperNewExpression node, V value) {
+        visit((Expression) node, value);
+    }
+
+    @Override
+    public void visit(SuperPropertyAccessor node, V value) {
+        visit((Expression) node, value);
+    }
+
+    @Override
+    public void visit(SuperPropertyAccessorValue node, V value) {
+        visit((SuperPropertyAccessor) node, value);
     }
 
     @Override

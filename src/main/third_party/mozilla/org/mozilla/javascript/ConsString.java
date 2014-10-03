@@ -135,5 +135,4 @@ public final class ConsString implements CharSequence {
     public CharSequence subSequence(int start, int end) {
         return toString().substring(start, end);
     }
-
 }

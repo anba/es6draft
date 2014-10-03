@@ -32,6 +32,7 @@ public final class AssignmentExpression extends Expression {
     private final Operator operator;
     private final LeftHandSideExpression left;
     private final Expression right;
+    private boolean completion = true;
 
     public AssignmentExpression(Operator operator, LeftHandSideExpression left, Expression right) {
         super(left.getBeginPosition(), right.getEndPosition());
@@ -50,6 +51,16 @@ public final class AssignmentExpression extends Expression {
 
     public Expression getRight() {
         return right;
+    }
+
+    @Override
+    public Expression emptyCompletion() {
+        completion = false;
+        return this;
+    }
+
+    public boolean hasCompletion() {
+        return completion;
     }
 
     @Override

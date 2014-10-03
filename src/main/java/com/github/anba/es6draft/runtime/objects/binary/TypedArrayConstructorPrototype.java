@@ -516,8 +516,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         /* step 1 (omitted) */
         /* step 2 */
         assert constructor == null ^ target == null;
-        /* step 3 */
-        assert constructor == null || IsConstructor(constructor);
+        /* step 3 (not applicable) */
         /* step 4 */
         assert target == null || (target.getElementType() != null && target.getBuffer() == null);
         /* step 5 (not applicable) */
@@ -601,8 +600,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             TypedArrayObject target, long length) {
         /* step 1 */
         assert constructor == null ^ target == null;
-        /* step 2 */
-        assert constructor == null || IsConstructor(constructor);
+        /* step 2 (not applicable) */
         /* step 3 */
         assert target == null || target.getElementType() != null;
         /* step 4 (not applicable) */

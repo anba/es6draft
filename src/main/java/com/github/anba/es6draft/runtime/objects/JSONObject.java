@@ -138,7 +138,8 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                     // https://bugs.ecmascript.org/show_bug.cgi?id=170
                     propertyList = new LinkedHashSet<>();
                     ArrayObject objReplacer = (ArrayObject) replacer;
-                    long len = ToLength(cx, Get(cx, objReplacer, "length"));
+                    // long len = ToLength(cx, Get(cx, objReplacer, "length"));
+                    long len = objReplacer.getLength();
                     for (long i = 0; i < len; ++i) {
                         String item = null;
                         Object v = Get(cx, objReplacer, i);
@@ -221,31 +222,71 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             ScriptObject objVal = Type.objectValue(val);
             if (objVal instanceof ArrayObject) {
                 /* step 3.a */
-                long len = ToLength(cx, Get(cx, objVal, "length"));
-                for (long i = 0; i < len; ++i) {
-                    Object newElement = Walk(cx, reviver, objVal, ToString(i));
-                    if (Type.isUndefined(newElement)) {
-                        objVal.delete(cx, i);
-                    } else {
-                        objVal.defineOwnProperty(cx, i, new PropertyDescriptor(newElement, true,
-                                true, true));
-                    }
-                }
+                Walk(cx, reviver, (ArrayObject) objVal);
             } else {
                 /* step 3.b */
-                for (String p : EnumerableOwnNames(cx, objVal)) {
-                    Object newElement = Walk(cx, reviver, objVal, p);
-                    if (Type.isUndefined(newElement)) {
-                        objVal.delete(cx, p);
-                    } else {
-                        objVal.defineOwnProperty(cx, p, new PropertyDescriptor(newElement, true,
-                                true, true));
-                    }
-                }
+                Walk(cx, reviver, objVal);
             }
         }
         /* step 4 */
         return reviver.call(cx, holder, name, val);
+    }
+
+    /**
+     * 24.3.1.1 Runtime Semantics: Walk Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param reviver
+     *            the reviver function
+     * @param holder
+     *            the script object
+     * @param name
+     *            the property key
+     * @return the result value
+     */
+    public static Object Walk(ExecutionContext cx, Callable reviver, ScriptObject holder, long name) {
+        /* steps 1-2 */
+        Object val = Get(cx, holder, name);
+        /* step 3 */
+        if (Type.isObject(val)) {
+            ScriptObject objVal = Type.objectValue(val);
+            if (objVal instanceof ArrayObject) {
+                /* step 3.a */
+                Walk(cx, reviver, (ArrayObject) objVal);
+            } else {
+                /* step 3.b */
+                Walk(cx, reviver, objVal);
+            }
+        }
+        /* step 4 */
+        return reviver.call(cx, holder, ToString(name), val);
+    }
+
+    private static void Walk(ExecutionContext cx, Callable reviver, ArrayObject val) {
+        /* step 3.a */
+        // long len = ToLength(cx, Get(cx, val, "length"));
+        long len = val.getLength();
+        for (long i = 0; i < len; ++i) {
+            Object newElement = Walk(cx, reviver, val, i);
+            if (Type.isUndefined(newElement)) {
+                val.delete(cx, i);
+            } else {
+                val.defineOwnProperty(cx, i, new PropertyDescriptor(newElement, true, true, true));
+            }
+        }
+    }
+
+    private static void Walk(ExecutionContext cx, Callable reviver, ScriptObject val) {
+        /* step 3.b */
+        for (String p : EnumerableOwnNames(cx, val)) {
+            Object newElement = Walk(cx, reviver, val, p);
+            if (Type.isUndefined(newElement)) {
+                val.delete(cx, p);
+            } else {
+                val.defineOwnProperty(cx, p, new PropertyDescriptor(newElement, true, true, true));
+            }
+        }
     }
 
     /**
@@ -505,10 +546,9 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         indent = indent + gap;
         /* step 5 */
         ArrayList<String> partial = new ArrayList<>();
-        /* steps 6-7 */
-        Object lenVal = Get(cx, value, "length");
-        /* steps 8-9 */
-        long len = ToLength(cx, lenVal);
+        /* steps 6-9 */
+        // long len = ToLength(cx, Get(cx, value, "length"));
+        long len = value.getLength();
         /* steps 10-11 */
         for (long index = 0; index < len; ++index) {
             String strP = Str(cx, stack, propertyList, replacerFunction, indent, gap,

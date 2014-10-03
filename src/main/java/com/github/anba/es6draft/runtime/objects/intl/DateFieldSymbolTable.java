@@ -31,7 +31,6 @@ final class DateFieldSymbolTable {
                 }
                 DateField field = DateField.forSymbol(sym);
                 FieldWeight weight = field.getWeight(sym, length);
-                assert weight != FieldWeight.Invalid;
                 symbols[field.ordinal()] = sym;
                 weights[field.ordinal()] = weight;
                 if (field == DateField.Hour) {
@@ -69,7 +68,7 @@ final class DateFieldSymbolTable {
     }
 
     enum FieldWeight {
-        TwoDigit(1, 2), Numeric(2, 1), Narrow(3, 5), Short(4, 3), Long(5, 4), Invalid(-1, -1);
+        TwoDigit(1, 2), Numeric(2, 1), Narrow(3, 5), Short(4, 3), Long(5, 4);
 
         // relative weight per abstract operation BasicFormatMatcher, step 11.c.vii.1
         private final int weight;
@@ -102,8 +101,6 @@ final class DateFieldSymbolTable {
                 return "short";
             case Long:
                 return "long";
-            case Invalid:
-                return "<invalid>";
             default:
                 throw new AssertionError();
             }
@@ -135,22 +132,23 @@ final class DateFieldSymbolTable {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
                 assert symbol == 'G';
-                if (count >= 1 && count <= 3) {
-                    return FieldWeight.Short;
+                if (symbol == 'G') {
+                    if (count >= 1 && count <= 3) {
+                        return FieldWeight.Short;
+                    }
+                    if (count == 4) {
+                        return FieldWeight.Long;
+                    }
+                    if (count == 5) {
+                        return FieldWeight.Narrow;
+                    }
                 }
-                if (count == 4) {
-                    return FieldWeight.Long;
-                }
-                if (count == 5) {
-                    return FieldWeight.Narrow;
-                }
-                return FieldWeight.Invalid;
+                throw new IllegalArgumentException();
             }
         },
         Year('y') {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
-                assert symbol == 'y' || symbol == 'Y' || symbol == 'u' || symbol == 'U';
                 if (symbol == 'U') {
                     if (count >= 1 && count <= 3) {
                         return FieldWeight.Short;
@@ -161,7 +159,7 @@ final class DateFieldSymbolTable {
                     if (count == 5) {
                         return FieldWeight.Narrow;
                     }
-                } else {
+                } else if (symbol == 'y' || symbol == 'Y' || symbol == 'u') {
                     if (count == 2) {
                         return FieldWeight.TwoDigit;
                     }
@@ -169,67 +167,67 @@ final class DateFieldSymbolTable {
                         return FieldWeight.Numeric;
                     }
                 }
-                return FieldWeight.Invalid;
+                throw new IllegalArgumentException();
             }
         },
         Quarter('Q') {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
-                assert symbol == 'Q' || symbol == 'q';
-                if (count >= 1 && count <= 2) {
-                    return FieldWeight.Numeric;
+                if (symbol == 'Q' || symbol == 'q') {
+                    if (count >= 1 && count <= 2) {
+                        return FieldWeight.Numeric;
+                    }
+                    if (count == 3) {
+                        return FieldWeight.Short;
+                    }
+                    if (count == 4) {
+                        return FieldWeight.Long;
+                    }
                 }
-                if (count == 3) {
-                    return FieldWeight.Short;
-                }
-                if (count == 4) {
-                    return FieldWeight.Long;
-                }
-                return FieldWeight.Invalid;
+                throw new IllegalArgumentException();
             }
         },
         Month('M') {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
-                assert symbol == 'M' || symbol == 'L';
-                if (count == 1) {
-                    return FieldWeight.Numeric;
+                if (symbol == 'M' || symbol == 'L') {
+                    if (count == 1) {
+                        return FieldWeight.Numeric;
+                    }
+                    if (count == 2) {
+                        return FieldWeight.TwoDigit;
+                    }
+                    if (count == 3) {
+                        return FieldWeight.Short;
+                    }
+                    if (count == 4) {
+                        return FieldWeight.Long;
+                    }
+                    if (count == 5) {
+                        return FieldWeight.Narrow;
+                    }
                 }
-                if (count == 2) {
-                    return FieldWeight.TwoDigit;
-                }
-                if (count == 3) {
-                    return FieldWeight.Short;
-                }
-                if (count == 4) {
-                    return FieldWeight.Long;
-                }
-                if (count == 5) {
-                    return FieldWeight.Narrow;
-                }
-                return FieldWeight.Invalid;
+                throw new IllegalArgumentException();
             }
         },
         Week('w') {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
-                assert symbol == 'w' || symbol == 'W';
                 if (symbol == 'w') {
                     if (count >= 1 && count <= 2) {
                         return FieldWeight.Numeric;
                     }
-                } else {
+                } else if (symbol == 'W') {
                     if (count == 1) {
                         return FieldWeight.Numeric;
                     }
                 }
-                return FieldWeight.Invalid;
+                throw new IllegalArgumentException();
             }
         },
         Day('d') {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
-                assert symbol == 'd' || symbol == 'D' || symbol == 'F' || symbol == 'g';
                 if (symbol == 'd') {
                     if (count == 1) {
                         return FieldWeight.Numeric;
@@ -245,18 +243,17 @@ final class DateFieldSymbolTable {
                     if (count == 1) {
                         return FieldWeight.Numeric;
                     }
-                } else {
+                } else if (symbol == 'g') {
                     if (count >= 1) {
                         return FieldWeight.Numeric;
                     }
                 }
-                return FieldWeight.Invalid;
+                throw new IllegalArgumentException();
             }
         },
         Weekday('E') {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
-                assert symbol == 'E' || symbol == 'e' || symbol == 'c';
                 if (symbol == 'E') {
                     if (count >= 1 && count <= 3) {
                         return FieldWeight.Short;
@@ -280,7 +277,7 @@ final class DateFieldSymbolTable {
                     if (count >= 5 && count <= 6) {
                         return FieldWeight.Narrow;
                     }
-                } else {
+                } else if (symbol == 'c') {
                     if (count == 1) {
                         return FieldWeight.Numeric;
                     }
@@ -294,30 +291,30 @@ final class DateFieldSymbolTable {
                         return FieldWeight.Narrow;
                     }
                 }
-                return FieldWeight.Invalid;
+                throw new IllegalArgumentException();
             }
         },
         Period('a') {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
-                assert symbol == 'a';
-                if (count == 1) {
+                if (symbol == 'a' && count == 1) {
                     return FieldWeight.Short;
                 }
-                return FieldWeight.Invalid;
+                throw new IllegalArgumentException();
             }
         },
         Hour('j') {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
-                assert symbol == 'h' || symbol == 'H' || symbol == 'K' || symbol == 'k';
-                if (count == 1) {
-                    return FieldWeight.Numeric;
+                if (symbol == 'h' || symbol == 'H' || symbol == 'K' || symbol == 'k') {
+                    if (count == 1) {
+                        return FieldWeight.Numeric;
+                    }
+                    if (count == 2) {
+                        return FieldWeight.TwoDigit;
+                    }
                 }
-                if (count == 2) {
-                    return FieldWeight.TwoDigit;
-                }
-                return FieldWeight.Invalid;
+                throw new IllegalArgumentException();
             }
 
             @Override
@@ -332,20 +329,20 @@ final class DateFieldSymbolTable {
         Minute('m') {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
-                assert symbol == 'm';
-                if (count == 1) {
-                    return FieldWeight.Numeric;
+                if (symbol == 'm') {
+                    if (count == 1) {
+                        return FieldWeight.Numeric;
+                    }
+                    if (count == 2) {
+                        return FieldWeight.TwoDigit;
+                    }
                 }
-                if (count == 2) {
-                    return FieldWeight.TwoDigit;
-                }
-                return FieldWeight.Invalid;
+                throw new IllegalArgumentException();
             }
         },
         Second('s') {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
-                assert symbol == 's' || symbol == 'S' || symbol == 'A';
                 if (symbol == 's') {
                     if (count == 1) {
                         return FieldWeight.Numeric;
@@ -353,19 +350,17 @@ final class DateFieldSymbolTable {
                     if (count == 2) {
                         return FieldWeight.TwoDigit;
                     }
-                } else {
+                } else if (symbol == 'S' || symbol == 'A') {
                     if (count >= 1) {
                         return FieldWeight.Numeric;
                     }
                 }
-                return FieldWeight.Invalid;
+                throw new IllegalArgumentException();
             }
         },
         Timezone('z') {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
-                assert symbol == 'z' || symbol == 'Z' || symbol == 'O' || symbol == 'v'
-                        || symbol == 'V' || symbol == 'X' || symbol == 'x';
                 if (symbol == 'z') {
                     if (count >= 1 && count <= 3) {
                         return FieldWeight.Short;
@@ -394,7 +389,7 @@ final class DateFieldSymbolTable {
                     if (count == 4) {
                         return FieldWeight.Long;
                     }
-                } else {
+                } else if (symbol == 'X' || symbol == 'x') {
                     if (count >= 1 && count <= 3) {
                         return FieldWeight.Short;
                     }
@@ -402,7 +397,7 @@ final class DateFieldSymbolTable {
                         return FieldWeight.Long;
                     }
                 }
-                return FieldWeight.Invalid;
+                throw new IllegalArgumentException();
             }
         };
 

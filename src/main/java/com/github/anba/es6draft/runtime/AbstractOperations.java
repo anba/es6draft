@@ -713,13 +713,13 @@ public final class AbstractOperations {
      * 
      * @param value
      *            the argument value
-     * @return the canonical number or {@code NaN} if not canonical
+     * @return the canonical number or -1 if not canonical
      */
-    public static double CanonicalNumericIndexString(String value) {
+    public static long CanonicalNumericIndexString(String value) {
         /* step 1 (not applicable) */
         /* step 2 */
         if ("-0".equals(value)) {
-            return Double.NEGATIVE_INFINITY;
+            return Long.MAX_VALUE;
         }
         /* step 3 */
         double n = ToNumber(value);
@@ -727,14 +727,14 @@ public final class AbstractOperations {
         // FIXME: not resolved in rev26 - reopen bug report!
         /* step 4 */
         if (!value.equals(ToString(n))) {
-            return Double.NaN;
+            return -1;
         }
-        // Directly perform IsInteger() check and encode non-integer indices as -Infinity.
-        if (!IsInteger(n)) {
-            return Double.NEGATIVE_INFINITY;
+        // Directly perform IsInteger() check and encode negative and non-integer indices as OOB.
+        if (n < 0 || !IsInteger(n)) {
+            return Long.MAX_VALUE;
         }
         /* step 5 */
-        return n;
+        return (long) n;
     }
 
     /**
@@ -2417,6 +2417,32 @@ public final class AbstractOperations {
     }
 
     /**
+     * 7.3.16 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
+     * 
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor object
+     * @param intrinsicDefaultProto
+     *            the default prototype
+     * @return the prototype object
+     */
+    public static ScriptObject GetPrototypeFromConstructor(ExecutionContext cx,
+            Constructor constructor, Intrinsics intrinsicDefaultProto) {
+        /* step 1 (not applicable) */
+        /* step 2 (not applicable) */
+        /* steps 3-4 */
+        Object proto = Get(cx, constructor, "prototype");
+        /* step 5 */
+        if (!Type.isObject(proto)) {
+            Realm realm = GetFunctionRealm(cx, constructor);
+            proto = realm.getIntrinsic(intrinsicDefaultProto);
+        }
+        /* step 6 */
+        return Type.objectValue(proto);
+    }
+
+    /**
      * 7.3.17 CreateFromConstructor (F)
      * 
      * @param cx
@@ -2634,7 +2660,10 @@ public final class AbstractOperations {
     public static Object CheckIterable(ExecutionContext cx, Object obj) {
         /* step 1 */
         if (!Type.isObject(obj)) {
-            return UNDEFINED;
+            // Directly throw a TypeError instead of returning `undefined` to get a more useful
+            // error message. The only callers of this method are Promise.all and Promise.race.
+            // return UNDEFINED;
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         /* step 2 */
         return Get(cx, Type.objectValue(obj), BuiltinSymbol.iterator.get());
@@ -2701,6 +2730,34 @@ public final class AbstractOperations {
      * @return the script iterator object
      */
     public static ScriptObject GetIterator(ExecutionContext cx, Object obj, Object method) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        if (!IsCallable(method)) {
+            throw newTypeError(cx, Messages.Key.PropertyNotCallable,
+                    BuiltinSymbol.iterator.toString());
+        }
+        /* steps 4-5 */
+        Object iterator = ((Callable) method).call(cx, obj);
+        /* step 6 */
+        if (!Type.isObject(iterator)) {
+            throw newTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* step 7 */
+        return Type.objectValue(iterator);
+    }
+
+    /**
+     * 7.4.2 GetIterator ( obj )
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the script object
+     * @param method
+     *            the iterator method
+     * @return the script iterator object
+     */
+    public static ScriptObject GetIterator(ExecutionContext cx, ScriptObject obj, Object method) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         if (!IsCallable(method)) {

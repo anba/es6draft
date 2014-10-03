@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.compiler;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -83,7 +82,6 @@ final class Types {
 
     // java.lang.invoke
     static final Type MethodHandle = Type.getType(MethodHandle.class);
-    static final Type MethodType = Type.getType(MethodType.class);
 
     // java.util
     static final Type ArrayList = Type.getType(ArrayList.class);

@@ -51,4 +51,15 @@ public abstract class Expression extends AstNode {
     public Expression asValue() {
         return this;
     }
+
+    /**
+     * Returns a {@link Expression} instance representing this node as a no-value-expression, i.e.
+     * an expression which returns no value at all. May throw an {@link IllegalStateException} if
+     * the operation is not valid for the requested node.
+     * 
+     * @return the expression no-value node
+     */
+    public Expression emptyCompletion() {
+        return this;
+    }
 }

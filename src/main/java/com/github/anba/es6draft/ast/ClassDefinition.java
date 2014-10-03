@@ -35,4 +35,26 @@ public interface ClassDefinition extends ScopedNode {
      * @return the list of class methods
      */
     List<MethodDefinition> getMethods();
+
+    /**
+     * Returns the constructor method.
+     * 
+     * @return the constructor method
+     */
+    MethodDefinition getConstructor();
+
+    /**
+     * Returns the list of class properties.
+     * 
+     * @return the list of class properties
+     */
+    List<? extends PropertyDefinition> getProperties();
+
+    /**
+     * Sets the list of class properties.
+     * 
+     * @param properties
+     *            the new list of class properties
+     */
+    void setProperties(List<PropertyDefinition> properties);
 }

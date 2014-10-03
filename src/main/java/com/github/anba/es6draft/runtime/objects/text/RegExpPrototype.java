@@ -40,7 +40,6 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
-import com.github.anba.es6draft.runtime.types.builtins.NativeFunction.NativeFunctionId;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -105,7 +104,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
          *            the string
          * @return the match result array
          */
-        @Function(name = "exec", arity = 1, nativeId = NativeFunctionId.RegExpPrototypeExec)
+        @Function(name = "exec", arity = 1, nativeId = RegExpPrototypeExec.class)
         public static Object exec(ExecutionContext cx, Object thisValue, Object string) {
             /* steps 1-4 */
             RegExpObject r = thisRegExpObject(cx, thisValue);
@@ -708,6 +707,8 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      *            the regular expression object
      * @param s
      *            the string
+     * @param storeResult
+     *            {@code true} if the match result is stored
      * @return the match result object or null
      */
     private static MatchResult getMatcherOrNull(ExecutionContext cx, ScriptObject r, String s,
@@ -734,9 +735,15 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         return m;
     }
 
+    /**
+     * Marker class for {@code RegExp.prototype.exec}.
+     */
+    private static final class RegExpPrototypeExec {
+    }
+
     private static boolean isBuiltinExec(ExecutionContext cx, Object exec) {
         return exec instanceof NativeFunction
-                && ((NativeFunction) exec).getId() == NativeFunctionId.RegExpPrototypeExec
+                && ((NativeFunction) exec).getId() == RegExpPrototypeExec.class
                 && ((NativeFunction) exec).getRealm() == cx.getRealm();
     }
 

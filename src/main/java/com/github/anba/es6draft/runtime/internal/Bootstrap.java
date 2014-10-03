@@ -6,6 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.EqualityComparison;
+import static com.github.anba.es6draft.runtime.AbstractOperations.RelationalComparison;
+import static com.github.anba.es6draft.runtime.AbstractOperations.StrictEqualityComparison;
+
 import java.lang.invoke.CallSite;
 import java.lang.invoke.ConstantCallSite;
 import java.lang.invoke.MethodHandle;
@@ -55,8 +59,9 @@ public final class Bootstrap {
 
     private static final String OP_ADD = org.objectweb.asm.Type.getMethodDescriptor(Types.Object,
             Types.Object, Types.Object, Types.ExecutionContext);
-    private static final String OP_CMP = org.objectweb.asm.Type.getMethodDescriptor(
-            org.objectweb.asm.Type.INT_TYPE, Types.Object, Types.Object, Types.ExecutionContext);
+    private static final String OP_CMP = org.objectweb.asm.Type
+            .getMethodDescriptor(org.objectweb.asm.Type.BOOLEAN_TYPE, Types.Object, Types.Object,
+                    Types.ExecutionContext);
     private static final String OP_EQ = org.objectweb.asm.Type
             .getMethodDescriptor(org.objectweb.asm.Type.BOOLEAN_TYPE, Types.Object, Types.Object,
                     Types.ExecutionContext);
@@ -105,7 +110,6 @@ public final class Bootstrap {
     private static final MethodHandle callGenericMH;
     private static final MethodHandle testFunctionObjectMH, testNativeFunctionMH,
             testNativeTailCallFunctionMH, testNativeConstructorMH;
-
     static {
         MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
         testFunctionObjectMH = lookup.findStatic("testFunctionObject",
@@ -263,6 +267,8 @@ public final class Bootstrap {
     private static final MethodHandle addSetupMH, relCmpSetupMH, eqCmpSetupMH, strictEqCmpSetupMH;
     private static final MethodHandle addStringMH, addNumberMH, addGenericMH;
     private static final MethodHandle relCmpStringMH, relCmpNumberMH, relCmpGenericMH;
+    private static final MethodHandle lessThanMH, greaterThanMH, lessThanEqualsMH,
+            greaterThanEqualsMH;
     private static final MethodHandle eqCmpStringMH, eqCmpNumberMH, eqCmpBooleanMH, eqCmpGenericMH;
     private static final MethodHandle strictEqCmpStringMH, strictEqCmpNumberMH,
             strictEqCmpBooleanMH, strictEqCmpGenericMH;
@@ -292,7 +298,15 @@ public final class Bootstrap {
                 MethodType.methodType(int.class, Number.class, Number.class));
         relCmpNumberMH = MethodHandles.dropArguments(relCmpNumber, 2, ExecutionContext.class);
         relCmpGenericMH = lookup.findStatic("relCmpGeneric", MethodType.methodType(int.class,
-                Object.class, Object.class, boolean.class, ExecutionContext.class));
+                Object.class, Object.class, RelationalOperator.class, ExecutionContext.class));
+
+        lessThanMH = lookup.findStatic("lessThan", MethodType.methodType(boolean.class, int.class));
+        greaterThanMH = lookup.findStatic("greaterThan",
+                MethodType.methodType(boolean.class, int.class));
+        lessThanEqualsMH = lookup.findStatic("lessThanEquals",
+                MethodType.methodType(boolean.class, int.class));
+        greaterThanEqualsMH = lookup.findStatic("greaterThanEquals",
+                MethodType.methodType(boolean.class, int.class));
 
         MethodHandle eqCmpString = lookup.findStatic("eqCmpString",
                 MethodType.methodType(boolean.class, CharSequence.class, CharSequence.class));
@@ -316,7 +330,7 @@ public final class Bootstrap {
         addSetupMH = lookup.findStatic("addSetup", MethodType.methodType(MethodHandle.class,
                 MutableCallSite.class, Object.class, Object.class, ExecutionContext.class));
         relCmpSetupMH = lookup.findStatic("relCmpSetup", MethodType.methodType(MethodHandle.class,
-                MutableCallSite.class, boolean.class, Object.class, Object.class,
+                MutableCallSite.class, RelationalOperator.class, Object.class, Object.class,
                 ExecutionContext.class));
         eqCmpSetupMH = lookup.findStatic("eqCmpSetup", MethodType.methodType(MethodHandle.class,
                 MutableCallSite.class, Object.class, Object.class, ExecutionContext.class));
@@ -349,13 +363,52 @@ public final class Bootstrap {
     private static int relCmpNumber(Number arg1, Number arg2) {
         double nx = arg1.doubleValue();
         double ny = arg2.doubleValue();
-        return (Double.isNaN(nx) || Double.isNaN(ny) ? -1 : nx < ny ? 1 : 0);
+        return Double.isNaN(nx) || Double.isNaN(ny) ? -1 : nx < ny ? 1 : 0;
     }
 
     @SuppressWarnings("unused")
-    private static int relCmpGeneric(Object arg1, Object arg2, boolean leftFirst,
+    private static int relCmpGeneric(Object arg1, Object arg2, RelationalOperator op,
             ExecutionContext cx) {
-        return ScriptRuntime.relationalComparison(arg1, arg2, leftFirst, cx);
+        return RelationalComparison(cx, arg1, arg2, op.leftFirst());
+    }
+
+    enum RelationalOperator {
+        LessThan, GreaterThan, LessThanEquals, GreaterThanEquals;
+
+        boolean leftFirst() {
+            switch (this) {
+            case LessThan:
+                return true;
+            case GreaterThan:
+                return false;
+            case LessThanEquals:
+                return false;
+            case GreaterThanEquals:
+                return true;
+            default:
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean lessThan(int result) {
+        return result > 0;
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean greaterThan(int result) {
+        return result > 0;
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean lessThanEquals(int result) {
+        return result == 0;
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean greaterThanEquals(int result) {
+        return result == 0;
     }
 
     @SuppressWarnings("unused")
@@ -375,12 +428,12 @@ public final class Bootstrap {
 
     @SuppressWarnings("unused")
     private static boolean eqCmpGeneric(Object arg1, Object arg2, ExecutionContext cx) {
-        return ScriptRuntime.equalityComparison(arg1, arg2, cx);
+        return EqualityComparison(cx, arg1, arg2);
     }
 
     @SuppressWarnings("unused")
     private static boolean strictEqCmpGeneric(Object arg1, Object arg2) {
-        return ScriptRuntime.strictEqualityComparison(arg1, arg2);
+        return StrictEqualityComparison(arg1, arg2);
     }
 
     private static boolean testString(Object arg1, Object arg2) {
@@ -437,19 +490,38 @@ public final class Bootstrap {
     }
 
     @SuppressWarnings("unused")
-    private static MethodHandle relCmpSetup(MutableCallSite callsite, boolean leftFirst,
+    private static MethodHandle relCmpSetup(MutableCallSite callsite, RelationalOperator op,
             Object arg1, Object arg2, ExecutionContext cx) {
         Type type = getType(arg1, arg2);
         MethodHandle target;
         if (type == Type.String) {
-            target = relCmpStringMH;
+            target = filterReturnValue(relCmpStringMH, op);
         } else if (type == Type.Number) {
-            target = relCmpNumberMH;
+            target = filterReturnValue(relCmpNumberMH, op);
         } else {
             target = null;
         }
         return setCallSiteTarget(callsite, target, getTestFor(type),
-                MethodHandles.insertArguments(relCmpGenericMH, 2, leftFirst));
+                filterReturnValue(MethodHandles.insertArguments(relCmpGenericMH, 2, op), op));
+    }
+
+    private static MethodHandle filterReturnValue(MethodHandle mh, RelationalOperator op) {
+        return MethodHandles.filterReturnValue(mh, returnFilter(op));
+    }
+
+    private static MethodHandle returnFilter(RelationalOperator op) {
+        switch (op) {
+        case LessThan:
+            return lessThanMH;
+        case GreaterThan:
+            return greaterThanMH;
+        case LessThanEquals:
+            return lessThanEqualsMH;
+        case GreaterThanEquals:
+            return greaterThanEqualsMH;
+        default:
+            throw new AssertionError();
+        }
     }
 
     @SuppressWarnings("unused")
@@ -607,20 +679,20 @@ public final class Bootstrap {
                 setup = MethodHandles.insertArguments(strictEqCmpSetupMH, 0, callsite);
                 break;
             case CallNames.LT:
-                setup = MethodHandles
-                        .insertArguments(relCmpSetupMH, 0, callsite, true /* leftFirst */);
+                setup = MethodHandles.insertArguments(relCmpSetupMH, 0, callsite,
+                        RelationalOperator.LessThan);
                 break;
             case CallNames.GT:
-                setup = MethodHandles
-                        .insertArguments(relCmpSetupMH, 0, callsite, false /* leftFirst */);
+                setup = MethodHandles.insertArguments(relCmpSetupMH, 0, callsite,
+                        RelationalOperator.GreaterThan);
                 break;
             case CallNames.LE:
-                setup = MethodHandles
-                        .insertArguments(relCmpSetupMH, 0, callsite, false /* leftFirst */);
+                setup = MethodHandles.insertArguments(relCmpSetupMH, 0, callsite,
+                        RelationalOperator.LessThanEquals);
                 break;
             case CallNames.GE:
-                setup = MethodHandles
-                        .insertArguments(relCmpSetupMH, 0, callsite, true /* leftFirst */);
+                setup = MethodHandles.insertArguments(relCmpSetupMH, 0, callsite,
+                        RelationalOperator.GreaterThanEquals);
                 break;
             default:
                 throw new IllegalArgumentException(name);

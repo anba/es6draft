@@ -6,29 +6,28 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.compiler.ClassPropertyGenerator.ClassPropertyEvaluation;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMethod;
-import static com.github.anba.es6draft.semantics.StaticSemantics.MethodDefinitions;
 
 import java.util.EnumSet;
 
-import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.compiler.assembler.FieldDesc;
+import com.github.anba.es6draft.compiler.assembler.Jump;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * Abstract base class for specialised generators
@@ -36,225 +35,232 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         DefaultNodeVisitor<R, V> {
     private static final class Fields {
-        static final FieldDesc Double_NaN = FieldDesc.create(FieldType.Static, Types.Double, "NaN",
-                Type.DOUBLE_TYPE);
+        static final FieldDesc Double_NaN = FieldDesc.create(FieldDesc.Allocation.Static,
+                Types.Double, "NaN", Type.DOUBLE_TYPE);
     }
 
     private static final class Methods {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_CreateIterResultObject = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "CreateIterResultObject", Type
-                        .getMethodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Object,
-                                Type.BOOLEAN_TYPE));
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "CreateIterResultObject",
+                Type.getMethodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Object,
+                        Type.BOOLEAN_TYPE));
 
         static final MethodDesc AbstractOperations_HasOwnProperty = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "HasOwnProperty", Type
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "HasOwnProperty", Type
                         .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
                                 Types.ScriptObject, Types.String));
 
         static final MethodDesc AbstractOperations_HasProperty = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "HasProperty", Type
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "HasProperty", Type
                         .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
                                 Types.ScriptObject, Types.String));
 
         static final MethodDesc AbstractOperations_IteratorComplete = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "IteratorComplete",
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "IteratorComplete",
                 Type.getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Types.ScriptObject));
 
         static final MethodDesc AbstractOperations_IteratorNext = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "IteratorNext", Type.getMethodType(
-                        Types.ScriptObject, Types.ExecutionContext, Types.ScriptObject,
-                        Types.Object));
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "IteratorNext", Type
+                        .getMethodType(Types.ScriptObject, Types.ExecutionContext,
+                                Types.ScriptObject, Types.Object));
 
         static final MethodDesc AbstractOperations_IteratorReturn = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "IteratorReturn", Type.getMethodType(
-                        Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.Object));
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "IteratorReturn", Type
+                        .getMethodType(Types.Object, Types.ExecutionContext, Types.ScriptObject,
+                                Types.Object));
 
         static final MethodDesc AbstractOperations_IteratorThrow = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "IteratorThrow", Type.getMethodType(
-                        Type.VOID_TYPE, Types.ExecutionContext, Types.ScriptObject, Types.Object));
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "IteratorThrow", Type
+                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext, Types.ScriptObject,
+                                Types.Object));
 
         static final MethodDesc AbstractOperations_IteratorValue = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "IteratorValue",
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "IteratorValue",
                 Type.getMethodType(Types.Object, Types.ExecutionContext, Types.ScriptObject));
 
         static final MethodDesc AbstractOperations_ToPrimitive = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "ToPrimitive",
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToPrimitive",
                 Type.getMethodType(Types.Object, Types.ExecutionContext, Types.Object));
 
-        static final MethodDesc AbstractOperations_ToBoolean = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "ToBoolean",
+        static final MethodDesc AbstractOperations_ToBoolean = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToBoolean",
                 Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
 
         static final MethodDesc AbstractOperations_ToBoolean_double = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "ToBoolean",
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToBoolean",
                 Type.getMethodType(Type.BOOLEAN_TYPE, Type.DOUBLE_TYPE));
 
         static final MethodDesc AbstractOperations_ToFlatString = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "ToFlatString",
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToFlatString",
                 Type.getMethodType(Types.String, Types.ExecutionContext, Types.Object));
 
-        static final MethodDesc AbstractOperations_ToNumber = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "ToNumber",
+        static final MethodDesc AbstractOperations_ToNumber = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToNumber",
                 Type.getMethodType(Type.DOUBLE_TYPE, Types.ExecutionContext, Types.Object));
 
         static final MethodDesc AbstractOperations_ToNumber_CharSequence = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "ToNumber",
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToNumber",
                 Type.getMethodType(Type.DOUBLE_TYPE, Types.CharSequence));
 
-        static final MethodDesc AbstractOperations_ToInt32 = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "ToInt32",
+        static final MethodDesc AbstractOperations_ToInt32 = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToInt32",
                 Type.getMethodType(Type.INT_TYPE, Types.ExecutionContext, Types.Object));
 
         static final MethodDesc AbstractOperations_ToInt32_double = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "ToInt32",
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToInt32",
                 Type.getMethodType(Type.INT_TYPE, Type.DOUBLE_TYPE));
 
-        static final MethodDesc AbstractOperations_ToUint32 = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "ToUint32",
+        static final MethodDesc AbstractOperations_ToUint32 = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToUint32",
                 Type.getMethodType(Type.LONG_TYPE, Types.ExecutionContext, Types.Object));
 
         static final MethodDesc AbstractOperations_ToUint32_double = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "ToUint32",
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToUint32",
                 Type.getMethodType(Type.LONG_TYPE, Type.DOUBLE_TYPE));
 
-        static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "ToObject",
+        static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToObject",
                 Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
 
         static final MethodDesc AbstractOperations_ToPropertyKey = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "ToPropertyKey",
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToPropertyKey",
                 Type.getMethodType(Types.Object, Types.ExecutionContext, Types.Object));
 
-        static final MethodDesc AbstractOperations_ToString = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "ToString",
+        static final MethodDesc AbstractOperations_ToString = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToString",
                 Type.getMethodType(Types.CharSequence, Types.ExecutionContext, Types.Object));
 
         static final MethodDesc AbstractOperations_ToString_int = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "ToString",
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToString",
                 Type.getMethodType(Types.String, Type.INT_TYPE));
 
         static final MethodDesc AbstractOperations_ToString_long = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "ToString",
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToString",
                 Type.getMethodType(Types.String, Type.LONG_TYPE));
 
         static final MethodDesc AbstractOperations_ToString_double = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "ToString",
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToString",
                 Type.getMethodType(Types.String, Type.DOUBLE_TYPE));
 
         // class: Boolean
-        static final MethodDesc Boolean_toString = MethodDesc.create(MethodType.Static,
+        static final MethodDesc Boolean_toString = MethodDesc.create(MethodDesc.Invoke.Static,
                 Types.Boolean, "toString", Type.getMethodType(Types.String, Type.BOOLEAN_TYPE));
 
         // class: CharSequence
-        static final MethodDesc CharSequence_length = MethodDesc.create(MethodType.Interface,
-                Types.CharSequence, "length", Type.getMethodType(Type.INT_TYPE));
-        static final MethodDesc CharSequence_toString = MethodDesc.create(MethodType.Interface,
-                Types.CharSequence, "toString", Type.getMethodType(Types.String));
+        static final MethodDesc CharSequence_length = MethodDesc.create(
+                MethodDesc.Invoke.Interface, Types.CharSequence, "length",
+                Type.getMethodType(Type.INT_TYPE));
+        static final MethodDesc CharSequence_toString = MethodDesc.create(
+                MethodDesc.Invoke.Interface, Types.CharSequence, "toString",
+                Type.getMethodType(Types.String));
 
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_createImmutableBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "createImmutableBinding",
+                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "createImmutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String));
 
         static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
+                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "initializeBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
 
         // class: ExecutionContext
         static final MethodDesc ExecutionContext_getLexicalEnvironment = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "getLexicalEnvironment",
+                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "getLexicalEnvironment",
                 Type.getMethodType(Types.LexicalEnvironment));
 
         static final MethodDesc ExecutionContext_pushLexicalEnvironment = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "pushLexicalEnvironment",
+                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "pushLexicalEnvironment",
                 Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
         static final MethodDesc ExecutionContext_popLexicalEnvironment = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "popLexicalEnvironment",
+                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "popLexicalEnvironment",
                 Type.getMethodType(Type.VOID_TYPE));
 
         static final MethodDesc ExecutionContext_replaceLexicalEnvironment = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "replaceLexicalEnvironment",
+                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "replaceLexicalEnvironment",
                 Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
         static final MethodDesc ExecutionContext_restoreLexicalEnvironment = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "restoreLexicalEnvironment",
+                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "restoreLexicalEnvironment",
                 Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
-                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
+                MethodDesc.Invoke.Virtual, Types.LexicalEnvironment, "getEnvRec",
                 Type.getMethodType(Types.EnvironmentRecord));
 
         static final MethodDesc LexicalEnvironment_cloneDeclarativeEnvironment = MethodDesc.create(
-                MethodType.Static, Types.LexicalEnvironment, "cloneDeclarativeEnvironment",
+                MethodDesc.Invoke.Static, Types.LexicalEnvironment,
+                "cloneDeclarativeEnvironment",
                 Type.getMethodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
         static final MethodDesc LexicalEnvironment_newDeclarativeEnvironment = MethodDesc.create(
-                MethodType.Static, Types.LexicalEnvironment, "newDeclarativeEnvironment",
+                MethodDesc.Invoke.Static, Types.LexicalEnvironment,
+                "newDeclarativeEnvironment",
                 Type.getMethodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
         static final MethodDesc LexicalEnvironment_newObjectEnvironment = MethodDesc.create(
-                MethodType.Static, Types.LexicalEnvironment, "newObjectEnvironment", Type
-                        .getMethodType(Types.LexicalEnvironment, Types.ScriptObject,
-                                Types.LexicalEnvironment, Type.BOOLEAN_TYPE));
+                MethodDesc.Invoke.Static, Types.LexicalEnvironment, "newObjectEnvironment",
+                Type.getMethodType(Types.LexicalEnvironment, Types.ScriptObject,
+                        Types.LexicalEnvironment, Type.BOOLEAN_TYPE));
 
         // class: OrdinaryFunction
         static final MethodDesc OrdinaryFunction_SetFunctionName_String = MethodDesc.create(
-                MethodType.Static, Types.OrdinaryFunction, "SetFunctionName",
+                MethodDesc.Invoke.Static, Types.OrdinaryFunction, "SetFunctionName",
                 Type.getMethodType(Type.VOID_TYPE, Types.FunctionObject, Types.String));
 
         static final MethodDesc OrdinaryFunction_SetFunctionName_Symbol = MethodDesc.create(
-                MethodType.Static, Types.OrdinaryFunction, "SetFunctionName",
+                MethodDesc.Invoke.Static, Types.OrdinaryFunction, "SetFunctionName",
                 Type.getMethodType(Type.VOID_TYPE, Types.FunctionObject, Types.Symbol));
 
         // class: ReturnValue
-        static final MethodDesc ReturnValue_getValue = MethodDesc.create(MethodType.Virtual,
-                Types.ReturnValue, "getValue", Type.getMethodType(Types.Object));
+        static final MethodDesc ReturnValue_getValue = MethodDesc.create(
+                MethodDesc.Invoke.Virtual, Types.ReturnValue, "getValue",
+                Type.getMethodType(Types.Object));
 
         // class: ScriptException
-        static final MethodDesc ScriptException_getValue = MethodDesc.create(MethodType.Virtual,
-                Types.ScriptException, "getValue", Type.getMethodType(Types.Object));
+        static final MethodDesc ScriptException_getValue = MethodDesc.create(
+                MethodDesc.Invoke.Virtual, Types.ScriptException, "getValue",
+                Type.getMethodType(Types.Object));
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_CreateDefaultConstructor = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "CreateDefaultConstructor",
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "CreateDefaultConstructor",
                 Type.getMethodType(Types.RuntimeInfo$Function));
 
         static final MethodDesc ScriptRuntime_CreateDefaultEmptyConstructor = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "CreateDefaultEmptyConstructor",
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "CreateDefaultEmptyConstructor",
                 Type.getMethodType(Types.RuntimeInfo$Function));
 
-        static final MethodDesc ScriptRuntime_delegatedYield = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "delegatedYield",
+        static final MethodDesc ScriptRuntime_delegatedYield = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "delegatedYield",
                 Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateConstructorMethod = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "EvaluateConstructorMethod", Type
-                        .getMethodType(Types.OrdinaryFunction, Types.ScriptObject,
-                                Types.OrdinaryObject, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateConstructorMethod",
+                Type.getMethodType(Types.OrdinaryFunction, Types.ScriptObject,
+                        Types.OrdinaryObject, Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getClassProto = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "getClassProto",
+        static final MethodDesc ScriptRuntime_getClassProto = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getClassProto",
                 Type.getMethodType(Types.ScriptObject_, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_getDefaultClassProto = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "getDefaultClassProto",
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getDefaultClassProto",
                 Type.getMethodType(Types.ScriptObject_, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_getIteratorObject = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "getIteratorObject",
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getIteratorObject",
                 Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_yield = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "yield",
+        static final MethodDesc ScriptRuntime_yield = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "yield",
                 Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
 
         // class: Type
-        static final MethodDesc Type_isUndefinedOrNull = MethodDesc.create(MethodType.Static,
-                Types._Type, "isUndefinedOrNull",
+        static final MethodDesc Type_isUndefinedOrNull = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types._Type, "isUndefinedOrNull",
                 Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
@@ -494,7 +500,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     enum ValType {
-        Undefined, Null, Boolean, Number, Number_int, Number_uint, String, Object, Reference, Any;
+        Undefined, Null, Boolean, Number, Number_int, Number_uint, String, Object, Reference, Any,
+        Empty;
 
         public int size() {
             switch (this) {
@@ -509,8 +516,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             case Object:
             case Reference:
             case Any:
-            default:
                 return 1;
+            case Empty:
+            default:
+                return 0;
             }
         }
 
@@ -527,6 +536,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             case Object:
             case Reference:
             case Any:
+            case Empty:
             default:
                 return false;
             }
@@ -545,6 +555,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             case Object:
             case Reference:
             case Any:
+            case Empty:
             default:
                 return false;
             }
@@ -563,6 +574,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             case Object:
             case Reference:
             case Any:
+            case Empty:
             default:
                 return false;
             }
@@ -589,8 +601,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             case Undefined:
                 return Undefined.class;
             case Any:
-            default:
                 return Object.class;
+            case Empty:
+            default:
+                throw new AssertionError();
             }
         }
 
@@ -615,8 +629,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             case Undefined:
                 return Types.Undefined;
             case Any:
-            default:
                 return Types.Object;
+            case Empty:
+            default:
+                throw new AssertionError();
             }
         }
 
@@ -641,8 +657,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             case Undefined:
                 return Types.Undefined;
             case Any:
-            default:
                 return Types.Object;
+            case Empty:
+            default:
+                throw new AssertionError();
             }
         }
     }
@@ -669,11 +687,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             return from;
         case Object:
         case Any:
-        default:
             mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToPrimitive);
             return ValType.Any;
+        case Empty:
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -692,11 +712,11 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.AbstractOperations_ToBoolean_double);
             return;
         case Number_int:
-            mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
+            mv.i2d();
             mv.invoke(Methods.AbstractOperations_ToBoolean_double);
             return;
         case Number_uint:
-            mv.cast(Type.LONG_TYPE, Type.DOUBLE_TYPE);
+            mv.l2d();
             mv.invoke(Methods.AbstractOperations_ToBoolean_double);
             return;
         case Undefined:
@@ -707,7 +727,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         case Boolean:
             return;
         case String: {
-            Label l0 = new Label(), l1 = new Label();
+            Jump l0 = new Jump(), l1 = new Jump();
             mv.invoke(Methods.CharSequence_length);
             mv.ifeq(l0);
             mv.iconst(true);
@@ -722,9 +742,11 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.iconst(true);
             return;
         case Any:
-        default:
             mv.invoke(Methods.AbstractOperations_ToBoolean);
             return;
+        case Empty:
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -742,10 +764,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         case Number:
             return;
         case Number_int:
-            mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
+            mv.i2d();
             return;
         case Number_uint:
-            mv.cast(Type.LONG_TYPE, Type.DOUBLE_TYPE);
+            mv.l2d();
             return;
         case Undefined:
             mv.pop();
@@ -756,18 +778,20 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.dconst(0);
             return;
         case Boolean:
-            mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
+            mv.i2d();
             return;
         case String:
             mv.invoke(Methods.AbstractOperations_ToNumber_CharSequence);
             return;
         case Object:
         case Any:
-        default:
             mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToNumber);
             return;
+        case Empty:
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -788,7 +812,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         case Number_int:
             return;
         case Number_uint:
-            mv.cast(Type.LONG_TYPE, Type.INT_TYPE);
+            mv.l2i();
             return;
         case Undefined:
         case Null:
@@ -803,11 +827,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             return;
         case Object:
         case Any:
-        default:
             mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToInt32);
             return;
+        case Empty:
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -826,9 +852,9 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.AbstractOperations_ToUint32_double);
             return;
         case Number_int:
-            mv.cast(Type.INT_TYPE, Type.LONG_TYPE);
+            mv.i2l();
             mv.lconst(0xffff_ffffL);
-            mv.and(Type.LONG_TYPE);
+            mv.land();
             return;
         case Number_uint:
             return;
@@ -838,7 +864,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.lconst(0);
             return;
         case Boolean:
-            mv.cast(Type.INT_TYPE, Type.LONG_TYPE);
+            mv.i2l();
             return;
         case String:
             mv.invoke(Methods.AbstractOperations_ToNumber_CharSequence);
@@ -846,11 +872,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             return;
         case Object:
         case Any:
-        default:
             mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToUint32);
             return;
+        case Empty:
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -889,11 +917,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             return;
         case Object:
         case Any:
-        default:
             mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToString);
             return;
+        case Empty:
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -933,11 +963,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             return;
         case Object:
         case Any:
-        default:
             mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToFlatString);
             return;
+        case Empty:
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -964,8 +996,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         case Null:
         case String:
         case Any:
-        default:
             break;
+        case Empty:
+        default:
+            throw new AssertionError();
         }
 
         mv.loadExecutionContext();
@@ -998,8 +1032,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         case Null:
         case String:
         case Any:
-        default:
             break;
+        case Empty:
+        default:
+            throw new AssertionError();
         }
 
         mv.lineInfo(node);
@@ -1048,11 +1084,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.AbstractOperations_ToFlatString);
             return ValType.String;
         case Any:
-        default:
             mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToPropertyKey);
             return ValType.Any;
+        case Empty:
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -1067,11 +1105,11 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      */
     protected static void SetFunctionName(Node node, ValType propertyKeyType, ExpressionVisitor mv) {
-        assert node instanceof ClassDefinition || node instanceof FunctionNode;
+        assert node instanceof ClassDefinition || node instanceof FunctionNode : node.getClass();
 
-        Label hasOwnName = null;
-        if (node instanceof ClassDefinition) {
-            hasOwnName = new Label();
+        Jump hasOwnName = null;
+        if (node instanceof ClassDefinition && hasOwnNameProperty((ClassDefinition) node)) {
+            hasOwnName = new Jump();
             // stack: [propertyKey, function] -> [propertyKey, function, cx, function, "name"]
             mv.dup();
             mv.loadExecutionContext();
@@ -1090,7 +1128,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.OrdinaryFunction_SetFunctionName_String);
         } else {
             assert propertyKeyType == ValType.Any;
-            Label isString = new Label(), afterSetFunctionName = new Label();
+            Jump isString = new Jump(), afterSetFunctionName = new Jump();
             mv.dup();
             mv.instanceOf(Types.String);
             mv.ifeq(isString);
@@ -1138,11 +1176,11 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      */
     protected static void SetFunctionName(Node node, String name, ExpressionVisitor mv) {
-        assert node instanceof ClassDefinition || node instanceof FunctionNode;
+        assert node instanceof ClassDefinition || node instanceof FunctionNode : node.getClass();
 
-        Label hasOwnName = null;
-        if (node instanceof ClassDefinition) {
-            hasOwnName = new Label();
+        Jump hasOwnName = null;
+        if (node instanceof ClassDefinition && hasOwnNameProperty((ClassDefinition) node)) {
+            hasOwnName = new Jump();
 
             // stack: [function] -> [function, cx, function, "name"]
             mv.dup();
@@ -1165,6 +1203,19 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         }
     }
 
+    private static boolean hasOwnNameProperty(ClassDefinition node) {
+        for (MethodDefinition methodDefinition : node.getMethods()) {
+            if (methodDefinition.isStatic()) {
+                String methodName = methodDefinition.getPropertyName().getName();
+                if (methodName == null || "name".equals(methodName)) {
+                    // Computed property name or method name is "name"
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * stack: [value] {@literal ->} []
      * 
@@ -1174,7 +1225,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      */
     protected final void BindingInitialization(Binding node, ExpressionVisitor mv) {
-        new BindingInitializationGenerator(codegen).generate(node, mv);
+        BindingInitializationGenerator.BindingInitialization(codegen, node, mv);
     }
 
     /**
@@ -1186,7 +1237,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      */
     protected final void BindingInitializationWithEnvironment(Binding node, ExpressionVisitor mv) {
-        new BindingInitializationGenerator(codegen).generateWithEnvironment(node, mv);
+        BindingInitializationGenerator.BindingInitializationWithEnvironment(codegen, node, mv);
     }
 
     /**
@@ -1198,7 +1249,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      */
     protected final void DestructuringAssignment(AssignmentPattern node, ExpressionVisitor mv) {
-        new DestructuringAssignmentGenerator(codegen).generate(node, mv);
+        DestructuringAssignmentGenerator.DestructuringAssignment(codegen, node, mv);
     }
 
     /**
@@ -1277,24 +1328,14 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
 
         Variable<OrdinaryFunction> F = mv.newScratchVariable(OrdinaryFunction.class);
-        Variable<ScriptObject> proto = mv.newScratchVariable(ScriptObject.class);
+        Variable<OrdinaryObject> proto = mv.newScratchVariable(OrdinaryObject.class);
 
         // stack: [proto, F] -> []
         mv.store(F);
         mv.store(proto);
 
         // steps 15-17
-        for (MethodDefinition method : MethodDefinitions(def)) {
-            if (method == constructor) {
-                continue;
-            }
-            if (method.isStatic()) {
-                mv.load(F);
-            } else {
-                mv.load(proto);
-            }
-            codegen.propertyDefinition(method, mv);
-        }
+        ClassPropertyEvaluation(codegen, def, def.getProperties(), F, proto, mv);
 
         // step 19
         if (className != null) {
@@ -1344,8 +1385,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.lineInfo(node);
         if (mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume)) {
             assert mv.hasStack();
-            Label iteratorNext = new Label();
-            Label done = new Label();
+            Jump iteratorNext = new Jump();
+            Jump done = new Jump();
 
             mv.enterVariableScope();
             Variable<ScriptObject> iterator = mv.newVariable("iterator", ScriptObject.class);
@@ -1390,12 +1431,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.store(received);
 
             /* step 6c */
-            Label isException = new Label();
+            Jump isException = new Jump();
             mv.load(received);
             mv.instanceOf(Types.ScriptException);
             mv.ifeq(isException);
             {
-                Label hasThrow = new Label();
+                Jump hasThrow = new Jump();
                 mv.loadExecutionContext();
                 mv.load(iterator);
                 mv.aconst("throw");
@@ -1421,7 +1462,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.instanceOf(Types.ReturnValue);
             mv.ifeq(iteratorNext);
             {
-                Label hasReturn = new Label();
+                Jump hasReturn = new Jump();
                 mv.loadExecutionContext();
                 mv.load(iterator);
                 mv.aconst("return");
@@ -1487,7 +1528,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.newResumptionPoint();
 
             // check for exception
-            Label isException = new Label();
+            Jump isException = new Jump();
             mv.dup();
             mv.instanceOf(Types.ScriptException);
             mv.ifeq(isException);
@@ -1498,7 +1539,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.mark(isException);
 
             // check for return value
-            Label isReturn = new Label();
+            Jump isReturn = new Jump();
             mv.dup();
             mv.instanceOf(Types.ReturnValue);
             mv.ifeq(isReturn);

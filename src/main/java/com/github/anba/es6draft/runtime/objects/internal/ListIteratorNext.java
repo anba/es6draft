@@ -21,9 +21,9 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 /**
  * <h1>7 Abstract Operations</h1><br>
  * <h2>7.4 Operations on Iterator Objects</h2><br>
- * <h3>7.4.8 CreateListIterator (list)</h3>
+ * <h3>7.4.9 CreateListIterator (list)</h3>
  * <ul>
- * <li>7.4.8.1 ListIterator next( )
+ * <li>7.4.9.1 ListIterator next( )
  * </ul>
  */
 public final class ListIteratorNext extends BuiltinFunction {
@@ -55,7 +55,7 @@ public final class ListIteratorNext extends BuiltinFunction {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         /* step 7 */
-        Iterator<?> iterator = ((ListIterator<?>) thisValue).getIterator();
+        Iterator<?> iterator = listIterator.getIterator();
         /* steps 8-10 */
         if (!iterator.hasNext()) {
             return CreateIterResultObject(calleeContext, UNDEFINED, true);

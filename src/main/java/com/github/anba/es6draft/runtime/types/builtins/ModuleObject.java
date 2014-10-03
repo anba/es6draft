@@ -160,20 +160,20 @@ public final class ModuleObject extends OrdinaryObject {
 
     /** 9.4.6.7 [[HasProperty]] (P) */
     @Override
-    protected boolean hasProp(ExecutionContext cx, long propertyKey) {
-        return hasProp(cx, ToString(propertyKey));
+    protected boolean has(ExecutionContext cx, long propertyKey) {
+        return has(cx, ToString(propertyKey));
     }
 
     /** 9.4.6.7 [[HasProperty]] (P) */
     @Override
-    protected boolean hasProp(ExecutionContext cx, String propertyKey) {
+    protected boolean has(ExecutionContext cx, String propertyKey) {
         /* steps 1-3 */
         return exports.contains(propertyKey);
     }
 
     /** 9.4.6.7 [[HasProperty]] (P) */
     @Override
-    protected boolean hasProp(ExecutionContext cx, Symbol propertyKey) {
+    protected boolean has(ExecutionContext cx, Symbol propertyKey) {
         return false;
     }
 
@@ -248,10 +248,10 @@ public final class ModuleObject extends OrdinaryObject {
     }
 
     @Override
-    protected boolean isEnumerableOwnProperty(String propertyKey) {
+    protected Enumerability isEnumerableOwnProperty(String propertyKey) {
         assert exports.contains(propertyKey) : String.format("'%s' is not an exported binding",
                 propertyKey);
-        return true;
+        return Enumerability.Enumerable;
     }
 
     /** 9.4.6.12 [[OwnPropertyKeys]] ( ) */

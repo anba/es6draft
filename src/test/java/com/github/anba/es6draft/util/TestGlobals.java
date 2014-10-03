@@ -44,7 +44,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
     private ScriptCache scriptCache;
     private List<Script> scripts;
 
-    public TestGlobals(Configuration configuration) {
+    protected TestGlobals(Configuration configuration) {
         this.configuration = configuration;
     }
 
@@ -63,7 +63,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
     @Override
     protected void before() throws Throwable {
         if (!Resources.isEnabled(configuration)) {
-            // skip initialisation if test suite not enabled
+            // skip initialization if test suite not enabled
             return;
         }
 
@@ -71,7 +71,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         options = compatibilityOptions(configuration.getString("mode", ""));
         scriptCache = new ScriptCache();
 
-        // pre-compile initialisation scripts
+        // pre-compile initialization scripts
         scripts = compileScripts();
     }
 

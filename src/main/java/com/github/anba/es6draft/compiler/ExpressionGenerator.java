@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.compiler.ArrayComprehensionGenerator.EvaluateArrayComprehension;
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsIdentifierRef;
@@ -15,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
@@ -29,295 +29,307 @@ import com.github.anba.es6draft.ast.synthetic.IdentifierReferenceValue;
 import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
 import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
-import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
+import com.github.anba.es6draft.ast.synthetic.SuperElementAccessorValue;
+import com.github.anba.es6draft.ast.synthetic.SuperPropertyAccessorValue;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.assembler.FieldDesc;
+import com.github.anba.es6draft.compiler.assembler.Jump;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
 import com.github.anba.es6draft.runtime.internal.Bootstrap;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.NativeCalls;
 import com.github.anba.es6draft.runtime.objects.Eval.EvalFlags;
-import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 
 /**
  *
  */
 final class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisitor> {
     private static final class Fields {
-        static final FieldDesc Intrinsics_ObjectPrototype = FieldDesc.create(FieldType.Static,
-                Types.Intrinsics, "ObjectPrototype", Types.Intrinsics);
+        static final FieldDesc Intrinsics_ObjectPrototype = FieldDesc.create(
+                FieldDesc.Allocation.Static, Types.Intrinsics, "ObjectPrototype", Types.Intrinsics);
 
-        static final FieldDesc ScriptRuntime_EMPTY_ARRAY = FieldDesc.create(FieldType.Static,
-                Types.ScriptRuntime, "EMPTY_ARRAY", Types.Object_);
+        static final FieldDesc ScriptRuntime_EMPTY_ARRAY = FieldDesc.create(
+                FieldDesc.Allocation.Static, Types.ScriptRuntime, "EMPTY_ARRAY", Types.Object_);
     }
 
     private static final class Methods {
         // class: AbstractOperations
-        static final MethodDesc AbstractOperations_Put = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "Put", Type.getMethodType(Type.VOID_TYPE,
-                        Types.ExecutionContext, Types.ScriptObject, Types.String, Types.Object,
-                        Type.BOOLEAN_TYPE));
+        static final MethodDesc AbstractOperations_Put = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "Put", Type.getMethodType(
+                        Type.VOID_TYPE, Types.ExecutionContext, Types.ScriptObject, Types.String,
+                        Types.Object, Type.BOOLEAN_TYPE));
 
         // class: Eval
-        static final MethodDesc Eval_directEval = MethodDesc.create(MethodType.Static, Types.Eval,
-                "directEval", Type.getMethodType(Types.Object, Types.Object_,
+        static final MethodDesc Eval_directEval = MethodDesc.create(MethodDesc.Invoke.Static,
+                Types.Eval, "directEval", Type.getMethodType(Types.Object, Types.Object_,
                         Types.ExecutionContext, Type.INT_TYPE));
 
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "createMutableBinding",
+                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "createMutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
         static final MethodDesc EnvironmentRecord_withBaseObject = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "withBaseObject",
+                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "withBaseObject",
                 Type.getMethodType(Types.ScriptObject));
 
         // class: ExecutionContext
         static final MethodDesc ExecutionContext_resolveThisBinding = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "resolveThisBinding",
+                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "resolveThisBinding",
                 Type.getMethodType(Types.Object));
 
         // class: ArrayObject
-        static final MethodDesc ArrayObject_ArrayCreate = MethodDesc.create(MethodType.Static,
-                Types.ArrayObject, "ArrayCreate",
+        static final MethodDesc ArrayObject_ArrayCreate = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ArrayObject, "ArrayCreate",
                 Type.getMethodType(Types.ArrayObject, Types.ExecutionContext, Type.LONG_TYPE));
 
-        static final MethodDesc ArrayObject_DenseArrayCreate = MethodDesc.create(MethodType.Static,
-                Types.ArrayObject, "DenseArrayCreate",
+        static final MethodDesc ArrayObject_DenseArrayCreate = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ArrayObject, "DenseArrayCreate",
                 Type.getMethodType(Types.ArrayObject, Types.ExecutionContext, Types.Object_));
 
         static final MethodDesc ArrayObject_SparseArrayCreate = MethodDesc.create(
-                MethodType.Static, Types.ArrayObject, "SparseArrayCreate",
+                MethodDesc.Invoke.Static, Types.ArrayObject, "SparseArrayCreate",
                 Type.getMethodType(Types.ArrayObject, Types.ExecutionContext, Types.Object_));
 
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
-                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
+                MethodDesc.Invoke.Virtual, Types.LexicalEnvironment, "getEnvRec",
                 Type.getMethodType(Types.EnvironmentRecord));
 
         // class: Math
-        static final MethodDesc Math_pow = MethodDesc.create(MethodType.Static, Types.Math, "pow",
-                Type.getMethodType(Type.DOUBLE_TYPE, Type.DOUBLE_TYPE, Type.DOUBLE_TYPE));
+        static final MethodDesc Math_pow = MethodDesc.create(MethodDesc.Invoke.Static, Types.Math,
+                "pow", Type.getMethodType(Type.DOUBLE_TYPE, Type.DOUBLE_TYPE, Type.DOUBLE_TYPE));
 
         // class: OrdinaryObject
-        static final MethodDesc OrdinaryObject_ObjectCreate = MethodDesc.create(MethodType.Static,
-                Types.OrdinaryObject, "ObjectCreate",
+        static final MethodDesc OrdinaryObject_ObjectCreate = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.OrdinaryObject, "ObjectCreate",
                 Type.getMethodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Intrinsics));
 
         // class: Reference
-        static final MethodDesc Reference_getBase = MethodDesc.create(MethodType.Virtual,
+        static final MethodDesc Reference_getBase = MethodDesc.create(MethodDesc.Invoke.Virtual,
                 Types.Reference, "getBase", Type.getMethodType(Types.Object));
 
-        static final MethodDesc Reference_getThisValue = MethodDesc.create(MethodType.Virtual,
-                Types.Reference, "getThisValue",
+        static final MethodDesc Reference_getThisValue = MethodDesc.create(
+                MethodDesc.Invoke.Virtual, Types.Reference, "getThisValue",
                 Type.getMethodType(Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc Reference_getValue = MethodDesc.create(MethodType.Virtual,
+        static final MethodDesc Reference_getValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
                 Types.Reference, "getValue",
                 Type.getMethodType(Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc Reference_putValue = MethodDesc.create(MethodType.Virtual,
+        static final MethodDesc Reference_putValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
                 Types.Reference, "putValue",
                 Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
+        static final MethodDesc Reference_delete = MethodDesc.create(MethodDesc.Invoke.Virtual,
+                Types.Reference, "delete",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext));
+
         // class: RegExpConstructor
         static final MethodDesc RegExpConstructor_RegExpCreate = MethodDesc.create(
-                MethodType.Static, Types.RegExpConstructor, "RegExpCreate", Type.getMethodType(
-                        Types.RegExpObject, Types.ExecutionContext, Types.Object, Types.Object));
+                MethodDesc.Invoke.Static, Types.RegExpConstructor, "RegExpCreate", Type
+                        .getMethodType(Types.RegExpObject, Types.ExecutionContext, Types.Object,
+                                Types.Object));
 
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_add_str = MethodDesc.create(MethodType.Static,
+        static final MethodDesc ScriptRuntime_add_str = MethodDesc.create(MethodDesc.Invoke.Static,
                 Types.ScriptRuntime, "add", Type.getMethodType(Types.CharSequence,
                         Types.CharSequence, Types.CharSequence, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_deleteBinding = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "deleteBinding",
-                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Reference, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_deleteProperty = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "deleteProperty",
-                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Reference, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_in = MethodDesc.create(MethodType.Static,
+        static final MethodDesc ScriptRuntime_in = MethodDesc.create(MethodDesc.Invoke.Static,
                 Types.ScriptRuntime, "in", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object,
                         Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_typeof = MethodDesc.create(MethodType.Static,
+        static final MethodDesc ScriptRuntime_typeof = MethodDesc.create(MethodDesc.Invoke.Static,
                 Types.ScriptRuntime, "typeof",
                 Type.getMethodType(Types.String, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_InstanceofOperator = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "InstanceofOperator", Type.getMethodType(
-                        Type.BOOLEAN_TYPE, Types.Object, Types.Object, Types.ExecutionContext));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstanceofOperator", Type
+                        .getMethodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object,
+                                Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_ArrayAccumulationSpreadElement = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "ArrayAccumulationSpreadElement", Type
-                        .getMethodType(Type.INT_TYPE, Types.ArrayObject, Type.INT_TYPE,
-                                Types.Object, Types.ExecutionContext));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "ArrayAccumulationSpreadElement",
+                Type.getMethodType(Type.INT_TYPE, Types.ArrayObject, Type.INT_TYPE, Types.Object,
+                        Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_CheckCallable = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "CheckCallable",
+        static final MethodDesc ScriptRuntime_CheckCallable = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "CheckCallable",
                 Type.getMethodType(Types.Callable, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_defineProperty__int = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "defineProperty", Type.getMethodType(
-                        Type.VOID_TYPE, Types.ArrayObject, Type.INT_TYPE, Types.Object,
-                        Types.ExecutionContext));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineProperty", Type
+                        .getMethodType(Type.VOID_TYPE, Types.ArrayObject, Type.INT_TYPE,
+                                Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_directEvalFallbackArguments = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "directEvalFallbackArguments", Type
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "directEvalFallbackArguments", Type
                         .getMethodType(Types.Object_, Types.Object_, Types.Object, Types.Callable,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_directEvalFallbackThisArgument = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "directEvalFallbackThisArgument",
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "directEvalFallbackThisArgument",
                 Type.getMethodType(Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_directEvalFallbackHook = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "directEvalFallbackHook",
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "directEvalFallbackHook",
                 Type.getMethodType(Types.Callable, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateArrowFunction = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "EvaluateArrowFunction", Type
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateArrowFunction", Type
                         .getMethodType(Types.OrdinaryFunction, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateAsyncArrowFunction = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "EvaluateAsyncArrowFunction", Type
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateAsyncArrowFunction", Type
                         .getMethodType(Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateAsyncFunctionExpression = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "EvaluateAsyncFunctionExpression", Type
-                        .getMethodType(Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateAsyncFunctionExpression",
+                Type.getMethodType(Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function,
+                        Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateConstructorCall = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "EvaluateConstructorCall", Type
-                        .getMethodType(Types.Object, Types.Object, Types.Object_,
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateConstructorCall", Type
+                        .getMethodType(Types.ScriptObject, Types.Object, Types.Object_,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateConstructorTailCall = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "EvaluateConstructorTailCall", Type
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateConstructorTailCall", Type
                         .getMethodType(Types.Object, Types.Object, Types.Object_,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateFunctionExpression = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "EvaluateFunctionExpression", Type
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateFunctionExpression", Type
                         .getMethodType(Types.OrdinaryFunction, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateGeneratorComprehension = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "EvaluateGeneratorComprehension", Type
-                        .getMethodType(Types.GeneratorObject, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateGeneratorComprehension",
+                Type.getMethodType(Types.GeneratorObject, Types.RuntimeInfo$Function,
+                        Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateLegacyGeneratorComprehension = MethodDesc
-                .create(MethodType.Static, Types.ScriptRuntime,
+                .create(MethodDesc.Invoke.Static, Types.ScriptRuntime,
                         "EvaluateLegacyGeneratorComprehension", Type.getMethodType(
                                 Types.GeneratorObject, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateGeneratorExpression = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "EvaluateGeneratorExpression", Type
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateGeneratorExpression", Type
                         .getMethodType(Types.OrdinaryGenerator, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateLegacyGeneratorExpression = MethodDesc
-                .create(MethodType.Static, Types.ScriptRuntime,
+                .create(MethodDesc.Invoke.Static, Types.ScriptRuntime,
                         "EvaluateLegacyGeneratorExpression", Type.getMethodType(
                                 Types.OrdinaryGenerator, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getElement = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "getElement", Type.getMethodType(Types.Reference,
-                        Types.Object, Types.Object, Types.ExecutionContext, Type.BOOLEAN_TYPE));
-
-        static final MethodDesc ScriptRuntime_getElementValue = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "getElementValue", Type.getMethodType(
-                        Types.Object, Types.Object, Types.Object, Types.ExecutionContext,
+        static final MethodDesc ScriptRuntime_getElement = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getElement", Type.getMethodType(
+                        Types.Reference, Types.Object, Types.Object, Types.ExecutionContext,
                         Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_getProperty = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "getProperty", Type.getMethodType(Types.Reference,
-                        Types.Object, Types.String, Types.ExecutionContext, Type.BOOLEAN_TYPE));
+        static final MethodDesc ScriptRuntime_getElementValue = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getElementValue", Type
+                        .getMethodType(Types.Object, Types.Object, Types.Object,
+                                Types.ExecutionContext, Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_getProperty = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getProperty", Type.getMethodType(
+                        Types.Reference, Types.Object, Types.String, Types.ExecutionContext,
+                        Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_getProperty_int = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "getProperty", Type.getMethodType(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getProperty", Type.getMethodType(
                         Types.Reference, Types.Object, Type.INT_TYPE, Types.ExecutionContext,
                         Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_getProperty_long = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "getProperty", Type.getMethodType(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getProperty", Type.getMethodType(
                         Types.Reference, Types.Object, Type.LONG_TYPE, Types.ExecutionContext,
                         Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_getProperty_double = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "getProperty", Type.getMethodType(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getProperty", Type.getMethodType(
                         Types.Reference, Types.Object, Type.DOUBLE_TYPE, Types.ExecutionContext,
                         Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_getPropertyValue = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "getPropertyValue", Type.getMethodType(
-                        Types.Object, Types.Object, Types.String, Types.ExecutionContext,
-                        Type.BOOLEAN_TYPE));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getPropertyValue", Type
+                        .getMethodType(Types.Object, Types.Object, Types.String,
+                                Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_getPropertyValue_int = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "getPropertyValue", Type.getMethodType(
-                        Types.Object, Types.Object, Type.INT_TYPE, Types.ExecutionContext,
-                        Type.BOOLEAN_TYPE));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getPropertyValue", Type
+                        .getMethodType(Types.Object, Types.Object, Type.INT_TYPE,
+                                Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_getPropertyValue_long = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "getPropertyValue", Type.getMethodType(
-                        Types.Object, Types.Object, Type.LONG_TYPE, Types.ExecutionContext,
-                        Type.BOOLEAN_TYPE));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getPropertyValue", Type
+                        .getMethodType(Types.Object, Types.Object, Type.LONG_TYPE,
+                                Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_getPropertyValue_double = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "getPropertyValue", Type.getMethodType(
-                        Types.Object, Types.Object, Type.DOUBLE_TYPE, Types.ExecutionContext,
-                        Type.BOOLEAN_TYPE));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getPropertyValue", Type
+                        .getMethodType(Types.Object, Types.Object, Type.DOUBLE_TYPE,
+                                Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_IsBuiltinEval = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "IsBuiltinEval",
+        static final MethodDesc ScriptRuntime_getSuperReferenceValue = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getSuperReferenceValue", Type
+                        .getMethodType(Types.Object, Types.ExecutionContext, Types.Object,
+                                Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_getSuperReferenceValue_String = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getSuperReferenceValue", Type
+                        .getMethodType(Types.Object, Types.ExecutionContext, Types.String,
+                                Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_IsBuiltinEval = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "IsBuiltinEval",
                 Type.getMethodType(Type.BOOLEAN_TYPE, Types.Callable, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_MakeSuperReference = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "MakeSuperReference", Type.getMethodType(
-                        Types.Reference, Types.ExecutionContext, Types.Object, Type.BOOLEAN_TYPE));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "MakeSuperReference", Type
+                        .getMethodType(Types.Reference, Types.ExecutionContext, Types.Object,
+                                Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_MakeStringSuperReference = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "MakeSuperReference", Type.getMethodType(
-                        Types.Reference, Types.ExecutionContext, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodDesc ScriptRuntime_MakeSuperReference_String = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "MakeSuperReference", Type
+                        .getMethodType(Types.Reference, Types.ExecutionContext, Types.String,
+                                Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_PrepareForTailCall = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "PrepareForTailCall",
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "PrepareForTailCall",
                 Type.getMethodType(Types.Object, Types.Object_, Types.Object, Types.Callable));
 
-        static final MethodDesc ScriptRuntime_SpreadArray = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "SpreadArray",
+        static final MethodDesc ScriptRuntime_SpreadArray = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "SpreadArray",
                 Type.getMethodType(Types.Object_, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_toFlatArray = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "toFlatArray",
+        static final MethodDesc ScriptRuntime_toFlatArray = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "toFlatArray",
                 Type.getMethodType(Types.Object_, Types.Object_, Types.ExecutionContext));
 
         // class: StringBuilder
         static final MethodDesc StringBuilder_append_Charsequence = MethodDesc.create(
-                MethodType.Virtual, Types.StringBuilder, "append",
+                MethodDesc.Invoke.Virtual, Types.StringBuilder, "append",
                 Type.getMethodType(Types.StringBuilder, Types.CharSequence));
 
-        static final MethodDesc StringBuilder_append_String = MethodDesc.create(MethodType.Virtual,
-                Types.StringBuilder, "append",
+        static final MethodDesc StringBuilder_append_String = MethodDesc.create(
+                MethodDesc.Invoke.Virtual, Types.StringBuilder, "append",
                 Type.getMethodType(Types.StringBuilder, Types.String));
 
-        static final MethodDesc StringBuilder_init = MethodDesc.create(MethodType.Special,
+        static final MethodDesc StringBuilder_init = MethodDesc.create(MethodDesc.Invoke.Special,
                 Types.StringBuilder, "<init>", Type.getMethodType(Type.VOID_TYPE));
 
-        static final MethodDesc StringBuilder_toString = MethodDesc.create(MethodType.Virtual,
-                Types.StringBuilder, "toString", Type.getMethodType(Types.String));
+        static final MethodDesc StringBuilder_toString = MethodDesc.create(
+                MethodDesc.Invoke.Virtual, Types.StringBuilder, "toString",
+                Type.getMethodType(Types.String));
     }
 
     private final IdentifierResolution identifierResolution;
@@ -377,6 +389,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     private ValType GetValue(LeftHandSideExpression node, ValType type, ExpressionVisitor mv) {
+        assert type == ValType.Reference : "type is not reference: " + type;
+        mv.loadExecutionContext();
+        mv.invoke(Methods.Reference_getValue);
+        return ValType.Any;
+    }
+
+    private ValType GetValue(SuperCallExpression node, ValType type, ExpressionVisitor mv) {
         assert type == ValType.Reference : "type is not reference: " + type;
         mv.loadExecutionContext();
         mv.invoke(Methods.Reference_getValue);
@@ -482,17 +501,22 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     private ValType EvaluateCall(Expression call, Expression base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
         if (type == ValType.Reference) {
-            assert base instanceof LeftHandSideExpression;
-            LeftHandSideExpression lhs = (LeftHandSideExpression) base;
-            if (isPropertyReference(lhs, type)) {
-                EvaluateCallPropRef(call, lhs, type, arguments, mv);
+            if (base instanceof SuperCallExpression) {
+                assert call == base;
+                EvaluateCallSuper((SuperCallExpression) call, type, arguments, mv);
             } else {
-                IdentifierReference ident = (IdentifierReference) base;
-                Name name = ident.toName();
-                if (isEnclosedByWithStatement(name, mv)) {
-                    EvaluateCallWithIdentRef(call, ident, type, arguments, directEval, mv);
+                assert base instanceof LeftHandSideExpression;
+                LeftHandSideExpression lhs = (LeftHandSideExpression) base;
+                if (isPropertyReference(lhs, type)) {
+                    EvaluateCallPropRef(call, lhs, type, arguments, mv);
                 } else {
-                    EvaluateCallIdentRef(call, ident, type, arguments, directEval, mv);
+                    IdentifierReference ident = (IdentifierReference) base;
+                    Name name = ident.toName();
+                    if (isEnclosedByWithStatement(name, mv)) {
+                        EvaluateCallWithIdentRef(call, ident, type, arguments, directEval, mv);
+                    } else {
+                        EvaluateCallIdentRef(call, ident, type, arguments, directEval, mv);
+                    }
                 }
             }
         } else {
@@ -520,7 +544,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         // only called for the property reference case (`obj.method(...)` or `obj[method](...)`)
         assert isPropertyReference(base, type);
         assert base instanceof ElementAccessor || base instanceof PropertyAccessor
-                || base instanceof SuperExpression;
+                || base instanceof SuperElementAccessor || base instanceof SuperPropertyAccessor;
 
         // stack: [ref] -> [ref, ref]
         mv.dup();
@@ -528,6 +552,53 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 1-2 */
         // stack: [ref, ref] -> [ref, func]
         GetValue(base, type, mv);
+
+        /* steps 3-4 */
+        // stack: [ref, func] -> [args, ref, func]
+        ArgumentListEvaluation(arguments, mv);
+        mv.dupX2();
+        mv.pop();
+
+        // stack: [args, ref, func]
+        mv.lineInfo(call);
+
+        /* steps 5-6 */
+        // stack: [args, ref, func] -> [args, ref, func(Callable)]
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_CheckCallable);
+
+        /* step 7-8 */
+        // stack: [args, ref, func(Callable)] -> [args, thisValue, func(Callable)]
+        mv.swap();
+        mv.loadExecutionContext();
+        mv.invoke(Methods.Reference_getThisValue);
+        mv.swap();
+
+        /* steps 9-13 */
+        // stack: [args, thisValue, func(Callable)] -> result
+        standardCall(call, mv);
+    }
+
+    /**
+     * [12.3.4.2 Runtime Semantics: EvaluateCall]
+     * 
+     * @param call
+     *            the function call expression
+     * @param type
+     *            the value type of the base node
+     * @param arguments
+     *            the list of function call arguments
+     * @param mv
+     *            the expression visitor
+     */
+    private void EvaluateCallSuper(SuperCallExpression call, ValType type,
+            List<Expression> arguments, ExpressionVisitor mv) {
+        // stack: [ref] -> [ref, ref]
+        mv.dup();
+
+        /* steps 1-2 */
+        // stack: [ref, ref] -> [ref, func]
+        GetValue(call, type, mv);
 
         /* steps 3-4 */
         // stack: [ref, func] -> [args, ref, func]
@@ -619,7 +690,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
         assert type == ValType.Reference;
 
-        Label afterCall = new Label();
+        Jump afterCall = new Jump();
 
         /* steps 1-2 */
         // stack: [ref] -> [func]
@@ -676,7 +747,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
         assert type == ValType.Reference;
 
-        Label afterCall = new Label(), baseObjNotNull = new Label();
+        Jump afterCall = new Jump(), baseObjNotNull = new Jump();
 
         // stack: [ref] -> [ref, ref]
         mv.dup();
@@ -737,9 +808,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      * @param mv
      *            the expression visitor
      */
-    private void directEvalCall(Label afterCall, ExpressionVisitor mv) {
+    private void directEvalCall(Jump afterCall, ExpressionVisitor mv) {
         // test for possible direct-eval call
-        Label notEval = new Label();
+        Jump notEval = new Jump();
 
         // stack: [args, thisValue, func(Callable)] -> [args, thisValue, func(Callable)]
         mv.dup();
@@ -773,7 +844,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         if (codegen.isEnabled(CompatibilityOption.Realm)) {
             // direct-eval fallback hook
-            Label noEvalHook = new Label();
+            Jump noEvalHook = new Jump();
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_directEvalFallbackHook);
             mv.ifnull(noEvalHook);
@@ -834,7 +905,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.get(Fields.ScriptRuntime_EMPTY_ARRAY);
         } else {
             boolean hasSpread = false;
-            mv.newarray(arguments.size(), Types.Object);
+            mv.anewarray(arguments.size(), Types.Object);
             for (int i = 0, size = arguments.size(); i < size; ++i) {
                 mv.dup();
                 mv.iconst(i);
@@ -863,9 +934,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(ArrayComprehension node, ExpressionVisitor mv) {
-        node.accept(new ArrayComprehensionGenerator(codegen), mv);
-
-        return ValType.Object;
+        return EvaluateArrayComprehension(codegen, node, mv);
     }
 
     /**
@@ -890,7 +959,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             float density = (float) (length - elision) / length;
             if ((density >= 0.25f && length < 0x10) || (density >= 0.75f && length < 0x1000)) {
                 mv.loadExecutionContext();
-                mv.newarray(length, Types.Object);
+                mv.anewarray(length, Types.Object);
                 int nextIndex = 0;
                 for (Expression element : node.getElements()) {
                     if (element instanceof Elision) {
@@ -969,10 +1038,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(SpreadArrayLiteral node, ExpressionVisitor mv) {
-        // stack: [] -> [array, nextIndex]
-        mv.loadParameter(1, ArrayObject.class);
-        mv.loadParameter(2, int.class);
-
+        // stack: [array, nextIndex]
         arrayLiteralWithSpread(node, mv);
 
         // stack: [array, nextIndex] -> [nextIndex]
@@ -1002,7 +1068,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             }
             if (elisionWidth != 0) {
                 mv.iconst(elisionWidth);
-                mv.add(Type.INT_TYPE);
+                mv.iadd();
                 elisionWidth = 0;
             }
             if (element instanceof SpreadElement) {
@@ -1019,7 +1085,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         }
         if (elisionWidth != 0) {
             mv.iconst(elisionWidth);
-            mv.add(Type.INT_TYPE);
+            mv.iadd();
         }
     }
 
@@ -1097,11 +1163,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 ValType rtype = evalAndGetValue(right, mv);
 
                 ToObject(left, rtype, mv);
-                mv.dup();
+                dup(node, mv);
 
                 DestructuringAssignment((AssignmentPattern) left, mv);
 
-                return ValType.Object;
+                return completion(node, ValType.Object);
             } else {
                 ValType ltype = left.accept(this, mv);
                 ValType rtype = evalAndGetValue(right, mv);
@@ -1111,11 +1177,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 }
 
                 // lref rval
-                mv.dupX(ltype, rtype);
+                dupX(node, ltype, rtype, mv);
                 mv.toBoxed(rtype);
                 PutValue(left, ltype, mv);
 
-                return rtype;
+                return completion(node, rtype);
             }
         } else {
             switch (node.getOperator()) {
@@ -1138,10 +1204,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 // lref lval rval
                 mv.invoke(Methods.Math_pow);
                 // r lref r
-                mv.dupX(ltype, ValType.Number);
+                dupX(node, ltype, ValType.Number, mv);
                 mv.toBoxed(ValType.Number);
                 PutValue(left, ltype, mv);
-                return ValType.Number;
+                return completion(node, ValType.Number);
             }
             case ASSIGN_MUL: {
                 // 12.6 Multiplicative Operators
@@ -1160,12 +1226,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 }
                 ToNumber(rtype, mv);
                 // lref lval rval
-                mv.mul(Type.DOUBLE_TYPE);
+                mv.dmul();
                 // r lref r
-                mv.dupX(ltype, ValType.Number);
+                dupX(node, ltype, ValType.Number, mv);
                 mv.toBoxed(ValType.Number);
                 PutValue(left, ltype, mv);
-                return ValType.Number;
+                return completion(node, ValType.Number);
             }
             case ASSIGN_DIV: {
                 // 12.6 Multiplicative Operators
@@ -1184,12 +1250,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 }
                 ToNumber(rtype, mv);
                 // lref lval rval
-                mv.div(Type.DOUBLE_TYPE);
+                mv.ddiv();
                 // r lref r
-                mv.dupX(ltype, ValType.Number);
+                dupX(node, ltype, ValType.Number, mv);
                 mv.toBoxed(ValType.Number);
                 PutValue(left, ltype, mv);
-                return ValType.Number;
+                return completion(node, ValType.Number);
             }
             case ASSIGN_MOD: {
                 // 12.6 Multiplicative Operators
@@ -1208,12 +1274,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 }
                 ToNumber(rtype, mv);
                 // lref lval rval
-                mv.rem(Type.DOUBLE_TYPE);
+                mv.drem();
                 // r lref r
-                mv.dupX(ltype, ValType.Number);
+                dupX(node, ltype, ValType.Number, mv);
                 mv.toBoxed(ValType.Number);
                 PutValue(left, ltype, mv);
-                return ValType.Number;
+                return completion(node, ValType.Number);
             }
             case ASSIGN_ADD: {
                 // 12.7.1 The Addition operator ( + )
@@ -1233,9 +1299,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                         addStrings(ValType.String, rtype, mv);
                     }
                     // r lref r
-                    mv.dupX1();
+                    dupX1(node, mv);
                     PutValue(left, ltype, mv);
-                    return ValType.String;
+                    return completion(node, ValType.String);
                 }
 
                 ValType ltype = left.accept(this, mv);
@@ -1248,9 +1314,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 mv.loadExecutionContext();
                 invokeDynamicOperator(BinaryExpression.Operator.ADD, mv);
                 // r lref r
-                mv.dupX1();
+                dupX1(node, mv);
                 PutValue(left, ltype, mv);
-                return ValType.Any;
+                return completion(node, ValType.Any);
             }
             case ASSIGN_SUB: {
                 // 12.7.2 The Subtraction Operator ( - )
@@ -1269,12 +1335,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 }
                 ToNumber(rtype, mv);
                 // lref lval rval
-                mv.sub(Type.DOUBLE_TYPE);
+                mv.dsub();
                 // r lref r
-                mv.dupX(ltype, ValType.Number);
+                dupX(node, ltype, ValType.Number, mv);
                 mv.toBoxed(ValType.Number);
                 PutValue(left, ltype, mv);
-                return ValType.Number;
+                return completion(node, ValType.Number);
             }
             case ASSIGN_SHL: {
                 // 12.8.1 The Left Shift Operator ( << )
@@ -1294,13 +1360,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 ToInt32(rtype, mv); // ToUint32()
                 // lref lval rval
                 mv.iconst(0x1F);
-                mv.and(Type.INT_TYPE);
-                mv.shl(Type.INT_TYPE);
+                mv.iand();
+                mv.ishl();
                 // r lref r
-                mv.dupX(ltype, ValType.Number_int);
+                dupX(node, ltype, ValType.Number_int, mv);
                 mv.toBoxed(ValType.Number_int);
                 PutValue(left, ltype, mv);
-                return ValType.Number_int;
+                return completion(node, ValType.Number_int);
             }
             case ASSIGN_SHR: {
                 // 12.8.2 The Signed Right Shift Operator ( >> )
@@ -1320,13 +1386,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 ToInt32(rtype, mv); // ToUint32()
                 // lref lval rval
                 mv.iconst(0x1F);
-                mv.and(Type.INT_TYPE);
-                mv.shr(Type.INT_TYPE);
+                mv.iand();
+                mv.ishr();
                 // r lref r
-                mv.dupX(ltype, ValType.Number_int);
+                dupX(node, ltype, ValType.Number_int, mv);
                 mv.toBoxed(ValType.Number_int);
                 PutValue(left, ltype, mv);
-                return ValType.Number_int;
+                return completion(node, ValType.Number_int);
             }
             case ASSIGN_USHR: {
                 // 12.8.3 The Unsigned Right Shift Operator ( >>> )
@@ -1346,13 +1412,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 ToInt32(rtype, mv); // ToUint32()
                 // lref lval rval
                 mv.iconst(0x1F);
-                mv.and(Type.INT_TYPE);
-                mv.ushr(Type.LONG_TYPE);
+                mv.iand();
+                mv.lushr();
                 // r lref r
-                mv.dupX(ltype, ValType.Number_uint);
+                dupX(node, ltype, ValType.Number_uint, mv);
                 mv.toBoxed(ValType.Number_uint);
                 PutValue(left, ltype, mv);
-                return ValType.Number_uint;
+                return completion(node, ValType.Number_uint);
             }
             case ASSIGN_BITAND: {
                 // 12.11 Binary Bitwise Operators ( & )
@@ -1371,12 +1437,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 }
                 ToInt32(rtype, mv); // ToUint32()
                 // lref lval rval
-                mv.and(Type.INT_TYPE);
+                mv.iand();
                 // r lref r
-                mv.dupX(ltype, ValType.Number_int);
+                dupX(node, ltype, ValType.Number_int, mv);
                 mv.toBoxed(ValType.Number_int);
                 PutValue(left, ltype, mv);
-                return ValType.Number_int;
+                return completion(node, ValType.Number_int);
             }
             case ASSIGN_BITXOR: {
                 // 12.11 Binary Bitwise Operators ( ^ )
@@ -1395,12 +1461,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 }
                 ToInt32(rtype, mv); // ToUint32()
                 // lref lval rval
-                mv.xor(Type.INT_TYPE);
+                mv.ixor();
                 // r lref r
-                mv.dupX(ltype, ValType.Number_int);
+                dupX(node, ltype, ValType.Number_int, mv);
                 mv.toBoxed(ValType.Number_int);
                 PutValue(left, ltype, mv);
-                return ValType.Number_int;
+                return completion(node, ValType.Number_int);
             }
             case ASSIGN_BITOR: {
                 // 12.11 Binary Bitwise Operators ( | )
@@ -1419,18 +1485,40 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 }
                 ToInt32(rtype, mv); // ToUint32()
                 // lref lval rval
-                mv.or(Type.INT_TYPE);
+                mv.ior();
                 // r lref r
-                mv.dupX(ltype, ValType.Number_int);
+                dupX(node, ltype, ValType.Number_int, mv);
                 mv.toBoxed(ValType.Number_int);
                 PutValue(left, ltype, mv);
-                return ValType.Number_int;
+                return completion(node, ValType.Number_int);
             }
             case ASSIGN:
             default:
                 throw new AssertionError(Objects.toString(node.getOperator(), "<null>"));
             }
         }
+    }
+
+    private void dup(AssignmentExpression node, ExpressionVisitor mv) {
+        if (node.hasCompletion()) {
+            mv.dup();
+        }
+    }
+
+    private void dupX1(AssignmentExpression node, ExpressionVisitor mv) {
+        if (node.hasCompletion()) {
+            mv.dupX1();
+        }
+    }
+
+    private void dupX(AssignmentExpression node, ValType ltype, ValType rtype, ExpressionVisitor mv) {
+        if (node.hasCompletion()) {
+            mv.dupX(ltype, rtype);
+        }
+    }
+
+    private ValType completion(AssignmentExpression node, ValType type) {
+        return node.hasCompletion() ? type : ValType.Empty;
     }
 
     @Override
@@ -1522,7 +1610,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 mv.swap(rtype, ValType.Number);
             }
             ToNumber(rtype, mv);
-            mv.mul(Type.DOUBLE_TYPE);
+            mv.dmul();
             return ValType.Number;
         }
         case DIV: {
@@ -1538,7 +1626,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 mv.swap(rtype, ValType.Number);
             }
             ToNumber(rtype, mv);
-            mv.div(Type.DOUBLE_TYPE);
+            mv.ddiv();
             return ValType.Number;
         }
         case MOD: {
@@ -1554,7 +1642,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 mv.swap(rtype, ValType.Number);
             }
             ToNumber(rtype, mv);
-            mv.rem(Type.DOUBLE_TYPE);
+            mv.drem();
             return ValType.Number;
         }
         case ADD: {
@@ -1588,7 +1676,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 ToNumber(ltype, mv);
                 ValType rtype = evalAndGetValue(right, mv);
                 ToNumber(rtype, mv);
-                mv.add(Type.DOUBLE_TYPE);
+                mv.dadd();
                 return ValType.Number;
             }
             mv.toBoxed(ltype);
@@ -1613,7 +1701,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 mv.swap(rtype, ValType.Number);
             }
             ToNumber(rtype, mv);
-            mv.sub(Type.DOUBLE_TYPE);
+            mv.dsub();
             return ValType.Number;
         }
         case SHL: {
@@ -1630,8 +1718,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             }
             ToInt32(rtype, mv); // ToUint32()
             mv.iconst(0x1F);
-            mv.and(Type.INT_TYPE);
-            mv.shl(Type.INT_TYPE);
+            mv.iand();
+            mv.ishl();
             return ValType.Number_int;
         }
         case SHR: {
@@ -1648,8 +1736,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             }
             ToInt32(rtype, mv); // ToUint32()
             mv.iconst(0x1F);
-            mv.and(Type.INT_TYPE);
-            mv.shr(Type.INT_TYPE);
+            mv.iand();
+            mv.ishr();
             return ValType.Number_int;
         }
         case USHR: {
@@ -1666,8 +1754,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             }
             ToInt32(rtype, mv); // ToUint32()
             mv.iconst(0x1F);
-            mv.and(Type.INT_TYPE);
-            mv.ushr(Type.LONG_TYPE);
+            mv.iand();
+            mv.lushr();
             return ValType.Number_uint;
         }
         case LT: {
@@ -1677,16 +1765,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
             mv.loadExecutionContext();
             invokeDynamicOperator(node.getOperator(), mv);
-
-            {
-                Label lbl1 = new Label(), lbl2 = new Label();
-                mv.ifgt(lbl1);
-                mv.iconst(false);
-                mv.goTo(lbl2);
-                mv.mark(lbl1);
-                mv.iconst(true);
-                mv.mark(lbl2);
-            }
             return ValType.Boolean;
         }
         case GT: {
@@ -1697,16 +1775,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
             mv.loadExecutionContext();
             invokeDynamicOperator(node.getOperator(), mv);
-
-            {
-                Label lbl1 = new Label(), lbl2 = new Label();
-                mv.ifgt(lbl1);
-                mv.iconst(false);
-                mv.goTo(lbl2);
-                mv.mark(lbl1);
-                mv.iconst(true);
-                mv.mark(lbl2);
-            }
             return ValType.Boolean;
         }
         case LE: {
@@ -1717,16 +1785,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
             mv.loadExecutionContext();
             invokeDynamicOperator(node.getOperator(), mv);
-
-            {
-                Label lbl1 = new Label(), lbl2 = new Label();
-                mv.ifeq(lbl1);
-                mv.iconst(false);
-                mv.goTo(lbl2);
-                mv.mark(lbl1);
-                mv.iconst(true);
-                mv.mark(lbl2);
-            }
             return ValType.Boolean;
         }
         case GE: {
@@ -1736,16 +1794,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
             mv.loadExecutionContext();
             invokeDynamicOperator(node.getOperator(), mv);
-
-            {
-                Label lbl1 = new Label(), lbl2 = new Label();
-                mv.ifeq(lbl1);
-                mv.iconst(false);
-                mv.goTo(lbl2);
-                mv.mark(lbl1);
-                mv.iconst(true);
-                mv.mark(lbl2);
-            }
             return ValType.Boolean;
         }
         case INSTANCEOF: {
@@ -1819,7 +1867,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 mv.swap(rtype, ValType.Number_int);
             }
             ToInt32(rtype, mv);
-            mv.and(Type.INT_TYPE);
+            mv.iand();
             return ValType.Number_int;
         }
         case BITXOR: {
@@ -1835,7 +1883,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 mv.swap(rtype, ValType.Number_int);
             }
             ToInt32(rtype, mv);
-            mv.xor(Type.INT_TYPE);
+            mv.ixor();
             return ValType.Number_int;
         }
         case BITOR: {
@@ -1851,14 +1899,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 mv.swap(rtype, ValType.Number_int);
             }
             ToInt32(rtype, mv);
-            mv.or(Type.INT_TYPE);
+            mv.ior();
             return ValType.Number_int;
         }
 
         case AND:
         case OR: {
             // 12.12 Binary Logical Operators
-            Label after = new Label();
+            Jump after = new Jump();
 
             evalAndGetBoxedValue(left, mv);
             mv.dup();
@@ -1963,15 +2011,16 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(CommaExpression node, ExpressionVisitor mv) {
-        ValType type = null;
+        assert !node.getOperands().isEmpty() : "empty comma expression";
+        int count = node.getOperands().size();
         for (Expression e : node.getOperands()) {
-            if (type != null) {
-                mv.pop(type);
+            if (--count == 0) {
+                return evalAndGetValue(e, mv);
             }
-            type = evalAndGetValue(e, mv);
+            ValType type = evalAndGetValue(e.emptyCompletion(), mv);
+            mv.pop(type);
         }
-        assert type != null;
-        return type;
+        return null;
     }
 
     /**
@@ -1979,7 +2028,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(ConditionalExpression node, ExpressionVisitor mv) {
-        Label l0 = new Label(), l1 = new Label();
+        Jump l0 = new Jump(), l1 = new Jump();
 
         /* steps 1-2 */
         ValType typeTest = evalAndGetValue(node.getTest(), mv);
@@ -2085,6 +2134,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         }
         /* step 11 */
         return ValType.Any;
+    }
+
+    @Override
+    public ValType visit(EmptyExpression node, ExpressionVisitor mv) {
+        return ValType.Empty;
     }
 
     @Override
@@ -2258,10 +2312,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.loadExecutionContext();
         if (!codegen.isEnabled(Compiler.Option.NoTailCall) && mv.isTailCall(node)) {
             mv.invoke(Methods.ScriptRuntime_EvaluateConstructorTailCall);
-        } else {
-            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);
+            return ValType.Any;
         }
-        return ValType.Any;
+        mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);
+        return ValType.Object;
     }
 
     /**
@@ -2372,88 +2426,92 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      * 12.3.5.2 Runtime Semantics: Evaluation
      */
     @Override
-    public ValType visit(SuperExpression node, ExpressionVisitor mv) {
-        switch (node.getType()) {
-        case PropertyAccessor: {
-            mv.loadExecutionContext();
-            mv.aconst(node.getName());
-            mv.iconst(mv.isStrict());
-            mv.invoke(Methods.ScriptRuntime_MakeStringSuperReference);
+    public ValType visit(SuperCallExpression node, ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        mv.aconst(null);
+        mv.iconst(mv.isStrict());
+        mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 
-            return ValType.Reference;
-        }
-        case ElementAccessor: {
-            mv.loadExecutionContext();
-            ValType type = evalAndGetValue(node.getExpression(), mv);
-            ToPropertyKey(type, mv);
-            mv.iconst(mv.isStrict());
-            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
-
-            return ValType.Reference;
-        }
-        case CallExpression: {
-            mv.loadExecutionContext();
-            mv.aconst(null);
-            mv.iconst(mv.isStrict());
-            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
-
-            return EvaluateCall(node, node, ValType.Reference, node.getArguments(), false, mv);
-        }
-        case NewExpression: {
-            mv.loadExecutionContext();
-            mv.aconst(null);
-            mv.iconst(mv.isStrict());
-            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
-
-            return ValType.Reference;
-        }
-        default:
-            throw new AssertionError();
-        }
+        return EvaluateCall(node, node, ValType.Reference, node.getArguments(), false, mv);
     }
 
     /**
      * 12.3.5.2 Runtime Semantics: Evaluation
      */
     @Override
-    public ValType visit(SuperExpressionValue node, ExpressionVisitor mv) {
-        switch (node.getType()) {
-        case PropertyAccessor: {
-            mv.loadExecutionContext();
-            mv.aconst(node.getName());
-            mv.iconst(mv.isStrict());
-            mv.invoke(Methods.ScriptRuntime_MakeStringSuperReference);
+    public ValType visit(SuperElementAccessor node, ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        ValType type = evalAndGetValue(node.getExpression(), mv);
+        ToPropertyKey(type, mv);
+        mv.iconst(mv.isStrict());
+        mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 
-            return GetValue(node, ValType.Reference, mv);
-        }
-        case ElementAccessor: {
-            mv.loadExecutionContext();
-            ValType type = evalAndGetValue(node.getExpression(), mv);
-            ToPropertyKey(type, mv);
-            mv.iconst(mv.isStrict());
-            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
+        return ValType.Reference;
+    }
 
-            return GetValue(node, ValType.Reference, mv);
-        }
-        case CallExpression: {
-            mv.loadExecutionContext();
-            mv.aconst(null);
-            mv.iconst(mv.isStrict());
-            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
+    /**
+     * 12.3.5.2 Runtime Semantics: Evaluation
+     */
+    @Override
+    public ValType visit(SuperElementAccessorValue node, ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        ValType type = evalAndGetValue(node.getExpression(), mv);
+        ToPropertyKey(type, mv);
+        mv.iconst(mv.isStrict());
+        mv.invoke(Methods.ScriptRuntime_getSuperReferenceValue);
 
-            return EvaluateCall(node, node, ValType.Reference, node.getArguments(), false, mv);
-        }
-        case NewExpression: {
-            mv.loadExecutionContext();
-            mv.aconst(null);
-            mv.iconst(mv.isStrict());
-            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
+        return ValType.Any;
+    }
 
-            return GetValue(node, ValType.Reference, mv);
+    /**
+     * 12.3.5.2 Runtime Semantics: Evaluation
+     */
+    @Override
+    public ValType visit(SuperNewExpression node, ExpressionVisitor mv) {
+        /* steps 1-4 */
+        mv.loadExecutionContext();
+        mv.aconst(null);
+        mv.iconst(mv.isStrict());
+        mv.invoke(Methods.ScriptRuntime_getSuperReferenceValue);
+
+        /* steps 5-6 */
+        ArgumentListEvaluation(node.getArguments(), mv);
+
+        /* steps 7-13 */
+        mv.lineInfo(node);
+        mv.loadExecutionContext();
+        if (!codegen.isEnabled(Compiler.Option.NoTailCall) && mv.isTailCall(node)) {
+            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorTailCall);
+            return ValType.Any;
         }
-        default:
-            throw new AssertionError();
-        }
+        mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);
+        return ValType.Object;
+    }
+
+    /**
+     * 12.3.5.2 Runtime Semantics: Evaluation
+     */
+    @Override
+    public ValType visit(SuperPropertyAccessor node, ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        mv.aconst(node.getName());
+        mv.iconst(mv.isStrict());
+        mv.invoke(Methods.ScriptRuntime_MakeSuperReference_String);
+
+        return ValType.Reference;
+    }
+
+    /**
+     * 12.3.5.2 Runtime Semantics: Evaluation
+     */
+    @Override
+    public ValType visit(SuperPropertyAccessorValue node, ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        mv.aconst(node.getName());
+        mv.iconst(mv.isStrict());
+        mv.invoke(Methods.ScriptRuntime_getSuperReferenceValue_String);
+
+        return ValType.Any;
     }
 
     /**
@@ -2495,9 +2553,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             TemplateCharacters chars = (TemplateCharacters) elements.get(0);
             mv.aconst(chars.getValue());
         } else {
-            mv.anew(Types.StringBuilder);
-            mv.dup();
-            mv.invoke(Methods.StringBuilder_init);
+            mv.anew(Types.StringBuilder, Methods.StringBuilder_init);
 
             for (Expression expr : elements) {
                 if (expr instanceof TemplateCharacters) {
@@ -2554,12 +2610,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.dup();
             ValType vtype = GetValue(expr, type, mv);
             ToNumber(vtype, mv);
-            mv.dupX(type, ValType.Number);
+            dupX(node, type, ValType.Number, mv);
             mv.dconst(1d);
-            mv.add(Type.DOUBLE_TYPE);
+            mv.dadd();
             mv.toBoxed(ValType.Number);
             PutValue(expr, type, mv);
-            return ValType.Number;
+            return completion(node, ValType.Number);
         }
         case POST_DEC: {
             // 12.4.4 Postfix Decrement Operator
@@ -2569,36 +2625,31 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.dup();
             ValType vtype = GetValue(expr, type, mv);
             ToNumber(vtype, mv);
-            mv.dupX(type, ValType.Number);
+            dupX(node, type, ValType.Number, mv);
             mv.dconst(1d);
-            mv.sub(Type.DOUBLE_TYPE);
+            mv.dsub();
             mv.toBoxed(ValType.Number);
             PutValue(expr, type, mv);
-            return ValType.Number;
+            return completion(node, ValType.Number);
         }
         case DELETE: {
             // 12.5.3 The delete Operator
-            Expression expr = node.getOperand();
+            Expression expr = node.getOperand().emptyCompletion();
             ValType type = expr.accept(this, mv);
             if (type != ValType.Reference) {
                 mv.pop(type);
                 mv.iconst(true);
-            } else if (isPropertyReference(expr, type)) {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_deleteProperty);
             } else {
                 mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_deleteBinding);
+                mv.invoke(Methods.Reference_delete);
             }
             return ValType.Boolean;
         }
         case VOID: {
             // 12.5.4 The void Operator
-            Expression expr = node.getOperand();
-            if (!(expr instanceof Literal)) {
-                ValType type = evalAndGetValue(expr, mv);
-                mv.pop(type);
-            }
+            Expression expr = node.getOperand().emptyCompletion();
+            ValType type = evalAndGetValue(expr, mv);
+            mv.pop(type);
             mv.loadUndefined();
             return ValType.Undefined;
         }
@@ -2620,11 +2671,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             ValType vtype = GetValue(expr, type, mv);
             ToNumber(vtype, mv);
             mv.dconst(1d);
-            mv.add(Type.DOUBLE_TYPE);
-            mv.dupX(type, ValType.Number);
+            mv.dadd();
+            dupX(node, type, ValType.Number, mv);
             mv.toBoxed(ValType.Number);
             PutValue(expr, type, mv);
-            return ValType.Number;
+            return completion(node, ValType.Number);
         }
         case PRE_DEC: {
             // 12.5.7 Prefix Decrement Operator
@@ -2635,11 +2686,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             ValType vtype = GetValue(expr, type, mv);
             ToNumber(vtype, mv);
             mv.dconst(1d);
-            mv.sub(Type.DOUBLE_TYPE);
-            mv.dupX(type, ValType.Number);
+            mv.dsub();
+            dupX(node, type, ValType.Number, mv);
             mv.toBoxed(ValType.Number);
             PutValue(expr, type, mv);
-            return ValType.Number;
+            return completion(node, ValType.Number);
         }
         case POS: {
             // 12.5.8 Unary + Operator
@@ -2653,7 +2704,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             Expression expr = node.getOperand();
             ValType type = evalAndGetValue(expr, mv);
             ToNumber(type, mv);
-            mv.neg(Type.DOUBLE_TYPE);
+            mv.dneg();
             return ValType.Number;
         }
         case BITNOT: {
@@ -2675,6 +2726,16 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         default:
             throw new AssertionError(Objects.toString(node.getOperator(), "<null>"));
         }
+    }
+
+    private void dupX(UnaryExpression node, ValType ltype, ValType rtype, ExpressionVisitor mv) {
+        if (node.hasCompletion()) {
+            mv.dupX(ltype, rtype);
+        }
+    }
+
+    private ValType completion(UnaryExpression node, ValType type) {
+        return node.hasCompletion() ? type : ValType.Empty;
     }
 
     /**

@@ -21,6 +21,8 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
     private final BindingIdentifier name;
     private final Expression heritage;
     private final List<MethodDefinition> methods;
+    private final MethodDefinition constructor;
+    private List<PropertyDefinition> properties;
 
     public ClassDeclaration(long beginPosition, long endPosition, BlockScope scope,
             BindingIdentifier name, Expression heritage, List<MethodDefinition> methods) {
@@ -29,6 +31,7 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
         this.name = name;
         this.heritage = heritage;
         this.methods = methods;
+        this.constructor = ConstructorMethod(methods);
     }
 
     @Override
@@ -52,6 +55,24 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
     }
 
     @Override
+    public MethodDefinition getConstructor() {
+        return constructor;
+    }
+
+    @Override
+    public List<? extends PropertyDefinition> getProperties() {
+        if (properties == null) {
+            return methods;
+        }
+        return properties;
+    }
+
+    @Override
+    public void setProperties(List<PropertyDefinition> properties) {
+        this.properties = properties;
+    }
+
+    @Override
     public boolean isConstDeclaration() {
         return false;
     }
@@ -69,5 +90,15 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
     @Override
     public <V> void accept(VoidNodeVisitor<V> visitor, V value) {
         visitor.visit(this, value);
+    }
+
+    // 14.5.3 Static Semantics: ConstructorMethod
+    private static MethodDefinition ConstructorMethod(List<MethodDefinition> methods) {
+        for (MethodDefinition m : methods) {
+            if (!m.isStatic() && "constructor".equals(m.getPropertyName().getName())) {
+                return m;
+            }
+        }
+        return null;
     }
 }

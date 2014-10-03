@@ -158,10 +158,10 @@ public final class StringObject extends OrdinaryObject {
     }
 
     @Override
-    protected boolean isEnumerableOwnProperty(String key) {
+    protected Enumerability isEnumerableOwnProperty(String key) {
         int index = Strings.toStringIndex(key);
         if (0 <= index && index < getStringDataOrEmpty().length() && !ordinaryHasOwnProperty(index)) {
-            return true;
+            return Enumerability.Enumerable;
         }
         return super.isEnumerableOwnProperty(key);
     }

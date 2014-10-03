@@ -12,9 +12,8 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.ArrayComprehension;
 import com.github.anba.es6draft.ast.Expression;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.Variable;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
@@ -27,52 +26,47 @@ final class ArrayComprehensionGenerator extends ComprehensionGenerator {
     private static final class Methods {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_CreateArrayFromList = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "CreateArrayFromList",
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "CreateArrayFromList",
                 Type.getMethodType(Types.ArrayObject, Types.ExecutionContext, Types.List));
 
         // class: ArrayList
-        static final MethodDesc ArrayList_init = MethodDesc.create(MethodType.Special,
+        static final MethodDesc ArrayList_init = MethodDesc.create(MethodDesc.Invoke.Special,
                 Types.ArrayList, "<init>", Type.getMethodType(Type.VOID_TYPE));
 
-        static final MethodDesc ArrayList_add = MethodDesc.create(MethodType.Virtual,
+        static final MethodDesc ArrayList_add = MethodDesc.create(MethodDesc.Invoke.Virtual,
                 Types.ArrayList, "add", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
     @SuppressWarnings("rawtypes")
-    private Variable<ArrayList> result = null;
+    private Variable<ArrayList> result;
 
-    ArrayComprehensionGenerator(CodeGenerator codegen) {
+    private ArrayComprehensionGenerator(CodeGenerator codegen) {
         super(codegen);
     }
 
     /**
      * 12.2.4.2.5 Runtime Semantics: Evaluation
      */
-    @Override
-    public Void visit(ArrayComprehension node, ExpressionVisitor mv) {
-        if (result != null) {
-            // nested array comprehension
-            return visit((Expression) node, mv);
-        }
+    static ValType EvaluateArrayComprehension(CodeGenerator codegen, ArrayComprehension node,
+            ExpressionVisitor mv) {
+        ArrayComprehensionGenerator generator = new ArrayComprehensionGenerator(codegen);
 
         /* step 1 */
         mv.enterVariableScope();
-        result = mv.newVariable("result", ArrayList.class);
-        mv.anew(Types.ArrayList);
-        mv.dup();
-        mv.invoke(Methods.ArrayList_init);
-        mv.store(result);
+        generator.result = mv.newVariable("result", ArrayList.class);
+        mv.anew(Types.ArrayList, Methods.ArrayList_init);
+        mv.store(generator.result);
 
         /* steps 2-3 */
-        node.getComprehension().accept(this, mv);
+        node.getComprehension().accept(generator, mv);
 
         /* step 4 */
         mv.loadExecutionContext();
-        mv.load(result);
+        mv.load(generator.result);
         mv.invoke(Methods.AbstractOperations_CreateArrayFromList);
         mv.exitVariableScope();
 
-        return null;
+        return ValType.Object;
     }
 
     /**
@@ -82,8 +76,6 @@ final class ArrayComprehensionGenerator extends ComprehensionGenerator {
      */
     @Override
     protected Void visit(Expression node, ExpressionVisitor mv) {
-        assert result != null : "array-comprehension generator not initialized";
-
         /* steps 1-3 */
         expressionBoxedValue(node, mv);
         /* step 4 */

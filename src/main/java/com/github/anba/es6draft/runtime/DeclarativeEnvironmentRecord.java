@@ -51,25 +51,6 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
                     deletable);
         }
 
-        public void initialize(Object value) {
-            assert this.value == null && value != null;
-            this.value = value;
-        }
-
-        public void setValue(Object value) {
-            assert this.value != null && value != null && this.mutable;
-            this.value = value;
-        }
-
-        public Object getValue() {
-            assert this.value != null;
-            return value;
-        }
-
-        public Reference<Binding, String> toReference(String name, boolean strict) {
-            return new Reference.BindingReference(this, name, strict);
-        }
-
         public void setValue(ExecutionContext cx, String name, Object value, boolean strict) {
             assert value != null;
             if (this.value == null) {
@@ -81,7 +62,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
             }
         }
 
-        public Object getValue(ExecutionContext cx, String name, boolean strict) {
+        public Object getValue(ExecutionContext cx, String name) {
             if (value == null) {
                 throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
             }
@@ -144,6 +125,31 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     @Override
     public Set<String> bindingNames() {
         return Collections.unmodifiableSet(bindings.keySet());
+    }
+
+    @Override
+    public Object getBindingValueOrNull(String name, boolean strict) {
+        Binding b = bindings.get(name);
+        if (b == null) {
+            return null;
+        }
+        if (b.value == null) {
+            throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
+        }
+        return b.value;
+    }
+
+    @Override
+    public Reference<DeclarativeEnvironmentRecord, String> getReferenceOrNull(String name,
+            boolean strict) {
+        Binding b = bindings.get(name);
+        if (b == null) {
+            return null;
+        }
+        if (b.deletable) {
+            return new Reference.IdentifierReference<>(this, name, strict);
+        }
+        return new Reference.BindingReference(this, b, name, strict);
     }
 
     /**

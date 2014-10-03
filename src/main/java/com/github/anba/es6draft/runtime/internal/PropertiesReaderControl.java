@@ -53,9 +53,8 @@ public class PropertiesReaderControl extends ResourceBundle.Control {
             try (Reader reader = new InputStreamReader(stream, charset)) {
                 return new PropertyResourceBundle(reader);
             }
-        } else {
-            throw new IllegalArgumentException("unknown format: " + format);
         }
+        throw new IllegalArgumentException("unknown format: " + format);
     }
 
     private static InputStream getInputStream(ClassLoader loader, String resourceName,

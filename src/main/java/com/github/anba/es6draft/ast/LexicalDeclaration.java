@@ -40,7 +40,7 @@ public final class LexicalDeclaration extends Declaration {
 
     @Override
     public boolean isConstDeclaration() {
-        return (type == Type.Const);
+        return type == Type.Const;
     }
 
     @Override

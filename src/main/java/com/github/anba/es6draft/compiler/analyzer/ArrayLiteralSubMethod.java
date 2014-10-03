@@ -21,6 +21,7 @@ final class ArrayLiteralSubMethod extends ListSubMethod<ArrayLiteral> {
     private static final int MAX_ARRAY_ELEMENT_SIZE = MAX_EXPR_SIZE;
     private static final int MAX_ARRAY_SIZE = 8 * MAX_ARRAY_ELEMENT_SIZE;
     private static final int MAX_SPREAD_SIZE = 4 * MAX_ARRAY_ELEMENT_SIZE;
+    private static final int SPREAD_METHOD_SIZE = 10;
 
     private static final class ArrayElement extends NodeElement<Expression> {
         ArrayElement(Expression node, int size, int index) {

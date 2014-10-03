@@ -381,6 +381,11 @@ public final class RuntimeInfo {
          */
         TailCall(0x8000),
 
+        /**
+         * Flag for native functions.
+         */
+        Native(0x10000);
+
         ;
 
         private final int value;

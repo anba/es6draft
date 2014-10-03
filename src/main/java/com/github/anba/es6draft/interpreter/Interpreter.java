@@ -21,7 +21,6 @@ import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BinaryExpression.Operator;
-import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
@@ -114,7 +113,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         if (!(expr instanceof Reference)) {
             return true;
         }
-        return ScriptRuntime.delete((Reference<?, ?>) expr, cx);
+        return ((Reference<?, ?>) expr).delete(cx);
     }
 
     /**
@@ -383,8 +382,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      * @return the return value after applying the operation
      */
     private static Boolean lessThan(Object lval, Object rval, ExecutionContext cx) {
-        int c = ScriptRuntime.relationalComparison(lval, rval, true, cx);
-        return (c == 1);
+        return RelationalComparison(cx, lval, rval, true) == 1;
     }
 
     /**
@@ -399,8 +397,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      * @return the return value after applying the operation
      */
     private static Boolean lessThanEqual(Object lval, Object rval, ExecutionContext cx) {
-        int c = ScriptRuntime.relationalComparison(rval, lval, false, cx);
-        return (c == 0);
+        return RelationalComparison(cx, rval, lval, false) == 0;
     }
 
     /**
@@ -415,8 +412,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      * @return the return value after applying the operation
      */
     private static Boolean greaterThan(Object lval, Object rval, ExecutionContext cx) {
-        int c = ScriptRuntime.relationalComparison(rval, lval, false, cx);
-        return (c == 1);
+        return RelationalComparison(cx, rval, lval, false) == 1;
     }
 
     /**
@@ -431,8 +427,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      * @return the return value after applying the operation
      */
     private static Boolean greaterThanEqual(Object lval, Object rval, ExecutionContext cx) {
-        int c = ScriptRuntime.relationalComparison(lval, rval, true, cx);
-        return (c == 0);
+        return RelationalComparison(cx, lval, rval, true) == 0;
     }
 
     /**
@@ -447,7 +442,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      * @return the return value after applying the operation
      */
     private static Boolean equals(Object lval, Object rval, ExecutionContext cx) {
-        return ScriptRuntime.equalityComparison(rval, lval, cx);
+        return EqualityComparison(cx, rval, lval);
     }
 
     /**
@@ -462,7 +457,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      * @return the return value after applying the operation
      */
     private static Boolean notEquals(Object lval, Object rval, ExecutionContext cx) {
-        return !ScriptRuntime.equalityComparison(rval, lval, cx);
+        return !EqualityComparison(cx, rval, lval);
     }
 
     /**
@@ -477,7 +472,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      * @return the return value after applying the operation
      */
     private static Boolean strictEquals(Object lval, Object rval, ExecutionContext cx) {
-        return ScriptRuntime.strictEqualityComparison(rval, lval);
+        return StrictEqualityComparison(rval, lval);
     }
 
     /**
@@ -492,7 +487,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      * @return the return value after applying the operation
      */
     private static Boolean strictNotEquals(Object lval, Object rval, ExecutionContext cx) {
-        return !ScriptRuntime.strictEqualityComparison(rval, lval);
+        return !StrictEqualityComparison(rval, lval);
     }
 
     /**
@@ -885,9 +880,9 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             Reference<?, ?> rref = (Reference<?, ?>) ref;
             if (rref.isPropertyReference()) {
                 thisValue = rref.getThisValue(cx);
-            } else {
+            } else if (!(rref instanceof Reference.BindingReference)) {
                 assert rref instanceof Reference.IdentifierReference;
-                Reference<EnvironmentRecord, String> idref = (Reference.IdentifierReference) rref;
+                Reference.IdentifierReference<?> idref = (Reference.IdentifierReference<?>) rref;
                 ScriptObject newThisValue = idref.getBase().withBaseObject();
                 if (newThisValue != null) {
                     thisValue = newThisValue;

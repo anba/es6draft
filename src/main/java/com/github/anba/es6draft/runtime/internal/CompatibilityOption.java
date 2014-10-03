@@ -214,7 +214,8 @@ public enum CompatibilityOption {
      * @return the options set for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return addAll(WebCompatibility(), EnumSet.range(ForEachStatement, ImplicitStrictDirective));
+        return addAll(WebCompatibility(), EnumSet.range(ForEachStatement, ImplicitStrictDirective),
+                EnumSet.of(Comprehension));
     }
 
     /**
@@ -235,8 +236,11 @@ public enum CompatibilityOption {
         return EnumSet.range(AsyncFunction, ArrayContains);
     }
 
-    private static <E extends Enum<E>> Set<E> addAll(Set<E> set, Set<E> set2) {
-        set.addAll(set2);
+    @SafeVarargs
+    private static <E extends Enum<E>> Set<E> addAll(Set<E> set, Set<E>... sets) {
+        for (Set<E> set2 : sets) {
+            set.addAll(set2);
+        }
         return set;
     }
 }

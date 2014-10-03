@@ -19,7 +19,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -108,47 +107,8 @@ public final class ArrayObject extends OrdinaryObject {
      *            the property key
      * @return {@code true} if the property key is a valid array index
      */
-    public static boolean isArrayIndex(int p) {
-        return p >= 0;
-    }
-
-    /**
-     * 9.4.2 Array Exotic Objects
-     * <p>
-     * Introductory paragraph
-     * 
-     * @param p
-     *            the property key
-     * @return {@code true} if the property key is a valid array index
-     */
-    public static boolean isArrayIndex(long p) {
-        return p >= 0 && p < 0xFFFF_FFFFL;
-    }
-
-    /**
-     * 9.4.2 Array Exotic Objects
-     * <p>
-     * Introductory paragraph
-     * 
-     * @param p
-     *            the property key
-     * @return {@code true} if the property key is a valid array index
-     */
-    public static boolean isArrayIndex(String p) {
-        return toArrayIndex(p) >= 0;
-    }
-
-    /**
-     * 9.4.2 Array Exotic Objects
-     * <p>
-     * Introductory paragraph
-     * 
-     * @param p
-     *            the property key
-     * @return the array index or {@code -1}
-     */
-    public static long toArrayIndex(String p) {
-        return Strings.toArrayIndex(p);
+    private static boolean isArrayIndex(long p) {
+        return 0 <= p && p < 0xFFFF_FFFFL;
     }
 
     private boolean isCompatibleLengthProperty(PropertyDescriptor desc, long newLength) {
@@ -235,24 +195,26 @@ public final class ArrayObject extends OrdinaryObject {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         if (isArrayIndex(propertyKey)) {
-            /* steps 3.a-3.d */
+            /* steps 3.a-3.c */
             long oldLen = this.length;
+            /* steps 3.d-3.e */
             long index = propertyKey;
-            /* steps 3.e */
+            /* steps 3.f */
             if (index >= oldLen && !lengthWritable) {
                 return false;
             }
-            /* steps 3.f-3.h */
+            /* steps 3.g-3.h */
             boolean succeeded = ordinaryDefineOwnProperty(cx, propertyKey, desc);
+            /* step 3.i */
             if (!succeeded) {
                 return false;
             }
-            /* step 3.i */
+            /* step 3.j */
             if (index >= oldLen) {
                 this.length = index + 1;
             }
             hasIndexedAccessors |= desc.isAccessorDescriptor();
-            /* step 3.j */
+            /* step 3.k */
             return true;
         }
         /* step 4 */

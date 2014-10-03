@@ -54,6 +54,7 @@ public final class UnaryExpression extends Expression {
 
     private final Operator operator;
     private final Expression operand;
+    private boolean completion = true;
 
     public UnaryExpression(long beginPosition, long endPosition, Operator operator,
             Expression operand) {
@@ -68,6 +69,16 @@ public final class UnaryExpression extends Expression {
 
     public Expression getOperand() {
         return operand;
+    }
+
+    @Override
+    public Expression emptyCompletion() {
+        completion = false;
+        return this;
+    }
+
+    public boolean hasCompletion() {
+        return completion;
     }
 
     @Override

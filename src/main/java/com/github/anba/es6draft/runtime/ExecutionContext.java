@@ -271,7 +271,7 @@ public final class ExecutionContext {
      *            the strict mode flag
      * @return the resolved reference
      */
-    public Reference<EnvironmentRecord, String> resolveBinding(String name, boolean strict) {
+    public Reference<? extends EnvironmentRecord, String> resolveBinding(String name, boolean strict) {
         /* steps 1-3 */
         return LexicalEnvironment.getIdentifierReference(lexEnv, name, strict);
     }

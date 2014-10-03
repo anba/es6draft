@@ -6,12 +6,10 @@
  */
 package com.github.anba.es6draft.ast.synthetic;
 
-import java.util.List;
-
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.IntNodeVisitor;
 import com.github.anba.es6draft.ast.NodeVisitor;
-import com.github.anba.es6draft.ast.SuperExpression;
+import com.github.anba.es6draft.ast.SuperElementAccessor;
 import com.github.anba.es6draft.ast.VoidNodeVisitor;
 
 /**
@@ -21,21 +19,9 @@ import com.github.anba.es6draft.ast.VoidNodeVisitor;
  * <li>12.3.4 The super Keyword
  * </ul>
  */
-public final class SuperExpressionValue extends SuperExpression {
-    public SuperExpressionValue(long beginPosition, long endPosition) {
-        super(beginPosition, endPosition);
-    }
-
-    public SuperExpressionValue(long beginPosition, long endPosition, String name) {
-        super(beginPosition, endPosition, name);
-    }
-
-    public SuperExpressionValue(long beginPosition, long endPosition, Expression expression) {
+public final class SuperElementAccessorValue extends SuperElementAccessor {
+    public SuperElementAccessorValue(long beginPosition, long endPosition, Expression expression) {
         super(beginPosition, endPosition, expression);
-    }
-
-    public SuperExpressionValue(long beginPosition, long endPosition, List<Expression> arguments) {
-        super(beginPosition, endPosition, arguments);
     }
 
     @Override

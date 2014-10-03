@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
@@ -76,7 +75,8 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
      * {@inheritDoc}
      */
     @Override
-    protected boolean elementHas(ExecutionContext cx, double index) {
+    protected boolean elementHas(ExecutionContext cx, long index) {
+        assert index >= 0;
         // Steps 1-6 of elementGet to support hasOwnProperty
         /* steps 1-2 (not applicable) */
         /* step 3 */
@@ -89,25 +89,16 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* steps 6-7 */
-        if (!IsInteger(index)) {
-            assert index == Double.NEGATIVE_INFINITY : "unexpected non-integer: " + index;
-            return false;
-        }
-        /* step 8 */
-        long length = getArrayLength();
-        /* step 9 */
-        if (index < 0 || index >= length) {
-            return false;
-        }
-        return true;
+        /* steps 6-9 */
+        return index < getArrayLength();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected Object elementGet(ExecutionContext cx, double index) {
+    protected Object elementGet(ExecutionContext cx, long index) {
+        assert index >= 0;
         /* steps 1-2 (not applicable) */
         /* step 3 */
         ArrayBufferObject buffer = getBuffer();
@@ -119,15 +110,8 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* steps 6-7 */
-        if (!IsInteger(index)) {
-            assert index == Double.NEGATIVE_INFINITY : "unexpected non-integer: " + index;
-            return UNDEFINED;
-        }
-        /* step 8 */
-        long length = getArrayLength();
-        /* step 9 */
-        if (index < 0 || index >= length) {
+        /* steps 6-9 */
+        if (index >= getArrayLength()) {
             return UNDEFINED;
         }
         /* step 10 */
@@ -146,7 +130,8 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
      * {@inheritDoc}
      */
     @Override
-    protected boolean elementSet(ExecutionContext cx, double index, Object value) {
+    protected boolean elementSet(ExecutionContext cx, long index, Object value) {
+        assert index >= 0;
         /* steps 1-2 (not applicable) */
         /* steps 3-4 */
         double numValue = ToNumber(cx, value);
@@ -160,15 +145,8 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* steps 8-9 */
-        if (!IsInteger(index)) {
-            assert index == Double.NEGATIVE_INFINITY : "unexpected non-integer: " + index;
-            return false;
-        }
-        /* step 10 */
-        long length = getArrayLength();
-        /* step 11 */
-        if (index < 0 || index >= length) {
+        /* steps 8-11 */
+        if (index >= getArrayLength()) {
             return false;
         }
         /* step 12 */

@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.VarScopedDeclar
 
 import java.util.List;
 
-import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.Declaration;
@@ -21,11 +20,11 @@ import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.ast.scope.Name;
-import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.assembler.Jump;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -43,8 +42,9 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
     private static final class Methods {
         // class: IllegalStateException
-        static final MethodDesc IllegalStateException_init = MethodDesc.create(MethodType.Special,
-                Types.IllegalStateException, "<init>", Type.getMethodType(Type.VOID_TYPE));
+        static final MethodDesc IllegalStateException_init = MethodDesc.create(
+                MethodDesc.Invoke.Special, Types.IllegalStateException, "<init>",
+                Type.getMethodType(Type.VOID_TYPE));
     }
 
     private static final int EXECUTION_CONTEXT = 0;
@@ -87,9 +87,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
     }
 
     private void generateExceptionThrower(ExpressionVisitor mv) {
-        mv.anew(Types.IllegalStateException);
-        mv.dup();
-        mv.invoke(Methods.IllegalStateException_init);
+        mv.anew(Types.IllegalStateException, Methods.IllegalStateException_init);
         mv.athrow();
     }
 
@@ -137,7 +135,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
 
                 hasBinding(envRec, fn, mv);
 
-                Label funcAlreadyDeclared = new Label(), after = new Label();
+                Jump funcAlreadyDeclared = new Jump(), after = new Jump();
                 mv.ifne(funcAlreadyDeclared);
                 createMutableBinding(envRec, fn, deletableBindings, mv);
                 initializeBinding(envRec, fn, fo, mv);
@@ -154,7 +152,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                 for (Name dn : BoundNames((VariableStatement) d)) {
                     hasBinding(envRec, dn, mv);
 
-                    Label varAlreadyDeclared = new Label();
+                    Jump varAlreadyDeclared = new Jump();
                     mv.ifne(varAlreadyDeclared);
                     createMutableBinding(envRec, dn, deletableBindings, mv);
                     initializeBinding(envRec, dn, undef, mv);
@@ -174,6 +172,6 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
             }
         }
 
-        mv.areturn();
+        mv._return();
     }
 }

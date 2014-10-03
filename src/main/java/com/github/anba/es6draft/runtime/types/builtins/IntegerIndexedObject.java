@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CanonicalNumericIndexString;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsInteger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,8 +36,8 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
         super(realm);
     }
 
-    private static boolean isCanonicalNumericIndex(double numericIndex) {
-        return !Double.isNaN(numericIndex);
+    private static boolean isCanonicalNumericIndex(long numericIndex) {
+        return numericIndex >= 0;
     }
 
     /** [[HasOwnProperty]] (P) */
@@ -52,7 +51,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     protected final boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
-        double numericIndex = CanonicalNumericIndexString(propertyKey);
+        long numericIndex = CanonicalNumericIndexString(propertyKey);
         if (isCanonicalNumericIndex(numericIndex)) {
             return elementHas(cx, numericIndex);
         }
@@ -75,7 +74,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     protected final Property getProperty(ExecutionContext cx, String propertyKey) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
-        double numericIndex = CanonicalNumericIndexString(propertyKey);
+        long numericIndex = CanonicalNumericIndexString(propertyKey);
         if (isCanonicalNumericIndex(numericIndex)) {
             Object value = elementGet(cx, numericIndex);
             if (Type.isUndefined(value)) {
@@ -91,7 +90,33 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     @Override
     protected final boolean defineProperty(ExecutionContext cx, long propertyKey,
             PropertyDescriptor desc) {
-        return defineProperty(cx, (double) propertyKey, desc);
+        /* steps 3.c.i-3.c.vii */
+        if (propertyKey >= getLength(cx)) {
+            return false;
+        }
+        /* step 3.c.viii */
+        if (desc.isAccessorDescriptor()) {
+            return false;
+        }
+        /* step 3.c.ix */
+        if (desc.hasConfigurable() && desc.isConfigurable()) {
+            return false;
+        }
+        /* step 3.c.x */
+        if (desc.hasEnumerable() && !desc.isEnumerable()) {
+            return false;
+        }
+        /* step 3.c.xi */
+        if (desc.hasWritable() && !desc.isWritable()) {
+            return false;
+        }
+        /* step 3.c.xii */
+        if (desc.hasValue()) {
+            Object value = desc.getValue();
+            elementSet(cx, propertyKey, value);
+        }
+        /* step 3.c.xiii */
+        return true;
     }
 
     /** 9.4.5.2 [[DefineOwnProperty]] (P, Desc) */
@@ -100,7 +125,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
             PropertyDescriptor desc) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
-        double numericIndex = CanonicalNumericIndexString(propertyKey);
+        long numericIndex = CanonicalNumericIndexString(propertyKey);
         if (isCanonicalNumericIndex(numericIndex)) {
             return defineProperty(cx, numericIndex, desc);
         }
@@ -108,55 +133,16 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
         return ordinaryDefineOwnProperty(cx, propertyKey, desc);
     }
 
-    private boolean defineProperty(ExecutionContext cx, double numericIndex, PropertyDescriptor desc) {
-        // Moved fallible getLength(cx) to top to perform initialization check
-        /* step 3.c.v */
-        long length = getLength(cx);
-        /* step 3.c.i, 3.c.iii */
-        if (!IsInteger(numericIndex)) {
-            assert numericIndex == Double.NEGATIVE_INFINITY : "unexpected non-integer: "
-                    + numericIndex;
-            return false;
-        }
-        /* step 3.c.ii */
-        double intIndex = numericIndex;
-        /* step 3.c.iv */
-        if (intIndex < 0) {
-            return false;
-        }
-        /* step 3.c.vi */
-        if (intIndex >= length) {
-            return false;
-        }
-        /* step 3.c.vii */
-        if (desc.isAccessorDescriptor()) {
-            return false;
-        }
-        /* step 3.c.viii */
-        if (desc.hasConfigurable() && desc.isConfigurable()) {
-            return false;
-        }
-        /* step 3.c.ix */
-        if (desc.hasEnumerable() && !desc.isEnumerable()) {
-            return false;
-        }
-        /* step 3.c.x */
-        if (desc.hasWritable() && !desc.isWritable()) {
-            return false;
-        }
-        /* step 3.c.xi */
-        if (desc.hasValue()) {
-            Object value = desc.getValue();
-            elementSet(cx, intIndex, value);
-        }
-        /* step 3.c.xii */
-        return true;
-    }
-
     /** 9.4.5.3 [[Get]] (P, Receiver) */
     @Override
     protected final Object getValue(ExecutionContext cx, long propertyKey, Object receiver) {
-        return elementGet(cx, propertyKey);
+        /* step 1 (not applicable) */
+        /* step 2 */
+        if (this == receiver) { // SameValue(this, receiver)
+            return elementGet(cx, propertyKey);
+        }
+        /* step 3 */
+        return super.getValue(cx, propertyKey, receiver);
     }
 
     /** 9.4.5.3 [[Get]] (P, Receiver) */
@@ -165,7 +151,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
         /* step 1 (not applicable) */
         /* step 2 */
         if (this == receiver) { // SameValue(this, receiver)
-            double numericIndex = CanonicalNumericIndexString(propertyKey);
+            long numericIndex = CanonicalNumericIndexString(propertyKey);
             if (isCanonicalNumericIndex(numericIndex)) {
                 return elementGet(cx, numericIndex);
             }
@@ -178,7 +164,13 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     @Override
     protected final boolean setValue(ExecutionContext cx, long propertyKey, Object value,
             Object receiver) {
-        return elementSet(cx, propertyKey, value);
+        /* step 1 (not applicable) */
+        /* step 2 */
+        if (this == receiver) { // SameValue(this, receiver)
+            return elementSet(cx, propertyKey, value);
+        }
+        /* step 3 */
+        return super.setValue(cx, propertyKey, value, receiver);
     }
 
     /** 9.4.5.4 [[Set]] (P, V, Receiver) */
@@ -188,7 +180,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
         /* step 1 (not applicable) */
         /* step 2 */
         if (this == receiver) { // SameValue(this, receiver)
-            double numericIndex = CanonicalNumericIndexString(propertyKey);
+            long numericIndex = CanonicalNumericIndexString(propertyKey);
             if (isCanonicalNumericIndex(numericIndex)) {
                 return elementSet(cx, numericIndex, value);
             }
@@ -237,11 +229,10 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     }
 
     @Override
-    protected final boolean isEnumerableOwnProperty(String propertyKey) {
-        double numericIndex = CanonicalNumericIndexString(propertyKey);
+    protected final Enumerability isEnumerableOwnProperty(String propertyKey) {
+        long numericIndex = CanonicalNumericIndexString(propertyKey);
         if (isCanonicalNumericIndex(numericIndex)) {
-            long length = getLength();
-            return 0 <= numericIndex && numericIndex < length;
+            return Enumerability.isEnumerable(numericIndex < getLength());
         }
         return super.isEnumerableOwnProperty(propertyKey);
     }
@@ -300,7 +291,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
      *            the integer index
      * @return {@code true} if the element is present
      */
-    protected abstract boolean elementHas(ExecutionContext cx, double index);
+    protected abstract boolean elementHas(ExecutionContext cx, long index);
 
     /**
      * 9.4.5.8 IntegerIndexedElementGet (O, index) Abstract Operation
@@ -311,7 +302,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
      *            the integer index
      * @return the element value
      */
-    protected abstract Object elementGet(ExecutionContext cx, double index);
+    protected abstract Object elementGet(ExecutionContext cx, long index);
 
     /**
      * 9.4.5.9 IntegerIndexedElementSet (O, index, value) Abstract Operation
@@ -324,5 +315,5 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
      *            the new element value
      * @return {@code true} on success
      */
-    protected abstract boolean elementSet(ExecutionContext cx, double index, Object value);
+    protected abstract boolean elementSet(ExecutionContext cx, long index, Object value);
 }

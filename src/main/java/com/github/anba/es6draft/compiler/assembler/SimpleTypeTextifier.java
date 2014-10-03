@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.compiler;
+package com.github.anba.es6draft.compiler.assembler;
 
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;

@@ -25,9 +25,9 @@ public @interface Concurrency {
     int threads() default -1;
 
     /**
-     * Multiplicator for {@link #threads()}, defaults to {@code 2}.
+     * Multiplicator for {@link #threads()}, defaults to {@code 1.5}.
      * 
      * @return thread multiplicator
      */
-    int factor() default 2;
+    float factor() default 1.5f;
 }

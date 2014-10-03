@@ -390,14 +390,14 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * Updates the method name and home object fields.
+     * Sets the method name and home object fields.
      * 
      * @param methodName
      *            the method name
      * @param homeObject
      *            the home object
      */
-    public final void updateMethod(Object methodName, ScriptObject homeObject) {
+    public final void toMethod(Object methodName, OrdinaryObject homeObject) {
         assert isInitialized() : "uninitialized function object";
         assert needsSuper : "function object not method";
         assert methodName != null && homeObject != null;

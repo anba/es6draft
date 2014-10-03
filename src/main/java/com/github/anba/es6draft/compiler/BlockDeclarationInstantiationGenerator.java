@@ -17,7 +17,7 @@ import com.github.anba.es6draft.ast.BlockStatement;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.SwitchStatement;
 import com.github.anba.es6draft.ast.scope.Name;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 

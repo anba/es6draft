@@ -49,9 +49,6 @@ ecma_6/Symbol/as-base-value.js
 # @@toPrimitive not supported in SM
 ecma_6/Symbol/conversions.js
 
-# Realm API not supported in SM
-ecma_6/Symbol/realms.js
-
 # lib/asserts.js: assertDeepEq() considers `{a: 1, b: 2}` and `{b: 2, a: 1}` as different objects...
 ecma_6/Symbol/property-basics.js
 ecma_6/Symbol/property-reflection.js
@@ -61,6 +58,10 @@ ecma_6/Class/compPropNames.js
 
 # yield* no longer performs complete error recovery
 ecma_6/Generators/iteration.js
+
+# ES6 spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3215)
+ecma_6/Object/freeze-proxy.js
+ecma_6/Object/seal-proxy.js
 
 
 ####################################
@@ -115,7 +116,6 @@ js1_5/Scope/regress-185485.js
 
 # destructuring difference
 js1_7/expressions/destructuring-scope.js
-js1_7/extensions/regress-368224.js
 
 # Java-Pattern vs ECMAScript-RegExp issues
 ecma_3/RegExp/15.10.2-1.js
@@ -165,15 +165,11 @@ ecma_5/String/string-upper-lower-mapping.js
 
 # different function source representation
 ecma_5/extensions/strict-function-toSource.js
-ecma_5/extensions/uneval-strict-functions.js
-js1_5/extensions/regress-313803.js
-js1_7/extensions/regress-367629.js
-js1_7/extensions/regress-381301.js
 js1_8/extensions/regress-385729.js
-js1_8_5/regress/regress-584355.js
 
 # SpiderMonkey __proto__ not own property on Object.prototype
 ecma_5/extensions/getOwnPropertyNames-__proto__.js
+ecma_6/Expressions/object-literal-__proto__.js
 
 # old 'Proxy' design prototype restriction
 ecma_5/extensions/proxy-__proto__.js
@@ -187,12 +183,8 @@ js1_8_5/extensions/scripted-proxies.js
 # Date parser
 ecma/Date/15.9.4.2.js
 ecma/Date/15.9.4.2-1.js
-ecma/Date/15.9.5.2.js
-ecma/Date/15.9.5.2-1.js
 ecma_3/Date/15.9.3.2-1.js
 ecma_3/Date/15.9.5.3.js
-ecma_3/Date/15.9.5.5-02.js
-ecma_3/Date/15.9.5.5.js
 ecma_3/Date/15.9.5.6.js
 ecma_3/Date/15.9.5.7.js
 ecma_5/Date/15.9.4.2.js
@@ -220,13 +212,10 @@ ecma_3/extensions/regress-274152.js
 ecma_3/LexicalConventions/7.8.3-01.js
 ecma_3/LexicalConventions/7.9.1.js
 ecma_3/RegExp/15.10.4.1-6.js
-ecma_3/RegExp/regress-375711.js
-ecma_3/RegExp/regress-375715-04.js
 ecma_3/Unicode/regress-352044-01.js
 ecma_3_1/Object/regress-444787.js
 ecma_5/Function/builtin-no-construct.js
 ecma_5/misc/new-with-non-constructor.js
-js1_5/Exceptions/regress-332472.js
 js1_5/extensions/regress-352372.js
 js1_5/LexicalConventions/regress-469940.js
 js1_5/Regress/regress-328664.js
@@ -248,7 +237,6 @@ js1_7/extensions/regress-355052-03.js
 js1_7/geniter/regress-345855.js
 js1_7/geniter/regress-349012-05.js
 js1_7/geniter/regress-351120.js
-js1_7/geniter/regress-392310.js
 js1_7/regress/regress-352870-02.js
 js1_7/regress/regress-363040-01.js
 js1_8/extensions/regress-353116.js
@@ -275,9 +263,6 @@ ecma_3/String/regress-392378.js
 ecma_3_1/RegExp/regress-305064.js
 js1_8_1/String/regress-305064.js
 
-# browser-only
-js1_5/Regress/regress-259935.js
-
 # SpiderMonkey restriction test
 js1_8_5/regress/regress-610026.js
 js1_8_5/regress/regress-665355.js
@@ -291,7 +276,6 @@ js1_7/geniter/regress-366941.js
 js1_7/iterable/regress-568056.js
 
 # Proxy implementation in SpiderMonkey is incomplete
-ecma_5/extensions/proxy-array-target-length-definition.js
 js1_8_5/extensions/mutable-proto-special-form.js
 
 # Various issues, see modified reflect-parse.js file
@@ -303,11 +287,7 @@ ecma_6/Comprehensions/scope.js
 # SpiderMonkey does not support 'yield' as identifier in generator comprehensions
 ecma_6/Comprehensions/error-messages.js
 
-# SpiderMonkey sets RegExp.$n to undefined instead of "" when capturing group n is empty
-ecma_3/extensions/regress-220367-002.js
-
 # legacy .caller and .arguments are implemented as accessors on Function.prototype in SM
-ecma_5/extensions/builtin-function-arguments-caller.js
 ecma_5/extensions/function-caller-strict-cross-global.js
 
 
@@ -355,13 +335,8 @@ ecma_5/strict/function-name.js
 
 # No implicit ToObject() in destructuring
 ecma_5/extensions/destructuring-for-inof-__proto__.js
-js1_5/extensions/regress-469625.js
 js1_7/extensions/regress-355410.js
 js1_8_1/extensions/regress-477158.js
-
-# array destructuring on object without @@iterator
-js1_7/extensions/regress-351102-03.js
-js1_8_5/regress/regress-646820-3.js
 
 # String.prototype.split changed to use ToLength instead of ToUint32
 ecma_2/String/split-002.js
@@ -375,10 +350,6 @@ js1_4/Regress/date-001-n.js
 # Generator.prototype.return
 ecma_6/Generators/runtime.js
 
-# ToNumber(symbol) throws TypeError
-ecma_6/Symbol/comparisons.js
-ecma_6/Symbol/typed-arrays.js
-
 
 #######################################
 # ES6 related syntax changes          #
@@ -386,11 +357,6 @@ ecma_6/Symbol/typed-arrays.js
 
 # ES6: const not in object-env of global
 js1_5/extensions/scope-001.js
-
-# ES6: let-var temporary dead zone
-js1_7/block/order-of-operation.js
-js1_7/block/regress-411279.js
-js1_8_1/regress/regress-452498-103.js
 
 # const is block-scoped
 js1_7/block/regress-349507.js
@@ -410,11 +376,6 @@ ecma_5/extensions/strict-function-statements.js
 
 # ES6-change: block-scoped function declaration
 ecma_3/Function/scope-001.js
-js1_8_5/regress/regress-554955-5.js
-js1_8_5/regress/regress-602621.js
-
-# ES6: duplicate formal-parameter + lexical declaration
-js1_8_1/extensions/regress-353214-02.js
 
 # ES6-change: for-in no longer accepts initializer in VarDeclaration
 js1_5/extensions/regress-226078.js
@@ -450,14 +411,8 @@ js1_8_1/regress/regress-452498-192.js
 # FunctionDeclaration directly nested in Statement not allowed
 ecma_3/FunExpr/fe-001.js
 ecma_5/extensions/function-definition-with.js
-js1_5/extensions/regress-406572.js
 js1_5/Regress/regress-326453.js
-js1_7/block/regress-357754.js
 js1_8/regress/regress-384758.js
-js1_8/regress/regress-467495-03.js
-js1_8/regress/regress-467495-04.js
-js1_8/regress/regress-467495-05.js
-js1_8/regress/regress-467495-06.js
 
 # Declaration directly nested in Statement not allowed
 js1_8_1/regress/regress-452498-102.js
@@ -472,12 +427,6 @@ js1_8_5/regress/regress-383902.js
 
 # script code, but not global scope(!), eval() does not add lexical declarations to global object
 js1_5/Regress/regress-103602.js
-
-# object initializer shorthand not supported in SpiderMonkey
-js1_8_5/extensions/regress-696109.js
-
-# Duplicate property definitions in object literal are allowed
-ecma_5/strict/11.1.5.js
 
 
 ############################################
@@ -542,6 +491,12 @@ js1_8_5/regress/regress-636394.js
 # Error.prototype.columnNumber
 ecma/extensions/errorcolumnblame.js
 
+# SharedArrayBuffer object
+js1_8_5/extensions/sharedtypedarray.js
+
+# Debugger API
+js1_8_5/regress/regress-698028-2.js
+
 
 #######################################
 # Unsupported shell functions         #
@@ -585,9 +540,6 @@ js1_8_5/extensions/file-mapped-arraybuffers.js
 # Legacy generator issues             #
 #######################################
 
-# legacy generator syntax in setter
-js1_7/extensions/regress-346642-06.js
-
 # legacy generator syntax in Function()
 js1_7/geniter/regress-355834.js
 
@@ -607,7 +559,6 @@ js1_8/regress/regress-384412.js
 
 # for-in executes close()
 js1_8/genexps/regress-347739.js
-js1_8/genexps/regress-349012-01.js
 js1_8/genexps/regress-349326.js
 
 
@@ -655,9 +606,6 @@ js1_5/Regress/regress-366601.js
 js1_5/Regress/regress-367561-01.js
 js1_5/Regress/regress-367561-03.js
 
-# StackOverflow (regular expression engine)
-js1_2/regexp/regress-9141.js
-
 # StackOverflow (CodeAnalyzer recursion)
 js1_5/Expressions/regress-394673.js
 js1_5/Regress/regress-98901.js
@@ -695,8 +643,8 @@ js1_8_5/regress/no-array-comprehension-length-limit.js
 # Timeout
 ecma_5/Array/unshift-01.js
 ecma_5/JSON/parse-mega-huge-array.js
-js1_5/Array/regress-330812.js
 js1_5/Array/regress-157652.js
+js1_5/Array/regress-330812.js
 js1_5/Function/regress-364023.js
 js1_5/Regress/regress-244470.js
 js1_5/Regress/regress-303213.js

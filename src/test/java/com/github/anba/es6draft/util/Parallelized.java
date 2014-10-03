@@ -57,15 +57,26 @@ public class Parallelized extends Parameterized {
 
     protected int numberOfThreads(Class<?> klass) {
         Concurrency concurrency = klass.getAnnotation(Concurrency.class);
-        int threads, factor;
+        int threads;
+        float factor;
         if (concurrency != null) {
-            threads = Math.max(concurrency.threads() < 0 ? Runtime.getRuntime()
-                    .availableProcessors() : concurrency.threads(), 1);
-            factor = Math.max(concurrency.factor(), 1);
+            threads = concurrency.threads();
+            factor = concurrency.factor();
         } else {
-            threads = Runtime.getRuntime().availableProcessors();
-            factor = 2;
+            threads = getDefaultValue(Concurrency.class, "threads", Integer.class);
+            factor = getDefaultValue(Concurrency.class, "factor", Float.class);
         }
-        return threads * factor;
+        threads = threads > 0 ? threads : Runtime.getRuntime().availableProcessors();
+        factor = Math.max(factor, 0);
+        return Math.max((int) Math.round(threads * factor), 1);
+    }
+
+    private static <T> T getDefaultValue(Class<?> annotation, String methodName, Class<T> valueType) {
+        assert annotation.isAnnotation();
+        try {
+            return valueType.cast(annotation.getMethod(methodName).getDefaultValue());
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

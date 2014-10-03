@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
@@ -22,11 +21,11 @@ import com.github.anba.es6draft.ast.NumericLiteral;
 import com.github.anba.es6draft.ast.StringLiteral;
 import com.github.anba.es6draft.ast.SwitchClause;
 import com.github.anba.es6draft.ast.SwitchStatement;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
-import com.github.anba.es6draft.compiler.JumpLabel.BreakLabel;
+import com.github.anba.es6draft.compiler.JumpLabels.BreakLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
+import com.github.anba.es6draft.compiler.assembler.Jump;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
@@ -38,28 +37,32 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 final class SwitchStatementGenerator extends
         DefaultCodeGenerator<StatementGenerator.Completion, StatementVisitor> {
     private static final class Methods {
+        // class: AbstractOperations
+        static final MethodDesc AbstractOperations_StrictEqualityComparison = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "StrictEqualityComparison",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object));
+
         // class: CharSequence
-        static final MethodDesc CharSequence_charAt = MethodDesc.create(MethodType.Interface,
-                Types.CharSequence, "charAt", Type.getMethodType(Type.CHAR_TYPE, Type.INT_TYPE));
-        static final MethodDesc CharSequence_length = MethodDesc.create(MethodType.Interface,
-                Types.CharSequence, "length", Type.getMethodType(Type.INT_TYPE));
-        static final MethodDesc CharSequence_toString = MethodDesc.create(MethodType.Interface,
-                Types.CharSequence, "toString", Type.getMethodType(Types.String));
+        static final MethodDesc CharSequence_charAt = MethodDesc.create(
+                MethodDesc.Invoke.Interface, Types.CharSequence, "charAt",
+                Type.getMethodType(Type.CHAR_TYPE, Type.INT_TYPE));
+        static final MethodDesc CharSequence_length = MethodDesc.create(
+                MethodDesc.Invoke.Interface, Types.CharSequence, "length",
+                Type.getMethodType(Type.INT_TYPE));
+        static final MethodDesc CharSequence_toString = MethodDesc.create(
+                MethodDesc.Invoke.Interface, Types.CharSequence, "toString",
+                Type.getMethodType(Types.String));
 
         // class: Number
-        static final MethodDesc Number_doubleValue = MethodDesc.create(MethodType.Virtual,
-                Types.Number, "doubleValue", Type.getMethodType(Type.DOUBLE_TYPE));
+        static final MethodDesc Number_doubleValue = MethodDesc.create(
+                MethodDesc.Invoke.Virtual, Types.Number, "doubleValue",
+                Type.getMethodType(Type.DOUBLE_TYPE));
 
         // class: String
-        static final MethodDesc String_equals = MethodDesc.create(MethodType.Virtual, Types.String,
-                "equals", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
-        static final MethodDesc String_hashCode = MethodDesc.create(MethodType.Virtual,
+        static final MethodDesc String_equals = MethodDesc.create(MethodDesc.Invoke.Virtual,
+                Types.String, "equals", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
+        static final MethodDesc String_hashCode = MethodDesc.create(MethodDesc.Invoke.Virtual,
                 Types.String, "hashCode", Type.getMethodType(Type.INT_TYPE));
-
-        // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_strictEqualityComparison = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "strictEqualityComparison",
-                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object));
     }
 
     private enum SwitchType {
@@ -172,10 +175,11 @@ final class SwitchStatementGenerator extends
             defaultOrReturn = true;
         }
 
+        final boolean defaultClausePresent = hasDefaultClause(node);
         if (defaultOrReturn) {
             // never true -> emit default switch or return
             mv.pop(switchValueType);
-            if (hasDefaultClause(node)) {
+            if (defaultClausePresent) {
                 type = SwitchType.Default;
             } else {
                 return Completion.Normal;
@@ -198,23 +202,27 @@ final class SwitchStatementGenerator extends
             pushLexicalEnvironment(mv);
         }
 
+        Jump lblExit = new Jump();
         BreakLabel lblBreak = new BreakLabel();
         mv.enterScope(node);
-        Completion result = CaseBlockEvaluation(node, type, lblBreak, switchValue, mv);
+        mv.enterBreakable(node, lblBreak);
+        Completion result = CaseBlockEvaluation(node, type, lblExit, switchValue, mv);
+        mv.exitBreakable(node);
         mv.exitScope();
 
+        if (!defaultClausePresent) {
+            mv.mark(lblExit);
+        }
         if (hasDeclarations && !result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
-        if (lblBreak.isUsed() || !hasDefaultClause(node)) {
+        if (lblBreak.isTarget()) {
             mv.mark(lblBreak);
-        }
-        if (lblBreak.isUsed()) {
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
         mv.exitVariableScope();
 
-        return result;
+        return result.normal(lblBreak.isTarget());
     }
 
     /**
@@ -224,21 +232,21 @@ final class SwitchStatementGenerator extends
      *            the switch statement
      * @param type
      *            the switch statement type
-     * @param lblBreak
-     *            the break label
+     * @param lblExit
+     *            the exit label
      * @param switchValue
      *            the variable which holds the switch value
      * @param mv
      *            the statement visitor
      * @return the completion value
      */
-    private Completion CaseBlockEvaluation(SwitchStatement node, SwitchType type,
-            BreakLabel lblBreak, Variable<?> switchValue, StatementVisitor mv) {
+    private Completion CaseBlockEvaluation(SwitchStatement node, SwitchType type, Jump lblExit,
+            Variable<?> switchValue, StatementVisitor mv) {
         List<SwitchClause> clauses = node.getClauses();
-        Label lblDefault = null;
-        Label[] labels = new Label[clauses.size()];
+        Jump lblDefault = null;
+        Jump[] labels = new Jump[clauses.size()];
         for (int i = 0, size = clauses.size(); i < size; ++i) {
-            labels[i] = new Label();
+            labels[i] = new Jump();
             if (clauses.get(i).isDefaultClause()) {
                 assert lblDefault == null;
                 lblDefault = labels[i];
@@ -246,20 +254,19 @@ final class SwitchStatementGenerator extends
         }
 
         if (type == SwitchType.Int) {
-            emitIntSwitch(clauses, labels, lblDefault, lblBreak, switchValue, mv);
+            emitIntSwitch(clauses, labels, lblDefault, lblExit, switchValue, mv);
         } else if (type == SwitchType.Char) {
-            emitCharSwitch(clauses, labels, lblDefault, lblBreak, switchValue, mv);
+            emitCharSwitch(clauses, labels, lblDefault, lblExit, switchValue, mv);
         } else if (type == SwitchType.String) {
-            emitStringSwitch(clauses, labels, lblDefault, lblBreak, switchValue, mv);
+            emitStringSwitch(clauses, labels, lblDefault, lblExit, switchValue, mv);
         } else if (type == SwitchType.Generic) {
-            emitGenericSwitch(clauses, labels, lblDefault, lblBreak, switchValue, mv);
+            emitGenericSwitch(clauses, labels, lblDefault, lblExit, switchValue, mv);
         } else {
             assert type == SwitchType.Default;
-            emitDefaultSwitch(clauses, labels, lblDefault, lblBreak, switchValue, mv);
+            emitDefaultSwitch(clauses, labels, lblDefault, lblExit, switchValue, mv);
         }
 
         Completion result = Completion.Normal, lastResult = Completion.Normal;
-        mv.enterBreakable(node, lblBreak);
         if (type == SwitchType.Default) {
             Iterator<SwitchClause> iter = clauses.iterator();
             // skip leading clauses until default clause found
@@ -287,9 +294,8 @@ final class SwitchStatementGenerator extends
                 lastResult = innerResult;
             }
         }
-        mv.exitBreakable(node);
 
-        return result.normal(lblBreak.isUsed() || lblDefault == null || !lastResult.isAbrupt());
+        return result.normal(lblDefault == null || !lastResult.isAbrupt());
     }
 
     private static boolean hasDefaultClause(SwitchStatement node) {
@@ -320,15 +326,15 @@ final class SwitchStatementGenerator extends
      *            the labels for each switch clause
      * @param defaultClause
      *            the label for the default clause
-     * @param lblBreak
-     *            the break label
+     * @param lblExit
+     *            the exit label
      * @param switchValue
      *            the variable which holds the switch value
      * @param mv
      *            the statement visitor
      */
-    private void emitDefaultSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
-            Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
+    private void emitDefaultSwitch(List<SwitchClause> clauses, Jump[] labels, Jump defaultClause,
+            Jump lblExit, Variable<?> switchValue, StatementVisitor mv) {
         assert switchValue == null;
         // directly jump to default clause; since switch clauses before default clause are not
         // emitted, jump instruction can be elided as well, so we directly fall into the
@@ -358,26 +364,26 @@ final class SwitchStatementGenerator extends
      *            the labels for each switch clause
      * @param defaultClause
      *            the label for the default clause
-     * @param lblBreak
-     *            the break label
+     * @param lblExit
+     *            the exit label
      * @param switchValue
      *            the variable which holds the switch value
      * @param mv
      *            the statement visitor
      */
-    private void emitGenericSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
-            Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
+    private void emitGenericSwitch(List<SwitchClause> clauses, Jump[] labels, Jump defaultClause,
+            Jump lblExit, Variable<?> switchValue, StatementVisitor mv) {
         assert switchValue.getType().equals(Types.Object);
-        Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
+        Jump switchDefault = defaultClause != null ? defaultClause : lblExit;
 
         int index = 0;
         for (SwitchClause switchClause : clauses) {
-            Label caseLabel = labels[index++];
+            Jump caseLabel = labels[index++];
             Expression expr = switchClause.getExpression();
             if (expr != null) {
                 mv.load(switchValue);
                 expressionBoxedValue(expr, mv);
-                mv.invoke(Methods.ScriptRuntime_strictEqualityComparison);
+                mv.invoke(Methods.AbstractOperations_StrictEqualityComparison);
                 mv.ifne(caseLabel);
             }
         }
@@ -411,16 +417,16 @@ final class SwitchStatementGenerator extends
      *            the labels for each switch clause
      * @param defaultClause
      *            the label for the default clause
-     * @param lblBreak
-     *            the break label
+     * @param lblExit
+     *            the exit label
      * @param switchValue
      *            the variable which holds the switch value
      * @param mv
      *            the statement visitor
      */
-    private void emitStringSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
-            Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
-        Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
+    private void emitStringSwitch(List<SwitchClause> clauses, Jump[] labels, Jump defaultClause,
+            Jump lblExit, Variable<?> switchValue, StatementVisitor mv) {
+        Jump switchDefault = defaultClause != null ? defaultClause : lblExit;
         mv.enterVariableScope();
         Variable<String> switchValueString = mv.newVariable("switchValueString", String.class);
         if (switchValue.getType().equals(Types.CharSequence)) {
@@ -447,12 +453,12 @@ final class SwitchStatementGenerator extends
 
         long[] entries = stringSwitchEntries(clauses, defaultClause != null);
         int distinctValues = distinctValues(entries);
-        Label[] switchLabels = new Label[distinctValues];
+        Jump[] switchLabels = new Jump[distinctValues];
         int[] switchKeys = new int[distinctValues];
         for (int i = 0, j = 0, lastValue = 0, length = entries.length; i < length; ++i) {
             int value = Value(entries[i]);
             if (i == 0 || value != lastValue) {
-                switchLabels[j] = new Label();
+                switchLabels[j] = new Jump();
                 switchKeys[j] = value;
                 j += 1;
             }
@@ -509,16 +515,16 @@ final class SwitchStatementGenerator extends
      *            the labels for each switch clause
      * @param defaultClause
      *            the label for the default clause
-     * @param lblBreak
-     *            the break label
+     * @param lblExit
+     *            the exit label
      * @param switchValue
      *            the variable which holds the switch value
      * @param mv
      *            the statement visitor
      */
-    private void emitCharSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
-            Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
-        Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
+    private void emitCharSwitch(List<SwitchClause> clauses, Jump[] labels, Jump defaultClause,
+            Jump lblExit, Variable<?> switchValue, StatementVisitor mv) {
+        Jump switchDefault = defaultClause != null ? defaultClause : lblExit;
         if (switchValue.getType().equals(Types.CharSequence)) {
             // test for char: value is character (string with only one character)
             mv.load(switchValue);
@@ -529,7 +535,7 @@ final class SwitchStatementGenerator extends
             mv.load(switchValue);
             mv.iconst(0);
             mv.invoke(Methods.CharSequence_charAt);
-            mv.cast(Type.CHAR_TYPE, Type.INT_TYPE);
+            // mv.cast(Type.CHAR_TYPE, Type.INT_TYPE);
         } else {
             assert switchValue.getType().equals(Types.Object);
 
@@ -553,7 +559,7 @@ final class SwitchStatementGenerator extends
             mv.load(switchValueChar);
             mv.iconst(0);
             mv.invoke(Methods.CharSequence_charAt);
-            mv.cast(Type.CHAR_TYPE, Type.INT_TYPE);
+            // mv.cast(Type.CHAR_TYPE, Type.INT_TYPE);
             mv.exitVariableScope();
         }
 
@@ -588,40 +594,40 @@ final class SwitchStatementGenerator extends
      *            the labels for each switch clause
      * @param defaultClause
      *            the label for the default clause
-     * @param lblBreak
-     *            the break label
+     * @param lblExit
+     *            the exit label
      * @param switchValue
      *            the variable which holds the switch value
      * @param mv
      *            the statement visitor
      */
-    private void emitIntSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
-            Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
-        Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
+    private void emitIntSwitch(List<SwitchClause> clauses, Jump[] labels, Jump defaultClause,
+            Jump lblExit, Variable<?> switchValue, StatementVisitor mv) {
+        Jump switchDefault = defaultClause != null ? defaultClause : lblExit;
         if (switchValue.getType().equals(Type.INT_TYPE)) {
             mv.load(switchValue);
         } else if (switchValue.getType().equals(Type.LONG_TYPE)) {
             // test for int: value is integer
             mv.load(switchValue);
             mv.dup2();
-            mv.cast(Type.LONG_TYPE, Type.INT_TYPE);
-            mv.cast(Type.INT_TYPE, Type.LONG_TYPE);
+            mv.l2i();
+            mv.i2l();
             mv.lcmp();
             mv.ifne(switchDefault);
 
             mv.load(switchValue);
-            mv.cast(Type.LONG_TYPE, Type.INT_TYPE);
+            mv.l2i();
         } else if (switchValue.getType().equals(Type.DOUBLE_TYPE)) {
             // test for int: value is integer
             mv.load(switchValue);
             mv.dup2();
-            mv.cast(Type.DOUBLE_TYPE, Type.INT_TYPE);
-            mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
-            mv.cmpl(Type.DOUBLE_TYPE);
+            mv.d2i();
+            mv.i2d();
+            mv.dcmpl();
             mv.ifne(switchDefault);
 
             mv.load(switchValue);
-            mv.cast(Type.DOUBLE_TYPE, Type.INT_TYPE);
+            mv.d2i();
         } else {
             assert switchValue.getType().equals(Types.Object);
 
@@ -639,13 +645,13 @@ final class SwitchStatementGenerator extends
             mv.dup2();
             mv.dup2();
             mv.store(switchValueNum);
-            mv.cast(Type.DOUBLE_TYPE, Type.INT_TYPE);
-            mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
-            mv.cmpl(Type.DOUBLE_TYPE);
+            mv.d2i();
+            mv.i2d();
+            mv.dcmpl();
             mv.ifne(switchDefault);
 
             mv.load(switchValueNum);
-            mv.cast(Type.DOUBLE_TYPE, Type.INT_TYPE);
+            mv.d2i();
             mv.exitVariableScope();
         }
 
@@ -666,7 +672,7 @@ final class SwitchStatementGenerator extends
      * @param mv
      *            the statement visitor
      */
-    private static void switchInstruction(Label switchDefault, Label[] labels, long[] entries,
+    private static void switchInstruction(Jump switchDefault, Jump[] labels, long[] entries,
             StatementVisitor mv) {
         int entriesLength = entries.length;
         int distinctValues = distinctValues(entries);
@@ -676,7 +682,7 @@ final class SwitchStatementGenerator extends
         float density = (float) distinctValues / range;
         if (range > 0 && (range <= 5 || density >= 0.5f)) {
             // System.out.printf("tableswitch [%d: %d - %d]\n", entriesLength, minValue, maxValue);
-            Label[] switchLabels = new Label[range];
+            Jump[] switchLabels = new Jump[range];
             Arrays.fill(switchLabels, switchDefault);
             for (int i = 0, lastValue = 0; i < entriesLength; ++i) {
                 int value = Value(entries[i]);
@@ -689,7 +695,7 @@ final class SwitchStatementGenerator extends
             mv.tableswitch(minValue, maxValue, switchDefault, switchLabels);
         } else {
             // System.out.printf("lookupswitch [%d: %d - %d]\n", entriesLength, minValue, maxValue);
-            Label[] switchLabels = new Label[distinctValues];
+            Jump[] switchLabels = new Jump[distinctValues];
             int[] switchKeys = new int[distinctValues];
             for (int i = 0, j = 0, lastValue = 0; i < entriesLength; ++i) {
                 int value = Value(entries[i]);

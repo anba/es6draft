@@ -20,13 +20,9 @@ import com.github.anba.es6draft.ast.TopLevelNode;
  */
 abstract class SubMethod<NODE extends Node> {
     protected static final int MAX_SIZE = 32768;
-
     protected static final int MAX_STATEMENT_SIZE = 8192;
     protected static final int MAX_EXPR_SIZE = 1024;
-
     protected static final int STMT_METHOD_SIZE = 15;
-    protected static final int SPREAD_METHOD_SIZE = 10;
-    protected static final int PROPDEF_METHOD_SIZE = 10;
     protected static final int EXPR_METHOD_SIZE = 5;
 
     protected SubMethod() {

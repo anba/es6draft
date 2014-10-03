@@ -53,11 +53,6 @@ fast/regex/toString.js
 # - SpiderMonkey treats both the same, JSC/V8 treat .compile(undefined) as .compile('undefined')
 regexp-compile.js
 
-# RegExp range
-# - var regexp01c = /[1-\s35]+/
-# - Not allowed in SpiderMonkey, allowed in JSC/V8
-fast/js/regexp-ranges-and-escaped-hyphens.js
-
 # different completion result with try-finally
 eval-throw-return.js
 
@@ -94,8 +89,6 @@ date-parse-comments-test.js
 fast/js/date-toisostring.js
 
 # different function source representation
-dfg-redundant-load-of-captured-variable-proven-constant.js
-dfg-resolve-global-specific-dictionary.js
 fast/js/function-toString-semicolon-insertion.js
 
 # String.prototype.trim() removes \u200B in V8
@@ -146,9 +139,7 @@ fast/js/parser-syntax-check.js
 fast/js/function-toString-parentheses.js
 fast/js/modify-non-references.js
 
-# setter in object literal requires exactly one argument
-for-in-cached.js
-object-literal-direct-put.js
+# duplicate property keys are allowed
 object-literal-syntax.js
 
 # block-scoped function declaration activated at definition
@@ -176,9 +167,6 @@ fast/js/excessive-comma-usage.js
 # Different maximal stack depth
 function-call-register-allocation.js
 stack-overflow-catch.js
-
-# StackOverflowError in java.util.regex.Pattern
-fast/js/regexp-stack-overflow.js
 
 # Timeout (slow)
 array-splice.js

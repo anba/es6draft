@@ -12,15 +12,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import org.objectweb.asm.Label;
-
 import com.github.anba.es6draft.ast.*;
-import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.JumpLabel.BreakLabel;
-import com.github.anba.es6draft.compiler.JumpLabel.ContinueLabel;
-import com.github.anba.es6draft.compiler.JumpLabel.ReturnLabel;
-import com.github.anba.es6draft.compiler.JumpLabel.TempLabel;
+import com.github.anba.es6draft.compiler.JumpLabels.BreakLabel;
+import com.github.anba.es6draft.compiler.JumpLabels.ContinueLabel;
+import com.github.anba.es6draft.compiler.JumpLabels.ReturnLabel;
+import com.github.anba.es6draft.compiler.JumpLabels.TempLabel;
+import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.assembler.Jump;
+import com.github.anba.es6draft.compiler.assembler.Variable;
 
 /**
  * 
@@ -28,17 +28,17 @@ import com.github.anba.es6draft.compiler.JumpLabel.TempLabel;
 abstract class StatementVisitor extends ExpressionVisitor {
     private static final class Labels {
         // unlabelled breaks and continues
-        final ArrayDeque<JumpLabel> breakTargets = new ArrayDeque<>(4);
-        final ArrayDeque<JumpLabel> continueTargets = new ArrayDeque<>(4);
+        final ArrayDeque<Jump> breakTargets = new ArrayDeque<>(4);
+        final ArrayDeque<Jump> continueTargets = new ArrayDeque<>(4);
 
         // labelled breaks and continues
-        final HashMap<String, JumpLabel> namedBreakLabels = new HashMap<>(4);
-        final HashMap<String, JumpLabel> namedContinueLabels = new HashMap<>(4);
+        final HashMap<String, Jump> namedBreakLabels = new HashMap<>(4);
+        final HashMap<String, Jump> namedContinueLabels = new HashMap<>(4);
 
-        JumpLabel returnLabel = null;
+        Jump returnLabel = null;
 
         // label after last catch node
-        final ArrayDeque<Label> catchLabels = new ArrayDeque<>(4);
+        final ArrayDeque<Jump> catchLabels = new ArrayDeque<>(4);
 
         // temporary labels in try-catch-finally blocks
         ArrayList<TempLabel> tempLabels = null;
@@ -53,7 +53,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
             this.isFinallyScope = isFinallyScope;
         }
 
-        private TempLabel newTemp(JumpLabel actual) {
+        private TempLabel newTemp(Jump actual) {
             assert actual != null;
             TempLabel temp = new TempLabel(actual);
             if (tempLabels == null) {
@@ -63,11 +63,11 @@ abstract class StatementVisitor extends ExpressionVisitor {
             return temp;
         }
 
-        private JumpLabel getBreakLabel(String name) {
+        private Jump getBreakLabel(String name) {
             return name == null ? breakTargets.peek() : namedBreakLabels.get(name);
         }
 
-        private void setBreakLabel(String name, JumpLabel label) {
+        private void setBreakLabel(String name, Jump label) {
             if (name == null) {
                 assert breakTargets.isEmpty();
                 breakTargets.push(label);
@@ -76,11 +76,11 @@ abstract class StatementVisitor extends ExpressionVisitor {
             }
         }
 
-        private JumpLabel getContinueLabel(String name) {
+        private Jump getContinueLabel(String name) {
             return name == null ? continueTargets.peek() : namedContinueLabels.get(name);
         }
 
-        private void setContinueLabel(String name, JumpLabel label) {
+        private void setContinueLabel(String name, Jump label) {
             if (name == null) {
                 assert continueTargets.isEmpty();
                 continueTargets.push(label);
@@ -89,8 +89,8 @@ abstract class StatementVisitor extends ExpressionVisitor {
             }
         }
 
-        JumpLabel returnLabel() {
-            JumpLabel lbl = returnLabel;
+        Jump returnLabel() {
+            Jump lbl = returnLabel;
             if (lbl == null) {
                 assert parent != null : "return outside of function";
                 lbl = newTemp(parent.returnLabel());
@@ -99,8 +99,8 @@ abstract class StatementVisitor extends ExpressionVisitor {
             return lbl;
         }
 
-        JumpLabel breakLabel(String name) {
-            JumpLabel label = getBreakLabel(name);
+        Jump breakLabel(String name) {
+            Jump label = getBreakLabel(name);
             if (label == null) {
                 assert parent != null : "Label not found: " + name;
                 label = newTemp(parent.breakLabel(name));
@@ -109,8 +109,8 @@ abstract class StatementVisitor extends ExpressionVisitor {
             return label;
         }
 
-        JumpLabel continueLabel(String name) {
-            JumpLabel label = getContinueLabel(name);
+        Jump continueLabel(String name) {
+            Jump label = getContinueLabel(name);
             if (label == null) {
                 assert parent != null : "Label not found: " + name;
                 label = parent.continueLabel(name);
@@ -147,6 +147,8 @@ abstract class StatementVisitor extends ExpressionVisitor {
         this.isGeneratorOrAsync = codeType == CodeType.Function && isGeneratorOrAsync(topLevelNode);
         // no return in script code
         this.labels.returnLabel = codeType == CodeType.Function ? new ReturnLabel() : null;
+        this.finallyDepth = parent.finallyDepth;
+        this.wrapped = parent.wrapped;
     }
 
     protected StatementVisitor(MethodCode method, boolean strict, TopLevelNode<?> topLevelNode,
@@ -219,12 +221,16 @@ abstract class StatementVisitor extends ExpressionVisitor {
      *            the value type of top stack value
      */
     void storeCompletionValue(ValType type) {
-        if (isScriptCode && finallyDepth == 0) {
+        if (hasCompletion()) {
             toBoxed(type);
             store(completionValue);
         } else {
             pop(type);
         }
+    }
+
+    boolean hasCompletion() {
+        return isScriptCode && finallyDepth == 0;
     }
 
     @Override
@@ -464,7 +470,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * @param catchLabel
      *            the catch label
      */
-    void enterCatchWithGuarded(TryStatement node, Label catchLabel) {
+    void enterCatchWithGuarded(TryStatement node, Jump catchLabel) {
         labels.catchLabels.push(catchLabel);
     }
 
@@ -487,7 +493,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
             goTo(returnLabel());
         } else {
             // Otherwise emit direct return instruction
-            areturn();
+            _return();
         }
     }
 
@@ -496,8 +502,8 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * 
      * @return the return label
      */
-    private Label returnLabel() {
-        return labels.returnLabel().mark();
+    private Jump returnLabel() {
+        return labels.returnLabel();
     }
 
     /**
@@ -507,9 +513,9 @@ abstract class StatementVisitor extends ExpressionVisitor {
      *            the break statement
      * @return the label to the target instruction
      */
-    Label breakLabel(BreakStatement node) {
+    Jump breakLabel(BreakStatement node) {
         String name = node.getLabel();
-        return labels.breakLabel(name).mark();
+        return labels.breakLabel(name);
     }
 
     /**
@@ -519,23 +525,23 @@ abstract class StatementVisitor extends ExpressionVisitor {
      *            the continue statement
      * @return the label to the target instruction
      */
-    Label continueLabel(ContinueStatement node) {
+    Jump continueLabel(ContinueStatement node) {
         String name = node.getLabel();
-        return labels.continueLabel(name).mark();
+        return labels.continueLabel(name);
     }
 
     /**
-     * Returns the catch-label originally set in {@link #enterCatchWithGuarded(TryStatement, Label)}
+     * Returns the catch-label originally set in {@link #enterCatchWithGuarded(TryStatement, Jump)}
      * .
      * 
      * @return the guarded catch label
      */
-    Label catchWithGuardedLabel() {
+    Jump catchWithGuardedLabel() {
         return labels.catchLabels.peek();
     }
 
     /**
-     * Emit goto instruction to jump to {@code label}'s actual target.
+     * Emit goto instruction to jump to {@code label}'s wrapped target.
      * 
      * @param label
      *            the target instruction
@@ -543,13 +549,13 @@ abstract class StatementVisitor extends ExpressionVisitor {
      *            the variable which holds the current completion value
      */
     void goTo(TempLabel label, Variable<Object> completion) {
-        JumpLabel actual = label.getActual();
-        if (actual instanceof ReturnLabel) {
+        Jump wrapped = label.getWrapped();
+        if (wrapped instanceof ReturnLabel) {
             // specialize return label to emit direct return instruction
             load(completion);
-            areturn();
+            _return();
         } else {
-            goTo(actual.mark());
+            goTo(wrapped);
         }
     }
 }

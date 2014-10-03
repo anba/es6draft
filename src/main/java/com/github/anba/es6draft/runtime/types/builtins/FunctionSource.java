@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import java.util.Objects;
+
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
@@ -29,26 +31,33 @@ final class FunctionSource {
      */
     public static String toSourceString(SourceSelector selector, FunctionObject function) {
         RuntimeInfo.Function code = function.getCode();
-        String src = code.source();
-        if (src == null) {
+        if (RuntimeInfo.FunctionFlags.Native.isSet(code.functionFlags())) {
+            String functionName = Objects.toString(code.functionName(), "F");
+            return FunctionSource.nativeCode(selector, functionName);
+        }
+        String compressedSource = code.source();
+        if (compressedSource == null) {
             return FunctionSource.noSource(selector);
         }
-        String source;
+        String src = decompressSource(compressedSource);
+        if (selector == SourceSelector.Body) {
+            return src.substring(code.bodySourceStart());
+        }
+        return sourceString(function, src);
+    }
+
+    private static String decompressSource(String compressedSource) {
         try {
-            source = SourceCompressor.decompress(src).call();
+            return SourceCompressor.decompress(compressedSource).call();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        String parameters = source.substring(0, code.bodySourceStart());
-        String body = source.substring(code.bodySourceStart());
-        if (selector == SourceSelector.Body) {
-            return body;
-        }
-        return sourceString(function, parameters, body);
     }
 
-    private static String sourceString(FunctionObject function, String parameters, String body) {
+    private static String sourceString(FunctionObject function, String src) {
         RuntimeInfo.Function code = function.getCode();
+        String parameters = src.substring(0, code.bodySourceStart());
+        String body = src.substring(code.bodySourceStart());
         boolean async = code.isAsync(), generator = code.isGenerator();
         String name = code.functionName();
         int flags = code.functionFlags();

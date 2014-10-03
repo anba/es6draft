@@ -19,7 +19,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
-import com.github.anba.es6draft.compiler.SimpleTypeTextifier;
+import com.github.anba.es6draft.compiler.assembler.SimpleTypeTextifier;
 
 /**
  *

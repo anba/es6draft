@@ -167,9 +167,9 @@ public final class LegacyArgumentsObject extends OrdinaryObject {
     }
 
     @Override
-    protected boolean isEnumerableOwnProperty(String key) {
+    protected Enumerability isEnumerableOwnProperty(String key) {
         int index = Strings.toArgumentIndex(key);
-        return 0 <= index && index < arguments.length;
+        return Enumerability.isEnumerable(0 <= index && index < arguments.length);
     }
 
     private void addArgumentIndices(List<? super String> keys) {

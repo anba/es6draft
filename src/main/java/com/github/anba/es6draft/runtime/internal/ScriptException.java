@@ -11,6 +11,7 @@ import java.util.Objects;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * Runtime exception to represent exceptions thrown from the ThrowStatement.
@@ -69,6 +70,9 @@ public final class ScriptException extends RuntimeException {
         try {
             return AbstractOperations.ToFlatString(cx, value);
         } catch (ScriptException t) {
+            if (value instanceof ScriptObject) {
+                return cx.getRealm().message(Messages.Key.ToStringFailed);
+            }
             return Objects.toString(value);
         }
     }

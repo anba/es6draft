@@ -21,14 +21,7 @@ public final class NativeFunction extends BuiltinFunction {
     // (ExecutionContext, Object, Object[]) -> Object
     private final MethodHandle mh;
 
-    private final NativeFunctionId id;
-
-    /**
-     * Internal enumeration to mark native functions.
-     */
-    public enum NativeFunctionId {
-        None, RegExpPrototypeExec
-    }
+    private final Class<?> id;
 
     /**
      * Constructs a new native function.
@@ -43,7 +36,7 @@ public final class NativeFunction extends BuiltinFunction {
      *            the method handle to the function code
      */
     public NativeFunction(Realm realm, String name, int arity, MethodHandle mh) {
-        this(realm, name, NativeFunctionId.None, mh);
+        this(realm, name, null, mh);
         createDefaultFunctionProperties(name, arity);
     }
 
@@ -61,12 +54,12 @@ public final class NativeFunction extends BuiltinFunction {
      * @param mh
      *            the method handle to the function code
      */
-    public NativeFunction(Realm realm, String name, int arity, NativeFunctionId id, MethodHandle mh) {
+    public NativeFunction(Realm realm, String name, int arity, Class<?> id, MethodHandle mh) {
         this(realm, name, id, mh);
         createDefaultFunctionProperties(name, arity);
     }
 
-    private NativeFunction(Realm realm, String name, NativeFunctionId id, MethodHandle mh) {
+    private NativeFunction(Realm realm, String name, Class<?> id, MethodHandle mh) {
         super(realm, name);
         this.mh = mh;
         this.id = id;
@@ -86,7 +79,7 @@ public final class NativeFunction extends BuiltinFunction {
      * 
      * @return the native function id
      */
-    public final NativeFunctionId getId() {
+    public final Class<?> getId() {
         return id;
     }
 

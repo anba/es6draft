@@ -11,12 +11,16 @@
 const global = %GlobalObject();
 
 const {
-  Object, Function, Array, String, Symbol, TypeError, Proxy, Reflect
+  Object, Function, Array, String, Symbol, TypeError, Proxy, Reflect, Int8Array
 } = global;
 
-const Object_keys = Object.keys,
-      Object_defineProperty = Object.defineProperty,
-      Object_prototype_hasOwnProperty = Object.prototype.hasOwnProperty;
+const {
+  keys: Object_keys,
+  defineProperty: Object_defineProperty,
+  prototype: {
+    hasOwnProperty: Object_prototype_hasOwnProperty,
+  }
+} = Object;
 
 const {
   iterator: iteratorSym,
@@ -365,21 +369,17 @@ function MakeBuiltinIterator(ctor) {
   delete Array.prototype.values;
 }
 
-// make TypedArrays iterable
 {
-  const ArrayPrototype_iterator = Array.prototype[mozIteratorSym];
-  for (const type of ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32", "Uint32", "Float32", "Float64"]) {
-    const ctor = global[`${type}Array`];
+  const TypedArray = Object.getPrototypeOf(Int8Array);
 
-    // "@@iterator" iterator based on Array.prototype[mozIteratorSym]
-    Object.defineProperties(Object.assign(ctor.prototype, {
-      [mozIteratorSym]() {
-        return %CallFunction(ArrayPrototype_iterator, this);
-      }
-    }), {
-      [mozIteratorSym]: {enumerable: false},
-    });
-  }
+  // share "@@iterator" with Array.prototype
+  Object.defineProperty(TypedArray.prototype, mozIteratorSym, {
+    value: Array.prototype[mozIteratorSym],
+    writable: true, enumerable: false, configurable: true
+  });
+
+  // delete original TypedArray.prototype[@@iterator]
+  delete TypedArray.prototype[iteratorSym];
 }
 
 {

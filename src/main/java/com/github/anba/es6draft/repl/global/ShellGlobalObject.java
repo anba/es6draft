@@ -198,6 +198,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
         ScriptLoader scriptLoader = getScriptLoader();
         EnumSet<Parser.Option> parserOptions = EnumSet.copyOf(scriptLoader.getParserOptions());
         parserOptions.add(Parser.Option.NativeCall);
+        parserOptions.add(Parser.Option.NativeFunction);
         return new ScriptLoader(scriptLoader.getExecutor(), scriptLoader.getOptions(),
                 parserOptions, scriptLoader.getCompilerOptions());
     }
@@ -208,7 +209,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
 
     protected String read(ExecutionContext cx, Path fileName, Path path) {
         if (!Files.exists(path)) {
-            throw ScriptException.create(String.format("can't open '%s'", fileName.toString()));
+            throw new ScriptException(String.format("can't open '%s'", fileName.toString()));
         }
         try {
             byte[] bytes = Files.readAllBytes(path);
@@ -220,7 +221,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
 
     protected Object load(ExecutionContext cx, Path fileName, Path path) {
         if (!Files.exists(path)) {
-            throw ScriptException.create(String.format("can't open '%s'", fileName.toString()));
+            throw new ScriptException(String.format("can't open '%s'", fileName.toString()));
         }
         try {
             eval(fileName, path);

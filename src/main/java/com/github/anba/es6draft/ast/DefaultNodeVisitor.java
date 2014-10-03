@@ -6,15 +6,7 @@
  */
 package com.github.anba.es6draft.ast;
 
-import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
-import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
-import com.github.anba.es6draft.ast.synthetic.IdentifierReferenceValue;
-import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
-import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
-import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
-import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
-import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
-import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
+import com.github.anba.es6draft.ast.synthetic.*;
 
 /**
  * Default implementation for {@link NodeVisitor}.
@@ -310,6 +302,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(EmptyExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public R visit(ExpressionStatement node, V value) {
         return visit((Statement) node, value);
     }
@@ -475,6 +472,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(MethodDefinitionsMethod node, V value) {
+        return visit((PropertyDefinition) node, value);
+    }
+
+    @Override
     public R visit(Module node, V value) {
         return visit((Node) node, value);
     }
@@ -570,13 +572,33 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
-    public R visit(SuperExpression node, V value) {
+    public R visit(SuperCallExpression node, V value) {
         return visit((Expression) node, value);
     }
 
     @Override
-    public R visit(SuperExpressionValue node, V value) {
-        return visit((SuperExpression) node, value);
+    public R visit(SuperElementAccessor node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
+    public R visit(SuperElementAccessorValue node, V value) {
+        return visit((SuperElementAccessor) node, value);
+    }
+
+    @Override
+    public R visit(SuperNewExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
+    public R visit(SuperPropertyAccessor node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
+    public R visit(SuperPropertyAccessorValue node, V value) {
+        return visit((SuperPropertyAccessor) node, value);
     }
 
     @Override

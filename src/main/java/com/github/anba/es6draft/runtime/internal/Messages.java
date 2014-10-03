@@ -81,6 +81,7 @@ public final class Messages {
         // internal
         InternalError("internal.error"),
         StackOverflow("internal.stackoverflow"),
+        ToStringFailed("internal.tostring_failed"),
 
         // TokenStream
         InvalidNumberLiteral("parser.invalid_number_literal"),

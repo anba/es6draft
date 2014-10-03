@@ -35,6 +35,9 @@ js/script-tests/typedarray-set-overlapping-elements-of-same-size.js
 # invalid test, `(new Array(1)).findIndex(function(){return true})` is -1
 js/script-tests/array-findIndex.js
 
+# invalid test, ToString(searchString) appears before ToInteger(position)
+js/script-tests/string-contains.js
+
 
 ###################
 # Misc issues     #
@@ -89,10 +92,10 @@ js/script-tests/date-toisostring.js
 
 # different function source representation
 js/kde/script-tests/function.js
-js/kde/script-tests/inbuilt_function_tostring.js
-js/script-tests/dfg-redundant-load-of-captured-variable-proven-constant.js
-js/script-tests/dfg-resolve-global-specific-dictionary.js
 js/script-tests/function-toString-semicolon-insertion.js
+
+# Date.prototype.toUTCString and Date.prototype.toGMTString distinct objects in JSC
+js/kde/script-tests/inbuilt_function_tostring.js
 
 # error objects have non-standard 'line' and 'sourceURL' properties in JSC
 js/script-tests/exception-properties.js

@@ -37,7 +37,9 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -118,13 +120,14 @@ public final class MozillaJitTest {
         assumeTrue(moztest.isEnabled());
 
         global = globals.newGlobal(new MozTestConsole(collector), moztest);
-        ExecutionContext cx = global.getRealm().defaultContext();
-        exceptionHandler.setExecutionContext(cx);
+        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
+        install(new TestEnvironment(), TestEnvironment.class);
 
         if (moztest.error == null) {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
             exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
         } else {
+            ExecutionContext cx = global.getRealm().defaultContext();
             expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher()).or(
                     ScriptExceptionHandler.defaultMatcher()));
             expected.expect(hasErrorMessage(cx, containsString(moztest.error)));
@@ -140,18 +143,43 @@ public final class MozillaJitTest {
 
     @Test
     public void runTest() throws Throwable {
-        // set required global variables
-        ExecutionContext cx = global.getRealm().defaultContext();
-        ScriptObject globalThis = global.getRealm().getGlobalThis();
-        globalThis.set(cx, "libdir", "lib/", globalThis);
-        globalThis.set(cx, "environment",
-                OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype), globalThis);
-
         // evaluate actual test-script
         global.eval(moztest.getScript(), moztest.toFile());
 
         // wait for pending tasks to finish
         global.getRealm().getWorld().runEventLoop();
+    }
+
+    private <T> T install(T object, Class<T> clazz) {
+        Realm realm = global.getRealm();
+        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
+        return object;
+    }
+
+    public static final class TestEnvironment {
+        @Properties.Value(name = "libdir")
+        public String libdir() {
+            return "lib/";
+        }
+
+        @Properties.Value(name = "environment")
+        public ScriptObject environment(ExecutionContext cx) {
+            return OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        }
+
+        @Properties.Value(name = "os")
+        public ScriptObject os(ExecutionContext cx) {
+            OrdinaryObject os = OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            Properties.createProperties(cx, os, new OS(), OS.class);
+            return os;
+        }
+    }
+
+    public static final class OS {
+        @Properties.Function(name = "getenv", arity = 1)
+        public String getenv(String name) {
+            return System.getenv().get(name);
+        }
     }
 
     private static final class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {

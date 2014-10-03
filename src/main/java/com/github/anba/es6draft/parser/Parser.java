@@ -627,39 +627,44 @@ public final class Parser {
 
     public enum Option {
         /**
-         * Strictness for source code
+         * Strictness for source code.
          */
         Strict,
 
         /**
-         * Source code is not global code
+         * Source code is not global code.
          */
         FunctionCode,
 
         /**
-         * Source code is not in global scope
+         * Source code is not in global scope.
          */
         LocalScope,
 
         /**
-         * Source code is direct eval code
+         * Source code is direct eval code.
          */
         DirectEval,
 
         /**
-         * Source code is eval code
+         * Source code is eval code.
          */
         EvalScript,
 
         /**
-         * Source code is nested in with-statement context
+         * Source code is nested in with-statement context.
          */
         EnclosedByWithStatement,
 
         /**
-         * Allow native call syntax
+         * Allow native call syntax.
          */
         NativeCall,
+
+        /**
+         * Parse functions as native.
+         */
+        NativeFunction,
     }
 
     public Parser(Source source, Set<CompatibilityOption> options, EnumSet<Option> parserOptions) {
@@ -4837,7 +4842,7 @@ public final class Parser {
         } else if (head instanceof LexicalDeclaration) {
             // Enforce initializer for BindingPattern and const declarations
             LexicalDeclaration lexDecl = (LexicalDeclaration) head;
-            boolean isConst = lexDecl.getType() == LexicalDeclaration.Type.Const;
+            boolean isConst = lexDecl.isConstDeclaration();
             for (LexicalBinding decl : lexDecl.getElements()) {
                 if (decl.getBinding() instanceof BindingPattern && decl.getInitializer() == null) {
                     reportSyntaxError(lexDecl, Messages.Key.DestructuringMissingInitializer);
@@ -6622,6 +6627,9 @@ public final class Parser {
             IdentifierReference identifier = identifierReference();
             consume(Token.ASSIGN);
             Expression initializer = assignmentExpression(true);
+            if (isAnonymousFunctionDefinition(initializer)) {
+                setFunctionName(identifier, initializer);
+            }
             return new CoverInitializedName(begin, ts.endPosition(), identifier, initializer);
         }
         return methodDefinition(false);
@@ -6950,46 +6958,49 @@ public final class Parser {
         Expression lhs;
         if (token() == Token.NEW) {
             consume(Token.NEW);
-            Expression expr = leftHandSideExpression(false);
-            if (token() == Token.LP) {
-                lhs = new NewExpression(begin, ts.endPosition(), expr, arguments());
+            if (token() == Token.SUPER && !(LOOKAHEAD(Token.DOT) || LOOKAHEAD(Token.LB))) {
+                referencesSuper();
+
+                consume(Token.SUPER);
+                if (token() == Token.LP) {
+                    lhs = new SuperNewExpression(begin, ts.endPosition(), arguments());
+                } else {
+                    return new SuperNewExpression(begin, ts.endPosition(),
+                            Collections.<Expression> emptyList());
+                }
             } else {
-                return new NewExpression(begin, ts.endPosition(), expr,
-                        Collections.<Expression> emptyList());
+                Expression expr = leftHandSideExpression(false);
+                if (token() == Token.LP) {
+                    lhs = new NewExpression(begin, ts.endPosition(), expr, arguments());
+                } else {
+                    return new NewExpression(begin, ts.endPosition(), expr,
+                            Collections.<Expression> emptyList());
+                }
             }
         } else if (token() == Token.SUPER) {
-            ParseContext cx = context.findSuperContext();
-            if (cx.kind == ContextKind.Script && !isEnabled(Option.FunctionCode)
-                    || cx.kind == ContextKind.Module) {
-                reportSyntaxError(Messages.Key.InvalidSuperExpression);
-            }
-            cx.setReferencesSuper();
+            referencesSuper();
 
             consume(Token.SUPER);
             switch (token()) {
             case DOT:
                 consume(Token.DOT);
                 String name = identifierName();
-                lhs = new SuperExpression(begin, ts.endPosition(), name);
+                lhs = new SuperPropertyAccessor(begin, ts.endPosition(), name);
                 break;
             case LB:
                 consume(Token.LB);
                 Expression expr = expression(true);
                 consume(Token.RB);
-                lhs = new SuperExpression(begin, ts.endPosition(), expr);
+                lhs = new SuperElementAccessor(begin, ts.endPosition(), expr);
                 break;
             case LP:
                 if (allowCall) {
                     List<Expression> args = arguments();
-                    lhs = new SuperExpression(begin, ts.endPosition(), args);
+                    lhs = new SuperCallExpression(begin, ts.endPosition(), args);
                     break;
                 }
-                // fall-through
             case TEMPLATE:
             default:
-                if (!allowCall) {
-                    return new SuperExpression(begin, ts.endPosition());
-                }
                 throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
             }
         } else {
@@ -7028,6 +7039,15 @@ public final class Parser {
                 return lhs;
             }
         }
+    }
+
+    private void referencesSuper() {
+        ParseContext cx = context.findSuperContext();
+        if (cx.kind == ContextKind.Script && !isEnabled(Option.FunctionCode)
+                || cx.kind == ContextKind.Module) {
+            reportSyntaxError(Messages.Key.InvalidSuperExpression);
+        }
+        cx.setReferencesSuper();
     }
 
     /**
@@ -7602,12 +7622,10 @@ public final class Parser {
             return (ElementAccessor) lhs;
         } else if (lhs instanceof PropertyAccessor) {
             return (PropertyAccessor) lhs;
-        } else if (lhs instanceof SuperExpression) {
-            SuperExpression superExpr = (SuperExpression) lhs;
-            if (superExpr.getType() == SuperExpression.Type.ElementAccessor
-                    || superExpr.getType() == SuperExpression.Type.PropertyAccessor) {
-                return superExpr;
-            }
+        } else if (lhs instanceof SuperElementAccessor) {
+            return (SuperElementAccessor) lhs;
+        } else if (lhs instanceof SuperPropertyAccessor) {
+            return (SuperPropertyAccessor) lhs;
         }
         // everything else => invalid lhs
         throw reportError(type, lhs.getBeginPosition(), messageKey);
