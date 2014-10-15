@@ -17,7 +17,7 @@ import com.github.anba.es6draft.ast.scope.WithScope;
 public final class WithStatement extends Statement implements ScopedNode {
     private final WithScope scope;
     private final Expression expression;
-    private final Statement statement;
+    private Statement statement;
 
     public WithStatement(long beginPosition, long endPosition, WithScope scope,
             Expression expression, Statement statement) {
@@ -48,6 +48,16 @@ public final class WithStatement extends Statement implements ScopedNode {
      */
     public Statement getStatement() {
         return statement;
+    }
+
+    /**
+     * Sets the <tt>with</tt>-statement's statement node.
+     * 
+     * @param statement
+     *            the new statement node
+     */
+    public void setStatement(Statement statement) {
+        this.statement = statement;
     }
 
     @Override

@@ -66,26 +66,24 @@ abstract class DeclarationBindingInstantiationGenerator {
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_InstantiateAsyncFunctionObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                "InstantiateAsyncFunctionObject", Type.getMethodType(Types.OrdinaryAsyncFunction,
-                        Types.LexicalEnvironment, Types.ExecutionContext,
-                        Types.RuntimeInfo$Function));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstantiateAsyncFunctionObject",
+                Type.getMethodType(Types.OrdinaryAsyncFunction, Types.LexicalEnvironment,
+                        Types.ExecutionContext, Types.RuntimeInfo$Function));
 
         static final MethodDesc ScriptRuntime_InstantiateFunctionObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstantiateFunctionObject",
-                Type.getMethodType(Types.OrdinaryFunction, Types.LexicalEnvironment,
-                        Types.ExecutionContext, Types.RuntimeInfo$Function));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstantiateFunctionObject", Type
+                        .getMethodType(Types.OrdinaryFunction, Types.LexicalEnvironment,
+                                Types.ExecutionContext, Types.RuntimeInfo$Function));
 
         static final MethodDesc ScriptRuntime_InstantiateGeneratorObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstantiateGeneratorObject",
-                Type.getMethodType(Types.OrdinaryGenerator, Types.LexicalEnvironment,
-                        Types.ExecutionContext, Types.RuntimeInfo$Function));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstantiateGeneratorObject", Type
+                        .getMethodType(Types.OrdinaryGenerator, Types.LexicalEnvironment,
+                                Types.ExecutionContext, Types.RuntimeInfo$Function));
 
         static final MethodDesc ScriptRuntime_InstantiateLegacyGeneratorObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                "InstantiateLegacyGeneratorObject", Type.getMethodType(Types.OrdinaryGenerator,
-                        Types.LexicalEnvironment, Types.ExecutionContext,
-                        Types.RuntimeInfo$Function));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstantiateLegacyGeneratorObject",
+                Type.getMethodType(Types.OrdinaryGenerator, Types.LexicalEnvironment,
+                        Types.ExecutionContext, Types.RuntimeInfo$Function));
     }
 
     protected final CodeGenerator codegen;

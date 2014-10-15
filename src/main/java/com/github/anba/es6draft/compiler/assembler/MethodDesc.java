@@ -92,8 +92,7 @@ public final class MethodDesc {
      *            the method argument and return types
      * @return the method descriptor
      */
-    public static MethodDesc create(MethodDesc.Invoke type, String owner, String name,
-            String desc) {
+    public static MethodDesc create(MethodDesc.Invoke type, String owner, String name, String desc) {
         return new MethodDesc(type, owner, name, desc);
     }
 }

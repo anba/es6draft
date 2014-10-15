@@ -14,7 +14,7 @@ import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.synthetic.*;
 
 /**
- * Returns the estimated byte code size for a {@link Node}
+ * Returns the estimated byte code size for a {@link Node}.
  */
 final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     public int startAnalyze(Node node, List<? extends Node> children, CodeSizeHandler handler) {

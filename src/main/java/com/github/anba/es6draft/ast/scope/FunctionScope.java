@@ -6,8 +6,10 @@
  */
 package com.github.anba.es6draft.ast.scope;
 
+import java.util.List;
 import java.util.Set;
 
+import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.FunctionNode;
 
 /**
@@ -55,4 +57,11 @@ public interface FunctionScope extends TopLevelScope {
      * @return {@code true} if the <tt>arguments</tt> object needs to be allocated
      */
     boolean needsArguments();
+
+    /**
+     * Returns the function's web legacy block-level function declarations.
+     * 
+     * @return the function declarations
+     */
+    List<FunctionDeclaration> blockFunctions();
 }

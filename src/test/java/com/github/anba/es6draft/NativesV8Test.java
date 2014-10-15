@@ -28,7 +28,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
@@ -77,11 +76,6 @@ public final class NativesV8Test {
         @Override
         protected EnumSet<Parser.Option> getParserOptions() {
             return EnumSet.of(Parser.Option.NativeCall);
-        }
-
-        @Override
-        protected EnumSet<Compiler.Option> getCompilerOptions() {
-            return EnumSet.of(Compiler.Option.VerifyStack);
         }
     };
 

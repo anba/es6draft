@@ -23,6 +23,20 @@ public final class NumericLiteral extends ValueLiteral<Double> implements Proper
         this.value = value;
     }
 
+    public boolean isInt() {
+        double value = this.value;
+        int intValue = (int) value;
+        return intValue == value && (intValue != 0 || Double.doubleToRawLongBits(value) == 0L);
+    }
+
+    public int intValue() {
+        return (int) value;
+    }
+
+    public double doubleValue() {
+        return value;
+    }
+
     @Override
     public Double getValue() {
         return value;

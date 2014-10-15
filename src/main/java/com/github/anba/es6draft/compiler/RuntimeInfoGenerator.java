@@ -32,8 +32,8 @@ final class RuntimeInfoGenerator {
         static final MethodDesc DebugInfo_init = MethodDesc.create(MethodDesc.Invoke.Special,
                 Types.DebugInfo, "<init>", Type.getMethodType(Type.VOID_TYPE));
 
-        static final MethodDesc DebugInfo_addMethod = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.DebugInfo, "addMethod",
+        static final MethodDesc DebugInfo_addMethod = MethodDesc.create(MethodDesc.Invoke.Virtual,
+                Types.DebugInfo, "addMethod",
                 Type.getMethodType(Type.VOID_TYPE, Types.Class, Types.String));
 
         // class: RuntimeInfo
@@ -44,21 +44,20 @@ final class RuntimeInfoGenerator {
                         Types.MethodHandle));
 
         static final MethodDesc RTI_newScriptBodyDebug = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.RuntimeInfo, "newScriptBody", Type
-                        .getMethodType(Types.RuntimeInfo$ScriptBody, Types.String, Types.String,
-                                Type.BOOLEAN_TYPE, Types.MethodHandle, Types.MethodHandle,
-                                Types.MethodHandle, Types.MethodHandle));
+                MethodDesc.Invoke.Static, Types.RuntimeInfo, "newScriptBody", Type.getMethodType(
+                        Types.RuntimeInfo$ScriptBody, Types.String, Types.String,
+                        Type.BOOLEAN_TYPE, Types.MethodHandle, Types.MethodHandle,
+                        Types.MethodHandle, Types.MethodHandle));
 
         static final MethodDesc RTI_newFunction = MethodDesc.create(MethodDesc.Invoke.Static,
                 Types.RuntimeInfo, "newFunction", Type.getMethodType(Types.RuntimeInfo$Function,
                         Types.String, Type.INT_TYPE, Type.INT_TYPE, Types.String, Type.INT_TYPE,
                         Types.MethodHandle, Types.MethodHandle));
 
-        static final MethodDesc RTI_newFunctionDebug = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.RuntimeInfo, "newFunction", Type.getMethodType(
-                        Types.RuntimeInfo$Function, Types.String, Type.INT_TYPE, Type.INT_TYPE,
-                        Types.String, Type.INT_TYPE, Types.MethodHandle, Types.MethodHandle,
-                        Types.MethodHandle));
+        static final MethodDesc RTI_newFunctionDebug = MethodDesc.create(MethodDesc.Invoke.Static,
+                Types.RuntimeInfo, "newFunction", Type.getMethodType(Types.RuntimeInfo$Function,
+                        Types.String, Type.INT_TYPE, Type.INT_TYPE, Types.String, Type.INT_TYPE,
+                        Types.MethodHandle, Types.MethodHandle, Types.MethodHandle));
     }
 
     private final CodeGenerator codegen;

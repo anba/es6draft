@@ -54,9 +54,8 @@ final class SwitchStatementGenerator extends
                 Type.getMethodType(Types.String));
 
         // class: Number
-        static final MethodDesc Number_doubleValue = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.Number, "doubleValue",
-                Type.getMethodType(Type.DOUBLE_TYPE));
+        static final MethodDesc Number_doubleValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
+                Types.Number, "doubleValue", Type.getMethodType(Type.DOUBLE_TYPE));
 
         // class: String
         static final MethodDesc String_equals = MethodDesc.create(MethodDesc.Invoke.Virtual,
@@ -72,11 +71,8 @@ final class SwitchStatementGenerator extends
             for (SwitchClause switchClause : node.getClauses()) {
                 Expression expr = switchClause.getExpression();
                 if (expr != null) {
-                    if (!(expr instanceof NumericLiteral)) {
-                        return false;
-                    }
-                    double value = ((NumericLiteral) expr).getValue();
-                    if (value != (int) value) {
+                    // TODO: does not handle negative numbers (UnaryExpression -> (NumericLiteral))
+                    if (!(expr instanceof NumericLiteral && ((NumericLiteral) expr).isInt())) {
                         return false;
                     }
                 }
@@ -741,7 +737,7 @@ final class SwitchStatementGenerator extends
         for (int i = 0, j = 0, size = clauses.size(); i < size; ++i) {
             Expression expr = clauses.get(i).getExpression();
             if (expr != null) {
-                entries[j++] = Entry(((NumericLiteral) expr).getValue().intValue(), i);
+                entries[j++] = Entry(((NumericLiteral) expr).intValue(), i);
             }
         }
         // sort values in ascending order

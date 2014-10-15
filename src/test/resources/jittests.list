@@ -114,7 +114,6 @@ tests/basic/testBug579647.js
 tests/basic/testBug593559.js
 tests/basic/testBug604210.js
 tests/basic/testDontClobberScannerError.js
-tests/basic/testErrorReportIn_getPrototypeOf.js
 tests/basic/testInitSingletons.js
 tests/generators/bug931414.js
 tests/self-hosting/invoke-self-hosted-with-primitive-this.js

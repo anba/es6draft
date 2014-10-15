@@ -13,7 +13,6 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -27,7 +26,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -58,11 +56,6 @@ public class StrictTest {
         protected ObjectAllocator<TestGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
             return newGlobalObjectAllocator(console, test, scriptCache);
-        }
-
-        @Override
-        protected EnumSet<Compiler.Option> getCompilerOptions() {
-            return EnumSet.of(Compiler.Option.VerifyStack);
         }
     };
 

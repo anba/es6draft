@@ -11,7 +11,7 @@ import java.util.HashMap;
 /**
  * Supplemental data for canonicalization of language tags.
  * <p>
- * Data generated from: language-subtag-registry, 2014-02-18
+ * Data generated from: language-subtag-registry, 2014-04-10
  * 
  * @see <a
  *      href="http://www.iana.org/assignments/language-subtag-registry">language-subtag-registry</a>
@@ -195,11 +195,13 @@ final class LanguageSubtagRegistryData {
         map.put("ibi", "opa");
         map.put("ilw", "gal");
         map.put("kgh", "kml");
+        map.put("lmm", "rmx");
         map.put("meg", "cir");
         map.put("mst", "mry");
         map.put("myt", "mry");
         map.put("pcr", "adx");
         map.put("ppr", "lcq");
+        map.put("puz", "pub");
         map.put("sca", "hle");
         map.put("tie", "ras");
         map.put("tkk", "twm");
@@ -209,6 +211,7 @@ final class LanguageSubtagRegistryData {
         map.put("ybd", "rki");
         map.put("yma", "lrr");
         map.put("yos", "zom");
+        map.put("yuu", "yug");
         languageData = map;
     }
 
@@ -450,6 +453,7 @@ final class LanguageSubtagRegistryData {
         map.put("xmm", "ms");
         map.put("xms", "sgn");
         map.put("yds", "sgn");
+        map.put("ygs", "sgn");
         map.put("ysl", "sgn");
         map.put("yue", "zh");
         map.put("zib", "sgn");

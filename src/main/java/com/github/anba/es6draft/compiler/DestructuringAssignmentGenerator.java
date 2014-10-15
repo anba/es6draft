@@ -42,8 +42,8 @@ final class DestructuringAssignmentGenerator {
                 Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
 
         // class: Reference
-        static final MethodDesc Reference_putValue = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.Reference, "putValue",
+        static final MethodDesc Reference_putValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
+                Types.Reference, "putValue",
                 Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
         // class: ScriptRuntime

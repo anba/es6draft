@@ -6,10 +6,13 @@
  */
 package com.github.anba.es6draft.mozilla;
 
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.DetachArrayBuffer;
+
 import com.github.anba.es6draft.repl.global.StopExecutionException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
@@ -23,7 +26,7 @@ public final class TestingFunctions {
      * shell-function: {@code version([number])}
      *
      * @return the version string "185"
-     **/
+     */
     @Function(name = "version", arity = 1)
     public String version() {
         return "185";
@@ -33,7 +36,7 @@ public final class TestingFunctions {
      * shell-function: {@code options([name])}
      *
      * @return the empty string
-     **/
+     */
     @Function(name = "options", arity = 0)
     public String options() {
         return "";
@@ -43,7 +46,7 @@ public final class TestingFunctions {
      * shell-function: {@code gc()}
      *
      * @return the empty string
-     **/
+     */
     @Function(name = "gc", arity = 0)
     public String gc() {
         return "";
@@ -53,7 +56,7 @@ public final class TestingFunctions {
      * shell-function: {@code gczeal()}
      *
      * @return the empty string
-     **/
+     */
     @Function(name = "gczeal", arity = 0)
     public String gczeal() {
         return "";
@@ -65,7 +68,7 @@ public final class TestingFunctions {
      * @param cx
      *            the execution context
      * @return an empty object
-     **/
+     */
     @Function(name = "getBuildConfiguration", arity = 0)
     public ScriptObject getBuildConfiguration(ExecutionContext cx) {
         return OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
@@ -73,7 +76,7 @@ public final class TestingFunctions {
 
     /**
      * shell-function: {@code terminate()}
-     **/
+     */
     @Function(name = "terminate", arity = 0)
     public void terminate() {
         throw new StopExecutionException(StopExecutionException.Reason.Terminate);
@@ -81,7 +84,7 @@ public final class TestingFunctions {
 
     /**
      * shell-function: {@code enableOsiPointRegisterChecks()}
-     **/
+     */
     @Function(name = "enableOsiPointRegisterChecks", arity = 0)
     public void enableOsiPointRegisterChecks() {
         // empty
@@ -91,7 +94,7 @@ public final class TestingFunctions {
      * shell-function: {@code isAsmJSCompilationAvailable()}
      * 
      * @return always {@code false}
-     **/
+     */
     @Function(name = "isAsmJSCompilationAvailable", arity = 0)
     public boolean isAsmJSCompilationAvailable() {
         return false;
@@ -101,7 +104,7 @@ public final class TestingFunctions {
      * shell-function: {@code helperThreadCount()}
      * 
      * @return always {@code 0}
-     **/
+     */
     @Function(name = "helperThreadCount", arity = 0)
     public int helperThreadCount() {
         return 0;
@@ -111,7 +114,7 @@ public final class TestingFunctions {
      * shell-function: {@code getSelfHostedValue(name)}
      * 
      * @return a placeholder function
-     **/
+     */
     @Function(name = "getSelfHostedValue", arity = 1)
     public ScriptObject getSelfHostedValue(ExecutionContext cx, String name) {
         if ("ToLength".equals(name)) {
@@ -128,5 +131,23 @@ public final class TestingFunctions {
             };
         }
         throw new IllegalArgumentException(name);
+    }
+
+    /**
+     * shell-function: {@code neuter(arrayBuffer, type)}
+     * 
+     * @param cx
+     *            the execution context
+     * @param arrayBuffer
+     *            the array buffer object
+     * @param type
+     *            the neuter type
+     */
+    @Function(name = "neuter", arity = 2)
+    public void neuter(ExecutionContext cx, ArrayBufferObject arrayBuffer, String type) {
+        assert "change-data".equals(type) || "same-data".equals(type);
+        if (arrayBuffer.getData() != null) {
+            DetachArrayBuffer(cx, arrayBuffer);
+        }
     }
 }

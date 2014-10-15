@@ -276,8 +276,7 @@ public final class PromiseAbstractOperations {
      */
     public static <PROMISE extends ScriptObject> PromiseCapability<PROMISE> CreatePromiseCapabilityRecord(
             ExecutionContext cx, PROMISE promise, Constructor constructor) {
-        /* step 1 */
-        assert IsConstructor(constructor);
+        /* steps 1-2 (not applicable) */
         /* step 2 (not applicable) */
         /* steps 4-5 */
         GetCapabilitiesExecutor executor = new GetCapabilitiesExecutor(cx.getRealm());

@@ -67,10 +67,11 @@ abstract class ExpressionVisitor extends InstructionVisitor {
 
     private static final int CONTEXT_SLOT = 0;
 
+    private final ExpressionVisitor parent;
     private final boolean strict;
     private final boolean globalCode;
     private final boolean syntheticMethod;
-    private int classDef = 0;
+    private int classDefDepth = 0;
     private Variable<ExecutionContext> executionContext;
     private Scope scope;
     // tail-call support
@@ -79,16 +80,19 @@ abstract class ExpressionVisitor extends InstructionVisitor {
 
     protected ExpressionVisitor(MethodCode method, ExpressionVisitor parent) {
         super(method);
+        this.parent = parent;
         this.strict = parent.isStrict();
         this.globalCode = parent.isGlobalCode();
         this.syntheticMethod = true;
-        this.classDef = parent.classDef;
+        this.classDefDepth = parent.classDefDepth;
+        this.scope = parent.scope;
         this.tailCallNodes = parent.tailCallNodes;
     }
 
     protected ExpressionVisitor(MethodCode method, boolean strict, boolean globalCode,
             boolean syntheticMethods) {
         super(method);
+        this.parent = null;
         this.strict = strict;
         this.globalCode = globalCode;
         this.syntheticMethod = syntheticMethods;
@@ -100,15 +104,12 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         this.executionContext = getParameter(CONTEXT_SLOT, ExecutionContext.class);
     }
 
-    /**
-     * Update additional state information after nested {@link ExpressionVisitor} has finished its
-     * pass.
-     * 
-     * @param nested
-     *            the nested expression visitor
-     */
-    void updateInfo(ExpressionVisitor nested) {
-        hasTailCalls |= nested.hasTailCalls;
+    @Override
+    public void end() {
+        if (parent != null) {
+            parent.hasTailCalls |= hasTailCalls;
+        }
+        super.end();
     }
 
     /**
@@ -116,57 +117,53 @@ abstract class ExpressionVisitor extends InstructionVisitor {
      * 
      * @return the execution context
      */
-    Variable<ExecutionContext> executionContext() {
+    final Variable<ExecutionContext> executionContext() {
         return executionContext;
     }
 
     /**
      * &#x2205; → cx
      */
-    void loadExecutionContext() {
+    final void loadExecutionContext() {
         load(executionContext);
     }
 
     /**
      * &#x2205; → undefined
      */
-    void loadUndefined() {
+    final void loadUndefined() {
         get(Fields.Undefined_UNDEFINED);
     }
 
     /**
      * &#x2205; → null
      */
-    void loadNull() {
+    final void loadNull() {
         get(Fields.Null_NULL);
     }
 
-    boolean isStrict() {
-        return strict || classDef != 0;
+    final boolean isStrict() {
+        return strict || classDefDepth != 0;
     }
 
-    boolean isGlobalCode() {
+    final boolean isGlobalCode() {
         return globalCode;
     }
 
-    boolean isResumable() {
+    final boolean isResumable() {
         return !syntheticMethod;
     }
 
     void enterClassDefinition() {
-        ++classDef;
+        ++classDefDepth;
     }
 
     void exitClassDefinition() {
-        --classDef;
+        --classDefDepth;
     }
 
     Scope getScope() {
         return scope;
-    }
-
-    void setScope(Scope scope) {
-        this.scope = scope;
     }
 
     void enterScope(ScopedNode node) {
@@ -189,15 +186,15 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         }
     }
 
-    final void exitTailCallPosition() {
+    void exitTailCallPosition() {
         this.tailCallNodes = Collections.emptySet();
     }
 
-    final boolean hasTailCalls() {
+    boolean hasTailCalls() {
         return hasTailCalls;
     }
 
-    final boolean isTailCall(Expression expr) {
+    boolean isTailCall(Expression expr) {
         boolean isTaillCall = tailCallNodes.contains(expr);
         hasTailCalls |= isTaillCall;
         return isTaillCall;

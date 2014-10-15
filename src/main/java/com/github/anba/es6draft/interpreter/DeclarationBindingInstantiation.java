@@ -6,14 +6,12 @@
  */
 package com.github.anba.es6draft.interpreter;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.newSyntaxError;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.VarDeclaredNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.VarScopedDeclarations;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.Script;
@@ -24,7 +22,7 @@ import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 
 /**
  * <h1>Declaration Binding Instantiation</h1>
@@ -38,7 +36,7 @@ final class DeclarationBindingInstantiation {
     }
 
     /**
-     * [15.2.8 Runtime Semantics: GlobalDeclarationInstantiation]
+     * [15.1.8 Runtime Semantics: GlobalDeclarationInstantiation]
      * 
      * @param cx
      *            the execution context
@@ -57,28 +55,32 @@ final class DeclarationBindingInstantiation {
         LexicalEnvironment<GlobalEnvironmentRecord> env = globalEnv;
         GlobalEnvironmentRecord envRec = env.getEnvRec();
 
+        /* step 1 (omitted) */
+        /* steps 2, 4 (not applicable) */
+        /* steps 3, 5 */
         for (Name name : VarDeclaredNames(script)) {
-            if (envRec.hasLexicalDeclaration(name.getIdentifier())) {
-                throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name.getIdentifier());
-            }
+            ScriptRuntime.canDeclareVarScopedOrThrow(cx, envRec, name.getIdentifier());
         }
+        /* step 6 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
-        HashSet<Name> declaredVarNames = new HashSet<>();
+        /* steps 7-9 (not applicable) */
+        /* step 10 */
+        LinkedHashSet<Name> declaredVarNames = new LinkedHashSet<>();
+        /* step 11 */
         for (StatementListItem d : varDeclarations) {
             assert d instanceof VariableStatement;
             for (Name vn : BoundNames((VariableStatement) d)) {
-                boolean vnDefinable = envRec.canDeclareGlobalVar(vn.getIdentifier());
-                if (!vnDefinable) {
-                    throw newTypeError(cx, Messages.Key.InvalidDeclaration, vn.getIdentifier());
-                }
-                if (!declaredVarNames.contains(vn)) {
-                    declaredVarNames.add(vn);
-                }
+                ScriptRuntime.canDeclareGlobalVarOrThrow(cx, envRec, vn.getIdentifier());
+                declaredVarNames.add(vn);
             }
         }
+        /* step 12 (NOTE) */
+        /* step 13-15 (not applicable) */
+        /* step 16 */
         for (Name vn : declaredVarNames) {
             envRec.createGlobalVarBinding(vn.getIdentifier(), deletableBindings);
         }
+        /* step 17 (return) */
     }
 
     /**

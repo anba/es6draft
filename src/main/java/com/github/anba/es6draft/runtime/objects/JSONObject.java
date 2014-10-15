@@ -153,7 +153,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                                 item = ToFlatString(cx, v);
                             }
                         }
-                        if (item != null && !propertyList.contains(item)) {
+                        if (item != null) {
                             propertyList.add(item);
                         }
                     }
@@ -376,7 +376,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         return !(Double.isNaN(v) || Double.isInfinite(v));
     }
 
-    private static final char[] hexdigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    private static final char[] HEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
             'a', 'b', 'c', 'd', 'e', 'f' };
 
     /**
@@ -416,10 +416,10 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             default:
                 if (c < ' ') {
                     product.append('\\').append('u')//
-                            .append(hexdigits[(c >> 12) & 0xf])//
-                            .append(hexdigits[(c >> 8) & 0xf])//
-                            .append(hexdigits[(c >> 4) & 0xf])//
-                            .append(hexdigits[(c >> 0) & 0xf]);
+                            .append(HEXDIGITS[(c >> 12) & 0xf])//
+                            .append(HEXDIGITS[(c >> 8) & 0xf])//
+                            .append(HEXDIGITS[(c >> 4) & 0xf])//
+                            .append(HEXDIGITS[(c >> 0) & 0xf]);
                 } else {
                     product.append(c);
                 }
@@ -452,12 +452,10 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      */
     public static String JO(ExecutionContext cx, Set<ScriptObject> stack, Set<String> propertyList,
             Callable replacerFunction, String indent, String gap, ScriptObject value) {
-        /* step 1 */
-        if (stack.contains(value)) {
+        /* steps 1-2 */
+        if (!stack.add(value)) {
             throw newTypeError(cx, Messages.Key.JSONCyclicValue);
         }
-        /* step 2 */
-        stack.add(value);
         /* step 3 */
         String stepback = indent;
         /* step 4 */
@@ -534,12 +532,10 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      */
     public static String JA(ExecutionContext cx, Set<ScriptObject> stack, Set<String> propertyList,
             Callable replacerFunction, String indent, String gap, ArrayObject value) {
-        /* step 1 */
-        if (stack.contains(value)) {
+        /* steps 1-2 */
+        if (!stack.add(value)) {
             throw newTypeError(cx, Messages.Key.JSONCyclicValue);
         }
-        /* step 2 */
-        stack.add(value);
         /* step 3 */
         String stepback = indent;
         /* step 4 */

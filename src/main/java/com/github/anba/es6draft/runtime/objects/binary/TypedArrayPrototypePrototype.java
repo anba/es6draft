@@ -226,6 +226,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 /* step 9 */
                 long targetLength = target.getArrayLength();
                 /* steps 10-11 */
+                // TODO: spec issue? - does not follow the ToNumber(v) == ToInteger(v) pattern
                 double targetOffset = (offset == UNDEFINED ? 0 : ToInteger(cx, offset));
                 /* step 12 */
                 if (targetOffset < 0) {
@@ -276,6 +277,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 /* steps 1-5 */
                 TypedArrayObject target = thisTypedArrayObject(cx, thisValue);
                 /* steps 6-7 */
+                // TODO: spec issue? - does not follow the ToNumber(v) == ToInteger(v) pattern
                 double targetOffset = (offset == UNDEFINED ? 0 : ToInteger(cx, offset));
                 /* step 8 */
                 if (targetOffset < 0) {

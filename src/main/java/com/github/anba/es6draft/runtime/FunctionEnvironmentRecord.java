@@ -29,6 +29,13 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
         this.methodName = methodName;
     }
 
+    @Override
+    public String toString() {
+        return String.format(
+                "%s:{%n\tthisValue=%s,%n\thomeObject=%s,%n\tmethodName=%s,%n\tbindings=%s%n}",
+                getClass().getSimpleName(), thisValue, homeObject, methodName, bindingsToString());
+    }
+
     /**
      * 8.1.1.3.1 HasThisBinding ()
      */

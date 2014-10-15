@@ -22,7 +22,7 @@ public final class ForOfStatement extends IterationStatement implements ScopedNo
     private final BlockScope scope;
     private final Node head;
     private final Expression expression;
-    private final Statement statement;
+    private Statement statement;
 
     public ForOfStatement(long beginPosition, long endPosition, BlockScope scope,
             EnumSet<Abrupt> abrupt, Set<String> labelSet, Node head, Expression expression,
@@ -39,16 +39,47 @@ public final class ForOfStatement extends IterationStatement implements ScopedNo
         return scope;
     }
 
+    /**
+     * Returns the <tt>for of</tt>-statement's head node. The head node is one of the following
+     * types:
+     * <ul>
+     * <li>{@link VariableStatement}:&emsp;{@code for (var decl of expr)}
+     * <li>{@link LexicalDeclaration}:&emsp;{@code for (let/const decl of expr)}
+     * <li>{@link LeftHandSideExpression}:&emsp;{@code for (lhs of expr)}
+     * </ul>
+     * 
+     * @return the head node
+     */
     public Node getHead() {
         return head;
     }
 
+    /**
+     * Returns the <tt>for of</tt>-statement's expression node.
+     * 
+     * @return the expression node
+     */
     public Expression getExpression() {
         return expression;
     }
 
+    /**
+     * Returns the <tt>for of</tt>-statement's statement node.
+     * 
+     * @return the statement node
+     */
     public Statement getStatement() {
         return statement;
+    }
+
+    /**
+     * Sets the <tt>for of</tt>-statement's statement node.
+     * 
+     * @param statement
+     *            the new statement node
+     */
+    public void setStatement(Statement statement) {
+        this.statement = statement;
     }
 
     @Override

@@ -9,13 +9,13 @@ package com.github.anba.es6draft.runtime.objects.text;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.Strings.isLineTerminator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.github.anba.es6draft.parser.Characters;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.regexp.RegExpMatcher;
 import com.github.anba.es6draft.regexp.RegExpParser;
@@ -264,7 +264,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
                     sb.append('\\').append(c);
                     break;
                 }
-            } else if (isLineTerminator(c)) {
+            } else if (Characters.isLineTerminator(c)) {
                 switch (c) {
                 case 0x0A:
                     sb.append("\\n");

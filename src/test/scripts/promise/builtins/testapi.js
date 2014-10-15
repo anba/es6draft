@@ -10,22 +10,16 @@
  * Compatibility layer for mocha bdd test API
  */
 
-const $Promise = new Reflect.Realm().global.Promise;
-
 function reportFailure(reason) {
-  let p = $Promise.reject(reason);
-  p.constructor = function(r) {
-    r(() => {}, e => { throw e });
-  };
-  p.then();
+  return $async_enqueueTask(() => { throw reason });
 }
 
 function queueTask(task) {
-  $Promise.resolve().then(task);
+  return $async_enqueueTask(task);
 }
 
 global.done = function done() {
-  reportFailure(new Error("invalid call to done"));
+  return reportFailure(new Error("invalid call to done"));
 }
 
 let asyncTestCount = 0;

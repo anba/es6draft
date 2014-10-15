@@ -157,6 +157,22 @@ public final class StaticSemantics {
     }
 
     /**
+     * 14.5.3 Static Semantics: ConstructorMethod
+     * 
+     * @param methods
+     *            the methods list
+     * @return the constructor method if found, otherwise {@code null}
+     */
+    public static MethodDefinition ConstructorMethod(List<MethodDefinition> methods) {
+        for (MethodDefinition m : methods) {
+            if (!m.isStatic() && "constructor".equals(m.getPropertyName().getName())) {
+                return m;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Static Semantics: ContainsExpression
      * <ul>
      * <li>13.2.3.2 Static Semantics: ContainsExpression
@@ -169,6 +185,22 @@ public final class StaticSemantics {
      * @return {@code true} if an expression was found
      */
     public static boolean ContainsExpression(FormalParameterList formals) {
+        return formals.containsExpression();
+    }
+
+    /**
+     * Static Semantics: ContainsExpression
+     * <ul>
+     * <li>13.2.3.2 Static Semantics: ContainsExpression
+     * <li>14.1.5 Static Semantics: ContainsExpression
+     * <li>14.2.4 Static Semantics: ContainsExpression
+     * </ul>
+     * 
+     * @param formals
+     *            the formal parameters
+     * @return {@code true} if an expression was found
+     */
+    public static boolean ContainsExpression(List<FormalParameter> formals) {
         for (FormalParameter formal : formals) {
             if (formal instanceof BindingElement && ContainsExpression((BindingElement) formal)) {
                 return true;
@@ -475,6 +507,21 @@ public final class StaticSemantics {
      * @return {@code true} if the list is a simple formal parameters list
      */
     public static boolean IsSimpleParameterList(FormalParameterList formals) {
+        return formals.isSimpleParameterList();
+    }
+
+    /**
+     * Static Semantics: IsSimpleParameterList
+     * <ul>
+     * <li>14.1.12 Static Semantics: IsSimpleParameterList
+     * <li>14.2.10 Static Semantics: IsSimpleParameterList
+     * </ul>
+     * 
+     * @param formals
+     *            the formal parameters list
+     * @return {@code true} if the list is a simple formal parameters list
+     */
+    public static boolean IsSimpleParameterList(List<FormalParameter> formals) {
         for (FormalParameter formal : formals) {
             if (formal instanceof BindingRestElement) {
                 return false;

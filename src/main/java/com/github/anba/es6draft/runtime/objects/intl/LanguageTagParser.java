@@ -295,7 +295,7 @@ final class LanguageTagParser {
         }
         char[] ca = s.toCharArray();
         for (; i < len; ++i) {
-            char c = s.charAt(i);
+            char c = ca[i];
             if (isUpper(c)) {
                 ca[i] = (char) ('a' + (c - 'A'));
             } else if (!(isAlpha(c) || isDigit(c) || c == '-')) {
@@ -306,15 +306,15 @@ final class LanguageTagParser {
     }
 
     private static boolean isUpper(char c) {
-        return (c >= 'A' && c <= 'Z');
+        return ('A' <= c && c <= 'Z');
     }
 
     private static boolean isAlpha(char c) {
-        return (c >= 'a' && c <= 'z');
+        return ('a' <= c && c <= 'z');
     }
 
     private static boolean isDigit(char c) {
-        return (c >= '0' && c <= '9');
+        return ('0' <= c && c <= '9');
     }
 
     /**

@@ -62,11 +62,11 @@ final class StrBuffer {
      *            the code point
      */
     public void appendCodePoint(int c) {
-        if (c > 0xFFFF) {
+        if (Character.isBmpCodePoint(c)) {
+            append(c);
+        } else {
             append(Character.highSurrogate(c));
             append(Character.lowSurrogate(c));
-        } else {
-            append(c);
         }
     }
 

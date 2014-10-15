@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.ast;
 
+import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMethod;
+
 import java.util.List;
 
 import com.github.anba.es6draft.ast.scope.BlockScope;
@@ -90,15 +92,5 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
     @Override
     public <V> void accept(VoidNodeVisitor<V> visitor, V value) {
         visitor.visit(this, value);
-    }
-
-    // 14.5.3 Static Semantics: ConstructorMethod
-    private static MethodDefinition ConstructorMethod(List<MethodDefinition> methods) {
-        for (MethodDefinition m : methods) {
-            if (!m.isStatic() && "constructor".equals(m.getPropertyName().getName())) {
-                return m;
-            }
-        }
-        return null;
     }
 }

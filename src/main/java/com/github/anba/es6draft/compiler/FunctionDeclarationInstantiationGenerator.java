@@ -8,7 +8,6 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.BindingInitializationGenerator.BindingInitialization;
 import static com.github.anba.es6draft.compiler.BindingInitializationGenerator.BindingInitializationWithEnvironment;
-import static com.github.anba.es6draft.compiler.FunctionDeclarationCollector.findFunctionDeclarations;
 import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.util.ArrayList;
@@ -64,8 +63,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                         Types.LexicalEnvironment));
 
         static final MethodDesc ArgumentsObject_CreateUnmappedArgumentsObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ArgumentsObject,
-                "CreateUnmappedArgumentsObject",
+                MethodDesc.Invoke.Static, Types.ArgumentsObject, "CreateUnmappedArgumentsObject",
                 Type.getMethodType(Types.ArgumentsObject, Types.ExecutionContext, Types.Object_));
 
         static final MethodDesc LegacyArgumentsObject_CreateLegacyArgumentsObject = MethodDesc
@@ -94,8 +92,7 @@ final class FunctionDeclarationInstantiationGenerator extends
 
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_newDeclarativeEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.LexicalEnvironment,
-                "newDeclarativeEnvironment",
+                MethodDesc.Invoke.Static, Types.LexicalEnvironment, "newDeclarativeEnvironment",
                 Type.getMethodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
         // class: List
@@ -172,7 +169,6 @@ final class FunctionDeclarationInstantiationGenerator extends
         /* step 2 */
         boolean strict = IsStrict(function);
         boolean legacy = isLegacy(function);
-        boolean block = !strict && codegen.isEnabled(CompatibilityOption.BlockFunctionDeclaration);
         /* step 3 */
         FormalParameterList formals = function.getParameters();
         /* step 4 */
@@ -204,8 +200,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                 assert isFunctionDeclaration(item);
                 Declaration d = (Declaration) item;
                 Name fn = BoundName(d);
-                if (!functionNames.contains(fn)) {
-                    functionNames.add(fn);
+                if (functionNames.add(fn)) {
                     functionsToInitialize.add(d);
                 }
             }
@@ -234,9 +229,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         /* step 18 */
         HashSet<Name> bindings = new HashSet<>();
         for (Name paramName : parameterNames) {
-            boolean alreadyDeclared = bindings.contains(paramName);
-            if (!alreadyDeclared) {
-                bindings.add(paramName);
+            if (bindings.add(paramName)) {
                 createMutableBinding(envRec, paramName, false, mv);
                 if (hasDuplicates) {
                     initializeBinding(envRec, paramName, undef, mv);
@@ -293,8 +286,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             instantiatedVarNames = new HashSet<>(parameterNames);
             /* step 23.d */
             for (Name varName : varNames) {
-                if (!instantiatedVarNames.contains(varName)) {
-                    instantiatedVarNames.add(varName);
+                if (instantiatedVarNames.add(varName)) {
                     createMutableBinding(bodyEnvRec, varName, false, mv);
                     initializeBinding(bodyEnvRec, varName, undef, mv);
                 }
@@ -313,8 +305,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             instantiatedVarNames = new HashSet<>();
             /* step 24.g */
             for (Name varName : varNames) {
-                if (!instantiatedVarNames.contains(varName)) {
-                    instantiatedVarNames.add(varName);
+                if (instantiatedVarNames.add(varName)) {
                     createMutableBinding(bodyEnvRec, varName, false, mv);
                     if (!parameterNamesSet.contains(varName) || functionNames.contains(varName)) {
                         initializeBinding(bodyEnvRec, varName, undef, mv);
@@ -326,18 +317,13 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
 
         /* B.3.3 Block-Level Function Declarations Web Legacy Compatibility Semantics */
-        if (block) {
-            // Find all function declarations
-            boolean catchVar = codegen.isEnabled(CompatibilityOption.CatchVarStatement);
-            for (FunctionDeclaration f : findFunctionDeclarations(function, catchVar)) {
-                Name fname = f.getIdentifier().getName();
-                // FIXME: spec bug - parameterNames must not be checked
-                // function f(g=0) { { function g(){} } } f()
-                if (!instantiatedVarNames.contains(fname)) {
-                    instantiatedVarNames.add(fname);
-                    createMutableBinding(bodyEnvRec, fname, false, mv);
-                    initializeBinding(bodyEnvRec, fname, undef, mv);
-                }
+        for (FunctionDeclaration f : function.getScope().blockFunctions()) {
+            Name fname = f.getIdentifier().getName();
+            // FIXME: spec bug - parameterNames must not be checked
+            // function f(g=0) { { function g(){} } } f()
+            if (instantiatedVarNames.add(fname)) {
+                createMutableBinding(bodyEnvRec, fname, false, mv);
+                initializeBinding(bodyEnvRec, fname, undef, mv);
             }
         }
 
@@ -450,12 +436,12 @@ final class FunctionDeclarationInstantiationGenerator extends
         HashSet<String> mappedNames = new HashSet<>();
         String[] names = new String[numberOfParameters];
         for (int index = numberOfParameters - 1; index >= 0; --index) {
-            assert list.get(index) instanceof BindingElement;
-            BindingElement formal = (BindingElement) list.get(index);
-            assert formal.getBinding() instanceof BindingIdentifier;
-            String name = ((BindingIdentifier) formal.getBinding()).getName().getIdentifier();
-            if (!mappedNames.contains(name)) {
-                mappedNames.add(name);
+            FormalParameter formal = list.get(index);
+            assert formal instanceof BindingElement : formal.getClass().toString();
+            Binding binding = ((BindingElement) formal).getBinding();
+            assert binding instanceof BindingIdentifier : binding.getClass().toString();
+            String name = ((BindingIdentifier) binding).getName().getIdentifier();
+            if (mappedNames.add(name)) {
                 names[index] = name;
             }
         }

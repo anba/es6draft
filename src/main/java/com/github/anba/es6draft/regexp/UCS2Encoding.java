@@ -12,6 +12,8 @@ import org.jcodings.IntHolder;
 import org.jcodings.constants.CharacterType;
 import org.jcodings.unicode.UnicodeEncoding;
 
+import com.github.anba.es6draft.parser.Characters;
+
 /**
  * UCS-2 encoding with modified case-folding
  */
@@ -115,7 +117,7 @@ final class UCS2Encoding extends UnicodeEncoding {
     public CaseFoldCodeItem[] caseFoldCodesByString(int flag, byte[] bytes, int p, int end) {
         int codePoint = mbcToCode(bytes, p, end);
         if (isAscii(codePoint)) {
-            if ('a' <= (codePoint | 0x20) && (codePoint | 0x20) <= 'z') {
+            if (Characters.isASCIIAlpha(codePoint)) {
                 return new CaseFoldCodeItem[] { new CaseFoldCodeItem(2, 1,
                         new int[] { codePoint ^ 0x20 }) };
             }
@@ -161,34 +163,17 @@ final class UCS2Encoding extends UnicodeEncoding {
     public boolean isCodeCType(int code, int ctype) {
         switch (ctype) {
         case CharacterType.DIGIT:
-            return '0' <= code && code <= '9';
+            return Characters.isDecimalDigit(code);
         case CharacterType.SPACE:
-            // 11.2 White Space
-            // 11.3 Line Terminators
-            switch (code) {
-            case 0x0009:
-            case 0x000B:
-            case 0x000C:
-            case 0x0020:
-            case 0x00A0:
-            case 0xFEFF:
-            case 0x000A:
-            case 0x000D:
-            case 0x2028:
-            case 0x2029:
-                return true;
-            default:
-                return code > 0x7f && Character.getType(code) == Character.SPACE_SEPARATOR;
-            }
+            return Characters.isWhitespaceOrLineTerminator(code);
         case CharacterType.UPPER:
             // needs to be implemented to parse hexadecimal digits
             return Character.isUpperCase(code);
         case CharacterType.XDIGIT:
             // needs to be implemented to parse hexadecimal digits
-            return ('0' <= code && code <= '9') || ('a' <= (code | 0x20) && (code | 0x20) <= 'f');
+            return Characters.isHexDigit(code);
         case CharacterType.WORD:
-            return ('0' <= code && code <= '9')
-                    || ('a' <= (code | 0x20) && (code | 0x20) <= 'z' || code == '_');
+            return Characters.isASCIIAlphaNumericUnderscore(code);
         default:
             assert false : "unreachable: " + ctype;
             return super.isCodeCType(code, ctype);

@@ -23,7 +23,7 @@ public final class ForStatement extends IterationStatement implements ScopedNode
     private final Node head;
     private final Expression test;
     private final Expression step;
-    private final Statement statement;
+    private Statement statement;
 
     public ForStatement(long beginPosition, long endPosition, BlockScope scope,
             EnumSet<Abrupt> abrupt, Set<String> labelSet, Node head, Expression test,
@@ -41,20 +41,56 @@ public final class ForStatement extends IterationStatement implements ScopedNode
         return scope;
     }
 
+    /**
+     * Returns the <tt>for</tt>-statement's head node. The head node is one of the following types:
+     * <ul>
+     * <li>{@link VariableStatement}:&emsp;{@code for (var decl; ...)}
+     * <li>{@link LexicalDeclaration}:&emsp;{@code for (let/const decl; ...)}
+     * <li>{@link Expression}:&emsp;{@code for (expr; ...)}
+     * <li>or {@code null} if not present
+     * </ul>
+     * 
+     * @return the head node or {@code null} if not present
+     */
     public Node getHead() {
         return head;
     }
 
+    /**
+     * Returns the <tt>for</tt>-statement's test expression node.
+     * 
+     * @return the expression node or {@code null} if not present
+     */
     public Expression getTest() {
         return test;
     }
 
+    /**
+     * Returns the <tt>for</tt>-statement's step expression node.
+     * 
+     * @return the expression node or {@code null} if not present
+     */
     public Expression getStep() {
         return step;
     }
 
+    /**
+     * Returns the <tt>for</tt>-statement's statement node.
+     * 
+     * @return the statement node
+     */
     public Statement getStatement() {
         return statement;
+    }
+
+    /**
+     * Sets the <tt>for</tt>-statement's statement node.
+     * 
+     * @param statement
+     *            the new statement node
+     */
+    public void setStatement(Statement statement) {
+        this.statement = statement;
     }
 
     @Override

@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.regexp;
 
+import static com.github.anba.es6draft.parser.Characters.*;
+
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.regex.Pattern;
@@ -1764,29 +1766,6 @@ public final class RegExpParser {
         return HEXDIGITS[(c >> shift) & 0xf];
     }
 
-    private static final int hexDigit(int c) {
-        if (c >= '0' && c <= '9') {
-            return (c - '0');
-        } else if (c >= 'A' && c <= 'F') {
-            return (c - ('A' - 10));
-        } else if (c >= 'a' && c <= 'f') {
-            return (c - ('a' - 10));
-        }
-        return -1;
-    }
-
-    private static final boolean isASCIIAlpha(int c) {
-        return (c | 0x20) >= 'a' && (c | 0x20) <= 'z';
-    }
-
-    private static final boolean isASCIIAlphaNumericUnderscore(int c) {
-        return (c >= '0' && c <= '9') || ((c | 0x20) >= 'a' && (c | 0x20) <= 'z') || c == '_';
-    }
-
-    private static boolean isDecimalDigit(int c) {
-        return (c >= '0' && c <= '9');
-    }
-
     /**
      * <pre>
      * SyntaxCharacter :: <b>one of</b>
@@ -1817,76 +1796,5 @@ public final class RegExpParser {
         default:
             return false;
         }
-    }
-
-    /**
-     * <strong>[11.6] Names and Keywords</strong>
-     * 
-     * <pre>
-     * IdentifierPart ::
-     *     UnicodeIDContinue
-     *     $
-     *     _
-     * UnicodeIDContinue ::
-     *     any Unicode character with the Unicode property "ID_Continue", "Other_ID_Continue", or "Other_ID_Start"
-     * </pre>
-     * 
-     * @param c
-     *            the character to inspect
-     * @return {@code true} if the character is an identifier part character
-     */
-    private static boolean isIdentifierPartNotJoiner(int c) {
-        if (c <= 127) {
-            return ((c | 0x20) >= 'a' && (c | 0x20) <= 'z') || (c >= '0' && c <= '9') || c == '$'
-                    || c == '_';
-        }
-        return isIdentifierPartNotJoinerUnlikely(c);
-    }
-
-    private static boolean isIdentifierPartNotJoinerUnlikely(int c) {
-        // cf. http://www.unicode.org/reports/tr31/ for definition of "ID_Continue"
-        if (c == '\u2E2F') {
-            // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
-            return false;
-        }
-        switch (Character.getType(c)) {
-        case Character.UPPERCASE_LETTER:
-        case Character.LOWERCASE_LETTER:
-        case Character.TITLECASE_LETTER:
-        case Character.MODIFIER_LETTER:
-        case Character.OTHER_LETTER:
-        case Character.LETTER_NUMBER:
-        case Character.NON_SPACING_MARK:
-        case Character.COMBINING_SPACING_MARK:
-        case Character.DECIMAL_DIGIT_NUMBER:
-        case Character.CONNECTOR_PUNCTUATION:
-            return true;
-        }
-        // Additional characters for ID_Continue based on Unicode 5.1.
-        switch (c) {
-        case '\u00B7':
-        case '\u0387':
-        case '\u1369':
-        case '\u136A':
-        case '\u136B':
-        case '\u136C':
-        case '\u136D':
-        case '\u136E':
-        case '\u136F':
-        case '\u1370':
-        case '\u1371':
-        case '\u2118':
-        case '\u212E':
-        case '\u309B':
-        case '\u309C':
-            return true;
-        }
-        // Additional characters for ID_Continue based on Unicode 6.0 (Java 7).
-        // Also applies to Unicode 6.2 (Java 8) and Unicode 7.0 (Current).
-        switch (c) {
-        case '\u19DA':
-            return true;
-        }
-        return false;
     }
 }

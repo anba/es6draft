@@ -41,13 +41,13 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         }
 
         void maybeExport(List<StatementListItem> statements, int size) {
-            assert state == ExportState.NotExported && size < MAX_STATEMENT_SIZE;
+            assert getState() == ExportState.NotExported && size < MAX_STATEMENT_SIZE;
             update(ExportState.MaybeExported, new StatementListMethod(statements), size);
         }
 
         @Override
         protected final StatementListItem createReplacement() {
-            return new StatementListMethod(singletonList(node));
+            return new StatementListMethod(singletonList(getNode()));
         }
 
         @Override
@@ -80,9 +80,9 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         // re-compute all sizes
         MemorizingHandler memorizinghandler = new MemorizingHandler();
         new CodeSizeVisitor().startAnalyze(node, memorizinghandler);
-        Map<StatementListItem, Integer> codeSizes = memorizinghandler.codeSizes;
+        Map<StatementListItem, Integer> codeSizes = memorizinghandler.getSizeMap();
 
-        // find exportable statements
+        // Find exportable statements.
         FindExportableStatement findExport = new FindExportableStatement(codeSizes);
         node.accept(findExport, new ArrayDeque<Node>());
         List<StatementListItem> exportable = findExport.exportable;
@@ -91,22 +91,22 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         List<StatementElement> elements = StatementElement.from(exportable, codeSizes);
         int accSize = oldSize;
 
-        // replace single big elements with method-statements
+        // Replace large statements with method-statements.
         PriorityQueue<StatementElement> pq = new PriorityQueue<>(elements);
-        while (!pq.isEmpty() && pq.peek().size > MAX_STATEMENT_SIZE) {
+        while (!pq.isEmpty() && pq.peek().getSize() > MAX_STATEMENT_SIZE) {
             StatementElement element = pq.remove();
             accSize += element.export();
         }
 
         if (accSize > MAX_STATEMENT_SIZE) {
-            // if statement size still too large, try to export more statements, possibly by
-            // compacting sibling elements
+            // If statement size still too large, try to export more statements, possibly by
+            // compacting sibling elements.
             for (int i = 0, len = elements.size(); i < len; i++) {
                 StatementElement element = elements.get(i);
-                if (element.state != ExportState.NotExported) {
+                if (element.getState() != ExportState.NotExported) {
                     continue;
                 }
-                assert element.node == exportable.get(i);
+                assert element.getNode() == exportable.get(i);
                 Node parent = parents.get(i);
                 if (i + 1 < len && parents.get(i + 1) == parent) {
                     // siblings, try to compact
@@ -121,7 +121,8 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
             pq = new PriorityQueue<>(elements);
             while (!pq.isEmpty() && accSize > MAX_STATEMENT_SIZE) {
                 StatementElement element = pq.remove();
-                if (element.state == ExportState.Exported || element.state == ExportState.Empty) {
+                if (element.getState() == ExportState.Exported
+                        || element.getState() == ExportState.Empty) {
                     // or rather break..?
                     continue;
                 }
@@ -129,16 +130,18 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
             }
         }
 
-        // update all entries which were marked as exported
+        // Update all entries which were marked as exported.
         StatementUpdater updater = new StatementUpdater();
         for (int i = 0, len = elements.size(); i < len; i++) {
             StatementElement element = elements.get(i);
-            if (element.state != ExportState.Exported) {
+            if (element.getState() != ExportState.Exported) {
                 continue;
             }
             Node parent = parents.get(i);
+            assert parent != null : String.format("null parent at %d/%d, element = %s", i, len,
+                    element);
             StatementListItem sourceElement = exportable.get(i);
-            StatementListMethod targetElement = (StatementListMethod) element.node;
+            StatementListMethod targetElement = (StatementListMethod) element.getNode();
             assert sourceElement != targetElement : sourceElement.getClass() + ", "
                     + targetElement.getClass();
             Entry<StatementListItem, StatementListMethod> entry = new SimpleEntry<>(sourceElement,
@@ -160,16 +163,16 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
     private boolean tryCompactSibling(List<StatementElement> elements,
             List<StatementListItem> statements, int index) {
         StatementElement element = elements.get(index);
-        int startIndex = statements.indexOf(element.node);
+        int startIndex = statements.indexOf(element.getNode());
         assert startIndex != -1;
         int endIndex = startIndex + 1;
-        int accSize = element.size;
+        int accSize = element.getSize();
 
         for (int i = index + 1; endIndex < statements.size() && i < elements.size(); ++endIndex, ++i) {
             StatementListItem statement = statements.get(endIndex);
             StatementElement elem = elements.get(i);
-            if (statement == elem.node && accSize + elem.size < MAX_STATEMENT_SIZE) {
-                accSize += elem.size;
+            if (statement == elem.getNode() && accSize + elem.getSize() < MAX_STATEMENT_SIZE) {
+                accSize += elem.getSize();
             } else {
                 break;
             }
@@ -223,6 +226,36 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         }
 
         @Override
+        public void visit(DoWhileStatement node, Entry<StatementListItem, StatementListMethod> entry) {
+            assert entry.getKey() == node.getStatement();
+            node.setStatement(entry.getValue());
+        }
+
+        @Override
+        public void visit(ForEachStatement node, Entry<StatementListItem, StatementListMethod> entry) {
+            assert entry.getKey() == node.getStatement();
+            node.setStatement(entry.getValue());
+        }
+
+        @Override
+        public void visit(ForInStatement node, Entry<StatementListItem, StatementListMethod> entry) {
+            assert entry.getKey() == node.getStatement();
+            node.setStatement(entry.getValue());
+        }
+
+        @Override
+        public void visit(ForOfStatement node, Entry<StatementListItem, StatementListMethod> entry) {
+            assert entry.getKey() == node.getStatement();
+            node.setStatement(entry.getValue());
+        }
+
+        @Override
+        public void visit(ForStatement node, Entry<StatementListItem, StatementListMethod> entry) {
+            assert entry.getKey() == node.getStatement();
+            node.setStatement(entry.getValue());
+        }
+
+        @Override
         public void visit(IfStatement node, Entry<StatementListItem, StatementListMethod> entry) {
             if (entry.getKey() == node.getThen()) {
                 node.setThen(entry.getValue());
@@ -235,6 +268,18 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         @Override
         public void visit(SwitchClause node, Entry<StatementListItem, StatementListMethod> entry) {
             node.setStatements(updateStatements(node.getStatements(), entry));
+        }
+
+        @Override
+        public void visit(WhileStatement node, Entry<StatementListItem, StatementListMethod> entry) {
+            assert entry.getKey() == node.getStatement();
+            node.setStatement(entry.getValue());
+        }
+
+        @Override
+        public void visit(WithStatement node, Entry<StatementListItem, StatementListMethod> entry) {
+            assert entry.getKey() == node.getStatement();
+            node.setStatement(entry.getValue());
         }
     }
 
@@ -251,7 +296,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
     }
 
     private static final class FindExportableStatement extends
-            DefaultNodeVisitor<Boolean, ArrayDeque<Node>> {
+            DefaultVoidNodeVisitor<ArrayDeque<Node>> {
         final RangeArrayList<StatementListItem> exportable = new RangeArrayList<>();
         final RangeArrayList<Node> parents = new RangeArrayList<>();
         final HashSet<Node> nonExportable = new HashSet<>();
@@ -261,28 +306,30 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
             this.codeSizes = codeSizes;
         }
 
-        private boolean export(StatementListItem node, ArrayDeque<Node> stack) {
+        private void export(StatementListItem node, ArrayDeque<Node> stack) {
             // always exportable to sub-method
-            exportable.add(node);
-            parents.add(stack.peek());
-            return true;
+            Node parent = stack.peek();
+            if (parent != null) {
+                exportable.add(node);
+                parents.add(parent);
+            }
         }
 
-        private boolean neverExport(Node node) {
+        private void neverExport(Node node) {
             // never exportable to sub-method
-            return nonExportable.add(node);
+            nonExportable.add(node);
         }
 
-        private boolean neverExport(List<? extends Node> nodes) {
+        private void neverExport(List<? extends Node> nodes) {
             // never exportable to sub-method
-            return nonExportable.addAll(nodes);
+            nonExportable.addAll(nodes);
         }
 
         private boolean isExportable(Node node) {
             return !nonExportable.contains(node);
         }
 
-        private boolean findTarget(Statement breakOrContinue, String label, ArrayDeque<Node> stack) {
+        private void findTarget(Statement breakOrContinue, String label, ArrayDeque<Node> stack) {
             neverExport(breakOrContinue);
             for (Iterator<Node> iter = stack.iterator(); iter.hasNext();) {
                 Node stmt = iter.next();
@@ -297,9 +344,6 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
                 }
                 neverExport(stmt);
             }
-
-            // never exportable to sub-method
-            return false;
         }
 
         private int push(Node node, ArrayDeque<Node> stack) {
@@ -308,7 +352,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
             return startOffset;
         }
 
-        private boolean pop(Node node, ArrayDeque<Node> stack, int startOffset) {
+        private void pop(Node node, ArrayDeque<Node> stack, int startOffset) {
             Node value = stack.pop();
             assert node == value;
             if (isExportable(node) && codeSizes.get(node) < MAX_SIZE) {
@@ -318,29 +362,27 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
                 assert startOffset <= currentOffset && currentOffset == parents.size();
                 exportable.replaceRange((StatementListItem) node, startOffset, currentOffset);
                 parents.replaceRange(stack.peek(), startOffset, currentOffset);
-                return true;
             }
-            return false;
         }
 
         /* -------------------------------------------------------------------------------------- */
 
-        private boolean visit(Node node, Node child, ArrayDeque<Node> stack) {
+        private void visit(Node node, Node child, ArrayDeque<Node> stack) {
             int startOffset = push(node, stack);
             child.accept(this, stack);
-            return pop(node, stack, startOffset);
+            pop(node, stack, startOffset);
         }
 
-        private boolean visit(Node node, Node left, Node right, ArrayDeque<Node> stack) {
+        private void visit(Node node, Node left, Node right, ArrayDeque<Node> stack) {
             int startOffset = push(node, stack);
             left.accept(this, stack);
             if (right != null) {
                 right.accept(this, stack);
             }
-            return pop(node, stack, startOffset);
+            pop(node, stack, startOffset);
         }
 
-        private boolean visit(Node node, Node left, Node middle, Node right,
+        private void visit(Node node, Node left, Node middle, Node right,
                 List<? extends Node> children, ArrayDeque<Node> stack) {
             int startOffset = push(node, stack);
             left.accept(this, stack);
@@ -353,149 +395,149 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
             for (Node child : children) {
                 child.accept(this, stack);
             }
-            return pop(node, stack, startOffset);
+            pop(node, stack, startOffset);
         }
 
-        private boolean visit(Node node, List<? extends Node> children, ArrayDeque<Node> stack) {
+        private void visit(Node node, List<? extends Node> children, ArrayDeque<Node> stack) {
             int startOffset = push(node, stack);
             for (Node child : children) {
                 child.accept(this, stack);
             }
-            return pop(node, stack, startOffset);
+            pop(node, stack, startOffset);
         }
 
         /* -------------------------------------------------------------------------------------- */
 
         @Override
-        protected Boolean visit(Node node, ArrayDeque<Node> stack) {
+        protected void visit(Node node, ArrayDeque<Node> stack) {
             throw new IllegalStateException("unhandled node: " + node.getClass());
         }
 
         @Override
-        protected Boolean visit(Statement node, ArrayDeque<Node> stack) {
+        protected void visit(Statement node, ArrayDeque<Node> stack) {
             throw new IllegalStateException("unhandled statement: " + node.getClass());
         }
 
         @Override
-        protected Boolean visit(Declaration node, ArrayDeque<Node> stack) {
-            return export(node, stack);
+        protected void visit(Declaration node, ArrayDeque<Node> stack) {
+            export(node, stack);
         }
 
         @Override
-        public Boolean visit(BlockStatement node, ArrayDeque<Node> stack) {
-            return visit(node, node.getStatements(), stack);
+        public void visit(BlockStatement node, ArrayDeque<Node> stack) {
+            visit(node, node.getStatements(), stack);
         }
 
         @Override
-        public Boolean visit(BreakStatement node, ArrayDeque<Node> stack) {
-            return findTarget(node, node.getLabel(), stack);
+        public void visit(BreakStatement node, ArrayDeque<Node> stack) {
+            findTarget(node, node.getLabel(), stack);
         }
 
         @Override
-        public Boolean visit(CatchNode node, ArrayDeque<Node> stack) {
-            return node.getCatchBlock().accept(this, stack);
+        public void visit(CatchNode node, ArrayDeque<Node> stack) {
+            node.getCatchBlock().accept(this, stack);
         }
 
         @Override
-        public Boolean visit(ContinueStatement node, ArrayDeque<Node> stack) {
-            return findTarget(node, node.getLabel(), stack);
+        public void visit(ContinueStatement node, ArrayDeque<Node> stack) {
+            findTarget(node, node.getLabel(), stack);
         }
 
         @Override
-        public Boolean visit(DebuggerStatement node, ArrayDeque<Node> stack) {
-            return export(node, stack);
+        public void visit(DebuggerStatement node, ArrayDeque<Node> stack) {
+            export(node, stack);
         }
 
         @Override
-        public Boolean visit(DoWhileStatement node, ArrayDeque<Node> stack) {
-            return visit(node, node.getStatement(), stack);
+        public void visit(DoWhileStatement node, ArrayDeque<Node> stack) {
+            visit(node, node.getStatement(), stack);
         }
 
         @Override
-        public Boolean visit(EmptyStatement node, ArrayDeque<Node> stack) {
-            return neverExport(node);
+        public void visit(EmptyStatement node, ArrayDeque<Node> stack) {
+            neverExport(node);
         }
 
         @Override
-        public Boolean visit(ExpressionStatement node, ArrayDeque<Node> stack) {
-            return export(node, stack);
+        public void visit(ExpressionStatement node, ArrayDeque<Node> stack) {
+            export(node, stack);
         }
 
         @Override
-        public Boolean visit(ForEachStatement node, ArrayDeque<Node> stack) {
-            return visit(node, node.getStatement(), stack);
+        public void visit(ForEachStatement node, ArrayDeque<Node> stack) {
+            visit(node, node.getStatement(), stack);
         }
 
         @Override
-        public Boolean visit(ForInStatement node, ArrayDeque<Node> stack) {
-            return visit(node, node.getStatement(), stack);
+        public void visit(ForInStatement node, ArrayDeque<Node> stack) {
+            visit(node, node.getStatement(), stack);
         }
 
         @Override
-        public Boolean visit(ForOfStatement node, ArrayDeque<Node> stack) {
-            return visit(node, node.getStatement(), stack);
+        public void visit(ForOfStatement node, ArrayDeque<Node> stack) {
+            visit(node, node.getStatement(), stack);
         }
 
         @Override
-        public Boolean visit(ForStatement node, ArrayDeque<Node> stack) {
-            return visit(node, node.getStatement(), stack);
+        public void visit(ForStatement node, ArrayDeque<Node> stack) {
+            visit(node, node.getStatement(), stack);
         }
 
         @Override
-        public Boolean visit(GuardedCatchNode node, ArrayDeque<Node> stack) {
-            return node.getCatchBlock().accept(this, stack);
+        public void visit(GuardedCatchNode node, ArrayDeque<Node> stack) {
+            node.getCatchBlock().accept(this, stack);
         }
 
         @Override
-        public Boolean visit(IfStatement node, ArrayDeque<Node> stack) {
-            return visit(node, node.getThen(), node.getOtherwise(), stack);
+        public void visit(IfStatement node, ArrayDeque<Node> stack) {
+            visit(node, node.getThen(), node.getOtherwise(), stack);
         }
 
         @Override
-        public Boolean visit(LabelledFunctionStatement node, ArrayDeque<Node> stack) {
-            return visit(node, node.getFunction(), stack);
+        public void visit(LabelledFunctionStatement node, ArrayDeque<Node> stack) {
+            visit(node, node.getFunction(), stack);
         }
 
         @Override
-        public Boolean visit(LabelledStatement node, ArrayDeque<Node> stack) {
-            return visit(node, node.getStatement(), stack);
+        public void visit(LabelledStatement node, ArrayDeque<Node> stack) {
+            visit(node, node.getStatement(), stack);
         }
 
         @Override
-        public Boolean visit(LetStatement node, ArrayDeque<Node> stack) {
-            return visit(node, node.getStatement(), stack);
+        public void visit(LetStatement node, ArrayDeque<Node> stack) {
+            visit(node, node.getStatement(), stack);
         }
 
         @Override
-        public Boolean visit(ReturnStatement node, ArrayDeque<Node> stack) {
-            return export(node, stack);
+        public void visit(ReturnStatement node, ArrayDeque<Node> stack) {
+            export(node, stack);
         }
 
         @Override
-        public Boolean visit(StatementListMethod node, ArrayDeque<Node> stack) {
+        public void visit(StatementListMethod node, ArrayDeque<Node> stack) {
             // don't re-export already exported statements
-            return neverExport(node);
+            neverExport(node);
         }
 
         @Override
-        public Boolean visit(SwitchClause node, ArrayDeque<Node> stack) {
+        public void visit(SwitchClause node, ArrayDeque<Node> stack) {
             // don't export individual switch-clauses
             neverExport(node);
-            return visit(node, node.getStatements(), stack);
+            visit(node, node.getStatements(), stack);
         }
 
         @Override
-        public Boolean visit(SwitchStatement node, ArrayDeque<Node> stack) {
-            return visit(node, node.getClauses(), stack);
+        public void visit(SwitchStatement node, ArrayDeque<Node> stack) {
+            visit(node, node.getClauses(), stack);
         }
 
         @Override
-        public Boolean visit(ThrowStatement node, ArrayDeque<Node> stack) {
-            return export(node, stack);
+        public void visit(ThrowStatement node, ArrayDeque<Node> stack) {
+            export(node, stack);
         }
 
         @Override
-        public Boolean visit(TryStatement node, ArrayDeque<Node> stack) {
+        public void visit(TryStatement node, ArrayDeque<Node> stack) {
             // don't export individual try/catch/finally blocks
             neverExport(node.getTryBlock());
             neverExport(node.getGuardedCatchNodes());
@@ -505,23 +547,23 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
             if (node.getFinallyBlock() != null) {
                 neverExport(node.getFinallyBlock());
             }
-            return visit(node, node.getTryBlock(), node.getCatchNode(), node.getFinallyBlock(),
+            visit(node, node.getTryBlock(), node.getCatchNode(), node.getFinallyBlock(),
                     node.getGuardedCatchNodes(), stack);
         }
 
         @Override
-        public Boolean visit(VariableStatement node, ArrayDeque<Node> stack) {
-            return export(node, stack);
+        public void visit(VariableStatement node, ArrayDeque<Node> stack) {
+            export(node, stack);
         }
 
         @Override
-        public Boolean visit(WhileStatement node, ArrayDeque<Node> stack) {
-            return visit(node, node.getStatement(), stack);
+        public void visit(WhileStatement node, ArrayDeque<Node> stack) {
+            visit(node, node.getStatement(), stack);
         }
 
         @Override
-        public Boolean visit(WithStatement node, ArrayDeque<Node> stack) {
-            return visit(node, node.getStatement(), stack);
+        public void visit(WithStatement node, ArrayDeque<Node> stack) {
+            visit(node, node.getStatement(), stack);
         }
     }
 }

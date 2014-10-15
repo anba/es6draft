@@ -44,7 +44,7 @@ import com.github.anba.es6draft.runtime.internal.Source;
  */
 public final class Compiler {
     public enum Option {
-        Debug, FullDebug, DebugInfo, NoResume, NoTailCall, SourceMap, VerifyStack
+        Debug, FullDebug, DebugInfo, NoResume, NoTailCall, SourceMap
     }
 
     private final ExecutorService executor;

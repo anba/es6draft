@@ -33,9 +33,9 @@ final class FunctionCodeGenerator {
     private static final class Methods {
         // ExecutionContext
         static final MethodDesc ExecutionContext_newFunctionExecutionContext = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ExecutionContext,
-                "newFunctionExecutionContext", Type.getMethodType(Types.ExecutionContext,
-                        Types.ExecutionContext, Types.FunctionObject, Types.Object));
+                MethodDesc.Invoke.Static, Types.ExecutionContext, "newFunctionExecutionContext",
+                Type.getMethodType(Types.ExecutionContext, Types.ExecutionContext,
+                        Types.FunctionObject, Types.Object));
 
         static final MethodDesc ExecutionContext_getCurrentFunction = MethodDesc.create(
                 MethodDesc.Invoke.Virtual, Types.ExecutionContext, "getCurrentFunction",

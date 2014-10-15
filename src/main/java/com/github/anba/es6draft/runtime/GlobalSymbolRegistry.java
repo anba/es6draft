@@ -20,6 +20,11 @@ import com.github.anba.es6draft.runtime.types.Symbol;
 public final class GlobalSymbolRegistry {
     private final HashMap<String, Symbol> elements = new HashMap<>();
 
+    @Override
+    public String toString() {
+        return String.format("GlobalSymbolRegistry=%s", elements);
+    }
+
     /**
      * Returns the symbol which is mapped to {@code key}, or creates a new mapping.
      * 

@@ -63,6 +63,10 @@ ecma_6/Generators/iteration.js
 ecma_6/Object/freeze-proxy.js
 ecma_6/Object/seal-proxy.js
 
+# Detached ArrayBuffer object issues, maybe request spec changes?
+ecma_6/extensions/DataView-construct-arguments-neutering.js
+ecma_6/extensions/DataView-set-arguments-neutering.js
+
 
 ####################################
 # Intl only partially supported    #
@@ -109,6 +113,9 @@ ecma_5/RegExp/instance-property-storage-introspection.js
 ###################
 # Misc issues     #
 ###################
+
+# lib/asserts.js: assertDeepEq() considers `{a: 1, b: 2}` and `{b: 2, a: 1}` as different objects...
+ecma_6/Object/getOwnPropertyDescriptor.js
 
 # BlockScope and WithStatement issue
 js1_5/Scope/regress-184107.js
@@ -256,6 +263,7 @@ js1_8_5/regress/regress-618572.js
 
 # column number support in stack traces
 js1_8_5/extensions/column-numbers.js
+ecma_6/TemplateStrings/debugLineNumber.js
 
 # ignore marked as 'fail' test
 ecma_3/String/15.5.4.11.js

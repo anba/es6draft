@@ -30,7 +30,7 @@ final class ArrayLiteralSubMethod extends ListSubMethod<ArrayLiteral> {
 
         @Override
         protected final Expression createReplacement() {
-            return new ExpressionMethod(node);
+            return new ExpressionMethod(getNode());
         }
 
         @Override
@@ -50,7 +50,7 @@ final class ArrayLiteralSubMethod extends ListSubMethod<ArrayLiteral> {
     private static final class ArrayConflater extends Conflater<ArrayElement, Expression> {
         @Override
         protected int getSourceSize(ArrayElement source) {
-            return source.size;
+            return source.getSize();
         }
 
         @Override

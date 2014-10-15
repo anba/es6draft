@@ -51,6 +51,7 @@ import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.Scripts;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.Compiler;
+import com.github.anba.es6draft.parser.Characters;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserEOFException;
 import com.github.anba.es6draft.parser.ParserException;
@@ -289,9 +290,6 @@ public final class Repl {
         @Option(name = "--debug-info", hidden = true, usage = "options.debug_info")
         boolean debugInfo;
 
-        @Option(name = "--verify-stack", hidden = true, usage = "options.verify_stack")
-        boolean verifyStack;
-
         @Option(name = "--no-resume", hidden = true, usage = "options.no_resume")
         boolean noResume;
 
@@ -493,7 +491,8 @@ public final class Repl {
     }
 
     private static int nextLineTerminator(String s, int index) {
-        for (int length = s.length(); index < length && !Strings.isLineTerminator(s.charAt(index)); ++index) {
+        for (int length = s.length(); index < length
+                && !Characters.isLineTerminator(s.charAt(index)); ++index) {
         }
         return index;
     }
@@ -862,9 +861,6 @@ public final class Repl {
         }
         if (options.debugInfo) {
             compilerOptions.add(Compiler.Option.DebugInfo);
-        }
-        if (options.verifyStack) {
-            compilerOptions.add(Compiler.Option.VerifyStack);
         }
         if (options.noResume) {
             compilerOptions.add(Compiler.Option.NoResume);

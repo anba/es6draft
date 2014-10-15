@@ -1366,7 +1366,13 @@ public class InstructionAssembler {
 
     /* local increment instructions */
 
+    public void iinc(Variable<Integer> variable, int increment) {
+        assert variable.isAlive() : "variable out of scope";
+        iinc(variable.getSlot(), increment);
+    }
+
     public void iinc(int var, int increment) {
+        assert Short.MIN_VALUE <= increment && increment <= Short.MAX_VALUE;
         methodVisitor.visitIincInsn(var, increment);
         // no stack change
     }

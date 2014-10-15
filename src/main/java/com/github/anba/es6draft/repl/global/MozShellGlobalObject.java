@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import com.github.anba.es6draft.Script;
@@ -27,11 +28,13 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
+import com.github.anba.es6draft.runtime.objects.collection.WeakMapObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -107,7 +110,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      *            the file path
      * @return the result value
      *
-     **/
+     */
     @Function(name = "loadRelativeToScript", arity = 1)
     public Object loadRelativeToScript(ExecutionContext cx, ExecutionContext caller, String filename) {
         return load(cx, Paths.get(filename), relativePathToScript(caller, Paths.get(filename)));
@@ -125,7 +128,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @param options
      *            additional options object
      * @return the eval result value
-     **/
+     */
     @Function(name = "evaluate", arity = 2)
     public Object evaluate(ExecutionContext cx, ExecutionContext caller, Object code, Object options) {
         if (!(Type.isString(code) && (Type.isUndefined(options) || Type.isObject(options)))) {
@@ -167,7 +170,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
             return (!noScriptRval ? result : UNDEFINED);
         } catch (ScriptException | StackOverflowError e) {
             throw e;
-        } catch (Exception e) {
+        } catch (Error | Exception e) {
             if (catchTermination) {
                 return "terminated";
             }
@@ -183,7 +186,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @param file
      *            the file to evaluate
      * @return the execution time in milli-seconds
-     **/
+     */
     @Function(name = "run", arity = 1)
     public double run(ExecutionContext cx, String file) {
         long start = System.nanoTime();
@@ -197,7 +200,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      *
      * @param message
      *            the message to write
-     **/
+     */
     @Function(name = "printErr", arity = 1)
     public void printErr(String message) {
         console.printErr(message);
@@ -208,7 +211,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      *
      * @param message
      *            the message to write
-     **/
+     */
     @Function(name = "putstr", arity = 1)
     public void putstr(String message) {
         console.putstr(message);
@@ -218,7 +221,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * shell-function: {@code dateNow()}
      *
      * @return the current date in micro-seconds resolution
-     **/
+     */
     @Function(name = "dateNow", arity = 0)
     public double dateNow() {
         long elapsed = TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - startNano);
@@ -238,7 +241,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      *            the expected value
      * @param message
      *            the optional error message
-     **/
+     */
     @Function(name = "assertEq", arity = 2)
     public void assertEq(ExecutionContext cx, Object actual, Object expected, Object message) {
         if (!SameValue(actual, expected)) {
@@ -257,7 +260,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * 
      * @param cx
      *            the execution context
-     **/
+     */
     @Function(name = "throwError", arity = 0)
     public void throwError(ExecutionContext cx) {
         throw newError(cx, "This is an error");
@@ -269,7 +272,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @param cx
      *            the execution context
      * @return the build identifier string
-     **/
+     */
     @Function(name = "build", arity = 0)
     public String build(ExecutionContext cx) {
         return getResourceInfo("/build-date", "<unknown build>");
@@ -287,7 +290,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @param o
      *            the global object
      * @return the eval result value
-     **/
+     */
     @Function(name = "evalcx", arity = 1)
     public Object evalcx(ExecutionContext cx, ExecutionContext caller, String s, Object o) {
         ScriptObject global;
@@ -313,7 +316,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      *            the execution context
      * @param dt
      *            the number of seconds to pause the application
-     **/
+     */
     @Function(name = "sleep", arity = 1)
     public void sleep(ExecutionContext cx, double dt) {
         try {
@@ -331,7 +334,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @param filename
      *            the file path
      * @return the file content
-     **/
+     */
     @Function(name = "snarf", arity = 1)
     public String snarf(ExecutionContext cx, String filename) {
         return read(cx, filename);
@@ -342,20 +345,22 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      *
      * @param cx
      *            the execution context
+     * @param caller
+     *            the caller context
      * @param filename
      *            the file path
      * @return the file content
-     **/
+     */
     @Function(name = "readRelativeToScript", arity = 1)
-    public String readRelativeToScript(ExecutionContext cx, String filename) {
-        return read(cx, Paths.get(filename), relativePath(Paths.get(filename)));
+    public String readRelativeToScript(ExecutionContext cx, ExecutionContext caller, String filename) {
+        return read(cx, Paths.get(filename), relativePathToScript(caller, Paths.get(filename)));
     }
 
     /**
      * shell-function: {@code elapsed()}
      * 
      * @return the micro-seconds elapsed since application start-up
-     **/
+     */
     @Function(name = "elapsed", arity = 0)
     public double elapsed() {
         return (double) TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - startNano);
@@ -367,7 +372,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @param function
      *            the function object
      * @return the function source string
-     **/
+     */
     @Function(name = "decompileFunction", arity = 1)
     public Object decompileFunction(Object function) {
         if (!(function instanceof Callable)) {
@@ -384,7 +389,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @param function
      *            the function object
      * @return the function body source
-     **/
+     */
     @Function(name = "decompileBody", arity = 1)
     public Object decompileBody(ExecutionContext cx, Object function) {
         if (!(function instanceof Callable)) {
@@ -401,7 +406,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @param obj
      *            the proxy target object
      * @return the new proxy object
-     **/
+     */
     @Function(name = "wrap", arity = 1)
     public Object wrap(ExecutionContext cx, Object obj) {
         if (!Type.isObject(obj)) {
@@ -420,7 +425,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @param proto
      *            the proxy prototype object
      * @return the new proxy object
-     **/
+     */
     @Function(name = "wrapWithProto", arity = 2)
     public WrapperProxy wrapWithProto(ExecutionContext cx, Object obj, Object proto) {
         return CreateWrapProxy(cx, obj, proto);
@@ -432,7 +437,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @param cx
      *            the execution context
      * @return a new global object instance
-     **/
+     */
     @Function(name = "newGlobal", arity = 0)
     public ScriptObject newGlobal(ExecutionContext cx) {
         MozShellGlobalObject global;
@@ -450,7 +455,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * shell-function: {@code getMaxArgs()}
      *
      * @return the maximum number of allowed function arguments
-     **/
+     */
     @Function(name = "getMaxArgs", arity = 0)
     public int getMaxArgs() {
         return FunctionPrototype.getMaxArguments();
@@ -462,9 +467,87 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * @param p
      *            the proxy object
      * @return {@code true} if <var>p</var> is a proxy object
-     **/
+     */
     @Function(name = "isProxy", arity = 1)
     public boolean isProxy(Object p) {
         return (p instanceof ProxyObject || p instanceof WrapperProxy);
+    }
+
+    /**
+     * shell-function: {@code parse(source)}
+     * 
+     * @param cx
+     *            the execution context
+     * @param source
+     *            the source string to parse
+     */
+    @Function(name = "parse", arity = 1)
+    public void parse(ExecutionContext cx, String source) {
+        try {
+            cx.getRealm().getScriptLoader().parseScript(new Source("<script>", 1), source);
+        } catch (ParserException e) {
+            throw e.toScriptException(cx);
+        }
+    }
+
+    /**
+     * shell-function: {@code thisFilename()}
+     * 
+     * @param cx
+     *            the execution context
+     * @param caller
+     *            the caller context
+     * @return the current file name
+     */
+    @Function(name = "thisFilename", arity = 0)
+    public String thisFilename(ExecutionContext cx, ExecutionContext caller) {
+        Source source = cx.getRealm().sourceInfo(caller);
+        if (source == null) {
+            return "";
+        }
+        if (source.getFile() != null) {
+            return source.getFile().toString();
+        }
+        return source.getName();
+    }
+
+    /**
+     * shell-property: {@code scriptArgs}
+     * 
+     * @param cx
+     *            the execution context
+     * @return the array of arguments passed to the script
+     */
+    @Value(name = "scriptArgs")
+    public Object scriptArgs(ExecutionContext cx) {
+        return Get(cx, cx.getGlobalObject(), "arguments");
+    }
+
+    /**
+     * shell-function: {@code objectAddress(object)}
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @return the object's address
+     */
+    @Function(name = "objectAddress", arity = 1)
+    public String objectAddress(ExecutionContext cx, ScriptObject object) {
+        return Integer.toString(System.identityHashCode(object), 16);
+    }
+
+    /**
+     * shell-function: {@code nondeterministicGetWeakMapKeys(weakMap)}
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the weak map
+     * @return the object's address
+     */
+    @Function(name = "nondeterministicGetWeakMapKeys", arity = 1)
+    public ScriptObject nondeterministicGetWeakMapKeys(ExecutionContext cx, WeakMapObject weakMap) {
+        return CreateArrayFromList(cx, new ArrayList<>(weakMap.getWeakMapData().keySet()));
     }
 }

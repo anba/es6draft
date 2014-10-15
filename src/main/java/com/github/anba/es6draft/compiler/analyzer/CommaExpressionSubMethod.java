@@ -23,7 +23,7 @@ final class CommaExpressionSubMethod extends ListSubMethod<CommaExpression> {
 
         @Override
         protected final Expression createReplacement() {
-            return new ExpressionMethod(node);
+            return new ExpressionMethod(getNode());
         }
 
         @Override
@@ -43,7 +43,7 @@ final class CommaExpressionSubMethod extends ListSubMethod<CommaExpression> {
     private static final class ExpressionConflater extends Conflater<ExpressionElement, Expression> {
         @Override
         protected int getSourceSize(ExpressionElement source) {
-            return source.size;
+            return source.getSize();
         }
 
         @Override

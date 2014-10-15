@@ -157,13 +157,9 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      * @return the new array buffer object
      */
     public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Object constructor) {
-        /* steps 1-2 */
-        ArrayBufferObject obj = OrdinaryCreateFromConstructor(cx, constructor,
-                Intrinsics.ArrayBufferPrototype, ArrayBufferObjectAllocator.INSTANCE);
-        /* step 3 */
-        obj.setByteLength(0);
-        /* step 4 */
-        return obj;
+        /* steps 1-4 */
+        return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.ArrayBufferPrototype,
+                ArrayBufferObjectAllocator.INSTANCE);
     }
 
     /**

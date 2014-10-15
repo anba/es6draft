@@ -54,12 +54,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     private static final class Methods {
-        // class: AbstractOperations
-        static final MethodDesc AbstractOperations_Put = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "Put", Type.getMethodType(
-                        Type.VOID_TYPE, Types.ExecutionContext, Types.ScriptObject, Types.String,
-                        Types.Object, Type.BOOLEAN_TYPE));
-
         // class: Eval
         static final MethodDesc Eval_directEval = MethodDesc.create(MethodDesc.Invoke.Static,
                 Types.Eval, "directEval", Type.getMethodType(Types.Object, Types.Object_,
@@ -158,6 +152,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         static final MethodDesc ScriptRuntime_CheckCallable = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "CheckCallable",
                 Type.getMethodType(Types.Callable, Types.Object, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_defineLength = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineLength", Type
+                        .getMethodType(Types.ArrayObject, Types.ArrayObject, Type.INT_TYPE,
+                                Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_defineProperty__int = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineProperty", Type
@@ -1001,7 +1000,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 nextIndex += 1;
             }
             assert nextIndex == length;
-            // omit call Put(array, "length", nextIndex false), array is initialized with length
+            // Skip Put(array, "length", nextIndex, false), array is initialized with fixed length.
         } else {
             mv.loadExecutionContext();
             mv.lconst(0);
@@ -1012,21 +1011,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
             arrayLiteralWithSpread(node, mv);
 
-            // stack: [array, nextIndex] -> [(nextIndex), array, array, cx]
-            mv.toBoxed(Type.INT_TYPE);
-            mv.swap();
-            mv.dup();
+            // stack: [array, nextIndex] -> [array]
             mv.loadExecutionContext();
-            // stack: [(nextIndex), array, array, cx] -> [array, cx, array, (nextIndex)]
-            mv.dup2X2();
-            mv.pop2();
-            mv.swap();
-            // stack: [array, cx, array, (nextIndex)] -> [array, cx, array, pk, (nextIndex), false]
-            mv.aconst("length");
-            mv.swap();
-            mv.iconst(false);
-            // stack: [array, cx, array, pk, (nextIndex), false] -> [array]
-            mv.invoke(Methods.AbstractOperations_Put);
+            mv.invoke(Methods.ScriptRuntime_defineLength);
         }
 
         return ValType.Object;
@@ -2333,14 +2320,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(NumericLiteral node, ExpressionVisitor mv) {
-        double v = node.getValue();
-        if ((int) v == v && (v != 0 || Double.doubleToRawLongBits(v) == 0L)) {
+        if (node.isInt()) {
             /* step 1 */
-            mv.iconst((int) v);
+            mv.iconst(node.intValue());
             return ValType.Number_int;
         } else {
             /* step 1 */
-            mv.dconst(v);
+            mv.dconst(node.doubleValue());
             return ValType.Number;
         }
     }

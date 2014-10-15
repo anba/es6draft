@@ -131,9 +131,8 @@ final class StatementGenerator extends
                 Type.getMethodType(Type.BOOLEAN_TYPE));
 
         // class: Iterator
-        static final MethodDesc Iterator_hasNext = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.Iterator, "hasNext",
-                Type.getMethodType(Type.BOOLEAN_TYPE));
+        static final MethodDesc Iterator_hasNext = MethodDesc.create(MethodDesc.Invoke.Interface,
+                Types.Iterator, "hasNext", Type.getMethodType(Type.BOOLEAN_TYPE));
 
         static final MethodDesc Iterator_next = MethodDesc.create(MethodDesc.Invoke.Interface,
                 Types.Iterator, "next", Type.getMethodType(Types.Object));
@@ -144,8 +143,8 @@ final class StatementGenerator extends
                 Type.getMethodType(Types.EnvironmentRecord));
 
         // class: Reference
-        static final MethodDesc Reference_putValue = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.Reference, "putValue",
+        static final MethodDesc Reference_putValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
+                Types.Reference, "putValue",
                 Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
         // class: ScriptException
@@ -184,12 +183,11 @@ final class StatementGenerator extends
                 Type.getMethodType(Types.StackOverflowError, Types.Error));
 
         static final MethodDesc ScriptRuntime_initializeFunctionBlockBinding = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                "initializeFunctionBlockBinding",
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "initializeFunctionBlockBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "iterate",
+        static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodDesc.Invoke.Static,
+                Types.ScriptRuntime, "iterate",
                 Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_toInternalError = MethodDesc.create(

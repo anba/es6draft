@@ -31,9 +31,9 @@ import java.util.List;
 
 import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.DToA;
-import org.mozilla.javascript.StringToNumber;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 
+import com.github.anba.es6draft.parser.NumberParser;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
@@ -279,7 +279,7 @@ public final class AbstractOperations {
      * @return the number result
      */
     public static double ToNumber(CharSequence string) {
-        return NumberParser.parse(string.toString());
+        return ToNumberParser.parse(string.toString());
     }
 
     /**
@@ -3181,105 +3181,128 @@ public final class AbstractOperations {
     /**
      * 7.1.3.1 ToNumber Applied to the String Type
      */
-    private static final class NumberParser {
-        private NumberParser() {
+    private static final class ToNumberParser {
+        private ToNumberParser() {
         }
 
-        static double parse(String s) {
-            s = Strings.trim(s);
+        static double parse(String input) {
+            String s = Strings.trim(input);
             int len = s.length();
             if (len == 0) {
                 return 0;
             }
-            if (s.charAt(0) == '0' && len > 1) {
+            if (s.charAt(0) == '0' && len > 2) {
                 char c = s.charAt(1);
                 if (c == 'x' || c == 'X') {
-                    return readHexIntegerLiteral(s, 2, len);
+                    return readHexIntegerLiteral(s);
                 }
+                // TODO: Handle binary and octal (rev28?)
+                // https://bugs.ecmascript.org/show_bug.cgi?id=1584
+                // https://bugs.ecmascript.org/show_bug.cgi?id=3259
             }
-            return readDecimalLiteral(s, 0, len);
+            return readDecimalLiteral(s);
         }
 
-        private static double readHexIntegerLiteral(String s, int start, int end) {
-            for (int index = start; index < end; ++index) {
+        private static double readHexIntegerLiteral(String s) {
+            assert s.length() > 2;
+            final int start = 2; // "0x" prefix
+            for (int index = start, end = s.length(); index < end; ++index) {
                 char c = s.charAt(index);
-                if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))) {
+                if (!(('0' <= c && c <= '9') || ('A' <= c && c <= 'F') || ('a' <= c && c <= 'f'))) {
                     return Double.NaN;
                 }
             }
-            return StringToNumber.stringToNumber(s, start, 16);
+            return NumberParser.parseHex(s);
         }
 
-        private static double readDecimalLiteral(String s, int start, int end) {
+        static double readDecimalLiteral(String s) {
             final int Infinity_length = "Infinity".length();
 
-            int index = start;
-            int c = s.charAt(index++);
-            boolean isPos = true;
-            if (c == '+' || c == '-') {
-                if (index >= end)
-                    return Double.NaN;
-                isPos = (c == '+');
-                c = s.charAt(index++);
-            }
-            if (c == 'I') {
-                // Infinity
-                if (index - 1 + Infinity_length == end
-                        && s.regionMatches(index - 1, "Infinity", 0, Infinity_length)) {
-                    return isPos ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
-                }
-                return Double.NaN;
-            }
-            if (c == '.') {
-                if (index >= end)
-                    return Double.NaN;
-                char d = s.charAt(index);
-                if (!(d >= '0' && d <= '9')) {
-                    return Double.NaN;
-                }
-            } else {
-                do {
-                    if (!(c >= '0' && c <= '9')) {
-                        return Double.NaN;
-                    }
-                    if (index >= end) {
-                        break;
-                    }
-                    c = s.charAt(index++);
-                } while (c != '.' && c != 'e' && c != 'E');
-            }
-            if (c == '.') {
-                while (index < end) {
-                    c = s.charAt(index++);
-                    if (c == 'e' || c == 'E') {
-                        break;
-                    }
-                    if (!(c >= '0' && c <= '9')) {
-                        return Double.NaN;
-                    }
-                }
-            }
-            if (c == 'e' || c == 'E') {
-                if (index >= end)
-                    return Double.NaN;
-                c = s.charAt(index++);
+            outOfBounds: invalidChar: {
+                final int end = s.length();
+                int index = 0;
+                int c = s.charAt(index++);
+                boolean isPos = true;
                 if (c == '+' || c == '-') {
                     if (index >= end)
-                        return Double.NaN;
+                        break outOfBounds;
+                    isPos = (c == '+');
                     c = s.charAt(index++);
                 }
-                do {
-                    if (!(c >= '0' && c <= '9')) {
-                        return Double.NaN;
+                if (c == 'I') {
+                    // Infinity
+                    if (index - 1 + Infinity_length == end
+                            && s.regionMatches(index - 1, "Infinity", 0, Infinity_length)) {
+                        return isPos ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
                     }
-                    if (index >= end) {
-                        break;
+                    break invalidChar;
+                }
+                boolean hasDot = (c == '.'), hasExp = false;
+                if (hasDot) {
+                    if (index >= end)
+                        break outOfBounds;
+                    c = s.charAt(index);
+                }
+                if (!('0' <= c && c <= '9')) {
+                    break invalidChar;
+                }
+                if (!hasDot) {
+                    while (index < end) {
+                        c = s.charAt(index++);
+                        if ('0' <= c && c <= '9') {
+                            continue;
+                        }
+                        if (c == '.') {
+                            hasDot = true;
+                            break;
+                        }
+                        if (c == 'e' || c == 'E') {
+                            hasExp = true;
+                            break;
+                        }
+                        break invalidChar;
                     }
+                }
+                if (hasDot) {
+                    while (index < end) {
+                        c = s.charAt(index++);
+                        if ('0' <= c && c <= '9') {
+                            continue;
+                        }
+                        if (c == 'e' || c == 'E') {
+                            hasExp = true;
+                            break;
+                        }
+                        break invalidChar;
+                    }
+                }
+                if (hasExp) {
+                    if (index >= end)
+                        break outOfBounds;
                     c = s.charAt(index++);
-                } while (true);
-            }
-            if (index == end) {
-                return Double.parseDouble(s.substring(start, end));
+                    if (c == '+' || c == '-') {
+                        if (index >= end)
+                            break outOfBounds;
+                        c = s.charAt(index++);
+                    }
+                    if (!('0' <= c && c <= '9')) {
+                        break invalidChar;
+                    }
+                    while (index < end) {
+                        c = s.charAt(index++);
+                        if ('0' <= c && c <= '9') {
+                            continue;
+                        }
+                        break invalidChar;
+                    }
+                }
+                if (index != end) {
+                    break invalidChar;
+                }
+                if (!(hasDot || hasExp)) {
+                    return NumberParser.parseInteger(s);
+                }
+                return NumberParser.parseDecimal(s);
             }
             return Double.NaN;
         }

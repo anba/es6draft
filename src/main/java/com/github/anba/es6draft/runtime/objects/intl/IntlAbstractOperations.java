@@ -53,7 +53,7 @@ public final class IntlAbstractOperations {
         char[] ca = s.toCharArray();
         for (int i = 0, len = ca.length; i < len; ++i) {
             char c = ca[i];
-            if (c >= 'a' && c <= 'z') {
+            if ('a' <= c && c <= 'z') {
                 c = (char) ('A' + (c - 'a'));
             }
             ca[i] = c;
@@ -160,7 +160,7 @@ public final class IntlAbstractOperations {
     }
 
     private static final boolean isAlpha(char c) {
-        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+        return ('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z');
     }
 
     private static final Set<String> JDK_TIMEZONE_NAMES = set("ACT", "AET", "AGT", "ART", "AST",
@@ -416,7 +416,7 @@ public final class IntlAbstractOperations {
             tag = CanonicalizeLanguageTag(langTag);
             return singleton(tag);
         }
-        Set<String> seen = new LinkedHashSet<>();
+        LinkedHashSet<String> seen = new LinkedHashSet<>();
         ScriptObject o = ToObject(cx, locales);
         Object lenValue = Get(cx, o, "length");
         long len = ToUint32(cx, lenValue);
@@ -434,9 +434,7 @@ public final class IntlAbstractOperations {
                     throw newRangeError(cx, Messages.Key.IntlStructurallyInvalidLanguageTag, tag);
                 }
                 tag = CanonicalizeLanguageTag(langTag);
-                if (!seen.contains(tag)) {
-                    seen.add(tag);
-                }
+                seen.add(tag);
             }
         }
         return seen;

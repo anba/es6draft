@@ -8,8 +8,9 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -41,29 +42,28 @@ final class GlobalDeclarationInstantiationGenerator extends
     private static final class Methods {
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_canDeclareLexicalScopedOrThrow = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                "canDeclareLexicalScopedOrThrow", Type.getMethodType(Type.VOID_TYPE,
-                        Types.ExecutionContext, Types.GlobalEnvironmentRecord, Types.String));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareLexicalScopedOrThrow",
+                Type.getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+                        Types.GlobalEnvironmentRecord, Types.String));
 
         static final MethodDesc ScriptRuntime_canDeclareVarScopedOrThrow = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareVarScopedOrThrow",
-                Type.getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
-                        Types.GlobalEnvironmentRecord, Types.String));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareVarScopedOrThrow", Type
+                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+                                Types.GlobalEnvironmentRecord, Types.String));
 
         static final MethodDesc ScriptRuntime_canDeclareGlobalFunctionOrThrow = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                "canDeclareGlobalFunctionOrThrow", Type.getMethodType(Type.VOID_TYPE,
-                        Types.ExecutionContext, Types.GlobalEnvironmentRecord, Types.String));
-
-        static final MethodDesc ScriptRuntime_canDeclareGlobalVarOrThrow = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareGlobalVarOrThrow",
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareGlobalFunctionOrThrow",
                 Type.getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
                         Types.GlobalEnvironmentRecord, Types.String));
+
+        static final MethodDesc ScriptRuntime_canDeclareGlobalVarOrThrow = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareGlobalVarOrThrow", Type
+                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+                                Types.GlobalEnvironmentRecord, Types.String));
 
         // class: GlobalEnvironmentRecord
         static final MethodDesc GlobalEnvironmentRecord_createGlobalVarBinding = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.GlobalEnvironmentRecord,
-                "createGlobalVarBinding",
+                MethodDesc.Invoke.Virtual, Types.GlobalEnvironmentRecord, "createGlobalVarBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
         static final MethodDesc GlobalEnvironmentRecord_createGlobalFunctionBinding = MethodDesc
@@ -151,7 +151,7 @@ final class GlobalDeclarationInstantiationGenerator extends
         /* step 6 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
         /* step 7 */
-        ArrayList<Declaration> functionsToInitialize = new ArrayList<>();
+        ArrayDeque<Declaration> functionsToInitialize = new ArrayDeque<>();
         /* step 8 */
         HashSet<Name> declaredFunctionNames = new HashSet<>();
         /* step 9 */
@@ -159,24 +159,21 @@ final class GlobalDeclarationInstantiationGenerator extends
             if (isFunctionDeclaration(item)) {
                 Declaration d = (Declaration) item;
                 Name fn = BoundName(d);
-                if (!declaredFunctionNames.contains(fn)) {
+                if (declaredFunctionNames.add(fn)) {
                     canDeclareGlobalFunctionOrThrow(context, envRec, fn, mv);
-                    declaredFunctionNames.add(fn);
-                    functionsToInitialize.add(d);
+                    functionsToInitialize.addFirst(d);
                 }
             }
         }
         /* step 10 */
-        HashSet<Name> declaredVarNames = new HashSet<>();
+        LinkedHashSet<Name> declaredVarNames = new LinkedHashSet<>();
         /* step 11 */
         for (StatementListItem d : varDeclarations) {
             if (d instanceof VariableStatement) {
                 for (Name vn : BoundNames((VariableStatement) d)) {
                     if (!declaredFunctionNames.contains(vn)) {
                         canDeclareGlobalVarOrThrow(context, envRec, vn, mv);
-                        if (!declaredVarNames.contains(vn)) {
-                            declaredVarNames.add(vn);
-                        }
+                        declaredVarNames.add(vn);
                     }
                 }
             }

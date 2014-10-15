@@ -52,9 +52,8 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
                 Type.getMethodType(Type.BOOLEAN_TYPE));
 
         // class: Iterator
-        static final MethodDesc Iterator_hasNext = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.Iterator, "hasNext",
-                Type.getMethodType(Type.BOOLEAN_TYPE));
+        static final MethodDesc Iterator_hasNext = MethodDesc.create(MethodDesc.Invoke.Interface,
+                Types.Iterator, "hasNext", Type.getMethodType(Type.BOOLEAN_TYPE));
 
         static final MethodDesc Iterator_next = MethodDesc.create(MethodDesc.Invoke.Interface,
                 Types.Iterator, "next", Type.getMethodType(Types.Object));
@@ -77,8 +76,8 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "enumerateValues",
                 Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "iterate",
+        static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodDesc.Invoke.Static,
+                Types.ScriptRuntime, "iterate",
                 Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
     }
 

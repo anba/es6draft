@@ -30,8 +30,8 @@ final class ObjectLiteralSubMethod extends ListSubMethod<ObjectLiteral> {
 
         @Override
         protected final PropertyDefinition createReplacement() {
-            assert node instanceof PropertyValueDefinition : node.getClass();
-            PropertyValueDefinition valDef = (PropertyValueDefinition) node;
+            assert getNode() instanceof PropertyValueDefinition : getNode().getClass();
+            PropertyValueDefinition valDef = (PropertyValueDefinition) getNode();
             return new PropertyValueDefinition(valDef.getBeginPosition(), valDef.getEndPosition(),
                     valDef.getPropertyName(), new ExpressionMethod(valDef.getPropertyValue()));
         }
@@ -53,7 +53,7 @@ final class ObjectLiteralSubMethod extends ListSubMethod<ObjectLiteral> {
     private static final class ObjectConflater extends Conflater<ObjectElement, PropertyDefinition> {
         @Override
         protected int getSourceSize(ObjectElement source) {
-            return source.size;
+            return source.getSize();
         }
 
         @Override

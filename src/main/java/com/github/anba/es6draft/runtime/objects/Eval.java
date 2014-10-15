@@ -74,8 +74,28 @@ public final class Eval {
             return value;
         }
 
-        public boolean isSet(int bitmask) {
+        boolean isSet(int bitmask) {
             return (value & bitmask) != 0;
+        }
+
+        static EnumSet<Parser.Option> toOptions(int flags) {
+            EnumSet<Parser.Option> options = EnumSet.of(Parser.Option.EvalScript);
+            if (EvalFlags.Strict.isSet(flags)) {
+                options.add(Parser.Option.Strict);
+            }
+            if (!EvalFlags.GlobalCode.isSet(flags)) {
+                options.add(Parser.Option.FunctionCode);
+            }
+            if (EvalFlags.Direct.isSet(flags)) {
+                options.add(Parser.Option.DirectEval);
+            }
+            if (!EvalFlags.GlobalScope.isSet(flags)) {
+                options.add(Parser.Option.LocalScope);
+            }
+            if (EvalFlags.EnclosedByWithStatement.isSet(flags)) {
+                options.add(Parser.Option.EnclosedByWithStatement);
+            }
+            return options;
         }
     }
 
@@ -183,7 +203,7 @@ public final class Eval {
         if (direct && !strictScript && !strictCaller && globalCode) {
             assert cx.getVariableEnvironment() == evalRealm.getGlobalEnv();
             // The assertion does not hold in this implementation because lexical environments
-            // are only emitted when lexical declarations are present (optimization strikes back!)
+            // are only emitted when lexical declarations are present.
             // assert cx.getLexicalEnvironment() != evalRealm.getGlobalEnv();
             return EvalScriptEvaluation(script, cx, true);
         }
@@ -265,23 +285,8 @@ public final class Eval {
             int flags) {
         try {
             Realm realm = cx.getRealm();
-            EnumSet<Parser.Option> options = EnumSet.of(Parser.Option.EvalScript);
-            if (EvalFlags.Strict.isSet(flags)) {
-                options.add(Parser.Option.Strict);
-            }
-            if (!EvalFlags.GlobalCode.isSet(flags)) {
-                options.add(Parser.Option.FunctionCode);
-            }
-            if (EvalFlags.Direct.isSet(flags)) {
-                options.add(Parser.Option.DirectEval);
-            }
-            if (!EvalFlags.GlobalScope.isSet(flags)) {
-                options.add(Parser.Option.LocalScope);
-            }
-            if (EvalFlags.EnclosedByWithStatement.isSet(flags)) {
-                options.add(Parser.Option.EnclosedByWithStatement);
-            }
             Source source = evalSource(realm, caller);
+            EnumSet<Parser.Option> options = EvalFlags.toOptions(flags);
             return realm.getScriptLoader().evalScript(source, sourceCode, options);
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);

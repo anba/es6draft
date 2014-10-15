@@ -266,26 +266,26 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
      */
     private static int CurrencyDigits(String c) {
         // http://www.currency-iso.org/dam/downloads/table_a1.xml
+        // Last updated: 2014-08-15
         switch (c) {
-        case "BYR":
-        case "XOF":
         case "BIF":
-        case "XAF":
-        case "CLF":
+        case "BYR":
         case "CLP":
-        case "KMF":
         case "DJF":
-        case "XPF":
         case "GNF":
         case "ISK":
         case "JPY":
+        case "KMF":
         case "KRW":
         case "PYG":
         case "RWF":
         case "UGX":
         case "UYI":
-        case "VUV":
         case "VND":
+        case "VUV":
+        case "XAF":
+        case "XOF":
+        case "XPF":
             return 0;
         case "BHD":
         case "IQD":
@@ -295,6 +295,8 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         case "OMR":
         case "TND":
             return 3;
+        case "CLF":
+            return 4;
         default:
             return 2;
         }

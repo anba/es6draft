@@ -6,6 +6,9 @@
  */
 package com.github.anba.es6draft.ast;
 
+import static com.github.anba.es6draft.semantics.StaticSemantics.ContainsExpression;
+import static com.github.anba.es6draft.semantics.StaticSemantics.IsSimpleParameterList;
+
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,14 +20,26 @@ import java.util.List;
  */
 public final class FormalParameterList extends AstNode implements Iterable<FormalParameter> {
     private final List<FormalParameter> formals;
+    private final boolean simpleParameterList;
+    private final boolean containsExpression;
 
     public FormalParameterList(long beginPosition, long endPosition, List<FormalParameter> formals) {
         super(beginPosition, endPosition);
         this.formals = formals;
+        this.simpleParameterList = IsSimpleParameterList(formals);
+        this.containsExpression = ContainsExpression(formals);
     }
 
     public List<FormalParameter> getFormals() {
         return formals;
+    }
+
+    public boolean isSimpleParameterList() {
+        return simpleParameterList;
+    }
+
+    public boolean containsExpression() {
+        return containsExpression;
     }
 
     @Override

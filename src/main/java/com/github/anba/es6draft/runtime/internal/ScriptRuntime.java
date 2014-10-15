@@ -187,6 +187,24 @@ public final class ScriptRuntime {
     /**
      * 12.2.4.1 Array Literal
      * <p>
+     * 12.2.4.1.3 Runtime Semantics: Evaluation
+     * 
+     * @param array
+     *            the array object
+     * @param length
+     *            the array length value
+     * @param cx
+     *            the execution context
+     * @return the array object
+     */
+    public static ArrayObject defineLength(ArrayObject array, int length, ExecutionContext cx) {
+        Put(cx, array, "length", length, false);
+        return array;
+    }
+
+    /**
+     * 12.2.4.1 Array Literal
+     * <p>
      * 12.2.4.1.2 Runtime Semantics: Array Accumulation
      * <ul>
      * <li>SpreadElement : ... AssignmentExpression
@@ -2648,11 +2666,10 @@ public final class ScriptRuntime {
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
         /* step 9 */
         MakeConstructor(cx, closure, true, prototype);
-        /* step 10 */
+        /* steps 10-11 */
         SetFunctionName(closure, propKey);
-        /* steps 11-12 */
-        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
-        DefinePropertyOrThrow(cx, object, propKey, desc);
+        /* step 12 */
+        CreateDataPropertyOrThrow(cx, object, propKey, closure);
     }
 
     /**
@@ -2684,11 +2701,10 @@ public final class ScriptRuntime {
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
         /* step 9 */
         MakeConstructor(cx, closure, true, prototype);
-        /* step 10 */
+        /* steps 10-11 */
         SetFunctionName(closure, propKey);
-        /* steps 11-12 */
-        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
-        DefinePropertyOrThrow(cx, object, propKey, desc);
+        /* step 12 */
+        CreateDataPropertyOrThrow(cx, object, propKey, closure);
     }
 
     /**

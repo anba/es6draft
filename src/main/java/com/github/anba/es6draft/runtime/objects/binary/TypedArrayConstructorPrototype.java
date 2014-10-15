@@ -330,6 +330,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         /* step 11 */
         int elementSize = elementType.size();
         /* steps 12-13 */
+        // TODO: spec issue? - does not follow the ToNumber(v) == ToInteger(v) pattern
         double offset = ToInteger(cx, byteOffset);
         /* step 14 */
         if (offset < 0) {

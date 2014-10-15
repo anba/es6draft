@@ -23,7 +23,7 @@ final class TemplateLiteralSubMethod extends ListSubMethod<TemplateLiteral> {
 
         @Override
         protected final Expression createReplacement() {
-            return new ExpressionMethod(node);
+            return new ExpressionMethod(getNode());
         }
 
         @Override
@@ -43,7 +43,7 @@ final class TemplateLiteralSubMethod extends ListSubMethod<TemplateLiteral> {
     private static final class TemplateConflater extends Conflater<TemplateElement, Expression> {
         @Override
         protected int getSourceSize(TemplateElement source) {
-            return source.size;
+            return source.getSize();
         }
 
         @Override

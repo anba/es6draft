@@ -54,8 +54,7 @@ public abstract class Expression extends AstNode {
 
     /**
      * Returns a {@link Expression} instance representing this node as a no-value-expression, i.e.
-     * an expression which returns no value at all. May throw an {@link IllegalStateException} if
-     * the operation is not valid for the requested node.
+     * an expression which returns no value at all.
      * 
      * @return the expression no-value node
      */

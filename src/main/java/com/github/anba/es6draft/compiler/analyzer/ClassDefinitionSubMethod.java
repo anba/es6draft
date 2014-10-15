@@ -47,7 +47,7 @@ final class ClassDefinitionSubMethod extends ListSubMethod<ClassDefinition> {
     private static final class ClassConflater extends Conflater<ClassElement, PropertyDefinition> {
         @Override
         protected int getSourceSize(ClassElement source) {
-            return source.size;
+            return source.getSize();
         }
 
         @Override

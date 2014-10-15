@@ -16,7 +16,7 @@ import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.TopLevelNode;
 
 /**
- * Base class for node re-writing classes
+ * Base class for node re-writing classes.
  */
 abstract class SubMethod<NODE extends Node> {
     protected static final int MAX_SIZE = 32768;
@@ -67,10 +67,10 @@ abstract class SubMethod<NODE extends Node> {
 
     protected static abstract class NodeElement<NODE extends Node> implements
             Comparable<NodeElement<?>> {
-        ExportState state;
-        NODE node;
-        int size;
-        final int index;
+        private ExportState state;
+        private NODE node;
+        private int size;
+        private final int index;
 
         NodeElement(NODE node, int size, int index) {
             this(ExportState.NotExported, node, size, index);
@@ -93,6 +93,22 @@ abstract class SubMethod<NODE extends Node> {
 
         protected abstract int getReplacementSize();
 
+        final ExportState getState() {
+            return state;
+        }
+
+        final NODE getNode() {
+            return node;
+        }
+
+        final int getSize() {
+            return size;
+        }
+
+        final int getIndex() {
+            return index;
+        }
+
         final int export() {
             assert state == ExportState.NotExported || state == ExportState.MaybeExported;
             NODE replacement = state == ExportState.NotExported ? createReplacement() : node;
@@ -103,8 +119,14 @@ abstract class SubMethod<NODE extends Node> {
         }
 
         @Override
-        public int compareTo(NodeElement<?> o) {
+        public final int compareTo(NodeElement<?> o) {
             return o.size - size;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s [state=%s, node=%s, size=%d, index=%d]", getClass()
+                    .getSimpleName(), state, node, size, index);
         }
     }
 
@@ -159,7 +181,7 @@ abstract class SubMethod<NODE extends Node> {
     }
 
     /**
-     * {@link CodeSizeHandler} which performs no further action
+     * {@link CodeSizeHandler} which performs no further action.
      */
     protected static final class EmptyHandler implements CodeSizeHandler {
         @Override
@@ -174,15 +196,19 @@ abstract class SubMethod<NODE extends Node> {
     }
 
     /**
-     * {@link CodeSizeHandler} which saves code size for further re-use
+     * {@link CodeSizeHandler} which saves code size for further re-use.
      */
     protected static final class MemorizingHandler implements CodeSizeHandler {
-        Map<StatementListItem, Integer> codeSizes = new HashMap<>();
+        private final HashMap<StatementListItem, Integer> sizeMap = new HashMap<>();
+
+        public Map<StatementListItem, Integer> getSizeMap() {
+            return sizeMap;
+        }
 
         @Override
         public int reportSize(Node node, int size) {
             if (node instanceof StatementListItem) {
-                codeSizes.put((StatementListItem) node, size);
+                sizeMap.put((StatementListItem) node, size);
             }
             return size;
         }

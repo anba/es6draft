@@ -38,16 +38,16 @@ final class IntlDataTools {
     }
 
     public static void main(String[] args) throws IOException {
-        // Path cldrMainDir = Paths.get("/tmp/cldr-2.0.0-core--main");
+        // Path cldrMainDir = java.nio.file.Paths.get("/tmp/cldr-2.0.0-core--main");
         // oldStyleLanguageTags(cldrMainDir);
 
-        // Path currencyFile = Paths.get("/tmp/iso_currency.xml");
+        // Path currencyFile = java.nio.file.Paths.get("/tmp/iso_currency.xml");
         // currencyDigits(currencyFile);
 
-        // Path tzdataDir = Paths.get("/tmp/tzdata2013c.tar");
+        // Path tzdataDir = java.nio.file.Paths.get("/tmp/tzdata2013c.tar");
         // jdkTimezoneNames(tzdataDir);
 
-        // Path langSubtagReg = Paths.get("/tmp/language-subtag-registry.txt");
+        // Path langSubtagReg = java.nio.file.Paths.get("/tmp/language-subtag-registry.txt");
         // languageSubtagRegistry(langSubtagReg);
     }
 
@@ -380,7 +380,7 @@ final class IntlDataTools {
                 } catch (NumberFormatException e) {
                 }
                 if (map.containsKey(scode) && map.get(scode) != iminor) {
-                    System.out.println(scode);
+                    System.err.println(scode);
                 }
                 if (iminor != 2 && !map.containsKey(scode)) {
                     map.put(scode, iminor);
@@ -396,6 +396,7 @@ final class IntlDataTools {
                 sorted.put(entry.getValue(), currencies);
             }
             for (Map.Entry<Integer, List<String>> entry : sorted.entrySet()) {
+                Collections.sort(entry.getValue());
                 for (String c : entry.getValue()) {
                     System.out.printf("case \"%s\":%n", c);
                 }

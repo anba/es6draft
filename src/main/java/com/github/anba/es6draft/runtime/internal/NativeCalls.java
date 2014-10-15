@@ -28,6 +28,8 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
+import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
+import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
 import com.github.anba.es6draft.runtime.objects.collection.MapObject;
 import com.github.anba.es6draft.runtime.objects.collection.SetObject;
 import com.github.anba.es6draft.runtime.objects.collection.WeakMapObject;
@@ -160,6 +162,12 @@ public final class NativeCalls {
         case "native:Include":
             target = callIncludeMH;
             break;
+        case "native:IsArrayBuffer":
+            target = callIsArrayBufferMH;
+            break;
+        case "native:IsDetachedBuffer":
+            target = callIsDetachedBufferMH;
+            break;
         default:
             target = MethodHandles.insertArguments(invalidNativeCallMH, 0, name);
             target = MethodHandles.dropArguments(target, 0, Object[].class);
@@ -172,7 +180,8 @@ public final class NativeCalls {
             callGlobalThisMH, callCallFunctionMH, callIsGeneratorMH, callIsUninitializedMapMH,
             callIsUninitializedSetMH, callIsUninitializedWeakMapMH, callIsUninitializedWeakSetMH,
             callRegExpReplaceMH, callRegExpTestMH, callIsFunctionExpressionMH,
-            callSymbolDescriptionMH, callIncludeMH, invalidNativeCallMH;
+            callSymbolDescriptionMH, callIncludeMH, callIsArrayBufferMH, callIsDetachedBufferMH,
+            invalidNativeCallMH;
     static {
         MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
         MethodType callType = MethodType.methodType(Object.class, Object[].class,
@@ -192,6 +201,8 @@ public final class NativeCalls {
         callIsFunctionExpressionMH = lookup.findStatic("call_IsFunctionExpression", callType);
         callSymbolDescriptionMH = lookup.findStatic("call_SymbolDescription", callType);
         callIncludeMH = lookup.findStatic("call_Include", callType);
+        callIsArrayBufferMH = lookup.findStatic("call_IsArrayBuffer", callType);
+        callIsDetachedBufferMH = lookup.findStatic("call_IsDetachedBuffer", callType);
         invalidNativeCallMH = lookup.findStatic("invalidNativeCall",
                 MethodType.methodType(Object.class, String.class, ExecutionContext.class));
     }
@@ -324,6 +335,22 @@ public final class NativeCalls {
     private static Object call_Include(Object[] args, ExecutionContext cx) {
         if (args.length == 1 && Type.isString(args[0])) {
             return Include(cx, Type.stringValue(args[0]).toString());
+        }
+        return invalidNativeCallArguments(cx);
+    }
+
+    @SuppressWarnings("unused")
+    private static Object call_IsArrayBuffer(Object[] args, ExecutionContext cx) {
+        if (args.length == 1) {
+            return IsArrayBuffer(args[0]);
+        }
+        return invalidNativeCallArguments(cx);
+    }
+
+    @SuppressWarnings("unused")
+    private static Object call_IsDetachedBuffer(Object[] args, ExecutionContext cx) {
+        if (args.length == 1 && args[0] instanceof ArrayBufferObject) {
+            return IsDetachedBuffer((ArrayBufferObject) args[0]);
         }
         return invalidNativeCallArguments(cx);
     }
@@ -595,5 +622,31 @@ public final class NativeCalls {
             throw newInternalError(cx, Messages.Key.InternalError, e.toString());
         }
         return Scripts.ScriptEvaluation(script, realm, false);
+    }
+
+    /**
+     * Native function: {@code %IsArrayBuffer(<value>)}.
+     * <p>
+     * Tests whether the input argument is an ArrayBuffer object.
+     * 
+     * @param value
+     *            the input argument
+     * @return {@code true} if the object is an ArrayBuffer
+     */
+    public static boolean IsArrayBuffer(Object value) {
+        return value instanceof ArrayBufferObject;
+    }
+
+    /**
+     * Native function: {@code %IsDetachedBuffer(<arrayBuffer>)}.
+     * <p>
+     * Tests whether or not the array buffer is detached.
+     * 
+     * @param arrayBuffer
+     *            the array buffer object
+     * @return {@code true} if the array buffer is detached
+     */
+    public static boolean IsDetachedBuffer(ArrayBufferObject arrayBuffer) {
+        return ArrayBufferConstructor.IsDetachedBuffer(arrayBuffer);
     }
 }

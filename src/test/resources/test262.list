@@ -15,3 +15,6 @@ suite/ch15/15.3/15.3.5/15.3.5-1gs.js
 suite/ch10/10.1/10.1.1/10.1.1-2gs.js
 suite/ch10/10.1/10.1.1/10.1.1-8gs.js
 suite/ch10/10.1/10.1.1/10.1.1-5gs.js
+
+# CLF not updated (https://github.com/tc39/test262/issues/98)
+suite/intl402/ch11/11.1/11.1.1_20_c.js

@@ -57,6 +57,9 @@ feature/Scope/Error_BlockBinding1.js
 # unicode regular expressions are transformed in traceur
 feature/RegularExpression/Simple.js
 
+# Free variable checker extension
+feature/ArrowFunctions/Error_FreeVariableChecker.js
+
 
 #######################################
 # ES6 related syntax changes          #

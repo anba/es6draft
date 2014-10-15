@@ -43,7 +43,8 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
 
     @Override
     public String toString() {
-        return String.format("%s: {bindings=%s}", getClass().getSimpleName(), bindings);
+        return String.format("%s: {%n\twithEnvironment=%b,%n\tbindings=%n\t%s%n}", getClass()
+                .getSimpleName(), withEnvironment, bindings);
     }
 
     @Override

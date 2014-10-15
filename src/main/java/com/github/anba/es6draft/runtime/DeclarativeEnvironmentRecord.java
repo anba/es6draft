@@ -10,9 +10,11 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
 import java.util.Collections;
+import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -47,8 +49,8 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
 
         @Override
         public String toString() {
-            return String.format("{value = %s, mutable = %b, deletable = %b}", value, mutable,
-                    deletable);
+            return String.format("{value = %s, mutable = %b, deletable = %b}",
+                    Objects.toString(value, "<uninitialized>"), mutable, deletable);
         }
 
         public void setValue(ExecutionContext cx, String name, Object value, boolean strict) {
@@ -103,23 +105,30 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
 
     @Override
     public String toString() {
-        return String.format("%s: {bindings=%s}", getClass().getSimpleName(), toString(bindings));
+        return String.format("%s: {%n\tbindings=%s%n}", getClass().getSimpleName(),
+                bindingsToString());
+    }
+
+    /*package*/String bindingsToString() {
+        return toString(bindings);
     }
 
     private static <KEY, VALUE> String toString(Map<KEY, VALUE> map) {
         if (map.isEmpty()) {
             return "{}";
         }
-        StringBuilder sb = new StringBuilder();
-        sb.append('{');
-        for (Iterator<Map.Entry<KEY, VALUE>> iter = map.entrySet().iterator();;) {
-            Map.Entry<KEY, VALUE> entry = iter.next();
-            sb.append("\n  ").append(entry.getKey()).append('=').append(entry.getValue());
-            if (!iter.hasNext())
-                break;
-            sb.append(',');
+        try (Formatter f = new Formatter(new StringBuilder(), null)) {
+            f.format("{");
+            for (Iterator<Map.Entry<KEY, VALUE>> iter = map.entrySet().iterator();;) {
+                Map.Entry<KEY, VALUE> entry = iter.next();
+                f.format("%n\t\t%s=%s", entry.getKey(), entry.getValue());
+                if (!iter.hasNext())
+                    break;
+                f.format(",");
+            }
+            f.format("%n\t}");
+            return f.toString();
         }
-        return sb.append('\n').append('}').toString();
     }
 
     @Override

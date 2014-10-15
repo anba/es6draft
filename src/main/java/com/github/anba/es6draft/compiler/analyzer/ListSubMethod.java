@@ -41,14 +41,14 @@ abstract class ListSubMethod<NODE extends Node> extends SubMethod<NODE> {
         ArrayList<ELEMENT> elements = from(newNodes, mapper);
         int accSize = oldSize;
 
-        // replace single big elements with method-expressions
+        // Replace large elements with methods.
         PriorityQueue<ELEMENT> pq = new PriorityQueue<>(elements);
-        while (!pq.isEmpty() && pq.peek().size > maxElementSize) {
+        while (!pq.isEmpty() && pq.peek().getSize() > maxElementSize) {
             ELEMENT element = pq.remove();
 
             // export and update entry
             accSize += element.export();
-            newNodes.set(element.index, element.node);
+            newNodes.set(element.getIndex(), element.getNode());
         }
 
         if (accSize > maxAccSize) {

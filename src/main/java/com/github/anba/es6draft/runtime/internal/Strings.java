@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
+import static com.github.anba.es6draft.parser.Characters.isWhitespaceOrLineTerminator;
+
 import java.util.Arrays;
 
 /**
@@ -13,40 +15,6 @@ import java.util.Arrays;
  */
 public final class Strings {
     private Strings() {
-    }
-
-    /**
-     * @param c
-     *            the character to inspect
-     * @return {@code true} if the character is a line terminator
-     */
-    public static boolean isLineTerminator(int c) {
-        // @see TokenStream#isLineTerminator(int)
-        if ((c & ~0b0010_0000_0010_1111) != 0) {
-            return false;
-        }
-        return (c == 0x0A || c == 0x0D || c == 0x2028 || c == 0x2029);
-    }
-
-    /**
-     * @param c
-     *            the character to inspect
-     * @return {@code true} if the character is a whitespace
-     */
-    public static boolean isWhitespace(int c) {
-        // @see TokenStream#isWhitespace(int)
-        return (c == 0x09 || c == 0x0B || c == 0x0C || c == 0x20 || c == 0xA0 || c == 0xFEFF || isSpaceSeparator(c));
-    }
-
-    /**
-     * @param c
-     *            the character to inspect
-     * @return {@code true} if the character is space separator
-     */
-    private static boolean isSpaceSeparator(int c) {
-        // @see TokenStream#isSpaceSeparator(int)
-        return (c == 0x20 || c == 0xA0 || c == 0x1680 || c == 0x180E
-                || (c >= 0x2000 && c <= 0x200A) || c == 0x202F || c == 0x205F || c == 0x3000);
     }
 
     /**
@@ -60,7 +28,7 @@ public final class Strings {
         int start = 0, end = s.length();
         for (; start < end; ++start) {
             char c = s.charAt(start);
-            if (!(isWhitespace(c) || isLineTerminator(c))) {
+            if (!isWhitespaceOrLineTerminator(c)) {
                 break;
             }
         }
@@ -83,13 +51,13 @@ public final class Strings {
         int start = 0, end = s.length();
         for (; start < end; ++start) {
             char c = s.charAt(start);
-            if (!(isWhitespace(c) || isLineTerminator(c))) {
+            if (!isWhitespaceOrLineTerminator(c)) {
                 break;
             }
         }
         for (; end > start; --end) {
             char c = s.charAt(end - 1);
-            if (!(isWhitespace(c) || isLineTerminator(c))) {
+            if (!isWhitespaceOrLineTerminator(c)) {
                 break;
             }
         }
@@ -139,7 +107,7 @@ public final class Strings {
         return new String(value);
     }
 
-    private static final char[] hexdigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    private static final char[] HEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
             'a', 'b', 'c', 'd', 'e', 'f' };
 
     /**
@@ -200,10 +168,10 @@ public final class Strings {
             default:
                 if (c < ' ' || c > 0xff) {
                     sb.append('\\').append('u')//
-                            .append(hexdigits[(c >> 12) & 0xf])//
-                            .append(hexdigits[(c >> 8) & 0xf])//
-                            .append(hexdigits[(c >> 4) & 0xf])//
-                            .append(hexdigits[(c >> 0) & 0xf]);
+                            .append(HEXDIGITS[(c >> 12) & 0xf])//
+                            .append(HEXDIGITS[(c >> 8) & 0xf])//
+                            .append(HEXDIGITS[(c >> 4) & 0xf])//
+                            .append(HEXDIGITS[(c >> 0) & 0xf]);
                 } else {
                     sb.append(c);
                 }

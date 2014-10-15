@@ -18,7 +18,7 @@ import java.util.Set;
  */
 public final class WhileStatement extends IterationStatement {
     private final Expression test;
-    private final Statement statement;
+    private Statement statement;
 
     public WhileStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt,
             Set<String> labelSet, Expression test, Statement statement) {
@@ -43,6 +43,16 @@ public final class WhileStatement extends IterationStatement {
      */
     public Statement getStatement() {
         return statement;
+    }
+
+    /**
+     * Sets the <tt>while</tt>-statement's statement node.
+     * 
+     * @param statement
+     *            the new statement node
+     */
+    public void setStatement(Statement statement) {
+        this.statement = statement;
     }
 
     @Override

@@ -195,14 +195,12 @@ public class TraceurTest {
                 Matcher m = p.matcher(line);
                 if (m.matches()) {
                     String s = m.group(1);
-                    if ("Should not compile.".equals(s)) {
-                        test.expect = false;
-                    } else if ("Only in browser.".equals(s) || s.startsWith("Skip.")) {
+                    if ("Only in browser.".equals(s) || s.startsWith("Skip.")) {
                         test.setEnabled(false);
                     } else if (s.equals("Async.")) {
                         test.async = true;
                     } else if (s.startsWith("Error:")) {
-                        // ignore
+                        test.expect = false;
                     } else if (s.startsWith("Options:")) {
                         // ignore
                     } else {

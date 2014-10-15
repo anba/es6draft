@@ -171,6 +171,22 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
     }
 
     /**
+     * shell-function: {@code dumpScope()}
+     */
+    @Function(name = "dumpScope", arity = 0)
+    public void dumpScope(ExecutionContext cx, ExecutionContext caller) {
+        console.print(caller.getLexicalEnvironment().toString());
+    }
+
+    /**
+     * shell-function: {@code dumpSymbolRegistry()}
+     */
+    @Function(name = "dumpSymbolRegistry", arity = 0)
+    public void dumpSymbolRegistry(ExecutionContext cx) {
+        console.print(cx.getRealm().getSymbolRegistry().toString());
+    }
+
+    /**
      * shell-function: {@code gc()}
      */
     @Function(name = "gc", arity = 0)

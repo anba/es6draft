@@ -84,9 +84,24 @@ function PropertyKeyToString(propertyKey) {
   }
 }
 
+function toSource(v) {
+  switch (typeof v) {
+    case "number":
+      return v !== 0 ? String(v) : Object_is(v, +0) ? "+0" : "-0";
+    case "undefined":
+    case "boolean":
+    case "string":
+    case "symbol":
+    case "function":
+    case "object":
+    default:
+      return String(v);
+  }
+}
+
 function safeToString(o) {
   try {
-    return String(o);
+    return toSource(o);
   } catch (e) {
     try {
       return $CallFunction(Object_prototype_toString, o);

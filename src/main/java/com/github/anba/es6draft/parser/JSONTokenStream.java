@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.parser;
 
+import static com.github.anba.es6draft.parser.Characters.hexDigit;
+import static com.github.anba.es6draft.parser.Characters.isDecimalDigit;
 import static com.github.anba.es6draft.parser.NumberParser.parseDecimal;
 
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
@@ -350,18 +352,18 @@ final class JSONTokenStream {
     }
 
     private double readDecimalLiteral(int c) {
-        assert c == '-' || isDigit(c);
+        assert c == '-' || isDecimalDigit(c);
         TokenStreamInput input = this.input;
         StrBuffer buffer = this.buffer();
         if (c == '-') {
             buffer.append(c);
-            if (!isDigit(c = input.getChar())) {
+            if (!isDecimalDigit(c = input.getChar())) {
                 throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
         }
         buffer.append(c);
         if (c != '0') {
-            while (isDigit(c = input.getChar())) {
+            while (isDecimalDigit(c = input.getChar())) {
                 buffer.append(c);
             }
         } else {
@@ -369,11 +371,11 @@ final class JSONTokenStream {
         }
         if (c == '.') {
             buffer.append(c);
-            if (!isDigit(c = input.getChar())) {
+            if (!isDecimalDigit(c = input.getChar())) {
                 throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
             buffer.append(c);
-            while (isDigit(c = input.getChar())) {
+            while (isDecimalDigit(c = input.getChar())) {
                 buffer.append(c);
             }
         }
@@ -384,11 +386,11 @@ final class JSONTokenStream {
                 buffer.append(c);
                 c = input.getChar();
             }
-            if (!isDigit(c)) {
+            if (!isDecimalDigit(c)) {
                 throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
             buffer.append(c);
-            while (isDigit(c = input.getChar())) {
+            while (isDecimalDigit(c = input.getChar())) {
                 buffer.append(c);
             }
         }
@@ -405,21 +407,6 @@ final class JSONTokenStream {
         StrBuffer buffer = this.buffer;
         buffer.clear();
         return buffer;
-    }
-
-    private static boolean isDigit(int c) {
-        return (c >= '0' && c <= '9');
-    }
-
-    private static int hexDigit(int c) {
-        if (c >= '0' && c <= '9') {
-            return (c - '0');
-        } else if (c >= 'A' && c <= 'F') {
-            return (c - ('A' - 10));
-        } else if (c >= 'a' && c <= 'f') {
-            return (c - ('a' - 10));
-        }
-        return -1;
     }
 
     /**

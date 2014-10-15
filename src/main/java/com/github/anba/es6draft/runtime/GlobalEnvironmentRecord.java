@@ -43,8 +43,8 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
 
     @Override
     public String toString() {
-        return String.format("%s: {%n  objectEnv=%s,%n  declEnv=%s%n}", getClass().getSimpleName(),
-                objectRec, declRec);
+        return String.format("%s: {%n\tobjectEnv=%s,%n\tdeclEnv=%s,%n\tvarNames=%s%n}", getClass()
+                .getSimpleName(), objectRec, declRec, varNames);
     }
 
     @Override
@@ -316,14 +316,13 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     public void createGlobalVarBinding(String name, boolean deletable) {
         /* steps 1-2 (omitted) */
         /* step 3 */
+        // FIXME: spec issue - change to `!HasOwnProperty(cx, globalObject, name)` ?
         if (!objectRec.hasBinding(name)) {
             objectRec.createMutableBinding(name, deletable);
         }
         /* step 4 (omitted) */
         /* step 5 */
-        if (!varNames.contains(name)) {
-            varNames.add(name);
-        }
+        varNames.add(name);
         /* step 6 */
         return;
     }
@@ -353,9 +352,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
         DefinePropertyOrThrow(cx, globalObject, name, desc);
         /* step 9 (omitted) */
         /* step 10 */
-        if (!varNames.contains(name)) {
-            varNames.add(name);
-        }
+        varNames.add(name);
         /* step 11 */
         return;
     }

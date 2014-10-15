@@ -18,7 +18,7 @@ public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNod
         NonStrict, ImplicitStrict, ExplicitStrict
     }
 
-    public enum ThisMode {
+    enum ThisMode {
         Lexical, Strict, Global
     }
 
@@ -89,7 +89,7 @@ public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNod
     String getBodySource();
 
     @Override
-    public List<StatementListItem> getStatements();
+    List<StatementListItem> getStatements();
 
     @Override
     void setStatements(List<StatementListItem> statements);

@@ -268,6 +268,7 @@ public final class Parser {
     private static final class FunctionContext extends TopContext implements FunctionScope {
         FunctionNode node = null;
         NameSet parameterNames = null;
+        List<FunctionDeclaration> blockFunctions = null;
         boolean needsArguments = false;
         boolean superReference = false;
         final Name arguments;
@@ -275,6 +276,13 @@ public final class Parser {
         FunctionContext(ScopeContext enclosing, boolean hasArguments) {
             super(enclosing);
             arguments = hasArguments ? new Name("arguments") : null;
+        }
+
+        void addBlockFunction(FunctionDeclaration function) {
+            if (blockFunctions == null) {
+                blockFunctions = newSmallList();
+            }
+            blockFunctions.add(function);
         }
 
         @Override
@@ -327,6 +335,11 @@ public final class Parser {
                 return parameterNames.get(name);
             }
             return super.getDeclaredName(name);
+        }
+
+        @Override
+        public List<FunctionDeclaration> blockFunctions() {
+            return emptyIfNull(blockFunctions);
         }
     }
 
@@ -774,6 +787,9 @@ public final class Parser {
 
     private void addFunctionDeclaration(FunctionDeclaration decl) {
         addDeclaration(decl, BoundName(decl.getIdentifier()));
+        if (isBlockScopedFunction()) {
+            context.parent.funContext.addBlockFunction(decl);
+        }
     }
 
     private void addGeneratorDeclaration(GeneratorDeclaration decl) {
@@ -798,6 +814,14 @@ public final class Parser {
                 reportSyntaxError(decl, Messages.Key.VariableRedeclaration, name);
             }
         }
+    }
+
+    private boolean isBlockScopedFunction() {
+        ParseContext parentContext = context.parent;
+        return parentContext.kind.isFunction()
+                && (parentContext.topContext != parentContext.scopeContext)
+                && parentContext.strictMode != StrictMode.Strict
+                && isEnabled(CompatibilityOption.BlockFunctionDeclaration);
     }
 
     private void addLexScopedDeclaration(Declaration decl) {
@@ -1478,7 +1502,7 @@ public final class Parser {
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
                 }
-                if (ts.position() != formals.length()) {
+                if (hasUnsafeTrailingCharacters(formals, ts.position())) {
                     // more input after last token (whitespace, comments), add newlines to handle
                     // last token is single-line comment case
                     formals = "\n" + formals + "\n";
@@ -1546,7 +1570,7 @@ public final class Parser {
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
                 }
-                if (ts.position() != formals.length()) {
+                if (hasUnsafeTrailingCharacters(formals, ts.position())) {
                     // more input after last token (whitespace, comments), add newlines to handle
                     // last token is single-line comment case
                     formals = "\n" + formals + "\n";
@@ -1593,6 +1617,19 @@ public final class Parser {
         scope.node = script;
 
         return script;
+    }
+
+    private static boolean hasUnsafeTrailingCharacters(String s, int start) {
+        for (int i = s.length() - 1; i > start; --i) {
+            char c = s.charAt(i);
+            if (Characters.isLineTerminator(c)) {
+                break;
+            }
+            if (!Characters.isWhitespace(c)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /* ***************************************************************************************** */
@@ -2118,7 +2155,7 @@ public final class Parser {
         boolean strict = false;
         directive: while (token() == Token.STRING) {
             long begin = ts.beginPosition();
-            boolean hasEscape = ts.hasEscape(); // peek() may clear hasEscape flag
+            boolean hasEscape = ts.hasEscape(); // peek() clears hasEscape if next token is string
             Token next = peek();
             switch (next) {
             case SEMI:
@@ -2187,15 +2224,19 @@ public final class Parser {
     private <FUNCTION extends FunctionNode> FUNCTION inheritStrictness(FUNCTION function) {
         if (context.strictMode != StrictMode.Unknown) {
             boolean strict = (context.strictMode == StrictMode.Strict);
+            assert !strict || context.funContext.blockFunctions == null;
             function.setStrictMode(toFunctionStrictness(strict, context.explicitStrict));
             if (context.deferred != null) {
                 for (FunctionNode func : context.deferred) {
                     func.setStrictMode(toFunctionStrictness(strict, false));
+                    if (strict) {
+                        ((FunctionContext) func.getScope()).blockFunctions = null;
+                    }
                 }
                 context.deferred = null;
             }
         } else {
-            // this case only applies for functions with default parameters
+            // This case only applies for functions in default parameter expressions.
             assert context.parent.strictMode == StrictMode.Unknown;
             ParseContext parent = context.parent;
             if (parent.deferred == null) {
@@ -2425,7 +2466,7 @@ public final class Parser {
         return bindingElement();
     }
 
-    private static Name containsAny(NameSet set, List<Name> list) {
+    private static Name containsAny(List<Name> list, NameSet set) {
         for (Name element : list) {
             if (set.contains(element)) {
                 return element;
@@ -2437,9 +2478,10 @@ public final class Parser {
     private void checkFormalParameterRedeclaration(FunctionNode node, List<Name> boundNames,
             NameSet declaredNames) {
         if (!(declaredNames == null || declaredNames.isEmpty())) {
-            Name redeclared = containsAny(declaredNames, boundNames);
+            Name redeclared = containsAny(boundNames, declaredNames);
             if (redeclared != null) {
-                reportSyntaxError(node, Messages.Key.FormalParameterRedeclaration, redeclared);
+                BindingIdentifier parameter = FindParameter.find(node, redeclared);
+                reportSyntaxError(parameter, Messages.Key.FormalParameterRedeclaration, redeclared);
             }
         }
     }
@@ -2461,7 +2503,8 @@ public final class Parser {
         boolean hasDuplicates = (boundNames.size() != names.size());
         if (hasDuplicates) {
             Name duplicate = findDuplicate(names, boundNames);
-            reportSyntaxError(node, Messages.Key.DuplicateFormalParameter, duplicate);
+            BindingIdentifier parameter = FindParameter.find(node, duplicate);
+            reportSyntaxError(parameter, Messages.Key.DuplicateFormalParameter, duplicate);
         }
     }
 
@@ -2470,7 +2513,8 @@ public final class Parser {
         boolean hasDuplicates = (boundNames.size() != names.size());
         if (hasDuplicates) {
             Name duplicate = findDuplicate(names, boundNames);
-            reportStrictModeSyntaxError(node, Messages.Key.DuplicateFormalParameter, duplicate);
+            BindingIdentifier parameter = FindParameter.find(node, duplicate);
+            reportStrictModeSyntaxError(parameter, Messages.Key.DuplicateFormalParameter, duplicate);
         }
     }
 
@@ -2557,7 +2601,49 @@ public final class Parser {
         List<StatementListItem> prologue = directivePrologue();
         List<StatementListItem> body = statementList(end);
         assert context.assertLiteralsUnchecked(0);
+        computeBlockFunctions();
         return merge(prologue, body);
+    }
+
+    private void computeBlockFunctions() {
+        assert context.kind.isFunction();
+        if (!isEnabled(CompatibilityOption.BlockFunctionDeclaration)) {
+            return;
+        }
+        FunctionContext topScope = context.funContext;
+        List<FunctionDeclaration> functions = topScope.blockFunctions;
+        if (functions == null) {
+            return;
+        }
+        assert context.strictMode != StrictMode.Strict : "block functions in strict mode";
+        ArrayList<FunctionDeclaration> blockFunctions = new ArrayList<>();
+        outer: for (FunctionDeclaration function : functions) {
+            Name name = function.getIdentifier().getName();
+            ScopeContext enclosingScope = (ScopeContext) function.getScope().getEnclosingScope();
+            // Top-level function declarations are not applicable for legacy semantics.
+            assert enclosingScope != topScope : "top-level function declaration";
+            assert enclosingScope.isDeclared(name) : "undeclared block scoped function: " + name;
+            for (ScopeContext scope = enclosingScope; (scope = scope.parent) != topScope;) {
+                // See 13.1.1 Static Semantics: Early Errors
+                // See 13.11.1 Static Semantics: Early Errors
+                if (scope.isDeclared(name)) {
+                    // Found a block scoped, lexical declaration - cannot declare function as var.
+                    if (isEnabled(CompatibilityOption.CatchVarStatement)
+                            && scope instanceof CatchContext) {
+                        // Unless "B.3.5 VariableStatements in Catch blocks" applies.
+                        continue;
+                    }
+                    continue outer;
+                }
+            }
+            // See 14.1.2 Static Semantics: Early Errors
+            if (topScope.allowVarDeclaredName(name)) {
+                // Function declaration is applicable for legacy semantics.
+                function.setLegacyBlockScoped(true);
+                blockFunctions.add(function);
+            }
+        }
+        topScope.blockFunctions = blockFunctions;
     }
 
     /**
@@ -2571,7 +2657,7 @@ public final class Parser {
      * @return the list of parsed statement list items
      */
     private List<StatementListItem> expressionClosureBody() {
-        // need to call manually b/c directivePrologue() isn't used here
+        // Necessary to call applyStrictMode() manually b/c directivePrologue() is not used.
         applyStrictMode(false);
         Expression expr = assignmentExpression(true);
         assert context.assertLiteralsUnchecked(0);
@@ -2657,7 +2743,7 @@ public final class Parser {
 
                 return inheritStrictness(function);
             } else {
-                // need to call manually b/c functionBody() isn't used here
+                // Necessary to call applyStrictMode() manually b/c directivePrologue() is not used.
                 applyStrictMode(false);
 
                 int startBody = ts.position();
@@ -3725,7 +3811,7 @@ public final class Parser {
 
                 return inheritStrictness(function);
             } else {
-                // need to call manually b/c functionBody() isn't used here
+                // Necessary to call applyStrictMode() manually b/c directivePrologue() is not used.
                 applyStrictMode(false);
 
                 int startBody = ts.position();
@@ -6716,7 +6802,7 @@ public final class Parser {
         boolean awaitAllowed = context.awaitAllowed;
         newContext(ContextKind.GeneratorComprehension);
         try {
-            // need to call manually b/c functionBody() isn't used here
+            // Necessary to call applyStrictMode() manually b/c directivePrologue() is not used.
             applyStrictMode(false);
 
             // propagate the outer context's 'yield' state
@@ -6761,7 +6847,7 @@ public final class Parser {
         boolean awaitAllowed = context.awaitAllowed;
         newContext(ContextKind.GeneratorComprehension);
         try {
-            // need to call manually b/c functionBody() isn't used here
+            // Necessary to call applyStrictMode() manually b/c directivePrologue() is not used.
             applyStrictMode(false);
 
             // propagate the outer context's 'yield' state

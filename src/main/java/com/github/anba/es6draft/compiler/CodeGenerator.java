@@ -535,7 +535,8 @@ final class CodeGenerator {
 
     void compile(TemplateLiteral node) {
         if (!isCompiled(node)) {
-            InstructionVisitor body = new InstructionVisitor(newMethod(node));
+            MethodCode method = newMethod(node);
+            InstructionVisitor body = new InstructionVisitor(method);
             body.lineInfo(node.getBeginLine());
             body.begin();
 
@@ -569,7 +570,8 @@ final class CodeGenerator {
     }
 
     private void scriptBody(Script node) {
-        StatementVisitor body = new ScriptStatementVisitor(newMethod(node, ScriptName.Code), node);
+        MethodCode method = newMethod(node, ScriptName.Code);
+        StatementVisitor body = new ScriptStatementVisitor(method, node);
         body.lineInfo(node);
         body.begin();
         body.loadUndefined();
@@ -823,7 +825,6 @@ final class CodeGenerator {
             body.nop(); // force line-number entry
             body.begin();
 
-            body.setScope(mv.getScope());
             Completion result = statements(node.getStatements(), body);
 
             if (!result.isAbrupt()) {
@@ -833,9 +834,6 @@ final class CodeGenerator {
             }
 
             body.end();
-
-            // propagate state information from nested statement-list-method
-            mv.updateInfo(body);
         }
     }
 
@@ -846,16 +844,12 @@ final class CodeGenerator {
             body.lineInfo(node);
             body.begin();
 
-            body.setScope(mv.getScope());
             body.loadArrayObject();
             body.loadArrayIndex();
             expression(node.getExpression(), body);
 
             body._return();
             body.end();
-
-            // propagate state information from nested spread-element-method
-            mv.updateInfo(body);
         }
     }
 
@@ -866,7 +860,6 @@ final class CodeGenerator {
             body.lineInfo(node);
             body.begin();
 
-            body.setScope(mv.getScope());
             Variable<OrdinaryObject> object = body.getObjectParameter();
             for (PropertyDefinition property : node.getProperties()) {
                 body.load(object);
@@ -875,9 +868,6 @@ final class CodeGenerator {
 
             body._return();
             body.end();
-
-            // propagate state information from nested property-definitions-method
-            mv.updateInfo(body);
         }
     }
 
@@ -888,17 +878,12 @@ final class CodeGenerator {
             body.lineInfo(node);
             body.begin();
 
-            body.setScope(mv.getScope());
-
             Variable<OrdinaryFunction> function = body.getFunctionParameter();
             Variable<OrdinaryObject> proto = body.getPrototypeParameter();
             ClassPropertyEvaluation(this, def, node.getProperties(), function, proto, body);
 
             body._return();
             body.end();
-
-            // propagate state information from nested method-definitions-method
-            mv.updateInfo(body);
         }
     }
 
@@ -909,14 +894,10 @@ final class CodeGenerator {
             body.lineInfo(node);
             body.begin();
 
-            body.setScope(mv.getScope());
             expressionBoxedValue(node.getExpression(), body);
 
             body._return();
             body.end();
-
-            // propagate state information from nested expression-method
-            mv.updateInfo(body);
         }
     }
 
@@ -928,7 +909,6 @@ final class CodeGenerator {
             body.lineInfo(node);
             body.begin();
 
-            body.setScope(mv.getScope());
             body.loadLexicalEnvironment();
             generator.generateMethod(node, body);
 
@@ -945,7 +925,6 @@ final class CodeGenerator {
             body.lineInfo(node);
             body.begin();
 
-            body.setScope(mv.getScope());
             body.loadLexicalEnvironment();
             generator.generateMethod(node, body);
 

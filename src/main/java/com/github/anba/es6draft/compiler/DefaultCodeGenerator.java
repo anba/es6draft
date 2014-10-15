@@ -42,9 +42,9 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     private static final class Methods {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_CreateIterResultObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "CreateIterResultObject",
-                Type.getMethodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Object,
-                        Type.BOOLEAN_TYPE));
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "CreateIterResultObject", Type
+                        .getMethodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Object,
+                                Type.BOOLEAN_TYPE));
 
         static final MethodDesc AbstractOperations_HasOwnProperty = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.AbstractOperations, "HasOwnProperty", Type
@@ -191,19 +191,17 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 Type.getMethodType(Types.EnvironmentRecord));
 
         static final MethodDesc LexicalEnvironment_cloneDeclarativeEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.LexicalEnvironment,
-                "cloneDeclarativeEnvironment",
+                MethodDesc.Invoke.Static, Types.LexicalEnvironment, "cloneDeclarativeEnvironment",
                 Type.getMethodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
         static final MethodDesc LexicalEnvironment_newDeclarativeEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.LexicalEnvironment,
-                "newDeclarativeEnvironment",
+                MethodDesc.Invoke.Static, Types.LexicalEnvironment, "newDeclarativeEnvironment",
                 Type.getMethodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
         static final MethodDesc LexicalEnvironment_newObjectEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.LexicalEnvironment, "newObjectEnvironment",
-                Type.getMethodType(Types.LexicalEnvironment, Types.ScriptObject,
-                        Types.LexicalEnvironment, Type.BOOLEAN_TYPE));
+                MethodDesc.Invoke.Static, Types.LexicalEnvironment, "newObjectEnvironment", Type
+                        .getMethodType(Types.LexicalEnvironment, Types.ScriptObject,
+                                Types.LexicalEnvironment, Type.BOOLEAN_TYPE));
 
         // class: OrdinaryFunction
         static final MethodDesc OrdinaryFunction_SetFunctionName_String = MethodDesc.create(
@@ -215,9 +213,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 Type.getMethodType(Type.VOID_TYPE, Types.FunctionObject, Types.Symbol));
 
         // class: ReturnValue
-        static final MethodDesc ReturnValue_getValue = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ReturnValue, "getValue",
-                Type.getMethodType(Types.Object));
+        static final MethodDesc ReturnValue_getValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
+                Types.ReturnValue, "getValue", Type.getMethodType(Types.Object));
 
         // class: ScriptException
         static final MethodDesc ScriptException_getValue = MethodDesc.create(
@@ -238,9 +235,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateConstructorMethod = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateConstructorMethod",
-                Type.getMethodType(Types.OrdinaryFunction, Types.ScriptObject,
-                        Types.OrdinaryObject, Types.RuntimeInfo$Function, Types.ExecutionContext));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateConstructorMethod", Type
+                        .getMethodType(Types.OrdinaryFunction, Types.ScriptObject,
+                                Types.OrdinaryObject, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_getClassProto = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "getClassProto",
@@ -254,8 +252,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "getIteratorObject",
                 Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_yield = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "yield",
+        static final MethodDesc ScriptRuntime_yield = MethodDesc.create(MethodDesc.Invoke.Static,
+                Types.ScriptRuntime, "yield",
                 Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
 
         // class: Type

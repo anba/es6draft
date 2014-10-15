@@ -6,7 +6,7 @@
 #
 
 # spec "9.1.3.1 ToNumber Applied to the String Type" not updated for new number literals
-harmony/numeric-literals.js
+es6/numeric-literals.js
 
 # TypedArray implementation vs. spec issues:
 # - offsets/lengths with fractional part is a RangeError
@@ -75,6 +75,9 @@ harmony/regexp-sticky.js
 # v8 does not follow spec
 harmony/super.js
 
+# v8 does not add inferred name to classes
+harmony/classes.js
+
 
 ###################
 # Misc issues     #
@@ -142,6 +145,9 @@ date-parse.js
 json.js
 regress/regress-396.js
 
+# Date.prototype.toUTCString() format is implementation-dependent
+regress/regress-3116.js
+
 # for-in order
 enumeration-order.js
 
@@ -208,6 +214,7 @@ regress/d8-readbuffer.js
 # Object.observe
 regress/regress-3315.js
 regress/regress-356589.js
+regress/regress-417709a.js
 harmony/regress/regress-405844.js
 
 
