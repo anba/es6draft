@@ -9,7 +9,9 @@ const {
   assertSame
 } = Assert;
 
-loadRelativeToScript("../../lib/recorder.js");
+System.load("lib/recorder.jsm");
+const Recorder = System.get("lib/recorder.jsm");
+
 loadRelativeToScript("helper.js");
 
 // Object with @@unscopables but no match, property is not present, single access

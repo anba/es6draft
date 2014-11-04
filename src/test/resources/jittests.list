@@ -5,17 +5,6 @@
 # <https://github.com/anba/es6draft>
 #
 
-
-# https://bugzilla.mozilla.org/show_bug.cgi?id=997973
-# ES6 spec change: TypedArrays must be called with explicit `new`
-tests/basic/bug578041.js
-tests/basic/bug836601.js
-tests/basic/bug984766.js
-tests/basic/testBug606138.js
-tests/basic/testSlowNativeWithNullThis.js
-tests/basic/testTypedArrayInit.js
-tests/for-of/typedarrays-6.js
-
 # ES6 spec incomplete: integer indices beyond 2^53-1
 tests/basic/typed-array-index-out-of-range.js
 
@@ -35,9 +24,6 @@ tests/generators/es6-syntax.js
 # ES6: SpiderMonkey bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1022967)
 tests/arguments/defaults-call-function.js
 
-# ES6: new WeakSet performs ToObject on first argument
-tests/collections/WeakSet-error.js
-
 # ES6: SpiderMonkey bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1041341)
 tests/basic/destructuring-rest.js
 
@@ -46,6 +32,15 @@ tests/for-of/string-iterator-surfaces.js
 
 # ES6: let TDZ in loops (https://bugzilla.mozilla.org/show_bug.cgi?id=1069480)
 tests/basic/letLegacyForOfOrInScope.js
+
+# ES6: spec bug - eval in default parameter initializer
+tests/arguments/alias-function-not-closed.js
+
+# ES6: arguments object is iterable; new Map(null) and new Set(null) throws in SM
+tests/collections/constructor-errors.js
+
+# ES6: new Map(null) and new Set(null) throws in SM
+tests/collections/Map-constructor-4.js
 
 
 ###################
@@ -109,6 +104,7 @@ tests/basic/bug839420.js
 tests/basic/bug934997.js
 tests/basic/expression-autopsy.js
 tests/basic/spread-call-maxarg.js
+tests/basic/syntax-error-illegal-character.js
 tests/basic/testBug566556.js
 tests/basic/testBug579647.js
 tests/basic/testBug593559.js
@@ -116,6 +112,7 @@ tests/basic/testBug604210.js
 tests/basic/testDontClobberScannerError.js
 tests/basic/testInitSingletons.js
 tests/generators/bug931414.js
+tests/generators/wrappers.js
 tests/self-hosting/invoke-self-hosted-with-primitive-this.js
 
 # different error message with toString
@@ -141,6 +138,9 @@ tests/basic/bug852016.js
 # SpiderMonkey restriction test
 tests/basic/testBug773108.js
 
+# sourceURL annotations
+tests/basic/display-url-in-stack-trace.js
+
 
 ############################################
 # Misc proxy implementation isssues        #
@@ -163,9 +163,7 @@ tests/basic/bug807623.js
 
 # Old Proxy API not completely emulated
 tests/auto-regress/bug578015.js
-tests/auto-regress/bug727330.js
 tests/basic/bug763440.js
-tests/for-of/semantics-11.js
 
 # missing return value in defineProperty trap
 tests/proxy/testDirectProxyDefineProperty2.js
@@ -236,9 +234,6 @@ tests/basic/bug943126.js
 
 # contextual .name property for functions
 tests/self-test/assertDeepEq.js
-
-# Object.getPrototypeOf() works with primitives
-tests/basic/setPrototypeOf.js
 
 # formal parameter initializers are evaluated in extra scope
 tests/arguments/defaults-scoping.js

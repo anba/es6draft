@@ -110,21 +110,7 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
         }
 
         /**
-         * 25.3.1.5 Generator.prototype [ @@iterator ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the this-value
-         */
-        @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
-        public static Object iterator(ExecutionContext cx, Object thisValue) {
-            return thisValue;
-        }
-
-        /**
-         * 25.3.1.6 Generator.prototype [ @@toStringTag ]
+         * 25.3.1.5 Generator.prototype [ @@toStringTag ]
          */
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

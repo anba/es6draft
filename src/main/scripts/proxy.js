@@ -11,7 +11,7 @@
 const global = %GlobalObject();
 
 const {
-  Object, Proxy, Symbol, TypeError,
+  Object, Proxy, Symbol, TypeError, Reflect,
 } = global;
 
 const {
@@ -19,12 +19,14 @@ const {
   assign: Object_assign,
 } = Object;
 
-const iteratorSym = Symbol.iterator;
+const {
+  getPrototypeOf: Reflect_getPrototypeOf,
+  setPrototypeOf: Reflect_setPrototypeOf,
+  isExtensible: Reflect_isExtensible,
+  apply: Reflect_apply,
+} = Reflect;
 
-// pseudo-symbol in SpiderMonkey
-const mozIteratorSym = "@@iterator";
-
-function toArrayIterator(obj) {
+function toArray(obj) {
   if (obj == null) throw TypeError();
   obj = Object(obj);
   var length = obj.length >>> 0;
@@ -32,133 +34,205 @@ function toArrayIterator(obj) {
   for (var i = 0; i < length; ++i) {
     result[i] = obj[i];
   }
-  return result[iteratorSym]();
+  return result;
 }
 
-function toProxyHandler(handler) {
-  var TypeErrorThrower = () => { throw TypeError() };
-  /* fundamental traps mapping:
-   * getOwnPropertyDescriptor -> getOwnPropertyDescriptor
-   * getPropertyDescriptor -> -
-   * getOwnPropertyNames -> ownKeys
-   * getPropertyNames -> -
-   * defineProperty -> defineProperty
-   * delete -> deleteProperty
-   * fix -> -
-   */
-  var proxyHandler = {
-    getOwnPropertyDescriptor: TypeErrorThrower,
-    defineProperty: TypeErrorThrower,
-    deleteProperty: TypeErrorThrower,
-    ownKeys: TypeErrorThrower,
-  };
+function NormalizeAndCompletePropertyDescriptor(obj) {
+  if (obj == null) {
+    return;
+  }
+  if (Object(obj) !== obj) {
+    throw TypeError();
+  }
+  var enumerable, configurable, value, writable, get, set;
+  var isDataProperty = false, isAccessorProperty = false;
+  enumerable = 'enumerable' in obj ? !!obj.enumerable : false;
+  configurable = 'configurable' in obj ? !!obj.configurable : false;
+  if ('value' in obj) {
+    isDataProperty = true;
+    value = obj.value;
+  }
+  if ('writable' in obj) {
+    isDataProperty = true;
+    writable = !!obj.writable;
+  } else {
+    writable = false;
+  }
+  if ('get' in obj) {
+    isAccessorProperty = true;
+    get = obj.get;
+    if (typeof get !== 'function' && get !== void 0) {
+      throw TypeError();
+    }
+  }
+  if ('set' in obj) {
+    isAccessorProperty = true;
+    set = obj.set;
+    if (typeof set !== 'function' && set !== void 0) {
+      throw TypeError();
+    }
+  }
+  if (isDataProperty && isAccessorProperty) {
+    throw TypeError();
+  }
+  if (isDataProperty) {
+    return {__proto__: null, value, writable, enumerable, configurable};
+  } else {
+    return {__proto__: null, get, set, enumerable, configurable};
+  }
+}
 
-  // fundamental traps
-  if ('getOwnPropertyDescriptor' in handler) {
-    proxyHandler['getOwnPropertyDescriptor'] = (_, pk) => handler['getOwnPropertyDescriptor'](pk);
-  } else if ('getPropertyDescriptor' in handler) {
-    proxyHandler['getOwnPropertyDescriptor'] = (_, pk) => handler['getPropertyDescriptor'](pk);
-  }
-  if ('getOwnPropertyNames' in handler) {
-    proxyHandler['ownKeys'] = () => handler['getOwnPropertyNames']();
-  }
-  if ('defineProperty' in handler) {
-    proxyHandler['defineProperty'] = (_, pk, desc) => (handler['defineProperty'](pk, desc), true);
-  }
-  if ('delete' in handler) {
-    proxyHandler['deleteProperty'] = (_, pk) => handler['delete'](pk);
-  }
-
-  // derived traps
-  if ('has' in handler) {
-    proxyHandler['has'] = (_, pk) => handler['has'](pk);
-  } else {
-    proxyHandler['has'] = (_, pk) => !!handler['getPropertyDescriptor'](pk);
-  }
-  if ('hasOwn' in handler) {
-    proxyHandler['hasOwn'] = (_, pk) => handler['hasOwn'](pk);
-  } else {
-    proxyHandler['hasOwn'] = (_, pk) => !!handler['getOwnPropertyDescriptor'](pk);
-  }
-  if ('get' in handler && typeof handler['get'] == 'function') {
-    proxyHandler['get'] = (_, pk, receiver) => handler['get'](receiver, pk);
-  } else {
-    proxyHandler['get'] = (_, pk, receiver) => {
-      // XXX: special case for iteration tests
-      if (pk === iteratorSym) {
-        var desc = handler['getPropertyDescriptor'](mozIteratorSym);
-        if (desc !== void 0 && 'value' in desc) {
-          // call @@iterator() so we don't end up with a StopIteration based Iterator
-          return function() { return desc.value.call(this)[iteratorSym]() };
-        }
-      }
-      var desc = handler['getPropertyDescriptor'](pk);
-      if (desc !== void 0 && 'value' in desc) {
-        return desc.value;
-      }
-      if (desc !== void 0 && desc.get !== void 0) {
-        return desc.get.call(receiver);
-      }
-    };
-  }
-  if ('set' in handler) {
-    proxyHandler['set'] = (_, pk, value, receiver) => handler['set'](receiver, pk, value);
-  } else {
-    proxyHandler['set'] = (_, pk, value, receiver) => {
-      var desc = handler['getOwnPropertyDescriptor'](pk);
-      if (!desc) {
-        desc = handler['getPropertyDescriptor'](pk);
-        if (!desc) {
-          desc = {
-            writable: true, enumerable: true, configurable: true
-          };
-        }
-      }
-      if (('writable' in desc) && desc.writable) {
-        handler['defineProperty'](pk, (desc.value = value, desc));
-        return true;
-      }
-      if (!('writable' in desc) && desc.set) {
-        desc.set.call(receiver, value);
-        return true;
-      }
+function toProxyHandler(handler, callTrap = void 0, constructTrap = void 0) {
+  return {
+    __proto__: null,
+    getPrototypeOf(target) {
+      return Reflect_getPrototypeOf(target);
+    },
+    setPrototypeOf(target, p) {
+      return Reflect_setPrototypeOf(target, p);
+    },
+    isExtensible(target) {
+      return Reflect_isExtensible(target);
+    },
+    preventExtensions(target) {
       return false;
-    };
-  }
-  if ('enumerate' in handler) {
-    proxyHandler['enumerate'] = () => toArrayIterator(handler['enumerate']());
-  } else if ('iterate' in handler) {
-    proxyHandler['enumerate'] = () => handler['iterate']()[iteratorSym]();
-  } else {
-    proxyHandler['enumerate'] = () => handler['getPropertyNames']().filter(
-      pk => handler['getPropertyDescriptor'](pk).enumerable
-    )[iteratorSym]();
-  }
-  if ('keys' in handler) {
-    proxyHandler['ownKeys'] = () => handler['keys']();
-  }
-  return proxyHandler;
+    },
+    getOwnPropertyDescriptor(target, propertyKey) {
+      var trapGetOwnPropertyDescriptor = handler['getOwnPropertyDescriptor'];
+      if (typeof trapGetOwnPropertyDescriptor === 'function') {
+        return Reflect_apply(trapGetOwnPropertyDescriptor, handler, [propertyKey]);
+      }
+      // Some tests only define the 'getPropertyDescriptor' trap.
+      return handler['getPropertyDescriptor'](propertyKey);
+    },
+    defineProperty(target, propertyKey, desc) {
+      handler['defineProperty'](propertyKey, desc);
+      return true;
+    },
+    has(target, propertyKey) {
+      var trapHas = handler['has'];
+      if (typeof trapHas === 'function') {
+        return Reflect_apply(trapHas, handler, [propertyKey]);
+      }
+      // Derived trap
+      return handler['getPropertyDescriptor'](propertyKey) != null;
+    },
+    get(target, propertyKey, receiver) {
+      var trapGet = handler['get'];
+      if (typeof trapGet === 'function') {
+        return Reflect_apply(trapGet, handler, [receiver, propertyKey]);
+      }
+      // Derived trap
+      var desc = handler['getPropertyDescriptor'](propertyKey);
+      desc = NormalizeAndCompletePropertyDescriptor(desc);
+      if (desc !== void 0) {
+        if ('value' in desc) {
+          return desc.value;
+        } else if (desc.get) {
+          return Reflect_apply(desc.get, receiver, []);
+        }
+      }
+    },
+    set(target, propertyKey, value, receiver) {
+      var trapSet = handler['set'];
+      if (typeof trapSet === 'function') {
+        return Reflect_apply(trapSet, handler, [receiver, propertyKey, value]);
+      }
+      // Derived trap
+      var desc = handler['getOwnPropertyDescriptor'](propertyKey);
+      desc = NormalizeAndCompletePropertyDescriptor(desc);
+      if (desc) {
+        if ('writable' in desc) {
+          if (desc.writable) {
+            handler['defineProperty'](propertyKey, {value});
+            return true;
+          }
+        } else if (desc.set) {
+          Reflect_apply(desc.set, receiver, [value]);
+          return true;
+        }
+        return false;
+      }
+      desc = handler['getPropertyDescriptor'](propertyKey);
+      desc = NormalizeAndCompletePropertyDescriptor(desc);
+      if (desc) {
+        if ('writable' in desc) {
+          if (!desc.writable) {
+            return false;
+          }
+        } else {
+          if (desc.set) {
+            Reflect_apply(desc.set, receiver, [value]);
+            return true;
+          }
+          return false;
+        }
+      }
+      if (!Reflect_isExtensible(receiver)) {
+        return false;
+      }
+      handler['defineProperty'](propertyKey, {
+        value,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
+      return true;
+    },
+    deleteProperty(target, propertyKey) {
+      return handler['delete'](propertyKey);
+    },
+    enumerate(target) {
+      var trapIterate = handler['iterate'];
+      if (typeof trapIterate === 'function') {
+        return Reflect_apply(trapIterate, handler, [])[Symbol.iterator]();
+      }
+      var trapEnumerate = handler['enumerate'];
+      if (typeof trapEnumerate === 'function') {
+        return toArray(Reflect_apply(trapEnumerate, handler, []))[Symbol.iterator]();
+      }
+      // Derived trap
+      var names = handler['getPropertyNames']();
+      var result = [];
+      for (var i = 0, j = 0, len = names.length >>> 0; i < len; ++i) {
+        var name = String(names[i]);
+        var desc = handler['getPropertyDescriptor'](name);
+        desc = NormalizeAndCompletePropertyDescriptor(desc);
+        if (desc && desc.enumerable) {
+          result[j++] = name;
+        }
+      }
+      return result[Symbol.iterator]();
+    },
+    ownKeys(target) {
+      var trapKeys = handler['keys'];
+      if (typeof trapKeys === 'function') {
+        return Reflect_apply(trapKeys, handler, []);
+      }
+      return handler['getOwnPropertyNames']();
+    },
+    apply(target, thisValue, args) {
+      return Reflect_apply(callTrap, thisValue, args);
+    },
+    construct(target, args) {
+      return new constructTrap(...args);
+    },
+  };
 }
 
 Object.defineProperties(Object_assign(Proxy, {
   create(handler, proto = null) {
     if (Object(handler) !== handler) throw TypeError();
     var proxyTarget = Object_create(proto);
-    var proxyHandler = Object_assign({
-      setPrototypeOf() { throw TypeError() }
-    }, toProxyHandler(handler));
+    var proxyHandler = toProxyHandler(handler);
     return new Proxy(proxyTarget, proxyHandler);
   },
   createFunction(handler, callTrap, constructTrap = callTrap) {
     if (Object(handler) !== handler) throw TypeError();
-    if (typeof callTrap != 'function') throw TypeError();
-    if (typeof constructTrap != 'function') throw TypeError();
+    if (typeof callTrap !== 'function') throw TypeError();
+    if (typeof constructTrap !== 'function') throw TypeError();
     var proxyTarget = function(){};
-    var proxyHandler = Object_assign({
-      setPrototypeOf() { throw TypeError() },
-      apply(_, thisValue, args) { return callTrap.apply(thisValue, args) },
-      construct(_, args) { return new constructTrap(...args) }
-    }, toProxyHandler(handler));
+    var proxyHandler = toProxyHandler(handler, callTrap, constructTrap);
     return new Proxy(proxyTarget, proxyHandler);
   }
 }), {
@@ -166,8 +240,9 @@ Object.defineProperties(Object_assign(Proxy, {
   createFunction: {enumerable: false},
 });
 
-// Enable creating proxies without `new` for tests
+// Enable creating proxies without `new`.
 const newProxy = new Proxy(Proxy, {
+  __proto__: null,
   apply(target, thisValue, args) {
     return new target(...args);
   }

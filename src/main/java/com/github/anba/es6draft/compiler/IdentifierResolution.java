@@ -10,6 +10,7 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.BindingIdentifier;
 import com.github.anba.es6draft.ast.IdentifierReference;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.assembler.MethodDesc;
 
@@ -36,6 +37,10 @@ final class IdentifierResolution {
 
     ValType resolve(BindingIdentifier node, ExpressionVisitor mv) {
         return resolve(node.getName().getIdentifier(), mv);
+    }
+
+    ValType resolve(Name name, ExpressionVisitor mv) {
+        return resolve(name.getIdentifier(), mv);
     }
 
     ValType resolveValue(IdentifierReference node, ExpressionVisitor mv) {

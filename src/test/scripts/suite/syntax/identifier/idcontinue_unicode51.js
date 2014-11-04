@@ -10,13 +10,12 @@ const {
 } = Assert;
 
 function test(start, end) {
-  let source = "";
   for (let cp = start; cp <= end;) {
-    let source = "";
+    let source = "var obj = {};\n";
     for (let i = 0; cp <= end && i < 1000; ++cp, ++i) {
       source += `obj.A${String.fromCodePoint(cp)};\n`;
     }
-    Function(source);
+    eval(source);
   }
 }
 

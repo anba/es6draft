@@ -21,11 +21,12 @@ import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.modules.Loader;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -33,13 +34,14 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
  * <h1>26 Reflection</h1><br>
- * <h2>26.2 Loader Objects</h2>
+ * <h2>26.? Loader Objects</h2>
  * <ul>
- * <li>26.2.1 The Reflect.Loader Constructor
- * <li>26.2.2 Properties of the Reflect.Loader Constructor
+ * <li>26.?.1 The Reflect.Loader Constructor
+ * <li>26.?.2 Properties of the Reflect.Loader Constructor
  * </ul>
  */
-public final class LoaderConstructor extends BuiltinConstructor implements Initializable {
+public final class LoaderConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<LoaderObject> {
     /**
      * Constructs a new Loader constructor function.
      * 
@@ -61,7 +63,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 26.2.1.1 Reflect.Loader (options = { })
+     * 26.?.1.1 Reflect.Loader (options = { })
      */
     @Override
     public LoaderObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -114,15 +116,20 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 26.2.1.2 new Reflect.Loader ( ... argumentsList )
+     * 26.?.1.2 new Reflect.Loader ( ... argumentsList )
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return Construct(callerContext, this, args);
     }
 
+    @Override
+    public CreateAction<LoaderObject> createAction() {
+        return LoaderCreate.INSTANCE;
+    }
+
     /**
-     * 26.2.2 Properties of the Reflect.Loader Constructor
+     * 26.?.2 Properties of the Reflect.Loader Constructor
      */
     public enum Properties {
         ;
@@ -139,27 +146,11 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
         public static final String name = "Loader";
 
         /**
-         * 26.2.2.1 Reflect.Loader.prototype
+         * 26.?.2.1 Reflect.Loader.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.LoaderPrototype;
-
-        /**
-         * 26.2.2.2 Reflect.Loader [ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized loader object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.LoaderPrototype,
-                    LoaderObjectAllocator.INSTANCE);
-        }
     }
 
     private static final class LoaderObjectAllocator implements ObjectAllocator<LoaderObject> {
@@ -168,6 +159,16 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
         @Override
         public LoaderObject newInstance(Realm realm) {
             return new LoaderObject(realm);
+        }
+    }
+
+    private static final class LoaderCreate implements CreateAction<LoaderObject> {
+        static final CreateAction<LoaderObject> INSTANCE = new LoaderCreate();
+
+        @Override
+        public LoaderObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.LoaderPrototype,
+                    LoaderObjectAllocator.INSTANCE);
         }
     }
 }

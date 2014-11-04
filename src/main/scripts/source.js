@@ -106,7 +106,6 @@ function Quote(s, qc = '"') {
 
 function SymbolToSource(sym) {
   // Well-known symbols
-  if (sym === Symbol.create) return "Symbol.create";
   if (sym === Symbol.hasInstance) return "Symbol.hasInstance";
   if (sym === Symbol.isConcatSpreadable) return "Symbol.isConcatSpreadable";
   if (sym === Symbol.isRegExp) return "Symbol.isRegExp";

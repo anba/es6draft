@@ -22,9 +22,9 @@ const {
   class Derived extends Base {
     p() {
       log += "[Derived]";
-      super();
+      super.p();
       Object.setPrototypeOf(Derived.prototype, OtherBase.prototype);
-      super();
+      super.p();
     }
   }
   (new Derived).p();

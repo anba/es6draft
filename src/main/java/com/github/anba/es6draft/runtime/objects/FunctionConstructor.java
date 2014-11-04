@@ -13,20 +13,25 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*
 
 import java.util.Objects;
 
-import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.compiler.CompiledScript;
+import com.github.anba.es6draft.compiler.CompiledObject;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.*;
+import com.github.anba.es6draft.runtime.internal.DebugInfo;
+import com.github.anba.es6draft.runtime.internal.Initializable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.internal.ScriptLoader;
+import com.github.anba.es6draft.runtime.internal.Source;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
@@ -42,7 +47,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
  * <li>19.2.2 Properties of the Function Constructor
  * </ul>
  */
-public final class FunctionConstructor extends BuiltinConstructor implements Initializable {
+public final class FunctionConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<OrdinaryFunction> {
     /**
      * Constructs a new Function constructor function.
      * 
@@ -92,7 +98,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
 
         /* steps 8-10 */
         Source source = functionSource(callerContext);
-        Script script = new FunctionScript(source);
+        CompiledFunction exec = new CompiledFunction(source);
         RuntimeInfo.Function function;
         try {
             ScriptLoader scriptLoader = calleeContext.getRealm().getScriptLoader();
@@ -123,10 +129,10 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
             throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
         /* steps 19-20 */
-        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, strict, function, scope, script);
+        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, strict, function, scope, exec);
         /* step 21 */
         if (function.hasSuperReference()) {
-            MakeMethod(fn, (String) null, null);
+            MakeMethod(fn, null);
         }
         /* steps 22-23 */
         MakeConstructor(calleeContext, fn);
@@ -144,6 +150,24 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return Construct(callerContext, this, args);
+    }
+
+    private static final class FunctionCreate implements CreateAction<OrdinaryFunction> {
+        static final CreateAction<OrdinaryFunction> INSTANCE = new FunctionCreate();
+
+        @Override
+        public OrdinaryFunction create(ExecutionContext cx, Constructor constructor, Object... args) {
+            /* steps 1-2 */
+            ScriptObject proto = GetPrototypeFromConstructor(cx, constructor,
+                    Intrinsics.FunctionPrototype);
+            /* step 3 */
+            return FunctionAllocate(cx, proto, false, FunctionKind.Normal);
+        }
+    }
+
+    @Override
+    public CreateAction<OrdinaryFunction> createAction() {
+        return FunctionCreate.INSTANCE;
     }
 
     /**
@@ -172,25 +196,6 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
         public static final String name = "Function";
-
-        /**
-         * 19.2.2.3 Function[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized function object
-         */
-        @Function(name = "[Symbol.create]", arity = 0, symbol = BuiltinSymbol.create,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            /* steps 1-3 */
-            ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue,
-                    Intrinsics.FunctionPrototype);
-            /* step 4 */
-            return FunctionAllocate(cx, proto, false, FunctionKind.Normal);
-        }
     }
 
     private Source functionSource(ExecutionContext caller) {
@@ -204,16 +209,16 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         return new Source(baseSource, sourceName, 1);
     }
 
-    private static final class FunctionScript extends CompiledScript {
-        protected FunctionScript(Source source) {
-            super(new FunctionScriptBody(source));
+    private static final class CompiledFunction extends CompiledObject {
+        CompiledFunction(Source source) {
+            super(new FunctionSourceObject(source));
         }
     }
 
-    private static final class FunctionScriptBody implements RuntimeInfo.ScriptBody {
+    private static final class FunctionSourceObject implements RuntimeInfo.SourceObject {
         private final Source source;
 
-        FunctionScriptBody(Source source) {
+        FunctionSourceObject(Source source) {
             this.source = source;
         }
 
@@ -228,27 +233,8 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         }
 
         @Override
-        public boolean isStrict() {
-            throw new IllegalStateException();
-        }
-
-        @Override
-        public void globalDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<GlobalEnvironmentRecord> globalEnv,
-                LexicalEnvironment<?> lexicalEnv, boolean deletableBindings) {
-            throw new IllegalStateException();
-        }
-
-        @Override
-        public void evalDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<?> variableEnv, LexicalEnvironment<?> lexicalEnv,
-                boolean deletableBindings) {
-            throw new IllegalStateException();
-        }
-
-        @Override
-        public Object evaluate(ExecutionContext cx) {
-            throw new IllegalStateException();
+        public Source toSource() {
+            return source;
         }
 
         @Override

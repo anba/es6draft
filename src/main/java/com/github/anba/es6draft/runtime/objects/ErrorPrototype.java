@@ -378,7 +378,7 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
         }
 
         @Override
-        protected StackTraceElement tryNext() {
+        protected StackTraceElement findNext() {
             while (elements != null) {
                 while (cursor < elements.length) {
                     StackTraceElement element = elements[cursor++];

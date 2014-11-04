@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.EnumSet;
 import java.util.Locale;
@@ -19,7 +20,9 @@ import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.FileModuleLoader;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ModuleLoader;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.TaskSource;
@@ -34,6 +37,7 @@ import com.github.anba.es6draft.runtime.objects.GlobalObject;
  */
 public final class World<GLOBAL extends GlobalObject> {
     private final ObjectAllocator<GLOBAL> allocator;
+    private final ModuleLoader moduleLoader;
     private final ScriptLoader scriptLoader;
     private final Locale locale = Locale.getDefault();
     private final TimeZone timezone = TimeZone.getDefault();
@@ -110,8 +114,56 @@ public final class World<GLOBAL extends GlobalObject> {
      */
     public World(ObjectAllocator<GLOBAL> allocator, Set<CompatibilityOption> options,
             Set<Parser.Option> parserOptions, Set<Compiler.Option> compilerOptions) {
+        this(allocator, new FileModuleLoader(Paths.get("").toAbsolutePath()), options,
+                parserOptions, compilerOptions);
+    }
+
+    /**
+     * Creates a new {@link World} object.
+     * 
+     * @param allocator
+     *            the global object allocator
+     * @param moduleLoader
+     *            the module loader
+     * @param options
+     *            the compatibility options
+     * @param parserOptions
+     *            the parser options
+     * @param compilerOptions
+     *            the compiler options
+     */
+    public World(ObjectAllocator<GLOBAL> allocator, ModuleLoader moduleLoader,
+            Set<CompatibilityOption> options, Set<Parser.Option> parserOptions,
+            Set<Compiler.Option> compilerOptions) {
         this.allocator = allocator;
+        this.moduleLoader = moduleLoader;
         this.scriptLoader = new ScriptLoader(options, parserOptions, compilerOptions);
+    }
+
+    /**
+     * Creates a new {@link World} object.
+     * 
+     * @param allocator
+     *            the global object allocator
+     * @param moduleLoader
+     *            the module loader
+     * @param scriptLoader
+     *            the script loader
+     */
+    public World(ObjectAllocator<GLOBAL> allocator, ModuleLoader moduleLoader,
+            ScriptLoader scriptLoader) {
+        this.allocator = allocator;
+        this.moduleLoader = moduleLoader;
+        this.scriptLoader = scriptLoader;
+    }
+
+    /**
+     * Returns the module loader.
+     * 
+     * @return the module loader
+     */
+    public ModuleLoader getModuleLoader() {
+        return moduleLoader;
     }
 
     /**

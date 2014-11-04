@@ -12,7 +12,7 @@ const {
 // 24.2.4.2, 24.2.4.3: Missing checks for detached buffers in DataView accessors
 // https://bugs.ecmascript.org/show_bug.cgi?id=2910
 
-let dv = DataView[Symbol.create]();
+let dv = new class extends DataView { constructor() { /* no super */ } };
 assertThrows(TypeError, () => dv.byteLength);
 assertThrows(TypeError, () => dv.byteOffset);
 assertThrows(TypeError, () => dv.buffer);

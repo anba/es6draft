@@ -21,6 +21,9 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
@@ -35,7 +38,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>19.4.2 Properties of the Symbol Constructor
  * </ul>
  */
-public final class SymbolConstructor extends BuiltinConstructor implements Initializable {
+public final class SymbolConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<SymbolObject> {
     /**
      * Constructs a new Symbol constructor function.
      * 
@@ -78,6 +82,20 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
         return Construct(callerContext, this, args);
     }
 
+    private static final class SymbolCreate implements CreateAction<SymbolObject> {
+        static final CreateAction<SymbolObject> INSTANCE = new SymbolCreate();
+
+        @Override
+        public SymbolObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            throw newTypeError(cx, Messages.Key.SymbolCreate);
+        }
+    }
+
+    @Override
+    public CreateAction<SymbolObject> createAction() {
+        return SymbolCreate.INSTANCE;
+    }
+
     /**
      * 19.4.2 Properties of the Symbol Constructor
      */
@@ -96,70 +114,63 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
         public static final String name = "Symbol";
 
         /**
-         * 19.4.2.8 Symbol.prototype
+         * 19.4.2.7 Symbol.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.SymbolPrototype;
 
         /**
-         * 19.4.2.1 Symbol.create
-         */
-        @Value(name = "create", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
-        public static final Symbol create = BuiltinSymbol.create.get();
-
-        /**
-         * 19.4.2.3 Symbol.hasInstance
+         * 19.4.2.2 Symbol.hasInstance
          */
         @Value(name = "hasInstance", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Symbol hasInstance = BuiltinSymbol.hasInstance.get();
 
         /**
-         * 19.4.2.4 Symbol.isConcatSpreadable
+         * 19.4.2.3 Symbol.isConcatSpreadable
          */
         @Value(name = "isConcatSpreadable", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
         public static final Symbol isConcatSpreadable = BuiltinSymbol.isConcatSpreadable.get();
 
         /**
-         * 19.4.2.5 Symbol.isRegExp
+         * 19.4.2.4 Symbol.isRegExp
          */
         @Value(name = "isRegExp", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Symbol isRegExp = BuiltinSymbol.isRegExp.get();
 
         /**
-         * 19.4.2.6 Symbol.iterator
+         * 19.4.2.5 Symbol.iterator
          */
         @Value(name = "iterator", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Symbol iterator = BuiltinSymbol.iterator.get();
 
         /**
-         * 19.4.2.9 Symbol.toPrimitive
+         * 19.4.2.8 Symbol.toPrimitive
          */
         @Value(name = "toPrimitive", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Symbol toPrimitive = BuiltinSymbol.toPrimitive.get();
 
         /**
-         * 19.4.2.10 Symbol.toStringTag
+         * 19.4.2.9 Symbol.toStringTag
          */
         @Value(name = "toStringTag", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Symbol toStringTag = BuiltinSymbol.toStringTag.get();
 
         /**
-         * 19.4.2.11 Symbol.unscopables
+         * 19.4.2.10 Symbol.unscopables
          */
         @Value(name = "unscopables", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Symbol unscopables = BuiltinSymbol.unscopables.get();
 
         /**
-         * 19.4.2.2 Symbol.for (key)
+         * 19.4.2.1 Symbol.for (key)
          * 
          * @param cx
          *            the execution context
@@ -178,7 +189,7 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.4.2.7 Symbol.keyFor (sym)
+         * 19.4.2.6 Symbol.keyFor (sym)
          * 
          * @param cx
          *            the execution context
@@ -198,21 +209,6 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
             String key = cx.getRealm().getSymbolRegistry().getKey(Type.symbolValue(sym));
             /* step 4 */
             return key != null ? key : UNDEFINED;
-        }
-
-        /**
-         * 19.4.2.12 Symbol[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return always throws a TypeError
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            throw newTypeError(cx, Messages.Key.SymbolCreate);
         }
     }
 }

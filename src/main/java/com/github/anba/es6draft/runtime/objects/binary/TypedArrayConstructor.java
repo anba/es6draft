@@ -18,6 +18,8 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
@@ -30,7 +32,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>22.2.5 Properties of the TypedArray Constructors
  * </ul>
  */
-public final class TypedArrayConstructor extends BuiltinConstructor implements Initializable {
+public final class TypedArrayConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<TypedArrayObject> {
     /** [[ElementType]] */
     private final ElementType elementType;
 
@@ -130,6 +133,12 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return Construct(callerContext, this, args);
+    }
+
+    @Override
+    public CreateAction<TypedArrayObject> createAction() {
+        // FIXME: spec bug - need to use %TypedArray%.[[CreateAction]]
+        return TypedArrayConstructorPrototype.TypedArrayCreate.INSTANCE;
     }
 
     /**

@@ -59,7 +59,7 @@
     <mainClass>${project.groupId}.${project.artifactId}.repl.Repl</mainClass>
     <distribution.name>${project.artifactId}</distribution.name>
     <shaded.name>${project.artifactId}</shaded.name>
-    <spec.version>rev27</spec.version>
+    <spec.version>rev28</spec.version>
     <test.user.language>en</test.user.language>
     <test.user.country>US</test.user.country>
     <test.user.timezone>America/Los_Angeles</test.user.timezone>
@@ -74,12 +74,12 @@
     <dependency>
       <groupId>com.ibm.icu</groupId>
       <artifactId>icu4j</artifactId>
-      <version>54.1</version>
+      <version>54.1.1</version>
     </dependency>
     <dependency>
       <groupId>org.jruby.joni</groupId>
       <artifactId>joni</artifactId>
-      <version>2.1.3</version>
+      <version>2.1.4</version>
     </dependency>
     <dependency>
       <groupId>jline</groupId>
@@ -292,7 +292,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
-          <version>2.4.1</version>
+          <version>2.5</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -307,7 +307,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.1</version>
+          <version>3.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -571,7 +571,6 @@
                     <include name="compat.js" />
                     <include name="iterator.js" />
                     <include name="legacy-generator.js" />
-                    <include name="number.js" />
                     <include name="proxy.js" />
                     <include name="source.js" />
                     <include name="statics.js" />
@@ -586,7 +585,6 @@
                     <include name="generator.js" />
                     <include name="internal-error.js" />
                     <include name="proxy.js" />
-                    <include name="regexp.js" />
                     <include name="stacktrace.js" />
                     <include name="typed-array.js" />
                   </fileset>
@@ -741,6 +739,7 @@
             <include>src/**</include>
           </includes>
           <mapping>
+            <jsm>SLASHSTAR_STYLE</jsm>
             <list>SCRIPT_STYLE</list>
           </mapping>
           <properties>

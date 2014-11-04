@@ -19,7 +19,7 @@ public final class ExportDeclaration extends ModuleItem {
     private final Declaration declaration;
 
     public enum Type {
-        All, Local, External, Default, Variable, Declaration
+        All, Local, External, DefaultDeclaration, DefaultExpression, Variable, Declaration
     }
 
     public ExportDeclaration(long beginPosition, long endPosition, String moduleSpecifier) {
@@ -32,20 +32,10 @@ public final class ExportDeclaration extends ModuleItem {
         this.declaration = null;
     }
 
-    public ExportDeclaration(long beginPosition, long endPosition, ExportsClause exportsClause) {
-        super(beginPosition, endPosition);
-        this.type = Type.Local;
-        this.moduleSpecifier = null;
-        this.exportsClause = exportsClause;
-        this.expression = null;
-        this.variableStatement = null;
-        this.declaration = null;
-    }
-
     public ExportDeclaration(long beginPosition, long endPosition, ExportsClause exportsClause,
             String moduleSpecifier) {
         super(beginPosition, endPosition);
-        this.type = Type.External;
+        this.type = moduleSpecifier != null ? Type.External : Type.Local;
         this.exportsClause = exportsClause;
         this.moduleSpecifier = moduleSpecifier;
         this.expression = null;
@@ -55,12 +45,22 @@ public final class ExportDeclaration extends ModuleItem {
 
     public ExportDeclaration(long beginPosition, long endPosition, Expression expression) {
         super(beginPosition, endPosition);
-        this.type = Type.Default;
+        this.type = Type.DefaultExpression;
         this.expression = expression;
         this.exportsClause = null;
         this.moduleSpecifier = null;
         this.variableStatement = null;
         this.declaration = null;
+    }
+
+    public ExportDeclaration(long beginPosition, long endPosition, HoistableDeclaration declaration) {
+        super(beginPosition, endPosition);
+        this.type = Type.DefaultDeclaration;
+        this.declaration = declaration;
+        this.exportsClause = null;
+        this.moduleSpecifier = null;
+        this.expression = null;
+        this.variableStatement = null;
     }
 
     public ExportDeclaration(long beginPosition, long endPosition,

@@ -5,11 +5,8 @@
  * <https://github.com/anba/es6draft>
  */
 
-const {
-  assertSyntaxError
-} = Assert;
 
 // 21.2.1 Patterns: Allow to escape $ in IdentityEscape
 // https://bugs.ecmascript.org/show_bug.cgi?id=3192
 
-assertSyntaxError(`/\\$/`);
+RegExp(`/\\$/`);

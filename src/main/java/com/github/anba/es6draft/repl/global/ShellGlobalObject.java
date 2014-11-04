@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.repl.global;
 
-import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.BufferedReader;
@@ -30,6 +29,7 @@ import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Errors;
+import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -59,7 +59,13 @@ public abstract class ShellGlobalObject extends GlobalObject {
     @Override
     protected void initializeExtensions(ExecutionContext cx) {
         super.initializeExtensions(cx);
-        createProperties(cx, cx.getGlobalObject(), this, ShellGlobalObject.class);
+        install(this, ShellGlobalObject.class);
+    }
+
+    public final <T> T install(T object, Class<T> clazz) {
+        Realm realm = getRealm();
+        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
+        return object;
     }
 
     /**
@@ -138,7 +144,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
             CompilationException {
         Source source = new Source(file, fileName.toString(), 1);
         Script script = getScriptLoader().script(source, file);
-        Scripts.ScriptEvaluation(script, getRealm(), false);
+        eval(script);
     }
 
     /**
@@ -146,9 +152,10 @@ public abstract class ShellGlobalObject extends GlobalObject {
      * 
      * @param script
      *            the script to evaluate
+     * @return the evaluation result
      */
-    public void eval(Script script) {
-        Scripts.ScriptEvaluation(script, getRealm(), false);
+    public Object eval(Script script) {
+        return Scripts.ScriptEvaluation(script, getRealm());
     }
 
     /**
@@ -165,7 +172,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
      */
     public void include(Path file) throws IOException, ParserException, CompilationException {
         Script script = scriptCache.get(getScriptLoader(), absolutePath(file));
-        Scripts.ScriptEvaluation(script, getRealm(), false);
+        eval(script);
     }
 
     /**
@@ -185,13 +192,13 @@ public abstract class ShellGlobalObject extends GlobalObject {
     public void include(URL file) throws IOException, URISyntaxException, ParserException,
             CompilationException {
         Script script = scriptCache.get(getScriptLoader(), file);
-        Scripts.ScriptEvaluation(script, getRealm(), false);
+        eval(script);
     }
 
     protected void includeNative(URL file) throws IOException, URISyntaxException, ParserException,
             CompilationException {
         Script script = scriptCache.get(createNativeScriptLoader(), file);
-        Scripts.ScriptEvaluation(script, getRealm(), false);
+        eval(script);
     }
 
     private ScriptLoader createNativeScriptLoader() {

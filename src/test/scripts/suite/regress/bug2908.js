@@ -12,7 +12,7 @@ const {
 // 22.2.3.2, 22.2.3.3, 22.2.3.17: Incorrect detached buffer checks
 // https://bugs.ecmascript.org/show_bug.cgi?id=2908
 
-let ta = Int16Array[Symbol.create]();
+let ta = new class extends Int16Array { constructor() { /* no super */ } };
 assertThrows(TypeError, () => ta.byteLength);
 assertThrows(TypeError, () => ta.byteOffset);
 assertThrows(TypeError, () => ta.length);

@@ -21,6 +21,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.Ref;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
@@ -36,7 +38,8 @@ import com.github.anba.es6draft.runtime.types.builtins.ProxyObject;
  * <li>26.5.2 Properties of the Proxy Constructor Function
  * </ul>
  */
-public final class ProxyConstructorFunction extends BuiltinConstructor implements Initializable {
+public final class ProxyConstructorFunction extends BuiltinConstructor implements Initializable,
+        Creatable<ProxyObject> {
     /**
      * Constructs a new Proxy constructor function.
      * 
@@ -74,6 +77,12 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
         Object handler = argument(args, 1);
         /* step 1 */
         return ProxyCreate(callerContext, target, handler);
+    }
+
+    @Override
+    public CreateAction<ProxyObject> createAction() {
+        // FIXME: spec bug - not defined
+        return null;
     }
 
     /**

@@ -12,6 +12,8 @@ const {
 // 8.1.1.4.2 CreateMutableBinding, 8.1.1.4.3 CreateImmutableBinding: Change ReturnIfAbrupt to if-condition + return
 // https://bugs.ecmascript.org/show_bug.cgi?id=3021
 
+// This test requires the non-standard evalScript function.
+
 {
   let called = false;
   Object.setPrototypeOf(this, new Proxy({}, {
@@ -20,7 +22,7 @@ const {
         assertFalse(called);
         called = true;
         try {
-          (1, eval)("let letDecl");
+          evalScript("let letDecl");
         } catch (e) {
           fail `unexpected error`;
         }
@@ -28,7 +30,7 @@ const {
       return Reflect.has(t, pk);
     }
   }));
-  assertThrows(TypeError, () => (1, eval)("var varDecl; let letDecl"));
+  assertThrows(TypeError, () => evalScript("var varDecl; let letDecl"));
   assertTrue(called);
   Object.setPrototypeOf(this, null);
 }
@@ -41,7 +43,7 @@ const {
         assertFalse(called);
         called = true;
         try {
-          (1, eval)("const constDecl = 0");
+          evalScript("const constDecl = 0");
         } catch (e) {
           fail `unexpected error`;
         }
@@ -49,7 +51,7 @@ const {
       return Reflect.has(t, pk);
     }
   }));
-  assertThrows(TypeError, () => (1, eval)("var varDecl_2; const constDecl = 0"));
+  assertThrows(TypeError, () => evalScript("var varDecl_2; const constDecl = 0"));
   assertTrue(called);
   Object.setPrototypeOf(this, null);
 }

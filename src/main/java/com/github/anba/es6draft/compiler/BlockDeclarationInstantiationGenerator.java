@@ -6,15 +6,13 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
-import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
-import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyDeclaredNames;
-import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
+import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.util.List;
 
 import com.github.anba.es6draft.ast.BlockStatement;
 import com.github.anba.es6draft.ast.Declaration;
+import com.github.anba.es6draft.ast.HoistableDeclaration;
 import com.github.anba.es6draft.ast.SwitchStatement;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.assembler.Variable;
@@ -126,7 +124,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
 
         /* steps 1-3 */
         for (Declaration d : declarations) {
-            if (!isFunctionDeclaration(d)) {
+            if (!(d instanceof HoistableDeclaration)) {
                 for (Name dn : BoundNames(d)) {
                     if (IsConstantDeclaration(d)) {
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
@@ -137,7 +135,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
                     }
                 }
             } else {
-                Name fn = BoundName(d);
+                Name fn = BoundName((HoistableDeclaration) d);
 
                 createMutableBinding(envRec, fn, false, mv);
 

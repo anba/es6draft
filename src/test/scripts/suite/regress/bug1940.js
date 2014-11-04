@@ -15,7 +15,7 @@ const {
 const TypedArray = Object.getPrototypeOf(Int8Array);
 
 {
-  let ta = Int8Array[Symbol.create]();
+  let ta = new class extends Int8Array { constructor() { /* no super */ } };
   assertThrows(TypeError, () => Int8Array.call(ta, {get length() {TypedArray.call(ta, 0); return 10}}));
   assertSame(0, ta.length);
 }

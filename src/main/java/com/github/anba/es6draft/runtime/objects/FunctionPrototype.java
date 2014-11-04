@@ -28,6 +28,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.TailCall;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -45,7 +47,8 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * <li>19.2.4 Properties of Function Instances
  * </ul>
  */
-public final class FunctionPrototype extends BuiltinFunction implements Initializable {
+public final class FunctionPrototype extends BuiltinFunction implements Initializable,
+        Creatable<ScriptObject> {
     private static final int MAX_ARGUMENTS = 0x10000;
 
     /**
@@ -83,6 +86,11 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
     @Override
     public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
         return UNDEFINED;
+    }
+
+    @Override
+    public CreateAction<?> createAction() {
+        return null;
     }
 
     /**
@@ -232,7 +240,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
         }
 
         /**
-         * 19.2.3.5 Function.prototype.toMethod (newHome [ , methodName ] )
+         * 19.2.3.5 Function.prototype.toMethod (newHome)
          * 
          * @param cx
          *            the execution context
@@ -240,13 +248,10 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
          *            the function this-value
          * @param newHome
          *            the new home object
-         * @param methodName
-         *            the new method name
          * @return the new function object
          */
         @Function(name = "toMethod", arity = 1)
-        public static Object toMethod(ExecutionContext cx, Object thisValue, Object newHome,
-                Object methodName) {
+        public static Object toMethod(ExecutionContext cx, Object thisValue, Object newHome) {
             /* step 1 */
             if (!Type.isObject(newHome)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
@@ -254,20 +259,9 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
             ScriptObject newHomeObject = Type.objectValue(newHome);
             /* step 2 */
             if (thisValue instanceof FunctionObject) {
-                Object newName;
-                if (!Type.isUndefined(methodName)) {
-                    newName = ToPropertyKey(cx, methodName);
-                } else {
-                    newName = null;
-                }
-                return CloneMethod(cx, (FunctionObject) thisValue, newHomeObject, newName);
+                return CloneMethod(cx, (FunctionObject) thisValue, newHomeObject);
             }
             if (thisValue instanceof BuiltinFunction) {
-                if (!Type.isUndefined(methodName)) {
-                    // Only need to evaluate for side-effects
-                    // TODO: add test case!
-                    ToPropertyKey(cx, methodName);
-                }
                 return CloneMethod(cx, (BuiltinFunction) thisValue);
             }
             /* step 3 */
@@ -283,22 +277,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
         }
 
         /**
-         * 19.2.4.7 Function.prototype[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new object
-         */
-        @Function(name = "[Symbol.create]", arity = 0, symbol = BuiltinSymbol.create,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.ObjectPrototype);
-        }
-
-        /**
-         * 19.2.4.8 Function.prototype[@@hasInstance] (V)
+         * 19.2.3.7 Function.prototype[@@hasInstance] (V)
          * 
          * @param cx
          *            the execution context

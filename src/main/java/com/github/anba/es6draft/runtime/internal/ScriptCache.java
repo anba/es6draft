@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -45,9 +47,13 @@ public final class ScriptCache {
 
     private static final class CacheKey {
         private final URI uri;
+        private final long size;
+        private final long lastModified;
 
-        CacheKey(URI uri) {
+        CacheKey(URI uri, long size, long lastModified) {
             this.uri = uri;
+            this.size = size;
+            this.lastModified = lastModified;
         }
 
         @Override
@@ -56,17 +62,29 @@ public final class ScriptCache {
                 return false;
             }
             CacheKey other = (CacheKey) obj;
-            return uri.equals(other.uri);
+            return size == other.size && lastModified == other.lastModified
+                    && uri.equals(other.uri);
         }
 
         @Override
         public int hashCode() {
-            return uri.hashCode();
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + (int) (lastModified ^ (lastModified >>> 32));
+            result = prime * result + (int) (size ^ (size >>> 32));
+            result = prime * result + uri.hashCode();
+            return result;
         }
     }
 
-    private CacheKey keyFor(URI uri) {
-        return new CacheKey(uri);
+    private CacheKey keyFor(Path path) throws IOException {
+        BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
+        return new CacheKey(path.toUri(), attributes.size(), attributes.lastModifiedTime()
+                .toMillis());
+    }
+
+    private CacheKey keyFor(URL url) throws URISyntaxException {
+        return new CacheKey(url.toURI(), 0L, 0L);
     }
 
     /**
@@ -117,7 +135,7 @@ public final class ScriptCache {
      */
     public Script get(ScriptLoader scriptLoader, Path file) throws IOException, ParserException,
             CompilationException {
-        CacheKey cacheKey = keyFor(file.toUri());
+        CacheKey cacheKey = keyFor(file);
         if (cache.containsKey(cacheKey)) {
             return cache.get(cacheKey);
         }
@@ -146,7 +164,7 @@ public final class ScriptCache {
      */
     public Script get(ScriptLoader scriptLoader, URL file) throws IOException, URISyntaxException,
             ParserException, CompilationException {
-        CacheKey cacheKey = keyFor(file.toURI());
+        CacheKey cacheKey = keyFor(file);
         if (cache.containsKey(cacheKey)) {
             return cache.get(cacheKey);
         }

@@ -5,9 +5,6 @@
 # <https://github.com/anba/es6draft>
 #
 
-# spec "9.1.3.1 ToNumber Applied to the String Type" not updated for new number literals
-es6/numeric-literals.js
-
 # TypedArray implementation vs. spec issues:
 # - offsets/lengths with fractional part is a RangeError
 # - no simple ToNumber() conversion for offsets/lengths values
@@ -101,7 +98,6 @@ regress/regress-126412.js
 ############################################
 
 # old Proxy API not completly emulated
-harmony/proxies-example-membrane.js
 harmony/proxies-for.js
 harmony/proxies-hash.js
 harmony/proxies-json.js
@@ -215,6 +211,7 @@ regress/d8-readbuffer.js
 regress/regress-3315.js
 regress/regress-356589.js
 regress/regress-417709a.js
+regress/regress-417709b.js
 harmony/regress/regress-405844.js
 
 
@@ -247,9 +244,6 @@ regress/regress-105.js
 # Object.getPrototypeOf() wraps/ignores primitives
 get-prototype-of.js
 harmony/set-prototype-of.js
-
-# Object.keys() wraps/ignores primitives
-third_party/object-keys.js
 
 # Function.length is configurable
 regress/regress-function-length-strict.js
@@ -302,6 +296,7 @@ regress/regress-1170.js
 regress/regress-1178598.js
 regress/regress-1182832.js
 regress/regress-186.js
+regress/regress-2506.js
 regress/regress-3138.js
 regress/regress-641.js
 regress/regress-88591.js
@@ -317,6 +312,7 @@ regress/regress-handle-illegal-redeclaration.js
 
 # Static Semantics: Early errors invalid LHS
 invalid-lhs.js
+serialize-embedded-error.js
 
 # Static Semantics: Early Error for invalid RegExp flags (unicode escaped)
 regress/regress-136048.js

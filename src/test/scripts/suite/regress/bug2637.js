@@ -22,19 +22,7 @@ for (let builtin of [Object.prototype.toString, Array.prototype.join, Function])
     assertThrows(TypeError, () => builtin.toMethod(value));
   }
 
-  // Call ToPropertyKey if methodName was passed
-  class Err extends Error { }
-  assertThrows(Err, () => builtin.toMethod({}, {toString(){ throw new Err }}));
-
   let clone1 = builtin.toMethod({});
   assertSame("function", typeof clone1);
   assertNotSame(builtin, clone1);
-
-  let clone2 = builtin.toMethod({}, "m");
-  assertSame("function", typeof clone2);
-  assertNotSame(builtin, clone2);
-
-  let clone3 = builtin.toMethod({}, Symbol());
-  assertSame("function", typeof clone3);
-  assertNotSame(builtin, clone3);
 }

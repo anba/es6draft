@@ -18,7 +18,7 @@ realm.eval(`
     return this;
   }
   function noSuperBinding() {
-    super();
+    super.foo();
   }
 `);
 

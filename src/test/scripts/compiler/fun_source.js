@@ -14,7 +14,7 @@ function assertEq(actual, expected) {
 assertEq(Function.prototype.toString(), "function () { [native code] }");
 assertEq(Function.prototype.toString.toString(), "function toString() { [native code] }");
 assertEq(Function.prototype.bind().toString(), "function BoundFunction() { [native code] }");
-assertEq(Function[Symbol.create]().toString(), "function F() { [no source] }");
+assertEq((new class extends Function {constructor(){ /* no super */ }}).toString(), "function F() { [no source] }");
 
 function testProxy() {
   let {proxy, revoke} = Proxy.revocable(() => {}, {});

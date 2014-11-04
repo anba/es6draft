@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorResume;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorStart;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorThrow;
+import static com.github.anba.es6draft.runtime.objects.promise.PromisePrototype.PerformPromiseThen;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
@@ -18,6 +19,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -163,7 +165,8 @@ public final class AsyncAbstractOperations {
             return;
         }
         PromiseObject p = PromiseOf(cx, IteratorValue(cx, next));
-        PromiseThen(cx, p, asyncState.resolvedAction, asyncState.rejectedAction);
+        PromiseCapability<PromiseObject> capability = PromiseBuiltinCapability(cx);
+        PerformPromiseThen(cx, p, asyncState.resolvedAction, asyncState.rejectedAction, capability);
     }
 
     /**

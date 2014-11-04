@@ -75,6 +75,10 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
         return visit((StatementListItem) node, value);
     }
 
+    protected R visit(HoistableDeclaration node, V value) {
+        return visit((Declaration) node, value);
+    }
+
     protected R visit(Statement node, V value) {
         return visit((StatementListItem) node, value);
     }
@@ -133,7 +137,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(AsyncFunctionDeclaration node, V value) {
-        return visit((Declaration) node, value);
+        return visit((HoistableDeclaration) node, value);
     }
 
     @Override
@@ -338,7 +342,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(FunctionDeclaration node, V value) {
-        return visit((Declaration) node, value);
+        return visit((HoistableDeclaration) node, value);
     }
 
     @Override
@@ -353,7 +357,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(GeneratorDeclaration node, V value) {
-        return visit((Declaration) node, value);
+        return visit((HoistableDeclaration) node, value);
     }
 
     @Override
@@ -478,11 +482,6 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(Module node, V value) {
-        return visit((Node) node, value);
-    }
-
-    @Override
-    public R visit(ModuleImport node, V value) {
         return visit((Node) node, value);
     }
 

@@ -14,7 +14,8 @@ const {
 
 function* g() {}
 let gen = g.constructor.prototype.prototype;
+let iterProto = Object.getPrototypeOf(gen);
 
-assertDataProperty(gen, Symbol.iterator, {
+assertDataProperty(iterProto, Symbol.iterator, {
   value: gen[Symbol.iterator], writable: true, enumerable: false, configurable: true
 });

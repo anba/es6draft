@@ -7,6 +7,8 @@
 package com.github.anba.es6draft;
 
 import static com.github.anba.es6draft.TestGlobalObject.newGlobalObjectAllocator;
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ModuleEvaluationJob;
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.NormalizeModuleName;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
 import static org.junit.Assume.assumeTrue;
@@ -29,6 +31,8 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
+import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -64,9 +68,10 @@ public class ScriptTest {
         @Override
         protected Set<CompatibilityOption> getOptions() {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
-            // TODO: replace/move tests which require es7 extensions
+            // TODO: Replace/move tests which require es7 extensions
             options.add(CompatibilityOption.Comprehension);
             options.add(CompatibilityOption.Realm);
+            options.add(CompatibilityOption.Loader);
             options.add(CompatibilityOption.AsyncFunction);
             return options;
         }
@@ -88,7 +93,7 @@ public class ScriptTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        // filter disabled tests
+        // Filter disabled tests
         assumeTrue(test.isEnabled());
 
         global = globals.newGlobal(new ScriptTestConsole(), test);
@@ -104,10 +109,17 @@ public class ScriptTest {
 
     @Test
     public void runTest() throws Throwable {
-        // evaluate actual test-script
-        global.eval(test.getScript(), test.toFile());
+        // Evaluate actual test-script
+        if (test.isModule()) {
+            Realm realm = global.getRealm();
+            ExecutionContext cx = realm.defaultContext();
+            String normalizedModuleName = NormalizeModuleName(cx, realm, "", test.toModuleName());
+            ModuleEvaluationJob(cx, realm, normalizedModuleName);
+        } else {
+            global.eval(test.getScript(), test.toFile());
+        }
 
-        // wait for pending tasks to finish
+        // Wait for pending tasks to finish
         global.getRealm().getWorld().runEventLoop();
     }
 }

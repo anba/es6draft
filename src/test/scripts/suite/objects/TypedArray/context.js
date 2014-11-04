@@ -18,6 +18,6 @@ foreignRealm.eval(`
   }
 `);
 
-let int8Array = Int8Array[Symbol.create]();
+let int8Array = new class extends Int8Array {constructor() { /* no super */ }};
 assertThrows(TypeError, () => int8Array[0]);
 assertThrows(foreignRealm.global.TypeError, () => foreignRealm.global.indexedAccess(int8Array));

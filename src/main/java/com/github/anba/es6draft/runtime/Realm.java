@@ -17,16 +17,22 @@ import java.security.SecureRandom;
 import java.text.Collator;
 import java.text.DecimalFormatSymbols;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 import java.util.TimeZone;
 
+import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ModuleLoader;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.internal.RuntimeInfo.SourceObject;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.objects.*;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
@@ -58,7 +64,6 @@ import com.github.anba.es6draft.runtime.objects.number.NumberPrototype;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor;
 import com.github.anba.es6draft.runtime.objects.promise.PromisePrototype;
 import com.github.anba.es6draft.runtime.objects.reflect.LoaderConstructor;
-import com.github.anba.es6draft.runtime.objects.reflect.LoaderIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.reflect.LoaderPrototype;
 import com.github.anba.es6draft.runtime.objects.reflect.ProxyConstructorFunction;
 import com.github.anba.es6draft.runtime.objects.reflect.RealmConstructor;
@@ -86,7 +91,7 @@ import com.github.anba.es6draft.runtime.types.builtins.TypeErrorThrower;
  * <li>8.2 Code Realms
  * </ul>
  */
-public final class Realm {
+public final class Realm implements ShadowRealm {
     /**
      * [[intrinsics]]
      */
@@ -106,6 +111,16 @@ public final class Realm {
      * [[globalEnv]]
      */
     private final LexicalEnvironment<GlobalEnvironmentRecord> globalEnv;
+
+    /**
+     * [[modules]]
+     */
+    private final HashMap<String, ModuleRecord> modules = new HashMap<>();
+
+    /**
+     * [[nameMap]]
+     */
+    private final HashMap<String, String> nameMap = new HashMap<>();
 
     /**
      * [[ThrowTypeError]]
@@ -206,6 +221,11 @@ public final class Realm {
 
     private static final class RealmScript implements Script {
         @Override
+        public SourceObject getSourceObject() {
+            return null;
+        }
+
+        @Override
         public RuntimeInfo.ScriptBody getScriptBody() {
             return null;
         }
@@ -226,24 +246,24 @@ public final class Realm {
      * @return the source info or {@code null} if not available
      */
     public Source sourceInfo(ExecutionContext caller) {
-        Script callerScript = caller.getCurrentScript();
-        if (hasSourceInfo(callerScript)) {
-            return RuntimeInfo.toSource(callerScript.getScriptBody());
+        Executable callerExec = caller.getCurrentExecutable();
+        if (hasSourceInfo(callerExec)) {
+            return callerExec.getSourceObject().toSource();
         }
         ExecutionContext scriptContext = getScriptContext();
         if (scriptContext != null) {
-            Script currentScript = scriptContext.getCurrentScript();
-            if (hasSourceInfo(currentScript)) {
-                return RuntimeInfo.toSource(currentScript.getScriptBody());
+            Executable currentExec = scriptContext.getCurrentExecutable();
+            if (hasSourceInfo(currentExec)) {
+                return currentExec.getSourceObject().toSource();
             }
         }
         // Neither caller nor realm has source info available, return null
         return null;
     }
 
-    private static boolean hasSourceInfo(Script script) {
-        assert script == null || script.getScriptBody() != null || script instanceof RealmScript;
-        return script != null && script.getScriptBody() != null;
+    private static boolean hasSourceInfo(Executable exec) {
+        assert exec == null || exec.getSourceObject() != null || exec instanceof RealmScript;
+        return exec != null && exec.getSourceObject() != null;
     }
 
     /**
@@ -294,6 +314,26 @@ public final class Realm {
      */
     public LexicalEnvironment<GlobalEnvironmentRecord> getGlobalEnv() {
         return globalEnv;
+    }
+
+    /**
+     * [[modules]]
+     * 
+     * @return the map of resolved modules
+     */
+    @Override
+    public Map<String, ModuleRecord> getModules() {
+        return modules;
+    }
+
+    /**
+     * [[nameMap]]
+     * 
+     * @return the map of normalized module names
+     */
+    @Override
+    public Map<String, String> getNameMap() {
+        return nameMap;
     }
 
     /**
@@ -440,10 +480,21 @@ public final class Realm {
     }
 
     /**
+     * Returns the module loader.
+     * 
+     * @return the module loader
+     */
+    @Override
+    public ModuleLoader getModuleLoader() {
+        return world.getModuleLoader();
+    }
+
+    /**
      * Returns the script loader.
      * 
      * @return the script loader
      */
+    @Override
     public ScriptLoader getScriptLoader() {
         return world.getScriptLoader();
     }
@@ -928,25 +979,13 @@ public final class Realm {
         // allocation phase
         ProxyConstructorFunction proxy = new ProxyConstructorFunction(realm);
         Reflect reflect = new Reflect(realm);
-        LoaderConstructor loaderConstructor = new LoaderConstructor(realm);
-        LoaderPrototype loaderPrototype = new LoaderPrototype(realm);
-        LoaderIteratorPrototype loaderIteratorPrototype = new LoaderIteratorPrototype(realm);
-        SystemObject systemObject = new SystemObject(realm);
 
         // registration phase
         intrinsics.put(Intrinsics.Proxy, proxy);
         intrinsics.put(Intrinsics.Reflect, reflect);
-        intrinsics.put(Intrinsics.Loader, loaderConstructor);
-        intrinsics.put(Intrinsics.LoaderPrototype, loaderPrototype);
-        intrinsics.put(Intrinsics.LoaderIteratorPrototype, loaderIteratorPrototype);
-        intrinsics.put(Intrinsics.System, systemObject);
 
         // initialization phase
         proxy.initialize(defaultContext);
-        loaderConstructor.initialize(defaultContext);
-        loaderPrototype.initialize(defaultContext);
-        loaderIteratorPrototype.initialize(defaultContext);
-        systemObject.initialize(defaultContext);
 
         if (realm.isEnabled(CompatibilityOption.Realm)) {
             RealmConstructor realmConstructor = new RealmConstructor(realm);
@@ -957,6 +996,20 @@ public final class Realm {
 
             realmConstructor.initialize(defaultContext);
             realmPrototype.initialize(defaultContext);
+        }
+
+        if (realm.isEnabled(CompatibilityOption.Loader)) {
+            LoaderConstructor loaderConstructor = new LoaderConstructor(realm);
+            LoaderPrototype loaderPrototype = new LoaderPrototype(realm);
+            SystemObject systemObject = new SystemObject(realm);
+
+            intrinsics.put(Intrinsics.Loader, loaderConstructor);
+            intrinsics.put(Intrinsics.LoaderPrototype, loaderPrototype);
+            intrinsics.put(Intrinsics.System, systemObject);
+
+            loaderConstructor.initialize(defaultContext);
+            loaderPrototype.initialize(defaultContext);
+            systemObject.initialize(defaultContext);
         }
 
         reflect.initialize(defaultContext);

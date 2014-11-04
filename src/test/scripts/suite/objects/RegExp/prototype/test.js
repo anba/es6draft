@@ -135,9 +135,10 @@ const {
       }
     }
   } = new Reflect.Realm().global;
+  let uninitRegExp = new class extends RegExp { constructor() { /* no super */ } };
 
   assertThrows(foreignTypeError, () => ({__proto__: RegExp.prototype, exec: foreignExec}).test());
-  assertThrows(foreignTypeError, () => Object.assign(RegExp[Symbol.create](), {exec: foreignExec}).test());
+  assertThrows(foreignTypeError, () => Object.assign(uninitRegExp, {exec: foreignExec}).test());
 }
 
 // Test TypeError realm when replacing RegExp.prototype.exec with foreign exec function (2)
@@ -150,10 +151,11 @@ const {
       }
     }
   } = new Reflect.Realm().global;
+  let uninitRegExp = new class extends RegExp { constructor() { /* no super */ } };
 
   const RegExp_prototype_exec = RegExp.prototype.exec;
   RegExp.prototype.exec = foreignExec;
   assertThrows(foreignTypeError, () => ({__proto__: RegExp.prototype}).test());
-  assertThrows(foreignTypeError, () => RegExp[Symbol.create]().test());
+  assertThrows(foreignTypeError, () => uninitRegExp.test());
   RegExp.prototype.exec = RegExp_prototype_exec;
 }

@@ -45,4 +45,12 @@ public class TestInfo {
     public final Path toFile() {
         return baseDir.resolve(script);
     }
+
+    public String toModuleName() {
+        return baseDir.toUri().relativize(toFile().toUri()).toString();
+    }
+
+    public boolean isModule() {
+        return script.getFileName().toString().endsWith(".jsm");
+    }
 }

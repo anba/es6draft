@@ -24,7 +24,7 @@ function assertNoSyntaxError(source) {
 
 const varDeclarations = ["var a = 0"];
 const lexicalDeclarations = ["let a = 0", "const a = 0", "class a{}", "function a(){}", "function* a(){}"];
-const importDeclarations = ["module a from 'dummy'", "import a from 'dummy'", "import a, {} from 'dummy'", "import {a} from 'dummy'", "import {b as a} from 'dummy'"];
+const importDeclarations = ["import* as a from 'dummy'", "import a from 'dummy'", "import a, {} from 'dummy'", "import {a} from 'dummy'", "import {b as a} from 'dummy'"];
 const declarations = [...lexicalDeclarations, ...importDeclarations];
 
 const exportVarDeclarations = [for (d of varDeclarations) `export ${d}`];
@@ -32,7 +32,7 @@ const exportLexicalDeclarations = [for (d of lexicalDeclarations) `export ${d}`]
 const exportSpecifiers = ["export {a}", "export {b as a}", "export {a} from 'dummy'", "export {b as a} from 'dummy'"];
 const exportDeclarations = [...exportLexicalDeclarations, ...exportVarDeclarations, ...exportSpecifiers];
 
-// Duplicate lexically declared names (let, const, class, function, function*, module, import)
+// Duplicate lexically declared names (let, const, class, function, function*, import)
 {
   for (let [decl1, decl2] of [for (d1 of declarations) for (d2 of declarations) [d1, d2]]) {
     assertSyntaxError(`${decl1}; ${decl2};`);

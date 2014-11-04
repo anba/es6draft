@@ -41,7 +41,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -162,11 +161,11 @@ public final class Test262 {
         if (test.isAsync()) {
             // "doneprintHandle.js" is replaced with AsyncHelper
             global.include("timer.js");
-            async = install(new AsyncHelper(), AsyncHelper.class);
+            async = global.install(new AsyncHelper(), AsyncHelper.class);
         }
 
         // Install test hooks
-        install(global, Test262GlobalObject.class);
+        global.install(global, Test262GlobalObject.class);
     }
 
     @After
@@ -210,12 +209,6 @@ public final class Test262 {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.METHOD })
     public @interface Strict {
-    }
-
-    private <T> T install(T object, Class<T> clazz) {
-        Realm realm = global.getRealm();
-        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
-        return object;
     }
 
     public static final class AsyncHelper {

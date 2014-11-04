@@ -32,7 +32,6 @@ import com.github.anba.es6draft.runtime.objects.number.NumberObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
@@ -92,7 +91,9 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             try {
                 unfiltered = JSONParser.parse(cx, jtext);
             } catch (ParserException e) {
-                throw newSyntaxError(cx, Messages.Key.JSONInvalidLiteral);
+                throw newSyntaxError(cx, Messages.Key.JSONInvalidLiteral,
+                        e.getFormattedMessage(cx.getRealm()), Integer.toString(e.getLine()),
+                        Integer.toString(e.getColumn()));
             }
             /* step 8 */
             if (IsCallable(reviver)) {
@@ -272,7 +273,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             if (Type.isUndefined(newElement)) {
                 val.delete(cx, i);
             } else {
-                val.defineOwnProperty(cx, i, new PropertyDescriptor(newElement, true, true, true));
+                CreateDataProperty(cx, val, i, newElement);
             }
         }
     }
@@ -284,7 +285,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             if (Type.isUndefined(newElement)) {
                 val.delete(cx, p);
             } else {
-                val.defineOwnProperty(cx, p, new PropertyDescriptor(newElement, true, true, true));
+                CreateDataProperty(cx, val, p, newElement);
             }
         }
     }

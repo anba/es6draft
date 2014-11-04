@@ -65,8 +65,7 @@ Object.assign(exports, {
     },
     calledWith(f, ...matchers) {
       callRecords.get(f).some(({argList}) =>
-        argList.length === matchers.length
-          && argList.every((arg, i) => matchers[i](arg))
+        argList.length === matchers.length && argList.every((arg, i) => matchers[i](arg))
       ) || assert(false);
     },
     notCalled(f) {

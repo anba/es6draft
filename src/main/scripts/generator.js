@@ -19,11 +19,7 @@ const {
   getPrototypeOf: Object_getPrototypeOf,
 } = Object;
 
-const {
-  iterator: iteratorSym,
-} = Symbol;
-
-const Generator = Object_getPrototypeOf(function*(){});
+const Generator = Object.getPrototypeOf(function*(){});
 
 Object.defineProperty(Generator, Symbol.hasInstance, {
   value(O) {
@@ -56,7 +52,7 @@ Object.defineProperty(Object.prototype, Symbol.iterator, {
     }
   },
   set(iter) {
-    Object_defineProperty(this, iteratorSym, {
+    Object_defineProperty(this, Symbol.iterator, {
       __proto__: null,
       value: iter,
       writable: true, enumerable: true, configurable: true

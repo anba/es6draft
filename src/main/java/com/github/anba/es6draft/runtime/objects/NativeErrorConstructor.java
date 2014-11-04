@@ -9,15 +9,18 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
+import java.util.EnumMap;
+
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -36,7 +39,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  * </ul>
  */
-public final class NativeErrorConstructor extends BuiltinConstructor implements Initializable {
+public final class NativeErrorConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<ErrorObject> {
     /**
      * 19.5.5 Native Error Types Used in This Standard
      * <ul>
@@ -178,6 +182,11 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         return Construct(callerContext, this, args);
     }
 
+    @Override
+    public CreateAction<ErrorObject> createAction() {
+        return NativeErrorCreate.INSTANCES.get(type);
+    }
+
     /**
      * 19.5.6.2 Properties of the NativeError Constructors
      */
@@ -201,22 +210,6 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.EvalErrorPrototype;
-
-        /**
-         * 19.5.6.2.2 NativeError [ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized error object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.EvalErrorPrototype,
-                    NativeErrorObjectAllocator.INSTANCE);
-        }
     }
 
     /**
@@ -242,22 +235,6 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.RangeErrorPrototype;
-
-        /**
-         * 19.5.6.2.2 NativeError [ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized error object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.RangeErrorPrototype,
-                    NativeErrorObjectAllocator.INSTANCE);
-        }
     }
 
     /**
@@ -283,22 +260,6 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.ReferenceErrorPrototype;
-
-        /**
-         * 19.5.6.2.2 NativeError [ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized error object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.ReferenceErrorPrototype,
-                    NativeErrorObjectAllocator.INSTANCE);
-        }
     }
 
     /**
@@ -324,22 +285,6 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.SyntaxErrorPrototype;
-
-        /**
-         * 19.5.6.2.2 NativeError [ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized error object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.SyntaxErrorPrototype,
-                    NativeErrorObjectAllocator.INSTANCE);
-        }
     }
 
     /**
@@ -365,22 +310,6 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.TypeErrorPrototype;
-
-        /**
-         * 19.5.6.2.2 NativeError [ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized error object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.TypeErrorPrototype,
-                    NativeErrorObjectAllocator.INSTANCE);
-        }
     }
 
     /**
@@ -406,22 +335,6 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.URIErrorPrototype;
-
-        /**
-         * 19.5.6.2.2 NativeError [ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized error object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.URIErrorPrototype,
-                    NativeErrorObjectAllocator.INSTANCE);
-        }
     }
 
     /**
@@ -447,22 +360,6 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.InternalErrorPrototype;
-
-        /**
-         * 19.5.6.2.2 NativeError [ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized error object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.InternalErrorPrototype,
-                    NativeErrorObjectAllocator.INSTANCE);
-        }
     }
 
     private static final class NativeErrorObjectAllocator implements ObjectAllocator<ErrorObject> {
@@ -471,6 +368,29 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Override
         public ErrorObject newInstance(Realm realm) {
             return new ErrorObject(realm);
+        }
+    }
+
+    private static final class NativeErrorCreate implements CreateAction<ErrorObject> {
+        private static final EnumMap<ErrorType, NativeErrorCreate> INSTANCES;
+        static {
+            EnumMap<ErrorType, NativeErrorCreate> map = new EnumMap<>(ErrorType.class);
+            for (ErrorType type : ErrorType.values()) {
+                map.put(type, new NativeErrorCreate(type));
+            }
+            INSTANCES = map;
+        }
+
+        private final ErrorType type;
+
+        private NativeErrorCreate(ErrorType type) {
+            this.type = type;
+        }
+
+        @Override
+        public ErrorObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            return OrdinaryCreateFromConstructor(cx, constructor, type.prototype(),
+                    NativeErrorObjectAllocator.INSTANCE);
         }
     }
 }

@@ -81,6 +81,8 @@ public final class Variable<T> {
     /**
      * Performs an unchecked type cast.
      * 
+     * @param <U>
+     *            the target type
      * @return this variable
      */
     @SuppressWarnings("unchecked")

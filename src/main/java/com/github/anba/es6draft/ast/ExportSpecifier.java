@@ -6,31 +6,23 @@
  */
 package com.github.anba.es6draft.ast;
 
-import com.github.anba.es6draft.ast.scope.Name;
-
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.3 Modules</h2>
  */
 public final class ExportSpecifier extends AstNode {
-    private final String importName;
-    private final Name localName;
+    private final String sourceName;
     private final String exportName;
 
-    public ExportSpecifier(long beginPosition, long endPosition, String importName, Name localName,
+    public ExportSpecifier(long beginPosition, long endPosition, String sourceName,
             String exportName) {
         super(beginPosition, endPosition);
-        this.importName = importName;
-        this.localName = localName;
+        this.sourceName = sourceName;
         this.exportName = exportName;
     }
 
-    public String getImportName() {
-        return importName;
-    }
-
-    public Name getLocalName() {
-        return localName;
+    public String getSourceName() {
+        return sourceName;
     }
 
     public String getExportName() {

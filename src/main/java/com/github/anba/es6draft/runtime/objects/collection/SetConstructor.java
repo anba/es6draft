@@ -16,11 +16,12 @@ import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -34,7 +35,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>23.2.2 Properties of the Set Constructor
  * </ul>
  */
-public final class SetConstructor extends BuiltinConstructor implements Initializable {
+public final class SetConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<SetObject> {
     /**
      * Constructs a new Set constructor function.
      * 
@@ -120,6 +122,11 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
         return Construct(callerContext, this, args);
     }
 
+    @Override
+    public CreateAction<SetObject> createAction() {
+        return SetCreate.INSTANCE;
+    }
+
     /**
      * 23.2.2 Properties of the Set Constructor
      */
@@ -143,22 +150,6 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.SetPrototype;
-
-        /**
-         * 23.2.2.2 Set[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized set object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.SetPrototype,
-                    SetObjectAllocator.INSTANCE);
-        }
     }
 
     private static final class SetObjectAllocator implements ObjectAllocator<SetObject> {
@@ -167,6 +158,16 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
         @Override
         public SetObject newInstance(Realm realm) {
             return new SetObject(realm);
+        }
+    }
+
+    private static class SetCreate implements CreateAction<SetObject> {
+        static final CreateAction<SetObject> INSTANCE = new SetCreate();
+
+        @Override
+        public SetObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.SetPrototype,
+                    SetObjectAllocator.INSTANCE);
         }
     }
 }

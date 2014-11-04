@@ -30,7 +30,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
   assertInstanceOf(Boolean, Object.assign(true, {}));
   assertInstanceOf(Number, Object.assign(1, {}));
   assertInstanceOf(String, Object.assign("string", {}));
-  assertInstanceOf(Symbol, Object.assign(Symbol.create, {}));
+  assertInstanceOf(Symbol, Object.assign(Symbol.iterator, {}));
   let o = {};
   assertSame(o, Object.assign(o));
   assertSame(o, Object.assign(o, void 0));

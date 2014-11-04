@@ -21,6 +21,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
+import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -181,7 +182,8 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
         /**
          * 24.1.4.4 ArrayBuffer.prototype[ @@toStringTag ]
          */
-        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag)
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "ArrayBuffer";
     }
 }

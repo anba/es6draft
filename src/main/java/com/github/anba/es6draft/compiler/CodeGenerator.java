@@ -57,6 +57,11 @@ final class CodeGenerator {
                 MethodDesc.Invoke.Special, Types.CompiledFunction, "<init>",
                 Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$Function));
 
+        // class: CompiledModule
+        static final MethodDesc CompiledModule_Constructor = MethodDesc.create(
+                MethodDesc.Invoke.Special, Types.CompiledModule, "<init>",
+                Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$ModuleBody));
+
         // class: CompiledScript
         static final MethodDesc CompiledScript_Constructor = MethodDesc.create(
                 MethodDesc.Invoke.Special, Types.CompiledScript, "<init>",
@@ -112,13 +117,18 @@ final class CodeGenerator {
         static final String Script_Code = Type.getMethodDescriptor(Types.Object,
                 Types.ExecutionContext);
         static final String Script_Init = Type.getMethodDescriptor(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
-                Type.BOOLEAN_TYPE);
+                Types.ExecutionContext, Types.LexicalEnvironment);
         static final String Script_EvalInit = Type.getMethodDescriptor(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
-                Type.BOOLEAN_TYPE);
+                Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment);
         static final String Script_RTI = Type.getMethodDescriptor(Types.RuntimeInfo$ScriptBody);
         static final String Script_DebugInfo = Type.getMethodDescriptor(Types.DebugInfo);
+
+        static final String Module_Code = Type.getMethodDescriptor(Types.Object,
+                Types.ExecutionContext);
+        static final String Module_Init = Type.getMethodDescriptor(Type.VOID_TYPE,
+                Types.ExecutionContext, Types.LexicalEnvironment);
+        static final String Module_RTI = Type.getMethodDescriptor(Types.RuntimeInfo$ScriptBody);
+        static final String Module_DebugInfo = Type.getMethodDescriptor(Types.DebugInfo);
     }
 
     private static final boolean INCLUDE_SOURCE = true;
@@ -135,12 +145,12 @@ final class CodeGenerator {
     private final ExpressionGenerator exprgen = new ExpressionGenerator(this);
     private final PropertyGenerator propgen = new PropertyGenerator(this);
 
-    CodeGenerator(Code code, ExecutorService executor, Script script,
-            EnumSet<Compiler.Option> compilerOptions) {
+    CodeGenerator(Code code, ExecutorService executor, EnumSet<CompatibilityOption> options,
+            EnumSet<Parser.Option> parserOptions, EnumSet<Compiler.Option> compilerOptions) {
         this.code = code;
         this.executor = executor;
-        this.options = script.getOptions();
-        this.parserOptions = script.getParserOptions();
+        this.options = options;
+        this.parserOptions = parserOptions;
         this.compilerOptions = compilerOptions;
     }
 
@@ -180,6 +190,10 @@ final class CodeGenerator {
         Code, Init, EvalInit, RTI, DebugInfo
     }
 
+    enum ModuleName {
+        Code, Init, RTI, DebugInfo
+    }
+
     enum FunctionName {
         Call, Code, Init, RTI, DebugInfo
     }
@@ -206,6 +220,21 @@ final class CodeGenerator {
             return "!script_rti";
         case DebugInfo:
             return "!script_dbg";
+        default:
+            throw new AssertionError();
+        }
+    }
+
+    private String methodName(Module node, ModuleName name) {
+        switch (name) {
+        case Code:
+            return "~module";
+        case Init:
+            return "!module_init";
+        case RTI:
+            return "!module_rti";
+        case DebugInfo:
+            return "!module_dbg";
         default:
             throw new AssertionError();
         }
@@ -388,6 +417,21 @@ final class CodeGenerator {
         }
     }
 
+    private String methodDescriptor(Module node, ModuleName name) {
+        switch (name) {
+        case Code:
+            return MethodDescriptors.Module_Code;
+        case Init:
+            return MethodDescriptors.Module_Init;
+        case RTI:
+            return MethodDescriptors.Module_RTI;
+        case DebugInfo:
+            return MethodDescriptors.Module_DebugInfo;
+        default:
+            throw new AssertionError();
+        }
+    }
+
     /* ----------------------------------------------------------------------------------------- */
 
     /**
@@ -442,6 +486,10 @@ final class CodeGenerator {
     }
 
     MethodCode newMethod(Script node, ScriptName name) {
+        return publicStaticMethod(methodName(node, name), methodDescriptor(node, name));
+    }
+
+    MethodCode newMethod(Module node, ModuleName name) {
         return publicStaticMethod(methodName(node, name), methodDescriptor(node, name));
     }
 
@@ -508,6 +556,12 @@ final class CodeGenerator {
     }
 
     MethodDesc methodDesc(Script node, ScriptName name) {
+        String methodName = methodName(node, name);
+        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
+                methodDescriptor(node, name));
+    }
+
+    MethodDesc methodDesc(Module node, ModuleName name) {
         String methodName = methodName(node, name);
         return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
                 methodDescriptor(node, name));
@@ -595,6 +649,50 @@ final class CodeGenerator {
         mv.loadThis();
         mv.invoke(methodDesc(node, ScriptName.RTI));
         mv.invoke(Methods.CompiledScript_Constructor);
+        mv._return();
+        mv.end();
+    }
+
+    void compile(Module node) {
+        // initialization methods
+        new ModuleDeclarationInstantiationGenerator(this).generate(node);
+
+        // runtime method
+        moduleBody(node);
+
+        // runtime-info method
+        new RuntimeInfoGenerator(this).runtimeInfo(node);
+
+        // add default constructor
+        defaultModuleConstructor(node);
+    }
+
+    private void moduleBody(Module node) {
+        MethodCode method = newMethod(node, ModuleName.Code);
+        StatementVisitor body = new ModuleStatementVisitor(method, node);
+        body.lineInfo(node);
+        body.begin();
+        body.loadUndefined();
+        body.storeCompletionValue(ValType.Undefined);
+
+        body.enterScope(node);
+        Completion result = statements(node.getStatements(), body);
+        body.exitScope();
+
+        if (!result.isAbrupt()) {
+            body.loadCompletionValue();
+            body._return();
+        }
+        body.end();
+    }
+
+    private void defaultModuleConstructor(Module node) {
+        InstructionVisitor mv = new InstructionVisitor(code.newMainMethod(Opcodes.ACC_PUBLIC,
+                "<init>", "()V"));
+        mv.begin();
+        mv.loadThis();
+        mv.invoke(methodDesc(node, ModuleName.RTI));
+        mv.invoke(Methods.CompiledModule_Constructor);
         mv._return();
         mv.end();
     }
@@ -959,17 +1057,17 @@ final class CodeGenerator {
         node.accept(propgen, mv);
     }
 
-    Completion statement(StatementListItem node, StatementVisitor mv) {
+    Completion statement(ModuleItem node, StatementVisitor mv) {
         return node.accept(stmtgen, mv);
     }
 
-    Completion statements(List<StatementListItem> statements, StatementVisitor mv) {
+    Completion statements(List<? extends ModuleItem> statements, StatementVisitor mv) {
         // 13.1.10 Runtime Semantics: Evaluation<br>
         // StatementList : StatementList StatementListItem
         /* steps 1-6 */
         Completion result = Completion.Normal;
-        for (StatementListItem stmt : statements) {
-            if ((result = result.then(statement(stmt, mv))).isAbrupt()) {
+        for (ModuleItem item : statements) {
+            if ((result = result.then(statement(item, mv))).isAbrupt()) {
                 break;
             }
         }
@@ -982,6 +1080,18 @@ final class CodeGenerator {
         ScriptStatementVisitor(MethodCode method, Script node) {
             super(method, IsStrict(node), node, node.isGlobalCode() ? CodeType.GlobalScript
                     : CodeType.NonGlobalScript);
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", 0, Types.ExecutionContext);
+        }
+    }
+
+    private static final class ModuleStatementVisitor extends StatementVisitor {
+        ModuleStatementVisitor(MethodCode method, Module node) {
+            super(method, true, node, CodeType.GlobalScript);
         }
 
         @Override

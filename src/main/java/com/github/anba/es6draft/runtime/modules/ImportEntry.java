@@ -7,8 +7,9 @@
 package com.github.anba.es6draft.runtime.modules;
 
 /**
- * 15.2.0.6 Static Semantics: ImportEntries<br>
- * 15.2.1.3 Static Semantics: ImportEntries
+ * 15.2.1.6 Static Semantics: ImportEntries<br>
+ * 15.2.2.3 Static Semantics: ImportEntries<br>
+ * 15.2.1.15 Static and Runtme Semantics: Module Records
  */
 public final class ImportEntry {
     /** [[ModuleRequest]] */
@@ -20,10 +21,17 @@ public final class ImportEntry {
     /** [[LocalName]] */
     private final String localName;
 
+    /** [[ModuleRequest]] */
+    private String normalizedModuleRequest;
+
     public ImportEntry(String moduleRequest, String importName, String localName) {
         this.moduleRequest = moduleRequest;
         this.importName = importName;
         this.localName = localName;
+    }
+
+    public boolean isStarImport() {
+        return "*".equals(importName);
     }
 
     /**
@@ -33,6 +41,20 @@ public final class ImportEntry {
      */
     public String getModuleRequest() {
         return moduleRequest;
+    }
+
+    /**
+     * [[ModuleRequest]]
+     * 
+     * @return the module request
+     */
+    public String getNormalizedModuleRequest() {
+        assert normalizedModuleRequest != null;
+        return normalizedModuleRequest;
+    }
+
+    public void setNormalizedModuleRequest(String moduleRequest) {
+        this.normalizedModuleRequest = moduleRequest;
     }
 
     /**

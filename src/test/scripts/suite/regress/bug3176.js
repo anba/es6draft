@@ -12,8 +12,8 @@ const {
 // 13.6.4.5, 13.14.4 BindingInitialization: Add implicit ToObject instead of throwing TypeError?
 // https://bugs.ecmascript.org/show_bug.cgi?id=3176
 
-assertThrows(TypeError, () => { for (var [a] in {abc: 0}) ; });
-assertThrows(TypeError, () => { for (let [a] in {abc: 0}) ; });
-assertThrows(TypeError, () => { for (var [a] of ["abc"]) ; });
-assertThrows(TypeError, () => { for (let [a] of ["abc"]) ; });
-assertThrows(TypeError, () => { try { throw "abc"; } catch ([a]) {} });
+for (var [a] in {abc: 0}) ;
+for (let [a] in {abc: 0}) ;
+for (var [a] of ["abc"]) ;
+for (let [a] of ["abc"]) ;
+try { throw "abc"; } catch ([a]) {}

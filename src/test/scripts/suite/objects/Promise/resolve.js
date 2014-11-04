@@ -26,22 +26,25 @@ assertBuiltinFunction(Promise.resolve, "resolve", 1);
   }
 
   // uninitialized Promise object
-  let uninitPromise = Promise[Symbol.create]();
+  let uninitPromise = new class extends Promise { constructor() { /* no super */ } };
   assertNotSame(uninitPromise, Promise.resolve(uninitPromise));
 
   // initialized Promise object
   let initPromise = new Promise(() => {});
   assertSame(initPromise, Promise.resolve(initPromise));
 
-  function Ctor(r) {
-    r(() => {}, () => {});
+  class Ctor extends Promise {
+    constructor(r) {
+      /* no super */
+      r(() => {}, () => {});
+    }
   }
   // initialized Promise object, non-native constructor
-  let initPromiseCtor = Promise.call(Promise[Symbol.create].call(Ctor), () => {});
+  let initPromiseCtor = Promise.call(new Ctor(() => {}), () => {});
   assertSame(initPromiseCtor, Promise.resolve.call(Ctor, initPromiseCtor));
 
   // initialized Promise object, mismatch for [[PromiseConstructor]]
-  let initPromiseOtherCtor = Promise.call(Promise[Symbol.create].call(Ctor), () => {});
+  let initPromiseOtherCtor = Promise.call(new Ctor(() => {}), () => {});
   assertNotSame(initPromiseOtherCtor, Promise.resolve(initPromiseOtherCtor));
   let initPromiseOtherCtor2 = new Promise(() => {});
   assertNotSame(initPromiseOtherCtor2, Promise.resolve.call(Ctor, initPromiseOtherCtor2));
@@ -71,15 +74,17 @@ assertBuiltinFunction(Promise.resolve, "resolve", 1);
 {
   let throwError = false;
   class XError extends Error { }
-  function Ctor(r) {
-    if (throwError) {
-      throw new XError();
+  class Ctor extends Promise {
+    constructor(r) {
+      if (throwError) {
+        throw new XError();
+      }
+      throwError = true;
+      return Promise.call(this, r);
     }
-    throwError = true;
-    return Promise.call(this, r);
   }
 
-  let p = Ctor.call(Promise[Symbol.create].call(Ctor), () => {});
+  let p = new Ctor(() => {});
   assertTrue(throwError);
   assertSame(p, Promise.resolve.call(Ctor, p));
 }

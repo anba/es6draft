@@ -21,7 +21,9 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -37,7 +39,8 @@ import com.github.anba.es6draft.runtime.types.builtins.StringObject;
  * <li>21.1.2 Properties of the String Constructor
  * </ul>
  */
-public final class StringConstructor extends BuiltinConstructor implements Initializable {
+public final class StringConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<StringObject> {
     /**
      * Constructs a new String constructor function.
      * 
@@ -86,7 +89,8 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
         if (initializing) {
             StringObject obj = (StringObject) thisValue;
             if (obj.getStringData() != null) {
-                // FIXME: spec bug - missing init'ed check (bug 3189)
+                // TODO: This additional check can probably be removed after the new create
+                // mechanism is fully specified.
                 throw newTypeError(calleeContext, Messages.Key.InitializedObject);
             }
             if (!IsExtensible(calleeContext, obj)) {
@@ -108,6 +112,22 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return Construct(callerContext, this, args);
+    }
+
+    private static final class StringCreate implements CreateAction<StringObject> {
+        static final CreateAction<StringObject> INSTANCE = new StringCreate();
+
+        @Override
+        public StringObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            ScriptObject proto = GetPrototypeFromConstructor(cx, constructor,
+                    Intrinsics.StringPrototype);
+            return StringCreate(cx, proto);
+        }
+    }
+
+    @Override
+    public CreateAction<StringObject> createAction() {
+        return StringCreate.INSTANCE;
     }
 
     /**
@@ -247,23 +267,6 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
                 CharSequence nextSub = ToString(cx, next);
                 stringElements.append(nextSub);
             }
-        }
-
-        /**
-         * 21.1.2.5 String[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new string object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue,
-                    Intrinsics.StringPrototype);
-            return StringCreate(cx, proto);
         }
     }
 }

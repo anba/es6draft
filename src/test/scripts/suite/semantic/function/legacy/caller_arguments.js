@@ -13,11 +13,11 @@ const GeneratorFunction = (function*(){}).constructor;
 
 // Uninitialized functions and generators
 {
-  let f = Function[Symbol.create]();
+  let f = new class extends Function { constructor(){ /* no super */ } };
   assertTrue(f.hasOwnProperty("caller"));
   assertTrue(f.hasOwnProperty("arguments"));
 
-  let g = GeneratorFunction[Symbol.create]();
+  let g = new class extends GeneratorFunction { constructor(){ /* no super */ } };
   assertFalse(g.hasOwnProperty("caller"));
   assertFalse(g.hasOwnProperty("arguments"));
 }
@@ -43,19 +43,19 @@ const GeneratorFunction = (function*(){}).constructor;
 
 // Initialized functions and generators (2)
 {
-  let nonStrictF = Function.call(Function[Symbol.create](), "");
+  let nonStrictF = Function.call(new class extends Function { constructor(){ /* no super */ } }, "");
   assertTrue(nonStrictF.hasOwnProperty("caller"));
   assertTrue(nonStrictF.hasOwnProperty("arguments"));
 
-  let strictF = Function.call(Function[Symbol.create](), "'use strict'");
+  let strictF = Function.call(new class extends Function { constructor(){ /* no super */ } }, "'use strict'");
   assertFalse(strictF.hasOwnProperty("caller"));
   assertFalse(strictF.hasOwnProperty("arguments"));
 
-  let nonStrictG = GeneratorFunction.call(GeneratorFunction[Symbol.create](), "");
+  let nonStrictG = GeneratorFunction.call(new class extends GeneratorFunction { constructor(){ /* no super */ } }, "");
   assertFalse(nonStrictG.hasOwnProperty("caller"));
   assertFalse(nonStrictG.hasOwnProperty("arguments"));
 
-  let strictG = GeneratorFunction.call(GeneratorFunction[Symbol.create](), "'use strict'");
+  let strictG = GeneratorFunction.call(new class extends GeneratorFunction { constructor(){ /* no super */ } }, "'use strict'");
   assertFalse(strictG.hasOwnProperty("caller"));
   assertFalse(strictG.hasOwnProperty("arguments"));
 }
@@ -195,11 +195,11 @@ const GeneratorFunction = (function*(){}).constructor;
 
 // Uninitialized, cloned functions and generators
 {
-  let f = Function[Symbol.create]().toMethod({});
+  let f = new class extends Function { constructor(){ /* no super */ } }().toMethod({});
   assertFalse(f.hasOwnProperty("caller"));
   assertFalse(f.hasOwnProperty("arguments"));
 
-  let g = GeneratorFunction[Symbol.create]().toMethod({});
+  let g = new class extends GeneratorFunction { constructor(){ /* no super */ } }().toMethod({});
   assertFalse(g.hasOwnProperty("caller"));
   assertFalse(g.hasOwnProperty("arguments"));
 }

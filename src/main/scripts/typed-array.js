@@ -16,13 +16,9 @@ const {
 
 for (const type of ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32", "Uint32", "Float32", "Float64"]) {
   const ctor = global[`${type}Array`];
-  const {
-    subarray
-  } = ctor.prototype;
+  const {subarray} = ctor.prototype;
 
-  /*
-   * Remove polymorphism from 'subarray'
-   */
+  // Remove polymorphism from 'subarray'
   Object.defineProperty(ctor.prototype, "subarray", {
     value(begin, end) {
       if (!(this instanceof ctor)) throw TypeError();

@@ -16,11 +16,12 @@ import com.github.anba.es6draft.ast.scope.FunctionScope;
  * <li>14.1 Function Definitions
  * </ul>
  */
-public final class FunctionDeclaration extends Declaration implements FunctionDefinition {
+public final class FunctionDeclaration extends HoistableDeclaration implements FunctionDefinition {
     private final FunctionScope scope;
     private final BindingIdentifier identifier;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
+    private final String functionName;
     private final String headerSource, bodySource;
     private StrictMode strictMode;
     private boolean syntheticNodes;
@@ -28,12 +29,14 @@ public final class FunctionDeclaration extends Declaration implements FunctionDe
 
     public FunctionDeclaration(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
-            List<StatementListItem> statements, String headerSource, String bodySource) {
+            List<StatementListItem> statements, String functionName, String headerSource,
+            String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
         this.parameters = parameters;
         this.statements = statements;
+        this.functionName = functionName;
         this.headerSource = headerSource;
         this.bodySource = bodySource;
     }
@@ -60,7 +63,7 @@ public final class FunctionDeclaration extends Declaration implements FunctionDe
 
     @Override
     public String getFunctionName() {
-        return identifier.getName().getIdentifier();
+        return functionName;
     }
 
     @Override

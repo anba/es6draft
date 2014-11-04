@@ -14,10 +14,11 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -32,7 +33,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>19.5.2 Properties of the Error Constructor
  * </ul>
  */
-public final class ErrorConstructor extends BuiltinConstructor implements Initializable {
+public final class ErrorConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<ErrorObject> {
     /**
      * Constructs a new Error constructor function.
      * 
@@ -109,6 +111,11 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
         return Construct(callerContext, this, args);
     }
 
+    @Override
+    public CreateAction<ErrorObject> createAction() {
+        return ErrorCreate.INSTANCE;
+    }
+
     /**
      * 19.5.2 Properties of the Error Constructor
      */
@@ -132,22 +139,6 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.ErrorPrototype;
-
-        /**
-         * 19.5.2.2 Error[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized error object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.ErrorPrototype,
-                    ErrorObjectAllocator.INSTANCE);
-        }
     }
 
     private static final class ErrorObjectAllocator implements ObjectAllocator<ErrorObject> {
@@ -156,6 +147,16 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
         @Override
         public ErrorObject newInstance(Realm realm) {
             return new ErrorObject(realm);
+        }
+    }
+
+    private static final class ErrorCreate implements CreateAction<ErrorObject> {
+        static final CreateAction<ErrorObject> INSTANCE = new ErrorCreate();
+
+        @Override
+        public ErrorObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.ErrorPrototype,
+                    ErrorObjectAllocator.INSTANCE);
         }
     }
 }

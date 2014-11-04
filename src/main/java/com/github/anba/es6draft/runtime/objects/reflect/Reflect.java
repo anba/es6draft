@@ -58,6 +58,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
     public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         createProperties(cx, this, RealmProperty.class);
+        createProperties(cx, this, LoaderProperty.class);
         createProperties(cx, this, ParseProperty.class);
     }
 
@@ -69,12 +70,6 @@ public final class Reflect extends OrdinaryObject implements Initializable {
 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
-
-        /**
-         * Loader ( . . . )
-         */
-        @Value(name = "Loader")
-        public static final Intrinsics Loader = Intrinsics.Loader;
 
         /**
          * 26.1.1 Reflect.apply ( target, thisArgument, argumentsList )
@@ -492,5 +487,16 @@ public final class Reflect extends OrdinaryObject implements Initializable {
          */
         @Value(name = "Realm")
         public static final Intrinsics Realm = Intrinsics.Realm;
+    }
+
+    @CompatibilityExtension(CompatibilityOption.Loader)
+    public enum LoaderProperty {
+        ;
+
+        /**
+         * Loader ( . . . )
+         */
+        @Value(name = "Loader")
+        public static final Intrinsics Loader = Intrinsics.Loader;
     }
 }

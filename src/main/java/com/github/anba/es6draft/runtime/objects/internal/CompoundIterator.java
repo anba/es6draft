@@ -20,7 +20,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>7 Abstract Operations</h1><br>
  * <h2>7.4 Operations on Iterator Objects</h2>
  * <ul>
- * <li>7.4.11 CreateCompoundIterator ( iterator1, iterator2 )
+ * <li>7.4.10 CreateCompoundIterator ( iterator1, iterator2 )
  * </ul>
  */
 public final class CompoundIterator<T> extends OrdinaryObject {
@@ -77,7 +77,7 @@ public final class CompoundIterator<T> extends OrdinaryObject {
     }
 
     /**
-     * 7.4.11 CreateCompoundIterator ( iterator1, iterator2 )
+     * 7.4.10 CreateCompoundIterator ( iterator1, iterator2 )
      * <p>
      * Returns a new {@link CompoundIterator} object for the internal list {@code iterator}
      * 

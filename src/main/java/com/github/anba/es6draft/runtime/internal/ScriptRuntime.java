@@ -33,7 +33,7 @@ import java.util.Iterator;
 
 import org.mozilla.javascript.ConsString;
 
-import com.github.anba.es6draft.compiler.CompiledScript;
+import com.github.anba.es6draft.compiler.CompiledObject;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -155,6 +155,24 @@ public final class ScriptRuntime {
         }
     }
 
+    /**
+     * 18.2.1.2 Runtime Semantics: EvalDeclarationInstantiation( body, varEnv, lexEnv, strict)
+     * 
+     * @param cx
+     *            the execution context
+     * @param envRec
+     *            the environment record
+     * @param name
+     *            the variable name
+     */
+    public static void canDeclareVarOrThrow(ExecutionContext cx,
+            DeclarativeEnvironmentRecord envRec, String name) {
+        /* steps 6.b.ii.2 - 6.b.ii.3 */
+        if (envRec.hasBinding(name)) {
+            throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
+        }
+    }
+
     /* ***************************************************************************************** */
 
     /**
@@ -179,6 +197,7 @@ public final class ScriptRuntime {
             ExecutionContext cx) {
         // String propertyName = ToString(ToUint32(nextIndex));
         int propertyName = nextIndex;
+        // Inlined: CreateDataProperty(cx, array, propertyName, value);
         boolean created = array.defineOwnProperty(cx, propertyName, new PropertyDescriptor(value,
                 true, true, true));
         assert created;
@@ -293,7 +312,7 @@ public final class ScriptRuntime {
      */
     public static void defineMethod(OrdinaryObject object, Object propertyName,
             FunctionObject value, ExecutionContext cx) {
-        value.toMethod(propertyName, object);
+        value.setHomeObject(object);
         DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
                 true));
     }
@@ -314,7 +333,7 @@ public final class ScriptRuntime {
      */
     public static void defineMethod(OrdinaryObject object, String propertyName,
             FunctionObject value, ExecutionContext cx) {
-        value.toMethod(propertyName, object);
+        value.setHomeObject(object);
         DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
                 true));
     }
@@ -391,10 +410,10 @@ public final class ScriptRuntime {
      * @return the template call site object
      */
     public static ArrayObject GetTemplateCallSite(int key, MethodHandle handle, ExecutionContext cx) {
-        assert cx.getCurrentScript() instanceof CompiledScript : cx.getCurrentScript();
-        CompiledScript script = (CompiledScript) cx.getCurrentScript();
+        assert cx.getCurrentExecutable() instanceof CompiledObject : cx.getCurrentExecutable();
+        CompiledObject compiledObject = (CompiledObject) cx.getCurrentExecutable();
         /* step 1 */
-        ArrayObject callSite = script.getTemplateCallSite(key);
+        ArrayObject callSite = compiledObject.getTemplateCallSite(key);
         if (callSite != null) {
             return callSite;
         }
@@ -421,7 +440,7 @@ public final class ScriptRuntime {
         siteObj.defineOwnProperty(cx, "raw", new PropertyDescriptor(rawObj, false, false, false));
         SetIntegrityLevel(cx, siteObj, IntegrityLevel.Frozen);
         /* step 12 */
-        script.addTemplateCallSite(key, siteObj);
+        compiledObject.addTemplateCallSite(key, siteObj);
         /* step 13 */
         return siteObj;
     }
@@ -482,9 +501,9 @@ public final class ScriptRuntime {
     public static Reference<Object, String> getProperty(Object baseValue, long propertyNameString,
             ExecutionContext cx, boolean strict) {
         /* steps 1-6 (generated code) */
-        /* step 7 */
+        /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
-        /* steps 8-10 */
+        /* steps 9-11 */
         return new Reference.PropertyIndexReference(baseValue, propertyNameString, strict);
     }
 
@@ -538,9 +557,9 @@ public final class ScriptRuntime {
     public static Reference<Object, String> getProperty(Object baseValue,
             String propertyNameString, ExecutionContext cx, boolean strict) {
         /* steps 1-6 (generated code) */
-        /* step 7 */
+        /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
-        /* steps 8-10 */
+        /* steps 9-11 */
         return new Reference.PropertyNameReference(baseValue, propertyNameString, strict);
     }
 
@@ -590,9 +609,9 @@ public final class ScriptRuntime {
     public static Object getPropertyValue(Object baseValue, long propertyNameString,
             ExecutionContext cx, boolean strict) {
         /* steps 1-6 (generated code) */
-        /* step 7 */
+        /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
-        /* steps 8-10 */
+        /* steps 9-11 */
         Reference<Object, String> ref = new Reference.PropertyIndexReference(baseValue,
                 propertyNameString, strict);
         return ref.getValue(cx);
@@ -648,9 +667,9 @@ public final class ScriptRuntime {
     public static Object getPropertyValue(Object baseValue, String propertyNameString,
             ExecutionContext cx, boolean strict) {
         /* steps 1-6 (generated code) */
-        /* step 7 */
+        /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
-        /* steps 8-10 */
+        /* steps 9-11 */
         Reference<Object, String> ref = new Reference.PropertyNameReference(baseValue,
                 propertyNameString, strict);
         return ref.getValue(cx);
@@ -678,11 +697,11 @@ public final class ScriptRuntime {
     public static Reference<Object, ?> getElement(Object baseValue, Object propertyNameValue,
             ExecutionContext cx, boolean strict) {
         /* steps 1-6 (generated code) */
-        /* step 7 */
+        /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
-        /* step 8 */
+        /* step 9 */
         Object propertyKey = ToPropertyKey(cx, propertyNameValue);
-        /* steps 9-10 */
+        /* steps 10-11 */
         if (propertyKey instanceof String) {
             return new Reference.PropertyNameReference(baseValue, (String) propertyKey, strict);
         }
@@ -711,11 +730,11 @@ public final class ScriptRuntime {
     public static Object getElementValue(Object baseValue, Object propertyNameValue,
             ExecutionContext cx, boolean strict) {
         /* steps 1-6 (generated code) */
-        /* step 7 */
+        /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
-        /* step 8 */
+        /* step 9 */
         Object propertyKey = ToPropertyKey(cx, propertyNameValue);
-        /* steps 9-10 */
+        /* steps 10-11 */
         if (propertyKey instanceof String) {
             Reference<Object, String> ref = new Reference.PropertyNameReference(baseValue,
                     (String) propertyKey, strict);
@@ -734,7 +753,7 @@ public final class ScriptRuntime {
      * <ul>
      * <li>NewExpression : new NewExpression
      * <li>MemberExpression : new MemberExpression Arguments
-     * <li>MemberExpression : new super Arguments<span><sub>opt</sub></span>
+     * <li>MemberExpression : NewSuper Arguments<span><sub>opt</sub></span>
      * </ul>
      * 
      * @param constructor
@@ -747,8 +766,8 @@ public final class ScriptRuntime {
      */
     public static ScriptObject EvaluateConstructorCall(Object constructor, Object[] args,
             ExecutionContext cx) {
-        /* steps 1-3/1-3/1-6 (generated code) */
-        /* steps 4/6/7 */
+        /* steps 1-3/1-3/1-4 (generated code) */
+        /* steps 4/6/5 */
         if (!IsConstructor(constructor)) {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         }
@@ -764,7 +783,7 @@ public final class ScriptRuntime {
      * <ul>
      * <li>NewExpression : new NewExpression
      * <li>MemberExpression : new MemberExpression Arguments
-     * <li>MemberExpression : new super Arguments<span><sub>opt</sub></span>
+     * <li>MemberExpression : NewSuper Arguments<span><sub>opt</sub></span>
      * </ul>
      * 
      * @param constructor
@@ -777,7 +796,7 @@ public final class ScriptRuntime {
      */
     public static Object EvaluateConstructorTailCall(Object constructor, Object[] args,
             ExecutionContext cx) {
-        /* steps 1-3/1-3/1-6 (generated code) */
+        /* steps 1-3/1-3/1-4 (generated code) */
         /* steps 4/6/7 */
         if (!IsConstructor(constructor)) {
             throw newTypeError(cx, Messages.Key.NotConstructor);
@@ -903,49 +922,36 @@ public final class ScriptRuntime {
     /**
      * 12.3.5 The super Keyword
      * <p>
-     * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
+     * 12.3.5.3 Runtime Semantics: GetSuperConstructor ( )
      * 
      * @param cx
      *            the execution context
-     * @param propertyKey
-     *            the property key
-     * @param strict
-     *            the strict mode flag
      * @return the super reference
      */
-    public static Reference<ScriptObject, ?> MakeSuperReference(ExecutionContext cx,
-            Object propertyKey, boolean strict) {
-        assert propertyKey == null || propertyKey instanceof String
-                || propertyKey instanceof Symbol;
+    public static Callable GetSuperConstructor(ExecutionContext cx) {
+        /* step 1 */
         EnvironmentRecord envRec = cx.getThisEnvironment();
-        if (!envRec.hasSuperBinding()) {
-            throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
-        }
+        /* step 2 */
         assert envRec instanceof FunctionEnvironmentRecord;
         FunctionEnvironmentRecord fEnvRec = (FunctionEnvironmentRecord) envRec;
-        Object actualThis = fEnvRec.getThisBinding();
-        ScriptObject baseValue = fEnvRec.getSuperBase();
-        // RequireObjectCoercible(cx.getRealm(), baseValue);
-        if (baseValue == null) {
-            throw newTypeError(cx, Messages.Key.UndefinedOrNull);
+        /* step 3 */
+        FunctionObject activeFunction = fEnvRec.getFunctionObject();
+        /* steps 4-5 */
+        ScriptObject superConstructor = activeFunction.getPrototypeOf(cx);
+        /* step 6 */
+        if (!IsCallable(superConstructor)) {
+            // TODO: Change error message?
+            // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3282)
+            throw newReferenceError(cx, Messages.Key.NotCallable);
         }
-        if (propertyKey == null) {
-            propertyKey = fEnvRec.getMethodName();
-            if (propertyKey == null) {
-                throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
-            }
-        }
-        if (propertyKey instanceof Symbol) {
-            return new Reference.SuperSymbolReference(baseValue, (Symbol) propertyKey, strict,
-                    actualThis);
-        }
-        return new Reference.SuperNameReference(baseValue, (String) propertyKey, strict, actualThis);
+        /* step 7 */
+        return (Callable) superConstructor;
     }
 
     /**
      * 12.3.5 The super Keyword
      * <p>
-     * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
+     * 12.3.5.4 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
      * 
      * @param cx
      *            the execution context
@@ -955,28 +961,55 @@ public final class ScriptRuntime {
      *            the strict mode flag
      * @return the super reference
      */
-    public static Reference<ScriptObject, String> MakeSuperReference(ExecutionContext cx,
+    public static Reference<ScriptObject, ?> MakeSuperPropertyReference(ExecutionContext cx,
+            Object propertyKey, boolean strict) {
+        if (propertyKey instanceof String) {
+            return MakeSuperPropertyReference(cx, (String) propertyKey, strict);
+        } else {
+            return MakeSuperPropertyReference(cx, (Symbol) propertyKey, strict);
+        }
+    }
+
+    /**
+     * 12.3.5 The super Keyword
+     * <p>
+     * 12.3.5.4 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param strict
+     *            the strict mode flag
+     * @return the super reference
+     */
+    public static Reference<ScriptObject, String> MakeSuperPropertyReference(ExecutionContext cx,
             String propertyKey, boolean strict) {
-        assert propertyKey != null;
+        /* step 1 */
         EnvironmentRecord envRec = cx.getThisEnvironment();
+        /* step 2 */
         if (!envRec.hasSuperBinding()) {
             throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
         }
         assert envRec instanceof FunctionEnvironmentRecord;
         FunctionEnvironmentRecord fEnvRec = (FunctionEnvironmentRecord) envRec;
+        /* step 3 */
         Object actualThis = fEnvRec.getThisBinding();
+        /* step 4 */
         ScriptObject baseValue = fEnvRec.getSuperBase();
+        /* steps 5-6 */
         // RequireObjectCoercible(cx.getRealm(), baseValue);
         if (baseValue == null) {
             throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         }
+        /* step 7 */
         return new Reference.SuperNameReference(baseValue, propertyKey, strict, actualThis);
     }
 
     /**
      * 12.3.5 The super Keyword
      * <p>
-     * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
+     * 12.3.5.4 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
      * 
      * @param cx
      *            the execution context
@@ -984,17 +1017,35 @@ public final class ScriptRuntime {
      *            the property key
      * @param strict
      *            the strict mode flag
-     * @return the super reference value
+     * @return the super reference
      */
-    public static Object getSuperReferenceValue(ExecutionContext cx, Object propertyKey,
-            boolean strict) {
-        return MakeSuperReference(cx, propertyKey, strict).getValue(cx);
+    public static Reference<ScriptObject, Symbol> MakeSuperPropertyReference(ExecutionContext cx,
+            Symbol propertyKey, boolean strict) {
+        /* step 1 */
+        EnvironmentRecord envRec = cx.getThisEnvironment();
+        /* step 2 */
+        if (!envRec.hasSuperBinding()) {
+            throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
+        }
+        assert envRec instanceof FunctionEnvironmentRecord;
+        FunctionEnvironmentRecord fEnvRec = (FunctionEnvironmentRecord) envRec;
+        /* step 3 */
+        Object actualThis = fEnvRec.getThisBinding();
+        /* step 4 */
+        ScriptObject baseValue = fEnvRec.getSuperBase();
+        /* steps 5-6 */
+        // RequireObjectCoercible(cx.getRealm(), baseValue);
+        if (baseValue == null) {
+            throw newTypeError(cx, Messages.Key.UndefinedOrNull);
+        }
+        /* step 7 */
+        return new Reference.SuperSymbolReference(baseValue, propertyKey, strict, actualThis);
     }
 
     /**
      * 12.3.5 The super Keyword
      * <p>
-     * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
+     * 12.3.5.4 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
      * 
      * @param cx
      *            the execution context
@@ -1004,9 +1055,27 @@ public final class ScriptRuntime {
      *            the strict mode flag
      * @return the super reference value
      */
-    public static Object getSuperReferenceValue(ExecutionContext cx, String propertyKey,
+    public static Object getSuperPropertyReferenceValue(ExecutionContext cx, Object propertyKey,
             boolean strict) {
-        return MakeSuperReference(cx, propertyKey, strict).getValue(cx);
+        return MakeSuperPropertyReference(cx, propertyKey, strict).getValue(cx);
+    }
+
+    /**
+     * 12.3.5 The super Keyword
+     * <p>
+     * 12.3.5.4 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param strict
+     *            the strict mode flag
+     * @return the super reference value
+     */
+    public static Object getSuperPropertyReferenceValue(ExecutionContext cx, String propertyKey,
+            boolean strict) {
+        return MakeSuperPropertyReference(cx, propertyKey, strict).getValue(cx);
     }
 
     /**
@@ -1392,7 +1461,7 @@ public final class ScriptRuntime {
         }
 
         @Override
-        protected Object tryNext() {
+        protected Object findNext() {
             if (keysIterator.hasNext()) {
                 Object pk = ToPropertyKey(cx, keysIterator.next());
                 return Get(cx, object, pk);
@@ -1474,7 +1543,7 @@ public final class ScriptRuntime {
         OrdinaryFunction f = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
         /* step 4 */
         if (fd.hasSuperReference()) {
-            MakeMethod(f, name, null);
+            MakeMethod(f, null);
         }
         /* step 5 */
         MakeConstructor(cx, f);
@@ -1510,7 +1579,7 @@ public final class ScriptRuntime {
             closure = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
             /* step 4 */
             if (fd.hasSuperReference()) {
-                MakeMethod(closure, (String) null, null);
+                MakeMethod(closure, null);
             }
             /* step 5 */
             MakeConstructor(cx, closure);
@@ -1531,7 +1600,7 @@ public final class ScriptRuntime {
             closure = FunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
             /* step 8 */
             if (fd.hasSuperReference()) {
-                MakeMethod(closure, name, null);
+                MakeMethod(closure, null);
             }
             /* step 9 */
             MakeConstructor(cx, closure);
@@ -1594,7 +1663,7 @@ public final class ScriptRuntime {
         OrdinaryFunction constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd,
                 scope, constructorParent);
         if (fd.hasSuperReference()) {
-            MakeMethod(constructor, propKey, proto);
+            MakeMethod(constructor, proto);
         }
 
         // ClassDefinitionEvaluation - step 11
@@ -1662,7 +1731,7 @@ public final class ScriptRuntime {
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* DefineMethod: step 6 */
         if (fd.hasSuperReference()) {
-            MakeMethod(closure, propKey, object);
+            MakeMethod(closure, object);
         }
         /* steps 3-4 */
         SetFunctionName(closure, propKey);
@@ -1697,7 +1766,7 @@ public final class ScriptRuntime {
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* DefineMethod: step 6 */
         if (fd.hasSuperReference()) {
-            MakeMethod(closure, propKey, object);
+            MakeMethod(closure, object);
         }
         /* steps 3-4 */
         SetFunctionName(closure, propKey);
@@ -1757,7 +1826,7 @@ public final class ScriptRuntime {
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 7 */
         if (fd.hasSuperReference()) {
-            MakeMethod(closure, propKey, object);
+            MakeMethod(closure, object);
         }
         /* steps 8-9 */
         SetFunctionName(closure, propKey, "get");
@@ -1796,7 +1865,7 @@ public final class ScriptRuntime {
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 7 */
         if (fd.hasSuperReference()) {
-            MakeMethod(closure, propKey, object);
+            MakeMethod(closure, object);
         }
         /* steps 8-9 */
         SetFunctionName(closure, propKey, "get");
@@ -1861,7 +1930,7 @@ public final class ScriptRuntime {
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
         if (fd.hasSuperReference()) {
-            MakeMethod(closure, propKey, object);
+            MakeMethod(closure, object);
         }
         /* steps 7-8 */
         SetFunctionName(closure, propKey, "set");
@@ -1900,7 +1969,7 @@ public final class ScriptRuntime {
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
         if (fd.hasSuperReference()) {
-            MakeMethod(closure, propKey, object);
+            MakeMethod(closure, object);
         }
         /* steps 7-8 */
         SetFunctionName(closure, propKey, "set");
@@ -1935,7 +2004,7 @@ public final class ScriptRuntime {
         OrdinaryGenerator f = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
         /* step 5 */
         if (fd.hasSuperReference()) {
-            MakeMethod(f, name, null);
+            MakeMethod(f, null);
         }
         /* step 6 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
@@ -1969,7 +2038,7 @@ public final class ScriptRuntime {
         OrdinaryGenerator f = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
         /* step 5 */
         if (fd.hasSuperReference()) {
-            MakeMethod(f, name, null);
+            MakeMethod(f, null);
         }
         /* step 6 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
@@ -2035,7 +2104,7 @@ public final class ScriptRuntime {
         OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 7 */
         if (fd.hasSuperReference()) {
-            MakeMethod(closure, propKey, object);
+            MakeMethod(closure, object);
         }
         /* step 8 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
@@ -2075,7 +2144,7 @@ public final class ScriptRuntime {
         OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 7 */
         if (fd.hasSuperReference()) {
-            MakeMethod(closure, propKey, object);
+            MakeMethod(closure, object);
         }
         /* step 8 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
@@ -2113,7 +2182,7 @@ public final class ScriptRuntime {
             closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
             /* step 5 */
             if (fd.hasSuperReference()) {
-                MakeMethod(closure, (String) null, null);
+                MakeMethod(closure, null);
             }
             /* step 6 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
@@ -2136,7 +2205,7 @@ public final class ScriptRuntime {
             closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
             /* step 9 */
             if (fd.hasSuperReference()) {
-                MakeMethod(closure, name, null);
+                MakeMethod(closure, null);
             }
             /* step 10 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
@@ -2177,7 +2246,7 @@ public final class ScriptRuntime {
             closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
             /* step 5 */
             if (fd.hasSuperReference()) {
-                MakeMethod(closure, (String) null, null);
+                MakeMethod(closure, null);
             }
             /* step 6 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
@@ -2200,7 +2269,7 @@ public final class ScriptRuntime {
             closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
             /* step 9 */
             if (fd.hasSuperReference()) {
-                MakeMethod(closure, name, null);
+                MakeMethod(closure, null);
             }
             /* step 10 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
@@ -2278,32 +2347,37 @@ public final class ScriptRuntime {
         Object received = UNDEFINED;
         /* step 6 */
         for (;;) {
-            /* step 6a (empty) */
-            /* step 6b */
+            /* steps 6.a.i-6.a.ii */
             ScriptObject innerResult = IteratorNext(cx, iterator, received);
-            /* steps 6f-6g */
+            /* steps 6.a.iii-6.a.iv */
             boolean done = IteratorComplete(cx, innerResult);
-            /* step 6h */
+            /* step 6.a.v */
             if (done) {
                 return IteratorValue(cx, innerResult);
             }
             try {
-                /* step 6i */
+                /* step 6.a.vi */
                 received = GeneratorYield(cx, innerResult);
             } catch (ScriptException e) {
                 // FIXME: spec issue - change to GetMethod to avoid Has+Get?
-                /* step 6c */
+                /* step 6.b */
+                /* step 6.b.i-6.b.iii */
                 if (HasProperty(cx, iterator, "throw")) {
                     IteratorThrow(cx, iterator, e.getValue());
                 }
+                /* step 6.b.iv */
                 throw e;
             } catch (ReturnValue e) {
                 // FIXME: spec issue - change to GetMethod to avoid Has+Get?
-                /* step 6d */
+                /* step 6.c */
+                /* step 6.c.i-6.c.iii */
                 if (HasProperty(cx, iterator, "return")) {
+                    /* step 6.c.v-6.c.ix */
                     Object innerReturnValue = IteratorReturn(cx, iterator, e.getValue());
+                    /* step 6.c.x */
                     throw new ReturnValue(innerReturnValue);
                 }
+                /* step 6.c.iv */
                 throw e;
             }
         }
@@ -2445,13 +2519,11 @@ public final class ScriptRuntime {
 
     public static Object DefaultConstructor(ExecutionContext cx) {
         // super()
-        Reference<ScriptObject, ?> ref = MakeSuperReference(cx, (Object) null, true);
+        Callable superConstructor = GetSuperConstructor(cx);
+        Object thisValue = cx.resolveThisBinding();
         // EvaluateCall: super(...args)
-        Object func = ref.getValue(cx);
         Object[] argList = SpreadArray(cx.resolveBindingValue("args", true), cx);
-        Callable f = CheckCallable(func, cx);
-        Object thisValue = ref.getThisValue(cx);
-        f.call(cx, thisValue, argList);
+        superConstructor.call(cx, thisValue, argList);
         return UNDEFINED;
     }
 
@@ -2522,7 +2594,7 @@ public final class ScriptRuntime {
         OrdinaryAsyncFunction f = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, scope);
         /* step 5 */
         if (fd.hasSuperReference()) {
-            MakeMethod(f, name, null);
+            MakeMethod(f, null);
         }
         /* step 6 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
@@ -2554,7 +2626,7 @@ public final class ScriptRuntime {
             closure = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, scope);
             /* step 5 */
             if (fd.hasSuperReference()) {
-                MakeMethod(closure, (String) null, null);
+                MakeMethod(closure, null);
             }
             /* step 6 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
@@ -2577,7 +2649,7 @@ public final class ScriptRuntime {
             closure = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
             /* step 9 */
             if (fd.hasSuperReference()) {
-                MakeMethod(closure, name, null);
+                MakeMethod(closure, null);
             }
             /* step 10 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
@@ -2660,7 +2732,7 @@ public final class ScriptRuntime {
         OrdinaryAsyncFunction closure = AsyncFunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 7 */
         if (fd.hasSuperReference()) {
-            MakeMethod(closure, propKey, object);
+            MakeMethod(closure, object);
         }
         /* step 8 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
@@ -2695,7 +2767,7 @@ public final class ScriptRuntime {
         OrdinaryAsyncFunction closure = AsyncFunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 7 */
         if (fd.hasSuperReference()) {
-            MakeMethod(closure, propKey, object);
+            MakeMethod(closure, object);
         }
         /* step 8 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);

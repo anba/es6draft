@@ -13,8 +13,8 @@ import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.Instanceof
 import static com.github.anba.es6draft.runtime.objects.BooleanObject.BooleanCreate;
 import static com.github.anba.es6draft.runtime.objects.SymbolObject.SymbolCreate;
 import static com.github.anba.es6draft.runtime.objects.number.NumberObject.NumberCreate;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.AllocatePromise;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.CreatePromiseCapabilityRecord;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor.AllocatePromise;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor.InitializePromise;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
@@ -42,7 +42,6 @@ import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.internal.CompoundIterator;
 import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
-import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.*;
@@ -665,10 +664,14 @@ public final class AbstractOperations {
      * @return the property key
      */
     public static Object ToPropertyKey(ExecutionContext cx, Object value) {
-        if (value instanceof Symbol) {
-            return value;
+        /* steps 1-2 */
+        Object key = ToPrimitive(cx, value, ToPrimitiveHint.String);
+        /* step 3 */
+        if (key instanceof Symbol) {
+            return key;
         }
-        return ToFlatString(cx, value);
+        /* step 4 */
+        return ToFlatString(cx, key);
     }
 
     /**
@@ -2060,12 +2063,16 @@ public final class AbstractOperations {
             IntegrityLevel level) {
         /* steps 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
-        /* steps 3-4 */
+        /* steps 3-5 */
+        if (!object.preventExtensions(cx)) {
+            return false;
+        }
+        /* steps 6-7 */
         List<?> keys = object.ownPropertyKeys(cx);
-        /* step 5 */
+        /* step 8 */
         ScriptException pendingException = null;
         if (level == IntegrityLevel.Sealed) {
-            /* step 6 */
+            /* step 9 */
             PropertyDescriptor nonConfigurable = new PropertyDescriptor();
             nonConfigurable.setConfigurable(false);
             for (Object key : keys) {
@@ -2083,7 +2090,7 @@ public final class AbstractOperations {
                 }
             }
         } else {
-            /* step 7 */
+            /* step 10 */
             PropertyDescriptor nonConfigurable = new PropertyDescriptor();
             nonConfigurable.setConfigurable(false);
             PropertyDescriptor nonConfigurableWritable = new PropertyDescriptor();
@@ -2119,12 +2126,12 @@ public final class AbstractOperations {
                 }
             }
         }
-        /* step 8 */
+        /* step 11 */
         if (pendingException != null) {
             throw pendingException;
         }
-        /* step 9 */
-        return object.preventExtensions(cx);
+        /* step 12 */
+        return true;
     }
 
     /**
@@ -2449,24 +2456,24 @@ public final class AbstractOperations {
      *            the execution context
      * @param f
      *            the constructor function
+     * @param args
+     *            the arguments array
      * @return the new allocated object
      */
-    public static ScriptObject CreateFromConstructor(ExecutionContext cx, Constructor f) {
+    public static ScriptObject CreateFromConstructor(ExecutionContext cx, Constructor f,
+            Object... args) {
         /* step 1 (not applicable) */
-        /* steps 2-3 */
-        Callable creator = GetMethod(cx, f, BuiltinSymbol.create.get());
-        /* step 4 */
-        if (creator == null) {
-            return null;
+        /* step 2 */
+        if (f instanceof Creatable) {
+            CreateAction<?> createAction = ((Creatable<?>) f).createAction();
+            if (createAction != null) {
+                ScriptObject obj = createAction.create(cx, f, args);
+                assert obj != null;
+                return obj;
+            }
         }
-        /* steps 5-6 */
-        Object obj = creator.call(cx, f);
-        /* step 7 */
-        if (!Type.isObject(obj)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* step 8 */
-        return Type.objectValue(obj);
+        /* step 3 */
+        return null;
     }
 
     /**
@@ -2483,7 +2490,7 @@ public final class AbstractOperations {
     public static ScriptObject Construct(ExecutionContext cx, Constructor f, Object... args) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
-        ScriptObject obj = CreateFromConstructor(cx, f);
+        ScriptObject obj = CreateFromConstructor(cx, f, args);
         /* step 4 */
         if (obj == null) {
             obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
@@ -2515,7 +2522,7 @@ public final class AbstractOperations {
             throws Throwable {
         /* step 1 (not applicable) */
         /* steps 2-3 */
-        ScriptObject obj = CreateFromConstructor(cx, f);
+        ScriptObject obj = CreateFromConstructor(cx, f, args);
         /* step 4 */
         if (obj == null) {
             obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
@@ -2630,7 +2637,8 @@ public final class AbstractOperations {
                 }
             }
         }
-        /* step 6 */
+        /* step 6 (sort keys - not applicable) */
+        /* step 7 */
         return names;
     }
 
@@ -2989,21 +2997,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.10 CreateEmptyIterator ( )
-     * 
-     * @param cx
-     *            the execution context
-     * @return a new script object iterator
-     */
-    public static ScriptObject CreateEmptyIterator(ExecutionContext cx) {
-        /* step 1 */
-        List<?> empty = Collections.emptyList();
-        /* step 2 */
-        return CreateListIterator(cx, empty);
-    }
-
-    /**
-     * 7.4.11 CreateCompoundIterator ( iterator1, iterator2 )
+     * 7.4.10 CreateCompoundIterator ( iterator1, iterator2 )
      * 
      * @param <T>
      *            the element type
@@ -3031,7 +3025,8 @@ public final class AbstractOperations {
      */
     public static PromiseObject PromiseNew(ExecutionContext cx, Callable executor) {
         /* step 1 */
-        PromiseObject promise = AllocatePromise(cx, cx.getIntrinsic(Intrinsics.Promise));
+        PromiseObject promise = AllocatePromise(cx,
+                (Constructor) cx.getIntrinsic(Intrinsics.Promise));
         /* step 2 */
         return InitializePromise(cx, promise, executor);
     }
@@ -3045,7 +3040,8 @@ public final class AbstractOperations {
      */
     public static PromiseCapability<PromiseObject> PromiseBuiltinCapability(ExecutionContext cx) {
         /* step 1 */
-        PromiseObject promise = AllocatePromise(cx, cx.getIntrinsic(Intrinsics.Promise));
+        PromiseObject promise = AllocatePromise(cx,
+                (Constructor) cx.getIntrinsic(Intrinsics.Promise));
         /* step 2 */
         return CreatePromiseCapabilityRecord(cx, promise,
                 (Constructor) cx.getIntrinsic(Intrinsics.Promise));
@@ -3067,69 +3063,6 @@ public final class AbstractOperations {
         capability.getResolve().call(cx, UNDEFINED, value);
         /* step 5 */
         return capability.getPromise();
-    }
-
-    /**
-     * 7.5.4 PromiseAll (promiseList) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param promiseList
-     *            the list of promise objects
-     * @return the new promise object
-     */
-    public static ScriptObject PromiseAll(ExecutionContext cx, List<ScriptObject> promiseList) {
-        return PromiseAbstractOperations.PromiseAll(cx, promiseList);
-    }
-
-    /**
-     * 7.5.5 PromiseCatch (promise, rejectedAction) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param promise
-     *            the promise object
-     * @param rejectedAction
-     *            the reject function
-     * @return the new promise object
-     */
-    public static ScriptObject PromiseCatch(ExecutionContext cx, ScriptObject promise,
-            Callable rejectedAction) {
-        return PromiseAbstractOperations.PromiseCatch(cx, promise, rejectedAction);
-    }
-
-    /**
-     * 7.5.6 PromiseThen (promise, resolvedAction, rejectedAction) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param promise
-     *            the promise object
-     * @param resolvedAction
-     *            the resolve function
-     * @return the new promise object
-     */
-    public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
-            Callable resolvedAction) {
-        return PromiseAbstractOperations.PromiseThen(cx, promise, resolvedAction);
-    }
-
-    /**
-     * 7.5.6 PromiseThen (promise, resolvedAction, rejectedAction) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param promise
-     *            the promise object
-     * @param resolvedAction
-     *            the resolve function
-     * @param rejectedAction
-     *            the reject function
-     * @return the new promise object
-     */
-    public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
-            Callable resolvedAction, Callable rejectedAction) {
-        return PromiseAbstractOperations.PromiseThen(cx, promise, resolvedAction, rejectedAction);
     }
 
     /**
@@ -3196,9 +3129,12 @@ public final class AbstractOperations {
                 if (c == 'x' || c == 'X') {
                     return readHexIntegerLiteral(s);
                 }
-                // TODO: Handle binary and octal (rev28?)
-                // https://bugs.ecmascript.org/show_bug.cgi?id=1584
-                // https://bugs.ecmascript.org/show_bug.cgi?id=3259
+                if (c == 'b' || c == 'B') {
+                    return readBinaryIntegerLiteral(s);
+                }
+                if (c == 'o' || c == 'O') {
+                    return readOctalIntegerLiteral(s);
+                }
             }
             return readDecimalLiteral(s);
         }
@@ -3213,6 +3149,30 @@ public final class AbstractOperations {
                 }
             }
             return NumberParser.parseHex(s);
+        }
+
+        private static double readBinaryIntegerLiteral(String s) {
+            assert s.length() > 2;
+            final int start = 2; // "0b" prefix
+            for (int index = start, end = s.length(); index < end; ++index) {
+                char c = s.charAt(index);
+                if (!(c == '0' || c == '1')) {
+                    return Double.NaN;
+                }
+            }
+            return NumberParser.parseBinary(s);
+        }
+
+        private static double readOctalIntegerLiteral(String s) {
+            assert s.length() > 2;
+            final int start = 2; // "0o" prefix
+            for (int index = start, end = s.length(); index < end; ++index) {
+                char c = s.charAt(index);
+                if (!('0' <= c && c <= '7')) {
+                    return Double.NaN;
+                }
+            }
+            return NumberParser.parseOctal(s);
         }
 
         static double readDecimalLiteral(String s) {

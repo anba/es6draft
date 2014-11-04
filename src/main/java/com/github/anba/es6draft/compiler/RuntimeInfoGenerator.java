@@ -17,6 +17,7 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
+import com.github.anba.es6draft.compiler.CodeGenerator.ModuleName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.assembler.MethodDesc;
 import com.github.anba.es6draft.parser.Parser;
@@ -48,6 +49,16 @@ final class RuntimeInfoGenerator {
                         Types.RuntimeInfo$ScriptBody, Types.String, Types.String,
                         Type.BOOLEAN_TYPE, Types.MethodHandle, Types.MethodHandle,
                         Types.MethodHandle, Types.MethodHandle));
+
+        static final MethodDesc RTI_newModuleBody = MethodDesc.create(MethodDesc.Invoke.Static,
+                Types.RuntimeInfo, "newModuleBody", Type.getMethodType(
+                        Types.RuntimeInfo$ModuleBody, Types.String, Types.String,
+                        Types.MethodHandle, Types.MethodHandle));
+
+        static final MethodDesc RTI_newModuleBodyDebug = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.RuntimeInfo, "newModuleBody", Type.getMethodType(
+                        Types.RuntimeInfo$ModuleBody, Types.String, Types.String,
+                        Types.MethodHandle, Types.MethodHandle, Types.MethodHandle));
 
         static final MethodDesc RTI_newFunction = MethodDesc.create(MethodDesc.Invoke.Static,
                 Types.RuntimeInfo, "newFunction", Type.getMethodType(Types.RuntimeInfo$Function,
@@ -201,6 +212,26 @@ final class RuntimeInfoGenerator {
         mv.end();
     }
 
+    void runtimeInfo(Module node) {
+        InstructionVisitor mv = new InstructionVisitor(codegen.newMethod(node, ModuleName.RTI));
+        mv.begin();
+
+        mv.aconst(node.getSource().getName());
+        mv.aconst(Objects.toString(node.getSource().getFile(), null));
+        mv.handle(codegen.methodDesc(node, ModuleName.Init));
+        mv.handle(codegen.methodDesc(node, ModuleName.Code));
+        if (codegen.isEnabled(Compiler.Option.DebugInfo)) {
+            debugInfo(node);
+            mv.handle(codegen.methodDesc(node, ModuleName.DebugInfo));
+            mv.invoke(Methods.RTI_newModuleBodyDebug);
+        } else {
+            mv.invoke(Methods.RTI_newModuleBody);
+        }
+        mv._return();
+
+        mv.end();
+    }
+
     private void debugInfo(FunctionNode node) {
         InstructionVisitor mv = new InstructionVisitor(codegen.newMethod(node,
                 FunctionName.DebugInfo));
@@ -250,6 +281,29 @@ final class RuntimeInfoGenerator {
         mv.invoke(Methods.DebugInfo_addMethod);
 
         MethodDesc codeDesc = codegen.methodDesc(node, ScriptName.Code);
+        mv.dup();
+        mv.tconst(Type.getObjectType(codeDesc.owner));
+        mv.aconst(codeDesc.name);
+        mv.invoke(Methods.DebugInfo_addMethod);
+
+        mv._return();
+        mv.end();
+    }
+
+    private void debugInfo(Module node) {
+        InstructionVisitor mv = new InstructionVisitor(
+                codegen.newMethod(node, ModuleName.DebugInfo));
+        mv.begin();
+
+        mv.anew(Types.DebugInfo, Methods.DebugInfo_init);
+
+        MethodDesc initDesc = codegen.methodDesc(node, ModuleName.Init);
+        mv.dup();
+        mv.tconst(Type.getObjectType(initDesc.owner));
+        mv.aconst(initDesc.name);
+        mv.invoke(Methods.DebugInfo_addMethod);
+
+        MethodDesc codeDesc = codegen.methodDesc(node, ModuleName.Code);
         mv.dup();
         mv.tconst(Type.getObjectType(codeDesc.owner));
         mv.aconst(codeDesc.name);

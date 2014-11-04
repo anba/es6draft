@@ -159,11 +159,6 @@ public enum CompatibilityOption {
     ImplicitStrictDirective,
 
     /**
-     * Moz-Extension: 8 and 9 in legacy octal integer literal are reported as errors
-     */
-    StrictLegacyOctalIntegerLiteral,
-
-    /**
      * ES7-Extension: Async Function Definitions
      */
     AsyncFunction,
@@ -182,6 +177,11 @@ public enum CompatibilityOption {
      * ES7-Extension: Realm Objects
      */
     Realm,
+
+    /**
+     * ES7-Extension: Loader Objects
+     */
+    Loader,
 
     /**
      * ES7-Extension: Array.prototype.contains

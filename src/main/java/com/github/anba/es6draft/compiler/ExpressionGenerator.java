@@ -55,8 +55,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
     private static final class Methods {
         // class: Eval
+        static final MethodDesc Eval_directEvalWithTranslate = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.Eval, "directEval", Type.getMethodType(
+                        Types.Object, Types.Object_, Types.ExecutionContext, Type.INT_TYPE));
+
         static final MethodDesc Eval_directEval = MethodDesc.create(MethodDesc.Invoke.Static,
-                Types.Eval, "directEval", Type.getMethodType(Types.Object, Types.Object_,
+                Types.Eval, "directEval", Type.getMethodType(Types.Object, Types.Object,
                         Types.ExecutionContext, Type.INT_TYPE));
 
         // class: EnvironmentRecord
@@ -278,29 +282,33 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                         .getMethodType(Types.Object, Types.Object, Type.DOUBLE_TYPE,
                                 Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_getSuperReferenceValue = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getSuperReferenceValue", Type
-                        .getMethodType(Types.Object, Types.ExecutionContext, Types.Object,
-                                Type.BOOLEAN_TYPE));
+        static final MethodDesc ScriptRuntime_GetSuperConstructor = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "GetSuperConstructor",
+                Type.getMethodType(Types.Callable, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getSuperReferenceValue_String = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getSuperReferenceValue", Type
-                        .getMethodType(Types.Object, Types.ExecutionContext, Types.String,
-                                Type.BOOLEAN_TYPE));
+        static final MethodDesc ScriptRuntime_getSuperPropertyReferenceValue = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getSuperPropertyReferenceValue",
+                Type.getMethodType(Types.Object, Types.ExecutionContext, Types.Object,
+                        Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_getSuperPropertyReferenceValue_String = MethodDesc
+                .create(MethodDesc.Invoke.Static, Types.ScriptRuntime,
+                        "getSuperPropertyReferenceValue", Type.getMethodType(Types.Object,
+                                Types.ExecutionContext, Types.String, Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_IsBuiltinEval = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "IsBuiltinEval",
                 Type.getMethodType(Type.BOOLEAN_TYPE, Types.Callable, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_MakeSuperReference = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "MakeSuperReference", Type
+        static final MethodDesc ScriptRuntime_MakeSuperPropertyReference = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "MakeSuperPropertyReference", Type
                         .getMethodType(Types.Reference, Types.ExecutionContext, Types.Object,
                                 Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_MakeSuperReference_String = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "MakeSuperReference", Type
-                        .getMethodType(Types.Reference, Types.ExecutionContext, Types.String,
-                                Type.BOOLEAN_TYPE));
+        static final MethodDesc ScriptRuntime_MakeSuperPropertyReference_String = MethodDesc
+                .create(MethodDesc.Invoke.Static, Types.ScriptRuntime,
+                        "MakeSuperPropertyReference", Type.getMethodType(Types.Reference,
+                                Types.ExecutionContext, Types.String, Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_PrepareForTailCall = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "PrepareForTailCall",
@@ -424,6 +432,28 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
     }
 
+    /**
+     * [12.3.3.1.1 Runtime Semantics: EvaluateNew(thisCall, constructProduction, arguments)]
+     * 
+     * @return
+     */
+    private ValType EvaluateNew(NewExpression node, ExpressionVisitor mv) {
+        /* steps 1-3 (not applicable) */
+        /* steps 4-6 */
+        evalAndGetBoxedValue(node.getExpression(), mv);
+        /* steps 7-8 */
+        ArgumentListEvaluation(node.getArguments(), mv);
+        /* steps 9-14 */
+        mv.lineInfo(node);
+        mv.loadExecutionContext();
+        if (!codegen.isEnabled(Compiler.Option.NoTailCall) && mv.isTailCall(node)) {
+            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorTailCall);
+            return ValType.Any;
+        }
+        mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);
+        return ValType.Object;
+    }
+
     private static boolean isPropertyReference(Expression base, ValType type) {
         return type == ValType.Reference && !(base instanceof IdentifierReference);
     }
@@ -482,7 +512,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * [12.3.3 EvaluateCall Abstract Operation]
+     * [12.3.4.2 Runtime Semantics: EvaluateCall( ref, arguments, tailPosition )]<br>
+     * [12.3.4.3 Runtime Semantics: EvaluateDirectCall( func, thisValue, arguments, tailPosition )]
      * 
      * @param call
      *            the function call expression
@@ -525,7 +556,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * [12.3.4.2 Runtime Semantics: EvaluateCall]
+     * [12.3.4.2 Runtime Semantics: EvaluateCall( ref, arguments, tailPosition )]
      * 
      * @param call
      *            the function call expression
@@ -540,7 +571,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     private void EvaluateCallPropRef(Expression call, LeftHandSideExpression base, ValType type,
             List<Expression> arguments, ExpressionVisitor mv) {
-        // only called for the property reference case (`obj.method(...)` or `obj[method](...)`)
+        // Only called for the property reference case (`obj.method(...)` or `obj[method](...)`).
         assert isPropertyReference(base, type);
         assert base instanceof ElementAccessor || base instanceof PropertyAccessor
                 || base instanceof SuperElementAccessor || base instanceof SuperPropertyAccessor;
@@ -553,29 +584,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         GetValue(base, type, mv);
 
         /* steps 3-4 */
-        // stack: [ref, func] -> [args, ref, func]
-        ArgumentListEvaluation(arguments, mv);
-        mv.dupX2();
-        mv.pop();
-
-        // stack: [args, ref, func]
-        mv.lineInfo(call);
-
-        /* steps 5-6 */
-        // stack: [args, ref, func] -> [args, ref, func(Callable)]
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_CheckCallable);
-
-        /* step 7-8 */
-        // stack: [args, ref, func(Callable)] -> [args, thisValue, func(Callable)]
+        // stack: [ref, func] -> [thisValue, func]
         mv.swap();
         mv.loadExecutionContext();
         mv.invoke(Methods.Reference_getThisValue);
         mv.swap();
 
-        /* steps 9-13 */
-        // stack: [args, thisValue, func(Callable)] -> result
-        standardCall(call, mv);
+        // stack: [thisValue, func] -> [result]
+        EvaluateDirectCall(call, arguments, mv);
     }
 
     /**
@@ -600,29 +616,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         GetValue(call, type, mv);
 
         /* steps 3-4 */
-        // stack: [ref, func] -> [args, ref, func]
-        ArgumentListEvaluation(arguments, mv);
-        mv.dupX2();
-        mv.pop();
-
-        // stack: [args, ref, func]
-        mv.lineInfo(call);
-
-        /* steps 5-6 */
-        // stack: [args, ref, func] -> [args, ref, func(Callable)]
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_CheckCallable);
-
-        /* step 7-8 */
-        // stack: [args, ref, func(Callable)] -> [args, thisValue, func(Callable)]
+        // stack: [ref, func] -> [thisValue, func]
         mv.swap();
         mv.loadExecutionContext();
         mv.invoke(Methods.Reference_getThisValue);
         mv.swap();
 
-        /* steps 9-13 */
-        // stack: [args, thisValue, func(Callable)] -> result
-        standardCall(call, mv);
+        /* step 5 */
+        // stack: [thisValue, func] -> result
+        EvaluateDirectCall(call, arguments, mv);
     }
 
     /**
@@ -647,26 +649,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         // GetValue(...)
 
         /* steps 3-4 */
-        // stack: [func] -> [args, func]
-        ArgumentListEvaluation(arguments, mv);
-        mv.swap();
-
-        // stack: [args, func]
-        mv.lineInfo(call);
-
-        /* steps 5-6 */
-        // stack: [args, func] -> [args, func(Callable)]
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_CheckCallable);
-
-        /* steps 7-8 */
-        // stack: [args, func(Callable)] -> [args, thisValue, func(Callable)]
+        // stack: [func] -> [thisValue, func]
         mv.loadUndefined();
         mv.swap();
 
         /* steps 9-13 */
         // stack: [args, thisValue, func(Callable)] -> result
-        standardCall(call, mv);
+        EvaluateDirectCall(call, arguments, mv);
     }
 
     /**
@@ -696,30 +685,31 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         GetValue(base, type, mv);
 
         /* steps 3-4 */
-        // stack: [func] -> [args, func]
-        ArgumentListEvaluation(arguments, mv);
-        mv.swap();
-
-        // stack: [args, func]
-        mv.lineInfo(call);
-
-        /* steps 5-6 */
-        // stack: [args, func] -> [args, func(Callable)]
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_CheckCallable);
-
-        /* step 7-8 */
-        // stack: [args, func(Callable)] -> [args, thisValue, func(Callable)]
+        // stack: [func] -> [thisValue, func]
         mv.loadUndefined();
         mv.swap();
 
+        /* steps 1-2 (EvaluateDirectCall) */
+        // stack: [thisValue, func] -> [args, thisValue, func]
+        ArgumentListEvaluation(arguments, mv);
+        mv.dupX2();
+        mv.pop();
+
+        // stack: [args, thisValue, func]
+        mv.lineInfo(call);
+
+        /* steps 3-4 (EvaluateDirectCall) */
+        // stack: [args, thisValue, func] -> [args, thisValue, func(Callable)]
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_CheckCallable);
+
         if (directEval) {
-            directEvalCall(afterCall, mv);
+            directEvalCall(arguments, afterCall, mv);
         }
 
-        /* steps 9-13 */
+        /* steps 5-9 (EvaluateDirectCall) */
         // stack: [args, thisValue, func(Callable)] -> result
-        standardCall(call, mv);
+        EvaluateDirectCall(call, mv);
 
         if (directEval) {
             mv.mark(afterCall);
@@ -755,28 +745,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         // stack: [ref, ref] -> [ref, func]
         GetValue(base, type, mv);
 
-        /* steps 3-4 */
-        // stack: [ref, func] -> [args, ref, func]
-        ArgumentListEvaluation(arguments, mv);
-        mv.dupX2();
-        mv.pop();
-
-        // stack: [args, ref, func]
-        mv.lineInfo(call);
-
-        /* steps 5-6 */
-        // stack: [args, ref, func] -> [args, ref, func(Callable)]
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_CheckCallable);
-
-        /* step 7-8 */
-        // stack: [args, ref, func(Callable)] -> [args, func(Callable), baseObj?]
+        /* step 3-4 */
+        // stack: [ref, func] -> [func, baseObj?]
         mv.swap();
         mv.invoke(Methods.Reference_getBase);
         mv.checkcast(Types.EnvironmentRecord);
         mv.invoke(Methods.EnvironmentRecord_withBaseObject);
 
-        // stack: [args, func(Callable), baseObj?] -> [args, thisValue, func(Callable)]
+        // stack: [func, baseObj?] -> [thisValue, func]
         mv.dup();
         mv.ifnonnull(baseObjNotNull);
         {
@@ -786,13 +762,27 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.mark(baseObjNotNull);
         mv.swap();
 
+        /* steps 1-2 (EvaluateDirectCall) */
+        // stack: [thisValue, func] -> [args, thisValue, func]
+        ArgumentListEvaluation(arguments, mv);
+        mv.dupX2();
+        mv.pop();
+
+        // stack: [args, thisValue, func]
+        mv.lineInfo(call);
+
+        /* steps 3-4 (EvaluateDirectCall) */
+        // stack: [args, thisValue, func] -> [args, thisValue, func(Callable)]
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_CheckCallable);
+
         if (directEval) {
-            directEvalCall(afterCall, mv);
+            directEvalCall(arguments, afterCall, mv);
         }
 
-        /* steps 9-13 */
+        /* steps 5-9 (EvaluateDirectCall) */
         // stack: [args, thisValue, func(Callable)] -> result
-        standardCall(call, mv);
+        EvaluateDirectCall(call, mv);
 
         if (directEval) {
             mv.mark(afterCall);
@@ -802,12 +792,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     /**
      * [18.2.1.1] Direct Call to Eval
      * 
+     * @param arguments
+     *            the list of function call arguments
+     * 
      * @param afterCall
      *            the label after the call instruction
      * @param mv
      *            the expression visitor
      */
-    private void directEvalCall(Jump afterCall, ExpressionVisitor mv) {
+    private void directEvalCall(List<Expression> arguments, Jump afterCall, ExpressionVisitor mv) {
         // test for possible direct-eval call
         Jump notEval = new Jump();
 
@@ -816,29 +809,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_IsBuiltinEval);
         mv.ifeq(notEval);
-
-        // stack: [args, thisValue, func(Callable)] -> [args]
-        mv.pop2();
-
-        // stack: [args] -> [result]
-        mv.loadExecutionContext();
-        int evalFlags = EvalFlags.Direct.getValue();
-        if (mv.isStrict()) {
-            evalFlags |= EvalFlags.Strict.getValue();
+        {
+            PerformEval(arguments, afterCall, mv);
         }
-        if (mv.isGlobalCode()) {
-            evalFlags |= EvalFlags.GlobalCode.getValue();
-        }
-        if (isGlobalScope(mv)) {
-            evalFlags |= EvalFlags.GlobalScope.getValue();
-        }
-        if (isEnclosedByWithStatement(mv)) {
-            evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();
-        }
-        mv.iconst(evalFlags);
-        mv.invoke(Methods.Eval_directEval);
-
-        mv.goTo(afterCall);
         mv.mark(notEval);
 
         if (codegen.isEnabled(CompatibilityOption.Realm)) {
@@ -863,21 +836,126 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * [12.3.3 EvaluateCall Abstract Operation]
+     * [18.2.1.1] Direct Call to Eval
+     * 
+     * @param arguments
+     *            the list of function call arguments
+     * @param afterCall
+     *            the label after the call instruction
+     * @param mv
+     *            the expression visitor
+     */
+    private void PerformEval(List<Expression> arguments, Jump afterCall, ExpressionVisitor mv) {
+        int evalFlags = EvalFlags.Direct.getValue();
+        if (mv.isStrict()) {
+            evalFlags |= EvalFlags.Strict.getValue();
+        }
+        if (mv.isGlobalCode()) {
+            evalFlags |= EvalFlags.GlobalCode.getValue();
+        }
+        if (isGlobalScope(mv)) {
+            evalFlags |= EvalFlags.GlobalScope.getValue();
+        }
+        if (isEnclosedByWithStatement(mv)) {
+            evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();
+        }
+
+        // stack: [args, thisValue, func(Callable)] -> [args]
+        mv.pop2();
+
+        if (codegen.isEnabled(CompatibilityOption.Realm)) {
+            // stack: [args] -> [result]
+            mv.loadExecutionContext();
+            mv.iconst(evalFlags);
+            mv.invoke(Methods.Eval_directEvalWithTranslate);
+            mv.goTo(afterCall);
+        } else {
+            if (arguments.isEmpty()) {
+                // stack: [args(empty)] -> [result]
+                mv.pop();
+                mv.loadUndefined();
+                mv.goTo(afterCall);
+            } else if (hasArguments(arguments)) {
+                // stack: [args] -> [arg_0]
+                mv.iconst(0);
+                mv.aaload();
+                mv.loadExecutionContext();
+                mv.iconst(evalFlags);
+                mv.invoke(Methods.Eval_directEval);
+                mv.goTo(afterCall);
+            } else {
+                Jump emptyArguments = new Jump();
+                mv.dup();
+                mv.arraylength();
+                mv.ifeq(emptyArguments);
+                {
+                    mv.iconst(0);
+                    mv.aaload();
+                    mv.loadExecutionContext();
+                    mv.iconst(evalFlags);
+                    mv.invoke(Methods.Eval_directEval);
+                    mv.goTo(afterCall);
+                }
+                mv.mark(emptyArguments);
+                mv.pop();
+                mv.loadUndefined();
+                mv.goTo(afterCall);
+            }
+        }
+    }
+
+    private static boolean hasArguments(List<Expression> arguments) {
+        for (Expression argument : arguments) {
+            if (!(argument instanceof CallSpreadElement)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * [12.3.4.3 Runtime Semantics: EvaluateDirectCall( func, thisValue, arguments, tailPosition )]
      * 
      * @param call
      *            the function call expression
      * @param mv
      *            the expression visitor
      */
-    private void standardCall(Expression call, ExpressionVisitor mv) {
-        // stack: [args, thisValue, func(Callable)]
+    private ValType EvaluateDirectCall(Expression call, List<Expression> arguments,
+            ExpressionVisitor mv) {
+        /* steps 1-2 */
+        // stack: [thisValue, func] -> [args, thisValue, func]
+        ArgumentListEvaluation(arguments, mv);
+        mv.dupX2();
+        mv.pop();
 
-        /* steps 10, 12-13 */
+        // stack: [args, thisValue, func]
+        mv.lineInfo(call);
+
+        /* steps 3-4 */
+        // stack: [args, thisValue, func] -> [args, thisValue, func(Callable)]
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_CheckCallable);
+
+        /* steps 5-9 */
+        // stack: [args, thisValue, func(Callable)] -> result
+        return EvaluateDirectCall(call, mv);
+    }
+
+    /**
+     * [12.3.4.3 Runtime Semantics: EvaluateDirectCall( func, thisValue, arguments, tailPosition )]
+     * 
+     * @param call
+     *            the function call expression
+     * @param mv
+     *            the expression visitor
+     */
+    private ValType EvaluateDirectCall(Expression call, ExpressionVisitor mv) {
+        /* steps 5-9 */
         if (!codegen.isEnabled(Compiler.Option.NoTailCall) && mv.isTailCall(call)) {
             // stack: [args, thisValue, func(Callable)] -> [<func(Callable), thisValue, args>]
             mv.invoke(Methods.ScriptRuntime_PrepareForTailCall);
-            return;
+            return ValType.Any;
         }
 
         // stack: [args, thisValue, func(Callable)] -> [func(Callable), cx, thisValue, args]
@@ -886,9 +964,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.pop2();
         mv.swap();
 
-        /* steps 11, 14 */
+        /* steps 6, 8-9 */
         // stack: [func(Callable), cx, thisValue, args] -> [result]
         invokeDynamicCall(mv);
+        return ValType.Any;
     }
 
     /**
@@ -2291,18 +2370,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(NewExpression node, ExpressionVisitor mv) {
-        /* steps 1-3 */
-        evalAndGetBoxedValue(node.getExpression(), mv);
-        /* steps 4-5 */
-        ArgumentListEvaluation(node.getArguments(), mv);
-        mv.lineInfo(node);
-        mv.loadExecutionContext();
-        if (!codegen.isEnabled(Compiler.Option.NoTailCall) && mv.isTailCall(node)) {
-            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorTailCall);
-            return ValType.Any;
-        }
-        mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);
-        return ValType.Object;
+        /* steps 1-2 */
+        return EvaluateNew(node, mv);
     }
 
     /**
@@ -2413,12 +2482,19 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(SuperCallExpression node, ExpressionVisitor mv) {
+        /* steps 1-2 */
+        // stack: [] -> [func(Callable)]
         mv.loadExecutionContext();
-        mv.aconst(null);
-        mv.iconst(mv.isStrict());
-        mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
+        mv.invoke(Methods.ScriptRuntime_GetSuperConstructor);
 
-        return EvaluateCall(node, node, ValType.Reference, node.getArguments(), false, mv);
+        /* step 3 */
+        // stack: [] -> [thisValue, func(Callable)]
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ExecutionContext_resolveThisBinding);
+        mv.swap();
+
+        /* steps 4-6 */
+        return EvaluateDirectCall(node, node.getArguments(), mv);
     }
 
     /**
@@ -2426,11 +2502,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(SuperElementAccessor node, ExpressionVisitor mv) {
+        /* steps 1-5 */
         mv.loadExecutionContext();
         ValType type = evalAndGetValue(node.getExpression(), mv);
         ToPropertyKey(type, mv);
         mv.iconst(mv.isStrict());
-        mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
+        mv.invoke(Methods.ScriptRuntime_MakeSuperPropertyReference);
 
         return ValType.Reference;
     }
@@ -2440,11 +2517,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(SuperElementAccessorValue node, ExpressionVisitor mv) {
+        /* steps 1-5 */
         mv.loadExecutionContext();
         ValType type = evalAndGetValue(node.getExpression(), mv);
         ToPropertyKey(type, mv);
         mv.iconst(mv.isStrict());
-        mv.invoke(Methods.ScriptRuntime_getSuperReferenceValue);
+        mv.invoke(Methods.ScriptRuntime_getSuperPropertyReferenceValue);
 
         return ValType.Any;
     }
@@ -2454,16 +2532,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(SuperNewExpression node, ExpressionVisitor mv) {
-        /* steps 1-4 */
+        /* steps 1-2 */
         mv.loadExecutionContext();
-        mv.aconst(null);
-        mv.iconst(mv.isStrict());
-        mv.invoke(Methods.ScriptRuntime_getSuperReferenceValue);
+        mv.invoke(Methods.ScriptRuntime_GetSuperConstructor);
 
-        /* steps 5-6 */
+        /* steps 3-4 */
         ArgumentListEvaluation(node.getArguments(), mv);
 
-        /* steps 7-13 */
+        /* steps 5-11 */
         mv.lineInfo(node);
         mv.loadExecutionContext();
         if (!codegen.isEnabled(Compiler.Option.NoTailCall) && mv.isTailCall(node)) {
@@ -2479,10 +2555,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(SuperPropertyAccessor node, ExpressionVisitor mv) {
+        /* steps 1-3 */
         mv.loadExecutionContext();
         mv.aconst(node.getName());
         mv.iconst(mv.isStrict());
-        mv.invoke(Methods.ScriptRuntime_MakeSuperReference_String);
+        mv.invoke(Methods.ScriptRuntime_MakeSuperPropertyReference_String);
 
         return ValType.Reference;
     }
@@ -2492,10 +2569,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(SuperPropertyAccessorValue node, ExpressionVisitor mv) {
+        /* steps 1-3 */
         mv.loadExecutionContext();
         mv.aconst(node.getName());
         mv.iconst(mv.isStrict());
-        mv.invoke(Methods.ScriptRuntime_getSuperReferenceValue_String);
+        mv.invoke(Methods.ScriptRuntime_getSuperPropertyReferenceValue_String);
 
         return ValType.Any;
     }

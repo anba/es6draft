@@ -12,7 +12,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1><br>
@@ -26,7 +25,8 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     private final LexicalEnvironment<?> outer;
     private final RECORD envRec;
 
-    public LexicalEnvironment(ExecutionContext cx, RECORD envRec) {
+    LexicalEnvironment(ExecutionContext cx, RECORD envRec) {
+        assert envRec instanceof GlobalEnvironmentRecord;
         this.cx = cx;
         this.outer = null;
         this.envRec = envRec;
@@ -179,18 +179,20 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(
             ExecutionContext callerContext, FunctionObject f, Object t) {
         /* step 1 */
-        assert f.getThisMode() != ThisMode.Lexical;
-        /* step 5 */
+        // FIXME: spec bug
+        // assert f.getThisMode() != ThisMode.Lexical;
+        /* step 2 (note) */
+        /* step 7 */
         if (f.isNeedsSuper() && f.getHomeObject() == null) {
             throw newReferenceError(callerContext, Messages.Key.MissingSuperBinding);
         }
         LexicalEnvironment<?> e = f.getEnvironment();
-        /* steps 3-6 */
-        FunctionEnvironmentRecord envRec = new FunctionEnvironmentRecord(e.cx, t,
-                f.getHomeObject(), f.getMethodName());
-        /* steps 2, 7-8 */
+        /* steps 4-8 */
+        FunctionEnvironmentRecord envRec = new FunctionEnvironmentRecord(e.cx, f, t,
+                f.getHomeObject());
+        /* steps 3, 9-10 */
         LexicalEnvironment<FunctionEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
-        /* step 9 */
+        /* step 11 */
         return env;
     }
 
@@ -214,18 +216,18 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.? NewModuleEnvironment (E) Abstract Operation
+     * 8.1.2.6 NewModuleEnvironment (E) Abstract Operation
      * 
      * @param e
      *            the outer lexical environment
      * @return the new module environment
      */
-    public static LexicalEnvironment<DeclarativeEnvironmentRecord> newModuleEnvironment(
+    public static LexicalEnvironment<ModuleEnvironmentRecord> newModuleEnvironment(
             LexicalEnvironment<?> e) {
         /* step 2 */
-        DeclarativeEnvironmentRecord envRec = new DeclarativeEnvironmentRecord(e.cx);
+        ModuleEnvironmentRecord envRec = new ModuleEnvironmentRecord(e.cx);
         /* steps 1, 3-4 */
-        LexicalEnvironment<DeclarativeEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
+        LexicalEnvironment<ModuleEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
         /* step 5 */
         return env;
     }

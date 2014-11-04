@@ -13,7 +13,7 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=2906
 
 let lengthCalled = false;
-let ta = Int8Array[Symbol.create]();
+let ta = new class extends Int8Array { constructor() { /* no super */ } };
 
 assertThrows(TypeError, () => {
   Int8Array.call(ta, {

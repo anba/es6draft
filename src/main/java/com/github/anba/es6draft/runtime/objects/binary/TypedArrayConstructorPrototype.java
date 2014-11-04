@@ -22,9 +22,10 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -38,7 +39,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>22.2.2 Properties of the %TypedArray% Intrinsic Object
  * </ul>
  */
-public final class TypedArrayConstructorPrototype extends BuiltinFunction implements Initializable {
+public final class TypedArrayConstructorPrototype extends BuiltinFunction implements Initializable,
+        Creatable<TypedArrayObject> {
     /**
      * Constructs a new TypedArray constructor function.
      * 
@@ -129,7 +131,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             throw newRangeError(cx, Messages.Key.InvalidBufferSize);
         }
         /* steps 14-15 */
-        ArrayBufferObject data = AllocateArrayBuffer(cx, Intrinsics.ArrayBuffer);
+        ArrayBufferObject data = AllocateArrayBuffer(cx);
         /* step 16 */
         if (array.getBuffer() != null) {
             throw newTypeError(cx, Messages.Key.InitializedObject);
@@ -374,6 +376,28 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         return array;
     }
 
+    @Override
+    public CreateAction<TypedArrayObject> createAction() {
+        return TypedArrayCreate.INSTANCE;
+    }
+
+    static final class TypedArrayCreate implements CreateAction<TypedArrayObject> {
+        static final CreateAction<TypedArrayObject> INSTANCE = new TypedArrayCreate();
+
+        @Override
+        public TypedArrayObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            /* steps 1-2 */
+            ScriptObject proto = GetPrototypeFromConstructor(cx, constructor,
+                    Intrinsics.TypedArrayPrototype);
+            /* steps 3 */
+            TypedArrayObject obj = new TypedArrayObject(cx.getRealm());
+            obj.setPrototype(proto);
+            /* steps 4-8 (implicit) */
+            /* step 9 */
+            return obj;
+        }
+    }
+
     /**
      * 22.2.2 Properties of the %TypedArray% Intrinsic Object
      */
@@ -468,30 +492,6 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             /* step 7 (omitted) */
             /* step 8 */
             return TypedArrayFrom(cx, (Constructor) c, null, items, f, thisArg);
-        }
-
-        /**
-         * 22.2.3.4 %TypedArray%[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized typed array object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            /* step 1 */
-            Object f = thisValue;
-            /* steps 2-3 */
-            ScriptObject proto = GetPrototypeFromConstructor(cx, f, Intrinsics.TypedArrayPrototype);
-            /* steps 4 */
-            TypedArrayObject obj = new TypedArrayObject(cx.getRealm());
-            obj.setPrototype(proto);
-            /* steps 5-9 (implicit) */
-            /* step 10 */
-            return obj;
         }
     }
 
@@ -621,7 +621,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             /* steps 6.b-6.c */
             ElementType elementType = target.getElementType();
             /* steps 6.d-6.e */
-            ArrayBufferObject data = AllocateArrayBuffer(cx, Intrinsics.ArrayBuffer);
+            ArrayBufferObject data = AllocateArrayBuffer(cx);
             /* step 6.f */
             int elementSize = elementType.size();
             /* step 6.g */

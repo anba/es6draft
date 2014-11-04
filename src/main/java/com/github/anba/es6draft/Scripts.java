@@ -31,28 +31,27 @@ public final class Scripts {
      *            the script object
      * @param realm
      *            the realm instance
-     * @param deletableBindings
-     *            the deletableBindings flag
      * @return the script evaluation result
      */
-    public static Object ScriptEvaluation(Script script, Realm realm, boolean deletableBindings) {
+    public static Object ScriptEvaluation(Script script, Realm realm) {
         /* steps 1-2 */
         RuntimeInfo.ScriptBody scriptBody = script.getScriptBody();
         /* step 3 */
         LexicalEnvironment<GlobalEnvironmentRecord> globalEnv = realm.getGlobalEnv();
-        /* steps 6-10 (moved) */
+        /* steps 4-8 */
         ExecutionContext scriptCxt = newScriptExecutionContext(realm, script);
+        /* steps 9-10 */
         ExecutionContext oldScriptContext = realm.getScriptContext();
         try {
             realm.setScriptContext(scriptCxt);
-            /* steps 4-5 */
-            scriptBody.globalDeclarationInstantiation(scriptCxt, globalEnv, globalEnv,
-                    deletableBindings);
-            /* steps 11-16 */
+            /* step 11 */
+            scriptBody.globalDeclarationInstantiation(scriptCxt, globalEnv);
+            /* steps 12-13 */
             Object result = script.evaluate(scriptCxt);
             /* step 17 */
             return result;
         } finally {
+            /* steps 14-16  */
             realm.setScriptContext(oldScriptContext);
         }
     }

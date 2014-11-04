@@ -25,6 +25,7 @@ import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.Scripts;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
@@ -168,6 +169,9 @@ public final class NativeCalls {
         case "native:IsDetachedBuffer":
             target = callIsDetachedBufferMH;
             break;
+        case "native:ToPropertyKey":
+            target = callToPropertyKeyMH;
+            break;
         default:
             target = MethodHandles.insertArguments(invalidNativeCallMH, 0, name);
             target = MethodHandles.dropArguments(target, 0, Object[].class);
@@ -181,7 +185,7 @@ public final class NativeCalls {
             callIsUninitializedSetMH, callIsUninitializedWeakMapMH, callIsUninitializedWeakSetMH,
             callRegExpReplaceMH, callRegExpTestMH, callIsFunctionExpressionMH,
             callSymbolDescriptionMH, callIncludeMH, callIsArrayBufferMH, callIsDetachedBufferMH,
-            invalidNativeCallMH;
+            callToPropertyKeyMH, invalidNativeCallMH;
     static {
         MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
         MethodType callType = MethodType.methodType(Object.class, Object[].class,
@@ -203,6 +207,7 @@ public final class NativeCalls {
         callIncludeMH = lookup.findStatic("call_Include", callType);
         callIsArrayBufferMH = lookup.findStatic("call_IsArrayBuffer", callType);
         callIsDetachedBufferMH = lookup.findStatic("call_IsDetachedBuffer", callType);
+        callToPropertyKeyMH = lookup.findStatic("call_ToPropertyKey", callType);
         invalidNativeCallMH = lookup.findStatic("invalidNativeCall",
                 MethodType.methodType(Object.class, String.class, ExecutionContext.class));
     }
@@ -351,6 +356,14 @@ public final class NativeCalls {
     private static Object call_IsDetachedBuffer(Object[] args, ExecutionContext cx) {
         if (args.length == 1 && args[0] instanceof ArrayBufferObject) {
             return IsDetachedBuffer((ArrayBufferObject) args[0]);
+        }
+        return invalidNativeCallArguments(cx);
+    }
+
+    @SuppressWarnings("unused")
+    private static Object call_ToPropertyKey(Object[] args, ExecutionContext cx) {
+        if (args.length == 1) {
+            return ToPropertyKey(cx, args[0]);
         }
         return invalidNativeCallArguments(cx);
     }
@@ -621,7 +634,7 @@ public final class NativeCalls {
         } catch (IOException e) {
             throw newInternalError(cx, Messages.Key.InternalError, e.toString());
         }
-        return Scripts.ScriptEvaluation(script, realm, false);
+        return Scripts.ScriptEvaluation(script, realm);
     }
 
     /**
@@ -648,5 +661,20 @@ public final class NativeCalls {
      */
     public static boolean IsDetachedBuffer(ArrayBufferObject arrayBuffer) {
         return ArrayBufferConstructor.IsDetachedBuffer(arrayBuffer);
+    }
+
+    /**
+     * Native function: {@code %ToPropertyKey(<value>)}.
+     * <p>
+     * Converts the input argument to a property key.
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the input argument
+     * @return the property key
+     */
+    public static Object ToPropertyKey(ExecutionContext cx, Object value) {
+        return AbstractOperations.ToPropertyKey(cx, value);
     }
 }

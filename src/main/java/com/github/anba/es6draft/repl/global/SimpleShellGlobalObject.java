@@ -6,14 +6,20 @@
  */
 package com.github.anba.es6draft.repl.global;
 
-import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModuleNamespace;
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ModuleEvaluationJob;
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.NormalizeModuleName;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.DetachArrayBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
+import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
@@ -22,6 +28,8 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.internal.DebugInfo;
+import com.github.anba.es6draft.runtime.internal.Errors;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -29,9 +37,12 @@ import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
 import com.github.anba.es6draft.runtime.objects.collection.WeakMapObject;
+import com.github.anba.es6draft.runtime.objects.reflect.RealmObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject;
 
 /**
  *
@@ -45,7 +56,7 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
     @Override
     protected void initializeExtensions(ExecutionContext cx) {
         super.initializeExtensions(cx);
-        createProperties(cx, cx.getGlobalObject(), this, SimpleShellGlobalObject.class);
+        install(this, SimpleShellGlobalObject.class);
     }
 
     /**
@@ -147,15 +158,72 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
     }
 
     /**
+     * shell-function: {@code readRelativeToScript(filename)}
+     * 
+     * @param cx
+     *            the execution context
+     * @param caller
+     *            the caller execution context
+     * @param filename
+     *            the file to load
+     * @return the result value
+     */
+    @Function(name = "readRelativeToScript", arity = 1)
+    public Object readRelativeToScript(ExecutionContext cx, ExecutionContext caller, String filename) {
+        return read(cx, Paths.get(filename), relativePathToScript(caller, Paths.get(filename)));
+    }
+
+    /**
+     * shell-function: {@code loadModule(moduleName, [realmObject])}
+     * 
+     * @param cx
+     *            the execution context
+     * @param moduleName
+     *            the module name
+     * @param realmObject
+     *            the optional realm object
+     * @return the result value
+     */
+    @Function(name = "loadModule", arity = 1)
+    public ModuleNamespaceObject loadModule(ExecutionContext cx, String moduleName,
+            Object realmObject) {
+        Realm realm;
+        if (!Type.isUndefined(realmObject)) {
+            if (!(realmObject instanceof RealmObject)) {
+                throw Errors.newTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            realm = ((RealmObject) realmObject).getRealm();
+            if (realm == null) {
+                throw Errors.newTypeError(cx, Messages.Key.UninitializedObject);
+            }
+        } else {
+            realm = cx.getRealm();
+        }
+        String normalizedModuleName = NormalizeModuleName(cx, realm, "", moduleName);
+        ModuleEvaluationJob(cx, realm, normalizedModuleName);
+        return GetModuleNamespace(cx, realm, normalizedModuleName);
+    }
+
+    /**
      * shell-function: {@code dump(object)}
      * 
      * @param object
      *            the object to inspect
      */
     @Function(name = "dump", arity = 1)
-    public void dump(ScriptObject object) {
-        String id = String.format("%s@%d", object.getClass().getSimpleName(),
-                System.identityHashCode(object));
+    public void dump(Object object) {
+        String id;
+        if (!Type.isType(object)) {
+            // foreign object or null
+            id = Objects.toString(object, "<null>");
+        } else if (!Type.isObject(object)) {
+            // primitive value
+            id = String.format("%s (%s)", object.toString(), object.getClass().getSimpleName());
+        } else {
+            // script objects
+            id = String.format("%s@%x", object.getClass().getSimpleName(),
+                    System.identityHashCode(object));
+        }
         console.print(id);
     }
 
@@ -172,6 +240,11 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
 
     /**
      * shell-function: {@code dumpScope()}
+     * 
+     * @param cx
+     *            the execution context
+     * @param caller
+     *            the caller context
      */
     @Function(name = "dumpScope", arity = 0)
     public void dumpScope(ExecutionContext cx, ExecutionContext caller) {
@@ -180,6 +253,9 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
 
     /**
      * shell-function: {@code dumpSymbolRegistry()}
+     * 
+     * @param cx
+     *            the execution context
      */
     @Function(name = "dumpSymbolRegistry", arity = 0)
     public void dumpSymbolRegistry(ExecutionContext cx) {
@@ -284,11 +360,11 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         DebugInfo debugInfo = null;
         if (args.length == 0) {
             FunctionObject currentFunction = caller.getCurrentFunction();
-            Script currentScript = caller.getCurrentScript();
-            if (currentFunction != null && currentFunction.getScript() == currentScript) {
+            Executable currentExec = caller.getCurrentExecutable();
+            if (currentFunction != null && currentFunction.getExecutable() == currentExec) {
                 debugInfo = currentFunction.getCode().debugInfo();
-            } else if (currentScript != null && currentScript.getScriptBody() != null) {
-                debugInfo = currentScript.getScriptBody().debugInfo();
+            } else if (currentExec != null && currentExec.getSourceObject() != null) {
+                debugInfo = currentExec.getSourceObject().debugInfo();
             }
         } else if (args[0] instanceof FunctionObject) {
             debugInfo = ((FunctionObject) args[0]).getCode().debugInfo();
@@ -298,5 +374,28 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
                 console.print(method.disassemble());
             }
         }
+    }
+
+    /**
+     * shell-function: {@code evalScript(sourceString, [sourceName, sourceLine])}
+     * 
+     * @param cx
+     *            the execution context
+     * @param sourceString
+     *            the source string
+     * @param sourceName
+     *            the optional source name
+     * @param sourceLine
+     *            the optional source line number
+     * @return the evaluation result
+     */
+    @Function(name = "evalScript", arity = 1)
+    public Object evalScript(ExecutionContext cx, String sourceString, Object sourceName,
+            Object sourceLine) {
+        String name = Type.isUndefined(sourceName) ? "" : ToFlatString(cx, sourceName);
+        int line = Type.isUndefined(sourceLine) ? 1 : ToInt32(cx, sourceLine);
+        Source source = new Source(name, line);
+        Script script = getScriptLoader().script(source, sourceString);
+        return eval(script);
     }
 }

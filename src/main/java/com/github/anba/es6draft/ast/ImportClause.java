@@ -15,12 +15,14 @@ import java.util.List;
 public final class ImportClause extends AstNode {
     private final BindingIdentifier defaultEntry;
     private final List<ImportSpecifier> namedImports;
+    private final BindingIdentifier nameSpace;
 
     public ImportClause(long beginPosition, long endPosition, BindingIdentifier defaultEntry,
-            List<ImportSpecifier> namedImports) {
+            List<ImportSpecifier> namedImports, BindingIdentifier nameSpace) {
         super(beginPosition, endPosition);
         this.defaultEntry = defaultEntry;
         this.namedImports = namedImports;
+        this.nameSpace = nameSpace;
     }
 
     public BindingIdentifier getDefaultEntry() {
@@ -29,6 +31,10 @@ public final class ImportClause extends AstNode {
 
     public List<ImportSpecifier> getNamedImports() {
         return namedImports;
+    }
+
+    public BindingIdentifier getNameSpace() {
+        return nameSpace;
     }
 
     @Override

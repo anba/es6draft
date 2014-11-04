@@ -21,9 +21,7 @@ let g2 = gen.call(g1);
 assertNotSame(g1, g2);
 assertEquals({value: 0, done: false}, g2.next());
 
-let g3 = gen[Symbol.create]();
-let g4 = gen.call(g3);
-assertSame(g3, g4);
+let g3 = gen.call();
 assertEquals({value: 0, done: false}, g3.next());
 
 assertEquals({value: 1, done: false}, g1.next());

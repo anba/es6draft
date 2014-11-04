@@ -11,31 +11,19 @@
 const global = %GlobalObject();
 
 const {
-  Object, Symbol
+  Object, Function, Symbol
 } = global;
 
-const {
-  create: createSym,
-} = Symbol;
-
-// Pseudo-symbol in SpiderMonkey
-const mozIteratorSym = "@@iterator";
-
-// Create overrides for Map/Set/WeakMap/WeakSet:
-// - To enable construction without `new`
-// - To enable initialization with `mozIteratorSym`
+// Create overrides for Map/Set/WeakMap/WeakSet to enable construction without `new`.
 
 { /* Map */
   const BuiltinMap = global.Map;
   const BuiltinMap_prototype_size = Object.getOwnPropertyDescriptor(BuiltinMap.prototype, "size").get;
 
-  class Map {
+  class Map extends BuiltinMap {
     constructor(iterable) {
       if (!%IsUninitializedMap(this)) {
         return new Map(iterable);
-      }
-      if (iterable !== void 0) {
-        iterable = iterable[mozIteratorSym]();
       }
       return %CallFunction(BuiltinMap, this, iterable);
     }
@@ -83,11 +71,10 @@ const mozIteratorSym = "@@iterator";
     get [Symbol.toStringTag]() {
       return "Map";
     }
-
-    static [createSym]() {
-      return %CallFunction(BuiltinMap[createSym], this);
-    }
   }
+
+  Object.setPrototypeOf(Map, Function.prototype);
+  Object.setPrototypeOf(Map.prototype, Object.prototype);
 
   Object.defineProperties(Map.prototype, {
     clear: {enumerable: false},
@@ -104,10 +91,6 @@ const mozIteratorSym = "@@iterator";
     [Symbol.toStringTag]: {enumerable: false},
   });
 
-  Object.defineProperties(Map, {
-    [createSym]: {writable: false, enumerable: false},
-  });
-
   %SetIntrinsic("Map", Map);
   global.Map = Map;
 }
@@ -116,13 +99,10 @@ const mozIteratorSym = "@@iterator";
   const BuiltinSet = global.Set;
   const BuiltinSet_prototype_size = Object.getOwnPropertyDescriptor(BuiltinSet.prototype, "size").get;
 
-  class Set {
+  class Set extends BuiltinSet {
     constructor(iterable) {
       if (!%IsUninitializedSet(this)) {
         return new Set(iterable);
-      }
-      if (iterable !== void 0) {
-        iterable = iterable[mozIteratorSym]();
       }
       return %CallFunction(BuiltinSet, this, iterable);
     }
@@ -162,11 +142,10 @@ const mozIteratorSym = "@@iterator";
     get [Symbol.toStringTag]() {
       return "Set";
     }
-
-    static [createSym]() {
-      return %CallFunction(BuiltinSet[createSym], this);
-    }
   }
+
+  Object.setPrototypeOf(Set, Function.prototype);
+  Object.setPrototypeOf(Set.prototype, Object.prototype);
 
   Object.defineProperties(Set.prototype, {
     add: {enumerable: false},
@@ -182,10 +161,6 @@ const mozIteratorSym = "@@iterator";
     [Symbol.toStringTag]: {enumerable: false},
   });
 
-  Object.defineProperties(Set, {
-    [createSym]: {writable: false, enumerable: false},
-  });
-
   %SetIntrinsic("Set", Set);
   global.Set = Set;
 }
@@ -193,13 +168,10 @@ const mozIteratorSym = "@@iterator";
 { /* WeakMap */
   const BuiltinWeakMap = global.WeakMap;
 
-  class WeakMap {
+  class WeakMap extends BuiltinWeakMap {
     constructor(iterable) {
       if (!%IsUninitializedWeakMap(this)) {
         return new WeakMap(iterable);
-      }
-      if (iterable !== void 0) {
-        iterable = iterable[mozIteratorSym]();
       }
       return %CallFunction(BuiltinWeakMap, this, iterable);
     }
@@ -230,11 +202,10 @@ const mozIteratorSym = "@@iterator";
     get [Symbol.toStringTag]() {
       return "WeakMap";
     }
-
-    static [createSym]() {
-      return %CallFunction(BuiltinWeakMap[createSym], this);
-    }
   }
+
+  Object.setPrototypeOf(WeakMap, Function.prototype);
+  Object.setPrototypeOf(WeakMap.prototype, Object.prototype);
 
   Object.defineProperties(WeakMap.prototype, {
     clear: {enumerable: false},
@@ -245,10 +216,6 @@ const mozIteratorSym = "@@iterator";
     [Symbol.toStringTag]: {enumerable: false},
   });
 
-  Object.defineProperties(WeakMap, {
-    [createSym]: {writable: false, enumerable: false},
-  });
-
   %SetIntrinsic("WeakMap", WeakMap);
   global.WeakMap = WeakMap;
 }
@@ -256,11 +223,8 @@ const mozIteratorSym = "@@iterator";
 { /* WeakSet */
   const BuiltinWeakSet = global.WeakSet;
 
-  class WeakSet {
+  class WeakSet extends BuiltinWeakSet {
     constructor(iterable) {
-      if (iterable !== void 0) {
-        iterable = iterable[mozIteratorSym]();
-      }
       return %CallFunction(BuiltinWeakSet, this, iterable);
     }
 
@@ -283,11 +247,10 @@ const mozIteratorSym = "@@iterator";
     get [Symbol.toStringTag]() {
       return "WeakSet";
     }
-
-    static [createSym]() {
-      return %CallFunction(BuiltinWeakSet[createSym], this);
-    }
   }
+
+  Object.setPrototypeOf(WeakSet, Function.prototype);
+  Object.setPrototypeOf(WeakSet.prototype, Object.prototype);
 
   Object.defineProperties(WeakSet.prototype, {
     add: {enumerable: false},
@@ -295,10 +258,6 @@ const mozIteratorSym = "@@iterator";
     delete: {enumerable: false},
     has: {enumerable: false},
     [Symbol.toStringTag]: {enumerable: false},
-  });
-
-  Object.defineProperties(WeakSet, {
-    [createSym]: {writable: false, enumerable: false},
   });
 
   %SetIntrinsic("WeakSet", WeakSet);

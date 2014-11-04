@@ -172,8 +172,6 @@ public interface VoidNodeVisitor<V> {
 
     void visit(Module node, V value);
 
-    void visit(ModuleImport node, V value);
-
     void visit(NativeCallExpression node, V value);
 
     void visit(NewExpression node, V value);

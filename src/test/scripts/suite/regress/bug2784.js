@@ -13,14 +13,14 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=2784
 
 {
-  let ta = Int8Array[Symbol.create]();
+  let ta = new class extends Int8Array { constructor() { /* no super */ } };
   let result = Int8Array.call(ta, Object.assign({length: 0}, []));
   assertSame(ta, result);
   assertSame(0, ta.length);
 }
 
 {
-  let ta = Int8Array[Symbol.create]();
+  let ta = new class extends Int8Array { constructor() { /* no super */ } };
   let result = Int8Array.call(ta, Object.assign({length: 3}, [1, 2, 3]));
   assertSame(ta, result);
   assertSame(3, ta.length);

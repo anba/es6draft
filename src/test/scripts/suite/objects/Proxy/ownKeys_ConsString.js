@@ -11,6 +11,6 @@ const {
 
 // Ensure ConsString is flattened
 function testConsString(a, b) {
-  Object.freeze(new Proxy({}, {ownKeys: () => [a + b]}));
+  Object.freeze(new Proxy({[a + b]: null}, {ownKeys: () => [a + b]}));
 }
 testConsString("a".repeat(100), "b".repeat(100))

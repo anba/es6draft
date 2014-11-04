@@ -1402,9 +1402,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.loadUndefined();
             mv.store(received);
 
-            /* step 6a (empty) */
-
-            /* step 6b */
+            /* step 6.a.i-6.a.ii */
             // stack: [] -> []
             mv.mark(iteratorNext);
             mv.loadExecutionContext();
@@ -1413,14 +1411,14 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.AbstractOperations_IteratorNext);
             mv.store(innerResult);
 
-            /* steps 6f-6g */
+            /* steps 6.a.iii-6.a.v */
             // stack: [] -> []
             mv.loadExecutionContext();
             mv.load(innerResult);
             mv.invoke(Methods.AbstractOperations_IteratorComplete);
             mv.ifne(done);
 
-            /* step 6i */
+            /* step 6.a.vi */
             // stack: [] -> [Object(innerResult)]
             // force stack top to Object-type
             mv.load(innerResult);
@@ -1428,7 +1426,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.newResumptionPoint();
             mv.store(received);
 
-            /* step 6c */
+            /* step 6.b */
             Jump isException = new Jump();
             mv.load(received);
             mv.instanceOf(Types.ScriptException);
@@ -1455,7 +1453,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             }
             mv.mark(isException);
 
-            /* step 6d */
+            /* step 6.c */
             mv.load(received);
             mv.instanceOf(Types.ReturnValue);
             mv.ifeq(iteratorNext);
@@ -1482,7 +1480,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 popStackAndReturn(mv);
             }
 
-            /* step 6h */
+            /* step 6.a.v */
             mv.mark(done);
             mv.loadExecutionContext();
             mv.load(innerResult);

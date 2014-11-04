@@ -11,6 +11,7 @@ const {
   assertTrue,
   assertFalse,
   assertNotSame,
+  fail,
 } = Assert;
 
 // variable binding access tests
@@ -242,20 +243,16 @@ const {
   evalInParamsLater();
 
   function evalParamName(a = 0, b = eval("var a = 1")) {
-    assertSame(1, a);
-    assertFalse(delete a);
-    assertSame(1, a);
+    fail `unreachable`;
   }
-  evalParamName();
+  assertThrows(SyntaxError, () => evalParamName());
 
   function evalParamNameVar(_ = eval("var a"), a = 1) {
-    assertSame(1, a);
-    assertFalse(delete a);
-    assertSame(1, a);
+    fail `unreachable`;
   }
-  evalParamNameVar();
+  assertThrows(SyntaxError, () => evalParamNameVar());
 
-  assertThrows(ReferenceError, function(_ = eval("var a = 0"), a = 1){ });
+  assertThrows(SyntaxError, function(_ = eval("var a = 0"), a = 1){ });
 
   function noAccessToDynamic(f = () => a) {
     assertSame(99, a);

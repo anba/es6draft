@@ -15,8 +15,8 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.compiler.CompiledScript;
+import com.github.anba.es6draft.Executable;
+import com.github.anba.es6draft.compiler.CompiledObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -26,10 +26,12 @@ import com.github.anba.es6draft.runtime.internal.MethodLookup;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
@@ -37,7 +39,8 @@ import com.github.anba.es6draft.runtime.types.Symbol;
  * <li>9.2 ECMAScript Function Objects
  * </ul>
  */
-public abstract class FunctionObject extends OrdinaryObject implements Callable {
+public abstract class FunctionObject extends OrdinaryObject implements Callable,
+        Creatable<ScriptObject> {
     protected static final MethodHandle uninitializedFunctionMH;
     protected static final MethodHandle uninitializedGeneratorMH;
     protected static final MethodHandle uninitializedAsyncFunctionMH;
@@ -73,11 +76,11 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     private boolean needsSuper;
     /** [[HomeObject]] */
     private ScriptObject homeObject;
-    /** [[MethodName]] */
-    private Object /* String|Symbol */methodName;
+    /** [[CreateAction]] */
+    private CreateAction<?> createAction;
 
     private boolean isClone;
-    private Script script;
+    private Executable executable;
     private String source;
     private MethodHandle callMethod;
     private MethodHandle tailCallMethod;
@@ -276,9 +279,10 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         /* steps 4-6 */
         FunctionObject clone = allocateNew();
         clone.isClone = true;
+        clone.createAction = createAction;
         if (isInitialized()) {
             clone.initialize(getFunctionKind(), isStrict(), getCode(), getEnvironment(),
-                    getScript());
+                    getExecutable());
         }
         /* step 7 */
         assert clone.isExtensible() : "cloned function not extensible";
@@ -336,14 +340,14 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      *            the function code
      * @param scope
      *            the function scope
-     * @param script
-     *            the script object
+     * @param executable
+     *            the source executable
      */
     protected final void initialize(FunctionKind kind, boolean strict,
-            RuntimeInfo.Function function, LexicalEnvironment<?> scope, Script script) {
+            RuntimeInfo.Function function, LexicalEnvironment<?> scope, Executable executable) {
         assert this.function == null && function != null : "function object already initialized";
         assert this.functionKind == kind : String.format("%s != %s", functionKind, kind);
-        assert script instanceof CompiledScript : "Script=" + script;
+        assert executable instanceof CompiledObject : "Executable=" + executable;
         /* step 6 */
         this.strict = strict;
         /* step 7 */
@@ -360,7 +364,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         } else {
             this.thisMode = ThisMode.Global;
         }
-        this.script = script;
+        this.executable = executable;
     }
 
     protected final boolean infallibleDefineOwnProperty(String propertyKey, PropertyDescriptor desc) {
@@ -374,35 +378,15 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 9.2.10 MakeMethod ( F, methodName, homeObject ) Abstract Operation
+     * 9.2.10 MakeMethod ( F, homeObject ) Abstract Operation
      * 
-     * @param methodName
-     *            the new method name
      * @param homeObject
      *            the new home object
      */
-    protected final void toMethod(Object methodName, ScriptObject homeObject) {
+    protected final void toMethod(ScriptObject homeObject) {
         assert isInitialized() : "uninitialized function object";
         assert !needsSuper : "function object already method";
         this.needsSuper = true;
-        this.methodName = methodName;
-        this.homeObject = homeObject;
-    }
-
-    /**
-     * Sets the method name and home object fields.
-     * 
-     * @param methodName
-     *            the method name
-     * @param homeObject
-     *            the home object
-     */
-    public final void toMethod(Object methodName, OrdinaryObject homeObject) {
-        assert isInitialized() : "uninitialized function object";
-        assert needsSuper : "function object not method";
-        assert methodName != null && homeObject != null;
-        assert methodName instanceof String || methodName instanceof Symbol;
-        this.methodName = methodName;
         this.homeObject = homeObject;
     }
 
@@ -447,12 +431,12 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * Returns the script.
+     * Returns the executable object.
      * 
-     * @return the script
+     * @return the executable object
      */
-    public final Script getScript() {
-        return script;
+    public final Executable getExecutable() {
+        return executable;
     }
 
     /**
@@ -507,11 +491,37 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * [[MethodName]]
+     * [[HomeObject]]
      * 
-     * @return the method name field
+     * @param homeObject
+     *            the new home object
      */
-    public final Object getMethodName() {
-        return methodName;
+    public final void setHomeObject(OrdinaryObject homeObject) {
+        assert isInitialized() : "uninitialized function object";
+        assert needsSuper : "function object not method";
+        assert homeObject != null;
+        this.homeObject = homeObject;
+    }
+
+    /**
+     * [[CreateAction]]
+     * 
+     * @return the create action operation
+     */
+    @Override
+    public final CreateAction<?> createAction() {
+        return createAction;
+    }
+
+    /**
+     * [[CreateAction]]
+     * 
+     * @param createAction
+     *            the new create action operation for this function
+     */
+    protected final void setCreateAction(CreateAction<?> createAction) {
+        assert this instanceof Constructor : "[[CreateAction]] set on non-Constructor";
+        assert this.createAction == null : "[[CreateAction]] already defined";
+        this.createAction = createAction;
     }
 }

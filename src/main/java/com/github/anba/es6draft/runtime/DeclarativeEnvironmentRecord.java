@@ -30,19 +30,45 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
-    public static final class Binding implements Cloneable {
+    public static abstract class Binding implements Cloneable {
         final boolean mutable;
         final boolean deletable;
-        Object value;
 
         Binding(boolean mutable, boolean deletable) {
             this.mutable = mutable;
             this.deletable = deletable;
         }
 
+        public final boolean isMutable() {
+            return mutable;
+        }
+
+        public final boolean isDeletable() {
+            return deletable;
+        }
+
+        public abstract boolean isInitialized();
+
+        abstract void initialize(Object value);
+
         @Override
-        public Binding clone() {
-            Binding clone = new Binding(mutable, deletable);
+        public abstract Binding clone();
+
+        public abstract void setValue(Object value);
+
+        public abstract Object getValue();
+    }
+
+    private static final class DirectBinding extends Binding {
+        private Object value;
+
+        DirectBinding(boolean mutable, boolean deletable) {
+            super(mutable, deletable);
+        }
+
+        @Override
+        public DirectBinding clone() {
+            DirectBinding clone = new DirectBinding(mutable, deletable);
             clone.value = value;
             return clone;
         }
@@ -53,21 +79,26 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
                     Objects.toString(value, "<uninitialized>"), mutable, deletable);
         }
 
-        public void setValue(ExecutionContext cx, String name, Object value, boolean strict) {
-            assert value != null;
-            if (this.value == null) {
-                throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
-            } else if (mutable) {
-                this.value = value;
-            } else if (strict) {
-                throw newTypeError(cx, Messages.Key.ImmutableBinding, name);
-            }
+        @Override
+        public boolean isInitialized() {
+            return value != null;
         }
 
-        public Object getValue(ExecutionContext cx, String name) {
-            if (value == null) {
-                throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
-            }
+        @Override
+        void initialize(Object value) {
+            assert this.value == null : "binding already initialized";
+            this.value = value;
+        }
+
+        @Override
+        public void setValue(Object newValue) {
+            assert newValue != null && this.value != null && mutable;
+            this.value = newValue;
+        }
+
+        @Override
+        public Object getValue() {
+            assert value != null;
             return value;
         }
     }
@@ -90,10 +121,16 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         for (Map.Entry<String, Binding> entry : bindings.entrySet()) {
             String name = entry.getKey();
             Binding binding = entry.getValue();
-            assert binding.value != null : "binding not initialized: " + name;
+            assert binding.isInitialized() : "binding not initialized: " + name;
             newBindings.put(name, binding.clone());
         }
         return newBindings;
+    }
+
+    protected final void createBinding(String name, Binding binding) {
+        assert name != null && binding != null;
+        assert !bindings.containsKey(name) : "binding redeclaration: " + name;
+        bindings.put(name, binding);
     }
 
     public final Binding getBinding(String name) {
@@ -142,10 +179,10 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         if (b == null) {
             return null;
         }
-        if (b.value == null) {
+        if (!b.isInitialized()) {
             throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
         }
-        return b.value;
+        return b.getValue();
     }
 
     @Override
@@ -180,7 +217,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         /* step 2 */
         assert !bindings.containsKey(name) : "binding redeclaration: " + name;
         /* steps 3-4 */
-        bindings.put(name, new Binding(true, deletable));
+        bindings.put(name, new DirectBinding(true, deletable));
     }
 
     /**
@@ -192,7 +229,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         /* step 2 */
         assert !bindings.containsKey(name) : "binding redeclaration: " + name;
         /* step 3 */
-        bindings.put(name, new Binding(false, false));
+        bindings.put(name, new DirectBinding(false, false));
     }
 
     /**
@@ -205,9 +242,9 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         /* step 1 (omitted) */
         /* step 2 */
         assert b != null : "binding not found: " + name;
-        assert b.value == null : "binding already initialized: " + name;
+        assert !b.isInitialized() : "binding already initialized: " + name;
         /* steps 3-4 */
-        b.value = value;
+        b.initialize(value);
     }
 
     /**
@@ -224,10 +261,10 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
             throw newReferenceError(cx, Messages.Key.UnresolvableReference, name);
         }
         /* steps 3-6 */
-        if (b.value == null) {
+        if (!b.isInitialized()) {
             throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
         } else if (b.mutable) {
-            b.value = value;
+            b.setValue(value);
         } else if (strict) {
             throw newTypeError(cx, Messages.Key.ImmutableBinding, name);
         }
@@ -243,11 +280,11 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         /* step 2 */
         assert b != null : "binding not found: " + name;
         /* step 3 */
-        if (b.value == null) {
+        if (!b.isInitialized()) {
             throw newReferenceError(cx, Messages.Key.UninitializedBinding, name);
         }
         /* step 4 */
-        return b.value;
+        return b.getValue();
     }
 
     /**

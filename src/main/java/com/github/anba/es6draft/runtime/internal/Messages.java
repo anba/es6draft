@@ -97,11 +97,14 @@ public final class Messages {
         UnterminatedRegExpLiteral("parser.unterminated_regexp_literal"),
         InvalidRegExpLiteral("parser.invalid_regexp_literal"),
         InvalidUnicodeEscapedIdentifierPart("parser.invalid_unicode_escaped_identifierpart"),
-        UnexpectedCharacter("parser.unexpected_character"),
         InvalidToken("parser.invalid_token"),
+        IllegalCharacter("parser.illegal_character"),
         UnexpectedToken("parser.unexpected_token"),
+        UnexpectedEndOfFile("parser.unexpected_eof"),
         UnexpectedName("parser.unexpected_name"),
+        UnexpectedCharacter("parser.unexpected_character"),
         UnicodeEscapeInRegExpFlags("parser.unicode_escape_in_regexp_flags"),
+        OctalEscapeSequence("parser.octal_escape_sequence"),
 
         // Parser
         InvalidFormalParameterList("parser.invalid_formal_parameter_list"),
@@ -131,6 +134,7 @@ public final class Messages {
         ConstMissingInitializer("parser.const_missing_initializer"),
         InvalidIdentifier("parser.invalid_identifier"),
         DuplicateExport("parser.duplicate_export"),
+        DuplicateImport("parser.duplicate_import"),
 
         // strict mode TokenStream/Parser errors
         StrictModeRestrictedIdentifier("parser.strict.restricted_identifier"),
@@ -140,6 +144,7 @@ public final class Messages {
         StrictModeInvalidIdentifier("parser.strict.invalid_identifier"),
         StrictModeOctalIntegerLiteral("parser.strict.octal_integer_literal"),
         StrictModeOctalEscapeSequence("parser.strict.octal_escape_sequence"),
+        StrictModeDecimalLeadingZero("parser.strict.decimal_leading_zero"),
 
         // SyntaxError
         VariableRedeclaration("syntax.variable_redeclaration"),
@@ -190,13 +195,20 @@ public final class Messages {
         NoPrimitiveRepresentation("abstractops.no_primitive_representation"),
 
         // 15.2 Modules
+        ModulesOwnProperty("modules.own_property"),
         ModulesUnresolvedModule("modules.unresolved_module"),
         ModulesUnresolvedImport("modules.unresolved_import"),
         ModulesUnresolvedExport("modules.unresolved_export"),
         ModulesDuplicateExport("modules.duplicate_export"),
+        ModulesDuplicateImport("modules.duplicate_import"),
         ModulesDuplicateModule("modules.duplicate_module"),
         ModulesAlreadyLoading("modules.already_loading"),
         ModulesCyclicExport("modules.cyclic_export"),
+        ModulesMissingDefaultExport("modules.missing_default_export"),
+        ModulesDuplicateStarExport("modules.duplicate_star_export"),
+        ModulesAmbiguousExport("modules.ambiguous_export"),
+        ModulesIOException("modules.io_exception"),
+        ModulesInvalidName("modules.invalid_name"),
 
         // 18 The Global Object
         MalformedURI("globalobject.malformed_uri"),

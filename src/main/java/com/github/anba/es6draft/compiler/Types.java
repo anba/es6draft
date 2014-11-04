@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.objectweb.asm.Type;
 
@@ -18,6 +19,7 @@ import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -28,6 +30,7 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
@@ -88,9 +91,11 @@ final class Types {
     static final Type Arrays = Type.getType(Arrays.class);
     static final Type Iterator = Type.getType(Iterator.class);
     static final Type List = Type.getType(List.class);
+    static final Type Map = Type.getType(Map.class);
 
     // compiler
     static final Type CompiledFunction = Type.getType(CompiledFunction.class);
+    static final Type CompiledModule = Type.getType(CompiledModule.class);
     static final Type CompiledScript = Type.getType(CompiledScript.class);
 
     // runtime
@@ -101,10 +106,14 @@ final class Types {
             .getType(DeclarativeEnvironmentRecord.Binding.class);
     static final Type EnvironmentRecord = Type.getType(EnvironmentRecord.class);
     static final Type ExecutionContext = Type.getType(ExecutionContext.class);
+    static final Type FunctionEnvironmentRecord = Type.getType(FunctionEnvironmentRecord.class);
     static final Type GlobalEnvironmentRecord = Type.getType(GlobalEnvironmentRecord.class);
     static final Type LexicalEnvironment = Type.getType(LexicalEnvironment.class);
     static final Type Realm = Type.getType(Realm.class);
     static final Type ScriptRuntime = Type.getType(ScriptRuntime.class);
+
+    // runtime.modules
+    static final Type ModuleRecord = Type.getType(ModuleRecord.class);
 
     // runtime.objects
     static final Type Eval = Type.getType(Eval.class);
@@ -142,6 +151,7 @@ final class Types {
     static final Type ReturnValue = Type.getType(ReturnValue.class);
     static final Type RuntimeInfo = Type.getType(RuntimeInfo.class);
     static final Type RuntimeInfo$Function = Type.getType(RuntimeInfo.Function.class);
+    static final Type RuntimeInfo$ModuleBody = Type.getType(RuntimeInfo.ModuleBody.class);
     static final Type RuntimeInfo$ScriptBody = Type.getType(RuntimeInfo.ScriptBody.class);
     static final Type ScriptException = Type.getType(ScriptException.class);
     static final Type ScriptIterator = Type.getType(ScriptIterator.class);

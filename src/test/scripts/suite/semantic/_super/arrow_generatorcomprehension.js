@@ -15,7 +15,7 @@ const {
     array() { return [1,2,3] }
   }
   class Derived extends Base {
-    array() { return () => super() }
+    array() { return () => super.array() }
   }
   assertEquals([1,2,3], (new Derived).array()());
 }
@@ -26,7 +26,7 @@ const {
     array() { return [1,2,3] }
   }
   class Derived extends Base {
-    array() { return (for (x of super()) x) }
+    array() { return (for (x of super.array()) x) }
   }
   assertEquals([1,2,3], [...(new Derived).array()]);
 }

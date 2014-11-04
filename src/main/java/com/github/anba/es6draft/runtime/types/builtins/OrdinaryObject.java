@@ -1436,7 +1436,7 @@ public class OrdinaryObject implements ScriptObject {
         }
 
         @Override
-        protected Object tryNext() {
+        protected Object findNext() {
             HashSet<Object> visitedKeys = this.visitedKeys;
             for (Iterator<String> keys; (keys = this.keys) != null;) {
                 assert protoKeys == null;

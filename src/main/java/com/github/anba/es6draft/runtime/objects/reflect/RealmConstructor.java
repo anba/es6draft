@@ -26,13 +26,14 @@ import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
@@ -45,7 +46,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>26.?.2 Properties of the Reflect.Realm Constructor
  * </ul>
  */
-public final class RealmConstructor extends BuiltinConstructor implements Initializable {
+public final class RealmConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<RealmObject> {
     /**
      * Constructs a new Realm constructor function.
      * 
@@ -161,6 +163,11 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         return Construct(callerContext, this, args);
     }
 
+    @Override
+    public CreateAction<RealmObject> createAction() {
+        return RealmCreate.INSTANCE;
+    }
+
     /**
      * 26.?.2 Properties of the Reflect.Realm Constructor
      */
@@ -184,22 +191,6 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.RealmPrototype;
-
-        /**
-         * 26.?.2.2 Reflect.Realm [ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized realm object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.RealmPrototype,
-                    RealmObjectAllocator.INSTANCE);
-        }
     }
 
     private static final class RealmObjectAllocator implements ObjectAllocator<RealmObject> {
@@ -208,6 +199,16 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         @Override
         public RealmObject newInstance(Realm realm) {
             return new RealmObject(realm);
+        }
+    }
+
+    private static final class RealmCreate implements CreateAction<RealmObject> {
+        static final CreateAction<RealmObject> INSTANCE = new RealmCreate();
+
+        @Override
+        public RealmObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.RealmPrototype,
+                    RealmObjectAllocator.INSTANCE);
         }
     }
 }

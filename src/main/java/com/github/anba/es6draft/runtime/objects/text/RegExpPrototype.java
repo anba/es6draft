@@ -346,7 +346,8 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                         double thisIndex = ToInteger(cx, Get(cx, rx, "lastIndex"));
                         Put(cx, rx, "lastIndex", thisIndex + 1, true);
                     }
-                    CreateDataPropertyOrThrow(cx, array, n, matchStr);
+                    boolean status = CreateDataProperty(cx, array, n, matchStr);
+                    assert status;
                     n += 1;
                 }
             }

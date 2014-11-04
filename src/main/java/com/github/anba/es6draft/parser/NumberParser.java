@@ -51,7 +51,7 @@ public final class NumberParser {
     /**
      * Parse a decimal integer literal.
      * 
-     * @param cbuf
+     * @param s
      *            the string to parse
      * @return the parsed integer
      */
@@ -96,7 +96,7 @@ public final class NumberParser {
     /**
      * Parse a decimal number literal.
      * 
-     * @param cbuf
+     * @param s
      *            the string to parse
      * @return the parsed decimal
      */
@@ -138,7 +138,7 @@ public final class NumberParser {
     /**
      * Parse a binary integer literal.
      * 
-     * @param cbuf
+     * @param s
      *            the string to parse
      * @return the binary integer
      */
@@ -199,7 +199,7 @@ public final class NumberParser {
     /**
      * Parse an octal integer literal.
      * 
-     * @param cbuf
+     * @param s
      *            the string to parse
      * @return the octal integer
      */
@@ -260,10 +260,8 @@ public final class NumberParser {
     /**
      * Parse a hexadecimal integer literal.
      * 
-     * @param cbuf
+     * @param s
      *            the characters to parse
-     * @param length
-     *            the length of the characters
      * @return the hexadecimal integer
      */
     public static double parseHex(String s) {

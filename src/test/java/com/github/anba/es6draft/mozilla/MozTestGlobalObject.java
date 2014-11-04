@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.mozilla;
 
-import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -19,7 +17,7 @@ import com.github.anba.es6draft.util.TestInfo;
 /**
  *
  */
-public final class MozTestGlobalObject extends MozShellGlobalObject {
+final class MozTestGlobalObject extends MozShellGlobalObject {
     protected MozTestGlobalObject(Realm realm, ShellConsole console, TestInfo test,
             ScriptCache scriptCache) {
         super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
@@ -28,7 +26,7 @@ public final class MozTestGlobalObject extends MozShellGlobalObject {
     @Override
     protected void initializeExtensions(ExecutionContext cx) {
         super.initializeExtensions(cx);
-        createProperties(cx, cx.getGlobalObject(), new TestingFunctions(), TestingFunctions.class);
+        install(new TestingFunctions(), TestingFunctions.class);
     }
 
     /**
@@ -42,7 +40,7 @@ public final class MozTestGlobalObject extends MozShellGlobalObject {
      *            the script cache
      * @return the object allocator to construct new global object instances
      */
-    public static ObjectAllocator<MozTestGlobalObject> newGlobalObjectAllocator(
+    static ObjectAllocator<MozTestGlobalObject> newGlobalObjectAllocator(
             final ShellConsole console, final TestInfo test, final ScriptCache scriptCache) {
         return new ObjectAllocator<MozTestGlobalObject>() {
             @Override

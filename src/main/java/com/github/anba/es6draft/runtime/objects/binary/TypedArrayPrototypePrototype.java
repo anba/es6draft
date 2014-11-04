@@ -213,25 +213,25 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 // 22.2.3.22
                 /* steps 1-5 */
                 TypedArrayObject target = thisTypedArrayObject(cx, thisValue);
-                /* step 6 */
-                ArrayBufferObject targetBuffer = target.getBuffer();
-                /* step 7 */
-                if (targetBuffer == null) {
-                    throw newTypeError(cx, Messages.Key.UninitializedObject);
-                }
-                /* step 8 */
-                if (IsDetachedBuffer(targetBuffer)) {
-                    throw newTypeError(cx, Messages.Key.BufferDetached);
-                }
-                /* step 9 */
-                long targetLength = target.getArrayLength();
-                /* steps 10-11 */
+                /* steps 6-7 */
                 // TODO: spec issue? - does not follow the ToNumber(v) == ToInteger(v) pattern
                 double targetOffset = (offset == UNDEFINED ? 0 : ToInteger(cx, offset));
-                /* step 12 */
+                /* step 8 */
                 if (targetOffset < 0) {
                     throw newRangeError(cx, Messages.Key.InvalidByteOffset);
                 }
+                /* step 9 */
+                ArrayBufferObject targetBuffer = target.getBuffer();
+                /* step 10 */
+                if (targetBuffer == null) {
+                    throw newTypeError(cx, Messages.Key.UninitializedObject);
+                }
+                /* step 11 */
+                if (IsDetachedBuffer(targetBuffer)) {
+                    throw newTypeError(cx, Messages.Key.BufferDetached);
+                }
+                /* step 12 */
+                long targetLength = target.getArrayLength();
                 /* steps 13, 15 */
                 ElementType targetType = target.getElementType();
                 /* step 14 */
@@ -978,9 +978,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Function(name = "entries", arity = 0)
         public static Object entries(ExecutionContext cx, Object thisValue) {
-            /* steps 1-5 */
+            /* steps 1-6 */
             TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            /* step 6 */
+            /* step 7 */
             return CreateArrayIterator(cx, array, ArrayIterationKind.KeyValue);
         }
 
@@ -995,9 +995,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Function(name = "keys", arity = 0)
         public static Object keys(ExecutionContext cx, Object thisValue) {
-            /* steps 1-5 */
+            /* steps 1-6 */
             TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            /* step 6 */
+            /* step7 */
             return CreateArrayIterator(cx, array, ArrayIterationKind.Key);
         }
 
@@ -1014,9 +1014,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "values", arity = 0)
         @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
         public static Object values(ExecutionContext cx, Object thisValue) {
-            /* steps 1-5 */
+            /* steps 1-6 */
             TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            /* step 6 */
+            /* step 7 */
             return CreateArrayIterator(cx, array, ArrayIterationKind.Value);
         }
 
@@ -1035,12 +1035,12 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         public static Object toStringTag(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
             if (!(thisValue instanceof TypedArrayObject)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+                return UNDEFINED;
             }
             TypedArrayObject array = (TypedArrayObject) thisValue;
             /* steps 4-5 */
             if (array.getElementType() == null) {
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return UNDEFINED;
             }
             /* step 6 (not applicable) */
             /* step 7 */

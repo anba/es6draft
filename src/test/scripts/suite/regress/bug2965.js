@@ -14,32 +14,32 @@ const {
 
 const {
   Array: foreignArray,
-  Object: foreignObject,
+  Reflect: foreignReflect,
 } = (new Reflect.Realm).global;
 
 // GetPrototypeFromConstructor tests
 {
   function C() {}
   C.prototype = {};
-  let o = Object[Symbol.create].call(C);
+  let o = Reflect.construct(C, []);
   assertSame(C.prototype, Object.getPrototypeOf(o));
 }
 {
   function C() {}
   C.prototype = null;
-  let o = Object[Symbol.create].call(C);
+  let o = Reflect.construct(C, []);
   assertSame(Object.prototype, Object.getPrototypeOf(o));
 }
 {
   function C() {}
   C.prototype = {};
-  let o = foreignObject[Symbol.create].call(C);
+  let o = foreignReflect.construct(C, []);
   assertSame(C.prototype, Object.getPrototypeOf(o));
 }
 {
   function C() {}
   C.prototype = null;
-  let o = foreignObject[Symbol.create].call(C);
+  let o = foreignReflect.construct(C, []);
   assertSame(Object.prototype, Object.getPrototypeOf(o));
 }
 

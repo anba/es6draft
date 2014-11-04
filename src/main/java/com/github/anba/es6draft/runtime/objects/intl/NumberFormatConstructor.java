@@ -34,7 +34,9 @@ import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.Loca
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.LocaleDataInfo;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.OptionsRecord;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ResolvedLocale;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -50,7 +52,8 @@ import com.ibm.icu.util.ULocale;
  * <li>11.2 Properties of the Intl.NumberFormat Constructor
  * </ul>
  */
-public final class NumberFormatConstructor extends BuiltinConstructor implements Initializable {
+public final class NumberFormatConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<NumberFormatObject> {
     /** [[availableLocales]] */
     private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
@@ -334,6 +337,11 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         return obj;
     }
 
+    @Override
+    public CreateAction<NumberFormatObject> createAction() {
+        return NumberFormatCreate.INSTANCE;
+    }
+
     /**
      * 11.2 Properties of the Intl.NumberFormat Constructor
      */
@@ -378,22 +386,6 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
             return SupportedLocales(cx, availableLocales, requestedLocales, options);
         }
-
-        /**
-         * Extension: Make subclassable for ES6 classes
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized number format object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue,
-                    Intrinsics.Intl_NumberFormatPrototype, NumberFormatObjectAllocator.INSTANCE);
-        }
     }
 
     private static final class NumberFormatObjectAllocator implements
@@ -403,6 +395,17 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         @Override
         public NumberFormatObject newInstance(Realm realm) {
             return new NumberFormatObject(realm);
+        }
+    }
+
+    private static final class NumberFormatCreate implements CreateAction<NumberFormatObject> {
+        static final CreateAction<NumberFormatObject> INSTANCE = new NumberFormatCreate();
+
+        @Override
+        public NumberFormatObject create(ExecutionContext cx, Constructor constructor,
+                Object... args) {
+            return OrdinaryCreateFromConstructor(cx, constructor,
+                    Intrinsics.Intl_NumberFormatPrototype, NumberFormatObjectAllocator.INSTANCE);
         }
     }
 }

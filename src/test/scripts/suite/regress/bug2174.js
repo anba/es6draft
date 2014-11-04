@@ -20,5 +20,5 @@ Object.defineProperty(buf, "constructor", {
   }
 });
 var s = new Int8Array(buf);
-var t = Int8Array[Symbol.create]();
+var t = new class extends Int8Array { constructor() { /* no super */ } };
 assertThrows(TypeError, () => Int8Array.call(t, s));

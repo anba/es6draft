@@ -37,7 +37,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -116,12 +115,12 @@ public final class MozillaJitTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        // filter disabled tests
+        // Filter disabled tests
         assumeTrue(moztest.isEnabled());
 
         global = globals.newGlobal(new MozTestConsole(collector), moztest);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
-        install(new TestEnvironment(), TestEnvironment.class);
+        global.install(new TestEnvironment(), TestEnvironment.class);
 
         if (moztest.error == null) {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
@@ -143,17 +142,11 @@ public final class MozillaJitTest {
 
     @Test
     public void runTest() throws Throwable {
-        // evaluate actual test-script
+        // Evaluate actual test-script
         global.eval(moztest.getScript(), moztest.toFile());
 
-        // wait for pending tasks to finish
+        // Wait for pending tasks to finish
         global.getRealm().getWorld().runEventLoop();
-    }
-
-    private <T> T install(T object, Class<T> clazz) {
-        Realm realm = global.getRealm();
-        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
-        return object;
     }
 
     public static final class TestEnvironment {
@@ -196,7 +189,7 @@ public final class MozillaJitTest {
             String line = lines.next();
             Matcher m = testInfoPattern.matcher(line);
             if (!m.matches()) {
-                // ignore if pattern invalid or not present
+                // Ignore if pattern invalid or not present
                 return test;
             }
             if (!"jit-test".equals(m.group(1))) {
@@ -214,7 +207,7 @@ public final class MozillaJitTest {
                         test.error = value;
                         break;
                     case "exitstatus":
-                        // ignore for now...
+                        // Ignore for now...
                         break;
                     default:
                         System.err.printf("unknown option '%s' in line: %s\n", name, content);
@@ -223,11 +216,11 @@ public final class MozillaJitTest {
                     String name = p.trim();
                     switch (name) {
                     case "slow":
-                        // don't run slow tests
+                        // Don't run slow tests
                         test.setEnabled(false);
                         break;
                     case "debug":
-                        // don't run debug-mode tests
+                        // Don't run debug-mode tests
                         test.setEnabled(false);
                         break;
                     case "allow-oom":
@@ -240,10 +233,10 @@ public final class MozillaJitTest {
                     case "no-ion":
                     case "ion-eager":
                     case "dump-bytecode":
-                        // ignore for now...
+                        // Ignore for now...
                         break;
                     case "":
-                        // ignore empty string
+                        // Ignore empty string
                         break;
                     default:
                         System.err.printf("unknown option '%s' in line: %s\n", name, content);

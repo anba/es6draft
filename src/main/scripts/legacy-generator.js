@@ -33,23 +33,12 @@ const GeneratorPrototype_next = GeneratorPrototype.next,
       GeneratorPrototype_throw = GeneratorPrototype.throw;
 const LegacyGeneratorPrototype = Object.getPrototypeOf(function(){yield 0}.prototype);
 
-// pseudo-symbol in SpiderMonkey
-const mozIteratorSym = "@@iterator";
-
 Object.defineProperties(Object.assign(Function.prototype, {
   isGenerator() {
     return this instanceof GeneratorFunction;
   }
 }), {
   isGenerator: {enumerable: false},
-});
-
-Object.defineProperties(Object.assign(GeneratorPrototype, {
-  [mozIteratorSym]() {
-    return this;
-  }
-}), {
-  [mozIteratorSym]: {enumerable: false},
 });
 
 //  “newborn”, “executing”, “suspended”, or “closed”
@@ -97,14 +86,8 @@ function mixin(target, source) {
 
 Object.defineProperties(mixin(LegacyGeneratorPrototype, {
   [iteratorSym]() {
-    return this[mozIteratorSym]();
-  },
-  [mozIteratorSym]() {
     return {
       [iteratorSym]() {
-        return this;
-      },
-      [mozIteratorSym]() {
         return this;
       },
       next: v => {
@@ -185,7 +168,6 @@ Object.defineProperties(mixin(LegacyGeneratorPrototype, {
   }
 }), {
   [iteratorSym]: {enumerable: false},
-  [mozIteratorSym]: {enumerable: false},
   next: {enumerable: false},
   send: {enumerable: false},
   close: {enumerable: false},

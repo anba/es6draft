@@ -17,6 +17,7 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.DebugInfo;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.internal.Source;
 
 /**
  * 
@@ -39,21 +40,25 @@ final class InterpretedScriptBody implements RuntimeInfo.ScriptBody {
     }
 
     @Override
+    public Source toSource() {
+        return new Source(parsedScript.getSource().getFile(), sourceName(), 1);
+    }
+
+    @Override
     public boolean isStrict() {
         return parsedScript.isStrict();
     }
 
     @Override
     public void globalDeclarationInstantiation(ExecutionContext cx,
-            LexicalEnvironment<GlobalEnvironmentRecord> globalEnv,
-            LexicalEnvironment<?> lexicalEnv, boolean deletableBindings) {
-        GlobalDeclarationInstantiation(cx, parsedScript, globalEnv, lexicalEnv, deletableBindings);
+            LexicalEnvironment<GlobalEnvironmentRecord> globalEnv) {
+        GlobalDeclarationInstantiation(cx, parsedScript, globalEnv);
     }
 
     @Override
     public void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment<?> varEnv,
-            LexicalEnvironment<?> lexEnv, boolean deletableBindings) {
-        EvalDeclarationInstantiation(cx, parsedScript, varEnv, lexEnv, deletableBindings);
+            LexicalEnvironment<?> lexEnv) {
+        EvalDeclarationInstantiation(cx, parsedScript, varEnv, lexEnv);
     }
 
     @Override

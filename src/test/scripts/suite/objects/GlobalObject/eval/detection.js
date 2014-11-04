@@ -9,7 +9,8 @@ const {
   assertSame
 } = Assert;
 
-loadRelativeToScript("../../../lib/recorder.js");
+System.load("lib/recorder.jsm");
+const Recorder = System.get("lib/recorder.jsm");
 
 function HasBindingFail(name) {
   return `has:${name};`;

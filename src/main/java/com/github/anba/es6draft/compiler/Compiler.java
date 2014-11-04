@@ -10,7 +10,6 @@ import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Formatter;
 import java.util.Locale;
@@ -26,8 +25,9 @@ import org.objectweb.asm.util.TraceClassVisitor;
 import com.github.anba.es6draft.ast.FunctionDefinition;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
+import com.github.anba.es6draft.ast.Module;
+import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.Script;
-import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.ast.scope.ScriptScope;
 import com.github.anba.es6draft.compiler.analyzer.CodeSizeAnalysis;
@@ -44,7 +44,7 @@ import com.github.anba.es6draft.runtime.internal.Source;
  */
 public final class Compiler {
     public enum Option {
-        Debug, FullDebug, DebugInfo, NoResume, NoTailCall, SourceMap
+        PrintCode, PrintFullCode, DebugInfo, NoResume, NoTailCall, SourceMap
     }
 
     private final ExecutorService executor;
@@ -71,8 +71,33 @@ public final class Compiler {
         Code code = new Code(clazzName, superClassName, sourceName(script), sourceMap(script));
 
         // generate code
-        CodeGenerator codegen = new CodeGenerator(code, executor, script, compilerOptions);
+        CodeGenerator codegen = new CodeGenerator(code, executor, script.getOptions(),
+                script.getParserOptions(), compilerOptions);
         codegen.compile(script);
+
+        // finalize
+        return defineAndLoad(code, clazzName);
+    }
+
+    public CompiledModule compile(Module module, String className) throws CompilationException {
+        try {
+            CodeSizeAnalysis analysis = new CodeSizeAnalysis(executor);
+            analysis.submit(module);
+        } catch (CodeSizeException e) {
+            throw new CompilationException(e.getMessage());
+        }
+
+        // set-up
+        // prepend '#' to mark generated classes, cf. ErrorPrototype
+        String clazzName = "#" + className;
+
+        String superClassName = Types.CompiledModule.getInternalName();
+        Code code = new Code(clazzName, superClassName, sourceName(module), sourceMap(module));
+
+        // generate code
+        CodeGenerator codegen = new CodeGenerator(code, executor, module.getOptions(),
+                module.getParserOptions(), compilerOptions);
+        codegen.compile(module);
 
         // finalize
         return defineAndLoad(code, clazzName);
@@ -103,7 +128,8 @@ public final class Compiler {
         Code code = new Code(clazzName, superClassName, "<Function>", null);
 
         // generate code
-        CodeGenerator codegen = new CodeGenerator(code, executor, script(function), compilerOptions);
+        CodeGenerator codegen = new CodeGenerator(code, executor, compatibilityOptions(function),
+                parserOptions(function), compilerOptions);
         codegen.compileFunction(function);
 
         // finalize
@@ -111,7 +137,7 @@ public final class Compiler {
     }
 
     private <T> T defineAndLoad(Code code, String clazzName) {
-        boolean debug = compilerOptions.contains(Option.Debug);
+        boolean printCode = compilerOptions.contains(Option.PrintCode);
         boolean debugInfo = compilerOptions.contains(Option.DebugInfo);
         CodeLoader loader = new CodeLoader();
         for (ClassCode classCode : code.getClasses()) {
@@ -120,8 +146,8 @@ public final class Compiler {
                         Type.getDescriptor(byte[].class), null);
             }
             byte[] bytes = classCode.toByteArray();
-            if (debug) {
-                debug(bytes);
+            if (printCode) {
+                printCode(bytes);
             }
             // System.out.printf("define class '%s'%n", classCode.className);
             loader.defineClass(classCode.className, bytes);
@@ -147,16 +173,20 @@ public final class Compiler {
         }
     }
 
-    private static Script script(FunctionNode function) {
+    private static EnumSet<CompatibilityOption> compatibilityOptions(FunctionNode function) {
         Scope enclosingScope = function.getScope().getEnclosingScope();
         if (enclosingScope instanceof ScriptScope) {
-            return ((ScriptScope) enclosingScope).getNode();
+            return ((ScriptScope) enclosingScope).getNode().getOptions();
         }
-        // Create a dummy script instance
-        return new Script(0, 0, new Source("<unknown>", 0), null,
-                Collections.<StatementListItem> emptyList(),
-                EnumSet.noneOf(CompatibilityOption.class), EnumSet.noneOf(Parser.Option.class),
-                false);
+        return EnumSet.noneOf(CompatibilityOption.class);
+    }
+
+    private static EnumSet<Parser.Option> parserOptions(FunctionNode function) {
+        Scope enclosingScope = function.getScope().getEnclosingScope();
+        if (enclosingScope instanceof ScriptScope) {
+            return ((ScriptScope) enclosingScope).getNode().getParserOptions();
+        }
+        return EnumSet.noneOf(Parser.Option.class);
     }
 
     private static final class CodeLoader extends ClassLoader {
@@ -173,10 +203,10 @@ public final class Compiler {
         }
     }
 
-    private void debug(byte[] b) {
+    private void printCode(byte[] b) {
         ClassReader cr = new ClassReader(b);
         Printer p;
-        if (compilerOptions.contains(Option.FullDebug)) {
+        if (compilerOptions.contains(Option.PrintFullCode)) {
             p = new Textifier();
         } else {
             p = new SimpleTypeTextifier();
@@ -188,14 +218,30 @@ public final class Compiler {
     }
 
     private static String sourceName(Script script) {
-        return script.getSource().getName();
+        return sourceName(script.getSource());
+    }
+
+    private static String sourceName(Module module) {
+        return sourceName(module.getSource());
+    }
+
+    private static String sourceName(Source source) {
+        return source.getName();
     }
 
     private String sourceMap(Script script) {
+        return sourceMap(script, script.getSource());
+    }
+
+    private String sourceMap(Module module) {
+        return sourceMap(module, module.getSource());
+    }
+
+    private String sourceMap(Node node, Source source) {
         if (!compilerOptions.contains(Option.SourceMap)) {
             return null;
         }
-        Path sourceFile = script.getSource().getFile();
+        Path sourceFile = source.getFile();
         if (sourceFile == null) {
             // return if 'sourceFile' is not available
             return null;
@@ -207,7 +253,7 @@ public final class Compiler {
             // - ID
             smap.format("SMAP%n");
             // - OutputFileName
-            smap.format("%s%n", sourceName(script));
+            smap.format("%s%n", sourceName(source));
             // - DefaultStratumId
             smap.format("Script%n");
             // Section
@@ -220,10 +266,10 @@ public final class Compiler {
             // - LineSection
             smap.format("*L%n");
             // -- LineInfo
-            smap.format("%d#1,%d:%d%n", script.getBeginLine(), script.getEndLine(),
-                    script.getBeginLine());
+            smap.format("%d#1,%d:%d%n", node.getBeginLine(), node.getEndLine(), node.getBeginLine());
             // EndSection
             smap.format("*E%n");
+            System.out.println(smap);
 
             return smap.toString();
         }

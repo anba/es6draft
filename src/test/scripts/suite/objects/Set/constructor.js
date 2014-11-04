@@ -17,7 +17,7 @@ new Set(void 0);
 new Set(null);
 
 // TypeError for non-iterable
-for (let nonIterable of [0, 1, 0.5, 0 / 0, true, false, Symbol.create, Symbol()]) {
+for (let nonIterable of [0, 1, 0.5, 0 / 0, true, false, Symbol.iterator, Symbol()]) {
   assertThrows(TypeError, () => new Set(nonIterable));
 }
 for (let nonIterable of [{}, {a: 0}, /(?:)/, new Date, () => {}]) {

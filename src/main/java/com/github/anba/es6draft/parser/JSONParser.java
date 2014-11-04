@@ -63,8 +63,11 @@ public final class JSONParser {
      */
     private ParserException reportTokenMismatch(Token expected, Token actual) {
         if (actual == Token.EOF) {
-            throw reportEofError(Messages.Key.UnexpectedToken, actual.toString(),
-                    expected.toString());
+            throw reportEofError(Messages.Key.UnexpectedEndOfFile, expected.toString());
+        }
+        if (actual == Token.ERROR) {
+            throw reportSyntaxError(Messages.Key.UnexpectedCharacter,
+                    String.valueOf(ts.lastChar()), expected.toString());
         }
         throw reportSyntaxError(Messages.Key.UnexpectedToken, actual.toString(),
                 expected.toString());

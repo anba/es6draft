@@ -12,11 +12,10 @@ const {
   assertFalse, assertTrue,
 } = Assert;
 
-loadRelativeToScript("../lib/promises.js");
-
+System.load("lib/promises.jsm");
 const {
   reportFailure
-} = Promises;
+} = System.get("lib/promises.jsm");
 
 // 25.4.4.1.1 Promise.all: Change [[AlreadyCalled]] to record type
 // https://bugs.ecmascript.org/show_bug.cgi?id=2636

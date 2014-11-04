@@ -74,6 +74,10 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
         visit((StatementListItem) node, value);
     }
 
+    protected void visit(HoistableDeclaration node, V value) {
+        visit((Declaration) node, value);
+    }
+
     protected void visit(Statement node, V value) {
         visit((StatementListItem) node, value);
     }
@@ -132,7 +136,7 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(AsyncFunctionDeclaration node, V value) {
-        visit((Declaration) node, value);
+        visit((HoistableDeclaration) node, value);
     }
 
     @Override
@@ -337,7 +341,7 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(FunctionDeclaration node, V value) {
-        visit((Declaration) node, value);
+        visit((HoistableDeclaration) node, value);
     }
 
     @Override
@@ -352,7 +356,7 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(GeneratorDeclaration node, V value) {
-        visit((Declaration) node, value);
+        visit((HoistableDeclaration) node, value);
     }
 
     @Override
@@ -477,11 +481,6 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(Module node, V value) {
-        visit((Node) node, value);
-    }
-
-    @Override
-    public void visit(ModuleImport node, V value) {
         visit((Node) node, value);
     }
 

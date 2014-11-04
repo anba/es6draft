@@ -112,12 +112,7 @@ final class BindingInitializationGenerator {
      */
     static void BindingInitialization(CodeGenerator codegen, Binding node, ExpressionVisitor mv) {
         if (node instanceof BindingIdentifier) {
-            BindingIdentifier identifier = (BindingIdentifier) node;
-            // stack: [value] -> [reference, value]
-            ResolveBinding(identifier, mv);
-            mv.swap();
-            // stack: [reference, value] -> []
-            PutValue(mv);
+            InitializeBoundName((BindingIdentifier) node, mv);
         } else {
             BindingInitialization init = new BindingInitialization(codegen, mv,
                     EnvironmentType.NoEnvironment, null);
@@ -138,12 +133,7 @@ final class BindingInitializationGenerator {
     static void BindingInitializationWithEnvironment(CodeGenerator codegen, Binding node,
             ExpressionVisitor mv) {
         if (node instanceof BindingIdentifier) {
-            BindingIdentifier identifier = (BindingIdentifier) node;
-            // stack: [envRec, value] -> [envRec, id, value]
-            mv.aconst(identifier.getName().toString());
-            mv.swap();
-            // stack: [envRec, id, value] -> []
-            mv.invoke(Methods.EnvironmentRecord_initializeBinding);
+            InitializeBoundNameWithEnvironment((BindingIdentifier) node, mv);
         } else {
             // stack: [env, value] -> []
             BindingInitialization init = new BindingInitialization(codegen, mv,
@@ -192,6 +182,71 @@ final class BindingInitializationGenerator {
     }
 
     /**
+     * 12.1.4.1 Runtime Semantics: InitializeBoundName(name, value, environment)
+     * <p>
+     * stack: [value] {@literal ->} []
+     * 
+     * @param node
+     *            the binding identifier
+     * @param mv
+     *            the expression visitor
+     */
+    static void InitializeBoundName(BindingIdentifier identifier, ExpressionVisitor mv) {
+        InitializeBoundName(identifier.getName(), mv);
+    }
+
+    /**
+     * 12.1.4.1 Runtime Semantics: InitializeBoundName(name, value, environment)
+     * <p>
+     * stack: [value] {@literal ->} []
+     * 
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the expression visitor
+     */
+    static void InitializeBoundName(Name name, ExpressionVisitor mv) {
+        // stack: [value] -> [reference, value]
+        ResolveBinding(name, mv);
+        mv.swap();
+        // stack: [reference, value] -> []
+        PutValue(mv);
+    }
+
+    /**
+     * 12.1.4.1 Runtime Semantics: InitializeBoundName(name, value, environment)
+     * <p>
+     * stack: [envRec, value] {@literal ->} []
+     * 
+     * @param node
+     *            the binding identifier
+     * @param mv
+     *            the expression visitor
+     */
+    static void InitializeBoundNameWithEnvironment(BindingIdentifier identifier,
+            ExpressionVisitor mv) {
+        InitializeBoundNameWithEnvironment(identifier.getName(), mv);
+    }
+
+    /**
+     * 12.1.4.1 Runtime Semantics: InitializeBoundName(name, value, environment)
+     * <p>
+     * stack: [envRec, value] {@literal ->} []
+     * 
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the expression visitor
+     */
+    static void InitializeBoundNameWithEnvironment(Name name, ExpressionVisitor mv) {
+        // stack: [envRec, value] -> [envRec, id, value]
+        mv.aconst(name.getIdentifier());
+        mv.swap();
+        // stack: [envRec, id, value] -> []
+        mv.invoke(Methods.EnvironmentRecord_initializeBinding);
+    }
+
+    /**
      * stack: [] {@literal ->} [Reference]
      * 
      * @param node
@@ -201,6 +256,18 @@ final class BindingInitializationGenerator {
      */
     private static void ResolveBinding(BindingIdentifier node, ExpressionVisitor mv) {
         identifierResolution.resolve(node, mv);
+    }
+
+    /**
+     * stack: [] {@literal ->} [Reference]
+     * 
+     * @param node
+     *            the binding name
+     * @param mv
+     *            the expression visitor
+     */
+    private static void ResolveBinding(Name name, ExpressionVisitor mv) {
+        identifierResolution.resolve(name, mv);
     }
 
     /**
@@ -240,8 +307,12 @@ final class BindingInitializationGenerator {
             assert (environment == EnvironmentType.EnvironmentFromLocal) == (envRec != null);
         }
 
-        protected final void BindingInitialization(Binding node) {
+        protected final void BindingInitialization(BindingPattern node) {
             node.accept(new BindingInitialization(codegen, mv, environment, envRec), null);
+        }
+
+        protected final void BindingInitialization(BindingIdentifier node) {
+            initializeBoundName(node);
         }
 
         protected final void IteratorBindingInitialization(ArrayBindingPattern node,
@@ -287,17 +358,39 @@ final class BindingInitializationGenerator {
             }
         }
 
-        protected final void prepareBindingIdentifier(BindingIdentifier identifier) {
+        protected final void prepareInitializeBoundName(BindingIdentifier identifier) {
             // Load environment record and binding identifier on stack to avoid swap instructions
             if (environment == EnvironmentType.EnvironmentFromLocal) {
                 // stack: [] -> [envRec, id]
                 mv.load(envRec);
-                mv.aconst(identifier.getName().toString());
+                mv.aconst(identifier.getName().getIdentifier());
             } else if (environment == EnvironmentType.EnvironmentFromStack) {
                 // stack: [envRec] -> [envRec, id]
-                mv.aconst(identifier.getName().toString());
+                mv.aconst(identifier.getName().getIdentifier());
             } else {
                 assert environment == EnvironmentType.NoEnvironment;
+            }
+        }
+
+        /**
+         * 12.1.4.1 Runtime Semantics: InitializeBoundName(name, value, environment)
+         * 
+         * @param identifier
+         *            the binding identifier
+         */
+        protected final void initializeBoundName(BindingIdentifier identifier) {
+            if (environment == EnvironmentType.EnvironmentFromLocal) {
+                // stack: [envRec, id, value] -> []
+                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
+            } else if (environment == EnvironmentType.EnvironmentFromStack) {
+                // stack: [envRec, id, value] -> []
+                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
+            } else {
+                assert environment == EnvironmentType.NoEnvironment;
+                // stack: [value] -> []
+                ResolveBinding(identifier, mv);
+                mv.swap();
+                PutValue(mv);
             }
         }
     }
@@ -305,11 +398,9 @@ final class BindingInitializationGenerator {
     /**
      * <h1>Runtime Semantics: BindingInitialization</h1>
      * <ul>
-     * <li>12.1.2 Runtime Semantics: BindingInitialization
-     * <li>12.2.4.2.2 Runtime Semantics: BindingInitialization
-     * <li>13.2.2.2 Runtime Semantics: BindingInitialization
+     * <li>12.1.4 Runtime Semantics: BindingInitialization
+     * <li>12.1.4.1 Runtime Semantics: InitializeBoundName(name, value, environment)
      * <li>13.2.3.5 Runtime Semantics: BindingInitialization
-     * <li>13.14.3 Runtime Semantics: BindingInitialization
      * </ul>
      */
     private static final class BindingInitialization extends RuntimeSemantics<Void> {
@@ -375,19 +466,7 @@ final class BindingInitializationGenerator {
 
         @Override
         public void visit(BindingIdentifier node, Void value) {
-            if (environment == EnvironmentType.EnvironmentFromLocal) {
-                // stack: [envRec, id, value] -> []
-                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
-            } else if (environment == EnvironmentType.EnvironmentFromStack) {
-                // stack: [envRec, id, value] -> []
-                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
-            } else {
-                assert environment == EnvironmentType.NoEnvironment;
-                // stack: [value] -> []
-                ResolveBinding(node, mv);
-                mv.swap();
-                PutValue(mv);
-            }
+            initializeBoundName(node);
         }
     }
 
@@ -395,8 +474,8 @@ final class BindingInitializationGenerator {
      * <h2>Runtime Semantics: IteratorBindingInitialization</h2>
      * <ul>
      * <li>13.2.3.6 Runtime Semantics: IteratorBindingInitialization
-     * <li>14.1.20 Runtime Semantics: IteratorBindingInitialization
-     * <li>14.2.16 Runtime Semantics: IteratorBindingInitialization
+     * <li>14.1.21 Runtime Semantics: IteratorBindingInitialization
+     * <li>14.2.15 Runtime Semantics: IteratorBindingInitialization
      * <li>
      * </ul>
      */
@@ -438,12 +517,13 @@ final class BindingInitializationGenerator {
             if (binding instanceof BindingIdentifier) {
                 // BindingElement : SingleNameBinding
                 // SingleNameBinding : BindingIdentifier Initializer{opt}
+                BindingIdentifier bindingIdentifier = (BindingIdentifier) binding;
 
                 // stack: [(env)] -> [(env), (env)]
                 dupEnv();
 
                 // stack: [(env)] -> [(env), (env, id)]
-                prepareBindingIdentifier((BindingIdentifier) binding);
+                prepareInitializeBoundName(bindingIdentifier);
 
                 // steps 1-4
                 mv.load(iterator);
@@ -469,7 +549,7 @@ final class BindingInitializationGenerator {
 
                 // step 6
                 // stack: [(env), (env, id), v'] -> [(env)]
-                BindingInitialization(binding);
+                BindingInitialization(bindingIdentifier);
             } else {
                 // BindingElement : BindingPattern Initializer{opt}
                 assert binding instanceof BindingPattern;
@@ -502,7 +582,7 @@ final class BindingInitializationGenerator {
 
                 // step 8
                 // stack: [(env), (env), v'] -> [(env)]
-                BindingInitialization(binding);
+                BindingInitialization((BindingPattern) binding);
             }
         }
 
@@ -512,7 +592,7 @@ final class BindingInitializationGenerator {
             dupEnv();
 
             // stack: [(env)] -> [(env), (env, id)]
-            prepareBindingIdentifier(node.getBindingIdentifier());
+            prepareInitializeBoundName(node.getBindingIdentifier());
 
             mv.load(iterator);
             mv.loadExecutionContext();
@@ -553,7 +633,7 @@ final class BindingInitializationGenerator {
 
             if (binding instanceof BindingIdentifier) {
                 // stack: [(env)] -> [(env), (env, id)]
-                prepareBindingIdentifier((BindingIdentifier) binding);
+                prepareInitializeBoundName((BindingIdentifier) binding);
             }
 
             // stack: [(env), (env)] -> [(env), (env), cx, obj, propertyName]
@@ -592,11 +672,15 @@ final class BindingInitializationGenerator {
                 // step 4
                 // stack: [(env), (env), v'] -> [(env), (env), v']
                 ToObject(binding, mv);
-            }
 
-            // step 5
-            // stack: [(env), (env), v'] -> [(env)]
-            BindingInitialization(binding);
+                // step 5
+                // stack: [(env), (env), v'] -> [(env)]
+                BindingInitialization((BindingPattern) binding);
+            } else {
+                // step 5
+                // stack: [(env), (env), v'] -> [(env)]
+                BindingInitialization((BindingIdentifier) binding);
+            }
         }
     }
 

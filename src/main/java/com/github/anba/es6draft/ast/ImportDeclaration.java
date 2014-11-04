@@ -12,20 +12,11 @@ package com.github.anba.es6draft.ast;
  */
 public final class ImportDeclaration extends ModuleItem {
     private final Type type;
-    private final ModuleImport moduleImport;
     private final ImportClause importClause;
     private final String moduleSpecifier;
 
     public enum Type {
-        ModuleImport, ImportModule, ImportFrom
-    }
-
-    public ImportDeclaration(long beginPosition, long endPosition, ModuleImport moduleImport) {
-        super(beginPosition, endPosition);
-        this.type = Type.ModuleImport;
-        this.moduleImport = moduleImport;
-        this.importClause = null;
-        this.moduleSpecifier = null;
+        ImportFrom, ImportModule
     }
 
     public ImportDeclaration(long beginPosition, long endPosition, ImportClause importClause,
@@ -34,23 +25,17 @@ public final class ImportDeclaration extends ModuleItem {
         this.type = Type.ImportFrom;
         this.importClause = importClause;
         this.moduleSpecifier = moduleSpecifier;
-        this.moduleImport = null;
     }
 
     public ImportDeclaration(long beginPosition, long endPosition, String moduleSpecifier) {
         super(beginPosition, endPosition);
         this.type = Type.ImportModule;
         this.moduleSpecifier = moduleSpecifier;
-        this.moduleImport = null;
         this.importClause = null;
     }
 
     public Type getType() {
         return type;
-    }
-
-    public ModuleImport getModuleImport() {
-        return moduleImport;
     }
 
     public ImportClause getImportClause() {

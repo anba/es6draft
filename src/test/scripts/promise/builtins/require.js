@@ -11,7 +11,7 @@ var global = this;
 "use strict";
 
 const {
-  Function, Object, Map, Set, read,
+  Function, Object, Map, Set, read, readRelativeToScript,
 } = global;
 
 const Object_create = Object.create;
@@ -27,14 +27,15 @@ const builtins = new Set(["assert", "testapi", "sinon"]);
 
 function readFile(path) {
   if (builtins.has(path)) {
-    var file = `../builtins/${path}.js`;
+    var file = `${path}.js`;
+    return readRelativeToScript(file);
   } else {
     var file = path;
     if (!file.endsWith(".js")) {
       file += ".js";
     }
+    return read(file);
   }
-  return read(file);
 }
 
 function evaluateModule(module, code) {

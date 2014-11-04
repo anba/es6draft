@@ -1190,9 +1190,10 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         case Local:
             specifiers = node.getExportsClause().accept(this, value);
             break;
-        case Default:
+        case DefaultExpression:
             expression = node.getExpression().accept(this, value);
             break;
+        case DefaultDeclaration:
         case Declaration:
             declaration = node.getDeclaration().accept(this, value);
             break;
@@ -1213,8 +1214,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(ExportSpecifier node, Void value) {
-        Object id = createIdentifier(node.getLocalName() != null ? node.getLocalName()
-                .getIdentifier() : node.getImportName());
+        Object id = createIdentifier(node.getSourceName());
         Object name = createIdentifier(node.getExportName());
         OrdinaryObject exportSpec = createNode(node, Type.ExportSpecifier);
         addProperty(exportSpec, "id", id);
@@ -1494,9 +1494,6 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         Object specifiers = NULL;
         Object source = NULL;
         switch (node.getType()) {
-        case ModuleImport:
-            node.getModuleImport().accept(this, value);
-            break;
         case ImportFrom:
             specifiers = node.getImportClause().accept(this, value);
             source = createLiteral(node.getModuleSpecifier());
@@ -1699,11 +1696,6 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         OrdinaryObject program = createNode(node, Type.Program);
         addProperty(program, "body", body);
         return program;
-    }
-
-    @Override
-    public Object visit(ModuleImport node, Void value) {
-        throw new NotImplementedExpception(node);
     }
 
     @Override

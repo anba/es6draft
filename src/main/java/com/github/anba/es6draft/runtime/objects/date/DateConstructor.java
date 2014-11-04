@@ -23,7 +23,9 @@ import com.github.anba.es6draft.runtime.internal.Properties.Optional.Default;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.date.DatePrototype.DateString;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -37,7 +39,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>20.3.3 Properties of the Date Constructor
  * </ul>
  */
-public final class DateConstructor extends BuiltinConstructor implements Initializable {
+public final class DateConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<DateObject> {
     /**
      * Constructs a new Date constructor function.
      * 
@@ -155,6 +158,11 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
         return Construct(callerContext, this, args);
     }
 
+    @Override
+    public CreateAction<DateObject> createAction() {
+        return DateCreate.INSTANCE;
+    }
+
     /**
      * 20.3.3 Properties of the Date Constructor
      */
@@ -265,22 +273,6 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
         public static Object now(ExecutionContext cx, Object thisValue) {
             return (double) System.currentTimeMillis();
         }
-
-        /**
-         * 20.3.3.5 Date[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized date object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.DatePrototype,
-                    DateObjectAllocator.INSTANCE);
-        }
     }
 
     private static final class DateObjectAllocator implements ObjectAllocator<DateObject> {
@@ -289,6 +281,16 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
         @Override
         public DateObject newInstance(Realm realm) {
             return new DateObject(realm);
+        }
+    }
+
+    private static final class DateCreate implements CreateAction<DateObject> {
+        static final CreateAction<DateObject> INSTANCE = new DateCreate();
+
+        @Override
+        public DateObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.DatePrototype,
+                    DateObjectAllocator.INSTANCE);
         }
     }
 }

@@ -17,7 +17,7 @@ const {
 } = Assert;
 
 
-/* 19.2.3.5 Function.prototype.toMethod (superBinding, methodName = undefined) */
+/* 19.2.3.5 Function.prototype.toMethod (superBinding) */
 
 assertBuiltinFunction(Function.prototype.toMethod, "toMethod", 1);
 
@@ -42,11 +42,11 @@ const ToMethod = Function.prototype.call.bind(Function.prototype.toMethod);
   assertSame(Source, Source.prototype.constructor);
   assertSame(Target, Target.prototype.constructor);
 
-  log = "";  
+  log = "";
   assertSame(Source, (new Source).constructor);
   assertSame("[SourceBase][Source]", log);
 
-  log = "";  
+  log = "";
   assertSame(Target, (new Target).constructor);
   assertSame("[TargetBase][Target]", log);
 
@@ -59,7 +59,7 @@ const ToMethod = Function.prototype.call.bind(Function.prototype.toMethod);
 
   log = "";
   assertNotSame(Target, (new Target.prototype.constructor).constructor);
-  assertSame("[TargetBase][Source]", log);
+  assertSame("[SourceBase][Source]", log);
 }
 
 // Function.prototype.toMethod() overwrites .constructor with rebound .constructor from source (implicit constructor)
@@ -79,11 +79,11 @@ const ToMethod = Function.prototype.call.bind(Function.prototype.toMethod);
   assertSame(Source, Source.prototype.constructor);
   assertSame(Target, Target.prototype.constructor);
 
-  log = "";  
+  log = "";
   assertSame(Source, (new Source).constructor);
   assertSame("[SourceBase]", log);
 
-  log = "";  
+  log = "";
   assertSame(Target, (new Target).constructor);
   assertSame("[TargetBase]", log);
 
@@ -96,7 +96,7 @@ const ToMethod = Function.prototype.call.bind(Function.prototype.toMethod);
 
   log = "";
   assertNotSame(Target, (new Target.prototype.constructor).constructor);
-  assertSame("[TargetBase]", log);
+  assertSame("[SourceBase]", log);
 }
 
 // Function.prototype.toMethod() rebinds [[HomeObject]]
@@ -106,7 +106,7 @@ const ToMethod = Function.prototype.call.bind(Function.prototype.toMethod);
     fn() { log += "[SourceBase]"; }
   }
   class Source extends SourceBase {
-    fn() { super(); log += "[Source]"; }
+    fn() { super.fn(); log += "[Source]"; }
   }
   class TargetBase {
     fn() { log += "[TargetBase]"; }
@@ -114,11 +114,11 @@ const ToMethod = Function.prototype.call.bind(Function.prototype.toMethod);
   class Target extends TargetBase {
   }
 
-  log = "";  
+  log = "";
   (new Source).fn();
   assertSame("[SourceBase][Source]", log);
 
-  log = "";  
+  log = "";
   (new Target).fn();
   assertSame("[TargetBase]", log);
 
@@ -132,7 +132,7 @@ const ToMethod = Function.prototype.call.bind(Function.prototype.toMethod);
 // Function.prototype.toMethod() copies internal slots ([[Prototype]]) (1)
 {
   class Source {
-    fn() { super(); }
+    fn() { super.fn(); }
   }
   class Target { }
 
@@ -150,7 +150,7 @@ const ToMethod = Function.prototype.call.bind(Function.prototype.toMethod);
 // Function.prototype.toMethod() copies internal slots ([[Prototype]]) (2)
 {
   class Source {
-    fn() { super(); }
+    fn() { super.fn(); }
   }
   class Target { }
 
@@ -166,7 +166,7 @@ const ToMethod = Function.prototype.call.bind(Function.prototype.toMethod);
 // Function.prototype.toMethod() copies internal slots (excluded: [[Extensible]])
 {
   class Source {
-    fn() { super(); }
+    fn() { super.fn(); }
   }
   class Target { }
 
@@ -185,7 +185,7 @@ const ToMethod = Function.prototype.call.bind(Function.prototype.toMethod);
   assertNotSame(foreignRealm.global.TypeError, TypeError);
 
   class Source {
-    fn() { [](); super(); }
+    fn() { [](); super.fn(); }
   }
   let Target = foreignRealm.eval(`
     class Target { }
@@ -205,7 +205,7 @@ const ToMethod = Function.prototype.call.bind(Function.prototype.toMethod);
 
   let Source = foreignRealm.eval(`
     class Source {
-      fn() { [](); super(); }
+      fn() { [](); super.fn(); }
     }
     Source;
   `);
@@ -225,7 +225,7 @@ const ToMethod = Function.prototype.call.bind(Function.prototype.toMethod);
   assertCallable(ThrowTypeError);
 
   class Source {
-    fn() { super(); }
+    fn() { super.fn(); }
   }
   let Target = foreignRealm.eval(`
     class Target { }
@@ -251,7 +251,7 @@ const ToMethod = Function.prototype.call.bind(Function.prototype.toMethod);
 
   let Source = foreignRealm.eval(`
     class Source {
-      fn() { super(); }
+      fn() { super.fn(); }
     }
     Source;
   `);

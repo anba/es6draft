@@ -20,7 +20,7 @@ const {
   foreignConstructor.prototype = null;
 
   // GetPrototypeFromConstructor() retrieves the foreign realm's intrinsic %ObjectPrototype%
-  let obj1 = create.call(foreignConstructor);
+  let obj1 = new (foreignConstructor);
   assertSame(foreignRealm.global.Object.prototype, Object.getPrototypeOf(obj1));
 
 
@@ -29,7 +29,7 @@ const {
   foreignBoundConstructor.prototype = null;
 
   // GetPrototypeFromConstructor() retrieves the foreign realm's intrinsic %ObjectPrototype%
-  let obj2 = create.call(foreignBoundConstructor);
+  let obj2 = new (foreignBoundConstructor);
   assertSame(foreignRealm.global.Object.prototype, Object.getPrototypeOf(obj1));
 
 
@@ -38,6 +38,6 @@ const {
   foreignProxyConstructor.prototype = null;
 
   // GetPrototypeFromConstructor() retrieves the foreign realm's intrinsic %ObjectPrototype%
-  let obj3 = create.call(foreignProxyConstructor);
+  let obj3 = new (foreignProxyConstructor);
   assertSame(foreignRealm.global.Object.prototype, Object.getPrototypeOf(obj1));
 }

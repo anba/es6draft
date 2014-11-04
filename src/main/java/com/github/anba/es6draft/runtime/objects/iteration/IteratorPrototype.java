@@ -11,7 +11,9 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -46,5 +48,19 @@ public final class IteratorPrototype extends OrdinaryObject implements Initializ
 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
+
+        /**
+         * 25.1.2.1.1 %IteratorPrototype% [ @@iterator ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the this-value
+         */
+        @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
+        public static Object iterator(ExecutionContext cx, Object thisValue) {
+            return thisValue;
+        }
     }
 }

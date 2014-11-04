@@ -12,6 +12,6 @@ const {
 // 8.3.16.6: Missing ReturnIfAbrupt after step 2
 // https://bugs.ecmascript.org/show_bug.cgi?id=1852
 
-let fn = Function[Symbol.create]();
+let fn = new class extends Function { constructor() { /* no super */ } };
 Object.defineProperty(fn, "length", {value: null});
 assertThrows(TypeError, () => Function.call(fn, ""));

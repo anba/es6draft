@@ -11,7 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ConstructTailC
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
-import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -19,6 +19,8 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -147,20 +149,20 @@ public class OrdinaryFunction extends FunctionObject {
      *            the function code
      * @param scope
      *            the lexical environment
-     * @param script
-     *            the script object
+     * @param executable
+     *            the executable object
      * @return the function object
      */
     /*package*/static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialize(FUNCTION f,
             FunctionKind kind, boolean strict, RuntimeInfo.Function function,
-            LexicalEnvironment<?> scope, Script script) {
+            LexicalEnvironment<?> scope, Executable executable) {
         /* step 1 */
         int len = function.expectedArgumentCount();
         /* step 2 (not applicable) */
         /* steps 3-4 */
         f.infallibleDefineOwnProperty("length", new PropertyDescriptor(len, false, false, true));
         /* steps 5-11 */
-        f.initialize(kind, strict, function, scope, script);
+        f.initialize(kind, strict, function, scope, executable);
         /* step 12 */
         return f;
     }
@@ -182,20 +184,20 @@ public class OrdinaryFunction extends FunctionObject {
      *            the function code
      * @param scope
      *            the lexical environment
-     * @param script
-     *            the script object
+     * @param executable
+     *            the executable object
      * @return the function object
      */
     public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialize(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, boolean strict,
-            RuntimeInfo.Function function, LexicalEnvironment<?> scope, Script script) {
+            RuntimeInfo.Function function, LexicalEnvironment<?> scope, Executable executable) {
         /* step 1 */
         int len = function.expectedArgumentCount();
         /* step 2 (not applicable) */
         /* steps 3-4 */
         DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, true));
         /* steps 5-11 */
-        f.initialize(kind, strict, function, scope, script);
+        f.initialize(kind, strict, function, scope, executable);
         /* step 12 */
         return f;
     }
@@ -245,7 +247,7 @@ public class OrdinaryFunction extends FunctionObject {
         OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
         return FunctionInitialize(f, kind, function.isStrict(), function, scope,
-                cx.getCurrentScript());
+                cx.getCurrentExecutable());
     }
 
     /**
@@ -287,12 +289,21 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 5 */
         boolean writablePrototype = true;
         /* step 6 */
+        ScriptObject superF = f.getPrototype();
+        /* step 7 */
+        if (superF instanceof Creatable) {
+            CreateAction<?> createAction = ((Creatable<?>) superF).createAction();
+            if (createAction != null) {
+                f.setCreateAction(createAction);
+            }
+        }
+        /* step 8 */
         DefinePropertyOrThrow(cx, prototype, "constructor", new PropertyDescriptor(f,
                 writablePrototype, false, writablePrototype));
-        /* steps 7-8 */
+        /* steps 9-10 */
         DefinePropertyOrThrow(cx, f, "prototype", new PropertyDescriptor(prototype,
                 writablePrototype, false, false));
-        /* step 9 (return) */
+        /* step 11 (return) */
     }
 
     /**
@@ -312,44 +323,35 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 1 (not applicable) */
         /* step 2 */
         assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
-        /* steps 3-6 (not applicable) */
-        /* steps 7-8 */
+        /* steps 3-5 (not applicable) */
+        /* step 6 */
+        ScriptObject superF = f.getPrototype();
+        /* step 7 */
+        if (superF instanceof Creatable) {
+            CreateAction<?> createAction = ((Creatable<?>) superF).createAction();
+            if (createAction != null) {
+                f.setCreateAction(createAction);
+            }
+        }
+        /* step 8 (not applicable) */
+        /* steps 9-10 */
         DefinePropertyOrThrow(cx, f, "prototype", new PropertyDescriptor(prototype,
                 writablePrototype, false, false));
-        /* step 9 (return) */
+        /* step 11 (return) */
     }
 
     /**
-     * 9.2.10 MakeMethod ( F, methodName, homeObject ) Abstract Operation
+     * 9.2.10 MakeMethod ( F, homeObject ) Abstract Operation
      * 
      * @param f
      *            the function object
-     * @param methodName
-     *            the method name
      * @param homeObject
      *            the home object
      */
-    public static void MakeMethod(FunctionObject f, String methodName, ScriptObject homeObject) {
+    public static void MakeMethod(FunctionObject f, ScriptObject homeObject) {
         /* steps 1-3 (not applicable) */
         /* steps 4-6 */
-        f.toMethod(methodName, homeObject);
-        /* step 7 (return) */
-    }
-
-    /**
-     * 9.2.10 MakeMethod ( F, methodName, homeObject ) Abstract Operation
-     * 
-     * @param f
-     *            the function object
-     * @param methodName
-     *            the method name
-     * @param homeObject
-     *            the home object
-     */
-    public static void MakeMethod(FunctionObject f, Symbol methodName, ScriptObject homeObject) {
-        /* steps 1-3 (not applicable) */
-        /* steps 3-6 */
-        f.toMethod(methodName, homeObject);
+        f.toMethod(homeObject);
         /* step 7 (return) */
     }
 
@@ -455,7 +457,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.12 CloneMethod(function, newHome, newName) Abstract Operation
+     * 9.2.12 CloneMethod(function, newHome) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -463,24 +465,17 @@ public class OrdinaryFunction extends FunctionObject {
      *            the function object
      * @param newHome
      *            the new home object
-     * @param newName
-     *            the new method name
      * @return the cloned function object
      */
     public static FunctionObject CloneMethod(ExecutionContext cx, FunctionObject function,
-            ScriptObject newHome, Object newName) {
+            ScriptObject newHome) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
-        assert newName == null || newName instanceof String || newName instanceof Symbol;
         /* steps 4-7, 9 */
         FunctionObject clone = function.clone(cx);
         /* step 8 */
         if (function.isNeedsSuper()) {
-            if (newName != null) {
-                clone.toMethod(newName, newHome);
-            } else {
-                clone.toMethod(function.getMethodName(), newHome);
-            }
+            clone.toMethod(newHome);
         }
         /* step 9 */
         return clone;

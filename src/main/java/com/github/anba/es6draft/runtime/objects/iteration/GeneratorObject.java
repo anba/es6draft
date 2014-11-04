@@ -98,9 +98,9 @@ public final class GeneratorObject extends OrdinaryObject {
     private void close() {
         assert state == GeneratorState.Executing || state == GeneratorState.SuspendedStart : "close from: "
                 + state;
+        this.state = GeneratorState.Completed;
         this.context = null;
         this.code = null;
-        this.state = GeneratorState.Completed;
         this.generator = null;
     }
 
@@ -158,10 +158,10 @@ public final class GeneratorObject extends OrdinaryObject {
         switch (state) {
         case Executing:
             throw newTypeError(cx, Messages.Key.GeneratorExecuting);
-        case Completed:
-            return CreateIterResultObject(cx, value, true);
         case SuspendedStart:
             close();
+            // fall-through
+        case Completed:
             return CreateIterResultObject(cx, value, true);
         case SuspendedYield:
         default:
@@ -182,10 +182,10 @@ public final class GeneratorObject extends OrdinaryObject {
         switch (state) {
         case Executing:
             throw newTypeError(cx, Messages.Key.GeneratorExecuting);
-        case Completed:
-            throw ScriptException.create(value);
         case SuspendedStart:
             close();
+            // fall-through
+        case Completed:
             throw ScriptException.create(value);
         case SuspendedYield:
         default:

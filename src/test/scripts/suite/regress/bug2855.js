@@ -14,7 +14,7 @@ const {
 
 {
   let GeneratorFunction = (function*(){}).constructor;
-  let fn = Function[Symbol.create]();
+  let fn = new class extends Function { constructor() { /* no super */ } };
 
   function argumentsCaller(c) {
     // See bug 2718

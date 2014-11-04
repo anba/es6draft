@@ -276,24 +276,13 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
     @Override
     public List<Name> visit(ImportDeclaration node, List<Name> value) {
         switch (node.getType()) {
-        case ModuleImport:
-            return node.getModuleImport().accept(this, value);
         case ImportFrom:
             return node.getImportClause().accept(this, value);
         case ImportModule:
-        default:
             return value;
+        default:
+            throw new AssertionError();
         }
-    }
-
-    /**
-     * <pre>
-     * ModuleImport : module ImportedBinding FromClause ;
-     * </pre>
-     */
-    @Override
-    public List<Name> visit(ModuleImport node, List<Name> value) {
-        return node.getImportedBinding().accept(this, value);
     }
 
     /**
@@ -306,6 +295,9 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
     public List<Name> visit(ImportClause node, List<Name> value) {
         if (node.getDefaultEntry() != null) {
             node.getDefaultEntry().accept(this, value);
+        }
+        if (node.getNameSpace() != null) {
+            node.getNameSpace().accept(this, value);
         }
         return forEach(node.getNamedImports(), value);
     }
@@ -326,9 +318,10 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      *     export * FromClause ;
      *     export ExportClause FromClause ;
      *     export ExportClause ;
-     * ExportDeclaration : export VariableStatement ;
-     * ExportDeclaration : export Declaration ;
-     * ExportDeclaration : export default AssignmentExpression ;
+     *     export VariableStatement
+     *     export Declaration
+     *     export default HoistableDeclaration
+     *     export default AssignmentExpression ;
      * </pre>
      */
     @Override
@@ -337,15 +330,17 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
         case Variable:
             return node.getVariableStatement().accept(this, value);
         case Declaration:
+        case DefaultDeclaration:
             return node.getDeclaration().accept(this, value);
-        case Default:
-            value.add(new Name("default"));
+        case DefaultExpression:
+            value.add(new Name("*default*"));
             return value;
         case All:
         case External:
         case Local:
-        default:
             return value;
+        default:
+            throw new AssertionError();
         }
     }
 }

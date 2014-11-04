@@ -12,6 +12,8 @@ import java.lang.invoke.MethodHandle;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
@@ -20,7 +22,9 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>9.3 Built-in Function Objects
  * </ul>
  */
-public final class NativeConstructor extends BuiltinConstructor {
+public final class NativeConstructor extends BuiltinConstructor implements Creatable<ScriptObject> {
+    /** [[CreateAction]] */
+    private final CreateAction<?> createAction;
     // (ExecutionContext, Object, Object[]) -> Object
     private final MethodHandle mh;
 
@@ -33,17 +37,27 @@ public final class NativeConstructor extends BuiltinConstructor {
      *            the function name
      * @param arity
      *            the function arity
+     * @param createAction
+     *            the create action operation
      * @param mh
      *            the method handle to the function code
      */
-    public NativeConstructor(Realm realm, String name, int arity, MethodHandle mh) {
-        this(realm, name, mh);
+    public NativeConstructor(Realm realm, String name, int arity, CreateAction<?> createAction,
+            MethodHandle mh) {
+        this(realm, name, createAction, mh);
         createDefaultFunctionProperties(name, arity);
     }
 
-    private NativeConstructor(Realm realm, String name, MethodHandle mh) {
+    private NativeConstructor(Realm realm, String name, CreateAction<?> createAction,
+            MethodHandle mh) {
         super(realm, name);
+        this.createAction = createAction;
         this.mh = mh;
+    }
+
+    @Override
+    public CreateAction<?> createAction() {
+        return createAction;
     }
 
     /**
@@ -71,7 +85,7 @@ public final class NativeConstructor extends BuiltinConstructor {
 
     @Override
     public NativeConstructor clone() {
-        return new NativeConstructor(getRealm(), getName(), mh);
+        return new NativeConstructor(getRealm(), getName(), createAction, mh);
     }
 
     @Override

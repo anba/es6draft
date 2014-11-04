@@ -9,16 +9,15 @@ const {
   assertSyntaxError
 } = Assert;
 
-// IdentifierPart (UnicodeIDContinue, $, _) must not appear in identity escape.
-assertSyntaxError(`/\\$/`);
+// UnicodeIDContinue must not appear in identity escape.
 assertSyntaxError(`/\\a/`);
 assertSyntaxError(`/\\A/`);
 assertSyntaxError(`/\\_/`);
 assertSyntaxError(`/\\\u00C0/`);
 assertSyntaxError(`/\\\u0660/`);
 
-// U+200C (ZERO-WIDTH NON-JOINER) and U+200D (ZERO-WIDTH JOINER) are IdentifierPart,
-// but are explicitly allowed in the regular expression grammar to appear in identity
-// escape sequences.
+// $, U+200C (ZERO-WIDTH NON-JOINER) and U+200D (ZERO-WIDTH JOINER) are IdentifierPart
+// but not UnicodeIDContinue, so they are allowed to appear in identity escape sequences.
+RegExp(`/\\$/`);
 RegExp("\\\u200c");
 RegExp("\\\u200d");

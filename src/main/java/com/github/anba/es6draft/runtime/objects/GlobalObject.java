@@ -64,6 +64,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         createProperties(cx, this, URIHandlingFunctions.class);
         createProperties(cx, this, ConstructorProperties.class);
         createProperties(cx, this, OtherProperties.class);
+        createProperties(cx, this, SystemProperty.class);
         createProperties(cx, this, AdditionalProperties.class);
     }
 
@@ -587,16 +588,18 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         @Value(name = "Reflect")
         public static final Intrinsics Reflect = Intrinsics.Reflect;
 
-        /**
-         * 18.4.5 System
-         */
-        @Value(name = "System")
-        public static final Intrinsics System = Intrinsics.System;
-
         // Internationalization API
 
         @Value(name = "Intl")
         public static final Intrinsics Intl = Intrinsics.Intl;
+    }
+
+    @CompatibilityExtension(CompatibilityOption.Loader)
+    public enum SystemProperty {
+        ;
+
+        @Value(name = "System")
+        public static final Intrinsics System = Intrinsics.System;
     }
 
     /**

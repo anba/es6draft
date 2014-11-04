@@ -215,10 +215,6 @@ public final class Characters {
      * <strong>[11.6] Names and Keywords</strong>
      * 
      * <pre>
-     * IdentifierPart ::
-     *     UnicodeIDContinue
-     *     $
-     *     _
      * UnicodeIDContinue ::
      *     any Unicode character with the Unicode property "ID_Continue", "Other_ID_Continue", or "Other_ID_Start"
      * </pre>
@@ -227,15 +223,14 @@ public final class Characters {
      *            the character to inspect
      * @return {@code true} if the character is an identifier part character
      */
-    public static boolean isIdentifierPartNotJoiner(int c) {
+    public static boolean isUnicodeIDContinue(int c) {
         if (c <= 127) {
-            return ('a' <= (c | 0x20) && (c | 0x20) <= 'z') || ('0' <= c && c <= '9') || c == '$'
-                    || c == '_';
+            return ('a' <= (c | 0x20) && (c | 0x20) <= 'z') || ('0' <= c && c <= '9') || c == '_';
         }
-        return isIdentifierPartNotJoinerUnlikely(c);
+        return isUnicodeIDContinueUnlikely(c);
     }
 
-    private static boolean isIdentifierPartNotJoinerUnlikely(int c) {
+    private static boolean isUnicodeIDContinueUnlikely(int c) {
         // cf. http://www.unicode.org/reports/tr31/ for definition of "ID_Continue"
         if (c == '\u2E2F') {
             // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]

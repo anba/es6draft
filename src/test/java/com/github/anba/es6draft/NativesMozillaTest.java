@@ -70,6 +70,7 @@ public final class NativesMozillaTest {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             options.add(CompatibilityOption.Comprehension);
             options.add(CompatibilityOption.Realm);
+            options.add(CompatibilityOption.Loader);
             return options;
         }
 
@@ -95,7 +96,7 @@ public final class NativesMozillaTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        // filter disabled tests
+        // Filter disabled tests
         assumeTrue(test.isEnabled());
 
         global = globals.newGlobal(new ScriptTestConsole(), test);
@@ -111,10 +112,10 @@ public final class NativesMozillaTest {
 
     @Test
     public void runTest() throws Throwable {
-        // evaluate actual test-script
+        // Evaluate actual test-script
         global.eval(test.getScript(), test.toFile());
 
-        // wait for pending tasks to finish
+        // Wait for pending tasks to finish
         global.getRealm().getWorld().runEventLoop();
     }
 
@@ -133,7 +134,6 @@ public final class NativesMozillaTest {
             includeNative(getScriptURL("compat.js"));
             includeNative(getScriptURL("iterator.js"));
             includeNative(getScriptURL("legacy-generator.js"));
-            includeNative(getScriptURL("number.js"));
             includeNative(getScriptURL("proxy.js"));
             includeNative(getScriptURL("source.js"));
             includeNative(getScriptURL("statics.js"));

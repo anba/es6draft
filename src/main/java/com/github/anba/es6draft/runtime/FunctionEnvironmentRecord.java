@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime;
 
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1><br>
@@ -17,23 +18,57 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecord {
+    private final FunctionObject functionObject;
     private final Object thisValue;
     private final ScriptObject homeObject;
-    private final Object methodName;
+    private DeclarativeEnvironmentRecord topLex;
 
-    public FunctionEnvironmentRecord(ExecutionContext cx, Object thisValue,
-            ScriptObject homeObject, Object methodName) {
+    public FunctionEnvironmentRecord(ExecutionContext cx, FunctionObject functionObject,
+            Object thisValue, ScriptObject homeObject) {
         super(cx);
+        this.functionObject = functionObject;
         this.thisValue = thisValue;
         this.homeObject = homeObject;
-        this.methodName = methodName;
     }
 
     @Override
     public String toString() {
         return String.format(
-                "%s:{%n\tthisValue=%s,%n\thomeObject=%s,%n\tmethodName=%s,%n\tbindings=%s%n}",
-                getClass().getSimpleName(), thisValue, homeObject, methodName, bindingsToString());
+                "%s:{%n\tfunctionObject=%s,%n\tthisValue=%s,%n\thomeObject=%s,%n\tbindings=%s%n}",
+                getClass().getSimpleName(), functionObject, thisValue, homeObject,
+                bindingsToString());
+    }
+
+    /**
+     * Returns the {@code FunctionObject} state component.
+     * 
+     * @return the {@code FunctionObject} component
+     */
+    public FunctionObject getFunctionObject() {
+        return functionObject;
+    }
+
+    /**
+     * Returns the {@code topLex} state component.
+     * 
+     * @return the {@code topLex} component
+     */
+    public DeclarativeEnvironmentRecord getTopLex() {
+        // FIXME: spec bug - eval in default parameter initializer
+        if (topLex == null) {
+            return this;
+        }
+        return topLex;
+    }
+
+    /**
+     * [Called from generated code]
+     * 
+     * @param topLex
+     *            the top lexical environment record
+     */
+    public void setTopLex(DeclarativeEnvironmentRecord topLex) {
+        this.topLex = topLex;
     }
 
     /**
@@ -42,7 +77,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     @Override
     public boolean hasThisBinding() {
         /* step 1 */
-        return true;
+        return thisValue != null;
     }
 
     /**
@@ -50,8 +85,8 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
      */
     @Override
     public boolean hasSuperBinding() {
-        /* step 1 */
-        return homeObject != null;
+        /* steps 1-2 */
+        return thisValue != null && homeObject != null;
     }
 
     /**
@@ -78,15 +113,5 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
         /* step 3 (not applicable) */
         /* step 4 */
         return home.getPrototypeOf(cx);
-    }
-
-    /**
-     * 8.1.1.3.5 GetMethodName ()
-     * 
-     * @return the method name or {@code null} if not available
-     */
-    public Object getMethodName() {
-        /* step 1 */
-        return methodName;
     }
 }

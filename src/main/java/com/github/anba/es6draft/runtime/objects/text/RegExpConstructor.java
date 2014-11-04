@@ -21,14 +21,18 @@ import com.github.anba.es6draft.regexp.RegExpMatcher;
 import com.github.anba.es6draft.regexp.RegExpParser;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.*;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.Initializable;
+import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -43,7 +47,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>21.2.4 Properties of the RegExp Constructor
  * </ul>
  */
-public final class RegExpConstructor extends BuiltinConstructor implements Initializable {
+public final class RegExpConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<RegExpObject> {
     /**
      * Constructs a new RegExp constructor function.
      * 
@@ -126,25 +131,18 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         }
     }
 
-    /**
-     * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
-     * 21.2.3.3.1 Runtime Semantics: RegExpAlloc Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param constructor
-     *            the constructor function
-     * @return the new regular expression object
-     */
-    public static RegExpObject RegExpAlloc(ExecutionContext cx, Object constructor) {
-        /* step 1 */
-        RegExpObject obj = OrdinaryCreateFromConstructor(cx, constructor,
-                Intrinsics.RegExpPrototype, RegExpObjectAllocator.INSTANCE);
-        /* steps 2-3 */
-        DefinePropertyOrThrow(cx, obj, "lastIndex", new PropertyDescriptor(UNDEFINED, true, false,
-                false));
-        /* step 4 */
-        return obj;
+    private static final class RegExpCreate implements CreateAction<RegExpObject> {
+        static final CreateAction<RegExpObject> INSTANCE = new RegExpCreate();
+
+        @Override
+        public RegExpObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            return RegExpAlloc(cx, constructor);
+        }
+    }
+
+    @Override
+    public CreateAction<RegExpObject> createAction() {
+        return RegExpCreate.INSTANCE;
     }
 
     /**
@@ -157,7 +155,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
      *            the constructor function
      * @return the new regular expression object
      */
-    public static RegExpObject RegExpAlloc(ExecutionContext cx, RegExpConstructor constructor) {
+    public static RegExpObject RegExpAlloc(ExecutionContext cx, Constructor constructor) {
         /* step 1 */
         RegExpObject obj = OrdinaryCreateFromConstructor(cx, constructor,
                 Intrinsics.RegExpPrototype, RegExpObjectAllocator.INSTANCE);
@@ -224,7 +222,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
      */
     public static RegExpObject RegExpCreate(ExecutionContext cx, Object pattern, Object flags) {
         /* steps 1-2 */
-        RegExpObject obj = RegExpAlloc(cx, (RegExpConstructor) cx.getIntrinsic(Intrinsics.RegExp));
+        RegExpObject obj = RegExpAlloc(cx, (Constructor) cx.getIntrinsic(Intrinsics.RegExp));
         /* step 3 */
         return RegExpInitialize(cx, obj, pattern, flags);
     }
@@ -318,21 +316,6 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.RegExpPrototype;
-
-        /**
-         * 21.2.4.2 RegExp[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new RegExp object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return RegExpAlloc(cx, thisValue);
-        }
     }
 
     /*

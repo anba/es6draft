@@ -86,7 +86,7 @@ public class CompilerTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        // filter disabled tests
+        // Filter disabled tests
         assumeTrue(test.isEnabled());
 
         global = globals.newGlobal(new ScriptTestConsole(), test);
@@ -102,10 +102,10 @@ public class CompilerTest {
 
     @Test
     public void runTest() throws Throwable {
-        // evaluate actual test-script
+        // Evaluate actual test-script
         global.eval(test.getScript(), test.toFile());
 
-        // wait for pending tasks to finish
+        // Wait for pending tasks to finish
         global.getRealm().getWorld().runEventLoop();
     }
 }

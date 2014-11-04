@@ -13,6 +13,8 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -27,6 +29,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.Parallelized;
@@ -57,6 +60,15 @@ public class StrictTest {
                 TestInfo test, ScriptCache scriptCache) {
             return newGlobalObjectAllocator(console, test, scriptCache);
         }
+
+        @Override
+        protected Set<CompatibilityOption> getOptions() {
+            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            // TODO: Replace/move tests which require es7 extensions
+            options.add(CompatibilityOption.Realm);
+            options.add(CompatibilityOption.Loader);
+            return options;
+        }
     };
 
     @Rule
@@ -75,7 +87,7 @@ public class StrictTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        // filter disabled tests
+        // Filter disabled tests
         assumeTrue(test.isEnabled());
 
         global = globals.newGlobal(new ScriptTestConsole(), test);
@@ -91,10 +103,10 @@ public class StrictTest {
 
     @Test
     public void runTest() throws Throwable {
-        // evaluate actual test-script
+        // Evaluate actual test-script
         global.eval(test.getScript(), test.toFile());
 
-        // wait for pending tasks to finish
+        // Wait for pending tasks to finish
         global.getRealm().getWorld().runEventLoop();
     }
 }

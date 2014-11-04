@@ -41,6 +41,7 @@ public final class Source {
      *            the source start line offset
      */
     public Source(Path file, String name, int line) {
+        assert file == null || file.isAbsolute() : "File not absolute: " + file.toString();
         this.file = file;
         this.name = name;
         this.line = line;

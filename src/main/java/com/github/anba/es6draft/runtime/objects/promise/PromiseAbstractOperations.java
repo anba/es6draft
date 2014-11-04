@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects.promise;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.OrdinaryCreateFromConstructor;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -18,8 +19,8 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.MutRef;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -38,6 +39,36 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  */
 public final class PromiseAbstractOperations {
     private PromiseAbstractOperations() {
+    }
+
+    private static final class PromiseObjectAllocator implements ObjectAllocator<PromiseObject> {
+        static final ObjectAllocator<PromiseObject> INSTANCE = new PromiseObjectAllocator();
+
+        @Override
+        public PromiseObject newInstance(Realm realm) {
+            return new PromiseObject(realm);
+        }
+    }
+
+    /**
+     * <h2>25.4.1 Promise Abstract Operations</h2>
+     * <p>
+     * 25.4.1.3 AllocatePromise ( constructor )
+     * 
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor function
+     * @return the new promise object
+     */
+    public static PromiseObject AllocatePromise(ExecutionContext cx, Constructor constructor) {
+        /* step 1 */
+        PromiseObject obj = OrdinaryCreateFromConstructor(cx, constructor,
+                Intrinsics.PromisePrototype, PromiseObjectAllocator.INSTANCE);
+        /* step 2 */
+        obj.setConstructor(constructor);
+        /* step 3 */
+        return obj;
     }
 
     public static final class ResolvingFunctions {
@@ -74,7 +105,7 @@ public final class PromiseAbstractOperations {
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
-     * 25.4.1.3 CreateResolvingFunctions ( promise )
+     * 25.4.1.4 CreateResolvingFunctions ( promise )
      * 
      * @param cx
      *            the execution context
@@ -98,7 +129,7 @@ public final class PromiseAbstractOperations {
     }
 
     /**
-     * 25.4.1.3.1 Promise Reject Functions
+     * 25.4.1.4.1 Promise Reject Functions
      */
     public static final class PromiseRejectFunction extends BuiltinFunction {
         /** [[Promise]] */
@@ -143,7 +174,7 @@ public final class PromiseAbstractOperations {
     }
 
     /**
-     * 25.4.1.3.2 Promise Resolve Functions
+     * 25.4.1.4.2 Promise Resolve Functions
      */
     public static final class PromiseResolveFunction extends BuiltinFunction {
         /** [[Promise]] */
@@ -219,7 +250,7 @@ public final class PromiseAbstractOperations {
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
-     * 25.4.1.4 FulfillPromise (promise, value)
+     * 25.4.1.5 FulfillPromise (promise, value)
      * 
      * @param cx
      *            the execution context
@@ -236,7 +267,7 @@ public final class PromiseAbstractOperations {
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
-     * 25.4.1.5 NewPromiseCapability ( C )
+     * 25.4.1.6 NewPromiseCapability ( C )
      * 
      * @param cx
      *            the execution context
@@ -255,14 +286,16 @@ public final class PromiseAbstractOperations {
         ScriptObject promise = CreateFromConstructor(cx, constructor);
         /* step 5 */
         if (promise == null) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
+            // FIXME: spec bug
+            // throw newTypeError(cx, Messages.Key.NotObjectType);
+            promise = AllocatePromise(cx, constructor);
         }
         /* step 6 */
         return CreatePromiseCapabilityRecord(cx, promise, constructor);
     }
 
     /**
-     * 25.4.1.5.1 CreatePromiseCapabilityRecord( promise, constructor )
+     * 25.4.1.6.1 CreatePromiseCapabilityRecord( promise, constructor )
      * 
      * @param <PROMISE>
      *            the promise type
@@ -301,7 +334,7 @@ public final class PromiseAbstractOperations {
     }
 
     /**
-     * 25.4.1.5.2 GetCapabilitiesExecutor Functions
+     * 25.4.1.6.2 GetCapabilitiesExecutor Functions
      */
     public static final class GetCapabilitiesExecutor extends BuiltinFunction {
         /** [[Resolve]] */
@@ -353,7 +386,7 @@ public final class PromiseAbstractOperations {
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
-     * 25.4.1.6 IsPromise ( x )
+     * 25.4.1.7 IsPromise ( x )
      * 
      * @param x
      *            the object
@@ -371,7 +404,7 @@ public final class PromiseAbstractOperations {
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
-     * 25.4.1.7 RejectPromise (promise, reason)
+     * 25.4.1.8 RejectPromise (promise, reason)
      * 
      * @param cx
      *            the execution context
@@ -388,7 +421,7 @@ public final class PromiseAbstractOperations {
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
-     * 25.4.1.8 TriggerPromiseReactions ( reactions, argument )
+     * 25.4.1.9 TriggerPromiseReactions ( reactions, argument )
      * 
      * @param cx
      *            the execution context
@@ -487,121 +520,6 @@ public final class PromiseAbstractOperations {
                 /* step 3 */
                 resolvingFunctions.getReject().call(cx, UNDEFINED, e.getValue());
             }
-        }
-    }
-
-    /* ***************************************************************************************** */
-
-    /**
-     * <h2>Modules</h2>
-     * <p>
-     * PromiseThen ( promise, onFulfilled )
-     * 
-     * @param cx
-     *            the execution context
-     * @param promise
-     *            the promise object
-     * @param onFulfilled
-     *            the fulfillment handler
-     * @return the new promise object
-     */
-    public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
-            Callable onFulfilled) {
-        // TODO: make safe
-        Object p = PromisePrototype.Properties.then(cx, promise, onFulfilled, UNDEFINED);
-        assert p instanceof ScriptObject;
-        return (ScriptObject) p;
-    }
-
-    /**
-     * <h2>Modules</h2>
-     * <p>
-     * PromiseThen ( promise, onFulfilled, onRejected )
-     * 
-     * @param cx
-     *            the execution context
-     * @param promise
-     *            the promise object
-     * @param onFulfilled
-     *            the fulfillment handler
-     * @param onRejected
-     *            the rejection handler
-     * @return the new promise object
-     */
-    public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
-            Callable onFulfilled, Callable onRejected) {
-        // TODO: make safe
-        Object p = PromisePrototype.Properties.then(cx, promise, onFulfilled, onRejected);
-        assert p instanceof ScriptObject;
-        return (ScriptObject) p;
-    }
-
-    /**
-     * <h2>Modules</h2>
-     * <p>
-     * PromiseCatch ( promise, onRejected )
-     * 
-     * @param cx
-     *            the execution context
-     * @param promise
-     *            the promise object
-     * @param onRejected
-     *            the rejection handler
-     * @return the new promise object
-     */
-    public static ScriptObject PromiseCatch(ExecutionContext cx, ScriptObject promise,
-            Callable onRejected) {
-        // TODO: make safe
-        Object p = PromisePrototype.Properties.then(cx, promise, UNDEFINED, onRejected);
-        assert p instanceof ScriptObject;
-        return (ScriptObject) p;
-    }
-
-    /**
-     * <h2>Modules</h2>
-     * <p>
-     * PromiseAll ( x )
-     * 
-     * @param cx
-     *            the execution context
-     * @param list
-     *            the list of promise objects
-     * @return the new promise object
-     */
-    public static ScriptObject PromiseAll(ExecutionContext cx, List<ScriptObject> list) {
-        // TODO: make safe
-        ScriptObject promiseConstructor = cx.getIntrinsic(Intrinsics.Promise);
-        ScriptObject iterator = CreateListIterator(cx, list);
-        // Promote Iterator to Iterable
-        CreateDataProperty(cx, iterator, BuiltinSymbol.iterator.get(),
-                new ConstantFunction<>(cx.getRealm(), iterator));
-        Object p = PromiseConstructor.Properties.all(cx, promiseConstructor, iterator);
-        assert p instanceof ScriptObject;
-        return (ScriptObject) p;
-    }
-
-    private static final class ConstantFunction<VALUE> extends BuiltinFunction {
-        /** [[ConstantValue]] */
-        private final VALUE constantValue;
-
-        public ConstantFunction(Realm realm, VALUE constantValue) {
-            this(realm, constantValue, null);
-            createDefaultFunctionProperties(ANONYMOUS, 0);
-        }
-
-        private ConstantFunction(Realm realm, VALUE constantValue, Void ignore) {
-            super(realm, ANONYMOUS);
-            this.constantValue = constantValue;
-        }
-
-        @Override
-        public ConstantFunction<VALUE> clone() {
-            return new ConstantFunction<>(getRealm(), constantValue, null);
-        }
-
-        @Override
-        public VALUE call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            return constantValue;
         }
     }
 }

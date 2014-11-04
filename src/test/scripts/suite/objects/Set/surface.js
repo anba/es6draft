@@ -21,10 +21,6 @@ function assertFunctionProperty(object, name, value = object[name]) {
   return assertDataProperty(object, name, {value, writable: true, enumerable: false, configurable: true});
 }
 
-function assertCreateFunctionProperty(object, name, value = object[name]) {
-  return assertDataProperty(object, name, {value, writable: false, enumerable: false, configurable: true});
-}
-
 function assertConstructorProperty(object, name = "constructor", value = object[name]) {
   return assertDataProperty(object, name, {value, writable: true, enumerable: false, configurable: true});
 }
@@ -43,7 +39,6 @@ assertSame(Set, Set.prototype.constructor);
 /* Properties of the Set Constructor */
 
 assertPrototypeProperty(Set);
-assertCreateFunctionProperty(Set, Symbol.create);
 
 
 /* Properties of the Set Prototype Object */

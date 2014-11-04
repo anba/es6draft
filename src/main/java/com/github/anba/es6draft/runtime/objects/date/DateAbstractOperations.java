@@ -312,7 +312,13 @@ final class DateAbstractOperations {
      * @return the date in milli-seconds since the epoch
      */
     public static double UTC(Realm realm, double t) {
-        return t - LocalTZA(realm) - DaylightSavingTA(realm, t - LocalTZA(realm));
+        double d = t - LocalTZA(realm);
+        return d - DaylightSavingTA(realm, d - realm.getTimezone().getDSTSavings());
+        // TODO: spec issue
+        // https://code.google.com/p/v8/issues/detail?id=3116
+        // https://code.google.com/p/v8/issues/detail?id=3637
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=1084434
+        // return t - LocalTZA(realm) - DaylightSavingTA(realm, t - LocalTZA(realm));
     }
 
     /**

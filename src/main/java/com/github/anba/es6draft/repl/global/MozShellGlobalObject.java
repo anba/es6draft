@@ -9,7 +9,6 @@ package com.github.anba.es6draft.repl.global;
 import static com.github.anba.es6draft.repl.SourceBuilder.ToSource;
 import static com.github.anba.es6draft.repl.global.WrapperProxy.CreateWrapProxy;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
@@ -56,7 +55,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
     @Override
     protected void initializeExtensions(ExecutionContext cx) {
         super.initializeExtensions(cx);
-        createProperties(cx, cx.getGlobalObject(), this, MozShellGlobalObject.class);
+        install(this, MozShellGlobalObject.class);
     }
 
     /**
@@ -92,7 +91,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
     private Object evaluate(Realm realm, Source source, String sourceCode) {
         try {
             Script script = getScriptLoader().script(source, sourceCode);
-            return Scripts.ScriptEvaluation(script, realm, false);
+            return Scripts.ScriptEvaluation(script, realm);
         } catch (ParserException | CompilationException e) {
             // create a script exception from the requested code realm, not from the caller's realm!
             throw e.toScriptException(realm.defaultContext());
@@ -542,7 +541,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
      * 
      * @param cx
      *            the execution context
-     * @param object
+     * @param weakMap
      *            the weak map
      * @return the object's address
      */

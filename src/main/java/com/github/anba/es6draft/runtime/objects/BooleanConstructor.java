@@ -15,10 +15,11 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
@@ -31,7 +32,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>19.3.2 Properties of the Boolean Constructor
  * </ul>
  */
-public final class BooleanConstructor extends BuiltinConstructor implements Initializable {
+public final class BooleanConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<BooleanObject> {
     /**
      * Constructs a new Boolean constructor function.
      * 
@@ -80,6 +82,11 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
         return Construct(callerContext, this, args);
     }
 
+    @Override
+    public CreateAction<BooleanObject> createAction() {
+        return BooleanCreate.INSTANCE;
+    }
+
     /**
      * 19.3.2 Properties of the Boolean Constructor
      */
@@ -103,22 +110,6 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.BooleanPrototype;
-
-        /**
-         * 19.3.2.2 Boolean[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized boolean object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.BooleanPrototype,
-                    BooleanObjectAllocator.INSTANCE);
-        }
     }
 
     private static final class BooleanObjectAllocator implements ObjectAllocator<BooleanObject> {
@@ -127,6 +118,16 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
         @Override
         public BooleanObject newInstance(Realm realm) {
             return new BooleanObject(realm);
+        }
+    }
+
+    private static final class BooleanCreate implements CreateAction<BooleanObject> {
+        static final CreateAction<BooleanObject> INSTANCE = new BooleanCreate();
+
+        @Override
+        public BooleanObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.BooleanPrototype,
+                    BooleanObjectAllocator.INSTANCE);
         }
     }
 }

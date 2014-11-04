@@ -23,7 +23,9 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -38,7 +40,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>24.1.3 Properties of the ArrayBuffer Constructor
  * </ul>
  */
-public final class ArrayBufferConstructor extends BuiltinConstructor implements Initializable {
+public final class ArrayBufferConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<ArrayBufferObject> {
     // set default byte-order to little-endian - implementation specific choice
     private static final ByteOrder DEFAULT_BYTE_ORDER = ByteOrder.LITTLE_ENDIAN;
     private static final boolean IS_LITTLE_ENDIAN = true;
@@ -73,6 +76,16 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         @Override
         public ArrayBufferObject newInstance(Realm realm) {
             return new ArrayBufferObject(realm);
+        }
+    }
+
+    private static final class ArrayBufferCreate implements CreateAction<ArrayBufferObject> {
+        static final CreateAction<ArrayBufferObject> INSTANCE = new ArrayBufferCreate();
+
+        @Override
+        public ArrayBufferObject create(ExecutionContext cx, Constructor constructor,
+                Object... args) {
+            return AllocateArrayBuffer(cx, constructor);
         }
     }
 
@@ -139,12 +152,11 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      * 
      * @param cx
      *            the execution context
-     * @param constructor
-     *            the constructor function
      * @return the new array buffer object
      */
-    public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Intrinsics constructor) {
-        return AllocateArrayBuffer(cx, cx.getIntrinsic(constructor));
+    public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx) {
+        /* steps 1-4 */
+        return AllocateArrayBuffer(cx, (Constructor) cx.getIntrinsic(Intrinsics.ArrayBuffer));
     }
 
     /**
@@ -157,6 +169,24 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      * @return the new array buffer object
      */
     public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Object constructor) {
+        // TODO: Moved check from GetPrototypeFromConstructor
+        if (!IsConstructor(constructor)) {
+            throw newTypeError(cx, Messages.Key.NotConstructor);
+        }
+        /* steps 1-4 */
+        return AllocateArrayBuffer(cx, (Constructor) constructor);
+    }
+
+    /**
+     * 24.1.1.1 AllocateArrayBuffer (constructor)
+     * 
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor function
+     * @return the new array buffer object
+     */
+    public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Constructor constructor) {
         /* steps 1-4 */
         return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.ArrayBufferPrototype,
                 ArrayBufferObjectAllocator.INSTANCE);
@@ -242,24 +272,24 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         if (IsDetachedBuffer(srcBuffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* step 5 */
-        long srcLength = srcBuffer.getByteLength();
-        /* steps 6-7 */
+        /* steps 5-6 */
         Object bufferConstructor = Get(cx, srcBuffer, "constructor");
-        /* step 8 */
-        assert srcByteOffset <= srcLength;
-        /* step 9 */
-        long cloneLength = srcLength - srcByteOffset;
-        /* step 10 */
+        /* step 7 */
         if (Type.isUndefined(bufferConstructor)) {
             bufferConstructor = cx.getIntrinsic(Intrinsics.ArrayBuffer);
         }
-        /* step 11 */
+        /* step 8 */
         ArrayBufferObject targetBuffer = AllocateArrayBuffer(cx, bufferConstructor);
-        /* steps 12-13 */
+        /* steps 9-10 */
         if (IsDetachedBuffer(srcBuffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
+        /* step 11 */
+        long srcLength = srcBuffer.getByteLength();
+        /* step 12 */
+        assert srcByteOffset <= srcLength;
+        /* step 13 */
+        long cloneLength = srcLength - srcByteOffset;
         /* step 14 */
         assert srcBlock == srcBuffer.getData();
         /* steps 15-16 */
@@ -485,6 +515,11 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         return Construct(callerContext, this, args);
     }
 
+    @Override
+    public CreateAction<ArrayBufferObject> createAction() {
+        return ArrayBufferCreate.INSTANCE;
+    }
+
     /**
      * 24.1.3 Properties of the ArrayBuffer Constructor
      */
@@ -524,21 +559,6 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         public static Object isView(ExecutionContext cx, Object thisValue, Object arg) {
             /* steps 1-3 */
             return arg instanceof ArrayBufferView;
-        }
-
-        /**
-         * 24.1.3.3 @@create ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized array buffer object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return AllocateArrayBuffer(cx, thisValue);
         }
     }
 }

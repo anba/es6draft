@@ -151,6 +151,6 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
         OrdinaryAsyncFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
         return FunctionInitialize(f, kind, function.isStrict(), function, scope,
-                cx.getCurrentScript());
+                cx.getCurrentExecutable());
     }
 }

@@ -13,6 +13,7 @@ import static java.util.Collections.singletonList;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -59,6 +60,35 @@ import com.github.anba.es6draft.runtime.modules.ImportEntry;
  */
 public final class StaticSemantics {
     private StaticSemantics() {
+    }
+
+    /**
+     * Static Semantics: BoundNames
+     * <ul>
+     * <li>12.1.2 Static Semantics: BoundNames
+     * </ul>
+     * 
+     * @param node
+     *            the binding identifier
+     * @return the bound name
+     */
+    public static Name BoundName(BindingIdentifier node) {
+        return node.getName();
+    }
+
+    /**
+     * Static Semantics: BoundNames
+     * <ul>
+     * <li>14.1.3 Static Semantics: BoundNames
+     * <li>14.4.2 Static Semantics: BoundNames
+     * </ul>
+     * 
+     * @param node
+     *            the hoistable declaration
+     * @return the bound name
+     */
+    public static Name BoundName(HoistableDeclaration node) {
+        return node.getIdentifier().getName();
     }
 
     /**
@@ -797,18 +827,6 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.0.3 Static Semantics: ExportedBindings<br>
-     * 15.2.2.2 Static Semantics: ExportedBindings
-     * 
-     * @param node
-     *            the module node
-     * @return the set of export bindings
-     */
-    public static Set<String> ExportedBindings(Module node) {
-        return node.getScope().getExportBindings();
-    }
-
-    /**
      * 15.2.0.4 Static Semantics: ExportEntries<br>
      * 15.2.2.3 Static Semantics: ExportEntries
      * 
@@ -824,7 +842,7 @@ public final class StaticSemantics {
                 switch (exportDecl.getType()) {
                 case All: {
                     String module = exportDecl.getModuleSpecifier();
-                    entries.add(new ExportEntry(module, "<all>", null, null));
+                    entries.add(new ExportEntry(module, "*", null, null));
                     break;
                 }
                 case External: {
@@ -838,19 +856,25 @@ public final class StaticSemantics {
                 case Variable:
                     for (Name name : BoundNames(exportDecl.getVariableStatement())) {
                         String id = name.getIdentifier();
-                        entries.add(new ExportEntry(null, null, name, id));
+                        entries.add(new ExportEntry(null, null, id, id));
                     }
                     break;
                 case Declaration:
                     for (Name name : BoundNames(exportDecl.getDeclaration())) {
                         String id = name.getIdentifier();
-                        entries.add(new ExportEntry(null, null, name, id));
+                        entries.add(new ExportEntry(null, null, id, id));
                     }
                     break;
-                case Default:
-                default:
-                    entries.add(new ExportEntry(null, null, new Name("default"), "default"));
+                case DefaultDeclaration: {
+                    Name localName = BoundName((HoistableDeclaration) exportDecl.getDeclaration());
+                    entries.add(new ExportEntry(null, null, localName.getIdentifier(), "default"));
                     break;
+                }
+                case DefaultExpression:
+                    entries.add(new ExportEntry(null, null, "*default*", "default"));
+                    break;
+                default:
+                    throw new AssertionError();
                 }
             }
         }
@@ -858,7 +882,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.2.4 Static Semantics: ExportEntriesForModule
+     * 15.2.3.5 Static Semantics: ExportEntriesForModule
      * 
      * @param node
      *            the exports clause node
@@ -869,32 +893,26 @@ public final class StaticSemantics {
      */
     private static void ExportEntriesForModule(ExportsClause node, String module,
             List<ExportEntry> entries) {
-        for (ExportSpecifier specifier : node.getExports()) {
-            entries.add(new ExportEntry(module, specifier.getImportName(),
-                    specifier.getLocalName(), specifier.getExportName()));
-        }
-    }
-
-    /**
-     * 15.2.0.5 Static Semantics: ImportedBindings
-     * 
-     * @param node
-     *            the module node
-     * @return the list of imported bindings
-     */
-    public static List<Name> ImportedBindings(Module node) {
-        ArrayList<Name> bindings = new ArrayList<>();
-        for (ModuleItem item : node.getStatements()) {
-            if (item instanceof ImportDeclaration) {
-                item.accept(BoundNames.INSTANCE, bindings);
+        if (module == null) {
+            for (ExportSpecifier specifier : node.getExports()) {
+                String localName = specifier.getSourceName();
+                String importName = null;
+                String exportName = specifier.getExportName();
+                entries.add(new ExportEntry(module, importName, localName, exportName));
+            }
+        } else {
+            for (ExportSpecifier specifier : node.getExports()) {
+                String localName = null;
+                String importName = specifier.getSourceName();
+                String exportName = specifier.getExportName();
+                entries.add(new ExportEntry(module, importName, localName, exportName));
             }
         }
-        return bindings;
     }
 
     /**
-     * 15.2.0.6 Static Semantics: ImportEntries<br>
-     * 15.2.1.3 Static Semantics: ImportEntries
+     * 15.2.1.6 Static Semantics: ImportEntries<br>
+     * 15.2.2.3 Static Semantics: ImportEntries
      * 
      * @param node
      *            the module node
@@ -911,17 +929,11 @@ public final class StaticSemantics {
                     ImportEntriesForModule(importDecl.getImportClause(), module, entries);
                     break;
                 }
-                case ModuleImport: {
-                    ModuleImport moduleImport = importDecl.getModuleImport();
-                    String module = moduleImport.getModuleSpecifier();
-                    String localName = moduleImport.getImportedBinding().getName().getIdentifier();
-                    entries.add(new ImportEntry(module, "default", localName));
-                    break;
-                }
                 case ImportModule:
-                default:
                     /* empty */
                     break;
+                default:
+                    throw new AssertionError();
                 }
             }
         }
@@ -929,7 +941,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.1.4 Static Semantics: ImportEntriesForModule
+     * 15.2.2.4 Static Semantics: ImportEntriesForModule
      * 
      * @param node
      *            the import clause node
@@ -943,6 +955,10 @@ public final class StaticSemantics {
         if (node.getDefaultEntry() != null) {
             String localName = node.getDefaultEntry().getName().getIdentifier();
             entries.add(new ImportEntry(module, "default", localName));
+        }
+        if (node.getNameSpace() != null) {
+            String localName = node.getNameSpace().getName().getIdentifier();
+            entries.add(new ImportEntry(module, "*", localName));
         }
         for (ImportSpecifier specifier : node.getNamedImports()) {
             String importName = specifier.getImportName();
@@ -961,7 +977,7 @@ public final class StaticSemantics {
     public static List<ExportEntry> KnownExportEntries(Module node) {
         ArrayList<ExportEntry> knownExports = new ArrayList<>();
         for (ExportEntry entry : ExportEntries(node)) {
-            if (!"<all>".equals(entry.getImportName())) {
+            if (!entry.isStarExport()) {
                 knownExports.add(entry);
             }
         }
@@ -978,7 +994,20 @@ public final class StaticSemantics {
      * @return the ordered set of module requests
      */
     public static Set<String> ModuleRequests(Module node) {
-        return node.getScope().getModuleRequests();
+        LinkedHashSet<String> requests = new LinkedHashSet<>();
+        for (ModuleItem item : node.getStatements()) {
+            if (item instanceof ExportDeclaration) {
+                String moduleSpecifier = ((ExportDeclaration) item).getModuleSpecifier();
+                if (moduleSpecifier != null) {
+                    requests.add(moduleSpecifier);
+                }
+            } else if (item instanceof ImportDeclaration) {
+                String moduleSpecifier = ((ImportDeclaration) item).getModuleSpecifier();
+                assert moduleSpecifier != null;
+                requests.add(moduleSpecifier);
+            }
+        }
+        return requests;
     }
 
     /**
@@ -1014,7 +1043,7 @@ public final class StaticSemantics {
     public static List<ExportEntry> UnknownExportEntries(Module node) {
         ArrayList<ExportEntry> unknownExports = new ArrayList<>();
         for (ExportEntry entry : ExportEntries(node)) {
-            if ("<all>".equals(entry.getImportName())) {
+            if (entry.isStarExport()) {
                 unknownExports.add(entry);
             }
         }

@@ -51,6 +51,16 @@ final class TokenStreamInput {
     }
 
     /**
+     * Returns the last character.
+     * 
+     * @return the last character
+     */
+    public int lastChar() {
+        assert cursor > 0 : cursor;
+        return source.charAt(cursor - 1);
+    }
+
+    /**
      * Ungets the code point {@code c}.
      * 
      * @param c

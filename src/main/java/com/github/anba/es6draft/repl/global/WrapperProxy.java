@@ -540,7 +540,7 @@ class WrapperProxy implements ScriptObject {
         }
 
         @Override
-        protected Object tryNext() {
+        protected Object findNext() {
             while (targetKeys.hasNext()) {
                 Object k = targetKeys.next();
                 if (k instanceof String) {

@@ -14,7 +14,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.Scripts;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
@@ -79,7 +78,7 @@ public final class Test262GlobalObject extends ShellGlobalObject {
             CompilationException {
         Source source = new Source(file, file.getFileName().toString(), sourceLine);
         Script script = getScriptLoader().script(source, sourceCode);
-        Scripts.ScriptEvaluation(script, getRealm(), false);
+        eval(script);
     }
 
     /**

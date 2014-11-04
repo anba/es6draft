@@ -16,11 +16,12 @@ import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -34,7 +35,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>23.1.2 Properties of the Map Constructor
  * </ul>
  */
-public final class MapConstructor extends BuiltinConstructor implements Initializable {
+public final class MapConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<MapObject> {
     /**
      * Constructs a new Map constructor function.
      * 
@@ -126,6 +128,11 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
         return Construct(callerContext, this, args);
     }
 
+    @Override
+    public CreateAction<MapObject> createAction() {
+        return MapCreate.INSTANCE;
+    }
+
     /**
      * 23.1.2 Properties of the Map Constructor
      */
@@ -149,22 +156,6 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.MapPrototype;
-
-        /**
-         * 23.1.2.2 Map[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized map object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.MapPrototype,
-                    MapObjectAllocator.INSTANCE);
-        }
     }
 
     private static final class MapObjectAllocator implements ObjectAllocator<MapObject> {
@@ -173,6 +164,16 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
         @Override
         public MapObject newInstance(Realm realm) {
             return new MapObject(realm);
+        }
+    }
+
+    private static class MapCreate implements CreateAction<MapObject> {
+        static final CreateAction<MapObject> INSTANCE = new MapCreate();
+
+        @Override
+        public MapObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.MapPrototype,
+                    MapObjectAllocator.INSTANCE);
         }
     }
 }

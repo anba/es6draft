@@ -40,9 +40,6 @@ ecma_6/Proxy/regress-bug950407.js
 # - need to implement version() function...
 ecma_6/Generators/syntax.js
 
-# String.fromCodePoint length changed to 1
-ecma_6/String/fromCodePoint.js
-
 # Boxing broken in strict mode accessor (Bug 603201, Bug 869098)
 ecma_6/Symbol/as-base-value.js
 
@@ -53,15 +50,8 @@ ecma_6/Symbol/conversions.js
 ecma_6/Symbol/property-basics.js
 ecma_6/Symbol/property-reflection.js
 
-# computed property names in accessors
-ecma_6/Class/compPropNames.js
-
 # yield* no longer performs complete error recovery
 ecma_6/Generators/iteration.js
-
-# ES6 spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3215)
-ecma_6/Object/freeze-proxy.js
-ecma_6/Object/seal-proxy.js
 
 # Detached ArrayBuffer object issues, maybe request spec changes?
 ecma_6/extensions/DataView-construct-arguments-neutering.js
@@ -178,9 +168,6 @@ js1_8/extensions/regress-385729.js
 ecma_5/extensions/getOwnPropertyNames-__proto__.js
 ecma_6/Expressions/object-literal-__proto__.js
 
-# old 'Proxy' design prototype restriction
-ecma_5/extensions/proxy-__proto__.js
-
 # old 'Proxy' not completely emulated
 js1_8_5/extensions/proxy-enumerateOwn-duplicates.js
 
@@ -256,6 +243,7 @@ js1_8_1/regress/regress-420399.js
 js1_8_1/regress/regress-452498-092.js
 js1_8_1/regress/regress-452498-185.js
 js1_8_1/regress/regress-452498-191.js
+js1_8_5/extensions/decompile-for-of.js
 js1_8_5/extensions/redeclaration-of-catch-warning.js
 js1_8_5/regress/regress-469758.js
 js1_8_5/regress/regress-619003-1.js

@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.F
 
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -109,9 +108,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
      */
     public static GeneratorObject EvaluateBody(ExecutionContext cx, OrdinaryGenerator functionObject) {
         /* step 1 */
-        assert cx.getVariableEnvironment() == cx.getLexicalEnvironment();
-        assert cx.getLexicalEnvironment().getEnvRec() instanceof FunctionEnvironmentRecord
-                || cx.getLexicalEnvironment().getOuter().getEnvRec() instanceof FunctionEnvironmentRecord;
+        assert cx.getFunctionVariableEnvironment() != null;
         /* step 2 */
         EnvironmentRecord env = cx.getThisEnvironment();
         /* step 3 */
@@ -122,6 +119,8 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
             gen = OrdinaryCreateFromConstructor(cx, functionObject, Intrinsics.GeneratorPrototype,
                     GeneratorObjectAllocator.INSTANCE);
         } else {
+            // FIXME: spec bug - this case is no longer possible
+            assert false : "unreachable";
             gen = (GeneratorObject) g;
         }
         /* step 5 */
@@ -215,6 +214,6 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
         return FunctionInitialize(f, kind, function.isStrict(), function, scope,
-                cx.getCurrentScript());
+                cx.getCurrentExecutable());
     }
 }

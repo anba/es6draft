@@ -12,9 +12,9 @@ const {
 // 8.1.6.2: [[Construct]] may also return non-object types
 // https://bugs.ecmascript.org/show_bug.cgi?id=1422
 
-function F(){}
-Object.defineProperty(F, Symbol.create, {value() { return null }});
-assertThrows(TypeError, () => new F);
+// function F(){}
+// Object.defineProperty(F, Symbol.create, {value() { return null }});
+// assertThrows(TypeError, () => new F);
 
 let P = new Proxy(function(){}, {construct() { return null }});
 assertThrows(TypeError, () => new P);

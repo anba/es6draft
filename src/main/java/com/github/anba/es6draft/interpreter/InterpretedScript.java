@@ -9,6 +9,7 @@ package com.github.anba.es6draft.interpreter;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.internal.RuntimeInfo.SourceObject;
 
 /**
  * 
@@ -18,6 +19,11 @@ public final class InterpretedScript implements Script {
 
     InterpretedScript(com.github.anba.es6draft.ast.Script parsedScript) {
         this.scriptBody = new InterpretedScriptBody(parsedScript);
+    }
+
+    @Override
+    public SourceObject getSourceObject() {
+        return scriptBody;
     }
 
     @Override

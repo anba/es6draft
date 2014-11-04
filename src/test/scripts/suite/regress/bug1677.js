@@ -17,5 +17,5 @@ for (const type of ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32",
   const ctor = global[`${type}Array`];
   assertSame(0, new ctor(0).length);
   assertThrows(TypeError, () => ctor());
-  assertSame(0, ctor.call(ctor[Symbol.create](), 0).length);
+  assertSame(0, ctor.call(new class extends ctor { constructor() { /* no super */ } }, 0).length);
 }

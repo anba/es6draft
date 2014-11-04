@@ -21,10 +21,6 @@ function assertFunctionProperty(object, name, value = object[name]) {
   return assertDataProperty(object, name, {value, writable: true, enumerable: false, configurable: true});
 }
 
-function assertCreateFunctionProperty(object, name, value = object[name]) {
-  return assertDataProperty(object, name, {value, writable: false, enumerable: false, configurable: true});
-}
-
 function assertConstructorProperty(object, name = "constructor", value = object[name]) {
   return assertDataProperty(object, name, {value, writable: true, enumerable: false, configurable: true});
 }
@@ -43,7 +39,6 @@ assertSame(Reflect.Realm, Reflect.Realm.prototype.constructor);
 /* Properties of the Realm Constructor */
 
 assertPrototypeProperty(Reflect.Realm);
-assertCreateFunctionProperty(Reflect.Realm, Symbol.create);
 
 
 /* Properties of the Realm Prototype Object */

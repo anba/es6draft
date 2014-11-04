@@ -7,10 +7,12 @@
 package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
-import static com.github.anba.es6draft.runtime.LexicalEnvironment.newDeclarativeEnvironment;
 import static com.github.anba.es6draft.runtime.LexicalEnvironment.newFunctionEnvironment;
 
+import com.github.anba.es6draft.Executable;
+import com.github.anba.es6draft.Module;
 import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Reference;
@@ -30,16 +32,19 @@ public final class ExecutionContext {
     private final Realm realm;
     private LexicalEnvironment<?> varEnv;
     private LexicalEnvironment<?> lexEnv;
-    private final Script script;
+    private final LexicalEnvironment<FunctionEnvironmentRecord> funVarEnv;
+    private final Executable executable;
     private final FunctionObject function;
     private GeneratorObject generator = null;
 
     private ExecutionContext(Realm realm, LexicalEnvironment<?> varEnv,
-            LexicalEnvironment<?> lexEnv, Script script, FunctionObject function) {
+            LexicalEnvironment<?> lexEnv, LexicalEnvironment<FunctionEnvironmentRecord> funVarEnv,
+            Executable executable, FunctionObject function) {
         this.realm = realm;
         this.varEnv = varEnv;
         this.lexEnv = lexEnv;
-        this.script = script;
+        this.funVarEnv = funVarEnv;
+        this.executable = executable;
         this.function = function;
     }
 
@@ -55,12 +60,16 @@ public final class ExecutionContext {
         return varEnv;
     }
 
+    public LexicalEnvironment<FunctionEnvironmentRecord> getFunctionVariableEnvironment() {
+        return funVarEnv;
+    }
+
     public OrdinaryObject getIntrinsic(Intrinsics id) {
         return realm.getIntrinsic(id);
     }
 
-    public Script getCurrentScript() {
-        return script;
+    public Executable getCurrentExecutable() {
+        return executable;
     }
 
     // called from generated code
@@ -123,10 +132,17 @@ public final class ExecutionContext {
      * @param env
      *            the new lexical environment
      */
-    public void setEnvironment(LexicalEnvironment<?> env) {
-        assert env.getOuter() == this.lexEnv;
-        assert this.varEnv == this.lexEnv;
+    public void setVariableEnvironment(LexicalEnvironment<?> env) {
         this.varEnv = env;
+    }
+
+    /**
+     * [Called from generated code]
+     * 
+     * @param env
+     *            the new lexical environment
+     */
+    public void setLexicalEnvironment(LexicalEnvironment<?> env) {
         this.lexEnv = env;
     }
 
@@ -148,7 +164,8 @@ public final class ExecutionContext {
      */
     public static ExecutionContext newScriptExecutionContext(Realm realm, Script script) {
         /* steps 3-6 */
-        return new ExecutionContext(realm, realm.getGlobalEnv(), realm.getGlobalEnv(), script, null);
+        return new ExecutionContext(realm, realm.getGlobalEnv(), realm.getGlobalEnv(), null,
+                script, null);
     }
 
     /**
@@ -157,23 +174,47 @@ public final class ExecutionContext {
      * <ul>
      * <li>15.2 Modules
      * <ul>
-     * <li>15.2.6 Runtime Semantics: Module Evaluation
+     * <li>15.2.1 Module Semantics
      * </ul>
      * </ul>
      * </ul>
      * <p>
-     * 15.2.6.2 EnsureEvaluated(mod, seen, loader) Abstract Operation
+     * 15.2.1.22 Runtime Semantics: ModuleEvaluation(module, realm)
      * 
      * @param realm
      *            the realm instance
-     * @param env
-     *            the current lexical environment
+     * @param module
+     *            the module object
      * @return the new module execution context
      */
-    public static ExecutionContext newModuleExecutionContext(Realm realm,
-            LexicalEnvironment<DeclarativeEnvironmentRecord> env) {
+    public static ExecutionContext newModuleExecutionContext(Realm realm, ModuleRecord module) {
         /* steps 8-11 */
-        return new ExecutionContext(realm, env, env, null, null);
+        return new ExecutionContext(realm, module.getEnvironment(), module.getEnvironment(), null,
+                module.getScriptCode(), null);
+    }
+
+    /**
+     * <ul>
+     * <li>15 ECMAScript Language: Scripts and Modules
+     * <ul>
+     * <li>15.2 Modules
+     * <ul>
+     * <li>15.2.1 Module Semantics
+     * </ul>
+     * </ul>
+     * </ul>
+     * <p>
+     * 15.2.1.22 Runtime Semantics: ModuleEvaluation(module, realm)
+     * 
+     * @param realm
+     *            the realm instance
+     * @param module
+     *            the module object
+     * @return the new module execution context
+     */
+    public static ExecutionContext newModuleDeclarationExecutionContext(Realm realm, Module module) {
+        return new ExecutionContext(realm, realm.getGlobalEnv(), realm.getGlobalEnv(), null,
+                module, null);
     }
 
     /**
@@ -199,8 +240,9 @@ public final class ExecutionContext {
     public static ExecutionContext newEvalExecutionContext(ExecutionContext callerContext,
             Script evalScript, LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv) {
         /* steps 17-20 */
-        return new ExecutionContext(callerContext.realm, varEnv, lexEnv, evalScript,
-                callerContext.function);
+        // FIXME: add test to verify passing funVarEnv is correct/required.
+        return new ExecutionContext(callerContext.realm, varEnv, lexEnv, callerContext.funVarEnv,
+                evalScript, callerContext.function);
     }
 
     /**
@@ -211,7 +253,7 @@ public final class ExecutionContext {
      * </ul>
      * </ul>
      * <p>
-     * 9.2.4 [[Call]] (thisArgument, argumentsList)
+     * 9.2.2 [[Call]] (thisArgument, argumentsList)
      * 
      * @param callerContext
      *            the caller execution context
@@ -223,14 +265,19 @@ public final class ExecutionContext {
      */
     public static ExecutionContext newFunctionExecutionContext(ExecutionContext callerContext,
             FunctionObject f, Object thisArgument) {
-        /* 9.2.4, steps 4-12, 14 */
+        /* step 1 (checked in caller) */
+        /* steps 2-3 (not applicable) */
+        /* step 6 */
         Realm calleeRealm = f.getRealm();
+        /* step 8 */
         ThisMode thisMode = f.getThisMode();
-        LexicalEnvironment<? extends DeclarativeEnvironmentRecord> localEnv;
+        /* step 9 (omitted) */
+        /* step 10 (?) */
+        /* steps 11-12, 19 */
+        Object thisValue;
         if (thisMode == ThisMode.Lexical) {
-            localEnv = newDeclarativeEnvironment(f.getEnvironment());
+            thisValue = null;
         } else {
-            Object thisValue;
             if (thisMode == ThisMode.Strict) {
                 thisValue = thisArgument;
             } else {
@@ -239,13 +286,16 @@ public final class ExecutionContext {
                 } else if (Type.isObject(thisArgument)) {
                     thisValue = thisArgument;
                 } else {
-                    /*  step 14 */
+                    /*  step 19 */
                     thisValue = ToObject(calleeRealm.defaultContext(), thisArgument);
                 }
             }
-            localEnv = newFunctionEnvironment(callerContext, f, thisValue);
         }
-        return new ExecutionContext(calleeRealm, localEnv, localEnv, f.getScript(), f);
+        /* steps 13-15 */
+        LexicalEnvironment<FunctionEnvironmentRecord> localEnv = newFunctionEnvironment(
+                callerContext, f, thisValue);
+        /* steps 4-5, 7, 16-18 */
+        return new ExecutionContext(calleeRealm, localEnv, localEnv, localEnv, f.getExecutable(), f);
     }
 
     /**

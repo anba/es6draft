@@ -33,9 +33,15 @@ function MyConstructor() { }
 const TypedArray = Object.getPrototypeOf(Int8Array);
 
 // Test with concrete TypedArray constructor and normal function constructor
-for (let constructor of [MyConstructor, Int8Array]) {
+for (let constructor of [/* TypedArray, */ Int8Array]) {
   function create() {
-    return TypedArray[Symbol.create].call(constructor);
+    class C extends constructor {
+      constructor() {
+        /* no super */
+        Object.setPrototypeOf(this, constructor.prototype);
+      }
+    };
+    return new C;
   }
 
   // [[GetPrototypeOf]]

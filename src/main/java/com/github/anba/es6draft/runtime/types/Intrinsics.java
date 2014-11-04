@@ -168,14 +168,6 @@ public enum Intrinsics {/* @formatter:off */
     /** Intrinsic: <tt>%PromisePrototype%</tt> */
     PromisePrototype,
 
-    // Loader, Module
-    /** Intrinsic: <tt>%Loader%</tt> */
-    Loader,
-    /** Intrinsic: <tt>%LoaderPrototype%</tt> */
-    LoaderPrototype,
-    /** Intrinsic: <tt>%LoaderIteratorPrototype%</tt> */
-    LoaderIteratorPrototype,
-
     // Other
     /** Intrinsic: <tt>%Symbol%</tt> */
     Symbol,
@@ -193,8 +185,6 @@ public enum Intrinsics {/* @formatter:off */
     Proxy,
     /** Intrinsic: <tt>%Reflect%</tt> */
     Reflect,
-    /** Intrinsic: <tt>%System%</tt> */
-    System,
 
     // Internationalization API
     /** Intrinsic: <tt>%Intl%</tt> */
@@ -227,6 +217,16 @@ public enum Intrinsics {/* @formatter:off */
     Realm,
     /** Intrinsic: <tt>%RealmPrototype%</tt> */
     RealmPrototype,
+
+    // ESx extension: Loader
+    /** Intrinsic: <tt>%Loader%</tt> */
+    Loader,
+    /** Intrinsic: <tt>%LoaderPrototype%</tt> */
+    LoaderPrototype,
+    /** Intrinsic: <tt>%LoaderIteratorPrototype%</tt> */
+    LoaderIteratorPrototype,
+    /** Intrinsic: <tt>%System%</tt> */
+    System,
 
     /* @formatter:on */
     ;

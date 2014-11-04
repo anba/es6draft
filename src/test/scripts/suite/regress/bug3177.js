@@ -12,5 +12,5 @@ const {
 // 13.6.4.9 ForIn/OfBodyEvaluation: Add ToObject or type check in step 3.f.iii.2
 // https://bugs.ecmascript.org/show_bug.cgi?id=3177
 
-assertThrows(TypeError, () => { var a; for ([a] in {abc: 0}) ; });
-assertThrows(TypeError, () => { var a; for ([a] of ["abc"]) ; });
+var a; for ([a] in {abc: 0}) ;
+var a; for ([a] of ["abc"]) ;

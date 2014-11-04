@@ -29,11 +29,10 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.TestGlobalObject;
-import com.github.anba.es6draft.repl.WindowTimers;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Task;
+import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -83,17 +82,17 @@ public class PromiseAPlusTest {
 
     private TestGlobalObject global;
     private AsyncHelper async;
-    private WindowTimers timers;
+    private Timers timers;
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        // filter disabled tests
+        // Filter disabled tests
         assumeTrue(test.isEnabled());
 
         global = globals.newGlobal(new PromiseTestConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
-        async = install(new AsyncHelper(), AsyncHelper.class);
-        timers = install(new WindowTimers(), WindowTimers.class);
+        async = global.install(new AsyncHelper(), AsyncHelper.class);
+        timers = global.install(new Timers(), Timers.class);
     }
 
     @After
@@ -105,19 +104,13 @@ public class PromiseAPlusTest {
 
     @Test
     public void runTest() throws Throwable {
-        // evaluate actual test-script
+        // Evaluate actual test-script
         global.eval(test.getScript(), test.toFile());
 
-        // wait for pending tasks to finish
+        // Wait for pending tasks to finish
         assertFalse(async.doneCalled);
         global.getRealm().getWorld().runEventLoop(timers);
         assertTrue(async.doneCalled);
-    }
-
-    private <T> T install(T object, Class<T> clazz) {
-        Realm realm = global.getRealm();
-        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
-        return object;
     }
 
     public static class AsyncHelper {

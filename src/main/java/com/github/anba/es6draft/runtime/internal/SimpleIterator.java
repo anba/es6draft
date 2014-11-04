@@ -20,12 +20,12 @@ public abstract class SimpleIterator<E> implements Iterator<E> {
      * 
      * @return the next element or {@code null}
      */
-    protected abstract E tryNext();
+    protected abstract E findNext();
 
     @Override
     public final boolean hasNext() {
         if (next == null) {
-            next = tryNext();
+            next = findNext();
         }
         return next != null;
     }

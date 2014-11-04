@@ -12,11 +12,10 @@ const {
   assertFalse, assertTrue,
 } = Assert;
 
-loadRelativeToScript("../../lib/promises.js");
-
+System.load("lib/promises.jsm");
 const {
   reportFailure
-} = Promises;
+} = System.get("lib/promises.jsm");
 
 /* Promise.all ( iterable ) */
 

@@ -65,12 +65,14 @@ import com.github.anba.es6draft.util.Functional.Function;
  */
 public final class Resources {
     private static final boolean REMOVE_DISABLED_TESTS = false;
+    private static final boolean DISABLE_ALL_TESTS = false;
+    private static final boolean RUN_DISABLED_TESTS = false;
 
     private Resources() {
     }
 
     /**
-     * {@link ConfigurationInterpolator} which reports an error for missing variables
+     * {@link ConfigurationInterpolator} which reports an error for missing variables.
      */
     private static final ConfigurationInterpolator MISSING_VAR = new ConfigurationInterpolator() {
         private final StrLookup errorLookup = new StrLookup() {
@@ -98,7 +100,7 @@ public final class Resources {
     };
 
     /**
-     * Loads the configuration file
+     * Loads the configuration file.
      */
     public static Configuration loadConfiguration(Class<?> clazz) {
         TestConfiguration config = clazz.getAnnotation(TestConfiguration.class);
@@ -124,7 +126,7 @@ public final class Resources {
     /**
      * Loads the named resource through {@link Class#getResourceAsStream(String)} if the uri starts
      * with "resource:", otherwise loads the resource with
-     * {@link Files#newInputStream(Path, java.nio.file.OpenOption...)}
+     * {@link Files#newInputStream(Path, java.nio.file.OpenOption...)}.
      */
     public static InputStream resource(String uri) throws IOException {
         return resource(uri, Paths.get(""));
@@ -133,7 +135,7 @@ public final class Resources {
     /**
      * Loads the named resource through {@link Class#getResourceAsStream(String)} if the uri starts
      * with "resource:", otherwise loads the resource with
-     * {@link Files#newInputStream(Path, java.nio.file.OpenOption...)}
+     * {@link Files#newInputStream(Path, java.nio.file.OpenOption...)}.
      */
     public static InputStream resource(String uri, Path basedir) throws IOException {
         final String RESOURCE = "resource:";
@@ -150,6 +152,18 @@ public final class Resources {
     }
 
     /**
+     * Returns the resource path if available.
+     */
+    public static Path resourcePath(String uri, Path basedir) {
+        final String RESOURCE = "resource:";
+        if (uri.startsWith(RESOURCE)) {
+            return null;
+        } else {
+            return basedir.resolve(Paths.get(uri)).toAbsolutePath();
+        }
+    }
+
+    /**
      * Returns {@code true} if the test suite is enabled.
      */
     public static boolean isEnabled(Configuration configuration) {
@@ -157,7 +171,7 @@ public final class Resources {
     }
 
     /**
-     * Returns the test suite's base path
+     * Returns the test suite's base path.
      */
     public static Path getTestSuitePath(Configuration configuration) {
         try {
@@ -170,14 +184,14 @@ public final class Resources {
     }
 
     /**
-     * Load the test files based on the supplied {@link Configuration}
+     * Load the test files based on the supplied {@link Configuration}.
      */
     public static Iterable<Object[]> loadTestsAsArray(Configuration config) throws IOException {
         return toObjectArray(loadTests(config));
     }
 
     /**
-     * Load the test files based on the supplied {@link Configuration}
+     * Load the test files based on the supplied {@link Configuration}.
      */
     public static <TEST extends TestInfo> Iterable<Object[]> loadTestsAsArray(Configuration config,
             BiFunction<Path, Path, TEST> fn) throws IOException {
@@ -185,7 +199,7 @@ public final class Resources {
     }
 
     /**
-     * Load the test files based on the supplied {@link Configuration}
+     * Load the test files based on the supplied {@link Configuration}.
      */
     public static <TEST extends TestInfo> Iterable<Object[]> loadTestsAsArray(Configuration config,
             Function<Path, BiFunction<Path, Iterator<String>, TEST>> fn) throws IOException {
@@ -193,14 +207,14 @@ public final class Resources {
     }
 
     /**
-     * Load the test files based on the supplied {@link Configuration}
+     * Load the test files based on the supplied {@link Configuration}.
      */
     public static List<TestInfo> loadTests(Configuration config) throws IOException {
         return loadTests(config, defaultCreate);
     }
 
     /**
-     * Load the test files based on the supplied {@link Configuration}
+     * Load the test files based on the supplied {@link Configuration}.
      */
     public static <TEST extends TestInfo> List<TEST> loadTests(Configuration config,
             BiFunction<Path, Path, TEST> fn) throws IOException {
@@ -215,7 +229,7 @@ public final class Resources {
     }
 
     /**
-     * Load the test files based on the supplied {@link Configuration}
+     * Load the test files based on the supplied {@link Configuration}.
      */
     public static <TEST extends TestInfo> List<TEST> loadTests(Configuration config,
             Function<Path, BiFunction<Path, Iterator<String>, TEST>> fn) throws IOException {
@@ -230,7 +244,7 @@ public final class Resources {
     }
 
     /**
-     * Recursively searches for js-file test cases in {@code searchdir} and its sub-directories
+     * Recursively searches for js-file test cases in {@code searchdir} and its sub-directories.
      */
     private static <TEST extends TestInfo> List<TEST> loadTests(Configuration config,
             Function<Path, TEST> mapper, Path basedir) throws IOException {
@@ -256,10 +270,15 @@ public final class Resources {
     }
 
     /**
-     * Filter the initially collected test cases
+     * Filter the initially collected test cases.
      */
     private static void filterTests(List<? extends TestInfo> tests, Path basedir,
             Configuration config) throws IOException {
+        if (DISABLE_ALL_TESTS) {
+            for (TestInfo test : tests) {
+                test.setEnabled(false);
+            }
+        }
         if (config.containsKey("exclude.list")) {
             InputStream exclusionList = Resources.resource(config.getString("exclude.list"),
                     basedir);
@@ -273,7 +292,7 @@ public final class Resources {
     }
 
     /**
-     * Filter the initially collected test cases
+     * Filter the initially collected test cases.
      */
     private static void filterTests(List<? extends TestInfo> tests, InputStream resource)
             throws IOException {
@@ -296,13 +315,13 @@ public final class Resources {
                     System.err.printf("detected stale entry '%s'\n", line);
                     continue;
                 }
-                test.setEnabled(false);
+                test.setEnabled(RUN_DISABLED_TESTS);
             }
         }
     }
 
     /**
-     * Filter the initially collected test cases
+     * Filter the initially collected test cases.
      */
     private static void filterTests(List<? extends TestInfo> tests, Set<String> excludes) {
         Pattern pattern = Pattern.compile("(.+?)(?:\\.([^.]*)$|$)");
@@ -315,14 +334,14 @@ public final class Resources {
             }
             String testname = matcher.group(1);
             if (excludes.contains(testname)) {
-                test.setEnabled(false);
+                test.setEnabled(RUN_DISABLED_TESTS);
                 continue;
             }
         }
     }
 
     /**
-     * Reads all exlusion xml-files from the configuration
+     * Reads all exlusion xml-files from the configuration.
      */
     private static Set<String> readExcludeXMLs(List<?> values, Path basedir) throws IOException {
         Set<String> exclude = new HashSet<>();
@@ -348,7 +367,7 @@ public final class Resources {
     }
 
     /**
-     * Reads the xml-structure from {@link Reader} and returns the corresponding {@link Document}
+     * Reads the xml-structure from {@link Reader} and returns the corresponding {@link Document}.
      */
     private static Document xml(Reader xml) throws IOException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -376,7 +395,7 @@ public final class Resources {
     }
 
     /**
-     * {@link Parameterized} expects a list of {@code Object[]}
+     * {@link Parameterized} expects a list of {@code Object[]}.
      */
     private static Iterable<Object[]> toObjectArray(Iterable<? extends TestInfo> iterable) {
         ArrayList<Object[]> list = new ArrayList<>();

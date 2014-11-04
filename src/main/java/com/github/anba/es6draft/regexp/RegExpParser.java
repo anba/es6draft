@@ -686,7 +686,7 @@ public final class RegExpParser {
                         throw error(Messages.Key.RegExpTrailingSlash);
                     }
                     int d = get(unicode);
-                    if (unicode ? !isSyntaxCharacter(d) : !web && isIdentifierPartNotJoiner(d)) {
+                    if (unicode ? !isSyntaxCharacter(d) : !web && isUnicodeIDContinue(d)) {
                         throw error(Messages.Key.RegExpInvalidEscape,
                                 new String(Character.toChars(d)));
                     }
@@ -1130,7 +1130,7 @@ public final class RegExpParser {
                         throw error(Messages.Key.RegExpTrailingSlash);
                     }
                     int d = get(unicode);
-                    if (unicode ? !isSyntaxCharacter(d) : !web && isIdentifierPartNotJoiner(d)) {
+                    if (unicode ? !isSyntaxCharacter(d) : !web && isUnicodeIDContinue(d)) {
                         throw error(Messages.Key.RegExpInvalidEscape,
                                 new String(Character.toChars(d)));
                     }

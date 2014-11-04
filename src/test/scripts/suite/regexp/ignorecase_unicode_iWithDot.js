@@ -9,8 +9,11 @@ const {
   assertSame
 } = Assert;
 
-loadRelativeToScript("../lib/range.js");
-loadRelativeToScript("../lib/transformers.js");
+System.load("lib/range.jsm");
+System.load("lib/transformers.jsm");
+
+const {default: range} = System.get("lib/range.jsm");
+const {Transformers} = System.get("lib/transformers.jsm");
 
 // flags and transformers for Supplementary Planes
 const supplementary = {

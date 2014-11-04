@@ -17,6 +17,7 @@ import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Strings;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>6 ECMAScript Data Types and Values</h1><br>
@@ -226,12 +227,21 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public Object getValue(ExecutionContext cx) {
-            return binding.getValue(cx, referencedName);
+            if (!binding.isInitialized()) {
+                throw newReferenceError(cx, Messages.Key.UninitializedBinding, referencedName);
+            }
+            return binding.getValue();
         }
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            binding.setValue(cx, referencedName, w, strictReference);
+            if (!binding.isInitialized()) {
+                throw newReferenceError(cx, Messages.Key.UninitializedBinding, referencedName);
+            } else if (binding.isMutable()) {
+                binding.setValue(w);
+            } else if (strictReference) {
+                throw newTypeError(cx, Messages.Key.ImmutableBinding, referencedName);
+            }
         }
 
         @Override
@@ -409,7 +419,7 @@ public abstract class Reference<BASE, NAME> {
             return getBase();
         }
 
-        protected final ScriptObject getPrimitiveBaseProto(ExecutionContext cx) {
+        protected final OrdinaryObject getPrimitiveBaseProto(ExecutionContext cx) {
             switch (type) {
             case Boolean:
                 return cx.getIntrinsic(Intrinsics.BooleanPrototype);

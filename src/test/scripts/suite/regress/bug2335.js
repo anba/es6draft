@@ -13,7 +13,7 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=2335
 
 function create(c, f, ...args) {
-  let o = c[Symbol.create]();
+  let o = new class extends c { constructor() { /* no super */ } };
   f(o);
   return c.call(o, ...args);
 }

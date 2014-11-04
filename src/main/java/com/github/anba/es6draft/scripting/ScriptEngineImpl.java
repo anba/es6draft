@@ -15,6 +15,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
@@ -33,11 +34,14 @@ import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.FileModuleLoader;
+import com.github.anba.es6draft.runtime.internal.ModuleLoader;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
@@ -58,18 +62,22 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         this.factory = factory;
 
         Set<CompatibilityOption> compatibilityOptions = CompatibilityOption.WebCompatibility();
-        // This is a terrible hack to ensure bindings are properly resolved
-        EnumSet<Parser.Option> parserOptions = EnumSet.of(Parser.Option.EvalScript);
+        // Scripting sources have an extra scope object before the global environment record, the
+        // ScriptContext object. To ensure this extra scope is properly handled, we compile
+        // scripting sources with the EvalScript option and use eval-declaration instead of the
+        // normal global declaration instantiation when evaluating the source code.
+        EnumSet<Parser.Option> parserOptions = EnumSet.of(Parser.Option.EvalScript,
+                Parser.Option.Scripting);
         EnumSet<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
         ScriptLoader scriptLoader = new ScriptLoader(compatibilityOptions, parserOptions,
                 compilerOptions);
 
-        // TODO: Remove "EvalScript" hack and use shared script loader?
         this.scriptLoader = scriptLoader;
 
         ObjectAllocator<ScriptingGlobalObject> allocator = ScriptingGlobalObject
                 .newGlobalObjectAllocator();
-        this.world = new World<>(allocator, compatibilityOptions,
+        ModuleLoader moduleLoader = new FileModuleLoader(Paths.get("").toAbsolutePath());
+        this.world = new World<>(allocator, moduleLoader, compatibilityOptions,
                 EnumSet.noneOf(Parser.Option.class), compilerOptions);
         context.setBindings(createBindings(), ScriptContext.ENGINE_SCOPE);
     }
@@ -172,10 +180,12 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         try {
             Realm realm = getEvalRealm(context);
             ExecutionContext cx = realm.defaultContext();
-            LexicalEnvironment<ScriptContextEnvironmentRecord> lexEnv = new LexicalEnvironment<>(
+            LexicalEnvironment<ScriptContextEnvironmentRecord> varEnv = new LexicalEnvironment<>(
                     realm.getGlobalEnv(), new ScriptContextEnvironmentRecord(cx, context));
-            ExecutionContext evalCxt = newEvalExecutionContext(cx, script, lexEnv, lexEnv);
-            script.getScriptBody().evalDeclarationInstantiation(evalCxt, lexEnv, lexEnv, true);
+            LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv = new LexicalEnvironment<>(
+                    varEnv, new DeclarativeEnvironmentRecord(cx));
+            ExecutionContext evalCxt = newEvalExecutionContext(cx, script, varEnv, lexEnv);
+            script.getScriptBody().evalDeclarationInstantiation(evalCxt, varEnv, lexEnv);
             Object result = script.evaluate(evalCxt);
             return TypeConverter.toJava(result);
         } catch (ScriptException e) {

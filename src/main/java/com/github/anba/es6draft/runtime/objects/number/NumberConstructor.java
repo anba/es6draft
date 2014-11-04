@@ -20,7 +20,9 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.Strings;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -34,7 +36,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>20.1.2 Properties of the Number Constructor
  * </ul>
  */
-public final class NumberConstructor extends BuiltinConstructor implements Initializable {
+public final class NumberConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<NumberObject> {
     /**
      * Constructs a new Number constructor function.
      * 
@@ -82,6 +85,11 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return Construct(callerContext, this, args);
+    }
+
+    @Override
+    public CreateAction<NumberObject> createAction() {
+        return NumberCreate.INSTANCE;
     }
 
     /**
@@ -345,22 +353,6 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
             /* steps 5-6 */
             return Math.abs(integer) <= 0x1F_FFFF_FFFF_FFFFL;
         }
-
-        /**
-         * 20.1.2.16 Number[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new number object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.NumberPrototype,
-                    NumberObjectAllocator.INSTANCE);
-        }
     }
 
     private static final class NumberObjectAllocator implements ObjectAllocator<NumberObject> {
@@ -369,6 +361,16 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
         @Override
         public NumberObject newInstance(Realm realm) {
             return new NumberObject(realm);
+        }
+    }
+
+    private static final class NumberCreate implements CreateAction<NumberObject> {
+        static final CreateAction<NumberObject> INSTANCE = new NumberCreate();
+
+        @Override
+        public NumberObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.NumberPrototype,
+                    NumberObjectAllocator.INSTANCE);
         }
     }
 

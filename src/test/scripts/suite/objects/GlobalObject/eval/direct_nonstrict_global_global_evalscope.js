@@ -32,7 +32,7 @@ assertTrue("v2" in global);
 assertNotUndefined(global["v2"]);
 
 eval(`eval("class v3{}")`);
-assertSame("function", typeof v3);
+assertSame("undefined", typeof v3);
 assertFalse("v3" in global);
 assertUndefined(global["v3"]);
 
@@ -52,11 +52,11 @@ assertFalse("v6" in global);
 assertUndefined(global["v6"]);
 
 eval(`eval("let v7 = 0")`);
-assertSame("number", typeof v7);
+assertSame("undefined", typeof v7);
 assertFalse("v7" in global);
 assertUndefined(global["v7"]);
 
 eval(`eval("const v8 = 0")`);
-assertSame("number", typeof v8);
+assertSame("undefined", typeof v8);
 assertFalse("v8" in global);
 assertUndefined(global["v8"]);

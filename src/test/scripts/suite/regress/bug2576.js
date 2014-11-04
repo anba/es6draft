@@ -12,7 +12,7 @@ const {
 // 9.4.5.2 [[DefineOwnProperty]]: Condition in step 3.c.iii is never true
 // https://bugs.ecmascript.org/show_bug.cgi?id=2576
 
-let ta = Int8Array[Symbol.create]();
+let ta = new class extends Int8Array { constructor() { /* no super */ } };
 for (let w of [{}, {writable: true}, {writable: false}]) {
   for (let e of [{}, {enumerable: true}, {enumerable: false}]) {
     for (let c of [{}, {configurable: true}, {configurable: false}]) {

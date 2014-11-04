@@ -13,11 +13,10 @@ const {
   assertNativeFunction,
 } = Assert;
 
-loadRelativeToScript("../../lib/promises.js");
-
+System.load("lib/promises.jsm");
 const {
   reportFailure
-} = Promises;
+} = System.get("lib/promises.jsm");
 
 // Test access to built-in functions:
 // - GetCapabilitiesExecutor Functions
@@ -80,7 +79,7 @@ const {
           assertNativeFunction(reject, undefined, 1);
           break;
       }
-      return super(fulfill, reject);
+      return super.then(fulfill, reject);
     }
 
     static deferred() {

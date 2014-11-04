@@ -140,20 +140,20 @@ public final class MozillaJSTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        // filter disabled tests
+        // Filter disabled tests
         assumeTrue(moztest.isEnabled());
 
         global = globals.newGlobal(new MozTestConsole(collector), moztest);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
 
-        // apply scripted conditions
+        // Apply scripted conditions
         scriptConditions();
 
-        // filter disabled tests (may have changed after applying scripted conditions)
+        // Filter disabled tests (may have changed after applying scripted conditions)
         assumeTrue(moztest.isEnabled());
 
         if (moztest.random) {
-            // results from random tests are simply ignored...
+            // Results from random tests are simply ignored...
             ignoreHandler.match(IgnoreExceptionHandler.defaultMatcher());
         } else if (moztest.expect) {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
@@ -174,15 +174,15 @@ public final class MozillaJSTest {
 
     @Test
     public void runTest() throws Throwable {
-        // load and execute shell.js files
+        // Load and execute shell.js files
         for (Path shell : shellJS(moztest)) {
             global.include(shell);
         }
 
-        // evaluate actual test-script
+        // Evaluate actual test-script
         global.eval(moztest.getScript(), moztest.toFile());
 
-        // wait for pending tasks to finish
+        // Wait for pending tasks to finish
         global.getRealm().getWorld().runEventLoop();
     }
 
@@ -190,7 +190,7 @@ public final class MozillaJSTest {
      * Returns an {@link Iterable} of 'shell.js'-{@link Path}s
      */
     private static Iterable<Path> shellJS(MozTest test) {
-        // add 'shell.js' files from each directory
+        // Add 'shell.js' files from each directory
         List<Path> files = new ArrayList<>();
         Path testDir = test.getBaseDir();
         Path dir = Paths.get("");
@@ -253,14 +253,14 @@ public final class MozillaJSTest {
         @Override
         public TestInfo apply(Path file, Iterator<String> lines) {
             MozTest test = new MozTest(basedir, file);
-            // negative tests end with "-n"
+            // Negative tests end with "-n"
             if (file.getFileName().toString().endsWith("-n.js")) {
                 test.expect = false;
             }
             String line = lines.next();
             Matcher m = testInfoPattern.matcher(line);
             if (!m.matches()) {
-                // ignore if pattern invalid or not present
+                // Ignore if pattern invalid or not present
                 return test;
             }
             if (!"reftest".equals(m.group(1))) {
@@ -276,10 +276,10 @@ public final class MozillaJSTest {
                 } else if (p.equals("random")) {
                     test.random = true;
                 } else if (p.equals("slow")) {
-                    // don't run slow tests
+                    // Don't run slow tests
                     test.setEnabled(false);
                 } else if (p.equals("silentfail")) {
-                    // ignore for now...
+                    // Ignore for now...
                 } else if (p.startsWith("fails-if")) {
                     test.addCondition(Condition.FailsIf, p.substring("fails-if".length()));
                 } else if (p.startsWith("skip-if")) {
@@ -287,9 +287,9 @@ public final class MozillaJSTest {
                 } else if (p.startsWith("random-if")) {
                     test.addCondition(Condition.RandomIf, p.substring("random-if".length()));
                 } else if (p.startsWith("asserts-if")) {
-                    // ignore for now...
+                    // Ignore for now...
                 } else if (p.startsWith("require-or")) {
-                    // ignore for now...
+                    // Ignore for now...
                 } else {
                     System.err.printf("invalid manifest line: %s\n", p);
                 }
@@ -300,12 +300,12 @@ public final class MozillaJSTest {
         private static String[] split(String line) {
             final String comment = "--";
             final String ws = "[ \t\n\r\f\013]+";
-            // remove comment if any
+            // Remove comment if any
             int k = line.indexOf(comment);
             if (k != -1) {
                 line = line.substring(0, k);
             }
-            // split at whitespace
+            // Split at whitespace
             return line.trim().split(ws);
         }
     }

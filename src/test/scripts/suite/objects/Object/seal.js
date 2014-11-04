@@ -9,7 +9,7 @@ const {
   assertBuiltinFunction,
   assertThrows,
   assertSame,
-  assertTrue,
+  assertFalse,
   assertAccessorProperty,
   assertDataProperty,
   fail,
@@ -58,20 +58,19 @@ assertBuiltinFunction(Object.seal, "seal", 1);
 
 // Test correct property traversal order, no additional MOP methods are called
 {
-  let expectedLog = "ownKeys,defineProperty:a,defineProperty:b,preventExtensions";
+  let expectedLog = ",preventExtensions,ownKeys,defineProperty:a,defineProperty:b";
   let log = "";
   let o = new Proxy({a: 1, b: 2}, new Proxy({
     defineProperty(t, pk, d) {
-      log += `:${pk},`;
+      log += `:${pk}`;
       return Object.defineProperty(t, pk, d);
     },
     ownKeys() {
-      log += ",";
       return ["a", "b"];
     },
   }, {
     get(t, pk, r) {
-      log += pk;
+      log += "," + pk;
       return t[pk];
     }
   }));
@@ -101,7 +100,7 @@ assertBuiltinFunction(Object.seal, "seal", 1);
   assertSame(2, count);
   assertDataProperty(o, "a", {value: 1, writable: true, enumerable: true, configurable: true});
   assertDataProperty(o, "b", {value: 2, writable: true, enumerable: true, configurable: false});
-  assertTrue(Object.isExtensible(o));
+  assertFalse(Object.isExtensible(o));
 }
 
 // Intermediate exceptions do not stop property traversal, first exception is reported (2)
@@ -123,5 +122,5 @@ assertBuiltinFunction(Object.seal, "seal", 1);
   assertSame(0, count);
   assertDataProperty(o, "a", {value: 1, writable: true, enumerable: true, configurable: true});
   assertDataProperty(o, "b", {value: 2, writable: true, enumerable: true, configurable: true});
-  assertTrue(Object.isExtensible(o));
+  assertFalse(Object.isExtensible(o));
 }

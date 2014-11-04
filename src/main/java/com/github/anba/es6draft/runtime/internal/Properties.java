@@ -36,6 +36,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -386,6 +387,8 @@ public final class Properties {
      *            the execution context
      * @param className
      *            the class-name
+     * @param createAction
+     *            the create action operation for this class
      * @param constructorProperties
      *            the class which holds the constructor properties
      * @param prototypeProperties
@@ -393,10 +396,12 @@ public final class Properties {
      * @return the new native script class
      */
     public static Constructor createClass(ExecutionContext cx, String className,
-            Class<?> constructorProperties, Class<?> prototypeProperties) {
+            CreateAction<?> createAction, Class<?> constructorProperties,
+            Class<?> prototypeProperties) {
         assert !constructorProperties.getName().startsWith(INTERNAL_PACKAGE);
         assert !prototypeProperties.getName().startsWith(INTERNAL_PACKAGE);
-        return createExternalClass(cx, className, constructorProperties, prototypeProperties);
+        return createExternalClass(cx, className, createAction, constructorProperties,
+                prototypeProperties);
     }
 
     private static final String INTERNAL_PACKAGE = "com.github.anba.es6draft.runtime.objects.";
@@ -610,7 +615,9 @@ public final class Properties {
             if (cause instanceof InternalException)
                 return ((InternalException) cause).toScriptException(cx);
             String info = Objects.toString(cause.getMessage(), cause.getClass().getSimpleName());
-            return Errors.newInternalError(cx, Messages.Key.InternalError, info);
+            ScriptException error = Errors.newInternalError(cx, Messages.Key.InternalError, info);
+            error.addSuppressed(cause);
+            return error;
         }
 
         private static void throwTypeError(ExecutionContext cx, Object ignore) {
@@ -667,7 +674,8 @@ public final class Properties {
     }
 
     private static Constructor createExternalClass(ExecutionContext cx, String className,
-            Class<?> constructorProperties, Class<?> prototypeProperties) {
+            CreateAction<?> createAction, Class<?> constructorProperties,
+            Class<?> prototypeProperties) {
         ObjectLayout ctorLayout = externalClassLayouts.get(constructorProperties);
         ObjectLayout protoLayout = externalClassLayouts.get(prototypeProperties);
         Converter converter = new Converter(cx);
@@ -677,8 +685,8 @@ public final class Properties {
         ScriptObject constructorParent = objects[1];
         assert constructorParent == cx.getIntrinsic(Intrinsics.FunctionPrototype);
 
-        OrdinaryObject constructor = createConstructor(cx, className, proto, constructorParent,
-                converter, protoLayout);
+        OrdinaryObject constructor = createConstructor(cx, className, createAction, proto,
+                constructorParent, converter, protoLayout);
         assert constructor instanceof Constructor;
         if (ctorLayout.functions != null) {
             createExternalFunctions(cx, constructor, ctorLayout, converter);
@@ -696,8 +704,8 @@ public final class Properties {
     }
 
     private static OrdinaryObject createConstructor(ExecutionContext cx, String className,
-            OrdinaryObject proto, ScriptObject constructorParent, Converter converter,
-            ObjectLayout layout) {
+            CreateAction<?> createAction, OrdinaryObject proto, ScriptObject constructorParent,
+            Converter converter, ObjectLayout layout) {
         Entry<Function, MethodHandle> constructorEntry = findConstructor(layout);
         if (constructorEntry != null) {
             // User supplied method, perform manual ClassDefinitionEvaluation for constructors
@@ -705,13 +713,14 @@ public final class Properties {
             MethodHandle unreflect = constructorEntry.getValue();
             MethodHandle mh = getStaticMethodHandle(cx, converter, unreflect);
             NativeConstructor constructor = new NativeConstructor(cx.getRealm(), className,
-                    function.arity(), mh);
+                    function.arity(), createAction, mh);
             constructor.defineOwnProperty(cx, "prototype", new PropertyDescriptor(proto, false,
                     false, false));
             proto.defineOwnProperty(cx, "constructor", new PropertyDescriptor(constructor, true,
                     false, true));
             return constructor;
         }
+        // TODO: Support create action when no user defined constructor is present
         // Create default constructor
         RuntimeInfo.Function fd = ScriptRuntime.CreateDefaultEmptyConstructor();
         OrdinaryFunction constructor = ScriptRuntime.EvaluateConstructorMethod(constructorParent,

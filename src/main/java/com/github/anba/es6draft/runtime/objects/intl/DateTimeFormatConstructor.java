@@ -40,7 +40,9 @@ import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.Loca
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.LocaleDataInfo;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.OptionsRecord;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ResolvedLocale;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -60,7 +62,8 @@ import com.ibm.icu.util.ULocale;
  * <li>12.2 Properties of the Intl.DateTimeFormat Constructor
  * </ul>
  */
-public final class DateTimeFormatConstructor extends BuiltinConstructor implements Initializable {
+public final class DateTimeFormatConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<DateTimeFormatObject> {
     /** [[availableLocales]] */
     private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
@@ -734,6 +737,11 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         return obj;
     }
 
+    @Override
+    public CreateAction<DateTimeFormatObject> createAction() {
+        return DateTimeFormatCreate.INSTANCE;
+    }
+
     /**
      * 12.2 Properties of the Intl.DateTimeFormat Constructor
      */
@@ -778,22 +786,6 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
             return SupportedLocales(cx, availableLocales, requestedLocales, options);
         }
-
-        /**
-         * Extension: Make subclassable for ES6 classes
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized date format object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue,
-                    Intrinsics.Intl_DateTimeFormatPrototype, DateTimeFormatObjectAllocator.INSTANCE);
-        }
     }
 
     private static final class DateTimeFormatObjectAllocator implements
@@ -803,6 +795,17 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         @Override
         public DateTimeFormatObject newInstance(Realm realm) {
             return new DateTimeFormatObject(realm);
+        }
+    }
+
+    private static final class DateTimeFormatCreate implements CreateAction<DateTimeFormatObject> {
+        static final CreateAction<DateTimeFormatObject> INSTANCE = new DateTimeFormatCreate();
+
+        @Override
+        public DateTimeFormatObject create(ExecutionContext cx, Constructor constructor,
+                Object... args) {
+            return OrdinaryCreateFromConstructor(cx, constructor,
+                    Intrinsics.Intl_DateTimeFormatPrototype, DateTimeFormatObjectAllocator.INSTANCE);
         }
     }
 }

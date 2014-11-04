@@ -103,16 +103,16 @@ public final class ListIterator<T> extends OrdinaryObject {
     private static final class ScriptIteratorImpl extends SimpleIterator<Object> implements
             ScriptIterator<Object> {
         private final ExecutionContext cx;
-        private final ScriptObject object;
+        private final ScriptObject iterator;
 
-        ScriptIteratorImpl(ExecutionContext cx, ScriptObject object) {
+        ScriptIteratorImpl(ExecutionContext cx, ScriptObject iterator) {
             this.cx = cx;
-            this.object = object;
+            this.iterator = iterator;
         }
 
         @Override
-        protected Object tryNext() {
-            ScriptObject next = IteratorStep(cx, object);
+        protected Object findNext() {
+            ScriptObject next = IteratorStep(cx, iterator);
             if (next == null) {
                 return null;
             }
@@ -121,7 +121,7 @@ public final class ListIterator<T> extends OrdinaryObject {
 
         @Override
         public ScriptObject getScriptObject() {
-            return object;
+            return iterator;
         }
     }
 }

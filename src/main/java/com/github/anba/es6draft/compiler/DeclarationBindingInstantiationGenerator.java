@@ -13,18 +13,17 @@ import java.util.ListIterator;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.AsyncFunctionDeclaration;
-import com.github.anba.es6draft.ast.BindingIdentifier;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.ast.LegacyGeneratorDeclaration;
-import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.MethodDesc;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
@@ -59,12 +58,42 @@ abstract class DeclarationBindingInstantiationGenerator {
                 MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "getBindingValue",
                 Type.getMethodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
 
+        // class: GlobalEnvironmentRecord
+        static final MethodDesc GlobalEnvironmentRecord_createGlobalVarBinding = MethodDesc.create(
+                MethodDesc.Invoke.Virtual, Types.GlobalEnvironmentRecord, "createGlobalVarBinding",
+                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
+
+        static final MethodDesc GlobalEnvironmentRecord_createGlobalFunctionBinding = MethodDesc
+                .create(MethodDesc.Invoke.Virtual, Types.GlobalEnvironmentRecord,
+                        "createGlobalFunctionBinding", Type.getMethodType(Type.VOID_TYPE,
+                                Types.String, Types.Object, Type.BOOLEAN_TYPE));
+
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
                 MethodDesc.Invoke.Virtual, Types.LexicalEnvironment, "getEnvRec",
                 Type.getMethodType(Types.EnvironmentRecord));
 
         // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_canDeclareGlobalFunctionOrThrow = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareGlobalFunctionOrThrow",
+                Type.getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+                        Types.GlobalEnvironmentRecord, Types.String));
+
+        static final MethodDesc ScriptRuntime_canDeclareGlobalVarOrThrow = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareGlobalVarOrThrow", Type
+                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+                                Types.GlobalEnvironmentRecord, Types.String));
+
+        static final MethodDesc ScriptRuntime_canDeclareLexicalScopedOrThrow = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareLexicalScopedOrThrow",
+                Type.getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+                        Types.GlobalEnvironmentRecord, Types.String));
+
+        static final MethodDesc ScriptRuntime_canDeclareVarScopedOrThrow = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareVarScopedOrThrow", Type
+                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+                                Types.GlobalEnvironmentRecord, Types.String));
+
         static final MethodDesc ScriptRuntime_InstantiateAsyncFunctionObject = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstantiateAsyncFunctionObject",
                 Type.getMethodType(Types.OrdinaryAsyncFunction, Types.LexicalEnvironment,
@@ -200,20 +229,6 @@ abstract class DeclarationBindingInstantiationGenerator {
     protected void createImmutableBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
             InstructionVisitor mv) {
         mv.load(envRec);
-        createImmutableBinding(name, mv);
-    }
-
-    /**
-     * Emit function call for: {@link EnvironmentRecord#createImmutableBinding(String)}
-     * <p>
-     * stack: [envRec] {@literal ->} []
-     * 
-     * @param name
-     *            the binding name
-     * @param mv
-     *            the instruction visitor
-     */
-    protected void createImmutableBinding(Name name, InstructionVisitor mv) {
         mv.aconst(name.getIdentifier());
         mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
     }
@@ -316,9 +331,13 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void getEnvironmentRecord(Variable<LexicalEnvironment<?>> env, InstructionVisitor mv) {
+    protected <R extends EnvironmentRecord, R2 extends R> void storeEnvironmentRecord(
+            Variable<? extends R> envRec, Variable<? extends LexicalEnvironment<? extends R2>> env,
+            InstructionVisitor mv) {
         mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+        mv.checkcast(envRec.getType());
+        mv.store(envRec);
     }
 
     /**
@@ -331,6 +350,141 @@ abstract class DeclarationBindingInstantiationGenerator {
      */
     protected void getEnvironmentRecord(InstructionVisitor mv) {
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+    }
+
+    /**
+     * <code>
+     * ScriptRuntime.canDeclareLexicalScopedOrThrow(cx, envRec, name)
+     * </code>
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the instruction visitor
+     */
+    protected void canDeclareLexicalScopedOrThrow(Variable<ExecutionContext> context,
+            Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
+        mv.load(context);
+        mv.load(envRec);
+        mv.aconst(name.getIdentifier());
+        mv.invoke(Methods.ScriptRuntime_canDeclareLexicalScopedOrThrow);
+    }
+
+    /**
+     * <code>
+     * ScriptRuntime.canDeclareVarScopedOrThrow(cx, envRec, name)
+     * </code>
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the instruction visitor
+     */
+    protected void canDeclareVarScopedOrThrow(Variable<ExecutionContext> context,
+            Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
+        mv.load(context);
+        mv.load(envRec);
+        mv.aconst(name.getIdentifier());
+        mv.invoke(Methods.ScriptRuntime_canDeclareVarScopedOrThrow);
+    }
+
+    /**
+     * <code>
+     * ScriptRuntime.canDeclareGlobalFunctionOrThrow(cx, envRec, name)
+     * </code>
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the instruction visitor
+     */
+    protected void canDeclareGlobalFunctionOrThrow(Variable<ExecutionContext> context,
+            Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
+        mv.load(context);
+        mv.load(envRec);
+        mv.aconst(name.getIdentifier());
+        mv.invoke(Methods.ScriptRuntime_canDeclareGlobalFunctionOrThrow);
+    }
+
+    /**
+     * <code>
+     * ScriptRuntime.canDeclareGlobalVarOrThrow(cx, envRec, name)
+     * </code>
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the instruction visitor
+     */
+    protected void canDeclareGlobalVarOrThrow(Variable<ExecutionContext> context,
+            Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
+        mv.load(context);
+        mv.load(envRec);
+        mv.aconst(name.getIdentifier());
+        mv.invoke(Methods.ScriptRuntime_canDeclareGlobalVarOrThrow);
+    }
+
+    /**
+     * <code>
+     * envRec.createGlobalVarBinding(name, deletableBindings)
+     * </code>
+     * 
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param deletableBindings
+     *            the variable which holds the deletable flag
+     * @param mv
+     *            the instruction visitor
+     */
+    protected void createGlobalVarBinding(Variable<GlobalEnvironmentRecord> envRec, Name name,
+            boolean deletableBindings, InstructionVisitor mv) {
+        mv.load(envRec);
+        mv.aconst(name.getIdentifier());
+        mv.iconst(deletableBindings);
+        mv.invoke(Methods.GlobalEnvironmentRecord_createGlobalVarBinding);
+    }
+
+    /**
+     * <code>
+     * envRec.createGlobalFunctionBinding(name, functionObject, deletableBindings)
+     * </code>
+     * 
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param name
+     *            the binding name
+     * @param deletableBindings
+     *            the variable which holds the deletable flag
+     * @param mv
+     *            the instruction visitor
+     */
+    protected void createGlobalFunctionBinding(Variable<GlobalEnvironmentRecord> envRec, Name name,
+            boolean deletableBindings, InstructionVisitor mv) {
+        // stack: [fo] -> []
+        mv.load(envRec);
+        mv.swap();
+        mv.aconst(name.getIdentifier());
+        mv.swap();
+        mv.iconst(deletableBindings);
+        mv.invoke(Methods.GlobalEnvironmentRecord_createGlobalFunctionBinding);
     }
 
     /**
@@ -348,7 +502,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     protected void InstantiateFunctionObject(Variable<ExecutionContext> context,
-            Variable<LexicalEnvironment<?>> env, Declaration f, InstructionVisitor mv) {
+            Variable<? extends LexicalEnvironment<?>> env, Declaration f, InstructionVisitor mv) {
         if (f instanceof FunctionDeclaration) {
             InstantiateFunctionObject(context, env, (FunctionDeclaration) f, mv);
         } else if (f instanceof GeneratorDeclaration) {
@@ -394,7 +548,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     private void InstantiateAsyncFunctionObject(Variable<ExecutionContext> context,
-            Variable<LexicalEnvironment<?>> env, AsyncFunctionDeclaration f, InstructionVisitor mv) {
+            Variable<? extends LexicalEnvironment<?>> env, AsyncFunctionDeclaration f,
+            InstructionVisitor mv) {
         mv.load(env);
         mv.load(context);
 
@@ -435,7 +590,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     private void InstantiateFunctionObject(Variable<ExecutionContext> context,
-            Variable<LexicalEnvironment<?>> env, FunctionDeclaration f, InstructionVisitor mv) {
+            Variable<? extends LexicalEnvironment<?>> env, FunctionDeclaration f,
+            InstructionVisitor mv) {
         mv.load(env);
         mv.load(context);
 
@@ -476,7 +632,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     private void InstantiateGeneratorObject(Variable<ExecutionContext> context,
-            Variable<LexicalEnvironment<?>> env, GeneratorDeclaration f, InstructionVisitor mv) {
+            Variable<? extends LexicalEnvironment<?>> env, GeneratorDeclaration f,
+            InstructionVisitor mv) {
         mv.load(env);
         mv.load(context);
 
@@ -503,64 +660,6 @@ abstract class DeclarationBindingInstantiationGenerator {
         } else {
             mv.invoke(Methods.ScriptRuntime_InstantiateLegacyGeneratorObject);
         }
-    }
-
-    /**
-     * Returns the bound name of the declaration {@code d}, which must be either a function,
-     * generator or async function declaration. The bound name of function declaration node is its
-     * function name.
-     * 
-     * @param d
-     *            the function declaration node
-     * @return the bound name of the function declaration
-     */
-    protected static Name BoundName(Declaration d) {
-        return getFunctionName(d).getName();
-    }
-
-    /**
-     * Returns the function name of the declaration {@code d}, which must be either a function,
-     * generator or async function declaration.
-     * 
-     * @param d
-     *            the function declaration node
-     * @return the function name of the function declaration
-     */
-    protected static BindingIdentifier getFunctionName(Declaration d) {
-        if (d instanceof FunctionDeclaration) {
-            return ((FunctionDeclaration) d).getIdentifier();
-        } else if (d instanceof GeneratorDeclaration) {
-            return ((GeneratorDeclaration) d).getIdentifier();
-        } else {
-            assert d instanceof AsyncFunctionDeclaration;
-            return ((AsyncFunctionDeclaration) d).getIdentifier();
-        }
-    }
-
-    /**
-     * Returns {@code true} if {@code d} is either a function, generator or async function
-     * declaration.
-     * 
-     * @param item
-     *            the statement list node
-     * @return {@code true} if the declaration is a function declaration
-     */
-    protected static boolean isFunctionDeclaration(StatementListItem item) {
-        return item instanceof FunctionDeclaration || item instanceof GeneratorDeclaration
-                || item instanceof AsyncFunctionDeclaration;
-    }
-
-    /**
-     * Returns {@code true} if {@code d} is either a function, generator or async function
-     * declaration.
-     * 
-     * @param d
-     *            the declaration node
-     * @return {@code true} if the declaration is a function declaration
-     */
-    protected static boolean isFunctionDeclaration(Declaration d) {
-        return d instanceof FunctionDeclaration || d instanceof GeneratorDeclaration
-                || d instanceof AsyncFunctionDeclaration;
     }
 
     protected static <T> Iterable<T> reverse(final List<T> list) {

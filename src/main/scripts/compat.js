@@ -20,13 +20,6 @@ const {
   getOwnPropertyDescriptor: Object_getOwnPropertyDescriptor,
 } = Object;
 
-function ToPropertyKey(pk) {
-  if (typeof pk == 'symbol') {
-    return pk;
-  }
-  return String(pk);
-}
-
 /*
  * Add @@toStringTag to global object
  */
@@ -40,18 +33,18 @@ Object.defineProperty(global, Symbol.toStringTag, {
 Object.defineProperties(Object.assign(Object.prototype, {
   __defineGetter__(name, getter) {
     if (typeof getter != 'function') throw TypeError();
-    var pk = ToPropertyKey(name);
+    var pk = %ToPropertyKey(name);
     var obj = this != null ? Object(this) : %GlobalThis();
     Object_defineProperty(obj, pk, {__proto__: null, get: getter, enumerable: true, configurable: true});
   },
   __defineSetter__(name, setter) {
     if (typeof setter != 'function') throw TypeError();
-    var pk = ToPropertyKey(name);
+    var pk = %ToPropertyKey(name);
     var obj = this != null ? Object(this) : %GlobalThis();
     Object_defineProperty(obj, pk, {__proto__: null, set: setter, enumerable: true, configurable: true});
   },
   __lookupGetter__(name) {
-    var pk = ToPropertyKey(name);
+    var pk = %ToPropertyKey(name);
     var p = this != null ? Object(this) : this;
     do {
       var desc = Object_getOwnPropertyDescriptor(p, pk);
@@ -59,7 +52,7 @@ Object.defineProperties(Object.assign(Object.prototype, {
     } while ((p = Object_getPrototypeOf(p)));
   },
   __lookupSetter__(name) {
-    var pk = ToPropertyKey(name);
+    var pk = %ToPropertyKey(name);
     var p = this != null ? Object(this) : this;
     do {
       var desc = Object_getOwnPropertyDescriptor(p, pk);

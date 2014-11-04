@@ -41,6 +41,10 @@ feature/ArrayExtras/FindIndex.js
 # yield* no longer performs complete error recovery
 feature/Yield/GeneratorReturn.js
 
+# class constructor method no longer calls super["constructor"] (rev28)
+feature/Classes/InheritanceFromMemberExpression.js
+feature/Classes/SuperChangeProto.js
+
 
 ############################################
 # Implementation specific differences      #
@@ -60,10 +64,17 @@ feature/RegularExpression/Simple.js
 # Free variable checker extension
 feature/ArrowFunctions/Error_FreeVariableChecker.js
 
+# implicit __moduleName binding in modules
+feature/Modules/ModuleName.module.js
+
 
 #######################################
 # ES6 related syntax changes          #
 #######################################
+
+# Modules - Classes are not applicable for default declaration exports
+# https://mail.mozilla.org/pipermail/es-discuss/2014-October/039977.html
+feature/Modules/ImportDefault.module.js
 
 
 #######################################
@@ -82,15 +93,20 @@ feature/Destructuring/Rest.js
 # SetFunctionName() not supported in traceur
 feature/Classes/ClassNameBinding.js
 
+# Modules - Explicit export overrides star export
+feature/Modules/Error_ExportStarConflict.module.js
+
+# Modules - Circular imports not supported in Traceur
+feature/Modules/ImportCircular.module.js
+
+# Modules - Imported modules are evaluated before importing module
+feature/Modules/ImportEmptyImportClause.module.js
+feature/Modules/ImportNoImportClause.module.js
+
 
 #######################################
 # Test for syntax extensions          #
 #######################################
-
-# module syntax
-feature/AsyncFunctions/Export.module.js
-feature/Syntax/Error_WithInModule.module.js
-feature/TemplateLiterals/InModule.module.js
 
 # Type declaration syntax
 feature/Classes/Types.js

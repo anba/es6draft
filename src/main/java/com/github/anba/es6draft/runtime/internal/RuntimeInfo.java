@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 
 /**
  * Classes for function and script code bootstrapping.
@@ -75,6 +76,44 @@ public final class RuntimeInfo {
     }
 
     /**
+     * Returns a new {@link ModuleBody} object.
+     * 
+     * @param sourceName
+     *            the source name
+     * @param sourcePath
+     *            the source path
+     * @param initialization
+     *            the initialization method handle
+     * @param handle
+     *            the code method handle
+     * @return the new module object
+     */
+    public static ModuleBody newModuleBody(String sourceName, String sourcePath,
+            MethodHandle initialization, MethodHandle handle) {
+        return new CompiledModuleBody(sourceName, sourcePath, initialization, handle, null);
+    }
+
+    /**
+     * Returns a new {@link ModuleBody} object.
+     * 
+     * @param sourceName
+     *            the source name
+     * @param sourcePath
+     *            the source path
+     * @param initialization
+     *            the initialization method handle
+     * @param handle
+     *            the code method handle
+     * @param debugInfo
+     *            the debug info method handle
+     * @return the new module object
+     */
+    public static ModuleBody newModuleBody(String sourceName, String sourcePath,
+            MethodHandle initialization, MethodHandle handle, MethodHandle debugInfo) {
+        return new CompiledModuleBody(sourceName, sourcePath, initialization, handle, debugInfo);
+    }
+
+    /**
      * Returns a new {@link ScriptBody} object.
      * 
      * @param sourceName
@@ -124,22 +163,22 @@ public final class RuntimeInfo {
     }
 
     /**
-     * Returns the source object for the {@link ScriptBody} element.
+     * Returns the source information for the {@link SourceObject} element.
      * 
-     * @param scriptBody
+     * @param sourceObject
      *            the script body
      * @return the source object
      */
-    public static Source toSource(ScriptBody scriptBody) {
-        // TODO: default method on ScriptBody
-        return new Source(scriptBody.sourceFile() != null ? Paths.get(scriptBody.sourceFile())
-                : null, scriptBody.sourceName(), 1);
+    private static Source toSource(SourceObject sourceObject) {
+        // TODO: default method on SourceObject
+        return new Source(sourceObject.sourceFile() != null ? Paths.get(sourceObject.sourceFile())
+                : null, sourceObject.sourceName(), 1);
     }
 
     /**
-     * Compiled script body information
+     * Compiled source object.
      */
-    public interface ScriptBody {
+    public interface SourceObject {
         /**
          * Returns the source name descriptor.
          * 
@@ -155,6 +194,25 @@ public final class RuntimeInfo {
         String sourceFile();
 
         /**
+         * Returns the source information for this object.
+         * 
+         * @return the source object
+         */
+        Source toSource();
+
+        /**
+         * Returns the debug information or {@code null} if not available.
+         * 
+         * @return the debug information
+         */
+        DebugInfo debugInfo();
+    }
+
+    /**
+     * Compiled script body information
+     */
+    public interface ScriptBody extends SourceObject {
+        /**
          * Returns {@code true} if the script uses strict mode semantics.
          * 
          * @return {@code true} if the script is strict
@@ -168,14 +226,9 @@ public final class RuntimeInfo {
          *            the execution context
          * @param globalEnv
          *            the global environment
-         * @param lexicalEnv
-         *            the current lexical environment
-         * @param deletableBindings
-         *            {@code true} if new bindings are deletable
          */
         void globalDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<GlobalEnvironmentRecord> globalEnv,
-                LexicalEnvironment<?> lexicalEnv, boolean deletableBindings);
+                LexicalEnvironment<GlobalEnvironmentRecord> globalEnv);
 
         /**
          * Performs 18.2.1.2 Eval Declaration Instantiation.
@@ -186,11 +239,9 @@ public final class RuntimeInfo {
          *            the current variable environment
          * @param lexicalEnv
          *            the current lexical environment
-         * @param deletableBindings
-         *            {@code true} if new bindings are deletable
          */
         void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment<?> variableEnv,
-                LexicalEnvironment<?> lexicalEnv, boolean deletableBindings);
+                LexicalEnvironment<?> lexicalEnv);
 
         /**
          * Performs 15.1.7 Runtime Semantics: Script Evaluation.
@@ -200,13 +251,6 @@ public final class RuntimeInfo {
          * @return the evaluation result
          */
         Object evaluate(ExecutionContext cx);
-
-        /**
-         * Returns the debug information or {@code null} if not available.
-         * 
-         * @return the debug information
-         */
-        DebugInfo debugInfo();
     }
 
     private static final class CompiledScriptBody implements ScriptBody {
@@ -241,16 +285,20 @@ public final class RuntimeInfo {
         }
 
         @Override
+        public Source toSource() {
+            return RuntimeInfo.toSource(this);
+        }
+
+        @Override
         public boolean isStrict() {
             return isStrict;
         }
 
         @Override
         public void globalDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<GlobalEnvironmentRecord> globalEnv,
-                LexicalEnvironment<?> lexicalEnv, boolean deletableBindings) {
+                LexicalEnvironment<GlobalEnvironmentRecord> globalEnv) {
             try {
-                initialization.invokeExact(cx, globalEnv, lexicalEnv, deletableBindings);
+                initialization.invokeExact(cx, globalEnv);
             } catch (RuntimeException | Error e) {
                 throw e;
             } catch (Throwable e) {
@@ -260,10 +308,103 @@ public final class RuntimeInfo {
 
         @Override
         public void evalDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<?> variableEnv, LexicalEnvironment<?> lexicalEnv,
-                boolean deletableBindings) {
+                LexicalEnvironment<?> variableEnv, LexicalEnvironment<?> lexicalEnv) {
             try {
-                evalinitialization.invokeExact(cx, variableEnv, lexicalEnv, deletableBindings);
+                evalinitialization.invokeExact(cx, variableEnv, lexicalEnv);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public Object evaluate(ExecutionContext cx) {
+            try {
+                return handle.invokeExact(cx);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public DebugInfo debugInfo() {
+            if (debugInfo != null) {
+                try {
+                    return (DebugInfo) debugInfo.invokeExact();
+                } catch (RuntimeException | Error e) {
+                    throw e;
+                } catch (Throwable e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Compiled module information
+     */
+    public interface ModuleBody extends SourceObject {
+        /**
+         * Performs 15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation.
+         * 
+         * @param cx
+         *            the execution context
+         * @param envRec
+         *            the lexical environment
+         */
+        void moduleDeclarationInstantiation(ExecutionContext cx,
+                LexicalEnvironment<ModuleEnvironmentRecord> envRec);
+
+        /**
+         * Performs 15.2.1.22 Runtime Semantics: ModuleEvaluation.
+         * 
+         * @param cx
+         *            the execution context
+         * @return the evaluation result
+         */
+        Object evaluate(ExecutionContext cx);
+    }
+
+    private static final class CompiledModuleBody implements ModuleBody {
+        private final String sourceName;
+        private final String sourceFile;
+        private final MethodHandle initialization;
+        private final MethodHandle handle;
+        private final MethodHandle debugInfo;
+
+        CompiledModuleBody(String sourceName, String sourceFile, MethodHandle initialization,
+                MethodHandle handle, MethodHandle debugInfo) {
+            this.sourceName = sourceName;
+            this.sourceFile = sourceFile;
+            this.initialization = initialization;
+            this.handle = handle;
+            this.debugInfo = debugInfo;
+        }
+
+        @Override
+        public String sourceName() {
+            return sourceName;
+        }
+
+        @Override
+        public String sourceFile() {
+            return sourceFile;
+        }
+
+        @Override
+        public Source toSource() {
+            return RuntimeInfo.toSource(this);
+        }
+
+        @Override
+        public void moduleDeclarationInstantiation(ExecutionContext cx,
+                LexicalEnvironment<ModuleEnvironmentRecord> globalEnv) {
+            try {
+                initialization.invokeExact(cx, globalEnv);
             } catch (RuntimeException | Error e) {
                 throw e;
             } catch (Throwable e) {

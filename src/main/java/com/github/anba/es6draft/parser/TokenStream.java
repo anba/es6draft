@@ -126,6 +126,15 @@ final class TokenStream {
     }
 
     /**
+     * Returns the last character from the input source.
+     * 
+     * @return the last character
+     */
+    public char lastChar() {
+        return (char) input.lastChar();
+    }
+
+    /**
      * Returns the raw source characters from the underlying input source.
      * 
      * @param from
@@ -329,7 +338,7 @@ final class TokenStream {
      * @return the next token
      */
     public Token peekToken() {
-        assert !(current == Token.DIV || current == Token.ASSIGN_DIV);
+        assert !(current == Token.DIV || current == Token.ASSIGN_DIV || current == Token.ERROR);
         if (next == null) {
             switch (current) {
             case NAME:
@@ -560,7 +569,7 @@ final class TokenStream {
      * CharacterEscapeSequence ::
      *     SingleEscapeCharacter
      *     NonEscapeCharacter
-     * SingleEscapeCharacter ::  one of
+     * SingleEscapeCharacter :: one of
      *     ' "  \  b f n r t v
      * NonEscapeCharacter ::
      *     SourceCharacter but not one of EscapeCharacter or LineTerminator
@@ -625,7 +634,7 @@ final class TokenStream {
         case '7':
         case '8':
         case '9':
-            throw error(Messages.Key.StrictModeOctalEscapeSequence);
+            throw error(Messages.Key.OctalEscapeSequence);
         case '"':
         case '\'':
         case '\\':
@@ -1103,7 +1112,7 @@ final class TokenStream {
             }
         }
 
-        Token tok = readReservedWord(buffer);
+        Token tok = readReservedWord(buffer.array(), buffer.length());
         if (hasEscape) {
             return Token.toEscapedNameToken(tok);
         }
@@ -1143,6 +1152,13 @@ final class TokenStream {
             throw error(Messages.Key.InvalidUnicodeEscape);
         }
         return c;
+    }
+
+    static Token readReservedWord(String name) {
+        int length = name.length();
+        if (length < 2 || length > 10)
+            return Token.NAME;
+        return readReservedWord(name.toCharArray(), length);
     }
 
     /**
@@ -1204,15 +1220,15 @@ final class TokenStream {
      *     false
      * </pre>
      * 
-     * @param buffer
-     *            the string buffer containing identifier
+     * @param cbuf
+     *            the character array
+     * @param length
+     *            the number of characters to read
      * @return the token type for the identifier
      */
-    private static Token readReservedWord(StrBuffer buffer) {
-        int length = buffer.length();
+    private static Token readReservedWord(char[] cbuf, int length) {
         if (length < 2 || length > 10)
             return Token.NAME;
-        char[] cbuf = buffer.array();
         char c0 = cbuf[0], c1 = cbuf[1];
         Token test = null;
         switch (c0) {
@@ -1436,7 +1452,7 @@ final class TokenStream {
      * CharacterEscapeSequence ::
      *     SingleEscapeCharacter
      *     NonEscapeCharacter
-     * SingleEscapeCharacter ::  one of
+     * SingleEscapeCharacter :: one of
      *     ' "  \  b f n r t v
      * NonEscapeCharacter ::
      *     SourceCharacter but not one of EscapeCharacter or LineTerminator
@@ -1514,7 +1530,7 @@ final class TokenStream {
         case '6':
         case '7':
             if (!isEnabled(CompatibilityOption.OctalEscapeSequence)) {
-                throw error(Messages.Key.StrictModeOctalEscapeSequence);
+                throw error(Messages.Key.OctalEscapeSequence);
             }
             c = readLegacyOctalEscape(c);
             break;
@@ -1522,7 +1538,7 @@ final class TokenStream {
         case '9':
             // FIXME: spec bug - undefined behaviour for \8 and \9
             if (!isEnabled(CompatibilityOption.OctalEscapeSequence)) {
-                throw error(Messages.Key.StrictModeOctalEscapeSequence);
+                throw error(Messages.Key.OctalEscapeSequence);
             }
             // fall-through
         case '"':
@@ -1555,7 +1571,7 @@ final class TokenStream {
      */
     private int readLegacyOctalEscape(int c) {
         assert '0' <= c && c <= '7';
-        parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalEscapeSequence);
+        strictModeError(Messages.Key.StrictModeOctalEscapeSequence);
         int d = (c - '0');
         c = input.getChar();
         if (isOctalDigit(c)) {
@@ -1599,10 +1615,13 @@ final class TokenStream {
                 number = readBinaryIntegerLiteral();
             } else if (d == 'o' || d == 'O') {
                 number = readOctalIntegerLiteral();
-            } else if (isDecimalDigit(d)
-                    && isEnabled(CompatibilityOption.LegacyOctalIntegerLiteral)) {
-                input.ungetChar(d);
-                number = readLegacyOctalIntegerLiteral();
+            } else if (isDecimalDigit(d)) {
+                if (isEnabled(CompatibilityOption.LegacyOctalIntegerLiteral)) {
+                    input.ungetChar(d);
+                    number = readLegacyOctalIntegerLiteral();
+                } else {
+                    throw error(Messages.Key.InvalidNumberLiteral);
+                }
             } else {
                 input.ungetChar(d);
                 number = readDecimalLiteral(c);
@@ -1721,14 +1740,11 @@ final class TokenStream {
             buffer.append(c);
         }
         if (c == '8' || c == '9') {
-            // invalid octal integer literal -> treat as decimal literal, no strict-mode error
-            // FIXME: spec bug? undefined behaviour - SM reports an error in this case
-            if (isEnabled(CompatibilityOption.StrictLegacyOctalIntegerLiteral)) {
-                throw error(Messages.Key.InvalidOctalIntegerLiteral);
-            }
+            // invalid octal integer literal -> treat as decimal literal in non-strict mode
+            strictModeError(Messages.Key.StrictModeDecimalLeadingZero);
             return readDecimalLiteral(c, false);
         }
-        parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalIntegerLiteral);
+        strictModeError(Messages.Key.StrictModeOctalIntegerLiteral);
         if (isDecimalDigitOrIdentifierStart(c)) {
             throw error(Messages.Key.InvalidOctalIntegerLiteral);
         }
@@ -1763,6 +1779,24 @@ final class TokenStream {
      *     - DecimalDigits
      * </pre>
      * 
+     * <strong>[B.1.1] Numeric Literals</strong>
+     * 
+     * <pre>
+     * DecimalIntegerLiteral ::
+     *     0
+     *     NonZeroDigit DecimalDigits<span><sub>opt</sub></span>
+     *     NonOctalDecimalIntegerLiteral
+     * NonOctalDecimalIntegerLiteral ::
+     *     0 NonOctalDigit
+     *     LegacyOctalLikeDecimalIntegerLiteral NonOctalDigit
+     *     NonOctalDecimalIntegerLiteral DecimalDigit
+     * LegacyOctalLikeDecimalIntegerLiteral ::
+     *     0 OctalDigit
+     *     LegacyOctalLikeDecimalIntegerLiteral OctalDigit
+     * NonOctalDigit :: one of
+     *     8 9
+     * </pre>
+     * 
      * @param c
      *            the start character of the decimal integer literal
      * @return the decimal integer literal
@@ -1771,11 +1805,11 @@ final class TokenStream {
         return readDecimalLiteral(c, true);
     }
 
-    private double readDecimalLiteral(int c, boolean reset) {
+    private double readDecimalLiteral(int c, boolean resetBuffer) {
         assert c == '.' || isDecimalDigit(c);
         boolean isInteger = true;
         TokenStreamInput input = this.input;
-        StrBuffer buffer = reset ? this.buffer() : this.buffer;
+        StrBuffer buffer = resetBuffer ? this.buffer() : this.buffer;
         if (c != '.' && c != '0') {
             buffer.append(c);
             while (isDecimalDigit(c = input.get())) {
@@ -1860,6 +1894,21 @@ final class TokenStream {
     }
 
     /**
+     * Reports a strict-mode error.
+     * 
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the parser exception
+     */
+    private void strictModeError(Messages.Key messageKey, String... args) {
+        // Report the error from the start position of the currently parsed token.
+        long sourcePosition = nextSourcePosition;
+        parser.reportStrictModeError(ExceptionType.SyntaxError, sourcePosition, messageKey, args);
+    }
+
+    /**
      * Returns <code>true</code> and advances the source position if the current character is
      * {@code c}. Otherwise returns <code>false</code> and does not advance the source position.
      * 
@@ -1880,7 +1929,7 @@ final class TokenStream {
      */
     private void mustMatch(char c) {
         if (input.getChar() != c) {
-            throw error(Messages.Key.UnexpectedCharacter, String.valueOf(c));
+            throw error(Messages.Key.IllegalCharacter, String.valueOf(c));
         }
     }
 }

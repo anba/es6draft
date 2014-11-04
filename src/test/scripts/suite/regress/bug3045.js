@@ -6,7 +6,7 @@
  */
 
 const {
-  assertTrue, assertThrows, fail
+  assertTrue, assertFalse, assertThrows, fail
 } = Assert;
 
 // 22.2.3.22 %TypedArray%.prototype.set: Missing detached array buffer checks
@@ -17,9 +17,24 @@ const {
 // First check on function entry
 {
   let ta = new Int8Array(10);
+  let valueOfCalled = false;
   detachArrayBuffer(ta.buffer);
   assertThrows(TypeError,
-    () => ta.set([], {valueOf(){ fail `ToInteger(offset) called on detached buffer` }})
+    () => ta.set([], {valueOf() {
+      assertFalse(valueOfCalled);
+      valueOfCalled = true;
+      return 0;
+    }})
+  );
+  assertTrue(valueOfCalled);
+}
+
+// First check before ToObject(array)
+{
+  let ta = new Int8Array(10);
+  detachArrayBuffer(ta.buffer);
+  assertThrows(TypeError,
+    () => ta.set(null)
   );
 }
 

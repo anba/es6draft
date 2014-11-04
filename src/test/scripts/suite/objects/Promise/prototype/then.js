@@ -24,7 +24,7 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
 // .then() called with value where IsPromise(value) = false, value is a Promise Object
 {
   // IsPromise() returns false if the argument is an uninitialized promise object
-  let uninitPromise = Promise[Symbol.create]();
+  let uninitPromise = new class extends Promise{ constructor(){ /* no super */ } };
   let onFulfilled = () => {};
   let onRejected = () => {};
 
@@ -35,7 +35,8 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
 
   // Test .constructor property is not accessed before IsPromise() check
   class ConstructorAccessed extends Error {}
-  let uninitPromiseWithConstructor = Object.defineProperty(Promise[Symbol.create](), "constructor", {
+  let uninitPromiseWithConstructor = new class extends Promise{ constructor(){ /* no super */ } };
+  Object.defineProperty(uninitPromiseWithConstructor, "constructor", {
     get() { throw new ConstructorAccessed }, configurable: true
   });
   assertThrows(TypeError, () => uninitPromiseWithConstructor.then());

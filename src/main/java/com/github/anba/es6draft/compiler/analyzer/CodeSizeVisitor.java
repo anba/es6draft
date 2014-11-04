@@ -365,7 +365,22 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(ExportDeclaration node, CodeSizeHandler handler) {
-        return 0;
+        switch (node.getType()) {
+        case All:
+        case External:
+        case Local:
+            return 0;
+        case Declaration:
+            return analyze(node, node.getDeclaration(), 0, handler);
+        case DefaultDeclaration:
+            return analyze(node, node.getDeclaration(), 0, handler);
+        case DefaultExpression:
+            return analyze(node, node.getExpression(), 15, handler);
+        case Variable:
+            return analyze(node, node.getVariableStatement(), 0, handler);
+        default:
+            throw new AssertionError();
+        }
     }
 
     @Override
@@ -480,12 +495,12 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(ImportSpecifier node, CodeSizeHandler handler) {
-        return 0;
+        throw new IllegalStateException();
     }
 
     @Override
     public int visit(ImportClause node, CodeSizeHandler handler) {
-        return 0;
+        throw new IllegalStateException();
     }
 
     @Override
@@ -552,11 +567,6 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(Module node, CodeSizeHandler handler) {
-        return 0;
-    }
-
-    @Override
-    public int visit(ModuleImport node, CodeSizeHandler handler) {
         return 0;
     }
 

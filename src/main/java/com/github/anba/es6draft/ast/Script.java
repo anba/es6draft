@@ -88,8 +88,16 @@ public final class Script extends AstNode implements TopLevelNode<StatementListI
         return !parserOptions.contains(Parser.Option.FunctionCode);
     }
 
+    public boolean isFunctionCode() {
+        return parserOptions.contains(Parser.Option.FunctionCode);
+    }
+
     public boolean isEnclosedByWithStatement() {
         return parserOptions.contains(Parser.Option.EnclosedByWithStatement);
+    }
+
+    public boolean isScripting() {
+        return parserOptions.contains(Parser.Option.Scripting);
     }
 
     @Override

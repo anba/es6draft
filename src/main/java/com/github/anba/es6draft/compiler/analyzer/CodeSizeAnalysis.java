@@ -48,6 +48,17 @@ public final class CodeSizeAnalysis {
     /**
      * Start method.
      * 
+     * @param module
+     *            the module to be analyzed
+     */
+    public void submit(Module module) throws CodeSizeException {
+        submitAndExec(module, module.getStatements());
+        drainQueue();
+    }
+
+    /**
+     * Start method.
+     * 
      * @param function
      *            the function node to be analyzed
      */

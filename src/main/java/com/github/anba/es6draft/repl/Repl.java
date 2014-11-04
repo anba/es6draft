@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.repl;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateArrayFromList;
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ModuleEvaluationJob;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.BufferedReader;
@@ -49,7 +50,6 @@ import org.kohsuke.args4j.spi.StopOptionHandler;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.Scripts;
-import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Characters;
 import com.github.anba.es6draft.parser.Parser;
@@ -69,15 +69,8 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.World;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.Properties;
-import com.github.anba.es6draft.runtime.internal.PropertiesReaderControl;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.internal.Source;
-import com.github.anba.es6draft.runtime.internal.Strings;
-import com.github.anba.es6draft.runtime.internal.TaskSource;
+import com.github.anba.es6draft.runtime.extensions.timer.Timers;
+import com.github.anba.es6draft.runtime.internal.*;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -172,9 +165,12 @@ public final class Repl {
         Source getSource();
 
         String getSourceCode() throws IOException;
+
+        String getModuleName();
     }
 
     private static final class EvalString implements EvalScript {
+        private static final AtomicInteger moduleIds = new AtomicInteger(0);
         private final String sourceCode;
 
         EvalString(String sourceCode) {
@@ -183,12 +179,17 @@ public final class Repl {
 
         @Override
         public Source getSource() {
-            return new Source("<eval>", 1);
+            return new Source(Paths.get(".").toAbsolutePath(), "<eval>", 1);
         }
 
         @Override
         public String getSourceCode() {
             return sourceCode;
+        }
+
+        @Override
+        public String getModuleName() {
+            return "eval-module-" + moduleIds.incrementAndGet();
         }
     }
 
@@ -201,7 +202,7 @@ public final class Repl {
 
         @Override
         public Source getSource() {
-            return new Source(path, path.toString(), 1);
+            return new Source(path.toAbsolutePath(), path.toString(), 1);
         }
 
         @Override
@@ -214,6 +215,11 @@ public final class Repl {
             byte[] content = Files.readAllBytes(filePath);
             String source = new String(content, StandardCharsets.UTF_8);
             return source;
+        }
+
+        @Override
+        public String getModuleName() {
+            return Paths.get("").toAbsolutePath().toUri().relativize(path.toUri()).toString();
         }
     }
 
@@ -250,6 +256,9 @@ public final class Repl {
         @Option(name = "-i", aliases = { "--interactive" }, usage = "options.interactive")
         boolean interactive;
 
+        @Option(name = "--module", usage = "options.module")
+        boolean module;
+
         @Option(name = "--strict", usage = "options.strict")
         boolean strict;
 
@@ -264,6 +273,9 @@ public final class Repl {
 
         @Option(name = "--parser", usage = "options.parser")
         boolean parser;
+
+        @Option(name = "--timers", usage = "options.timers")
+        boolean timers;
 
         @Option(name = "--no-jline", usage = "options.no_jline")
         boolean noJLine;
@@ -301,9 +313,6 @@ public final class Repl {
 
         @Option(name = "--xhelp", hidden = true, usage = "options.extended_help")
         boolean showExtendedHelp;
-
-        @Option(name = "--timers", hidden = true, usage = "options.timers")
-        boolean timers;
 
         @Argument(index = 0, multiValued = false, metaVar = "meta.file", usage = "options.filename")
         Path fileName = null;
@@ -519,7 +528,7 @@ public final class Repl {
                 continue;
             }
             sourceCode.append(s).append('\n');
-            Source source = new Source("typein", line);
+            Source source = new Source(Paths.get(".").toAbsolutePath(), "typein", line);
             try {
                 return parse(realm, source, sourceCode.toString());
             } catch (ParserEOFException e) {
@@ -547,7 +556,7 @@ public final class Repl {
         } else {
             script = realm.getScriptLoader().load(parsedScript, className);
         }
-        return Scripts.ScriptEvaluation(script, realm, false);
+        return Scripts.ScriptEvaluation(script, realm);
     }
 
     /**
@@ -583,7 +592,7 @@ public final class Repl {
                 handleException(e);
             } catch (ScriptException e) {
                 handleException(realm, e);
-            } catch (ParserException | CompilationException | StackOverflowError e) {
+            } catch (InternalException | StackOverflowError e) {
                 handleException(e);
             } catch (BootstrapMethodError | UncheckedIOException e) {
                 handleException(e.getCause());
@@ -597,7 +606,7 @@ public final class Repl {
             sources.add(new InteractiveTaskSource(realm));
         }
         if (options.timers) {
-            WindowTimers timers = install(realm, new WindowTimers(), WindowTimers.class);
+            Timers timers = install(realm, new Timers(), Timers.class);
             sources.add(timers);
         }
         switch (sources.size()) {
@@ -769,9 +778,10 @@ public final class Repl {
             allocator = SimpleShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
                     scriptCache);
         }
+        ModuleLoader moduleLoader = new FileModuleLoader(baseDir);
 
-        World<? extends ShellGlobalObject> world = new World<>(allocator, compatibilityOptions,
-                parserOptions, compilerOptions);
+        World<? extends ShellGlobalObject> world = new World<>(allocator, moduleLoader,
+                compatibilityOptions, parserOptions, compilerOptions);
         final ShellGlobalObject global = world.newGlobal();
         final Realm realm = global.getRealm();
         ScriptObject globalThis = realm.getGlobalThis();
@@ -800,26 +810,66 @@ public final class Repl {
         });
 
         // Run eval expressions and files
-        for (final EvalScript evalScript : options.evalScripts) {
-            realm.enqueueScriptTask(new Task() {
-                @Override
-                public void execute() {
-                    try {
-                        Source source = evalScript.getSource();
-                        String sourceCode = evalScript.getSourceCode();
-                        try {
-                            eval(realm, parse(realm, source, sourceCode));
-                        } catch (ParserException e) {
-                            throw new ParserExceptionWithSource(e, source, sourceCode);
-                        }
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                }
-            });
+        for (EvalScript evalScript : options.evalScripts) {
+            if (options.module) {
+                realm.enqueueScriptTask(new ModuleEvaluationTask(realm, evalScript));
+            } else {
+                realm.enqueueScriptTask(new ScriptEvaluationTask(realm, evalScript));
+            }
         }
 
         return realm;
+    }
+
+    private final class ScriptEvaluationTask implements Task {
+        private final Realm realm;
+        private final EvalScript evalScript;
+
+        ScriptEvaluationTask(Realm realm, EvalScript evalScript) {
+            this.realm = realm;
+            this.evalScript = evalScript;
+        }
+
+        @Override
+        public void execute() {
+            try {
+                Source source = evalScript.getSource();
+                String sourceCode = evalScript.getSourceCode();
+                try {
+                    eval(realm, parse(realm, source, sourceCode));
+                } catch (ParserException e) {
+                    throw new ParserExceptionWithSource(e, source, sourceCode);
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+    }
+
+    private final class ModuleEvaluationTask implements Task {
+        private final Realm realm;
+        private final EvalScript evalScript;
+
+        ModuleEvaluationTask(Realm realm, EvalScript evalScript) {
+            this.realm = realm;
+            this.evalScript = evalScript;
+        }
+
+        @Override
+        public void execute() {
+            try {
+                Source source = evalScript.getSource();
+                String sourceCode = evalScript.getSourceCode();
+                String moduleName = evalScript.getModuleName();
+                try {
+                    ModuleEvaluationJob(realm, moduleName, sourceCode);
+                } catch (ParserException e) {
+                    throw new ParserExceptionWithSource(e, source, sourceCode);
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
     }
 
     private static Set<CompatibilityOption> compatibilityOptions(Options options) {
@@ -854,10 +904,11 @@ public final class Repl {
     private static EnumSet<Compiler.Option> compilerOptions(Options options) {
         EnumSet<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
         if (options.debug) {
-            compilerOptions.add(Compiler.Option.Debug);
+            compilerOptions.add(Compiler.Option.PrintCode);
         }
         if (options.fullDebug) {
-            compilerOptions.add(Compiler.Option.FullDebug);
+            compilerOptions.add(Compiler.Option.PrintCode);
+            compilerOptions.add(Compiler.Option.PrintFullCode);
         }
         if (options.debugInfo) {
             compilerOptions.add(Compiler.Option.DebugInfo);

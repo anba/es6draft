@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.compiler.BindingInitializationGenerator.InitializeBoundNameWithEnvironment;
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
@@ -166,10 +167,6 @@ final class StatementGenerator extends
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "debugger",
                 Type.getMethodType(Type.VOID_TYPE));
 
-        static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "ensureObject",
-                Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
-
         static final MethodDesc ScriptRuntime_enumerate = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "enumerate",
                 Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
@@ -247,24 +244,6 @@ final class StatementGenerator extends
         mv.aconst(name.getIdentifier());
         mv.iconst(deletable);
         mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
-    }
-
-    /**
-     * stack: [value] {@literal ->} [value]
-     * 
-     * @param pattern
-     *            the pattern node, either {@link AssignmentPattern} or {@link BindingPattern}
-     * @param type
-     *            the value type
-     * @param mv
-     *            the statement visitor
-     */
-    private void ensureObjectOrThrow(Node pattern, ValType type, StatementVisitor mv) {
-        if (type != ValType.Object) {
-            mv.lineInfo(pattern);
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_ensureObject);
-        }
     }
 
     @Override
@@ -435,6 +414,44 @@ final class StatementGenerator extends
     public Completion visit(EmptyStatement node, StatementVisitor mv) {
         /* step 1 */
         return Completion.Normal;
+    }
+
+    /**
+     * 15.2.1.23 Runtime Semantics: Evaluation<br>
+     * 15.2.3.10 Runtime Semantics: Evaluation
+     */
+    @Override
+    public Completion visit(ExportDeclaration node, StatementVisitor mv) {
+        switch (node.getType()) {
+        case All:
+        case External:
+        case Local:
+            return Completion.Normal;
+        case Variable:
+            return node.getVariableStatement().accept(this, mv);
+        case Declaration:
+            return node.getDeclaration().accept(this, mv);
+        case DefaultDeclaration:
+            return node.getDeclaration().accept(this, mv);
+        case DefaultExpression: {
+            Expression expr = node.getExpression();
+            /* steps 1-3 */
+            expressionBoxedValue(expr, mv);
+            /* step 4 */
+            if (IsAnonymousFunctionDefinition(expr)) {
+                SetFunctionName(expr, "default", mv);
+            }
+            /* step 5 */
+            getEnvironmentRecord(mv);
+            mv.swap();
+            /* step 6 */
+            InitializeBoundNameWithEnvironment(new Name("*default*"), mv);
+            /* step 7 */
+            return Completion.Normal;
+        }
+        default:
+            throw new AssertionError();
+        }
     }
 
     /**
@@ -841,7 +858,7 @@ final class StatementGenerator extends
                 PutValue((LeftHandSideExpression) lhs, lhsType, mv);
             } else {
                 /* step 3f.iii */
-                ensureObjectOrThrow(lhs, ValType.Any, mv);
+                ToObject(lhs, ValType.Any, mv);
                 DestructuringAssignment((AssignmentPattern) lhs, mv);
             }
         } else if (lhs instanceof VariableStatement) {
@@ -849,9 +866,9 @@ final class StatementGenerator extends
             assert ((VariableStatement) lhs).getElements().size() == 1;
             VariableDeclaration varDecl = ((VariableStatement) lhs).getElements().get(0);
             Binding binding = varDecl.getBinding();
-            // 12.2.4.2.2 Runtime Semantics: BindingInitialization :: ForBinding
+            // 13.6.4.5 Runtime Semantics: BindingInitialization
             if (binding instanceof BindingPattern) {
-                ensureObjectOrThrow(lhs, ValType.Any, mv);
+                ToObject(lhs, ValType.Any, mv);
             }
             BindingInitialization(binding, mv);
         } else {
@@ -890,9 +907,9 @@ final class StatementGenerator extends
             // stack: [nextValue, envRec] -> [envRec, nextValue]
             mv.swap();
 
-            // 13.6.4.5 Runtime Semantics: BindingInitialization :: ForBinding
+            // 13.6.4.5 Runtime Semantics: BindingInitialization
             if (lexicalBinding.getBinding() instanceof BindingPattern) {
-                ensureObjectOrThrow(lexicalBinding, ValType.Any, mv);
+                ToObject(lexicalBinding, ValType.Any, mv);
             }
 
             // stack: [envRec, nextValue] -> []
@@ -1052,7 +1069,7 @@ final class StatementGenerator extends
     public Completion visit(FunctionDeclaration node, StatementVisitor mv) {
         codegen.compile(node);
 
-        /* B.3.2  Web Legacy Compatibility for Block-Level Function Declarations */
+        /* B.3.3  Web Legacy Compatibility for Block-Level Function Declarations */
         if (node.isLegacyBlockScoped()) {
             mv.aconst(node.getIdentifier().getName().toString());
             mv.loadExecutionContext();
@@ -1113,6 +1130,15 @@ final class StatementGenerator extends
             /* steps 4, 6-7 */
             return resultThen.select(Completion.Normal);
         }
+    }
+
+    /**
+     * 15.2.1.23 Runtime Semantics: Evaluation<br>
+     * 15.2.2.6 Runtime Semantics: Evaluation
+     */
+    @Override
+    public Completion visit(ImportDeclaration node, StatementVisitor mv) {
+        return Completion.Normal;
     }
 
     /**
@@ -1673,9 +1699,9 @@ final class StatementGenerator extends
         mv.swap();
 
         /* steps 5-6 */
-        // 13.14.3 Runtime Semantics: BindingInitialization :: CatchParameter
+        // 13.14.4 Runtime Semantics: BindingInitialization :: CatchParameter
         if (catchParameter instanceof BindingPattern) {
-            ensureObjectOrThrow(catchParameter, ValType.Any, mv);
+            ToObject(catchParameter, ValType.Any, mv);
         }
         // stack: [envRec, ex] -> []
         BindingInitializationWithEnvironment(catchParameter, mv);
@@ -1733,9 +1759,9 @@ final class StatementGenerator extends
         mv.swap();
 
         /* steps 5-6 */
-        // 13.14.3 Runtime Semantics: BindingInitialization :: CatchParameter
+        // 13.14.4 Runtime Semantics: BindingInitialization :: CatchParameter
         if (catchParameter instanceof BindingPattern) {
-            ensureObjectOrThrow(catchParameter, ValType.Any, mv);
+            ToObject(catchParameter, ValType.Any, mv);
         }
         // stack: [envRec, ex] -> []
         BindingInitializationWithEnvironment(catchParameter, mv);

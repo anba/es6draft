@@ -17,9 +17,9 @@ const {
       b: () => "B",
       c: () => "C",
     },
-    a: function aaa() { return super() },
-    b: function() { return super() },
-    c: (0, function() { return super() }),
+    a: function aaa() { return super.a() },
+    b: function() { return super.b() },
+    c: (0, function() { return super.c() }),
   };
   assertSame("A", obj.a());
   assertSame("B", obj.b());
@@ -37,8 +37,7 @@ const {
   };
   assertSame("A'", obj.a.toMethod(home)());
   assertSame("B'", obj.b.toMethod(home)());
-  assertThrows(ReferenceError, () => obj.c.toMethod(home)());
-  assertSame("C'", obj.c.toMethod(home, "c")());
+  assertSame("C'", obj.c.toMethod(home)());
 }
 
 // Computed property names, property name is String
@@ -49,9 +48,9 @@ const {
       b: () => "B",
       c: () => "C",
     },
-    ["a"]: function aaa() { return super() },
-    ["b"]: function() { return super() },
-    ["c"]: (0, function() { return super() }),
+    ["a"]: function aaa() { return super["a"]() },
+    ["b"]: function() { return super["b"]() },
+    ["c"]: (0, function() { return super["c"]() }),
   };
   assertSame("A", obj.a());
   assertSame("B", obj.b());
@@ -69,8 +68,7 @@ const {
   };
   assertSame("A'", obj.a.toMethod(home)());
   assertSame("B'", obj.b.toMethod(home)());
-  assertThrows(ReferenceError, () => obj.c.toMethod(home)());
-  assertSame("C'", obj.c.toMethod(home, "c")());
+  assertSame("C'", obj.c.toMethod(home)());
 }
 
 // Computed property names, property name is Symbol
@@ -82,9 +80,9 @@ const {
       [symB]: () => "B",
       [symC]: () => "C",
     },
-    [symA]: function aaa() { return super() },
-    [symB]: function() { return super() },
-    [symC]: (0, function() { return super() }),
+    [symA]: function aaa() { return super[symA]() },
+    [symB]: function() { return super[symB]() },
+    [symC]: (0, function() { return super[symC]() }),
   };
   assertSame("A", obj[symA]());
   assertSame("B", obj[symB]());
@@ -102,6 +100,5 @@ const {
   };
   assertSame("A'", obj[symA].toMethod(home)());
   assertSame("B'", obj[symB].toMethod(home)());
-  assertThrows(ReferenceError, () => obj[symC].toMethod(home)());
-  assertSame("C'", obj[symC].toMethod(home, symC)());
+  assertSame("C'", obj[symC].toMethod(home)());
 }

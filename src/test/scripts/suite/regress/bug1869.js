@@ -16,4 +16,6 @@ var [head, ...tail] = "123";
 assertSame("1", head);
 assertEquals(["2", "3"], tail);
 
-assertThrows(TypeError, () => { for (var [head, ...tail] of "123") ; });
+for (var [head, ...tail] of "123") ;
+assertThrows(TypeError, () => { for (var [head, ...tail] of void 0) ; });
+assertThrows(TypeError, () => { for (var [head, ...tail] of null) ; });

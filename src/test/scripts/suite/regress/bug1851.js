@@ -13,7 +13,7 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=1851
 // https://bugs.ecmascript.org/show_bug.cgi?id=1613
 
-let f = Function[Symbol.create]();
+let f = new class extends Function { constructor() { /* no super */ } };
 Object.defineProperty(f, "prototype", {get() { return String.prototype }});
 assertThrows(TypeError, () => Function.call(f, "return 1"));
 assertSame(1, f());

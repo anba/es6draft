@@ -33,7 +33,9 @@ import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.Loca
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.LocaleDataInfo;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.OptionsRecord;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ResolvedLocale;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -48,7 +50,8 @@ import com.ibm.icu.util.ULocale;
  * <li>10.2 Properties of the Intl.Collator Constructor
  * </ul>
  */
-public final class CollatorConstructor extends BuiltinConstructor implements Initializable {
+public final class CollatorConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<CollatorObject> {
     /** [[availableLocales]] */
     private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
@@ -356,6 +359,11 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         return obj;
     }
 
+    @Override
+    public CreateAction<CollatorObject> createAction() {
+        return CollatorCreate.INSTANCE;
+    }
+
     /**
      * 10.2 Properties of the Intl.Collator Constructor
      */
@@ -400,22 +408,6 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
             return SupportedLocales(cx, availableLocales, requestedLocales, options);
         }
-
-        /**
-         * Extension: Make subclassable for ES6 classes
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized collator object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.Intl_CollatorPrototype,
-                    CollatorObjectAllocator.INSTANCE);
-        }
     }
 
     private static final class CollatorObjectAllocator implements ObjectAllocator<CollatorObject> {
@@ -424,6 +416,16 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         @Override
         public CollatorObject newInstance(Realm realm) {
             return new CollatorObject(realm);
+        }
+    }
+
+    private static final class CollatorCreate implements CreateAction<CollatorObject> {
+        static final CreateAction<CollatorObject> INSTANCE = new CollatorCreate();
+
+        @Override
+        public CollatorObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            return OrdinaryCreateFromConstructor(cx, constructor,
+                    Intrinsics.Intl_CollatorPrototype, CollatorObjectAllocator.INSTANCE);
         }
     }
 }

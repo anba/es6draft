@@ -9,9 +9,11 @@ const {
   assertSame
 } = Assert;
 
-loadRelativeToScript("../lib/unicode_case_folding.js");
-loadRelativeToScript("../lib/range.js");
-loadRelativeToScript("../lib/transformers.js");
+System.load("lib/unicode_case_folding.jsm");
+System.load("lib/transformers.jsm");
+
+const {UnicodeCaseFolding} = System.get("lib/unicode_case_folding.jsm");
+const {Transformers} = System.get("lib/transformers.jsm");
 
 function test(upperCase, lowerCase, plane, {unicode = false} = {}) {
   const upperCaseText = String(upperCase);
@@ -78,4 +80,4 @@ const latin = {
   ]
 };
 
-UnicodeCaseFolding(test, range, {latin, basic, supplementary});
+UnicodeCaseFolding(test, {latin, basic, supplementary});

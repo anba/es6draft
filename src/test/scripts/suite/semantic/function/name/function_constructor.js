@@ -26,12 +26,12 @@ const GeneratorFunction = Object.getPrototypeOf(function*(){}).constructor;
 
 // Delayed initialisation for Function/GeneratorFunction constructor
 {
-  let f = Function[Symbol.create]();
+  let f = new class extends Function { constructor(){ /* no super */ } };
   Object.defineProperty(f, "name", {value: "own-name", writable: false, enumerable: false, configurable: true});
   Function.call(f, "");
   assertFunctionName(f, "own-name");
 
-  let g = GeneratorFunction[Symbol.create]();
+  let g = new class extends GeneratorFunction { constructor(){ /* no super */ } };
   Object.defineProperty(g, "name", {value: "own-name", writable: false, enumerable: false, configurable: true});
   GeneratorFunction.call(g, "");
   assertFunctionName(g, "own-name");

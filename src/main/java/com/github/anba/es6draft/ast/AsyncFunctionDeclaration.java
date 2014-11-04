@@ -13,23 +13,27 @@ import com.github.anba.es6draft.ast.scope.FunctionScope;
 /**
  * Extension: Async Function Declaration
  */
-public final class AsyncFunctionDeclaration extends Declaration implements AsyncFunctionDefinition {
+public final class AsyncFunctionDeclaration extends HoistableDeclaration implements
+        AsyncFunctionDefinition {
     private final FunctionScope scope;
     private final BindingIdentifier identifier;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
+    private final String functionName;
     private final String headerSource, bodySource;
     private StrictMode strictMode;
     private boolean syntheticNodes;
 
     public AsyncFunctionDeclaration(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
-            List<StatementListItem> statements, String headerSource, String bodySource) {
+            List<StatementListItem> statements, String functionName, String headerSource,
+            String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
         this.parameters = parameters;
         this.statements = statements;
+        this.functionName = functionName;
         this.headerSource = headerSource;
         this.bodySource = bodySource;
     }
@@ -56,7 +60,7 @@ public final class AsyncFunctionDeclaration extends Declaration implements Async
 
     @Override
     public String getFunctionName() {
-        return identifier.getName().getIdentifier();
+        return functionName;
     }
 
     @Override

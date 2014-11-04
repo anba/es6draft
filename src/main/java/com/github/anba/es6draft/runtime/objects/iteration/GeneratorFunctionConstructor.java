@@ -17,20 +17,25 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.
 
 import java.util.Objects;
 
-import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.compiler.CompiledScript;
+import com.github.anba.es6draft.compiler.CompiledObject;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.*;
+import com.github.anba.es6draft.runtime.internal.DebugInfo;
+import com.github.anba.es6draft.runtime.internal.Initializable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.internal.ScriptLoader;
+import com.github.anba.es6draft.runtime.internal.Source;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
@@ -47,7 +52,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>25.2.2 Properties of the GeneratorFunction Constructor
  * </ul>
  */
-public final class GeneratorFunctionConstructor extends BuiltinConstructor implements Initializable {
+public final class GeneratorFunctionConstructor extends BuiltinConstructor implements
+        Initializable, Creatable<OrdinaryGenerator> {
     /**
      * Constructs a new Generator Function constructor function.
      * 
@@ -97,7 +103,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
 
         /* steps 8-10 */
         Source source = generatorSource(callerContext);
-        Script script = new GeneratorScript(source);
+        CompiledGenerator exec = new CompiledGenerator(source);
         RuntimeInfo.Function function;
         try {
             ScriptLoader scriptLoader = calleeContext.getRealm().getScriptLoader();
@@ -128,12 +134,12 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
             throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
         /* steps 19-20 */
-        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, strict, function, scope, script);
+        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, strict, function, scope, exec);
         /* step 21 */
         OrdinaryObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
         /* step 22 */
         if (function.hasSuperReference()) {
-            MakeMethod(fn, (String) null, null);
+            MakeMethod(fn, null);
         }
         /* steps 23-24 */
         MakeConstructor(calleeContext, fn, true, prototype);
@@ -151,6 +157,24 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return Construct(callerContext, this, args);
+    }
+
+    private static final class GeneratorCreate implements CreateAction<OrdinaryGenerator> {
+        static final CreateAction<OrdinaryGenerator> INSTANCE = new GeneratorCreate();
+
+        @Override
+        public OrdinaryGenerator create(ExecutionContext cx, Constructor constructor,
+                Object... args) {
+            /* steps 1-3 */
+            ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, Intrinsics.Generator);
+            /* step 4 */
+            return FunctionAllocate(cx, proto, false, FunctionKind.Normal);
+        }
+    }
+
+    @Override
+    public CreateAction<OrdinaryGenerator> createAction() {
+        return GeneratorCreate.INSTANCE;
     }
 
     /**
@@ -179,24 +203,6 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
         public static final String name = "GeneratorFunction";
-
-        /**
-         * 25.2.2.3 GeneratorFunction[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialsed generator function object
-         */
-        @Function(name = "[Symbol.create]", arity = 0, symbol = BuiltinSymbol.create,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            /* steps 1-3 */
-            ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue, Intrinsics.Generator);
-            /* step 4 */
-            return FunctionAllocate(cx, proto, false, FunctionKind.Normal);
-        }
     }
 
     private Source generatorSource(ExecutionContext caller) {
@@ -210,16 +216,16 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         return new Source(baseSource, sourceName, 1);
     }
 
-    private static final class GeneratorScript extends CompiledScript {
-        protected GeneratorScript(Source source) {
-            super(new GeneratorScriptBody(source));
+    private static final class CompiledGenerator extends CompiledObject {
+        CompiledGenerator(Source source) {
+            super(new GeneratorSourceObject(source));
         }
     }
 
-    private static final class GeneratorScriptBody implements RuntimeInfo.ScriptBody {
+    private static final class GeneratorSourceObject implements RuntimeInfo.SourceObject {
         private final Source source;
 
-        GeneratorScriptBody(Source source) {
+        GeneratorSourceObject(Source source) {
             this.source = source;
         }
 
@@ -234,27 +240,8 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         }
 
         @Override
-        public boolean isStrict() {
-            throw new IllegalStateException();
-        }
-
-        @Override
-        public void globalDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<GlobalEnvironmentRecord> globalEnv,
-                LexicalEnvironment<?> lexicalEnv, boolean deletableBindings) {
-            throw new IllegalStateException();
-        }
-
-        @Override
-        public void evalDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<?> variableEnv, LexicalEnvironment<?> lexicalEnv,
-                boolean deletableBindings) {
-            throw new IllegalStateException();
-        }
-
-        @Override
-        public Object evaluate(ExecutionContext cx) {
-            throw new IllegalStateException();
+        public Source toSource() {
+            return source;
         }
 
         @Override

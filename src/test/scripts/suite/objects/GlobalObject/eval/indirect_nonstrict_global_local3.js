@@ -31,7 +31,7 @@ assertNotUndefined(global["v2"]);
 }
 try { throw 0 } catch (e) {
 (1,eval)("class v3{}");
-assertSame("function", typeof v3);
+assertSame("undefined", typeof v3);
 assertFalse("v3" in global);
 assertUndefined(global["v3"]);
 }
@@ -55,13 +55,13 @@ assertUndefined(global["v6"]);
 }
 try { throw 0 } catch (e) {
 (1,eval)("let v7 = 0");
-assertSame("number", typeof v7);
+assertSame("undefined", typeof v7);
 assertFalse("v7" in global);
 assertUndefined(global["v7"]);
 }
 try { throw 0 } catch (e) {
 (1,eval)("const v8 = 0");
-assertSame("number", typeof v8);
+assertSame("undefined", typeof v8);
 assertFalse("v8" in global);
 assertUndefined(global["v8"]);
 }

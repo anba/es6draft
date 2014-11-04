@@ -26,6 +26,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -45,7 +47,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>19.1.2 Properties of the Object Constructor
  * </ul>
  */
-public final class ObjectConstructor extends BuiltinConstructor implements Initializable {
+public final class ObjectConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<ScriptObject> {
     /**
      * Constructs a new Object constructor function.
      * 
@@ -88,6 +91,11 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return call(callerContext, UNDEFINED, args);
+    }
+
+    @Override
+    public CreateAction<ScriptObject> createAction() {
+        return null;
     }
 
     /**

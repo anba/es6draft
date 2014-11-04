@@ -6,7 +6,9 @@
  */
 package com.github.anba.es6draft.traceur;
 
-import static com.github.anba.es6draft.repl.global.V8ShellGlobalObject.newGlobalObjectAllocator;
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ModuleEvaluationJob;
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.NormalizeModuleName;
+import static com.github.anba.es6draft.traceur.TraceurTestGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
 import static org.junit.Assert.assertFalse;
@@ -36,10 +38,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.github.anba.es6draft.repl.WindowTimers;
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
@@ -73,7 +75,7 @@ public class TraceurTest {
     }
 
     @ClassRule
-    public static TestGlobals<V8ShellGlobalObject, TraceurTestInfo> globals = new TestGlobals<V8ShellGlobalObject, TraceurTestInfo>(
+    public static TestGlobals<TraceurTestGlobalObject, TraceurTestInfo> globals = new TestGlobals<TraceurTestGlobalObject, TraceurTestInfo>(
             configuration) {
         @Override
         protected Set<CompatibilityOption> getOptions() {
@@ -85,10 +87,14 @@ public class TraceurTest {
         }
 
         @Override
-        protected ObjectAllocator<V8ShellGlobalObject> newAllocator(ShellConsole console,
+        protected ObjectAllocator<TraceurTestGlobalObject> newAllocator(ShellConsole console,
                 TraceurTestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
-                    scriptCache);
+            return newGlobalObjectAllocator(console, test, scriptCache);
+        }
+
+        @Override
+        protected TraceurFileModuleLoader createModuleLoader(Path baseDirectory) {
+            return new TraceurFileModuleLoader(baseDirectory);
         }
     };
 
@@ -114,11 +120,23 @@ public class TraceurTest {
         TraceurTestInfo(Path basedir, Path script) {
             super(basedir, script);
         }
+
+        @Override
+        public boolean isModule() {
+            return getScript().getFileName().toString().endsWith(".module.js");
+        }
+
+        @Override
+        public String toModuleName() {
+            String moduleName = super.toModuleName();
+            assert moduleName.endsWith(".js");
+            return moduleName.substring(0, moduleName.length() - 3);
+        }
     }
 
-    private V8ShellGlobalObject global;
+    private TraceurTestGlobalObject global;
     private AsyncHelper async;
-    private WindowTimers timers;
+    private Timers timers;
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
@@ -128,8 +146,8 @@ public class TraceurTest {
         global = globals.newGlobal(new TraceurConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
         if (test.async) {
-            async = install(new AsyncHelper(), AsyncHelper.class);
-            timers = install(new WindowTimers(), WindowTimers.class);
+            async = global.install(new AsyncHelper(), AsyncHelper.class);
+            timers = global.install(new Timers(), Timers.class);
         }
         if (test.expect) {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
@@ -150,7 +168,14 @@ public class TraceurTest {
     @Test
     public void runTest() throws Throwable {
         // evaluate actual test-script
-        global.eval(test.getScript(), test.toFile());
+        if (test.isModule()) {
+            Realm realm = global.getRealm();
+            ExecutionContext cx = realm.defaultContext();
+            String normalizedModuleName = NormalizeModuleName(cx, realm, "", test.toModuleName());
+            ModuleEvaluationJob(cx, realm, normalizedModuleName);
+        } else {
+            global.eval(test.getScript(), test.toFile());
+        }
 
         // wait for pending tasks to finish
         if (test.async) {
@@ -160,12 +185,6 @@ public class TraceurTest {
         } else {
             global.getRealm().getWorld().runEventLoop();
         }
-    }
-
-    private <T> T install(T object, Class<T> clazz) {
-        Realm realm = global.getRealm();
-        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
-        return object;
     }
 
     public static final class AsyncHelper {

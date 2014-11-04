@@ -16,11 +16,12 @@ import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -34,7 +35,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>23.3.2 Properties of the WeakMap Constructor
  * </ul>
  */
-public final class WeakMapConstructor extends BuiltinConstructor implements Initializable {
+public final class WeakMapConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<WeakMapObject> {
     /**
      * Constructs a new WeakMap constructor function.
      * 
@@ -126,6 +128,11 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
         return Construct(callerContext, this, args);
     }
 
+    @Override
+    public CreateAction<WeakMapObject> createAction() {
+        return WeakMapCreate.INSTANCE;
+    }
+
     /**
      * 23.3.2 Properties of the WeakMap Constructor
      */
@@ -149,22 +156,6 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.WeakMapPrototype;
-
-        /**
-         * 23.3.2.2 WeakMap[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized weak map object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.WeakMapPrototype,
-                    WeakMapObjectAllocator.INSTANCE);
-        }
     }
 
     private static final class WeakMapObjectAllocator implements ObjectAllocator<WeakMapObject> {
@@ -173,6 +164,16 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
         @Override
         public WeakMapObject newInstance(Realm realm) {
             return new WeakMapObject(realm);
+        }
+    }
+
+    private static class WeakMapCreate implements CreateAction<WeakMapObject> {
+        static final CreateAction<WeakMapObject> INSTANCE = new WeakMapCreate();
+
+        @Override
+        public WeakMapObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.WeakMapPrototype,
+                    WeakMapObjectAllocator.INSTANCE);
         }
     }
 }

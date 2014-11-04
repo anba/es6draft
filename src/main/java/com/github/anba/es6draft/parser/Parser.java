@@ -43,6 +43,7 @@ public final class Parser {
     private static final boolean DEBUG = false;
 
     private static final int MAX_ARGUMENTS = 0x4000;
+    private static final String ANONYMOUS_EXPORT_DECLARATION = "*default*";
     private static final List<Binding> NO_INHERITED_BINDING = Collections.emptyList();
     private static final Set<String> EMPTY_LABEL_SET = Collections.emptySet();
 
@@ -62,8 +63,8 @@ public final class Parser {
     }
 
     private enum ContextKind {
-        Script, Module, AsyncFunction, Function, Generator, AsyncArrowFunction, ArrowFunction,
-        GeneratorComprehension, Method;
+        Script, Module, Function, Method, Generator, GeneratorMethod, AsyncFunction, AsyncMethod,
+        ArrowFunction, GeneratorComprehension, AsyncArrowFunction;
 
         final boolean isScript() {
             return this == Script;
@@ -78,13 +79,34 @@ public final class Parser {
             case ArrowFunction:
             case AsyncArrowFunction:
             case AsyncFunction:
+            case AsyncMethod:
             case Function:
             case Generator:
+            case GeneratorMethod:
             case GeneratorComprehension:
             case Method:
                 return true;
-            case Module:
-            case Script:
+            default:
+                return false;
+            }
+        }
+
+        final boolean isGenerator() {
+            switch (this) {
+            case Generator:
+            case GeneratorMethod:
+                return true;
+            default:
+                return false;
+            }
+        }
+
+        final boolean isAsync() {
+            switch (this) {
+            case AsyncArrowFunction:
+            case AsyncFunction:
+            case AsyncMethod:
+                return true;
             default:
                 return false;
             }
@@ -96,12 +118,17 @@ public final class Parser {
             case AsyncArrowFunction:
             case GeneratorComprehension:
                 return true;
-            case AsyncFunction:
-            case Function:
-            case Generator:
+            default:
+                return false;
+            }
+        }
+
+        public boolean isMethod() {
+            switch (this) {
             case Method:
-            case Module:
-            case Script:
+            case GeneratorMethod:
+            case AsyncMethod:
+                return true;
             default:
                 return false;
             }
@@ -119,6 +146,7 @@ public final class Parser {
         boolean inArrowParameters = false;
         boolean legacyGenerator = false;
         boolean explicitStrict = false;
+        boolean isConstructor = false;
 
         StrictMode strictMode = StrictMode.Unknown;
         ParserException strictError = null;
@@ -184,7 +212,7 @@ public final class Parser {
             }
         }
 
-        void setReferencesSuper() {
+        void setNeedsSuperBinding() {
             if (funContext != null) {
                 funContext.superReference = true;
             }
@@ -357,8 +385,9 @@ public final class Parser {
     }
 
     private static final class ModuleContext extends TopContext implements ModuleScope {
-        final LinkedHashSet<String> moduleRequests = new LinkedHashSet<>();
-        final HashSet<String> exportBindings = new HashSet<>();
+        HashSet<String> exportBindings = new HashSet<>();
+        HashSet<Name> importBindings = new HashSet<>();
+        Expression defaultExportExpression;
         Module node = null;
 
         ModuleContext(ScopeContext enclosing) {
@@ -371,21 +400,16 @@ public final class Parser {
         }
 
         @Override
-        public Set<String> getModuleRequests() {
-            return moduleRequests;
+        public Expression getDefaultExportExpression() {
+            return defaultExportExpression;
         }
 
-        @Override
-        public Set<String> getExportBindings() {
-            return exportBindings;
-        }
-
-        void addModuleRequest(String moduleSpecifier) {
-            moduleRequests.add(moduleSpecifier);
-        }
-
-        boolean addExportedBindings(String binding) {
+        boolean addExportBinding(String binding) {
             return exportBindings.add(binding);
+        }
+
+        boolean addImportBinding(Name name) {
+            return importBindings.add(name);
         }
     }
 
@@ -670,6 +694,11 @@ public final class Parser {
         EnclosedByWithStatement,
 
         /**
+         * Source is JSR-223 scripting.
+         */
+        Scripting,
+
+        /**
          * Allow native call syntax.
          */
         NativeCall,
@@ -691,9 +720,10 @@ public final class Parser {
         // eval-script option must be set if one of the following options is used
         assert !(parserOptions.contains(Option.FunctionCode)
                 || parserOptions.contains(Option.LocalScope)
-                || parserOptions.contains(Option.DirectEval) || parserOptions
-                    .contains(Option.EnclosedByWithStatement))
-                || parserOptions.contains(Option.EvalScript) : "Illegal option: " + parserOptions;
+                || parserOptions.contains(Option.DirectEval)
+                || parserOptions.contains(Option.EnclosedByWithStatement) || parserOptions
+                    .contains(Option.Scripting)) || parserOptions.contains(Option.EvalScript) : "Illegal option: "
+                + parserOptions;
     }
 
     String getSourceName() {
@@ -777,27 +807,15 @@ public final class Parser {
         return context.scopeContext = parent;
     }
 
-    private static Name BoundName(BindingIdentifier binding) {
-        return binding.getName();
-    }
-
-    private void addAsyncFunctionDeclaration(AsyncFunctionDeclaration decl) {
-        addDeclaration(decl, BoundName(decl.getIdentifier()));
-    }
-
     private void addFunctionDeclaration(FunctionDeclaration decl) {
-        addDeclaration(decl, BoundName(decl.getIdentifier()));
+        addDeclaration(decl);
         if (isBlockScopedFunction()) {
             context.parent.funContext.addBlockFunction(decl);
         }
     }
 
-    private void addGeneratorDeclaration(GeneratorDeclaration decl) {
-        addDeclaration(decl, BoundName(decl.getIdentifier()));
-    }
-
-    private <DECLARATION extends Declaration & FunctionNode> void addDeclaration(DECLARATION decl,
-            Name name) {
+    private void addDeclaration(HoistableDeclaration decl) {
+        Name name = BoundName(decl);
         ParseContext parentContext = context.parent;
         ScopeContext parentScope = parentContext.scopeContext;
         TopContext topScope = parentContext.topContext;
@@ -974,23 +992,25 @@ public final class Parser {
         return names;
     }
 
-    private void addExportedBindings(long sourcePosition, List<Name> bindings) {
+    private void addExportBindings(long sourcePosition, List<Name> bindings) {
         for (Name binding : bindings) {
-            addExportedBindings(sourcePosition, binding.getIdentifier());
+            addExportBinding(sourcePosition, binding.getIdentifier());
         }
     }
 
-    private void addExportedBindings(long sourcePosition, String binding) {
+    private void addExportBinding(long sourcePosition, String binding) {
         assert context.scopeContext == context.modContext : "not in module scope";
-        if (!context.modContext.addExportedBindings(binding)) {
+        if (!context.modContext.addExportBinding(binding)) {
             reportSyntaxError(sourcePosition, Messages.Key.DuplicateExport, binding);
         }
     }
 
-    private void addModuleRequest(String moduleSpecifier) {
+    private void addImportBinding(BindingIdentifier bindingIdentifier) {
         assert context.scopeContext == context.modContext : "not in module scope";
-        // TODO: remove from parser if not subject to early error restrictions
-        context.modContext.addModuleRequest(moduleSpecifier);
+        Name name = BoundName(bindingIdentifier);
+        if (!context.modContext.addImportBinding(name)) {
+            reportSyntaxError(bindingIdentifier, Messages.Key.DuplicateImport, name);
+        }
     }
 
     private void addLabel(long sourcePosition, LinkedHashSet<String> labelSet, String label) {
@@ -1202,8 +1222,11 @@ public final class Parser {
      */
     private ParserException reportTokenMismatch(String expected, Token actual) {
         if (actual == Token.EOF) {
-            throw reportEofError(ts.sourcePosition(), Messages.Key.UnexpectedToken,
-                    actual.toString(), expected);
+            throw reportEofError(ts.sourcePosition(), Messages.Key.UnexpectedEndOfFile, expected);
+        }
+        if (actual == Token.ERROR) {
+            throw reportError(ExceptionType.SyntaxError, ts.sourcePosition(),
+                    Messages.Key.UnexpectedCharacter, String.valueOf(ts.lastChar()), expected);
         }
         throw reportError(ExceptionType.SyntaxError, ts.sourcePosition(),
                 Messages.Key.UnexpectedToken, actual.toString(), expected);
@@ -1316,8 +1339,8 @@ public final class Parser {
      * @param args
      *            the error message arguments
      */
-    private void reportStrictModeError(ExceptionType type, long sourcePosition,
-            Messages.Key messageKey, String... args) {
+    void reportStrictModeError(ExceptionType type, long sourcePosition, Messages.Key messageKey,
+            String... args) {
         if (context.strictMode == StrictMode.Unknown) {
             if (context.strictError == null) {
                 int line = toLine(sourcePosition), column = toColumn(sourcePosition);
@@ -1366,7 +1389,7 @@ public final class Parser {
      * @param args
      *            the error message arguments
      */
-    void reportStrictModeSyntaxError(Messages.Key messageKey, String... args) {
+    private void reportStrictModeSyntaxError(Messages.Key messageKey, String... args) {
         reportStrictModeError(ExceptionType.SyntaxError, ts.sourcePosition(), messageKey, args);
     }
 
@@ -1390,8 +1413,28 @@ public final class Parser {
      * 
      * @return the next token
      */
+    private Token peekOrError() {
+        return token() != Token.ERROR ? ts.peekToken() : Token.ERROR;
+    }
+
+    /**
+     * Peeks the next token in the token-stream.
+     * 
+     * @return the next token
+     */
     private Token peek() {
         return ts.peekToken();
+    }
+
+    /**
+     * Checks whether the next token in the token-stream is equal to the input token.
+     *
+     * @param token
+     *            the token to test
+     * @return {@code true} if the next token matches
+     */
+    private boolean SAFE_LOOKAHEAD(Token token) {
+        return token() != Token.ERROR ? ts.peekToken() == token : false;
     }
 
     /**
@@ -1514,14 +1557,15 @@ public final class Parser {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);
                 }
 
+                String functionName = "anonymous";
                 BindingIdentifier identifier = new BindingIdentifier(beginSource(), beginSource(),
-                        "anonymous");
+                        functionName);
                 String header = String.format("(%s) ", formals);
                 String body = String.format("\n%s\n", bodyText);
 
                 FunctionContext scope = context.funContext;
                 function = new FunctionDeclaration(beginSource(), ts.endPosition(), scope,
-                        identifier, parameters, statements, header, body);
+                        identifier, parameters, statements, functionName, header, body);
                 scope.node = function;
 
                 function_EarlyErrors(function);
@@ -1582,14 +1626,15 @@ public final class Parser {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);
                 }
 
+                String functionName = "anonymous";
                 BindingIdentifier identifier = new BindingIdentifier(beginSource(), beginSource(),
-                        "anonymous");
+                        functionName);
                 String header = String.format("(%s) ", formals);
                 String body = String.format("\n%s\n", bodyText);
 
                 FunctionContext scope = context.funContext;
                 generator = new GeneratorDeclaration(beginSource(), ts.endPosition(), scope,
-                        identifier, parameters, statements, header, body);
+                        identifier, parameters, statements, functionName, header, body);
                 scope.node = generator;
 
                 generator_EarlyErrors(generator);
@@ -1692,10 +1737,21 @@ public final class Parser {
                     options, parserOptions);
             scope.node = module;
 
+            module_EarlyErrors(module);
+
             return module;
         } finally {
             restoreContext();
         }
+    }
+
+    private void module_EarlyErrors(Module module) {
+        assert context.scopeContext == context.modContext;
+
+        ModuleContext scope = context.modContext;
+
+        scope.exportBindings = null;
+        scope.importBindings = null;
     }
 
     /**
@@ -1744,7 +1800,6 @@ public final class Parser {
      * 
      * <pre>
      * ImportDeclaration :
-     *     ModuleImport
      *     import ImportClause FromClause ;
      *     import ModuleSpecifier ;
      * </pre>
@@ -1753,63 +1808,29 @@ public final class Parser {
      */
     private ImportDeclaration importDeclaration() {
         long begin = ts.beginPosition();
+        consume(Token.IMPORT);
         ImportDeclaration decl;
-        if (token() != Token.IMPORT) {
-            ModuleImport moduleImport = moduleImport();
+        if (token() != Token.STRING) {
+            ImportClause importClause = importClause();
+            String moduleSpecifier = fromClause();
+            semicolon();
 
-            decl = new ImportDeclaration(begin, ts.endPosition(), moduleImport);
-            addLexScopedDeclaration(decl);
-        } else {
-            consume(Token.IMPORT);
-            if (token() != Token.STRING) {
-                ImportClause importClause = importClause();
-                String moduleSpecifier = fromClause();
-                semicolon();
+            // Only lexically scoped if BoundNames(ImportDeclaration) is not empty
+            boolean isLexicallyScoped = importClause.getDefaultEntry() != null
+                    || importClause.getNameSpace() != null
+                    || !importClause.getNamedImports().isEmpty();
 
-                // Only lexically scoped if BoundNames(ImportDeclaration) is not empty
-                boolean isLexicallyScoped = importClause.getDefaultEntry() != null
-                        || !importClause.getNamedImports().isEmpty();
-
-                decl = new ImportDeclaration(begin, ts.endPosition(), importClause, moduleSpecifier);
-                if (isLexicallyScoped) {
-                    addLexScopedDeclaration(decl);
-                }
-                addModuleRequest(moduleSpecifier);
-            } else {
-                String moduleSpecifier = moduleSpecifier();
-                semicolon();
-
-                decl = new ImportDeclaration(begin, ts.endPosition(), moduleSpecifier);
-                addModuleRequest(moduleSpecifier);
+            decl = new ImportDeclaration(begin, ts.endPosition(), importClause, moduleSpecifier);
+            if (isLexicallyScoped) {
+                addLexScopedDeclaration(decl);
             }
+        } else {
+            String moduleSpecifier = moduleSpecifier();
+            semicolon();
+
+            decl = new ImportDeclaration(begin, ts.endPosition(), moduleSpecifier);
         }
         return decl;
-    }
-
-    /**
-     * <strong>[15.2.1] Imports</strong>
-     * 
-     * <pre>
-     * ModuleImport :
-     *     module [no <i>LineTerminator</i> here] ImportedBinding FromClause ;
-     * </pre>
-     * 
-     * @return the parsed module import
-     */
-    private ModuleImport moduleImport() {
-        long begin = ts.beginPosition();
-        consume("module");
-        if (!noLineTerminator()) {
-            reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
-        }
-        BindingIdentifier importedBinding = importedBinding();
-        String moduleSpecifier = fromClause();
-        semicolon();
-
-        addLexDeclaredName(importedBinding);
-        addModuleRequest(moduleSpecifier);
-
-        return new ModuleImport(begin, ts.endPosition(), importedBinding, moduleSpecifier);
     }
 
     /**
@@ -1832,9 +1853,13 @@ public final class Parser {
      * 
      * <pre>
      * ImportClause :
-     *     ImportedBinding
-     *     ImportedBinding , NamedImports
+     *     ImportedDefaultBinding
+     *     NameSpaceImport
      *     NamedImports
+     *     ImportedDefaultBinding , NameSpaceImport
+     *     ImportedDefaultBinding , NamedImports
+     * ImportedDefaultBinding :
+     *     ImportedBinding
      * </pre>
      * 
      * @return the parsed import clause
@@ -1842,19 +1867,48 @@ public final class Parser {
     private ImportClause importClause() {
         long begin = ts.beginPosition();
         BindingIdentifier defaultEntry = null;
+        BindingIdentifier nameSpace = null;
         List<ImportSpecifier> namedImports = emptyList();
-        if (token() != Token.LC) {
+        if (token() == Token.LC) {
+            namedImports = namedImports();
+        } else if (token() == Token.MUL) {
+            nameSpace = nameSpaceImport();
+            addImportBinding(nameSpace);
+            addLexDeclaredName(nameSpace);
+        } else {
             defaultEntry = importedBinding();
+            addImportBinding(defaultEntry);
             addLexDeclaredName(defaultEntry);
 
             if (token() == Token.COMMA) {
                 consume(Token.COMMA);
-                namedImports = namedImports();
+                if (token() == Token.LC) {
+                    namedImports = namedImports();
+                } else {
+                    nameSpace = nameSpaceImport();
+                    addImportBinding(nameSpace);
+                    addLexDeclaredName(nameSpace);
+                }
             }
-        } else {
-            namedImports = namedImports();
         }
-        return new ImportClause(begin, ts.endPosition(), defaultEntry, namedImports);
+        return new ImportClause(begin, ts.endPosition(), defaultEntry, namedImports, nameSpace);
+    }
+
+    /**
+     * <strong>[15.2.1] Imports</strong>
+     * 
+     * <pre>
+     * NameSpaceImport :
+     *     * as ImportedBinding
+     * </pre>
+     * 
+     * @return the parsed namespace import binding
+     */
+    public BindingIdentifier nameSpaceImport() {
+        // TODO: Add new ast node?
+        consume(Token.MUL);
+        consume("as");
+        return importedBinding();
     }
 
     /**
@@ -1902,7 +1956,7 @@ public final class Parser {
         long begin = ts.beginPosition();
         String importName;
         BindingIdentifier localName;
-        if (importSpecifierFollowSet(peek())) {
+        if (importSpecifierFollowSet(peekOrError())) {
             BindingIdentifier binding = importedBinding();
             importName = binding.getName().getIdentifier();
             localName = binding;
@@ -1911,6 +1965,7 @@ public final class Parser {
             consume("as");
             localName = importedBinding();
         }
+        addImportBinding(localName);
         addLexDeclaredName(localName);
 
         return new ImportSpecifier(begin, ts.endPosition(), importName, localName);
@@ -1951,6 +2006,8 @@ public final class Parser {
      * <strong>[15.2.1] Imports</strong>
      * 
      * <pre>
+     * ImportedDefaultBinding :
+     *     ImportedBinding
      * ImportedBinding :
      *     BindingIdentifier
      * </pre>
@@ -1967,11 +2024,12 @@ public final class Parser {
      * <pre>
      * ExportDeclaration :
      *     export * FromClause ;
-     *     export ExportsClause<span><sub>[NoReference]</sub></span> FromClause ;
+     *     export ExportsClause FromClause ;
      *     export ExportsClause ;
      *     export VariableStatement
-     *     export Declaration<span><sub>[Default]</sub></span>
-     *     export default AssignmentExpression<span><sub>[In]</sub></span> ;
+     *     export Declaration
+     *     export default HoistableDeclaration<span><sub>[Default]</sub></span>
+     *     export default [LA &#x2260; <b>function</b>] AssignmentExpression<span><sub>[In]</sub></span> ;
      * </pre>
      * 
      * @return the parsed export declaration
@@ -1986,45 +2044,40 @@ public final class Parser {
             String moduleSpecifier = fromClause();
             semicolon();
 
-            addModuleRequest(moduleSpecifier);
-
             return new ExportDeclaration(begin, ts.endPosition(), moduleSpecifier);
         }
 
         case LC: {
-            // export ExportsClause[NoReference] FromClause ;
+            // export ExportsClause FromClause ;
             // export ExportsClause ;
-            long position = ts.position(), lineinfo = ts.lineinfo();
-            ExportsClause exportsClause = exportsClause(true);
+            ExportsClause exportsClause = exportsClause();
+            String moduleSpecifier;
             if (isName("from")) {
-                String moduleSpecifier = fromClause();
-                semicolon();
+                moduleSpecifier = fromClause();
+            } else {
+                moduleSpecifier = null;
 
                 for (ExportSpecifier export : exportsClause.getExports()) {
-                    addExportedBindings(export.getBeginPosition(), export.getExportName());
+                    String sourceName = export.getSourceName();
+                    if (isModuleReservedName(sourceName)) {
+                        throw reportSyntaxError(Messages.Key.InvalidIdentifier, sourceName);
+                    }
                 }
-                addModuleRequest(moduleSpecifier);
-
-                return new ExportDeclaration(begin, ts.endPosition(), exportsClause,
-                        moduleSpecifier);
             }
-            // rollback and try resolving exports with local references
-            ts.reset(position, lineinfo);
-            exportsClause = exportsClause(false);
             semicolon();
 
             for (ExportSpecifier export : exportsClause.getExports()) {
-                addExportedBindings(export.getBeginPosition(), export.getExportName());
+                addExportBinding(export.getBeginPosition(), export.getExportName());
             }
 
-            return new ExportDeclaration(begin, ts.endPosition(), exportsClause);
+            return new ExportDeclaration(begin, ts.endPosition(), exportsClause, moduleSpecifier);
         }
 
         case VAR: {
             // export VariableStatement
             VariableStatement variableStatement = variableStatement();
 
-            addExportedBindings(begin, BoundNames(variableStatement));
+            addExportBindings(begin, BoundNames(variableStatement));
 
             return new ExportDeclaration(begin, ts.endPosition(), variableStatement);
         }
@@ -2034,56 +2087,66 @@ public final class Parser {
         case CONST:
         case LET:
         case ASYNC: {
-            // export Declaration[Default]
-            Declaration declaration = declaration(true);
+            // export Declaration
+            Declaration declaration = declaration();
 
-            addExportedBindings(begin, BoundNames(declaration));
+            addExportBindings(begin, BoundNames(declaration));
 
             return new ExportDeclaration(begin, ts.endPosition(), declaration);
         }
 
         case DEFAULT:
         default: {
-            // export default AssignmentExpression[In] ;
+            // export default HoistableDeclaration[Default]
+            // export default [LA != function] AssignmentExpression[In] ;
             consume(Token.DEFAULT);
-            Expression expression = assignmentExpression(true);
-            semicolon();
+            if (token() == Token.FUNCTION) {
+                HoistableDeclaration declaration = hoistableDeclaration(true);
 
-            // FIXME: default exports add a lexical declared name with value "default" (spec bug?)
-            // BindingIdentifier id = new BindingIdentifier(beginPosition, ts.endPosition(),
-            // "default");
-            // addLexDeclaredName(id);
+                addExportBinding(begin, "default");
 
-            addExportedBindings(begin, "default");
+                return new ExportDeclaration(begin, ts.endPosition(), declaration);
+            } else {
+                Expression expression = assignmentExpression(true);
+                semicolon();
 
-            return new ExportDeclaration(begin, ts.endPosition(), expression);
+                addLexDeclaredName(new BindingIdentifier(begin, ts.endPosition(), "*default*"));
+                addExportBinding(begin, "default");
+                context.modContext.defaultExportExpression = expression;
+
+                return new ExportDeclaration(begin, ts.endPosition(), expression);
+            }
         }
         }
+    }
+
+    private static boolean isModuleReservedName(String name) {
+        Token token = TokenStream.readReservedWord(name);
+        return Token.isReservedWord(token) || Token.isStrictReservedWord(token)
+                || token == Token.LET || token == Token.YIELD || token == Token.AWAIT;
     }
 
     /**
      * <strong>[15.2.2] Exports</strong>
      * 
      * <pre>
-     * ExportsClause<span><sub>[NoReference]</sub></span> :
+     * ExportsClause :
      *     { } 
-     *     { ExportsList<span><sub>[?NoReference]</sub></span> }
-     *     { ExportsList<span><sub>[?NoReference]</sub></span> , }
-     * ExportsList<span><sub>[NoReference]</sub></span> :
-     *     ExportSpecifier<span><sub>[?NoReference]</sub></span>
-     *     ExportsList<span><sub>[?NoReference]</sub></span> , ExportSpecifier<span><sub>[?NoReference]</sub></span>
+     *     { ExportsList }
+     *     { ExportsList , }
+     * ExportsList :
+     *     ExportSpecifier
+     *     ExportsList , ExportSpecifier
      * </pre>
      * 
-     * @param noReference
-     *            the flag to allow/disallow references
      * @return the parsed exports clause
      */
-    private ExportsClause exportsClause(boolean noReference) {
+    private ExportsClause exportsClause() {
         long begin = ts.beginPosition();
         List<ExportSpecifier> exports = newList();
         consume(Token.LC);
         while (token() != Token.RC) {
-            exports.add(exportSpecifier(noReference));
+            exports.add(exportSpecifier());
             if (token() == Token.COMMA) {
                 consume(Token.COMMA);
             } else {
@@ -2098,43 +2161,24 @@ public final class Parser {
      * <strong>[15.2.2] Exports</strong>
      * 
      * <pre>
-     * ExportSpecifier<span><sub>[NoReference]</sub></span> :
-     *     <span><sub>[~NoReference]</sub></span>IdentifierReference
-     *     <span><sub>[~NoReference]</sub></span>IdentifierReference as IdentifierName
-     *     <span><sub>[+NoReference]</sub></span>IdentifierName
-     *     <span><sub>[+NoReference]</sub></span>IdentifierName as IdentifierName
+     * ExportSpecifier :
+     *     IdentifierName
+     *     IdentifierName as IdentifierName
      * </pre>
-     * 
-     * @param noReference
-     *            the flag to allow/disallow references
+     *
      * @return the parsed export specifier
      */
-    private ExportSpecifier exportSpecifier(boolean noReference) {
+    private ExportSpecifier exportSpecifier() {
         long begin = ts.beginPosition();
-        Name localName;
-        String importName, exportName;
-        if (noReference) {
-            String sourceName = identifierName();
-            if (isName("as")) {
-                consume("as");
-                exportName = identifierName();
-            } else {
-                exportName = sourceName;
-            }
-            importName = sourceName;
-            localName = null;
+        String sourceName = identifierName();
+        String exportName;
+        if (isName("as")) {
+            consume("as");
+            exportName = identifierName();
         } else {
-            importName = null;
-            localName = identifierReference().toName();
-            if (isName("as")) {
-                consume("as");
-                exportName = identifierName();
-            } else {
-                exportName = localName.getIdentifier();
-            }
+            exportName = sourceName;
         }
-
-        return new ExportSpecifier(begin, ts.endPosition(), importName, localName, exportName);
+        return new ExportSpecifier(begin, ts.endPosition(), sourceName, exportName);
     }
 
     /**
@@ -2257,19 +2301,28 @@ public final class Parser {
      * 
      * <pre>
      * FunctionDeclaration<span><sub>[Yield, Default]</sub></span> :
-     *     function BindingIdentifier<span><sub>[?Yield, ?Default]</sub></span> ( FormalParameters ) { FunctionBody }
+     *     function BindingIdentifier<span><sub>[?Yield]</sub></span> ( FormalParameters ) { FunctionBody }
+     *     <span><sub>[+Default]</sub></span> function ( FormalParameters ) { FunctionBody }
      * </pre>
      * 
-     * @param allowDefault
-     *            the flag to select if 'default' is allowed as the function name
+     * @param isDefault
+     *            the flag to select whether or not the declaration is part of a default export
      * @return the parsed function declaration
      */
-    private FunctionDeclaration functionDeclaration(boolean allowDefault) {
+    private FunctionDeclaration functionDeclaration(boolean isDefault) {
         newContext(ContextKind.Function);
         try {
             long begin = ts.beginPosition();
             consume(Token.FUNCTION);
-            BindingIdentifier identifier = bindingIdentifierFunctionName(true, allowDefault);
+            BindingIdentifier identifier;
+            String functionName;
+            if (!isDefault || token() != Token.LP) {
+                identifier = bindingIdentifierFunctionName(true);
+                functionName = identifier.getName().getIdentifier();
+            } else {
+                identifier = new BindingIdentifier(0, 0, ANONYMOUS_EXPORT_DECLARATION);
+                functionName = "default";
+            }
             consume(Token.LP);
             int startFunction = ts.position() - 1;
             FormalParameterList parameters = formalParameters(Token.RP);
@@ -2297,7 +2350,7 @@ public final class Parser {
 
             FunctionContext scope = context.funContext;
             FunctionDeclaration function = new FunctionDeclaration(begin, ts.endPosition(), scope,
-                    identifier, parameters, statements, header, body);
+                    identifier, parameters, statements, functionName, header, body);
             scope.node = function;
 
             function_EarlyErrors(function);
@@ -2327,7 +2380,7 @@ public final class Parser {
             consume(Token.FUNCTION);
             BindingIdentifier identifier = null;
             if (token() != Token.LP) {
-                identifier = bindingIdentifierFunctionName(false, false);
+                identifier = bindingIdentifierFunctionName(false);
             }
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -2595,9 +2648,9 @@ public final class Parser {
      */
     private List<StatementListItem> functionBody(Token end) {
         // enable 'yield' if in generator
-        context.yieldAllowed = (context.kind == ContextKind.Generator);
+        context.yieldAllowed = context.kind.isGenerator();
         // enable 'await' if in async function
-        context.awaitAllowed = (context.kind == ContextKind.AsyncFunction || context.kind == ContextKind.AsyncArrowFunction);
+        context.awaitAllowed = context.kind.isAsync();
         List<StatementListItem> prologue = directivePrologue();
         List<StatementListItem> body = statementList(end);
         assert context.assertLiteralsUnchecked(0);
@@ -2800,11 +2853,13 @@ public final class Parser {
      *     set PropertyName<span><sub>[?Yield]</sub></span> ( PropertySetParameterList ) { FunctionBody }
      * </pre>
      * 
+     * @param isClass
+     *            {@code true} for class methods
      * @param isStatic
      *            {@code true} for <tt>static</tt> class methods
      * @return the parsed method definition
      */
-    private MethodDefinition methodDefinition(boolean isStatic) {
+    private MethodDefinition methodDefinition(boolean isClass, boolean isStatic) {
         switch (methodType()) {
         case AsyncFunction:
             return asyncMethod(isStatic);
@@ -2816,7 +2871,7 @@ public final class Parser {
             return setterMethod(isStatic);
         case Function:
         default:
-            return normalMethod(isStatic);
+            return normalMethod(isClass, isStatic);
         }
     }
 
@@ -2828,19 +2883,25 @@ public final class Parser {
      *     PropertyName<span><sub>[?Yield]</sub></span> ( StrictFormalParameters ) { FunctionBody }
      * </pre>
      * 
+     * @param isClass
+     *            {@code true} for class methods
      * @param isStatic
      *            {@code true} for <tt>static</tt> class methods
      * @return the parsed method definition
      */
-    private MethodDefinition normalMethod(boolean isStatic) {
+    private MethodDefinition normalMethod(boolean isClass, boolean isStatic) {
         long begin = ts.beginPosition();
         PropertyName propertyName = propertyName();
-        return normalMethod(isStatic, begin, propertyName);
+        return normalMethod(isClass, isStatic, begin, propertyName);
     }
 
-    private MethodDefinition normalMethod(boolean isStatic, long begin, PropertyName propertyName) {
+    private MethodDefinition normalMethod(boolean isClass, boolean isStatic, long begin,
+            PropertyName propertyName) {
         newContext(ContextKind.Method);
         try {
+            if (isClass && !isStatic && "constructor".equals(propertyName.getName())) {
+                context.isConstructor = true;
+            }
             consume(Token.LP);
             int startFunction = ts.position() - 1;
             FormalParameterList parameters = strictFormalParameters(Token.RP);
@@ -3099,7 +3160,7 @@ public final class Parser {
         consume(Token.MUL);
         PropertyName propertyName = propertyName();
 
-        newContext(ContextKind.Generator);
+        newContext(ContextKind.GeneratorMethod);
         try {
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -3133,16 +3194,19 @@ public final class Parser {
      * 
      * <pre>
      * GeneratorDeclaration<span><sub>[Yield, Default]</sub></span> :
-     *     function * BindingIdentifier<span><sub>[?Yield, ?Default]</sub></span> ( FormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { FunctionBody<span><sub>[Yield]</sub></span> }
+     *     function * BindingIdentifier<span><sub>[?Yield]</sub></span> ( FormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { GeneratorBody<span><sub>[Yield]</sub></span> }
+     *     <span><sub>[+Default]</sub></span> function * ( FormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { GeneratorBody<span><sub>[Yield]</sub></span> }
+     * GeneratorBody<span><sub>[Yield]</sub></span> :
+     *     FunctionBody<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
-     * @param allowDefault
-     *            the flag to select if 'default' is allowed as the function name
+     * @param isDefault
+     *            the flag to select whether or not the declaration is part of a default export
      * @param isLegacy
      *            the flag to mark this generator as a legacy, star-less generator
      * @return the parsed generator declaration
      */
-    private GeneratorDeclaration generatorDeclaration(boolean allowDefault, boolean isLegacy) {
+    private GeneratorDeclaration generatorDeclaration(boolean isDefault, boolean isLegacy) {
         newContext(ContextKind.Generator);
         try {
             context.legacyGenerator = isLegacy;
@@ -3152,7 +3216,15 @@ public final class Parser {
             if (!isLegacy) {
                 consume(Token.MUL);
             }
-            BindingIdentifier identifier = bindingIdentifierFunctionName(true, allowDefault);
+            BindingIdentifier identifier;
+            String functionName;
+            if (!isDefault || token() != Token.LP) {
+                identifier = bindingIdentifierFunctionName(true);
+                functionName = identifier.getName().getIdentifier();
+            } else {
+                identifier = new BindingIdentifier(0, 0, ANONYMOUS_EXPORT_DECLARATION);
+                functionName = "default";
+            }
             consume(Token.LP);
             int startFunction = ts.position() - 1;
             FormalParameterList parameters = formalParameters(Token.RP);
@@ -3170,16 +3242,16 @@ public final class Parser {
             GeneratorDeclaration generator;
             if (!isLegacy) {
                 generator = new GeneratorDeclaration(begin, ts.endPosition(), scope, identifier,
-                        parameters, statements, header, body);
+                        parameters, statements, functionName, header, body);
             } else {
                 generator = new LegacyGeneratorDeclaration(begin, ts.endPosition(), scope,
-                        identifier, parameters, statements, header, body);
+                        identifier, parameters, statements, functionName, header, body);
             }
             scope.node = generator;
 
             generator_EarlyErrors(generator);
 
-            addGeneratorDeclaration(generator);
+            addDeclaration(generator);
 
             return inheritStrictness(generator);
         } finally {
@@ -3211,7 +3283,7 @@ public final class Parser {
             }
             BindingIdentifier identifier = null;
             if (token() != Token.LP) {
-                identifier = bindingIdentifierFunctionName(false, false);
+                identifier = bindingIdentifierFunctionName(false);
             }
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -3284,7 +3356,7 @@ public final class Parser {
      * @return the parsed yield expression
      */
     private YieldExpression yieldExpression(boolean allowIn) {
-        assert context.kind == ContextKind.Generator && context.yieldAllowed;
+        assert context.kind.isGenerator() && context.yieldAllowed;
         long begin = ts.beginPosition();
         consume(Token.YIELD);
         boolean delegatedYield = false;
@@ -3400,25 +3472,23 @@ public final class Parser {
      * <strong>[14.5] Class Definitions</strong>
      * 
      * <pre>
-     * ClassDeclaration<span><sub>[Yield, Default]</sub></span> :
-     *     class BindingIdentifier<span><sub>[?Yield, ?Default]</sub></span> ClassTail<span><sub>[?Yield]</sub></span>
+     * ClassDeclaration<span><sub>[Yield]</sub></span> :
+     *     class BindingIdentifier<span><sub>[?Yield]</sub></span> ClassTail<span><sub>[?Yield]</sub></span>
      * ClassTail<span><sub>[Yield, GeneratorParameter]</sub></span> :
      *     [~GeneratorParameter] ClassHeritage<span><sub>[?Yield]opt</sub></span> { ClassBody<span><sub>[?Yield]opt</sub></span> }
      *     [+GeneratorParameter] ClassHeritage<span><sub>opt</sub></span> { ClassBody<span><sub>opt</sub></span> }
      * </pre>
      * 
-     * @param allowDefault
-     *            the flag to select if 'default' is allowed as the class name
      * @return the parsed class declaration
      */
-    private ClassDeclaration classDeclaration(boolean allowDefault) {
+    private ClassDeclaration classDeclaration() {
         StrictMode strictMode = context.strictMode;
         try {
             // 10.2.1 - ClassDeclaration and ClassExpression is always strict code
             context.strictMode = StrictMode.Strict;
             long begin = ts.beginPosition();
             consume(Token.CLASS);
-            BindingIdentifier name = bindingIdentifierClassName(allowDefault);
+            BindingIdentifier name = bindingIdentifierClassName();
             Expression heritage = null;
             if (token() == Token.EXTENDS) {
                 heritage = classHeritage();
@@ -3462,7 +3532,7 @@ public final class Parser {
             consume(Token.CLASS);
             BindingIdentifier name = null;
             if (token() != Token.EXTENDS && token() != Token.LC) {
-                name = bindingIdentifierClassName(false);
+                name = bindingIdentifierClassName();
             }
             Expression heritage = null;
             if (token() == Token.EXTENDS) {
@@ -3536,10 +3606,10 @@ public final class Parser {
             MethodDefinition method;
             if (token() == Token.STATIC && !LOOKAHEAD(Token.LP)) {
                 consume(Token.STATIC);
-                method = methodDefinition(true);
+                method = methodDefinition(true, true);
                 staticMethods.add(method);
             } else {
-                method = methodDefinition(false);
+                method = methodDefinition(true, false);
                 prototypeMethods.add(method);
             }
             if (className != null) {
@@ -3625,14 +3695,14 @@ public final class Parser {
      * 
      * <pre>
      * AsyncFunctionDeclaration<span><sub>[Default]</sub></span> :
-     *     async [no <i>LineTerminator</i> here] function BindingIdentifier<span><sub>[?Default]</sub></span> ( FormalParameters ) { FunctionBody }
+     *     async [no <i>LineTerminator</i> here] function BindingIdentifier ( FormalParameters ) { FunctionBody }
      * </pre>
      * 
-     * @param allowDefault
-     *            the flag to select if 'default' is allowed as the function name
+     * @param isDefault
+     *            the flag to select whether or not the declaration is part of a default export
      * @return the parsed async function declaration
      */
-    private AsyncFunctionDeclaration asyncFunctionDeclaration(boolean allowDefault) {
+    private AsyncFunctionDeclaration asyncFunctionDeclaration(boolean isDefault) {
         newContext(ContextKind.AsyncFunction);
         try {
             long begin = ts.beginPosition();
@@ -3641,7 +3711,8 @@ public final class Parser {
                 reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
             }
             consume(Token.FUNCTION);
-            BindingIdentifier identifier = bindingIdentifierFunctionName(true, allowDefault);
+            BindingIdentifier identifier = bindingIdentifierFunctionName(true);
+            String functionName = identifier.getName().getIdentifier();
             consume(Token.LP);
             int startFunction = ts.position() - 1;
             FormalParameterList parameters = formalParameters(Token.RP);
@@ -3658,12 +3729,13 @@ public final class Parser {
 
             FunctionContext scope = context.funContext;
             AsyncFunctionDeclaration function = new AsyncFunctionDeclaration(begin,
-                    ts.endPosition(), scope, identifier, parameters, statements, header, body);
+                    ts.endPosition(), scope, identifier, parameters, statements, functionName,
+                    header, body);
             scope.node = function;
 
             asyncFunction_EarlyErrors(function);
 
-            addAsyncFunctionDeclaration(function);
+            addDeclaration(function);
 
             return inheritStrictness(function);
         } finally {
@@ -3692,7 +3764,7 @@ public final class Parser {
             consume(Token.FUNCTION);
             BindingIdentifier identifier = null;
             if (token() != Token.LP) {
-                identifier = bindingIdentifierFunctionName(false, false);
+                identifier = bindingIdentifierFunctionName(false);
             }
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -3875,7 +3947,7 @@ public final class Parser {
         consume(Token.ASYNC);
         PropertyName propertyName = propertyName();
 
-        newContext(ContextKind.AsyncFunction);
+        newContext(ContextKind.AsyncMethod);
         try {
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -3915,8 +3987,7 @@ public final class Parser {
      * @return the parsed await expression
      */
     private AwaitExpression awaitExpression() {
-        assert (context.kind == ContextKind.AsyncFunction || context.kind == ContextKind.AsyncArrowFunction)
-                && context.awaitAllowed;
+        assert context.kind.isAsync() && context.awaitAllowed;
         long begin = ts.beginPosition();
         consume(Token.AWAIT);
         Expression expr = unaryExpression();
@@ -4088,16 +4159,16 @@ public final class Parser {
         case FUNCTION:
         case CLASS:
         case CONST:
-            return declaration(false);
+            return declaration();
         case ASYNC:
             if (isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION)
                     && noNextLineTerminator()) {
-                return declaration(false);
+                return declaration();
             }
             break;
         case LET:
             if (lexicalBindingFirstSet(peek())) {
-                return declaration(false);
+                return declaration();
             }
             // 'let' as identifier, e.g. `let + 1`
             break;
@@ -4110,49 +4181,59 @@ public final class Parser {
      * <strong>[13] ECMAScript Language: Statements and Declarations</strong>
      * 
      * <pre>
-     * Declaration<span><sub>[Yield, Default]</sub></span> :
-     *     FunctionDeclaration<span><sub>[?Yield, ?Default]</sub></span>
-     *     GeneratorDeclaration<span><sub>[?Yield, ?Default]</sub></span>
-     *     ClassDeclaration<span><sub>[?Yield, ?Default]</sub></span>
+     * Declaration<span><sub>[Yield]</sub></span> :
+     *     HoistableDeclaration<span><sub>[?Yield]</sub></span>
+     *     ClassDeclaration<span><sub>[?Yield]</sub></span>
      *     LexicalDeclaration<span><sub>[In, ?Yield]</sub></span>
      * </pre>
      * 
-     * @param allowDefault
-     *            the flag to select if 'default' is allowed as declaration name
      * @return the parsed declaration node
      */
-    private Declaration declaration(boolean allowDefault) {
+    private Declaration declaration() {
         switch (token()) {
         case FUNCTION:
-            return functionOrGeneratorDeclaration(allowDefault);
+            return hoistableDeclaration(false);
         case CLASS:
-            return classDeclaration(allowDefault);
+            return classDeclaration();
         case LET:
         case CONST:
             return lexicalDeclaration(true);
         case ASYNC:
             if (isEnabled(CompatibilityOption.AsyncFunction)) {
-                return asyncFunctionDeclaration(allowDefault);
+                return asyncFunctionDeclaration(false);
             }
         default:
             throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
         }
     }
 
-    private Declaration functionOrGeneratorDeclaration(boolean allowDefault) {
+    /**
+     * <strong>[13] ECMAScript Language: Statements and Declarations</strong>
+     * 
+     * <pre>
+     * HoistableDeclaration<span><sub>[Yield, Default]</sub></span> :
+     *     FunctionDeclaration<span><sub>[?Yield, ?Default]</sub></span>
+     *     GeneratorDeclaration<span><sub>[?Yield, ?Default]</sub></span>
+     * </pre>
+     * 
+     * @param isDefault
+     *            the flag to select whether or not the declaration is part of a default export
+     * @return the parsed declaration node
+     */
+    private HoistableDeclaration hoistableDeclaration(boolean isDefault) {
         if (LOOKAHEAD(Token.MUL)) {
-            return generatorDeclaration(allowDefault, false);
+            return generatorDeclaration(isDefault, false);
         }
-        return functionDeclarationWithRetry(allowDefault);
+        return functionDeclarationWithRetry(isDefault);
     }
 
-    private Declaration functionDeclarationWithRetry(boolean allowDefault) {
+    private HoistableDeclaration functionDeclarationWithRetry(boolean isDefault) {
         long position = ts.position(), lineinfo = ts.lineinfo();
         try {
-            return functionDeclaration(allowDefault);
+            return functionDeclaration(isDefault);
         } catch (RetryGenerator e) {
             ts.reset(position, lineinfo);
-            return generatorDeclaration(allowDefault, true);
+            return generatorDeclaration(isDefault, true);
         }
     }
 
@@ -4474,7 +4555,7 @@ public final class Parser {
      * @return the parsed binding property
      */
     private BindingProperty bindingProperty(boolean allowLet) {
-        if (token() == Token.LB || LOOKAHEAD(Token.COLON)) {
+        if (token() == Token.LB || SAFE_LOOKAHEAD(Token.COLON)) {
             PropertyName propertyName = propertyName();
             consume(Token.COLON);
             Binding binding;
@@ -4848,6 +4929,7 @@ public final class Parser {
             return forStatement;
         }
         // Reset tokenstream and parse again to ensure correct block scopes are created
+        // TODO: Re-evaluate, latest spec changes may have obviated the need to reset the stream.
         ts.reset(position, lineinfo);
         return forInOfStatement(labelSet);
     }
@@ -5723,8 +5805,7 @@ public final class Parser {
      * <strong>[12.1] Identifiers</strong>
      * 
      * <pre>
-     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
-     *     <span><sub>[+Default]</sub></span> default
+     * BindingIdentifier<span><sub>[Yield]</sub></span> :
      *     <span><sub>[~Yield]</sub></span> yield
      *     Identifier
      * </pre>
@@ -5739,8 +5820,7 @@ public final class Parser {
      * <strong>[12.1] Identifiers</strong>
      * 
      * <pre>
-     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
-     *     <span><sub>[+Default]</sub></span> default
+     * BindingIdentifier<span><sub>[Yield]</sub></span> :
      *     <span><sub>[~Yield]</sub></span> yield
      *     Identifier
      * </pre>
@@ -5773,23 +5853,15 @@ public final class Parser {
      * Neither "arguments" nor "eval" nor "let" is allowed.
      * 
      * <pre>
-     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
-     *     <span><sub>[+Default]</sub></span> default
+     * BindingIdentifier<span><sub>[Yield]</sub></span> :
      *     <span><sub>[~Yield]</sub></span> yield
      *     Identifier
      * </pre>
      * 
-     * @param allowDefault
-     *            the flag to select if 'default' is allowed as the class name
      * @return the parsed binding identifier
      */
-    private BindingIdentifier bindingIdentifierClassName(boolean allowDefault) {
+    private BindingIdentifier bindingIdentifierClassName() {
         assert context.strictMode == StrictMode.Strict;
-        if (allowDefault && token() == Token.DEFAULT) {
-            long begin = ts.beginPosition();
-            consume(Token.DEFAULT);
-            return new BindingIdentifier(begin, ts.endPosition(), getName(Token.DEFAULT));
-        }
         return bindingIdentifier(true);
     }
 
@@ -5799,20 +5871,16 @@ public final class Parser {
      * Special case for {@link Token#YIELD} as {@link BindingIdentifier} in functions and generators
      * 
      * <pre>
-     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
-     *     <span><sub>[+Default]</sub></span> default
+     * BindingIdentifier<span><sub>[Yield]</sub></span> :
      *     <span><sub>[~Yield]</sub></span> yield
      *     Identifier
      * </pre>
      * 
      * @param isDeclaration
      *            {@code true} if the function is declaration node
-     * @param allowDefault
-     *            the flag to select if 'default' is allowed as the function name
      * @return the parsed binding identifier
      */
-    private BindingIdentifier bindingIdentifierFunctionName(boolean isDeclaration,
-            boolean allowDefault) {
+    private BindingIdentifier bindingIdentifierFunctionName(boolean isDeclaration) {
         Token tok = token();
         if (tok == Token.YIELD || tok == Token.ESCAPED_YIELD) {
             // function declarations inherit the yield mode from the parent context
@@ -5823,11 +5891,6 @@ public final class Parser {
             consume(tok);
             return new BindingIdentifier(begin, ts.endPosition(), getName(Token.YIELD));
         }
-        if (allowDefault && tok == Token.DEFAULT) {
-            long begin = ts.beginPosition();
-            consume(tok);
-            return new BindingIdentifier(begin, ts.endPosition(), getName(Token.DEFAULT));
-        }
         return bindingIdentifier(true);
     }
 
@@ -5837,8 +5900,7 @@ public final class Parser {
      * Special case for {@link Token#YIELD} as {@link BindingIdentifier} arrow rest parameter.
      * 
      * <pre>
-     * BindingIdentifier<span><sub>[Default, Yield]</sub></span> :
-     *     <span><sub>[+Default]</sub></span> default
+     * BindingIdentifier<span><sub>[Yield]</sub></span> :
      *     <span><sub>[~Yield]</sub></span> yield
      *     Identifier
      * </pre>
@@ -5997,6 +6059,7 @@ public final class Parser {
     private boolean isYieldName(ParseContext yieldContext, boolean isReference) {
         switch (yieldContext.kind) {
         case Generator:
+        case GeneratorMethod:
             if (yieldContext.yieldAllowed || !isReference) {
                 // 'yield' in generator, but not in default parameter initializer expression
                 reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
@@ -6037,7 +6100,8 @@ public final class Parser {
      *     this
      *     IdentifierReference<span><sub>[?Yield]</sub></span>
      *     Literal
-     *     ArrayInitializer<span><sub>[?Yield]</sub></span>
+     *     ArrayLiteral<span><sub>[?Yield]</sub></span>
+     *     ArrayComprehension<span><sub>[?Yield]</sub></span>
      *     ObjectLiteral<span><sub>[?Yield]</sub></span>
      *     FunctionExpression
      *     ClassExpression
@@ -6694,9 +6758,9 @@ public final class Parser {
                 return new PropertyValueDefinition(begin, ts.endPosition(), propertyName,
                         propertyValue);
             }
-            return normalMethod(false, begin, propertyName);
+            return normalMethod(false, false, begin, propertyName);
         }
-        if (LOOKAHEAD(Token.COLON)) {
+        if (SAFE_LOOKAHEAD(Token.COLON)) {
             PropertyName propertyName = literalPropertyName();
             consume(Token.COLON);
             Expression propertyValue = assignmentExpressionNoValidation(true);
@@ -6705,11 +6769,11 @@ public final class Parser {
             }
             return new PropertyValueDefinition(begin, ts.endPosition(), propertyName, propertyValue);
         }
-        if (LOOKAHEAD(Token.COMMA) || LOOKAHEAD(Token.RC)) {
+        if (SAFE_LOOKAHEAD(Token.COMMA) || SAFE_LOOKAHEAD(Token.RC)) {
             IdentifierReference identifier = identifierReference();
             return new PropertyNameDefinition(begin, ts.endPosition(), identifier);
         }
-        if (LOOKAHEAD(Token.ASSIGN)) {
+        if (SAFE_LOOKAHEAD(Token.ASSIGN)) {
             IdentifierReference identifier = identifierReference();
             consume(Token.ASSIGN);
             Expression initializer = assignmentExpression(true);
@@ -6718,7 +6782,7 @@ public final class Parser {
             }
             return new CoverInitializedName(begin, ts.endPosition(), identifier, initializer);
         }
-        return methodDefinition(false);
+        return methodDefinition(false, false);
     }
 
     /**
@@ -7015,14 +7079,18 @@ public final class Parser {
      *     MemberExpression<span><sub>[?Yield]</sub></span> [ Expression<span><sub>[In, ?Yield]</sub></span> ]
      *     MemberExpression<span><sub>[?Yield]</sub></span> . IdentifierName
      *     MemberExpression<span><sub>[?Yield]</sub></span> TemplateLiteral<span><sub>[?Yield]</sub></span>
+     *     SuperProperty<span><sub>[?Yield]</sub></span>
+     *     NewSuper Arguments<span><sub>[?Yield]</sub></span>
+     *     new MemberExpression<span><sub>[?Yield]</sub></span> Arguments<span><sub>[?Yield]</sub></span>
+     * SuperProperty<span><sub>[Yield]</sub></span> :
      *     super [ Expression<span><sub>[In, ?Yield]</sub></span> ]
      *     super . IdentifierName
-     *     new super Arguments<span><sub>[?Yield]</sub></span>
-     *     new MemberExpression<span><sub>[?Yield]</sub></span> Arguments<span><sub>[?Yield]</sub></span>
+     * NewSuper :
+     *     new super
      * NewExpression<span><sub>[Yield]</sub></span> :
      *     MemberExpression<span><sub>[?Yield]</sub></span>
      *     new NewExpression<span><sub>[?Yield]</sub></span>
-     *     new super
+     *     NewSuper
      * CallExpression<span><sub>[Yield]</sub></span> :
      *     MemberExpression<span><sub>[?Yield]</sub></span> Arguments<span><sub>[?Yield]</sub></span>
      *     super Arguments<span><sub>[?Yield]</sub></span>
@@ -7045,7 +7113,7 @@ public final class Parser {
         if (token() == Token.NEW) {
             consume(Token.NEW);
             if (token() == Token.SUPER && !(LOOKAHEAD(Token.DOT) || LOOKAHEAD(Token.LB))) {
-                referencesSuper();
+                superNew();
 
                 consume(Token.SUPER);
                 if (token() == Token.LP) {
@@ -7064,16 +7132,16 @@ public final class Parser {
                 }
             }
         } else if (token() == Token.SUPER) {
-            referencesSuper();
-
             consume(Token.SUPER);
             switch (token()) {
             case DOT:
+                superPropertyAccess();
                 consume(Token.DOT);
                 String name = identifierName();
                 lhs = new SuperPropertyAccessor(begin, ts.endPosition(), name);
                 break;
             case LB:
+                superPropertyAccess();
                 consume(Token.LB);
                 Expression expr = expression(true);
                 consume(Token.RB);
@@ -7081,6 +7149,7 @@ public final class Parser {
                 break;
             case LP:
                 if (allowCall) {
+                    superCall();
                     List<Expression> args = arguments();
                     lhs = new SuperCallExpression(begin, ts.endPosition(), args);
                     break;
@@ -7127,13 +7196,37 @@ public final class Parser {
         }
     }
 
-    private void referencesSuper() {
-        ParseContext cx = context.findSuperContext();
+    private void superPropertyAccess() {
+        ParseContext superContext = context.findSuperContext();
+        super_EarlyErrors(superContext);
+        superContext.setNeedsSuperBinding();
+    }
+
+    private void superCall() {
+        ParseContext superContext = context.findSuperContext();
+        super_EarlyErrors(superContext);
+        // TODO: https://bugs.ecmascript.org/show_bug.cgi?id=3284
+        if (superContext.kind.isMethod() && !superContext.isConstructor) {
+            // TODO: better error message
+            reportSyntaxError(Messages.Key.InvalidSuperExpression);
+        }
+    }
+
+    private void superNew() {
+        ParseContext superContext = context.findSuperContext();
+        super_EarlyErrors(superContext);
+        if (superContext.kind.isMethod() && !superContext.isConstructor) {
+            // TODO: better error message
+            reportSyntaxError(Messages.Key.InvalidSuperExpression);
+        }
+    }
+
+    private void super_EarlyErrors(ParseContext cx) {
+        // TODO: spec bug - search for first non-lexical context.
         if (cx.kind == ContextKind.Script && !isEnabled(Option.FunctionCode)
                 || cx.kind == ContextKind.Module) {
             reportSyntaxError(Messages.Key.InvalidSuperExpression);
         }
-        cx.setReferencesSuper();
     }
 
     /**
@@ -7269,9 +7362,8 @@ public final class Parser {
         }
         case AWAIT:
             if (isEnabled(CompatibilityOption.AsyncFunction)
-                    && (context.awaitAllowed || context.kind == ContextKind.AsyncFunction || context.kind == ContextKind.AsyncArrowFunction)) {
-                if (context.kind == ContextKind.AsyncFunction
-                        || context.kind == ContextKind.AsyncArrowFunction) {
+                    && (context.awaitAllowed || context.kind.isAsync())) {
+                if (context.kind.isAsync()) {
                     if (!context.awaitAllowed) {
                         // await in default parameters
                         reportSyntaxError(Messages.Key.InvalidAwaitExpression);
@@ -7515,7 +7607,7 @@ public final class Parser {
 
     private Expression assignmentExpression(boolean allowIn, int oldCount) {
         if (token() == Token.YIELD) {
-            if (context.kind == ContextKind.Generator && context.yieldAllowed) {
+            if (context.kind.isGenerator() && context.yieldAllowed) {
                 // `yield` in default parameters expressions is parsed as identifier.
                 return yieldExpression(allowIn);
             } else if (context.kind == ContextKind.GeneratorComprehension && context.yieldAllowed) {

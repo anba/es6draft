@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.repl.global;
 
-import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -36,7 +34,7 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
     @Override
     protected void initializeExtensions(ExecutionContext cx) {
         super.initializeExtensions(cx);
-        createProperties(cx, cx.getGlobalObject(), this, V8ShellGlobalObject.class);
+        install(this, V8ShellGlobalObject.class);
     }
 
     /**

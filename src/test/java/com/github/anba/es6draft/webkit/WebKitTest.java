@@ -6,9 +6,9 @@
  */
 package com.github.anba.es6draft.webkit;
 
-import static com.github.anba.es6draft.repl.global.V8ShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
+import static com.github.anba.es6draft.webkit.WebKitTestGlobalObject.newGlobalObjectAllocator;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
@@ -33,13 +33,8 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.model.MultipleFailureException;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
-import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestConfiguration;
@@ -67,13 +62,12 @@ public class WebKitTest {
     }
 
     @ClassRule
-    public static TestGlobals<V8ShellGlobalObject, TestInfo> globals = new TestGlobals<V8ShellGlobalObject, TestInfo>(
+    public static TestGlobals<WebKitTestGlobalObject, TestInfo> globals = new TestGlobals<WebKitTestGlobalObject, TestInfo>(
             configuration) {
         @Override
-        protected ObjectAllocator<V8ShellGlobalObject> newAllocator(ShellConsole console,
+        protected ObjectAllocator<WebKitTestGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
-                    scriptCache);
+            return newGlobalObjectAllocator(console, test, scriptCache);
         }
     };
 
@@ -105,7 +99,7 @@ public class WebKitTest {
         }
     }
 
-    private V8ShellGlobalObject global;
+    private WebKitTestGlobalObject global;
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
@@ -114,7 +108,6 @@ public class WebKitTest {
 
         global = globals.newGlobal(new WebKitTestConsole(collector), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
-        install(new WebKitNatives(), WebKitNatives.class);
 
         if (test.expect) {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
@@ -143,27 +136,5 @@ public class WebKitTest {
 
         // Wait for pending tasks to finish
         global.getRealm().getWorld().runEventLoop();
-    }
-
-    private <T> T install(T object, Class<T> clazz) {
-        Realm realm = global.getRealm();
-        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
-        return object;
-    }
-
-    public static final class WebKitNatives {
-        @Properties.Value(name = "window")
-        public ScriptObject window(ExecutionContext cx) {
-            return cx.getGlobalObject();
-        }
-
-        @Properties.Function(name = "neverInlineFunction", arity = 0)
-        public void neverInlineFunction() {
-        }
-
-        @Properties.Function(name = "numberOfDFGCompiles", arity = 0)
-        public double numberOfDFGCompiles() {
-            return Double.NaN;
-        }
     }
 }

@@ -10,9 +10,11 @@ const {
 } = Assert;
 
 
+// TODO: Early error restrictions for 'super' incomplete (rev28 draft)
+
 // 'super' is allowed in object literals
 {
-  ({m(){super()}});
+  assertSyntaxError(`({m(){super()}});`);
   ({m(){super.x}});
   ({m(){super["x"]}});
   ({m(){super.x()}});
@@ -25,12 +27,12 @@ const {
 // CallExpression: CallExpression '.' IdentifierName
 // CallExpression: CallExpression TemplateLiteral
 {
-  (class {m(){super()}});
-  (class {m(){super()()}});
-  (class {m(){super()["x"]}});
-  (class {m(){super().x}});
-  (class {m(){super().if}});
-  (class {m(){super()``}});
+  assertSyntaxError(`(class {m(){super()}});`);
+  assertSyntaxError(`(class {m(){super()()}});`);
+  assertSyntaxError(`(class {m(){super()["x"]}});`);
+  assertSyntaxError(`(class {m(){super().x}});`);
+  assertSyntaxError(`(class {m(){super().if}});`);
+  assertSyntaxError("(class {m(){super()``}});");
 }
 
 // CallExpression: MemberExpression Arguments
@@ -38,7 +40,7 @@ const {
   (class {m(){super["x"]()}});
   (class {m(){super.x()}});
   (class {m(){super.if()}});
-  (class {m(){new super()()}});
+  assertSyntaxError(`(class {m(){new super()()}});`);
 }
 
 // MemberExpression: 'super' '[' Expression ']'
@@ -76,19 +78,19 @@ const {
 // MemberExpression: MemberExpression '.' IdentifierName
 // MemberExpression: MemberExpression TemplateLiteral
 {
-  (class {m(){new super()}});
-  (class {m(){new super()["x"]}});
-  (class {m(){new super().x}});
-  (class {m(){new super().if}});
-  (class {m(){new super()``}});
+  assertSyntaxError(`(class {m(){new super()}});`);
+  assertSyntaxError(`(class {m(){new super()["x"]}});`);
+  assertSyntaxError(`(class {m(){new super().x}});`);
+  assertSyntaxError(`(class {m(){new super().if}});`);
+  assertSyntaxError("(class {m(){new super()``}});");
 }
 
 // NewExpression: 'new' 'super'
 // NewExpression: 'new' NewExpression
 // NewExpression: MemberExpression
 {
-  (class {m(){new super}});
-  (class {m(){new new super}});
+  assertSyntaxError(`(class {m(){new super}});`);
+  assertSyntaxError(`(class {m(){new new super}});`);
   (class {m(){new super["x"]}});
   (class {m(){new super.x}});
   (class {m(){new super.if}});
@@ -104,5 +106,5 @@ const {
 {
   assertSyntaxError("(class {m(){super \n ``}});");
   assertSyntaxError("(class {m(){new \n super ``}});");
-  Function("(class {m(){new super \n ``}});");
+  assertSyntaxError("(class {m(){new super \n ``}});");
 }

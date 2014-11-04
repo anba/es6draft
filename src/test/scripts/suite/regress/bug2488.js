@@ -13,7 +13,7 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=2488
 
 // Create uninitialized string object and define its "length" property
-let str = String[Symbol.create]();
+let str = new class extends String { constructor() { /* no super */ } };
 Reflect.defineProperty(str, "length", {value: 1, writable: false, enumerable: false, configurable: false});
 
 // Make string object non-extensible, observe "0" property

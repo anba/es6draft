@@ -13,11 +13,13 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.VarScopedDeclar
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.ast.scope.Name;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
@@ -27,8 +29,8 @@ import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 /**
  * <h1>Declaration Binding Instantiation</h1>
  * <ul>
- * <li>15.2.8 Runtime Semantics: GlobalDeclarationInstantiation
- * <li>18.2.1.2 Eval Declaration Instantiation
+ * <li>15.1.8 Runtime Semantics: GlobalDeclarationInstantiation (script, env)
+ * <li>18.2.1.2 Runtime Semantics: EvalDeclarationInstantiation (body, varEnv, lexEnv, strict)
  * </ul>
  */
 final class DeclarationBindingInstantiation {
@@ -36,7 +38,7 @@ final class DeclarationBindingInstantiation {
     }
 
     /**
-     * [15.1.8 Runtime Semantics: GlobalDeclarationInstantiation]
+     * 15.1.8 Runtime Semantics: GlobalDeclarationInstantiation (script, env)
      * 
      * @param cx
      *            the execution context
@@ -44,29 +46,28 @@ final class DeclarationBindingInstantiation {
      *            the global script to instantiate
      * @param globalEnv
      *            the global environment
-     * @param lexicalEnv
-     *            the current lexical environment
-     * @param deletableBindings
-     *            the deletable flag for bindings
      */
     public static void GlobalDeclarationInstantiation(ExecutionContext cx, Script script,
-            LexicalEnvironment<GlobalEnvironmentRecord> globalEnv,
-            LexicalEnvironment<?> lexicalEnv, boolean deletableBindings) {
-        LexicalEnvironment<GlobalEnvironmentRecord> env = globalEnv;
+            LexicalEnvironment<GlobalEnvironmentRecord> env) {
+        /* step 1 */
+        @SuppressWarnings("unused")
+        boolean strict = script.isStrict();
+        /* steps 2-3 */
         GlobalEnvironmentRecord envRec = env.getEnvRec();
-
-        /* step 1 (omitted) */
-        /* steps 2, 4 (not applicable) */
-        /* steps 3, 5 */
-        for (Name name : VarDeclaredNames(script)) {
+        /* step 4 (not applicable) */
+        /* step 5 */
+        Set<Name> varNames = VarDeclaredNames(script);
+        /* step 6 (not applicable) */
+        /* step 7 */
+        for (Name name : varNames) {
             ScriptRuntime.canDeclareVarScopedOrThrow(cx, envRec, name.getIdentifier());
         }
-        /* step 6 */
+        /* step 8 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
-        /* steps 7-9 (not applicable) */
-        /* step 10 */
+        /* steps 9-11 (not applicable) */
+        /* step 12 */
         LinkedHashSet<Name> declaredVarNames = new LinkedHashSet<>();
-        /* step 11 */
+        /* step 13 */
         for (StatementListItem d : varDeclarations) {
             assert d instanceof VariableStatement;
             for (Name vn : BoundNames((VariableStatement) d)) {
@@ -74,17 +75,17 @@ final class DeclarationBindingInstantiation {
                 declaredVarNames.add(vn);
             }
         }
-        /* step 12 (NOTE) */
-        /* step 13-15 (not applicable) */
-        /* step 16 */
+        /* step 14 (NOTE) */
+        /* step 15-17 (not applicable) */
+        /* step 18 */
         for (Name vn : declaredVarNames) {
-            envRec.createGlobalVarBinding(vn.getIdentifier(), deletableBindings);
+            envRec.createGlobalVarBinding(vn.getIdentifier(), false);
         }
-        /* step 17 (return) */
+        /* step 19 (return) */
     }
 
     /**
-     * [18.2.1.2 Eval Declaration Instantiation]
+     * 18.2.1.2 Runtime Semantics: EvalDeclarationInstantiation (body, varEnv, lexEnv, strict)
      * 
      * @param cx
      *            the execution context
@@ -98,22 +99,66 @@ final class DeclarationBindingInstantiation {
      *            the deletable flag for bindings
      */
     public static void EvalDeclarationInstantiation(ExecutionContext cx, Script script,
-            LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv, boolean deletableBindings) {
-        // FIXME: spec incomplete (using modified ES5.1 algorithm for now...)
+            LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv) {
+        boolean strict = script.isStrict();
+        boolean nonStrictGlobal = !strict && script.isGlobalCode() && !script.isScripting();
 
-        LexicalEnvironment<?> env = varEnv;
-        EnvironmentRecord envRec = env.getEnvRec();
-        // boolean strict = script.isStrict();
-        for (StatementListItem d : VarScopedDeclarations(script)) {
-            assert d instanceof VariableStatement;
-            for (Name dn : BoundNames((VariableStatement) d)) {
-                boolean varAlreadyDeclared = envRec.hasBinding(dn.getIdentifier());
-                if (!varAlreadyDeclared) {
-                    envRec.createMutableBinding(dn.getIdentifier(), deletableBindings);
-                    // envRec.setMutableBinding(dn, UNDEFINED, strict);
-                    envRec.initializeBinding(dn.getIdentifier(), UNDEFINED);
+        /* step 1 (not applicable) */
+        /* step 2 */
+        Set<Name> varNames = VarDeclaredNames(script);
+        /* step 3 */
+        List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
+        /* step 4 (not applicable) */
+        /* step 5 */
+        EnvironmentRecord varEnvRec = varEnv.getEnvRec();
+        assert !nonStrictGlobal || varEnvRec instanceof GlobalEnvironmentRecord : String.format(
+                "Unexpected environment record type: %s", varEnvRec);
+        /* step 6 */
+        if (!strict) {
+            if (nonStrictGlobal) {
+                /* step 6.a */
+                GlobalEnvironmentRecord gEnvRec = (GlobalEnvironmentRecord) varEnvRec;
+                for (Name name : varNames) {
+                    ScriptRuntime.canDeclareVarScopedOrThrow(cx, gEnvRec, name.getIdentifier());
+                }
+            } else if (script.isFunctionCode()) {
+                /* step 6.b */
+                DeclarativeEnvironmentRecord topLexEnvRec = cx.getFunctionVariableEnvironment()
+                        .getEnvRec().getTopLex();
+                for (Name name : varNames) {
+                    ScriptRuntime.canDeclareVarOrThrow(cx, topLexEnvRec, name.getIdentifier());
                 }
             }
         }
+        /* steps 7-9 (not applicable) */
+        /* step 10 */
+        LinkedHashSet<Name> declaredNames = new LinkedHashSet<>();
+        /* step 11 */
+        for (StatementListItem d : varDeclarations) {
+            assert d instanceof VariableStatement;
+            for (Name vn : BoundNames((VariableStatement) d)) {
+                if (nonStrictGlobal) {
+                    GlobalEnvironmentRecord gEnvRec = (GlobalEnvironmentRecord) varEnvRec;
+                    ScriptRuntime.canDeclareGlobalVarOrThrow(cx, gEnvRec, vn.getIdentifier());
+                }
+                declaredNames.add(vn);
+            }
+        }
+        /* step 12 (note) */
+        /* steps 13-15 (not applicable) */
+        /* step 16 */
+        for (Name vn : declaredNames) {
+            if (nonStrictGlobal) {
+                GlobalEnvironmentRecord gEnvRec = (GlobalEnvironmentRecord) varEnvRec;
+                gEnvRec.createGlobalVarBinding(vn.getIdentifier(), true);
+            } else {
+                boolean varAlreadyDeclared = varEnvRec.hasBinding(vn.getIdentifier());
+                if (!varAlreadyDeclared) {
+                    varEnvRec.createMutableBinding(vn.getIdentifier(), true);
+                    varEnvRec.initializeBinding(vn.getIdentifier(), UNDEFINED);
+                }
+            }
+        }
+        /* step 17 (return) */
     }
 }

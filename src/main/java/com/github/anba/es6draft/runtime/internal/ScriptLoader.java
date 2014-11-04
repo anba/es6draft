@@ -23,11 +23,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.github.anba.es6draft.Module;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ast.FunctionDefinition;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.CompiledFunction;
+import com.github.anba.es6draft.compiler.CompiledModule;
 import com.github.anba.es6draft.compiler.CompiledScript;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.interpreter.Interpreter;
@@ -41,12 +43,13 @@ import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionConst
  * 
  */
 public final class ScriptLoader {
-    private final boolean finalizeExecutor;
+    private final boolean shutdownExecutorOnFinalization;
     private final ExecutorService executor;
     private final EnumSet<CompatibilityOption> options;
     private final EnumSet<Parser.Option> parserOptions;
     private final EnumSet<Compiler.Option> compilerOptions;
     private final AtomicInteger scriptCounter = new AtomicInteger(0);
+    private final AtomicInteger moduleCounter = new AtomicInteger(0);
     private final AtomicInteger evalCounter = new AtomicInteger(0);
     private final AtomicInteger functionCounter = new AtomicInteger(0);
 
@@ -72,19 +75,21 @@ public final class ScriptLoader {
     }
 
     /**
+     * Next class name for modules.
+     * 
+     * @return the next class name for modules
+     */
+    private String nextModuleName() {
+        return "Module_" + moduleCounter.incrementAndGet();
+    }
+
+    /**
      * Next class name for scripts.
      * 
-     * @return the next class name for functions
-     * @see FunctionConstructor
-     * @see GeneratorFunctionConstructor
+     * @return the next class name for scripts
      */
     private String nextScriptName() {
         return "Script_" + scriptCounter.incrementAndGet();
-    }
-
-    public ScriptLoader(Set<CompatibilityOption> options) {
-        this(null, options, EnumSet.noneOf(Parser.Option.class), EnumSet
-                .noneOf(Compiler.Option.class));
     }
 
     public ScriptLoader(Set<CompatibilityOption> options, Set<Parser.Option> parserOptions,
@@ -94,7 +99,7 @@ public final class ScriptLoader {
 
     public ScriptLoader(ExecutorService executor, Set<CompatibilityOption> options,
             Set<Parser.Option> parserOptions, Set<Compiler.Option> compilerOptions) {
-        this.finalizeExecutor = executor == null;
+        this.shutdownExecutorOnFinalization = executor == null;
         this.executor = executor != null ? executor : createThreadPoolExecutor();
         this.options = EnumSet.copyOf(options);
         this.parserOptions = EnumSet.copyOf(parserOptions);
@@ -103,7 +108,7 @@ public final class ScriptLoader {
 
     @Override
     protected void finalize() throws Throwable {
-        if (finalizeExecutor)
+        if (shutdownExecutorOnFinalization)
             executor.shutdown();
         super.finalize();
     }
@@ -248,6 +253,25 @@ public final class ScriptLoader {
     }
 
     /**
+     * Parses and compiles the javascript module.
+     * 
+     * @param source
+     *            the script source descriptor
+     * @param sourceCode
+     *            the source code
+     * @return the compiled module
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
+     */
+    public Module module(Source source, String sourceCode) throws ParserException,
+            CompilationException {
+        com.github.anba.es6draft.ast.Module parsedModule = parseModule(source, sourceCode);
+        return load(parsedModule, nextScriptName());
+    }
+
+    /**
      * Parses and compiles the javascript file.
      * 
      * @param source
@@ -369,8 +393,37 @@ public final class ScriptLoader {
     }
 
     /**
+     * Returns an executable {@link Module} object for the
+     * {@link com.github.anba.es6draft.ast.Module Module} AST-node.
+     * 
+     * @param parsedModule
+     *            the module node
+     * @return the module object
+     */
+    public Module load(com.github.anba.es6draft.ast.Module parsedModule)
+            throws CompilationException {
+        // TODO: Remove this method when all module information is preserved in compiled form
+        return compile(parsedModule, nextModuleName());
+    }
+
+    /**
+     * Returns an executable {@link Module} object for the
+     * {@link com.github.anba.es6draft.ast.Module Module} AST-node.
+     * 
+     * @param parsedModule
+     *            the module node
+     * @param className
+     *            the class name
+     * @return the module object
+     */
+    public Module load(com.github.anba.es6draft.ast.Module parsedModule, String className)
+            throws CompilationException {
+        return compile(parsedModule, className);
+    }
+
+    /**
      * Compiles the {@link com.github.anba.es6draft.ast.Script Script} AST-node to an executable
-     * {@link Script} object.
+     * {@link CompiledScript} object.
      * 
      * @param parsedScript
      *            the script node
@@ -384,9 +437,22 @@ public final class ScriptLoader {
     }
 
     /**
-     * Compiles the {@link FunctionDefinition} AST-node to a
-     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.Function RuntimeInfo.Function}
-     * object.
+     * Compiles the {@link com.github.anba.es6draft.ast.Module Module} AST-node to an executable
+     * {@link CompiledModule} object.
+     * 
+     * @param parsedModule
+     *            the module node
+     * @param className
+     *            the class name
+     * @return the module object
+     */
+    public CompiledModule compile(com.github.anba.es6draft.ast.Module parsedModule, String className)
+            throws CompilationException {
+        return tryCompile(parsedModule, className, executor, compilerOptions);
+    }
+
+    /**
+     * Compiles the {@link FunctionDefinition} AST-node to a {@link CompiledFunction} object.
      * 
      * @param function
      *            the function node
@@ -400,9 +466,7 @@ public final class ScriptLoader {
     }
 
     /**
-     * Compiles the {@link GeneratorDefinition} AST-node to a
-     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.Function RuntimeInfo.Function}
-     * object.
+     * Compiles the {@link GeneratorDefinition} AST-node to a {@link CompiledFunction} object.
      * 
      * @param generator
      *            the generator node
@@ -421,6 +485,14 @@ public final class ScriptLoader {
             return compileWithNew(parsedScript, className, options);
         }
         return compileWith(parsedScript, className, executor, options);
+    }
+
+    private static CompiledModule tryCompile(com.github.anba.es6draft.ast.Module parsedModule,
+            String className, ExecutorService executor, EnumSet<Compiler.Option> options) {
+        if (executor.isShutdown()) {
+            return compileWithNew(parsedModule, className, options);
+        }
+        return compileWith(parsedModule, className, executor, options);
     }
 
     private static CompiledFunction tryCompile(FunctionDefinition function, String className,
@@ -444,6 +516,16 @@ public final class ScriptLoader {
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try {
             return compileWith(parsedScript, className, executor, options);
+        } finally {
+            executor.shutdown();
+        }
+    }
+
+    private static CompiledModule compileWithNew(com.github.anba.es6draft.ast.Module parsedModule,
+            String className, EnumSet<Compiler.Option> options) throws CompilationException {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            return compileWith(parsedModule, className, executor, options);
         } finally {
             executor.shutdown();
         }
@@ -473,6 +555,12 @@ public final class ScriptLoader {
             String className, ExecutorService executor, EnumSet<Compiler.Option> options) {
         Compiler compiler = new Compiler(executor, options);
         return compiler.compile(parsedScript, className);
+    }
+
+    private static CompiledModule compileWith(com.github.anba.es6draft.ast.Module parsedModule,
+            String className, ExecutorService executor, EnumSet<Compiler.Option> options) {
+        Compiler compiler = new Compiler(executor, options);
+        return compiler.compile(parsedModule, className);
     }
 
     private static CompiledFunction compileWith(FunctionDefinition function, String className,

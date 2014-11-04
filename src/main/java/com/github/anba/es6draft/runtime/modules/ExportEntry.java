@@ -6,11 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
-import com.github.anba.es6draft.ast.scope.Name;
-
 /**
- * 15.2.0.4 Static Semantics: ExportEntries<br>
- * 15.2.2.3 Static Semantics: ExportEntries
+ * 15.2.1.4 Static Semantics: ExportEntries<br>
+ * 15.2.3.4 Static Semantics: ExportEntries<br>
+ * 15.2.1.15 Static and Runtme Semantics: Module Records
  */
 public final class ExportEntry {
     /** [[ModuleRequest]] */
@@ -20,16 +19,26 @@ public final class ExportEntry {
     private final String importName;
 
     /** [[LocalName]] */
-    private final Name localName;
+    private final String localName;
 
     /** [[ExportName]] */
     private final String exportName;
 
-    public ExportEntry(String moduleRequest, String importName, Name localName, String exportName) {
+    /** [[ModuleRequest]] */
+    private String normalizedModuleRequest;
+
+    public ExportEntry(String moduleRequest, String importName, String localName, String exportName) {
         this.moduleRequest = moduleRequest;
         this.importName = importName;
         this.localName = localName;
         this.exportName = exportName;
+    }
+
+    @Override
+    public String toString() {
+        return String
+                .format("ExportEntry {moduleRequest=%s, importName=%s, localName=%s, exportName=%s, normalizedModuleRequest=%s}",
+                        moduleRequest, importName, localName, exportName, normalizedModuleRequest);
     }
 
     /**
@@ -39,6 +48,30 @@ public final class ExportEntry {
      */
     public String getModuleRequest() {
         return moduleRequest;
+    }
+
+    /**
+     * [[ModuleRequest]]
+     * 
+     * @return the normalized module request
+     */
+    public String getNormalizedModuleRequest() {
+        assert normalizedModuleRequest != null;
+        return normalizedModuleRequest;
+    }
+
+    /**
+     * [[ModuleRequest]]
+     * 
+     * @param moduleRequest
+     *            the new module request
+     */
+    public void setNormalizedModuleRequest(String moduleRequest) {
+        this.normalizedModuleRequest = moduleRequest;
+    }
+
+    public boolean isStarExport() {
+        return "*".equals(importName);
     }
 
     /**
@@ -55,7 +88,7 @@ public final class ExportEntry {
      * 
      * @return the local name
      */
-    public Name getLocalName() {
+    public String getLocalName() {
         return localName;
     }
 

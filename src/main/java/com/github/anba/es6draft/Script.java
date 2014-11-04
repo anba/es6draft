@@ -15,7 +15,7 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
  * <li>15.1 Scripts
  * </ul>
  */
-public interface Script {
+public interface Script extends Program {
     /**
      * Returns this script's
      * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.ScriptBody ScriptBody} object.

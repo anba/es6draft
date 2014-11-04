@@ -9,6 +9,7 @@ package com.github.anba.es6draft.parser;
 import java.util.Locale;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.InternalException;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -123,9 +124,20 @@ public class ParserException extends InternalException {
         return Messages.create(locale).getMessage(messageKey, messageArguments);
     }
 
+    /**
+     * Returns a formatted message describing this exception.
+     * 
+     * @param realm
+     *            the realm object
+     * @return the formatted error message in the locale of the realm object
+     */
+    public String getFormattedMessage(Realm realm) {
+        return realm.message(messageKey, messageArguments);
+    }
+
     @Override
     public ScriptException toScriptException(ExecutionContext cx) {
-        String message = cx.getRealm().message(messageKey, messageArguments);
+        String message = getFormattedMessage(cx.getRealm());
         if (type == ExceptionType.ReferenceError) {
             return Errors.newReferenceError(cx, message, getFile(), getLine(), getColumn());
         }

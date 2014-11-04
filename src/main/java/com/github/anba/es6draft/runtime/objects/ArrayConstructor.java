@@ -20,9 +20,10 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Creatable;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -37,7 +38,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>22.1.2 Properties of the Array Constructor
  * </ul>
  */
-public final class ArrayConstructor extends BuiltinConstructor implements Initializable {
+public final class ArrayConstructor extends BuiltinConstructor implements Initializable,
+        Creatable<ArrayObject> {
     /**
      * Constructs a new Array constructor function.
      * 
@@ -133,6 +135,24 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return Construct(callerContext, this, args);
+    }
+
+    private static final class ArrayCreate implements CreateAction<ArrayObject> {
+        static final CreateAction<ArrayObject> INSTANCE = new ArrayCreate();
+
+        @Override
+        public ArrayObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            /* steps 1-2 */
+            ScriptObject proto = GetPrototypeFromConstructor(cx, constructor,
+                    Intrinsics.ArrayPrototype);
+            /* step 3 */
+            return ArrayCreate(cx, proto);
+        }
+    }
+
+    @Override
+    public CreateAction<ArrayObject> createAction() {
+        return ArrayCreate.INSTANCE;
     }
 
     /**
@@ -305,25 +325,6 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             Put(cx, a, "length", len, true);
             /* step 20 */
             return a;
-        }
-
-        /**
-         * 22.1.2.5 Array[ @@create ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the new uninitialized array object
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            /* steps 1-3 */
-            ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue,
-                    Intrinsics.ArrayPrototype);
-            /* steps 4-5 */
-            return ArrayCreate(cx, proto);
         }
     }
 }

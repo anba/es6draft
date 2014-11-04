@@ -16,10 +16,6 @@ function assertFunctionProperty(object, name, value = object[name]) {
   return assertDataProperty(object, name, {value, writable: true, enumerable: false, configurable: true});
 }
 
-function assertCreateFunctionProperty(object, name, value = object[name]) {
-  return assertDataProperty(object, name, {value, writable: false, enumerable: false, configurable: true});
-}
-
 function assertConstructorProperty(object, name = "constructor", value = object[name]) {
   return assertDataProperty(object, name, {value, writable: true, enumerable: false, configurable: true});
 }
@@ -41,7 +37,6 @@ assertPrototypeProperty(String);
 assertFunctionProperty(String, "fromCharCode");
 assertFunctionProperty(String, "fromCodePoint");
 assertFunctionProperty(String, "raw");
-assertCreateFunctionProperty(String, Symbol.create);
 
 
 /* Properties of the String Prototype Object */

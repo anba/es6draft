@@ -22,7 +22,7 @@ Object.defineProperty(source.buffer, "constructor", {
   }
 });
 
-let target = Int8Array[Symbol.create]();
+let target = new class extends Int8Array { constructor() { /* no super */ } };
 assertThrows(MyError, () => Int8Array.call(target, source));
 assertSame(1, accessed);
 assertSame("[object Int8Array]", Object.prototype.toString.call(target));

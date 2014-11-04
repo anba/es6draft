@@ -27,6 +27,7 @@ import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperation
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -102,52 +103,18 @@ public final class PromisePrototype extends OrdinaryObject implements Initializa
         @Function(name = "then", arity = 2)
         public static Object then(ExecutionContext cx, Object thisValue, Object onFulfilled,
                 Object onRejected) {
-            Realm realm = cx.getRealm();
             /* step 2 */
             if (!IsPromise(thisValue)) {
                 throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             /* step 1 */
             PromiseObject promise = (PromiseObject) thisValue;
-            /* step 3 */
-            PromiseReaction.Type fulfillType = PromiseReaction.Type.Function;
-            if (!IsCallable(onFulfilled)) {
-                fulfillType = PromiseReaction.Type.Identity;
-                onFulfilled = null;
-            }
-            /* step 4 */
-            PromiseReaction.Type rejectType = PromiseReaction.Type.Function;
-            if (!IsCallable(onRejected)) {
-                rejectType = PromiseReaction.Type.Thrower;
-                onRejected = null;
-            }
-            /* steps 5-6 */
+            /* steps 3-4 */
             Object c = Get(cx, promise, "constructor");
-            /* steps 7-8 */
-            PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
-            /* step 9 */
-            PromiseReaction fulfillReaction = new PromiseReaction(promiseCapability,
-                    (Callable) onFulfilled, fulfillType);
-            /* step 10 */
-            PromiseReaction rejectReaction = new PromiseReaction(promiseCapability,
-                    (Callable) onRejected, rejectType);
-            /* step 11 */
-            if (promise.getState() == PromiseObject.State.Pending) {
-                promise.addFulfillReaction(fulfillReaction);
-                promise.addRejectReaction(rejectReaction);
-            }
-            /* step 12 */
-            else if (promise.getState() == PromiseObject.State.Fulfilled) {
-                Object value = promise.getResult();
-                realm.enqueuePromiseTask(new PromiseReactionTask(realm, fulfillReaction, value));
-            }
-            /* step 13 */
-            else if (promise.getState() == PromiseObject.State.Rejected) {
-                Object reason = promise.getResult();
-                realm.enqueuePromiseTask(new PromiseReactionTask(realm, rejectReaction, reason));
-            }
-            /* step 14 */
-            return promiseCapability.getPromise();
+            /* steps 5-6 */
+            PromiseCapability<ScriptObject> resultCapability = NewPromiseCapability(cx, c);
+            /* step 7 */
+            return PerformPromiseThen(cx, promise, onFulfilled, onRejected, resultCapability);
         }
 
         /**
@@ -156,5 +123,65 @@ public final class PromisePrototype extends OrdinaryObject implements Initializa
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "Promise";
+    }
+
+    /**
+     * 25.4.5.3.1 PerformPromiseThen ( promise, onFulfilled, onRejected, resultCapability )
+     * 
+     * @param <PROMISE>
+     *            the promise type
+     * @param cx
+     *            the execution context
+     * @param promise
+     *            the promise object
+     * @param onFulfilled
+     *            the onFulfilled handler
+     * @param onRejected
+     *            the onRejected handler
+     * @param resultCapability
+     *            the new promise capability record
+     * @return the new promise object
+     */
+    public static <PROMISE extends ScriptObject> PROMISE PerformPromiseThen(ExecutionContext cx,
+            PromiseObject promise, Object onFulfilled, Object onRejected,
+            PromiseCapability<PROMISE> resultCapability) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        PromiseReaction.Type fulfillType = PromiseReaction.Type.Function;
+        if (!IsCallable(onFulfilled)) {
+            fulfillType = PromiseReaction.Type.Identity;
+            onFulfilled = null;
+        }
+        /* step 4 */
+        PromiseReaction.Type rejectType = PromiseReaction.Type.Function;
+        if (!IsCallable(onRejected)) {
+            rejectType = PromiseReaction.Type.Thrower;
+            onRejected = null;
+        }
+        /* step 5 */
+        PromiseReaction fulfillReaction = new PromiseReaction(resultCapability,
+                (Callable) onFulfilled, fulfillType);
+        /* step 6 */
+        PromiseReaction rejectReaction = new PromiseReaction(resultCapability,
+                (Callable) onRejected, rejectType);
+        /* step 7 */
+        if (promise.getState() == PromiseObject.State.Pending) {
+            promise.addFulfillReaction(fulfillReaction);
+            promise.addRejectReaction(rejectReaction);
+        }
+        /* step 8 */
+        else if (promise.getState() == PromiseObject.State.Fulfilled) {
+            Object value = promise.getResult();
+            Realm realm = cx.getRealm();
+            realm.enqueuePromiseTask(new PromiseReactionTask(realm, fulfillReaction, value));
+        }
+        /* step 9 */
+        else if (promise.getState() == PromiseObject.State.Rejected) {
+            Object reason = promise.getResult();
+            Realm realm = cx.getRealm();
+            realm.enqueuePromiseTask(new PromiseReactionTask(realm, rejectReaction, reason));
+        }
+        /* step 10 */
+        return resultCapability.getPromise();
     }
 }

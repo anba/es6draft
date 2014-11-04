@@ -58,6 +58,15 @@ final class JSONTokenStream {
     }
 
     /**
+     * Returns the last character from the input source.
+     * 
+     * @return the last character
+     */
+    public char lastChar() {
+        return (char) input.lastChar();
+    }
+
+    /**
      * Returns the encoded line/column information of the current source position.
      * 
      * @return the current line/column information

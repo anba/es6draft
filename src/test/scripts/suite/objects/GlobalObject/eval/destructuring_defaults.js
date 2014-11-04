@@ -12,7 +12,7 @@ const {
 const global = this;
 
 
-// Destructuring default values in Catch are evaluated in the lexical environment of the Catch node
+// Destructuring default values in Catch are evaluated in a new lexical environment
 try {
   throw {}
 } catch ({a = eval("let letInCatch = 0;")}) {
@@ -22,7 +22,7 @@ assertFalse("letInCatch" in global);
 assertUndefined(global["letInCatch"]);
 
 
-// Destructuring default values in ForOfStatement are evaluated in the lexical environment of the ForOfStatement node
+// Destructuring default values in ForOfStatement are evaluated in a new lexical environment
 for (let {a = eval("let letInForOf = 0;")} of [{}]) {
 }
 assertSame("undefined", typeof letInForOf);
@@ -30,7 +30,7 @@ assertFalse("letInForOf" in global);
 assertUndefined(global["letInForOf"]);
 
 
-// Destructuring default values in ForInStatement are evaluated in the lexical environment of the ForInStatement node
+// Destructuring default values in ForInStatement are evaluated in a new lexical environment
 var proxy = new Proxy({}, {
   *enumerate() {
     yield {};
@@ -43,16 +43,15 @@ assertFalse("letInForIn" in global);
 assertUndefined(global["letInForIn"]);
 
 
-// Destructuring default values in ArrayComprehension are evaluated in the surrounding
-// lexical environment, not in the lexical environment of the ArrayComprehension
+// Destructuring default values in ArrayComprehension are evaluated a new lexical environment,
+// not in the lexical environment of the ArrayComprehension
 [for ({a = eval("let letInArrayCompr = 0;")} of [{}]) 123];
-assertSame("number", typeof letInArrayCompr);
+assertSame("undefined", typeof letInArrayCompr);
 assertFalse("letInArrayCompr" in global);
 assertUndefined(global["letInArrayCompr"]);
 
 
-// Destructuring default values in GeneratorComprehension are evaluated in the
-// lexical environment of the GeneratorComprehension's synthetic arrow function
+// Destructuring default values in GeneratorComprehension are evaluated a new lexical environment
 [...(for ({a = eval("let letInGenCompr = 0;")} of [{}]) 123)];
 assertSame("undefined", typeof letInGenCompr);
 assertFalse("letInGenCompr" in global);

@@ -12,7 +12,7 @@ const {
 // 8.3.15.6: FunctionInitialize should set internal properties after user-modifiable properties
 // https://bugs.ecmascript.org/show_bug.cgi?id=1537
 
-let fn = Function[Symbol.create]();
+let fn = new class extends Function { constructor() { /* no super */ } };
 Object.defineProperty(fn, "length", {value: -1});
 assertThrows(TypeError, () => Function.call(fn, ""));
 assertThrows(TypeError, fn);

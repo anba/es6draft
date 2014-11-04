@@ -75,6 +75,10 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
         return visit((StatementListItem) node, value);
     }
 
+    protected int visit(HoistableDeclaration node, V value) {
+        return visit((Declaration) node, value);
+    }
+
     protected int visit(Statement node, V value) {
         return visit((StatementListItem) node, value);
     }
@@ -133,7 +137,7 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     @Override
     public int visit(AsyncFunctionDeclaration node, V value) {
-        return visit((Declaration) node, value);
+        return visit((HoistableDeclaration) node, value);
     }
 
     @Override
@@ -338,7 +342,7 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     @Override
     public int visit(FunctionDeclaration node, V value) {
-        return visit((Declaration) node, value);
+        return visit((HoistableDeclaration) node, value);
     }
 
     @Override
@@ -353,7 +357,7 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     @Override
     public int visit(GeneratorDeclaration node, V value) {
-        return visit((Declaration) node, value);
+        return visit((HoistableDeclaration) node, value);
     }
 
     @Override
@@ -478,11 +482,6 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     @Override
     public int visit(Module node, V value) {
-        return visit((Node) node, value);
-    }
-
-    @Override
-    public int visit(ModuleImport node, V value) {
         return visit((Node) node, value);
     }
 

@@ -21,6 +21,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -184,23 +185,10 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
         }
 
         /**
-         * 23.2.5.2.2 %SetIteratorPrototype% [ @@iterator ]()
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the this-value
+         * 23.2.5.2.2 %SetIteratorPrototype% [ @@toStringTag ]
          */
-        @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
-        public static Object iterator(ExecutionContext cx, Object thisValue) {
-            return thisValue;
-        }
-
-        /**
-         * 23.2.5.2.3 %SetIteratorPrototype% [ @@toStringTag ]
-         */
-        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag)
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "Set Iterator";
     }
 }

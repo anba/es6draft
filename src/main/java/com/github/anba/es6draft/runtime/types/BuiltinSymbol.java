@@ -19,11 +19,6 @@ public enum BuiltinSymbol {
     NONE, //
 
     /**
-     * &#64;&#64;create
-     */
-    create,
-
-    /**
      * &#64;&#64;hasInstance
      */
     hasInstance,

@@ -202,6 +202,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 }
             }
             /* steps 10-11 */
+            // TODO: handle 2^53-1 limit
             Put(cx, a, "length", n, true);
             /* step 12 */
             return a;
@@ -365,6 +366,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 n += 1;
             }
             /* steps 8-9 */
+            // TODO: handle 2^53-1 limit
             Put(cx, o, "length", n, true);
             /* step 10 */
             return n;
@@ -456,6 +458,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 Put(cx, o, "length", 0, true);
                 return UNDEFINED;
             }
+            assert len > 0;
             /* steps 7-8 */
             Object first = Get(cx, o, 0);
             /* steps 9-10 */
@@ -779,6 +782,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 Put(cx, o, k, e, true);
             }
             /* steps 26-27 */
+            // TODO: handle 2^53-1 limit
             Put(cx, o, "length", len - actualDeleteCount + itemCount, true);
             /* step 28 */
             return a;
@@ -826,6 +830,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 }
             }
             /* steps 8-9 */
+            // TODO: handle 2^53-1 limit
             Put(cx, o, "length", len + argCount, true);
             /* step 10 */
             return len + argCount;
@@ -1689,7 +1694,6 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object unscopables(ExecutionContext cx) {
             /* step 1 */
-            // FIXME: spec bug - don't inherit from %ObjectPrototype%
             OrdinaryObject blackList = ObjectCreate(cx, (ScriptObject) null);
             /* steps 2-8 */
             boolean status = true;
