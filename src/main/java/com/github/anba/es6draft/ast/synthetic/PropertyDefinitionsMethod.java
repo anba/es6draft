@@ -18,7 +18,7 @@ import com.github.anba.es6draft.ast.VoidNodeVisitor;
  * List of {@link PropertyDefinition}s as an external Java method
  */
 public final class PropertyDefinitionsMethod extends PropertyDefinition {
-    private List<PropertyDefinition> properties;
+    private final List<PropertyDefinition> properties;
 
     public PropertyDefinitionsMethod(List<PropertyDefinition> properties) {
         super(first(properties).getBeginPosition(), last(properties).getEndPosition());

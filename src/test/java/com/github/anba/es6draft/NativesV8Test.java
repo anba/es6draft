@@ -70,7 +70,7 @@ public final class NativesV8Test {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             options.add(CompatibilityOption.Comprehension);
             options.add(CompatibilityOption.Realm);
-            options.add(CompatibilityOption.Loader);
+            options.add(CompatibilityOption.System);
             return options;
         }
 

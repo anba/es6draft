@@ -77,6 +77,11 @@
       <version>54.1.1</version>
     </dependency>
     <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>2.5</version>
+    </dependency>
+    <dependency>
       <groupId>org.jruby.joni</groupId>
       <artifactId>joni</artifactId>
       <version>2.1.4</version>

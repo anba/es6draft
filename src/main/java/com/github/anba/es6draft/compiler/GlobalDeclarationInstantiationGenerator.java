@@ -62,7 +62,12 @@ final class GlobalDeclarationInstantiationGenerator extends
 
         mv.lineInfo(script);
         mv.begin();
-        generate(script, mv);
+        // Only generate global-script-init when needed.
+        if (!script.isEvalScript()) {
+            generate(script, mv);
+        } else {
+            generateExceptionThrower(mv);
+        }
         mv.end();
     }
 

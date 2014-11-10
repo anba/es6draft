@@ -30,8 +30,8 @@ public final class ImportDeclaration extends ModuleItem {
     public ImportDeclaration(long beginPosition, long endPosition, String moduleSpecifier) {
         super(beginPosition, endPosition);
         this.type = Type.ImportModule;
-        this.moduleSpecifier = moduleSpecifier;
         this.importClause = null;
+        this.moduleSpecifier = moduleSpecifier;
     }
 
     public Type getType() {

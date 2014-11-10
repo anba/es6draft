@@ -594,7 +594,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         public static final Intrinsics Intl = Intrinsics.Intl;
     }
 
-    @CompatibilityExtension(CompatibilityOption.Loader)
+    @CompatibilityExtension(CompatibilityOption.System)
     public enum SystemProperty {
         ;
 

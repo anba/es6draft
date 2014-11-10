@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.ast;
 
-import java.util.Collections;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.scope.FunctionScope;
@@ -16,15 +15,18 @@ import com.github.anba.es6draft.ast.scope.FunctionScope;
  */
 public final class GeneratorComprehension extends Expression implements FunctionNode {
     private final FunctionScope scope;
+    private final FormalParameterList parameters;
     private final Comprehension comprehension;
     private String functionName, methodName;
     private StrictMode strictMode;
     private boolean syntheticNodes;
 
     public GeneratorComprehension(long beginPosition, long endPosition, FunctionScope scope,
-            Comprehension comprehension) {
+            FormalParameterList parameters, Comprehension comprehension) {
         super(beginPosition, endPosition);
+        assert parameters.getFormals().isEmpty() : "Non-empty parameter list in comprehension";
         this.scope = scope;
+        this.parameters = parameters;
         this.comprehension = comprehension;
     }
 
@@ -60,8 +62,7 @@ public final class GeneratorComprehension extends Expression implements Function
 
     @Override
     public FormalParameterList getParameters() {
-        return new FormalParameterList(getBeginPosition(), getEndPosition(),
-                Collections.<FormalParameter> emptyList());
+        return parameters;
     }
 
     @Override

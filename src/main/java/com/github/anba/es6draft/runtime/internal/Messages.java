@@ -118,6 +118,8 @@ public final class Messages {
         InvalidConstructorMethod("parser.invalid_constructor_method"),
         InvalidPrototypeMethod("parser.invalid_prototype_method"),
         InvalidSuperExpression("parser.invalid_super_expression"),
+        InvalidNewSuperExpression("invalid_new_super_expression"),
+        InvalidSuperCallExpression("invalid_super_call_expression"),
         MissingColonAfterPropertyId("parser.missing_colon_after_property_id"),
         DuplicatePropertyDefinition("parser.duplicate_property_definition"),
         InvalidReturnStatement("parser.invalid_return_statement"),

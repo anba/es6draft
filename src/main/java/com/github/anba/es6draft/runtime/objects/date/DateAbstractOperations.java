@@ -8,10 +8,6 @@ package com.github.anba.es6draft.runtime.objects.date;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 
-import java.text.DateFormatSymbols;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -269,7 +265,7 @@ final class DateAbstractOperations {
      * @return the locale time zone offset
      */
     public static double LocalTZA(Realm realm) {
-        return realm.getTimezone().getRawOffset();
+        return TimeZoneInfo.getDefault().getRawOffset(realm.getTimeZone());
     }
 
     /**
@@ -282,11 +278,11 @@ final class DateAbstractOperations {
      * @return the day light saving time in milli-seconds
      */
     public static double DaylightSavingTA(Realm realm, double t) {
-        TimeZone tz = realm.getTimezone();
-        if (tz.inDaylightTime(new Date((long) t))) {
-            return tz.getDSTSavings();
+        if (Double.isNaN(t)) {
+            return t;
         }
-        return 0;
+        assert Math.abs(t) <= 8.64e15;
+        return TimeZoneInfo.getDefault().getDSTSavings(realm.getTimeZone(), (long) t);
     }
 
     /**
@@ -299,7 +295,12 @@ final class DateAbstractOperations {
      * @return the local time value in milli-seconds
      */
     public static double LocalTime(Realm realm, double t) {
-        return t + LocalTZA(realm) + DaylightSavingTA(realm, t);
+        // return t + LocalTZA(realm) + DaylightSavingTA(realm, t);
+        if (Double.isNaN(t)) {
+            return t;
+        }
+        assert Math.abs(t) <= 8.64e15;
+        return TimeZoneInfo.getDefault().localTime(realm.getTimeZone(), (long) t);
     }
 
     /**
@@ -312,13 +313,17 @@ final class DateAbstractOperations {
      * @return the date in milli-seconds since the epoch
      */
     public static double UTC(Realm realm, double t) {
-        double d = t - LocalTZA(realm);
-        return d - DaylightSavingTA(realm, d - realm.getTimezone().getDSTSavings());
+        // double d = t - LocalTZA(realm);
+        // return d - DaylightSavingTA(realm, d - realm.getTimezone().getDSTSavings());
         // TODO: spec issue
         // https://code.google.com/p/v8/issues/detail?id=3116
         // https://code.google.com/p/v8/issues/detail?id=3637
         // https://bugzilla.mozilla.org/show_bug.cgi?id=1084434
         // return t - LocalTZA(realm) - DaylightSavingTA(realm, t - LocalTZA(realm));
+        if (Double.isNaN(t) || Math.abs(t) > (8.64e15 + 8.64e7)) {
+            return t;
+        }
+        return TimeZoneInfo.getDefault().utc(realm.getTimeZone(), (long) t);
     }
 
     /**
@@ -589,7 +594,7 @@ final class DateAbstractOperations {
                 state = (c == '-' ? state + 1 : c == 'T' ? HOUR : ERROR);
                 break;
             case DAY:
-                // allow ' ' as time separator in lenient mode (to be able to parse our UTC strings)
+                // allow ' ' as time separator in lenient mode
                 state = (c == 'T' ? HOUR : lenient && c == ' ' ? HOUR : ERROR);
                 break;
             case HOUR:
@@ -659,13 +664,67 @@ final class DateAbstractOperations {
         return Double.NaN;
     }
 
+    private static final String[] weekDayNames = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+
+    /**
+     * Week Day Name
+     * 
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the week day name
+     */
+    public static String WeekDayName(double t) {
+        double weekDay = WeekDay(t);
+        if (Double.isNaN(weekDay)) {
+            return "";
+        }
+        return weekDayNames[(int) weekDay];
+    }
+
+    private static final String[] monthNames = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+            "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+    /**
+     * Month Name
+     * 
+     * @param t
+     *            the date in milli-seconds since the epoch
+     * @return the month name
+     */
+    public static String MonthNameFromTime(double t) {
+        double month = MonthFromTime(t);
+        if (Double.isNaN(month)) {
+            return "";
+        }
+        return monthNames[(int) month];
+    }
+
+    private static final Pattern utcDateTimePattern;
     private static final Pattern dateTimePattern;
+    private static final Pattern usDateTimePattern;
     static {
-        // "EEE MMM dd yyyy HH:mm:ss 'GMT'Z (z)"
-        String date = "([a-zA-Z]{3}) ([a-zA-Z]{3}) ([0-3][0-9]) (-?[0-9]{1,6})";
-        String time = "([0-2][0-9]):([0-5][0-9]):([0-5][0-9])";
-        String timezone = "GMT([+-][0-9]{4})(?: \\([a-zA-Z]{3,5}\\))?";
-        dateTimePattern = Pattern.compile(date + " " + time + " " + timezone);
+        String weekday = "(?:([a-zA-Z]{3}),? )?";
+        String time = "(?: ([0-2]?[0-9]):([0-5][0-9])(?::([0-5][0-9]))?(?: (AM|PM))?)?";
+        String timezone;
+        {
+            String tzHour = "([+-][0-9]{2})";
+            String tzMin = "([0-9]{2})";
+            String tzOffset = "(?: ?" + tzHour + ":?" + tzMin + ")?";
+            String tzName = "(?: \\([a-zA-Z]{3,5}\\))?";
+            timezone = "( (?:GMT|UTC)?" + tzOffset + tzName + ")?";
+        }
+
+        // "EEE, dd MMM yyyy HH:mm:ss 'AM|PM' 'GMT'Z (z)"
+        String utcDate = "([0-3]?[0-9]) ([a-zA-Z]{3}) (-?[0-9]{1,6})";
+        utcDateTimePattern = Pattern.compile(weekday + utcDate + time + timezone);
+
+        // "EEE, MMM dd yyyy HH:mm:ss 'AM|PM' 'GMT'Z (z)"
+        String date = "([a-zA-Z]{3}) ([0-3]?[0-9]) (-?[0-9]{1,6})";
+        dateTimePattern = Pattern.compile(weekday + date + time + timezone);
+
+        // "mm/dd/yyyy HH:mm:ss 'AM|PM'"
+        String usDate = "([0-1]?[0-9])/([0-3]?[0-9])/([0-9]{1,6})";
+        usDateTimePattern = Pattern.compile(usDate + time);
     }
 
     /**
@@ -679,46 +738,142 @@ final class DateAbstractOperations {
      * @return the date in milli-seconds or {@code NaN} if not parsed successfully
      */
     public static double parseDateString(Realm realm, CharSequence s) {
-        Matcher matcher = dateTimePattern.matcher(s);
-        syntax: if (matcher.matches()) {
-            DateFormatSymbols symbols = DateFormatSymbols.getInstance(Locale.US);
-            int weekday = indexOf(symbols.getShortWeekdays(), matcher.group(1), 1, 7);
-            int month = 1 + indexOf(symbols.getShortMonths(), matcher.group(2), 0, 11);
-            int day = Integer.parseInt(matcher.group(3));
-            int year = Integer.parseInt(matcher.group(4));
-            int hour = Integer.parseInt(matcher.group(5));
-            int min = Integer.parseInt(matcher.group(6));
-            int sec = Integer.parseInt(matcher.group(7));
-            int msec = 0;
-            int tz = Integer.parseInt(matcher.group(8));
-            int tzhour = tz / 100;
-            int tzmin = tz % 100;
-
-            // just parse, but ignore actual value
-            if (weekday == -1) {
-                break syntax;
+        Matcher matcher;
+        if ((matcher = utcDateTimePattern.matcher(s)).matches()) {
+            assert matcher.groupCount() == 11;
+            double day = fromDateString(matcher.group(4), matcher.group(3), matcher.group(2),
+                    matcher.group(1));
+            double time = fromTimeString(matcher.group(5), matcher.group(6), matcher.group(7),
+                    matcher.group(8));
+            double tzOffset = 0;
+            boolean localTime = matcher.group(9) == null;
+            if (!localTime) {
+                tzOffset = fromTimeZoneString(matcher.group(10), matcher.group(11));
             }
-            if (Math.abs(year) > 275943 // ceil(1e8/365) + 1970 = 275943
-                    || (month < 1 || month > 12)
-                    || (day < 1 || day > DaysInMonth(year, month))
-                    || hour > 24 || (hour == 24 && (min > 0 || sec > 0 || msec > 0))
-                    || min > 59
-                    || sec > 59 || Math.abs(tzhour) > 23 || Math.abs(tzmin) > 59) {
-                break syntax;
+            return fromDateTimeString(realm, day, time, tzOffset, localTime);
+        }
+        if ((matcher = dateTimePattern.matcher(s)).matches()) {
+            assert matcher.groupCount() == 11;
+            double day = fromDateString(matcher.group(4), matcher.group(2), matcher.group(3),
+                    matcher.group(1));
+            double time = fromTimeString(matcher.group(5), matcher.group(6), matcher.group(7),
+                    matcher.group(8));
+            double tzOffset = 0;
+            boolean localTime = matcher.group(9) == null;
+            if (!localTime) {
+                tzOffset = fromTimeZoneString(matcher.group(10), matcher.group(11));
             }
-            double date = MakeDate(MakeDay(year, month - 1, day), MakeTime(hour, min, sec, msec));
-            date -= (tzhour * 60 + tzmin) * msPerMinute;
-
-            if (date < -8.64e15 || date > 8.64e15)
-                break syntax;
-            return date;
+            return fromDateTimeString(realm, day, time, tzOffset, localTime);
+        }
+        if ((matcher = usDateTimePattern.matcher(s)).matches()) {
+            assert matcher.groupCount() == 7;
+            double day = fromDateString(matcher.group(3), matcher.group(1), matcher.group(2));
+            double time = fromTimeString(matcher.group(4), matcher.group(5), matcher.group(6),
+                    matcher.group(7));
+            double tzOffset = 0;
+            boolean localTime = true;
+            return fromDateTimeString(realm, day, time, tzOffset, localTime);
         }
         return Double.NaN;
     }
 
-    private static int indexOf(String[] array, String value, int startIndex, int endIndex) {
-        assert startIndex >= 0 && endIndex < array.length && startIndex <= endIndex;
-        for (int i = startIndex; i <= endIndex; ++i) {
+    private static double fromDateTimeString(Realm realm, double day, double time, double tzOffset,
+            boolean localTime) {
+        if (Double.isNaN(day) || Double.isNaN(time) || Double.isNaN(tzOffset))
+            return Double.NaN;
+        double date = MakeDate(day, time);
+        if (localTime) {
+            date = UTC(realm, date);
+        } else {
+            date -= tzOffset;
+        }
+        if (date < -8.64e15 || date > 8.64e15)
+            return Double.NaN;
+        return date;
+    }
+
+    private static double fromDateString(String yearValue, String monthName, String dayValue,
+            String weekdayName) {
+        assert yearValue != null && monthName != null && dayValue != null;
+        int month = 1 + indexOf(monthNames, monthName);
+        if (weekdayName != null) {
+            // Just parse, but ignore actual value.
+            int weekday = indexOf(weekDayNames, weekdayName);
+            if (weekday == -1) {
+                return Double.NaN;
+            }
+        }
+        int year = Integer.parseInt(yearValue);
+        int day = Integer.parseInt(dayValue);
+        return fromDateString(year, month, day);
+    }
+
+    private static double fromDateString(String yearValue, String monthValue, String dayValue) {
+        assert yearValue != null && monthValue != null && dayValue != null;
+        int year = Integer.parseInt(yearValue);
+        int month = Integer.parseInt(monthValue);
+        int day = Integer.parseInt(dayValue);
+        return fromDateString(year, month, day);
+    }
+
+    private static double fromDateString(int year, int month, int day) {
+        if (Math.abs(year) > 275943 // ceil(1e8/365) + 1970 = 275943
+                || (month < 1 || month > 12) || (day < 1 || day > DaysInMonth(year, month))) {
+            return Double.NaN;
+        }
+        return MakeDay(year, month - 1, day);
+    }
+
+    private static double fromTimeString(String hourValue, String minValue, String secValue,
+            String amPm) {
+        if (hourValue == null) {
+            assert minValue == null && secValue == null && amPm == null;
+            return MakeTime(0, 0, 0, 0);
+        }
+        assert minValue != null;
+        int hour = Integer.parseInt(hourValue);
+        int min = Integer.parseInt(minValue);
+        int sec = secValue != null ? Integer.parseInt(secValue) : 0;
+        if (amPm == null) {
+            if (hour > 24 || (hour == 24 && (min > 0 || sec > 0)) || min > 59 || sec > 59) {
+                return Double.NaN;
+            }
+        } else {
+            if (hour > 12 || min > 59 || sec > 59) {
+                return Double.NaN;
+            }
+            if (hour == 12) {
+                if ("AM".equals(amPm)) {
+                    hour = 0;
+                }
+            } else {
+                if ("PM".equals(amPm)) {
+                    hour += 12;
+                }
+            }
+        }
+        return MakeTime(hour, min, sec, 0);
+    }
+
+    private static double fromTimeZoneString(String tzHourValue, String tzMinValue) {
+        if (tzHourValue == null) {
+            assert tzMinValue == null;
+            return 0;
+        }
+        assert tzMinValue != null;
+        int tzhour = Integer.parseInt(tzHourValue);
+        int tzmin = Integer.parseInt(tzMinValue);
+        if (Math.abs(tzhour) > 23 || Math.abs(tzmin) > 59) {
+            return Double.NaN;
+        }
+        if (tzhour < 0) {
+            return (tzhour * 60 - tzmin) * msPerMinute;
+        }
+        return (tzhour * 60 + tzmin) * msPerMinute;
+    }
+
+    private static int indexOf(String[] array, String value) {
+        for (int i = 0, len = array.length; i < len; ++i) {
             if (array[i].equals(value)) {
                 return i;
             }

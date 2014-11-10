@@ -69,10 +69,11 @@ public class ScriptTest {
         protected Set<CompatibilityOption> getOptions() {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             // TODO: Replace/move tests which require es7 extensions
-            options.add(CompatibilityOption.Comprehension);
-            options.add(CompatibilityOption.Realm);
-            options.add(CompatibilityOption.Loader);
             options.add(CompatibilityOption.AsyncFunction);
+            options.add(CompatibilityOption.Comprehension);
+            options.add(CompatibilityOption.Loader);
+            options.add(CompatibilityOption.Realm);
+            options.add(CompatibilityOption.System);
             return options;
         }
     };

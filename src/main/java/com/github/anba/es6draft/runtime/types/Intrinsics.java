@@ -231,8 +231,6 @@ public enum Intrinsics {/* @formatter:off */
     /* @formatter:on */
     ;
 
-    // TODO: add %ReturnUndefined% intrinsic
-
     /**
      * Returns the intrinsic key.
      * 

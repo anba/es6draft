@@ -33,12 +33,6 @@ es6/generators-parsing.js
 # non-strict equality fails when comparing symbols and primitive values against each other
 es6/iteration-semantics.js
 
-# modules not yet enabled
-harmony/module-linking.js
-harmony/module-parsing.js
-harmony/module-recompile.js
-harmony/module-resolution.js
-
 # RegExp: invalid test, match/replace call Put("lastIndex", 0) if global
 regress/regress-2438.js
 
@@ -141,9 +135,6 @@ date-parse.js
 json.js
 regress/regress-396.js
 
-# Date.prototype.toUTCString() format is implementation-dependent
-regress/regress-3116.js
-
 # for-in order
 enumeration-order.js
 
@@ -213,6 +204,17 @@ regress/regress-356589.js
 regress/regress-417709a.js
 regress/regress-417709b.js
 harmony/regress/regress-405844.js
+
+
+#######################################
+# Test for syntax extensions          #
+#######################################
+
+# Inline module syntax
+harmony/module-linking.js
+harmony/module-parsing.js
+harmony/module-recompile.js
+harmony/module-resolution.js
 
 
 ###############################################################

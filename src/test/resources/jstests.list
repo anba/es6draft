@@ -175,15 +175,12 @@ js1_8_5/extensions/proxy-enumerateOwn-duplicates.js
 js1_8_5/extensions/scripted-proxies.js
 
 # Date parser
-ecma/Date/15.9.4.2.js
-ecma/Date/15.9.4.2-1.js
 ecma_3/Date/15.9.3.2-1.js
-ecma_3/Date/15.9.5.3.js
-ecma_3/Date/15.9.5.6.js
-ecma_3/Date/15.9.5.7.js
-ecma_5/Date/15.9.4.2.js
 js1_5/Date/regress-301738-01.js
 js1_5/Date/regress-301738-02.js
+
+# ES6-change: Date without timezone interpreted as local time
+ecma_5/Date/15.9.4.2.js
 
 # Spidermonkey embraces bad DST
 js1_5/Regress/regress-58116.js
@@ -329,11 +326,6 @@ ecma_5/strict/15.3.5.1.js
 # function .name property is configurable=true
 ecma_5/strict/function-name.js
 
-# No implicit ToObject() in destructuring
-ecma_5/extensions/destructuring-for-inof-__proto__.js
-js1_7/extensions/regress-355410.js
-js1_8_1/extensions/regress-477158.js
-
 # String.prototype.split changed to use ToLength instead of ToUint32
 ecma_2/String/split-002.js
 ecma_5/String/split-undefined-separator.js
@@ -423,6 +415,10 @@ js1_8_5/regress/regress-383902.js
 
 # script code, but not global scope(!), eval() does not add lexical declarations to global object
 js1_5/Regress/regress-103602.js
+
+# function declaration with same name as parameter in surrounding function not applicable for B.3.3
+js1_8/regress/regress-467495-05.js
+js1_8/regress/regress-467495-06.js
 
 
 ############################################

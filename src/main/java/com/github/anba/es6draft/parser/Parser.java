@@ -198,7 +198,6 @@ public final class Parser {
             }
         }
 
-        // TODO: rename
         ParseContext findSuperContext() {
             for (ParseContext cx = this;; cx = cx.parent) {
                 switch (cx.kind) {
@@ -2451,10 +2450,22 @@ public final class Parser {
      */
     private FormalParameterList formalParameters(Token end) {
         if (token() == end) {
-            return new FormalParameterList(ts.beginPosition(), ts.endPosition(),
-                    Collections.<FormalParameter> emptyList());
+            return emptyFormalParameterList();
         }
         return formalParameterList();
+    }
+
+    private FormalParameterList emptyFormalParameterList() {
+        context.funContext.parameterNames = new NameSet();
+        return new FormalParameterList(ts.beginPosition(), ts.endPosition(),
+                Collections.<FormalParameter> emptyList());
+    }
+
+    private FormalParameterList arrowFormalParameterList(BindingIdentifier identifier) {
+        long begin = identifier.getBeginPosition();
+        FormalParameter parameter = new BindingElement(begin, ts.endPosition(), identifier, null);
+        context.funContext.parameterNames = new NameSet(BoundNames(identifier));
+        return new FormalParameterList(begin, ts.endPosition(), singletonList(parameter));
     }
 
     /**
@@ -2488,6 +2499,7 @@ public final class Parser {
                 }
             }
         }
+        context.funContext.parameterNames = new NameSet(BoundNames(formals));
         return new FormalParameterList(begin, ts.endPosition(), formals);
     }
 
@@ -2579,57 +2591,16 @@ public final class Parser {
      */
     private void function_EarlyErrors(FunctionDefinition function) {
         assert context.scopeContext == context.funContext;
-
         FunctionContext scope = context.funContext;
         FormalParameterList parameters = function.getParameters();
         List<Name> boundNames = BoundNames(parameters);
-        scope.parameterNames = new NameSet(boundNames);
 
-        boolean strict = (context.strictMode != StrictMode.NonStrict);
-        boolean simple = IsSimpleParameterList(parameters);
+        if (!IsSimpleParameterList(parameters)) {
+            checkFormalParameterDuplication(function, boundNames, scope.parameterNames);
+        } else if (context.strictMode != StrictMode.NonStrict) {
+            checkFormalParameterDuplicationStrict(function, boundNames, scope.parameterNames);
+        }
         checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
-        if (strict) {
-            strictFormalParameters_EarlyErrors(function, boundNames, scope.parameterNames, simple);
-        } else {
-            formalParameters_EarlyErrors(function, boundNames, scope.parameterNames, simple);
-        }
-    }
-
-    /**
-     * 14.1.1 Static Semantics: Early Errors
-     * 
-     * @param node
-     *            the function definition to validate
-     * @param boundNames
-     *            the list of bound parameter names
-     * @param names
-     *            the set of names to validate
-     * @param simple
-     *            the flag to describe simple parameter lists
-     */
-    private void strictFormalParameters_EarlyErrors(FunctionNode node, List<Name> boundNames,
-            NameSet names, boolean simple) {
-        checkFormalParameterDuplicationStrict(node, boundNames, names);
-        formalParameters_EarlyErrors(node, boundNames, names, simple);
-    }
-
-    /**
-     * 14.1.1 Static Semantics: Early Errors
-     * 
-     * @param node
-     *            the function definition to validate
-     * @param boundNames
-     *            the list of bound parameter names
-     * @param names
-     *            the set of names to validate
-     * @param simple
-     *            the flag to describe simple parameter lists
-     */
-    private void formalParameters_EarlyErrors(FunctionNode node, List<Name> boundNames,
-            NameSet names, boolean simple) {
-        if (!simple) {
-            checkFormalParameterDuplication(node, boundNames, names);
-        }
     }
 
     /**
@@ -2690,8 +2661,10 @@ public final class Parser {
                 }
             }
             // See 14.1.2 Static Semantics: Early Errors
-            if (topScope.allowVarDeclaredName(name)) {
-                // Function declaration is applicable for legacy semantics.
+            if (topScope.allowVarDeclaredName(name) && !topScope.parameterNames.contains(name)) {
+                // Function declaration is applicable for legacy semantics, iff
+                // (1) Adding a VariableStatement with the same name would not produce an error.
+                // (2) The name is not an element of BoundNames of FormalParameters.
                 function.setLegacyBlockScoped(true);
                 blockFunctions.add(function);
             }
@@ -2763,10 +2736,7 @@ public final class Parser {
                 consume(Token.RP);
             } else {
                 BindingIdentifier identifier = bindingIdentifier();
-                FormalParameter parameter = new BindingElement(begin, ts.endPosition(), identifier,
-                        null);
-                parameters = new FormalParameterList(begin, ts.endPosition(),
-                        singletonList(parameter));
+                parameters = arrowFormalParameterList(identifier);
 
                 startFunction = ts.position();
                 source.append(identifier.getName());
@@ -2831,15 +2801,11 @@ public final class Parser {
      */
     private void arrowFunction_EarlyErrors(ArrowFunction function) {
         assert context.scopeContext == context.funContext;
-
         FunctionContext scope = context.funContext;
-        FormalParameterList parameters = function.getParameters();
-        List<Name> boundNames = BoundNames(parameters);
-        scope.parameterNames = new NameSet(boundNames);
+        List<Name> boundNames = BoundNames(function.getParameters());
 
-        boolean simple = IsSimpleParameterList(parameters);
+        checkFormalParameterDuplication(function, boundNames, scope.parameterNames);
         checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
-        strictFormalParameters_EarlyErrors(function, boundNames, scope.parameterNames, simple);
     }
 
     /**
@@ -2951,8 +2917,7 @@ public final class Parser {
         try {
             consume(Token.LP);
             int startFunction = ts.position() - 1;
-            FormalParameterList parameters = new FormalParameterList(ts.beginPosition(),
-                    ts.endPosition(), Collections.<FormalParameter> emptyList());
+            FormalParameterList parameters = emptyFormalParameterList();
             consume(Token.RP);
 
             List<StatementListItem> statements;
@@ -3061,6 +3026,7 @@ public final class Parser {
     private FormalParameterList propertySetParameterList() {
         long begin = ts.beginPosition();
         FormalParameter setParameter = formalParameter();
+        context.funContext.parameterNames = new NameSet(BoundNames(setParameter));
         return new FormalParameterList(begin, ts.endPosition(), singletonList(setParameter));
     }
 
@@ -3101,45 +3067,26 @@ public final class Parser {
      */
     private void methodDefinition_EarlyErrors(MethodDefinition method) {
         assert context.scopeContext == context.funContext;
-
         FunctionContext scope = context.funContext;
-        FormalParameterList parameters = method.getParameters();
-        List<Name> boundNames = BoundNames(parameters);
-        scope.parameterNames = new NameSet(boundNames);
+        List<Name> boundNames = BoundNames(method.getParameters());
 
-        boolean simple = IsSimpleParameterList(parameters);
         switch (method.getType()) {
         case AsyncFunction:
         case Function:
         case Generator: {
+            checkFormalParameterDuplication(method, boundNames, scope.parameterNames);
             checkFormalParameterRedeclaration(method, boundNames, scope.lexDeclaredNames);
-            strictFormalParameters_EarlyErrors(method, boundNames, scope.parameterNames, simple);
             return;
         }
         case Setter: {
+            checkFormalParameterDuplication(method, boundNames, scope.parameterNames);
             checkFormalParameterRedeclaration(method, boundNames, scope.lexDeclaredNames);
-            propertySetParameterList_EarlyErrors(method, boundNames, scope.parameterNames);
             return;
         }
         case Getter:
         default:
             return;
         }
-    }
-
-    /**
-     * 14.3.1 Static Semantics: Early Errors
-     * 
-     * @param node
-     *            the function definition to validate
-     * @param boundNames
-     *            the list of bound parameter names
-     * @param names
-     *            the set of names to validate
-     */
-    private void propertySetParameterList_EarlyErrors(FunctionNode node, List<Name> boundNames,
-            NameSet names) {
-        checkFormalParameterDuplication(node, boundNames, names);
     }
 
     /**
@@ -3325,20 +3272,16 @@ public final class Parser {
      */
     private void generator_EarlyErrors(GeneratorDefinition generator) {
         assert context.scopeContext == context.funContext;
-
         FunctionContext scope = context.funContext;
         FormalParameterList parameters = generator.getParameters();
         List<Name> boundNames = BoundNames(parameters);
-        scope.parameterNames = new NameSet(boundNames);
 
-        boolean strict = (context.strictMode != StrictMode.NonStrict);
-        boolean simple = IsSimpleParameterList(parameters);
-        checkFormalParameterRedeclaration(generator, boundNames, scope.lexDeclaredNames);
-        if (strict) {
-            strictFormalParameters_EarlyErrors(generator, boundNames, scope.parameterNames, simple);
-        } else {
-            formalParameters_EarlyErrors(generator, boundNames, scope.parameterNames, simple);
+        if (!IsSimpleParameterList(parameters)) {
+            checkFormalParameterDuplication(generator, boundNames, scope.parameterNames);
+        } else if (context.strictMode != StrictMode.NonStrict) {
+            checkFormalParameterDuplicationStrict(generator, boundNames, scope.parameterNames);
         }
+        checkFormalParameterRedeclaration(generator, boundNames, scope.lexDeclaredNames);
     }
 
     /**
@@ -3795,20 +3738,16 @@ public final class Parser {
 
     private void asyncFunction_EarlyErrors(AsyncFunctionDefinition function) {
         assert context.scopeContext == context.funContext;
-
         FunctionContext scope = context.funContext;
         FormalParameterList parameters = function.getParameters();
         List<Name> boundNames = BoundNames(parameters);
-        scope.parameterNames = new NameSet(boundNames);
 
-        boolean strict = (context.strictMode != StrictMode.NonStrict);
-        boolean simple = IsSimpleParameterList(parameters);
-        checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
-        if (strict) {
-            strictFormalParameters_EarlyErrors(function, boundNames, scope.parameterNames, simple);
-        } else {
-            formalParameters_EarlyErrors(function, boundNames, scope.parameterNames, simple);
+        if (!IsSimpleParameterList(parameters)) {
+            checkFormalParameterDuplication(function, boundNames, scope.parameterNames);
+        } else if (context.strictMode != StrictMode.NonStrict) {
+            checkFormalParameterDuplicationStrict(function, boundNames, scope.parameterNames);
         }
+        checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
     }
 
     /**
@@ -3850,10 +3789,7 @@ public final class Parser {
                 consume(Token.RP);
             } else {
                 BindingIdentifier identifier = bindingIdentifier();
-                FormalParameter parameter = new BindingElement(begin, ts.endPosition(), identifier,
-                        null);
-                parameters = new FormalParameterList(begin, ts.endPosition(),
-                        singletonList(parameter));
+                parameters = arrowFormalParameterList(identifier);
 
                 startFunction = ts.position();
                 source.append(identifier.getName());
@@ -3918,15 +3854,11 @@ public final class Parser {
      */
     private void asyncArrowFunction_EarlyErrors(AsyncArrowFunction function) {
         assert context.scopeContext == context.funContext;
-
         FunctionContext scope = context.funContext;
-        FormalParameterList parameters = function.getParameters();
-        List<Name> boundNames = BoundNames(parameters);
-        scope.parameterNames = new NameSet(boundNames);
+        List<Name> boundNames = BoundNames(function.getParameters());
 
-        boolean simple = IsSimpleParameterList(parameters);
+        checkFormalParameterDuplication(function, boundNames, scope.parameterNames);
         checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
-        strictFormalParameters_EarlyErrors(function, boundNames, scope.parameterNames, simple);
     }
 
     /**
@@ -5635,7 +5567,7 @@ public final class Parser {
                     // CatchBlock receives a list of non-available lexical declarable names to
                     // fulfill the early error restriction that the BoundNames of CatchParameter
                     // must not also occur in either the LexicallyDeclaredNames or the
-                    // VarDeclaredNames of CatchBlock
+                    // VarDeclaredNames of CatchBlock.
                     BlockStatement catchBlock = block(singletonList(catchParameter));
 
                     exitCatchContext();
@@ -5662,7 +5594,7 @@ public final class Parser {
                 // CatchBlock receives a list of non-available lexical declarable names to
                 // fulfill the early error restriction that the BoundNames of CatchParameter
                 // must not also occur in either the LexicallyDeclaredNames or the
-                // VarDeclaredNames of CatchBlock
+                // VarDeclaredNames of CatchBlock.
                 BlockStatement catchBlock = block(singletonList(catchParameter));
 
                 exitCatchContext();
@@ -6876,17 +6808,16 @@ public final class Parser {
 
             long begin = ts.beginPosition();
             consume(Token.LP);
+            // generator comprehensions have no named parameters
+            FormalParameterList parameters = emptyFormalParameterList();
             Comprehension comprehension = comprehension();
             consume(Token.RP);
             assert context.assertLiteralsUnchecked(0);
 
             FunctionContext scope = context.funContext;
             GeneratorComprehension generator = new GeneratorComprehension(begin, ts.endPosition(),
-                    scope, comprehension);
+                    scope, parameters, comprehension);
             scope.node = generator;
-
-            // generator comprehensions have no named parameters
-            scope.parameterNames = new NameSet();
 
             propagateNeedsArguments();
 
@@ -6921,17 +6852,16 @@ public final class Parser {
 
             long begin = ts.beginPosition();
             consume(Token.LP);
+            // generator comprehensions have no named parameters
+            FormalParameterList parameters = emptyFormalParameterList();
             LegacyComprehension comprehension = legacyComprehension();
             consume(Token.RP);
             assert context.assertLiteralsUnchecked(0);
 
             FunctionContext scope = context.funContext;
             GeneratorComprehension generator = new GeneratorComprehension(begin, ts.endPosition(),
-                    scope, comprehension);
+                    scope, parameters, comprehension);
             scope.node = generator;
-
-            // generator comprehensions have no named parameters
-            scope.parameterNames = new NameSet();
 
             propagateNeedsArguments();
 
@@ -7205,26 +7135,25 @@ public final class Parser {
     private void superCall() {
         ParseContext superContext = context.findSuperContext();
         super_EarlyErrors(superContext);
-        // TODO: https://bugs.ecmascript.org/show_bug.cgi?id=3284
+        // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=3284
         if (superContext.kind.isMethod() && !superContext.isConstructor) {
-            // TODO: better error message
-            reportSyntaxError(Messages.Key.InvalidSuperExpression);
+            reportSyntaxError(Messages.Key.InvalidSuperCallExpression);
         }
     }
 
     private void superNew() {
         ParseContext superContext = context.findSuperContext();
         super_EarlyErrors(superContext);
+        // FIXME: spec bug - allow in constructor methods.
         if (superContext.kind.isMethod() && !superContext.isConstructor) {
-            // TODO: better error message
-            reportSyntaxError(Messages.Key.InvalidSuperExpression);
+            reportSyntaxError(Messages.Key.InvalidNewSuperExpression);
         }
     }
 
-    private void super_EarlyErrors(ParseContext cx) {
-        // TODO: spec bug - search for first non-lexical context.
-        if (cx.kind == ContextKind.Script && !isEnabled(Option.FunctionCode)
-                || cx.kind == ContextKind.Module) {
+    private void super_EarlyErrors(ParseContext superContext) {
+        // FIXME: spec bug - search for first non-lexical context.
+        if (superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionCode)
+                || superContext.kind == ContextKind.Module) {
             reportSyntaxError(Messages.Key.InvalidSuperExpression);
         }
     }

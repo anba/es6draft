@@ -56,11 +56,6 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                         "getFunctionVariableEnvironment",
                         Type.getMethodType(Types.LexicalEnvironment));
 
-        // class: IllegalStateException
-        static final MethodDesc IllegalStateException_init = MethodDesc.create(
-                MethodDesc.Invoke.Special, Types.IllegalStateException, "<init>",
-                Type.getMethodType(Type.VOID_TYPE));
-
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_canDeclareVarOrThrow = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareVarOrThrow", Type
@@ -96,7 +91,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
 
         mv.lineInfo(evalScript);
         mv.begin();
-        // only generate eval-script-init when requested
+        // Only generate eval-script-init when needed.
         if (!evalScript.isEvalScript()) {
             generateExceptionThrower(mv);
         } else if (evalScript.isGlobalCode() && !evalScript.isStrict() && !evalScript.isScripting()) {
@@ -105,11 +100,6 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
             generate(evalScript, mv);
         }
         mv.end();
-    }
-
-    private void generateExceptionThrower(ExpressionVisitor mv) {
-        mv.anew(Types.IllegalStateException, Methods.IllegalStateException_init);
-        mv.athrow();
     }
 
     private void generateGlobal(Script evalScript, ExpressionVisitor mv) {

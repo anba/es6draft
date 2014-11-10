@@ -11,8 +11,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
 
-import java.util.Objects;
-
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.CompiledObject;
 import com.github.anba.es6draft.parser.ParserException;
@@ -220,16 +218,6 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
 
         FunctionSourceObject(Source source) {
             this.source = source;
-        }
-
-        @Override
-        public String sourceName() {
-            return source.getName();
-        }
-
-        @Override
-        public String sourceFile() {
-            return Objects.toString(source.getFile(), null);
         }
 
         @Override

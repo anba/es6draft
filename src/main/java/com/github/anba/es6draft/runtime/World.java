@@ -8,9 +8,7 @@ package com.github.anba.es6draft.runtime;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Paths;
 import java.util.ArrayDeque;
-import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
@@ -20,7 +18,6 @@ import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.FileModuleLoader;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ModuleLoader;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -39,9 +36,9 @@ public final class World<GLOBAL extends GlobalObject> {
     private final ObjectAllocator<GLOBAL> allocator;
     private final ModuleLoader moduleLoader;
     private final ScriptLoader scriptLoader;
-    private final Locale locale = Locale.getDefault();
-    private final TimeZone timezone = TimeZone.getDefault();
-    private final Messages messages = Messages.create(locale);
+    private final Locale locale;
+    private final TimeZone timeZone;
+    private final Messages messages;
     private final GlobalSymbolRegistry symbolRegistry = new GlobalSymbolRegistry();
 
     // TODO: move to custom class
@@ -77,48 +74,6 @@ public final class World<GLOBAL extends GlobalObject> {
     }
 
     /**
-     * Creates a new {@link World} object with the default settings.
-     * 
-     * @param allocator
-     *            the global object allocator
-     */
-    public World(ObjectAllocator<GLOBAL> allocator) {
-        this(allocator, CompatibilityOption.WebCompatibility(),
-                EnumSet.noneOf(Parser.Option.class), EnumSet.noneOf(Compiler.Option.class));
-    }
-
-    /**
-     * Creates a new {@link World} object.
-     * 
-     * @param allocator
-     *            the global object allocator
-     * @param options
-     *            the compatibility options
-     */
-    public World(ObjectAllocator<GLOBAL> allocator, Set<CompatibilityOption> options) {
-        this(allocator, options, EnumSet.noneOf(Parser.Option.class), EnumSet
-                .noneOf(Compiler.Option.class));
-    }
-
-    /**
-     * Creates a new {@link World} object.
-     * 
-     * @param allocator
-     *            the global object allocator
-     * @param options
-     *            the compatibility options
-     * @param parserOptions
-     *            the parser options
-     * @param compilerOptions
-     *            the compiler options
-     */
-    public World(ObjectAllocator<GLOBAL> allocator, Set<CompatibilityOption> options,
-            Set<Parser.Option> parserOptions, Set<Compiler.Option> compilerOptions) {
-        this(allocator, new FileModuleLoader(Paths.get("").toAbsolutePath()), options,
-                parserOptions, compilerOptions);
-    }
-
-    /**
      * Creates a new {@link World} object.
      * 
      * @param allocator
@@ -135,9 +90,7 @@ public final class World<GLOBAL extends GlobalObject> {
     public World(ObjectAllocator<GLOBAL> allocator, ModuleLoader moduleLoader,
             Set<CompatibilityOption> options, Set<Parser.Option> parserOptions,
             Set<Compiler.Option> compilerOptions) {
-        this.allocator = allocator;
-        this.moduleLoader = moduleLoader;
-        this.scriptLoader = new ScriptLoader(options, parserOptions, compilerOptions);
+        this(allocator, moduleLoader, new ScriptLoader(options, parserOptions, compilerOptions));
     }
 
     /**
@@ -152,9 +105,31 @@ public final class World<GLOBAL extends GlobalObject> {
      */
     public World(ObjectAllocator<GLOBAL> allocator, ModuleLoader moduleLoader,
             ScriptLoader scriptLoader) {
+        this(allocator, moduleLoader, scriptLoader, Locale.getDefault(), TimeZone.getDefault());
+    }
+
+    /**
+     * Creates a new {@link World} object.
+     * 
+     * @param allocator
+     *            the global object allocator
+     * @param moduleLoader
+     *            the module loader
+     * @param scriptLoader
+     *            the script loader
+     * @param locale
+     *            the default locale
+     * @param timeZone
+     *            the default timezone
+     */
+    public World(ObjectAllocator<GLOBAL> allocator, ModuleLoader moduleLoader,
+            ScriptLoader scriptLoader, Locale locale, TimeZone timeZone) {
         this.allocator = allocator;
         this.moduleLoader = moduleLoader;
         this.scriptLoader = scriptLoader;
+        this.locale = locale;
+        this.timeZone = timeZone;
+        this.messages = Messages.create(locale);
     }
 
     /**
@@ -268,8 +243,8 @@ public final class World<GLOBAL extends GlobalObject> {
      * 
      * @return the timezone
      */
-    public TimeZone getTimezone() {
-        return timezone;
+    public TimeZone getTimeZone() {
+        return timeZone;
     }
 
     /**

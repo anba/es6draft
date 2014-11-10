@@ -1312,7 +1312,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         } else {
             // step 8
             if (def.getHeritage() != null) {
-                // FIXME: spec bug? - `new (class extends null {})` throws TypeError
                 mv.invoke(Methods.ScriptRuntime_CreateDefaultConstructor);
             } else {
                 mv.invoke(Methods.ScriptRuntime_CreateDefaultEmptyConstructor);

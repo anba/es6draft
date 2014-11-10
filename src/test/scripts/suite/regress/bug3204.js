@@ -6,7 +6,7 @@
  */
 
 const {
-  assertSame
+  assertSame, assertNotSame
 } = Assert;
 
 // B.3.3 Block-Level Function Declarations: Missing variable binding when parameter with same name as function is present
@@ -16,7 +16,7 @@ const {
   function g(f) {
     let r;
     { function f(){} r = f; }
-    assertSame(r, f);
+    assertNotSame(r, f);
   }
   g();
   g(1);
@@ -26,7 +26,7 @@ const {
   function g(f = 0) {
     let r;
     { function f(){} r = f; }
-    assertSame(r, f);
+    assertNotSame(r, f);
   }
   g();
   g(1);

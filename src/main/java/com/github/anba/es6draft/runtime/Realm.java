@@ -442,8 +442,8 @@ public final class Realm implements ShadowRealm {
      * 
      * @return the timezone
      */
-    public TimeZone getTimezone() {
-        return world.getTimezone();
+    public TimeZone getTimeZone() {
+        return world.getTimeZone();
     }
 
     /**
@@ -565,7 +565,7 @@ public final class Realm implements ShadowRealm {
      * @return the locale specific list separator
      */
     public String getListSeparator() {
-        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance();
+        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(getLocale());
         return symbols.getDecimalSeparator() == ',' ? ";" : ",";
     }
 
@@ -1001,14 +1001,19 @@ public final class Realm implements ShadowRealm {
         if (realm.isEnabled(CompatibilityOption.Loader)) {
             LoaderConstructor loaderConstructor = new LoaderConstructor(realm);
             LoaderPrototype loaderPrototype = new LoaderPrototype(realm);
-            SystemObject systemObject = new SystemObject(realm);
 
             intrinsics.put(Intrinsics.Loader, loaderConstructor);
             intrinsics.put(Intrinsics.LoaderPrototype, loaderPrototype);
-            intrinsics.put(Intrinsics.System, systemObject);
 
             loaderConstructor.initialize(defaultContext);
             loaderPrototype.initialize(defaultContext);
+        }
+
+        if (realm.isEnabled(CompatibilityOption.System)) {
+            SystemObject systemObject = new SystemObject(realm);
+
+            intrinsics.put(Intrinsics.System, systemObject);
+
             systemObject.initialize(defaultContext);
         }
 

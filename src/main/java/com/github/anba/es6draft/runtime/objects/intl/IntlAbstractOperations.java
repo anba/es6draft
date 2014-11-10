@@ -223,7 +223,7 @@ public final class IntlAbstractOperations {
      * @return the default time zone
      */
     public static String DefaultTimeZone(Realm realm) {
-        return realm.getTimezone().getID();
+        return realm.getTimeZone().getID();
     }
 
     private static final Map<String, String[]> oldStyleLanguageTags;

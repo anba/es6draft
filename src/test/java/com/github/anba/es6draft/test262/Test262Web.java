@@ -58,8 +58,8 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  */
 @RunWith(Parallelized.class)
 @TestConfiguration(name = "test262.test.web", file = "resource:/test-configuration.properties")
-public final class Test262 {
-    private static final Configuration configuration = loadConfiguration(Test262.class);
+public final class Test262Web {
+    private static final Configuration configuration = loadConfiguration(Test262Web.class);
 
     private static final DefaultMode unmarkedDefault = DefaultMode.forName(configuration
             .getString("unmarked_default"));

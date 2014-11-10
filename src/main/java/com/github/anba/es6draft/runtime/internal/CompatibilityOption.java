@@ -184,6 +184,11 @@ public enum CompatibilityOption {
     Loader,
 
     /**
+     * ES7-Extension: System Object
+     */
+    System,
+
+    /**
      * ES7-Extension: Array.prototype.contains
      */
     ArrayContains,

@@ -21,8 +21,10 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 
 import org.apache.commons.configuration.Configuration;
 import org.junit.rules.ExternalResource;
@@ -84,6 +86,14 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         return new FileModuleLoader(baseDirectory);
     }
 
+    protected Locale getLocale(TEST test) {
+        return Locale.getDefault();
+    }
+
+    protected TimeZone getTimeZone(TEST test) {
+        return TimeZone.getDefault();
+    }
+
     @Override
     protected void before() throws Throwable {
         if (!Resources.isEnabled(configuration)) {
@@ -103,8 +113,11 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
     public final GLOBAL newGlobal(ShellConsole console, TEST test) throws IOException,
             URISyntaxException {
         ObjectAllocator<GLOBAL> allocator = newAllocator(console, test, scriptCache);
-        World<GLOBAL> world = new World<>(allocator, createModuleLoader(getBaseDirectory()),
-                createScriptLoader());
+        ModuleLoader moduleLoader = createModuleLoader(getBaseDirectory());
+        ScriptLoader scriptLoader = createScriptLoader();
+        Locale locale = getLocale(test);
+        TimeZone timeZone = getTimeZone(test);
+        World<GLOBAL> world = new World<>(allocator, moduleLoader, scriptLoader, locale, timeZone);
         GLOBAL global = world.newInitializedGlobal();
         // Evaluate additional initialization scripts and modules
         for (PreloadedModule preloadModule : modules) {

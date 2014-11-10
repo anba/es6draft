@@ -7,13 +7,8 @@
 package com.github.anba.es6draft.runtime.objects.reflect;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataPropertyOrThrow;
-import static com.github.anba.es6draft.runtime.AbstractOperations.GetOption;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.modules.Loader.CreateLoader;
-import static java.util.Arrays.asList;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -23,13 +18,11 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.modules.Loader;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Creatable;
 import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
@@ -68,51 +61,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
     @Override
     public LoaderObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object options = argument(args, 0);
-        /* steps 2-3 */
-        if (!(thisValue instanceof LoaderObject)) {
-            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
-        }
-        /* step 1 */
-        LoaderObject loader = (LoaderObject) thisValue;
-        /* step 4 */
-        if (loader.getLoader() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
-        /* steps 5-6 */
-        Object realmObject = GetOption(calleeContext, options, "realm");
-        /* steps 7-8 */
-        Realm realm;
-        if (Type.isUndefined(realmObject)) {
-            realm = calleeContext.getRealm();
-        } else if (!(realmObject instanceof RealmObject)) {
-            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
-        } else {
-            realm = ((RealmObject) realmObject).getRealm();
-            if (realm == null) {
-                throw newTypeError(calleeContext, Messages.Key.UninitializedObject);
-            }
-        }
-        /* step 9 */
-        for (String name : asList("normalize", "locate", "fetch", "translate", "instantiate")) {
-            Object hook = GetOption(calleeContext, options, name);
-            if (!Type.isUndefined(hook)) {
-                if (!IsCallable(hook)) {
-                    throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, name);
-                }
-                CreateDataPropertyOrThrow(calleeContext, loader, name, hook);
-            }
-        }
-        /* steps 10-11 */
-        if (loader.getLoader() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
-        /* step 12 */
-        Loader loaderRecord = CreateLoader(realm, loader);
-        /* step 13 */
-        loader.setLoader(loaderRecord);
-        /* step 14 */
-        return loader;
+        throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
     }
 
     /**

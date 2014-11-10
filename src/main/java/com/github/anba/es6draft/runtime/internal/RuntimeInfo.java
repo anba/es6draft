@@ -163,36 +163,9 @@ public final class RuntimeInfo {
     }
 
     /**
-     * Returns the source information for the {@link SourceObject} element.
-     * 
-     * @param sourceObject
-     *            the script body
-     * @return the source object
-     */
-    private static Source toSource(SourceObject sourceObject) {
-        // TODO: default method on SourceObject
-        return new Source(sourceObject.sourceFile() != null ? Paths.get(sourceObject.sourceFile())
-                : null, sourceObject.sourceName(), 1);
-    }
-
-    /**
      * Compiled source object.
      */
     public interface SourceObject {
-        /**
-         * Returns the source name descriptor.
-         * 
-         * @return the source name descriptor
-         */
-        String sourceName();
-
-        /**
-         * Returns the source file location.
-         * 
-         * @return the source file location
-         */
-        String sourceFile();
-
         /**
          * Returns the source information for this object.
          * 
@@ -275,18 +248,8 @@ public final class RuntimeInfo {
         }
 
         @Override
-        public String sourceName() {
-            return sourceName;
-        }
-
-        @Override
-        public String sourceFile() {
-            return sourceFile;
-        }
-
-        @Override
         public Source toSource() {
-            return RuntimeInfo.toSource(this);
+            return new Source(sourceFile != null ? Paths.get(sourceFile) : null, sourceName, 1);
         }
 
         @Override
@@ -386,18 +349,8 @@ public final class RuntimeInfo {
         }
 
         @Override
-        public String sourceName() {
-            return sourceName;
-        }
-
-        @Override
-        public String sourceFile() {
-            return sourceFile;
-        }
-
-        @Override
         public Source toSource() {
-            return RuntimeInfo.toSource(this);
+            return new Source(sourceFile != null ? Paths.get(sourceFile) : null, sourceName, 1);
         }
 
         @Override

@@ -776,7 +776,7 @@ assertSyntaxError(`(function* g(){ (for(a of b) yield d) });`);
 ({ ["yield"](){} });
 // parameter name
 ({ f(yield){} });
-({ f(yield, yield){} });
+assertSyntaxError(`({ f(yield, yield){} });`);
 ({ f(yield = 0){} });
 ({ f(yield = yield){} });
 ({ f(...yield){} });
@@ -1266,7 +1266,7 @@ assertSyntaxError(`class C{ * g(){ (for(a of b) yield d) } }`);
 
 // parameter name
 ((yield) => {});
-((yield, yield) => {});
+assertSyntaxError(`((yield, yield) => {});`);
 ((yield = 0) => {});
 ((yield = yield) => {});
 ((...yield) => {});

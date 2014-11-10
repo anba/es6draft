@@ -17,6 +17,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -27,6 +28,7 @@ import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>26 Reflection</h1><br>
@@ -49,6 +51,9 @@ public final class SystemObject extends LoaderObject implements Initializable {
         setLoader(loaderRecord);
 
         createProperties(cx, this, Properties.class);
+        if (cx.getRealm().isEnabled(CompatibilityOption.Loader)) {
+            setPrototype(cx.getIntrinsic(Intrinsics.LoaderPrototype));
+        }
     }
 
     /**
@@ -84,7 +89,7 @@ public final class SystemObject extends LoaderObject implements Initializable {
         }
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.LoaderPrototype;
+        public static final ScriptObject __proto__ = null;
 
         /**
          * System.define(moduleName, source)
@@ -216,8 +221,7 @@ public final class SystemObject extends LoaderObject implements Initializable {
         @Function(name = "normalize", arity = 1)
         public static Object normalize(ExecutionContext cx, Object thisValue, Object moduleName) {
             LoaderObject loader = thisLoader(cx, thisValue);
-            Loader loaderRecord = loader.getLoader();
-            Realm realm = loaderRecord.getRealm();
+            Realm realm = loader.getLoader().getRealm();
             String unnormalizedName = ToFlatString(cx, moduleName);
             String normalizedModuleName = NormalizeModuleName(cx, realm, "", unnormalizedName);
             if (normalizedModuleName == null) {

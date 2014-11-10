@@ -240,7 +240,6 @@ public final class ExecutionContext {
     public static ExecutionContext newEvalExecutionContext(ExecutionContext callerContext,
             Script evalScript, LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv) {
         /* steps 17-20 */
-        // FIXME: add test to verify passing funVarEnv is correct/required.
         return new ExecutionContext(callerContext.realm, varEnv, lexEnv, callerContext.funVarEnv,
                 evalScript, callerContext.function);
     }

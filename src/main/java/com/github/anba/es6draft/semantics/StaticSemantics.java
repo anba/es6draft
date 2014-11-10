@@ -128,6 +128,42 @@ public final class StaticSemantics {
     /**
      * Static Semantics: BoundNames
      * <ul>
+     * <li>14.1.3 Static Semantics: BoundNames
+     * <li>14.2.2 Static Semantics: BoundNames
+     * </ul>
+     * 
+     * @param node
+     *            the formal parameter node
+     * @return the bound names
+     */
+    public static List<Name> BoundNames(FormalParameter node) {
+        SmallArrayList<Name> list = new SmallArrayList<Name>();
+        node.accept(BoundNames.INSTANCE, list);
+        return list;
+    }
+
+    /**
+     * Static Semantics: BoundNames
+     * <ul>
+     * <li>14.1.3 Static Semantics: BoundNames
+     * <li>14.2.2 Static Semantics: BoundNames
+     * </ul>
+     * 
+     * @param formals
+     *            the formal parameters list
+     * @return the bound names
+     */
+    public static List<Name> BoundNames(List<FormalParameter> formals) {
+        SmallArrayList<Name> list = new SmallArrayList<Name>();
+        for (FormalParameter formalParameter : formals) {
+            formalParameter.accept(BoundNames.INSTANCE, list);
+        }
+        return list;
+    }
+
+    /**
+     * Static Semantics: BoundNames
+     * <ul>
      * <li>13.2.1.2 Static Semantics: BoundNames
      * <li>14.1.3 Static Semantics: BoundNames
      * <li>14.4.2 Static Semantics: BoundNames

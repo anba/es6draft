@@ -166,7 +166,11 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
                     continue;
                 }
                 String intrinsicKey = intrinsic.getKey();
-                CreateDataProperty(cx, table, intrinsicKey, realm.getIntrinsic(intrinsic));
+                OrdinaryObject intrinsicValue = realm.getIntrinsic(intrinsic);
+                if (intrinsicValue == null) {
+                    continue;
+                }
+                CreateDataProperty(cx, table, intrinsicKey, intrinsicValue);
             }
             /* step 7 */
             return table;

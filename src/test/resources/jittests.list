@@ -40,6 +40,7 @@ tests/arguments/alias-function-not-closed.js
 tests/collections/constructor-errors.js
 
 # ES6: new Map(null) and new Set(null) throws in SM
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1092538
 tests/collections/Map-constructor-4.js
 
 
@@ -300,6 +301,14 @@ tests/basic/bug821470.js
 
 # let is per iteration bound in for-loop
 tests/basic/testBug763950.js
+
+# let/const + function redeclaration in block/global scope
+tests/basic/functionRedeclConst.js
+tests/basic/functionRedeclGlobalConst.js
+tests/basic/functionRedeclLet.js
+
+# function declaration with same name as parameter in surrounding function not applicable for B.3.3
+tests/basic/testFunctionStatementAliasLocals.js
 
 
 ############################################

@@ -15,8 +15,6 @@ import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstr
 import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatPrototype.FormatDateTime;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
-import java.text.DateFormatSymbols;
-import java.util.Locale;
 import java.util.TimeZone;
 
 import com.github.anba.es6draft.runtime.AbstractOperations;
@@ -67,8 +65,7 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
     private static final String ISO_FORMAT = "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ";
     private static final String ISO_EXTENDED_FORMAT = "%+07d-%02d-%02dT%02d:%02d:%02d.%03dZ";
 
-    private static final String UTC_FORMAT = "%04d-%02d-%02d %02d:%02d:%02d.%03dZ";
-    private static final String UTC_EXTENDED_FORMAT = "%+07d-%02d-%02d %02d:%02d:%02d.%03dZ";
+    private static final String UTC_FORMAT = "%s, %02d %s %04d %02d:%02d:%02d GMT";
 
     private static String toISOString(double t) {
         assert !Double.isNaN(t);
@@ -92,20 +89,14 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
     private static String toUTCString(double t) {
         assert !Double.isNaN(t);
         int year = (int) YearFromTime(t);
-        int month = (int) MonthFromTime(t) + 1;
+        String month = MonthNameFromTime(t);
         int date = (int) DateFromTime(t);
+        String weekday = WeekDayName(t);
         int hour = (int) HourFromTime(t);
         int min = (int) MinFromTime(t);
         int sec = (int) SecFromTime(t);
-        int milli = (int) msFromTime(t);
 
-        String format;
-        if (year < 0 || year > 9999) {
-            format = UTC_EXTENDED_FORMAT;
-        } else {
-            format = UTC_FORMAT;
-        }
-        return String.format(format, year, month, date, hour, min, sec, milli);
+        return String.format(UTC_FORMAT, weekday, date, month, year, hour, min, sec);
     }
 
     private static boolean isFinite(double d) {
@@ -136,27 +127,24 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         Realm realm = cx.getRealm();
         StringBuilder result = new StringBuilder();
         if (dateString == DateString.DateTime || dateString == DateString.Date) {
-            DateFormatSymbols symbols = DateFormatSymbols.getInstance(Locale.US);
             double t = LocalTime(realm, tv);
 
-            result.append(String.format("%s %s %02d %04d",
-                    symbols.getShortWeekdays()[1 + (int) WeekDay(t)],
-                    symbols.getShortMonths()[(int) MonthFromTime(t)], (int) DateFromTime(t),
-                    (int) YearFromTime(t)));
+            result.append(String.format("%s %s %02d %04d", WeekDayName(t), MonthNameFromTime(t),
+                    (int) DateFromTime(t), (int) YearFromTime(t)));
         }
         if (dateString == DateString.DateTime) {
             result.append(' ');
         }
         if (dateString == DateString.DateTime || dateString == DateString.Time) {
-            TimeZone tz = realm.getTimezone();
-            int dstOffset = (int) DaylightSavingTA(realm, tv);
-            int tzOffset = (((int) LocalTZA(realm) + dstOffset) / 60000);
+            long date = (long) tv;
+            TimeZone tz = realm.getTimeZone();
+            int tzOffset = TimeZoneInfo.getDefault().getOffset(tz, date) / 60000;
             tzOffset = (tzOffset / 60) * 100 + tzOffset % 60;
             double t = LocalTime(realm, tv);
+            String timeZoneDisplayName = TimeZoneInfo.getDefault().getDisplayName(tz, date);
 
             result.append(String.format("%02d:%02d:%02d GMT%+05d (%s)", (int) HourFromTime(t),
-                    (int) MinFromTime(t), (int) SecFromTime(t), tzOffset,
-                    tz.getDisplayName(dstOffset != 0, TimeZone.SHORT, Locale.US)));
+                    (int) MinFromTime(t), (int) SecFromTime(t), tzOffset, timeZoneDisplayName));
         }
         return result.toString();
     }

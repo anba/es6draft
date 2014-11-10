@@ -9,8 +9,6 @@ package com.github.anba.es6draft.interpreter;
 import static com.github.anba.es6draft.interpreter.DeclarationBindingInstantiation.EvalDeclarationInstantiation;
 import static com.github.anba.es6draft.interpreter.DeclarationBindingInstantiation.GlobalDeclarationInstantiation;
 
-import java.util.Objects;
-
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
@@ -30,18 +28,8 @@ final class InterpretedScriptBody implements RuntimeInfo.ScriptBody {
     }
 
     @Override
-    public String sourceName() {
-        return parsedScript.getSource().getName();
-    }
-
-    @Override
-    public String sourceFile() {
-        return Objects.toString(parsedScript.getSource().getFile(), null);
-    }
-
-    @Override
     public Source toSource() {
-        return new Source(parsedScript.getSource().getFile(), sourceName(), 1);
+        return new Source(parsedScript.getSource().getFile(), parsedScript.getSource().getName(), 1);
     }
 
     @Override

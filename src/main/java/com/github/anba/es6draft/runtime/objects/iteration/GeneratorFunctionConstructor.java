@@ -15,8 +15,6 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.M
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.SetFunctionName;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.FunctionAllocate;
 
-import java.util.Objects;
-
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.CompiledObject;
 import com.github.anba.es6draft.parser.ParserException;
@@ -227,16 +225,6 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
 
         GeneratorSourceObject(Source source) {
             this.source = source;
-        }
-
-        @Override
-        public String sourceName() {
-            return source.getName();
-        }
-
-        @Override
-        public String sourceFile() {
-            return Objects.toString(source.getFile(), null);
         }
 
         @Override

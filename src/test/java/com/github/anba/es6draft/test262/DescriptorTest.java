@@ -29,7 +29,7 @@ import com.github.anba.es6draft.util.TestInfo;
  */
 @RunWith(Parallelized.class)
 public class DescriptorTest {
-    private static final Configuration configuration = loadConfiguration(Test262.class);
+    private static final Configuration configuration = loadConfiguration(Test262Web.class);
 
     @Parameters(name = "{0}")
     public static Iterable<Object[]> suiteValues() throws IOException {

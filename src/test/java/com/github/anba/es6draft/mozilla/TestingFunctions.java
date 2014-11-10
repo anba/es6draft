@@ -117,6 +117,19 @@ public final class TestingFunctions {
      */
     @Function(name = "getSelfHostedValue", arity = 1)
     public ScriptObject getSelfHostedValue(ExecutionContext cx, String name) {
+        if ("ToNumber".equals(name)) {
+            return new BuiltinFunction(cx.getRealm(), "ToNumber") {
+                @Override
+                public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+                    return AbstractOperations.ToNumber(calleeContext(), argument(args, 0));
+                }
+
+                @Override
+                protected BuiltinFunction clone() {
+                    return this;
+                }
+            };
+        }
         if ("ToLength".equals(name)) {
             return new BuiltinFunction(cx.getRealm(), "ToLength") {
                 @Override

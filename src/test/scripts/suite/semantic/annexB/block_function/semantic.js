@@ -114,30 +114,30 @@ const {
   f13();
 
   function f14(g = 0) {
-    assertUndefined(g);
+    assertSame(0, g);
     { function g() { return "g" } }
-    assertSame("g", g());
+    assertSame(0, g);
   }
   f14();
 
   function f15(g = 0) {
-    assertUndefined(g);
+    assertSame(1, g);
     { function g() { return "g" } }
-    assertSame("g", g());
+    assertSame(1, g);
   }
   f15(1);
 
   function f16(g) {
     assertUndefined(g);
     { function g() { return "g" } }
-    assertSame("g", g());
+    assertUndefined(g);
   }
   f16();
 
   function f17(g) {
     assertSame(1, g);
     { function g() { return "g" } }
-    assertSame("g", g());
+    assertSame(1, g);
   }
   f17(1);
 }

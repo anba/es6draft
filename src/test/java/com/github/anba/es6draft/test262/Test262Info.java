@@ -182,9 +182,8 @@ final class Test262Info extends TestInfo {
         }
     }
 
-    // TODO: Remove "path" when https://github.com/tc39/test262/issues/75 is fixed
     private static final HashSet<String> allowedFlags = new HashSet<>(Arrays.asList("negative",
-            "onlyStrict", "noStrict", "path"));
+            "onlyStrict", "noStrict"));
 
     public static final class TestDescriptor {
         private String description;

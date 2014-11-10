@@ -84,7 +84,6 @@ fast/js/string-link.js
 fast/regex/overflow.js
 
 # Date.parse incompatibility
-date-constructor.js
 date-parse-comments-test.js
 fast/js/date-toisostring.js
 

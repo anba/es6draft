@@ -33,6 +33,11 @@ import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
  */
 abstract class DeclarationBindingInstantiationGenerator {
     private static final class Methods {
+        // class: IllegalStateException
+        static final MethodDesc IllegalStateException_init = MethodDesc.create(
+                MethodDesc.Invoke.Special, Types.IllegalStateException, "<init>",
+                Type.getMethodType(Type.VOID_TYPE));
+
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_hasBinding = MethodDesc.create(
                 MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "hasBinding",
@@ -119,6 +124,20 @@ abstract class DeclarationBindingInstantiationGenerator {
 
     protected DeclarationBindingInstantiationGenerator(CodeGenerator codegen) {
         this.codegen = codegen;
+    }
+
+    /**
+     * Emit throw expression for: {@code throw new}
+     * {@link IllegalStateException#IllegalStateException() IllegalStateException}
+     * <p>
+     * stack: [] {@literal ->} []
+     * 
+     * @param mv
+     *            the instruction visitor
+     */
+    protected void generateExceptionThrower(ExpressionVisitor mv) {
+        mv.anew(Types.IllegalStateException, Methods.IllegalStateException_init);
+        mv.athrow();
     }
 
     /**
