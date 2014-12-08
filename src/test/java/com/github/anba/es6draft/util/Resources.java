@@ -50,7 +50,6 @@ import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.configuration.interpol.ConfigurationInterpolator;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang.text.StrLookup;
-import org.junit.runners.Parameterized;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -181,29 +180,6 @@ public final class Resources {
             System.err.println(e.getMessage());
             return null;
         }
-    }
-
-    /**
-     * Load the test files based on the supplied {@link Configuration}.
-     */
-    public static Iterable<Object[]> loadTestsAsArray(Configuration config) throws IOException {
-        return toObjectArray(loadTests(config));
-    }
-
-    /**
-     * Load the test files based on the supplied {@link Configuration}.
-     */
-    public static <TEST extends TestInfo> Iterable<Object[]> loadTestsAsArray(Configuration config,
-            BiFunction<Path, Path, TEST> fn) throws IOException {
-        return toObjectArray(loadTests(config, fn));
-    }
-
-    /**
-     * Load the test files based on the supplied {@link Configuration}.
-     */
-    public static <TEST extends TestInfo> Iterable<Object[]> loadTestsAsArray(Configuration config,
-            Function<Path, BiFunction<Path, Iterator<String>, TEST>> fn) throws IOException {
-        return toObjectArray(loadTests(config, fn));
     }
 
     /**
@@ -392,17 +368,6 @@ public final class Resources {
         } catch (ParserConfigurationException | SAXException e) {
             throw new IOException(e);
         }
-    }
-
-    /**
-     * {@link Parameterized} expects a list of {@code Object[]}.
-     */
-    private static Iterable<Object[]> toObjectArray(Iterable<? extends TestInfo> iterable) {
-        ArrayList<Object[]> list = new ArrayList<>();
-        for (TestInfo o : iterable) {
-            list.add(new Object[] { o });
-        }
-        return list;
     }
 
     private static final BiFunction<Path, Path, TestInfo> defaultCreate = new BiFunction<Path, Path, TestInfo>() {

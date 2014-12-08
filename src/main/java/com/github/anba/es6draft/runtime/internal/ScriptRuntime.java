@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.internal;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.*;
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ResolveExport;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorYield;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -29,7 +30,10 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import org.mozilla.javascript.ConsString;
 
@@ -40,9 +44,13 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.modules.ModuleExport;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
+import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
@@ -173,6 +181,56 @@ public final class ScriptRuntime {
         }
     }
 
+    /**
+     * 15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
+     * 
+     * @param cx
+     *            the execution context
+     * @param moduleSet
+     *            the list of available modules
+     * @param moduleName
+     *            the normalized module name
+     * @param exportName
+     *            the requested export name
+     */
+    public static void resolveExportOrThrow(ExecutionContext cx,
+            Map<String, ModuleRecord> moduleSet, String moduleName, String exportName)
+            throws ResolutionException {
+        /* steps 3.a-3.b */
+        ModuleExport resolution = ResolveExport(moduleSet, moduleName, exportName,
+                new HashMap<String, Set<String>>());
+        /* step 3.c */
+        if (resolution == null) {
+            throw new ResolutionException(Messages.Key.ModulesUnresolvedExport, exportName);
+        }
+    }
+
+    /**
+     * 15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
+     * 
+     * @param cx
+     *            the execution context
+     * @param moduleSet
+     *            the list of available modules
+     * @param moduleName
+     *            the normalized module name
+     * @param importName
+     *            the requested import name
+     * @return the resolved module import
+     */
+    public static ModuleExport resolveImportOrThrow(ExecutionContext cx,
+            Map<String, ModuleRecord> moduleSet, String moduleName, String importName)
+            throws ResolutionException {
+        /* steps 8.b.i-8.b.ii */
+        ModuleExport resolution = ResolveExport(moduleSet, moduleName, importName,
+                new HashMap<String, Set<String>>());
+        /* step 8.b.iii */
+        if (resolution == null) {
+            throw new ResolutionException(Messages.Key.ModulesUnresolvedImport, importName);
+        }
+        return resolution;
+    }
+
     /* ***************************************************************************************** */
 
     /**
@@ -212,13 +270,10 @@ public final class ScriptRuntime {
      *            the array object
      * @param length
      *            the array length value
-     * @param cx
-     *            the execution context
-     * @return the array object
      */
-    public static ArrayObject defineLength(ArrayObject array, int length, ExecutionContext cx) {
-        Put(cx, array, "length", length, false);
-        return array;
+    public static void defineLength(ArrayObject array, int length) {
+        // Put(cx, array, "length", length, false);
+        array.setLengthUnchecked(length);
     }
 
     /**
@@ -310,6 +365,26 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
+    public static void defineProperty(OrdinaryObject object, long propertyName, Object value,
+            ExecutionContext cx) {
+        DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
+                true));
+    }
+
+    /**
+     * 12.2.5 Object Initializer
+     * <p>
+     * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 
+     * @param object
+     *            the script object
+     * @param propertyName
+     *            the property name
+     * @param value
+     *            the property value
+     * @param cx
+     *            the execution context
+     */
     public static void defineMethod(OrdinaryObject object, Object propertyName,
             FunctionObject value, ExecutionContext cx) {
         value.setHomeObject(object);
@@ -333,6 +408,27 @@ public final class ScriptRuntime {
      */
     public static void defineMethod(OrdinaryObject object, String propertyName,
             FunctionObject value, ExecutionContext cx) {
+        value.setHomeObject(object);
+        DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
+                true));
+    }
+
+    /**
+     * 12.2.5 Object Initializer
+     * <p>
+     * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 
+     * @param object
+     *            the script object
+     * @param propertyName
+     *            the property name
+     * @param value
+     *            the property value
+     * @param cx
+     *            the execution context
+     */
+    public static void defineMethod(OrdinaryObject object, long propertyName, FunctionObject value,
+            ExecutionContext cx) {
         value.setHomeObject(object);
         DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
                 true));
@@ -802,7 +898,7 @@ public final class ScriptRuntime {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         }
         /* steps 5/7/8 */
-        return PrepareForTailCall(args, null, (Constructor) constructor);
+        return PrepareForTailCall((Constructor) constructor, null, args);
     }
 
     /**
@@ -887,17 +983,17 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
      * 
-     * @param args
-     *            the function call arguments
      * @param thisValue
      *            the function this-value
+     * @param args
+     *            the function call arguments
      * @param callee
      *            the function callee
      * @param cx
      *            the execution context
      * @return the direct eval fallback arguments
      */
-    public static Object[] directEvalFallbackArguments(Object[] args, Object thisValue,
+    public static Object[] directEvalFallbackArguments(Object thisValue, Object[] args,
             Callable callee, ExecutionContext cx) {
         Object[] fallbackArgs = new Object[3];
         fallbackArgs[0] = callee;
@@ -2792,8 +2888,19 @@ public final class ScriptRuntime {
      *            the tail call function
      * @return the tail call trampoline object
      */
-    public static Object PrepareForTailCall(Object[] args, Object thisValue, Callable function) {
+    public static Object PrepareForTailCall(Callable function, Object thisValue, Object[] args) {
         return new TailCallInvocation(function, thisValue, args);
+    }
+
+    // Called from generated code
+    public static Object PrepareForTailCall(Object thisValue, Object[] args, Callable function) {
+        return new TailCallInvocation(function, thisValue, args);
+    }
+
+    // Called from generated code
+    public static Object PrepareForTailCall(Object function, ExecutionContext cx, Object thisValue,
+            Object[] args) {
+        return new TailCallInvocation(CheckCallable(function, cx), thisValue, args);
     }
 
     /* ***************************************************************************************** */

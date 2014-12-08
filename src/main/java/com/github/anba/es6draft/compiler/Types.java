@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.DebugInfo;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
@@ -30,7 +31,9 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
+import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.ModuleSemantics;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
@@ -47,6 +50,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.LegacyArgumentsObject;
+import com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
@@ -109,11 +113,14 @@ final class Types {
     static final Type FunctionEnvironmentRecord = Type.getType(FunctionEnvironmentRecord.class);
     static final Type GlobalEnvironmentRecord = Type.getType(GlobalEnvironmentRecord.class);
     static final Type LexicalEnvironment = Type.getType(LexicalEnvironment.class);
+    static final Type ModuleEnvironmentRecord = Type.getType(ModuleEnvironmentRecord.class);
     static final Type Realm = Type.getType(Realm.class);
     static final Type ScriptRuntime = Type.getType(ScriptRuntime.class);
 
     // runtime.modules
+    static final Type ModuleExport = Type.getType(ModuleExport.class);
     static final Type ModuleRecord = Type.getType(ModuleRecord.class);
+    static final Type ModuleSemantics = Type.getType(ModuleSemantics.class);
 
     // runtime.objects
     static final Type Eval = Type.getType(Eval.class);
@@ -140,6 +147,7 @@ final class Types {
     static final Type ArrayObject = Type.getType(ArrayObject.class);
     static final Type FunctionObject = Type.getType(FunctionObject.class);
     static final Type LegacyArgumentsObject = Type.getType(LegacyArgumentsObject.class);
+    static final Type ModuleNamespaceObject = Type.getType(ModuleNamespaceObject.class);
     static final Type OrdinaryAsyncFunction = Type.getType(OrdinaryAsyncFunction.class);
     static final Type OrdinaryGenerator = Type.getType(OrdinaryGenerator.class);
     static final Type OrdinaryFunction = Type.getType(OrdinaryFunction.class);

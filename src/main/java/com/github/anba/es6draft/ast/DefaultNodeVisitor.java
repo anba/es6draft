@@ -291,12 +291,17 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(ExportDefaultExpression node, V value) {
+        return visit((Node) node, value);
+    }
+
+    @Override
     public R visit(ExportSpecifier node, V value) {
         return visit((Node) node, value);
     }
 
     @Override
-    public R visit(ExportsClause node, V value) {
+    public R visit(ExportClause node, V value) {
         return visit((Node) node, value);
     }
 

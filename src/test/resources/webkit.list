@@ -35,8 +35,9 @@ js/script-tests/typedarray-set-overlapping-elements-of-same-size.js
 # invalid test, `(new Array(1)).findIndex(function(){return true})` is -1
 js/script-tests/array-findIndex.js
 
+# Rename String.prototype.contains -> String.prototype.includes (rev 29?)
 # invalid test, ToString(searchString) appears before ToInteger(position)
-js/script-tests/string-contains.js
+js/script-tests/string-includes.js
 
 
 ###################

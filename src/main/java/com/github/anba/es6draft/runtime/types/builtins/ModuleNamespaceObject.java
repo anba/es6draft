@@ -23,8 +23,8 @@ import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
-import com.github.anba.es6draft.runtime.modules.ModuleSemantics.ResolvedExport;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -237,7 +237,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         /* step 8 */
         String moduleName = m.getName();
         /* steps 9-10 */
-        ResolvedExport binding;
+        ModuleExport binding;
         try {
             /* steps 9, 11 */
             binding = ResolveExport(modules, moduleName, propertyKey,
@@ -393,6 +393,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
+            // FIXME: spec bug - missing type check
             if (!(thisValue instanceof ModuleNamespaceObject)) {
                 throw Errors.newTypeError(calleeContext, Messages.Key.IncompatibleObject);
             }

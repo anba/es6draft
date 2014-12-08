@@ -89,11 +89,16 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
         @Accessor(name = "compare", type = Accessor.Type.Getter)
         public static Object compare(ExecutionContext cx, Object thisValue) {
             CollatorObject collator = thisCollatorObject(cx, thisValue);
+            /* step 1 */
             if (collator.getBoundCompare() == null) {
+                /* step 1.a */
                 CompareFunction f = new CompareFunction(cx.getRealm());
+                /* steps 1.b-c */
                 Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
+                /* step 1.d */
                 collator.setBoundCompare(bf);
             }
+            /* step 2 */
             return collator.getBoundCompare();
         }
 
@@ -154,17 +159,19 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
             return new CompareFunction(getRealm(), null);
         }
 
-        /**
-         * [[Call]]
-         */
         @Override
         public Integer call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof CollatorObject;
             ExecutionContext calleeContext = calleeContext();
+            /* step 1.a.i (10.3.2) */
             Object arg0 = argument(args, 0);
+            /* step 1.a.ii (10.3.2) */
             Object arg1 = argument(args, 1);
+            /* step 1.a.iii (10.3.2) */
             String x = ToFlatString(calleeContext, arg0);
+            /* step 1.a.iv (10.3.2) */
             String y = ToFlatString(calleeContext, arg1);
+            /* step 1.a.v (10.3.2) */
             return CompareStrings(calleeContext, (CollatorObject) thisValue, x, y);
         }
     }

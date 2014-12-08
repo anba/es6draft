@@ -23,6 +23,7 @@ const {
   getPrototypeOf: Reflect_getPrototypeOf,
   setPrototypeOf: Reflect_setPrototypeOf,
   isExtensible: Reflect_isExtensible,
+  defineProperty: Reflect_defineProperty,
   apply: Reflect_apply,
 } = Reflect;
 
@@ -171,13 +172,19 @@ function toProxyHandler(handler, callTrap = void 0, constructTrap = void 0) {
       if (!Reflect_isExtensible(receiver)) {
         return false;
       }
-      handler['defineProperty'](propertyKey, {
+      // handler['defineProperty'](propertyKey, {
+      //   value,
+      //   writable: true,
+      //   enumerable: true,
+      //   configurable: true,
+      // });
+      // return true;
+      return Reflect_defineProperty(receiver, propertyKey, {
         value,
         writable: true,
         enumerable: true,
         configurable: true,
       });
-      return true;
     },
     deleteProperty(target, propertyKey) {
       return handler['delete'](propertyKey);

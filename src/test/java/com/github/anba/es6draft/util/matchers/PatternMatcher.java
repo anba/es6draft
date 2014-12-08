@@ -13,7 +13,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
 /**
- * {@link Matcher} to match strings against regular expressions
+ * {@link Matcher} to match strings against regular expressions.
  */
 public class PatternMatcher extends TypeSafeMatcher<String> {
     private final String regex;

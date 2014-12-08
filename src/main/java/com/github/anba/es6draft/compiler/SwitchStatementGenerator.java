@@ -281,7 +281,13 @@ final class SwitchStatementGenerator extends
         } else {
             int index = 0;
             for (SwitchClause switchClause : clauses) {
-                mv.mark(labels[index++]);
+                Jump caseLabel = labels[index++];
+                if (caseLabel != null) {
+                    mv.mark(caseLabel);
+                } else if (lastResult.isAbrupt()) {
+                    // Ignore unreachable targets
+                    continue;
+                }
                 Completion innerResult = switchClause.accept(this, mv);
                 if (innerResult.isAbrupt()) {
                     // not fall-thru
@@ -685,6 +691,9 @@ final class SwitchStatementGenerator extends
                 int index = Index(entries[i]);
                 if (i == 0 || value != lastValue) {
                     switchLabels[value - minValue] = labels[index];
+                } else {
+                    // Duplicate case value
+                    labels[index] = null;
                 }
                 lastValue = value;
             }
@@ -700,6 +709,9 @@ final class SwitchStatementGenerator extends
                     switchLabels[j] = labels[index];
                     switchKeys[j] = value;
                     j += 1;
+                } else {
+                    // Duplicate case value
+                    labels[index] = null;
                 }
                 lastValue = value;
             }

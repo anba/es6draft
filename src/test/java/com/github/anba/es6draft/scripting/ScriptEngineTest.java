@@ -14,6 +14,7 @@ import static org.junit.Assert.assertThat;
 import java.io.StringReader;
 
 import javax.script.Bindings;
+import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -175,5 +176,22 @@ public class ScriptEngineTest {
     @Test(expected = ScriptException.class)
     public void evalSyntaxError() throws ScriptException {
         engine.eval("invalid[syntax");
+    }
+
+    @Test
+    public void processJobQueue() throws ScriptException {
+        engine.put("log", "");
+        Object value = engine.eval("Promise.resolve().then(() => log += 'b'); log = 'a'; log;");
+        assertThat(value, instanceOfWith(String.class, is("a")));
+        assertThat(engine.get("log"), instanceOfWith(String.class, is("ab")));
+    }
+
+    @Test
+    public void processJobQueueWithInvoke() throws ScriptException, NoSuchMethodException {
+        engine.put("log", "");
+        engine.eval("function F() { Promise.resolve().then(() => log += 'b'); log = 'a'; return log; }");
+        Object value = ((Invocable) engine).invokeFunction("F");
+        assertThat(value, instanceOfWith(String.class, is("a")));
+        assertThat(engine.get("log"), instanceOfWith(String.class, is("ab")));
     }
 }

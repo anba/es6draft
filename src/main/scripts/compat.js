@@ -18,6 +18,9 @@ const {
   defineProperty: Object_defineProperty,
   getPrototypeOf: Object_getPrototypeOf,
   getOwnPropertyDescriptor: Object_getOwnPropertyDescriptor,
+  prototype: {
+    hasOwnProperty: Object_prototype_hasOwnProperty,
+  }
 } = Object;
 
 /*
@@ -48,7 +51,9 @@ Object.defineProperties(Object.assign(Object.prototype, {
     var p = this != null ? Object(this) : this;
     do {
       var desc = Object_getOwnPropertyDescriptor(p, pk);
-      if (desc) return desc.get;
+      if (desc) {
+        return %CallFunction(Object_prototype_hasOwnProperty, desc, "get") ? desc.get : void 0;
+      }
     } while ((p = Object_getPrototypeOf(p)));
   },
   __lookupSetter__(name) {
@@ -56,7 +61,9 @@ Object.defineProperties(Object.assign(Object.prototype, {
     var p = this != null ? Object(this) : this;
     do {
       var desc = Object_getOwnPropertyDescriptor(p, pk);
-      if (desc) return desc.set;
+      if (desc) {
+        return %CallFunction(Object_prototype_hasOwnProperty, desc, "set") ? desc.set : void 0;
+      }
     } while ((p = Object_getPrototypeOf(p)));
   }
 }), {

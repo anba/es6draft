@@ -7,6 +7,11 @@
     <https://github.com/anba/es6draft>
 
 -->
+<!DOCTYPE excludeList [
+  <!ELEMENT excludeList (test)*>
+  <!ELEMENT test (#PCDATA)>
+  <!ATTLIST test id CDATA #REQUIRED>
+]>
 <excludeList>
   <!-- octal integer literal (https://bugs.ecmascript.org/show_bug.cgi?id=1532) -->
   <test id="15.2.3.6-2-17-1" />
@@ -49,12 +54,4 @@
   <test id="15.3.5.4_2-91gs" />
   <test id="15.3.5.4_2-92gs" />
   <test id="15.3.5.4_2-93gs" />
-
-  <!-- ES6 changes -->
-  <test id="12.14-1">ES6-change: Early Error if BoundNames of CatchParameter occurs in VarDeclaredNames
-    of Block
-  </test>
-  <test id="12.14-2">ES6-change: Early Error if BoundNames of CatchParameter occurs in VarDeclaredNames
-    of Block
-  </test>
 </excludeList>

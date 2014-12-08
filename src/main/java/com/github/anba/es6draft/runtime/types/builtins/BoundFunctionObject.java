@@ -193,21 +193,6 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
         return getFlattenedTargetFunction().getRealm(cx);
     }
 
-    private static final Object[] concatArguments(ExecutionContext callerContext,
-            Object[] boundArgs, Object[] argumentsList) {
-        int argsLen = boundArgs.length + argumentsList.length;
-        if (argsLen > FunctionPrototype.getMaxArguments()) {
-            throw newRangeError(callerContext, Messages.Key.FunctionTooManyArguments);
-        }
-        if (boundArgs.length == 0) {
-            return argumentsList;
-        }
-        Object[] args = new Object[argsLen];
-        System.arraycopy(boundArgs, 0, args, 0, boundArgs.length);
-        System.arraycopy(argumentsList, 0, args, boundArgs.length, argumentsList.length);
-        return args;
-    }
-
     /**
      * 9.4.1.3 BoundFunctionCreate (targetFunction, boundThis, boundArgs) Abstract Operation
      * 
@@ -269,6 +254,21 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
     public static BoundFunctionObject BoundFunctionClone(ExecutionContext cx,
             BoundFunctionObject function) {
         return function.clone(cx);
+    }
+
+    private static Object[] concatArguments(ExecutionContext callerContext, Object[] boundArgs,
+            Object[] argumentsList) {
+        int argsLen = boundArgs.length + argumentsList.length;
+        if (argsLen > FunctionPrototype.getMaxArguments()) {
+            throw newRangeError(callerContext, Messages.Key.FunctionTooManyArguments);
+        }
+        if (boundArgs.length == 0) {
+            return argumentsList;
+        }
+        Object[] args = new Object[argsLen];
+        System.arraycopy(boundArgs, 0, args, 0, boundArgs.length);
+        System.arraycopy(argumentsList, 0, args, boundArgs.length, argumentsList.length);
+        return args;
     }
 
     private static Object[] intern(Object[] arguments) {

@@ -38,6 +38,7 @@ import com.github.anba.es6draft.compiler.assembler.SimpleTypeTextifier;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Source;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 
 /**
  *
@@ -79,7 +80,8 @@ public final class Compiler {
         return defineAndLoad(code, clazzName);
     }
 
-    public CompiledModule compile(Module module, String className) throws CompilationException {
+    public CompiledModule compile(Module module, ModuleRecord moduleRecord, String className)
+            throws CompilationException {
         try {
             CodeSizeAnalysis analysis = new CodeSizeAnalysis(executor);
             analysis.submit(module);
@@ -97,7 +99,7 @@ public final class Compiler {
         // generate code
         CodeGenerator codegen = new CodeGenerator(code, executor, module.getOptions(),
                 module.getParserOptions(), compilerOptions);
-        codegen.compile(module);
+        codegen.compile(module, moduleRecord);
 
         // finalize
         return defineAndLoad(code, clazzName);

@@ -6,23 +6,16 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import java.util.AbstractList;
-import java.util.Arrays;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.RandomAccess;
+import java.util.*;
 
 /**
- * Simple list implementation with three fixed slots to avoid array allocation
+ * List implementation with three fixed slots to avoid initial array allocation.
  */
-public final class SmallArrayList<E> extends AbstractList<E> implements List<E>, RandomAccess {
-    private static final int INIT_SIZE = 10;
+public final class InlineArrayList<E> extends AbstractList<E> implements List<E>, RandomAccess {
+    private static final int INITIAL_CAPACITY = 3;
+    private static final int INITIAL_SIZE = 10;
 
-    private int capacity = 3;
+    private int capacity = INITIAL_CAPACITY;
     private int size = 0;
     private E fst = null;
     private E snd = null;
@@ -46,8 +39,8 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
 
     private void grow(int c) {
         E[] ext = this.extended;
-        if (this.extended == null) {
-            int len = Math.max(c, INIT_SIZE);
+        if (ext == null) {
+            int len = Math.max(c, INITIAL_SIZE);
             E[] array = newArray(len);
             array[0] = fst;
             array[1] = snd;
@@ -297,8 +290,18 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
         return new ListIteratorImpl(index);
     }
 
+    /**
+     * @see ArrayList#trimToSize()
+     */
+    public void trimToSize() {
+        E[] ext = this.extended;
+        if (ext != null && size < ext.length) {
+            extended = Arrays.copyOf(ext, size);
+        }
+    }
+
     private final class IteratorImpl implements Iterator<E> {
-        private final int expectedModCount = SmallArrayList.this.modCount;
+        private final int expectedModCount = InlineArrayList.this.modCount;
         private int cursor = 0;
 
         @Override
@@ -308,7 +311,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
 
         @Override
         public E next() {
-            if (expectedModCount != SmallArrayList.this.modCount) {
+            if (expectedModCount != InlineArrayList.this.modCount) {
                 throw new ConcurrentModificationException();
             }
             if (cursor >= size) {
@@ -324,7 +327,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
     }
 
     private final class ListIteratorImpl implements ListIterator<E> {
-        private final int expectedModCount = SmallArrayList.this.modCount;
+        private final int expectedModCount = InlineArrayList.this.modCount;
         private int cursor;
 
         ListIteratorImpl(int cursor) {
@@ -338,7 +341,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
 
         @Override
         public E next() {
-            if (expectedModCount != SmallArrayList.this.modCount) {
+            if (expectedModCount != InlineArrayList.this.modCount) {
                 throw new ConcurrentModificationException();
             }
             if (cursor >= size) {
@@ -354,7 +357,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
 
         @Override
         public E previous() {
-            if (expectedModCount != SmallArrayList.this.modCount) {
+            if (expectedModCount != InlineArrayList.this.modCount) {
                 throw new ConcurrentModificationException();
             }
             if (cursor <= 0) {

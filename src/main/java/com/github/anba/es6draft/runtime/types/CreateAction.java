@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.types;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 
 /**
- *
+ * Interface object representing a [[CreateAction]] abstract operation.
  */
 public interface CreateAction<OBJECT extends ScriptObject> {
     /**

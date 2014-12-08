@@ -283,6 +283,10 @@ ecma_6/Comprehensions/error-messages.js
 # legacy .caller and .arguments are implemented as accessors on Function.prototype in SM
 ecma_5/extensions/function-caller-strict-cross-global.js
 
+# Tests SM limitations
+ecma_6/extensions/element-setting-ToNumber-neuters.js
+js1_8_5/extensions/typedarray-set-neutering.js
+
 
 #######################################
 # ES6 related runtime changes         #

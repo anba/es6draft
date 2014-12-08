@@ -10,7 +10,7 @@ import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ModuleEva
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.NormalizeModuleName;
 import static com.github.anba.es6draft.traceur.TraceurTestGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
+import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -20,6 +20,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -60,13 +61,13 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  */
 @RunWith(Parallelized.class)
 @TestConfiguration(name = "traceur.test", file = "resource:/test-configuration.properties")
-public class TraceurTest {
+public final class TraceurTest {
     private static final Configuration configuration = loadConfiguration(TraceurTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<Object[]> suiteValues() throws IOException {
-        return loadTestsAsArray(configuration,
-                new Function<Path, BiFunction<Path, Iterator<String>, TestInfo>>() {
+    public static List<TraceurTestInfo> suiteValues() throws IOException {
+        return loadTests(configuration,
+                new Function<Path, BiFunction<Path, Iterator<String>, TraceurTestInfo>>() {
                     @Override
                     public TestInfos apply(Path basedir) {
                         return new TestInfos(basedir);
@@ -99,7 +100,7 @@ public class TraceurTest {
     };
 
     @Rule
-    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
+    public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
 
     @Rule
     public StandardErrorHandler errorHandler = StandardErrorHandler.none();
@@ -197,7 +198,8 @@ public class TraceurTest {
         }
     }
 
-    private static final class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
+    private static final class TestInfos implements
+            BiFunction<Path, Iterator<String>, TraceurTestInfo> {
         private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*(.*)\\s*");
         private final Path basedir;
 
@@ -206,7 +208,7 @@ public class TraceurTest {
         }
 
         @Override
-        public TestInfo apply(Path file, Iterator<String> lines) {
+        public TraceurTestInfo apply(Path file, Iterator<String> lines) {
             TraceurTestInfo test = new TraceurTestInfo(basedir, file);
             Pattern p = FlagsPattern;
             while (lines.hasNext()) {

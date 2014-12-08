@@ -83,7 +83,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     /** [[relevantExtensionKeys]] */
-    private static List<ExtensionKey> relevantExtensionKeys = asList(ExtensionKey.ca,
+    private static final List<ExtensionKey> relevantExtensionKeys = asList(ExtensionKey.ca,
             ExtensionKey.nu);
 
     /**
@@ -236,6 +236,11 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     @SafeVarargs
+    private static <T> T[] array(T... elements) {
+        return elements;
+    }
+
+    @SafeVarargs
     private static <T> Set<T> set(T... elements) {
         return new HashSet<>(asList(elements));
     }
@@ -254,7 +259,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      */
     public static void InitializeDateTimeFormat(ExecutionContext cx, ScriptObject obj,
             Object locales, Object opts) {
-        // spec allows any object to become a DateTimeFormat object, we don't allow this
+        // Deliberate spec violation: Restrict initialization to proper DateTimeFormat objects.
         if (!(obj instanceof DateTimeFormatObject)) {
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -268,26 +273,24 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
         /* step 4 */
         ScriptObject options = ToDateTimeOptions(cx, opts, "any", "date");
-        /* step 5 */
-        OptionsRecord opt = new OptionsRecord();
         /* step 6 */
         String matcher = GetStringOption(cx, options, "localeMatcher", set("lookup", "best fit"),
                 "best fit");
-        /* step 7 */
-        opt.localeMatcher = OptionsRecord.MatcherType.forName(matcher);
+        /* step 5, 7 */
+        OptionsRecord opt = new OptionsRecord(OptionsRecord.MatcherType.forName(matcher));
         /* steps 8-9 */
         DateTimeFormatLocaleData localeData = new DateTimeFormatLocaleData();
         /* step 10 */
         ResolvedLocale r = ResolveLocale(cx, getAvailableLocalesLazy(cx), requestedLocales, opt,
                 relevantExtensionKeys, localeData);
         /* step 11 */
-        dateTimeFormat.setLocale(r.locale);
+        dateTimeFormat.setLocale(r.getLocale());
         /* step 12 */
-        dateTimeFormat.setCalendar(r.values.get(ExtensionKey.ca));
+        dateTimeFormat.setCalendar(r.getValue(ExtensionKey.ca));
         /* step 13 */
-        dateTimeFormat.setNumberingSystem(r.values.get(ExtensionKey.nu));
+        dateTimeFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
         /* step 14 */
-        String dataLocale = r.dataLocale;
+        String dataLocale = r.getDataLocale();
         /* steps 15-17 */
         String timeZone;
         Object tz = Get(cx, options, "timeZone");
@@ -300,43 +303,41 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         } else {
             timeZone = DefaultTimeZone(cx.getRealm());
         }
-        dateTimeFormat.setTimeZone(timeZone);
         /* step 18 */
-        FormatMatcherRecord opt2 = new FormatMatcherRecord();
-        /* step 19 */
+        dateTimeFormat.setTimeZone(timeZone);
+        /* step 20 */
         // FIXME: spec should propably define exact iteration order here
-        opt2.weekday = GetStringOption(cx, options, "weekday", set("narrow", "short", "long"), null);
-        opt2.era = GetStringOption(cx, options, "era", set("narrow", "short", "long"), null);
-        opt2.year = GetStringOption(cx, options, "year", set("2-digit", "numeric"), null);
-        opt2.month = GetStringOption(cx, options, "month",
+        String weekday = GetStringOption(cx, options, "weekday", set("narrow", "short", "long"),
+                null);
+        String era = GetStringOption(cx, options, "era", set("narrow", "short", "long"), null);
+        String year = GetStringOption(cx, options, "year", set("2-digit", "numeric"), null);
+        String month = GetStringOption(cx, options, "month",
                 set("2-digit", "numeric", "narrow", "short", "long"), null);
-        opt2.day = GetStringOption(cx, options, "day", set("2-digit", "numeric"), null);
-        opt2.hour = GetStringOption(cx, options, "hour", set("2-digit", "numeric"), null);
-        opt2.minute = GetStringOption(cx, options, "minute", set("2-digit", "numeric"), null);
-        opt2.second = GetStringOption(cx, options, "second", set("2-digit", "numeric"), null);
-        opt2.timeZoneName = GetStringOption(cx, options, "timeZoneName", set("short", "long"), null);
-        /* steps 20-21 */
-        // not applicable
-        /* step 22 */
-        matcher = GetStringOption(cx, options, "formatMatcher", set("basic", "best fit"),
-                "best fit");
-        /* steps 25 */
-        // not applicable
-        /* step 26 */
-        Boolean hr12 = GetBooleanOption(cx, options, "hour12", null);
-        opt2.hour12 = hr12;
-        /* steps 23-24, 27-28 */
+        String day = GetStringOption(cx, options, "day", set("2-digit", "numeric"), null);
+        String hour = GetStringOption(cx, options, "hour", set("2-digit", "numeric"), null);
+        String minute = GetStringOption(cx, options, "minute", set("2-digit", "numeric"), null);
+        String second = GetStringOption(cx, options, "second", set("2-digit", "numeric"), null);
+        String timeZoneName = GetStringOption(cx, options, "timeZoneName", set("short", "long"),
+                null);
+        /* step 23 */
+        String formatMatcher = GetStringOption(cx, options, "formatMatcher",
+                set("basic", "best fit"), "best fit");
+        /* step 27 */
+        Boolean hour12 = GetBooleanOption(cx, options, "hour12", null);
+        /* steps 19, 21-22, 24-26, 28-29 */
+        FormatMatcherRecord formatRecord = new FormatMatcherRecord(weekday, era, year, month, day,
+                hour, minute, second, timeZoneName, hour12);
         Lazy<String> pattern;
-        if ("basic".equals(matcher)) {
-            pattern = new BasicFormatPattern(opt2, dataLocale);
+        if ("basic".equals(formatMatcher)) {
+            pattern = new BasicFormatPattern(formatRecord, dataLocale);
         } else {
-            pattern = new BestFitFormatPattern(opt2, dataLocale);
+            pattern = new BestFitFormatPattern(formatRecord, dataLocale);
         }
-        /* step 29 */
-        dateTimeFormat.setPattern(pattern);
         /* step 30 */
-        dateTimeFormat.setBoundFormat(null);
+        dateTimeFormat.setPattern(pattern);
         /* step 31 */
+        dateTimeFormat.setBoundFormat(null);
+        /* step 32 */
         dateTimeFormat.setInitializedDateTimeFormat(true);
     }
 
@@ -364,7 +365,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         /* step 5 */
         if ("date".equals(required) || "any".equals(required)) {
             // FIXME: spec vs. impl (short circuit after first undefined value?)
-            for (String pk : asList("weekday", "year", "month", "day")) {
+            for (String pk : array("weekday", "year", "month", "day")) {
                 Object kvalue = Get(cx, options, pk);
                 if (!Type.isUndefined(kvalue)) {
                     needDefaults = false;
@@ -374,7 +375,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         /* step 6 */
         if ("time".equals(required) || "any".equals(required)) {
             // FIXME: spec vs. impl (short circuit after first undefined value?)
-            for (String pk : asList("hour", "minute", "second")) {
+            for (String pk : array("hour", "minute", "second")) {
                 Object kvalue = Get(cx, options, pk);
                 if (!Type.isUndefined(kvalue)) {
                     needDefaults = false;
@@ -383,13 +384,15 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         }
         /* step 7 */
         if (needDefaults && ("date".equals(defaults) || "all".equals(defaults))) {
-            for (String pk : asList("year", "month", "day")) {
+            for (String pk : array("year", "month", "day")) {
+                // FIXME: spec issue? (https://bugs.ecmascript.org/show_bug.cgi?id=3399)
                 CreateDataProperty(cx, options, pk, "numeric");
             }
         }
         /* step 8 */
         if (needDefaults && ("time".equals(defaults) || "all".equals(defaults))) {
-            for (String pk : asList("hour", "minute", "second")) {
+            for (String pk : array("hour", "minute", "second")) {
+                // FIXME: spec issue? (https://bugs.ecmascript.org/show_bug.cgi?id=3399)
                 CreateDataProperty(cx, options, pk, "numeric");
             }
         }
@@ -428,16 +431,30 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     private static final class FormatMatcherRecord {
-        String weekday;
-        String era;
-        String year;
-        String month;
-        String day;
-        String hour;
-        String minute;
-        String second;
-        String timeZoneName;
-        Boolean hour12;
+        private final FieldWeight weekday;
+        private final FieldWeight era;
+        private final FieldWeight year;
+        private final FieldWeight month;
+        private final FieldWeight day;
+        private final FieldWeight hour;
+        private final FieldWeight minute;
+        private final FieldWeight second;
+        private final FieldWeight timeZoneName;
+        private final Boolean hour12;
+
+        FormatMatcherRecord(String weekday, String era, String year, String month, String day,
+                String hour, String minute, String second, String timeZoneName, Boolean hour12) {
+            this.weekday = FieldWeight.forName(weekday);
+            this.era = FieldWeight.forName(era);
+            this.year = FieldWeight.forName(year);
+            this.month = FieldWeight.forName(month);
+            this.day = FieldWeight.forName(day);
+            this.hour = FieldWeight.forName(hour);
+            this.minute = FieldWeight.forName(minute);
+            this.second = FieldWeight.forName(second);
+            this.timeZoneName = FieldWeight.forName(timeZoneName);
+            this.hour12 = hour12;
+        }
 
         boolean isDate() {
             return (year != null || month != null || day != null);
@@ -446,38 +463,91 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         boolean isTime() {
             return (hour != null || minute != null || second != null);
         }
+
+        boolean isHour12(ULocale locale) {
+            if (hour12 != null) {
+                return hour12;
+            }
+            char hourFormat = defaultHourFormat(locale);
+            return (hourFormat == 'h' || hourFormat == 'K');
+        }
+
+        FieldWeight getWeight(DateField field) {
+            switch (field) {
+            case Era:
+                return era;
+            case Year:
+                return year;
+            case Quarter:
+                return null;
+            case Month:
+                return month;
+            case Week:
+                return null;
+            case Day:
+                return day;
+            case Weekday:
+                return weekday;
+            case Period:
+                return null;
+            case Hour:
+                return hour;
+            case Minute:
+                return minute;
+            case Second:
+                return second;
+            case Timezone:
+                return timeZoneName;
+            default:
+                throw new AssertionError();
+            }
+        }
+
+        String toSkeleton() {
+            StringBuilder sb = new StringBuilder();
+            DateField.Weekday.append(sb, weekday);
+            DateField.Era.append(sb, era);
+            DateField.Year.append(sb, year);
+            DateField.Month.append(sb, month);
+            DateField.Day.append(sb, day);
+            DateField.Hour.append(sb, hour, hour12);
+            DateField.Minute.append(sb, minute);
+            DateField.Second.append(sb, second);
+            DateField.Timezone.append(sb, timeZoneName);
+            return sb.toString();
+        }
     }
 
     /**
      * Abstract Operation: BasicFormatMatcher
      * 
-     * @param opt
-     *            the format matcher
+     * @param formatRecord
+     *            the format matcher record
      * @param dataLocale
      *            the locale
      * @return the basic format matcher
      */
-    public static String BasicFormatMatcher(FormatMatcherRecord opt, String dataLocale) {
-        // ICU4J only provides access to date or time-only skeletons, with the exception of the
+    public static String BasicFormatMatcher(FormatMatcherRecord formatRecord, String dataLocale) {
+        ULocale locale = ULocale.forLanguageTag(dataLocale);
+        DateTimePatternGenerator generator = DateTimePatternGenerator.getInstance(locale);
+
+        // ICU4J only provides access to date- or time-only skeletons, with the exception of the
         // weekday property, which may also appear in time-only skeletons or as a single skeleton
-        // property. That means we want to handle four different cases:
-        // 1) opt contains only date properties
-        // 2) opt contains only time properties
-        // 3) opt contains date and time properties
-        // 4) opt contains only the weekday property
-        boolean optDate = opt.isDate(), optTime = opt.isTime(), optDateTime = optDate && optTime;
+        // property. That means we need to handle four different cases:
+        // 1) formatRecord contains only date properties
+        // 2) formatRecord contains only time properties
+        // 3) formatRecord contains date and time properties
+        // 4) formatRecord contains only the weekday property
+        boolean optDate = formatRecord.isDate();
+        boolean optTime = formatRecord.isTime();
+        boolean optDateTime = optDate && optTime;
+
+        // get the preferred hour representation (12-hour-cycle or 24-hour-cycle)
+        boolean optHour12 = formatRecord.isHour12(locale);
 
         // handle date and time patterns separately
         int bestDateScore = Integer.MIN_VALUE, bestTimeScore = Integer.MIN_VALUE;
         String bestDateFormat = null, bestTimeFormat = null;
-
-        ULocale locale = ULocale.forLanguageTag(dataLocale);
-        DateTimePatternGenerator generator = DateTimePatternGenerator.getInstance(locale);
-
-        // get the preferred hour representation (12-hour-cycle or 24-hour-cycle)
-        char hourFormat = defaultHourFormat(locale);
-        boolean hour12 = (hourFormat == 'h' || hourFormat == 'K');
-        boolean optHour12 = (opt.hour12 != null ? opt.hour12 : hour12);
 
         Map<String, String> skeletons = addCanonicalSkeletons(generator.getSkeletons(null));
         for (Map.Entry<String, String> entry : skeletons.entrySet()) {
@@ -508,13 +578,13 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
                     continue;
                 }
                 if (skeleton.isDate()) {
-                    int score = computeScore(opt, skeleton);
+                    int score = computeScore(formatRecord, skeleton);
                     if (score > bestDateScore) {
                         bestDateScore = score;
                         bestDateFormat = entry.getValue();
                     }
                 } else {
-                    int score = computeScore(opt, skeleton);
+                    int score = computeScore(formatRecord, skeleton);
                     if (score > bestTimeScore) {
                         bestTimeScore = score;
                         bestTimeFormat = entry.getValue();
@@ -525,7 +595,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
                 if (skeleton.isTime()) {
                     continue;
                 }
-                int score = computeScore(opt, skeleton);
+                int score = computeScore(formatRecord, skeleton);
                 if (score > bestDateScore) {
                     bestDateScore = score;
                     bestDateFormat = entry.getValue();
@@ -539,14 +609,14 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
                 if (skeleton.isHour12() != optHour12) {
                     continue;
                 }
-                int score = computeScore(opt, skeleton);
+                int score = computeScore(formatRecord, skeleton);
                 if (score > bestTimeScore) {
                     bestTimeScore = score;
                     bestTimeFormat = entry.getValue();
                 }
             } else {
                 // weekday-only case
-                int score = computeScore(opt, skeleton);
+                int score = computeScore(formatRecord, skeleton);
                 if (score > bestDateScore) {
                     bestDateScore = score;
                     bestDateFormat = entry.getValue();
@@ -600,9 +670,9 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      * @return the updated skeletons map
      */
     private static Map<String, String> addCanonicalSkeletons(Map<String, String> skeletons) {
-        final String source = "GyQMwWEdDFHmsSv";
+        final String source = "GyQMwWEdDFHmsSv"; // see DateTimePatternGenerator#CANONICAL_ITEMS
         for (int i = 0, len = source.length(); i < len; ++i) {
-            String k = source.substring(i, i + 1);
+            String k = String.valueOf(source.charAt(i));
             if (!skeletons.containsKey(k)) {
                 skeletons.put(k, k);
             }
@@ -613,96 +683,97 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     /**
      * Abstract Operation: BasicFormatMatcher (score computation)
      * 
-     * @param opt
-     *            the format matcher
+     * @param formatRecord
+     *            the format matcher record
      * @param skeleton
      *            the pattern skeleton
      * @return the computed score
      */
-    private static int computeScore(FormatMatcherRecord opt, Skeleton skeleton) {
+    private static int computeScore(FormatMatcherRecord formatRecord, Skeleton skeleton) {
         /* step 11.b */
         int score = 0;
         /* steps 11.c.i - 11.c.iv */
-        score -= getPenalty(DateField.Weekday, opt.weekday, skeleton);
-        score -= getPenalty(DateField.Era, opt.era, skeleton);
-        score -= getPenalty(DateField.Year, opt.year, skeleton);
-        score -= getPenalty(DateField.Month, opt.month, skeleton);
-        score -= getPenalty(DateField.Day, opt.day, skeleton);
-        score -= getPenalty(DateField.Hour, opt.hour, skeleton);
-        score -= getPenalty(DateField.Minute, opt.minute, skeleton);
-        score -= getPenalty(DateField.Second, opt.second, skeleton);
-        score -= getPenalty(DateField.Timezone, opt.timeZoneName, skeleton);
+        score -= computePenalty(formatRecord, skeleton, DateField.Weekday).value();
+        score -= computePenalty(formatRecord, skeleton, DateField.Era).value();
+        score -= computePenalty(formatRecord, skeleton, DateField.Year).value();
+        score -= computePenalty(formatRecord, skeleton, DateField.Month).value();
+        score -= computePenalty(formatRecord, skeleton, DateField.Day).value();
+        score -= computePenalty(formatRecord, skeleton, DateField.Hour).value();
+        score -= computePenalty(formatRecord, skeleton, DateField.Minute).value();
+        score -= computePenalty(formatRecord, skeleton, DateField.Second).value();
+        score -= computePenalty(formatRecord, skeleton, DateField.Timezone).value();
         return score;
     }
 
-    private static final int removalPenalty = 120, additionPenalty = 20, longLessPenalty = 8,
-            longMorePenalty = 6, shortLessPenalty = 6, shortMorePenalty = 3;
+    private enum Penalty {
+        Removal(120), Addition(20), LongLess(8), LongMore(6), ShortLess(6), ShortMore(3), None(0);
+
+        private final int value;
+
+        private Penalty(int value) {
+            this.value = value;
+        }
+
+        public int value() {
+            return this.value;
+        }
+    }
 
     /**
      * Abstract Operation: BasicFormatMatcher (penalty computation)
      * 
-     * @param field
-     *            the date field
-     * @param weight
-     *            the field weight
+     * @param formatRecord
+     *            the format matcher record
      * @param skeleton
      *            the pattern skeleton
+     * @param field
+     *            the date field
      * @return the computed penalty
      */
-    private static int getPenalty(DateField field, String weight, Skeleton skeleton) {
-        FieldWeight optionsProp = FieldWeight.forName(weight);
+    private static Penalty computePenalty(FormatMatcherRecord formatRecord, Skeleton skeleton,
+            DateField field) {
+        FieldWeight optionsProp = formatRecord.getWeight(field);
         FieldWeight formatProp = skeleton.getWeight(field);
         /* step 11.c.v */
         if (optionsProp == null && formatProp != null) {
-            return additionPenalty;
+            return Penalty.Addition;
         }
         /* step 11.c.vi */
         if (optionsProp != null && formatProp == null) {
-            return removalPenalty;
+            return Penalty.Removal;
         }
         /* step 11.c.vii */
         if (optionsProp != formatProp) {
-            int optionsPropIndex = optionsProp.weight();
-            int formatPropIndex = formatProp.weight();
+            int optionsPropIndex = optionsProp.index();
+            int formatPropIndex = formatProp.index();
             int delta = Math.max(Math.min(formatPropIndex - optionsPropIndex, 2), -2);
             if (delta == 2) {
-                return longMorePenalty;
+                return Penalty.LongMore;
             } else if (delta == 1) {
-                return shortMorePenalty;
+                return Penalty.ShortMore;
             } else if (delta == -1) {
-                return shortLessPenalty;
+                return Penalty.ShortLess;
             } else if (delta == -2) {
-                return longLessPenalty;
+                return Penalty.LongLess;
             }
         }
-        return 0;
+        return Penalty.None;
     }
 
     /**
      * Abstract Operation: BestFitFormatMatcher
      * 
-     * @param opt
-     *            the format matcher
+     * @param formatRecord
+     *            the format matcher record
      * @param dataLocale
      *            the locale
      * @return the best applicable pattern
      */
-    public static String BestFitFormatMatcher(FormatMatcherRecord opt, String dataLocale) {
+    public static String BestFitFormatMatcher(FormatMatcherRecord formatRecord, String dataLocale) {
         // Let ICU4J compute the best applicable pattern for the requested input values
-        StringBuilder sb = new StringBuilder();
-        DateField.Weekday.append(sb, opt.weekday);
-        DateField.Era.append(sb, opt.era);
-        DateField.Year.append(sb, opt.year);
-        DateField.Month.append(sb, opt.month);
-        DateField.Day.append(sb, opt.day);
-        DateField.Hour.append(sb, opt.hour, opt.hour12);
-        DateField.Minute.append(sb, opt.minute);
-        DateField.Second.append(sb, opt.second);
-        DateField.Timezone.append(sb, opt.timeZoneName);
         ULocale locale = ULocale.forLanguageTag(dataLocale);
         DateTimePatternGenerator generator = DateTimePatternGenerator.getInstance(locale);
-        String skeleton = sb.toString();
-        return generator.getBestPattern(skeleton);
+        return generator.getBestPattern(formatRecord.toSkeleton());
     }
 
     /**
@@ -711,16 +782,23 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
+        /* step 1 */
         Object locales = argument(args, 0);
+        /* step 2 */
         Object options = argument(args, 1);
+        /* step 3 */
         if (Type.isUndefined(thisValue) || thisValue == calleeContext.getIntrinsic(Intrinsics.Intl)) {
             return construct(calleeContext, args);
         }
+        /* step 4 */
         ScriptObject obj = ToObject(calleeContext, thisValue);
+        /* step 5 */
         if (!IsExtensible(calleeContext, obj)) {
             throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
+        /* step 6 */
         InitializeDateTimeFormat(calleeContext, obj, locales, options);
+        /* step 7 */
         return obj;
     }
 
@@ -729,10 +807,13 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      */
     @Override
     public DateTimeFormatObject construct(ExecutionContext callerContext, Object... args) {
-        Object locales = argument(args, 0);
-        Object options = argument(args, 1);
         DateTimeFormatObject obj = new DateTimeFormatObject(callerContext.getRealm());
         obj.setPrototype(callerContext.getIntrinsic(Intrinsics.Intl_DateTimeFormatPrototype));
+        /* step 1 */
+        Object locales = argument(args, 0);
+        /* step 2 */
+        Object options = argument(args, 1);
+        /* step 3 */
         InitializeDateTimeFormat(callerContext, obj, locales, options);
         return obj;
     }
@@ -782,8 +863,12 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         @Function(name = "supportedLocalesOf", arity = 1)
         public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue,
                 Object locales, Object options) {
+            /* step 1 (implicit) */
+            /* step 2 */
             Set<String> availableLocales = getAvailableLocales(cx);
+            /* step 3 */
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
+            /* step 4 */
             return SupportedLocales(cx, availableLocales, requestedLocales, options);
         }
     }

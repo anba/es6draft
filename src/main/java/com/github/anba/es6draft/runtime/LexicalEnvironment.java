@@ -68,7 +68,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
 
     /**
      * Retrieves the binding value of the first {@link EnvironmentRecord} which has a binding for
-     * {@code name}, if no such binding exists a ReferenceError is thrown.
+     * {@code name}. If no such binding exists a ReferenceError is thrown.
      * 
      * @param lex
      *            the lexical environment

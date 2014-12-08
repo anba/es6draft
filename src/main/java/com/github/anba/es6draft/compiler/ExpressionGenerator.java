@@ -110,7 +110,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         static final MethodDesc Reference_getThisValue = MethodDesc.create(
                 MethodDesc.Invoke.Virtual, Types.Reference, "getThisValue",
-                Type.getMethodType(Types.Object, Types.ExecutionContext));
+                Type.getMethodType(Types.Object));
 
         static final MethodDesc Reference_getValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
                 Types.Reference, "getValue",
@@ -158,9 +158,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Type.getMethodType(Types.Callable, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_defineLength = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineLength", Type
-                        .getMethodType(Types.ArrayObject, Types.ArrayObject, Type.INT_TYPE,
-                                Types.ExecutionContext));
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineLength",
+                Type.getMethodType(Type.VOID_TYPE, Types.ArrayObject, Type.INT_TYPE));
 
         static final MethodDesc ScriptRuntime_defineProperty__int = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineProperty", Type
@@ -169,7 +168,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         static final MethodDesc ScriptRuntime_directEvalFallbackArguments = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "directEvalFallbackArguments", Type
-                        .getMethodType(Types.Object_, Types.Object_, Types.Object, Types.Callable,
+                        .getMethodType(Types.Object_, Types.Object, Types.Object_, Types.Callable,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_directEvalFallbackThisArgument = MethodDesc.create(
@@ -312,7 +311,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         static final MethodDesc ScriptRuntime_PrepareForTailCall = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "PrepareForTailCall",
-                Type.getMethodType(Types.Object, Types.Object_, Types.Object, Types.Callable));
+                Type.getMethodType(Types.Object, Types.Object, Types.Object_, Types.Callable));
+
+        static final MethodDesc ScriptRuntime_PrepareForTailCallUnchecked = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "PrepareForTailCall", Type
+                        .getMethodType(Types.Object, Types.Object, Types.ExecutionContext,
+                                Types.Object, Types.Object_));
 
         static final MethodDesc ScriptRuntime_SpreadArray = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "SpreadArray",
@@ -349,17 +353,20 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     private static final Object[] EMPTY_BSM_ARGS = new Object[] {};
 
     private void invokeDynamicCall(ExpressionVisitor mv) {
+        // stack: [func(Callable), cx, thisValue, args] -> [result]
         mv.invokedynamic(Bootstrap.getCallName(), Bootstrap.getCallMethodDescriptor(),
                 Bootstrap.getCallBootstrap(), EMPTY_BSM_ARGS);
     }
 
     private void invokeDynamicNativeCall(String name, ExpressionVisitor mv) {
+        // stack: [args, cx] -> [result]
         mv.invokedynamic(NativeCalls.getNativeCallName(name),
                 NativeCalls.getNativeCallMethodDescriptor(), NativeCalls.getNativeCallBootstrap(),
                 EMPTY_BSM_ARGS);
     }
 
     private void invokeDynamicOperator(BinaryExpression.Operator operator, ExpressionVisitor mv) {
+        // stack: [lval, rval, cx] -> [result]
         mv.invokedynamic(Bootstrap.getName(operator), Bootstrap.getMethodDescriptor(operator),
                 Bootstrap.getBootstrap(operator), EMPTY_BSM_ARGS);
     }
@@ -402,13 +409,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         return ValType.Any;
     }
 
-    private ValType GetValue(SuperCallExpression node, ValType type, ExpressionVisitor mv) {
-        assert type == ValType.Reference : "type is not reference: " + type;
-        mv.loadExecutionContext();
-        mv.invoke(Methods.Reference_getValue);
-        return ValType.Any;
-    }
-
     private void PutValue(LeftHandSideExpression node, ValType type, ExpressionVisitor mv) {
         assert type == ValType.Reference : "type is not reference: " + type;
         mv.loadExecutionContext();
@@ -432,6 +432,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
     }
 
+    private boolean isTailCall(Expression node, ExpressionVisitor mv) {
+        return !codegen.isEnabled(Compiler.Option.NoTailCall) && mv.isTailCall(node);
+    }
+
     /**
      * [12.3.3.1.1 Runtime Semantics: EvaluateNew(thisCall, constructProduction, arguments)]
      * 
@@ -446,7 +450,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 9-14 */
         mv.lineInfo(node);
         mv.loadExecutionContext();
-        if (!codegen.isEnabled(Compiler.Option.NoTailCall) && mv.isTailCall(node)) {
+        if (isTailCall(node, mv)) {
             mv.invoke(Methods.ScriptRuntime_EvaluateConstructorTailCall);
             return ValType.Any;
         }
@@ -454,12 +458,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         return ValType.Object;
     }
 
-    private static boolean isPropertyReference(Expression base, ValType type) {
-        return type == ValType.Reference && !(base instanceof IdentifierReference);
-    }
-
-    private static boolean isEnclosedByWithStatement(Name name, ExpressionVisitor mv) {
-        for (Scope scope = mv.getScope();;) {
+    private static boolean isEnclosedByWithStatement(Name name, Scope currentScope) {
+        for (Scope scope = currentScope;;) {
             if (scope instanceof WithScope) {
                 return true;
             }
@@ -482,8 +482,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         }
     }
 
-    private static boolean isEnclosedByWithStatement(ExpressionVisitor mv) {
-        for (Scope scope = mv.getScope();;) {
+    private static boolean isEnclosedByWithStatement(Scope currentScope) {
+        for (Scope scope = currentScope;;) {
             if (scope instanceof WithScope) {
                 return true;
             }
@@ -503,56 +503,36 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         }
     }
 
-    private static boolean isGlobalScope(ExpressionVisitor mv) {
-        ScopedNode node = mv.getScope().getNode();
+    private static boolean isGlobalScope(Scope currentScope) {
+        ScopedNode node = currentScope.getNode();
         if (node instanceof Script) {
             return ((Script) node).isGlobalScope();
         }
         return false;
     }
 
-    /**
-     * [12.3.4.2 Runtime Semantics: EvaluateCall( ref, arguments, tailPosition )]<br>
-     * [12.3.4.3 Runtime Semantics: EvaluateDirectCall( func, thisValue, arguments, tailPosition )]
-     * 
-     * @param call
-     *            the function call expression
-     * @param base
-     *            the call expression's base node
-     * @param type
-     *            the value type of the base node
-     * @param arguments
-     *            the list of function call arguments
-     * @param directEval
-     *            the strict-mode flag
-     * @param mv
-     *            the expression visitor
-     */
-    private ValType EvaluateCall(Expression call, Expression base, ValType type,
-            List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
-        if (type == ValType.Reference) {
-            if (base instanceof SuperCallExpression) {
-                assert call == base;
-                EvaluateCallSuper((SuperCallExpression) call, type, arguments, mv);
-            } else {
-                assert base instanceof LeftHandSideExpression;
-                LeftHandSideExpression lhs = (LeftHandSideExpression) base;
-                if (isPropertyReference(lhs, type)) {
-                    EvaluateCallPropRef(call, lhs, type, arguments, mv);
-                } else {
-                    IdentifierReference ident = (IdentifierReference) base;
-                    Name name = ident.toName();
-                    if (isEnclosedByWithStatement(name, mv)) {
-                        EvaluateCallWithIdentRef(call, ident, type, arguments, directEval, mv);
-                    } else {
-                        EvaluateCallIdentRef(call, ident, type, arguments, directEval, mv);
-                    }
-                }
+    private enum CallType {
+        Property, SuperProperty, Identifier, IdentifierWith, Eval, EvalWith, Value;
+
+        static CallType of(Expression call, Expression base, Scope scope) {
+            if (base instanceof ElementAccessor || base instanceof PropertyAccessor) {
+                return Property;
             }
-        } else {
-            EvaluateCallWithValue(call, base, type, arguments, mv);
+            if (base instanceof SuperElementAccessor || base instanceof SuperPropertyAccessor) {
+                return SuperProperty;
+            }
+            if (base instanceof IdentifierReference) {
+                IdentifierReference ident = (IdentifierReference) base;
+                boolean directEval = call instanceof CallExpression
+                        && "eval".equals(ident.getName());
+                Name name = ident.toName();
+                if (isEnclosedByWithStatement(name, scope)) {
+                    return directEval ? EvalWith : IdentifierWith;
+                }
+                return directEval ? Eval : Identifier;
+            }
+            return Value;
         }
-        return ValType.Any;
     }
 
     /**
@@ -562,197 +542,163 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      *            the function call expression
      * @param base
      *            the call expression's base node
-     * @param type
-     *            the value type of the base node
      * @param arguments
      *            the list of function call arguments
      * @param mv
      *            the expression visitor
      */
-    private void EvaluateCallPropRef(Expression call, LeftHandSideExpression base, ValType type,
-            List<Expression> arguments, ExpressionVisitor mv) {
-        // Only called for the property reference case (`obj.method(...)` or `obj[method](...)`).
-        assert isPropertyReference(base, type);
-        assert base instanceof ElementAccessor || base instanceof PropertyAccessor
-                || base instanceof SuperElementAccessor || base instanceof SuperPropertyAccessor;
-
-        // stack: [ref] -> [ref, ref]
-        mv.dup();
-
-        /* steps 1-2 */
-        // stack: [ref, ref] -> [ref, func]
-        GetValue(base, type, mv);
-
-        /* steps 3-4 */
-        // stack: [ref, func] -> [thisValue, func]
-        mv.swap();
-        mv.loadExecutionContext();
-        mv.invoke(Methods.Reference_getThisValue);
-        mv.swap();
-
-        // stack: [thisValue, func] -> [result]
-        EvaluateDirectCall(call, arguments, mv);
+    private ValType EvaluateCall(Expression call, Expression base, List<Expression> arguments,
+            ExpressionVisitor mv) {
+        switch (CallType.of(call, base, mv.getScope())) {
+        case Property:
+        case SuperProperty:
+            return EvaluateCallProperty(call, (LeftHandSideExpression) base, arguments, mv);
+        case Value:
+            return EvaluateCallValue(call, base, arguments, mv);
+        case Identifier:
+            return EvaluateCallIdent(call, (IdentifierReference) base, arguments, mv);
+        case IdentifierWith:
+            return EvaluateCallIdentWith(call, (IdentifierReference) base, arguments, mv);
+        case Eval:
+            return EvaluateCallEval(call, (IdentifierReference) base, arguments, mv);
+        case EvalWith:
+            return EvaluateCallEvalWith(call, (IdentifierReference) base, arguments, mv);
+        default:
+            throw new AssertionError();
+        }
     }
 
-    /**
-     * [12.3.4.2 Runtime Semantics: EvaluateCall]
-     * 
-     * @param call
-     *            the function call expression
-     * @param type
-     *            the value type of the base node
-     * @param arguments
-     *            the list of function call arguments
-     * @param mv
-     *            the expression visitor
-     */
-    private void EvaluateCallSuper(SuperCallExpression call, ValType type,
+    private ValType EvaluateCallProperty(Expression call, LeftHandSideExpression base,
             List<Expression> arguments, ExpressionVisitor mv) {
-        // stack: [ref] -> [ref, ref]
-        mv.dup();
+        // Only called for the property reference case (`obj.method(...)` or `obj[method](...)`).
+
+        // stack: [] -> [ref]
+        ValType type = base.accept(this, mv);
+        assert type == ValType.Reference;
 
         /* steps 1-2 */
-        // stack: [ref, ref] -> [ref, func]
-        GetValue(call, type, mv);
+        // stack: [ref] -> [func, ref]
+        mv.dup();
+        GetValue(base, type, mv);
+        mv.swap();
 
         /* steps 3-4 */
-        // stack: [ref, func] -> [thisValue, func]
-        mv.swap();
-        mv.loadExecutionContext();
+        // stack: [func, ref] -> [func, thisValue]
         mv.invoke(Methods.Reference_getThisValue);
+
+        // stack: [func, thisValue] -> [func, cx, thisValue]
+        mv.loadExecutionContext();
         mv.swap();
 
         /* step 5 */
-        // stack: [thisValue, func] -> result
-        EvaluateDirectCall(call, arguments, mv);
+        // stack: [func, cx, thisValue] -> [result]
+        return EvaluateDirectCall(call, arguments, mv);
     }
 
-    /**
-     * [12.3.4.2 Runtime Semantics: EvaluateCall]
-     * 
-     * @param call
-     *            the function call expression
-     * @param base
-     *            the call expression's base node
-     * @param type
-     *            the value type of the base node
-     * @param arguments
-     *            the list of function call arguments
-     * @param mv
-     *            the expression visitor
-     */
-    private void EvaluateCallWithValue(Expression call, Expression base, ValType type,
-            List<Expression> arguments, ExpressionVisitor mv) {
+    private ValType EvaluateCallValue(Expression call, Expression base, List<Expression> arguments,
+            ExpressionVisitor mv) {
+        // stack: [] -> [func]
+        ValType type = base.accept(this, mv);
+        mv.toBoxed(type);
         assert type != ValType.Reference;
 
         /* steps 1-2 (not applicable) */
         // GetValue(...)
 
         /* steps 3-4 */
-        // stack: [func] -> [thisValue, func]
+        // stack: [func] -> [func, cx, thisValue]
+        mv.loadExecutionContext();
         mv.loadUndefined();
-        mv.swap();
 
-        /* steps 9-13 */
-        // stack: [args, thisValue, func(Callable)] -> result
-        EvaluateDirectCall(call, arguments, mv);
+        /* step 5 */
+        // stack: [func, cx, thisValue] -> [result]
+        return EvaluateDirectCall(call, arguments, mv);
     }
 
-    /**
-     * [12.3.4.2 Runtime Semantics: EvaluateCall]
-     * 
-     * @param call
-     *            the function call expression
-     * @param base
-     *            the call expression's base node
-     * @param type
-     *            the value type of the base node
-     * @param arguments
-     *            the list of function call arguments
-     * @param directEval
-     *            the strict-mode flag
-     * @param mv
-     *            the expression visitor
-     */
-    private void EvaluateCallIdentRef(Expression call, IdentifierReference base, ValType type,
-            List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
-        assert type == ValType.Reference;
-
-        Jump afterCall = new Jump();
-
+    private ValType EvaluateCallIdent(Expression call, IdentifierReference base,
+            List<Expression> arguments, ExpressionVisitor mv) {
         /* steps 1-2 */
-        // stack: [ref] -> [func]
-        GetValue(base, type, mv);
+        // stack: [] -> [func]
+        evalAndGetValue(base, mv);
 
         /* steps 3-4 */
-        // stack: [func] -> [thisValue, func]
-        mv.loadUndefined();
-        mv.swap();
-
-        /* steps 1-2 (EvaluateDirectCall) */
-        // stack: [thisValue, func] -> [args, thisValue, func]
-        ArgumentListEvaluation(arguments, mv);
-        mv.dupX2();
-        mv.pop();
-
-        // stack: [args, thisValue, func]
-        mv.lineInfo(call);
-
-        /* steps 3-4 (EvaluateDirectCall) */
-        // stack: [args, thisValue, func] -> [args, thisValue, func(Callable)]
+        // stack: [func] -> [func, cx, thisValue]
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_CheckCallable);
+        mv.loadUndefined();
 
-        if (directEval) {
-            directEvalCall(arguments, afterCall, mv);
-        }
-
-        /* steps 5-9 (EvaluateDirectCall) */
-        // stack: [args, thisValue, func(Callable)] -> result
-        EvaluateDirectCall(call, mv);
-
-        if (directEval) {
-            mv.mark(afterCall);
-        }
+        /* step 5 */
+        // stack: [func, cx, thisValue] -> [result]
+        return EvaluateDirectCall(call, arguments, mv);
     }
 
-    /**
-     * [12.3.4.2 Runtime Semantics: EvaluateCall]
-     * 
-     * @param call
-     *            the function call expression
-     * @param base
-     *            the call expression's base node
-     * @param type
-     *            the value type of the base node
-     * @param arguments
-     *            the list of function call arguments
-     * @param directEval
-     *            the strict-mode flag
-     * @param mv
-     *            the expression visitor
-     */
-    private void EvaluateCallWithIdentRef(Expression call, IdentifierReference base, ValType type,
-            List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
+    private ValType EvaluateCallIdentWith(Expression call, IdentifierReference base,
+            List<Expression> arguments, ExpressionVisitor mv) {
+        // stack: [] -> [ref]
+        ValType type = base.accept(this, mv);
         assert type == ValType.Reference;
 
-        Jump afterCall = new Jump(), baseObjNotNull = new Jump();
-
-        // stack: [ref] -> [ref, ref]
-        mv.dup();
-
         /* steps 1-2 */
-        // stack: [ref, ref] -> [ref, func]
+        // stack: [ref] -> [func, ref]
+        mv.dup();
         GetValue(base, type, mv);
+        mv.swap();
 
         /* step 3-4 */
-        // stack: [ref, func] -> [func, baseObj?]
+        // stack: [func, ref] -> [func, thisValue]
+        withBaseObject(mv);
+
+        // stack: [func, thisValue] -> [func, cx, thisValue]
+        mv.loadExecutionContext();
         mv.swap();
+
+        /* step 5 */
+        // stack: [func, cx, thisValue] -> [result]
+        return EvaluateDirectCall(call, arguments, mv);
+    }
+
+    private ValType EvaluateCallEval(Expression call, IdentifierReference base,
+            List<Expression> arguments, ExpressionVisitor mv) {
+        /* steps 3-4 */
+        // stack: [] -> [thisValue]
+        mv.loadUndefined();
+
+        /* steps 1-2 */
+        // stack: [thisValue] -> [thisValue, func]
+        evalAndGetValue(base, mv);
+
+        /* step 5 */
+        // stack: [thisValue, func] -> [result]
+        return EvaluateDirectCallEval(call, arguments, mv);
+    }
+
+    private ValType EvaluateCallEvalWith(Expression call, IdentifierReference base,
+            List<Expression> arguments, ExpressionVisitor mv) {
+        // stack: [] -> [ref]
+        ValType type = base.accept(this, mv);
+        assert type == ValType.Reference;
+
+        /* steps 1-2 */
+        // stack: [ref] -> [func, ref]
+        mv.dup();
+        GetValue(base, type, mv);
+        mv.swap();
+
+        /* step 3-4 */
+        // stack: [func, ref] -> [thisValue, func]
+        withBaseObject(mv);
+        mv.swap();
+
+        return EvaluateDirectCallEval(call, arguments, mv);
+    }
+
+    private void withBaseObject(ExpressionVisitor mv) {
+        // stack: [ref] -> [baseObj?]
         mv.invoke(Methods.Reference_getBase);
         mv.checkcast(Types.EnvironmentRecord);
         mv.invoke(Methods.EnvironmentRecord_withBaseObject);
 
-        // stack: [func, baseObj?] -> [thisValue, func]
+        // stack: [baseObj?] -> [thisValue]
+        Jump baseObjNotNull = new Jump();
         mv.dup();
         mv.ifnonnull(baseObjNotNull);
         {
@@ -760,51 +706,62 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.loadUndefined();
         }
         mv.mark(baseObjNotNull);
-        mv.swap();
-
-        /* steps 1-2 (EvaluateDirectCall) */
-        // stack: [thisValue, func] -> [args, thisValue, func]
-        ArgumentListEvaluation(arguments, mv);
-        mv.dupX2();
-        mv.pop();
-
-        // stack: [args, thisValue, func]
-        mv.lineInfo(call);
-
-        /* steps 3-4 (EvaluateDirectCall) */
-        // stack: [args, thisValue, func] -> [args, thisValue, func(Callable)]
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_CheckCallable);
-
-        if (directEval) {
-            directEvalCall(arguments, afterCall, mv);
-        }
-
-        /* steps 5-9 (EvaluateDirectCall) */
-        // stack: [args, thisValue, func(Callable)] -> result
-        EvaluateDirectCall(call, mv);
-
-        if (directEval) {
-            mv.mark(afterCall);
-        }
     }
 
     /**
-     * [18.2.1.1] Direct Call to Eval
+     * [12.3.4.3 Runtime Semantics: EvaluateDirectCall( func, thisValue, arguments, tailPosition )]
      * 
+     * @param call
+     *            the function call expression
      * @param arguments
-     *            the list of function call arguments
-     * 
-     * @param afterCall
-     *            the label after the call instruction
+     *            the function arguments
      * @param mv
      *            the expression visitor
      */
-    private void directEvalCall(List<Expression> arguments, Jump afterCall, ExpressionVisitor mv) {
-        // test for possible direct-eval call
-        Jump notEval = new Jump();
+    private ValType EvaluateDirectCall(Expression call, List<Expression> arguments,
+            ExpressionVisitor mv) {
+        /* steps 1-2 */
+        // stack: [func, cx, thisValue] -> [func, cx, thisValue, args]
+        ArgumentListEvaluation(arguments, mv);
 
-        // stack: [args, thisValue, func(Callable)] -> [args, thisValue, func(Callable)]
+        /* steps 3-9 */
+        mv.lineInfo(call);
+        if (isTailCall(call, mv)) {
+            // stack: [func, cx, thisValue, args] -> [<func(Callable), thisValue, args>]
+            mv.invoke(Methods.ScriptRuntime_PrepareForTailCallUnchecked);
+        } else {
+            // stack: [func, cx, thisValue, args] -> [result]
+            invokeDynamicCall(mv);
+        }
+        return ValType.Any;
+    }
+
+    /**
+     * [12.3.4.3 Runtime Semantics: EvaluateDirectCall( func, thisValue, arguments, tailPosition )]
+     * 
+     * @param call
+     *            the function call expression
+     * @param arguments
+     *            the function arguments
+     * @param mv
+     *            the expression visitor
+     */
+    private ValType EvaluateDirectCallEval(Expression call, List<Expression> arguments,
+            ExpressionVisitor mv) {
+        Jump afterCall = new Jump(), notEval = new Jump();
+
+        /* steps 1-2 (EvaluateDirectCall) */
+        // stack: [thisValue, func] -> [thisValue, args, func]
+        ArgumentListEvaluation(arguments, mv);
+        mv.swap();
+
+        /* steps 3-4 (EvaluateDirectCall) */
+        // stack: [thisValue, args, func] -> [thisValue, args, func(Callable)]
+        mv.lineInfo(call);
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_CheckCallable);
+
+        // stack: [thisValue, args, func(Callable)] -> [thisValue, args, func(Callable)]
         mv.dup();
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_IsBuiltinEval);
@@ -821,18 +778,36 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.invoke(Methods.ScriptRuntime_directEvalFallbackHook);
             mv.ifnull(noEvalHook);
             {
-                // stack: [args, thisValue, func(Callable)] -> [args']
+                // stack: [thisValue, args, func(Callable)] -> [args']
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_directEvalFallbackArguments);
-                // stack: [args'] -> [args', thisValue']
+                // stack: [args'] -> [thisValue', args']
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_directEvalFallbackThisArgument);
-                // stack: [args', thisValue'] -> [args', thisValue', fallback(Callable)]
+                mv.swap();
+                // stack: [thisValue', args'] -> [thisValue', args', fallback(Callable)]
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_directEvalFallbackHook);
             }
             mv.mark(noEvalHook);
         }
+
+        /* steps 5-9 (EvaluateDirectCall) */
+        if (isTailCall(call, mv)) {
+            // stack: [thisValue, args, func(Callable)] -> [<func(Callable), thisValue, args>]
+            mv.invoke(Methods.ScriptRuntime_PrepareForTailCall);
+        } else {
+            // stack: [thisValue, args, func(Callable)] -> [func(Callable), cx, thisValue, args]
+            mv.loadExecutionContext();
+            mv.dup2X2();
+            mv.pop2();
+
+            // stack: [func(Callable), cx, thisValue, args] -> [result]
+            invokeDynamicCall(mv);
+        }
+
+        mv.mark(afterCall);
+        return ValType.Any;
     }
 
     /**
@@ -853,15 +828,17 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         if (mv.isGlobalCode()) {
             evalFlags |= EvalFlags.GlobalCode.getValue();
         }
-        if (isGlobalScope(mv)) {
+        if (isGlobalScope(mv.getScope())) {
             evalFlags |= EvalFlags.GlobalScope.getValue();
         }
-        if (isEnclosedByWithStatement(mv)) {
+        if (isEnclosedByWithStatement(mv.getScope())) {
             evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();
         }
 
-        // stack: [args, thisValue, func(Callable)] -> [args]
-        mv.pop2();
+        // stack: [thisValue, args, func(Callable)] -> [args]
+        mv.pop();
+        mv.swap();
+        mv.pop();
 
         if (codegen.isEnabled(CompatibilityOption.Realm)) {
             // stack: [args] -> [result]
@@ -914,64 +891,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * [12.3.4.3 Runtime Semantics: EvaluateDirectCall( func, thisValue, arguments, tailPosition )]
-     * 
-     * @param call
-     *            the function call expression
-     * @param mv
-     *            the expression visitor
-     */
-    private ValType EvaluateDirectCall(Expression call, List<Expression> arguments,
-            ExpressionVisitor mv) {
-        /* steps 1-2 */
-        // stack: [thisValue, func] -> [args, thisValue, func]
-        ArgumentListEvaluation(arguments, mv);
-        mv.dupX2();
-        mv.pop();
-
-        // stack: [args, thisValue, func]
-        mv.lineInfo(call);
-
-        /* steps 3-4 */
-        // stack: [args, thisValue, func] -> [args, thisValue, func(Callable)]
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_CheckCallable);
-
-        /* steps 5-9 */
-        // stack: [args, thisValue, func(Callable)] -> result
-        return EvaluateDirectCall(call, mv);
-    }
-
-    /**
-     * [12.3.4.3 Runtime Semantics: EvaluateDirectCall( func, thisValue, arguments, tailPosition )]
-     * 
-     * @param call
-     *            the function call expression
-     * @param mv
-     *            the expression visitor
-     */
-    private ValType EvaluateDirectCall(Expression call, ExpressionVisitor mv) {
-        /* steps 5-9 */
-        if (!codegen.isEnabled(Compiler.Option.NoTailCall) && mv.isTailCall(call)) {
-            // stack: [args, thisValue, func(Callable)] -> [<func(Callable), thisValue, args>]
-            mv.invoke(Methods.ScriptRuntime_PrepareForTailCall);
-            return ValType.Any;
-        }
-
-        // stack: [args, thisValue, func(Callable)] -> [func(Callable), cx, thisValue, args]
-        mv.loadExecutionContext();
-        mv.dup2X2();
-        mv.pop2();
-        mv.swap();
-
-        /* steps 6, 8-9 */
-        // stack: [func(Callable), cx, thisValue, args] -> [result]
-        invokeDynamicCall(mv);
-        return ValType.Any;
-    }
-
-    /**
-     * [12.3.5.1 ArgumentListEvaluation]
+     * [12.3.6.1 ArgumentListEvaluation]
      * 
      * @param arguments
      *            the list of function call arguments
@@ -981,6 +901,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     private void ArgumentListEvaluation(List<Expression> arguments, ExpressionVisitor mv) {
         if (arguments.isEmpty()) {
             mv.get(Fields.ScriptRuntime_EMPTY_ARRAY);
+        } else if (arguments.size() == 1 && arguments.get(0) instanceof CallSpreadElement) {
+            ((CallSpreadElement) arguments.get(0)).accept(this, mv);
         } else {
             boolean hasSpread = false;
             mv.anewarray(arguments.size(), Types.Object);
@@ -1084,14 +1006,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.loadExecutionContext();
             mv.lconst(0);
             mv.invoke(Methods.ArrayObject_ArrayCreate);
+            mv.dup();
 
-            // stack: [array, nextIndex]
+            // stack: [array, array, nextIndex]
             mv.iconst(0); // nextIndex
 
             arrayLiteralWithSpread(node, mv);
 
-            // stack: [array, nextIndex] -> [array]
-            mv.loadExecutionContext();
+            // stack: [array, array, nextIndex] -> [array]
             mv.invoke(Methods.ScriptRuntime_defineLength);
         }
 
@@ -1169,9 +1091,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         Expression spread = node.getExpression();
         evalAndGetBoxedValue(spread, mv);
 
+        // stack: [array, array, nextIndex, value] -> [array, nextIndex']
         mv.loadExecutionContext();
-
-        // stack: [array, array, nextIndex, value, cx] -> [array, nextIndex']
         mv.invoke(Methods.ScriptRuntime_ArrayAccumulationSpreadElement);
 
         return ValType.Any;
@@ -2034,13 +1955,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(CallExpression node, ExpressionVisitor mv) {
-        ValType type = node.getBase().accept(this, mv);
-        mv.toBoxed(type);
-
-        // direct call to eval?
-        boolean directEval = (node.getBase() instanceof IdentifierReference && "eval"
-                .equals(((IdentifierReference) node.getBase()).getName()));
-        return EvaluateCall(node, node.getBase(), type, node.getArguments(), directEval, mv);
+        return EvaluateCall(node, node.getBase(), node.getArguments(), mv);
     }
 
     /**
@@ -2483,17 +2398,18 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     @Override
     public ValType visit(SuperCallExpression node, ExpressionVisitor mv) {
         /* steps 1-2 */
-        // stack: [] -> [func(Callable)]
+        // stack: [] -> [func]
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_GetSuperConstructor);
 
         /* step 3 */
-        // stack: [] -> [thisValue, func(Callable)]
+        // stack: [func] -> [func, cx, thisValue]
         mv.loadExecutionContext();
+        mv.dup();
         mv.invoke(Methods.ExecutionContext_resolveThisBinding);
-        mv.swap();
 
         /* steps 4-6 */
+        // stack: [func, cx, thisValue] -> [result]
         return EvaluateDirectCall(node, node.getArguments(), mv);
     }
 
@@ -2542,7 +2458,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 5-11 */
         mv.lineInfo(node);
         mv.loadExecutionContext();
-        if (!codegen.isEnabled(Compiler.Option.NoTailCall) && mv.isTailCall(node)) {
+        if (isTailCall(node, mv)) {
             mv.invoke(Methods.ScriptRuntime_EvaluateConstructorTailCall);
             return ValType.Any;
         }
@@ -2594,11 +2510,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         arguments.add(template);
         arguments.addAll(substitutions);
 
-        /* step 1 */
-        ValType type = node.getBase().accept(this, mv);
-        mv.toBoxed(type);
-        /* steps 2-4 */
-        return EvaluateCall(node, node.getBase(), type, arguments, false, mv);
+        /* steps 1-4 */
+        return EvaluateCall(node, node.getBase(), arguments, mv);
     }
 
     /**

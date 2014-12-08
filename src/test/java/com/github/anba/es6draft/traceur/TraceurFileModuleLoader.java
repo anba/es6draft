@@ -14,7 +14,7 @@ import com.github.anba.es6draft.runtime.internal.FileModuleLoader;
 /**
  * 
  */
-class TraceurFileModuleLoader extends FileModuleLoader {
+final class TraceurFileModuleLoader extends FileModuleLoader {
     TraceurFileModuleLoader(Path baseDirectory) {
         super(baseDirectory);
     }
@@ -22,7 +22,11 @@ class TraceurFileModuleLoader extends FileModuleLoader {
     @Override
     public String normalizeName(String parentName, String unnormalizedName) {
         try {
-            return super.normalizeName(parentName, unnormalizedName) + ".js";
+            String normalizedName = super.normalizeName(parentName, unnormalizedName);
+            if (!normalizedName.endsWith(".js")) {
+                normalizedName += ".js";
+            }
+            return normalizedName;
         } catch (InvalidPathException e) {
             return null;
         }

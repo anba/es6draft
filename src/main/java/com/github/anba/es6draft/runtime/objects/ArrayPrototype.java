@@ -551,6 +551,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 }
             }
             /* steps 19-20 */
+            // TODO: handle 2^53-1 limit
             Put(cx, a, "length", n, true);
             /* step 21 */
             return a;

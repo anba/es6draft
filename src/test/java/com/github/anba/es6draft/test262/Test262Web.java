@@ -22,6 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -49,7 +50,6 @@ import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.Resources;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
-import com.github.anba.es6draft.util.TestInfo;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
 
@@ -65,10 +65,10 @@ public final class Test262Web {
             .getString("unmarked_default"));
 
     @Parameters(name = "{0}")
-    public static Iterable<Object[]> suiteValues() throws IOException {
-        return Resources.loadTestsAsArray(configuration, new BiFunction<Path, Path, TestInfo>() {
+    public static List<Test262Info> suiteValues() throws IOException {
+        return Resources.loadTests(configuration, new BiFunction<Path, Path, Test262Info>() {
             @Override
-            public TestInfo apply(Path basedir, Path file) {
+            public Test262Info apply(Path basedir, Path file) {
                 return new Test262Info(basedir, file);
             }
         });
@@ -94,7 +94,7 @@ public final class Test262Web {
     private boolean isStrictTest = false;
 
     @Rule
-    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(600));
+    public Timeout maxTime = new Timeout(600, TimeUnit.SECONDS);
 
     @Rule
     public StandardErrorHandler errorHandler = StandardErrorHandler.none();
@@ -103,7 +103,7 @@ public final class Test262Web {
     public ScriptExceptionHandler exceptionHandler = ScriptExceptionHandler.none();
 
     @Rule
-    public ExpectedException expected = ExpectedException.none().handleAssertionErrors();
+    public ExpectedException expected = ExpectedException.none();
 
     @Parameter(0)
     public Test262Info test;

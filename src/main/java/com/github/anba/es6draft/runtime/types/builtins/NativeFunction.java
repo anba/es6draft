@@ -65,6 +65,11 @@ public final class NativeFunction extends BuiltinFunction {
         this.id = id;
     }
 
+    @Override
+    public NativeFunction clone() {
+        return new NativeFunction(getRealm(), getName(), id, mh);
+    }
+
     /**
      * Returns `(Object, Object[]) {@literal ->} Object` method-handle.
      * 
@@ -75,11 +80,11 @@ public final class NativeFunction extends BuiltinFunction {
     }
 
     /**
-     * Returns the identifier for this native function.
+     * Returns the optional identifier for this native function.
      * 
-     * @return the native function id
+     * @return the native function id or {@code null} if not available
      */
-    public final Class<?> getId() {
+    public Class<?> getId() {
         return id;
     }
 
@@ -95,10 +100,5 @@ public final class NativeFunction extends BuiltinFunction {
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public NativeFunction clone() {
-        return new NativeFunction(getRealm(), getName(), id, mh);
     }
 }

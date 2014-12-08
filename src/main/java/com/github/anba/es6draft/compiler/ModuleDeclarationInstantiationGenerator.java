@@ -11,8 +11,12 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScoped
 import static com.github.anba.es6draft.semantics.StaticSemantics.VarScopedDeclarations;
 
 import java.util.List;
+import java.util.Map;
+
+import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.Declaration;
+import com.github.anba.es6draft.ast.ExportDefaultExpression;
 import com.github.anba.es6draft.ast.HoistableDeclaration;
 import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.ast.StatementListItem;
@@ -20,10 +24,17 @@ import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.ModuleName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.assembler.MethodDesc;
 import com.github.anba.es6draft.compiler.assembler.Variable;
+import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
+import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.modules.ExportEntry;
+import com.github.anba.es6draft.runtime.modules.ImportEntry;
+import com.github.anba.es6draft.runtime.modules.ModuleExport;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.types.Undefined;
 
 /**
@@ -36,8 +47,42 @@ import com.github.anba.es6draft.runtime.types.Undefined;
  */
 final class ModuleDeclarationInstantiationGenerator extends
         DeclarationBindingInstantiationGenerator {
+    private static final class Methods {
+        // class: ModuleEnvironmentRecord
+        static final MethodDesc ModuleEnvironmentRecord_createImportBinding = MethodDesc.create(
+                MethodDesc.Invoke.Virtual, Types.ModuleEnvironmentRecord, "createImportBinding",
+                Type.getMethodType(Type.VOID_TYPE, Types.String, Types.ModuleRecord, Types.String));
+
+        // class: ModuleSemantics
+        static final MethodDesc ModuleSemantics_GetModuleNamespace = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ModuleSemantics, "GetModuleNamespace", Type
+                        .getMethodType(Types.ModuleNamespaceObject, Types.ExecutionContext,
+                                Types.Realm, Types.Map, Types.String));
+
+        // class: ResolvedExport
+        static final MethodDesc ResolvedExport_getModule = MethodDesc.create(
+                MethodDesc.Invoke.Virtual, Types.ModuleExport, "getModule",
+                Type.getMethodType(Types.ModuleRecord));
+        static final MethodDesc ResolvedExport_getBindingName = MethodDesc.create(
+                MethodDesc.Invoke.Virtual, Types.ModuleExport, "getBindingName",
+                Type.getMethodType(Types.String));
+
+        // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_resolveExportOrThrow = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "resolveExportOrThrow", Type
+                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext, Types.Map,
+                                Types.String, Types.String));
+
+        static final MethodDesc ScriptRuntime_resolveImportOrThrow = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "resolveImportOrThrow", Type
+                        .getMethodType(Types.ModuleExport, Types.ExecutionContext, Types.Map,
+                                Types.String, Types.String));
+    }
+
     private static final int EXECUTION_CONTEXT = 0;
     private static final int MODULE_ENV = 1;
+    private static final int REALM = 2;
+    private static final int MODULE_SET = 3;
 
     private static final class ModuleDeclInitMethodGenerator extends ExpressionVisitor {
         ModuleDeclInitMethodGenerator(MethodCode method, Module module) {
@@ -49,6 +94,8 @@ final class ModuleDeclarationInstantiationGenerator extends
             super.begin();
             setParameterName("cx", EXECUTION_CONTEXT, Types.ExecutionContext);
             setParameterName("moduleEnv", MODULE_ENV, Types.LexicalEnvironment);
+            setParameterName("realm", REALM, Types.Realm);
+            setParameterName("moduleSet", MODULE_SET, Types.Map);
         }
     }
 
@@ -56,31 +103,73 @@ final class ModuleDeclarationInstantiationGenerator extends
         super(codegen);
     }
 
-    void generate(Module module) {
+    void generate(Module module, ModuleRecord moduleRecord) {
         MethodCode method = codegen.newMethod(module, ModuleName.Init);
         ExpressionVisitor mv = new ModuleDeclInitMethodGenerator(method, module);
 
         mv.lineInfo(module);
         mv.begin();
-        generate(module, mv);
+        generate(module, moduleRecord, mv);
         mv.end();
     }
 
-    private void generate(Module module, ExpressionVisitor mv) {
+    private void generate(Module module, ModuleRecord moduleRecord, ExpressionVisitor mv) {
         Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
         Variable<LexicalEnvironment<ModuleEnvironmentRecord>> env = mv.getParameter(MODULE_ENV,
                 LexicalEnvironment.class).uncheckedCast();
+        Variable<Realm> realm = mv.getParameter(REALM, Realm.class);
+        Variable<Map<String, ModuleRecord>> moduleSet = mv.getParameter(MODULE_SET, Map.class)
+                .uncheckedCast();
 
         Variable<ModuleEnvironmentRecord> envRec = mv.newVariable("envRec",
                 ModuleEnvironmentRecord.class);
         storeEnvironmentRecord(envRec, env, mv);
 
+        Variable<ModuleExport> resolved = mv.newVariable("resolved", ModuleExport.class);
+
         Variable<Undefined> undef = mv.newVariable("undef", Undefined.class);
         mv.loadUndefined();
         mv.store(undef);
 
-        /* steps 1-8 */
+        /* step 1 */
+        String moduleName = moduleRecord.getName();
+        /* step 2 (not applicable) */
+        /* step 3 */
+        for (ExportEntry exportEntry : moduleRecord.getIndirectExportEntries()) {
+            mv.load(context);
+            mv.load(moduleSet);
+            mv.aconst(moduleName);
+            mv.aconst(exportEntry.getExportName());
+            mv.invoke(Methods.ScriptRuntime_resolveExportOrThrow);
+        }
+        /* steps 4-7 (not applicable) */
+        /* step 8 */
+        for (ImportEntry importEntry : moduleRecord.getImportEntries()) {
+            if (importEntry.isStarImport()) {
+                createImmutableBinding(envRec, importEntry.getLocalName(), mv);
+
+                mv.load(envRec);
+                mv.aconst(importEntry.getLocalName());
+                {
+                    mv.load(context);
+                    mv.load(realm);
+                    mv.load(moduleSet);
+                    mv.aconst(importEntry.getNormalizedModuleRequest());
+                    mv.invoke(Methods.ModuleSemantics_GetModuleNamespace);
+                }
+                initializeBinding(mv);
+            } else {
+                mv.load(context);
+                mv.load(moduleSet);
+                mv.aconst(importEntry.getNormalizedModuleRequest());
+                mv.aconst(importEntry.getImportName());
+                mv.invoke(Methods.ScriptRuntime_resolveImportOrThrow);
+                mv.store(resolved);
+
+                createImportBinding(envRec, importEntry.getLocalName(), resolved, mv);
+            }
+        }
         /* step 9 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(module);
         /* step 10 */
@@ -118,10 +207,30 @@ final class ModuleDeclarationInstantiationGenerator extends
             }
         }
         // Emit binding for 'export default AssignmentExpression'.
-        if (module.getScope().getDefaultExportExpression() != null) {
-            createImmutableBinding(envRec, new Name("*default*"), mv);
+        ExportDefaultExpression defaultExport = module.getScope().getDefaultExportExpression();
+        if (defaultExport != null) {
+            createImmutableBinding(envRec, defaultExport.getBinding().getName(), mv);
         }
         /* step 13 */
         mv._return();
+    }
+
+    private void createImmutableBinding(Variable<? extends EnvironmentRecord> envRec, String name,
+            InstructionVisitor mv) {
+        createImmutableBinding(envRec, new Name(name), mv);
+    }
+
+    private void createImportBinding(Variable<? extends EnvironmentRecord> envRec, String name,
+            Variable<ModuleExport> resolved, InstructionVisitor mv) {
+        mv.load(envRec);
+        mv.aconst(name);
+
+        mv.load(resolved);
+        mv.invoke(Methods.ResolvedExport_getModule);
+
+        mv.load(resolved);
+        mv.invoke(Methods.ResolvedExport_getBindingName);
+
+        mv.invoke(Methods.ModuleEnvironmentRecord_createImportBinding);
     }
 }

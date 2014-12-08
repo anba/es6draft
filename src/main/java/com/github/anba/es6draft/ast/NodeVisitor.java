@@ -96,9 +96,11 @@ public interface NodeVisitor<R, V> {
 
     R visit(ExportDeclaration node, V value);
 
+    R visit(ExportDefaultExpression node, V value);
+
     R visit(ExportSpecifier node, V value);
 
-    R visit(ExportsClause node, V value);
+    R visit(ExportClause node, V value);
 
     R visit(ExpressionMethod node, V value);
 

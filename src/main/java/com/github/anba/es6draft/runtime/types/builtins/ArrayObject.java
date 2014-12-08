@@ -71,7 +71,18 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     /**
-     * Returns {@code true} if the array is dense.
+     * Sets the array's length.
+     * 
+     * @param length
+     *            the new array length
+     */
+    public void setLengthUnchecked(long length) {
+        assert this.length <= length && lengthWritable;
+        this.length = length;
+    }
+
+    /**
+     * Returns {@code true} if the array is dense and has no indexed accessors.
      * 
      * @return {@code true} if the array is dense
      */

@@ -167,7 +167,7 @@ public class ProxyObject implements ScriptObject {
             /* step 9 */
             // NB: PrepareForTailCall is necessary to handle the case when trap is this proxy
             // object, or a bound function instance of this proxy object.
-            return PrepareForTailCall(new Object[] { target, thisValue, argArray }, handler, trap);
+            return PrepareForTailCall(trap, handler, new Object[] { target, thisValue, argArray });
         }
 
         @Override
@@ -297,65 +297,6 @@ public class ProxyObject implements ScriptObject {
         }
         /* step 8 */
         return proxy;
-    }
-
-    private static Property __getOwnProperty(ExecutionContext cx, ScriptObject target,
-            Object propertyKey) {
-        if (propertyKey instanceof String) {
-            return target.getOwnProperty(cx, (String) propertyKey);
-        } else {
-            assert propertyKey instanceof Symbol;
-            return target.getOwnProperty(cx, (Symbol) propertyKey);
-        }
-    }
-
-    private static boolean __defineOwnProperty(ExecutionContext cx, ScriptObject target,
-            Object propertyKey, PropertyDescriptor desc) {
-        if (propertyKey instanceof String) {
-            return target.defineOwnProperty(cx, (String) propertyKey, desc);
-        } else {
-            assert propertyKey instanceof Symbol;
-            return target.defineOwnProperty(cx, (Symbol) propertyKey, desc);
-        }
-    }
-
-    private static boolean __hasProperty(ExecutionContext cx, ScriptObject target,
-            Object propertyKey) {
-        if (propertyKey instanceof String) {
-            return target.hasProperty(cx, (String) propertyKey);
-        } else {
-            assert propertyKey instanceof Symbol;
-            return target.hasProperty(cx, (Symbol) propertyKey);
-        }
-    }
-
-    private static Object __get(ExecutionContext cx, ScriptObject target, Object propertyKey,
-            Object receiver) {
-        if (propertyKey instanceof String) {
-            return target.get(cx, (String) propertyKey, receiver);
-        } else {
-            assert propertyKey instanceof Symbol;
-            return target.get(cx, (Symbol) propertyKey, receiver);
-        }
-    }
-
-    private static boolean __set(ExecutionContext cx, ScriptObject target, Object propertyKey,
-            Object value, Object receiver) {
-        if (propertyKey instanceof String) {
-            return target.set(cx, (String) propertyKey, value, receiver);
-        } else {
-            assert propertyKey instanceof Symbol;
-            return target.set(cx, (Symbol) propertyKey, value, receiver);
-        }
-    }
-
-    private static boolean __delete(ExecutionContext cx, ScriptObject target, Object propertyKey) {
-        if (propertyKey instanceof String) {
-            return target.delete(cx, (String) propertyKey);
-        } else {
-            assert propertyKey instanceof Symbol;
-            return target.delete(cx, (Symbol) propertyKey);
-        }
     }
 
     /**
@@ -507,7 +448,7 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, long propertyKey) {
-        return getOwnProperty(cx, (Object) ToString(propertyKey));
+        return getOwnProperty(cx, ToString(propertyKey));
     }
 
     /**
@@ -515,27 +456,6 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
-        return getOwnProperty(cx, (Object) propertyKey);
-    }
-
-    /**
-     * 9.5.5 [[GetOwnProperty]] (P)
-     */
-    @Override
-    public Property getOwnProperty(ExecutionContext cx, Symbol propertyKey) {
-        return getOwnProperty(cx, (Object) propertyKey);
-    }
-
-    /**
-     * 9.5.5 [[GetOwnProperty]] (P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param propertyKey
-     *            the property key
-     * @return the property or {@code null} if none found
-     */
-    private Property getOwnProperty(ExecutionContext cx, Object propertyKey) {
         /* step 1 (implicit) */
         /* steps 2-4 */
         ScriptObject handler = getProxyHandler(cx);
@@ -545,7 +465,7 @@ public class ProxyObject implements ScriptObject {
         Callable trap = GetMethod(cx, handler, "getOwnPropertyDescriptor");
         /* step 8 */
         if (trap == null) {
-            return __getOwnProperty(cx, target, propertyKey);
+            return target.getOwnProperty(cx, propertyKey);
         }
         /* steps 9-10 */
         Object trapResultObj = trap.call(cx, handler, target, propertyKey);
@@ -554,7 +474,41 @@ public class ProxyObject implements ScriptObject {
             throw newTypeError(cx, Messages.Key.ProxyNotObjectOrUndefined);
         }
         /* steps 12-13 */
-        Property targetDesc = __getOwnProperty(cx, target, propertyKey);
+        Property targetDesc = target.getOwnProperty(cx, propertyKey);
+        /* steps 14-23 */
+        return validateGetOwnProperty(cx, target, trapResultObj, targetDesc);
+    }
+
+    /**
+     * 9.5.5 [[GetOwnProperty]] (P)
+     */
+    @Override
+    public Property getOwnProperty(ExecutionContext cx, Symbol propertyKey) {
+        /* step 1 (implicit) */
+        /* steps 2-4 */
+        ScriptObject handler = getProxyHandler(cx);
+        /* step 5 */
+        ScriptObject target = getProxyTarget();
+        /* steps 6-7 */
+        Callable trap = GetMethod(cx, handler, "getOwnPropertyDescriptor");
+        /* step 8 */
+        if (trap == null) {
+            return target.getOwnProperty(cx, propertyKey);
+        }
+        /* steps 9-10 */
+        Object trapResultObj = trap.call(cx, handler, target, propertyKey);
+        /* step 11 */
+        if (!(Type.isObject(trapResultObj) || Type.isUndefined(trapResultObj))) {
+            throw newTypeError(cx, Messages.Key.ProxyNotObjectOrUndefined);
+        }
+        /* steps 12-13 */
+        Property targetDesc = target.getOwnProperty(cx, propertyKey);
+        /* steps 14-23 */
+        return validateGetOwnProperty(cx, target, trapResultObj, targetDesc);
+    }
+
+    private Property validateGetOwnProperty(ExecutionContext cx, ScriptObject target,
+            Object trapResultObj, Property targetDesc) {
         /* step 14 */
         if (Type.isUndefined(trapResultObj)) {
             if (targetDesc == null) {
@@ -600,7 +554,7 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
-        return defineOwnProperty(cx, (Object) ToString(propertyKey), desc);
+        return defineOwnProperty(cx, ToString(propertyKey), desc);
     }
 
     /**
@@ -608,31 +562,6 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
-        return defineOwnProperty(cx, (Object) propertyKey, desc);
-    }
-
-    /**
-     * 9.5.6 [[DefineOwnProperty]] (P, Desc)
-     */
-    @Override
-    public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
-            PropertyDescriptor desc) {
-        return defineOwnProperty(cx, (Object) propertyKey, desc);
-    }
-
-    /**
-     * 9.5.6 [[DefineOwnProperty]] (P, Desc)
-     * 
-     * @param cx
-     *            the execution context
-     * @param propertyKey
-     *            the property key
-     * @param desc
-     *            the property descriptor
-     * @return {@code true} if the property was successfully defined
-     */
-    private boolean defineOwnProperty(ExecutionContext cx, Object propertyKey,
             PropertyDescriptor desc) {
         /* step 1 (implicit) */
         /* steps 2-4 */
@@ -643,7 +572,7 @@ public class ProxyObject implements ScriptObject {
         Callable trap = GetMethod(cx, handler, "defineProperty");
         /* step 8 */
         if (trap == null) {
-            return __defineOwnProperty(cx, target, propertyKey, desc);
+            return target.defineOwnProperty(cx, propertyKey, desc);
         }
         /* step 9 */
         Object descObj = FromPropertyDescriptor(cx, desc);
@@ -656,7 +585,46 @@ public class ProxyObject implements ScriptObject {
             return false;
         }
         /* steps 14-15 */
-        Property targetDesc = __getOwnProperty(cx, target, propertyKey);
+        Property targetDesc = target.getOwnProperty(cx, propertyKey);
+        /* steps 16-22 */
+        return validateDefineOwnProperty(cx, desc, target, targetDesc);
+    }
+
+    /**
+     * 9.5.6 [[DefineOwnProperty]] (P, Desc)
+     */
+    @Override
+    public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
+            PropertyDescriptor desc) {
+        /* step 1 (implicit) */
+        /* steps 2-4 */
+        ScriptObject handler = getProxyHandler(cx);
+        /* step 5 */
+        ScriptObject target = getProxyTarget();
+        /* steps 6-7 */
+        Callable trap = GetMethod(cx, handler, "defineProperty");
+        /* step 8 */
+        if (trap == null) {
+            return target.defineOwnProperty(cx, propertyKey, desc);
+        }
+        /* step 9 */
+        Object descObj = FromPropertyDescriptor(cx, desc);
+        /* step 10 */
+        Object trapResult = trap.call(cx, handler, target, propertyKey, descObj);
+        /* steps 11-12 */
+        boolean booleanTrapResult = ToBoolean(trapResult);
+        /* step 13 */
+        if (!booleanTrapResult) {
+            return false;
+        }
+        /* steps 14-15 */
+        Property targetDesc = target.getOwnProperty(cx, propertyKey);
+        /* steps 16-22 */
+        return validateDefineOwnProperty(cx, desc, target, targetDesc);
+    }
+
+    private boolean validateDefineOwnProperty(ExecutionContext cx, PropertyDescriptor desc,
+            ScriptObject target, Property targetDesc) {
         if (targetDesc != null) {
             // need copy because of possible side-effects in IsExtensible()
             targetDesc = targetDesc.clone();
@@ -690,7 +658,7 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public boolean hasProperty(ExecutionContext cx, long propertyKey) {
-        return hasProperty(cx, (Object) ToString(propertyKey));
+        return hasProperty(cx, ToString(propertyKey));
     }
 
     /**
@@ -698,27 +666,6 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public boolean hasProperty(ExecutionContext cx, String propertyKey) {
-        return hasProperty(cx, (Object) propertyKey);
-    }
-
-    /**
-     * 9.5.7 [[HasProperty]] (P)
-     */
-    @Override
-    public boolean hasProperty(ExecutionContext cx, Symbol propertyKey) {
-        return hasProperty(cx, (Object) propertyKey);
-    }
-
-    /**
-     * 9.5.7 [[HasProperty]] (P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param propertyKey
-     *            the property key
-     * @return {@code true} if the property was found
-     */
-    private boolean hasProperty(ExecutionContext cx, Object propertyKey) {
         /* step 1 (implicit) */
         /* steps 2-4 */
         ScriptObject handler = getProxyHandler(cx);
@@ -728,7 +675,7 @@ public class ProxyObject implements ScriptObject {
         Callable trap = GetMethod(cx, handler, "has");
         /* step 8 */
         if (trap == null) {
-            return __hasProperty(cx, target, propertyKey);
+            return target.hasProperty(cx, propertyKey);
         }
         /* step 9 */
         Object trapResult = trap.call(cx, handler, target, propertyKey);
@@ -736,19 +683,57 @@ public class ProxyObject implements ScriptObject {
         boolean booleanTrapResult = ToBoolean(trapResult);
         /* step 12 */
         if (!booleanTrapResult) {
-            Property targetDesc = __getOwnProperty(cx, target, propertyKey);
-            if (targetDesc != null) {
-                if (!targetDesc.isConfigurable()) {
-                    throw newTypeError(cx, Messages.Key.ProxyNotConfigurable);
-                }
-                boolean extensibleTarget = IsExtensible(cx, target);
-                if (!extensibleTarget) {
-                    throw newTypeError(cx, Messages.Key.ProxyNotExtensible);
-                }
-            }
+            /* steps 12.a-12.b */
+            Property targetDesc = target.getOwnProperty(cx, propertyKey);
+            /* step 12.c */
+            validateHasProperty(cx, target, targetDesc);
         }
         /* step 13 */
         return booleanTrapResult;
+    }
+
+    /**
+     * 9.5.7 [[HasProperty]] (P)
+     */
+    @Override
+    public boolean hasProperty(ExecutionContext cx, Symbol propertyKey) {
+        /* step 1 (implicit) */
+        /* steps 2-4 */
+        ScriptObject handler = getProxyHandler(cx);
+        /* step 5 */
+        ScriptObject target = getProxyTarget();
+        /* steps 6-7 */
+        Callable trap = GetMethod(cx, handler, "has");
+        /* step 8 */
+        if (trap == null) {
+            return target.hasProperty(cx, propertyKey);
+        }
+        /* step 9 */
+        Object trapResult = trap.call(cx, handler, target, propertyKey);
+        /* steps 10-11 */
+        boolean booleanTrapResult = ToBoolean(trapResult);
+        /* step 12 */
+        if (!booleanTrapResult) {
+            /* steps 12.a-12.b */
+            Property targetDesc = target.getOwnProperty(cx, propertyKey);
+            /* step 12.c */
+            validateHasProperty(cx, target, targetDesc);
+        }
+        /* step 13 */
+        return booleanTrapResult;
+    }
+
+    private void validateHasProperty(ExecutionContext cx, ScriptObject target, Property targetDesc) {
+        /* step 12.c */
+        if (targetDesc != null) {
+            if (!targetDesc.isConfigurable()) {
+                throw newTypeError(cx, Messages.Key.ProxyNotConfigurable);
+            }
+            boolean extensibleTarget = IsExtensible(cx, target);
+            if (!extensibleTarget) {
+                throw newTypeError(cx, Messages.Key.ProxyNotExtensible);
+            }
+        }
     }
 
     /**
@@ -756,7 +741,7 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public Object get(ExecutionContext cx, long propertyKey, Object receiver) {
-        return get(cx, (Object) ToString(propertyKey), receiver);
+        return get(cx, ToString(propertyKey), receiver);
     }
 
     /**
@@ -764,29 +749,6 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
-        return get(cx, (Object) propertyKey, receiver);
-    }
-
-    /**
-     * 9.5.8 [[Get]] (P, Receiver)
-     */
-    @Override
-    public Object get(ExecutionContext cx, Symbol propertyKey, Object receiver) {
-        return get(cx, (Object) propertyKey, receiver);
-    }
-
-    /**
-     * 9.5.8 [[Get]] (P, Receiver)
-     * 
-     * @param cx
-     *            the execution context
-     * @param propertyKey
-     *            the property key
-     * @param receiver
-     *            the receiver object
-     * @return the property value
-     */
-    private Object get(ExecutionContext cx, Object propertyKey, Object receiver) {
         /* step 1 (implicit) */
         /* steps 2-4 */
         ScriptObject handler = getProxyHandler(cx);
@@ -796,12 +758,41 @@ public class ProxyObject implements ScriptObject {
         Callable trap = GetMethod(cx, handler, "get");
         /* step 8 */
         if (trap == null) {
-            return __get(cx, target, propertyKey, receiver);
+            return target.get(cx, propertyKey, receiver);
         }
         /* steps 9-10 */
         Object trapResult = trap.call(cx, handler, target, propertyKey, receiver);
         /* steps 11-12 */
-        Property targetDesc = __getOwnProperty(cx, target, propertyKey);
+        Property targetDesc = target.getOwnProperty(cx, propertyKey);
+        /* steps 13-14 */
+        return validateGet(cx, trapResult, targetDesc);
+    }
+
+    /**
+     * 9.5.8 [[Get]] (P, Receiver)
+     */
+    @Override
+    public Object get(ExecutionContext cx, Symbol propertyKey, Object receiver) {
+        /* step 1 (implicit) */
+        /* steps 2-4 */
+        ScriptObject handler = getProxyHandler(cx);
+        /* step 5 */
+        ScriptObject target = getProxyTarget();
+        /* steps 6-7 */
+        Callable trap = GetMethod(cx, handler, "get");
+        /* step 8 */
+        if (trap == null) {
+            return target.get(cx, propertyKey, receiver);
+        }
+        /* steps 9-10 */
+        Object trapResult = trap.call(cx, handler, target, propertyKey, receiver);
+        /* steps 11-12 */
+        Property targetDesc = target.getOwnProperty(cx, propertyKey);
+        /* steps 13-14 */
+        return validateGet(cx, trapResult, targetDesc);
+    }
+
+    private Object validateGet(ExecutionContext cx, Object trapResult, Property targetDesc) {
         /* step 13 */
         if (targetDesc != null) {
             if (targetDesc.isDataDescriptor() && !targetDesc.isConfigurable()
@@ -826,7 +817,7 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public boolean set(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
-        return set(cx, (Object) ToString(propertyKey), value, receiver);
+        return set(cx, ToString(propertyKey), value, receiver);
     }
 
     /**
@@ -834,31 +825,6 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
-        return set(cx, (Object) propertyKey, value, receiver);
-    }
-
-    /**
-     * 9.5.9 [[Set]] ( P, V, Receiver)
-     */
-    @Override
-    public boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
-        return set(cx, (Object) propertyKey, value, receiver);
-    }
-
-    /**
-     * 9.5.9 [[Set]] ( P, V, Receiver)
-     * 
-     * @param cx
-     *            the execution context
-     * @param propertyKey
-     *            the property key
-     * @param value
-     *            the new property value
-     * @param receiver
-     *            the receiver object
-     * @return {@code true} on success
-     */
-    private boolean set(ExecutionContext cx, Object propertyKey, Object value, Object receiver) {
         /* step 1 (implicit) */
         /* steps 2-4 */
         ScriptObject handler = getProxyHandler(cx);
@@ -868,7 +834,7 @@ public class ProxyObject implements ScriptObject {
         Callable trap = GetMethod(cx, handler, "set");
         /* step 8 */
         if (trap == null) {
-            return __set(cx, target, propertyKey, value, receiver);
+            return target.set(cx, propertyKey, value, receiver);
         }
         /* step 9 */
         Object trapResult = trap.call(cx, handler, target, propertyKey, value, receiver);
@@ -879,7 +845,42 @@ public class ProxyObject implements ScriptObject {
             return false;
         }
         /* steps 13-14 */
-        Property targetDesc = __getOwnProperty(cx, target, propertyKey);
+        Property targetDesc = target.getOwnProperty(cx, propertyKey);
+        /* steps 15-16 */
+        return validateSet(cx, value, targetDesc);
+    }
+
+    /**
+     * 9.5.9 [[Set]] ( P, V, Receiver)
+     */
+    @Override
+    public boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
+        /* step 1 (implicit) */
+        /* steps 2-4 */
+        ScriptObject handler = getProxyHandler(cx);
+        /* step 5 */
+        ScriptObject target = getProxyTarget();
+        /* steps 6-7 */
+        Callable trap = GetMethod(cx, handler, "set");
+        /* step 8 */
+        if (trap == null) {
+            return target.set(cx, propertyKey, value, receiver);
+        }
+        /* step 9 */
+        Object trapResult = trap.call(cx, handler, target, propertyKey, value, receiver);
+        /* steps 10-11 */
+        boolean booleanTrapResult = ToBoolean(trapResult);
+        /* step 12 */
+        if (!booleanTrapResult) {
+            return false;
+        }
+        /* steps 13-14 */
+        Property targetDesc = target.getOwnProperty(cx, propertyKey);
+        /* steps 15-16 */
+        return validateSet(cx, value, targetDesc);
+    }
+
+    private boolean validateSet(ExecutionContext cx, Object value, Property targetDesc) {
         /* step 15 */
         if (targetDesc != null) {
             if (targetDesc.isDataDescriptor() && !targetDesc.isConfigurable()
@@ -903,7 +904,7 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public boolean delete(ExecutionContext cx, long propertyKey) {
-        return delete(cx, (Object) ToString(propertyKey));
+        return delete(cx, ToString(propertyKey));
     }
 
     /**
@@ -911,27 +912,6 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public boolean delete(ExecutionContext cx, String propertyKey) {
-        return delete(cx, (Object) propertyKey);
-    }
-
-    /**
-     * 9.5.10 [[Delete]] (P)
-     */
-    @Override
-    public boolean delete(ExecutionContext cx, Symbol propertyKey) {
-        return delete(cx, (Object) propertyKey);
-    }
-
-    /**
-     * 9.5.10 [[Delete]] (P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param propertyKey
-     *            the property key
-     * @return {@code true} if the property was successfully deleted
-     */
-    private boolean delete(ExecutionContext cx, Object propertyKey) {
         /* step 1 (implicit) */
         /* steps 2-4 */
         ScriptObject handler = getProxyHandler(cx);
@@ -941,7 +921,8 @@ public class ProxyObject implements ScriptObject {
         Callable trap = GetMethod(cx, handler, "deleteProperty");
         /* step 8 */
         if (trap == null) {
-            return __delete(cx, target, propertyKey);
+            return target.delete(cx, propertyKey);
+
         }
         /* step 9 */
         Object trapResult = trap.call(cx, handler, target, propertyKey);
@@ -952,7 +933,42 @@ public class ProxyObject implements ScriptObject {
             return false;
         }
         /* steps 13-14 */
-        Property targetDesc = __getOwnProperty(cx, target, propertyKey);
+        Property targetDesc = target.getOwnProperty(cx, propertyKey);
+        /* steps 15-17 */
+        return validateDelete(cx, targetDesc);
+    }
+
+    /**
+     * 9.5.10 [[Delete]] (P)
+     */
+    @Override
+    public boolean delete(ExecutionContext cx, Symbol propertyKey) {
+        /* step 1 (implicit) */
+        /* steps 2-4 */
+        ScriptObject handler = getProxyHandler(cx);
+        /* step 5 */
+        ScriptObject target = getProxyTarget();
+        /* steps 6-7 */
+        Callable trap = GetMethod(cx, handler, "deleteProperty");
+        /* step 8 */
+        if (trap == null) {
+            return target.delete(cx, propertyKey);
+        }
+        /* step 9 */
+        Object trapResult = trap.call(cx, handler, target, propertyKey);
+        /* steps 10-11 */
+        boolean booleanTrapResult = ToBoolean(trapResult);
+        /* step 12 */
+        if (!booleanTrapResult) {
+            return false;
+        }
+        /* steps 13-14 */
+        Property targetDesc = target.getOwnProperty(cx, propertyKey);
+        /* steps 15-17 */
+        return validateDelete(cx, targetDesc);
+    }
+
+    private boolean validateDelete(ExecutionContext cx, Property targetDesc) {
         /* step 15 */
         if (targetDesc == null) {
             return true;
@@ -995,24 +1011,7 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public ScriptIterator<?> enumerateKeys(ExecutionContext cx) {
-        /* steps 1-3 */
-        ScriptObject handler = getProxyHandler(cx);
-        /* step 4 */
-        ScriptObject target = getProxyTarget();
-        /* steps 5-6 */
-        Callable trap = GetMethod(cx, handler, "enumerate");
-        /* step 7 */
-        if (trap == null) {
-            return target.enumerateKeys(cx);
-        }
-        /* steps 8-9 */
-        Object trapResult = trap.call(cx, handler, target);
-        /* step 10 */
-        if (!Type.isObject(trapResult)) {
-            throw newTypeError(cx, Messages.Key.ProxyNotObject);
-        }
-        /* step 11 */
-        return FromScriptIterator(cx, Type.objectValue(trapResult));
+        return FromScriptIterator(cx, enumerate(cx));
     }
 
     /**
@@ -1094,7 +1093,7 @@ public class ProxyObject implements ScriptObject {
         /* step 24 */
         for (Object key : targetConfigurableKeys) {
             if (!uncheckedResultKeys.remove(key)) {
-                throw newTypeError(cx, Messages.Key.NotExtensible);
+                throw newTypeError(cx, Messages.Key.ProxyNotExtensible);
             }
             if (uncheckedDuplicateKeys != null) {
                 updateUncheckedWithDuplicates(uncheckedResultKeys, uncheckedDuplicateKeys, key);

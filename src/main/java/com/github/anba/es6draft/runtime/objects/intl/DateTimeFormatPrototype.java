@@ -99,11 +99,16 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
         @Accessor(name = "format", type = Accessor.Type.Getter)
         public static Object format(ExecutionContext cx, Object thisValue) {
             DateTimeFormatObject dateTimeFormat = thisDateTimeFormatObject(cx, thisValue);
+            /* step 1 */
             if (dateTimeFormat.getBoundFormat() == null) {
+                /* step 1.a */
                 FormatFunction f = new FormatFunction(cx.getRealm());
+                /* steps 1.b-c */
                 Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
+                /* step 1.d */
                 dateTimeFormat.setBoundFormat(bf);
             }
+            /* step 2 */
             return dateTimeFormat.getBoundFormat();
         }
 
@@ -159,9 +164,11 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
      */
     public static String FormatDateTime(ExecutionContext cx, DateTimeFormatObject dateTimeFormat,
             double x) {
+        /* step 1 */
         if (Double.isInfinite(x) || Double.isNaN(x)) {
             throw newRangeError(cx, Messages.Key.InvalidDateValue);
         }
+        /* steps 2-9 */
         return dateTimeFormat.getDateFormat().format(new Date((long) x));
     }
 
@@ -180,18 +187,18 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
             return new FormatFunction(getRealm(), null);
         }
 
-        /**
-         * [[Call]]
-         */
         @Override
         public String call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof DateTimeFormatObject;
             ExecutionContext calleeContext = calleeContext();
             Object date = argument(args, 0);
+            /* step 1.a.i (12.3.2) */
             if (Type.isUndefined(date)) {
                 date = DateConstructor.Properties.now(calleeContext, null);
             }
+            /* step 1.a.ii (12.3.2) */
             double x = ToNumber(calleeContext, date);
+            /* step 1.a.iii (12.3.2) */
             return FormatDateTime(calleeContext, (DateTimeFormatObject) thisValue, x);
         }
     }

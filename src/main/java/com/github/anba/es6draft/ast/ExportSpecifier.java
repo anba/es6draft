@@ -8,7 +8,7 @@ package com.github.anba.es6draft.ast;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
- * <h2>15.3 Modules</h2>
+ * <h2>15.2 Modules</h2>
  */
 public final class ExportSpecifier extends AstNode {
     private final String sourceName;

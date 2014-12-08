@@ -100,7 +100,7 @@ final class DestructuringAssignmentGenerator {
         mv.invoke(Methods.AbstractOperations_ToObject);
     }
 
-    private abstract static class RuntimeSemantics<V> extends DefaultVoidNodeVisitor<V> {
+    private static abstract class RuntimeSemantics<V> extends DefaultVoidNodeVisitor<V> {
         protected final CodeGenerator codegen;
         protected final ExpressionVisitor mv;
 

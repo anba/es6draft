@@ -331,8 +331,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         /* B.3.3 Block-Level Function Declarations Web Legacy Compatibility Semantics */
         for (FunctionDeclaration f : function.getScope().blockFunctions()) {
             Name fname = f.getIdentifier().getName();
-            // FIXME: spec bug - parameterNames must not be checked
-            // function f(g=0) { { function g(){} } } f()
+            assert f.isLegacyBlockScoped() : "Missing block-scope flag: " + fname.getIdentifier();
             if (instantiatedVarNames.add(fname)) {
                 createMutableBinding(varEnvRec, fname, false, mv);
                 initializeBinding(varEnvRec, fname, undef, mv);

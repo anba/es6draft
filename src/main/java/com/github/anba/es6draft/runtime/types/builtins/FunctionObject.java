@@ -521,7 +521,26 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
      */
     protected final void setCreateAction(CreateAction<?> createAction) {
         assert this instanceof Constructor : "[[CreateAction]] set on non-Constructor";
-        assert this.createAction == null : "[[CreateAction]] already defined";
+        // assert this.createAction == null : "[[CreateAction]] already defined";
+        assert createAction != null;
         this.createAction = createAction;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s, kind=%s, mode=%s, create=%s, cloned=%b", super.toString(),
+                functionKind, thisMode, classNameWithEnclosing(createAction), isClone);
+    }
+
+    private static String classNameWithEnclosing(Object object) {
+        if (object == null) {
+            return "<null>";
+        }
+        Class<?> clazz = object.getClass();
+        Class<?> enclosing = clazz.getEnclosingClass();
+        if (enclosing == null) {
+            return clazz.getSimpleName();
+        }
+        return enclosing.getSimpleName() + "." + clazz.getSimpleName();
     }
 }

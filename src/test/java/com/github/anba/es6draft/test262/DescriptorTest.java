@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 import org.junit.Test;
@@ -22,7 +23,6 @@ import org.junit.runners.Parameterized.Parameters;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.Resources;
-import com.github.anba.es6draft.util.TestInfo;
 
 /**
  * Basic test to ensure test file descriptors can be parsed.
@@ -32,10 +32,10 @@ public class DescriptorTest {
     private static final Configuration configuration = loadConfiguration(Test262Web.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<Object[]> suiteValues() throws IOException {
-        return Resources.loadTestsAsArray(configuration, new BiFunction<Path, Path, TestInfo>() {
+    public static List<Test262Info> suiteValues() throws IOException {
+        return Resources.loadTests(configuration, new BiFunction<Path, Path, Test262Info>() {
             @Override
-            public TestInfo apply(Path basedir, Path file) {
+            public Test262Info apply(Path basedir, Path file) {
                 return new Test262Info(basedir, file);
             }
         });

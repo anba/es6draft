@@ -8,9 +8,7 @@ package com.github.anba.es6draft.runtime.modules;
 
 import static java.util.Collections.unmodifiableList;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import com.github.anba.es6draft.Module;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -18,7 +16,7 @@ import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject;
 
 /**
- * 
+ * 15.2.1.15 Static and Runtme Semantics: Module Records
  */
 public final class ModuleRecord implements Cloneable {
     /**
@@ -71,7 +69,14 @@ public final class ModuleRecord implements Cloneable {
      */
     private boolean evaluated;
 
+    /**
+     * Creates a module record.
+     * 
+     * @param name
+     *            the normalized module name
+     */
     public ModuleRecord(String name) {
+        assert name != null;
         this.name = name;
     }
 
@@ -91,109 +96,192 @@ public final class ModuleRecord implements Cloneable {
     }
 
     /**
-     * @return the name
+     * [[Name]]
+     * 
+     * @return the module name
      */
     public String getName() {
         return name;
     }
 
     /**
-     * @return the importedModules
+     * [[ImportedModules]]
+     * 
+     * @return the list of imported modules
      */
     public List<String> getImportedModules() {
-        return importedModules;
-    }
-
-    public void setImportedModules(Set<String> importedModules) {
-        this.importedModules = unmodifiableList(new ArrayList<>(importedModules));
+        return unmodifiableList(importedModules);
     }
 
     /**
-     * @return the scriptCode
+     * [[ImportedModules]]
+     * 
+     * @param importedModules
+     *            the list of imported modules
+     */
+    public void setImportedModules(List<String> importedModules) {
+        assert this.importedModules == null && importedModules != null;
+        this.importedModules = importedModules;
+    }
+
+    /**
+     * [[ECMAScriptCode]]
+     * 
+     * @return the script code for this module
      */
     public Module getScriptCode() {
         return scriptCode;
     }
 
+    /**
+     * [[ECMAScriptCode]]
+     * 
+     * @param scriptCode
+     *            the script code
+     */
     public void setScriptCode(Module scriptCode) {
+        assert this.scriptCode == null && scriptCode != null;
         this.scriptCode = scriptCode;
     }
 
     /**
-     * @return the importEntries
+     * [[ImportEntries]]
+     * 
+     * @return the list of {@code import} entries
      */
     public List<ImportEntry> getImportEntries() {
-        return importEntries;
-    }
-
-    public void setImportEntries(List<ImportEntry> importEntries) {
-        this.importEntries = unmodifiableList(importEntries);
+        return unmodifiableList(importEntries);
     }
 
     /**
-     * @return the localExportEntries
+     * [[ImportEntries]]
+     * 
+     * @param importEntries
+     *            the list of {@code import} entries
+     */
+    public void setImportEntries(List<ImportEntry> importEntries) {
+        assert this.importEntries == null && importEntries != null;
+        this.importEntries = importEntries;
+    }
+
+    /**
+     * [[LocalExportEntries]]
+     * 
+     * @return the list of local {@code export} entries
      */
     public List<ExportEntry> getLocalExportEntries() {
-        return localExportEntries;
-    }
-
-    public void setLocalExportEntries(List<ExportEntry> localExportEntries) {
-        this.localExportEntries = unmodifiableList(localExportEntries);
+        return unmodifiableList(localExportEntries);
     }
 
     /**
-     * @return the indirectExportEntries
+     * [[LocalExportEntries]]
+     * 
+     * @param localExportEntries
+     *            the list of local {@code export} entries
+     */
+    public void setLocalExportEntries(List<ExportEntry> localExportEntries) {
+        assert this.localExportEntries == null && localExportEntries != null;
+        this.localExportEntries = localExportEntries;
+    }
+
+    /**
+     * [[IndirectExportEntries]]
+     * 
+     * @return the list of indirect {@code export} entries
      */
     public List<ExportEntry> getIndirectExportEntries() {
-        return indirectExportEntries;
-    }
-
-    public void setIndirectExportEntries(List<ExportEntry> indirectExportEntries) {
-        this.indirectExportEntries = unmodifiableList(indirectExportEntries);
+        return unmodifiableList(indirectExportEntries);
     }
 
     /**
-     * @return the starExportEntries
+     * [[IndirectExportEntries]]
+     * 
+     * @param indirectExportEntries
+     *            the list of indirect {@code export} entries
+     */
+    public void setIndirectExportEntries(List<ExportEntry> indirectExportEntries) {
+        assert this.indirectExportEntries == null && indirectExportEntries != null;
+        this.indirectExportEntries = indirectExportEntries;
+    }
+
+    /**
+     * [[StarExportEntries]]
+     * 
+     * @return the list of {@code export*} entries
      */
     public List<ExportEntry> getStarExportEntries() {
-        return starExportEntries;
-    }
-
-    public void setStarExportEntries(List<ExportEntry> starExportEntries) {
-        this.starExportEntries = unmodifiableList(starExportEntries);
+        return unmodifiableList(starExportEntries);
     }
 
     /**
-     * @return the environment
+     * [[StarExportEntries]]
+     * 
+     * @param starExportEntries
+     *            the list of {@code export*} entries
+     */
+    public void setStarExportEntries(List<ExportEntry> starExportEntries) {
+        assert this.starExportEntries == null && starExportEntries != null;
+        this.starExportEntries = starExportEntries;
+    }
+
+    /**
+     * [[Environment]]
+     * 
+     * @return the lexical environment of this module
      */
     public LexicalEnvironment<ModuleEnvironmentRecord> getEnvironment() {
+        assert environment != null : "module not instantiated";
         return environment;
     }
 
+    /**
+     * [[Environment]]
+     * 
+     * @param environment
+     *            the lexical environment of this module
+     */
     public void setEnvironment(LexicalEnvironment<ModuleEnvironmentRecord> environment) {
+        assert this.environment == null && environment != null : "module already instantiated";
         this.environment = environment;
     }
 
     /**
-     * @return the namespace
+     * [[Namespace]]
+     * 
+     * @return the module namespace object
      */
     public ModuleNamespaceObject getNamespace() {
         return namespace;
     }
 
+    /**
+     * [[Namespace]]
+     * 
+     * @param namespace
+     *            the module namespace object
+     */
     public void setNamespace(ModuleNamespaceObject namespace) {
         assert this.namespace == null && namespace != null;
         this.namespace = namespace;
     }
 
     /**
-     * @return the evaluated
+     * [[Evaluated]]
+     * 
+     * @return the evaluated flag
      */
     public boolean isEvaluated() {
         return evaluated;
     }
 
+    /**
+     * [[Evaluated]]
+     * 
+     * @param evaluated
+     *            the evaluated flag
+     */
     public void setEvaluated(boolean evaluated) {
+        assert !this.evaluated && evaluated;
         this.evaluated = evaluated;
     }
 }

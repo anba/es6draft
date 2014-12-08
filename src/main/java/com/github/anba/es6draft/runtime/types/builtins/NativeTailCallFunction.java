@@ -49,11 +49,9 @@ public final class NativeTailCallFunction extends BuiltinFunction {
         this.tmh = tmh;
     }
 
-    private static MethodHandle tailCallAdapter(MethodHandle mh) {
-        MethodHandle result = TailCallInvocation.getTailCallHandler();
-        result = MethodHandles.dropArguments(result, 2, Object.class, Object[].class);
-        result = MethodHandles.foldArguments(result, mh);
-        return result;
+    @Override
+    public NativeTailCallFunction clone() {
+        return new NativeTailCallFunction(getRealm(), getName(), mh, tmh);
     }
 
     /**
@@ -88,8 +86,10 @@ public final class NativeTailCallFunction extends BuiltinFunction {
         return tmh.invokeExact(callerContext, thisValue, args);
     }
 
-    @Override
-    public NativeTailCallFunction clone() {
-        return new NativeTailCallFunction(getRealm(), getName(), mh, tmh);
+    private static MethodHandle tailCallAdapter(MethodHandle mh) {
+        MethodHandle result = TailCallInvocation.getTailCallHandler();
+        result = MethodHandles.dropArguments(result, 2, Object.class, Object[].class);
+        result = MethodHandles.foldArguments(result, mh);
+        return result;
     }
 }

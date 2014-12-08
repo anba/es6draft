@@ -163,9 +163,9 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         @Override
         public OrdinaryGenerator create(ExecutionContext cx, Constructor constructor,
                 Object... args) {
-            /* steps 1-3 */
+            /* steps 1-2 */
             ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, Intrinsics.Generator);
-            /* step 4 */
+            /* step 3 */
             return FunctionAllocate(cx, proto, false, FunctionKind.Normal);
         }
     }

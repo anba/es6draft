@@ -312,7 +312,7 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             /* steps 2-3 */
             Object[] args = CreateListFromArrayLike(cx, argumentsList);
             /* steps 4-5 */
-            return PrepareForTailCall(args, thisArgument, (Callable) function);
+            return PrepareForTailCall((Callable) function, thisArgument, args);
         }
     }
 }

@@ -8,14 +8,16 @@
 const global = this;
 
 const {
-  Object, Function, Proxy, Set, String, SyntaxError
+  Object, Function, Proxy, Reflect, Set, String, Symbol, SyntaxError
 } = global;
 
 const {
-  getOwnPropertyDescriptor: Object_getOwnPropertyDescriptor,
-  getOwnPropertyNames: Object_getOwnPropertyNames,
-  getOwnPropertySymbols: Object_getOwnPropertySymbols,
-  getPrototypeOf: Object_getPrototypeOf,
+  getOwnPropertyDescriptor: Reflect_getOwnPropertyDescriptor,
+  getPrototypeOf: Reflect_getPrototypeOf,
+  ownKeys: Reflect_ownKeys,
+} = Reflect;
+
+const {
   is: Object_is,
 } = Object;
 
@@ -32,15 +34,23 @@ const {
   contains: String_prototype_contains,
 } = String.prototype;
 
-const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
+const {
+  add: Set_prototype_add,
+  delete: Set_prototype_delete,
+  forEach: Set_prototype_forEach,
+} = Set.prototype;
 
-const ThrowTypeError = Object_getOwnPropertyDescriptor(Function.prototype, "caller").get;
+const Set_prototype_size = Reflect_getOwnPropertyDescriptor(Set.prototype, "size").get;
+
+const ThrowTypeError = Reflect_getOwnPropertyDescriptor(Function.prototype, "caller").get;
+
+const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
 function IsCallable(o) {
   try {
     (new Proxy(o, {apply: () => {}}))();
     return true;
-  } catch(e) {
+  } catch (e) {
     return false;
   }
 }
@@ -49,7 +59,7 @@ function IsConstructor(o) {
   try {
     new (new Proxy(o, {construct: () => ({})}));
     return true;
-  } catch(e) {
+  } catch (e) {
     return false;
   }
 }
@@ -71,6 +81,47 @@ function IsPrimitive(v) {
 
 function PropertyKeyToString(propertyKey) {
   return String(propertyKey);
+}
+
+function IsDataPropertyDescriptor(desc) {
+  return $CallFunction(Object_prototype_hasOwnProperty, desc, "value");
+}
+
+class PropertyKeySet extends null {
+  constructor(keys) {
+    this._set = new Set();
+    for (let i = 0, len = keys.length; i < len; ++i) {
+      this.add(keys[i]);
+    }
+  }
+
+  add(value) {
+    return $CallFunction(Set_prototype_add, this._set, value);
+  }
+
+  delete(value) {
+    return $CallFunction(Set_prototype_delete, this._set, value);
+  }
+
+  forEach(callback) {
+    return $CallFunction(Set_prototype_forEach, this._set, callback);
+  }
+
+  get size() {
+    return $CallFunction(Set_prototype_size, this._set);
+  }
+
+  toString() {
+    let s = "";
+    let n = this.size;
+    this.forEach(value => {
+      s += PropertyKeyToString(value);
+      if (--n) {
+        s += ", ";
+      }
+    });
+    return `[${s}]`;
+  }
 }
 
 function safeToString(v) {
@@ -100,7 +151,7 @@ function safeToString(v) {
   }
 }
 
-function fmt(callSite, ...substitutions) {
+function formatString(callSite, ...substitutions) {
   let cooked = Object(callSite);
   let literalSegments = cooked.length >>> 0;
   if (literalSegments === 0) {
@@ -127,7 +178,7 @@ export class AssertionError extends Error {
 }
 
 export function fail(format = "", ...args) {
-  let message = typeof format === "string" ? format : fmt(format, ...args);
+  let message = typeof format === "string" ? format : formatString(format, ...args);
   throw new AssertionError(message);
 }
 
@@ -204,19 +255,30 @@ export function assertNotConstructor(o, message = "Is not a [[Constructor]] obje
 }
 
 export function assertDataProperty(object, propertyKey, {value, writable, enumerable, configurable}) {
-  let desc = Object_getOwnPropertyDescriptor(object, propertyKey);
+  let desc = Reflect_getOwnPropertyDescriptor(object, propertyKey);
   assertNotUndefined(desc, `${PropertyKeyToString(propertyKey)} not found`);
-  assertTrue('value' in desc, `${PropertyKeyToString(propertyKey)}.[[Value]] present`);
+  assertTrue(IsDataPropertyDescriptor(desc), `${PropertyKeyToString(propertyKey)}.[[Value]] present`);
   assertSame(value, desc.value, `${PropertyKeyToString(propertyKey)}.[[Value]]`);
   assertSame(writable, desc.writable, `${PropertyKeyToString(propertyKey)}.[[Writable]]`);
   assertSame(enumerable, desc.enumerable, `${PropertyKeyToString(propertyKey)}.[[Enumerable]]`);
   assertSame(configurable, desc.configurable, `${PropertyKeyToString(propertyKey)}.[[Configurable]]`);
 }
 
-export function assertAccessorProperty(object, propertyKey, {get, set, enumerable, configurable}) {
-  let desc = Object_getOwnPropertyDescriptor(object, propertyKey);
+// Internal: Similar to assertDataProperty, except assertEquals is used for "value"
+function assertDataPropertyEquals(object, propertyKey, {value, writable, enumerable, configurable}) {
+  let desc = Reflect_getOwnPropertyDescriptor(object, propertyKey);
   assertNotUndefined(desc, `${PropertyKeyToString(propertyKey)} not found`);
-  assertFalse('value' in desc, `${PropertyKeyToString(propertyKey)}.[[Value]] present`);
+  assertTrue(IsDataPropertyDescriptor(desc), `${PropertyKeyToString(propertyKey)}.[[Value]] present`);
+  assertEquals(value, desc.value, `${PropertyKeyToString(propertyKey)}.[[Value]]`);
+  assertSame(writable, desc.writable, `${PropertyKeyToString(propertyKey)}.[[Writable]]`);
+  assertSame(enumerable, desc.enumerable, `${PropertyKeyToString(propertyKey)}.[[Enumerable]]`);
+  assertSame(configurable, desc.configurable, `${PropertyKeyToString(propertyKey)}.[[Configurable]]`);
+}
+
+export function assertAccessorProperty(object, propertyKey, {get, set, enumerable, configurable}) {
+  let desc = Reflect_getOwnPropertyDescriptor(object, propertyKey);
+  assertNotUndefined(desc, `${PropertyKeyToString(propertyKey)} not found`);
+  assertFalse(IsDataPropertyDescriptor(desc), `${PropertyKeyToString(propertyKey)}.[[Value]] present`);
   assertSame(get, desc.get, `${PropertyKeyToString(propertyKey)}.[[Get]]`);
   assertSame(set, desc.set, `${PropertyKeyToString(propertyKey)}.[[Set]]`);
   assertSame(enumerable, desc.enumerable, `${PropertyKeyToString(propertyKey)}.[[Enumerable]]`);
@@ -227,7 +289,7 @@ export function assertBuiltinFunction(fun, name, arity) {
   assertSame("function", typeof fun);
   assertCallable(fun);
   assertNotConstructor(fun);
-  assertSame(Function.prototype, Object_getPrototypeOf(fun), `${name}.[[Prototype]]`);
+  assertSame(Function.prototype, Reflect_getPrototypeOf(fun), `${name}.[[Prototype]]`);
   assertDataProperty(fun, "length", {value: arity, writable: false, enumerable: false, configurable: true});
   if (name !== void 0) {
     assertDataProperty(fun, "name", {value: name, writable: false, enumerable: false, configurable: true});
@@ -235,8 +297,8 @@ export function assertBuiltinFunction(fun, name, arity) {
     // anonymous function
     assertFalse($CallFunction(Object_prototype_hasOwnProperty, fun, "name"));
   }
-  assertUndefined(Object_getOwnPropertyDescriptor(fun, "arguments"));
-  assertUndefined(Object_getOwnPropertyDescriptor(fun, "caller"));
+  assertUndefined(Reflect_getOwnPropertyDescriptor(fun, "arguments"));
+  assertUndefined(Reflect_getOwnPropertyDescriptor(fun, "caller"));
 }
 
 export function assertNativeFunction(fun, name, arity) {
@@ -249,11 +311,11 @@ export function assertBuiltinConstructor(fun, name, arity) {
   assertSame("function", typeof fun);
   assertCallable(fun);
   assertConstructor(fun);
-  assertSame(Function.prototype, Object_getPrototypeOf(fun), `${name}.[[Prototype]]`);
+  assertSame(Function.prototype, Reflect_getPrototypeOf(fun), `${name}.[[Prototype]]`);
   assertDataProperty(fun, "length", {value: arity, writable: false, enumerable: false, configurable: true});
   assertDataProperty(fun, "name", {value: name, writable: false, enumerable: false, configurable: true});
-  assertUndefined(Object_getOwnPropertyDescriptor(fun, "arguments"));
-  assertUndefined(Object_getOwnPropertyDescriptor(fun, "caller"));
+  assertUndefined(Reflect_getOwnPropertyDescriptor(fun, "arguments"));
+  assertUndefined(Reflect_getOwnPropertyDescriptor(fun, "caller"));
 }
 
 export function assertBuiltinPrototype(o, proto = Object.prototype) {
@@ -265,7 +327,7 @@ export function assertBuiltinPrototype(o, proto = Object.prototype) {
     assertNotCallable(o);
   }
   assertNotConstructor(o);
-  assertSame(proto, Object_getPrototypeOf(o), `[[Prototype]]`);
+  assertSame(proto, Reflect_getPrototypeOf(o), `[[Prototype]]`);
 }
 
 export function assertEquals(expected, actual, message = "") {
@@ -278,30 +340,24 @@ export function assertEquals(expected, actual, message = "") {
     return;
   }
 
-  for (let fn of [Object_getOwnPropertyNames, Object_getOwnPropertySymbols]) {
-    let expectedOwnNames = fn(expected), actualOwnNames = fn(actual);
-    // assertSame(expectedOwnNames.length, actualOwnNames.length);
-    let actualOwnNamesSet = new Set(actualOwnNames);
-    for (let i = 0, len = expectedOwnNames.length; i < len; ++i) {
-      let propertyKey = expectedOwnNames[i];
-      let actualHas = actualOwnNamesSet.delete(propertyKey);
-      assertTrue(actualHas, `${PropertyKeyToString(propertyKey)} not present`);
+  let expectedOwnKeys = Reflect_ownKeys(expected);
+  let actualOwnKeys = Reflect_ownKeys(actual);
+  let actualOwnKeysSet = new PropertyKeySet(actualOwnKeys);
+  for (let i = 0, len = expectedOwnKeys.length; i < len; ++i) {
+    let propertyKey = expectedOwnKeys[i];
+    let actualHas = actualOwnKeysSet.delete(propertyKey);
+    assertTrue(actualHas, `${PropertyKeyToString(propertyKey)} not present`);
 
-      let expectedDesc = Object_getOwnPropertyDescriptor(expected, propertyKey);
-      let actualDesc = Object_getOwnPropertyDescriptor(actual, propertyKey);
-      assertNotUndefined(expectedDesc, `${PropertyKeyToString(propertyKey)} not present`);
-      assertNotUndefined(actualDesc, `${PropertyKeyToString(propertyKey)} not present`);
+    let expectedDesc = Reflect_getOwnPropertyDescriptor(expected, propertyKey);
+    assertNotUndefined(expectedDesc, `${PropertyKeyToString(propertyKey)} not found`);
 
-      assertSame('value' in expectedDesc, 'value' in actualDesc, `${PropertyKeyToString(propertyKey)}`);
-      assertEquals(expectedDesc.value, actualDesc.value, `${PropertyKeyToString(propertyKey)}.[[Value]]`);
-      assertEquals(expectedDesc.get, actualDesc.get, `${PropertyKeyToString(propertyKey)}.[[Get]]`);
-      assertEquals(expectedDesc.set, actualDesc.set, `${PropertyKeyToString(propertyKey)}.[[Set]]`);
-      assertSame(expectedDesc.writable, actualDesc.writable, `${PropertyKeyToString(propertyKey)}.[[Writable]]`);
-      assertSame(expectedDesc.enumerable, actualDesc.enumerable, `${PropertyKeyToString(propertyKey)}.[[Enumerable]]`);
-      assertSame(expectedDesc.configurable, actualDesc.configurable, `${PropertyKeyToString(propertyKey)}.[[Configurable]]`);
+    if (IsDataPropertyDescriptor(expectedDesc)) {
+      assertDataPropertyEquals(actual, propertyKey, expectedDesc);
+    } else {
+      assertAccessorProperty(actual, propertyKey, expectedDesc);
     }
-    assertSame(0, actualOwnNamesSet.size, {toString: () => `[${[...actualOwnNamesSet].map(PropertyKeyToString)}]`});
   }
+  assertSame(0, actualOwnKeysSet.size, actualOwnKeysSet);
 
-  return assertEquals(Object_getPrototypeOf(expected), Object_getPrototypeOf(actual));
+  return assertEquals(Reflect_getPrototypeOf(expected), Reflect_getPrototypeOf(actual));
 }

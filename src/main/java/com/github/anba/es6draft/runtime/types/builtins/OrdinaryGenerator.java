@@ -20,6 +20,7 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -119,8 +120,6 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
             gen = OrdinaryCreateFromConstructor(cx, functionObject, Intrinsics.GeneratorPrototype,
                     GeneratorObjectAllocator.INSTANCE);
         } else {
-            // FIXME: spec bug - this case is no longer possible
-            assert false : "unreachable";
             gen = (GeneratorObject) g;
         }
         /* step 5 */
@@ -164,6 +163,19 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         }
     }
 
+    /**
+     * 25.2.4 GeneratorFunction Instances
+     */
+    private static final class GeneratorCreate implements CreateAction<GeneratorObject> {
+        static final CreateAction<GeneratorObject> INSTANCE = new GeneratorCreate();
+
+        @Override
+        public GeneratorObject create(ExecutionContext cx, Constructor constructor, Object... args) {
+            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.GeneratorPrototype,
+                    GeneratorObjectAllocator.INSTANCE);
+        }
+    }
+
     /* ***************************************************************************************** */
 
     /**
@@ -188,6 +200,8 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         OrdinaryGenerator f = new OrdinaryGenerator(realm);
         /* steps 9-13 */
         f.allocate(realm, functionPrototype, strict, kind, uninitializedGeneratorMH);
+        // FIXME: spec issue - unclear when [[CreateAction]] is set (25.2.4)
+        f.setCreateAction(GeneratorCreate.INSTANCE);
         /* step 14 */
         return f;
     }

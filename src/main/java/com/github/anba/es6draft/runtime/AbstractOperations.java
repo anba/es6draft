@@ -2322,7 +2322,7 @@ public final class AbstractOperations {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         if (!Type.isObject(obj)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.ProxyNotObject);
         }
         ScriptObject object = Type.objectValue(obj);
         /* step 4 */

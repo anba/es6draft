@@ -292,7 +292,7 @@ final class BindingInitializationGenerator {
         NoEnvironment, EnvironmentFromStack, EnvironmentFromLocal
     }
 
-    private abstract static class RuntimeSemantics<V> extends DefaultVoidNodeVisitor<V> {
+    private static abstract class RuntimeSemantics<V> extends DefaultVoidNodeVisitor<V> {
         protected final CodeGenerator codegen;
         protected final ExpressionVisitor mv;
         protected final EnvironmentType environment;
@@ -575,8 +575,7 @@ final class BindingInitializationGenerator {
                     mv.mark(undef);
                 }
 
-                // FIXME: spec bug - ToObject not applied for iterator value
-                // step 7
+                // steps 6-7
                 // stack: [(env), (env), v'] -> [(env), (env), v']
                 ToObject(binding, mv);
 
@@ -668,12 +667,11 @@ final class BindingInitializationGenerator {
             }
 
             if (binding instanceof BindingPattern) {
-                // FIXME: spec bug - ToObject not applied for iterator value
-                // step 4
+                // steps 4-5
                 // stack: [(env), (env), v'] -> [(env), (env), v']
                 ToObject(binding, mv);
 
-                // step 5
+                // step 6
                 // stack: [(env), (env), v'] -> [(env)]
                 BindingInitialization((BindingPattern) binding);
             } else {

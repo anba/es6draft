@@ -434,24 +434,32 @@ final class StatementGenerator extends
         case DefaultDeclaration:
             return node.getDeclaration().accept(this, mv);
         case DefaultExpression: {
-            Expression expr = node.getExpression();
-            /* steps 1-3 */
-            expressionBoxedValue(expr, mv);
-            /* step 4 */
-            if (IsAnonymousFunctionDefinition(expr)) {
-                SetFunctionName(expr, "default", mv);
-            }
-            /* step 5 */
-            getEnvironmentRecord(mv);
-            mv.swap();
-            /* step 6 */
-            InitializeBoundNameWithEnvironment(new Name("*default*"), mv);
-            /* step 7 */
-            return Completion.Normal;
+            return node.getExpression().accept(this, mv);
         }
         default:
             throw new AssertionError();
         }
+    }
+
+    /**
+     * 15.2.3.10 Runtime Semantics: Evaluation
+     */
+    @Override
+    public Completion visit(ExportDefaultExpression node, StatementVisitor mv) {
+        Expression expr = node.getExpression();
+        /* steps 1-3 */
+        expressionBoxedValue(expr, mv);
+        /* step 4 */
+        if (IsAnonymousFunctionDefinition(expr)) {
+            SetFunctionName(expr, "default", mv);
+        }
+        /* step 5 */
+        getEnvironmentRecord(mv);
+        mv.swap();
+        /* step 6 */
+        InitializeBoundNameWithEnvironment(node.getBinding(), mv);
+        /* step 7 */
+        return Completion.Normal;
     }
 
     /**

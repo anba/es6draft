@@ -13,7 +13,7 @@ import com.github.anba.es6draft.repl.console.ShellConsole;
 /**
  *
  */
-class WebKitTestConsole implements ShellConsole {
+final class WebKitTestConsole implements ShellConsole {
     private final ErrorCollector collector;
 
     WebKitTestConsole(ErrorCollector collector) {

@@ -13,7 +13,7 @@ import com.github.anba.es6draft.repl.console.ShellConsole;
 /**
  *
  */
-class MozTestConsole implements ShellConsole {
+final class MozTestConsole implements ShellConsole {
     private final ErrorCollector collector;
 
     MozTestConsole(ErrorCollector collector) {

@@ -73,7 +73,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
     }
 
     /** [[relevantExtensionKeys]] */
-    private static List<ExtensionKey> relevantExtensionKeys = asList(ExtensionKey.nu);
+    private static final List<ExtensionKey> relevantExtensionKeys = asList(ExtensionKey.nu);
 
     /** [[localeData]] */
     private static final class NumberFormatLocaleData implements LocaleData {
@@ -160,7 +160,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
      */
     public static void InitializeNumberFormat(ExecutionContext cx, ScriptObject obj,
             Object locales, Object opts) {
-        // spec allows any object to become a NumberFormat object, we don't allow this
+        // Deliberate spec violation: Restrict initialization to proper NumberFormat objects.
         if (!(obj instanceof NumberFormatObject)) {
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -179,25 +179,23 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         } else {
             options = ToObject(cx, opts);
         }
-        /* step 6 */
-        OptionsRecord opt = new OptionsRecord();
         /* step 7 */
         String matcher = GetStringOption(cx, options, "localeMatcher", set("lookup", "best fit"),
                 "best fit");
-        /* step 8 */
-        opt.localeMatcher = OptionsRecord.MatcherType.forName(matcher);
+        /* step 6, 8 */
+        OptionsRecord opt = new OptionsRecord(OptionsRecord.MatcherType.forName(matcher));
         /* steps 9-10 */
         NumberFormatLocaleData localeData = new NumberFormatLocaleData();
         /* step 11 */
         ResolvedLocale r = ResolveLocale(cx, getAvailableLocalesLazy(cx), requestedLocales, opt,
                 relevantExtensionKeys, localeData);
         /* step 12 */
-        numberFormat.setLocale(r.locale);
+        numberFormat.setLocale(r.getLocale());
         /* step 13 */
-        numberFormat.setNumberingSystem(r.values.get(ExtensionKey.nu));
+        numberFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
         /* step 14 */
         @SuppressWarnings("unused")
-        String dataLocale = r.dataLocale;
+        String dataLocale = r.getDataLocale();
         /* steps 15-16 */
         String s = GetStringOption(cx, options, "style", set("decimal", "percent", "currency"),
                 "decimal");
@@ -311,16 +309,23 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
+        /* step 1 */
         Object locales = argument(args, 0);
+        /* step 2 */
         Object options = argument(args, 1);
+        /* step 3 */
         if (Type.isUndefined(thisValue) || thisValue == calleeContext.getIntrinsic(Intrinsics.Intl)) {
             return construct(calleeContext, args);
         }
+        /* step 4 */
         ScriptObject obj = ToObject(calleeContext, thisValue);
+        /* step 5 */
         if (!IsExtensible(calleeContext, obj)) {
             throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
+        /* step 6 */
         InitializeNumberFormat(calleeContext, obj, locales, options);
+        /* step 7 */
         return obj;
     }
 
@@ -329,10 +334,13 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
      */
     @Override
     public NumberFormatObject construct(ExecutionContext callerContext, Object... args) {
-        Object locales = argument(args, 0);
-        Object options = argument(args, 1);
         NumberFormatObject obj = new NumberFormatObject(callerContext.getRealm());
         obj.setPrototype(callerContext.getIntrinsic(Intrinsics.Intl_NumberFormatPrototype));
+        /* step 1 */
+        Object locales = argument(args, 0);
+        /* step 2 */
+        Object options = argument(args, 1);
+        /* step 3 */
         InitializeNumberFormat(callerContext, obj, locales, options);
         return obj;
     }
@@ -382,8 +390,12 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         @Function(name = "supportedLocalesOf", arity = 1)
         public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue,
                 Object locales, Object options) {
+            /* step 1 (implicit) */
+            /* step 2 */
             Set<String> availableLocales = getAvailableLocales(cx);
+            /* step 3 */
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
+            /* step 4 */
             return SupportedLocales(cx, availableLocales, requestedLocales, options);
         }
     }

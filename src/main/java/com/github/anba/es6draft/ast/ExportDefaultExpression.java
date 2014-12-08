@@ -6,22 +6,27 @@
  */
 package com.github.anba.es6draft.ast;
 
-import java.util.List;
-
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
- * <h2>15.3 Modules</h2>
+ * <h2>15.2 Modules</h2>
  */
-public final class ExportsClause extends AstNode {
-    private final List<ExportSpecifier> exports;
+public class ExportDefaultExpression extends AstNode {
+    private final BindingIdentifier binding;
+    private final Expression expression;
 
-    public ExportsClause(long beginPosition, long endPosition, List<ExportSpecifier> exports) {
+    public ExportDefaultExpression(long beginPosition, long endPosition, BindingIdentifier binding,
+            Expression expression) {
         super(beginPosition, endPosition);
-        this.exports = exports;
+        this.binding = binding;
+        this.expression = expression;
     }
 
-    public List<ExportSpecifier> getExports() {
-        return exports;
+    public BindingIdentifier getBinding() {
+        return binding;
+    }
+
+    public Expression getExpression() {
+        return expression;
     }
 
     @Override

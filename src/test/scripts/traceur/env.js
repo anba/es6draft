@@ -7,9 +7,19 @@
 
 traceur = {
   get(name) {
-    if (name !== "./Options") {
+    if (name !== "./Options.js") {
       throw new Error("unknown module: " + name);
     }
     return class Options { };
+  }
+};
+
+$traceurRuntime = {
+  // 7.1.13 ToObject
+  toObject(value) {
+    if (value == null) {
+      throw TypeError();
+    }
+    return Object(value);
   }
 };

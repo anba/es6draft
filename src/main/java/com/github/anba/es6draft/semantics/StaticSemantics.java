@@ -20,7 +20,7 @@ import java.util.Set;
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.BlockScope;
 import com.github.anba.es6draft.ast.scope.Name;
-import com.github.anba.es6draft.runtime.internal.SmallArrayList;
+import com.github.anba.es6draft.runtime.internal.InlineArrayList;
 import com.github.anba.es6draft.runtime.modules.ExportEntry;
 import com.github.anba.es6draft.runtime.modules.ImportEntry;
 
@@ -107,7 +107,7 @@ public final class StaticSemantics {
             return singletonList(((BindingIdentifier) node).getName());
         }
         assert node instanceof BindingPattern;
-        return node.accept(BoundNames.INSTANCE, new SmallArrayList<Name>());
+        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
     }
 
     /**
@@ -122,7 +122,7 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(FormalParameterList node) {
-        return node.accept(BoundNames.INSTANCE, new SmallArrayList<Name>());
+        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
     }
 
     /**
@@ -137,7 +137,7 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(FormalParameter node) {
-        SmallArrayList<Name> list = new SmallArrayList<Name>();
+        InlineArrayList<Name> list = new InlineArrayList<Name>();
         node.accept(BoundNames.INSTANCE, list);
         return list;
     }
@@ -154,7 +154,7 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(List<FormalParameter> formals) {
-        SmallArrayList<Name> list = new SmallArrayList<Name>();
+        InlineArrayList<Name> list = new InlineArrayList<Name>();
         for (FormalParameter formalParameter : formals) {
             formalParameter.accept(BoundNames.INSTANCE, list);
         }
@@ -175,7 +175,7 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(Declaration node) {
-        return node.accept(BoundNames.INSTANCE, new SmallArrayList<Name>());
+        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
     }
 
     /**
@@ -186,7 +186,7 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(VariableStatement node) {
-        return node.accept(BoundNames.INSTANCE, new SmallArrayList<Name>());
+        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
     }
 
     /**
@@ -197,7 +197,7 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(ImportDeclaration node) {
-        return node.accept(BoundNames.INSTANCE, new SmallArrayList<Name>());
+        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
     }
 
     /**
@@ -208,7 +208,7 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(ExportDeclaration node) {
-        return node.accept(BoundNames.INSTANCE, new SmallArrayList<Name>());
+        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
     }
 
     /**
@@ -927,7 +927,7 @@ public final class StaticSemantics {
      * @param entries
      *            the list of export entries
      */
-    private static void ExportEntriesForModule(ExportsClause node, String module,
+    private static void ExportEntriesForModule(ExportClause node, String module,
             List<ExportEntry> entries) {
         if (module == null) {
             for (ExportSpecifier specifier : node.getExports()) {

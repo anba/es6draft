@@ -97,7 +97,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
             /* steps 2-3 */
             Object[] args = CreateListFromArrayLike(cx, argumentsList);
             /* steps 4-5 */
-            return PrepareForTailCall(args, thisArgument, (Callable) target);
+            return PrepareForTailCall((Callable) target, thisArgument, args);
         }
 
         /**

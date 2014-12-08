@@ -187,8 +187,12 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
             ExecutionContext evalCxt = newEvalExecutionContext(cx, script, varEnv, lexEnv);
             script.getScriptBody().evalDeclarationInstantiation(evalCxt, varEnv, lexEnv);
             Object result = script.evaluate(evalCxt);
+            realm.getWorld().runEventLoop();
             return TypeConverter.toJava(result);
         } catch (ScriptException e) {
+            throw new javax.script.ScriptException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new javax.script.ScriptException(e);
         }
     }
@@ -210,8 +214,12 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
                 throw new NoSuchMethodException(name);
             }
             Object result = ((Callable) func).call(cx, thisValue, arguments);
+            realm.getWorld().runEventLoop();
             return TypeConverter.toJava(result);
         } catch (ScriptException e) {
+            throw new javax.script.ScriptException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new javax.script.ScriptException(e);
         }
     }

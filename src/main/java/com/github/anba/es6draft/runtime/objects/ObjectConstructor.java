@@ -573,7 +573,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                     }
                     throw newTypeError(cx, Messages.Key.CyclicProto);
                 }
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.ObjectSetPrototypeFailed);
             }
             /* step 8 */
             return obj;

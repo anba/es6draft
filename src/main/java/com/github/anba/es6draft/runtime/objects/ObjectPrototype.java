@@ -330,7 +330,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
                     }
                     throw newTypeError(cx, Messages.Key.CyclicProto);
                 }
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.ObjectSetPrototypeFailed);
             }
             /* step 8 */
             return UNDEFINED;

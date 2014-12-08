@@ -9,7 +9,7 @@ package com.github.anba.es6draft.mozilla;
 import static com.github.anba.es6draft.mozilla.MozTestGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
+import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
@@ -66,9 +66,9 @@ public final class MozillaJSTest {
     private static final Configuration configuration = loadConfiguration(MozillaJSTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<Object[]> suiteValues() throws IOException {
-        return loadTestsAsArray(configuration,
-                new Function<Path, BiFunction<Path, Iterator<String>, TestInfo>>() {
+    public static List<MozTest> suiteValues() throws IOException {
+        return loadTests(configuration,
+                new Function<Path, BiFunction<Path, Iterator<String>, MozTest>>() {
                     @Override
                     public TestInfos apply(Path basedir) {
                         return new TestInfos(basedir);
@@ -87,7 +87,7 @@ public final class MozillaJSTest {
     };
 
     @Rule
-    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
+    public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
 
     @Rule
     public ErrorCollector collector = new ErrorCollector() {
@@ -241,7 +241,7 @@ public final class MozillaJSTest {
         return sb.toString();
     }
 
-    private static final class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
+    private static final class TestInfos implements BiFunction<Path, Iterator<String>, MozTest> {
         private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
 
         private final Path basedir;
@@ -251,7 +251,7 @@ public final class MozillaJSTest {
         }
 
         @Override
-        public TestInfo apply(Path file, Iterator<String> lines) {
+        public MozTest apply(Path file, Iterator<String> lines) {
             MozTest test = new MozTest(basedir, file);
             // Negative tests end with "-n"
             if (file.getFileName().toString().endsWith("-n.js")) {

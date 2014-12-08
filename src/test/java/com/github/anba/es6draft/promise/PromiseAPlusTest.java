@@ -8,13 +8,14 @@ package com.github.anba.es6draft.promise;
 
 import static com.github.anba.es6draft.TestGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
+import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -50,12 +51,12 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  */
 @RunWith(Parallelized.class)
 @TestConfiguration(name = "promise.test.aplus", file = "resource:/test-configuration.properties")
-public class PromiseAPlusTest {
+public final class PromiseAPlusTest {
     private static final Configuration configuration = loadConfiguration(PromiseAPlusTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<Object[]> suiteValues() throws IOException {
-        return loadTestsAsArray(configuration);
+    public static List<TestInfo> suiteValues() throws IOException {
+        return loadTests(configuration);
     }
 
     @ClassRule
@@ -69,7 +70,7 @@ public class PromiseAPlusTest {
     };
 
     @Rule
-    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
+    public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
 
     @Rule
     public StandardErrorHandler errorHandler = new StandardErrorHandler();
@@ -113,7 +114,7 @@ public class PromiseAPlusTest {
         assertTrue(async.doneCalled);
     }
 
-    public static class AsyncHelper {
+    public static final class AsyncHelper {
         boolean doneCalled = false;
 
         @Properties.Function(name = "$async_done", arity = 0)

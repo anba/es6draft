@@ -37,14 +37,14 @@ public class IsNumberCloseTo extends TypeSafeMatcher<Number> {
     }
 
     /**
-     * Factory method for {@link IsNumberCloseTo}
+     * Factory method for {@link IsNumberCloseTo}.
      */
     public static Matcher<Number> numberCloseTo(double operand, double error) {
         return new IsNumberCloseTo(operand, error);
     }
 
     /**
-     * Short cut for {@code numberCloseTo(operand, Math.ulp(1.0))}
+     * Short cut for {@code numberCloseTo(operand, Math.ulp(1.0))}.
      */
     public static Matcher<Number> numberCloseTo(double operand) {
         return numberCloseTo(operand, Math.ulp(1.0));

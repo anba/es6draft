@@ -56,6 +56,11 @@ public final class NativeConstructor extends BuiltinConstructor implements Creat
     }
 
     @Override
+    public NativeConstructor clone() {
+        return new NativeConstructor(getRealm(), getName(), createAction, mh);
+    }
+
+    @Override
     public CreateAction<?> createAction() {
         return createAction;
     }
@@ -81,11 +86,6 @@ public final class NativeConstructor extends BuiltinConstructor implements Creat
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public NativeConstructor clone() {
-        return new NativeConstructor(getRealm(), getName(), createAction, mh);
     }
 
     @Override

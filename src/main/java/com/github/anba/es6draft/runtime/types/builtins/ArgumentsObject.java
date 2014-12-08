@@ -159,18 +159,6 @@ public final class ArgumentsObject extends OrdinaryObject {
     }
 
     /**
-     * 9.4.4.3 [[Get]] (P, Receiver)
-     */
-    @Override
-    protected Object getValue(ExecutionContext cx, String propertyKey, Object receiver) {
-        /* steps 1-4, 6 (not applicable) */
-        /* steps 5, 7 */
-        Object v = super.getValue(cx, propertyKey, receiver);
-        /* step 8 */
-        return v;
-    }
-
-    /**
      * 9.4.4.4 [[Set]] ( P, V, Receiver)
      */
     @Override

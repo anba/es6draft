@@ -7,12 +7,13 @@
 package com.github.anba.es6draft.v8;
 
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
+import static com.github.anba.es6draft.util.Resources.loadTests;
 import static com.github.anba.es6draft.v8.V8TestGlobalObject.newGlobalObjectAllocator;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -42,12 +43,12 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  */
 @RunWith(Parallelized.class)
 @TestConfiguration(name = "v8.test.intl", file = "resource:/test-configuration.properties")
-public class IntlTest {
+public final class IntlTest {
     private static final Configuration configuration = loadConfiguration(IntlTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<Object[]> suiteValues() throws IOException {
-        return loadTestsAsArray(configuration);
+    public static List<TestInfo> suiteValues() throws IOException {
+        return loadTests(configuration);
     }
 
     @ClassRule
@@ -61,7 +62,7 @@ public class IntlTest {
     };
 
     @Rule
-    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
+    public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
 
     @Rule
     public ErrorCollector collector = new ErrorCollector();

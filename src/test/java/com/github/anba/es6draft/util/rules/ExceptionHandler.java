@@ -16,8 +16,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 /**
- * Exception handler like {@link TestRule}
- * 
+ * Exception handler like {@link TestRule}.
  */
 public abstract class ExceptionHandler implements TestRule {
     private Matcher<?> matcher;
@@ -39,7 +38,7 @@ public abstract class ExceptionHandler implements TestRule {
     }
 
     /**
-     * To be implemented by subclasses
+     * To be implemented by sub-classes.
      */
     protected abstract void handle(Throwable t);
 

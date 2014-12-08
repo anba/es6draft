@@ -23,6 +23,7 @@ import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BinaryExpression.Operator;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.Eval.EvalFlags;
@@ -815,6 +816,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             Expression propertyValue = propValDef.getPropertyValue();
 
             String propName = PropName(propertyName);
+            long propIndex = propName != null ? IndexedMap.toIndex(propName) : -1;
             assert propName != null && !(propertyName instanceof ComputedPropertyName);
             Object value = propertyValue.accept(this, cx);
             value = GetValue(value, cx);
@@ -822,6 +824,8 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             if ("__proto__".equals(propName)
                     && cx.getRealm().isEnabled(CompatibilityOption.ProtoInitializer)) {
                 ScriptRuntime.defineProtoProperty(obj, value, cx);
+            } else if (IndexedMap.isIndex(propIndex)) {
+                ScriptRuntime.defineProperty(obj, propIndex, value, cx);
             } else {
                 ScriptRuntime.defineProperty(obj, propName, value, cx);
             }
@@ -879,7 +883,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         if (ref instanceof Reference) {
             Reference<?, ?> rref = (Reference<?, ?>) ref;
             if (rref.isPropertyReference()) {
-                thisValue = rref.getThisValue(cx);
+                thisValue = rref.getThisValue();
             } else if (!(rref instanceof Reference.BindingReference)) {
                 assert rref instanceof Reference.IdentifierReference;
                 Reference.IdentifierReference<?> idref = (Reference.IdentifierReference<?>) rref;
@@ -907,7 +911,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             return Eval.directEval(argList, cx, evalFlags);
         }
         if (directEval && ScriptRuntime.directEvalFallbackHook(cx) != null) {
-            argList = ScriptRuntime.directEvalFallbackArguments(argList, thisValue, f, cx);
+            argList = ScriptRuntime.directEvalFallbackArguments(thisValue, argList, f, cx);
             thisValue = ScriptRuntime.directEvalFallbackThisArgument(cx);
             f = ScriptRuntime.directEvalFallbackHook(cx);
         }

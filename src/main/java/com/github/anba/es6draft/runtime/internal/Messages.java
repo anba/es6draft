@@ -197,14 +197,8 @@ public final class Messages {
         NoPrimitiveRepresentation("abstractops.no_primitive_representation"),
 
         // 15.2 Modules
-        ModulesOwnProperty("modules.own_property"),
-        ModulesUnresolvedModule("modules.unresolved_module"),
         ModulesUnresolvedImport("modules.unresolved_import"),
         ModulesUnresolvedExport("modules.unresolved_export"),
-        ModulesDuplicateExport("modules.duplicate_export"),
-        ModulesDuplicateImport("modules.duplicate_import"),
-        ModulesDuplicateModule("modules.duplicate_module"),
-        ModulesAlreadyLoading("modules.already_loading"),
         ModulesCyclicExport("modules.cyclic_export"),
         ModulesMissingDefaultExport("modules.missing_default_export"),
         ModulesDuplicateStarExport("modules.duplicate_star_export"),
@@ -212,13 +206,22 @@ public final class Messages {
         ModulesIOException("modules.io_exception"),
         ModulesInvalidName("modules.invalid_name"),
 
+        // 15.2 Modules (TODO: unused)
+        ModulesOwnProperty("modules.own_property"),
+        ModulesUnresolvedModule("modules.unresolved_module"),
+        ModulesDuplicateExport("modules.duplicate_export"),
+        ModulesDuplicateImport("modules.duplicate_import"),
+        ModulesDuplicateModule("modules.duplicate_module"),
+        ModulesAlreadyLoading("modules.already_loading"),
+
         // 18 The Global Object
         MalformedURI("globalobject.malformed_uri"),
 
         // 19.1 Object Objects
         ObjectSealFailed("object.seal_failed"),
         ObjectFreezeFailed("object.freeze_failed"),
-        ObjectPreventExtensionsFailed("object.preventextension_failed"),
+        ObjectPreventExtensionsFailed("object.preventextensions_failed"),
+        ObjectSetPrototypeFailed("object.setprototype_failed"),
 
         // 19.2 Function Objects
         FunctionTooManyArguments("function.too_many_arguments"),
@@ -274,6 +277,7 @@ public final class Messages {
 
         // 25.4 Promise Objects
         PromiseSelfResolution("promise.self_resolution"),
+        PromiseConstructorSameObject("promise.constructor_same_object"),
 
         // 26.5 Proxy Objects
         ProxyRevoked("proxy.revoked"),
@@ -300,6 +304,7 @@ public final class Messages {
         IntlStructurallyInvalidLanguageTag("intl.structurally_invalid_language_tag"),
         IntlInvalidOption("intl.invalid_option"),
         IntlInvalidCurrency("intl.invalid_currency"),
+        IntlInvalidLanguageTagType("intl.invalid_language_tag_type"),
         ;
         /* @formatter:on */
 

@@ -8,11 +8,12 @@ package com.github.anba.es6draft;
 
 import static com.github.anba.es6draft.repl.global.MozShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
+import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -46,8 +47,8 @@ public class ReflectTest {
     private static final Configuration configuration = loadConfiguration(ReflectTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<Object[]> suiteValues() throws IOException {
-        return loadTestsAsArray(configuration);
+    public static List<TestInfo> suiteValues() throws IOException {
+        return loadTests(configuration);
     }
 
     @ClassRule
@@ -62,7 +63,7 @@ public class ReflectTest {
     };
 
     @Rule
-    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
+    public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
 
     @Rule
     public StandardErrorHandler errorHandler = new StandardErrorHandler();

@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.v8;
 
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
+import static com.github.anba.es6draft.util.Resources.loadTests;
 import static com.github.anba.es6draft.v8.V8TestGlobalObject.newGlobalObjectAllocator;
 import static org.junit.Assume.assumeTrue;
 
@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,12 +49,12 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  */
 @RunWith(Parallelized.class)
 @TestConfiguration(name = "v8.test.mjsunit", file = "resource:/test-configuration.properties")
-public class MiniJSUnitTest {
+public final class MiniJSUnitTest {
     private static final Configuration configuration = loadConfiguration(MiniJSUnitTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<Object[]> suiteValues() throws IOException {
-        return loadTestsAsArray(configuration,
+    public static List<TestInfo> suiteValues() throws IOException {
+        return loadTests(configuration,
                 new Function<Path, BiFunction<Path, Iterator<String>, TestInfo>>() {
                     @Override
                     public TestInfos apply(Path basedir) {
@@ -73,7 +74,7 @@ public class MiniJSUnitTest {
     };
 
     @Rule
-    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
+    public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
 
     @Rule
     public ErrorCollector collector = new ErrorCollector();
@@ -114,7 +115,7 @@ public class MiniJSUnitTest {
         global.getRealm().getWorld().runEventLoop();
     }
 
-    private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
+    private static final class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
         private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*Flags:\\s*(.*)\\s*");
         private final Path basedir;
 

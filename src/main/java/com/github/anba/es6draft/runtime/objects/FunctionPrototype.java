@@ -157,12 +157,12 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
             Callable func = (Callable) thisValue;
             /* step 2 */
             if (Type.isUndefinedOrNull(argArray)) {
-                return PrepareForTailCall(EMPTY_ARRAY, thisArg, func);
+                return PrepareForTailCall(func, thisArg, EMPTY_ARRAY);
             }
             /* steps 3-4 */
             Object[] argList = CreateListFromArrayLike(cx, argArray);
             /* steps 5-6 */
-            return PrepareForTailCall(argList, thisArg, func);
+            return PrepareForTailCall(func, thisArg, argList);
         }
 
         /**
@@ -188,7 +188,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
             }
             Callable func = (Callable) thisValue;
             /* steps 2-5 */
-            return PrepareForTailCall(args, thisArg, func);
+            return PrepareForTailCall(func, thisArg, args);
         }
 
         /**

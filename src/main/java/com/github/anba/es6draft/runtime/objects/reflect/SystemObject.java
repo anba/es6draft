@@ -111,9 +111,6 @@ public final class SystemObject extends LoaderObject implements Initializable {
             Realm realm = loader.getLoader().getRealm();
             String unnormalizedName = ToFlatString(cx, moduleName);
             String normalizedModuleName = NormalizeModuleName(cx, realm, "", unnormalizedName);
-            if (normalizedModuleName == null) {
-                return UNDEFINED;
-            }
             String src = ToFlatString(cx, source);
             try {
                 ModuleEvaluationJob(cx, realm, normalizedModuleName, src);
@@ -140,9 +137,6 @@ public final class SystemObject extends LoaderObject implements Initializable {
             Realm realm = loader.getLoader().getRealm();
             String unnormalizedName = ToFlatString(cx, moduleName);
             String normalizedModuleName = NormalizeModuleName(cx, realm, "", unnormalizedName);
-            if (normalizedModuleName == null) {
-                return UNDEFINED;
-            }
             try {
                 ModuleEvaluationJob(cx, realm, normalizedModuleName);
             } catch (ScriptException e) {
@@ -168,9 +162,6 @@ public final class SystemObject extends LoaderObject implements Initializable {
             Realm realm = loader.getLoader().getRealm();
             String unnormalizedName = ToFlatString(cx, moduleName);
             String normalizedModuleName = NormalizeModuleName(cx, realm, "", unnormalizedName);
-            if (normalizedModuleName == null) {
-                return UNDEFINED;
-            }
             try {
                 LoadModule(cx, realm, normalizedModuleName);
             } catch (ScriptException e) {
@@ -196,9 +187,6 @@ public final class SystemObject extends LoaderObject implements Initializable {
             Realm realm = loader.getLoader().getRealm();
             String unnormalizedName = ToFlatString(cx, moduleName);
             String normalizedModuleName = NormalizeModuleName(cx, realm, "", unnormalizedName);
-            if (normalizedModuleName == null) {
-                return UNDEFINED;
-            }
             ModuleRecord module = ModuleAt(realm.getModules(), normalizedModuleName);
             if (module == null) {
                 return UNDEFINED;
@@ -216,18 +204,14 @@ public final class SystemObject extends LoaderObject implements Initializable {
          *            the function this-value
          * @param moduleName
          *            the module name
-         * @return the normalized module name or undefined
+         * @return the normalized module name
          */
         @Function(name = "normalize", arity = 1)
         public static Object normalize(ExecutionContext cx, Object thisValue, Object moduleName) {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
             String unnormalizedName = ToFlatString(cx, moduleName);
-            String normalizedModuleName = NormalizeModuleName(cx, realm, "", unnormalizedName);
-            if (normalizedModuleName == null) {
-                return UNDEFINED;
-            }
-            return normalizedModuleName;
+            return NormalizeModuleName(cx, realm, "", unnormalizedName);
         }
     }
 }

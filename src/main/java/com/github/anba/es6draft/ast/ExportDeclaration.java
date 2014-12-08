@@ -8,13 +8,13 @@ package com.github.anba.es6draft.ast;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
- * <h2>15.3 Modules</h2>
+ * <h2>15.2 Modules</h2>
  */
 public final class ExportDeclaration extends ModuleItem {
     private final Type type;
     private final String moduleSpecifier;
-    private final ExportsClause exportsClause;
-    private final Expression expression;
+    private final ExportClause exportsClause;
+    private final ExportDefaultExpression expression;
     private final VariableStatement variableStatement;
     private final Declaration declaration;
 
@@ -32,7 +32,7 @@ public final class ExportDeclaration extends ModuleItem {
         this.declaration = null;
     }
 
-    public ExportDeclaration(long beginPosition, long endPosition, ExportsClause exportsClause,
+    public ExportDeclaration(long beginPosition, long endPosition, ExportClause exportsClause,
             String moduleSpecifier) {
         super(beginPosition, endPosition);
         this.type = moduleSpecifier != null ? Type.External : Type.Local;
@@ -43,7 +43,8 @@ public final class ExportDeclaration extends ModuleItem {
         this.declaration = null;
     }
 
-    public ExportDeclaration(long beginPosition, long endPosition, Expression expression) {
+    public ExportDeclaration(long beginPosition, long endPosition,
+            ExportDefaultExpression expression) {
         super(beginPosition, endPosition);
         this.type = Type.DefaultExpression;
         this.expression = expression;
@@ -92,11 +93,11 @@ public final class ExportDeclaration extends ModuleItem {
         return moduleSpecifier;
     }
 
-    public ExportsClause getExportsClause() {
+    public ExportClause getExportsClause() {
         return exportsClause;
     }
 
-    public Expression getExpression() {
+    public ExportDefaultExpression getExpression() {
         return expression;
     }
 

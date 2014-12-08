@@ -69,6 +69,12 @@ harmony/super.js
 # v8 does not add inferred name to classes
 harmony/classes.js
 
+# Rename String.prototype.contains -> String.prototype.includes (rev 29?)
+harmony/string-includes.js
+
+# let, etc. restricted to strict-mode in v8
+harmony/block-non-strict-errors.js
+
 
 ###################
 # Misc issues     #
@@ -123,9 +129,11 @@ object-seal.js
 regress/regress-1591.js
 regress/regress-1980.js
 regress/regress-3159.js
+regress/regress-crbug-109362.js
 
 # forward-slash not escaped in RegExp
 compiler/literals.js
+regress/regress-3229.js
 
 # \n\r are two separate line terminators
 newline-in-string.js
@@ -274,6 +282,9 @@ function-bind.js
 # "get " prefix for getter accessor function names
 object-literal.js
 
+# %TypedArray% intrinsic not available in V8
+harmony/typedarrays-of.js
+
 
 #######################################
 # ES6 related syntax changes          #
@@ -319,6 +330,9 @@ serialize-embedded-error.js
 # Static Semantics: Early Error for invalid RegExp flags (unicode escaped)
 regress/regress-136048.js
 
+# Static Semantics: Early Error for RegExp pattern
+regress/regress-crbug-435825.js
+
 # for-in with initializer
 for-in.js
 
@@ -327,6 +341,9 @@ regress/regress-1119.js
 
 # MethodDefinition syntax not supported
 regress/regress-parse-object-literal.js
+
+# HexEscapeSequence not available in v8?
+harmony/templates.js
 
 
 #######################################
@@ -370,6 +387,7 @@ regress/regress-581.js
 regress/regress-634.js
 regress/regress-685.js
 regress/regress-deep-proto.js
+regress/regress-splice-large-index.js
 sparse-array-reverse.js
 compiler/expression-trees.js
 compiler/regress-4.js

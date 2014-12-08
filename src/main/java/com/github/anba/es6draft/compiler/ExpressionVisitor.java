@@ -252,7 +252,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     }
 
     private static final class RuntimeBootstrap {
-        static final boolean ENABLED = false;
+        static final boolean ENABLED = true;
         static final Object[] EMPTY_BSM_ARGS = new Object[] {};
         static final String STACK = "rt:stack";
         static final String LOCALS = "rt:locals";

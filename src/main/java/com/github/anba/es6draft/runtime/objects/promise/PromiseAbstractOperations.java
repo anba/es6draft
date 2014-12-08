@@ -288,7 +288,8 @@ public final class PromiseAbstractOperations {
         if (promise == null) {
             // FIXME: spec bug
             // throw newTypeError(cx, Messages.Key.NotObjectType);
-            promise = AllocatePromise(cx, constructor);
+            // promise = AllocatePromise(cx, constructor);
+            promise = OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.ObjectPrototype);
         }
         /* step 6 */
         return CreatePromiseCapabilityRecord(cx, promise, constructor);
@@ -327,7 +328,7 @@ public final class PromiseAbstractOperations {
         }
         /* step 10 */
         if (Type.isObject(constructorResult) && !SameValue(promise, constructorResult)) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.PromiseConstructorSameObject);
         }
         /* steps 3, 11 */
         return new PromiseCapability<>(promise, (Callable) resolve, (Callable) reject);

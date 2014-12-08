@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.internal;
 import static com.github.anba.es6draft.runtime.AbstractOperations.EqualityComparison;
 import static com.github.anba.es6draft.runtime.AbstractOperations.RelationalComparison;
 import static com.github.anba.es6draft.runtime.AbstractOperations.StrictEqualityComparison;
+import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.CheckCallable;
 
 import java.lang.invoke.CallSite;
 import java.lang.invoke.ConstantCallSite;
@@ -22,7 +23,6 @@ import org.objectweb.asm.Opcodes;
 
 import com.github.anba.es6draft.ast.BinaryExpression;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.NativeConstructor;
@@ -42,8 +42,6 @@ public final class Bootstrap {
                 .getType(Object[].class);
         static final org.objectweb.asm.Type ExecutionContext = org.objectweb.asm.Type
                 .getType(ExecutionContext.class);
-        static final org.objectweb.asm.Type Callable = org.objectweb.asm.Type
-                .getType(Callable.class);
     }
 
     private static final class CallNames {
@@ -68,7 +66,7 @@ public final class Bootstrap {
     private static final String OP_STRICT_EQ = org.objectweb.asm.Type.getMethodDescriptor(
             org.objectweb.asm.Type.BOOLEAN_TYPE, Types.Object, Types.Object);
     private static final String OP_CALL = org.objectweb.asm.Type.getMethodDescriptor(Types.Object,
-            Types.Callable, Types.ExecutionContext, Types.Object, Types.Object_);
+            Types.Object, Types.ExecutionContext, Types.Object, Types.Object_);
 
     private static final Handle BOOTSTRAP;
     static {
@@ -113,22 +111,22 @@ public final class Bootstrap {
     static {
         MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
         testFunctionObjectMH = lookup.findStatic("testFunctionObject",
-                MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
+                MethodType.methodType(boolean.class, Object.class, MethodHandle.class));
         testNativeFunctionMH = lookup.findStatic("testNativeFunction",
-                MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
+                MethodType.methodType(boolean.class, Object.class, MethodHandle.class));
         testNativeTailCallFunctionMH = lookup.findStatic("testNativeTailCallFunction",
-                MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
+                MethodType.methodType(boolean.class, Object.class, MethodHandle.class));
         testNativeConstructorMH = lookup.findStatic("testNativeConstructor",
-                MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
+                MethodType.methodType(boolean.class, Object.class, MethodHandle.class));
         callGenericMH = lookup.findStatic("callGeneric", MethodType.methodType(Object.class,
-                Callable.class, ExecutionContext.class, Object.class, Object[].class));
+                Object.class, ExecutionContext.class, Object.class, Object[].class));
         callSetupMH = lookup.findStatic("callSetup", MethodType.methodType(MethodHandle.class,
-                MutableCallSite.class, Callable.class, ExecutionContext.class, Object.class,
+                MutableCallSite.class, Object.class, ExecutionContext.class, Object.class,
                 Object[].class));
     }
 
     @SuppressWarnings("unused")
-    private static MethodHandle callSetup(MutableCallSite callsite, Callable function,
+    private static MethodHandle callSetup(MutableCallSite callsite, Object function,
             ExecutionContext cx, Object thisValue, Object[] arguments) {
         MethodHandle target, test;
         if (function instanceof FunctionObject) {
@@ -154,33 +152,33 @@ public final class Bootstrap {
     }
 
     @SuppressWarnings("unused")
-    private static boolean testFunctionObject(Callable function, MethodHandle callMethod) {
+    private static boolean testFunctionObject(Object function, MethodHandle callMethod) {
         return function instanceof FunctionObject
                 && ((FunctionObject) function).getCallMethod() == callMethod;
     }
 
     @SuppressWarnings("unused")
-    private static boolean testNativeFunction(Callable function, MethodHandle callMethod) {
+    private static boolean testNativeFunction(Object function, MethodHandle callMethod) {
         return function instanceof NativeFunction
                 && ((NativeFunction) function).getCallMethod() == callMethod;
     }
 
     @SuppressWarnings("unused")
-    private static boolean testNativeTailCallFunction(Callable function, MethodHandle callMethod) {
+    private static boolean testNativeTailCallFunction(Object function, MethodHandle callMethod) {
         return function instanceof NativeTailCallFunction
                 && ((NativeTailCallFunction) function).getCallMethod() == callMethod;
     }
 
     @SuppressWarnings("unused")
-    private static boolean testNativeConstructor(Callable function, MethodHandle callMethod) {
+    private static boolean testNativeConstructor(Object function, MethodHandle callMethod) {
         return function instanceof NativeConstructor
                 && ((NativeConstructor) function).getCallMethod() == callMethod;
     }
 
     @SuppressWarnings("unused")
-    private static Object callGeneric(Callable function, ExecutionContext callerContext,
+    private static Object callGeneric(Object function, ExecutionContext callerContext,
             Object thisValue, Object[] arguments) {
-        return function.call(callerContext, thisValue, arguments);
+        return CheckCallable(function, callerContext).call(callerContext, thisValue, arguments);
     }
 
     /**
@@ -615,7 +613,7 @@ public final class Bootstrap {
         stackOverFlow_StrictEq = new ConstantCallSite(lookup.findStatic("stackOverFlow_StrictEq",
                 MethodType.methodType(boolean.class, Object.class, Object.class)));
         stackOverFlow_Call = new ConstantCallSite(lookup.findStatic("stackOverFlow_Call",
-                MethodType.methodType(Object.class, Callable.class, ExecutionContext.class,
+                MethodType.methodType(Object.class, Object.class, ExecutionContext.class,
                         Object.class, Object[].class)));
     }
 
@@ -640,7 +638,7 @@ public final class Bootstrap {
     }
 
     @SuppressWarnings("unused")
-    private static Object stackOverFlow_Call(Callable fun, ExecutionContext cx, Object thisValue,
+    private static Object stackOverFlow_Call(Object fun, ExecutionContext cx, Object thisValue,
             Object[] arguments) {
         throw new StackOverflowError("bootstrap stack overflow");
     }

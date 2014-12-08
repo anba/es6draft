@@ -11,8 +11,9 @@ feature/Classes/NestedFunctionSuper.js
 # Object.mixin() removed in rev22
 feature/ObjectMixin.js
 
+# Rename String.prototype.contains -> String.prototype.includes (rev 29?)
 # String.prototype.contains() throws when search argument is RegExp
-feature/StringExtras/Contains.js
+feature/StringExtras/Includes.js
 
 # String.fromCodePoint length changed to 1
 feature/StringExtras/FromCodePoint.js
@@ -35,9 +36,6 @@ feature/Yield/GeneratorReturn.js
 feature/Classes/ExtendNonConstructableFunction.js
 feature/Yield/GeneratorSend.js
 feature/Yield/GeneratorThrow.js
-
-# actually runtime exception
-feature/Scope/Error_BlockBinding1.js
 
 # unicode regular expressions are transformed in traceur
 feature/RegularExpression/Simple.js

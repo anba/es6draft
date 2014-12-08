@@ -96,9 +96,11 @@ public interface VoidNodeVisitor<V> {
 
     void visit(ExportDeclaration node, V value);
 
+    void visit(ExportDefaultExpression node, V value);
+
     void visit(ExportSpecifier node, V value);
 
-    void visit(ExportsClause node, V value);
+    void visit(ExportClause node, V value);
 
     void visit(ExpressionMethod node, V value);
 

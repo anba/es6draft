@@ -8,11 +8,15 @@ package com.github.anba.es6draft.runtime.internal;
 
 import java.lang.invoke.MethodHandle;
 import java.nio.file.Paths;
+import java.util.Map;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
+import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.ResolutionException;
 
 /**
  * Classes for function and script code bootstrapping.
@@ -316,11 +320,18 @@ public final class RuntimeInfo {
          * 
          * @param cx
          *            the execution context
-         * @param envRec
+         * @param env
          *            the lexical environment
+         * @param realm
+         *            the realm
+         * @param moduleSet
+         *            the module set
+         * @throws ResolutionException
+         *             if any export or import binding cannot be resolved
          */
         void moduleDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<ModuleEnvironmentRecord> envRec);
+                LexicalEnvironment<ModuleEnvironmentRecord> env, Realm realm,
+                Map<String, ModuleRecord> moduleSet) throws ResolutionException;
 
         /**
          * Performs 15.2.1.22 Runtime Semantics: ModuleEvaluation.
@@ -355,9 +366,10 @@ public final class RuntimeInfo {
 
         @Override
         public void moduleDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<ModuleEnvironmentRecord> globalEnv) {
+                LexicalEnvironment<ModuleEnvironmentRecord> env, Realm realm,
+                Map<String, ModuleRecord> moduleSet) {
             try {
-                initialization.invokeExact(cx, globalEnv);
+                initialization.invokeExact(cx, env, realm, moduleSet);
             } catch (RuntimeException | Error e) {
                 throw e;
             } catch (Throwable e) {

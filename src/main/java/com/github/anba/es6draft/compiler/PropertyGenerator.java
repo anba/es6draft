@@ -17,6 +17,7 @@ import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.MethodDesc;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.IndexedMap;
 
 /**
  * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation<br>
@@ -93,6 +94,11 @@ final class PropertyGenerator extends
                         Type.VOID_TYPE, Types.OrdinaryObject, Types.String, Types.FunctionObject,
                         Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_defineMethod_long = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineMethod", Type.getMethodType(
+                        Type.VOID_TYPE, Types.OrdinaryObject, Type.LONG_TYPE, Types.FunctionObject,
+                        Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_defineProperty = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineProperty", Type
                         .getMethodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
@@ -101,6 +107,11 @@ final class PropertyGenerator extends
         static final MethodDesc ScriptRuntime_defineProperty_String = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineProperty", Type
                         .getMethodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
+                                Types.Object, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_defineProperty_long = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineProperty", Type
+                        .getMethodType(Type.VOID_TYPE, Types.OrdinaryObject, Type.LONG_TYPE,
                                 Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_defineProtoProperty = MethodDesc.create(
@@ -266,6 +277,7 @@ final class PropertyGenerator extends
         }
 
         String propName = PropName(propertyName);
+        long propIndex = propName != null ? IndexedMap.toIndex(propName) : -1;
         if (propName == null) {
             assert propertyName instanceof ComputedPropertyName;
             ValType type = propertyName.accept(this, mv);
@@ -288,6 +300,18 @@ final class PropertyGenerator extends
             // TODO: SetFunctionName() ?
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProtoProperty);
+        } else if (IndexedMap.isIndex(propIndex)) {
+            mv.lconst(propIndex);
+            expressionBoxedValue(propertyValue, mv);
+            if (isAnonymousFunctionDefinition) {
+                SetFunctionName(propertyValue, propName, mv);
+            }
+            mv.loadExecutionContext();
+            if (defineMethod) {
+                mv.invoke(Methods.ScriptRuntime_defineMethod_long);
+            } else {
+                mv.invoke(Methods.ScriptRuntime_defineProperty_long);
+            }
         } else {
             mv.aconst(propName);
             expressionBoxedValue(propertyValue, mv);

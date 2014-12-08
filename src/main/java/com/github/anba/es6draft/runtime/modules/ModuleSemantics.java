@@ -108,7 +108,7 @@ public final class ModuleSemantics {
      *            the module loader
      * @param normalizedName
      *            the module name
-     * @return the module source code
+     * @return the module source code file
      */
     public static Path HostGetSourceFile(ModuleLoader moduleLoader, String normalizedName) {
         return moduleLoader.getSourceFile(normalizedName);
@@ -217,25 +217,26 @@ public final class ModuleSemantics {
     private static ModuleRecord ParseModuleAndImports(ShadowRealm realm, String moduleName,
             String src, Path file, Map<String, ModuleRecord> visited) throws IOException,
             MalformedNameException, ParserException {
+        HashMap<String, String> normalizedNames = new HashMap<>();
+        /* steps 1-7 (not applicable) */
         /* step 8 */
         ModuleRecord m = CreateModule(moduleName);
         /* step 9 */
         visited.put(moduleName, m);
+        /* steps 10-11 (not applicable) */
         /* steps 12-13 */
         Source source = new Source(file, moduleName, 1);
-        // TODO: Move all module information to compiledBody.
         ScriptLoader scriptLoader = realm.getScriptLoader();
         com.github.anba.es6draft.ast.Module parsedBody = scriptLoader.parseModule(source, src);
-        Module compiledBody = scriptLoader.load(parsedBody);
-        /* step 14 */
-        m.setScriptCode(compiledBody);
+        /* step 14 (moved) */
         /* step 15 */
         Set<String> requestedModules = ModuleRequests(parsedBody);
         /* step 16 */
-        HashSet<String> importedModules = new HashSet<>();
+        ArrayList<String> importedModules = new ArrayList<>();
         /* step 17 */
         for (String requestedName : requestedModules) {
-            String normalizedRequest = NormalizeModuleName(realm, moduleName, requestedName);
+            String normalizedRequest = NormalizeModuleName(realm, normalizedNames, moduleName,
+                    requestedName);
             importedModules.add(normalizedRequest);
             ParseModuleAndImports(realm, normalizedRequest, visited);
         }
@@ -245,7 +246,7 @@ public final class ModuleSemantics {
         List<ImportEntry> importEntries = ImportEntries(parsedBody);
         /* step 20 */
         for (ImportEntry importEntry : importEntries) {
-            String normalizedRequest = NormalizeModuleName(realm, moduleName,
+            String normalizedRequest = NormalizeModuleName(realm, normalizedNames, moduleName,
                     importEntry.getModuleRequest());
             importEntry.setNormalizedModuleRequest(normalizedRequest);
         }
@@ -264,7 +265,7 @@ public final class ModuleSemantics {
             if (exportEntry.getModuleRequest() == null) {
                 localExportEntries.add(exportEntry);
             } else {
-                String normalizedReqest = NormalizeModuleName(realm, moduleName,
+                String normalizedReqest = NormalizeModuleName(realm, normalizedNames, moduleName,
                         exportEntry.getModuleRequest());
                 exportEntry.setNormalizedModuleRequest(normalizedReqest);
                 if (exportEntry.isStarExport()) {
@@ -280,6 +281,9 @@ public final class ModuleSemantics {
         m.setIndirectExportEntries(indirectExportEntries);
         /* step 29 */
         m.setStarExportEntries(starExportEntries);
+        /* step 14 */
+        Module compiledBody = scriptLoader.load(parsedBody, m);
+        m.setScriptCode(compiledBody);
         /* step 30 */
         return m;
     }
@@ -299,13 +303,39 @@ public final class ModuleSemantics {
      * @throws ScriptException
      *             if the module name cannot be normalized
      */
-    public static String NormalizeModuleName(ExecutionContext cx, ShadowRealm realm,
-            String parentName, String unnormalizedName) throws ScriptException {
+    public static String NormalizeModuleName(ExecutionContext cx, Realm realm, String parentName,
+            String unnormalizedName) throws ScriptException {
         try {
             return NormalizeModuleName(realm, parentName, unnormalizedName);
         } catch (MalformedNameException e) {
             throw e.toScriptException(cx);
         }
+    }
+
+    /**
+     * 15.2.1.16.1 NormalizeModuleName( realm, unnormalizedName )
+     * 
+     * @param realm
+     *            the realm instance
+     * @param normalizedNames
+     *            the map of already normalized names
+     * @param parentName
+     *            the parent module name
+     * @param unnormalizedName
+     *            the unnormalized module name
+     * @return the normalized module name
+     * @throws MalformedNameException
+     *             if the module name cannot be normalized
+     */
+    private static String NormalizeModuleName(ShadowRealm realm,
+            Map<String, String> normalizedNames, String parentName, String unnormalizedName)
+            throws MalformedNameException {
+        String normalized = normalizedNames.get(unnormalizedName);
+        if (normalized == null) {
+            normalized = NormalizeModuleName(realm, parentName, unnormalizedName);
+            normalizedNames.put(unnormalizedName, normalized);
+        }
+        return normalized;
     }
 
     /**
@@ -408,24 +438,6 @@ public final class ModuleSemantics {
         return exportedNames;
     }
 
-    public static final class ResolvedExport {
-        private final ModuleRecord module;
-        private final String bindingName;
-
-        ResolvedExport(ModuleRecord module, String bindingName) {
-            this.module = module;
-            this.bindingName = bindingName;
-        }
-
-        public ModuleRecord getModule() {
-            return module;
-        }
-
-        public String getBindingName() {
-            return bindingName;
-        }
-    }
-
     /**
      * 15.2.1.18 Static Semantics: ResolveExport( modules, moduleName, exportName, circularitySet)
      * 
@@ -441,9 +453,8 @@ public final class ModuleSemantics {
      * @throws ResolutionException
      *             if the export cannot be resolved
      */
-    public static ResolvedExport ResolveExport(Map<String, ModuleRecord> modules,
-            String moduleName, String exportName, Map<String, Set<String>> circularitySet)
-            throws ResolutionException {
+    public static ModuleExport ResolveExport(Map<String, ModuleRecord> modules, String moduleName,
+            String exportName, Map<String, Set<String>> circularitySet) throws ResolutionException {
         /* step 1 */
         assert modules.containsKey(moduleName);
         /* step 2 */
@@ -462,7 +473,7 @@ public final class ModuleSemantics {
             if (exportName.equals(exportEntry.getExportName())) {
                 /* step 5.a.i (not applicable) */
                 /* step 5.a.ii */
-                return new ResolvedExport(m, exportEntry.getLocalName());
+                return new ModuleExport(m, exportEntry.getLocalName());
             }
         }
         /* step 6 */
@@ -481,13 +492,13 @@ public final class ModuleSemantics {
             throw new ResolutionException(Messages.Key.ModulesMissingDefaultExport, moduleName);
         }
         /* step 8 */
-        ResolvedExport starResolution = null;
+        ModuleExport starResolution = null;
         /* step 9 */
         for (ExportEntry exportEntry : m.getStarExportEntries()) {
             /* step 9.a */
             Map<String, Set<String>> circularitySetCopy = copy(circularitySet);
             /* steps 9.b-9.c */
-            ResolvedExport resolution = ResolveExport(modules,
+            ModuleExport resolution = ResolveExport(modules,
                     exportEntry.getNormalizedModuleRequest(), exportName, circularitySetCopy);
             /* step 9.d */
             if (resolution != null) {
@@ -729,52 +740,16 @@ public final class ModuleSemantics {
      */
     public static void ModuleDeclarationInstantiation(ExecutionContext cx, ModuleRecord module,
             Realm realm, Map<String, ModuleRecord> moduleSet) throws ResolutionException {
-        // TODO: Move to compiled code
-        /* step 1 */
-        String moduleName = module.getName();
+        /* steps 1, 3-4, 6 (not applicable) */
         /* step 2 */
         Module code = module.getScriptCode();
-        /* step 3 */
-        for (ExportEntry exportEntry : module.getIndirectExportEntries()) {
-            /* steps 3.a-3.b */
-            ResolvedExport resolution = ResolveExport(moduleSet, moduleName,
-                    exportEntry.getExportName(), new HashMap<String, Set<String>>());
-            /* step 3.c */
-            if (resolution == null) {
-                throw new ResolutionException(Messages.Key.ModulesUnresolvedExport,
-                        exportEntry.getExportName());
-            }
-        }
-        /* step 4 (not applicable) */
         /* step 5 */
         LexicalEnvironment<ModuleEnvironmentRecord> env = newModuleEnvironment(realm.getGlobalEnv());
-        /* step 6 */
-        ModuleEnvironmentRecord envRec = env.getEnvRec();
         /* step 7 */
         module.setEnvironment(env);
-        /* step 8 */
-        for (ImportEntry importEntry : module.getImportEntries()) {
-            if (importEntry.isStarImport()) {
-                String importedModuleName = importEntry.getNormalizedModuleRequest();
-                ModuleNamespaceObject namespace = GetModuleNamespace(cx, realm, moduleSet,
-                        importedModuleName);
-                envRec.createImmutableBinding(importEntry.getLocalName());
-                envRec.initializeBinding(importEntry.getLocalName(), namespace);
-            } else {
-                ResolvedExport resolution = ResolveExport(moduleSet,
-                        importEntry.getNormalizedModuleRequest(), importEntry.getImportName(),
-                        new HashMap<String, Set<String>>());
-                if (resolution == null) {
-                    throw new ResolutionException(Messages.Key.ModulesUnresolvedImport,
-                            importEntry.getImportName());
-                }
-                envRec.createImportBinding(importEntry.getLocalName(), resolution.getModule(),
-                        resolution.getBindingName());
-            }
-        }
-        /* steps 9-13 */
+        /* steps 8-13 */
         ExecutionContext context = newModuleDeclarationExecutionContext(realm, code);
-        code.getModuleBody().moduleDeclarationInstantiation(context, env);
+        code.getModuleBody().moduleDeclarationInstantiation(context, env, realm, moduleSet);
     }
 
     /**

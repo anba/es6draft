@@ -26,8 +26,8 @@ import com.github.anba.es6draft.ast.scope.WithScope;
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.regexp.RegExpParser;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.InlineArrayList;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.SmallArrayList;
 import com.github.anba.es6draft.runtime.internal.Source;
 
 /**
@@ -150,7 +150,7 @@ public final class Parser {
 
         StrictMode strictMode = StrictMode.Unknown;
         ParserException strictError = null;
-        List<FunctionNode> deferred = null;
+        InlineArrayList<FunctionNode> deferred = null;
         ArrayDeque<ObjectLiteral> objectLiterals = null;
 
         HashMap<String, LabelContext> labelSet = null;
@@ -295,7 +295,7 @@ public final class Parser {
     private static final class FunctionContext extends TopContext implements FunctionScope {
         FunctionNode node = null;
         NameSet parameterNames = null;
-        List<FunctionDeclaration> blockFunctions = null;
+        InlineArrayList<FunctionDeclaration> blockFunctions = null;
         boolean needsArguments = false;
         boolean superReference = false;
         final Name arguments;
@@ -307,7 +307,7 @@ public final class Parser {
 
         void addBlockFunction(FunctionDeclaration function) {
             if (blockFunctions == null) {
-                blockFunctions = newSmallList();
+                blockFunctions = newList();
             }
             blockFunctions.add(function);
         }
@@ -386,7 +386,7 @@ public final class Parser {
     private static final class ModuleContext extends TopContext implements ModuleScope {
         HashSet<String> exportBindings = new HashSet<>();
         HashSet<Name> importBindings = new HashSet<>();
-        Expression defaultExportExpression;
+        ExportDefaultExpression defaultExportExpression;
         Module node = null;
 
         ModuleContext(ScopeContext enclosing) {
@@ -399,7 +399,7 @@ public final class Parser {
         }
 
         @Override
-        public Expression getDefaultExportExpression() {
+        public ExportDefaultExpression getDefaultExportExpression() {
             return defaultExportExpression;
         }
 
@@ -415,7 +415,7 @@ public final class Parser {
     private static abstract class TopContext extends ScopeContext implements TopLevelScope {
         final ScopeContext enclosing;
         boolean directEval = false;
-        List<StatementListItem> varScopedDeclarations = null;
+        InlineArrayList<StatementListItem> varScopedDeclarations = null;
 
         TopContext(ScopeContext enclosing) {
             super(null);
@@ -424,7 +424,7 @@ public final class Parser {
 
         void addVarScopedDeclaration(StatementListItem decl) {
             if (varScopedDeclarations == null) {
-                varScopedDeclarations = newSmallList();
+                varScopedDeclarations = newList();
             }
             varScopedDeclarations.add(decl);
         }
@@ -566,12 +566,12 @@ public final class Parser {
         }
     }
 
-    private abstract static class ScopeContext implements Scope {
+    private static abstract class ScopeContext implements Scope {
         final ScopeContext parent;
 
         NameSet varDeclaredNames = null;
         NameSet lexDeclaredNames = null;
-        List<Declaration> lexScopedDeclarations = null;
+        InlineArrayList<Declaration> lexScopedDeclarations = null;
         NameSet forbiddenLexNames = null;
 
         ScopeContext(ScopeContext parent) {
@@ -623,7 +623,7 @@ public final class Parser {
 
         void addLexScopedDeclaration(Declaration decl) {
             if (lexScopedDeclarations == null) {
-                lexScopedDeclarations = newSmallList();
+                lexScopedDeclarations = newList();
             }
             lexScopedDeclarations.add(decl);
         }
@@ -1137,12 +1137,8 @@ public final class Parser {
         }
     }
 
-    private static <T> List<T> newSmallList() {
-        return new SmallArrayList<>();
-    }
-
-    private static <T> List<T> newList() {
-        return new SmallArrayList<>();
+    private static <T> InlineArrayList<T> newList() {
+        return new InlineArrayList<>();
     }
 
     private static <T> List<T> merge(List<T> list1, List<T> list2) {
@@ -1748,7 +1744,7 @@ public final class Parser {
         assert context.scopeContext == context.modContext;
 
         ModuleContext scope = context.modContext;
-
+        // FIXME: spec bug - early error restrictions for export bindings are invalid
         scope.exportBindings = null;
         scope.importBindings = null;
     }
@@ -1769,7 +1765,7 @@ public final class Parser {
      * @return the list of parsed module items
      */
     private List<ModuleItem> moduleItemList() {
-        List<ModuleItem> moduleItemList = newList();
+        InlineArrayList<ModuleItem> moduleItemList = newList();
         while (token() != Token.EOF) {
             switch (token()) {
             case EXPORT:
@@ -1778,15 +1774,6 @@ public final class Parser {
             case IMPORT:
                 moduleItemList.add(importDeclaration());
                 break;
-            case NAME:
-                if (isName("module")) {
-                    Token next = peek();
-                    if (noNextLineTerminator() && isBindingIdentifier(next)) {
-                        moduleItemList.add(importDeclaration());
-                        break;
-                    }
-                }
-                // fall-through
             default:
                 moduleItemList.add(statementListItem());
             }
@@ -1926,7 +1913,7 @@ public final class Parser {
      * @return the list of parsed named imports
      */
     private List<ImportSpecifier> namedImports() {
-        List<ImportSpecifier> namedImports = newList();
+        InlineArrayList<ImportSpecifier> namedImports = newList();
         consume(Token.LC);
         while (token() != Token.RC) {
             namedImports.add(importSpecifier());
@@ -2023,8 +2010,8 @@ public final class Parser {
      * <pre>
      * ExportDeclaration :
      *     export * FromClause ;
-     *     export ExportsClause FromClause ;
-     *     export ExportsClause ;
+     *     export ExportClause FromClause ;
+     *     export ExportClause ;
      *     export VariableStatement
      *     export Declaration
      *     export default HoistableDeclaration<span><sub>[Default]</sub></span>
@@ -2047,9 +2034,9 @@ public final class Parser {
         }
 
         case LC: {
-            // export ExportsClause FromClause ;
-            // export ExportsClause ;
-            ExportsClause exportsClause = exportsClause();
+            // export ExportClause FromClause ;
+            // export ExportClause ;
+            ExportClause exportsClause = exportClause();
             String moduleSpecifier;
             if (isName("from")) {
                 moduleSpecifier = fromClause();
@@ -2106,17 +2093,26 @@ public final class Parser {
 
                 return new ExportDeclaration(begin, ts.endPosition(), declaration);
             } else {
-                Expression expression = assignmentExpression(true);
-                semicolon();
+                ExportDefaultExpression defaultExpression = defaultExpression();
 
-                addLexDeclaredName(new BindingIdentifier(begin, ts.endPosition(), "*default*"));
+                context.modContext.defaultExportExpression = defaultExpression;
                 addExportBinding(begin, "default");
-                context.modContext.defaultExportExpression = expression;
 
-                return new ExportDeclaration(begin, ts.endPosition(), expression);
+                return new ExportDeclaration(begin, ts.endPosition(), defaultExpression);
             }
         }
         }
+    }
+
+    private ExportDefaultExpression defaultExpression() {
+        long begin = ts.beginPosition();
+        BindingIdentifier binding = new BindingIdentifier(begin, ts.endPosition(), "*default*");
+        Expression expression = assignmentExpression(true);
+        semicolon();
+
+        addLexDeclaredName(binding);
+
+        return new ExportDefaultExpression(begin, ts.endPosition(), binding, expression);
     }
 
     private static boolean isModuleReservedName(String name) {
@@ -2129,7 +2125,7 @@ public final class Parser {
      * <strong>[15.2.2] Exports</strong>
      * 
      * <pre>
-     * ExportsClause :
+     * ExportClause :
      *     { } 
      *     { ExportsList }
      *     { ExportsList , }
@@ -2140,9 +2136,9 @@ public final class Parser {
      * 
      * @return the parsed exports clause
      */
-    private ExportsClause exportsClause() {
+    private ExportClause exportClause() {
         long begin = ts.beginPosition();
-        List<ExportSpecifier> exports = newList();
+        InlineArrayList<ExportSpecifier> exports = newList();
         consume(Token.LC);
         while (token() != Token.RC) {
             exports.add(exportSpecifier());
@@ -2153,7 +2149,7 @@ public final class Parser {
             }
         }
         consume(Token.RC);
-        return new ExportsClause(begin, ts.endPosition(), exports);
+        return new ExportClause(begin, ts.endPosition(), exports);
     }
 
     /**
@@ -2194,7 +2190,7 @@ public final class Parser {
      * @return the parsed list of directives
      */
     private List<StatementListItem> directivePrologue() {
-        List<StatementListItem> statements = newSmallList();
+        InlineArrayList<StatementListItem> statements = newList();
         boolean strict = false;
         directive: while (token() == Token.STRING) {
             long begin = ts.beginPosition();
@@ -2265,34 +2261,51 @@ public final class Parser {
     }
 
     private <FUNCTION extends FunctionNode> FUNCTION inheritStrictness(FUNCTION function) {
+        ParseContext context = this.context;
         if (context.strictMode != StrictMode.Unknown) {
             boolean strict = (context.strictMode == StrictMode.Strict);
             assert !strict || context.funContext.blockFunctions == null;
             function.setStrictMode(toFunctionStrictness(strict, context.explicitStrict));
             if (context.deferred != null) {
-                for (FunctionNode func : context.deferred) {
-                    func.setStrictMode(toFunctionStrictness(strict, false));
-                    if (strict) {
-                        ((FunctionContext) func.getScope()).blockFunctions = null;
-                    }
-                }
-                context.deferred = null;
+                deferredInheritStrictness(strict);
             }
         } else {
             // This case only applies for functions in default parameter expressions.
-            assert context.parent.strictMode == StrictMode.Unknown;
-            ParseContext parent = context.parent;
-            if (parent.deferred == null) {
-                parent.deferred = newSmallList();
-            }
-            parent.deferred.add(function);
-            if (context.deferred != null) {
-                parent.deferred.addAll(context.deferred);
-                context.deferred = null;
+            deferInheritStrictness(function);
+        }
+        return function;
+    }
+
+    private void deferredInheritStrictness(boolean strict) {
+        ParseContext context = this.context;
+        for (FunctionNode func : context.deferred) {
+            func.setStrictMode(toFunctionStrictness(strict, false));
+            if (strict) {
+                FunctionContext fc = (FunctionContext) func.getScope();
+                InlineArrayList<FunctionDeclaration> blockFunctions = fc.blockFunctions;
+                if (blockFunctions != null) {
+                    for (FunctionDeclaration blockFunction : blockFunctions) {
+                        blockFunction.setLegacyBlockScoped(false);
+                    }
+                    fc.blockFunctions = null;
+                }
             }
         }
+        context.deferred = null;
+    }
 
-        return function;
+    private <FUNCTION extends FunctionNode> void deferInheritStrictness(FUNCTION function) {
+        ParseContext context = this.context;
+        assert context.parent.strictMode == StrictMode.Unknown;
+        ParseContext parent = context.parent;
+        if (parent.deferred == null) {
+            parent.deferred = newList();
+        }
+        parent.deferred.add(function);
+        if (context.deferred != null) {
+            parent.deferred.addAll(context.deferred);
+            context.deferred = null;
+        }
     }
 
     /**
@@ -2485,7 +2498,7 @@ public final class Parser {
      */
     private FormalParameterList formalParameterList() {
         long begin = ts.beginPosition();
-        List<FormalParameter> formals = newSmallList();
+        InlineArrayList<FormalParameter> formals = newList();
         for (;;) {
             if (token() == Token.TRIPLE_DOT) {
                 formals.add(functionRestParameter());
@@ -2640,7 +2653,7 @@ public final class Parser {
             return;
         }
         assert context.strictMode != StrictMode.Strict : "block functions in strict mode";
-        ArrayList<FunctionDeclaration> blockFunctions = new ArrayList<>();
+        InlineArrayList<FunctionDeclaration> blockFunctions = new InlineArrayList<>();
         outer: for (FunctionDeclaration function : functions) {
             Name name = function.getIdentifier().getName();
             ScopeContext enclosingScope = (ScopeContext) function.getScope().getEnclosingScope();
@@ -3538,9 +3551,9 @@ public final class Parser {
      * @return the class methods in source order
      */
     private List<MethodDefinition> classBody(BindingIdentifier className) {
-        List<MethodDefinition> methods = newList();
-        List<MethodDefinition> staticMethods = newList();
-        List<MethodDefinition> prototypeMethods = newList();
+        InlineArrayList<MethodDefinition> methods = newList();
+        InlineArrayList<MethodDefinition> staticMethods = newList();
+        InlineArrayList<MethodDefinition> prototypeMethods = newList();
         while (token() != Token.RC) {
             if (token() == Token.SEMI) {
                 consume(Token.SEMI);
@@ -4068,7 +4081,7 @@ public final class Parser {
      * @return the list of parsed statement list items
      */
     private List<StatementListItem> statementList(Token end) {
-        List<StatementListItem> list = newList();
+        InlineArrayList<StatementListItem> list = newList();
         while (token() != end) {
             list.add(statementListItem());
         }
@@ -4221,7 +4234,7 @@ public final class Parser {
      * @return the list of parsed lexical bindings
      */
     private List<LexicalBinding> bindingList(boolean isConst, boolean allowIn) {
-        List<LexicalBinding> list = newSmallList();
+        InlineArrayList<LexicalBinding> list = newList();
         list.add(lexicalBinding(isConst, allowIn));
         while (token() == Token.COMMA) {
             consume(Token.COMMA);
@@ -4349,7 +4362,7 @@ public final class Parser {
      * @return the parsed list of variable declarations
      */
     private List<VariableDeclaration> variableDeclarationList(boolean allowIn) {
-        List<VariableDeclaration> list = newSmallList();
+        InlineArrayList<VariableDeclaration> list = newList();
         list.add(variableDeclaration(allowIn));
         while (token() == Token.COMMA) {
             consume(Token.COMMA);
@@ -4455,7 +4468,7 @@ public final class Parser {
      */
     private ObjectBindingPattern objectBindingPattern(boolean allowLet) {
         long begin = ts.beginPosition();
-        List<BindingProperty> list = newSmallList();
+        InlineArrayList<BindingProperty> list = newList();
         consume(Token.LC);
         while (token() != Token.RC) {
             list.add(bindingProperty(allowLet));
@@ -4541,7 +4554,7 @@ public final class Parser {
      */
     private ArrayBindingPattern arrayBindingPattern(boolean allowLet) {
         long begin = ts.beginPosition();
-        List<BindingElementItem> list = newSmallList();
+        InlineArrayList<BindingElementItem> list = newList();
         consume(Token.LB);
         boolean needComma = false;
         Token tok;
@@ -5341,7 +5354,7 @@ public final class Parser {
      * @return the parsed switch statement
      */
     private SwitchStatement switchStatement(Set<String> labelSet) {
-        List<SwitchClause> clauses = newList();
+        InlineArrayList<SwitchClause> clauses = newList();
         long begin = ts.beginPosition();
         consume(Token.SWITCH);
         consume(Token.LP);
@@ -5368,7 +5381,7 @@ public final class Parser {
             } else {
                 break;
             }
-            List<StatementListItem> list = newList();
+            InlineArrayList<StatementListItem> list = newList();
             statementlist: for (;;) {
                 switch (token()) {
                 case CASE:
@@ -5545,7 +5558,7 @@ public final class Parser {
         Token tok = token();
         if (tok == Token.CATCH) {
             if (isEnabled(CompatibilityOption.GuardedCatch)) {
-                guardedCatchNodes = newSmallList();
+                guardedCatchNodes = newList();
                 while (token() == Token.CATCH && catchNode == null) {
                     long beginCatch = ts.beginPosition();
                     consume(Token.CATCH);
@@ -5678,7 +5691,7 @@ public final class Parser {
     }
 
     private List<LexicalBinding> letBindingList() {
-        List<LexicalBinding> list = newSmallList();
+        InlineArrayList<LexicalBinding> list = newList();
         list.add(letBinding());
         while (token() == Token.COMMA) {
             consume(Token.COMMA);
@@ -6165,7 +6178,7 @@ public final class Parser {
                 return legacyGeneratorComprehension();
             }
             if (token() == Token.COMMA) {
-                List<Expression> list = newList();
+                InlineArrayList<Expression> list = newList();
                 list.add(expr);
                 while (token() == Token.COMMA) {
                     consume(Token.COMMA);
@@ -6273,7 +6286,7 @@ public final class Parser {
      * @return the parsed array literal
      */
     private ArrayLiteral arrayLiteral(long begin, Expression expr) {
-        List<Expression> list = newList();
+        InlineArrayList<Expression> list = newList();
         boolean needComma = false;
         if (expr == null) {
             consume(Token.LB);
@@ -6339,7 +6352,7 @@ public final class Parser {
      */
     private Comprehension comprehension() {
         assert token() == Token.FOR;
-        List<ComprehensionQualifier> list = newSmallList();
+        InlineArrayList<ComprehensionQualifier> list = newList();
         int scopes = 0;
         for (;;) {
             ComprehensionQualifier qualifier;
@@ -6465,7 +6478,7 @@ public final class Parser {
 
         assert token() == Token.FOR : "empty legacy comprehension";
 
-        List<ComprehensionQualifier> list = newSmallList();
+        InlineArrayList<ComprehensionQualifier> list = newList();
         while (token() == Token.FOR) {
             long begin = ts.beginPosition();
             consume(Token.FOR);
@@ -6529,7 +6542,7 @@ public final class Parser {
      */
     private ObjectLiteral objectLiteral() {
         long begin = ts.beginPosition();
-        List<PropertyDefinition> defs = newList();
+        InlineArrayList<PropertyDefinition> defs = newList();
         consume(Token.LC);
         while (token() != Token.RC) {
             defs.add(propertyDefinition());
@@ -6928,17 +6941,17 @@ public final class Parser {
      * @return the parsed template literal
      */
     private TemplateLiteral templateLiteral(boolean tagged) {
-        List<Expression> elements = newList();
+        InlineArrayList<Expression> elements = newList();
 
         long begin = ts.beginPosition();
-        templateCharacters(elements, Token.TEMPLATE);
+        elements.add(templateCharacters(Token.TEMPLATE));
         while (token() == Token.LC) {
             consume(Token.LC);
             elements.add(expression(true));
             if (token() != Token.RC) {
                 reportTokenMismatch(Token.RC, token());
             }
-            templateCharacters(elements, Token.RC);
+            elements.add(templateCharacters(Token.RC));
         }
         consume(Token.TEMPLATE);
 
@@ -6949,10 +6962,10 @@ public final class Parser {
         return new TemplateLiteral(begin, ts.endPosition(), tagged, elements);
     }
 
-    private void templateCharacters(List<Expression> elements, Token start) {
+    private TemplateCharacters templateCharacters(Token start) {
         long begin = ts.beginPosition();
         String[] values = ts.readTemplateLiteral(start);
-        elements.add(new TemplateCharacters(begin, ts.endPosition(), values[0], values[1]));
+        return new TemplateCharacters(begin, ts.endPosition(), values[0], values[1]);
     }
 
     /**
@@ -7188,7 +7201,7 @@ public final class Parser {
      * @return the list of parsed function call arguments
      */
     private List<Expression> arguments() {
-        List<Expression> args = newSmallList();
+        InlineArrayList<Expression> args = newList();
         long position = ts.position(), lineinfo = ts.lineinfo();
         consume(Token.LP);
         if (token() != Token.RP) {
@@ -7793,7 +7806,7 @@ public final class Parser {
      * @return the object assignment pattern for the object literal
      */
     private ObjectAssignmentPattern toDestructuring(ObjectLiteral object) {
-        List<AssignmentProperty> list = newSmallList();
+        InlineArrayList<AssignmentProperty> list = newList();
         for (PropertyDefinition p : object.getProperties()) {
             AssignmentProperty property;
             if (p instanceof PropertyValueDefinition) {
@@ -7872,7 +7885,7 @@ public final class Parser {
      * @return the array assignment pattern for the array literal
      */
     private ArrayAssignmentPattern toDestructuring(ArrayLiteral array) {
-        List<AssignmentElementItem> list = newSmallList();
+        InlineArrayList<AssignmentElementItem> list = newList();
         for (Iterator<Expression> iterator = array.getElements().iterator(); iterator.hasNext();) {
             Expression e = iterator.next();
             AssignmentElementItem element;
@@ -7999,7 +8012,7 @@ public final class Parser {
      * @return the parsed comma expression
      */
     private CommaExpression commaExpression(Expression expr, boolean allowIn) {
-        List<Expression> list = newList();
+        InlineArrayList<Expression> list = newList();
         list.add(expr);
         while (token() == Token.COMMA) {
             consume(Token.COMMA);

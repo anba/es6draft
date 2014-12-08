@@ -20,8 +20,8 @@ final class DateFieldSymbolTable {
         private final boolean hour12;
 
         public Skeleton(String skeleton) {
-            char symbols[] = new char[DateField.LENGTH];
-            FieldWeight weights[] = new FieldWeight[DateField.LENGTH];
+            char[] symbols = new char[DateField.LENGTH];
+            FieldWeight[] weights = new FieldWeight[DateField.LENGTH];
             boolean hour12 = false;
             for (int i = 0, len = skeleton.length(); i < len;) {
                 char sym = skeleton.charAt(i++);
@@ -70,22 +70,22 @@ final class DateFieldSymbolTable {
     enum FieldWeight {
         TwoDigit(1, 2), Numeric(2, 1), Narrow(3, 5), Short(4, 3), Long(5, 4);
 
-        // relative weight per abstract operation BasicFormatMatcher, step 11.c.vii.1
-        private final int weight;
+        // relative index per abstract operation BasicFormatMatcher, step 11.c.vii.1
+        private final int index;
         // length in output string
         private final int length;
 
-        private FieldWeight(int weight, int length) {
-            this.weight = weight;
+        private FieldWeight(int index, int length) {
+            this.index = index;
             this.length = length;
+        }
+
+        public int index() {
+            return index;
         }
 
         public int length() {
             return length;
-        }
-
-        public int weight() {
-            return weight;
         }
 
         @Override
@@ -318,12 +318,8 @@ final class DateFieldSymbolTable {
             }
 
             @Override
-            public void append(StringBuilder sb, String weight, Boolean hour12) {
-                char c = (hour12 != null ? hour12 ? 'h' : 'H' : symbol);
-                FieldWeight fw = FieldWeight.forName(weight);
-                for (int i = (fw != null ? fw.length() : 0); i != 0; --i) {
-                    sb.append(c);
-                }
+            public void append(StringBuilder sb, FieldWeight weight, Boolean hour12) {
+                append(sb, weight, hour12 != null ? hour12 ? 'h' : 'H' : symbol);
             }
         },
         Minute('m') {
@@ -401,7 +397,7 @@ final class DateFieldSymbolTable {
             }
         };
 
-        public static final int LENGTH = values().length;
+        static final int LENGTH = values().length;
 
         protected final char symbol;
 
@@ -441,17 +437,24 @@ final class DateFieldSymbolTable {
             }
         }
 
+        protected final void append(StringBuilder sb, FieldWeight weight, char c) {
+            if (weight != null) {
+                int n = weight.length();
+                sb.ensureCapacity(sb.length() + n);
+                for (int i = 0; i < n; ++i) {
+                    sb.append(c);
+                }
+            }
+        }
+
         public abstract FieldWeight getWeight(char symbol, int count);
 
-        public void append(StringBuilder sb, String weight, Boolean option) {
+        public void append(StringBuilder sb, FieldWeight weight, Boolean option) {
             throw new UnsupportedOperationException();
         }
 
-        public void append(StringBuilder sb, String weight) {
-            FieldWeight fw = FieldWeight.forName(weight);
-            for (int i = (fw != null ? fw.length() : 0); i != 0; --i) {
-                sb.append(symbol);
-            }
+        public final void append(StringBuilder sb, FieldWeight weight) {
+            append(sb, weight, symbol);
         }
 
         public static DateField forSymbol(char symbol) {
@@ -502,7 +505,6 @@ final class DateFieldSymbolTable {
             case 'X':
             case 'x':
                 return Timezone;
-
             case 'l':
             case 'j':
             case 'J':

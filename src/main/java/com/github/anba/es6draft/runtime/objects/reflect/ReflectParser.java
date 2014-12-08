@@ -1213,6 +1213,11 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     @Override
+    public Object visit(ExportDefaultExpression node, Void value) {
+        return node.getExpression().accept(this, value);
+    }
+
+    @Override
     public Object visit(ExportSpecifier node, Void value) {
         Object id = createIdentifier(node.getSourceName());
         Object name = createIdentifier(node.getExportName());
@@ -1223,7 +1228,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     @Override
-    public Object visit(ExportsClause node, Void value) {
+    public Object visit(ExportClause node, Void value) {
         return createList(node.getExports(), value);
     }
 

@@ -546,7 +546,7 @@ class WrapperProxy implements ScriptObject {
                 if (k instanceof String) {
                     String propertyKey = (String) k;
                     Property property = proxyTarget.getOwnProperty(cx, propertyKey);
-                    if (property != null && property.isEnumerable() && visitedKeys.add(propertyKey)) {
+                    if (property != null && visitedKeys.add(propertyKey) && property.isEnumerable()) {
                         return propertyKey;
                     }
                 }

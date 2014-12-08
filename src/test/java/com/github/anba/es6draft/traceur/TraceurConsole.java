@@ -11,7 +11,7 @@ import com.github.anba.es6draft.repl.console.ShellConsole;
 /**
  *
  */
-class TraceurConsole implements ShellConsole {
+final class TraceurConsole implements ShellConsole {
     @Override
     public String readLine() {
         return "";

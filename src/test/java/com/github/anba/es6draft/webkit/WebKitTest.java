@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.webkit;
 
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
-import static com.github.anba.es6draft.util.Resources.loadTestsAsArray;
+import static com.github.anba.es6draft.util.Resources.loadTests;
 import static com.github.anba.es6draft.webkit.WebKitTestGlobalObject.newGlobalObjectAllocator;
 import static org.junit.Assume.assumeTrue;
 
@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -48,14 +49,14 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  */
 @RunWith(Parallelized.class)
 @TestConfiguration(name = "webkit.test", file = "resource:/test-configuration.properties")
-public class WebKitTest {
+public final class WebKitTest {
     private static final Configuration configuration = loadConfiguration(WebKitTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<Object[]> suiteValues() throws IOException {
-        return loadTestsAsArray(configuration, new BiFunction<Path, Path, TestInfo>() {
+    public static List<WebKitTestInfo> suiteValues() throws IOException {
+        return loadTests(configuration, new BiFunction<Path, Path, WebKitTestInfo>() {
             @Override
-            public TestInfo apply(Path basedir, Path file) {
+            public WebKitTestInfo apply(Path basedir, Path file) {
                 return new WebKitTestInfo(basedir, file);
             }
         });
@@ -72,7 +73,7 @@ public class WebKitTest {
     };
 
     @Rule
-    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
+    public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
 
     @Rule
     public ErrorCollector collector = new ErrorCollector();

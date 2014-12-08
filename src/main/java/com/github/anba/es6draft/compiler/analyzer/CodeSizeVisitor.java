@@ -375,7 +375,7 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
         case DefaultDeclaration:
             return analyze(node, node.getDeclaration(), 0, handler);
         case DefaultExpression:
-            return analyze(node, node.getExpression(), 15, handler);
+            return analyze(node, node.getExpression(), 0, handler);
         case Variable:
             return analyze(node, node.getVariableStatement(), 0, handler);
         default:
@@ -384,12 +384,17 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     }
 
     @Override
+    public int visit(ExportDefaultExpression node, CodeSizeHandler handler) {
+        return analyze(node, node.getExpression(), 15, handler);
+    }
+
+    @Override
     public int visit(ExportSpecifier node, CodeSizeHandler handler) {
         return 0;
     }
 
     @Override
-    public int visit(ExportsClause node, CodeSizeHandler handler) {
+    public int visit(ExportClause node, CodeSizeHandler handler) {
         return 0;
     }
 

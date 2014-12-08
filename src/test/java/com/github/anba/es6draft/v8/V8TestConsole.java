@@ -13,7 +13,7 @@ import com.github.anba.es6draft.repl.console.ShellConsole;
 /**
  *
  */
-class V8TestConsole implements ShellConsole {
+final class V8TestConsole implements ShellConsole {
     private final ErrorCollector collector;
 
     V8TestConsole(ErrorCollector collector) {

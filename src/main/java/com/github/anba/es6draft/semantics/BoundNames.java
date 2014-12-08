@@ -333,8 +333,7 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
         case DefaultDeclaration:
             return node.getDeclaration().accept(this, value);
         case DefaultExpression:
-            value.add(new Name("*default*"));
-            return value;
+            return node.getExpression().getBinding().accept(this, value);
         case All:
         case External:
         case Local:

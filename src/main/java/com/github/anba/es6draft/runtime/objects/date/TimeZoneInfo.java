@@ -292,8 +292,7 @@ abstract class TimeZoneInfo {
         private static final boolean IGNORE_LOCAL_BEFORE_EPOCH = true;
 
         static {
-            assert (!IGNORE_LMT && !IGNORE_LOCAL) | (!IGNORE_LMT && !IGNORE_LOCAL_BEFORE_EPOCH)
-                    | (!IGNORE_LOCAL && !IGNORE_LOCAL_BEFORE_EPOCH);
+            assert !((IGNORE_LMT | IGNORE_LOCAL) & (IGNORE_LMT | IGNORE_LOCAL_BEFORE_EPOCH) & (IGNORE_LOCAL | IGNORE_LOCAL_BEFORE_EPOCH));
         }
 
         private static TimeZoneRef<DateTimeZone> lastTimeZone = new TimeZoneRef<>(null, null);

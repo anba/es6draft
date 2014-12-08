@@ -25,7 +25,6 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
-import com.ibm.icu.text.NumberFormat;
 
 /**
  * <h1>11 NumberFormat Objects</h1>
@@ -90,11 +89,16 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
         @Accessor(name = "format", type = Accessor.Type.Getter)
         public static Object format(ExecutionContext cx, Object thisValue) {
             NumberFormatObject numberFormat = thisNumberFormatObject(cx, thisValue);
+            /* step 1 */
             if (numberFormat.getBoundFormat() == null) {
+                /* step 1.a */
                 FormatFunction f = new FormatFunction(cx.getRealm());
+                /* steps 1.b-c */
                 Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
+                /* step 1.d */
                 numberFormat.setBoundFormat(bf);
             }
+            /* step 2 */
             return numberFormat.getBoundFormat();
         }
 
@@ -155,8 +159,8 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
             // -0 is not considered to be negative, cf. step 3a
             x = +0.0;
         }
-        NumberFormat format = numberFormat.getNumberFormat();
-        return format.format(x);
+        /* steps 1-7 */
+        return numberFormat.getNumberFormat().format(x);
     }
 
     private static final class FormatFunction extends BuiltinFunction {
@@ -174,15 +178,15 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
             return new FormatFunction(getRealm(), null);
         }
 
-        /**
-         * [[Call]]
-         */
         @Override
         public String call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof NumberFormatObject;
             ExecutionContext calleeContext = calleeContext();
+            /* step 1.a.i (11.3.2) */
             Object value = argument(args, 0);
+            /* step 1.a.ii (11.3.2) */
             double x = ToNumber(calleeContext, value);
+            /* step 1.a.iii (11.3.2) */
             return FormatNumber(calleeContext, (NumberFormatObject) thisValue, x);
         }
     }

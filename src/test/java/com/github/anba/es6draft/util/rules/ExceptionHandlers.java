@@ -21,7 +21,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.util.Functional.Function;
 
 /**
- * Default exception handlers
+ * Default exception handlers.
  */
 public final class ExceptionHandlers {
     private ExceptionHandlers() {
@@ -41,7 +41,7 @@ public final class ExceptionHandlers {
 
     /**
      * {@link ExceptionHandler} for {@link ParserException}, {@link CompilationException} and
-     * {@link StackOverflowError} errors
+     * {@link StackOverflowError} errors.
      */
     public static class StandardErrorHandler extends ExceptionHandler {
         private static final Matcher<Object> defaultMatcher = anyInstanceOf(ParserException.class,
@@ -70,7 +70,7 @@ public final class ExceptionHandlers {
     }
 
     /**
-     * {@link ExceptionHandler} for {@link ScriptException} errors
+     * {@link ExceptionHandler} for {@link ScriptException} errors.
      */
     public static class ScriptExceptionHandler extends ExceptionHandler {
         private static final Matcher<Object> defaultMatcher = instanceOf(ScriptException.class);
@@ -105,7 +105,7 @@ public final class ExceptionHandlers {
 
     /**
      * {@link ExceptionHandler} for {@link ParserException}, {@link CompilationException},
-     * {@link StackOverflowError} and {@link ScriptException} errors
+     * {@link StackOverflowError} and {@link ScriptException} errors.
      */
     public static class IgnoreExceptionHandler extends ExceptionHandler {
         private static final Matcher<Object> defaultMatcher = anyInstanceOf(ParserException.class,
@@ -134,7 +134,7 @@ public final class ExceptionHandlers {
     }
 
     /**
-     * {@link ExceptionHandler} for {@link StopExecutionException} errors
+     * {@link ExceptionHandler} for {@link StopExecutionException} errors.
      */
     public static class StopExecutionHandler extends ExceptionHandler {
         private static final Matcher<Object> defaultMatcher = instanceOf(StopExecutionException.class);

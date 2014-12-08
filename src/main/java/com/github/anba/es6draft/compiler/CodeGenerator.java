@@ -43,6 +43,7 @@ import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
 import com.github.anba.es6draft.runtime.internal.JVMNames;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -126,7 +127,7 @@ final class CodeGenerator {
         static final String Module_Code = Type.getMethodDescriptor(Types.Object,
                 Types.ExecutionContext);
         static final String Module_Init = Type.getMethodDescriptor(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.LexicalEnvironment);
+                Types.ExecutionContext, Types.LexicalEnvironment, Types.Realm, Types.Map);
         static final String Module_RTI = Type.getMethodDescriptor(Types.RuntimeInfo$ScriptBody);
         static final String Module_DebugInfo = Type.getMethodDescriptor(Types.DebugInfo);
     }
@@ -653,9 +654,9 @@ final class CodeGenerator {
         mv.end();
     }
 
-    void compile(Module node) {
+    void compile(Module node, ModuleRecord moduleRecord) {
         // initialization methods
-        new ModuleDeclarationInstantiationGenerator(this).generate(node);
+        new ModuleDeclarationInstantiationGenerator(this).generate(node, moduleRecord);
 
         // runtime method
         moduleBody(node);

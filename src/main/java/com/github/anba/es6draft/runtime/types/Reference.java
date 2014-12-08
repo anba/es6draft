@@ -101,11 +101,9 @@ public abstract class Reference<BASE, NAME> {
     /**
      * [6.2.3.3] GetThisValue (V)
      * 
-     * @param cx
-     *            the execution context
      * @return the reference this value
      */
-    public abstract Object getThisValue(ExecutionContext cx);
+    public abstract Object getThisValue();
 
     /**
      * 12.5.4 The delete Operator<br>
@@ -168,7 +166,7 @@ public abstract class Reference<BASE, NAME> {
         /* step 1 */
         assert v instanceof Reference && ((Reference<?, ?>) v).isPropertyReference();
         /* steps 2-3 */
-        return ((Reference<?, ?>) v).getThisValue(cx);
+        return ((Reference<?, ?>) v).getThisValue();
     }
 
     /**
@@ -250,7 +248,7 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public Object getThisValue(ExecutionContext cx) {
+        public Object getThisValue() {
             throw new AssertionError();
         }
     }
@@ -351,7 +349,7 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public EnvironmentRecord getThisValue(ExecutionContext cx) {
+        public EnvironmentRecord getThisValue() {
             throw new AssertionError();
         }
     }
@@ -413,7 +411,7 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public final Object getThisValue(ExecutionContext cx) {
+        public final Object getThisValue() {
             /* steps 1-2 (not applicable) */
             /* step 3 */
             return getBase();
@@ -470,7 +468,7 @@ public abstract class Reference<BASE, NAME> {
                 return GetValuePrimitive(cx);
             }
             /* steps 3, 5.b */
-            return ((ScriptObject) getBase()).get(cx, referencedName, getThisValue(cx));
+            return ((ScriptObject) getBase()).get(cx, referencedName, getThisValue());
         }
 
         @Override
@@ -479,7 +477,7 @@ public abstract class Reference<BASE, NAME> {
 
             ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
                     : (ScriptObject) getBase();
-            boolean succeeded = base.set(cx, referencedName, w, getThisValue(cx));
+            boolean succeeded = base.set(cx, referencedName, w, getThisValue());
             if (!succeeded && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
             }
@@ -547,7 +545,7 @@ public abstract class Reference<BASE, NAME> {
                 return GetValuePrimitive(cx);
             }
             /* steps 3, 5.b */
-            return ((ScriptObject) getBase()).get(cx, referencedName, getThisValue(cx));
+            return ((ScriptObject) getBase()).get(cx, referencedName, getThisValue());
         }
 
         @Override
@@ -556,7 +554,7 @@ public abstract class Reference<BASE, NAME> {
 
             ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
                     : (ScriptObject) getBase();
-            boolean succeeded = base.set(cx, referencedName, w, getThisValue(cx));
+            boolean succeeded = base.set(cx, referencedName, w, getThisValue());
             if (!succeeded && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
             }
@@ -629,7 +627,7 @@ public abstract class Reference<BASE, NAME> {
                 return GetValuePrimitive(cx);
             }
             /* steps 3, 5.b */
-            return ((ScriptObject) getBase()).get(cx, referencedName, getThisValue(cx));
+            return ((ScriptObject) getBase()).get(cx, referencedName, getThisValue());
         }
 
         @Override
@@ -638,7 +636,7 @@ public abstract class Reference<BASE, NAME> {
 
             ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
                     : (ScriptObject) getBase();
-            boolean succeeded = base.set(cx, referencedName, w, getThisValue(cx));
+            boolean succeeded = base.set(cx, referencedName, w, getThisValue());
             if (!succeeded && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
                         .toString());
@@ -723,7 +721,7 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public final Object getThisValue(ExecutionContext cx) {
+        public final Object getThisValue() {
             /* steps 1, 3 (not applicable) */
             /* step 2 */
             return thisValue;
@@ -766,14 +764,14 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public Object getValue(ExecutionContext cx) {
-            return getBase().get(cx, getReferencedName(), getThisValue(cx));
+            return getBase().get(cx, getReferencedName(), getThisValue());
         }
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
-            boolean succeeded = getBase().set(cx, getReferencedName(), w, getThisValue(cx));
+            boolean succeeded = getBase().set(cx, getReferencedName(), w, getThisValue());
             if (!succeeded && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
             }
@@ -811,14 +809,14 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public Object getValue(ExecutionContext cx) {
-            return getBase().get(cx, getReferencedName(), getThisValue(cx));
+            return getBase().get(cx, getReferencedName(), getThisValue());
         }
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
-            boolean succeeded = getBase().set(cx, getReferencedName(), w, getThisValue(cx));
+            boolean succeeded = getBase().set(cx, getReferencedName(), w, getThisValue());
             if (!succeeded && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
                         .toString());

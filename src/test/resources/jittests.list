@@ -42,6 +42,7 @@ tests/collections/constructor-errors.js
 # ES6: new Map(null) and new Set(null) throws in SM
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1092538
 tests/collections/Map-constructor-4.js
+tests/collections/WeakMap-constructor-4.js
 
 
 ###################
@@ -81,6 +82,9 @@ tests/collections/Set-iterator-proxies-2.js
 # emulated Iterator does not work cross-global
 tests/basic/testCrossCompartmentTransparency.js
 
+# ES6: "Concrats on implementing Reflect.set"
+tests/proxy/testDirectProxySetArray2.js
+
 
 ############################################
 # Implementation specific differences      #
@@ -103,6 +107,7 @@ tests/basic/testLet.js
 tests/basic/bug827104.js
 tests/basic/bug839420.js
 tests/basic/bug934997.js
+tests/basic/bug1100623.js
 tests/basic/expression-autopsy.js
 tests/basic/spread-call-maxarg.js
 tests/basic/syntax-error-illegal-character.js
@@ -310,6 +315,10 @@ tests/basic/functionRedeclLet.js
 # function declaration with same name as parameter in surrounding function not applicable for B.3.3
 tests/basic/testFunctionStatementAliasLocals.js
 
+# Assignment to const, early SyntaxError vs. silently ignored in non-strict mode
+tests/basic/constGlobalAssignError.js
+tests/basic/constAssignError.js
+
 
 ############################################
 # Unsupported built-in object functions    #
@@ -440,6 +449,8 @@ tests/basic/bug673569.js
 # cacheEntry
 tests/basic/bug1057571.js
 tests/basic/bug1061534.js
+# saveStack
+tests/parser/columnNumber.js
 
 
 #######################################
@@ -448,6 +459,9 @@ tests/basic/bug1061534.js
 
 # finally-blocks are executed when for-in produces an abrupt completion
 tests/basic/testErrorInFinalizerCalledWhileUnwinding.js
+
+# finally-blocks are executed when generator is closed
+tests/generators/closing-osr.js
 
 # Function() with legacy generator source code
 tests/auto-regress/bug491806.js

@@ -188,10 +188,11 @@ describe("Promise.all", function () {
             var isInstrumented = true;
             var resolveValues = [];
 
-            function PromiseWithBadStaticResolve(executor) {
+            class PromiseWithBadStaticResolve extends Promise {
+              constructor(executor) {
                 if (isInstrumented) {
                     isInstrumented = false;
-                    Promise.call(this, function (resolve, reject) {
+                    super(function (resolve, reject) {
                         return executor(instrumentedResolve, reject);
 
                         function instrumentedResolve(value) {
@@ -200,16 +201,13 @@ describe("Promise.all", function () {
                         }
                     });
                 } else {
-                    Promise.call(this, executor);
+                    super(executor);
                 }
-            }
-            PromiseWithBadStaticResolve.prototype = Object.create(Promise.prototype);
-            PromiseWithBadStaticResolve.prototype.constructor = PromiseWithBadStaticResolve;
-            PromiseWithBadStaticResolve.__proto__ = Promise;
-
-            PromiseWithBadStaticResolve.resolve = function (p) {
+              }
+              static resolve(p) {
                 return p;
-            };
+              }
+            }
 
             var iterable = iterableFromArray([Promise.resolve(0), badPromise, Promise.resolve(2)]);
 

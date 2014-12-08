@@ -195,14 +195,6 @@ final class Test262Info extends TestInfo {
         private String bestPractice;
         private String author;
 
-        // TODO: Number of test descriptor entries should be reduced/consolidated
-        // https://github.com/tc39/test262/issues/80
-        private String name;
-        private String section;
-        private String assertion;
-        private String email;
-        private String spec;
-
         public String getDescription() {
             return description;
         }
@@ -265,46 +257,6 @@ final class Test262Info extends TestInfo {
 
         public void setAuthor(String author) {
             this.author = author;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getSection() {
-            return section;
-        }
-
-        public void setSection(String section) {
-            this.section = section;
-        }
-
-        public String getAssertion() {
-            return assertion;
-        }
-
-        public void setAssertion(String assertion) {
-            this.assertion = assertion;
-        }
-
-        public String getEmail() {
-            return email;
-        }
-
-        public void setEmail(String email) {
-            this.email = email;
-        }
-
-        public String getSpec() {
-            return spec;
-        }
-
-        public void setSpec(String spec) {
-            this.spec = spec;
         }
     }
 

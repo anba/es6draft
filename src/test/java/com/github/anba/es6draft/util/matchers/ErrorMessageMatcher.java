@@ -15,7 +15,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 
 /**
- * {@link Matcher} for script execution error messages
+ * {@link Matcher} for script execution error messages.
  */
 public class ErrorMessageMatcher<T extends Throwable> extends TypeSafeMatcher<T> {
     private final ExecutionContext cx;
