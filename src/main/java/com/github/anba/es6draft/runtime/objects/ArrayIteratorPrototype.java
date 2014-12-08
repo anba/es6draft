@@ -29,6 +29,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -113,6 +114,17 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
     }
 
     /**
+     * Marker class for {@code %ArrayIteratorPrototype%.next}.
+     */
+    private static final class ArrayIteratorPrototypeNext {
+    }
+
+    public static boolean isBuiltinNext(Object next) {
+        return next instanceof NativeFunction
+                && ((NativeFunction) next).getId() == ArrayIteratorPrototypeNext.class;
+    }
+
+    /**
      * 22.1.5.2 The %ArrayIteratorPrototype% Object
      */
     public enum Properties {
@@ -130,7 +142,7 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
          *            the function this-value
          * @return the next iterator result object
          */
-        @Function(name = "next", arity = 0)
+        @Function(name = "next", arity = 0, nativeId = ArrayIteratorPrototypeNext.class)
         public static Object next(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
             if (!Type.isObject(thisValue)) {

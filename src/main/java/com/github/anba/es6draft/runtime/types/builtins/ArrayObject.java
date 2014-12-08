@@ -19,6 +19,9 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype;
+import com.github.anba.es6draft.runtime.objects.ArrayPrototype;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -473,5 +476,102 @@ public final class ArrayObject extends OrdinaryObject {
             iter.remove();
         }
         return -1;
+    }
+
+    /**
+     * Checks if an object uses the built-in array iterator.
+     * 
+     * @param object
+     *            the object to validate
+     * @return {@code true} if {@code object} uses the built-in array iterator
+     */
+    /*package*/static boolean hasBuiltinArrayIterator(OrdinaryObject object) {
+        // Test 1: Is object[Symbol.iterator] == %ArrayPrototype%.values?
+        Property iteratorProp = object.ordinaryGetOwnProperty(BuiltinSymbol.iterator.get());
+        if (iteratorProp == null || !ArrayPrototype.isBuiltinValues(iteratorProp.getValue())) {
+            return false;
+        }
+        // Test 2: Is %ArrayIteratorPrototype%.next the built-in next method?
+        OrdinaryObject arrayIterProto = ((NativeFunction) iteratorProp.getValue()).getRealm()
+                .getIntrinsic(Intrinsics.ArrayIteratorPrototype);
+        Property iterNextProp = arrayIterProto.ordinaryGetOwnProperty("next");
+        if (iterNextProp == null || !ArrayIteratorPrototype.isBuiltinNext(iterNextProp.getValue())) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Checks if the array is applicable for fast spread operations.
+     * 
+     * @return {@code true} if the array is applicable for fast spread
+     */
+    public boolean isSpreadable() {
+        if (!isDenseArray()) {
+            return false;
+        }
+        if (ordinaryHasOwnProperty(BuiltinSymbol.iterator.get())) {
+            return false;
+        }
+        if (!(getPrototype() instanceof ArrayPrototype)) {
+            return false;
+        }
+        return hasBuiltinArrayIterator((ArrayPrototype) getPrototype());
+    }
+
+    /**
+     * Inserts the given array object into this array.
+     * 
+     * @param spreadArray
+     *            the array to spread
+     * @param index
+     *            the start index
+     */
+    // TODO: rename?
+    public void spread(ArrayObject spreadArray, int index) {
+        assert isExtensible() && lengthWritable && index >= this.length;
+        assert spreadArray.isSpreadable();
+        IndexedMap<Property> spreadIndexed = spreadArray.indexedProperties();
+        IndexedMap<Property> indexed = indexedProperties();
+        long length = spreadArray.length;
+        assert 0 <= length && length <= Integer.MAX_VALUE : "length=" + length;
+        assert index + length <= Integer.MAX_VALUE;
+        int len = (int) length;
+        for (int i = 0, j = index; i < len; ++i, ++j) {
+            Object value = spreadIndexed.get(i).getValue();
+            indexed.put(j, new Property(value, true, true, true));
+        }
+        this.length = index + len;
+    }
+
+    /**
+     * Inserts the given arguments object into this array.
+     * 
+     * @param spreadArguments
+     *            the array to spread
+     * @param index
+     *            the start index
+     */
+    // TODO: rename?
+    public void spread(ArgumentsObject spreadArguments, int index) {
+        assert isExtensible() && lengthWritable && index >= this.length;
+        assert spreadArguments.isSpreadable();
+        IndexedMap<Property> spreadIndexed = spreadArguments.indexedProperties();
+        ParameterMap parameterMap = spreadArguments.getParameterMap();
+        IndexedMap<Property> indexed = indexedProperties();
+        long length = spreadArguments.getLength();
+        assert 0 <= length && length <= Integer.MAX_VALUE : "length=" + length;
+        assert index + length <= Integer.MAX_VALUE;
+        int len = (int) length;
+        for (int i = 0, j = index; i < len; ++i, ++j) {
+            Object value;
+            if (parameterMap != null && parameterMap.hasOwnProperty(i, false)) {
+                value = parameterMap.get(i);
+            } else {
+                value = spreadIndexed.get(i).getValue();
+            }
+            indexed.put(j, new Property(value, true, true, true));
+        }
+        this.length = index + len;
     }
 }

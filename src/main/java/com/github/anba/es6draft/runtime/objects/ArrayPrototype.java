@@ -37,6 +37,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -62,6 +63,17 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
     public void initialize(ExecutionContext cx) {
         createProperties(cx, this, Properties.class);
         createProperties(cx, this, AdditionalProperties.class);
+    }
+
+    /**
+     * Marker class for {@code Array.prototype.values}.
+     */
+    private static final class ArrayPrototypeValues {
+    }
+
+    public static boolean isBuiltinValues(Object next) {
+        return next instanceof NativeFunction
+                && ((NativeFunction) next).getId() == ArrayPrototypeValues.class;
     }
 
     /**
@@ -1675,7 +1687,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
          *            the function this-value
          * @return the values iterator
          */
-        @Function(name = "values", arity = 0)
+        @Function(name = "values", arity = 0, nativeId = ArrayPrototypeValues.class)
         @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
         public static Object values(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */

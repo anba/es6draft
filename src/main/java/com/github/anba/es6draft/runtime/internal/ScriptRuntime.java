@@ -296,6 +296,22 @@ public final class ScriptRuntime {
      */
     public static int ArrayAccumulationSpreadElement(ArrayObject array, int nextIndex,
             Object spreadObj, ExecutionContext cx) {
+        if (spreadObj instanceof ArrayObject) {
+            ArrayObject spreadArray = (ArrayObject) spreadObj;
+            long newLength = nextIndex + spreadArray.getLength();
+            if (newLength <= Integer.MAX_VALUE && spreadArray.isSpreadable()) {
+                array.spread(spreadArray, nextIndex);
+                return (int) newLength;
+            }
+        }
+        if (spreadObj instanceof ArgumentsObject) {
+            ArgumentsObject arguments = (ArgumentsObject) spreadObj;
+            long newLength = nextIndex + arguments.getLength();
+            if (newLength <= Integer.MAX_VALUE && arguments.isSpreadable()) {
+                array.spread(arguments, nextIndex);
+                return (int) newLength;
+            }
+        }
         /* steps 1-2 (cf. generated code) */
         /* steps 2-4 */
         ScriptObject iterator = GetIterator(cx, ToObject(cx, spreadObj));
@@ -1187,6 +1203,26 @@ public final class ScriptRuntime {
      */
     public static Object[] SpreadArray(Object spreadObj, ExecutionContext cx) {
         final int MAX_ARGS = FunctionPrototype.getMaxArguments();
+        if (spreadObj instanceof ArrayObject) {
+            ArrayObject array = (ArrayObject) spreadObj;
+            long length = array.getLength();
+            if (length <= MAX_ARGS && array.isSpreadable()) {
+                if (length == 0) {
+                    return EMPTY_ARRAY;
+                }
+                return array.toArray();
+            }
+        }
+        if (spreadObj instanceof ArgumentsObject) {
+            ArgumentsObject arguments = (ArgumentsObject) spreadObj;
+            long length = arguments.getLength();
+            if (0 <= length && length <= MAX_ARGS && arguments.isSpreadable()) {
+                if (length == 0) {
+                    return EMPTY_ARRAY;
+                }
+                return arguments.toArray();
+            }
+        }
         /* steps 1-3 (cf. generated code) */
         /* steps 3-4 */
         ScriptObject iterator = GetIterator(cx, ToObject(cx, spreadObj));
