@@ -94,7 +94,7 @@ public final class Test262Web {
     private boolean isStrictTest = false;
 
     @Rule
-    public Timeout maxTime = new Timeout(600, TimeUnit.SECONDS);
+    public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
 
     @Rule
     public StandardErrorHandler errorHandler = StandardErrorHandler.none();
@@ -115,6 +115,8 @@ public final class Test262Web {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
+        System.out.printf("setUp for Test = %s%n", test.getScript().toString());
+
         // Filter disabled tests
         assumeTrue(test.isEnabled());
 

@@ -94,7 +94,7 @@ public final class Test262Strict {
     private boolean isStrictTest = false;
 
     @Rule
-    public Timeout maxTime = new Timeout(600, TimeUnit.SECONDS);
+    public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
 
     @Rule
     public StandardErrorHandler errorHandler = StandardErrorHandler.none();

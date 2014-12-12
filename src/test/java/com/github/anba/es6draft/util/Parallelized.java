@@ -58,21 +58,23 @@ public class Parallelized extends Parameterized {
     protected int numberOfThreads(Class<?> klass) {
         Concurrency concurrency = klass.getAnnotation(Concurrency.class);
         int threads;
+        int maxThreads;
         float factor;
         if (concurrency != null) {
             threads = concurrency.threads();
+            maxThreads = concurrency.maxThreads();
             factor = concurrency.factor();
         } else {
             threads = getDefaultValue(Concurrency.class, "threads", Integer.class);
+            maxThreads = getDefaultValue(Concurrency.class, "maxThreads", Integer.class);
             factor = getDefaultValue(Concurrency.class, "factor", Float.class);
         }
         threads = threads > 0 ? threads : Runtime.getRuntime().availableProcessors();
+        maxThreads = Math.max(maxThreads, 1);
         factor = Math.max(factor, 0);
         int numThreads = Math.max((int) Math.round(threads * factor), 1);
-        System.out.printf("num-threads = %d%n", numThreads);
-        if (numThreads > 8) {
-            System.out.printf("Change num-threads from %d to 8%n", numThreads);
-            numThreads = 8;
+        if (numThreads > maxThreads) {
+            numThreads = maxThreads;
         }
         return numThreads;
     }
