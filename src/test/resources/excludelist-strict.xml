@@ -54,4 +54,8 @@
   <test id="15.3.5.4_2-91gs" />
   <test id="15.3.5.4_2-92gs" />
   <test id="15.3.5.4_2-93gs" />
+
+  <!-- rev24 changes -->
+  <test id="12.14-1">'var' redeclaration in CatchBlock allowed [B.3.5]</test>
+  <test id="12.14-2">'var' redeclaration in CatchBlock allowed [B.3.5]</test>
 </excludeList>

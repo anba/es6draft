@@ -13,7 +13,4 @@
   <!ATTLIST test id CDATA #REQUIRED>
 ]>
 <excludeList>
-  <!-- rev24 changes -->
-  <test id="12.14-1">'var' redeclaration in CatchBlock allowed [B.3.5]</test>
-  <test id="12.14-2">'var' redeclaration in CatchBlock allowed [B.3.5]</test>
 </excludeList>

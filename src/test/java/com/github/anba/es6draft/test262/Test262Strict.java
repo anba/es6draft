@@ -178,7 +178,7 @@ public final class Test262Strict {
     @Test
     public void runTest() throws Throwable {
         // Evaluate actual test-script
-        global.eval(test.toFile(), sourceCode, -preambleLines);
+        global.eval(test.toFile(), sourceCode, 1 - preambleLines);
 
         // Wait for pending tasks to finish
         if (test.isAsync()) {
@@ -194,7 +194,7 @@ public final class Test262Strict {
     @Strict
     public void runTestStrict() throws Throwable {
         // Evaluate actual test-script
-        global.eval(test.toFile(), sourceCode, -preambleLines);
+        global.eval(test.toFile(), sourceCode, 1 - preambleLines);
 
         // Wait for pending tasks to finish
         if (test.isAsync()) {

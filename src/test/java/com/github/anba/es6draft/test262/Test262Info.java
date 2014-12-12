@@ -52,7 +52,8 @@ final class Test262Info extends TestInfo {
 
     @Override
     public String toString() {
-        return getTestName();
+        // return getTestName();
+        return super.toString();
     }
 
     /**
@@ -190,6 +191,7 @@ final class Test262Info extends TestInfo {
         private String info;
         private List<String> includes = Collections.emptyList();
         private List<String> flags = Collections.emptyList();
+        private List<String> features = Collections.emptyList();
         private String negative;
         private String es5id;
         private String bestPractice;
@@ -225,6 +227,14 @@ final class Test262Info extends TestInfo {
 
         public void setFlags(List<String> flags) {
             this.flags = flags;
+        }
+
+        public List<String> getFeatures() {
+            return features;
+        }
+
+        public void setFeatures(List<String> features) {
+            this.features = features;
         }
 
         public String getNegative() {
