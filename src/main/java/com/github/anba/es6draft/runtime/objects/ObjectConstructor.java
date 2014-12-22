@@ -56,7 +56,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
      *            the realm object
      */
     public ObjectConstructor(Realm realm) {
-        super(realm, "Object");
+        super(realm, "Object", 1);
     }
 
     @Override

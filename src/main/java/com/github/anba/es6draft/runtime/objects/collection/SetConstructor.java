@@ -44,7 +44,7 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
      *            the realm object
      */
     public SetConstructor(Realm realm) {
-        super(realm, "Set");
+        super(realm, "Set", 1);
     }
 
     @Override

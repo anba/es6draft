@@ -258,7 +258,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
      */
     @Function(name = "print", arity = 1)
     public void print(String... messages) {
-        console.print(Strings.concat(messages));
+        console.print(Strings.concatWith(' ', messages));
     }
 
     /**

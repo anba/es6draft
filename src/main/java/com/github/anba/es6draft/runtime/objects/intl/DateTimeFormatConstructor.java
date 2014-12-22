@@ -222,7 +222,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      *            the realm object
      */
     public DateTimeFormatConstructor(Realm realm) {
-        super(realm, "DateTimeFormat");
+        super(realm, "DateTimeFormat", 0);
     }
 
     @Override

@@ -28,11 +28,13 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
+import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.Parallelized;
+import com.github.anba.es6draft.util.ParallelizedRunnerFactory;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -43,6 +45,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  *
  */
 @RunWith(Parallelized.class)
+@UseParametersRunnerFactory(ParallelizedRunnerFactory.class)
 @TestConfiguration(name = "v8.test.webkit", file = "resource:/test-configuration.properties")
 public final class WebkitTest {
     private static final Configuration configuration = loadConfiguration(WebkitTest.class);

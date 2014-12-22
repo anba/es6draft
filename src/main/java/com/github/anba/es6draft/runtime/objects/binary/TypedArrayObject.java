@@ -55,7 +55,7 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
      * {@inheritDoc}
      */
     @Override
-    protected long getLength() {
+    public long getLength() {
         return getArrayLength();
     }
 

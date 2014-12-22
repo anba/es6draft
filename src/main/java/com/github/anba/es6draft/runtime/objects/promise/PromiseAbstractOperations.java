@@ -140,12 +140,12 @@ public final class PromiseAbstractOperations {
         public PromiseRejectFunction(Realm realm, PromiseObject promise,
                 AtomicBoolean alreadyResolved) {
             this(realm, promise, alreadyResolved, null);
-            createDefaultFunctionProperties(ANONYMOUS, 1);
+            createDefaultFunctionProperties();
         }
 
         private PromiseRejectFunction(Realm realm, PromiseObject promise,
                 AtomicBoolean alreadyResolved, Void ignore) {
-            super(realm, ANONYMOUS);
+            super(realm, ANONYMOUS, 1);
             assert promise.getState() != null : "Promise not initialized";
             this.promise = promise;
             this.alreadyResolved = alreadyResolved;
@@ -185,12 +185,12 @@ public final class PromiseAbstractOperations {
         public PromiseResolveFunction(Realm realm, PromiseObject promise,
                 AtomicBoolean alreadyResolved) {
             this(realm, promise, alreadyResolved, null);
-            createDefaultFunctionProperties(ANONYMOUS, 1);
+            createDefaultFunctionProperties();
         }
 
         private PromiseResolveFunction(Realm realm, PromiseObject promise,
                 AtomicBoolean alreadyResolved, Void ignore) {
-            super(realm, ANONYMOUS);
+            super(realm, ANONYMOUS, 1);
             assert promise.getState() != null : "Promise not initialized";
             this.promise = promise;
             this.alreadyResolved = alreadyResolved;
@@ -346,11 +346,11 @@ public final class PromiseAbstractOperations {
 
         public GetCapabilitiesExecutor(Realm realm) {
             this(realm, new MutRef<Object>(UNDEFINED), new MutRef<Object>(UNDEFINED));
-            createDefaultFunctionProperties(ANONYMOUS, 2);
+            createDefaultFunctionProperties();
         }
 
         private GetCapabilitiesExecutor(Realm realm, MutRef<Object> resolve, MutRef<Object> reject) {
-            super(realm, ANONYMOUS);
+            super(realm, ANONYMOUS, 2);
             this.resolve = resolve;
             this.reject = reject;
         }

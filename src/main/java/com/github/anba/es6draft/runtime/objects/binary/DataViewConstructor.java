@@ -51,7 +51,7 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
      *            the realm object
      */
     public DataViewConstructor(Realm realm) {
-        super(realm, "DataView");
+        super(realm, "DataView", 3);
     }
 
     @Override

@@ -59,7 +59,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
      *            the realm object
      */
     public GeneratorFunctionConstructor(Realm realm) {
-        super(realm, "GeneratorFunction");
+        super(realm, "GeneratorFunction", 1);
     }
 
     @Override

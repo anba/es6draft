@@ -174,12 +174,12 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
 
     private static final class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
-            super(realm, "format");
-            createDefaultFunctionProperties("format", 0);
+            super(realm, "format", 0);
+            createDefaultFunctionProperties();
         }
 
         private FormatFunction(Realm realm, Void ignore) {
-            super(realm, "format");
+            super(realm, "format", 0);
         }
 
         @Override

@@ -39,19 +39,21 @@ public final class NativeTailCallFunction extends BuiltinFunction {
      *            the method handle to the function code
      */
     public NativeTailCallFunction(Realm realm, String name, int arity, MethodHandle mh) {
-        this(realm, name, tailCallAdapter(mh), mh);
-        createDefaultFunctionProperties(name, arity);
+        super(realm, name, arity);
+        this.mh = tailCallAdapter(mh);
+        this.tmh = mh;
+        createDefaultFunctionProperties();
     }
 
-    private NativeTailCallFunction(Realm realm, String name, MethodHandle mh, MethodHandle tmh) {
-        super(realm, name);
-        this.mh = mh;
-        this.tmh = tmh;
+    private NativeTailCallFunction(NativeTailCallFunction original) {
+        super(original.getRealm(), original.getName(), original.getArity());
+        this.mh = original.mh;
+        this.tmh = original.tmh;
     }
 
     @Override
     public NativeTailCallFunction clone() {
-        return new NativeTailCallFunction(getRealm(), getName(), mh, tmh);
+        return new NativeTailCallFunction(this);
     }
 
     /**

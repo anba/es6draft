@@ -58,7 +58,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
      *            the realm object
      */
     public PromiseConstructor(Realm realm) {
-        super(realm, "Promise");
+        super(realm, "Promise", 1);
     }
 
     @Override
@@ -418,13 +418,13 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
                 int index, ArrayList<Object> values, PromiseCapability<?> capabilities,
                 AtomicInteger remainingElements) {
             this(realm, alreadyCalled, index, values, capabilities, remainingElements, null);
-            createDefaultFunctionProperties(ANONYMOUS, 1);
+            createDefaultFunctionProperties();
         }
 
         private PromiseAllResolveElementFunction(Realm realm, AtomicBoolean alreadyCalled,
                 int index, ArrayList<Object> values, PromiseCapability<?> capabilities,
                 AtomicInteger remainingElements, Void ignore) {
-            super(realm, ANONYMOUS);
+            super(realm, ANONYMOUS, 1);
             this.alreadyCalled = alreadyCalled;
             this.index = index;
             this.values = values;

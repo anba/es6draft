@@ -61,7 +61,7 @@ public final class ScriptLoader {
      * @see Eval
      */
     private String nextEvalName() {
-        return "Eval_" + evalCounter.incrementAndGet();
+        return "#Eval_" + evalCounter.incrementAndGet();
     }
 
     /**
@@ -72,7 +72,7 @@ public final class ScriptLoader {
      * @see GeneratorFunctionConstructor
      */
     private String nextFunctionName() {
-        return "Function_" + functionCounter.incrementAndGet();
+        return "#Function_" + functionCounter.incrementAndGet();
     }
 
     /**
@@ -81,7 +81,7 @@ public final class ScriptLoader {
      * @return the next class name for modules
      */
     private String nextModuleName() {
-        return "Module_" + moduleCounter.incrementAndGet();
+        return "#Module_" + moduleCounter.incrementAndGet();
     }
 
     /**
@@ -90,7 +90,7 @@ public final class ScriptLoader {
      * @return the next class name for scripts
      */
     private String nextScriptName() {
-        return "Script_" + scriptCounter.incrementAndGet();
+        return "#Script_" + scriptCounter.incrementAndGet();
     }
 
     public ScriptLoader(Set<CompatibilityOption> options, Set<Parser.Option> parserOptions,
@@ -251,26 +251,6 @@ public final class ScriptLoader {
         Parser parser = new Parser(source, options, parserOptions);
         GeneratorDefinition generatorDef = parser.parseGenerator(formals, bodyText);
         return compile(generatorDef, nextFunctionName());
-    }
-
-    /**
-     * Parses and compiles the javascript module.
-     * 
-     * @param source
-     *            the script source descriptor
-     * @param sourceCode
-     *            the source code
-     * @return the compiled module
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
-     */
-    public Module module(Source source, String sourceCode) throws ParserException,
-            CompilationException {
-        // TODO: Remove
-        com.github.anba.es6draft.ast.Module parsedModule = parseModule(source, sourceCode);
-        return load(parsedModule, null, nextScriptName());
     }
 
     /**

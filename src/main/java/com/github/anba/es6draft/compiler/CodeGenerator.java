@@ -43,6 +43,7 @@ import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
 import com.github.anba.es6draft.runtime.internal.JVMNames;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
@@ -165,13 +166,6 @@ final class CodeGenerator {
 
     boolean isEnabled(Compiler.Option option) {
         return compilerOptions.contains(option);
-    }
-
-    private Future<String> compressed(String source) {
-        if (INCLUDE_SOURCE && !isEnabled(Parser.Option.NativeFunction)) {
-            return executor.submit(SourceCompressor.compress(source));
-        }
-        return NO_SOURCE;
     }
 
     // template strings
@@ -783,10 +777,11 @@ final class CodeGenerator {
     }
 
     private Future<String> getSource(FunctionNode node) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(node.getHeaderSource());
-        sb.append(node.getBodySource());
-        return compressed(sb.toString());
+        if (INCLUDE_SOURCE && !isEnabled(Parser.Option.NativeFunction)) {
+            String source = Strings.concat(node.getHeaderSource(), node.getBodySource());
+            return executor.submit(SourceCompressor.compress(source));
+        }
+        return NO_SOURCE;
     }
 
     private boolean conciseFunctionBody(ArrowFunction node) {

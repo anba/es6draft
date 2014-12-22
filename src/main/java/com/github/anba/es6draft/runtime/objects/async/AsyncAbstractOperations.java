@@ -69,11 +69,11 @@ public final class AsyncAbstractOperations {
 
         public SpawnExecutor(Realm realm, GeneratorObject generator) {
             this(realm, generator, null);
-            createDefaultFunctionProperties(ANONYMOUS, 2);
+            createDefaultFunctionProperties();
         }
 
         private SpawnExecutor(Realm realm, GeneratorObject generator, Void ignore) {
-            super(realm, ANONYMOUS);
+            super(realm, ANONYMOUS, 2);
             this.generator = generator;
         }
 
@@ -178,11 +178,11 @@ public final class AsyncAbstractOperations {
 
         public CallStep(Realm realm, AsyncState asyncState, StepAction action) {
             this(realm, asyncState, action, null);
-            createDefaultFunctionProperties(ANONYMOUS, 1);
+            createDefaultFunctionProperties();
         }
 
         private CallStep(Realm realm, AsyncState asyncState, StepAction action, Void ignore) {
-            super(realm, ANONYMOUS);
+            super(realm, ANONYMOUS, 1);
             this.asyncState = asyncState;
             this.action = action;
         }

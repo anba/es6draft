@@ -56,7 +56,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      *            the realm object
      */
     public ArrayBufferConstructor(Realm realm) {
-        super(realm, "ArrayBuffer");
+        super(realm, "ArrayBuffer", 1);
     }
 
     @Override

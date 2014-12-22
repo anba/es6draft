@@ -40,6 +40,11 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
         return numericIndex >= 0;
     }
 
+    @Override
+    public boolean hasSpecialIndexedProperties() {
+        return true;
+    }
+
     /** [[HasOwnProperty]] (P) */
     @Override
     protected final boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
@@ -271,7 +276,8 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
      *
      * @return the length property
      */
-    protected abstract long getLength();
+    @Override
+    public abstract long getLength();
 
     /**
      * Not in spec

@@ -111,7 +111,7 @@ final class LanguageTagParser {
             if (script != null) {
                 // titlecase
                 sb.append('-').append((char) (script.charAt(0) & ~0x20))
-                        .append(script.substring(1));
+                        .append(script, 1, script.length());
             }
             if (region != null) {
                 if (region.length() == 2) {

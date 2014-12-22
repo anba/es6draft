@@ -41,7 +41,7 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
      *            the realm object
      */
     public BooleanConstructor(Realm realm) {
-        super(realm, "Boolean");
+        super(realm, "Boolean", 1);
     }
 
     @Override

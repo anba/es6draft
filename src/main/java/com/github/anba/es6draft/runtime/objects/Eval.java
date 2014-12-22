@@ -256,7 +256,7 @@ public final class Eval {
         Source baseSource = realm.sourceInfo(caller);
         String sourceName;
         if (baseSource != null) {
-            sourceName = String.format("<eval> (%s)", baseSource.getName());
+            sourceName = "<eval> (" + baseSource.getName() + ")";
         } else {
             sourceName = "<eval>";
         }

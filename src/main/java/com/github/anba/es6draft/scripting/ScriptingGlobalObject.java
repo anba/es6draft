@@ -51,6 +51,6 @@ public final class ScriptingGlobalObject extends GlobalObject {
      */
     @Function(name = "print", arity = 1)
     public void print(String... messages) {
-        System.out.println(Strings.concat(messages));
+        System.out.println(Strings.concatWith(' ', messages));
     }
 }

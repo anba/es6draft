@@ -19,8 +19,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype;
-import com.github.anba.es6draft.runtime.objects.ArrayPrototype;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -69,6 +67,7 @@ public final class ArrayObject extends OrdinaryObject {
      * 
      * @return the array's length
      */
+    @Override
     public long getLength() {
         return length;
     }
@@ -85,31 +84,13 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     /**
-     * Returns {@code true} if the array is dense and has no indexed accessors.
+     * Returns {@code true} if the array has indexed accessors.
      * 
-     * @return {@code true} if the array is dense
+     * @return {@code true} if the array has indexed accessors
      */
-    public boolean isDenseArray() {
-        IndexedMap<Property> ix = indexedProperties();
-        return !hasIndexedAccessors && ix.getLength() == length && !ix.isSparse() && !ix.hasHoles();
-    }
-
-    /**
-     * Returns the array's indexed property values. Only applicable for dense arrays.
-     * 
-     * @return the array's indexed values
-     */
-    public Object[] toArray() {
-        assert isDenseArray();
-        IndexedMap<Property> indexed = indexedProperties();
-        long length = this.length;
-        assert 0 <= length && length <= Integer.MAX_VALUE : "length=" + length;
-        int len = (int) length;
-        Object[] values = new Object[len];
-        for (int i = 0; i < len; ++i) {
-            values[i] = indexed.get(i).getValue();
-        }
-        return values;
+    @Override
+    public boolean hasIndexedAccessors() {
+        return hasIndexedAccessors;
     }
 
     /**
@@ -337,9 +318,8 @@ public final class ArrayObject extends OrdinaryObject {
      */
     public static ArrayObject DenseArrayCreate(ExecutionContext cx, Object[] values) {
         ArrayObject array = ArrayCreate(cx, values.length);
-        IndexedMap<Property> indexed = array.indexedProperties();
         for (int i = 0, len = values.length; i < len; ++i) {
-            indexed.put(i, new Property(values[i], true, true, true));
+            array.setIndexed(i, values[i]);
         }
         return array;
     }
@@ -357,10 +337,9 @@ public final class ArrayObject extends OrdinaryObject {
      */
     public static ArrayObject SparseArrayCreate(ExecutionContext cx, Object[] values) {
         ArrayObject array = ArrayCreate(cx, values.length);
-        IndexedMap<Property> indexed = array.indexedProperties();
         for (int i = 0, len = values.length; i < len; ++i) {
             if (values[i] != null) {
-                indexed.put(i, new Property(values[i], true, true, true));
+                array.setIndexed(i, values[i]);
             }
         }
         return array;
@@ -439,7 +418,9 @@ public final class ArrayObject extends OrdinaryObject {
     private static long ArraySetLength(ArrayObject array, long newLen, long oldLen) {
         IndexedMap<Property> indexed = array.indexedProperties();
         long lastIndex;
-        if (indexed.isSparse()) {
+        if (indexed.isEmpty()) {
+            lastIndex = -1;
+        } else if (indexed.isSparse()) {
             lastIndex = SparseArraySetLength(indexed, newLen, oldLen);
         } else {
             lastIndex = DenseArraySetLength(indexed, newLen, oldLen);
@@ -479,98 +460,23 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     /**
-     * Checks if an object uses the built-in array iterator.
+     * Inserts the object into this array object.
      * 
+     * @param index
+     *            the destination start index
      * @param object
-     *            the object to validate
-     * @return {@code true} if {@code object} uses the built-in array iterator
+     *            the source object
+     * @param length
+     *            the source object's length
      */
-    /*package*/static boolean hasBuiltinArrayIterator(OrdinaryObject object) {
-        // Test 1: Is object[Symbol.iterator] == %ArrayPrototype%.values?
-        Property iteratorProp = object.ordinaryGetOwnProperty(BuiltinSymbol.iterator.get());
-        if (iteratorProp == null || !ArrayPrototype.isBuiltinValues(iteratorProp.getValue())) {
-            return false;
-        }
-        // Test 2: Is %ArrayIteratorPrototype%.next the built-in next method?
-        OrdinaryObject arrayIterProto = ((NativeFunction) iteratorProp.getValue()).getRealm()
-                .getIntrinsic(Intrinsics.ArrayIteratorPrototype);
-        Property iterNextProp = arrayIterProto.ordinaryGetOwnProperty("next");
-        if (iterNextProp == null || !ArrayIteratorPrototype.isBuiltinNext(iterNextProp.getValue())) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Checks if the array is applicable for fast spread operations.
-     * 
-     * @return {@code true} if the array is applicable for fast spread
-     */
-    public boolean isSpreadable() {
-        if (!isDenseArray()) {
-            return false;
-        }
-        if (ordinaryHasOwnProperty(BuiltinSymbol.iterator.get())) {
-            return false;
-        }
-        if (!(getPrototype() instanceof ArrayPrototype)) {
-            return false;
-        }
-        return hasBuiltinArrayIterator((ArrayPrototype) getPrototype());
-    }
-
-    /**
-     * Inserts the given array object into this array.
-     * 
-     * @param spreadArray
-     *            the array to spread
-     * @param index
-     *            the start index
-     */
-    // TODO: rename?
-    public void spread(ArrayObject spreadArray, int index) {
+    public void insertFrom(int index, OrdinaryObject object, long length) {
         assert isExtensible() && lengthWritable && index >= this.length;
-        assert spreadArray.isSpreadable();
-        IndexedMap<Property> spreadIndexed = spreadArray.indexedProperties();
-        IndexedMap<Property> indexed = indexedProperties();
-        long length = spreadArray.length;
+        assert object.isDenseArray(length);
         assert 0 <= length && length <= Integer.MAX_VALUE : "length=" + length;
         assert index + length <= Integer.MAX_VALUE;
         int len = (int) length;
         for (int i = 0, j = index; i < len; ++i, ++j) {
-            Object value = spreadIndexed.get(i).getValue();
-            indexed.put(j, new Property(value, true, true, true));
-        }
-        this.length = index + len;
-    }
-
-    /**
-     * Inserts the given arguments object into this array.
-     * 
-     * @param spreadArguments
-     *            the array to spread
-     * @param index
-     *            the start index
-     */
-    // TODO: rename?
-    public void spread(ArgumentsObject spreadArguments, int index) {
-        assert isExtensible() && lengthWritable && index >= this.length;
-        assert spreadArguments.isSpreadable();
-        IndexedMap<Property> spreadIndexed = spreadArguments.indexedProperties();
-        ParameterMap parameterMap = spreadArguments.getParameterMap();
-        IndexedMap<Property> indexed = indexedProperties();
-        long length = spreadArguments.getLength();
-        assert 0 <= length && length <= Integer.MAX_VALUE : "length=" + length;
-        assert index + length <= Integer.MAX_VALUE;
-        int len = (int) length;
-        for (int i = 0, j = index; i < len; ++i, ++j) {
-            Object value;
-            if (parameterMap != null && parameterMap.hasOwnProperty(i, false)) {
-                value = parameterMap.get(i);
-            } else {
-                value = spreadIndexed.get(i).getValue();
-            }
-            indexed.put(j, new Property(value, true, true, true));
+            setIndexed(j, object.getIndexed(i));
         }
         this.length = index + len;
     }

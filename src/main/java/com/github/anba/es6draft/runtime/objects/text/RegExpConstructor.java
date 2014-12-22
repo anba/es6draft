@@ -56,7 +56,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
      *            the realm object
      */
     public RegExpConstructor(Realm realm) {
-        super(realm, "RegExp");
+        super(realm, "RegExp", 2);
     }
 
     @Override

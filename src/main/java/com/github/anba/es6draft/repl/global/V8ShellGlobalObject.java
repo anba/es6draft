@@ -75,6 +75,6 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
      */
     @Function(name = "write", arity = 1)
     public void write(String... messages) {
-        console.putstr(Strings.concat(messages));
+        console.putstr(Strings.concatWith(' ', messages));
     }
 }

@@ -62,8 +62,44 @@ public final class ConsString implements CharSequence {
     }
 
     @Override
+    public int length() {
+        return length;
+    }
+
+    @Override
+    public char charAt(int index) {
+        return toString().charAt(index);
+    }
+
+    @Override
+    public CharSequence subSequence(int start, int end) {
+        return toString().substring(start, end);
+    }
+
+    @Override
     public String toString() {
-        return depth == 0 ? (String)s1 : flatten();
+        return depth == 0 ? (String) s1 : flatten();
+    }
+
+    public char[] toCharArray() {
+        if (depth == 0) {
+            return ((String) s1).toCharArray();
+        }
+        char[] ca = new char[length()];
+        appendTo(this, ca, 0);
+        return ca;
+    }
+
+    public byte[] toByteArray(byte[] ba) {
+        if (ba == null || ba.length < length() * 2) {
+            ba = new byte[length() * 2];
+        }
+        if (depth == 0) {
+            appendTo((String) s1, ba, 0);
+        } else {
+            appendTo(this, ba, 0);
+        }
+        return ba;
     }
 
     private String flatten() {
@@ -83,27 +119,27 @@ public final class ConsString implements CharSequence {
 
     private static void appendTo(ConsString s, char[] ca, int offset) {
         for (;;) {
-            // Flattened ConsString or both parts are simple Strings, just append and return
+            // Flattened ConsString or both parts are simple Strings, just append and return.
             if (s.depth <= 1) {
                 String s1 = (String) s.s1, s2 = (String) s.s2;
                 appendTo(s1, ca, offset);
                 appendTo(s2, ca, offset + s1.length());
                 return;
             }
-            // At least one part is a ConsString
+            // At least one part is a ConsString.
             if (s.s1 instanceof String) {
-                // Left is String and right is ConsString, append left and continue with right
+                // Left is String and right is ConsString, append left and continue with right.
                 String s1 = (String) s.s1;
                 s = (ConsString) s.s2;
                 appendTo(s1, ca, offset);
                 offset += s1.length();
             } else if (s.s2 instanceof String) {
-                // Left is ConsString and right is String, append right and continue with left
+                // Left is ConsString and right is String, append right and continue with left.
                 String s2 = (String) s.s2;
                 s = (ConsString) s.s1;
                 appendTo(s2, ca, offset + s.length());
             } else {
-                // Both are ConsStrings, descend into less deeper one and continue with the other
+                // Both are ConsStrings, descend into less deeper one and continue with the other.
                 ConsString s1 = (ConsString) s.s1, s2 = (ConsString) s.s2;
                 if (s1.depth < s2.depth) {
                     s = s2;
@@ -121,18 +157,47 @@ public final class ConsString implements CharSequence {
         s.getChars(0, s.length(), ca, offset);
     }
 
-    @Override
-    public int length() {
-        return length;
+    private static void appendTo(ConsString s, byte[] ba, int offset) {
+        for (;;) {
+            // Flattened ConsString or both parts are simple Strings, just append and return.
+            if (s.depth <= 1) {
+                String s1 = (String) s.s1, s2 = (String) s.s2;
+                appendTo(s1, ba, offset);
+                appendTo(s2, ba, offset + s1.length());
+                return;
+            }
+            // At least one part is a ConsString.
+            if (s.s1 instanceof String) {
+                // Left is String and right is ConsString, append left and continue with right.
+                String s1 = (String) s.s1;
+                s = (ConsString) s.s2;
+                appendTo(s1, ba, offset);
+                offset += s1.length();
+            } else if (s.s2 instanceof String) {
+                // Left is ConsString and right is String, append right and continue with left.
+                String s2 = (String) s.s2;
+                s = (ConsString) s.s1;
+                appendTo(s2, ba, offset + s.length());
+            } else {
+                // Both are ConsStrings, descend into less deeper one and continue with the other.
+                ConsString s1 = (ConsString) s.s1, s2 = (ConsString) s.s2;
+                if (s1.depth < s2.depth) {
+                    s = s2;
+                    appendTo(s1, ba, offset);
+                    offset += s1.length();
+                } else {
+                    s = s1;
+                    appendTo(s2, ba, offset + s.length());
+                }
+            }
+        }
     }
 
-    @Override
-    public char charAt(int index) {
-        return toString().charAt(index);
-    }
-
-    @Override
-    public CharSequence subSequence(int start, int end) {
-        return toString().substring(start, end);
+    private static void appendTo(String s, byte[] ba, int offset) {
+        for (int i = 0, j = offset, len = s.length(); i < len; ++i) {
+            char c = s.charAt(i);
+            ba[j++] = (byte) ((c >>> 8) & 0xff);
+            ba[j++] = (byte) ((c >>> 0) & 0xff);
+        }
     }
 }

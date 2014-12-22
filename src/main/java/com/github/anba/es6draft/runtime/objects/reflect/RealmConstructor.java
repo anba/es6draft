@@ -55,7 +55,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
      *            the realm object
      */
     public RealmConstructor(Realm realm) {
-        super(realm, "Realm");
+        super(realm, "Realm", 0);
     }
 
     @Override

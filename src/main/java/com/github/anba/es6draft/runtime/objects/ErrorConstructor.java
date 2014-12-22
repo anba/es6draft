@@ -42,7 +42,7 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
      *            the realm object
      */
     public ErrorConstructor(Realm realm) {
-        super(realm, "Error");
+        super(realm, "Error", 1);
     }
 
     @Override

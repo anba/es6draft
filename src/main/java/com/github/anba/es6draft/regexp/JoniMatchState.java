@@ -20,18 +20,19 @@ import org.joni.Region;
  */
 final class JoniMatchState implements MatchState, IterableMatchResult {
     private final Matcher matcher;
-    private final String string;
+    private final CharSequence string;
     private final BitSet negativeLAGroups;
     private int begin = -1, end = 0;
     private Region region;
 
-    public JoniMatchState(Matcher matcher, String string, BitSet negativeLAGroups) {
+    public JoniMatchState(Matcher matcher, CharSequence string, BitSet negativeLAGroups) {
         this.matcher = matcher;
         this.string = string;
         this.negativeLAGroups = negativeLAGroups;
     }
 
-    private JoniMatchState(String string, BitSet negativeLAGroups, int begin, int end, Region region) {
+    private JoniMatchState(CharSequence string, BitSet negativeLAGroups, int begin, int end,
+            Region region) {
         this.matcher = null;
         this.string = string;
         this.negativeLAGroups = negativeLAGroups;
@@ -150,7 +151,7 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
         if (start == -1 || end == -1) {
             return null;
         }
-        return string.substring(start, end);
+        return string.subSequence(start, end).toString();
     }
 
     @Override

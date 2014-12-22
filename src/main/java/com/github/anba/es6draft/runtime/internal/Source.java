@@ -7,12 +7,14 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Class representing script source code information.
  */
 public final class Source {
-    private final Path file;
+    private final Path filePath;
+    private final String fileName;
     private final String name;
     private final int line;
 
@@ -25,7 +27,8 @@ public final class Source {
      *            the source start line offset
      */
     public Source(String name, int line) {
-        this.file = null;
+        this.filePath = null;
+        this.fileName = null;
         this.name = name;
         this.line = line;
     }
@@ -42,7 +45,8 @@ public final class Source {
      */
     public Source(Path file, String name, int line) {
         assert file == null || file.isAbsolute() : "File not absolute: " + file.toString();
-        this.file = file;
+        this.filePath = file;
+        this.fileName = null;
         this.name = name;
         this.line = line;
     }
@@ -58,7 +62,25 @@ public final class Source {
      *            the source start line offset
      */
     public Source(Source base, String name, int line) {
-        this.file = base != null ? base.getFile() : null;
+        this.filePath = base != null ? base.filePath : null;
+        this.fileName = base != null ? base.fileName : null;
+        this.name = name;
+        this.line = line;
+    }
+
+    /**
+     * Constructs a new {@link Source} object.
+     * 
+     * @param file
+     *            the source file
+     * @param name
+     *            the source name
+     * @param line
+     *            the source start line offset
+     */
+    /*package*/Source(String file, String name, int line) {
+        this.filePath = null;
+        this.fileName = file;
         this.name = name;
         this.line = line;
     }
@@ -69,7 +91,28 @@ public final class Source {
      * @return the source file or {@code null} if not available
      */
     public Path getFile() {
-        return file;
+        if (filePath != null) {
+            return filePath;
+        }
+        if (fileName != null) {
+            return Paths.get(fileName);
+        }
+        return null;
+    }
+
+    /**
+     * Returns the script file path if available.
+     * 
+     * @return the source file or {@code null} if not available
+     */
+    public String getFileString() {
+        if (filePath != null) {
+            return filePath.toString();
+        }
+        if (fileName != null) {
+            return fileName;
+        }
+        return null;
     }
 
     /**
@@ -92,6 +135,7 @@ public final class Source {
 
     @Override
     public String toString() {
+        String file = getFileString();
         if (file == null) {
             return String.format("Source {name='%s', line=%d}", name, line);
         }

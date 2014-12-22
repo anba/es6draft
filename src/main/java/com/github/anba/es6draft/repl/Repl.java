@@ -549,7 +549,7 @@ public final class Repl {
      * @return the evaluated script result
      */
     private Object eval(Realm realm, com.github.anba.es6draft.ast.Script parsedScript) {
-        String className = "typein_" + scriptCounter.incrementAndGet();
+        String className = "#typein_" + scriptCounter.incrementAndGet();
         Script script;
         if (options.noInterpreter) {
             script = realm.getScriptLoader().compile(parsedScript, className);

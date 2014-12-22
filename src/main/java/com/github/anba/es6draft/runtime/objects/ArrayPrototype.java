@@ -15,6 +15,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -29,6 +30,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.ArrayIterationKind;
+import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
+import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypePrototype;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -74,6 +77,245 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
     public static boolean isBuiltinValues(Object next) {
         return next instanceof NativeFunction
                 && ((NativeFunction) next).getId() == ArrayPrototypeValues.class;
+    }
+
+    private static final boolean NO_ARRAY_OPTIMIZATION = false;
+    private static final int MIN_SPARSE_LENGTH = 100; // Arbitrarily chosen limit
+    private static final int MAX_PROTO_DEPTH = 10; // Arbitrarily chosen limit
+
+    private enum IterationKind {
+        DenseOwnKeys, SparseOwnKeys, InheritedKeys, TypedArray, Slow;
+
+        public boolean isSparse() {
+            return this == SparseOwnKeys || this == InheritedKeys;
+        }
+
+        public boolean isInherited() {
+            return this == InheritedKeys;
+        }
+    }
+
+    private static IterationKind iterationKind(ScriptObject object, long length) {
+        return iterationKind(object, object, length);
+    }
+
+    private static IterationKind iterationKind(ScriptObject target, ScriptObject source, long length) {
+        if (NO_ARRAY_OPTIMIZATION) {
+            return IterationKind.Slow;
+        }
+        if (length == 0) {
+            return IterationKind.Slow;
+        }
+        if (length < MIN_SPARSE_LENGTH) {
+            return IterationKind.Slow;
+        }
+        if (!(target instanceof OrdinaryObject)
+                || ((OrdinaryObject) target).hasSpecialIndexedProperties()) {
+            return IterationKind.Slow;
+        }
+        if (source instanceof ArrayObject) {
+            return iterationKind((ArrayObject) source);
+        }
+        if (source instanceof TypedArrayObject) {
+            return iterationKind((TypedArrayObject) source);
+        }
+        if (source instanceof OrdinaryObject) {
+            return iterationKind((OrdinaryObject) source, length);
+        }
+        return IterationKind.Slow;
+    }
+
+    private static IterationKind iterationKind(ArrayObject array) {
+        if (array.isDenseArray()) {
+            return IterationKind.DenseOwnKeys;
+        }
+        if (array.hasIndexedAccessors()) {
+            return IterationKind.Slow;
+        }
+        return iterationKindForSparse(array);
+    }
+
+    private static IterationKind iterationKind(OrdinaryObject arrayLike, long length) {
+        if (arrayLike.hasSpecialIndexedProperties()) {
+            return IterationKind.Slow;
+        }
+        if (arrayLike.isDenseArray(length)) {
+            return IterationKind.DenseOwnKeys;
+        }
+        if (arrayLike.hasIndexedAccessors()) {
+            return IterationKind.Slow;
+        }
+        return iterationKindForSparse(arrayLike);
+    }
+
+    private static IterationKind iterationKind(TypedArrayObject typedArray) {
+        ArrayBufferObject buffer = typedArray.getBuffer();
+        if (buffer == null || buffer.isDetached()) {
+            return IterationKind.Slow;
+        }
+        return IterationKind.TypedArray;
+    }
+
+    private static IterationKind iterationKindForSparse(OrdinaryObject arrayLike) {
+        IterationKind iteration = IterationKind.SparseOwnKeys;
+        int protoDepth = 0;
+        for (OrdinaryObject object = arrayLike;;) {
+            ScriptObject prototype = object.getPrototype();
+            if (prototype == null) {
+                break;
+            }
+            if (!(prototype instanceof OrdinaryObject)) {
+                return IterationKind.Slow;
+            }
+            object = (OrdinaryObject) prototype;
+            if (object.hasSpecialIndexedProperties()) {
+                return IterationKind.Slow;
+            }
+            if (object.hasIndexedProperties()) {
+                if (object.hasIndexedAccessors()) {
+                    return IterationKind.Slow;
+                }
+                iteration = IterationKind.InheritedKeys;
+            }
+            if (++protoDepth == MAX_PROTO_DEPTH) {
+                return IterationKind.Slow;
+            }
+        }
+        return iteration;
+    }
+
+    private static long[] arrayKeys(OrdinaryObject array, long from, long to, boolean inherited) {
+        if (inherited) {
+            return inheritedKeys(array, from, to);
+        }
+        return array.indices(from, to);
+    }
+
+    private static long[] inheritedKeys(OrdinaryObject array, long from, long to) {
+        long[] indices = array.indices(from, to);
+        for (ScriptObject prototype = array.getPrototype(); prototype != null;) {
+            assert prototype instanceof OrdinaryObject : "Wrong class " + prototype.getClass();
+            OrdinaryObject proto = (OrdinaryObject) prototype;
+            if (proto.hasIndexedProperties()) {
+                long[] protoIndices = proto.indices(from, to);
+                long[] newIndices = new long[indices.length + protoIndices.length];
+                System.arraycopy(indices, 0, newIndices, 0, indices.length);
+                System.arraycopy(protoIndices, 0, newIndices, indices.length, protoIndices.length);
+                indices = newIndices;
+            }
+            prototype = proto.getPrototype();
+        }
+        Arrays.sort(indices);
+        return indices;
+    }
+
+    private static ForwardIter forwardIter(OrdinaryObject array, long from, long to,
+            boolean inherited) {
+        return new ForwardIter(from, to, arrayKeys(array, from, to, inherited), inherited);
+    }
+
+    private static ReverseIter reverseIterator(OrdinaryObject array, long from, long to,
+            boolean inherited) {
+        return new ReverseIter(from, to, arrayKeys(array, from, to, inherited), inherited);
+    }
+
+    private static abstract class KeyIter {
+        protected final long from;
+        protected final long to;
+        protected final long[] keys;
+        protected final boolean inherited;
+        protected final int length;
+        protected int index;
+        protected long lastKey;
+
+        KeyIter(long from, long to, long[] keys, boolean inherited, int index, long lastKey) {
+            this.from = from;
+            this.to = to;
+            this.keys = keys;
+            this.inherited = inherited;
+            this.length = keys.length;
+            this.index = index;
+            this.lastKey = lastKey;
+        }
+
+        final int size() {
+            return keys.length;
+        }
+
+        final long peek() {
+            assert 0 <= index && index < length;
+            return keys[index];
+        }
+    }
+
+    private static final class ForwardIter extends KeyIter {
+        ForwardIter(long from, long to, long[] keys, boolean inherited) {
+            super(from, to, keys, inherited, 0, from - 1);
+        }
+
+        boolean hasNext() {
+            for (; index < length; ++index) {
+                long key = keys[index];
+                if (key != lastKey) {
+                    assert lastKey < key && (from <= key && key < to);
+                    return true;
+                }
+                assert inherited;
+            }
+            return false;
+        }
+
+        long next() {
+            assert index < length;
+            return lastKey = keys[index++];
+        }
+
+        boolean contains(long needle) {
+            for (int i = index; i < length; ++i) {
+                if (keys[i] == needle) {
+                    return true;
+                }
+                if (keys[i] > needle) {
+                    break;
+                }
+            }
+            return false;
+        }
+    }
+
+    private static final class ReverseIter extends KeyIter {
+        ReverseIter(long from, long to, long[] keys, boolean inherited) {
+            super(from, to, keys, inherited, keys.length - 1, to);
+        }
+
+        boolean hasNext() {
+            for (; index >= 0; --index) {
+                long key = keys[index];
+                if (key != lastKey) {
+                    assert key < lastKey && (from <= key && key < to);
+                    return true;
+                }
+                assert inherited;
+            }
+            return false;
+        }
+
+        long next() {
+            assert index >= 0;
+            return lastKey = keys[index--];
+        }
+
+        boolean contains(long needle) {
+            for (int i = index; i >= 0; --i) {
+                if (keys[i] == needle) {
+                    return true;
+                }
+                if (keys[i] < needle) {
+                    break;
+                }
+            }
+            return false;
+        }
     }
 
     /**
@@ -201,6 +443,20 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     ScriptObject e = (ScriptObject) item;
                     Object lenVal = Get(cx, e, "length");
                     long len = ToLength(cx, lenVal);
+                    IterationKind iteration = iterationKind(a, e, len);
+                    // Optimization: Sparse Array objects
+                    if (iteration.isSparse()) {
+                        concatSpread(cx, (OrdinaryObject) a, n, (OrdinaryObject) e, len,
+                                iteration.isInherited());
+                        n += len;
+                        continue;
+                    }
+                    // Optimization: TypedArray objects
+                    if (iteration == IterationKind.TypedArray) {
+                        concatSpread(cx, (OrdinaryObject) a, n, (TypedArrayObject) e, len);
+                        n += len;
+                        continue;
+                    }
                     for (long k = 0; k < len; ++k, ++n) {
                         long p = k;
                         boolean exists = HasProperty(cx, e, p);
@@ -218,6 +474,25 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             Put(cx, a, "length", n, true);
             /* step 12 */
             return a;
+        }
+
+        private static void concatSpread(ExecutionContext cx, OrdinaryObject a, long n,
+                OrdinaryObject e, long length, boolean inherited) {
+            for (ForwardIter iter = forwardIter(e, 0, length, inherited); iter.hasNext();) {
+                long k = iter.next();
+                Object subElement = Get(cx, e, k);
+                CreateDataPropertyOrThrow(cx, a, n + k, subElement);
+            }
+        }
+
+        private static void concatSpread(ExecutionContext cx, OrdinaryObject a, long n,
+                TypedArrayObject e, long length) {
+            assert length > 0;
+            long actualLength = Math.min(length, e.getArrayLength());
+            for (long k = 0; k < actualLength; ++k) {
+                Object subElement = Get(cx, e, k);
+                CreateDataPropertyOrThrow(cx, a, n + k, subElement);
+            }
         }
 
         /**
@@ -307,17 +582,71 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             } else {
                 r.append(ToString(cx, element0));
             }
-            /* steps 12-13 */
-            for (long k = 1; k < len; ++k) {
-                Object element = Get(cx, o, k);
-                if (Type.isUndefinedOrNull(element)) {
-                    r.append(sep).append("");
-                } else {
-                    r.append(sep).append(ToString(cx, element));
+            IterationKind iteration = iterationKind(o, len);
+            if (iteration.isSparse()) {
+                /* steps 12-13 (Optimization: Sparse Array objects) */
+                joinSparse(cx, (OrdinaryObject) o, len, sep, r, iteration.isInherited());
+            } else {
+                /* steps 12-13 */
+                for (long k = 1; k < len; ++k) {
+                    Object element = Get(cx, o, k);
+                    if (Type.isUndefinedOrNull(element)) {
+                        r.append(sep).append("");
+                    } else {
+                        r.append(sep).append(ToString(cx, element));
+                    }
                 }
             }
             /* step 14 */
             return r.toString();
+        }
+
+        private static void joinSparse(ExecutionContext cx, OrdinaryObject o, long length,
+                String sep, StringBuilder r, boolean inherited) {
+            final boolean hasSeparator = !sep.isEmpty();
+            if (hasSeparator) {
+                long estimated = length * sep.length();
+                if (estimated >= Integer.MAX_VALUE || length > Long.MAX_VALUE / sep.length()) {
+                    throw newInternalError(cx, Messages.Key.OutOfMemory);
+                }
+            }
+            long lastKey = 0;
+            objectElement: {
+                for (ForwardIter iter = forwardIter(o, 1, length, inherited); iter.hasNext();) {
+                    long k = iter.next();
+                    // Add leading separator and fill holes if separator is not the empty string.
+                    if (hasSeparator) {
+                        for (long start = lastKey; start < k; ++start) {
+                            r.append(sep);
+                        }
+                    }
+                    lastKey = k;
+
+                    Object element = Get(cx, o, k);
+                    if (!Type.isUndefinedOrNull(element)) {
+                        r.append(ToString(cx, element));
+                        // Side-effects may have invalidated array keys.
+                        if (Type.isObject(element)) {
+                            break objectElement;
+                        }
+                    }
+                }
+                // Fill trailing holes if separator is not the empty string.
+                if (hasSeparator) {
+                    for (long start = lastKey + 1; start < length; ++start) {
+                        r.append(sep);
+                    }
+                }
+                return;
+            }
+            // Trailing elements after object type element.
+            for (long k = lastKey + 1; k < length; ++k) {
+                Object element = Get(cx, o, k);
+                r.append(sep);
+                if (!Type.isUndefinedOrNull(element)) {
+                    r.append(ToString(cx, element));
+                }
+            }
         }
 
         /**
@@ -420,32 +749,92 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
          */
         public static ScriptObject reverse(ExecutionContext cx, ScriptObject o, long len) {
             /* steps 1-5 (not applicable) */
-            /* step 6 */
-            long middle = len / 2L;
-            /* steps 7-8 */
-            for (long lower = 0; lower != middle; ++lower) {
-                long upper = len - lower - 1;
-                long upperP = upper;
-                long lowerP = lower;
-                boolean lowerExists = HasProperty(cx, o, lowerP);
-                Object lowerValue = lowerExists ? Get(cx, o, lowerP) : null;
-                boolean upperExists = HasProperty(cx, o, upperP);
-                Object upperValue = upperExists ? Get(cx, o, upperP) : null;
-                if (lowerExists && upperExists) {
-                    Put(cx, o, lowerP, upperValue, true);
-                    Put(cx, o, upperP, lowerValue, true);
-                } else if (!lowerExists && upperExists) {
-                    Put(cx, o, lowerP, upperValue, true);
-                    DeletePropertyOrThrow(cx, o, upperP);
-                } else if (lowerExists && !upperExists) {
-                    DeletePropertyOrThrow(cx, o, lowerP);
-                    Put(cx, o, upperP, lowerValue, true);
-                } else {
-                    // no action required
+            IterationKind iteration = iterationKind(o, len);
+            if (iteration.isSparse()) {
+                /* steps 6-8 (Optimization: Sparse Array objects) */
+                reverseSparse(cx, (OrdinaryObject) o, len, iteration.isInherited());
+            } else {
+                /* step 6 */
+                long middle = len / 2L;
+                /* steps 7-8 */
+                for (long lower = 0; lower != middle; ++lower) {
+                    long upper = len - lower - 1;
+                    long upperP = upper;
+                    long lowerP = lower;
+                    boolean lowerExists = HasProperty(cx, o, lowerP);
+                    Object lowerValue = lowerExists ? Get(cx, o, lowerP) : null;
+                    boolean upperExists = HasProperty(cx, o, upperP);
+                    Object upperValue = upperExists ? Get(cx, o, upperP) : null;
+                    if (lowerExists && upperExists) {
+                        Put(cx, o, lowerP, upperValue, true);
+                        Put(cx, o, upperP, lowerValue, true);
+                    } else if (!lowerExists && upperExists) {
+                        Put(cx, o, lowerP, upperValue, true);
+                        DeletePropertyOrThrow(cx, o, upperP);
+                    } else if (lowerExists && !upperExists) {
+                        DeletePropertyOrThrow(cx, o, lowerP);
+                        Put(cx, o, upperP, lowerValue, true);
+                    } else {
+                        // no action required
+                    }
                 }
             }
             /* step 9 */
             return o;
+        }
+
+        private static void reverseSparse(ExecutionContext cx, OrdinaryObject o, long length,
+                boolean inherited) {
+            long middle = length / 2L;
+            ForwardIter lowerIter = forwardIter(o, 0, middle, inherited);
+            ReverseIter upperIter = reverseIterator(o, length - middle, length, inherited);
+
+            while (lowerIter.hasNext() && upperIter.hasNext()) {
+                long lower = lowerIter.peek();
+                long upper = (length - 1) - upperIter.peek();
+
+                if (lower == upper) {
+                    long lowerP = lowerIter.next();
+                    long upperP = upperIter.next();
+
+                    Object lowerValue = Get(cx, o, lowerP);
+                    Object upperValue = Get(cx, o, upperP);
+                    Put(cx, o, lowerP, upperValue, true);
+                    Put(cx, o, upperP, lowerValue, true);
+                } else if (lower < upper) {
+                    long lowerP = lowerIter.next();
+                    long upperP = (length - 1) - lower;
+
+                    Object lowerValue = Get(cx, o, lowerP);
+                    DeletePropertyOrThrow(cx, o, lowerP);
+                    Put(cx, o, upperP, lowerValue, true);
+                } else {
+                    long upperP = upperIter.next();
+                    long lowerP = upper;
+
+                    Object upperValue = Get(cx, o, upperP);
+                    Put(cx, o, lowerP, upperValue, true);
+                    DeletePropertyOrThrow(cx, o, upperP);
+                }
+            }
+
+            while (lowerIter.hasNext()) {
+                long lowerP = lowerIter.next();
+                long upperP = (length - 1) - lowerP;
+
+                Object lowerValue = Get(cx, o, lowerP);
+                DeletePropertyOrThrow(cx, o, lowerP);
+                Put(cx, o, upperP, lowerValue, true);
+            }
+
+            while (upperIter.hasNext()) {
+                long upperP = upperIter.next();
+                long lowerP = (length - 1) - upperP;
+
+                Object upperValue = Get(cx, o, upperP);
+                Put(cx, o, lowerP, upperValue, true);
+                DeletePropertyOrThrow(cx, o, upperP);
+            }
         }
 
         /**
@@ -473,16 +862,22 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             assert len > 0;
             /* steps 7-8 */
             Object first = Get(cx, o, 0);
-            /* steps 9-10 */
-            for (long k = 1; k < len; ++k) {
-                long from = k;
-                long to = k - 1;
-                boolean fromPresent = HasProperty(cx, o, from);
-                if (fromPresent) {
-                    Object fromVal = Get(cx, o, from);
-                    Put(cx, o, to, fromVal, true);
-                } else {
-                    DeletePropertyOrThrow(cx, o, to);
+            IterationKind iteration = iterationKind(o, len);
+            if (iteration.isSparse()) {
+                /* steps 9-10 (Optimization: Sparse Array objects) */
+                shiftSparse(cx, (OrdinaryObject) o, len, iteration.isInherited());
+            } else {
+                /* steps 9-10 */
+                for (long k = 1; k < len; ++k) {
+                    long from = k;
+                    long to = k - 1;
+                    boolean fromPresent = HasProperty(cx, o, from);
+                    if (fromPresent) {
+                        Object fromVal = Get(cx, o, from);
+                        Put(cx, o, to, fromVal, true);
+                    } else {
+                        DeletePropertyOrThrow(cx, o, to);
+                    }
                 }
             }
             /* steps 11-12 */
@@ -491,6 +886,27 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             Put(cx, o, "length", len - 1, true);
             /* step 15 */
             return first;
+        }
+
+        private static void shiftSparse(ExecutionContext cx, OrdinaryObject o, long length,
+                boolean inherited) {
+            ForwardIter iter = forwardIter(o, 1, length, inherited);
+            if (iter.hasNext() && iter.peek() != 1) {
+                DeletePropertyOrThrow(cx, o, 0);
+            }
+            while (iter.hasNext()) {
+                long k = iter.next();
+
+                long from = k;
+                long to = k - 1;
+                Object fromVal = Get(cx, o, from);
+                Put(cx, o, to, fromVal, true);
+
+                long replacement = k + 1;
+                if (replacement < length && !iter.contains(replacement)) {
+                    DeletePropertyOrThrow(cx, o, from);
+                }
+            }
         }
 
         /**
@@ -552,21 +968,44 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             if (a == null) {
                 a = ArrayCreate(cx, count);
             }
-            /* steps 17-18 */
-            long n = 0;
-            for (; k < finall; ++k, ++n) {
-                long pk = k;
-                boolean kpresent = HasProperty(cx, o, pk);
-                if (kpresent) {
-                    Object kvalue = Get(cx, o, pk);
-                    CreateDataPropertyOrThrow(cx, a, n, kvalue);
+            long n;
+            IterationKind iteration = iterationKind(a, o, len);
+            if (iteration.isSparse()) {
+                /* steps 15-16 (Optimization: Sparse Array objects) */
+                sliceSparse(cx, (OrdinaryObject) a, k, finall, (OrdinaryObject) o,
+                        iteration.isInherited());
+                n = count;
+            } else {
+                n = 0;
+                /* steps 15-16 */
+                for (; k < finall; ++k, ++n) {
+                    long pk = k;
+                    boolean kpresent = HasProperty(cx, o, pk);
+                    if (kpresent) {
+                        Object kvalue = Get(cx, o, pk);
+                        CreateDataPropertyOrThrow(cx, a, n, kvalue);
+                    }
                 }
             }
-            /* steps 19-20 */
-            // TODO: handle 2^53-1 limit
+            /* steps 15-16 */
+            if (a == null) {
+                a = ArrayCreate(cx, count);
+            }
+            /* steps 17-18 */
             Put(cx, a, "length", n, true);
             /* step 21 */
             return a;
+        }
+
+        private static void sliceSparse(ExecutionContext cx, OrdinaryObject a, long k, long finall,
+                OrdinaryObject o, boolean inherited) {
+            for (ForwardIter iter = forwardIter(o, k, finall, inherited); iter.hasNext();) {
+                long pk = iter.next();
+
+                long n = pk - k;
+                Object kvalue = Get(cx, o, pk);
+                CreateDataPropertyOrThrow(cx, a, n, kvalue);
+            }
         }
 
         /**
@@ -606,6 +1045,27 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
         }
 
+        private static void sortElements(ExecutionContext cx, ArrayList<Object> elements,
+                Object comparefn) {
+            Comparator<Object> comparator;
+            if (!Type.isUndefined(comparefn)) {
+                if (!IsCallable(comparefn)) {
+                    throw newTypeError(cx, Messages.Key.NotCallable);
+                }
+                comparator = new FunctionComparator(cx, (Callable) comparefn);
+            } else {
+                comparator = new DefaultComparator(cx);
+            }
+            try {
+                Collections.sort(elements, comparator);
+            } catch (IllegalArgumentException e) {
+                // User-defined comparator functions may return inconsistent comparison results,
+                // and those will trigger this exception in the Collections.sort() method:
+                // `IllegalArgumentException: Comparison method violates its general contract!`
+                // If that happens, just ignore the Java exception and stop the sort operation.
+            }
+        }
+
         /**
          * 22.1.3.24 Array.prototype.sort (comparefn)
          * 
@@ -626,48 +1086,77 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* steps 3-4 */
             long len = ToLength(cx, lenValue);
 
-            // handle OOM early
-            if (len > Integer.MAX_VALUE) {
-                throw newInternalError(cx, Messages.Key.OutOfMemory);
-            }
+            IterationKind iteration = iterationKind(obj, len);
+            if (iteration.isSparse()) {
+                sortSparse(cx, (OrdinaryObject) obj, len, comparefn, iteration.isInherited());
+            } else {
+                // handle OOM early
+                if (len > Integer.MAX_VALUE) {
+                    throw newInternalError(cx, Messages.Key.OutOfMemory);
+                }
 
-            // collect elements
-            int length = (int) len;
-            int emptyCount = 0;
-            int undefCount = 0;
-            ArrayList<Object> elements = new ArrayList<>(Math.min(length, 1024));
-            for (int i = 0; i < length; ++i) {
-                int index = i;
-                if (HasProperty(cx, obj, index)) {
-                    Object e = Get(cx, obj, index);
-                    if (!Type.isUndefined(e)) {
-                        elements.add(e);
+                // collect elements
+                int length = (int) len;
+                int emptyCount = 0;
+                int undefCount = 0;
+                ArrayList<Object> elements = new ArrayList<>(Math.min(length, 1024));
+                for (int i = 0; i < length; ++i) {
+                    long index = i;
+                    if (HasProperty(cx, obj, index)) {
+                        Object e = Get(cx, obj, index);
+                        if (!Type.isUndefined(e)) {
+                            elements.add(e);
+                        } else {
+                            undefCount += 1;
+                        }
                     } else {
-                        undefCount += 1;
+                        emptyCount += 1;
                     }
+                }
+
+                // sort elements
+                int count = elements.size();
+                if (count > 1) {
+                    sortElements(cx, elements, comparefn);
+                }
+
+                // and finally set sorted elements
+                for (int i = 0, offset = 0; i < count; ++i) {
+                    int p = offset + i;
+                    Put(cx, obj, p, elements.get(i), true);
+                }
+                for (int i = 0, offset = count; i < undefCount; ++i) {
+                    int p = offset + i;
+                    Put(cx, obj, p, UNDEFINED, true);
+                }
+                for (int i = 0, offset = count + undefCount; i < emptyCount; ++i) {
+                    int p = offset + i;
+                    DeletePropertyOrThrow(cx, obj, p);
+                }
+            }
+            return obj;
+        }
+
+        private static void sortSparse(ExecutionContext cx, OrdinaryObject obj, long length,
+                Object comparefn, boolean inherited) {
+            // collect elements
+            ForwardIter collectIter = forwardIter((OrdinaryObject) obj, 0, length, inherited);
+            int undefCount = 0;
+            ArrayList<Object> elements = new ArrayList<>(Math.min(collectIter.size(), 1024));
+            while (collectIter.hasNext()) {
+                long index = collectIter.next();
+                Object e = Get(cx, obj, index);
+                if (!Type.isUndefined(e)) {
+                    elements.add(e);
                 } else {
-                    emptyCount += 1;
+                    undefCount += 1;
                 }
             }
 
             // sort elements
             int count = elements.size();
             if (count > 1) {
-                Comparator<Object> comparator;
-                if (!Type.isUndefined(comparefn)) {
-                    if (!IsCallable(comparefn)) {
-                        throw newTypeError(cx, Messages.Key.NotCallable);
-                    }
-                    comparator = new FunctionComparator(cx, (Callable) comparefn);
-                } else {
-                    comparator = new DefaultComparator(cx);
-                }
-                try {
-                    Collections.sort(elements, comparator);
-                } catch (IllegalArgumentException e) {
-                    // `IllegalArgumentException: Comparison method violates its general contract!`
-                    // just ignore this exception...
-                }
+                sortElements(cx, elements, comparefn);
             }
 
             // and finally set sorted elements
@@ -679,12 +1168,20 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 int p = offset + i;
                 Put(cx, obj, p, UNDEFINED, true);
             }
-            for (int i = 0, offset = count + undefCount; i < emptyCount; ++i) {
-                int p = offset + i;
-                DeletePropertyOrThrow(cx, obj, p);
+            // User-defined actions in comparefn may have invalidated sparse-property
+            IterationKind iterationDelete = iterationKind(obj, length);
+            if (iterationDelete.isSparse()) {
+                for (ForwardIter deleteIter = forwardIter((OrdinaryObject) obj, count + undefCount,
+                        length, iterationDelete.isInherited()); deleteIter.hasNext();) {
+                    long p = deleteIter.next();
+                    DeletePropertyOrThrow(cx, obj, p);
+                }
+            } else {
+                for (long i = count + undefCount; i < length; ++i) {
+                    long p = i;
+                    DeletePropertyOrThrow(cx, obj, p);
+                }
             }
-
-            return obj;
         }
 
         /**
@@ -744,13 +1241,20 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             if (a == null) {
                 a = ArrayCreate(cx, actualDeleteCount);
             }
-            /* steps 16-17 */
-            for (long k = 0; k < actualDeleteCount; ++k) {
-                long from = actualStart + k;
-                boolean fromPresent = HasProperty(cx, o, from);
-                if (fromPresent) {
-                    Object fromValue = Get(cx, o, from);
-                    CreateDataPropertyOrThrow(cx, a, k, fromValue);
+            IterationKind iterationCopy = iterationKind(a, o, actualDeleteCount);
+            if (iterationCopy.isSparse()) {
+                /* steps 14-15 */
+                spliceSparseCopy(cx, (OrdinaryObject) a, (OrdinaryObject) o, actualStart,
+                        actualDeleteCount, iterationCopy.isInherited());
+            } else {
+                /* steps 14-15 */
+                for (long k = 0; k < actualDeleteCount; ++k) {
+                    long from = actualStart + k;
+                    boolean fromPresent = HasProperty(cx, o, from);
+                    if (fromPresent) {
+                        Object fromValue = Get(cx, o, from);
+                        CreateDataPropertyOrThrow(cx, a, k, fromValue);
+                    }
                 }
             }
             /* steps 18-19 */
@@ -758,32 +1262,56 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* steps 20-21 */
             int itemCount = items.length;
             if (itemCount < actualDeleteCount) {
-                /* step 22 */
-                for (long k = actualStart; k < (len - actualDeleteCount); ++k) {
-                    long from = k + actualDeleteCount;
-                    long to = k + itemCount;
-                    boolean fromPresent = HasProperty(cx, o, from);
-                    if (fromPresent) {
-                        Object fromValue = Get(cx, o, from);
-                        Put(cx, o, to, fromValue, true);
-                    } else {
-                        DeletePropertyOrThrow(cx, o, to);
+                /* step 20 */
+                IterationKind iterationMove = iterationKind(o, len);
+                if (iterationMove.isSparse()) {
+                    /* steps 20.a-20.b */
+                    spliceSparseMoveLeft(cx, (OrdinaryObject) o, len, actualStart,
+                            actualDeleteCount, itemCount, iterationMove.isInherited());
+                } else {
+                    /* steps 20.a-20.b */
+                    for (long k = actualStart; k < (len - actualDeleteCount); ++k) {
+                        long from = k + actualDeleteCount;
+                        long to = k + itemCount;
+                        boolean fromPresent = HasProperty(cx, o, from);
+                        if (fromPresent) {
+                            Object fromValue = Get(cx, o, from);
+                            Put(cx, o, to, fromValue, true);
+                        } else {
+                            DeletePropertyOrThrow(cx, o, to);
+                        }
                     }
                 }
-                for (long k = len; k > (len - actualDeleteCount + itemCount); --k) {
-                    DeletePropertyOrThrow(cx, o, k - 1);
+                IterationKind iterationDelete = iterationKind(o, len);
+                if (iterationDelete.isSparse()) {
+                    /* steps 20.c-20.d */
+                    spliceSparseDelete(cx, (OrdinaryObject) o, len, actualDeleteCount, itemCount,
+                            iterationDelete.isInherited());
+                } else {
+                    /* steps 20.c-20.d */
+                    for (long k = len; k > (len - actualDeleteCount + itemCount); --k) {
+                        DeletePropertyOrThrow(cx, o, k - 1);
+                    }
                 }
             } else if (itemCount > actualDeleteCount) {
-                /* step 23 */
-                for (long k = (len - actualDeleteCount); k > actualStart; --k) {
-                    long from = k + actualDeleteCount - 1;
-                    long to = k + itemCount - 1;
-                    boolean fromPresent = HasProperty(cx, o, from);
-                    if (fromPresent) {
-                        Object fromValue = Get(cx, o, from);
-                        Put(cx, o, to, fromValue, true);
-                    } else {
-                        DeletePropertyOrThrow(cx, o, to);
+                /* step 21 */
+                IterationKind iterationMove = iterationKind(o, len);
+                if (iterationMove.isSparse()) {
+                    /* step 21 */
+                    spliceSparseMoveRight(cx, (OrdinaryObject) o, len, actualStart,
+                            actualDeleteCount, itemCount, iterationMove.isInherited());
+                } else {
+                    /* step 21 */
+                    for (long k = (len - actualDeleteCount); k > actualStart; --k) {
+                        long from = k + actualDeleteCount - 1;
+                        long to = k + itemCount - 1;
+                        boolean fromPresent = HasProperty(cx, o, from);
+                        if (fromPresent) {
+                            Object fromValue = Get(cx, o, from);
+                            Put(cx, o, to, fromValue, true);
+                        } else {
+                            DeletePropertyOrThrow(cx, o, to);
+                        }
                     }
                 }
             }
@@ -799,6 +1327,122 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             Put(cx, o, "length", len - actualDeleteCount + itemCount, true);
             /* step 28 */
             return a;
+        }
+
+        private static void spliceSparseMoveRight(ExecutionContext cx, OrdinaryObject o,
+                long length, long start, long deleteCount, int itemCount, boolean inherited) {
+            assert 0 <= deleteCount && deleteCount <= (length - start) : "actualDeleteCount="
+                    + deleteCount;
+            assert start >= 0 && (itemCount > 0 && itemCount > deleteCount);
+
+            long targetRangeStart = start + itemCount;
+            long targetRangeEnd = length;
+            ReverseIter iterTarget = reverseIterator(o, targetRangeStart, targetRangeEnd, inherited);
+
+            long sourceRangeStart = start + deleteCount;
+            long sourceRangeEnd = length;
+            ReverseIter iterSource = reverseIterator(o, sourceRangeStart, sourceRangeEnd, inherited);
+
+            while (iterTarget.hasNext() && iterSource.hasNext()) {
+                long toRel = iterTarget.peek() - itemCount;
+                long fromRel = iterSource.peek() - deleteCount;
+                if (toRel == fromRel) {
+                    long from = iterSource.next();
+                    long to = iterTarget.next();
+                    Object fromValue = Get(cx, o, from);
+                    Put(cx, o, to, fromValue, true);
+                } else if (toRel < fromRel) {
+                    long from = iterSource.next();
+                    long actualTo = from - deleteCount + itemCount;
+                    Object fromValue = Get(cx, o, from);
+                    Put(cx, o, actualTo, fromValue, true);
+                } else {
+                    long to = iterTarget.next();
+                    DeletePropertyOrThrow(cx, o, to);
+                }
+            }
+
+            while (iterTarget.hasNext()) {
+                long to = iterTarget.next();
+                DeletePropertyOrThrow(cx, o, to);
+            }
+
+            while (iterSource.hasNext()) {
+                long from = iterSource.next();
+                long actualTo = from - deleteCount + itemCount;
+                Object fromValue = Get(cx, o, from);
+                Put(cx, o, actualTo, fromValue, true);
+            }
+        }
+
+        private static void spliceSparseMoveLeft(ExecutionContext cx, OrdinaryObject o,
+                long length, long start, long deleteCount, int itemCount, boolean inherited) {
+            assert 0 < deleteCount && deleteCount <= (length - start) : "actualDeleteCount="
+                    + deleteCount;
+            assert (itemCount < deleteCount);
+            assert start >= 0 && itemCount >= 0;
+            long moveAmount = (length - start) - deleteCount;
+            assert moveAmount >= 0;
+
+            long targetRangeStart = start + itemCount;
+            long targetRangeEnd = targetRangeStart + moveAmount;
+            assert targetRangeEnd < length;
+            ForwardIter iterTarget = forwardIter(o, targetRangeStart, targetRangeEnd, inherited);
+
+            long sourceRangeStart = start + deleteCount;
+            long sourceRangeEnd = sourceRangeStart + moveAmount;
+            assert sourceRangeEnd == length;
+            ForwardIter iterSource = forwardIter(o, sourceRangeStart, sourceRangeEnd, inherited);
+
+            while (iterTarget.hasNext() && iterSource.hasNext()) {
+                long toRel = iterTarget.peek() - itemCount;
+                long fromRel = iterSource.peek() - deleteCount;
+                if (toRel == fromRel) {
+                    long to = iterTarget.next();
+                    long from = iterSource.next();
+                    Object fromValue = Get(cx, o, from);
+                    Put(cx, o, to, fromValue, true);
+                } else if (toRel < fromRel) {
+                    long to = iterTarget.next();
+                    DeletePropertyOrThrow(cx, o, to);
+                } else {
+                    long from = iterSource.next();
+                    long actualTo = from - deleteCount + itemCount;
+                    Object fromValue = Get(cx, o, from);
+                    Put(cx, o, actualTo, fromValue, true);
+                }
+            }
+
+            while (iterTarget.hasNext()) {
+                long to = iterTarget.next();
+                DeletePropertyOrThrow(cx, o, to);
+            }
+
+            while (iterSource.hasNext()) {
+                long from = iterSource.next();
+                long actualTo = from - deleteCount + itemCount;
+                Object fromValue = Get(cx, o, from);
+                Put(cx, o, actualTo, fromValue, true);
+            }
+        }
+
+        private static void spliceSparseCopy(ExecutionContext cx, OrdinaryObject a,
+                OrdinaryObject o, long start, long deleteCount, boolean inherited) {
+            long copyEnd = start + deleteCount;
+            for (ForwardIter iter = forwardIter(o, start, copyEnd, inherited); iter.hasNext();) {
+                long from = iter.next();
+                Object fromValue = Get(cx, o, from);
+                CreateDataPropertyOrThrow(cx, a, from - start, fromValue);
+            }
+        }
+
+        private static void spliceSparseDelete(ExecutionContext cx, OrdinaryObject o, long length,
+                long deleteCount, long itemCount, boolean inherited) {
+            long delStart = length - deleteCount + itemCount;
+            for (ReverseIter iter = reverseIterator(o, delStart, length, inherited); iter.hasNext();) {
+                long k = iter.next();
+                DeletePropertyOrThrow(cx, o, k);
+            }
         }
 
         /**
@@ -824,16 +1468,22 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             int argCount = items.length;
             /* step 7 */
             if (argCount > 0) {
-                /* steps 7.a-7.b */
-                for (long k = len; k > 0; --k) {
-                    long from = k - 1;
-                    long to = k + argCount - 1;
-                    boolean fromPresent = HasProperty(cx, o, from);
-                    if (fromPresent) {
-                        Object fromValue = Get(cx, o, from);
-                        Put(cx, o, to, fromValue, true);
-                    } else {
-                        DeletePropertyOrThrow(cx, o, to);
+                IterationKind iteration = iterationKind(o, len);
+                if (iteration.isSparse()) {
+                    /* steps 7.a-7.b (Optimization: Sparse Array objects) */
+                    unshiftSparse(cx, (OrdinaryObject) o, len, argCount, iteration.isInherited());
+                } else {
+                    /* steps 7.a-7.b */
+                    for (long k = len; k > 0; --k) {
+                        long from = k - 1;
+                        long to = k + argCount - 1;
+                        boolean fromPresent = HasProperty(cx, o, from);
+                        if (fromPresent) {
+                            Object fromValue = Get(cx, o, from);
+                            Put(cx, o, to, fromValue, true);
+                        } else {
+                            DeletePropertyOrThrow(cx, o, to);
+                        }
                     }
                 }
                 /* steps 7.c-7.e */
@@ -847,6 +1497,32 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             Put(cx, o, "length", len + argCount, true);
             /* step 10 */
             return len + argCount;
+        }
+
+        private static void unshiftSparse(ExecutionContext cx, OrdinaryObject o, long length,
+                int argCount, boolean inherited) {
+            ReverseIter iter = reverseIterator(o, 0, length, inherited);
+            int deleteFirst = 0, deleteLast = 0;
+            long[] keysToDelete = new long[iter.size()];
+            while (iter.hasNext()) {
+                long k = iter.next();
+                while (deleteLast > deleteFirst && keysToDelete[deleteFirst] > k) {
+                    DeletePropertyOrThrow(cx, o, keysToDelete[deleteFirst++] + argCount);
+                }
+
+                long from = k;
+                long to = k + argCount;
+                Object fromValue = Get(cx, o, from);
+                Put(cx, o, to, fromValue, true);
+
+                long replacement = k - argCount;
+                if (replacement >= 0 && !iter.contains(replacement)) {
+                    keysToDelete[deleteLast++] = replacement;
+                }
+            }
+            while (deleteLast > deleteFirst) {
+                DeletePropertyOrThrow(cx, o, keysToDelete[deleteFirst++] + argCount);
+            }
         }
 
         /**

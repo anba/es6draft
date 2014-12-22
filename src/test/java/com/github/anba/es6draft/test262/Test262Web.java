@@ -13,7 +13,7 @@ import static com.github.anba.es6draft.util.matchers.PatternMatcher.matchesPatte
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeThat;
 
 import java.io.IOException;
 import java.lang.annotation.ElementType;
@@ -23,10 +23,12 @@ import java.lang.annotation.Target;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.apache.commons.configuration.Configuration;
+import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -40,13 +42,16 @@ import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
+import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
+import com.github.anba.es6draft.util.ParallelizedRunnerFactory;
 import com.github.anba.es6draft.util.Resources;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
@@ -57,10 +62,11 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  * The standard test262 test suite
  */
 @RunWith(Parallelized.class)
+@UseParametersRunnerFactory(ParallelizedRunnerFactory.class)
 @TestConfiguration(name = "test262.test.web", file = "resource:/test-configuration.properties")
 public final class Test262Web {
+    private static final boolean USE_SHARED_EXECUTOR = false;
     private static final Configuration configuration = loadConfiguration(Test262Web.class);
-
     private static final DefaultMode unmarkedDefault = DefaultMode.forName(configuration
             .getString("unmarked_default"));
 
@@ -81,6 +87,14 @@ public final class Test262Web {
         protected ObjectAllocator<Test262GlobalObject> newAllocator(ShellConsole console,
                 Test262Info test, ScriptCache scriptCache) {
             return newGlobalObjectAllocator(console, test, scriptCache);
+        }
+
+        @Override
+        protected ExecutorService getExecutor() {
+            if (USE_SHARED_EXECUTOR) {
+                return createDefaultSharedExecutor();
+            }
+            return null;
         }
     };
 
@@ -113,20 +127,21 @@ public final class Test262Web {
     private String sourceCode;
     private int preambleLines;
 
+    // Reduces displayed allocation count in multi-threaded environments...
+    private static final Matcher<Boolean> isTrue = Matchers.is(true);
+
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        System.out.printf("setUp for Test = %s%n", test.getScript().toString());
-
         // Filter disabled tests
-        assumeTrue(test.isEnabled());
+        assumeThat(test.isEnabled(), isTrue);
 
         String fileContent = test.readFile();
         if (isStrictTest) {
-            assumeTrue(!test.isNoStrict()
-                    && (test.isOnlyStrict() || unmarkedDefault != DefaultMode.NonStrict));
+            assumeThat(!test.isNoStrict()
+                    && (test.isOnlyStrict() || unmarkedDefault != DefaultMode.NonStrict), isTrue);
         } else {
-            assumeTrue(!test.isOnlyStrict()
-                    && (test.isNoStrict() || unmarkedDefault != DefaultMode.Strict));
+            assumeThat(!test.isOnlyStrict()
+                    && (test.isNoStrict() || unmarkedDefault != DefaultMode.Strict), isTrue);
         }
 
         final String preamble;
@@ -135,7 +150,7 @@ public final class Test262Web {
         } else {
             preamble = "//\"use strict\";\nvar strict_mode = false;\n";
         }
-        sourceCode = preamble + fileContent;
+        sourceCode = Strings.concat(preamble, fileContent);
         preambleLines = 2;
 
         global = globals.newGlobal(new Test262Console(), test);
@@ -172,8 +187,10 @@ public final class Test262Web {
 
     @After
     public void tearDown() {
-        if (global != null) {
-            global.getScriptLoader().getExecutor().shutdown();
+        if (!USE_SHARED_EXECUTOR) {
+            if (global != null) {
+                global.getScriptLoader().getExecutor().shutdown();
+            }
         }
     }
 

@@ -22,7 +22,6 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -33,15 +32,8 @@ import java.util.Objects;
 import com.github.anba.es6draft.repl.global.StopExecutionException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.CreateAction;
-import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Property;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.*;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.NativeConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.NativeTailCallFunction;
@@ -190,6 +182,13 @@ public final class Properties {
          */
         Attributes attributes() default @Attributes(writable = false /*unused*/,
                 enumerable = false, configurable = true);
+
+        /**
+         * Returns the optional native function identifier.
+         * 
+         * @return the native function identifier
+         */
+        Class<?> nativeId() default void.class;
     }
 
     /**
@@ -311,9 +310,9 @@ public final class Properties {
         }
     }
 
-    private static ClassValue<ObjectLayout> internalLayouts = new ClassValue<ObjectLayout>() {
+    private static ClassValue<CompactLayout> internalLayouts = new ClassValue<CompactLayout>() {
         @Override
-        protected ObjectLayout computeValue(Class<?> type) {
+        protected CompactLayout computeValue(Class<?> type) {
             return createInternalObjectLayout(type);
         }
     };
@@ -333,14 +332,145 @@ public final class Properties {
     };
 
     private static final class ObjectLayout {
-        CompatibilityExtension extension;
-        Prototype proto;
-        Object protoValue;
         LinkedHashMap<Value, Object> values;
         LinkedHashMap<Function, MethodHandle> functions;
-        LinkedHashMap<Function, MethodHandle> tcfunctions;
         LinkedHashMap<Accessor, MethodHandle> accessors;
-        ArrayList<Entry<AliasFunction, Function>> aliases;
+    }
+
+    private enum Tag {
+        Value, Function, Accessor, Alias
+    }
+
+    private static abstract class PropertyLayout {
+        static final int WRITABLE = 0x01;
+        static final int ENUMERABLE = 0x02;
+        static final int CONFIGURABLE = 0x04;
+        static final int TAILCALL = 0x08;
+        static final int ACCESSOR = 0x00;
+        static final int FUNCTION = 0x10;
+        static final int VALUE = 0x20;
+        static final int ALIAS = 0x30;
+
+        final int attributes;
+        final String name;
+        final Symbol symbol;
+
+        PropertyLayout(int tag, Attributes attributes, String name, BuiltinSymbol builtin) {
+            this.attributes = tag | toAttributes(attributes);
+            this.name = name;
+            this.symbol = builtin != BuiltinSymbol.NONE ? builtin.get() : null;
+        }
+
+        final boolean writable() {
+            return (attributes & WRITABLE) != 0;
+        }
+
+        final boolean enumerable() {
+            return (attributes & ENUMERABLE) != 0;
+        }
+
+        final boolean configurable() {
+            return (attributes & CONFIGURABLE) != 0;
+        }
+
+        final Tag tag() {
+            switch ((attributes >> 4) & 0b11) {
+            case 0:
+                return Tag.Accessor;
+            case 1:
+                return Tag.Function;
+            case 2:
+                return Tag.Value;
+            case 3:
+                return Tag.Alias;
+            }
+            throw new AssertionError();
+        }
+
+        private static int toAttributes(Attributes attributes) {
+            int attrs = 0;
+            attrs |= (attributes.writable() ? WRITABLE : 0);
+            attrs |= (attributes.enumerable() ? ENUMERABLE : 0);
+            attrs |= (attributes.configurable() ? CONFIGURABLE : 0);
+            return attrs;
+        }
+    }
+
+    private static final class AccessorLayout extends PropertyLayout {
+        final Accessor.Type type;
+        final Class<?> nativeId;
+        final MethodHandle methodHandle;
+        final String accessorName;
+
+        AccessorLayout(Accessor accessor, MethodHandle methodHandle) {
+            super(ACCESSOR, accessor.attributes(), accessor.name(), accessor.symbol());
+            this.type = accessor.type();
+            this.nativeId = accessor.nativeId();
+            this.methodHandle = methodHandle;
+            this.accessorName = accessorName(type, name, symbol);
+        }
+    }
+
+    private static final class FunctionLayout extends PropertyLayout {
+        final int arity;
+        final Class<?> nativeId;
+        final MethodHandle methodHandle;
+
+        FunctionLayout(Function function, MethodHandle methodHandle) {
+            super(FUNCTION, function.attributes(), function.name(), function.symbol());
+            this.arity = function.arity();
+            this.nativeId = function.nativeId();
+            this.methodHandle = methodHandle;
+        }
+
+        FunctionLayout(Function function, TailCall tailCall, MethodHandle methodHandle) {
+            super(FUNCTION | TAILCALL, function.attributes(), function.name(), function.symbol());
+            this.arity = function.arity();
+            this.nativeId = function.nativeId();
+            this.methodHandle = methodHandle;
+        }
+
+        boolean isTailCall() {
+            return (attributes & TAILCALL) != 0;
+        }
+    }
+
+    private static final class AliasFunctionLayout extends PropertyLayout {
+        final Object propertyKey; // String|BuiltinSymbol
+
+        AliasFunctionLayout(AliasFunction alias, Function function) {
+            super(ALIAS, alias.attributes(), alias.name(), alias.symbol());
+            this.propertyKey = propertyKey(function);
+        }
+
+        private static Object propertyKey(Function function) {
+            BuiltinSymbol sym = function.symbol();
+            return sym != BuiltinSymbol.NONE ? sym : function.name();
+        }
+    }
+
+    private static final class ValueLayout extends PropertyLayout {
+        final Object rawValue; // Object|MethodHandle
+
+        ValueLayout(Value value, Object rawValue) {
+            super(VALUE, value.attributes(), value.name(), value.symbol());
+            this.rawValue = rawValue;
+        }
+    }
+
+    private static final class CompactLayout {
+        static final Object EMPTY = new Object();
+
+        final Object prototype;
+        final ArrayList<PropertyLayout> properties;
+        final CompatibilityOption option;
+
+        CompactLayout(Object prototype, ArrayList<PropertyLayout> properties,
+                CompatibilityOption option) {
+            this.prototype = prototype;
+            this.properties = properties;
+            this.option = option;
+        }
     }
 
     /**
@@ -793,15 +923,43 @@ public final class Properties {
     private static void createExternalAccessor(ExecutionContext cx, Accessor accessor,
             MethodHandle mh, LinkedHashMap<String, PropertyDescriptor> stringProps,
             EnumMap<BuiltinSymbol, PropertyDescriptor> symbolProps) {
-        NativeFunction fun = createAccessor(cx, accessor, mh);
-        PropertyDescriptor desc = createAccessorDescriptor(accessor, stringProps, symbolProps);
-        if (!isCompatibleDescriptor(accessor, desc)) {
-            throw new IllegalArgumentException();
+        Accessor.Type type = accessor.type();
+        String name = accessor.name();
+        BuiltinSymbol symbol = accessor.symbol();
+        Attributes attributes = accessor.attributes();
+        String functionName = accessorName(type, name, symbol);
+        int arity = (type == Accessor.Type.Getter ? 0 : 1);
+        NativeFunction fun = new NativeFunction(cx.getRealm(), functionName, arity, mh);
+
+        PropertyDescriptor existing;
+        if (symbol == BuiltinSymbol.NONE) {
+            existing = stringProps.get(name);
+        } else {
+            existing = symbolProps.get(symbol);
         }
-        if (accessor.type() == Accessor.Type.Getter) {
+        PropertyDescriptor desc;
+        if (existing != null) {
+            if (attributes.enumerable() != existing.isEnumerable()
+                    || attributes.configurable() != existing.isConfigurable()) {
+                throw new IllegalArgumentException();
+            }
+            if (type == Accessor.Type.Getter ? existing.getGetter() != null
+                    : existing.getSetter() != null) {
+                throw new IllegalArgumentException();
+            }
+            desc = existing;
+        } else {
+            desc = propertyDescriptor(null, null, attributes);
+        }
+        if (type == Accessor.Type.Getter) {
             desc.setGetter(fun);
         } else {
             desc.setSetter(fun);
+        }
+        if (symbol == BuiltinSymbol.NONE) {
+            stringProps.put(name, desc);
+        } else {
+            symbolProps.put(symbol, desc);
         }
     }
 
@@ -846,11 +1004,13 @@ public final class Properties {
         }
     }
 
-    private static ObjectLayout createInternalObjectLayout(Class<?> holder) {
+    private static CompactLayout createInternalObjectLayout(Class<?> holder) {
         try {
-            ObjectLayout layout = new ObjectLayout();
             Lookup lookup = MethodHandles.publicLookup();
-            layout.extension = holder.getAnnotation(CompatibilityExtension.class);
+            CompatibilityExtension extension = holder.getAnnotation(CompatibilityExtension.class);
+            CompatibilityOption option = extension != null ? extension.value() : null;
+            Object prototypeValue = CompactLayout.EMPTY;
+            ArrayList<PropertyLayout> properties = new ArrayList<>();
             boolean hasProto = false;
             for (Field field : holder.getDeclaredFields()) {
                 if (!Modifier.isStatic(field.getModifiers()))
@@ -860,15 +1020,11 @@ public final class Properties {
                 assert value == null || prototype == null;
 
                 if (value != null) {
-                    if (layout.values == null) {
-                        layout.values = new LinkedHashMap<>();
-                    }
-                    layout.values.put(value, getRawValue(field));
+                    properties.add(new ValueLayout(value, getRawValue(field)));
                 }
                 if (prototype != null) {
                     assert !hasProto && (hasProto = true);
-                    layout.proto = prototype;
-                    layout.protoValue = getRawValue(field);
+                    prototypeValue = getRawValue(field);
                 }
             }
             for (Method method : holder.getDeclaredMethods()) {
@@ -887,46 +1043,30 @@ public final class Properties {
                 assert aliases == null || function != null;
                 assert tailCall == null || function != null;
 
-                if (function != null && tailCall == null) {
-                    if (layout.functions == null) {
-                        layout.functions = new LinkedHashMap<>();
-                    }
-                    layout.functions.put(function, getStaticMethodHandle(lookup, method));
-                }
-                if (function != null && tailCall != null) {
-                    if (layout.tcfunctions == null) {
-                        layout.tcfunctions = new LinkedHashMap<>();
-                    }
-                    layout.tcfunctions.put(function, getStaticMethodHandle(lookup, method));
-                }
-                if (accessor != null) {
-                    if (layout.accessors == null) {
-                        layout.accessors = new LinkedHashMap<>();
-                    }
-                    layout.accessors.put(accessor, getStaticMethodHandle(lookup, method));
-                }
                 if (value != null) {
-                    if (layout.values == null) {
-                        layout.values = new LinkedHashMap<>();
+                    MethodHandle mh = getComputedValueMethodHandle(lookup, method);
+                    properties.add(new ValueLayout(value, mh));
+                } else if (accessor != null) {
+                    MethodHandle mh = getStaticMethodHandle(lookup, method);
+                    properties.add(new AccessorLayout(accessor, mh));
+                } else if (function != null) {
+                    MethodHandle mh = getStaticMethodHandle(lookup, method);
+                    if (tailCall == null) {
+                        properties.add(new FunctionLayout(function, mh));
+                    } else {
+                        properties.add(new FunctionLayout(function, tailCall, mh));
                     }
-                    layout.values.put(value, getComputedValueMethodHandle(lookup, method));
-                }
-                if (alias != null) {
-                    if (layout.aliases == null) {
-                        layout.aliases = new ArrayList<>();
+                    if (alias != null) {
+                        properties.add(new AliasFunctionLayout(alias, function));
                     }
-                    layout.aliases.add(new SimpleImmutableEntry<>(alias, function));
-                }
-                if (aliases != null) {
-                    if (layout.aliases == null) {
-                        layout.aliases = new ArrayList<>();
-                    }
-                    for (AliasFunction a : aliases.value()) {
-                        layout.aliases.add(new SimpleImmutableEntry<>(a, function));
+                    if (aliases != null) {
+                        for (AliasFunction a : aliases.value()) {
+                            properties.add(new AliasFunctionLayout(a, function));
+                        }
                     }
                 }
             }
-            return layout;
+            return new CompactLayout(prototypeValue, properties, option);
         } catch (IllegalAccessException e) {
             throw new IllegalArgumentException(e);
         }
@@ -1213,104 +1353,77 @@ public final class Properties {
 
     private static void createInternalProperties(ExecutionContext cx, OrdinaryObject target,
             Class<?> holder) {
-        ObjectLayout layout = internalLayouts.get(holder);
-        if (layout.extension != null && !cx.getRealm().isEnabled(layout.extension.value())) {
+        CompactLayout layout = internalLayouts.get(holder);
+        if (layout.option != null && !cx.getRealm().isEnabled(layout.option)) {
             // return if extension is not enabled
             return;
         }
-        if (layout.proto != null) {
-            createPrototype(cx, target, layout.proto, layout.protoValue);
+        if (layout.prototype != CompactLayout.EMPTY) {
+            createPrototype(cx, target, layout.prototype);
         }
-        if (layout.values != null) {
-            createValues(cx, target, layout);
-        }
-        if (layout.functions != null) {
-            createFunctions(cx, target, layout);
-        }
-        if (layout.tcfunctions != null) {
-            createTailCallFunctions(cx, target, layout);
-        }
-        if (layout.accessors != null) {
-            createInternalAccessors(cx, target, layout);
-        }
-        if (layout.aliases != null) {
-            createAliasFunctions(cx, target, layout);
+        for (PropertyLayout property : layout.properties) {
+            switch (property.tag()) {
+            case Value:
+                createValue(cx, target, (ValueLayout) property);
+                break;
+            case Function:
+                createFunction(cx, target, (FunctionLayout) property);
+                break;
+            case Accessor:
+                createAccessor(cx, target, (AccessorLayout) property);
+                break;
+            case Alias:
+                createAliasFunction(cx, target, (AliasFunctionLayout) property);
+                break;
+            default:
+                throw new AssertionError();
+            }
         }
     }
 
-    private static void createPrototype(ExecutionContext cx, OrdinaryObject target,
-            Prototype proto, Object rawValue) {
+    private static void createPrototype(ExecutionContext cx, OrdinaryObject target, Object rawValue) {
         Object value = resolveValue(cx, rawValue);
         assert value == null || value instanceof ScriptObject;
         target.setPrototype((ScriptObject) value);
     }
 
-    private static void createValues(ExecutionContext cx, OrdinaryObject target, ObjectLayout layout) {
-        for (Entry<Value, Object> entry : layout.values.entrySet()) {
-            Value val = entry.getKey();
-            Object value = resolveValue(cx, entry.getValue());
-            defineProperty(cx, target, val.name(), val.symbol(), val.attributes(), value);
-        }
+    private static void createValue(ExecutionContext cx, OrdinaryObject target, ValueLayout layout) {
+        Object value = resolveValue(cx, layout.rawValue);
+        defineProperty(cx, target, layout, valueDescriptor(layout, value));
     }
 
-    private static void createFunctions(ExecutionContext cx, OrdinaryObject target,
-            ObjectLayout layout) {
-        for (Entry<Function, MethodHandle> entry : layout.functions.entrySet()) {
-            Function function = entry.getKey();
-            String name = function.name();
-            MethodHandle mh = MethodHandles.insertArguments(entry.getValue(), 0, cx);
-            NativeFunction fun = new NativeFunction(cx.getRealm(), name, function.arity(),
-                    function.nativeId(), mh);
-            defineProperty(cx, target, name, function.symbol(), function.attributes(), fun);
+    private static void createFunction(ExecutionContext cx, OrdinaryObject target,
+            FunctionLayout layout) {
+        MethodHandle mh = MethodHandles.insertArguments(layout.methodHandle, 0, cx);
+        BuiltinFunction fun;
+        if (layout.isTailCall()) {
+            fun = new NativeTailCallFunction(cx.getRealm(), layout.name, layout.arity, mh);
+        } else {
+            fun = new NativeFunction(cx.getRealm(), layout.name, layout.arity, layout.nativeId, mh);
         }
+        defineProperty(cx, target, layout, valueDescriptor(layout, fun));
     }
 
-    private static void createTailCallFunctions(ExecutionContext cx, OrdinaryObject target,
-            ObjectLayout layout) {
-        for (Entry<Function, MethodHandle> entry : layout.tcfunctions.entrySet()) {
-            Function function = entry.getKey();
-            String name = function.name();
-            MethodHandle mh = MethodHandles.insertArguments(entry.getValue(), 0, cx);
-            NativeTailCallFunction fun = new NativeTailCallFunction(cx.getRealm(), name,
-                    function.arity(), mh);
-            defineProperty(cx, target, name, function.symbol(), function.attributes(), fun);
-        }
+    private static void createAccessor(ExecutionContext cx, OrdinaryObject target,
+            AccessorLayout layout) {
+        MethodHandle mh = MethodHandles.insertArguments(layout.methodHandle, 0, cx);
+        int arity = (layout.type == Accessor.Type.Getter ? 0 : 1);
+        NativeFunction fun = new NativeFunction(cx.getRealm(), layout.accessorName, arity,
+                layout.nativeId, mh);
+        defineProperty(cx, target, layout, accessorDescriptor(layout, fun));
     }
 
-    private static void createInternalAccessors(ExecutionContext cx, OrdinaryObject target,
-            ObjectLayout layout) {
-        LinkedHashMap<String, PropertyDescriptor> stringProps = new LinkedHashMap<>();
-        EnumMap<BuiltinSymbol, PropertyDescriptor> symbolProps = new EnumMap<>(BuiltinSymbol.class);
-        for (Entry<Accessor, MethodHandle> entry : layout.accessors.entrySet()) {
-            Accessor accessor = entry.getKey();
-            MethodHandle mh = MethodHandles.insertArguments(entry.getValue(), 0, cx);
-            NativeFunction fun = createAccessor(cx, accessor, mh);
-            PropertyDescriptor desc = createAccessorDescriptor(accessor, stringProps, symbolProps);
-            assert isCompatibleDescriptor(accessor, desc);
-            if (accessor.type() == Accessor.Type.Getter) {
-                desc.setGetter(fun);
-            } else {
-                desc.setSetter(fun);
-            }
+    private static void createAliasFunction(ExecutionContext cx, OrdinaryObject target,
+            AliasFunctionLayout layout) {
+        Object propertyKey = layout.propertyKey;
+        Property fun;
+        if (propertyKey instanceof String) {
+            fun = target.getOwnProperty(cx, (String) propertyKey);
+        } else {
+            fun = target.getOwnProperty(cx, ((BuiltinSymbol) propertyKey).get());
         }
-        defineProperties(cx, target, stringProps, symbolProps);
-    }
-
-    private static void createAliasFunctions(ExecutionContext cx, OrdinaryObject target,
-            ObjectLayout layout) {
-        for (Entry<AliasFunction, Function> entry : layout.aliases) {
-            AliasFunction alias = entry.getKey();
-            Function function = entry.getValue();
-            Property fun;
-            if (function.symbol() == BuiltinSymbol.NONE) {
-                fun = target.getOwnProperty(cx, function.name());
-            } else {
-                fun = target.getOwnProperty(cx, function.symbol().get());
-            }
-            assert fun != null;
-            defineProperty(cx, target, alias.name(), alias.symbol(), alias.attributes(),
-                    fun.getValue());
-        }
+        assert fun != null;
+        defineProperty(cx, target, layout, valueDescriptor(layout, fun.getValue()));
     }
 
     private static Object resolveValue(ExecutionContext cx, Object value) {
@@ -1350,49 +1463,12 @@ public final class Properties {
         return defaults;
     }
 
-    private static PropertyDescriptor createAccessorDescriptor(Accessor accessor,
-            LinkedHashMap<String, PropertyDescriptor> strProps,
-            EnumMap<BuiltinSymbol, PropertyDescriptor> symProps) {
-        PropertyDescriptor desc;
-        if (accessor.symbol() == BuiltinSymbol.NONE) {
-            String name = accessor.name();
-            if ((desc = strProps.get(name)) == null) {
-                strProps.put(name, desc = propertyDescriptor(null, null, accessor.attributes()));
-            }
+    private static void defineProperty(ExecutionContext cx, OrdinaryObject target,
+            PropertyLayout layout, PropertyDescriptor desc) {
+        if (layout.symbol == null) {
+            target.defineOwnProperty(cx, layout.name, desc);
         } else {
-            BuiltinSymbol sym = accessor.symbol();
-            if ((desc = symProps.get(sym)) == null) {
-                symProps.put(sym, desc = propertyDescriptor(null, null, accessor.attributes()));
-            }
-        }
-        return desc;
-    }
-
-    private static NativeFunction createAccessor(ExecutionContext cx, Accessor accessor,
-            MethodHandle mh) {
-        String name = accessor.name();
-        BuiltinSymbol sym = accessor.symbol();
-        Accessor.Type type = accessor.type();
-        int arity = (type == Accessor.Type.Getter ? 0 : 1);
-        String functionName = sym == BuiltinSymbol.NONE ? (type == Accessor.Type.Getter ? "get "
-                : "set ") + name : name;
-        return new NativeFunction(cx.getRealm(), functionName, arity, mh);
-    }
-
-    private static boolean isCompatibleDescriptor(Accessor accessor, PropertyDescriptor desc) {
-        Attributes attrs = accessor.attributes();
-        return (!attrs.writable() && attrs.enumerable() == desc.isEnumerable() && attrs
-                .configurable() == desc.isConfigurable())
-                && (accessor.type() == Accessor.Type.Getter ? desc.getGetter() == null : desc
-                        .getSetter() == null);
-    }
-
-    private static void defineProperty(ExecutionContext cx, OrdinaryObject target, String name,
-            BuiltinSymbol sym, Attributes attrs, Object value) {
-        if (sym == BuiltinSymbol.NONE) {
-            target.defineOwnProperty(cx, name, propertyDescriptor(value, attrs));
-        } else {
-            target.defineOwnProperty(cx, sym.get(), propertyDescriptor(value, attrs));
+            target.defineOwnProperty(cx, layout.symbol, desc);
         }
     }
 
@@ -1402,17 +1478,6 @@ public final class Properties {
             target.defineOwnProperty(cx, name, propertyDescriptor(value, attrs));
         } else {
             target.defineOwnProperty(cx, sym.get(), propertyDescriptor(value, attrs));
-        }
-    }
-
-    private static void defineProperties(ExecutionContext cx, OrdinaryObject target,
-            LinkedHashMap<String, PropertyDescriptor> stringProperties,
-            EnumMap<BuiltinSymbol, PropertyDescriptor> symbolProperties) {
-        for (Entry<String, PropertyDescriptor> entry : stringProperties.entrySet()) {
-            target.defineOwnProperty(cx, entry.getKey(), entry.getValue());
-        }
-        for (Entry<BuiltinSymbol, PropertyDescriptor> entry : symbolProperties.entrySet()) {
-            target.defineOwnProperty(cx, entry.getKey().get(), entry.getValue());
         }
     }
 
@@ -1427,6 +1492,24 @@ public final class Properties {
         }
     }
 
+    private static PropertyDescriptor accessorDescriptor(AccessorLayout layout,
+            NativeFunction accessor) {
+        PropertyDescriptor desc = new PropertyDescriptor();
+        desc.setEnumerable(layout.enumerable());
+        desc.setConfigurable(layout.configurable());
+        if (layout.type == Accessor.Type.Getter) {
+            desc.setGetter(accessor);
+        } else {
+            desc.setSetter(accessor);
+        }
+        return desc;
+    }
+
+    private static PropertyDescriptor valueDescriptor(PropertyLayout layout, Object value) {
+        return new PropertyDescriptor(value, layout.writable(), layout.enumerable(),
+                layout.configurable());
+    }
+
     private static PropertyDescriptor propertyDescriptor(Object value, Attributes attrs) {
         return new PropertyDescriptor(value, attrs.writable(), attrs.enumerable(),
                 attrs.configurable());
@@ -1435,5 +1518,14 @@ public final class Properties {
     private static PropertyDescriptor propertyDescriptor(Callable getter, Callable setter,
             Attributes attrs) {
         return new PropertyDescriptor(getter, setter, attrs.enumerable(), attrs.configurable());
+    }
+
+    private static String accessorName(Accessor.Type type, String name, BuiltinSymbol symbol) {
+        return symbol == BuiltinSymbol.NONE ? (type == Accessor.Type.Getter ? "get " : "set ")
+                + name : name;
+    }
+
+    private static String accessorName(Accessor.Type type, String name, Symbol symbol) {
+        return symbol == null ? (type == Accessor.Type.Getter ? "get " : "set ") + name : name;
     }
 }

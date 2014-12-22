@@ -146,12 +146,12 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
 
     private static final class CompareFunction extends BuiltinFunction {
         public CompareFunction(Realm realm) {
-            super(realm, "compare");
-            createDefaultFunctionProperties("compare", 2);
+            super(realm, "compare", 2);
+            createDefaultFunctionProperties();
         }
 
         private CompareFunction(Realm realm, Void ignore) {
-            super(realm, "compare");
+            super(realm, "compare", 2);
         }
 
         @Override

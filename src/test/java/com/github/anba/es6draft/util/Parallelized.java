@@ -72,11 +72,7 @@ public class Parallelized extends Parameterized {
         threads = threads > 0 ? threads : Runtime.getRuntime().availableProcessors();
         maxThreads = Math.max(maxThreads, 1);
         factor = Math.max(factor, 0);
-        int numThreads = Math.max((int) Math.round(threads * factor), 1);
-        if (numThreads > maxThreads) {
-            numThreads = maxThreads;
-        }
-        return numThreads;
+        return Math.min(Math.max((int) Math.round(threads * factor), 1), maxThreads);
     }
 
     private static <T> T getDefaultValue(Class<?> annotation, String methodName, Class<T> valueType) {

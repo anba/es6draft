@@ -47,7 +47,7 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
      *            the realm object
      */
     public ProxyConstructorFunction(Realm realm) {
-        super(realm, "Proxy");
+        super(realm, "Proxy", 2);
     }
 
     @Override
@@ -142,11 +142,11 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
 
         public ProxyRevocationFunction(Realm realm, ProxyObject revokableProxy) {
             this(realm, new Ref<>(revokableProxy));
-            createDefaultFunctionProperties(ANONYMOUS, 0);
+            createDefaultFunctionProperties();
         }
 
         private ProxyRevocationFunction(Realm realm, Ref<ProxyObject> revokableProxy) {
-            super(realm, ANONYMOUS);
+            super(realm, ANONYMOUS, 0);
             this.revokableProxy = revokableProxy;
         }
 

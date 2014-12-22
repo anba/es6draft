@@ -845,7 +845,9 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                     }
                 } else {
                     if (sb == null) {
-                        sb = new StringBuilder(length).append(s.substring(0, i));
+                        // 10 = 5 * encoded ASCII or 1 * encoded supplementary character
+                        // sb = new StringBuilder(length + 10).append(s.substring(0, i));
+                        sb = new StringBuilder(length + 10).append(s, 0, i);
                     }
                     if (c <= 0x7F) {
                         writeByte(sb, c);
@@ -904,90 +906,140 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
             }
             int len = s.length();
             int j = 0;
-            StringBuilder sb = new StringBuilder(len);
+            StringBuilder sb = null;
             while (i >= 0) {
                 if (i + 2 >= len)
                     return null;
-                if (j < i) {
-                    // append substring before '%'
-                    sb.append(s.substring(j, i));
-                }
                 int c0 = readByte(s, i);
                 if (c0 < 0)
                     return null;
+                int cp;
                 if (c0 <= 0b01111111) {
                     // US-ASCII
                     if (masked(c0, low, high)) {
                         // leave as-is
-                        sb.append(s.substring(i, i + 3));
-                    } else {
-                        sb.append((char) c0);
+                        i = s.indexOf('%', i + 3);
+                        continue;
                     }
-                    i += 3;
-                } else if (c0 <= 0b10111111) {
-                    // illegal (byte sequence part)
-                    return null;
-                } else if (c0 <= 0b11000001) {
-                    // illegal (two byte encoding for US-ASCII)
-                    return null;
+                    cp = (char) c0;
+                } else {
+                    cp = decodeNonASCII(c0, s, i, len);
+                    if (cp < 0)
+                        return null;
+                }
+                int k;
+                if (c0 <= 0b10111111) {
+                    // US-ASCII
+                    // or: illegal (byte sequence part)
+                    k = 3;
                 } else if (c0 <= 0b11011111) {
                     // two byte sequence
-                    if (!(i + 2 + 3 < len))
-                        return null;
-                    int c1 = readByte(s, i + 3);
-                    if (c1 < 0x80 || c1 > 0xBF)
-                        return null;
-                    sb.append((char) ((c0 & 0b11111) << 6 | (c1 & 0b111111)));
-                    i += 6;
+                    // or: illegal (two byte encoding for US-ASCII)
+                    k = 6;
                 } else if (c0 <= 0b11101111) {
                     // three byte sequence
-                    if (!(i + 2 + 6 < len))
-                        return null;
-                    int c1 = readByte(s, i + 3);
-                    int c2 = readByte(s, i + 6);
-                    if (c0 == 0b11100000 ? (c1 < 0xA0 || c1 > 0xBF)
-                            : c0 == 0b11101101 ? (c1 < 0x80 || c1 > 0x9F)
-                                    : (c1 < 0x80 || c1 > 0xBF))
-                        return null;
-                    if (c2 < 0x80 || c2 > 0xBF)
-                        return null;
-                    sb.append((char) ((c0 & 0b1111) << 12 | (c1 & 0b111111) << 6 | (c2 & 0b111111)));
-                    i += 9;
-                } else if (c0 <= 0b11110100) {
-                    // four byte sequence
-                    if (!(i + 2 + 9 < len))
-                        return null;
-                    int c1 = readByte(s, i + 3);
-                    int c2 = readByte(s, i + 6);
-                    int c3 = readByte(s, i + 9);
-                    if (c0 == 0b11110000 ? (c1 < 0x90 || c1 > 0xBF)
-                            : c0 == 0b11110100 ? (c1 < 0x80 || c1 > 0x8F)
-                                    : (c1 < 0x80 || c1 > 0xBF))
-                        return null;
-                    if (c2 < 0x80 || c3 < 0x80 || c2 > 0xBF || c3 > 0xBF)
-                        return null;
-                    int cp = ((c0 & 0b111) << 18 | (c1 & 0b111111) << 12 | (c2 & 0b111111) << 6 | (c3 & 0b111111));
-                    if (cp <= Character.MAX_CODE_POINT) {
-                        // sb.appendCodePoint(cp);
-                        sb.append(Character.highSurrogate(cp));
-                        sb.append(Character.lowSurrogate(cp));
-                    } else {
-                        // illegal code point
-                        return null;
-                    }
-                    i += 12;
+                    k = 9;
                 } else {
-                    // illegal (cf. RFC-3629)
-                    return null;
+                    // four byte sequence
+                    // or: illegal (cf. RFC-3629)
+                    k = 12;
                 }
-                j = i;
-                i = s.indexOf('%', i);
+                if (sb == null) {
+                    if (i == 0 && k == len) {
+                        // Single character escape
+                        return fromCodePoint(cp);
+                    }
+                    sb = new StringBuilder(len);
+                }
+                if (j < i) {
+                    // append substring before '%'
+                    // sb.append(s.substring(j, i));
+                    sb.append(s, j, i);
+                }
+                // sb.appendCodePoint(cp);
+                if (Character.isBmpCodePoint(cp)) {
+                    sb.append((char) cp);
+                } else {
+                    sb.append(Character.highSurrogate(cp));
+                    sb.append(Character.lowSurrogate(cp));
+                }
+                j = i + k;
+                i = s.indexOf('%', j);
+            }
+            if (sb == null) {
+                return s;
             }
             if (j < len) {
                 // append remaining substring
-                sb.append(s.substring(j, len));
+                // sb.append(s.substring(j, len));
+                sb.append(s, j, len);
             }
             return sb.toString();
+        }
+
+        private static int decodeNonASCII(int c0, String s, int i, int len) {
+            if (c0 < 0)
+                return -1;
+            if (c0 <= 0b01111111) {
+                // US-ASCII (handled in caller)
+                return -1;
+            } else if (c0 <= 0b10111111) {
+                // illegal (byte sequence part)
+                return -1;
+            } else if (c0 <= 0b11000001) {
+                // illegal (two byte encoding for US-ASCII)
+                return -1;
+            } else if (c0 <= 0b11011111) {
+                // two byte sequence
+                if (!(i + 2 + 3 < len))
+                    return -1;
+                int c1 = readByte(s, i + 3);
+                if (c1 < 0x80 || c1 > 0xBF)
+                    return -1;
+                return (char) ((c0 & 0b11111) << 6 | (c1 & 0b111111));
+            } else if (c0 <= 0b11101111) {
+                // three byte sequence
+                if (!(i + 2 + 6 < len))
+                    return -1;
+                int c1 = readByte(s, i + 3);
+                int c2 = readByte(s, i + 6);
+                if (c0 == 0b11100000 ? (c1 < 0xA0 || c1 > 0xBF)
+                        : c0 == 0b11101101 ? (c1 < 0x80 || c1 > 0x9F) : (c1 < 0x80 || c1 > 0xBF))
+                    return -1;
+                if (c2 < 0x80 || c2 > 0xBF)
+                    return -1;
+                return (char) ((c0 & 0b1111) << 12 | (c1 & 0b111111) << 6 | (c2 & 0b111111));
+            } else if (c0 <= 0b11110100) {
+                // four byte sequence
+                if (!(i + 2 + 9 < len))
+                    return -1;
+                int c1 = readByte(s, i + 3);
+                int c2 = readByte(s, i + 6);
+                int c3 = readByte(s, i + 9);
+                if (c0 == 0b11110000 ? (c1 < 0x90 || c1 > 0xBF)
+                        : c0 == 0b11110100 ? (c1 < 0x80 || c1 > 0x8F) : (c1 < 0x80 || c1 > 0xBF))
+                    return -1;
+                if (c2 < 0x80 || c3 < 0x80 || c2 > 0xBF || c3 > 0xBF)
+                    return -1;
+                int cp = ((c0 & 0b111) << 18 | (c1 & 0b111111) << 12 | (c2 & 0b111111) << 6 | (c3 & 0b111111));
+                if (cp <= Character.MAX_CODE_POINT) {
+                    return cp;
+                } else {
+                    // illegal code point
+                    return -1;
+                }
+            } else {
+                // illegal (cf. RFC-3629)
+                return -1;
+            }
+        }
+
+        private static String fromCodePoint(int cp) {
+            if (Character.isBmpCodePoint(cp)) {
+                return String.valueOf((char) cp);
+            }
+            return String.valueOf(new char[] { Character.highSurrogate(cp),
+                    Character.lowSurrogate(cp) });
         }
 
         /* embedded BitMaskUtil */

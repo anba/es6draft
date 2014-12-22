@@ -15,14 +15,12 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
@@ -53,6 +51,19 @@ public final class ArgumentsObject extends OrdinaryObject {
      */
     ParameterMap getParameterMap() {
         return parameterMap;
+    }
+
+    @Override
+    public boolean hasIndexedAccessors() {
+        return hasIndexedAccessors;
+    }
+
+    @Override
+    Object getIndexed(int propertyKey) {
+        if (parameterMap != null && parameterMap.hasOwnProperty(propertyKey, false)) {
+            return parameterMap.get(propertyKey);
+        }
+        return super.getIndexed(propertyKey);
     }
 
     /**
@@ -229,10 +240,8 @@ public final class ArgumentsObject extends OrdinaryObject {
         /* step 4 */
         obj.properties().put("length", new Property(len, true, false, true));
         /* steps 5-6 */
-        IndexedMap<Property> indexed = obj.indexedProperties();
         for (int index = 0; index < len; ++index) {
-            Object val = argumentsList[index];
-            indexed.put(index, new Property(val, true, true, true));
+            obj.setIndexed(index, argumentsList[index]);
         }
         Callable thrower = cx.getRealm().getThrowTypeError();
         /* step 7 */
@@ -275,10 +284,8 @@ public final class ArgumentsObject extends OrdinaryObject {
         obj.setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
         /* steps 12-13 (not applicable) */
         /* steps 14-15 */
-        IndexedMap<Property> indexed = obj.indexedProperties();
         for (int index = 0; index < len; ++index) {
-            Object val = argumentsList[index];
-            indexed.put(index, new Property(val, true, true, true));
+            obj.setIndexed(index, argumentsList[index]);
         }
         /* step 16 */
         obj.properties().put("length", new Property(len, true, false, true));
@@ -291,66 +298,5 @@ public final class ArgumentsObject extends OrdinaryObject {
         obj.properties().put("callee", new Property(func, true, false, true));
         /* step 25 */
         return obj;
-    }
-
-    /**
-     * Returns the arguments object's length.
-     * 
-     * @return the length or {@code -1} if not available
-     */
-    public long getLength() {
-        Property length = ordinaryGetOwnProperty("length");
-        if (length == null || !length.isDataDescriptor() || !Type.isNumber(length.getValue())) {
-            return -1;
-        }
-        return ToLength(Type.numberValue(length.getValue()));
-    }
-
-    /**
-     * Returns the argument's indexed property values. Only applicable for dense argument objects.
-     * 
-     * @return the argument's indexed values
-     */
-    public Object[] toArray() {
-        assert isDenseArguments();
-        IndexedMap<Property> indexed = indexedProperties();
-        ParameterMap parameterMap = this.parameterMap;
-        long length = getLength();
-        assert 0 <= length && length <= Integer.MAX_VALUE : "length=" + length;
-        int len = (int) length;
-        Object[] values = new Object[len];
-        for (int i = 0; i < len; ++i) {
-            Object value;
-            if (parameterMap != null && parameterMap.hasOwnProperty(i, false)) {
-                value = parameterMap.get(i);
-            } else {
-                value = indexed.get(i).getValue();
-            }
-            values[i] = value;
-        }
-        return values;
-    }
-
-    /**
-     * Returns {@code true} if the arguments object is dense and has no indexed accessors.
-     * 
-     * @return {@code true} if the arguments object is dense
-     */
-    public boolean isDenseArguments() {
-        IndexedMap<Property> ix = indexedProperties();
-        long length = getLength();
-        return !hasIndexedAccessors && ix.getLength() == length && !ix.isSparse() && !ix.hasHoles();
-    }
-
-    /**
-     * Checks if the arguments object is applicable for fast spread operations.
-     * 
-     * @return {@code true} if the arguments object is applicable for fast spread
-     */
-    public boolean isSpreadable() {
-        if (!isDenseArguments()) {
-            return false;
-        }
-        return ArrayObject.hasBuiltinArrayIterator(this);
     }
 }

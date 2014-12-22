@@ -25,6 +25,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
 import org.junit.rules.ExternalResource;
@@ -62,6 +66,10 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         this.configuration = configuration;
     }
 
+    protected ExecutorService getExecutor() {
+        return null;
+    }
+
     protected Set<CompatibilityOption> getOptions() {
         return options;
     }
@@ -79,7 +87,8 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
     }
 
     protected ScriptLoader createScriptLoader() {
-        return new ScriptLoader(getOptions(), getParserOptions(), getCompilerOptions());
+        return new ScriptLoader(getExecutor(), getOptions(), getParserOptions(),
+                getCompilerOptions());
     }
 
     protected ModuleLoader createModuleLoader(Path baseDirectory) {
@@ -92,6 +101,16 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
 
     protected TimeZone getTimeZone(TEST test) {
         return TimeZone.getDefault();
+    }
+
+    protected static ThreadPoolExecutor createDefaultSharedExecutor() {
+        int coreSize = 4;
+        int maxSize = 12;
+        long timeout = 60L;
+        int queueCapacity = 10;
+        return new ThreadPoolExecutor(coreSize, maxSize, timeout, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(queueCapacity),
+                new ThreadPoolExecutor.CallerRunsPolicy());
     }
 
     @Override

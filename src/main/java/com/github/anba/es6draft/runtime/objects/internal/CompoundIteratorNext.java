@@ -29,12 +29,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class CompoundIteratorNext extends BuiltinFunction {
     public CompoundIteratorNext(Realm realm) {
-        super(realm, "next");
-        createDefaultFunctionProperties("next", 0);
+        super(realm, "next", 0);
+        createDefaultFunctionProperties();
     }
 
     private CompoundIteratorNext(Realm realm, Void ignore) {
-        super(realm, "next");
+        super(realm, "next", 0);
     }
 
     @Override

@@ -145,10 +145,42 @@ public final class IndexedMap<VALUE> {
          */
         abstract long[] indices();
 
+        /**
+         * Returns the indexed keys.
+         * 
+         * @param from
+         *            from index (inclusive)
+         * @param to
+         *            to index (exclusive)
+         * @return the indexed keys
+         */
+        abstract long[] indices(long from, long to);
+
         @SuppressWarnings("unchecked")
         static <T> T[] newArray(int length) {
             return (T[]) new Object[length];
         }
+
+        /**
+         * Returns an ascending iterator over the complete range.
+         * 
+         * @return the range iterator
+         */
+        abstract Iterator<Map.Entry<Long, VALUE>> iterator();
+
+        /**
+         * Returns an ascending iterator over the complete range.
+         * 
+         * @return the range iterator
+         */
+        abstract Iterator<Long> keysIterator();
+
+        /**
+         * Returns an ascending iterator over the complete range.
+         * 
+         * @return the range iterator
+         */
+        abstract Iterator<VALUE> valuesIterator();
 
         /**
          * Returns an ascending iterator over the requested range.
@@ -236,6 +268,26 @@ public final class IndexedMap<VALUE> {
         @Override
         long[] indices() {
             return new long[0];
+        }
+
+        @Override
+        long[] indices(long from, long to) {
+            return new long[0];
+        }
+
+        @Override
+        Iterator<Long> keysIterator() {
+            return Collections.emptyIterator();
+        }
+
+        @Override
+        Iterator<VALUE> valuesIterator() {
+            return Collections.emptyIterator();
+        }
+
+        @Override
+        Iterator<Map.Entry<Long, VALUE>> iterator() {
+            return Collections.emptyIterator();
         }
 
         @Override
@@ -369,7 +421,7 @@ public final class IndexedMap<VALUE> {
         @Override
         List<String> keys() {
             ArrayList<String> keys = new ArrayList<>(count());
-            Iterator<String> iter = new SparseKeyIterator<>(0, array.length, array);
+            Iterator<String> iter = new DenseStringKeyIterator<>(0, array.length, array);
             while (iter.hasNext()) {
                 keys.add(iter.next());
             }
@@ -383,7 +435,7 @@ public final class IndexedMap<VALUE> {
             int toIndex = (int) Math.min(to, array.length);
             int size = Math.min(count(), toIndex - fromIndex);
             ArrayList<String> keys = new ArrayList<>(size);
-            Iterator<String> iter = new SparseKeyIterator<>(fromIndex, toIndex, array);
+            Iterator<String> iter = new DenseStringKeyIterator<>(fromIndex, toIndex, array);
             while (iter.hasNext()) {
                 keys.add(iter.next());
             }
@@ -403,13 +455,50 @@ public final class IndexedMap<VALUE> {
         }
 
         @Override
+        long[] indices(long from, long to) {
+            VALUE[] array = this.array;
+            if (from >= array.length || from >= to) {
+                return new long[0];
+            }
+            int fromIndex = (int) Math.min(from, array.length);
+            int toIndex = (int) Math.min(to, array.length);
+            int range = (toIndex - fromIndex);
+            int j = 0;
+            long[] indices = new long[Math.min(range, count())];
+            for (int i = fromIndex; i < toIndex; ++i) {
+                if (array[i] != null) {
+                    indices[j++] = i;
+                }
+            }
+            if (j != indices.length) {
+                indices = Arrays.copyOf(indices, j);
+            }
+            return indices;
+        }
+
+        @Override
+        Iterator<Map.Entry<Long, VALUE>> iterator() {
+            return new DenseEntryIterator<>(0, array.length, array);
+        }
+
+        @Override
+        Iterator<Long> keysIterator() {
+            return new DenseKeyIterator<>(0, array.length, array);
+        }
+
+        @Override
+        Iterator<VALUE> valuesIterator() {
+            return new DenseValueIterator<>(0, array.length, array);
+        }
+
+        @Override
         Iterator<Map.Entry<Long, VALUE>> ascendingIterator(long from, long to) {
             if (from >= array.length || from >= to) {
                 return Collections.emptyIterator();
             }
             int fromIndex = (int) Math.min(from, array.length);
             int toIndex = (int) Math.min(to, array.length);
-            return new SparseEntryIterator<>(fromIndex, toIndex, array);
+            return new DenseEntryIterator<>(fromIndex, toIndex, array);
         }
 
         @Override
@@ -419,7 +508,7 @@ public final class IndexedMap<VALUE> {
             }
             int endIndex = (int) Math.min(from, array.length) - 1;
             int startIndex = Math.max(0, (int) Math.min(to, array.length) - 1);
-            return new SparseEntryIterator<>(startIndex, endIndex, array);
+            return new DenseEntryIterator<>(startIndex, endIndex, array);
         }
 
         @Override
@@ -581,6 +670,45 @@ public final class IndexedMap<VALUE> {
         }
 
         @Override
+        long[] indices(long from, long to) {
+            long length = length();
+            if (from >= length || from >= to) {
+                return new long[0];
+            }
+            long fromIndex = Math.min(from, length);
+            long toIndex = Math.min(to, length);
+            // Skip subMap() if whole range is requested.
+            if (fromIndex == 0 && toIndex == length) {
+                return indices();
+            }
+            long range = (toIndex - fromIndex);
+            int j = 0;
+            long[] indices = new long[(int) Math.min(range, count())];
+            for (Long k : map.subMap(from, true, to, false).keySet()) {
+                indices[j++] = k;
+            }
+            if (j != indices.length) {
+                indices = Arrays.copyOf(indices, j);
+            }
+            return indices;
+        }
+
+        @Override
+        Iterator<Map.Entry<Long, VALUE>> iterator() {
+            return map.entrySet().iterator();
+        }
+
+        @Override
+        Iterator<Long> keysIterator() {
+            return map.keySet().iterator();
+        }
+
+        @Override
+        Iterator<VALUE> valuesIterator() {
+            return map.values().iterator();
+        }
+
+        @Override
         Iterator<Map.Entry<Long, VALUE>> ascendingIterator(long from, long to) {
             return map.subMap(from, true, to, false).entrySet().iterator();
         }
@@ -596,13 +724,13 @@ public final class IndexedMap<VALUE> {
         }
     }
 
-    private static abstract class SparseIterator<V, T> implements Iterator<T> {
+    private static abstract class DenseIterator<V, T> implements Iterator<T> {
         private final V[] values;
         private final int endIndex;
         private final int step;
         private int index;
 
-        SparseIterator(int startIndex, int endIndex, V[] values) {
+        DenseIterator(int startIndex, int endIndex, V[] values) {
             assert 0 <= startIndex && startIndex <= values.length;
             assert -1 <= endIndex && endIndex <= values.length;
             this.index = startIndex;
@@ -648,8 +776,30 @@ public final class IndexedMap<VALUE> {
         }
     }
 
-    private static final class SparseKeyIterator<V> extends SparseIterator<V, String> {
-        SparseKeyIterator(int startIndex, int endIndex, V[] values) {
+    private static final class DenseKeyIterator<V> extends DenseIterator<V, Long> {
+        DenseKeyIterator(int startIndex, int endIndex, V[] values) {
+            super(startIndex, endIndex, values);
+        }
+
+        @Override
+        protected Long nextValue(int index) {
+            return (long) index;
+        }
+    }
+
+    private static final class DenseValueIterator<V> extends DenseIterator<V, V> {
+        DenseValueIterator(int startIndex, int endIndex, V[] values) {
+            super(startIndex, endIndex, values);
+        }
+
+        @Override
+        protected V nextValue(int index) {
+            return value(index);
+        }
+    }
+
+    private static final class DenseStringKeyIterator<V> extends DenseIterator<V, String> {
+        DenseStringKeyIterator(int startIndex, int endIndex, V[] values) {
             super(startIndex, endIndex, values);
         }
 
@@ -659,8 +809,8 @@ public final class IndexedMap<VALUE> {
         }
     }
 
-    private static final class SparseEntryIterator<V> extends SparseIterator<V, Map.Entry<Long, V>> {
-        SparseEntryIterator(int startIndex, int endIndex, V[] values) {
+    private static final class DenseEntryIterator<V> extends DenseIterator<V, Map.Entry<Long, V>> {
+        DenseEntryIterator(int startIndex, int endIndex, V[] values) {
             super(startIndex, endIndex, values);
         }
 
@@ -690,7 +840,7 @@ public final class IndexedMap<VALUE> {
             return new AbstractSet<Map.Entry<Long, V>>() {
                 @Override
                 public Iterator<java.util.Map.Entry<Long, V>> iterator() {
-                    return new SparseEntryIterator<>(0, values.length, values);
+                    return new DenseEntryIterator<>(0, values.length, values);
                 }
 
                 @Override
@@ -903,7 +1053,7 @@ public final class IndexedMap<VALUE> {
     }
 
     /**
-     * Returns {@code true} if the map is sparse.
+     * Returns {@code true} if the map uses the sparse elements representation.
      * 
      * @return {@code true} if the map is sparse
      */
@@ -927,6 +1077,15 @@ public final class IndexedMap<VALUE> {
      */
     public boolean isEmpty() {
         return elements.count() == 0;
+    }
+
+    /**
+     * Returns the number of mappings in this map.
+     * 
+     * @return the number of mappings
+     */
+    public int size() {
+        return elements.count();
     }
 
     /**
@@ -961,6 +1120,46 @@ public final class IndexedMap<VALUE> {
      */
     public long[] indices() {
         return elements.indices();
+    }
+
+    /**
+     * Returns the indexed keys over the requested range.
+     * 
+     * @param from
+     *            from index (inclusive)
+     * @param to
+     *            to index (exclusive)
+     * @return the indexed keys
+     */
+    public long[] indices(long from, long to) {
+        return elements.indices(from, to);
+    }
+
+    /**
+     * Returns an ascending iterator over the complete range.
+     * 
+     * @return the range iterator
+     */
+    public Iterator<Map.Entry<Long, VALUE>> iterator() {
+        return elements.iterator();
+    }
+
+    /**
+     * Returns an ascending iterator over the complete range.
+     * 
+     * @return the range iterator
+     */
+    public Iterator<Long> keysIterator() {
+        return elements.keysIterator();
+    }
+
+    /**
+     * Returns an ascending iterator over the complete range.
+     * 
+     * @return the range iterator
+     */
+    public Iterator<VALUE> valuesIterator() {
+        return elements.valuesIterator();
     }
 
     /**

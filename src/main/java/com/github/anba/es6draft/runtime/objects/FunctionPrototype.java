@@ -58,7 +58,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
      *            the realm object
      */
     public FunctionPrototype(Realm realm) {
-        super(realm, "");
+        super(realm, "", 0);
     }
 
     @Override

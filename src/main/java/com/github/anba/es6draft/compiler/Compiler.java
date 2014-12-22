@@ -65,11 +65,8 @@ public final class Compiler {
         }
 
         // set-up
-        // prepend '#' to mark generated classes, cf. ErrorPrototype
-        String clazzName = "#" + className;
-
         String superClassName = Types.CompiledScript.getInternalName();
-        Code code = new Code(clazzName, superClassName, sourceName(script), sourceMap(script));
+        Code code = new Code(className, superClassName, sourceName(script), sourceMap(script));
 
         // generate code
         CodeGenerator codegen = new CodeGenerator(code, executor, script.getOptions(),
@@ -77,7 +74,7 @@ public final class Compiler {
         codegen.compile(script);
 
         // finalize
-        return defineAndLoad(code, clazzName);
+        return defineAndLoad(code, className);
     }
 
     public CompiledModule compile(Module module, ModuleRecord moduleRecord, String className)
@@ -90,11 +87,8 @@ public final class Compiler {
         }
 
         // set-up
-        // prepend '#' to mark generated classes, cf. ErrorPrototype
-        String clazzName = "#" + className;
-
         String superClassName = Types.CompiledModule.getInternalName();
-        Code code = new Code(clazzName, superClassName, sourceName(module), sourceMap(module));
+        Code code = new Code(className, superClassName, sourceName(module), sourceMap(module));
 
         // generate code
         CodeGenerator codegen = new CodeGenerator(code, executor, module.getOptions(),
@@ -102,7 +96,7 @@ public final class Compiler {
         codegen.compile(module, moduleRecord);
 
         // finalize
-        return defineAndLoad(code, clazzName);
+        return defineAndLoad(code, className);
     }
 
     public CompiledFunction compile(FunctionDefinition function, String className)
@@ -124,10 +118,8 @@ public final class Compiler {
         }
 
         // set-up
-        // prepend '#' to mark generated classes, cf. ErrorPrototype
-        String clazzName = "#" + className;
         String superClassName = Types.CompiledFunction.getInternalName();
-        Code code = new Code(clazzName, superClassName, "<Function>", null);
+        Code code = new Code(className, superClassName, "<Function>", null);
 
         // generate code
         CodeGenerator codegen = new CodeGenerator(code, executor, compatibilityOptions(function),
@@ -135,7 +127,7 @@ public final class Compiler {
         codegen.compileFunction(function);
 
         // finalize
-        return defineAndLoad(code, clazzName);
+        return defineAndLoad(code, className);
     }
 
     private <T> T defineAndLoad(Code code, String clazzName) {

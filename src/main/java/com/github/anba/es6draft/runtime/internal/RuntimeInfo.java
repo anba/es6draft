@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import java.lang.invoke.MethodHandle;
-import java.nio.file.Paths;
 import java.util.Map;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -253,7 +252,7 @@ public final class RuntimeInfo {
 
         @Override
         public Source toSource() {
-            return new Source(sourceFile != null ? Paths.get(sourceFile) : null, sourceName, 1);
+            return new Source(sourceFile, sourceName, 1);
         }
 
         @Override
@@ -361,7 +360,7 @@ public final class RuntimeInfo {
 
         @Override
         public Source toSource() {
-            return new Source(sourceFile != null ? Paths.get(sourceFile) : null, sourceName, 1);
+            return new Source(sourceFile, sourceName, 1);
         }
 
         @Override

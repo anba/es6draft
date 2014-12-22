@@ -6,15 +6,13 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.TestIntegrityLevel;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.Property;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1>
@@ -33,20 +31,16 @@ public final class TypeErrorThrower extends BuiltinFunction {
      *            the realm object
      */
     private TypeErrorThrower(Realm realm) {
-        super(realm, ANONYMOUS);
-        createDefaultFunctionProperties(ANONYMOUS, 0);
-        // Make 'length' non-configurable to ensure %ThrowTypeError% is not a communication channel
-        PropertyDescriptor nonConfigurable = new PropertyDescriptor();
-        nonConfigurable.setConfigurable(false);
-        ordinaryGetOwnProperty("length").apply(nonConfigurable);
+        super(realm, ANONYMOUS, 0);
+        setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
+        // 'length' is non-configurable to ensure %ThrowTypeError% is not a communication channel
+        properties().put("length", new Property(0, false, false, false));
         // [[Extensible]] slot is false
         setExtensible(false);
-        // Ensure %ThrowTypeError% is not a communication channel
-        assert TestIntegrityLevel(realm.defaultContext(), this, IntegrityLevel.Frozen);
     }
 
     private TypeErrorThrower(Realm realm, Void ignore) {
-        super(realm, ANONYMOUS);
+        super(realm, ANONYMOUS, 0);
     }
 
     @Override

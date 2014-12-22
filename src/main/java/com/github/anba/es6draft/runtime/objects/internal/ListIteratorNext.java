@@ -28,12 +28,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class ListIteratorNext extends BuiltinFunction {
     public ListIteratorNext(Realm realm) {
-        super(realm, "next");
-        createDefaultFunctionProperties("next", 0);
+        super(realm, "next", 0);
+        createDefaultFunctionProperties();
     }
 
     private ListIteratorNext(Realm realm, Void ignore) {
-        super(realm, "next");
+        super(realm, "next", 0);
     }
 
     @Override

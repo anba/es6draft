@@ -24,7 +24,8 @@ final class JoniRegExpMatcher implements RegExpMatcher {
     private final int flags;
     private final BitSet negativeLAGroups;
     private Regex pattern;
-    private String lastInput = null;
+    // FIXME: Memory issue?
+    private CharSequence lastInput = null;
     private byte[] lastInputBytes = null;
 
     public JoniRegExpMatcher(String regex, int flags, BitSet negativeLAGroups) {
@@ -54,6 +55,17 @@ final class JoniRegExpMatcher implements RegExpMatcher {
 
     @Override
     public JoniMatchState matcher(String s) {
+        if (s != lastInput) {
+            lastInput = s;
+            lastInputBytes = UCS2Encoding.toBytes(s);
+        }
+        // -2 to account for null-terminating bytes in c-string
+        Matcher matcher = getPattern().matcher(lastInputBytes, 0, lastInputBytes.length - 2);
+        return new JoniMatchState(matcher, s, negativeLAGroups);
+    }
+
+    @Override
+    public MatchState matcher(CharSequence s) {
         if (s != lastInput) {
             lastInput = s;
             lastInputBytes = UCS2Encoding.toBytes(s);

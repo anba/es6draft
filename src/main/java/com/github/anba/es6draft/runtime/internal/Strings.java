@@ -70,13 +70,15 @@ public final class Strings {
     }
 
     /**
-     * Concatenates the input strings, adjacent strings are separated by a single space character.
+     * Concatenates the input strings, adjacent strings are separated by the given separator char.
      * 
+     * @param separator
+     *            the separator character
      * @param strings
      *            the input strings
      * @return the concatenated string
      */
-    public static String concat(String... strings) {
+    public static String concatWith(char separator, String... strings) {
         if (strings.length == 0) {
             return "";
         } else if (strings.length == 1) {
@@ -84,11 +86,27 @@ public final class Strings {
         } else {
             StringBuilder sb = new StringBuilder();
             for (String string : strings) {
-                sb.append(string).append(' ');
+                sb.append(string).append(separator);
             }
             sb.setLength(sb.length() - 1);
             return sb.toString();
         }
+    }
+
+    /**
+     * Concatenates two strings.
+     * 
+     * @param s1
+     *            the first string
+     * @param s2
+     *            the second string
+     * @return the concatenated string
+     */
+    public static String concat(String s1, String s2) {
+        char[] ca = new char[s1.length() + s2.length()];
+        s1.getChars(0, s1.length(), ca, 0);
+        s2.getChars(0, s2.length(), ca, s1.length());
+        return new String(ca);
     }
 
     /**

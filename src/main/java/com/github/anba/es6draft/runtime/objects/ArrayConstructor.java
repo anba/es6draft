@@ -47,7 +47,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
      *            the realm object
      */
     public ArrayConstructor(Realm realm) {
-        super(realm, "Array");
+        super(realm, "Array", 1);
     }
 
     @Override

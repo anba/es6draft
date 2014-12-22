@@ -47,13 +47,15 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
+import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype;
+import com.github.anba.es6draft.runtime.objects.ArrayPrototype;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
-import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
@@ -296,19 +298,12 @@ public final class ScriptRuntime {
      */
     public static int ArrayAccumulationSpreadElement(ArrayObject array, int nextIndex,
             Object spreadObj, ExecutionContext cx) {
-        if (spreadObj instanceof ArrayObject) {
-            ArrayObject spreadArray = (ArrayObject) spreadObj;
-            long newLength = nextIndex + spreadArray.getLength();
-            if (newLength <= Integer.MAX_VALUE && spreadArray.isSpreadable()) {
-                array.spread(spreadArray, nextIndex);
-                return (int) newLength;
-            }
-        }
-        if (spreadObj instanceof ArgumentsObject) {
-            ArgumentsObject arguments = (ArgumentsObject) spreadObj;
-            long newLength = nextIndex + arguments.getLength();
-            if (newLength <= Integer.MAX_VALUE && arguments.isSpreadable()) {
-                array.spread(arguments, nextIndex);
+        if (spreadObj instanceof OrdinaryObject) {
+            OrdinaryObject object = (OrdinaryObject) spreadObj;
+            long length = object.getLength();
+            long newLength = nextIndex + length;
+            if (0 <= length && newLength <= Integer.MAX_VALUE && isSpreadable(cx, object, length)) {
+                array.insertFrom(nextIndex, object, length);
                 return (int) newLength;
             }
         }
@@ -325,6 +320,35 @@ public final class ScriptRuntime {
             defineProperty(array, nextIndex, nextValue, cx);
             nextIndex += 1;
         }
+    }
+
+    private static boolean isSpreadable(ExecutionContext cx, OrdinaryObject object, long length) {
+        if (object.hasSpecialIndexedProperties()) {
+            return false;
+        }
+        if (!object.isDenseArray(length)) {
+            return false;
+        }
+        Property iterProp = object.getOwnProperty(cx, BuiltinSymbol.iterator.get());
+        if (iterProp == null) {
+            ScriptObject proto = object.getPrototype();
+            if (!(proto instanceof OrdinaryObject)) {
+                return false;
+            }
+            iterProp = ((OrdinaryObject) proto).getOwnProperty(cx, BuiltinSymbol.iterator.get());
+        }
+        // Test 1: Is object[Symbol.iterator] == %ArrayPrototype%.values?
+        if (iterProp == null || !ArrayPrototype.isBuiltinValues(iterProp.getValue())) {
+            return false;
+        }
+        // Test 2: Is %ArrayIteratorPrototype%.next the built-in next method?
+        OrdinaryObject arrayIterProto = ((NativeFunction) iterProp.getValue()).getRealm()
+                .getIntrinsic(Intrinsics.ArrayIteratorPrototype);
+        Property iterNextProp = arrayIterProto.getOwnProperty(cx, "next");
+        if (iterNextProp == null || !ArrayIteratorPrototype.isBuiltinNext(iterNextProp.getValue())) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -808,6 +832,14 @@ public final class ScriptRuntime {
      */
     public static Reference<Object, ?> getElement(Object baseValue, Object propertyNameValue,
             ExecutionContext cx, boolean strict) {
+        // TODO: IC
+        if (Type.isString(propertyNameValue)) {
+            return getProperty(baseValue, Type.stringValue(propertyNameValue).toString(), cx,
+                    strict);
+        }
+        if (Type.isNumber(propertyNameValue)) {
+            return getProperty(baseValue, Type.numberValue(propertyNameValue), cx, strict);
+        }
         /* steps 1-6 (generated code) */
         /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
@@ -841,6 +873,14 @@ public final class ScriptRuntime {
      */
     public static Object getElementValue(Object baseValue, Object propertyNameValue,
             ExecutionContext cx, boolean strict) {
+        // TODO: IC
+        if (Type.isString(propertyNameValue)) {
+            return getPropertyValue(baseValue, Type.stringValue(propertyNameValue).toString(), cx,
+                    strict);
+        }
+        if (Type.isNumber(propertyNameValue)) {
+            return getPropertyValue(baseValue, Type.numberValue(propertyNameValue), cx, strict);
+        }
         /* steps 1-6 (generated code) */
         /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
@@ -1203,24 +1243,14 @@ public final class ScriptRuntime {
      */
     public static Object[] SpreadArray(Object spreadObj, ExecutionContext cx) {
         final int MAX_ARGS = FunctionPrototype.getMaxArguments();
-        if (spreadObj instanceof ArrayObject) {
-            ArrayObject array = (ArrayObject) spreadObj;
-            long length = array.getLength();
-            if (length <= MAX_ARGS && array.isSpreadable()) {
+        if (spreadObj instanceof OrdinaryObject) {
+            OrdinaryObject object = (OrdinaryObject) spreadObj;
+            long length = object.getLength();
+            if (0 <= length && length <= MAX_ARGS && isSpreadable(cx, object, length)) {
                 if (length == 0) {
                     return EMPTY_ARRAY;
                 }
-                return array.toArray();
-            }
-        }
-        if (spreadObj instanceof ArgumentsObject) {
-            ArgumentsObject arguments = (ArgumentsObject) spreadObj;
-            long length = arguments.getLength();
-            if (0 <= length && length <= MAX_ARGS && arguments.isSpreadable()) {
-                if (length == 0) {
-                    return EMPTY_ARRAY;
-                }
-                return arguments.toArray();
+                return object.toArray(length);
             }
         }
         /* steps 1-3 (cf. generated code) */
@@ -1370,9 +1400,17 @@ public final class ScriptRuntime {
             throw newInternalError(cx, Messages.Key.OutOfMemory);
         }
         if (newlen <= 10) {
-            return new StringBuilder(newlen).append(lstr).append(rstr).toString();
+            // return new StringBuilder(newlen).append(lstr).append(rstr).toString();
+            return inlineString(lstr, rstr, llen, rlen);
         }
         return new ConsString(lstr, rstr);
+    }
+
+    private static String inlineString(CharSequence lstr, CharSequence rstr, int llen, int rlen) {
+        char[] ca = new char[llen + rlen];
+        lstr.toString().getChars(0, llen, ca, 0);
+        rstr.toString().getChars(0, rlen, ca, llen);
+        return new String(ca);
     }
 
     /**

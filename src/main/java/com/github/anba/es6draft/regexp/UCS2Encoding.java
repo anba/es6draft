@@ -11,6 +11,7 @@ import org.jcodings.CaseFoldCodeItem;
 import org.jcodings.IntHolder;
 import org.jcodings.constants.CharacterType;
 import org.jcodings.unicode.UnicodeEncoding;
+import org.mozilla.javascript.ConsString;
 
 import com.github.anba.es6draft.parser.Characters;
 
@@ -22,6 +23,13 @@ final class UCS2Encoding extends UnicodeEncoding {
 
     protected UCS2Encoding() {
         super("UCS-2", 2, 2, null);
+    }
+
+    public static byte[] toBytes(CharSequence cs) {
+        if (cs instanceof ConsString) {
+            return ((ConsString) cs).toByteArray(new byte[cs.length() * 2 + 2]);
+        }
+        return toBytes(cs.toString());
     }
 
     public static byte[] toBytes(String s) {

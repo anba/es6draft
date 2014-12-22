@@ -28,6 +28,7 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
+import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.TestGlobalObject;
 import com.github.anba.es6draft.repl.console.ShellConsole;
@@ -40,6 +41,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.util.Parallelized;
+import com.github.anba.es6draft.util.ParallelizedRunnerFactory;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -50,6 +52,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  * Test class for Promise/A+ tests
  */
 @RunWith(Parallelized.class)
+@UseParametersRunnerFactory(ParallelizedRunnerFactory.class)
 @TestConfiguration(name = "promise.test.aplus", file = "resource:/test-configuration.properties")
 public final class PromiseAPlusTest {
     private static final Configuration configuration = loadConfiguration(PromiseAPlusTest.class);

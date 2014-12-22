@@ -219,7 +219,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
      *            the realm object
      */
     public CollatorConstructor(Realm realm) {
-        super(realm, "Collator");
+        super(realm, "Collator", 0);
     }
 
     @Override

@@ -48,7 +48,7 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
      *            the realm object
      */
     public DateConstructor(Realm realm) {
-        super(realm, "Date");
+        super(realm, "Date", 7);
     }
 
     @Override

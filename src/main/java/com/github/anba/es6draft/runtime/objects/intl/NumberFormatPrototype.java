@@ -165,12 +165,12 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
 
     private static final class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
-            super(realm, "format");
-            createDefaultFunctionProperties("format", 1);
+            super(realm, "format", 1);
+            createDefaultFunctionProperties();
         }
 
         private FormatFunction(Realm realm, Void ignore) {
-            super(realm, "format");
+            super(realm, "format", 1);
         }
 
         @Override

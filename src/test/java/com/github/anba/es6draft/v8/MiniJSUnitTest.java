@@ -16,6 +16,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,13 +32,16 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
+import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.Parallelized;
+import com.github.anba.es6draft.util.ParallelizedRunnerFactory;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -48,6 +52,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  *
  */
 @RunWith(Parallelized.class)
+@UseParametersRunnerFactory(ParallelizedRunnerFactory.class)
 @TestConfiguration(name = "v8.test.mjsunit", file = "resource:/test-configuration.properties")
 public final class MiniJSUnitTest {
     private static final Configuration configuration = loadConfiguration(MiniJSUnitTest.class);

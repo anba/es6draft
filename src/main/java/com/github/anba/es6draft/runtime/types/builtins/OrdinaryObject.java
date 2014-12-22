@@ -10,15 +10,16 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.PropertyMap;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -39,9 +40,10 @@ import com.github.anba.es6draft.runtime.types.Type;
 public class OrdinaryObject implements ScriptObject {
     private static final int STRING_PROPERTIES_DEFAULT_INITIAL_CAPACITY = 16;
     private static final int SYMBOL_PROPERTIES_DEFAULT_INITIAL_CAPACITY = 4;
+    private static final Object[] EMPTY_GETTER_ARGS = new Object[0];
     // Maps for String and Symbol valued property keys
-    private final LinkedHashMap<String, Property> properties;
-    private final LinkedHashMap<Symbol, Property> symbolProperties;
+    private final PropertyMap<String, Property> properties;
+    private final PropertyMap<Symbol, Property> symbolProperties;
     // Map for indexed properties [0, 2^53 - 1]
     private final IndexedMap<Property> indexedProperties;
 
@@ -63,8 +65,8 @@ public class OrdinaryObject implements ScriptObject {
      */
     public OrdinaryObject(Realm realm) {
         this.realm = realm;
-        this.properties = new LinkedHashMap<>(STRING_PROPERTIES_DEFAULT_INITIAL_CAPACITY);
-        this.symbolProperties = new LinkedHashMap<>(SYMBOL_PROPERTIES_DEFAULT_INITIAL_CAPACITY);
+        this.properties = new PropertyMap<>(STRING_PROPERTIES_DEFAULT_INITIAL_CAPACITY);
+        this.symbolProperties = new PropertyMap<>(SYMBOL_PROPERTIES_DEFAULT_INITIAL_CAPACITY);
         this.indexedProperties = new IndexedMap<>();
     }
 
@@ -95,7 +97,7 @@ public class OrdinaryObject implements ScriptObject {
      * 
      * @return the string valued properties
      */
-    final LinkedHashMap<String, Property> properties() {
+    final PropertyMap<String, Property> properties() {
         return properties;
     }
 
@@ -104,7 +106,7 @@ public class OrdinaryObject implements ScriptObject {
      * 
      * @return the symbol valued properties
      */
-    final LinkedHashMap<Symbol, Property> symbolProperties() {
+    final PropertyMap<Symbol, Property> symbolProperties() {
         return symbolProperties;
     }
 
@@ -115,6 +117,150 @@ public class OrdinaryObject implements ScriptObject {
      */
     final IndexedMap<Property> indexedProperties() {
         return indexedProperties;
+    }
+
+    /**
+     * Returns the own property value from the given index.
+     * 
+     * @param propertyKey
+     *            the indexed property key
+     * @return the property value
+     */
+    Object getIndexed(int propertyKey) {
+        return indexedProperties.get(propertyKey).getValue();
+    }
+
+    /**
+     * Set the own property value at the given index to the new value.
+     * 
+     * @param propertyKey
+     *            the indexed property key
+     * @param value
+     *            the property value
+     */
+    final void setIndexed(int propertyKey, Object value) {
+        indexedProperties.put(propertyKey, new Property(value, true, true, true));
+    }
+
+    /**
+     * Returns the list of integer indexed properties.
+     * 
+     * @return the list of integer indexed properties
+     */
+    public final long[] indices() {
+        return indexedProperties().indices();
+    }
+
+    /**
+     * Returns the list of integer indexed properties.
+     * 
+     * @param from
+     *            from index (inclusive)
+     * @param to
+     *            to index (exclusive)
+     * @return the list of integer indexed properties
+     */
+    public final long[] indices(long from, long to) {
+        return indexedProperties().indices(from, to);
+    }
+
+    /**
+     * Returns {@code true} if this object has indexed properties.
+     * 
+     * @return {@code true} if this object has indexed properties
+     */
+    public final boolean hasIndexedProperties() {
+        return !indexedProperties.isEmpty();
+    }
+
+    /**
+     * Returns {@code true} if the object has indexed accessors.
+     * 
+     * @return {@code true} if the object has indexed accessors
+     */
+    public boolean hasIndexedAccessors() {
+        if (indexedProperties.isEmpty()) {
+            return false;
+        }
+        for (Iterator<Property> iter = indexedProperties.valuesIterator(); iter.hasNext();) {
+            if (iter.next().isAccessorDescriptor()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns the object's length.
+     * 
+     * @return the length or {@code -1} if not available
+     */
+    public long getLength() {
+        Property length = ordinaryGetOwnProperty("length");
+        if (length == null || !length.isDataDescriptor() || !Type.isNumber(length.getValue())) {
+            return -1;
+        }
+        return ToLength(Type.numberValue(length.getValue()));
+    }
+
+    /**
+     * Returns {@code true} if the array is dense and has no indexed accessors.
+     * 
+     * @return {@code true} if the array is dense
+     */
+    public final boolean isDenseArray() {
+        return isDenseArray(getLength());
+    }
+
+    /**
+     * Returns {@code true} if the array is dense and has no indexed accessors.
+     * 
+     * @param length
+     *            the array length
+     * @return {@code true} if the array is dense
+     */
+    public final boolean isDenseArray(long length) {
+        assert !hasSpecialIndexedProperties() : "cannot report dense if special indexed present";
+        IndexedMap<Property> ix = indexedProperties();
+        return !hasIndexedAccessors() && ix.getLength() == length && !ix.isSparse()
+                && !ix.hasHoles();
+    }
+
+    /**
+     * Returns {@code true} if this object has "special" indexed properties.
+     * 
+     * @return {@code true} if this object has special indexed properties
+     */
+    public boolean hasSpecialIndexedProperties() {
+        // TODO: Rename method...
+        return false;
+    }
+
+    /**
+     * Returns the array's indexed property values. Only applicable for dense arrays.
+     * 
+     * @return the array's indexed values
+     */
+    public final Object[] toArray() {
+        return toArray(getLength());
+    }
+
+    /**
+     * Returns the array's indexed property values. Only applicable for dense arrays.
+     * 
+     * @param length
+     *            the array length
+     * @return the array's indexed values
+     */
+    public final Object[] toArray(long length) {
+        assert isDenseArray(length);
+        assert 0 <= length && length <= Integer.MAX_VALUE : "length=" + length;
+        int len = (int) length;
+        Object[] values = new Object[len];
+        for (int i = 0; i < len; ++i) {
+            values[i] = getIndexed(i);
+        }
+        return values;
     }
 
     /**
@@ -632,7 +778,7 @@ public class OrdinaryObject implements ScriptObject {
      * @return {@code true} on success
      */
     private static final <KEY> boolean validateAndApplyPropertyDescriptor(
-            LinkedHashMap<KEY, Property> object, KEY propertyKey, boolean extensible,
+            PropertyMap<KEY, Property> object, KEY propertyKey, boolean extensible,
             PropertyDescriptor desc, Property current) {
         /* step 1 */
         assert (object == null || propertyKey != null);
@@ -993,7 +1139,7 @@ public class OrdinaryObject implements ScriptObject {
             return UNDEFINED;
         }
         /* step 8 */
-        return getter.call(cx, receiver);
+        return getter.call(cx, receiver, EMPTY_GETTER_ARGS);
     }
 
     /**
@@ -1031,7 +1177,7 @@ public class OrdinaryObject implements ScriptObject {
             return UNDEFINED;
         }
         /* step 8 */
-        return getter.call(cx, receiver);
+        return getter.call(cx, receiver, EMPTY_GETTER_ARGS);
     }
 
     /**
@@ -1069,7 +1215,7 @@ public class OrdinaryObject implements ScriptObject {
             return UNDEFINED;
         }
         /* step 8 */
-        return getter.call(cx, receiver);
+        return getter.call(cx, receiver, EMPTY_GETTER_ARGS);
     }
 
     /** 9.1.9 [[Set] (P, V, Receiver) */
@@ -1381,11 +1527,17 @@ public class OrdinaryObject implements ScriptObject {
      * @return the list of enumerable string valued property keys
      */
     protected List<String> getEnumerableKeys(ExecutionContext cx) {
-        ArrayList<String> keys = new ArrayList<>();
-        if (!indexedProperties.isEmpty()) {
+        int indexedSize = indexedProperties.size();
+        int propertiesSize = properties.size();
+        int totalSize = indexedSize + propertiesSize;
+        if (totalSize == 0) {
+            return Collections.emptyList();
+        }
+        ArrayList<String> keys = new ArrayList<>(totalSize);
+        if (indexedSize != 0) {
             keys.addAll(indexedProperties.keys());
         }
-        if (!properties.isEmpty()) {
+        if (propertiesSize != 0) {
             keys.addAll(properties.keySet());
         }
         return keys;
@@ -1400,7 +1552,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * Subclasses need to override this method if they have virtual, enumerable properties.
+     * Subclasses need to override this method if they have virtual, configurable properties.
      * 
      * @param propertyKey
      *            the property key
@@ -1519,18 +1671,25 @@ public class OrdinaryObject implements ScriptObject {
      * @return the list of own property keys
      */
     protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
+        int indexedSize = indexedProperties.size();
+        int propertiesSize = properties.size();
+        int symbolsSize = symbolProperties.size();
+        int totalSize = indexedSize + propertiesSize + symbolsSize;
+        if (totalSize == 0) {
+            return Collections.emptyList();
+        }
         /* step 1 */
-        ArrayList<Object> ownKeys = new ArrayList<>();
+        ArrayList<Object> ownKeys = new ArrayList<>(totalSize);
         /* step 2 */
-        if (!indexedProperties.isEmpty()) {
+        if (indexedSize != 0) {
             ownKeys.addAll(indexedProperties.keys());
         }
         /* step 3 */
-        if (!properties.isEmpty()) {
+        if (propertiesSize != 0) {
             ownKeys.addAll(properties.keySet());
         }
         /* step 4 */
-        if (!symbolProperties.isEmpty()) {
+        if (symbolsSize != 0) {
             ownKeys.addAll(symbolProperties.keySet());
         }
         /* step 5 */

@@ -88,7 +88,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
      *            the native error type
      */
     public NativeErrorConstructor(Realm realm, ErrorType type) {
-        super(realm, type.name());
+        super(realm, type.name(), 1);
         this.type = type;
     }
 

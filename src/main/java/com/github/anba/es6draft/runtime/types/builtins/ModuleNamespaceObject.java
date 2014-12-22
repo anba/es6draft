@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,6 +22,7 @@ import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.PropertyMap;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
@@ -96,6 +96,11 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
             sortedExports = Collections.unmodifiableList(sorted);
         }
         return sortedExports;
+    }
+
+    @Override
+    public boolean hasSpecialIndexedProperties() {
+        return true;
     }
 
     /** 9.4.6.1 [[GetPrototypeOf]] ( ) */
@@ -327,7 +332,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         @SuppressWarnings("unchecked")
         List<Object> exports = (List<Object>) (List<?>) getSortedExports();
         /* step 2 */
-        LinkedHashMap<Symbol, Property> symbolProperties = symbolProperties();
+        PropertyMap<Symbol, Property> symbolProperties = symbolProperties();
         /* step 3 */
         if (!symbolProperties.isEmpty()) {
             exports = new ArrayList<>(exports);
@@ -359,7 +364,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         /* steps 5-9 */
         ModuleNamespaceObject m = new ModuleNamespaceObject(cx.getRealm(), module, realm, exports);
         /* step 10 */
-        LinkedHashMap<Symbol, Property> symbolProperties = m.symbolProperties();
+        PropertyMap<Symbol, Property> symbolProperties = m.symbolProperties();
         // 26.3.1 @@toStringTag
         symbolProperties.put(BuiltinSymbol.toStringTag.get(), new Property("Module", false, false,
                 true));
@@ -377,12 +382,12 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
      */
     private static final class ModuleIteratorFunction extends BuiltinFunction {
         public ModuleIteratorFunction(Realm realm) {
-            super(realm, "[Symbol.iterator]");
-            createDefaultFunctionProperties("[Symbol.iterator]", 0);
+            super(realm, "[Symbol.iterator]", 0);
+            createDefaultFunctionProperties();
         }
 
         private ModuleIteratorFunction(Realm realm, Void ignore) {
-            super(realm, "[Symbol.iterator]");
+            super(realm, "[Symbol.iterator]", 0);
         }
 
         @Override

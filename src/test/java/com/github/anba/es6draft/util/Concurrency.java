@@ -29,7 +29,7 @@ public @interface Concurrency {
      * 
      * @return maximum number of threads
      */
-    int maxThreads() default 16;
+    int maxThreads() default 12;
 
     /**
      * Multiplicator for {@link #threads()}, defaults to {@code 1.5}.

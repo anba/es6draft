@@ -47,7 +47,7 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
      *            the realm object
      */
     public SymbolConstructor(Realm realm) {
-        super(realm, "Symbol");
+        super(realm, "Symbol", 1);
     }
 
     @Override

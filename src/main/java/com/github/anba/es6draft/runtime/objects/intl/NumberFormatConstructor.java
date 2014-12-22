@@ -128,7 +128,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
      *            the realm object
      */
     public NumberFormatConstructor(Realm realm) {
-        super(realm, "NumberFormat");
+        super(realm, "NumberFormat", 0);
     }
 
     @Override

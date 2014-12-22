@@ -40,13 +40,16 @@ import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
+import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
+import com.github.anba.es6draft.util.ParallelizedRunnerFactory;
 import com.github.anba.es6draft.util.Resources;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
@@ -57,10 +60,10 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  * The standard test262 test suite (strict)
  */
 @RunWith(Parallelized.class)
+@UseParametersRunnerFactory(ParallelizedRunnerFactory.class)
 @TestConfiguration(name = "test262.test.strict", file = "resource:/test-configuration.properties")
 public final class Test262Strict {
     private static final Configuration configuration = loadConfiguration(Test262Strict.class);
-
     private static final DefaultMode unmarkedDefault = DefaultMode.forName(configuration
             .getString("unmarked_default"));
 
@@ -133,7 +136,7 @@ public final class Test262Strict {
         } else {
             preamble = "//\"use strict\";\nvar strict_mode = false;\n";
         }
-        sourceCode = preamble + fileContent;
+        sourceCode = Strings.concat(preamble, fileContent);
         preambleLines = 2;
 
         global = globals.newGlobal(new Test262Console(), test);

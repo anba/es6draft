@@ -220,6 +220,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* step 2 */
             ScriptObject r = Type.objectValue(thisValue);
             /* steps 3-4 */
+            // TODO: ToFlatString for small strings, ToString for large strings?
             String s = ToFlatString(cx, string);
             /* steps 5-6 */
             MatchResult match = getMatcherOrNull(cx, r, s, true);

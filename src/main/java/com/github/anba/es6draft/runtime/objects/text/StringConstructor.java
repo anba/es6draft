@@ -48,7 +48,7 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
      *            the realm object
      */
     public StringConstructor(Realm realm) {
-        super(realm, "String");
+        super(realm, "String", 1);
     }
 
     @Override
@@ -170,6 +170,10 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
                 Object... codeUnits) {
             /* steps 1-2 */
             int length = codeUnits.length;
+            // Optimize:
+            if (length == 1) {
+                return String.valueOf((char) ToUint16(cx, codeUnits[0]));
+            }
             /* step 3 */
             char elements[] = new char[length];
             /* steps 4-5 */
@@ -198,6 +202,19 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
                 Object... codePoints) {
             /* steps 1-2 */
             int length = codePoints.length;
+            // Optimize:
+            if (length == 1) {
+                double nextCP = ToNumber(cx, codePoints[0]);
+                int cp = (int) nextCP;
+                if (cp < 0 || cp > 0x10FFFF || nextCP != (double) cp) {
+                    throw newRangeError(cx, Messages.Key.InvalidCodePoint);
+                }
+                if (Character.isBmpCodePoint(cp)) {
+                    return String.valueOf((char) cp);
+                }
+                return String.valueOf(new char[] { Character.highSurrogate(cp),
+                        Character.lowSurrogate(cp) });
+            }
             /* step 3 */
             int elements[] = new int[length];
             /* steps 4-5 */

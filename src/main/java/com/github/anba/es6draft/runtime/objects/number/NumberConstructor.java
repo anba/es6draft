@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 
 import org.mozilla.javascript.StringToNumber;
 
+import com.github.anba.es6draft.parser.NumberParser;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
@@ -45,7 +46,7 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
      *            the realm object
      */
     public NumberConstructor(Realm realm) {
-        super(realm, "Number");
+        super(realm, "Number", 1);
     }
 
     @Override
@@ -248,7 +249,7 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
                 return Double.NaN;
             }
             /* steps 5-6 */
-            return readDecimalLiteralPrefix(trimmedString, 0, trimmedString.length());
+            return readDecimalLiteralPrefix(trimmedString);
         }
 
         /**
@@ -374,10 +375,11 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
         }
     }
 
-    private static double readDecimalLiteralPrefix(String s, int start, int end) {
+    private static double readDecimalLiteralPrefix(String s) {
         final int Infinity_length = "Infinity".length();
 
-        int index = start;
+        final int end = s.length();
+        int index = 0;
         int c = s.charAt(index++);
         boolean isPos = true;
         if (c == '+' || c == '-') {
@@ -394,6 +396,7 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
             }
             return Double.NaN;
         }
+        boolean hasDot = false, hasExp = false;
         prefix: {
             if (c == '.') {
                 if (index >= end)
@@ -417,6 +420,7 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
                 } while (c != '.' && c != 'e' && c != 'E');
             }
             if (c == '.') {
+                hasDot = true;
                 while (index < end) {
                     c = s.charAt(index++);
                     if (c == 'e' || c == 'E') {
@@ -443,6 +447,7 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
                     index = exp;
                     break prefix;
                 }
+                hasExp = true;
                 do {
                     if (!(c >= '0' && c <= '9')) {
                         break prefix;
@@ -454,9 +459,15 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
                 } while (true);
             }
             if (index >= end) {
-                return Double.parseDouble(s.substring(start, end));
+                if (!(hasDot || hasExp)) {
+                    return NumberParser.parseInteger(s);
+                }
+                return NumberParser.parseDecimal(s);
             }
         } // prefix
-        return Double.parseDouble(s.substring(start, index - 1));
+        if (!(hasDot || hasExp)) {
+            return NumberParser.parseInteger(s, index - 1);
+        }
+        return NumberParser.parseDecimal(s, index - 1);
     }
 }

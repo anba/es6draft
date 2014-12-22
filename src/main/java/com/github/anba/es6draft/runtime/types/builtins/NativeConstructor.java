@@ -44,20 +44,21 @@ public final class NativeConstructor extends BuiltinConstructor implements Creat
      */
     public NativeConstructor(Realm realm, String name, int arity, CreateAction<?> createAction,
             MethodHandle mh) {
-        this(realm, name, createAction, mh);
-        createDefaultFunctionProperties(name, arity);
-    }
-
-    private NativeConstructor(Realm realm, String name, CreateAction<?> createAction,
-            MethodHandle mh) {
-        super(realm, name);
+        super(realm, name, arity);
         this.createAction = createAction;
         this.mh = mh;
+        createDefaultFunctionProperties();
+    }
+
+    private NativeConstructor(NativeConstructor original) {
+        super(original.getRealm(), original.getName(), original.getArity());
+        this.createAction = original.createAction;
+        this.mh = original.mh;
     }
 
     @Override
     public NativeConstructor clone() {
-        return new NativeConstructor(getRealm(), getName(), createAction, mh);
+        return new NativeConstructor(this);
     }
 
     @Override

@@ -18,4 +18,13 @@ public interface RegExpMatcher {
      * @return the match state
      */
     MatchState matcher(String input);
+
+    /**
+     * Returns a {@link MatchState} object for {@code input}.
+     * 
+     * @param input
+     *            the input string to match against
+     * @return the match state
+     */
+    MatchState matcher(CharSequence input);
 }

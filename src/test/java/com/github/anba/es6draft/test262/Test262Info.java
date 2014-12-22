@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,11 +36,14 @@ import com.github.anba.es6draft.util.TestInfo;
 final class Test262Info extends TestInfo {
     private static final Pattern fileNamePattern = Pattern.compile("(.+?)(?:\\.([^.]*)$|$)");
     private static final Pattern tags = Pattern.compile("\\s*\\*\\s*@(\\w+)\\s*(.+)?\\s*");
-    private static final Pattern contentPattern;
+    private static final Pattern contentPattern, yamlContentPattern;
     static {
-        String fileHeader = "(?:\\s*(?://.*)?)*";
-        String descriptor = "/\\*\\*?(?<descriptor>(?s:.*?))\\*/\\s*\n";
-        contentPattern = Pattern.compile("(?:" + fileHeader + ")(?:" + descriptor + ")?(?s:.*)");
+        String fileHeader = "(?:(?:\\s*(?://.*)?)*)";
+        String descriptor = "(?:/\\*\\*?((?s:.*?))\\*/\\s*\n)?";
+        String yamlDescriptor = "(?:/\\*---((?s:.*?))---\\*/\\s*\n)";
+        String testCode = "(?s:.*)";
+        contentPattern = Pattern.compile(fileHeader + descriptor + testCode);
+        yamlContentPattern = Pattern.compile(fileHeader + yamlDescriptor + testCode);
     }
 
     private String testName, description, errorType;
@@ -149,26 +153,27 @@ final class Test262Info extends TestInfo {
      * Parses the test file information for this test case.
      */
     public void readFileInformation(String content) {
-        Matcher m = contentPattern.matcher(content);
-        if (!m.matches()) {
-            throw new AssertionError("Invalid test file: " + this);
-        }
-        assert m.groupCount() == 1;
-        String descriptor = m.group("descriptor");
-        boolean isYaml = descriptor.startsWith("---") && descriptor.endsWith("---");
-        if (isYaml) {
-            readYaml(descriptor);
+        Matcher m;
+        if ((m = yamlContentPattern.matcher(content)).matches()) {
+            readYaml(m.group(1));
+        } else if ((m = contentPattern.matcher(content)).matches()) {
+            readTagged(m.group(1));
         } else {
-            readTagged(descriptor);
+            throw new AssertionError("Invalid test file: " + this);
         }
         this.async = content.contains("$DONE");
     }
 
+    private static final ConcurrentLinkedQueue<Yaml> yamlQueue = new ConcurrentLinkedQueue<>();
+
     private void readYaml(String descriptor) {
-        // Strip leading and trailing triple dash to ensure stream contains only a single document
-        String content = descriptor.substring(3, descriptor.length() - 3);
-        Yaml yaml = new Yaml();
-        TestDescriptor desc = yaml.loadAs(content, TestDescriptor.class);
+        assert descriptor != null && !descriptor.isEmpty();
+        Yaml yaml = yamlQueue.poll();
+        if (yaml == null) {
+            yaml = new Yaml();
+        }
+        TestDescriptor desc = yaml.loadAs(descriptor, TestDescriptor.class);
+        yamlQueue.offer(yaml);
         this.description = desc.getDescription();
         this.includes = desc.getIncludes();
         this.errorType = desc.getNegative();
@@ -271,6 +276,7 @@ final class Test262Info extends TestInfo {
     }
 
     private void readTagged(String descriptor) {
+        assert descriptor != null && !descriptor.isEmpty();
         for (LineIterator lines = new LineIterator(new StringReader(descriptor)); lines.hasNext();) {
             String line = lines.next();
             Matcher m = tags.matcher(line);

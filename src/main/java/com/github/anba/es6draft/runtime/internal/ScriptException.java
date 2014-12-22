@@ -31,6 +31,19 @@ public final class ScriptException extends RuntimeException {
     }
 
     /**
+     * Create a new {@link ScriptException} instance.
+     * 
+     * @param value
+     *            the wrapped exception value
+     * @param cause
+     *            the exception's cause
+     */
+    public ScriptException(Object value, Throwable cause) {
+        super(cause);
+        this.value = value;
+    }
+
+    /**
      * Creates a new {@link ScriptException} instance, unless {@code value} is an instance of
      * {@link ErrorObject}, in that case {@link ErrorObject#getException()} is returned.
      * 

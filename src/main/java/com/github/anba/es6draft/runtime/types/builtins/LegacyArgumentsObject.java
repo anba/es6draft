@@ -130,6 +130,11 @@ public final class LegacyArgumentsObject extends OrdinaryObject {
     }
 
     @Override
+    public boolean hasSpecialIndexedProperties() {
+        return true;
+    }
+
+    @Override
     protected boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
         int index = ParameterMap.toArgumentIndex(propertyKey);
         return 0 <= index && index < arguments.length;

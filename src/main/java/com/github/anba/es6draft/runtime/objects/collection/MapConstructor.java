@@ -44,7 +44,7 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
      *            the realm object
      */
     public MapConstructor(Realm realm) {
-        super(realm, "Map");
+        super(realm, "Map", 1);
     }
 
     @Override

@@ -44,7 +44,7 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
      *            the realm object
      */
     public WeakSetConstructor(Realm realm) {
-        super(realm, "WeakSet");
+        super(realm, "WeakSet", 1);
     }
 
     @Override

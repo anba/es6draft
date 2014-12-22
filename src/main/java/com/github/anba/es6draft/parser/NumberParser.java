@@ -80,6 +80,42 @@ public final class NumberParser {
     }
 
     /**
+     * Parse a decimal integer literal.
+     * 
+     * @param s
+     *            the string to parse
+     * @param end
+     *            the end index
+     * @return the parsed integer
+     */
+    public static double parseInteger(String s, final int end) {
+        final char sign = s.charAt(0);
+        final int start = (sign == '-' || sign == '+') ? 1 : 0;
+        final int length = s.length();
+        if (end <= start || end >= length) {
+            throw new IndexOutOfBoundsException();
+        }
+        if (end - start < 10) {
+            // integer [0, 9999_99999]
+            int num = 0;
+            for (int i = start; i < end; ++i) {
+                num = (num * 10) + digit(s.charAt(i));
+            }
+            return (sign == '-') ? -(double) num : num;
+        } else if (end - start < 19) {
+            // integer [0, 999_99999_99999_99999]
+            long num = 0;
+            for (int i = start; i < end; ++i) {
+                num = (num * 10) + digit(s.charAt(i));
+            }
+            return (sign == '-') ? -(double) num : num;
+        } else {
+            // integer ]999_99999_99999_99999, ...]
+            return Double.parseDouble(s.substring(0, end));
+        }
+    }
+
+    /**
      * Parse a decimal number literal.
      * 
      * @param cbuf
@@ -102,6 +138,19 @@ public final class NumberParser {
      */
     public static double parseDecimal(String s) {
         return Double.parseDouble(s);
+    }
+
+    /**
+     * Parse a decimal number literal.
+     * 
+     * @param s
+     *            the string to parse
+     * @param end
+     *            the end index
+     * @return the parsed decimal
+     */
+    public static double parseDecimal(String s, int end) {
+        return Double.parseDouble(s.substring(0, end));
     }
 
     /**

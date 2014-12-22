@@ -1277,8 +1277,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                     ValType ltype = left.accept(this, mv);
                     mv.dup();
                     ValType vtype = GetValue(left, ltype, mv);
-                    vtype = ToPrimitive(vtype, mv);
-                    ToString(vtype, mv);
+                    toStringForConcat(vtype, mv);
                     // lref lval(string)
                     if (!(right instanceof StringLiteral && ((StringLiteral) right).getValue()
                             .isEmpty())) {
@@ -1634,6 +1633,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         }
         case ADD: {
             // 12.7.1 The Addition operator ( + )
+            // Handle 'a' + b + ...
+            if (left instanceof BinaryExpression && isStringConcat((BinaryExpression) left)) {
+                return stringConcatLeft(node, mv);
+            }
+            if (right instanceof BinaryExpression && isStringConcat((BinaryExpression) right)) {
+                return stringConcatRight(node, mv);
+            }
+            // Handle 'a' + b
             if (left instanceof StringLiteral) {
                 if (((StringLiteral) left).getValue().isEmpty()) {
                     // "" + x
@@ -1914,11 +1921,73 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         }
     }
 
+    private ValType stringConcatLeft(BinaryExpression binary, ExpressionVisitor mv) {
+        mv.anew(Types.StringBuilder, Methods.StringBuilder_init);
+        stringConcat(binary, mv);
+        mv.invoke(Methods.StringBuilder_toString);
+
+        return ValType.String;
+    }
+
+    private ValType stringConcatRight(BinaryExpression binary, ExpressionVisitor mv) {
+        mv.anew(Types.StringBuilder, Methods.StringBuilder_init);
+        stringConcat(binary, mv);
+        mv.invoke(Methods.StringBuilder_toString);
+
+        return ValType.String;
+    }
+
+    private int stringConcat(Expression node, ExpressionVisitor mv) {
+        // TODO: Tests?
+        // TODO: Performance regression for code like:
+        // for (var i = 0; i < n; ++i) s = "a" + s + "b";
+        // TODO: Replace with invokedynamic
+        // expr:concat(s1, s2, s3) -> CharSequence
+        if (node instanceof StringLiteral) {
+            node.accept(this, mv);
+            mv.invoke(Methods.StringBuilder_append_String);
+        } else if (node instanceof TemplateLiteral) {
+            node.accept(this, mv);
+            mv.invoke(Methods.StringBuilder_append_String);
+        } else if (node instanceof BinaryExpression && isStringConcat((BinaryExpression) node)) {
+            return stringConcat(((BinaryExpression) node).getLeft(), mv)
+                    + stringConcat(((BinaryExpression) node).getRight(), mv);
+        } else {
+            evalToString(node, mv);
+            mv.invoke(Methods.StringBuilder_append_Charsequence);
+        }
+        return 1;
+    }
+
+    private boolean isStringConcat(BinaryExpression binary) {
+        if (binary.getOperator() != BinaryExpression.Operator.ADD) {
+            return false;
+        }
+        Expression left = binary.getLeft();
+        Expression right = binary.getRight();
+        if (left instanceof StringLiteral || left instanceof TemplateLiteral) {
+            return true;
+        }
+        if (right instanceof StringLiteral || right instanceof TemplateLiteral) {
+            return true;
+        }
+        if (left instanceof BinaryExpression && isStringConcat((BinaryExpression) left)) {
+            return true;
+        }
+        if (right instanceof BinaryExpression && isStringConcat((BinaryExpression) right)) {
+            return true;
+        }
+        return false;
+    }
+
+    private ValType toStringForConcat(ValType type, ExpressionVisitor mv) {
+        ToString(ToPrimitive(type, mv), mv);
+        return ValType.String;
+    }
+
     private ValType evalToString(Expression node, ExpressionVisitor mv) {
         ValType type = evalAndGetValue(node, mv);
-        type = ToPrimitive(type, mv);
-        ToString(type, mv);
-        return ValType.String;
+        return toStringForConcat(type, mv);
     }
 
     private ValType addStringLeft(Expression left, Expression right, ExpressionVisitor mv) {
@@ -2037,6 +2106,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 4-6 */
         ValType elementType = evalAndGetValue(node.getElement(), mv);
         /* steps 7-11 */
+        mv.lineInfo(node);
         switch (elementType) {
         case Number:
             mv.loadExecutionContext();
@@ -2082,6 +2152,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 4-6 */
         ValType elementType = evalAndGetValue(node.getElement(), mv);
         /* steps 7-11 */
+        mv.lineInfo(node);
         switch (elementType) {
         case Number:
             mv.loadExecutionContext();
@@ -2343,6 +2414,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 4-6 */
         mv.aconst(node.getName());
         /* steps 7-11 */
+        mv.lineInfo(node);
         mv.loadExecutionContext();
         mv.iconst(mv.isStrict());
         mv.invoke(Methods.ScriptRuntime_getProperty);
@@ -2360,6 +2432,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 4-6 */
         mv.aconst(node.getName());
         /* steps 7-11 */
+        mv.lineInfo(node);
         mv.loadExecutionContext();
         mv.iconst(mv.isStrict());
         mv.invoke(Methods.ScriptRuntime_getPropertyValue);
@@ -2422,6 +2495,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.loadExecutionContext();
         ValType type = evalAndGetValue(node.getExpression(), mv);
         ToPropertyKey(type, mv);
+        mv.lineInfo(node);
         mv.iconst(mv.isStrict());
         mv.invoke(Methods.ScriptRuntime_MakeSuperPropertyReference);
 
@@ -2437,6 +2511,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.loadExecutionContext();
         ValType type = evalAndGetValue(node.getExpression(), mv);
         ToPropertyKey(type, mv);
+        mv.lineInfo(node);
         mv.iconst(mv.isStrict());
         mv.invoke(Methods.ScriptRuntime_getSuperPropertyReferenceValue);
 
@@ -2472,6 +2547,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     @Override
     public ValType visit(SuperPropertyAccessor node, ExpressionVisitor mv) {
         /* steps 1-3 */
+        mv.lineInfo(node);
         mv.loadExecutionContext();
         mv.aconst(node.getName());
         mv.iconst(mv.isStrict());
@@ -2486,6 +2562,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     @Override
     public ValType visit(SuperPropertyAccessorValue node, ExpressionVisitor mv) {
         /* steps 1-3 */
+        mv.lineInfo(node);
         mv.loadExecutionContext();
         mv.aconst(node.getName());
         mv.iconst(mv.isStrict());

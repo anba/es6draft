@@ -45,6 +45,7 @@ import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.*;
+import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -568,6 +569,9 @@ public final class AbstractOperations {
         }
     }
 
+    private static final String[] cachedIntegerStrings = { "0", "1", "2", "3", "4", "5", "6", "7",
+            "8", "9" };
+
     /**
      * 7.1.12.1 ToString Applied to the Number Type
      * 
@@ -604,8 +608,12 @@ public final class AbstractOperations {
      */
     public static String ToString(double value) {
         /* steps 1-4 (+ shortcut for integer values) */
-        if ((int) value == value) {
-            return Integer.toString((int) value);
+        int intValue = (int) value;
+        if (intValue == value) {
+            if (0 <= intValue && intValue <= 9) {
+                return cachedIntegerStrings[intValue];
+            }
+            return Integer.toString(intValue);
         } else if (value != value) {
             return "NaN";
         } else if (value == Double.POSITIVE_INFINITY) {
@@ -2238,11 +2246,11 @@ public final class AbstractOperations {
      * @return the array elements
      */
     public static Object[] CreateListFromArrayLike(ExecutionContext cx, Object obj) {
-        if (obj instanceof ArrayObject) {
-            // Fast-path for dense arrays
-            ArrayObject array = (ArrayObject) obj;
-            if (array.isDenseArray()) {
-                long len = array.getLength();
+        if (obj instanceof ArrayObject || obj instanceof ArgumentsObject) {
+            // Fast-path for dense arrays/arguments
+            OrdinaryObject array = (OrdinaryObject) obj;
+            long len = array.getLength();
+            if (array.isDenseArray(len)) {
                 if (len == 0) {
                     return ScriptRuntime.EMPTY_ARRAY;
                 }
@@ -2250,7 +2258,7 @@ public final class AbstractOperations {
                 if (len > FunctionPrototype.getMaxArguments()) {
                     throw newRangeError(cx, Messages.Key.FunctionTooManyArguments);
                 }
-                return array.toArray();
+                return array.toArray(len);
             }
         }
         /* steps 1-2 (not applicable) */

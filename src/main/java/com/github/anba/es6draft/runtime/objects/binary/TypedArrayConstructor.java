@@ -46,7 +46,7 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
      *            the typed array element type
      */
     public TypedArrayConstructor(Realm realm, ElementType elementType) {
-        super(realm, elementType.getConstructorName());
+        super(realm, elementType.getConstructorName(), 3);
         this.elementType = elementType;
     }
 

@@ -48,7 +48,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
      *            the realm object
      */
     public TypedArrayConstructorPrototype(Realm realm) {
-        super(realm, "TypedArray");
+        super(realm, "TypedArray", 3);
     }
 
     @Override

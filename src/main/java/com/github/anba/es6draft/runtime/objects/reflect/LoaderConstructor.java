@@ -42,7 +42,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
      *            the realm object
      */
     public LoaderConstructor(Realm realm) {
-        super(realm, "Loader");
+        super(realm, "Loader", 0);
     }
 
     @Override

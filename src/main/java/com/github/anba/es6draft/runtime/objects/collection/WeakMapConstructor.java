@@ -44,7 +44,7 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
      *            the realm object
      */
     public WeakMapConstructor(Realm realm) {
-        super(realm, "WeakMap");
+        super(realm, "WeakMap", 1);
     }
 
     @Override

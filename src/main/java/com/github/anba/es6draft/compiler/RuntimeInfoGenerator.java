@@ -9,7 +9,6 @@ package com.github.anba.es6draft.compiler;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ExpectedArgumentCount;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -195,7 +194,7 @@ final class RuntimeInfoGenerator {
         mv.begin();
 
         mv.aconst(node.getSource().getName());
-        mv.aconst(Objects.toString(node.getSource().getFile(), null));
+        mv.aconst(node.getSource().getFileString());
         mv.iconst(IsStrict(node));
         mv.handle(codegen.methodDesc(node, ScriptName.Init));
         mv.handle(codegen.methodDesc(node, ScriptName.EvalInit));
@@ -217,7 +216,7 @@ final class RuntimeInfoGenerator {
         mv.begin();
 
         mv.aconst(node.getSource().getName());
-        mv.aconst(Objects.toString(node.getSource().getFile(), null));
+        mv.aconst(node.getSource().getFileString());
         mv.handle(codegen.methodDesc(node, ModuleName.Init));
         mv.handle(codegen.methodDesc(node, ModuleName.Code));
         if (codegen.isEnabled(Compiler.Option.DebugInfo)) {

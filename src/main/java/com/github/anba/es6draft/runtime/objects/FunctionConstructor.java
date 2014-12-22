@@ -54,7 +54,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
      *            the realm object
      */
     public FunctionConstructor(Realm realm) {
-        super(realm, "Function");
+        super(realm, "Function", 1);
     }
 
     @Override

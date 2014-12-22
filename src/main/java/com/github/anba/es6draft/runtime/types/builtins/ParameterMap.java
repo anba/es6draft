@@ -23,13 +23,24 @@ final class ParameterMap {
     private final LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env;
     private final int length;
     private final String[] parameters;
-    private final BitSet legacyUnmapped;
+    private BitSet legacyUnmapped;
 
     private ParameterMap(LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env, int length) {
         this.env = env;
         this.length = length;
         this.parameters = new String[length];
-        this.legacyUnmapped = new BitSet();
+        this.legacyUnmapped = null; // lazily instantiated
+    }
+
+    private boolean isLegacyUnmapped(int index) {
+        return legacyUnmapped != null && legacyUnmapped.get(index);
+    }
+
+    private void setLegacyUnmapped(int index) {
+        if (legacyUnmapped == null) {
+            legacyUnmapped = new BitSet();
+        }
+        legacyUnmapped.set(index);
     }
 
     /**
@@ -99,7 +110,7 @@ final class ParameterMap {
      */
     boolean hasOwnProperty(long propertyKey, boolean isLegacy) {
         int index = toArgumentIndex(propertyKey);
-        if (0 <= index && index < length && !(isLegacy && legacyUnmapped.get(index))) {
+        if (0 <= index && index < length && !(isLegacy && isLegacyUnmapped(index))) {
             return parameters[index] != null;
         }
         return false;
@@ -130,7 +141,7 @@ final class ParameterMap {
     void put(long propertyKey, Object value) {
         int index = toArgumentIndex(propertyKey);
         assert (0 <= index && index < length && parameters[index] != null);
-        legacyUnmapped.set(index);
+        setLegacyUnmapped(index);
         String name = parameters[index];
         env.getEnvRec().setMutableBinding(name, value, false);
     }
@@ -144,7 +155,7 @@ final class ParameterMap {
     void delete(long propertyKey) {
         int index = toArgumentIndex(propertyKey);
         assert (0 <= index && index < length && parameters[index] != null);
-        legacyUnmapped.set(index);
+        setLegacyUnmapped(index);
         parameters[index] = null;
     }
 }

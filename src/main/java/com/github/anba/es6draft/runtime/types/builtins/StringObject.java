@@ -70,6 +70,11 @@ public final class StringObject extends OrdinaryObject {
         this.stringData = stringData;
     }
 
+    @Override
+    public boolean hasSpecialIndexedProperties() {
+        return true;
+    }
+
     /**
      * [[HasOwnProperty]] (P)
      */
