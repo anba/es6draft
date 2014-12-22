@@ -167,7 +167,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
             assert !(d instanceof HoistableDeclaration);
             for (Name dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
-                    createImmutableBinding(lexEnvRec, dn, mv);
+                    createImmutableBinding(lexEnvRec, dn, true, mv);
                 } else {
                     createMutableBinding(lexEnvRec, dn, false, mv);
                 }
@@ -269,7 +269,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
             assert !(d instanceof HoistableDeclaration);
             for (Name dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
-                    createImmutableBinding(lexEnvRec, dn, mv);
+                    createImmutableBinding(lexEnvRec, dn, true, mv);
                 } else {
                     createMutableBinding(lexEnvRec, dn, false, mv);
                 }

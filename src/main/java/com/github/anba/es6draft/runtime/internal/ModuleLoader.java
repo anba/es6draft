@@ -19,33 +19,33 @@ public abstract class ModuleLoader {
     }
 
     /**
-     * Returns the normalized module name.
+     * Returns the normalized module identifier.
      * 
-     * @param parentName
-     *            the normalized name of the including module
      * @param unnormalizedName
      *            the unnormalized module name
-     * @return the normalized module name or {@code null} if not a valid module name
+     * @param referrerId
+     *            the identifier of the including module or {@code null}
+     * @return the normalized module identifier or {@code null} if the name cannot be normalized
      */
-    public abstract String normalizeName(String parentName, String unnormalizedName);
+    public abstract String normalizeName(String unnormalizedName, String referrerId);
 
     /**
      * Retrieves the source code for the requested module.
      * 
-     * @param normalizedName
-     *            the normalized module name
+     * @param moduleId
+     *            the module identifier
      * @return the module source code
      * @throws IOException
      *             if there was any I/O error
      */
-    public abstract String getSource(String normalizedName) throws IOException;
+    public abstract String getSource(String moduleId) throws IOException;
 
     /**
      * Retrieves the source file for the requested module.
      * 
-     * @param normalizedName
-     *            the normalized module name
+     * @param moduleId
+     *            the module identifier
      * @return the module file or {@code null} if not available
      */
-    public abstract Path getSourceFile(String normalizedName);
+    public abstract Path getSourceFile(String moduleId);
 }

@@ -8,6 +8,8 @@ package com.github.anba.es6draft.ast;
 
 import java.util.List;
 
+import com.github.anba.es6draft.ast.scope.Scope;
+
 /**
  * <h1>14 ECMAScript Language: Functions and Classes</h1>
  * <ul>
@@ -16,11 +18,27 @@ import java.util.List;
  */
 public interface ClassDefinition extends ScopedNode {
     /**
+     * Returns the scope object for this node. May return {@code null} if this class definition does
+     * not create an implicit scope.
+     * 
+     * @return the scope object or {@code null}
+     */
+    @Override
+    Scope getScope();
+
+    /**
+     * Returns the class name
+     * 
+     * @return the class name
+     */
+    String getClassName();
+
+    /**
      * Returns the class name or {@code null} if not present.
      * 
      * @return the class name or {@code null}
      */
-    BindingIdentifier getName();
+    BindingIdentifier getIdentifier();
 
     /**
      * Returns the class heritage expression or {@code null} if not present.

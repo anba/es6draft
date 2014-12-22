@@ -13,8 +13,12 @@ const {
 const WellKnownSymbols = [
   "hasInstance",
   "isConcatSpreadable",
-  "isRegExp",
   "iterator",
+  "match",
+  "replace",
+  "search",
+  "species",
+  "split",
   "toPrimitive",
   "toStringTag",
   "unscopables",
@@ -32,7 +36,7 @@ assertSame(0, difference.length, "symmetric difference not empty: " + difference
 
 function getDescription(sym) {
   let s = Object(sym).toString();
-  return /^Symbol\((.*)\)$/.match(s)[1];
+  return s.match(/^Symbol\((.*)\)$/)[1];
 }
 
 // test [[Description]] for well-known symbols

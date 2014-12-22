@@ -17,6 +17,7 @@ const {
 const {
   create: Object_create,
   assign: Object_assign,
+  keys: Object_keys,
 } = Object;
 
 const {
@@ -190,26 +191,55 @@ function toProxyHandler(handler, callTrap = void 0, constructTrap = void 0) {
       return handler['delete'](propertyKey);
     },
     enumerate(target) {
+      // non-standard 'iterate' trap
       var trapIterate = handler['iterate'];
       if (typeof trapIterate === 'function') {
         return Reflect_apply(trapIterate, handler, [])[Symbol.iterator]();
       }
+      // standard trap 'enumerate'
       var trapEnumerate = handler['enumerate'];
       if (typeof trapEnumerate === 'function') {
         return toArray(Reflect_apply(trapEnumerate, handler, []))[Symbol.iterator]();
       }
       // Derived trap
-      var names = handler['getPropertyNames']();
+      var trapGetPropertyNames = handler['getPropertyNames'];
+      if (typeof trapGetPropertyNames === 'function') {
+        var names = Reflect_apply(trapGetPropertyNames, handler, []);
+        var result = [];
+        for (var i = 0, j = 0, len = names.length >>> 0; i < len; ++i) {
+          var name = String(names[i]);
+          var desc = handler['getPropertyDescriptor'](name);
+          desc = NormalizeAndCompletePropertyDescriptor(desc);
+          if (desc && desc.enumerable) {
+            result[j++] = name;
+          }
+        }
+        return result[Symbol.iterator]();
+      }
+      // Non-standard derived trap
+      var result = toArray(this.keys());
+      for (var object = target; (object = Reflect_getPrototypeOf(object));) {
+        result = [...result, ...Object_keys(object)];
+      }
+      return result[Symbol.iterator]();
+    },
+    keys(target) {
+      var trapKeys = handler['keys'];
+      if (typeof trapKeys === 'function') {
+        return Reflect_apply(trapKeys, handler, []);
+      }
+      // Derived trap
+      var names = handler['getOwnPropertyNames']();
       var result = [];
       for (var i = 0, j = 0, len = names.length >>> 0; i < len; ++i) {
         var name = String(names[i]);
-        var desc = handler['getPropertyDescriptor'](name);
+        var desc = handler['getOwnPropertyDescriptor'](name);
         desc = NormalizeAndCompletePropertyDescriptor(desc);
         if (desc && desc.enumerable) {
           result[j++] = name;
         }
       }
-      return result[Symbol.iterator]();
+      return result;
     },
     ownKeys(target) {
       var trapKeys = handler['keys'];

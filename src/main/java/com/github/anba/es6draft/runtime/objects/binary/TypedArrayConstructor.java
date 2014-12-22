@@ -137,7 +137,6 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
 
     @Override
     public CreateAction<TypedArrayObject> createAction() {
-        // FIXME: spec bug - need to use %TypedArray%.[[CreateAction]]
         return TypedArrayConstructorPrototype.TypedArrayCreate.INSTANCE;
     }
 

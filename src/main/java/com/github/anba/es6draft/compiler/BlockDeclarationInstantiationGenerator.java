@@ -128,7 +128,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
                 for (Name dn : BoundNames(d)) {
                     if (IsConstantDeclaration(d)) {
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
-                        createImmutableBinding(envRec, dn, mv);
+                        createImmutableBinding(envRec, dn, true, mv);
                     } else {
                         // FIXME: spec bug (CreateMutableBinding concrete method of `env`)
                         createMutableBinding(envRec, dn, false, mv);

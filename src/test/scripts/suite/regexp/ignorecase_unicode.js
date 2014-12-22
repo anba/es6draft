@@ -26,8 +26,8 @@ function test(upperCase, lowerCase, plane, {unicode = false} = {}) {
   ];
 
   for (let flags of plane.flags) {
-    let ignoreCase = flags.contains("i");
-    let unicodeCase = flags.contains("u");
+    let ignoreCase = flags.includes("i");
+    let unicodeCase = flags.includes("u");
     if (unicode && ignoreCase && !unicodeCase) {
       continue;
     }

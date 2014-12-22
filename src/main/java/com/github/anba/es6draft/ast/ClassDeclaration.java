@@ -20,20 +20,23 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
  */
 public final class ClassDeclaration extends Declaration implements ClassDefinition {
     private final BlockScope scope;
-    private final BindingIdentifier name;
+    private final BindingIdentifier identifier;
     private final Expression heritage;
     private final List<MethodDefinition> methods;
     private final MethodDefinition constructor;
+    private final String className;
     private List<PropertyDefinition> properties;
 
     public ClassDeclaration(long beginPosition, long endPosition, BlockScope scope,
-            BindingIdentifier name, Expression heritage, List<MethodDefinition> methods) {
+            BindingIdentifier identifier, Expression heritage, List<MethodDefinition> methods,
+            String className) {
         super(beginPosition, endPosition);
         this.scope = scope;
-        this.name = name;
+        this.identifier = identifier;
         this.heritage = heritage;
         this.methods = methods;
         this.constructor = ConstructorMethod(methods);
+        this.className = className;
     }
 
     @Override
@@ -42,8 +45,13 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
     }
 
     @Override
-    public BindingIdentifier getName() {
-        return name;
+    public String getClassName() {
+        return className;
+    }
+
+    @Override
+    public BindingIdentifier getIdentifier() {
+        return identifier;
     }
 
     @Override

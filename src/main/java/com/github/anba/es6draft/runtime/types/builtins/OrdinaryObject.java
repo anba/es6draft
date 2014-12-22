@@ -17,6 +17,7 @@ import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.PropertyMap;
@@ -1430,7 +1431,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * [[Delete]] (P)
+     * 9.1.10 [[Delete]] (P)
      *
      * @param cx
      *            the execution context
@@ -1456,7 +1457,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * [[Delete]] (P)
+     * 9.1.10 [[Delete]] (P)
      *
      * @param cx
      *            the execution context
@@ -1482,7 +1483,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * [[Delete]] (P)
+     * 9.1.10 [[Delete]] (P)
      *
      * @param cx
      *            the execution context
@@ -1572,6 +1573,25 @@ public class OrdinaryObject implements ScriptObject {
         return Enumerability.isEnumerable(prop.isEnumerable());
     }
 
+    private static final class FakeObject extends OrdinaryObject {
+        private final ScriptObject object;
+
+        FakeObject(Realm realm, ScriptObject object) {
+            super(realm, (Void) null);
+            this.object = object;
+        }
+
+        @Override
+        public ScriptObject getPrototypeOf(ExecutionContext cx) {
+            return object.getPrototypeOf(cx);
+        }
+
+        @Override
+        protected Enumerability isEnumerableOwnProperty(String propertyKey) {
+            return Enumerability.Enumerable;
+        }
+    }
+
     private static final class EnumKeysIterator extends SimpleIterator<Object> implements
             ScriptIterator<Object> {
         private final ExecutionContext cx;
@@ -1602,44 +1622,57 @@ public class OrdinaryObject implements ScriptObject {
                         }
                     }
                 }
-                // switch to prototype enumerate
-                ScriptObject proto = obj.getPrototypeOf(cx);
-                if (proto != null) {
-                    if (proto instanceof OrdinaryObject) {
-                        this.obj = (OrdinaryObject) proto;
-                        this.keys = ((OrdinaryObject) proto).getEnumerableKeys(cx).iterator();
-                    } else {
-                        ScriptIterator<?> protoKeys = proto.enumerateKeys(cx);
-                        if (protoKeys instanceof EnumKeysIterator) {
-                            EnumKeysIterator keysIterator = (EnumKeysIterator) protoKeys;
-                            assert keysIterator.visitedKeys.isEmpty();
-                            assert keysIterator.keys != null && keysIterator.protoKeys == null;
-                            this.obj = keysIterator.obj;
-                            this.keys = keysIterator.keys;
-                        } else {
-                            this.obj = null;
-                            this.keys = null;
-                            this.protoKeys = protoKeys;
-                        }
-                    }
-                } else {
-                    this.obj = null;
-                    this.keys = null;
-                    this.protoKeys = null;
-                }
+                nextObject();
             }
-            Iterator<?> protoKeys = this.protoKeys;
-            if (protoKeys != null) {
-                while (protoKeys.hasNext()) {
-                    Object key = protoKeys.next();
-                    if (visitedKeys.add(key)) {
-                        return key;
-                    }
-                }
-                // visited all inherited keys
-                this.protoKeys = null;
+            if (this.protoKeys != null) {
+                return findNextFromProtoKeys();
             }
             return null;
+        }
+
+        private Object findNextFromProtoKeys() {
+            HashSet<Object> visitedKeys = this.visitedKeys;
+            Iterator<?> protoKeys = this.protoKeys;
+            while (protoKeys.hasNext()) {
+                Object key = protoKeys.next();
+                if (visitedKeys.add(key)) {
+                    return key;
+                }
+            }
+            // visited all inherited keys
+            this.protoKeys = null;
+            return null;
+        }
+
+        private void nextObject() {
+            // switch to prototype enumerate
+            ScriptObject proto = obj.getPrototypeOf(cx);
+            if (proto != null) {
+                if (proto instanceof OrdinaryObject) {
+                    this.obj = (OrdinaryObject) proto;
+                    this.keys = ((OrdinaryObject) proto).getEnumerableKeys(cx).iterator();
+                } else if (cx.getRealm().isEnabled(CompatibilityOption.ProxyProtoSkipEnumerate)) {
+                    this.obj = new FakeObject(cx.getRealm(), proto);
+                    this.keys = EnumerableOwnNames(cx, proto).iterator();
+                } else {
+                    ScriptIterator<?> protoKeys = proto.enumerateKeys(cx);
+                    if (protoKeys instanceof EnumKeysIterator) {
+                        EnumKeysIterator keysIterator = (EnumKeysIterator) protoKeys;
+                        assert keysIterator.visitedKeys.isEmpty();
+                        assert keysIterator.keys != null && keysIterator.protoKeys == null;
+                        this.obj = keysIterator.obj;
+                        this.keys = keysIterator.keys;
+                    } else {
+                        this.obj = null;
+                        this.keys = null;
+                        this.protoKeys = protoKeys;
+                    }
+                }
+            } else {
+                this.obj = null;
+                this.keys = null;
+                this.protoKeys = null;
+            }
         }
 
         @Override

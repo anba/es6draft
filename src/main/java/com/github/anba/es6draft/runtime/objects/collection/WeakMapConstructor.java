@@ -88,7 +88,7 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
                 throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "set");
             }
             adder = (Callable) _adder;
-            iter = GetIterator(calleeContext, ToObject(calleeContext, iterable));
+            iter = GetIterator(calleeContext, iterable);
         }
 
         /* steps 8-9 */

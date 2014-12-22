@@ -5,7 +5,8 @@
  * <https://github.com/anba/es6draft>
  */
 
-const global = this;
+// TODO: Use Reflect.global when specified
+const global = System.global;
 
 const {
   Object, Function, Proxy, Reflect, Set, String, Symbol, SyntaxError
@@ -18,6 +19,7 @@ const {
 } = Reflect;
 
 const {
+  getOwnPropertyDescriptor: Object_getOwnPropertyDescriptor,
   is: Object_is,
 } = Object;
 
@@ -31,7 +33,7 @@ const {
 } = Function.prototype;
 
 const {
-  contains: String_prototype_contains,
+  includes: String_prototype_includes,
 } = String.prototype;
 
 const {
@@ -254,8 +256,8 @@ export function assertNotConstructor(o, message = "Is not a [[Constructor]] obje
   return assertFalse(IsConstructor(o), message);
 }
 
-export function assertDataProperty(object, propertyKey, {value, writable, enumerable, configurable}) {
-  let desc = Reflect_getOwnPropertyDescriptor(object, propertyKey);
+export function assertDataProperty(objectOrValue, propertyKey, {value, writable, enumerable, configurable}) {
+  let desc = Object_getOwnPropertyDescriptor(objectOrValue, propertyKey);
   assertNotUndefined(desc, `${PropertyKeyToString(propertyKey)} not found`);
   assertTrue(IsDataPropertyDescriptor(desc), `${PropertyKeyToString(propertyKey)}.[[Value]] present`);
   assertSame(value, desc.value, `${PropertyKeyToString(propertyKey)}.[[Value]]`);
@@ -265,8 +267,8 @@ export function assertDataProperty(object, propertyKey, {value, writable, enumer
 }
 
 // Internal: Similar to assertDataProperty, except assertEquals is used for "value"
-function assertDataPropertyEquals(object, propertyKey, {value, writable, enumerable, configurable}) {
-  let desc = Reflect_getOwnPropertyDescriptor(object, propertyKey);
+function assertDataPropertyEquals(objectOrValue, propertyKey, {value, writable, enumerable, configurable}) {
+  let desc = Object_getOwnPropertyDescriptor(objectOrValue, propertyKey);
   assertNotUndefined(desc, `${PropertyKeyToString(propertyKey)} not found`);
   assertTrue(IsDataPropertyDescriptor(desc), `${PropertyKeyToString(propertyKey)}.[[Value]] present`);
   assertEquals(value, desc.value, `${PropertyKeyToString(propertyKey)}.[[Value]]`);
@@ -275,8 +277,8 @@ function assertDataPropertyEquals(object, propertyKey, {value, writable, enumera
   assertSame(configurable, desc.configurable, `${PropertyKeyToString(propertyKey)}.[[Configurable]]`);
 }
 
-export function assertAccessorProperty(object, propertyKey, {get, set, enumerable, configurable}) {
-  let desc = Reflect_getOwnPropertyDescriptor(object, propertyKey);
+export function assertAccessorProperty(objectOrValue, propertyKey, {get, set, enumerable, configurable}) {
+  let desc = Object_getOwnPropertyDescriptor(objectOrValue, propertyKey);
   assertNotUndefined(desc, `${PropertyKeyToString(propertyKey)} not found`);
   assertFalse(IsDataPropertyDescriptor(desc), `${PropertyKeyToString(propertyKey)}.[[Value]] present`);
   assertSame(get, desc.get, `${PropertyKeyToString(propertyKey)}.[[Get]]`);
@@ -304,7 +306,7 @@ export function assertBuiltinFunction(fun, name, arity) {
 export function assertNativeFunction(fun, name, arity) {
   assertBuiltinFunction(fun, name, arity);
   let source = $CallFunction(Function_prototype_toString, fun);
-  assertTrue($CallFunction(String_prototype_contains, source, "native code"));
+  assertTrue($CallFunction(String_prototype_includes, source, "native code"));
 }
 
 export function assertBuiltinConstructor(fun, name, arity) {

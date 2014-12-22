@@ -49,7 +49,7 @@ Object.defineProperty(global, "StopIteration", {
 // Iterator object
 const Iterator = MakeIterator();
 function MakeIterator() {
-  const nextSym = Symbol("next");
+  const nextSym = Symbol.for(`std::BuiltinIterator::next`);
 
   function mixin(target, source) {
     for (let name of Reflect.ownKeys(source)) {
@@ -199,8 +199,8 @@ function MakeLegacyIterator() {
 }
 
 // (internal) BuiltinIterator object
-function MakeBuiltinIterator(tag) {
-  const iterSym = Symbol("iter");
+function MakeBuiltinIterator(tag, throwErrorIfPrototype) {
+  const iterSym = Symbol.for(`std::Builtin${tag}Iterator::iterator`);
 
   class BuiltinIterator extends Iterator {
     constructor(obj, iterF) {
@@ -209,13 +209,17 @@ function MakeBuiltinIterator(tag) {
 
     next() {
       if (this === BuiltinIterator.prototype) {
+        if (throwErrorIfPrototype) {
+          // Tests require this exact error message to be thrown! :-/
+          throw TypeError(`Call${tag}IteratorMethodIfWrapped method called on incompatible ${tag} Iterator`);
+        }
         return {value: void 0, done: true};
       }
       return this[iterSym].next();
     }
 
     get [toStringTagSym]() {
-      return tag;
+      return `${tag} Iterator`;
     }
 
     [iteratorSym]() {
@@ -236,7 +240,7 @@ function MakeBuiltinIterator(tag) {
 
 { /* Map.prototype */
   const Map = global.Map;
-  const BuiltinIterator = MakeBuiltinIterator("Map Iterator");
+  const BuiltinIterator = MakeBuiltinIterator("Map", false);
   const {
     keys: Map_prototype_keys,
     values: Map_prototype_values,
@@ -262,7 +266,7 @@ function MakeBuiltinIterator(tag) {
 
 { /* Set.prototype */
   const Set = global.Set;
-  const BuiltinIterator = MakeBuiltinIterator("Set Iterator");
+  const BuiltinIterator = MakeBuiltinIterator("Set", false);
   const {
     values: Set_prototype_values,
     entries: Set_prototype_entries,
@@ -290,7 +294,7 @@ function MakeBuiltinIterator(tag) {
 }
 
 { /* Array.prototype */
-  const BuiltinIterator = MakeBuiltinIterator("Array Iterator");
+  const BuiltinIterator = MakeBuiltinIterator("Array", true);
   const {
     keys: Array_prototype_keys,
     values: Array_prototype_values,
@@ -328,7 +332,21 @@ function MakeBuiltinIterator(tag) {
 }
 
 {
-  const StringIteratorPrototype = Object.getPrototypeOf(""[iteratorSym]());
+  const BuiltinIterator = MakeBuiltinIterator("String", true);
+  const {
+    [iteratorSym]: String_prototype_iterator,
+  } = String.prototype;
+
+  Object.defineProperties(Object.assign(String.prototype, {
+    [iteratorSym]() {
+      return new BuiltinIterator(this, String_prototype_iterator);
+    },
+  }), {
+    [iteratorSym]: {enumerable: false},
+  });
+
+  // const StringIteratorPrototype = Object.getPrototypeOf(""[iteratorSym]());
+  const StringIteratorPrototype = BuiltinIterator.prototype;
 
   // change "length" to non-configurable for my own tests in SpiderMonkey... :-/
   Object.defineProperty(StringIteratorPrototype.next, "length", {

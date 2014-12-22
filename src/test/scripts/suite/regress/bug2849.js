@@ -16,6 +16,6 @@ let result = (new class extends RegExp {
   exec(){
     return {index: 0, 0: "abc"};
   }
-}).replace("a", "b");
+})[Symbol.replace]("a", "b");
 
 assertSame("b", result);

@@ -164,7 +164,7 @@ for (var i = 0; i < 2; ++i)
   recordingHandler``;
 assertSame(3, records.length);
 
-assertNotSame(records[0].siteObj, records[1].siteObj);
+assertSame(records[0].siteObj, records[1].siteObj);
 assertSame(records[1].siteObj, records[2].siteObj);
 
 assertTrue("raw" in records[0].siteObj);

@@ -14,37 +14,37 @@ const {
 
 // String.prototype.match
 {
-  let regExpLike = {[Symbol.isRegExp]: true, match(){ return ["B"]; }, toString(){ fail `unreachable`; }};
+  let regExpLike = {[Symbol.match](){ return ["B"]; }, toString(){ fail `unreachable`; }};
   assertEquals(["B"], "aba".match(regExpLike));
 
-  let notRegExpLike = {[Symbol.isRegExp]: false, match(){ fail `unreachable`; }, toString(){ return "a"; }};
+  let notRegExpLike = {[Symbol.match]: null, toString(){ return "a"; }};
   assertEquals(Object.assign(["a"], {index: 0, input: "aba"}), "aba".match(notRegExpLike));
 }
 
 // String.prototype.replace
 {
-  let regExpLike = {[Symbol.isRegExp]: true, replace(){ return "B"; }, toString(){ fail `unreachable`; }};
+  let regExpLike = {[Symbol.replace](){ return "B"; }, toString(){ fail `unreachable`; }};
   assertSame("B", "aba".replace(regExpLike, "A"));
 
-  let notRegExpLike = {[Symbol.isRegExp]: false, replace(){ fail `unreachable`; }, toString(){ return "a"; }};
+  let notRegExpLike = {[Symbol.replace]: null, toString(){ return "a"; }};
   assertSame("Aba", "aba".replace(notRegExpLike, "A"));
 }
 
 // String.prototype.search
 {
-  let regExpLike = {[Symbol.isRegExp]: true, search(){ return 1000; }, toString(){ fail `unreachable`; }};
+  let regExpLike = {[Symbol.search](){ return 1000; }, toString(){ fail `unreachable`; }};
   assertSame(1000, "aba".search(regExpLike));
 
-  let notRegExpLike = {[Symbol.isRegExp]: false, search(){ fail `unreachable`; }, toString(){ return "a"; }};
+  let notRegExpLike = {[Symbol.search]: null, toString(){ return "a"; }};
   assertSame(0, "aba".search(notRegExpLike));
 }
 
 // String.prototype.split
 {
-  let regExpLike = {[Symbol.isRegExp]: true, split(){ return ["B"]; }, toString(){ fail `unreachable`; }};
+  let regExpLike = {[Symbol.split](){ return ["B"]; }, toString(){ fail `unreachable`; }};
   assertEquals(["B"], "aba".split(regExpLike));
 
-  let notRegExpLike = {[Symbol.isRegExp]: false, split(){ fail `unreachable`; }, toString(){ return "a"; }};
+  let notRegExpLike = {[Symbol.split]: null, toString(){ return "a"; }};
   assertEquals(["", "b", ""], "aba".split(notRegExpLike));
 }
 

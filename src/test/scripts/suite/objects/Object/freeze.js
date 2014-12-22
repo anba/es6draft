@@ -86,7 +86,7 @@ assertBuiltinFunction(Object.freeze, "freeze", 1);
   assertSame(expectedLog, log);
 }
 
-// Intermediate exceptions do not stop property traversal, first exception is reported (1)
+// Intermediate exceptions stop property traversal, first exception is reported (1)
 {
   class MyError extends Error {}
   let count = 0;
@@ -101,13 +101,13 @@ assertBuiltinFunction(Object.freeze, "freeze", 1);
     ownKeys: () => ["a", "b"]
   });
   assertThrows(MyError, () => Object.freeze(o));
-  assertSame(2, count);
+  assertSame(1, count);
   assertDataProperty(o, "a", {value: 1, writable: true, enumerable: true, configurable: true});
-  assertDataProperty(o, "b", {value: 2, writable: false, enumerable: true, configurable: false});
+  assertDataProperty(o, "b", {value: 2, writable: true, enumerable: true, configurable: true});
   assertFalse(Object.isExtensible(o));
 }
 
-// Intermediate exceptions do not stop property traversal, first exception is reported (2)
+// Intermediate exceptions stop property traversal, first exception is reported (2)
 {
   class MyError extends Error {}
   let count = 0, getOwnPDCalled = false;
@@ -129,13 +129,13 @@ assertBuiltinFunction(Object.freeze, "freeze", 1);
     ownKeys: () => ["a", "b"]
   });
   assertThrows(MyError, () => Object.freeze(o));
-  assertSame(1, count);
+  assertSame(0, count);
   assertDataProperty(o, "a", {value: 1, writable: true, enumerable: true, configurable: true});
-  assertDataProperty(o, "b", {value: 2, writable: false, enumerable: true, configurable: false});
+  assertDataProperty(o, "b", {value: 2, writable: true, enumerable: true, configurable: true});
   assertFalse(Object.isExtensible(o));
 }
 
-// Intermediate exceptions do not stop property traversal, first exception is reported (3)
+// Intermediate exceptions stop property traversal, first exception is reported (3)
 {
   class MyError extends Error {}
   let count = 0;

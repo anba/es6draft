@@ -16,10 +16,12 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Creatable;
@@ -192,8 +194,8 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
          */
         @Function(name = "isArray", arity = 1)
         public static Object isArray(ExecutionContext cx, Object thisValue, Object arg) {
-            /* steps 1-3 */
-            return arg instanceof ArrayObject;
+            /* step 1 */
+            return IsArray(cx, arg);
         }
 
         /**
@@ -233,13 +235,13 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         }
 
         /**
-         * 22.1.2.1 Array.from ( arrayLike [ , mapfn [ , thisArg ] ] )
+         * 22.1.2.1 Array.from ( items [ , mapfn [ , thisArg ] ] )
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param arrayLike
+         * @param items
          *            the source object
          * @param mapfn
          *            the optional mapper function
@@ -248,13 +250,11 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
          * @return the new array object
          */
         @Function(name = "from", arity = 1)
-        public static Object from(ExecutionContext cx, Object thisValue, Object arrayLike,
+        public static Object from(ExecutionContext cx, Object thisValue, Object items,
                 Object mapfn, Object thisArg) {
             /* step 1 */
             Object c = thisValue;
             /* steps 2-3 */
-            ScriptObject items = ToObject(cx, arrayLike);
-            /* steps 4-5 */
             Callable mapper = null;
             boolean mapping;
             if (Type.isUndefined(mapfn)) {
@@ -266,20 +266,20 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                 mapping = true;
                 mapper = (Callable) mapfn;
             }
-            /* steps 6-7 */
+            /* steps 4-5 */
             Object usingIterator = CheckIterable(cx, items);
-            /* step 8 */
+            /* step 6 */
             if (!Type.isUndefined(usingIterator)) {
-                /* steps 8a-8c */
+                /* steps 6a-6c */
                 ScriptObject a;
                 if (IsConstructor(c)) {
                     a = ((Constructor) c).construct(cx);
                 } else {
                     a = ArrayCreate(cx, 0);
                 }
-                /* steps 8d-8e */
+                /* steps 6d-6e */
                 ScriptObject iterator = GetIterator(cx, items, usingIterator);
-                /* steps 8f-8g */
+                /* steps 6f-6g */
                 for (int k = 0;; ++k) {
                     int pk = k;
                     ScriptObject next = IteratorStep(cx, iterator);
@@ -297,9 +297,11 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                     CreateDataPropertyOrThrow(cx, a, pk, mappedValue);
                 }
             }
-            /* step 9 (?) */
+            /* step 7 (?) */
+            /* steps 8-9 */
+            ScriptObject arrayLike = ToObject(cx, items);
             /* step 10 */
-            Object lenValue = Get(cx, items, "length");
+            Object lenValue = Get(cx, arrayLike, "length");
             /* steps 11-12 */
             long len = ToLength(cx, lenValue);
             /* steps 13-15 */
@@ -312,7 +314,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             /* steps 16-17 */
             for (long k = 0; k < len; ++k) {
                 long pk = k;
-                Object kValue = Get(cx, items, pk);
+                Object kValue = Get(cx, arrayLike, pk);
                 Object mappedValue;
                 if (mapping) {
                     mappedValue = mapper.call(cx, thisArg, kValue, k);
@@ -325,6 +327,22 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             Put(cx, a, "length", len, true);
             /* step 20 */
             return a;
+        }
+
+        /**
+         * 22.1.2.5 get Array [ @@species ]
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the species object
+         */
+        @Accessor(name = "get [Symbol.species]", symbol = BuiltinSymbol.species,
+                type = Accessor.Type.Getter)
+        public static Object species(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
+            return thisValue;
         }
     }
 }

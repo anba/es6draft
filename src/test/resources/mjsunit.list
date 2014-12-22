@@ -56,7 +56,7 @@ es6/unscopables.js
 # GetBindingValue invokes HasBinding for Object Environment Records, not supported in V8
 harmony/proxies-with-unscopables.js
 
-# Array.prototype.{find, findIndex} don't skip holes
+# Array.prototype.{find, findIndex} don't skip holes in v8
 harmony/array-find.js
 harmony/array-findIndex.js
 
@@ -74,6 +74,12 @@ harmony/string-includes.js
 
 # let, etc. restricted to strict-mode in v8
 harmony/block-non-strict-errors.js
+
+# @@species not supported in v8
+harmony/array-from.js
+
+# RegExp.prototype.flags is non-configurable in v8
+harmony/regexp-flags.js
 
 
 ###################
@@ -183,6 +189,9 @@ stack-traces-overflow.js
 # v8 restriction test
 regexp-not-sticky-yet.js
 
+# flag "--noharmony-strings" not implemented
+harmony/disable-harmony-string.js
+
 
 ############################################
 # Unsupported built-in object functions    #
@@ -207,10 +216,12 @@ regress/regress-280531.js
 regress/d8-readbuffer.js
 
 # Object.observe
+es7/regress/regress-443982.js
 regress/regress-3315.js
 regress/regress-356589.js
 regress/regress-417709a.js
 regress/regress-417709b.js
+harmony/regress/regress-3750.js
 harmony/regress/regress-405844.js
 
 
@@ -284,6 +295,10 @@ object-literal.js
 
 # %TypedArray% intrinsic not available in V8
 harmony/typedarrays-of.js
+
+# assignment to const binding is always a runtime error, regardless of strict mode
+const.js
+constant-folding.js
 
 
 #######################################
@@ -362,14 +377,11 @@ regress/regress-1132.js
 regress/regress-148378.js
 
 # Timeout (slow)
+json-parser-recursive.js
 unicodelctest.js
 unicodelctest-no-optimization.js
 
 # Timeout
-array-concat.js
-array-functions-prototype-misc.js
-array-join.js
-array-unshift.js
 ascii-regexp-subject.js
 mul-exhaustive-part1.js
 mul-exhaustive-part2.js
@@ -388,7 +400,6 @@ regress/regress-634.js
 regress/regress-685.js
 regress/regress-deep-proto.js
 regress/regress-splice-large-index.js
-sparse-array-reverse.js
 compiler/expression-trees.js
 compiler/regress-4.js
 compiler/regress-arguments.js

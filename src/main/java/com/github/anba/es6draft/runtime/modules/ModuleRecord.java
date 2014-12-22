@@ -16,13 +16,13 @@ import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject;
 
 /**
- * 15.2.1.15 Static and Runtme Semantics: Module Records
+ * 15.2.1.12 Static and Runtime Semantics: Module Records
  */
 public final class ModuleRecord implements Cloneable {
     /**
-     * [[Name]]
+     * [[ModuleId]]
      */
-    private final String name;
+    private final String moduleId;
 
     /**
      * [[ImportedModules]]
@@ -72,17 +72,17 @@ public final class ModuleRecord implements Cloneable {
     /**
      * Creates a module record.
      * 
-     * @param name
-     *            the normalized module name
+     * @param moduleId
+     *            the normalized module identifier
      */
-    public ModuleRecord(String name) {
-        assert name != null;
-        this.name = name;
+    public ModuleRecord(String moduleId) {
+        assert moduleId != null;
+        this.moduleId = moduleId;
     }
 
     @Override
     public ModuleRecord clone() {
-        ModuleRecord newModule = new ModuleRecord(name);
+        ModuleRecord newModule = new ModuleRecord(moduleId);
         newModule.importedModules = importedModules;
         newModule.scriptCode = scriptCode;
         newModule.importEntries = importEntries;
@@ -96,12 +96,12 @@ public final class ModuleRecord implements Cloneable {
     }
 
     /**
-     * [[Name]]
+     * [[ModuleId]]
      * 
-     * @return the module name
+     * @return the module identifier
      */
-    public String getName() {
-        return name;
+    public String getModuleId() {
+        return moduleId;
     }
 
     /**

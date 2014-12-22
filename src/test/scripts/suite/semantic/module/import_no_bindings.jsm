@@ -7,7 +7,8 @@
 
 import {assertSame, assertNotUndefined} from "lib/assert.jsm";
 
-const global = this;
+// TODO: Replace with Reflect.global when available
+const global = System.global;
 
 import "./resources/export_set_global_property1.jsm";
 import { /* empty */ } from "./resources/export_set_global_property2.jsm";

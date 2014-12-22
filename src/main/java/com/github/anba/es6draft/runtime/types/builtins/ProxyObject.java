@@ -59,6 +59,7 @@ public class ProxyObject implements ScriptObject {
      *            the proxy handler object
      */
     protected ProxyObject(ScriptObject target, ScriptObject handler) {
+        assert target != null && handler != null;
         this.proxyTarget = target;
         this.proxyHandler = handler;
     }
@@ -69,8 +70,32 @@ public class ProxyObject implements ScriptObject {
      * @return the proxy target object
      */
     protected final ScriptObject getProxyTarget() {
-        assert proxyTarget != null;
+        assert proxyTarget != null : "Proxy is revoked";
         return proxyTarget;
+    }
+
+    /**
+     * Returns the proxy handler object.
+     * 
+     * @return the proxy handler object
+     */
+    protected final ScriptObject getProxyHandler() {
+        assert proxyHandler != null : "Proxy is revoked";
+        return proxyHandler;
+    }
+
+    /**
+     * Returns the proxy target object or throws a script exception of the proxy has been revoked.
+     * 
+     * @param cx
+     *            the execution context
+     * @return the proxy handler object
+     */
+    public final ScriptObject getProxyTarget(ExecutionContext cx) {
+        if (isRevoked()) {
+            throw newTypeError(cx, Messages.Key.ProxyRevoked);
+        }
+        return getProxyTarget();
     }
 
     /**
@@ -80,11 +105,11 @@ public class ProxyObject implements ScriptObject {
      *            the execution context
      * @return the proxy handler object
      */
-    protected final ScriptObject getProxyHandler(ExecutionContext cx) {
-        if (proxyHandler == null) {
+    public final ScriptObject getProxyHandler(ExecutionContext cx) {
+        if (isRevoked()) {
             throw newTypeError(cx, Messages.Key.ProxyRevoked);
         }
-        return proxyHandler;
+        return getProxyHandler();
     }
 
     /**
@@ -96,20 +121,35 @@ public class ProxyObject implements ScriptObject {
         return proxyHandler == null;
     }
 
+    /**
+     * Revoke this proxy, that means set both, [[ProxyTarget]] and [[ProxyHandler]], to {@code null}
+     * and by that prevent further operations on this proxy object.
+     */
+    public final void revoke() {
+        assert !isRevoked() : "Proxy already revoked";
+        this.proxyHandler = null;
+        this.proxyTarget = null;
+    }
+
+    /**
+     * Repeatedly unwraps the proxy object and returns the underlying target object.
+     * 
+     * @param cx
+     *            the execution context
+     * @return the proxy target object
+     */
+    public final ScriptObject unwrap(ExecutionContext cx) {
+        ScriptObject target;
+        for (ProxyObject proxy = this; (target = proxy.getProxyTarget(cx)) instanceof ProxyObject;) {
+            proxy = (ProxyObject) target;
+        }
+        return target;
+    }
+
     @Override
     public String toString() {
         return String.format("%s@%x {{%n\tTarget=%s%n\tHandler=%s%n}}", getClass().getSimpleName(),
                 System.identityHashCode(this), proxyTarget, proxyHandler);
-    }
-
-    /**
-     * Revoke this proxy, that means set both, [[ProxyTarget]] and [[ProxyHandler]], to {@code null}
-     * and by that prevent further operations on this proxy.
-     */
-    public void revoke() {
-        assert this.proxyHandler != null && this.proxyTarget != null;
-        this.proxyHandler = null;
-        this.proxyTarget = null;
     }
 
     private static class CallabeProxyObject extends ProxyObject implements Callable {

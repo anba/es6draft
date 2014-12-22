@@ -232,7 +232,7 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      */
     @Override
     public List<Name> visit(ClassDeclaration node, List<Name> value) {
-        return node.getName().accept(this, value);
+        return node.getIdentifier().accept(this, value);
     }
 
     /**
@@ -321,23 +321,29 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      *     export VariableStatement
      *     export Declaration
      *     export default HoistableDeclaration
+     *     export default ClassDeclaration
      *     export default AssignmentExpression ;
      * </pre>
      */
     @Override
     public List<Name> visit(ExportDeclaration node, List<Name> value) {
         switch (node.getType()) {
-        case Variable:
-            return node.getVariableStatement().accept(this, value);
-        case Declaration:
-        case DefaultDeclaration:
-            return node.getDeclaration().accept(this, value);
-        case DefaultExpression:
-            return node.getExpression().getBinding().accept(this, value);
         case All:
         case External:
         case Local:
             return value;
+        case Variable:
+            return node.getVariableStatement().accept(this, value);
+        case Declaration:
+            return node.getDeclaration().accept(this, value);
+        case DefaultHoistableDeclaration:
+            // TODO: Necessary to include "*default*" if not present?
+            return node.getHoistableDeclaration().accept(this, value);
+        case DefaultClassDeclaration:
+            // TODO: Necessary to include "*default*" if not present?
+            return node.getClassDeclaration().accept(this, value);
+        case DefaultExpression:
+            return node.getExpression().getBinding().accept(this, value);
         default:
             throw new AssertionError();
         }

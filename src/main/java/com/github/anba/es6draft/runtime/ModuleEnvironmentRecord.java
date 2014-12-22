@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime;
 
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 
 /**
@@ -22,7 +24,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
         private final String otherName;
 
         IndirectBinding(ModuleRecord module, String otherName) {
-            super(false, false);
+            super(false, false, false);
             this.module = module;
             this.otherName = otherName;
         }
@@ -49,6 +51,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
 
         @Override
         public Object getValue() {
+            /* 8.1.1.5.1 GetBindingValue(N,S), step 3 */
             return module.getEnvironment().getEnvRec().getBindingValue(otherName, true);
         }
     }
@@ -57,8 +60,28 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
         super(cx);
     }
 
+    // Implicitly defined methods:
+    // 8.1.1.5.1 GetBindingValue(N,S)
+    // 8.1.1.5.2 DeleteBinding (N)
+
     /**
-     * 8.1.1.5.3 CreateImportBinding (N, M, N2)
+     * 8.1.1.5.3 HasThisBinding ()
+     */
+    @Override
+    public boolean hasThisBinding() {
+        return true;
+    }
+
+    /**
+     * 8.1.1.5.4 GetThisBinding ()
+     */
+    @Override
+    public Object getThisBinding() {
+        return UNDEFINED;
+    }
+
+    /**
+     * 8.1.1.5.5 CreateImportBinding (N, M, N2)
      * 
      * @param name
      *            the binding name

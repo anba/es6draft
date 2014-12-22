@@ -19,10 +19,12 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Creatable;
 import com.github.anba.es6draft.runtime.types.CreateAction;
@@ -273,32 +275,28 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
         /* steps 5-6 */
-        Object bufferConstructor = Get(cx, srcBuffer, "constructor");
+        Constructor bufferConstructor = SpeciesConstructor(cx, srcBuffer, Intrinsics.ArrayBuffer);
         /* step 7 */
-        if (Type.isUndefined(bufferConstructor)) {
-            bufferConstructor = cx.getIntrinsic(Intrinsics.ArrayBuffer);
-        }
-        /* step 8 */
         ArrayBufferObject targetBuffer = AllocateArrayBuffer(cx, bufferConstructor);
-        /* steps 9-10 */
+        /* steps 8-9 */
         if (IsDetachedBuffer(srcBuffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* step 11 */
+        /* step 10 */
         long srcLength = srcBuffer.getByteLength();
-        /* step 12 */
+        /* step 11 */
         assert srcByteOffset <= srcLength;
-        /* step 13 */
+        /* step 12 */
         long cloneLength = srcLength - srcByteOffset;
-        /* step 14 */
+        /* step 13 */
         assert srcBlock == srcBuffer.getData();
-        /* steps 15-16 */
+        /* steps 14-15 */
         SetArrayBufferData(cx, targetBuffer, cloneLength);
-        /* step 17 */
+        /* step 16 */
         ByteBuffer targetBlock = targetBuffer.getData();
-        /* step 18 */
+        /* step 17 */
         CopyDataBlockBytes(targetBlock, 0, srcBlock, srcByteOffset, cloneLength);
-        /* step 19 */
+        /* step 18 */
         return targetBuffer;
     }
 
@@ -559,6 +557,22 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         public static Object isView(ExecutionContext cx, Object thisValue, Object arg) {
             /* steps 1-3 */
             return arg instanceof ArrayBufferView;
+        }
+
+        /**
+         * 24.1.3.3 get ArrayBuffer [ @@species ]
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the species object
+         */
+        @Accessor(name = "get [Symbol.species]", symbol = BuiltinSymbol.species,
+                type = Accessor.Type.Getter)
+        public static Object species(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
+            return thisValue;
         }
     }
 }

@@ -36,7 +36,7 @@ const {
   let c = 0;
   let string = "ABCDEF";
   let r = new RE();
-  r.replace(string, (m, p, s) => {
+  r[Symbol.replace](string, (m, p, s) => {
     assertSame(0, r.lastIndex);
     assertSame(string, s);
     switch (c++) {

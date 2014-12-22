@@ -6,10 +6,15 @@
  */
 package com.github.anba.es6draft.runtime.objects.async;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorComplete;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorValue;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorResume;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorStart;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorThrow;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseBuiltinCapability;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseNew;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseOf;
 import static com.github.anba.es6draft.runtime.objects.promise.PromisePrototype.PerformPromiseThen;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;

@@ -17,7 +17,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
  */
 public abstract class CompiledObject implements Executable {
     private final RuntimeInfo.SourceObject sourceObject;
-    private HashMap<Integer, ArrayObject> templateCallSites;
+    private HashMap<Integer, ArrayObject> templateObjects;
 
     protected CompiledObject(RuntimeInfo.SourceObject sourceObject) {
         this.sourceObject = sourceObject;
@@ -29,28 +29,28 @@ public abstract class CompiledObject implements Executable {
     }
 
     /**
-     * Returns the template call-site object for {@code key}.
+     * Returns the template object for {@code key}.
      * 
      * @param key
      *            the template literal key
-     * @return the call-site object
+     * @return the template object
      */
-    public final ArrayObject getTemplateCallSite(int key) {
-        return templateCallSites != null ? templateCallSites.get(key) : null;
+    public final ArrayObject getTemplateObject(int key) {
+        return templateObjects != null ? templateObjects.get(key) : null;
     }
 
     /**
-     * Stores the template call-site object.
+     * Stores the template object.
      * 
      * @param key
      *            the template literal key
-     * @param callSite
-     *            the call-site object
+     * @param template
+     *            the template object
      */
-    public final void addTemplateCallSite(int key, ArrayObject callSite) {
-        if (templateCallSites == null) {
-            templateCallSites = new HashMap<>();
+    public final void setTemplateObject(int key, ArrayObject template) {
+        if (templateObjects == null) {
+            templateObjects = new HashMap<>();
         }
-        templateCallSites.put(key, callSite);
+        templateObjects.put(key, template);
     }
 }

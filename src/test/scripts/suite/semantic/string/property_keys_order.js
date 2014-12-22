@@ -11,7 +11,11 @@ const {
 } = Assert;
 
 function enumerableNames(o) {
-  return [...{[Symbol.iterator]: () => Reflect.enumerate(o)}];
+  return [...{[Symbol.iterator]: () => Reflect.enumerate(Object(o))}];
+}
+
+function getOwnKeys(o) {
+  return Reflect.ownKeys(Object(o));
 }
 
 function* range(start, end) {
@@ -25,7 +29,7 @@ for (let s of ["", new String("")]) {
   let names = enumerableNames(s);
   let ownNames = Object.getOwnPropertyNames(s);
   let ownSymbols = Object.getOwnPropertySymbols(s);
-  let ownKeys = Reflect.ownKeys(s);
+  let ownKeys = getOwnKeys(s);
 
   assertEquals([], names);
   assertEquals(["length"], ownNames);
@@ -37,7 +41,7 @@ for (let s of ["abc", new String("abc")]) {
   let names = enumerableNames(s);
   let ownNames = Object.getOwnPropertyNames(s);
   let ownSymbols = Object.getOwnPropertySymbols(s);
-  let ownKeys = Reflect.ownKeys(s);
+  let ownKeys = getOwnKeys(s);
 
   assertEquals(["0","1","2"], names);
   assertEquals(["0","1","2","length"], ownNames);
@@ -53,7 +57,7 @@ for (let t of ["", "abc"]) {
     let names = enumerableNames(s);
     let ownNames = Object.getOwnPropertyNames(s);
     let ownSymbols = Object.getOwnPropertySymbols(s);
-    let ownKeys = Reflect.ownKeys(s);
+    let ownKeys = getOwnKeys(s);
 
     assertEquals([...range(0, t.length + enumerable)], names);
     assertEquals([...range(0, t.length + 1), "length"], ownNames);
@@ -70,7 +74,7 @@ for (let t of ["", "abc"]) {
     let names = enumerableNames(s);
     let ownNames = Object.getOwnPropertyNames(s);
     let ownSymbols = Object.getOwnPropertySymbols(s);
-    let ownKeys = Reflect.ownKeys(s);
+    let ownKeys = getOwnKeys(s);
 
     assertEquals([...range(0, t.length), ...(enumerable ? ["p"] : [])], names);
     assertEquals([...range(0, t.length), "length", "p"], ownNames);
@@ -88,7 +92,7 @@ for (let t of ["", "abc"]) {
     let names = enumerableNames(s);
     let ownNames = Object.getOwnPropertyNames(s);
     let ownSymbols = Object.getOwnPropertySymbols(s);
-    let ownKeys = Reflect.ownKeys(s);
+    let ownKeys = getOwnKeys(s);
 
     assertEquals([...range(0, t.length)], names);
     assertEquals([...range(0, t.length), "length"], ownNames);
@@ -108,7 +112,7 @@ for (let t of ["", "abc"]) {
     let names = enumerableNames(s);
     let ownNames = Object.getOwnPropertyNames(s);
     let ownSymbols = Object.getOwnPropertySymbols(s);
-    let ownKeys = Reflect.ownKeys(s);
+    let ownKeys = getOwnKeys(s);
 
     assertEquals([...range(0, t.length + enumerable), ...(enumerable ? ["p"] : [])], names);
     assertEquals([...range(0, t.length + 1), "length", "p"], ownNames);
@@ -125,7 +129,7 @@ for (let t of ["", "abc"]) {
   String.call(s, "world");
   let names = enumerableNames(s);
   let ownNames = Object.getOwnPropertyNames(s);
-  let ownKeys = Reflect.ownKeys(s);
+  let ownKeys = getOwnKeys(s);
 
   assertSame("hello", s[0]);
   assertEquals(["0","1","2","3","4"], names);
@@ -140,7 +144,7 @@ for (let t of ["", "abc"]) {
   String.call(s, "world");
   let names = enumerableNames(s);
   let ownNames = Object.getOwnPropertyNames(s);
-  let ownKeys = Reflect.ownKeys(s);
+  let ownKeys = getOwnKeys(s);
 
   assertSame("hello", s[0]);
   assertEquals(["1","2","3","4"], names);

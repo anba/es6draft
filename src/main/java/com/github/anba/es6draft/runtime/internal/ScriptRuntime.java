@@ -99,12 +99,16 @@ public final class ScriptRuntime {
      */
     public static void canDeclareLexicalScopedOrThrow(ExecutionContext cx,
             GlobalEnvironmentRecord envRec, String name) {
-        /* step 4.a */
+        /* step 5.a */
         if (envRec.hasVarDeclaration(name)) {
             throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
-        /* step 4.b */
+        /* step 5.b */
         if (envRec.hasLexicalDeclaration(name)) {
+            throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
+        }
+        /* step 5.c */
+        if (envRec.hasRestrictedGlobalProperty(name)) {
             throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
     }
@@ -308,8 +312,8 @@ public final class ScriptRuntime {
             }
         }
         /* steps 1-2 (cf. generated code) */
-        /* steps 2-4 */
-        ScriptObject iterator = GetIterator(cx, ToObject(cx, spreadObj));
+        /* steps 3-4 */
+        ScriptObject iterator = GetIterator(cx, spreadObj);
         /* step 5 */
         for (;;) {
             ScriptObject next = IteratorStep(cx, iterator);
@@ -354,7 +358,7 @@ public final class ScriptRuntime {
     /**
      * 12.2.5 Object Initializer
      * <p>
-     * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 12.2.5.9 Runtime Semantics: PropertyDefinitionEvaluation
      * 
      * @param object
      *            the script object
@@ -367,14 +371,13 @@ public final class ScriptRuntime {
      */
     public static void defineProperty(OrdinaryObject object, Object propertyName, Object value,
             ExecutionContext cx) {
-        DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
-                true));
+        CreateDataPropertyOrThrow(cx, object, propertyName, value);
     }
 
     /**
      * 12.2.5 Object Initializer
      * <p>
-     * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 12.2.5.9 Runtime Semantics: PropertyDefinitionEvaluation
      * 
      * @param object
      *            the script object
@@ -387,14 +390,13 @@ public final class ScriptRuntime {
      */
     public static void defineProperty(OrdinaryObject object, String propertyName, Object value,
             ExecutionContext cx) {
-        DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
-                true));
+        CreateDataPropertyOrThrow(cx, object, propertyName, value);
     }
 
     /**
      * 12.2.5 Object Initializer
      * <p>
-     * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 12.2.5.9 Runtime Semantics: PropertyDefinitionEvaluation
      * 
      * @param object
      *            the script object
@@ -407,14 +409,13 @@ public final class ScriptRuntime {
      */
     public static void defineProperty(OrdinaryObject object, long propertyName, Object value,
             ExecutionContext cx) {
-        DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
-                true));
+        CreateDataPropertyOrThrow(cx, object, propertyName, value);
     }
 
     /**
      * 12.2.5 Object Initializer
      * <p>
-     * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 12.2.5.9 Runtime Semantics: PropertyDefinitionEvaluation
      * 
      * @param object
      *            the script object
@@ -428,14 +429,13 @@ public final class ScriptRuntime {
     public static void defineMethod(OrdinaryObject object, Object propertyName,
             FunctionObject value, ExecutionContext cx) {
         value.setHomeObject(object);
-        DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
-                true));
+        CreateDataPropertyOrThrow(cx, object, propertyName, value);
     }
 
     /**
      * 12.2.5 Object Initializer
      * <p>
-     * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 12.2.5.9 Runtime Semantics: PropertyDefinitionEvaluation
      * 
      * @param object
      *            the script object
@@ -449,14 +449,13 @@ public final class ScriptRuntime {
     public static void defineMethod(OrdinaryObject object, String propertyName,
             FunctionObject value, ExecutionContext cx) {
         value.setHomeObject(object);
-        DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
-                true));
+        CreateDataPropertyOrThrow(cx, object, propertyName, value);
     }
 
     /**
      * 12.2.5 Object Initializer
      * <p>
-     * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     * 12.2.5.9 Runtime Semantics: PropertyDefinitionEvaluation
      * 
      * @param object
      *            the script object
@@ -470,8 +469,7 @@ public final class ScriptRuntime {
     public static void defineMethod(OrdinaryObject object, long propertyName, FunctionObject value,
             ExecutionContext cx) {
         value.setHomeObject(object);
-        DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
-                true));
+        CreateDataPropertyOrThrow(cx, object, propertyName, value);
     }
 
     /**
@@ -535,7 +533,7 @@ public final class ScriptRuntime {
     /**
      * 12.2.8 Template Literals
      * <p>
-     * 12.2.8.2.2 Runtime Semantics: GetTemplateCallSite
+     * 12.2.8.2.2 Runtime Semantics: GetTemplateObject
      * 
      * @param key
      *            the template literal key
@@ -545,43 +543,77 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the template call site object
      */
-    public static ArrayObject GetTemplateCallSite(int key, MethodHandle handle, ExecutionContext cx) {
+    public static ArrayObject GetTemplateObject(int key, MethodHandle handle, ExecutionContext cx) {
         assert cx.getCurrentExecutable() instanceof CompiledObject : cx.getCurrentExecutable();
         CompiledObject compiledObject = (CompiledObject) cx.getCurrentExecutable();
-        /* step 1 */
-        ArrayObject callSite = compiledObject.getTemplateCallSite(key);
-        if (callSite != null) {
-            return callSite;
+        ArrayObject template = compiledObject.getTemplateObject(key);
+        if (template == null) {
+            template = GetTemplateObject(handle, cx);
+            compiledObject.setTemplateObject(key, template);
         }
-        /* steps 2-3 */
-        String[] strings = evaluateCallSite(handle);
+        return template;
+    }
+
+    /**
+     * 12.2.8 Template Literals
+     * <p>
+     * 12.2.8.2.2 Runtime Semantics: GetTemplateObject
+     * 
+     * @param handle
+     *            the method handle for the template literal data
+     * @param cx
+     *            the execution context
+     * @return the template call site object
+     */
+    private static ArrayObject GetTemplateObject(MethodHandle handle, ExecutionContext cx) {
+        /* steps 1, 6 */
+        String[] strings = evaluateTemplateStrings(handle);
         assert (strings.length & 1) == 0;
-        /* step 4 */
+        /* steps 2-4 */
+        Map<String, ArrayObject> templateRegistry = cx.getRealm().getTemplateMap();
+        /* step 5 */
+        String templateKey = templateStringKey(strings);
+        if (templateRegistry.containsKey(templateKey)) {
+            return templateRegistry.get(templateKey);
+        }
+        /* step 7 */
         int count = strings.length >>> 1;
-        /* steps 5-6 */
-        ArrayObject siteObj = ArrayCreate(cx, count);
+        /* steps 8-9 */
+        ArrayObject template = ArrayCreate(cx, count);
         ArrayObject rawObj = ArrayCreate(cx, count);
-        /* steps 7-8 */
+        /* steps 10-11 */
         for (int i = 0, n = strings.length; i < n; i += 2) {
             int index = i >>> 1;
             int prop = index;
             String cookedValue = strings[i];
-            siteObj.defineOwnProperty(cx, prop, new PropertyDescriptor(cookedValue, false, true,
+            template.defineOwnProperty(cx, prop, new PropertyDescriptor(cookedValue, false, true,
                     false));
             String rawValue = strings[i + 1];
             rawObj.defineOwnProperty(cx, prop, new PropertyDescriptor(rawValue, false, true, false));
         }
-        /* steps 9-11 */
+        /* steps 12-14 */
         SetIntegrityLevel(cx, rawObj, IntegrityLevel.Frozen);
-        siteObj.defineOwnProperty(cx, "raw", new PropertyDescriptor(rawObj, false, false, false));
-        SetIntegrityLevel(cx, siteObj, IntegrityLevel.Frozen);
-        /* step 12 */
-        compiledObject.addTemplateCallSite(key, siteObj);
-        /* step 13 */
-        return siteObj;
+        template.defineOwnProperty(cx, "raw", new PropertyDescriptor(rawObj, false, false, false));
+        SetIntegrityLevel(cx, template, IntegrityLevel.Frozen);
+        /* step 15 */
+        templateRegistry.put(templateKey, template);
+        /* step 16 */
+        return template;
     }
 
-    private static String[] evaluateCallSite(MethodHandle handle) {
+    private static String templateStringKey(String[] strings) {
+        assert (strings.length & 1) == 0;
+        StringBuilder raw = new StringBuilder();
+        for (int i = 0, n = strings.length; i < n; i += 2) {
+            // Template string normalization removes any \r character in the source string, so it's
+            // safe to use that character as a delimiter here.
+            String rawValue = strings[i + 1];
+            raw.append(rawValue).append('\r');
+        }
+        return raw.toString();
+    }
+
+    private static String[] evaluateTemplateStrings(MethodHandle handle) {
         try {
             return (String[]) handle.invokeExact();
         } catch (RuntimeException | Error e) {
@@ -1254,9 +1286,9 @@ public final class ScriptRuntime {
             }
         }
         /* steps 1-3 (cf. generated code) */
-        /* steps 3-4 */
-        ScriptObject iterator = GetIterator(cx, ToObject(cx, spreadObj));
-        /* step 5 */
+        /* steps 4-5 */
+        ScriptObject iterator = GetIterator(cx, spreadObj);
+        /* step 6 */
         ArrayList<Object> list = new ArrayList<>();
         for (int n = 0; n <= MAX_ARGS; ++n) {
             ScriptObject next = IteratorStep(cx, iterator);
@@ -1518,14 +1550,14 @@ public final class ScriptRuntime {
      * <p>
      * 13.2.3.5 Runtime Semantics: IteratorBindingInitialization
      * 
-     * @param obj
-     *            the script object
+     * @param value
+     *            the value object
      * @param cx
      *            the execution context
      * @return the object iterator
      */
-    public static Iterator<?> getIterator(ScriptObject obj, ExecutionContext cx) {
-        return FromScriptIterator(cx, GetIterator(cx, obj));
+    public static Iterator<?> getIterator(Object value, ExecutionContext cx) {
+        return FromScriptIterator(cx, GetIterator(cx, value));
     }
 
     /**
@@ -1560,62 +1592,54 @@ public final class ScriptRuntime {
     /**
      * 13.6.4 The for-in and for-of Statements
      * <p>
-     * 13.6.4.7 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * 13.6.4.8 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
      * 
-     * @param o
+     * @param value
      *            the object to enumerate
      * @param cx
      *            the execution context
      * @return the keys enumerator
      */
-    public static ScriptIterator<?> enumerate(Object o, ExecutionContext cx) {
-        /* step 8 */
-        ScriptObject obj = ToObject(cx, o);
-        /* step 9-11 */
-        ScriptIterator<?> keys = obj.enumerateKeys(cx);
-        /* step 12 */
-        return keys;
+    public static ScriptIterator<?> enumerate(Object value, ExecutionContext cx) {
+        /* step 7.b */
+        ScriptObject obj = ToObject(cx, value);
+        /* step 7.c */
+        return obj.enumerateKeys(cx);
     }
 
     /**
      * 13.6.4 The for-in and for-of Statements
      * <p>
-     * 13.6.4.7 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * 13.6.4.8 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
      * 
-     * @param o
-     *            the object to enumerate
+     * @param value
+     *            the object to iterate
      * @param cx
      *            the execution context
      * @return the object iterator
      */
-    public static ScriptIterator<?> iterate(Object o, ExecutionContext cx) {
+    public static ScriptIterator<?> iterate(Object value, ExecutionContext cx) {
         /* step 8 */
-        ScriptObject obj = ToObject(cx, o);
-        /* step 9-11 */
-        ScriptObject keys = GetIterator(cx, obj);
-        /* step 12 */
-        return FromScriptIterator(cx, keys);
+        return FromScriptIterator(cx, GetIterator(cx, value));
     }
 
     /**
      * 13.6.4 The for-in and for-of Statements<br>
      * Extension: 'for-each' statement
      * <p>
-     * 13.6.4.7 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * 13.6.4.8 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
      * 
-     * @param o
+     * @param value
      *            the object to enumerate
      * @param cx
      *            the execution context
      * @return the values enumerator
      */
-    public static ScriptIterator<?> enumerateValues(Object o, ExecutionContext cx) {
-        /* step 8 */
-        ScriptObject obj = ToObject(cx, o);
-        /* step 9-11 */
-        ScriptIterator<?> keys = new ValuesIterator(cx, obj, obj.enumerateKeys(cx));
-        /* step 12 */
-        return keys;
+    public static ScriptIterator<?> enumerateValues(Object value, ExecutionContext cx) {
+        /* step 7.b */
+        ScriptObject obj = ToObject(cx, value);
+        /* step 7.c */
+        return new ValuesIterator(cx, obj, obj.enumerateKeys(cx));
     }
 
     private static final class ValuesIterator extends SimpleIterator<Object> implements
@@ -1726,7 +1750,7 @@ public final class ScriptRuntime {
     /**
      * 14.1 Function Definitions
      * <p>
-     * 14.1.22 Runtime Semantics: Evaluation
+     * 14.1.23 Runtime Semantics: Evaluation
      * <ul>
      * <li>FunctionExpression : function ( FormalParameters ) { FunctionBody }
      * <li>FunctionExpression : function BindingIdentifier ( FormalParameters ) { FunctionBody }
@@ -1765,7 +1789,7 @@ public final class ScriptRuntime {
             /* step 5 */
             String name = fd.functionName();
             /* step 6 */
-            envRec.createImmutableBinding(name);
+            envRec.createImmutableBinding(name, false);
             /* step 7 */
             closure = FunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
             /* step 8 */
@@ -1812,7 +1836,7 @@ public final class ScriptRuntime {
      * 14.3 Method Definitions, 14.5 Class Definitions
      * <p>
      * 14.3.8 Runtime Semantics: DefineMethod<br>
-     * 14.5.17 Runtime Semantics: ClassDefinitionEvaluation
+     * 14.5.14 Runtime Semantics: ClassDefinitionEvaluation
      * 
      * @param constructorParent
      *            the constructor prototype
@@ -2370,7 +2394,7 @@ public final class ScriptRuntime {
             /* step 6 */
             String name = fd.functionName();
             /* step 7 */
-            envRec.createImmutableBinding(name);
+            envRec.createImmutableBinding(name, false);
             /* step 8 */
             closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
             /* step 9 */
@@ -2434,7 +2458,7 @@ public final class ScriptRuntime {
             /* step 6 */
             String name = fd.functionName();
             /* step 7 */
-            envRec.createImmutableBinding(name);
+            envRec.createImmutableBinding(name, false);
             /* step 8 */
             closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
             /* step 9 */
@@ -2490,7 +2514,8 @@ public final class ScriptRuntime {
      * @return the iterator object
      */
     public static ScriptObject getIteratorObject(Object value, ExecutionContext cx) {
-        return GetIterator(cx, ToObject(cx, value));
+        // TODO: move to generated code
+        return GetIterator(cx, value);
     }
 
     /**
@@ -2512,7 +2537,7 @@ public final class ScriptRuntime {
     public static Object delegatedYield(Object value, ExecutionContext cx) throws ReturnValue {
         /* steps 1-2 (generated code) */
         /* steps 3-4 */
-        ScriptObject iterator = GetIterator(cx, ToObject(cx, value));
+        ScriptObject iterator = GetIterator(cx, value);
         /* step 5 */
         Object received = UNDEFINED;
         /* step 6 */
@@ -2565,7 +2590,7 @@ public final class ScriptRuntime {
     /**
      * 14.5 Class Definitions
      * <p>
-     * 14.5.17 Runtime Semantics: ClassDefinitionEvaluation
+     * 14.5.14 Runtime Semantics: ClassDefinitionEvaluation
      * 
      * @param cx
      *            the execution context
@@ -2583,7 +2608,7 @@ public final class ScriptRuntime {
     /**
      * 14.5 Class Definitions
      * <p>
-     * 14.5.17 Runtime Semantics: ClassDefinitionEvaluation
+     * 14.5.14 Runtime Semantics: ClassDefinitionEvaluation
      * 
      * @param superClass
      *            the super class object
@@ -2616,7 +2641,7 @@ public final class ScriptRuntime {
     /**
      * 14.5 Class Definitions
      * <p>
-     * 14.5.17 Runtime Semantics: ClassDefinitionEvaluation
+     * 14.5.14 Runtime Semantics: ClassDefinitionEvaluation
      * 
      * @return the runtime info object for the default constructor
      */
@@ -2637,7 +2662,7 @@ public final class ScriptRuntime {
     /**
      * 14.5 Class Definitions
      * <p>
-     * 14.5.17 Runtime Semantics: ClassDefinitionEvaluation
+     * 14.5.14 Runtime Semantics: ClassDefinitionEvaluation
      * 
      * @return the runtime info object for the default constructor
      */
@@ -2677,7 +2702,7 @@ public final class ScriptRuntime {
         envRec.createMutableBinding("args", false);
         envRec.initializeBinding("args", UNDEFINED);
         if (DefaultConstructorArguments) {
-            envRec.createImmutableBinding("arguments");
+            envRec.createImmutableBinding("arguments", false);
         }
 
         cx.resolveBinding("args", true).putValue(createRestArray(asList(args).iterator(), cx), cx);
@@ -2727,7 +2752,7 @@ public final class ScriptRuntime {
             Object[] args) {
         if (DefaultEmptyConstructorArguments) {
             EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
-            envRec.createImmutableBinding("arguments");
+            envRec.createImmutableBinding("arguments", false);
             envRec.initializeBinding("arguments", CreateUnmappedArgumentsObject(cx, args));
         }
     }
@@ -2814,7 +2839,7 @@ public final class ScriptRuntime {
             /* step 6 */
             String name = fd.functionName();
             /* step 7 */
-            envRec.createImmutableBinding(name);
+            envRec.createImmutableBinding(name, false);
             /* step 8 */
             closure = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
             /* step 9 */

@@ -159,6 +159,11 @@ public enum CompatibilityOption {
     ImplicitStrictDirective,
 
     /**
+     * Moz-Extension: Don't call [[Enumerate]] on Proxy objects in the prototype chain
+     */
+    ProxyProtoSkipEnumerate,
+
+    /**
      * ES7-Extension: Async Function Definitions
      */
     AsyncFunction,
@@ -189,9 +194,9 @@ public enum CompatibilityOption {
     System,
 
     /**
-     * ES7-Extension: Array.prototype.contains
+     * ES7-Extension: Array.prototype.includes
      */
-    ArrayContains,
+    ArrayIncludes,
 
     ;
 
@@ -219,7 +224,7 @@ public enum CompatibilityOption {
      * @return the options set for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return addAll(WebCompatibility(), EnumSet.range(ForEachStatement, ImplicitStrictDirective),
+        return addAll(WebCompatibility(), EnumSet.range(ForEachStatement, ProxyProtoSkipEnumerate),
                 EnumSet.of(Comprehension));
     }
 
@@ -238,7 +243,7 @@ public enum CompatibilityOption {
      * @return the options set for proposed ES7 extensions
      */
     public static final Set<CompatibilityOption> ECMAScript7() {
-        return EnumSet.range(AsyncFunction, ArrayContains);
+        return EnumSet.range(AsyncFunction, ArrayIncludes);
     }
 
     @SafeVarargs

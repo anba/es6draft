@@ -6,7 +6,7 @@
  */
 
 const {
-  assertBuiltinFunction, assertThrows
+  assertBuiltinFunction, assertThrows, assertInstanceOf, assertFalse
 } = Assert;
 
 
@@ -53,7 +53,18 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
 
 // .constructor property is not a Constructor object
 {
-  for (let constructor of [null, void 0, 0, "", () => {}, {}, []]) {
+  for (let constructor of [null, void 0, 0, ""]) {
+    let promise = Object.assign(new Promise(() => {}), {constructor});
+    assertThrows(TypeError, () => promise.then());
+  }
+  for (let constructor of [() => {}, {}, []]) {
+    assertFalse(Symbol.species in constructor);
+    let promise = Object.assign(new Promise(() => {}), {constructor});
+    assertInstanceOf(Promise, promise.then());
+  }
+  for (let constructor of [() => {}, {}, []]) {
+    assertFalse(Symbol.species in constructor);
+    constructor[Symbol.species] = constructor;
     let promise = Object.assign(new Promise(() => {}), {constructor});
     assertThrows(TypeError, () => promise.then());
   }
@@ -66,6 +77,7 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
     executor(() => {}, () => {});
     return {};
   }
+  Constructor[Symbol.species] = Constructor;
   promise.constructor = Constructor;
   assertThrows(TypeError, () => promise.then());
 }
@@ -79,6 +91,7 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
     assertThrows(TypeError, () => executor(() => {}, () => {}));
     return this;
   }
+  Constructor[Symbol.species] = Constructor;
   promise.constructor = Constructor;
   promise.then();
 }
@@ -92,6 +105,7 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
     assertThrows(TypeError, () => executor(() => {}, () => {}));
     return this;
   }
+  Constructor[Symbol.species] = Constructor;
   promise.constructor = Constructor;
   assertThrows(TypeError, () => promise.then());
 }
@@ -105,6 +119,7 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
     executor(() => {}, () => {})
     return this;
   }
+  Constructor[Symbol.species] = Constructor;
   promise.constructor = Constructor;
   promise.then();
 }

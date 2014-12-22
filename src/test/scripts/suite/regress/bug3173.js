@@ -12,8 +12,8 @@ const {
 // 12.14.5.3 IteratorDestructuringAssignmentEvaluation: Unreachable step 5 for AssignmentRestElement
 // https://bugs.ecmascript.org/show_bug.cgi?id=3173
 
-assertSyntaxError(`[...[]] = []`);
-assertSyntaxError(`[...[a]] = []`);
-assertSyntaxError(`[...{}] = []`);
-assertSyntaxError(`[...{a}] = []`);
-assertSyntaxError(`[...{a: b}] = []`);
+[...[]] = [];
+[...[a]] = [];
+[...{}] = [];
+[...{a}] = [];
+[...{a: b}] = [];

@@ -41,7 +41,7 @@ function makeLoggingProxy(trap) {
   } catch (e) {
     assertUndefined(e);
   }
-  assertSame("ab", log());
+  assertSame("a", log());
 }
 
 // SetIntegrityLevel (Object.freeze)
@@ -53,7 +53,7 @@ function makeLoggingProxy(trap) {
   } catch (e) {
     assertUndefined(e);
   }
-  assertSame("ab", log());
+  assertSame("a", log());
 }
 
 // TestIntegrityLevel (Object.isSealed)
@@ -66,7 +66,7 @@ function makeLoggingProxy(trap) {
   } catch (e) {
     assertUndefined(e);
   }
-  assertSame("ab", log());
+  assertSame("a", log());
 }
 
 // TestIntegrityLevel (Object.isFrozen)
@@ -79,7 +79,7 @@ function makeLoggingProxy(trap) {
   } catch (e) {
     assertUndefined(e);
   }
-  assertSame("ab", log());
+  assertSame("a", log());
 }
 
 // Object.assign
@@ -91,7 +91,7 @@ function makeLoggingProxy(trap) {
   } catch (e) {
     assertUndefined(e);
   }
-  assertSame("ab", log());
+  assertSame("a", log());
 }
 
 // Object.defineProperties
@@ -104,5 +104,5 @@ function makeLoggingProxy(trap) {
   } catch (e) {
     assertUndefined(e);
   }
-  assertSame("ab", log());
+  assertSame("a", log());
 }

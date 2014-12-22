@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.runtime.modules;
 
 /**
- * 15.2.1.6 Static Semantics: ImportEntries<br>
+ * 15.2.1.5 Static Semantics: ImportEntries<br>
  * 15.2.2.3 Static Semantics: ImportEntries<br>
- * 15.2.1.15 Static and Runtme Semantics: Module Records
+ * 15.2.1.12 Static and Runtime Semantics: Module Records
  */
 public final class ImportEntry {
     /** [[ModuleRequest]] */
@@ -21,8 +21,8 @@ public final class ImportEntry {
     /** [[LocalName]] */
     private final String localName;
 
-    /** [[ModuleRequest]] */
-    private String normalizedModuleRequest;
+    /** [[ModuleRequestId]] */
+    private String moduleRequestId;
 
     public ImportEntry(String moduleRequest, String importName, String localName) {
         this.moduleRequest = moduleRequest;
@@ -37,24 +37,31 @@ public final class ImportEntry {
     /**
      * [[ModuleRequest]]
      * 
-     * @return the module request
+     * @return the module request name
      */
     public String getModuleRequest() {
         return moduleRequest;
     }
 
     /**
-     * [[ModuleRequest]]
+     * [[ModuleRequestId]]
      * 
-     * @return the module request
+     * @return the module request identifier
      */
-    public String getNormalizedModuleRequest() {
-        assert normalizedModuleRequest != null;
-        return normalizedModuleRequest;
+    public String getModuleRequestId() {
+        assert moduleRequestId != null;
+        return moduleRequestId;
     }
 
-    public void setNormalizedModuleRequest(String moduleRequest) {
-        this.normalizedModuleRequest = moduleRequest;
+    /**
+     * [[ModuleRequestId]]
+     * 
+     * @param moduleRequestId
+     *            the module request identifier
+     */
+    public void setModuleRequestId(String moduleRequestId) {
+        assert this.moduleRequestId == null && moduleRequestId != null;
+        this.moduleRequestId = moduleRequestId;
     }
 
     /**

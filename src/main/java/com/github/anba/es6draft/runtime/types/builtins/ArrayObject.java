@@ -6,9 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -20,10 +21,12 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
@@ -346,7 +349,59 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     /**
-     * 9.4.2.3 ArraySetLength(A, Desc) Abstract Operation
+     * 9.4.2.3 ArraySpeciesCreate(originalArray, length) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param orginalArray
+     *            the source array
+     * @param length
+     *            the array length
+     * @return the new array object
+     */
+    public static ScriptObject ArraySpeciesCreate(ExecutionContext cx, ScriptObject orginalArray,
+            long length) {
+        /* step 1 */
+        assert length >= 0;
+        /* step 2 (not applicable) */
+        /* step 3 */
+        Object c = UNDEFINED;
+        /* steps 4-5 */
+        boolean isArray = IsArray(cx, orginalArray);
+        /* step 6 */
+        if (isArray) {
+            /* steps 6.a-6.b */
+            c = Get(cx, orginalArray, "constructor");
+            /* step 6.c */
+            if (IsConstructor(c)) {
+                Constructor constructor = (Constructor) c;
+                /* step 6.c.i */
+                Realm thisRealm = cx.getRealm();
+                /* step 6.c.ii */
+                Realm realmC = constructor.getRealm(cx);
+                /* step 6.c.iii, 7 */
+                if (thisRealm != realmC && constructor == realmC.getIntrinsic(Intrinsics.Array)) {
+                    c = UNDEFINED;
+                } else {
+                    /* step 6.c.iv */
+                    c = Get(cx, constructor, BuiltinSymbol.species.get());
+                }
+            }
+        }
+        /* step 7 */
+        if (Type.isUndefinedOrNull(c)) {
+            return ArrayCreate(cx, length);
+        }
+        /* step 8 */
+        if (!IsConstructor(c)) {
+            throw newTypeError(cx, Messages.Key.NotConstructor);
+        }
+        /* step 9 */
+        return ((Constructor) c).construct(cx, length);
+    }
+
+    /**
+     * 9.4.2.4 ArraySetLength(A, Desc) Abstract Operation
      * 
      * @param cx
      *            the execution context

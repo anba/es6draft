@@ -135,35 +135,63 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
         public static final Symbol isConcatSpreadable = BuiltinSymbol.isConcatSpreadable.get();
 
         /**
-         * 19.4.2.4 Symbol.isRegExp
-         */
-        @Value(name = "isRegExp", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
-        public static final Symbol isRegExp = BuiltinSymbol.isRegExp.get();
-
-        /**
-         * 19.4.2.5 Symbol.iterator
+         * 19.4.2.4 Symbol.iterator
          */
         @Value(name = "iterator", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Symbol iterator = BuiltinSymbol.iterator.get();
 
         /**
-         * 19.4.2.8 Symbol.toPrimitive
+         * 19.4.2.6 Symbol.match
+         */
+        @Value(name = "match", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final Symbol match = BuiltinSymbol.match.get();
+
+        /**
+         * 19.4.2.8 Symbol.replace
+         */
+        @Value(name = "replace", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final Symbol replace = BuiltinSymbol.replace.get();
+
+        /**
+         * 19.4.2.9 Symbol.search
+         */
+        @Value(name = "search", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final Symbol search = BuiltinSymbol.search.get();
+
+        /**
+         * 19.4.2.10 Symbol.species
+         */
+        @Value(name = "species", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final Symbol species = BuiltinSymbol.species.get();
+
+        /**
+         * 19.4.2.11 Symbol.split
+         */
+        @Value(name = "split", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final Symbol split = BuiltinSymbol.split.get();
+
+        /**
+         * 19.4.2.12 Symbol.toPrimitive
          */
         @Value(name = "toPrimitive", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Symbol toPrimitive = BuiltinSymbol.toPrimitive.get();
 
         /**
-         * 19.4.2.9 Symbol.toStringTag
+         * 19.4.2.13 Symbol.toStringTag
          */
         @Value(name = "toStringTag", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Symbol toStringTag = BuiltinSymbol.toStringTag.get();
 
         /**
-         * 19.4.2.10 Symbol.unscopables
+         * 19.4.2.14 Symbol.unscopables
          */
         @Value(name = "unscopables", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -189,7 +217,7 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.4.2.6 Symbol.keyFor (sym)
+         * 19.4.2.5 Symbol.keyFor (sym)
          * 
          * @param cx
          *            the execution context

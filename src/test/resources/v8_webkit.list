@@ -125,6 +125,9 @@ fast/js/Object-getOwnPropertyNames.js
 # restricted properties only present on Function.prototype
 strict-throw-type-error.js
 
+# `RegExp(/a/, "g")` no longer throws
+fast/regex/constructor.js
+
 
 #######################################
 # ES6 related syntax changes          #
@@ -168,7 +171,6 @@ function-call-register-allocation.js
 stack-overflow-catch.js
 
 # Timeout (slow)
-array-splice.js
 comparison-operators.js
 comparison-operators-less.js
 comparison-operators-greater.js

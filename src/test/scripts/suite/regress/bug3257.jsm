@@ -6,12 +6,13 @@
  */
 
 const {
-  assertSame
+  assertNotSame, assertUndefined
 } = Assert;
 
 // Need decision on this binding of ES6 modules
 // https://bugs.ecmascript.org/show_bug.cgi?id=3257
 
 var indirectEval = eval;
-assertSame(indirectEval("this"), this);
-assertSame(Function("return this")(), this);
+assertUndefined(this);
+assertNotSame(indirectEval("this"), this);
+assertNotSame(Function("return this")(), this);

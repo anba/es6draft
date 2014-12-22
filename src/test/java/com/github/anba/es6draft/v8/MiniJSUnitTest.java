@@ -76,6 +76,13 @@ public final class MiniJSUnitTest {
                 TestInfo test, ScriptCache scriptCache) {
             return newGlobalObjectAllocator(console, test, scriptCache);
         }
+
+        @Override
+        protected Set<CompatibilityOption> getOptions() {
+            Set<CompatibilityOption> options = super.getOptions();
+            options.add(CompatibilityOption.ArrayIncludes);
+            return options;
+        }
     };
 
     @Rule

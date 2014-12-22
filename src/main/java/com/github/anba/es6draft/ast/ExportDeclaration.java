@@ -19,9 +19,23 @@ public final class ExportDeclaration extends ModuleItem {
     private final Declaration declaration;
 
     public enum Type {
-        All, Local, External, DefaultDeclaration, DefaultExpression, Variable, Declaration
+        All, External, Local, Variable, Declaration, DefaultHoistableDeclaration,
+        DefaultClassDeclaration, DefaultExpression
     }
 
+    /**
+     * <pre>
+     * ExportDeclaration :
+     *     export * FromClause ;
+     * </pre>
+     * 
+     * @param beginPosition
+     *            the source begin position
+     * @param endPosition
+     *            the source end position
+     * @param moduleSpecifier
+     *            the requested module name
+     */
     public ExportDeclaration(long beginPosition, long endPosition, String moduleSpecifier) {
         super(beginPosition, endPosition);
         this.type = Type.All;
@@ -32,57 +46,148 @@ public final class ExportDeclaration extends ModuleItem {
         this.declaration = null;
     }
 
+    /**
+     * <pre>
+     * ExportDeclaration :
+     *     export ExportClause FromClause ;
+     *     export ExportClause ;
+     * </pre>
+     * 
+     * @param beginPosition
+     *            the source begin position
+     * @param endPosition
+     *            the source end position
+     * @param exportsClause
+     *            the exports clause
+     * @param moduleSpecifier
+     *            the requested module name or {@code null}
+     */
     public ExportDeclaration(long beginPosition, long endPosition, ExportClause exportsClause,
             String moduleSpecifier) {
         super(beginPosition, endPosition);
         this.type = moduleSpecifier != null ? Type.External : Type.Local;
-        this.exportsClause = exportsClause;
         this.moduleSpecifier = moduleSpecifier;
+        this.exportsClause = exportsClause;
         this.expression = null;
         this.variableStatement = null;
         this.declaration = null;
     }
 
-    public ExportDeclaration(long beginPosition, long endPosition,
-            ExportDefaultExpression expression) {
-        super(beginPosition, endPosition);
-        this.type = Type.DefaultExpression;
-        this.expression = expression;
-        this.exportsClause = null;
-        this.moduleSpecifier = null;
-        this.variableStatement = null;
-        this.declaration = null;
-    }
-
-    public ExportDeclaration(long beginPosition, long endPosition, HoistableDeclaration declaration) {
-        super(beginPosition, endPosition);
-        this.type = Type.DefaultDeclaration;
-        this.declaration = declaration;
-        this.exportsClause = null;
-        this.moduleSpecifier = null;
-        this.expression = null;
-        this.variableStatement = null;
-    }
-
+    /**
+     * <pre>
+     * ExportDeclaration :
+     *     export VariableStatement
+     * </pre>
+     * 
+     * @param beginPosition
+     *            the source begin position
+     * @param endPosition
+     *            the source end position
+     * @param variableStatement
+     *            the variable statement node
+     */
     public ExportDeclaration(long beginPosition, long endPosition,
             VariableStatement variableStatement) {
         super(beginPosition, endPosition);
         this.type = Type.Variable;
-        this.variableStatement = variableStatement;
-        this.exportsClause = null;
         this.moduleSpecifier = null;
+        this.exportsClause = null;
         this.expression = null;
+        this.variableStatement = variableStatement;
         this.declaration = null;
     }
 
+    /**
+     * <pre>
+     * ExportDeclaration :
+     *     export Declaration
+     * </pre>
+     * 
+     * @param beginPosition
+     *            the source begin position
+     * @param endPosition
+     *            the source end position
+     * @param declaration
+     *            the declaration node
+     */
     public ExportDeclaration(long beginPosition, long endPosition, Declaration declaration) {
         super(beginPosition, endPosition);
         this.type = Type.Declaration;
-        this.declaration = declaration;
-        this.exportsClause = null;
         this.moduleSpecifier = null;
+        this.exportsClause = null;
         this.expression = null;
         this.variableStatement = null;
+        this.declaration = declaration;
+    }
+
+    /**
+     * <pre>
+     * ExportDeclaration :
+     *     export default HoistableDeclaration<span><sub>[Default]</sub></span>
+     * </pre>
+     * 
+     * @param beginPosition
+     *            the source begin position
+     * @param endPosition
+     *            the source end position
+     * @param declaration
+     *            the hoistable declaration node
+     */
+    public ExportDeclaration(long beginPosition, long endPosition, HoistableDeclaration declaration) {
+        super(beginPosition, endPosition);
+        this.type = Type.DefaultHoistableDeclaration;
+        this.moduleSpecifier = null;
+        this.exportsClause = null;
+        this.expression = null;
+        this.variableStatement = null;
+        this.declaration = declaration;
+    }
+
+    /**
+     * <pre>
+     * ExportDeclaration :
+     *     export default ClassDeclaration<span><sub>[Default]</sub></span>
+     * </pre>
+     * 
+     * @param beginPosition
+     *            the source begin position
+     * @param endPosition
+     *            the source end position
+     * @param declaration
+     *            the class declaration node
+     */
+    public ExportDeclaration(long beginPosition, long endPosition, ClassDeclaration declaration) {
+        super(beginPosition, endPosition);
+        this.type = Type.DefaultClassDeclaration;
+        this.moduleSpecifier = null;
+        this.exportsClause = null;
+        this.expression = null;
+        this.variableStatement = null;
+        this.declaration = declaration;
+    }
+
+    /**
+     * <pre>
+     * ExportDeclaration :
+     *     export default [lookahead &#x2209; { <b>function</b>, <b>class</b> }] AssignmentExpression<span><sub>[In]</sub></span> ;
+     * </pre>
+     * 
+     * @param beginPosition
+     *            the source begin position
+     * @param endPosition
+     *            the source end position
+     * @param expression
+     *            the default export expression node
+     */
+    public ExportDeclaration(long beginPosition, long endPosition,
+            ExportDefaultExpression expression) {
+        super(beginPosition, endPosition);
+        this.type = Type.DefaultExpression;
+        this.moduleSpecifier = null;
+        this.exportsClause = null;
+        this.expression = expression;
+        this.variableStatement = null;
+        this.declaration = null;
     }
 
     public Type getType() {
@@ -90,23 +195,38 @@ public final class ExportDeclaration extends ModuleItem {
     }
 
     public String getModuleSpecifier() {
+        assert type == Type.All || type == Type.External : "Type=" + type;
         return moduleSpecifier;
     }
 
     public ExportClause getExportsClause() {
+        assert type == Type.Local || type == Type.External : "Type=" + type;
         return exportsClause;
     }
 
     public ExportDefaultExpression getExpression() {
+        assert type == Type.DefaultExpression : "Type=" + type;
         return expression;
     }
 
     public VariableStatement getVariableStatement() {
+        assert type == Type.Variable : "Type=" + type;
         return variableStatement;
     }
 
     public Declaration getDeclaration() {
+        assert type == Type.Declaration : "Type=" + type;
         return declaration;
+    }
+
+    public HoistableDeclaration getHoistableDeclaration() {
+        assert type == Type.DefaultHoistableDeclaration : "Type=" + type;
+        return (HoistableDeclaration) declaration;
+    }
+
+    public ClassDeclaration getClassDeclaration() {
+        assert type == Type.DefaultClassDeclaration : "Type=" + type;
+        return (ClassDeclaration) declaration;
     }
 
     @Override

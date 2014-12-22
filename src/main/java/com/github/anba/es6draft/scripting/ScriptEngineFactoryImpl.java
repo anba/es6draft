@@ -58,7 +58,7 @@ public final class ScriptEngineFactoryImpl implements ScriptEngineFactory {
 
     @Override
     public String getLanguageVersion() {
-        return "ECMA-262 6th Edition / Draft October 14, 2014";
+        return "ECMA-262 6th Edition / Draft December 6, 2014";
     }
 
     @Override

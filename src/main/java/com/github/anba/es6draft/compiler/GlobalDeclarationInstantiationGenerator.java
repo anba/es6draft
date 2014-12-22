@@ -81,29 +81,26 @@ final class GlobalDeclarationInstantiationGenerator extends
                 GlobalEnvironmentRecord.class);
         storeEnvironmentRecord(envRec, env, mv);
 
-        /* step 1 */
-        @SuppressWarnings("unused")
-        boolean strict = script.isStrict();
-        /* steps 2-3 (omitted) */
-        /* step 4 */
+        /* steps 1-2 (omitted) */
+        /* step 3 */
         Set<Name> lexNames = LexicallyDeclaredNames(script); // note: unordered set!
-        /* step 5 */
+        /* step 4 */
         Set<Name> varNames = VarDeclaredNames(script); // note: unordered set!
-        /* step 6 */
+        /* step 5 */
         for (Name name : lexNames) {
             canDeclareLexicalScopedOrThrow(context, envRec, name, mv);
         }
-        /* step 7 */
+        /* step 6 */
         for (Name name : varNames) {
             canDeclareVarScopedOrThrow(context, envRec, name, mv);
         }
-        /* step 8 */
+        /* step 7 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
-        /* step 9 */
+        /* step 8 */
         ArrayDeque<HoistableDeclaration> functionsToInitialize = new ArrayDeque<>();
-        /* step 10 */
+        /* step 9 */
         HashSet<Name> declaredFunctionNames = new HashSet<>();
-        /* step 11 */
+        /* step 10 */
         for (StatementListItem item : reverse(varDeclarations)) {
             if (item instanceof HoistableDeclaration) {
                 HoistableDeclaration d = (HoistableDeclaration) item;
@@ -114,9 +111,9 @@ final class GlobalDeclarationInstantiationGenerator extends
                 }
             }
         }
-        /* step 12 */
+        /* step 11 */
         LinkedHashSet<Name> declaredVarNames = new LinkedHashSet<>();
-        /* step 13 */
+        /* step 12 */
         for (StatementListItem d : varDeclarations) {
             if (d instanceof VariableStatement) {
                 for (Name vn : BoundNames((VariableStatement) d)) {
@@ -127,32 +124,32 @@ final class GlobalDeclarationInstantiationGenerator extends
                 }
             }
         }
-        /* step 14 (note) */
-        /* step 15 */
+        /* step 13 (note) */
+        /* step 14 */
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(script);
-        /* step 16 */
+        /* step 15 */
         for (Declaration d : lexDeclarations) {
             assert !(d instanceof HoistableDeclaration);
             for (Name dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
-                    createImmutableBinding(envRec, dn, mv);
+                    createImmutableBinding(envRec, dn, true, mv);
                 } else {
                     createMutableBinding(envRec, dn, false, mv);
                 }
             }
         }
-        /* steps 17 */
+        /* steps 16 */
         for (HoistableDeclaration f : functionsToInitialize) {
             Name fn = BoundName(f);
             // stack: [] -> [fo]
             InstantiateFunctionObject(context, env, f, mv);
             createGlobalFunctionBinding(envRec, fn, false, mv);
         }
-        /* step 18 */
+        /* step 17 */
         for (Name vn : declaredVarNames) {
             createGlobalVarBinding(envRec, vn, false, mv);
         }
-        /* step 19 */
+        /* step 18 */
         mv._return();
     }
 }

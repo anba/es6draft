@@ -210,10 +210,10 @@ function testCompoundAdditionAssignment_2a() {
   var result = (function() {
     eval("var x = 2;");
     // https://bugs.ecmascript.org/show_bug.cgi?id=159
-    assertThrows(ReferenceError, () => { x += eval("delete x; x;") });
+    x += eval("delete x; x;")
     return x;
   })();
-  assertSame(1, result);
+  assertSame(3, result);
   assertSame(1, x);
 }
 testCompoundAdditionAssignment_2a();
@@ -223,10 +223,10 @@ function testCompoundAdditionAssignment_2b() {
   var result = (function() {
     eval("var x = 2;");
     // https://bugs.ecmascript.org/show_bug.cgi?id=159
-    assertThrows(ReferenceError, () => { x += (eval("delete x;"), x) });
+    x += (eval("delete x;"), x);
     return x;
   })();
-  assertSame(1, result);
+  assertSame(3, result);
   assertSame(1, x);
 }
 testCompoundAdditionAssignment_2b();
@@ -334,10 +334,10 @@ function testCompoundMultiplicationAssignment_2a() {
   var result = (function() {
     eval("var x = 2;");
     // https://bugs.ecmascript.org/show_bug.cgi?id=159
-    assertThrows(ReferenceError, () => { x *= eval("delete x; x;") });
+    x *= eval("delete x; x;");
     return x;
   })();
-  assertSame(3, result);
+  assertSame(6, result);
   assertSame(3, x);
 }
 testCompoundMultiplicationAssignment_2a();
@@ -347,10 +347,10 @@ function testCompoundMultiplicationAssignment_2b() {
   var result = (function() {
     eval("var x = 2;");
     // https://bugs.ecmascript.org/show_bug.cgi?id=159
-    assertThrows(ReferenceError, () => { x *= (eval("delete x;"), x) });
+    x *= (eval("delete x;"), x);
     return x;
   })();
-  assertSame(3, result);
+  assertSame(6, result);
   assertSame(3, x);
 }
 testCompoundMultiplicationAssignment_2b();

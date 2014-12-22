@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.runtime.modules;
 
 /**
- * 15.2.1.4 Static Semantics: ExportEntries<br>
+ * 15.2.1.3 Static Semantics: ExportEntries<br>
  * 15.2.3.4 Static Semantics: ExportEntries<br>
- * 15.2.1.15 Static and Runtme Semantics: Module Records
+ * 15.2.1.12 Static and Runtime Semantics: Module Records
  */
 public final class ExportEntry {
     /** [[ModuleRequest]] */
@@ -24,8 +24,8 @@ public final class ExportEntry {
     /** [[ExportName]] */
     private final String exportName;
 
-    /** [[ModuleRequest]] */
-    private String normalizedModuleRequest;
+    /** [[ModuleRequestId]] */
+    private String moduleRequestId;
 
     public ExportEntry(String moduleRequest, String importName, String localName, String exportName) {
         this.moduleRequest = moduleRequest;
@@ -37,37 +37,37 @@ public final class ExportEntry {
     @Override
     public String toString() {
         return String
-                .format("ExportEntry {moduleRequest=%s, importName=%s, localName=%s, exportName=%s, normalizedModuleRequest=%s}",
-                        moduleRequest, importName, localName, exportName, normalizedModuleRequest);
+                .format("ExportEntry {moduleRequest=%s, importName=%s, localName=%s, exportName=%s, moduleRequestId=%s}",
+                        moduleRequest, importName, localName, exportName, moduleRequestId);
     }
 
     /**
      * [[ModuleRequest]]
      * 
-     * @return the module request
+     * @return the module request name
      */
     public String getModuleRequest() {
         return moduleRequest;
     }
 
     /**
-     * [[ModuleRequest]]
+     * [[ModuleRequestId]]
      * 
-     * @return the normalized module request
+     * @return the module request identifier
      */
-    public String getNormalizedModuleRequest() {
-        assert normalizedModuleRequest != null;
-        return normalizedModuleRequest;
+    public String getModuleRequestId() {
+        assert moduleRequestId != null;
+        return moduleRequestId;
     }
 
     /**
-     * [[ModuleRequest]]
+     * [[ModuleRequestId]]
      * 
-     * @param moduleRequest
-     *            the new module request
+     * @param moduleRequestId
+     *            the module request identifier
      */
-    public void setNormalizedModuleRequest(String moduleRequest) {
-        this.normalizedModuleRequest = moduleRequest;
+    public void setModuleRequestId(String moduleRequestId) {
+        this.moduleRequestId = moduleRequestId;
     }
 
     public boolean isStarExport() {

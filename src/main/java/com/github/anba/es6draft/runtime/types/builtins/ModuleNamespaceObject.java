@@ -31,6 +31,7 @@ import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
+import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
@@ -240,7 +241,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         /* step 7 */
         Map<String, ModuleRecord> modules = realm.getModules();
         /* step 8 */
-        String moduleName = m.getName();
+        String moduleName = m.getModuleId();
         /* steps 9-10 */
         ModuleExport binding;
         try {
@@ -398,11 +399,13 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
-            // FIXME: spec bug - missing type check
-            if (!(thisValue instanceof ModuleNamespaceObject)) {
-                throw Errors.newTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            /* step 1 (not applicable) */
+            /* step 2 */
+            if (!Type.isObject(thisValue)) {
+                throw Errors.newTypeError(calleeContext, Messages.Key.NotObjectType);
             }
-            return ((ModuleNamespaceObject) thisValue).enumerate(calleeContext);
+            /* step 3 */
+            return Type.objectValue(thisValue).enumerate(calleeContext);
         }
     }
 }

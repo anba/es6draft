@@ -57,6 +57,15 @@ ecma_6/Generators/iteration.js
 ecma_6/extensions/DataView-construct-arguments-neutering.js
 ecma_6/extensions/DataView-set-arguments-neutering.js
 
+# Template string realm registry
+ecma_6/TemplateStrings/tagTempl.js
+
+# Object.assign reports first exception
+ecma_6/Object/assign.js
+
+# Reflect.set not supported in SM
+ecma_6/Reflect/set.js
+
 
 ####################################
 # Intl only partially supported    #
@@ -98,6 +107,7 @@ ecma/Date/15.9.5.js
 
 # RegExp.prototype
 ecma_5/RegExp/instance-property-storage-introspection.js
+ecma_6/RegExp/flags.js
 
 
 ###################
@@ -238,6 +248,7 @@ js1_8/regress/regress-455981-02.js
 js1_8/regress/regress-469625-03.js
 js1_8_1/regress/regress-420399.js
 js1_8_1/regress/regress-452498-092.js
+js1_8_1/regress/regress-452498-112.js
 js1_8_1/regress/regress-452498-185.js
 js1_8_1/regress/regress-452498-191.js
 js1_8_5/extensions/decompile-for-of.js
@@ -285,6 +296,7 @@ ecma_5/extensions/function-caller-strict-cross-global.js
 
 # Tests SM limitations
 ecma_6/extensions/element-setting-ToNumber-neuters.js
+js1_5/Regress/regress-422348.js
 js1_8_5/extensions/typedarray-set-neutering.js
 
 
@@ -302,9 +314,6 @@ ecma_5/strict/15.10.7.js
 
 # strict 'caller' no longer throws TypeError, returns null instead
 js1_8_5/extensions/censor-strict-caller.js
-
-# [[Set]] on non-existant property key triggers [[Set]] on prototype
-js1_8_5/extensions/correct-this-for-nonnatives-on-array-proto-chain.js
 
 # Function.length is configurable
 ecma/Array/15.4.4.3-1.js
@@ -342,6 +351,12 @@ js1_4/Regress/date-001-n.js
 # Generator.prototype.return
 ecma_6/Generators/runtime.js
 
+# assignment to const binding is always a runtime error, regardless of strict mode
+js1_5/Regress/regress-321874.js
+
+# Array length no longer limited to 2^32-1
+ecma_5/Array/unshift-01.js
+
 
 #######################################
 # ES6 related syntax changes          #
@@ -350,14 +365,8 @@ ecma_6/Generators/runtime.js
 # ES6: const not in object-env of global
 js1_5/extensions/scope-001.js
 
-# const is block-scoped
-js1_7/block/regress-349507.js
-
 # ES6-change: Future Reserved Words now used
 ecma_5/misc/future-reserved-words.js
-
-# ES6-change: 'eval'/'arguments' not allowed in binding pattern
-js1_8_1/strict/12.2.1.js
 
 # lexical declared variables must not be redeclared
 js1_8_1/regress/regress-452498-054.js
@@ -386,28 +395,11 @@ js1_5/Regress/regress-350253.js
 js1_5/Regress/regress-462292.js
 js1_8_5/regress/regress-609617.js
 
-# ES6: const declaration requires initializer
-ecma_5/Object/freeze-global-eval-const.js
-js1_5/extensions/regress-452565.js
-js1_5/Regress/regress-360969-03.js
-js1_5/Regress/regress-360969-04.js
-js1_6/Regress/regress-372565.js
-js1_8/genexps/regress-384991.js
-js1_8_1/regress/regress-452498-068.js
-js1_8_1/regress/regress-452498-101.js
-js1_8_1/regress/regress-452498-112.js
-js1_8_1/regress/regress-452498-160.js
-js1_8_1/regress/regress-452498-187.js
-js1_8_1/regress/regress-452498-192.js
-
 # FunctionDeclaration directly nested in Statement not allowed
 ecma_3/FunExpr/fe-001.js
 ecma_5/extensions/function-definition-with.js
 js1_5/Regress/regress-326453.js
 js1_8/regress/regress-384758.js
-
-# Declaration directly nested in Statement not allowed
-js1_8_1/regress/regress-452498-102.js
 
 # destructuring with undefined/null
 js1_8_5/regress/regress-592202-1.js
@@ -415,6 +407,7 @@ js1_8_5/regress/regress-592202-1.js
 # re-assignement to 'const' is not an early error
 js1_6/extensions/regress-465443.js
 js1_8_1/extensions/regress-437288-01.js
+js1_8_1/regress/regress-452498-187.js
 js1_8_5/regress/regress-383902.js
 
 # script code, but not global scope(!), eval() does not add lexical declarations to global object
@@ -463,10 +456,11 @@ js1_7/extensions/regress-453955.js
 js1_7/extensions/regress-473282.js
 js1_7/GC/regress-381374.js
 js1_8/extensions/regress-394709.js
+js1_8/extensions/regress-481989.js
 js1_8_1/extensions/regress-452498-193.js
 js1_8_1/extensions/regress-452498-196.js
 js1_8_1/extensions/regress-520572.js
-js1_8/extensions/regress-481989.js
+js1_8_1/regress/regress-452498-160.js
 js1_8_5/extensions/regress-604781-1.js
 js1_8_5/extensions/regress-604781-2.js
 js1_8_5/extensions/regress-627984-1.js
@@ -610,7 +604,6 @@ js1_5/Regress/regress-98901.js
 js1_8_5/extensions/recursion.js
 
 # OutOfMemory: Java heap space
-js1_5/Regress/regress-422348.js
 ecma_5/String/string-object-length.js
 ecma_5/String/replace-math.js
 ecma_5/RegExp/regress-617935.js
@@ -622,7 +615,6 @@ js1_8/regress/regress-477234.js
 ecma/Date/15.9.5.10-2.js
 ecma/Date/15.9.5.11-2.js
 ecma/Date/15.9.5.12-2.js
-ecma_3/Array/regress-322135-02.js
 ecma_6/String/normalize-generateddata.js
 ecma_6/String/normalize-generateddata-input.js
 js1_5/extensions/regress-311161.js
@@ -637,17 +629,17 @@ js1_5/Regress/regress-312588.js
 js1_8_5/regress/no-array-comprehension-length-limit.js
 
 # Timeout
-ecma_5/Array/unshift-01.js
-ecma_5/JSON/parse-mega-huge-array.js
-js1_5/Array/regress-157652.js
 js1_5/Array/regress-330812.js
 js1_5/Function/regress-364023.js
 js1_5/Regress/regress-244470.js
 js1_5/Regress/regress-303213.js
 js1_5/Regress/regress-321971.js
+js1_5/Regress/regress-360969-03.js
+js1_5/Regress/regress-360969-04.js
 js1_5/Regress/regress-360969-05.js
 js1_5/Regress/regress-360969-06.js
 js1_8/extensions/regress-476427.js
+ecma_5/JSON/parse-mega-huge-array.js
 ecma_5/Object/15.2.3.6-dictionary-redefinition-01-of-32.js
 ecma_5/Object/15.2.3.6-dictionary-redefinition-02-of-32.js
 ecma_5/Object/15.2.3.6-dictionary-redefinition-03-of-32.js

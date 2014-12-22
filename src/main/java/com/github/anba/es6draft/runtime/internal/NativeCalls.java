@@ -17,6 +17,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.WeakHashMap;
 
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
@@ -172,6 +173,12 @@ public final class NativeCalls {
         case "native:ToPropertyKey":
             target = callToPropertyKeyMH;
             break;
+        case "native:WeakMapClear":
+            target = callWeakMapClearMH;
+            break;
+        case "native:WeakSetClear":
+            target = callWeakSetClearMH;
+            break;
         default:
             target = MethodHandles.insertArguments(invalidNativeCallMH, 0, name);
             target = MethodHandles.dropArguments(target, 0, Object[].class);
@@ -185,7 +192,7 @@ public final class NativeCalls {
             callIsUninitializedSetMH, callIsUninitializedWeakMapMH, callIsUninitializedWeakSetMH,
             callRegExpReplaceMH, callRegExpTestMH, callIsFunctionExpressionMH,
             callSymbolDescriptionMH, callIncludeMH, callIsArrayBufferMH, callIsDetachedBufferMH,
-            callToPropertyKeyMH, invalidNativeCallMH;
+            callToPropertyKeyMH, callWeakMapClearMH, callWeakSetClearMH, invalidNativeCallMH;
     static {
         MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
         MethodType callType = MethodType.methodType(Object.class, Object[].class,
@@ -208,6 +215,8 @@ public final class NativeCalls {
         callIsArrayBufferMH = lookup.findStatic("call_IsArrayBuffer", callType);
         callIsDetachedBufferMH = lookup.findStatic("call_IsDetachedBuffer", callType);
         callToPropertyKeyMH = lookup.findStatic("call_ToPropertyKey", callType);
+        callWeakMapClearMH = lookup.findStatic("call_WeakMapClear", callType);
+        callWeakSetClearMH = lookup.findStatic("call_WeakSetClear", callType);
         invalidNativeCallMH = lookup.findStatic("invalidNativeCall",
                 MethodType.methodType(Object.class, String.class, ExecutionContext.class));
     }
@@ -364,6 +373,22 @@ public final class NativeCalls {
     private static Object call_ToPropertyKey(Object[] args, ExecutionContext cx) {
         if (args.length == 1) {
             return ToPropertyKey(cx, args[0]);
+        }
+        return invalidNativeCallArguments(cx);
+    }
+
+    @SuppressWarnings("unused")
+    private static Object call_WeakMapClear(Object[] args, ExecutionContext cx) {
+        if (args.length == 1) {
+            return WeakMapClear(cx, args[0]);
+        }
+        return invalidNativeCallArguments(cx);
+    }
+
+    @SuppressWarnings("unused")
+    private static Object call_WeakSetClear(Object[] args, ExecutionContext cx) {
+        if (args.length == 1) {
+            return WeakSetClear(cx, args[0]);
         }
         return invalidNativeCallArguments(cx);
     }
@@ -676,5 +701,51 @@ public final class NativeCalls {
      */
     public static Object ToPropertyKey(ExecutionContext cx, Object value) {
         return AbstractOperations.ToPropertyKey(cx, value);
+    }
+
+    /**
+     * Native function: {@code %WeakMapClear(<weakMap>)}.
+     * <p>
+     * Clears the weak map object.
+     * 
+     * @param cx
+     *            the execution context
+     * @param weakMap
+     *            the weak map object
+     * @return the undefined value
+     */
+    public static Undefined WeakMapClear(ExecutionContext cx, Object weakMap) {
+        if (!(weakMap instanceof WeakMapObject)) {
+            throw Errors.newTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        WeakHashMap<ScriptObject, Object> weakMapData = ((WeakMapObject) weakMap).getWeakMapData();
+        if (weakMapData == null) {
+            throw Errors.newTypeError(cx, Messages.Key.UninitializedObject);
+        }
+        weakMapData.clear();
+        return UNDEFINED;
+    }
+
+    /**
+     * Native function: {@code %WeakSetClear(<weakSet>)}.
+     * <p>
+     * Clears the weak set object.
+     * 
+     * @param cx
+     *            the execution context
+     * @param weakSet
+     *            the weak set object
+     * @return the undefined value
+     */
+    public static Undefined WeakSetClear(ExecutionContext cx, Object weakSet) {
+        if (!(weakSet instanceof WeakSetObject)) {
+            throw Errors.newTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        WeakHashMap<ScriptObject, Boolean> weakSetData = ((WeakSetObject) weakSet).getWeakSetData();
+        if (weakSetData == null) {
+            throw Errors.newTypeError(cx, Messages.Key.UninitializedObject);
+        }
+        weakSetData.clear();
+        return UNDEFINED;
     }
 }

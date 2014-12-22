@@ -19,4 +19,5 @@ buf.constructor = function Constructor(len) {
   detachArrayBuffer(_new);
   return _new;
 };
+buf.constructor[Symbol.species] = buf.constructor;
 assertThrows(TypeError, () => buf.slice(0));

@@ -26,21 +26,30 @@ const {
   assertThrows(XError, () => String.prototype.startsWith.call(noToString, /./));
 }
 
-// step 4: RegExp check uses Symbol.isRegExp
+// step 4: RegExp check uses Symbol.match
 {
   class MyRegExp {
-    get [Symbol.isRegExp]() { return true }
+    get [Symbol.match]() { return true }
   }
   assertThrows(TypeError, () => "".startsWith(/./));
   assertThrows(TypeError, () => "".startsWith(new MyRegExp));
 
-  // temporarily remove `RegExp.prototype[Symbol.isRegExp]`
-  let isRegExpDesc = Object.getOwnPropertyDescriptor(RegExp.prototype, Symbol.isRegExp);
+  let isRegExpDesc = Object.getOwnPropertyDescriptor(RegExp.prototype, Symbol.match);
+
+  // Remove `RegExp.prototype[Symbol.match]`, IsRegExp proceeds by checking [[RegExpMatcher]]
   try {
-    delete RegExp.prototype[Symbol.isRegExp];
+    delete RegExp.prototype[Symbol.match];
+    assertThrows(TypeError, () => "".startsWith(/./));
+  } finally {
+    Object.defineProperty(RegExp.prototype, Symbol.match, isRegExpDesc);
+  }
+
+  // Set `RegExp.prototype[Symbol.match]` to falsy value
+  try {
+    RegExp.prototype[Symbol.match] = false;
     assertTrue("/./".startsWith(/./));
     assertTrue("aa/./".startsWith(/./, 2));
   } finally {
-    Object.defineProperty(RegExp.prototype, Symbol.isRegExp, isRegExpDesc);
+    Object.defineProperty(RegExp.prototype, Symbol.match, isRegExpDesc);
   }
 }

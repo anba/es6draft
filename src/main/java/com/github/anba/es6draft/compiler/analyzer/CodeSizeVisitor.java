@@ -370,14 +370,16 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
         case External:
         case Local:
             return 0;
-        case Declaration:
-            return analyze(node, node.getDeclaration(), 0, handler);
-        case DefaultDeclaration:
-            return analyze(node, node.getDeclaration(), 0, handler);
-        case DefaultExpression:
-            return analyze(node, node.getExpression(), 0, handler);
         case Variable:
             return analyze(node, node.getVariableStatement(), 0, handler);
+        case Declaration:
+            return analyze(node, node.getDeclaration(), 0, handler);
+        case DefaultHoistableDeclaration:
+            return analyze(node, node.getHoistableDeclaration(), 0, handler);
+        case DefaultClassDeclaration:
+            return analyze(node, node.getClassDeclaration(), 0, handler);
+        case DefaultExpression:
+            return analyze(node, node.getExpression(), 0, handler);
         default:
             throw new AssertionError();
         }

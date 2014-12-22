@@ -36,7 +36,7 @@ const {
   }
   let c = 0;
   let r = new RE();
-  r.replace("ABCDEF", (m, ...rest) => {
+  r[Symbol.replace]("ABCDEF", (m, ...rest) => {
     assertSame(0, r.lastIndex);
     switch (c++) {
     case 0:  
@@ -77,7 +77,7 @@ const {
     }
   }
   let r = new RE();
-  let s = r.replace("ABCDEF", "|$&,$`,$',$1,$2");
+  let s = r[Symbol.replace]("ABCDEF", "|$&,$`,$',$1,$2");
   assertSame("|abc,,DEF,def,ghi|jkl,ABC,,mno,$2", s);
   assertSame(0, r.lastIndex);
 }

@@ -16,9 +16,11 @@ let buffer = new ArrayBuffer(10);
 buffer.constructor = function(len) {
   return new ArrayBuffer(5);
 };
+buffer.constructor[Symbol.species] = buffer.constructor;
 assertThrows(TypeError, () => buffer.slice());
 
 buffer.constructor = function(len) {
   return new ArrayBuffer(15);
 };
+buffer.constructor[Symbol.species] = buffer.constructor;
 assertSame(15, buffer.slice().byteLength);

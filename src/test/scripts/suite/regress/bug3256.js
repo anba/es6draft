@@ -6,7 +6,7 @@
  */
 
 const {
-  assertFalse
+  assertTrue
 } = Assert;
 
 // New Array.prototype behavior of returning an instance of `this.constructor` breaks Zepto.
@@ -14,4 +14,4 @@ const {
 
 var obj = Object.setPrototypeOf([], {slice: Array.prototype.slice});
 var copy = obj.slice(0);
-assertFalse(Array.isArray(copy));
+assertTrue(Array.isArray(copy));

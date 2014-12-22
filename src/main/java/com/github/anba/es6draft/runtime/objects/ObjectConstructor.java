@@ -25,7 +25,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.Creatable;
 import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
@@ -506,29 +505,17 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                 /* steps 5.b.iii-5.b.iv */
                 List<?> keys = from.ownPropertyKeys(cx);
                 /* step 5.c */
-                ScriptException pendingException = null;
-                /* step 5.d */
                 for (Object nextKey : keys) {
-                    try {
-                        Property desc;
-                        if (nextKey instanceof String) {
-                            desc = from.getOwnProperty(cx, (String) nextKey);
-                        } else {
-                            desc = from.getOwnProperty(cx, (Symbol) nextKey);
-                        }
-                        if (desc != null && desc.isEnumerable()) {
-                            Object propValue = Get(cx, from, nextKey);
-                            Put(cx, to, nextKey, propValue, true);
-                        }
-                    } catch (ScriptException e) {
-                        if (pendingException == null) {
-                            pendingException = e;
-                        }
+                    Property desc;
+                    if (nextKey instanceof String) {
+                        desc = from.getOwnProperty(cx, (String) nextKey);
+                    } else {
+                        desc = from.getOwnProperty(cx, (Symbol) nextKey);
                     }
-                }
-                /* step 5.e */
-                if (pendingException != null) {
-                    throw pendingException;
+                    if (desc != null && desc.isEnumerable()) {
+                        Object propValue = Get(cx, from, nextKey);
+                        Put(cx, to, nextKey, propValue, true);
+                    }
                 }
             }
             /* step 6 */
@@ -621,24 +608,12 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
             }
         }
         /* step 7 */
-        ScriptException pendingException = null;
-        /* step 8 */
         for (int i = 0, size = names.size(); i < size; ++i) {
             Object p = names.get(i);
             PropertyDescriptor desc = descriptors.get(i);
-            try {
-                DefinePropertyOrThrow(cx, obj, p, desc);
-            } catch (ScriptException e) {
-                if (pendingException == null) {
-                    pendingException = e;
-                }
-            }
+            DefinePropertyOrThrow(cx, obj, p, desc);
         }
-        /* step 9 */
-        if (pendingException != null) {
-            throw pendingException;
-        }
-        /* step 10 */
+        /* step 8 */
         return obj;
     }
 

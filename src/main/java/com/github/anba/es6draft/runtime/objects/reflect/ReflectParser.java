@@ -1004,7 +1004,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(ClassDeclaration node, Void value) {
-        Object id = node.getName().accept(this, value);
+        Object id = node.getIdentifier().accept(this, value);
         Object superClass = acceptOrNull(node.getHeritage(), value);
         Object body = createClassBody(node, value);
         OrdinaryObject classDef = createClass(node, Type.ClassDeclaration);
@@ -1016,7 +1016,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(ClassExpression node, Void value) {
-        Object id = acceptOrNull(node.getName(), value);
+        Object id = acceptOrNull(node.getIdentifier(), value);
         Object superClass = acceptOrNull(node.getHeritage(), value);
         Object body = createClassBody(node, value);
         OrdinaryObject classDef = createClass(node, Type.ClassExpression);
@@ -1190,15 +1190,20 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         case Local:
             specifiers = node.getExportsClause().accept(this, value);
             break;
-        case DefaultExpression:
-            expression = node.getExpression().accept(this, value);
+        case Variable:
+            declaration = node.getVariableStatement().accept(this, value);
             break;
-        case DefaultDeclaration:
         case Declaration:
             declaration = node.getDeclaration().accept(this, value);
             break;
-        case Variable:
-            declaration = node.getVariableStatement().accept(this, value);
+        case DefaultHoistableDeclaration:
+            declaration = node.getHoistableDeclaration().accept(this, value);
+            break;
+        case DefaultClassDeclaration:
+            declaration = node.getClassDeclaration().accept(this, value);
+            break;
+        case DefaultExpression:
+            expression = node.getExpression().accept(this, value);
             break;
         default:
             throw new AssertionError();

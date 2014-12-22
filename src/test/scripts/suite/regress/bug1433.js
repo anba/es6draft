@@ -14,6 +14,6 @@ const {
 
 assertSame("aaa", "aaa".replace("bbb", () => { throw new Error }));
 
-delete RegExp.prototype[Symbol.isRegExp];
+RegExp.prototype[Symbol.replace] = null;
 assertSame("aaa", "aaa".replace(/aaa/, () => { throw new Error }));
 assertSame("bbb", "/aaa/".replace(/aaa/, "bbb"));

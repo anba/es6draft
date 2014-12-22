@@ -30,6 +30,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Creatable;
 import com.github.anba.es6draft.runtime.types.CreateAction;
@@ -74,43 +75,61 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
      * 21.2.3.1 RegExp(pattern, flags)
      */
     @Override
-    public RegExpObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object pattern = argument(args, 0);
         Object flags = argument(args, 1);
 
         /* steps 1-2 (omitted) */
+        /* steps 3-4 */
+        @SuppressWarnings("unused")
+        boolean thisValueIsRegExp = IsRegExp(calleeContext, thisValue);
+        /* steps 5-6 */
+        boolean patternIsRegExp = IsRegExp(calleeContext, pattern);
+        /* step 7 */
         RegExpObject obj;
         if (!(thisValue instanceof RegExpObject) || ((RegExpObject) thisValue).isInitialized()) {
-            /* step 3 */
-            if (pattern instanceof RegExpObject && Type.isUndefined(flags)) {
-                return (RegExpObject) pattern;
+            if (patternIsRegExp && Type.isUndefined(flags)) {
+                ScriptObject patternObject = Type.objectValue(pattern);
+                Object patternConstructor = Get(calleeContext, patternObject, "constructor");
+                if (SameValue(this, patternConstructor)) {
+                    return patternObject;
+                }
             }
             obj = RegExpAlloc(calleeContext, this);
         } else {
-            /* step 4 */
             obj = (RegExpObject) thisValue;
         }
 
+        /* steps 8-10 */
         Object p, f;
         if (pattern instanceof RegExpObject) {
-            /* step 4 */
+            /* step 8 */
             RegExpObject regexp = (RegExpObject) pattern;
+            /* step 8.a */
             if (!regexp.isInitialized()) {
                 throw newTypeError(calleeContext, Messages.Key.UninitializedObject);
             }
-            if (!Type.isUndefined(flags)) {
-                throw newTypeError(calleeContext, Messages.Key.NotUndefined);
-            }
+            /* step 8.b */
             p = regexp.getOriginalSource();
-            f = regexp.getOriginalFlags();
+            /* steps 8.c-8.d */
+            if (Type.isUndefined(flags)) {
+                f = regexp.getOriginalFlags();
+            } else {
+                f = flags;
+            }
+        } else if (patternIsRegExp) {
+            /* step 9 */
+            ScriptObject patternObject = Type.objectValue(pattern);
+            p = Get(calleeContext, patternObject, "source");
+            f = Get(calleeContext, patternObject, "flags");
         } else {
-            /* step 5 */
+            /* step 10 */
             p = pattern;
             f = flags;
         }
 
-        /* step 6 */
+        /* step 11 */
         return RegExpInitialize(calleeContext, obj, p, f);
     }
 
@@ -192,7 +211,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
             f = f + 'm';
         }
 
-        /* steps 7-8 */
+        /* steps 7-10 */
         RegExpMatcher matcher;
         try {
             matcher = RegExpParser.parse(p, f, "<regexp>", 1, 1,
@@ -200,11 +219,13 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         } catch (ParserException e) {
             throw e.toScriptException(cx);
         }
-        /* steps 9-11 */
+        /* steps 11-12, 14 */
         obj.initialize(p, f, matcher);
-        /* steps 12-13 */
+        /* step 13 */
+        // FIXME: spec bug - invalid test for initialization, cf. RegExp.prototype.compile
+        /* steps 15-16 */
         Put(cx, obj, "lastIndex", 0, true);
-        /* step 14 */
+        /* step 17 */
         return obj;
     }
 
@@ -316,6 +337,22 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.RegExpPrototype;
+
+        /**
+         * 21.2.4.2 get RegExp [ @@species ]
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the species object
+         */
+        @Accessor(name = "get [Symbol.species]", symbol = BuiltinSymbol.species,
+                type = Accessor.Type.Getter)
+        public static Object species(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
+            return thisValue;
+        }
     }
 
     /*

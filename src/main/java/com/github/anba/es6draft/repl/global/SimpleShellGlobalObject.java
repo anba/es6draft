@@ -199,7 +199,7 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         } else {
             realm = cx.getRealm();
         }
-        String normalizedModuleName = NormalizeModuleName(cx, realm, "", moduleName);
+        String normalizedModuleName = NormalizeModuleName(cx, realm, moduleName, null);
         ModuleEvaluationJob(cx, realm, normalizedModuleName);
         return GetModuleNamespace(cx, realm, normalizedModuleName);
     }

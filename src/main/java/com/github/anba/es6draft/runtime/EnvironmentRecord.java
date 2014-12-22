@@ -70,8 +70,10 @@ public interface EnvironmentRecord {
      * 
      * @param name
      *            the binding name
+     * @param strict
+     *            the binding strict flag
      */
-    void createImmutableBinding(String name);
+    void createImmutableBinding(String name, boolean strict);
 
     /**
      * InitializeBinding(N,V)

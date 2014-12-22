@@ -12,8 +12,8 @@ const {
 // 15.10.6.11/15.10.6.12: RegExp.prototype.{match, replace} algorithm is wrong for empty matches
 // https://bugs.ecmascript.org/show_bug.cgi?id=1467
 
-assertEquals(["", ""], /^|$/g.match("aa"));
-assertEquals(["", "", "", ""], /\b/g.match("aa aa"));
+assertEquals(["", ""], /^|$/g[Symbol.match]("aa"));
+assertEquals(["", "", "", ""], /\b/g[Symbol.match]("aa aa"));
 
-assertSame("baab", /^|$/g.replace("aa", "b"));
-assertSame("baab baab", /\b/g.replace("aa aa", "b"))
+assertSame("baab", /^|$/g[Symbol.replace]("aa", "b"));
+assertSame("baab baab", /\b/g[Symbol.replace]("aa aa", "b"))

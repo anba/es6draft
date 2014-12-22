@@ -118,7 +118,7 @@ public class ScriptTest {
         if (test.isModule()) {
             Realm realm = global.getRealm();
             ExecutionContext cx = realm.defaultContext();
-            String normalizedModuleName = NormalizeModuleName(cx, realm, "", test.toModuleName());
+            String normalizedModuleName = NormalizeModuleName(cx, realm, test.toModuleName(), null);
             ModuleEvaluationJob(cx, realm, normalizedModuleName);
         } else {
             global.eval(test.getScript(), test.toFile());

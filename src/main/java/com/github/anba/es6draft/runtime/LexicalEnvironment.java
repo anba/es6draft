@@ -12,6 +12,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1><br>
@@ -179,8 +180,8 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(
             ExecutionContext callerContext, FunctionObject f, Object t) {
         /* step 1 */
-        // FIXME: spec bug
-        // assert f.getThisMode() != ThisMode.Lexical;
+        assert f.getThisMode() != ThisMode.Lexical || t == null;
+        assert f.getThisMode() == ThisMode.Lexical || t != null;
         /* step 2 (note) */
         /* step 7 */
         if (f.isNeedsSuper() && f.getHomeObject() == null) {

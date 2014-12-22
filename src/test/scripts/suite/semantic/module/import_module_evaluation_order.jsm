@@ -7,7 +7,8 @@
 
 import {assertEquals} from "lib/assert.jsm";
 
-const global = this;
+// TODO: Replace with Reflect.global when available
+const global = System.global;
 
 import log from "./resources/export_set_global_property_logger.jsm";
 import "./resources/export_set_global_property1.jsm";

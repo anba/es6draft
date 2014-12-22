@@ -103,10 +103,10 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 8.1.1.4.3 CreateImmutableBinding (N)
+     * 8.1.1.4.3 CreateImmutableBinding (N, S)
      */
     @Override
-    public void createImmutableBinding(String name) {
+    public void createImmutableBinding(String name, boolean strict) {
         /* steps 1-2 (omitted) */
         /* step 3-4 */
         boolean alreadyThere = declRec.hasBinding(name);
@@ -115,7 +115,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
             throw newTypeError(cx, Messages.Key.VariableRedeclaration, name);
         }
         /* step 6 */
-        declRec.createImmutableBinding(name);
+        declRec.createImmutableBinding(name, strict);
     }
 
     /**
@@ -254,7 +254,30 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 8.1.1.4.14 CanDeclareGlobalVar (N)
+     * 8.1.1.4.14 HasRestrictedGlobalProperty (N)
+     * 
+     * @param name
+     *            the binding name
+     * @return {@code true} if the global binding is present and non-configurable
+     */
+    public boolean hasRestrictedGlobalProperty(String name) {
+        /* steps 1-3 (omitted) */
+        /* steps 4-5 */
+        Property existingProp = globalObject.getOwnProperty(cx, name);
+        /* step 6 */
+        if (existingProp == null) {
+            return false;
+        }
+        /* step 7 */
+        if (existingProp.isConfigurable()) {
+            return false;
+        }
+        /* step 8 */
+        return true;
+    }
+
+    /**
+     * 8.1.1.4.15 CanDeclareGlobalVar (N)
      * 
      * @param name
      *            the binding name
@@ -272,7 +295,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 8.1.1.4.15 CanDeclareGlobalFunction (N)
+     * 8.1.1.4.16 CanDeclareGlobalFunction (N)
      * 
      * @param name
      *            the binding name
@@ -286,27 +309,27 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
         if (!objectRec.hasBinding(name)) {
             return extensible;
         }
-        /* step 7 */
+        /* steps 7-8 */
         Property existingProp = globalObject.getOwnProperty(cx, name);
-        /* step 8 */
+        /* step 9 */
         if (existingProp == null) {
             return extensible;
         }
-        /* step 9 */
+        /* step 10 */
         if (existingProp.isConfigurable()) {
             return true;
         }
-        /* step 10 */
+        /* step 11 */
         if (existingProp.isDataDescriptor() && existingProp.isWritable()
                 && existingProp.isEnumerable()) {
             return true;
         }
-        /* step 11 */
+        /* step 12 */
         return false;
     }
 
     /**
-     * 8.1.1.4.16 CreateGlobalVarBinding (N, D)
+     * 8.1.1.4.17 CreateGlobalVarBinding (N, D)
      * 
      * @param name
      *            the binding name
@@ -328,7 +351,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 8.1.1.4.17 CreateGlobalFunctionBinding (N, V, D)
+     * 8.1.1.4.18 CreateGlobalFunctionBinding (N, V, D)
      * 
      * @param name
      *            the binding name
@@ -339,21 +362,21 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     public void createGlobalFunctionBinding(String name, Object value, boolean deletable) {
         /* steps 1-3 (omitted) */
-        /* step 4 */
+        /* steps 4-5 */
         Property existingProp = globalObject.getOwnProperty(cx, name);
-        /* steps 5-6 */
+        /* steps 6-7 */
         PropertyDescriptor desc;
         if (existingProp == null || existingProp.isConfigurable()) {
             desc = new PropertyDescriptor(value, true, true, deletable);
         } else {
             desc = new PropertyDescriptor(value);
         }
-        /* steps 7-8 */
+        /* steps 8-9 */
         DefinePropertyOrThrow(cx, globalObject, name, desc);
-        /* step 9 (omitted) */
-        /* step 10 */
-        varNames.add(name);
+        /* step 10 (omitted) */
         /* step 11 */
+        varNames.add(name);
+        /* step 12 */
         return;
     }
 }

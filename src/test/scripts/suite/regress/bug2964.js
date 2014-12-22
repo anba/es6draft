@@ -22,6 +22,7 @@ const {
     detachArrayBuffer(buf);
     return new ArrayBuffer(len);
   };
+  buf.constructor[Symbol.species] = buf.constructor;
   assertThrows(TypeError, () => buf.slice(0));
   assertTrue(constructorCalled);
 }

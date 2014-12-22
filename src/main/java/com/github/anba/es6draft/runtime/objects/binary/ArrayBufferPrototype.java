@@ -6,8 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
+import static com.github.anba.es6draft.runtime.AbstractOperations.SpeciesConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -143,39 +142,34 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
             /* step 13 */
             long newLen = Math.max(_final - first, 0);
             /* steps 14-15 */
-            Object ctor = Get(cx, obj, "constructor");
-            /* step 16 */
-            if (!IsConstructor(ctor)) {
-                throw newTypeError(cx, Messages.Key.NotConstructor);
-            }
-            /* steps 17-20 */
-            ArrayBufferObject _new = thisArrayBufferObject(cx,
-                    ((Constructor) ctor).construct(cx, newLen));
-            /* step 21 */
+            Constructor ctor = SpeciesConstructor(cx, obj, Intrinsics.ArrayBuffer);
+            /* steps 16-19 */
+            ArrayBufferObject _new = thisArrayBufferObject(cx, ctor.construct(cx, newLen));
+            /* step 20 */
             if (IsDetachedBuffer(_new)) {
                 throw newTypeError(cx, Messages.Key.BufferDetached);
             }
-            /* step 22 */
+            /* step 21 */
             if (_new == obj) {
                 // TODO: better error message
                 throw newTypeError(cx, Messages.Key.BufferInvalid);
             }
-            /* step 23 */
+            /* step 22 */
             if (_new.getByteLength() < newLen) {
                 // FIXME: spec bug - throw RangeError instead of TypeError?
                 throw newTypeError(cx, Messages.Key.InvalidBufferSize);
             }
-            /* steps 24-25 */
+            /* steps 23-24 */
             if (IsDetachedBuffer(obj)) {
                 throw newTypeError(cx, Messages.Key.BufferDetached);
             }
-            /* step 26 */
+            /* step 25 */
             ByteBuffer fromBuf = obj.getData();
-            /* step 27 */
+            /* step 26 */
             ByteBuffer toBuf = _new.getData();
-            /* steps 28 */
+            /* steps 27 */
             CopyDataBlockBytes(toBuf, 0, fromBuf, first, newLen);
-            /* step 29 */
+            /* step 28 */
             return _new;
         }
 

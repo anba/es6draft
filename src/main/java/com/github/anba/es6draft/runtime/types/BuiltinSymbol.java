@@ -29,14 +29,34 @@ public enum BuiltinSymbol {
     isConcatSpreadable,
 
     /**
-     * &#64;&#64;isRegExp
-     */
-    isRegExp,
-
-    /**
      * &#64;&#64;iterator
      */
     iterator,
+
+    /**
+     * &#64;&#64;match
+     */
+    match,
+
+    /**
+     * &#64;&#64;replace
+     */
+    replace,
+
+    /**
+     * &#64;&#64;search
+     */
+    search,
+
+    /**
+     * &#64;&#64;species
+     */
+    species,
+
+    /**
+     * &#64;&#64;split
+     */
+    split,
 
     /**
      * &#64;&#64;toPrimitive

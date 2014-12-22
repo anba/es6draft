@@ -39,10 +39,9 @@ tests/arguments/alias-function-not-closed.js
 # ES6: arguments object is iterable; new Map(null) and new Set(null) throws in SM
 tests/collections/constructor-errors.js
 
-# ES6: new Map(null) and new Set(null) throws in SM
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1092538
-tests/collections/Map-constructor-4.js
-tests/collections/WeakMap-constructor-4.js
+# ES6: String.prototype.contains renamed to String.prototype.includes
+tests/basic/bug1091757.js
+tests/basic/string-contains.js
 
 
 ###################
@@ -60,9 +59,6 @@ tests/collections/Array-of-ordering.js
 # and its strcmp function is broken as well
 tests/basic/testBug720695.js
 
-# WithStatement vs. block scope
-tests/basic/testDestructuringVarInsideWith.js
-
 # __noSuchMethod__ not supported
 tests/basic/bug717208.js
 tests/basic/bug732087.js
@@ -74,13 +70,6 @@ tests/basic/bug942390.js
 tests/basic/testArrayComp1.js
 tests/basic/testArrayComp2.js
 tests/basic/testCustomIterator.js
-
-# emulated Map/Set do not work cross-global
-tests/collections/Map-iterator-proxies-2.js
-tests/collections/Set-iterator-proxies-2.js
-
-# emulated Iterator does not work cross-global
-tests/basic/testCrossCompartmentTransparency.js
 
 # ES6: "Concrats on implementing Reflect.set"
 tests/proxy/testDirectProxySetArray2.js
@@ -153,7 +142,6 @@ tests/basic/display-url-in-stack-trace.js
 ############################################
 
 # Spidermonkey: Proxy vs. __proto__ on global
-tests/auto-regress/bug568855.js
 tests/auto-regress/bug589103.js
 
 # SpiderMonkey __proto__ not own property on Object.prototype
@@ -169,13 +157,9 @@ tests/basic/bug807623.js
 
 # Old Proxy API not completely emulated
 tests/auto-regress/bug578015.js
-tests/basic/bug763440.js
 
 # missing return value in defineProperty trap
 tests/proxy/testDirectProxyDefineProperty2.js
-
-# Proxy + .iterator in for-in
-tests/basic/testBug771242.js
 
 # SpiderMonkey does not allow duplicate property keys in "ownKeys" trap
 tests/proxy/testDirectProxyGetOwnPropertyNames4.js
@@ -194,9 +178,6 @@ tests/auto-regress/bug698074.js
 
 # Date.prototype no longer Date instance
 tests/auto-regress/bug771946.js
-
-# RegExp.prototype no longer RegExp instance
-tests/basic/bug649771.js
 
 # String.prototype no longer String instance
 tests/basic/bug699166.js
@@ -244,6 +225,12 @@ tests/self-test/assertDeepEq.js
 # formal parameter initializers are evaluated in extra scope
 tests/arguments/defaults-scoping.js
 
+# assignment to const binding is always a runtime error, regardless of strict mode
+tests/auto-regress/bug495962.js
+
+# RegExp.prototype.toString is generic
+tests/basic/testCrossCompartmentTransparency.js
+
 
 #######################################
 # ES6 related syntax changes          #
@@ -263,10 +250,7 @@ tests/basic/function-tosource-exprbody-bug777834.js
 tests/basic/bug646968-3.js
 
 # missing const initializer
-tests/auto-regress/bug487570.js
-tests/auto-regress/bug495843.js
 tests/basic/letTDZDelete.js
-tests/basic/letTDZEffectful.js
 
 # let variable must not be redeclared
 tests/basic/bug778268.js
@@ -283,7 +267,6 @@ tests/basic/bug-826124.js
 
 # Declaration directly nested in Statement
 tests/auto-regress/bug771027.js
-tests/basic/bug639797.js
 
 # Annex B extension B.3.3 is not applied for Script
 tests/basic/testDynamicLookup.js
@@ -473,24 +456,24 @@ tests/parser/yield-without-operand.js
 # Compilation or runtime issues       #
 #######################################
 
-# Method code too large
-# too many variables
+# Method code too large - too many variables
 tests/basic/testManyVars.js
 
-# Timeout
+# Timeout (slow)
 tests/auto-regress/bug583680.js
-tests/auto-regress/bug620637.js
 tests/basic/bug632964-regexp.js
-tests/basic/bug826581.js
-tests/basic/math-jit-tests.js
-tests/basic/testBug614653.js
-tests/basic/testBug621202.js
 tests/basic/spread-call.js
+
+# Timeout
+tests/auto-regress/bug620637.js
+tests/basic/math-jit-tests.js
 
 # OutOfMemory: Java heap space
 tests/auto-regress/bug690933.js
 tests/auto-regress/bug735313.js
-tests/basic/bug710947.js
+tests/basic/testBug614653.js
+tests/basic/testBug621202.js
+tests/basic/bug826581.js
 
 # Intermittent stackoverflow error
 tests/auto-regress/bug622167.js

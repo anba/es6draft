@@ -94,6 +94,20 @@ public final class StaticSemantics {
     /**
      * Static Semantics: BoundNames
      * <ul>
+     * <li>14.5.2 Static Semantics: BoundNames
+     * </ul>
+     * 
+     * @param node
+     *            the hoistable declaration
+     * @return the bound name
+     */
+    public static Name BoundName(ClassDeclaration node) {
+        return node.getIdentifier().getName();
+    }
+
+    /**
+     * Static Semantics: BoundNames
+     * <ul>
      * <li>12.1.3 Static Semantics: BoundNames
      * <li>13.2.3.1 Static Semantics: BoundNames
      * </ul>
@@ -455,7 +469,7 @@ public final class StaticSemantics {
      * @return {@code true} if the function has a binding name
      */
     public static boolean HasName(ClassExpression node) {
-        return node.getName() != null;
+        return node.getIdentifier() != null;
     }
 
     /**
@@ -901,8 +915,13 @@ public final class StaticSemantics {
                         entries.add(new ExportEntry(null, null, id, id));
                     }
                     break;
-                case DefaultDeclaration: {
-                    Name localName = BoundName((HoistableDeclaration) exportDecl.getDeclaration());
+                case DefaultHoistableDeclaration: {
+                    Name localName = BoundName(exportDecl.getHoistableDeclaration());
+                    entries.add(new ExportEntry(null, null, localName.getIdentifier(), "default"));
+                    break;
+                }
+                case DefaultClassDeclaration: {
+                    Name localName = BoundName(exportDecl.getClassDeclaration());
                     entries.add(new ExportEntry(null, null, localName.getIdentifier(), "default"));
                     break;
                 }
@@ -1033,9 +1052,23 @@ public final class StaticSemantics {
         LinkedHashSet<String> requests = new LinkedHashSet<>();
         for (ModuleItem item : node.getStatements()) {
             if (item instanceof ExportDeclaration) {
-                String moduleSpecifier = ((ExportDeclaration) item).getModuleSpecifier();
-                if (moduleSpecifier != null) {
+                ExportDeclaration export = (ExportDeclaration) item;
+                switch (export.getType()) {
+                case All:
+                case External: {
+                    String moduleSpecifier = export.getModuleSpecifier();
+                    assert moduleSpecifier != null;
                     requests.add(moduleSpecifier);
+                    break;
+                }
+                case Local:
+                case Variable:
+                case Declaration:
+                case DefaultHoistableDeclaration:
+                case DefaultClassDeclaration:
+                case DefaultExpression:
+                default:
+                    break;
                 }
             } else if (item instanceof ImportDeclaration) {
                 String moduleSpecifier = ((ImportDeclaration) item).getModuleSpecifier();

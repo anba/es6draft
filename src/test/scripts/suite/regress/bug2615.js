@@ -12,7 +12,7 @@ const {
 // 21.2.5.7 RegExp.prototype.replace: Off by one error when processing capturing groups
 // https://bugs.ecmascript.org/show_bug.cgi?id=2615
 
-/a(b*)(c+)/.replace("_abcc_", (group0, group1, group2, index, string) => {
+/a(b*)(c+)/[Symbol.replace]("_abcc_", (group0, group1, group2, index, string) => {
   assertSame("abcc", group0);
   assertSame("b", group1);
   assertSame("cc", group2);
@@ -20,7 +20,7 @@ const {
   assertSame("_abcc_", string);
 });
 
-/a(b*)(c+)/.replace("_acc_", (group0, group1, group2, index, string) => {
+/a(b*)(c+)/[Symbol.replace]("_acc_", (group0, group1, group2, index, string) => {
   assertSame("acc", group0);
   assertSame("", group1);
   assertSame("cc", group2);

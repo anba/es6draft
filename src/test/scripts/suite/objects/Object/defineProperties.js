@@ -59,7 +59,7 @@ assertBuiltinFunction(Object.defineProperties, "defineProperties", 2);
   }));
 }
 
-// Intermediate exceptions during install do not stop property traversal, first exception is reported (1)
+// Intermediate exceptions during install stop property traversal, first exception is reported (1)
 {
   // Precondition: [[OwnKeys]] for Proxies can return the same key multiple times
   assertSame(2, [for (k of Reflect.ownKeys(new Proxy({}, {ownKeys: () => ["a", "a"]}))) k].length);
@@ -75,7 +75,7 @@ assertBuiltinFunction(Object.defineProperties, "defineProperties", 2);
   assertDataProperty(o, "a", {value: 0, writable: false, enumerable: false, configurable: false});
 }
 
-// Intermediate exceptions during install do not stop property traversal, first exception is reported (2)
+// Intermediate exceptions during install stop property traversal, first exception is reported (2)
 {
   let o = {};
   Object.defineProperty(o, "a", {value: 0, writable: false, enumerable: true, configurable: false});
@@ -87,7 +87,7 @@ assertBuiltinFunction(Object.defineProperties, "defineProperties", 2);
   });
   assertThrows(TypeError, () => Object.defineProperties(o, props));
   assertDataProperty(o, "a", {value: 0, writable: false, enumerable: true, configurable: false});
-  assertDataProperty(o, "b", {value: 1, writable: false, enumerable: false, configurable: false});
+  // assertDataProperty(o, "b", {value: 1, writable: false, enumerable: false, configurable: false});
 }
 
 // Exceptions during property descriptor retrieval are reported immediately (1)

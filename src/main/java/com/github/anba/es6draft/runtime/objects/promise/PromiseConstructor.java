@@ -25,18 +25,21 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.ResolvingFunctions;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Creatable;
 import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
@@ -158,6 +161,18 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
     public enum Properties {
         ;
 
+        private static Constructor promiseConstructorFromSpecies(ExecutionContext cx, Object c) {
+            if (!Type.isObject(c)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            Object species = Get(cx, Type.objectValue(c), BuiltinSymbol.species.get());
+            Object constructor = !Type.isUndefinedOrNull(species) ? species : c;
+            if (!IsConstructor(constructor)) {
+                throw newTypeError(cx, Messages.Key.NotConstructor);
+            }
+            return (Constructor) constructor;
+        }
+
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
@@ -189,21 +204,20 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
          */
         @Function(name = "all", arity = 1)
         public static Object all(ExecutionContext cx, Object thisValue, Object iterable) {
-            /* step 1 */
-            Object c = thisValue;
-            /* steps 2-3 */
+            /* steps 1-5 */
+            Constructor c = promiseConstructorFromSpecies(cx, thisValue);
+            /* steps 6-7 */
             PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
-            /* step 4 */
+            /* step 8 */
             ScriptObject iterator;
             try {
                 iterator = GetIterator(cx, iterable);
             } catch (ScriptException e) {
-                /* step 5 */
+                /* step 9 */
                 return IfAbruptRejectPromise(cx, e, promiseCapability);
             }
-            /* step 6 */
-            assert c instanceof Constructor;
-            return PerformPromiseAll(cx, iterator, (Constructor) c, promiseCapability);
+            /* step 10 */
+            return PerformPromiseAll(cx, iterator, c, promiseCapability);
         }
 
         /**
@@ -219,46 +233,46 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
          */
         @Function(name = "race", arity = 1)
         public static Object race(ExecutionContext cx, Object thisValue, Object iterable) {
-            /* step 1 */
-            Object c = thisValue;
-            /* steps 2-3 */
+            /* steps 1-5 */
+            Constructor c = promiseConstructorFromSpecies(cx, thisValue);
+            /* steps 6-7 */
             PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
-            /* step 4 */
+            /* step 8 */
             ScriptObject iterator;
             try {
                 iterator = GetIterator(cx, iterable);
             } catch (ScriptException e) {
-                /* step 5 */
+                /* step 9 */
                 return IfAbruptRejectPromise(cx, e, promiseCapability);
             }
-            /* step 6 */
+            /* step 10 */
             for (;;) {
-                /* steps 6.a-6.b */
+                /* steps 10.a-10.b */
                 ScriptObject next;
                 try {
                     next = IteratorStep(cx, iterator);
                 } catch (ScriptException e) {
                     return IfAbruptRejectPromise(cx, e, promiseCapability);
                 }
-                /* step 6.c */
+                /* step 10.c */
                 if (next == null) {
                     return promiseCapability.getPromise();
                 }
-                /* steps 6.d-6.e */
+                /* steps 10.d-10.e */
                 Object nextValue;
                 try {
                     nextValue = IteratorValue(cx, next);
                 } catch (ScriptException e) {
                     return IfAbruptRejectPromise(cx, e, promiseCapability);
                 }
-                /* steps 6.f-6.g */
+                /* steps 10.f-10.g */
                 Object nextPromise;
                 try {
                     nextPromise = Invoke(cx, c, "resolve", nextValue);
                 } catch (ScriptException e) {
                     return IfAbruptRejectPromise(cx, e, promiseCapability);
                 }
-                /* steps 6.h-6.i */
+                /* steps 10.h-10.i */
                 try {
                     Invoke(cx, nextPromise, "then", promiseCapability.getResolve(),
                             promiseCapability.getReject());
@@ -281,13 +295,13 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
          */
         @Function(name = "reject", arity = 1)
         public static Object reject(ExecutionContext cx, Object thisValue, Object r) {
-            /* step 1 */
-            Object c = thisValue;
-            /* steps 2-3 */
+            /* steps 1-5 */
+            Constructor c = promiseConstructorFromSpecies(cx, thisValue);
+            /* steps 6-7 */
             PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
-            /* steps 4-5 */
+            /* steps 8-9 */
             promiseCapability.getReject().call(cx, UNDEFINED, r);
-            /* step 6 */
+            /* step 10 */
             return promiseCapability.getPromise();
         }
 
@@ -304,21 +318,37 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
          */
         @Function(name = "resolve", arity = 1)
         public static Object resolve(ExecutionContext cx, Object thisValue, Object x) {
-            /* step 1 */
-            Object c = thisValue;
             /* step 2 */
             if (IsPromise(x)) {
                 Constructor constructor = ((PromiseObject) x).getConstructor();
-                if (SameValue(constructor, c)) {
+                if (SameValue(constructor, thisValue)) {
                     return x;
                 }
             }
-            /* steps 3-4 */
+            /* steps 1, 3-6 */
+            Constructor c = promiseConstructorFromSpecies(cx, thisValue);
+            /* steps 7-8 */
             PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
-            /* steps 5-6 */
+            /* steps 9-10 */
             promiseCapability.getResolve().call(cx, UNDEFINED, x);
-            /* step 7 */
+            /* step 11 */
             return promiseCapability.getPromise();
+        }
+
+        /**
+         * 25.4.4.6 get Promise [ @@species ]
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the species object
+         */
+        @Accessor(name = "get [Symbol.species]", symbol = BuiltinSymbol.species,
+                type = Accessor.Type.Getter)
+        public static Object species(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
+            return thisValue;
         }
     }
 

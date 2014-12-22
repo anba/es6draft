@@ -189,7 +189,6 @@ js/script-tests/excessive-comma-usage.js
 js/script-tests/stack-overflow-catch.js
 
 # Timeout (slow)
-js/script-tests/array-splice.js
 js/script-tests/comparison-operators.js
 js/script-tests/comparison-operators-less.js
 js/script-tests/comparison-operators-greater.js

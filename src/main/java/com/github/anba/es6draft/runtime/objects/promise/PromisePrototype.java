@@ -6,9 +6,9 @@
  */
 package com.github.anba.es6draft.runtime.objects.promise;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Invoke;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
+import static com.github.anba.es6draft.runtime.AbstractOperations.SpeciesConstructor;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.IsPromise;
@@ -26,6 +26,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseReactionTask;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -110,7 +111,7 @@ public final class PromisePrototype extends OrdinaryObject implements Initializa
             /* step 1 */
             PromiseObject promise = (PromiseObject) thisValue;
             /* steps 3-4 */
-            Object c = Get(cx, promise, "constructor");
+            Constructor c = SpeciesConstructor(cx, promise, Intrinsics.Promise);
             /* steps 5-6 */
             PromiseCapability<ScriptObject> resultCapability = NewPromiseCapability(cx, c);
             /* step 7 */

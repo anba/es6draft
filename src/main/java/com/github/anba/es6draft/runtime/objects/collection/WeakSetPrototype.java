@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.objects.collection;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.WeakHashMap;
 
@@ -70,7 +69,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 23.4.3.3 WeakSet.prototype.constructor
+         * 23.4.3.2 WeakSet.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.WeakSet;
@@ -103,26 +102,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
         }
 
         /**
-         * 23.4.3.2 WeakSet.prototype.clear ()
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the undefined value
-         */
-        @Function(name = "clear", arity = 0)
-        public static Object clear(ExecutionContext cx, Object thisValue) {
-            /* steps 1-4 */
-            WeakSetObject s = thisWeakSetObject(cx, thisValue);
-            /* step 5 */
-            s.getWeakSetData().clear();
-            /* step 6 */
-            return UNDEFINED;
-        }
-
-        /**
-         * 23.4.3.4 WeakSet.prototype.delete ( value )
+         * 23.4.3.3 WeakSet.prototype.delete ( value )
          * 
          * @param cx
          *            the execution context
@@ -147,7 +127,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
         }
 
         /**
-         * 23.4.3.5 WeakSet.prototype.has ( value )
+         * 23.4.3.4 WeakSet.prototype.has ( value )
          * 
          * @param cx
          *            the execution context
@@ -172,7 +152,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
         }
 
         /**
-         * 23.4.3.6 WeakSet.prototype[ @@toStringTag ]
+         * 23.4.3.5 WeakSet.prototype[ @@toStringTag ]
          */
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

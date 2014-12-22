@@ -15,9 +15,11 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Creatable;
@@ -88,7 +90,7 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
                 throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "set");
             }
             adder = (Callable) _adder;
-            iter = GetIterator(calleeContext, ToObject(calleeContext, iterable));
+            iter = GetIterator(calleeContext, iterable);
         }
 
         /* step 8 */
@@ -156,6 +158,22 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.MapPrototype;
+
+        /**
+         * 23.1.2.2 get Map [ @@species ]
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the species object
+         */
+        @Accessor(name = "get [Symbol.species]", symbol = BuiltinSymbol.species,
+                type = Accessor.Type.Getter)
+        public static Object species(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
+            return thisValue;
+        }
     }
 
     private static final class MapObjectAllocator implements ObjectAllocator<MapObject> {

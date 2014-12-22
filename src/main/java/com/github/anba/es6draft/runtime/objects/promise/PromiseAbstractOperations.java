@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.objects.promise;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor.InitializePromise;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.OrdinaryCreateFromConstructor;
 
@@ -240,7 +241,7 @@ public final class PromiseAbstractOperations {
             }
             /* step 12 */
             Realm realm = calleeContext.getRealm();
-            realm.enqueuePromiseTask(new ResolvePromiseThenableTask(realm, promise, Type
+            realm.enqueuePromiseTask(new PromiseResolveThenableTask(realm, promise, Type
                     .objectValue(resolution), (Callable) then));
             /* step 13 */
             return UNDEFINED;
@@ -285,14 +286,27 @@ public final class PromiseAbstractOperations {
         /* steps 3-4 */
         ScriptObject promise = CreateFromConstructor(cx, constructor);
         /* step 5 */
-        if (promise == null) {
-            // FIXME: spec bug
-            // throw newTypeError(cx, Messages.Key.NotObjectType);
-            // promise = AllocatePromise(cx, constructor);
-            promise = OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.ObjectPrototype);
-        }
-        /* step 6 */
         return CreatePromiseCapabilityRecord(cx, promise, constructor);
+    }
+
+    /**
+     * <h2>25.4.1 Promise Abstract Operations</h2>
+     * <p>
+     * 25.4.1.6 NewPromiseCapability ( C )
+     * 
+     * @param cx
+     *            the execution context
+     * @param c
+     *            the promise constructor function
+     * @return the new promise capability record
+     */
+    public static PromiseCapability<ScriptObject> NewPromiseCapability(ExecutionContext cx,
+            Constructor c) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        ScriptObject promise = CreateFromConstructor(cx, c);
+        /* step 5 */
+        return CreatePromiseCapabilityRecord(cx, promise, c);
     }
 
     /**
@@ -440,9 +454,9 @@ public final class PromiseAbstractOperations {
     }
 
     /**
-     * <h2>25.4.2 Promise Tasks</h2>
+     * <h2>25.4.2 Promise Jobs</h2>
      * <p>
-     * 25.4.2.1 PromiseReactionTask( reaction, argument )
+     * 25.4.2.1 PromiseReactionJob( reaction, argument )
      */
     public static final class PromiseReactionTask implements Task {
         private final Realm realm;
@@ -488,17 +502,17 @@ public final class PromiseAbstractOperations {
     }
 
     /**
-     * <h2>25.4.2 Promise Tasks</h2>
+     * <h2>25.4.2 Promise Jobs</h2>
      * <p>
-     * 25.4.2.2 ResolvePromiseThenableTask ( promiseToResolve, thenable, then )
+     * 25.4.2.2 PromiseResolveThenableJob ( promiseToResolve, thenable, then )
      */
-    public static final class ResolvePromiseThenableTask implements Task {
+    public static final class PromiseResolveThenableTask implements Task {
         private final Realm realm;
         private final PromiseObject promise;
         private final ScriptObject thenable;
         private final Callable then;
 
-        public ResolvePromiseThenableTask(Realm realm, PromiseObject promise,
+        public PromiseResolveThenableTask(Realm realm, PromiseObject promise,
                 ScriptObject thenable, Callable then) {
             assert promise.getState() != null : "Promise not initialized";
             this.realm = realm;
@@ -522,5 +536,74 @@ public final class PromiseAbstractOperations {
                 resolvingFunctions.getReject().call(cx, UNDEFINED, e.getValue());
             }
         }
+    }
+
+    /**
+     * PromiseNew ( executor ) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param executor
+     *            the executor function
+     * @return the new promise object
+     */
+    public static PromiseObject PromiseNew(ExecutionContext cx, Callable executor) {
+        /* step 1 */
+        PromiseObject promise = AllocatePromise(cx,
+                (Constructor) cx.getIntrinsic(Intrinsics.Promise));
+        /* step 2 */
+        return InitializePromise(cx, promise, executor);
+    }
+
+    /**
+     * PromiseBuiltinCapability () Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @return the promise capability record
+     */
+    public static PromiseCapability<PromiseObject> PromiseBuiltinCapability(ExecutionContext cx) {
+        /* step 1 */
+        PromiseObject promise = AllocatePromise(cx,
+                (Constructor) cx.getIntrinsic(Intrinsics.Promise));
+        /* step 2 */
+        return CreatePromiseCapabilityRecord(cx, promise,
+                (Constructor) cx.getIntrinsic(Intrinsics.Promise));
+    }
+
+    /**
+     * PromiseOf (value) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the resolved value
+     * @return the new promise object
+     */
+    public static PromiseObject PromiseOf(ExecutionContext cx, Object value) {
+        /* steps 1-2 */
+        PromiseCapability<PromiseObject> capability = PromiseBuiltinCapability(cx);
+        /* steps 3-4 */
+        capability.getResolve().call(cx, UNDEFINED, value);
+        /* step 5 */
+        return capability.getPromise();
+    }
+
+    /**
+     * PromiseOf (value) Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param e
+     *            the exception object
+     * @return the new promise object
+     */
+    public static PromiseObject PromiseOf(ExecutionContext cx, ScriptException e) {
+        /* steps 1-2 */
+        PromiseCapability<PromiseObject> capability = PromiseBuiltinCapability(cx);
+        /* steps 3-4 */
+        capability.getReject().call(cx, UNDEFINED, e.getValue());
+        /* step 5 */
+        return capability.getPromise();
     }
 }

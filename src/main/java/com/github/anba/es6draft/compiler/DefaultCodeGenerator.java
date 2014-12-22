@@ -158,7 +158,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_createImmutableBinding = MethodDesc.create(
                 MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "createImmutableBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String));
+                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
         static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
                 MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "initializeBinding",
@@ -1251,8 +1251,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * 14.5.1.2 Runtime Semantics<br>
-     * Runtime Semantics: ClassDefinitionEvaluation
+     * 14.5.14 Runtime Semantics: ClassDefinitionEvaluation
      * 
      * @param def
      *            the class definition node
@@ -1296,6 +1295,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.dup();
             mv.invoke(Methods.LexicalEnvironment_getEnvRec);
             mv.aconst(className);
+            mv.iconst(true);
             mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
 
             // stack: [proto, ctor, proto, scope] -> [proto, ctor, proto]

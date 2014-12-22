@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.google.doubleconversion.DoubleConversion;
 
 /**
@@ -101,6 +102,36 @@ public enum ElementType {
             return "Float32Array";
         case Float64:
             return "Float64Array";
+        default:
+            throw new AssertionError();
+        }
+    }
+
+    /**
+     * Returns the constructor for the element type.
+     * 
+     * @return the constructor intrinsic
+     */
+    public Intrinsics getConstructor() {
+        switch (this) {
+        case Int8:
+            return Intrinsics.Int8Array;
+        case Uint8:
+            return Intrinsics.Uint8Array;
+        case Uint8C:
+            return Intrinsics.Uint8ClampedArray;
+        case Int16:
+            return Intrinsics.Int16Array;
+        case Uint16:
+            return Intrinsics.Uint16Array;
+        case Int32:
+            return Intrinsics.Int32Array;
+        case Uint32:
+            return Intrinsics.Uint32Array;
+        case Float32:
+            return Intrinsics.Float32Array;
+        case Float64:
+            return Intrinsics.Float64Array;
         default:
             throw new AssertionError();
         }

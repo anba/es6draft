@@ -20,17 +20,17 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
  */
 public final class ClassExpression extends Expression implements ClassDefinition {
     private final BlockScope scope;
-    private final BindingIdentifier name;
+    private final BindingIdentifier identifier;
     private final Expression heritage;
     private final List<MethodDefinition> methods;
     private final MethodDefinition constructor;
     private List<PropertyDefinition> properties;
 
     public ClassExpression(long beginPosition, long endPosition, BlockScope scope,
-            BindingIdentifier name, Expression heritage, List<MethodDefinition> methods) {
+            BindingIdentifier identifier, Expression heritage, List<MethodDefinition> methods) {
         super(beginPosition, endPosition);
         this.scope = scope;
-        this.name = name;
+        this.identifier = identifier;
         this.heritage = heritage;
         this.methods = methods;
         this.constructor = ConstructorMethod(methods);
@@ -42,8 +42,13 @@ public final class ClassExpression extends Expression implements ClassDefinition
     }
 
     @Override
-    public BindingIdentifier getName() {
-        return name;
+    public String getClassName() {
+        return identifier != null ? identifier.getName().getIdentifier() : "";
+    }
+
+    @Override
+    public BindingIdentifier getIdentifier() {
+        return identifier;
     }
 
     @Override

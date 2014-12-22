@@ -82,6 +82,7 @@ import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.github.anba.es6draft.runtime.types.builtins.TypeErrorThrower;
 
@@ -113,14 +114,14 @@ public final class Realm implements ShadowRealm {
     private final LexicalEnvironment<GlobalEnvironmentRecord> globalEnv;
 
     /**
+     * [[templateMap]]
+     */
+    private final HashMap<String, ArrayObject> templateMap = new HashMap<>();
+
+    /**
      * [[modules]]
      */
     private final HashMap<String, ModuleRecord> modules = new HashMap<>();
-
-    /**
-     * [[nameMap]]
-     */
-    private final HashMap<String, String> nameMap = new HashMap<>();
 
     /**
      * [[ThrowTypeError]]
@@ -317,6 +318,15 @@ public final class Realm implements ShadowRealm {
     }
 
     /**
+     * [[templateMap]]
+     * 
+     * @return the map of template string objects
+     */
+    public Map<String, ArrayObject> getTemplateMap() {
+        return templateMap;
+    }
+
+    /**
      * [[modules]]
      * 
      * @return the map of resolved modules
@@ -324,16 +334,6 @@ public final class Realm implements ShadowRealm {
     @Override
     public Map<String, ModuleRecord> getModules() {
         return modules;
-    }
-
-    /**
-     * [[nameMap]]
-     * 
-     * @return the map of normalized module names
-     */
-    @Override
-    public Map<String, String> getNameMap() {
-        return nameMap;
     }
 
     /**

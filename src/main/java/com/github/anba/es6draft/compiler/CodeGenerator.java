@@ -70,8 +70,8 @@ final class CodeGenerator {
                 Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$ScriptBody));
 
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_GetTemplateCallSite = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "GetTemplateCallSite", Type
+        static final MethodDesc ScriptRuntime_GetTemplateObject = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.ScriptRuntime, "GetTemplateObject", Type
                         .getMethodType(Types.ArrayObject, Type.INT_TYPE, Types.MethodHandle,
                                 Types.ExecutionContext));
     }
@@ -565,21 +565,21 @@ final class CodeGenerator {
     /* ----------------------------------------------------------------------------------------- */
 
     /**
-     * [12.2.9.2.2] Runtime Semantics: GetTemplateCallSite
+     * [12.2.8.2.2] Runtime Semantics: GetTemplateObject
      * 
      * @param node
      *            the template literal
      * @param mv
      *            the expression visitor
      */
-    void GetTemplateCallSite(TemplateLiteral node, ExpressionVisitor mv) {
+    void GetTemplateObject(TemplateLiteral node, ExpressionVisitor mv) {
         assert isCompiled(node);
 
-        // GetTemplateCallSite
+        // GetTemplateObject
         mv.iconst(templateKey(node));
         mv.handle(methodDesc(node));
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_GetTemplateCallSite);
+        mv.invoke(Methods.ScriptRuntime_GetTemplateObject);
     }
 
     void compile(TemplateLiteral node) {

@@ -260,7 +260,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                 CreateLegacyArguments(argumentsObj, mv);
             }
             if (strict) {
-                createImmutableBinding(envRec, arguments, mv);
+                createImmutableBinding(envRec, arguments, false, mv);
             } else {
                 createMutableBinding(envRec, arguments, false, mv);
             }
@@ -366,7 +366,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             assert !(d instanceof HoistableDeclaration);
             for (Name dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
-                    createImmutableBinding(lexEnvRec, dn, mv);
+                    createImmutableBinding(lexEnvRec, dn, true, mv);
                 } else {
                     createMutableBinding(lexEnvRec, dn, false, mv);
                 }

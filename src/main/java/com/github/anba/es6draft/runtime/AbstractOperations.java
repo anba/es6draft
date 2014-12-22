@@ -13,9 +13,6 @@ import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.Instanceof
 import static com.github.anba.es6draft.runtime.objects.BooleanObject.BooleanCreate;
 import static com.github.anba.es6draft.runtime.objects.SymbolObject.SymbolCreate;
 import static com.github.anba.es6draft.runtime.objects.number.NumberObject.NumberCreate;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.AllocatePromise;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.CreatePromiseCapabilityRecord;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor.InitializePromise;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
@@ -42,19 +39,19 @@ import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.internal.CompoundIterator;
 import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
-import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
-import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
+import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.github.anba.es6draft.runtime.types.builtins.ProxyObject;
 import com.google.doubleconversion.DoubleConversion;
 
 /**
  * <h1>7 Abstract Operations</h1>
  * <ul>
- * <li>7.1 Type Conversion and Testing
+ * <li>7.1 Type Conversion
  * <li>7.2 Testing and Comparison Operations
  * <li>7.3 Operations on Objects
  * <li>7.4 Operations on Iterator Objects
@@ -749,7 +746,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.1 RequireObjectCoercible
+     * 7.2.1 RequireObjectCoercible ( argument )
      * 
      * @param cx
      *            the execution context
@@ -765,7 +762,56 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.2 IsCallable
+     * 7.2.2 IsArray ( arg )
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return {@code true} if the argument is an Array object
+     */
+    public static boolean IsArray(ExecutionContext cx, Object value) {
+        /* step 1 */
+        if (!Type.isObject(value)) {
+            return false;
+        }
+        /* step 2 */
+        if (value instanceof ArrayObject) {
+            return true;
+        }
+        /* step 3 */
+        if (value instanceof ProxyObject) {
+            return ((ProxyObject) value).unwrap(cx) instanceof ArrayObject;
+        }
+        /* step 4 */
+        return false;
+    }
+
+    /**
+     * 7.2.2 IsArray ( arg )
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return {@code true} if the argument is an Array object
+     */
+    public static boolean IsArray(ExecutionContext cx, ScriptObject value) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        if (value instanceof ArrayObject) {
+            return true;
+        }
+        /* step 3 */
+        if (value instanceof ProxyObject) {
+            return ((ProxyObject) value).unwrap(cx) instanceof ArrayObject;
+        }
+        /* step 4 */
+        return false;
+    }
+
+    /**
+     * 7.2.3 IsCallable ( argument )
      * 
      * @param value
      *            the argument value
@@ -776,7 +822,120 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.3 SameValue(x, y)
+     * 7.2.4 IsConstructor ( argument )
+     * 
+     * @param value
+     *            the argument value
+     * @return {@code true} if the value is a constructor object
+     */
+    public static boolean IsConstructor(Object value) {
+        /* steps 1-4 */
+        return value instanceof Constructor;
+    }
+
+    /**
+     * 7.2.5 IsExtensible (O)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @return {@code true} if the object is extensible
+     */
+    public static boolean IsExtensible(ExecutionContext cx, ScriptObject object) {
+        /* steps 1-2 */
+        return object.isExtensible(cx);
+    }
+
+    /**
+     * 7.2.6 IsInteger ( argument )
+     * 
+     * @param value
+     *            the argument value
+     * @return {@code true} if the value is a finite integer
+     */
+    public static boolean IsInteger(Object value) {
+        /* steps 1-2 */
+        if (!Type.isNumber(value)) {
+            return false;
+        }
+        double d = Type.numberValue(value);
+        /* step 2 */
+        if (Double.isNaN(d) || Double.isInfinite(d)) {
+            return false;
+        }
+        /* step 3 */
+        if (Math.floor(Math.abs(d)) != Math.abs(d)) {
+            return false;
+        }
+        /* step 4 */
+        return true;
+    }
+
+    /**
+     * 7.2.6 IsInteger ( argument )
+     * 
+     * @param value
+     *            the argument value
+     * @return {@code true} if the value is a finite integer
+     */
+    public static boolean IsInteger(double value) {
+        double d = value;
+        /* step 2 */
+        if (Double.isNaN(d) || Double.isInfinite(d)) {
+            return false;
+        }
+        /* step 3 */
+        if (Math.floor(Math.abs(d)) != Math.abs(d)) {
+            return false;
+        }
+        /* step 4 */
+        return true;
+    }
+
+    /**
+     * 7.2.7 IsPropertyKey ( argument )
+     * 
+     * @param value
+     *            the argument value
+     * @return {@code true} if the value is a property key
+     */
+    public static boolean IsPropertyKey(Object value) {
+        /* steps 1-4 */
+        return value instanceof String || value instanceof Symbol;
+    }
+
+    /**
+     * 7.2.8 IsRegExp ( O )
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return {@code true} if the value is a regular expression object
+     */
+    public static boolean IsRegExp(ExecutionContext cx, Object value) {
+        /* step 1 */
+        if (!Type.isObject(value)) {
+            return false;
+        }
+        ScriptObject object = Type.objectValue(value);
+        /* steps 2-3 */
+        Object isRegExp = Get(cx, object, BuiltinSymbol.match.get());
+        /* step 4 */
+        if (!Type.isUndefined(isRegExp)) {
+            return ToBoolean(isRegExp);
+        }
+        /* step 5 */
+        if (object instanceof RegExpObject) {
+            return true;
+        }
+        /* step 6 */
+        return false;
+    }
+
+    /**
+     * 7.2.9 SameValue(x, y)
      * 
      * @param x
      *            the first operand
@@ -828,7 +987,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.3 SameValue(x, y)
+     * 7.2.9 SameValue(x, y)
      * 
      * @param x
      *            the first operand
@@ -843,7 +1002,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.3 SameValue(x, y)
+     * 7.2.9 SameValue(x, y)
      * 
      * @param x
      *            the first operand
@@ -858,7 +1017,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.4 SameValueZero(x, y)
+     * 7.2.10 SameValueZero(x, y)
      * 
      * @param x
      *            the first operand
@@ -913,7 +1072,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.4 SameValueZero(x, y)
+     * 7.2.10 SameValueZero(x, y)
      * 
      * @param x
      *            the first operand
@@ -934,91 +1093,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.5 IsConstructor
-     * 
-     * @param value
-     *            the argument value
-     * @return {@code true} if the value is a constructor object
-     */
-    public static boolean IsConstructor(Object value) {
-        /* steps 1-4 */
-        return value instanceof Constructor;
-    }
-
-    /**
-     * 7.2.6 IsPropertyKey
-     * 
-     * @param value
-     *            the argument value
-     * @return {@code true} if the value is a property key
-     */
-    public static boolean IsPropertyKey(Object value) {
-        /* steps 1-4 */
-        return value instanceof String || value instanceof Symbol;
-    }
-
-    /**
-     * 7.2.7 IsExtensible (O)
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @return {@code true} if the object is extensible
-     */
-    public static boolean IsExtensible(ExecutionContext cx, ScriptObject object) {
-        /* steps 1-2 */
-        return object.isExtensible(cx);
-    }
-
-    /**
-     * 7.2.8 IsInteger
-     * 
-     * @param value
-     *            the argument value
-     * @return {@code true} if the value is a finite integer
-     */
-    public static boolean IsInteger(Object value) {
-        /* steps 1-2 */
-        if (!Type.isNumber(value)) {
-            return false;
-        }
-        double d = Type.numberValue(value);
-        /* step 2 */
-        if (Double.isNaN(d) || Double.isInfinite(d)) {
-            return false;
-        }
-        /* step 3 */
-        if (Math.floor(Math.abs(d)) != Math.abs(d)) {
-            return false;
-        }
-        /* step 4 */
-        return true;
-    }
-
-    /**
-     * 7.2.8 IsInteger
-     * 
-     * @param value
-     *            the argument value
-     * @return {@code true} if the value is a finite integer
-     */
-    public static boolean IsInteger(double value) {
-        double d = value;
-        /* step 2 */
-        if (Double.isNaN(d) || Double.isInfinite(d)) {
-            return false;
-        }
-        /* step 3 */
-        if (Math.floor(Math.abs(d)) != Math.abs(d)) {
-            return false;
-        }
-        /* step 4 */
-        return true;
-    }
-
-    /**
-     * 7.2.9 Abstract Relational Comparison
+     * 7.2.11 Abstract Relational Comparison
      * 
      * @param cx
      *            the execution context
@@ -1076,7 +1151,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.10 Abstract Equality Comparison
+     * 7.2.12 Abstract Equality Comparison
      * 
      * @param cx
      *            the execution context
@@ -1140,7 +1215,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.11 Strict Equality Comparison
+     * 7.2.13 Strict Equality Comparison
      * 
      * @param x
      *            the first operand
@@ -1258,7 +1333,105 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.2 Put (O, P, V, Throw)
+     * 7.3.2 GetV (V, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @param propertyKey
+     *            the property key
+     * @return the property value
+     */
+    public static Object GetV(ExecutionContext cx, Object value, Object propertyKey) {
+        /* steps 1-3 */
+        if (propertyKey instanceof String) {
+            return GetV(cx, value, (String) propertyKey);
+        } else {
+            return GetV(cx, value, (Symbol) propertyKey);
+        }
+    }
+
+    /**
+     * 7.3.2 GetV (V, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @param propertyKey
+     *            the property key
+     * @return the property value
+     */
+    public static Object GetV(ExecutionContext cx, Object value, long propertyKey) {
+        /* step 1 */
+        if (Type.isUndefinedOrNull(value)) {
+            throw newTypeError(cx, Messages.Key.UndefinedOrNull);
+        }
+        /* step 2 */
+        if (Type.isObject(value)) {
+            return Get(cx, Type.objectValue(value), propertyKey);
+        }
+        /* steps 3-4 */
+        ScriptObject box = ToObject(cx, value);
+        /* step 5 */
+        return box.get(cx, propertyKey, value);
+    }
+
+    /**
+     * 7.3.2 GetV (V, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @param propertyKey
+     *            the property key
+     * @return the property value
+     */
+    public static Object GetV(ExecutionContext cx, Object value, String propertyKey) {
+        /* step 1 */
+        if (Type.isUndefinedOrNull(value)) {
+            throw newTypeError(cx, Messages.Key.UndefinedOrNull);
+        }
+        /* step 2 */
+        if (Type.isObject(value)) {
+            return Get(cx, Type.objectValue(value), propertyKey);
+        }
+        /* steps 3-4 */
+        ScriptObject box = ToObject(cx, value);
+        /* step 5 */
+        return box.get(cx, propertyKey, value);
+    }
+
+    /**
+     * 7.3.2 GetV (V, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @param propertyKey
+     *            the property key
+     * @return the property value
+     */
+    public static Object GetV(ExecutionContext cx, Object value, Symbol propertyKey) {
+        /* step 1 */
+        if (Type.isUndefinedOrNull(value)) {
+            throw newTypeError(cx, Messages.Key.UndefinedOrNull);
+        }
+        /* step 2 */
+        if (Type.isObject(value)) {
+            return Get(cx, Type.objectValue(value), propertyKey);
+        }
+        /* steps 3-4 */
+        ScriptObject box = ToObject(cx, value);
+        /* step 5 */
+        return box.get(cx, propertyKey, value);
+    }
+
+    /**
+     * 7.3.3 Put (O, P, V, Throw)
      * 
      * @param cx
      *            the execution context
@@ -1282,7 +1455,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.2 Put (O, P, V, Throw)
+     * 7.3.3 Put (O, P, V, Throw)
      * 
      * @param cx
      *            the execution context
@@ -1307,7 +1480,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.2 Put (O, P, V, Throw)
+     * 7.3.3 Put (O, P, V, Throw)
      * 
      * @param cx
      *            the execution context
@@ -1332,7 +1505,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.2 Put (O, P, V, Throw)
+     * 7.3.3 Put (O, P, V, Throw)
      * 
      * @param cx
      *            the execution context
@@ -1357,7 +1530,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.3 CreateDataProperty (O, P, V)
+     * 7.3.4 CreateDataProperty (O, P, V)
      * 
      * @param cx
      *            the execution context
@@ -1379,7 +1552,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.3 CreateDataProperty (O, P, V)
+     * 7.3.4 CreateDataProperty (O, P, V)
      * 
      * @param cx
      *            the execution context
@@ -1401,7 +1574,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.3 CreateDataProperty (O, P, V)
+     * 7.3.4 CreateDataProperty (O, P, V)
      * 
      * @param cx
      *            the execution context
@@ -1423,7 +1596,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.3 CreateDataProperty (O, P, V)
+     * 7.3.4 CreateDataProperty (O, P, V)
      * 
      * @param cx
      *            the execution context
@@ -1445,7 +1618,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.4 CreateDataPropertyOrThrow (O, P, V)
+     * 7.3.5 CreateDataPropertyOrThrow (O, P, V)
      * 
      * @param cx
      *            the execution context
@@ -1466,7 +1639,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.4 CreateDataPropertyOrThrow (O, P, V)
+     * 7.3.5 CreateDataPropertyOrThrow (O, P, V)
      * 
      * @param cx
      *            the execution context
@@ -1490,7 +1663,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.4 CreateDataPropertyOrThrow (O, P, V)
+     * 7.3.5 CreateDataPropertyOrThrow (O, P, V)
      * 
      * @param cx
      *            the execution context
@@ -1514,7 +1687,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.4 CreateDataPropertyOrThrow (O, P, V)
+     * 7.3.5 CreateDataPropertyOrThrow (O, P, V)
      * 
      * @param cx
      *            the execution context
@@ -1538,7 +1711,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.5 DefinePropertyOrThrow (O, P, desc)
+     * 7.3.6 DefinePropertyOrThrow (O, P, desc)
      * 
      * @param cx
      *            the execution context
@@ -1559,7 +1732,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.5 DefinePropertyOrThrow (O, P, desc)
+     * 7.3.6 DefinePropertyOrThrow (O, P, desc)
      * 
      * @param cx
      *            the execution context
@@ -1582,7 +1755,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.5 DefinePropertyOrThrow (O, P, desc)
+     * 7.3.6 DefinePropertyOrThrow (O, P, desc)
      * 
      * @param cx
      *            the execution context
@@ -1605,7 +1778,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.5 DefinePropertyOrThrow (O, P, desc)
+     * 7.3.6 DefinePropertyOrThrow (O, P, desc)
      * 
      * @param cx
      *            the execution context
@@ -1628,7 +1801,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.6 DeletePropertyOrThrow (O, P)
+     * 7.3.7 DeletePropertyOrThrow (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1647,7 +1820,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.6 DeletePropertyOrThrow (O, P)
+     * 7.3.7 DeletePropertyOrThrow (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1668,7 +1841,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.6 DeletePropertyOrThrow (O, P)
+     * 7.3.7 DeletePropertyOrThrow (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1689,7 +1862,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.6 DeletePropertyOrThrow (O, P)
+     * 7.3.7 DeletePropertyOrThrow (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1710,153 +1883,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.7 HasProperty (O, P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @param propertyKey
-     *            the property key
-     * @return {@code true} if the property is present
-     */
-    public static boolean HasProperty(ExecutionContext cx, ScriptObject object, Object propertyKey) {
-        if (propertyKey instanceof String) {
-            return HasProperty(cx, object, (String) propertyKey);
-        } else {
-            return HasProperty(cx, object, (Symbol) propertyKey);
-        }
-    }
-
-    /**
-     * 7.3.7 HasProperty (O, P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @param propertyKey
-     *            the property key
-     * @return {@code true} if the property is present
-     */
-    public static boolean HasProperty(ExecutionContext cx, ScriptObject object, long propertyKey) {
-        /* steps 1-3 */
-        return object.hasProperty(cx, propertyKey);
-    }
-
-    /**
-     * 7.3.7 HasProperty (O, P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @param propertyKey
-     *            the property key
-     * @return {@code true} if the property is present
-     */
-    public static boolean HasProperty(ExecutionContext cx, ScriptObject object, String propertyKey) {
-        /* steps 1-3 */
-        return object.hasProperty(cx, propertyKey);
-    }
-
-    /**
-     * 7.3.7 HasProperty (O, P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @param propertyKey
-     *            the property key
-     * @return {@code true} if the property is present
-     */
-    public static boolean HasProperty(ExecutionContext cx, ScriptObject object, Symbol propertyKey) {
-        /* steps 1-3 */
-        return object.hasProperty(cx, propertyKey);
-    }
-
-    /**
-     * 7.3.8 HasOwnProperty (O, P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @param propertyKey
-     *            the property key
-     * @return {@code true} if the property is present
-     */
-    public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
-            Object propertyKey) {
-        if (propertyKey instanceof String) {
-            return HasOwnProperty(cx, object, (String) propertyKey);
-        } else {
-            return HasOwnProperty(cx, object, (Symbol) propertyKey);
-        }
-    }
-
-    /**
-     * 7.3.8 HasOwnProperty (O, P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @param propertyKey
-     *            the property key
-     * @return {@code true} if the property is present
-     */
-    public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object, long propertyKey) {
-        /* steps 1-2 (not applicable) */
-        /* steps 3-4 */
-        Property desc = object.getOwnProperty(cx, propertyKey);
-        /* steps 5-6 */
-        return desc != null;
-    }
-
-    /**
-     * 7.3.8 HasOwnProperty (O, P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @param propertyKey
-     *            the property key
-     * @return {@code true} if the property is present
-     */
-    public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
-            String propertyKey) {
-        /* steps 1-2 (not applicable) */
-        /* steps 3-4 */
-        Property desc = object.getOwnProperty(cx, propertyKey);
-        /* steps 5-6 */
-        return desc != null;
-    }
-
-    /**
-     * 7.3.8 HasOwnProperty (O, P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @param propertyKey
-     *            the property key
-     * @return {@code true} if the property is present
-     */
-    public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
-            Symbol propertyKey) {
-        /* steps 1-2 (not applicable) */
-        /* steps 3-4 */
-        Property desc = object.getOwnProperty(cx, propertyKey);
-        /* steps 5-6 */
-        return desc != null;
-    }
-
-    /**
-     * 7.3.9 GetMethod (O, P)
+     * 7.3.8 GetMethod (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1875,7 +1902,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.9 GetMethod (O, P)
+     * 7.3.8 GetMethod (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1901,7 +1928,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.9 GetMethod (O, P)
+     * 7.3.8 GetMethod (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1927,7 +1954,197 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.10 Invoke(O,P [,args])
+     * 7.3.9 HasProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
+     */
+    public static boolean HasProperty(ExecutionContext cx, ScriptObject object, Object propertyKey) {
+        if (propertyKey instanceof String) {
+            return HasProperty(cx, object, (String) propertyKey);
+        } else {
+            return HasProperty(cx, object, (Symbol) propertyKey);
+        }
+    }
+
+    /**
+     * 7.3.9 HasProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
+     */
+    public static boolean HasProperty(ExecutionContext cx, ScriptObject object, long propertyKey) {
+        /* steps 1-3 */
+        return object.hasProperty(cx, propertyKey);
+    }
+
+    /**
+     * 7.3.9 HasProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
+     */
+    public static boolean HasProperty(ExecutionContext cx, ScriptObject object, String propertyKey) {
+        /* steps 1-3 */
+        return object.hasProperty(cx, propertyKey);
+    }
+
+    /**
+     * 7.3.9 HasProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
+     */
+    public static boolean HasProperty(ExecutionContext cx, ScriptObject object, Symbol propertyKey) {
+        /* steps 1-3 */
+        return object.hasProperty(cx, propertyKey);
+    }
+
+    /**
+     * 7.3.10 HasOwnProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
+     */
+    public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
+            Object propertyKey) {
+        if (propertyKey instanceof String) {
+            return HasOwnProperty(cx, object, (String) propertyKey);
+        } else {
+            return HasOwnProperty(cx, object, (Symbol) propertyKey);
+        }
+    }
+
+    /**
+     * 7.3.10 HasOwnProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
+     */
+    public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object, long propertyKey) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        Property desc = object.getOwnProperty(cx, propertyKey);
+        /* steps 5-6 */
+        return desc != null;
+    }
+
+    /**
+     * 7.3.10 HasOwnProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
+     */
+    public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
+            String propertyKey) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        Property desc = object.getOwnProperty(cx, propertyKey);
+        /* steps 5-6 */
+        return desc != null;
+    }
+
+    /**
+     * 7.3.10 HasOwnProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property is present
+     */
+    public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
+            Symbol propertyKey) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        Property desc = object.getOwnProperty(cx, propertyKey);
+        /* steps 5-6 */
+        return desc != null;
+    }
+
+    /**
+     * 7.3.11 Call(F, V, [args])
+     * 
+     * @param cx
+     *            the execution context
+     * @param function
+     *            the function object
+     * @param thisValue
+     *            the this value
+     * @param args
+     *            the function arguments
+     * @return the function call return value
+     */
+    public static Object Call(ExecutionContext cx, Object function, Object thisValue,
+            Object... args) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        if (!IsCallable(function)) {
+            throw newTypeError(cx, Messages.Key.NotCallable);
+        }
+        /* step 4 */
+        return ((Callable) function).call(cx, thisValue, args);
+    }
+
+    /**
+     * 7.3.11 Call(F, V, [args])
+     * 
+     * @param cx
+     *            the execution context
+     * @param function
+     *            the function object
+     * @param thisValue
+     *            the this value
+     * @param args
+     *            the function arguments
+     * @return the function call return value
+     */
+    public static Object Call(ExecutionContext cx, Callable function, Object thisValue,
+            Object... args) {
+        /* steps 1-3 (not applicable) */
+        /* step 4 */
+        return ((Callable) function).call(cx, thisValue, args);
+    }
+
+    /**
+     * 7.3.12 Invoke(O,P [,args])
      * 
      * @param cx
      *            the execution context
@@ -1949,7 +2166,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.10 Invoke(O,P [,args])
+     * 7.3.12 Invoke(O,P [,args])
      * 
      * @param cx
      *            the execution context
@@ -1968,16 +2185,16 @@ public final class AbstractOperations {
         ScriptObject base = ToObject(cx, object);
         /* steps 5-6 */
         Object func = base.get(cx, propertyKey, object);
-        /* step 7 */
+        /* step 7 (inlined callable check) */
         if (!IsCallable(func)) {
             throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey);
         }
-        /* step 8 */
+        /* step 7 */
         return ((Callable) func).call(cx, object, args);
     }
 
     /**
-     * 7.3.10 Invoke(O,P [,args])
+     * 7.3.12 Invoke(O,P [,args])
      * 
      * @param cx
      *            the execution context
@@ -1994,16 +2211,16 @@ public final class AbstractOperations {
         /* steps 1-4 (not applicable) */
         /* steps 5-6 */
         Object func = object.get(cx, propertyKey, object);
-        /* step 7 */
+        /* step 7 (inlined callable check) */
         if (!IsCallable(func)) {
             throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey);
         }
-        /* step 8 */
+        /* step 7 */
         return ((Callable) func).call(cx, object, args);
     }
 
     /**
-     * 7.3.10 Invoke(O,P [,args])
+     * 7.3.12 Invoke(O,P [,args])
      * 
      * @param cx
      *            the execution context
@@ -2022,16 +2239,16 @@ public final class AbstractOperations {
         ScriptObject base = ToObject(cx, object);
         /* steps 5-6 */
         Object func = base.get(cx, propertyKey, object);
-        /* step 7 */
+        /* step 7 (inlined callable check) */
         if (!IsCallable(func)) {
             throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey.toString());
         }
-        /* step 8 */
+        /* step 7 */
         return ((Callable) func).call(cx, object, args);
     }
 
     /**
-     * 7.3.10 Invoke(O,P [,args])
+     * 7.3.12 Invoke(O,P [,args])
      * 
      * @param cx
      *            the execution context
@@ -2057,7 +2274,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.11 SetIntegrityLevel (O, level)
+     * 7.3.13 SetIntegrityLevel (O, level)
      * 
      * @param cx
      *            the execution context
@@ -2077,73 +2294,55 @@ public final class AbstractOperations {
         }
         /* steps 6-7 */
         List<?> keys = object.ownPropertyKeys(cx);
-        /* step 8 */
-        ScriptException pendingException = null;
         if (level == IntegrityLevel.Sealed) {
-            /* step 9 */
+            /* step 8 */
             PropertyDescriptor nonConfigurable = new PropertyDescriptor();
             nonConfigurable.setConfigurable(false);
             for (Object key : keys) {
-                try {
-                    if (key instanceof String) {
-                        DefinePropertyOrThrow(cx, object, (String) key, nonConfigurable);
-                    } else {
-                        assert key instanceof Symbol;
-                        DefinePropertyOrThrow(cx, object, (Symbol) key, nonConfigurable);
-                    }
-                } catch (ScriptException e) {
-                    if (pendingException == null) {
-                        pendingException = e;
-                    }
+                if (key instanceof String) {
+                    DefinePropertyOrThrow(cx, object, (String) key, nonConfigurable);
+                } else {
+                    assert key instanceof Symbol;
+                    DefinePropertyOrThrow(cx, object, (Symbol) key, nonConfigurable);
                 }
             }
         } else {
-            /* step 10 */
+            /* step 9 */
             PropertyDescriptor nonConfigurable = new PropertyDescriptor();
             nonConfigurable.setConfigurable(false);
             PropertyDescriptor nonConfigurableWritable = new PropertyDescriptor();
             nonConfigurableWritable.setConfigurable(false);
             nonConfigurableWritable.setWritable(false);
             for (Object key : keys) {
-                try {
-                    Property currentDesc;
+                Property currentDesc;
+                if (key instanceof String) {
+                    currentDesc = object.getOwnProperty(cx, (String) key);
+                } else {
+                    assert key instanceof Symbol;
+                    currentDesc = object.getOwnProperty(cx, (Symbol) key);
+                }
+                if (currentDesc != null) {
+                    PropertyDescriptor desc;
+                    if (currentDesc.isAccessorDescriptor()) {
+                        desc = nonConfigurable;
+                    } else {
+                        desc = nonConfigurableWritable;
+                    }
                     if (key instanceof String) {
-                        currentDesc = object.getOwnProperty(cx, (String) key);
+                        DefinePropertyOrThrow(cx, object, (String) key, desc);
                     } else {
                         assert key instanceof Symbol;
-                        currentDesc = object.getOwnProperty(cx, (Symbol) key);
-                    }
-                    if (currentDesc != null) {
-                        PropertyDescriptor desc;
-                        if (currentDesc.isAccessorDescriptor()) {
-                            desc = nonConfigurable;
-                        } else {
-                            desc = nonConfigurableWritable;
-                        }
-                        if (key instanceof String) {
-                            DefinePropertyOrThrow(cx, object, (String) key, desc);
-                        } else {
-                            assert key instanceof Symbol;
-                            DefinePropertyOrThrow(cx, object, (Symbol) key, desc);
-                        }
-                    }
-                } catch (ScriptException e) {
-                    if (pendingException == null) {
-                        pendingException = e;
+                        DefinePropertyOrThrow(cx, object, (Symbol) key, desc);
                     }
                 }
             }
         }
-        /* step 11 */
-        if (pendingException != null) {
-            throw pendingException;
-        }
-        /* step 12 */
+        /* step 10 */
         return true;
     }
 
     /**
-     * 7.3.12 TestIntegrityLevel (O, level)
+     * 7.3.14 TestIntegrityLevel (O, level)
      * 
      * @param cx
      *            the execution context
@@ -2166,51 +2365,39 @@ public final class AbstractOperations {
         /* steps 7-8 */
         List<?> keys = object.ownPropertyKeys(cx);
         /* step 9 */
-        ScriptException pendingException = null;
-        /* step 10 */
         boolean configurable = false;
-        /* step 11 */
+        /* step 10 */
         boolean writable = false;
-        /* step 12 */
+        /* step 11 */
         for (Object key : keys) {
-            try {
-                Property currentDesc;
-                if (key instanceof String) {
-                    currentDesc = object.getOwnProperty(cx, (String) key);
-                } else {
-                    assert key instanceof Symbol;
-                    currentDesc = object.getOwnProperty(cx, (Symbol) key);
-                }
-                if (currentDesc != null) {
-                    configurable |= currentDesc.isConfigurable();
-                    if (currentDesc.isDataDescriptor()) {
-                        writable |= currentDesc.isWritable();
-                    }
-                }
-            } catch (ScriptException e) {
-                if (pendingException == null) {
-                    pendingException = e;
+            Property currentDesc;
+            if (key instanceof String) {
+                currentDesc = object.getOwnProperty(cx, (String) key);
+            } else {
+                assert key instanceof Symbol;
+                currentDesc = object.getOwnProperty(cx, (Symbol) key);
+            }
+            if (currentDesc != null) {
+                configurable |= currentDesc.isConfigurable();
+                if (currentDesc.isDataDescriptor()) {
+                    writable |= currentDesc.isWritable();
                 }
             }
         }
-        /* step 13 */
-        if (pendingException != null) {
-            throw pendingException;
-        }
-        /* step 14 */
+        /* step 12 */
         if (level == IntegrityLevel.Frozen && writable) {
             return false;
         }
-        /* step 15 */
+        /* step 13 */
         if (configurable) {
             return false;
         }
-        /* step 16 */
+        /* step 14 */
         return true;
     }
 
     /**
-     * 7.3.13 CreateArrayFromList (elements)
+     * 7.3.15 CreateArrayFromList (elements)
      * 
      * @param <T>
      *            the element type
@@ -2237,7 +2424,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.14 CreateListFromArrayLike (obj)
+     * 7.3.16 CreateListFromArrayLike (obj [, elementTypes] )
      * 
      * @param cx
      *            the execution context
@@ -2289,7 +2476,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.14 CreateListFromArrayLike (obj)
+     * 7.3.16 CreateListFromArrayLike (obj [, elementTypes] )
      * 
      * @param cx
      *            the execution context
@@ -2361,7 +2548,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.15 OrdinaryHasInstance (C, O)
+     * 7.3.17 OrdinaryHasInstance (C, O)
      * 
      * @param cx
      *            the execution context
@@ -2387,6 +2574,7 @@ public final class AbstractOperations {
         }
         /* steps 4-5 */
         Object p = Get(cx, (ScriptObject) c, "prototype");
+        /* step 6 */
         if (!Type.isObject(p)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
@@ -2403,7 +2591,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.16 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
+     * 7.3.18 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
      * 
      * @param cx
      *            the execution context
@@ -2432,7 +2620,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.16 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
+     * 7.3.18 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
      * 
      * @param cx
      *            the execution context
@@ -2458,7 +2646,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.17 CreateFromConstructor (F)
+     * 7.3.19 CreateFromConstructor (F, argumentsList)
      * 
      * @param cx
      *            the execution context
@@ -2475,17 +2663,24 @@ public final class AbstractOperations {
         if (f instanceof Creatable) {
             CreateAction<?> createAction = ((Creatable<?>) f).createAction();
             if (createAction != null) {
+                /* steps 2.a-2.b */
                 ScriptObject obj = createAction.create(cx, f, args);
+                /* step 2.c */
                 assert obj != null;
+                /* step 2.d */
                 return obj;
             }
         }
-        /* step 3 */
-        return null;
+        /* steps 3-4 */
+        ScriptObject obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
+        /* step 5 */
+        assert obj != null;
+        /* step 6 */
+        return obj;
     }
 
     /**
-     * 7.3.18 Construct (F, argumentsList)
+     * 7.3.20 Construct (F, argumentsList)
      * 
      * @param cx
      *            the execution context
@@ -2499,22 +2694,18 @@ public final class AbstractOperations {
         /* step 1 (not applicable) */
         /* steps 2-3 */
         ScriptObject obj = CreateFromConstructor(cx, f, args);
-        /* step 4 */
-        if (obj == null) {
-            obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
-        }
-        /* steps 5-6 */
+        /* steps 4-5 */
         Object result = f.call(cx, obj, args);
-        /* step 7 */
+        /* step 6 */
         if (Type.isObject(result)) {
             return Type.objectValue(result);
         }
-        /* step 8 */
+        /* step 7 */
         return obj;
     }
 
     /**
-     * 7.3.18 Construct (F, argumentsList)
+     * 7.3.20 Construct (F, argumentsList)
      * 
      * @param cx
      *            the execution context
@@ -2531,97 +2722,58 @@ public final class AbstractOperations {
         /* step 1 (not applicable) */
         /* steps 2-3 */
         ScriptObject obj = CreateFromConstructor(cx, f, args);
-        /* step 4 */
-        if (obj == null) {
-            obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
-        }
-        /* steps 5-6 */
+        /* steps 4-5 */
         // Invoke 'tailCall()' instead of 'call()' to get TailCallInvocation objects
         Object result = f.tailCall(cx, obj, args);
-        /* steps 7-8 (tail-call) */
+        /* steps 6-7 (tail-call) */
         if (result instanceof TailCallInvocation) {
             // Don't unwind tail-call yet, instead store reference to 'obj'
             return ((TailCallInvocation) result).toConstructTailCall(obj);
         }
-        /* step 7 */
+        /* step 6 */
         if (Type.isObject(result)) {
             return Type.objectValue(result);
         }
-        /* step 8 */
+        /* step 7 */
         return obj;
     }
 
     /**
-     * 7.3.19 GetOption (options, P)
+     * 7.3.21 SpeciesConstructor ( O, defaultConstructor )
      * 
      * @param cx
      *            the execution context
-     * @param options
-     *            the options object
-     * @param propertyKey
-     *            the property key
-     * @return the option value
+     * @param object
+     *            the script object
+     * @param defaultConstructor
+     *            the default constructor
+     * @return the constructor object
      */
-    public static Object GetOption(ExecutionContext cx, Object options, Object propertyKey) {
-        if (propertyKey instanceof String) {
-            return GetOption(cx, options, (String) propertyKey);
-        } else {
-            return GetOption(cx, options, (Symbol) propertyKey);
-        }
-    }
-
-    /**
-     * 7.3.19 GetOption (options, P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param options
-     *            the options object
-     * @param propertyKey
-     *            the property key
-     * @return the option value
-     */
-    public static Object GetOption(ExecutionContext cx, Object options, String propertyKey) {
+    public static Constructor SpeciesConstructor(ExecutionContext cx, ScriptObject object,
+            Intrinsics defaultConstructor) {
         /* step 1 (not applicable) */
-        /* step 2 */
-        if (Type.isUndefined(options)) {
-            return UNDEFINED;
-        }
-        /* step 3 */
-        if (!Type.isObject(options)) {
+        /* steps 2-3 */
+        Object constructor = Get(cx, object, "constructor");
+        /* step 4 */
+        if (!Type.isObject(constructor)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
-        /* step 4 */
-        return Type.objectValue(options).get(cx, propertyKey, options);
+        /* steps 5-6 */
+        Object species = Get(cx, Type.objectValue(constructor), BuiltinSymbol.species.get());
+        /* step 7 */
+        if (Type.isUndefinedOrNull(species)) {
+            return (Constructor) cx.getIntrinsic(defaultConstructor);
+        }
+        /* step 8 */
+        if (IsConstructor(species)) {
+            return (Constructor) species;
+        }
+        /* step 9 */
+        throw newTypeError(cx, Messages.Key.NotConstructor);
     }
 
     /**
-     * 7.3.19 GetOption (options, P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param options
-     *            the options object
-     * @param propertyKey
-     *            the property key
-     * @return the option value
-     */
-    public static Object GetOption(ExecutionContext cx, Object options, Symbol propertyKey) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        if (Type.isUndefined(options)) {
-            return UNDEFINED;
-        }
-        /* step 3 */
-        if (!Type.isObject(options)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* step 4 */
-        return Type.objectValue(options).get(cx, propertyKey, options);
-    }
-
-    /**
-     * 7.3.20 EnumerableOwnNames (O)
+     * 7.3.22 EnumerableOwnNames (O)
      * 
      * @param cx
      *            the execution context
@@ -2651,7 +2803,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.21 GetFunctionRealm ( obj ) Abstract Operation
+     * 7.3.23 GetFunctionRealm ( obj ) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -2675,14 +2827,12 @@ public final class AbstractOperations {
      */
     public static Object CheckIterable(ExecutionContext cx, Object obj) {
         /* step 1 */
-        if (!Type.isObject(obj)) {
-            // Directly throw a TypeError instead of returning `undefined` to get a more useful
-            // error message. The only callers of this method are Promise.all and Promise.race.
-            // return UNDEFINED;
-            throw newTypeError(cx, Messages.Key.NotObjectType);
+        if (Type.isUndefinedOrNull(obj)) {
+            return UNDEFINED;
         }
+        // FIXME: spec issue - should use GetV instead of duplicating the code.
         /* step 2 */
-        return Get(cx, Type.objectValue(obj), BuiltinSymbol.iterator.get());
+        return GetV(cx, obj, BuiltinSymbol.iterator.get());
     }
 
     /**
@@ -3020,103 +3170,6 @@ public final class AbstractOperations {
     public static <T> ScriptObject CreateCompoundIterator(ExecutionContext cx,
             Iterator<T> iterator1, Iterator<T> iterator2) {
         return CompoundIterator.CreateCompoundIterator(cx, iterator1, iterator2);
-    }
-
-    /**
-     * 7.5.1 PromiseNew ( executor ) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param executor
-     *            the executor function
-     * @return the new promise object
-     */
-    public static PromiseObject PromiseNew(ExecutionContext cx, Callable executor) {
-        /* step 1 */
-        PromiseObject promise = AllocatePromise(cx,
-                (Constructor) cx.getIntrinsic(Intrinsics.Promise));
-        /* step 2 */
-        return InitializePromise(cx, promise, executor);
-    }
-
-    /**
-     * 7.5.2 PromiseBuiltinCapability () Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @return the promise capability record
-     */
-    public static PromiseCapability<PromiseObject> PromiseBuiltinCapability(ExecutionContext cx) {
-        /* step 1 */
-        PromiseObject promise = AllocatePromise(cx,
-                (Constructor) cx.getIntrinsic(Intrinsics.Promise));
-        /* step 2 */
-        return CreatePromiseCapabilityRecord(cx, promise,
-                (Constructor) cx.getIntrinsic(Intrinsics.Promise));
-    }
-
-    /**
-     * 7.5.3 PromiseOf (value) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param value
-     *            the resolved value
-     * @return the new promise object
-     */
-    public static PromiseObject PromiseOf(ExecutionContext cx, Object value) {
-        /* steps 1-2 */
-        PromiseCapability<PromiseObject> capability = PromiseBuiltinCapability(cx);
-        /* steps 3-4 */
-        capability.getResolve().call(cx, UNDEFINED, value);
-        /* step 5 */
-        return capability.getPromise();
-    }
-
-    /**
-     * Returns a list of all string-valued [[OwnPropertyKeys]] of {@code obj}.
-     * 
-     * @param cx
-     *            the execution context
-     * @param obj
-     *            the script object
-     * @return <var>obj</var>'s own string-valued property keys
-     */
-    public static List<String> GetOwnPropertyNames(ExecutionContext cx, ScriptObject obj) {
-        // FIXME: spec clean-up (Bug 1142)
-        ArrayList<String> nameList = new ArrayList<>();
-        for (Object key : obj.ownPropertyKeys(cx)) {
-            if (key instanceof String) {
-                nameList.add((String) key);
-            }
-        }
-        return nameList;
-    }
-
-    /**
-     * Returns a list of all enumerable [[OwnPropertyKeys]] of {@code obj}.
-     * 
-     * @param cx
-     *            the execution context
-     * @param obj
-     *            the script object
-     * @return <var>obj</var>'s own enumerable property keys
-     */
-    public static List<Object> GetOwnEnumerablePropertyKeys(ExecutionContext cx, ScriptObject obj) {
-        // FIXME: spec clean-up (Bug 1142)
-        ArrayList<Object> nameList = new ArrayList<>();
-        for (Object key : obj.ownPropertyKeys(cx)) {
-            Property desc;
-            if (key instanceof String) {
-                desc = obj.getOwnProperty(cx, (String) key);
-            } else {
-                desc = obj.getOwnProperty(cx, (Symbol) key);
-            }
-            if (desc != null && desc.isEnumerable()) {
-                nameList.add(key);
-            }
-        }
-        return nameList;
     }
 
     /**

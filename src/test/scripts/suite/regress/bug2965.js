@@ -64,17 +64,26 @@ let {method, args} of [
   function testCrossRealm(fn) {
     let src = new foreignArray(), dst = [];
     fn(src, dst);
-    assertNotSame(dst, src[method](...args), `method = ${method}`);
+    assertSame(dst, src[method](...args), `method = ${method}`);
   }
   for (let test of [testSameRealm, testCrossRealm]) {
     test(
-      (src, dst) => src.constructor = function() { return dst }
+      (src, dst) => {
+        src.constructor = function() { return dst };
+        src.constructor[Symbol.species] = src.constructor;
+      }
     );
     test(
-      (src, dst) => src.constructor = function() { return dst }.bind(null)
+      (src, dst) => {
+        src.constructor = function() { return dst }.bind(null);
+        src.constructor[Symbol.species] = src.constructor;
+      }
     );
     test(
-      (src, dst) => src.constructor = new Proxy(function() { fail `trap not called` }, {construct() { return dst }})
+      (src, dst) => {
+        src.constructor = new Proxy(function() { fail `trap not called` }, {construct() { return dst }});
+        src.constructor[Symbol.species] = src.constructor;
+      }
     );
   }
 }

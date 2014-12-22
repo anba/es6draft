@@ -42,7 +42,7 @@ import com.github.anba.es6draft.runtime.types.Undefined;
  * <h2>15.2 Modules</h2><br>
  * <h3>15.2.1 Module Semantics</h3>
  * <ul>
- * <li>15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
+ * <li>15.2.1.18 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
  * </ul>
  */
 final class ModuleDeclarationInstantiationGenerator extends
@@ -133,7 +133,7 @@ final class ModuleDeclarationInstantiationGenerator extends
         mv.store(undef);
 
         /* step 1 */
-        String moduleName = moduleRecord.getName();
+        String moduleName = moduleRecord.getModuleId();
         /* step 2 (not applicable) */
         /* step 3 */
         for (ExportEntry exportEntry : moduleRecord.getIndirectExportEntries()) {
@@ -147,7 +147,7 @@ final class ModuleDeclarationInstantiationGenerator extends
         /* step 8 */
         for (ImportEntry importEntry : moduleRecord.getImportEntries()) {
             if (importEntry.isStarImport()) {
-                createImmutableBinding(envRec, importEntry.getLocalName(), mv);
+                createImmutableBinding(envRec, importEntry.getLocalName(), true, mv);
 
                 mv.load(envRec);
                 mv.aconst(importEntry.getLocalName());
@@ -155,14 +155,14 @@ final class ModuleDeclarationInstantiationGenerator extends
                     mv.load(context);
                     mv.load(realm);
                     mv.load(moduleSet);
-                    mv.aconst(importEntry.getNormalizedModuleRequest());
+                    mv.aconst(importEntry.getModuleRequestId());
                     mv.invoke(Methods.ModuleSemantics_GetModuleNamespace);
                 }
                 initializeBinding(mv);
             } else {
                 mv.load(context);
                 mv.load(moduleSet);
-                mv.aconst(importEntry.getNormalizedModuleRequest());
+                mv.aconst(importEntry.getModuleRequestId());
                 mv.aconst(importEntry.getImportName());
                 mv.invoke(Methods.ScriptRuntime_resolveImportOrThrow);
                 mv.store(resolved);
@@ -188,7 +188,7 @@ final class ModuleDeclarationInstantiationGenerator extends
         for (Declaration d : lexDeclarations) {
             for (Name dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
-                    createImmutableBinding(envRec, dn, mv);
+                    createImmutableBinding(envRec, dn, true, mv);
                 } else {
                     createMutableBinding(envRec, dn, false, mv);
                 }
@@ -209,15 +209,15 @@ final class ModuleDeclarationInstantiationGenerator extends
         // Emit binding for 'export default AssignmentExpression'.
         ExportDefaultExpression defaultExport = module.getScope().getDefaultExportExpression();
         if (defaultExport != null) {
-            createImmutableBinding(envRec, defaultExport.getBinding().getName(), mv);
+            createImmutableBinding(envRec, defaultExport.getBinding().getName(), true, mv);
         }
         /* step 13 */
         mv._return();
     }
 
     private void createImmutableBinding(Variable<? extends EnvironmentRecord> envRec, String name,
-            InstructionVisitor mv) {
-        createImmutableBinding(envRec, new Name(name), mv);
+            boolean strict, InstructionVisitor mv) {
+        createImmutableBinding(envRec, new Name(name), strict, mv);
     }
 
     private void createImportBinding(Variable<? extends EnvironmentRecord> envRec, String name,

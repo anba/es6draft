@@ -12,4 +12,4 @@ const {
 // 11.13.1: AssignmentRestElement must restrict DestructuringAssignmentTarget to simple assignment targets
 // https://bugs.ecmascript.org/show_bug.cgi?id=1439
 
-assertSyntaxError(`[...[a]] = []`);
+[...[a]] = [];

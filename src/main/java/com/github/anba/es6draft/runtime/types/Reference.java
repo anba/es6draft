@@ -237,7 +237,7 @@ public abstract class Reference<BASE, NAME> {
                 throw newReferenceError(cx, Messages.Key.UninitializedBinding, referencedName);
             } else if (binding.isMutable()) {
                 binding.setValue(w);
-            } else if (strictReference) {
+            } else if (strictReference || binding.isStrict()) {
                 throw newTypeError(cx, Messages.Key.ImmutableBinding, referencedName);
             }
         }

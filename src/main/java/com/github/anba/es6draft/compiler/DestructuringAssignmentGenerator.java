@@ -29,17 +29,13 @@ import com.github.anba.es6draft.compiler.assembler.Variable;
 final class DestructuringAssignmentGenerator {
     private static final class Methods {
         // class: AbstractOperations
-        static final MethodDesc AbstractOperations_Get = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "Get", Type.getMethodType(
-                        Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.Object));
+        static final MethodDesc AbstractOperations_GetV = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "GetV", Type.getMethodType(
+                        Types.Object, Types.ExecutionContext, Types.Object, Types.Object));
 
-        static final MethodDesc AbstractOperations_Get_String = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "Get", Type.getMethodType(
-                        Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.String));
-
-        static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToObject",
-                Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
+        static final MethodDesc AbstractOperations_GetV_String = MethodDesc.create(
+                MethodDesc.Invoke.Static, Types.AbstractOperations, "GetV", Type.getMethodType(
+                        Types.Object, Types.ExecutionContext, Types.Object, Types.String));
 
         // class: Reference
         static final MethodDesc Reference_putValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
@@ -53,7 +49,7 @@ final class DestructuringAssignmentGenerator {
 
         static final MethodDesc ScriptRuntime_getIterator = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "getIterator",
-                Type.getMethodType(Types.Iterator, Types.ScriptObject, Types.ExecutionContext));
+                Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_iteratorNextAndIgnore = MethodDesc.create(
                 MethodDesc.Invoke.Static, Types.ScriptRuntime, "iteratorNextAndIgnore",
@@ -91,13 +87,6 @@ final class DestructuringAssignmentGenerator {
         assert type == ValType.Reference : "lhs is not reference: " + type;
         mv.loadExecutionContext();
         mv.invoke(Methods.Reference_putValue);
-    }
-
-    private static void ToObject(Node node, ExpressionVisitor mv) {
-        mv.lineInfo(node);
-        mv.loadExecutionContext();
-        mv.swap();
-        mv.invoke(Methods.AbstractOperations_ToObject);
     }
 
     private static abstract class RuntimeSemantics<V> extends DefaultVoidNodeVisitor<V> {
@@ -156,7 +145,7 @@ final class DestructuringAssignmentGenerator {
 
         @Override
         public void visit(ArrayAssignmentPattern node, Void value) {
-            // stack: [obj] -> [iterator]
+            // stack: [value] -> [iterator]
             Variable<Iterator<?>> iterator = mv.newScratchVariable(Iterator.class).uncheckedCast();
             mv.lineInfo(node);
             mv.loadExecutionContext();
@@ -173,9 +162,9 @@ final class DestructuringAssignmentGenerator {
         @Override
         public void visit(ObjectAssignmentPattern node, Void value) {
             for (AssignmentProperty property : node.getProperties()) {
-                // stack: [obj] -> [obj, obj]
+                // stack: [value] -> [value, value]
                 mv.dup();
-                // stack: [obj, obj] -> [obj]
+                // stack: [value, value] -> [value]
                 if (property.getPropertyName() == null) {
                     // AssignmentProperty : IdentifierReference Initializer{opt}
                     assert property.getTarget() instanceof IdentifierReference;
@@ -194,7 +183,7 @@ final class DestructuringAssignmentGenerator {
                     }
                 }
             }
-            // stack: [obj] -> []
+            // stack: [value] -> []
             mv.pop();
         }
     }
@@ -220,16 +209,19 @@ final class DestructuringAssignmentGenerator {
             LeftHandSideExpression target = node.getTarget();
             Expression initializer = node.getInitializer();
 
+            /* step 1 */
             ValType refType = null;
             if (!(target instanceof AssignmentPattern)) {
                 // stack: [] -> [lref]
                 refType = expression(target, mv);
             }
 
+            /* steps 2-5 */
             // stack: [(lref)] -> [(lref), v]
             mv.load(iterator);
             mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
 
+            /* step 6 */
             // stack: [(lref), v] -> [(lref), v']
             if (initializer != null) {
                 Jump undef = new Jump();
@@ -243,10 +235,8 @@ final class DestructuringAssignmentGenerator {
                 mv.mark(undef);
             }
 
+            /* steps 7-8 */
             if (target instanceof AssignmentPattern) {
-                // stack: [v'] -> [v']
-                ToObject(target, mv);
-
                 // stack: [v'] -> []
                 DestructuringAssignmentEvaluation((AssignmentPattern) target);
             } else {
@@ -259,16 +249,26 @@ final class DestructuringAssignmentGenerator {
         public void visit(AssignmentRestElement node, Variable<Iterator<?>> iterator) {
             LeftHandSideExpression target = node.getTarget();
 
-            // stack: [] -> [lref]
-            ValType refType = expression(target, mv);
-
-            // stack: [lref] -> [lref, rest]
+            /* steps 1-4 */
+            // stack: [] -> [rest]
             mv.load(iterator);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_createRestArray);
 
-            // stack: [lref, rest] -> []
-            PutValue(target, refType, mv);
+            /* steps 5-7 */
+            if (!(target instanceof AssignmentPattern)) {
+                // FIXME: spec bug - evaluation order?
+
+                // stack: [rest] -> [lref, rest]
+                ValType refType = expression(target, mv);
+                mv.swap();
+
+                // stack: [lref, rest] -> []
+                PutValue(target, refType, mv);
+            } else {
+                // stack: [rest] -> []
+                DestructuringAssignmentEvaluation((AssignmentPattern) target);
+            }
         }
     }
 
@@ -288,22 +288,22 @@ final class DestructuringAssignmentGenerator {
             LeftHandSideExpression target = node.getTarget();
             Expression initializer = node.getInitializer();
 
-            // stack: [obj] -> [cx, obj]
+            // stack: [value] -> [cx, value]
             mv.loadExecutionContext();
             mv.swap();
 
-            // stack: [cx, obj] -> [cx, obj, propertyName]
+            // stack: [cx, value] -> [cx, value, propertyName]
             ValType type = evaluatePropertyName(propertyName);
 
-            // steps 1-2
-            // stack: [cx, obj, propertyName] -> [v]
+            /* steps 1-2 */
+            // stack: [cx, value, propertyName] -> [v]
             if (type == ValType.String) {
-                mv.invoke(Methods.AbstractOperations_Get_String);
+                mv.invoke(Methods.AbstractOperations_GetV_String);
             } else {
-                mv.invoke(Methods.AbstractOperations_Get);
+                mv.invoke(Methods.AbstractOperations_GetV);
             }
 
-            // step 3
+            /* step 3 */
             // stack: [v] -> [v']
             if (initializer != null) {
                 Jump undef = new Jump();
@@ -317,14 +317,13 @@ final class DestructuringAssignmentGenerator {
                 mv.mark(undef);
             }
 
-            // steps 4-6
+            /* steps 4-6 */
             if (target instanceof AssignmentPattern) {
-                // stack: [v'] -> [v']
-                ToObject(target, mv);
-
                 // stack: [v'] -> []
                 DestructuringAssignmentEvaluation((AssignmentPattern) target);
             } else {
+                // FIXME: spec bug - evaluation order?
+
                 // stack: [v'] -> [lref, 'v]
                 ValType refType = expression(target, mv);
                 mv.swap();

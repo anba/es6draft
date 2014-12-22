@@ -405,14 +405,12 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             double srcByteOffset = array.getByteOffset();
             /* step 23 */
             double beginByteOffset = srcByteOffset + beginIndex * elementSize;
-            /* steps 24-25 */
-            Object constructor = Get(cx, array, "constructor");
-            /* step 26 */
-            if (!IsConstructor(constructor)) {
-                throw newTypeError(cx, Messages.Key.NotConstructor);
-            }
+            /* step 24 */
+            Intrinsics defaultConstructor = array.getElementType().getConstructor();
+            /* steps 25-26 */
+            Constructor constructor = SpeciesConstructor(cx, array, defaultConstructor);
             /* steps 27-28 */
-            return ((Constructor) constructor).construct(cx, buffer, beginByteOffset, newLength);
+            return constructor.construct(cx, buffer, beginByteOffset, newLength);
         }
 
         /**
@@ -517,20 +515,19 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             }
             /* step 15 */
             long count = Math.max(finall - k, 0);
-            /* steps 16-17 */
-            Object c = Get(cx, o, "constructor");
-            /* steps 18-19 */
-            if (!IsConstructor(c)) {
-                throw newTypeError(cx, Messages.Key.NotConstructor);
-            }
+            /* step 16 */
+            Intrinsics defaultConstructor = o.getElementType().getConstructor();
+            /* steps 17-18 */
+            Constructor c = SpeciesConstructor(cx, o, defaultConstructor);
+            /* steps 19-20 */
             ScriptObject a = ((Constructor) c).construct(cx, count);
-            /* steps 20-21 */
+            /* steps 21-22 */
             for (long n = 0; k < finall; ++k, ++n) {
                 long pk = k;
                 Object kvalue = Get(cx, o, pk);
                 Put(cx, a, n, kvalue, true);
             }
-            /* step 22 */
+            /* step 23 */
             return a;
         }
 
@@ -755,31 +752,30 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "map", arity = 1)
         public static Object map(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
-            /* steps 1-3 */
+            /* steps 1-6 */
             TypedArrayObject o = thisTypedArrayObjectChecked(cx, thisValue);
-            /* step 4 */
+            /* step 7 */
             long len = o.getArrayLength();
-            /* step 5 */
+            /* step 8 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            /* step 6 (omitted) */
-            /* steps 7-8 */
-            Object c = Get(cx, o, "constructor");
-            /* steps 9-10 */
-            if (!IsConstructor(c)) {
-                throw newTypeError(cx, Messages.Key.NotConstructor);
-            }
-            ScriptObject a = ((Constructor) c).construct(cx, len);
+            /* step 9 (omitted) */
+            /* step 10 */
+            Intrinsics defaultConstructor = o.getElementType().getConstructor();
             /* steps 11-12 */
+            Constructor c = SpeciesConstructor(cx, o, defaultConstructor);
+            /* steps 13-14 */
+            ScriptObject a = c.construct(cx, len);
+            /* steps 15-16 */
             for (long k = 0; k < len; ++k) {
                 long pk = k;
                 Object kvalue = Get(cx, o, pk);
                 Object mappedValue = callback.call(cx, thisArg, kvalue, k, o);
                 Put(cx, a, pk, mappedValue, true);
             }
-            /* step 13 */
+            /* step 17 */
             return a;
         }
 
@@ -809,12 +805,10 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             }
             Callable callback = (Callable) callbackfn;
             /* step 9 (omitted) */
-            /* steps 10-11 */
-            Object c = Get(cx, o, "constructor");
-            /* step 12 */
-            if (!IsConstructor(c)) {
-                throw newTypeError(cx, Messages.Key.NotConstructor);
-            }
+            /* step 10 */
+            Intrinsics defaultConstructor = o.getElementType().getConstructor();
+            /* steps 11-12 */
+            Constructor c = SpeciesConstructor(cx, o, defaultConstructor);
             /* steps 13, 15 */
             ArrayList<Object> kept = new ArrayList<>();
             /* steps 14, 16 */
@@ -827,7 +821,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 }
             }
             /* steps 17-18 */
-            ScriptObject a = ((Constructor) c).construct(cx, kept.size());
+            ScriptObject a = c.construct(cx, kept.size());
             /* steps 19-20 */
             for (int n = 0; n < kept.size(); ++n) {
                 Object e = kept.get(n);

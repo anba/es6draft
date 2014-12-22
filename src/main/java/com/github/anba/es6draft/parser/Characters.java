@@ -23,7 +23,7 @@ public final class Characters {
      *     {@literal <FF>}   (U+000C)
      *     {@literal <SP>}   (U+0020)
      *     {@literal <NBSP>} (U+00A0)
-     *     {@literal <BOM>}  (U+FEFF)
+     *     {@literal <ZWNBSP>}  (U+FEFF)
      *     {@literal <USP>}  ("Zs")
      * </pre>
      * 

@@ -5,7 +5,8 @@
  * <https://github.com/anba/es6draft>
  */
 
-const global = this;
+// TODO: Use Reflect.global when specified
+const global = System.global;
 
 const {
   Object, String, Proxy, Reflect

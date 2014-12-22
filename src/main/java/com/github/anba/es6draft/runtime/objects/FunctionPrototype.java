@@ -222,7 +222,8 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
             if (targetHasLength) {
                 Object targetLen = Get(cx, target, "length");
                 if (Type.isNumber(targetLen)) {
-                    l = Math.max(0, Type.numberValue(targetLen) - args.length);
+                    double intLength = ToInteger(Type.numberValue(targetLen));
+                    l = Math.max(0, intLength - args.length);
                 }
             }
             /* steps 9-10 */

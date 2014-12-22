@@ -177,7 +177,8 @@ const {
     }
 
     clear() {
-      return %CallFunction(BuiltinWeakMap.prototype.clear, this);
+      // return %CallFunction(BuiltinWeakMap.prototype.clear, this);
+      return %WeakMapClear(this);
     }
 
     delete(key) {
@@ -233,7 +234,8 @@ const {
     }
 
     clear() {
-      return %CallFunction(BuiltinWeakSet.prototype.clear, this);
+      // return %CallFunction(BuiltinWeakSet.prototype.clear, this);
+      return %WeakSetClear(this);
     }
 
     delete(value) {

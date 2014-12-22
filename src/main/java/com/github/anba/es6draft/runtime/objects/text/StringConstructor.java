@@ -234,26 +234,26 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 21.1.2.4 String.raw ( callSite [ , ...substitutions ] )
+         * 21.1.2.4 String.raw ( template , ...substitutions )
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param callSite
+         * @param template
          *            the call site object
          * @param substitutions
          *            the string substitutions
          * @return the interpolated string
          */
         @Function(name = "raw", arity = 1)
-        public static Object raw(ExecutionContext cx, Object thisValue, Object callSite,
+        public static Object raw(ExecutionContext cx, Object thisValue, Object template,
                 Object... substitutions) {
             /* step 1 (not applicable) */
             /* step 2 */
             long numberOfSubstitutions = substitutions.length;
             /* steps 3-4 */
-            ScriptObject cooked = ToObject(cx, callSite);
+            ScriptObject cooked = ToObject(cx, template);
             /* steps 5-7 */
             Object rawValue = Get(cx, cooked, "raw");
             ScriptObject raw = ToObject(cx, rawValue);

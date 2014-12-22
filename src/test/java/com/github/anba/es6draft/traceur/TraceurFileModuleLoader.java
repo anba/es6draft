@@ -20,9 +20,9 @@ final class TraceurFileModuleLoader extends FileModuleLoader {
     }
 
     @Override
-    public String normalizeName(String parentName, String unnormalizedName) {
+    public String normalizeName(String unnormalizedName, String referrerId) {
         try {
-            String normalizedName = super.normalizeName(parentName, unnormalizedName);
+            String normalizedName = super.normalizeName(unnormalizedName, referrerId);
             if (!normalizedName.endsWith(".js")) {
                 normalizedName += ".js";
             }

@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.CreateArrayIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArraySpeciesCreate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +35,6 @@ import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypePrototype;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -417,31 +416,22 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
         public static Object concat(ExecutionContext cx, Object thisValue, Object... items) {
             /* steps 1-2 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* step 3 */
-            ScriptObject a = null;
-            /* step 4 */
-            if (o instanceof ArrayObject) {
-                Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
-                    a = ((Constructor) c).construct(cx, 0);
-                }
-            }
-            /* steps 5-6 */
-            if (a == null) {
-                a = ArrayCreate(cx, 0);
-            }
-            /* step 7 */
+            /* steps 3-4 */
+            ScriptObject a = ArraySpeciesCreate(cx, o, 0);
+            /* step 5 */
             long n = 0;
-            /* step 8 */
+            /* step 6 */
             Object[] allItems = new Object[items.length + 1];
             allItems[0] = o;
             System.arraycopy(items, 0, allItems, 1, items.length);
-            /* step 9 */
+            /* step 7 */
             for (Object item : allItems) {
                 boolean spreadable = IsConcatSpreadable(cx, item);
                 if (spreadable) {
                     ScriptObject e = (ScriptObject) item;
+                    /* step 7.d.ii */
                     Object lenVal = Get(cx, e, "length");
+                    /* steps 7.d.iii-7.d.iv */
                     long len = ToLength(cx, lenVal);
                     IterationKind iteration = iterationKind(a, e, len);
                     // Optimization: Sparse Array objects
@@ -457,6 +447,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                         n += len;
                         continue;
                     }
+                    /* steps 7.d.i, 7.d.v */
                     for (long k = 0; k < len; ++k, ++n) {
                         long p = k;
                         boolean exists = HasProperty(cx, e, p);
@@ -466,13 +457,14 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                         }
                     }
                 } else {
+                    /* step 7.e */
                     CreateDataPropertyOrThrow(cx, a, n++, item);
                 }
             }
-            /* steps 10-11 */
+            /* steps 8-9 */
             // TODO: handle 2^53-1 limit
             Put(cx, a, "length", n, true);
-            /* step 12 */
+            /* step 10 */
             return a;
         }
 
@@ -509,18 +501,15 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             if (!Type.isObject(o)) {
                 return false;
             }
+            ScriptObject object = Type.objectValue(o);
             /* steps 2-3 */
-            Object spreadable = Get(cx, Type.objectValue(o), BuiltinSymbol.isConcatSpreadable.get());
+            Object spreadable = Get(cx, object, BuiltinSymbol.isConcatSpreadable.get());
             /* step 4 */
             if (!Type.isUndefined(spreadable)) {
                 return ToBoolean(spreadable);
             }
             /* step 5 */
-            if (o instanceof ArrayObject) {
-                return true;
-            }
-            /* step 6 */
-            return false;
+            return IsArray(cx, object);
         }
 
         /**
@@ -955,19 +944,8 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* step 12 */
             long count = Math.max(finall - k, 0);
-            /* step 13 */
-            ScriptObject a = null;
-            /* step 14 */
-            if (o instanceof ArrayObject) {
-                Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
-                    a = ((Constructor) c).construct(cx, count);
-                }
-            }
-            /* steps 15-16 */
-            if (a == null) {
-                a = ArrayCreate(cx, count);
-            }
+            /* steps 13-14 */
+            ScriptObject a = ArraySpeciesCreate(cx, o, count);
             long n;
             IterationKind iteration = iterationKind(a, o, len);
             if (iteration.isSparse()) {
@@ -987,13 +965,9 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     }
                 }
             }
-            /* steps 15-16 */
-            if (a == null) {
-                a = ArrayCreate(cx, count);
-            }
             /* steps 17-18 */
             Put(cx, a, "length", n, true);
-            /* step 21 */
+            /* step 19 */
             return a;
         }
 
@@ -1228,19 +1202,8 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 double dc = ToInteger(cx, deleteCount);
                 actualDeleteCount = (long) Math.min(Math.max(dc, 0), len - actualStart);
             }
-            /* step 12 */
-            ScriptObject a = null;
-            /* step 13 */
-            if (o instanceof ArrayObject) {
-                Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
-                    a = ((Constructor) c).construct(cx, actualDeleteCount);
-                }
-            }
-            /* steps 14-15 */
-            if (a == null) {
-                a = ArrayCreate(cx, actualDeleteCount);
-            }
+            /* steps 12-13 */
+            ScriptObject a = ArraySpeciesCreate(cx, o, actualDeleteCount);
             IterationKind iterationCopy = iterationKind(a, o, actualDeleteCount);
             if (iterationCopy.isSparse()) {
                 /* steps 14-15 */
@@ -1257,9 +1220,9 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     }
                 }
             }
-            /* steps 18-19 */
+            /* steps 16-17 */
             Put(cx, a, "length", actualDeleteCount, true);
-            /* steps 20-21 */
+            /* steps 18-19 */
             int itemCount = items.length;
             if (itemCount < actualDeleteCount) {
                 /* step 20 */
@@ -1315,17 +1278,17 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     }
                 }
             }
-            /* step 24 */
+            /* step 22 */
             long k = actualStart;
-            /* step 25 */
+            /* step 23 */
             for (int i = 0; i < itemCount; ++k, ++i) {
                 Object e = items[i];
                 Put(cx, o, k, e, true);
             }
-            /* steps 26-27 */
+            /* steps 24-25 */
             // TODO: handle 2^53-1 limit
             Put(cx, o, "length", len - actualDeleteCount + itemCount, true);
-            /* step 28 */
+            /* step 26 */
             return a;
         }
 
@@ -1926,20 +1889,9 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             Callable callback = (Callable) callbackfn;
             /* step 7 (omitted) */
-            /* step 8 */
-            ScriptObject a = null;
-            /* step 9 */
-            if (o instanceof ArrayObject) {
-                Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
-                    a = ((Constructor) c).construct(cx, len);
-                }
-            }
+            /* steps 8-9 */
+            ScriptObject a = ArraySpeciesCreate(cx, o, len);
             /* steps 10-11 */
-            if (a == null) {
-                a = ArrayCreate(cx, len);
-            }
-            /* steps 12-13 */
             for (long k = 0; k < len; ++k) {
                 long pk = k;
                 boolean kpresent = HasProperty(cx, o, pk);
@@ -1949,7 +1901,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     CreateDataPropertyOrThrow(cx, a, pk, mappedValue);
                 }
             }
-            /* step 14 */
+            /* step 12 */
             return a;
         }
 
@@ -1981,20 +1933,9 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             Callable callback = (Callable) callbackfn;
             /* step 7 (omitted) */
-            /* step 8 */
-            ScriptObject a = null;
-            /* step 9 */
-            if (o instanceof ArrayObject) {
-                Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c) && GetFunctionRealm(cx, (Constructor) c) == cx.getRealm()) {
-                    a = ((Constructor) c).construct(cx, 0);
-                }
-            }
-            /* steps 10-11 */
-            if (a == null) {
-                a = ArrayCreate(cx, 0);
-            }
-            /* steps 12-14 */
+            /* steps 8-9 */
+            ScriptObject a = ArraySpeciesCreate(cx, o, 0);
+            /* steps 10-12 */
             for (long k = 0, to = 0; k < len; ++k) {
                 long pk = k;
                 boolean kpresent = HasProperty(cx, o, pk);
@@ -2007,7 +1948,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     }
                 }
             }
-            /* step 15 */
+            /* step 13 */
             return a;
         }
 
@@ -2589,12 +2530,12 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
     /**
      * Proposed ECMAScript 7 additions
      */
-    @CompatibilityExtension(CompatibilityOption.ArrayContains)
+    @CompatibilityExtension(CompatibilityOption.ArrayIncludes)
     public enum AdditionalProperties {
         ;
 
         /**
-         * Array.prototype.contains ( searchElement [ , fromIndex ] )
+         * Array.prototype.includes ( searchElement [ , fromIndex ] )
          * 
          * @param cx
          *            the execution context
@@ -2606,8 +2547,8 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
          *            the optional start index
          * @return the result index
          */
-        @Function(name = "contains", arity = 1)
-        public static Object contains(ExecutionContext cx, Object thisValue, Object searchElement,
+        @Function(name = "includes", arity = 1)
+        public static Object includes(ExecutionContext cx, Object thisValue, Object searchElement,
                 Object fromIndex) {
             /* steps 1-2 */
             ScriptObject o = ToObject(cx, thisValue);
@@ -2619,31 +2560,26 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* steps 6-7 */
             long n = (long) ToInteger(cx, fromIndex);
-            /* step 8 */
-            if (n >= len) {
-                return false;
-            }
-            /* steps 9-10 */
+            /* steps 8-9 */
             long k;
             if (n >= 0) {
                 k = n;
             } else {
-                k = len - Math.abs(n);
+                k = len + n;
                 if (k < 0) {
                     k = 0;
                 }
             }
-            /* step 11 */
+            /* step 10 */
             for (; k < len; ++k) {
-                boolean kpresent = HasProperty(cx, o, k);
-                if (kpresent) {
-                    Object element = Get(cx, o, k);
-                    if (SameValueZero(searchElement, element)) {
-                        return true;
-                    }
+                /* steps 10.a-b */
+                Object element = Get(cx, o, k);
+                /* step 10.c */
+                if (SameValueZero(searchElement, element)) {
+                    return true;
                 }
             }
-            /* step 12 */
+            /* step 11 */
             return false;
         }
     }

@@ -318,7 +318,7 @@ assertBuiltinFunction(Object.assign, "assign", 2);
   assertDataProperty(target, keyB, {value: 2, writable: true, enumerable: true, configurable: true});
 }
 
-// Intermediate exceptions do not stop property traversal, first exception is reported (1)
+// Intermediate exceptions stop property traversal, first exception is reported (1)
 {
   class ErrorA extends Error {}
   class ErrorB extends Error {}
@@ -331,10 +331,10 @@ assertBuiltinFunction(Object.assign, "assign", 2);
     ownKeys: () => ["b", "a"]
   });
   assertThrows(ErrorB, () => Object.assign({}, source));
-  assertSame("ba", log);
+  assertSame("b", log);
 }
 
-// Intermediate exceptions do not stop property traversal, first exception is reported (2)
+// Intermediate exceptions stop property traversal, first exception is reported (2)
 {
   class ErrorA extends Error {}
   class ErrorB extends Error {}
@@ -346,10 +346,10 @@ assertBuiltinFunction(Object.assign, "assign", 2);
     ownKeys: () => ["b", "a"]
   });
   assertThrows(ErrorB, () => Object.assign({}, source));
-  assertSame("ba", log);
+  assertSame("b", log);
 }
 
-// Intermediate exceptions do not stop property traversal, first exception is reported (3)
+// Intermediate exceptions stop property traversal, first exception is reported (3)
 {
   class ErrorA extends Error {}
   class ErrorB extends Error {}
@@ -362,10 +362,10 @@ assertBuiltinFunction(Object.assign, "assign", 2);
     set b(v) { log += "b"; throw new ErrorB },
   };
   assertThrows(ErrorB, () => Object.assign(target, source));
-  assertSame("ba", log);
+  assertSame("b", log);
 }
 
-// Intermediate exceptions do not stop property traversal, first exception is reported (4)
+// Intermediate exceptions stop property traversal, first exception is reported (4)
 {
   class ErrorGetOwnProperty extends Error {}
   class ErrorGet extends Error {}

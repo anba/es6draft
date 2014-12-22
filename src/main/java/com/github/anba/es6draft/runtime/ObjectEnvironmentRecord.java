@@ -120,10 +120,10 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 8.1.1.2.3 CreateImmutableBinding (N)
+     * 8.1.1.2.3 CreateImmutableBinding (N, S)
      */
     @Override
-    public void createImmutableBinding(String name) {
+    public void createImmutableBinding(String name, boolean strict) {
         throw new IllegalStateException();
     }
 

@@ -36,11 +36,4 @@ public interface ShadowRealm {
      * @return the map of resolved modules
      */
     Map<String, ModuleRecord> getModules();
-
-    /**
-     * [[nameMap]]
-     * 
-     * @return the map of normalized module names
-     */
-    Map<String, String> getNameMap();
 }

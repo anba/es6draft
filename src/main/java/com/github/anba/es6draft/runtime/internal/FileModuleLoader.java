@@ -25,7 +25,7 @@ public class FileModuleLoader extends ModuleLoader {
     }
 
     @Override
-    public String normalizeName(String parentName, String unnormalizedName) {
+    public String normalizeName(String unnormalizedName, String referrerId) {
         try {
             URI moduleName = new URI(unnormalizedName);
             if (hasIllegalComponents(moduleName) || hasEmptyPath(moduleName)) {
@@ -39,8 +39,8 @@ public class FileModuleLoader extends ModuleLoader {
                 // TODO: Treat as ?
                 return null;
             }
-            if (!parentName.isEmpty() && isRelative(moduleName)) {
-                moduleName = new URI(parentName).resolve(moduleName);
+            if (referrerId != null && isRelative(moduleName)) {
+                moduleName = new URI(referrerId).resolve(moduleName);
             }
             return moduleName.normalize().getPath();
         } catch (URISyntaxException e) {

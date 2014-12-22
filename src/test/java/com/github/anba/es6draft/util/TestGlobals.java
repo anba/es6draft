@@ -145,7 +145,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
             Map<String, ModuleRecord> newModuleSet = preloadModule.copyRequires();
             assert newModuleSet.containsKey(moduleName);
             ModuleRecord module = newModuleSet.get(moduleName);
-            LinkModules(realm.defaultContext(), realm, moduleName, newModuleSet);
+            LinkModules(realm.defaultContext(), realm, newModuleSet);
             ModuleEvaluation(module, realm);
         }
         for (Script script : scripts) {
@@ -196,7 +196,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         PreloaderRealm realm = new PreloaderRealm(moduleLoader, scriptLoader);
         ArrayList<PreloadedModule> modules = new ArrayList<>();
         for (String moduleName : toStrings(moduleNames)) {
-            String normalizedModuleName = NormalizeModuleName(realm, "", moduleName);
+            String normalizedModuleName = NormalizeModuleName(realm, moduleName, null);
             if (!realm.getModules().containsKey(normalizedModuleName)) {
                 HashMap<String, ModuleRecord> newModules = new HashMap<>();
                 ModuleRecord module = ParseModuleAndImports(realm, normalizedModuleName, newModules);
@@ -217,7 +217,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         }
 
         public String getModuleName() {
-            return module.getName();
+            return module.getModuleId();
         }
 
         public Map<String, ModuleRecord> copyRequires() {
@@ -233,7 +233,6 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         private final ModuleLoader moduleLoader;
         private final ScriptLoader scriptLoader;
         private final HashMap<String, ModuleRecord> modules = new HashMap<>();
-        private final HashMap<String, String> nameMap = new HashMap<>();
 
         PreloaderRealm(ModuleLoader moduleLoader, ScriptLoader scriptLoader) {
             this.moduleLoader = moduleLoader;
@@ -253,11 +252,6 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         @Override
         public Map<String, ModuleRecord> getModules() {
             return modules;
-        }
-
-        @Override
-        public Map<String, String> getNameMap() {
-            return nameMap;
         }
     }
 }

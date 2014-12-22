@@ -15,6 +15,7 @@ const {
 function Ctor() {
   return Object.defineProperty({}, 0, {value: null});
 }
+Ctor[Symbol.species] = Ctor;
 
 let emptyArray = [];
 let nonEmptyArray = [1];

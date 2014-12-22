@@ -7,10 +7,7 @@
 package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.BindingInitializationGenerator.InitializeBoundNameWithEnvironment;
-import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
-import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
-import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
-import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
+import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.util.List;
 
@@ -124,7 +121,7 @@ final class StatementGenerator extends
 
         static final MethodDesc EnvironmentRecord_createImmutableBinding = MethodDesc.create(
                 MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "createImmutableBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String));
+                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
         // class: GeneratorObject
         static final MethodDesc GeneratorObject_isLegacyGenerator = MethodDesc.create(
@@ -223,9 +220,10 @@ final class StatementGenerator extends
      * @param mv
      *            the statement visitor
      */
-    private void createImmutableBinding(Name name, StatementVisitor mv) {
+    private void createImmutableBinding(Name name, boolean strict, StatementVisitor mv) {
         mv.dup();
         mv.aconst(name.getIdentifier());
+        mv.iconst(strict);
         mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
     }
 
@@ -319,21 +317,43 @@ final class StatementGenerator extends
      */
     @Override
     public Completion visit(ClassDeclaration node, StatementVisitor mv) {
-        /* step 1 */
-        String className = node.getName().getName().getIdentifier();
-        /* steps 2-3 */
-        ClassDefinitionEvaluation(node, className, mv);
-        /* steps 4-6 */
-        SetFunctionName(node, className, mv);
-
-        /* steps 7-9 */
-        getEnvironmentRecord(mv);
-        mv.swap();
-        // stack: [envRec, value] -> []
-        BindingInitializationWithEnvironment(node.getName(), mv);
-
-        /* step 10 */
+        /* steps 1-2 */
+        BindingClassDeclarationEvaluation(node, false, mv);
+        /* step 3 */
         return Completion.Normal;
+    }
+
+    /**
+     * 14.5.15 Runtime Semantics: BindingClassDeclarationEvaluation
+     * 
+     * @param node
+     *            the class declaration node
+     * @param isAnonymousDefaultExport
+     *            {@code true} for anonymous default exports
+     * @param mv
+     *            the statement visitor
+     */
+    private void BindingClassDeclarationEvaluation(ClassDeclaration node,
+            boolean isAnonymousDefaultExport, StatementVisitor mv) {
+        if (!isAnonymousDefaultExport) {
+            /* step 1 */
+            String className = node.getIdentifier().getName().getIdentifier();
+            /* steps 2-3 */
+            ClassDefinitionEvaluation(node, className, mv);
+            /* steps 4-6 */
+            SetFunctionName(node, className, mv);
+
+            /* steps 7-9 */
+            getEnvironmentRecord(mv);
+            mv.swap();
+            // stack: [envRec, value] -> []
+            BindingInitializationWithEnvironment(node.getIdentifier(), mv);
+
+            /* step 10 (return) */
+        } else {
+            // stack: [] -> [value]
+            ClassDefinitionEvaluation(node, null, mv);
+        }
     }
 
     /**
@@ -431,11 +451,29 @@ final class StatementGenerator extends
             return node.getVariableStatement().accept(this, mv);
         case Declaration:
             return node.getDeclaration().accept(this, mv);
-        case DefaultDeclaration:
-            return node.getDeclaration().accept(this, mv);
-        case DefaultExpression: {
-            return node.getExpression().accept(this, mv);
+        case DefaultHoistableDeclaration:
+            return node.getHoistableDeclaration().accept(this, mv);
+        case DefaultClassDeclaration: {
+            // return node.getClassDeclaration().accept(this, mv);
+            ClassDeclaration decl = node.getClassDeclaration();
+            boolean isAnonymousDefaultExport = "*default*".equals(BoundName(decl).getIdentifier());
+            /* steps 1-2 */
+            BindingClassDeclarationEvaluation(decl, isAnonymousDefaultExport, mv);
+            /* steps 3-4 */
+            if (isAnonymousDefaultExport) {
+                /* steps 4.a-c */
+                SetFunctionName(decl, "default", mv);
+                /* steps 4.d-f */
+                getEnvironmentRecord(mv);
+                mv.swap();
+                // stack: [envRec, value] -> []
+                BindingInitializationWithEnvironment(decl.getIdentifier(), mv);
+            }
+            /* step 5 */
+            return Completion.Normal;
         }
+        case DefaultExpression:
+            return node.getExpression().accept(this, mv);
         default:
             throw new AssertionError();
         }
@@ -492,9 +530,9 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.0.3 Runtime Semantics: Evaluation<br>
-     * 13.0.2 Runtime Semantics: LabelledEvaluation<br>
-     * 13.6.4.5 Runtime Semantics: LabelledEvaluation
+     * 13.0.5 Runtime Semantics: Evaluation<br>
+     * 13.0.4 Runtime Semantics: LabelledEvaluation<br>
+     * 13.6.4.7 Runtime Semantics: LabelledEvaluation
      */
     @Override
     public Completion visit(ForInStatement node, StatementVisitor mv) {
@@ -503,9 +541,9 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.0.3 Runtime Semantics: Evaluation<br>
-     * 13.0.2 Runtime Semantics: LabelledEvaluation<br>
-     * 13.6.4.5 Runtime Semantics: LabelledEvaluation
+     * 13.0.5 Runtime Semantics: Evaluation<br>
+     * 13.0.4 Runtime Semantics: LabelledEvaluation<br>
+     * 13.6.4.7 Runtime Semantics: LabelledEvaluation
      */
     @Override
     public Completion visit(ForOfStatement node, StatementVisitor mv) {
@@ -514,7 +552,7 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.6.4.5 Runtime Semantics: LabelledEvaluation
+     * 13.6.4.7 Runtime Semantics: LabelledEvaluation
      * 
      * @param <FORSTATEMENT>
      *            the for-statement node type
@@ -866,7 +904,6 @@ final class StatementGenerator extends
                 PutValue((LeftHandSideExpression) lhs, lhsType, mv);
             } else {
                 /* step 3f.iii */
-                ToObject(lhs, ValType.Any, mv);
                 DestructuringAssignment((AssignmentPattern) lhs, mv);
             }
         } else if (lhs instanceof VariableStatement) {
@@ -875,9 +912,6 @@ final class StatementGenerator extends
             VariableDeclaration varDecl = ((VariableStatement) lhs).getElements().get(0);
             Binding binding = varDecl.getBinding();
             // 13.6.4.5 Runtime Semantics: BindingInitialization
-            if (binding instanceof BindingPattern) {
-                ToObject(lhs, ValType.Any, mv);
-            }
             BindingInitialization(binding, mv);
         } else {
             /* step 3h */
@@ -900,7 +934,7 @@ final class StatementGenerator extends
                 for (Name name : BoundNames(lexicalBinding.getBinding())) {
                     if (isConst) {
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
-                        createImmutableBinding(name, mv);
+                        createImmutableBinding(name, true, mv);
                     } else {
                         // FIXME: spec bug (CreateMutableBinding concrete method of `env`)
                         createMutableBinding(name, false, mv);
@@ -916,10 +950,6 @@ final class StatementGenerator extends
             mv.swap();
 
             // 13.6.4.5 Runtime Semantics: BindingInitialization
-            if (lexicalBinding.getBinding() instanceof BindingPattern) {
-                ToObject(lexicalBinding, ValType.Any, mv);
-            }
-
             // stack: [envRec, nextValue] -> []
             BindingInitializationWithEnvironment(lexicalBinding.getBinding(), mv);
         }
@@ -971,7 +1001,7 @@ final class StatementGenerator extends
                 for (Name dn : boundNames) {
                     if (isConst) {
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `loopEnv`)
-                        createImmutableBinding(dn, mv);
+                        createImmutableBinding(dn, true, mv);
                     } else {
                         // FIXME: spec bug (CreateMutableBinding concrete method of `loopEnv`)
                         createMutableBinding(dn, false, mv);
@@ -1250,7 +1280,7 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.2.1.6 Runtime Semantics: Evaluation
+     * 13.2.1.4 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(LexicalBinding node, StatementVisitor mv) {
@@ -1278,8 +1308,7 @@ final class StatementGenerator extends
             // LexicalBinding : BindingPattern Initializer
             assert binding instanceof BindingPattern;
             /* steps 1-3 */
-            ValType type = expressionBoxedValue(initializer, mv);
-            ToObject(binding, type, mv);
+            expressionBoxedValue(initializer, mv);
         }
         /* step 5/4 */
         getEnvironmentRecord(mv);
@@ -1708,9 +1737,6 @@ final class StatementGenerator extends
 
         /* steps 5-6 */
         // 13.14.4 Runtime Semantics: BindingInitialization :: CatchParameter
-        if (catchParameter instanceof BindingPattern) {
-            ToObject(catchParameter, ValType.Any, mv);
-        }
         // stack: [envRec, ex] -> []
         BindingInitializationWithEnvironment(catchParameter, mv);
 
@@ -1768,9 +1794,6 @@ final class StatementGenerator extends
 
         /* steps 5-6 */
         // 13.14.4 Runtime Semantics: BindingInitialization :: CatchParameter
-        if (catchParameter instanceof BindingPattern) {
-            ToObject(catchParameter, ValType.Any, mv);
-        }
         // stack: [envRec, ex] -> []
         BindingInitializationWithEnvironment(catchParameter, mv);
 
@@ -1823,8 +1846,7 @@ final class StatementGenerator extends
             // VariableDeclaration : BindingPattern Initializer
             assert binding instanceof BindingPattern;
             /* steps 1-3 */
-            ValType type = expressionBoxedValue(initializer, mv);
-            ToObject(binding, type, mv);
+            expressionBoxedValue(initializer, mv);
         }
         /* step 5/4 */
         BindingInitialization(binding, mv);

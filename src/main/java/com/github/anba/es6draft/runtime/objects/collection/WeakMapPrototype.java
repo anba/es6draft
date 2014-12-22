@@ -70,32 +70,13 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 23.3.3.2 WeakMap.prototype.constructor
+         * 23.3.3.1 WeakMap.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.WeakMap;
 
         /**
-         * 23.3.3.1 WeakMap.prototype.clear ()
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the undefined value
-         */
-        @Function(name = "clear", arity = 0)
-        public static Object clear(ExecutionContext cx, Object thisValue) {
-            /* steps 1-4 */
-            WeakMapObject m = thisWeakMapObject(cx, thisValue);
-            /* step 5 */
-            m.getWeakMapData().clear();
-            /* step 6 */
-            return UNDEFINED;
-        }
-
-        /**
-         * 23.3.3.3 WeakMap.prototype.delete ( key )
+         * 23.3.3.2 WeakMap.prototype.delete ( key )
          * 
          * @param cx
          *            the execution context
@@ -120,7 +101,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
         }
 
         /**
-         * 23.3.3.4 WeakMap.prototype.get ( key )
+         * 23.3.3.3 WeakMap.prototype.get ( key )
          * 
          * @param cx
          *            the execution context
@@ -146,7 +127,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
         }
 
         /**
-         * 23.3.3.5 WeakMap.prototype.has ( key )
+         * 23.3.3.4 WeakMap.prototype.has ( key )
          * 
          * @param cx
          *            the execution context
@@ -171,7 +152,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
         }
 
         /**
-         * 23.3.3.6 WeakMap.prototype.set ( key , value )
+         * 23.3.3.5 WeakMap.prototype.set ( key , value )
          * 
          * @param cx
          *            the execution context
@@ -200,7 +181,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
         }
 
         /**
-         * 23.3.3.7 WeakMap.prototype[ @@toStringTag ]
+         * 23.3.3.6 WeakMap.prototype[ @@toStringTag ]
          */
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

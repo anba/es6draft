@@ -22,7 +22,7 @@ function testAssignment() {
     p(x);
     eval("var x = 5");
     p(x);
-    assertThrows(ReferenceError, () => { x = eval("p(x); p(delete x); p(x); x"); });
+    x = eval("p(x); p(delete x); p(x); x + 1");
     p(x);
     p(delete x);
     p(x);
@@ -30,7 +30,7 @@ function testAssignment() {
     p(x);
   })();
   p(x);
-  assertEquals([2, 2, 5, 5, true, 2, 2, false, 2, false, 2, 2], log);
+  assertEquals([2, 2, 5, 5, true, 2, 3, true, 2, false, 2, 2], log);
 }
 testAssignment();
 
@@ -43,7 +43,7 @@ function testCompoundAssignment() {
     p(x);
     eval("var x = 5");
     p(x);
-    assertThrows(ReferenceError, () => { x += eval("p(x); p(delete x); p(x); x"); });
+    x += eval("p(x); p(delete x); p(x); x");
     p(x);
     p(delete x);
     p(x);
@@ -51,6 +51,6 @@ function testCompoundAssignment() {
     p(x);
   })();
   p(x);
-  assertEquals([2, 2, 5, 5, true, 2, 2, false, 2, false, 2, 2], log);
+  assertEquals([2, 2, 5, 5, true, 2, 7, true, 2, false, 2, 2], log);
 }
 testCompoundAssignment();

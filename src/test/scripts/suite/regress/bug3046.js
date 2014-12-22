@@ -16,4 +16,5 @@ let buf = new ArrayBuffer(10);
 buf.constructor = function Constructor(len) {
   return buf;
 };
+buf.constructor[Symbol.species] = buf.constructor;
 assertThrows(TypeError, () => buf.slice(0));

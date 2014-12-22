@@ -11,10 +11,6 @@ feature/Classes/NestedFunctionSuper.js
 # Object.mixin() removed in rev22
 feature/ObjectMixin.js
 
-# Rename String.prototype.contains -> String.prototype.includes (rev 29?)
-# String.prototype.contains() throws when search argument is RegExp
-feature/StringExtras/Includes.js
-
 # String.fromCodePoint length changed to 1
 feature/StringExtras/FromCodePoint.js
 
@@ -51,19 +47,10 @@ feature/Modules/ModuleName.module.js
 # ES6 related syntax changes          #
 #######################################
 
-# Modules - Classes are not applicable for default declaration exports
-# https://mail.mozilla.org/pipermail/es-discuss/2014-October/039977.html
-feature/Modules/ImportDefault.module.js
-
 
 #######################################
 # ES6 related runtime changes         #
 #######################################
-
-# Array destructuring without @@iterator
-# (https://github.com/google/traceur-compiler/issues/840)
-feature/Destructuring/Empty.js
-feature/Destructuring/Rest.js
 
 # SetFunctionName() not supported in traceur
 feature/Classes/ClassNameBinding.js

@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.repl.console;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.GetOwnPropertyNames;
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 
@@ -209,12 +208,13 @@ public final class JLineConsole implements ReplConsole {
                         break lookupFailure;
                     }
                     Object value = Get(cx, object, property);
-                    if (Type.isUndefinedOrNull(value)) {
+                    if (Type.isObject(value)) {
+                        object = Type.objectValue(value);
+                    } else if (!Type.isUndefinedOrNull(value)) {
+                        object = ToObject(cx, value);
+                    } else {
                         break lookupFailure;
-                    } else if (!Type.isObject(value)) {
-                        value = ToObject(cx, value);
                     }
-                    object = Type.objectValue(value);
                     prefix.append(property).append('.');
                 }
                 String partial = segments.get(segments.size() - 1);
@@ -236,7 +236,11 @@ public final class JLineConsole implements ReplConsole {
         private LinkedHashSet<String> getPropertyNames(ExecutionContext cx, ScriptObject object) {
             LinkedHashSet<String> names = new LinkedHashSet<>();
             while (object != null) {
-                names.addAll(GetOwnPropertyNames(cx, object));
+                for (Object key : object.ownPropertyKeys(cx)) {
+                    if (key instanceof String) {
+                        names.add((String) key);
+                    }
+                }
                 object = object.getPrototypeOf(cx);
             }
             return names;

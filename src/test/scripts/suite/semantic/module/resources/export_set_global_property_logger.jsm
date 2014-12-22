@@ -5,7 +5,8 @@
  * <https://github.com/anba/es6draft>
  */
 
-const global = this;
+// TODO: Replace with Reflect.global when available
+const global = System.global;
 
 let log = [];
 

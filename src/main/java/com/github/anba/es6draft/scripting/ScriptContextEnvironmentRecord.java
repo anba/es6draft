@@ -66,7 +66,7 @@ final class ScriptContextEnvironmentRecord implements EnvironmentRecord {
     }
 
     @Override
-    public void createImmutableBinding(String name) {
+    public void createImmutableBinding(String name, boolean strict) {
         setMutableBinding(name, UNDEFINED, false);
     }
 

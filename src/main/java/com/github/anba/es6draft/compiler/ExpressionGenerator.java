@@ -1149,12 +1149,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             if (left instanceof AssignmentPattern) {
                 ValType rtype = evalAndGetValue(right, mv);
 
-                ToObject(left, rtype, mv);
                 dup(node, mv);
-
+                mv.toBoxed(rtype);
                 DestructuringAssignment((AssignmentPattern) left, mv);
 
-                return completion(node, ValType.Object);
+                return completion(node, rtype);
             } else {
                 ValType ltype = left.accept(this, mv);
                 ValType rtype = evalAndGetValue(right, mv);
@@ -2045,7 +2044,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     @Override
     public ValType visit(ClassExpression node, ExpressionVisitor mv) {
         /* steps 1-2 */
-        String className = node.getName() != null ? node.getName().getName().getIdentifier() : null;
+        String className = node.getIdentifier() != null ? node.getIdentifier().getName()
+                .getIdentifier() : null;
         /* steps 3-4 */
         ClassDefinitionEvaluation(node, className, mv);
         /* step 5 */
@@ -2579,7 +2579,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         codegen.compile(node.getTemplate());
 
         // 12.2.9.2.1 Runtime Semantics: ArgumentListEvaluation
-        // 12.2.9.2.2 Runtime Semantics: GetTemplateCallSite
+        // 12.2.8.2.2 Runtime Semantics: GetTemplateObject
         // 12.2.9.2.3 Runtime Semantics: SubstitutionEvaluation
         TemplateLiteral template = node.getTemplate();
         List<Expression> substitutions = Substitutions(template);
@@ -2597,7 +2597,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     @Override
     public ValType visit(TemplateLiteral node, ExpressionVisitor mv) {
         if (node.isTagged()) {
-            codegen.GetTemplateCallSite(node, mv);
+            codegen.GetTemplateObject(node, mv);
             return ValType.Object;
         }
 

@@ -43,7 +43,8 @@ public final class Parser {
     private static final boolean DEBUG = false;
 
     private static final int MAX_ARGUMENTS = 0x4000;
-    private static final String ANONYMOUS_EXPORT_DECLARATION = "*default*";
+    private static final String DEFAULT_EXPORT_BINDING_NAME = "*default*";
+    private static final String DEFAULT_EXPORT_NAME = "default";
     private static final List<Binding> NO_INHERITED_BINDING = Collections.emptyList();
     private static final Set<String> EMPTY_LABEL_SET = Collections.emptySet();
 
@@ -2015,7 +2016,8 @@ public final class Parser {
      *     export VariableStatement
      *     export Declaration
      *     export default HoistableDeclaration<span><sub>[Default]</sub></span>
-     *     export default [LA &#x2260; <b>function</b>] AssignmentExpression<span><sub>[In]</sub></span> ;
+     *     export default ClassDeclaration<span><sub>[Default]</sub></span>
+     *     export default [LA &#x2209; { <b>function</b>, <b>class</b> }] AssignmentExpression<span><sub>[In]</sub></span> ;
      * </pre>
      * 
      * @return the parsed export declaration
@@ -2084,21 +2086,32 @@ public final class Parser {
         case DEFAULT:
         default: {
             // export default HoistableDeclaration[Default]
-            // export default [LA != function] AssignmentExpression[In] ;
+            // export default ClassDeclaration[Default]
+            // export default [LA != {function, class}] AssignmentExpression[In] ;
             consume(Token.DEFAULT);
-            if (token() == Token.FUNCTION) {
+            switch (token()) {
+            case FUNCTION: {
                 HoistableDeclaration declaration = hoistableDeclaration(true);
 
-                addExportBinding(begin, "default");
+                addExportBinding(begin, DEFAULT_EXPORT_NAME);
 
                 return new ExportDeclaration(begin, ts.endPosition(), declaration);
-            } else {
+            }
+            case CLASS: {
+                ClassDeclaration declaration = classDeclaration(true);
+
+                addExportBinding(begin, DEFAULT_EXPORT_NAME);
+
+                return new ExportDeclaration(begin, ts.endPosition(), declaration);
+            }
+            default: {
                 ExportDefaultExpression defaultExpression = defaultExpression();
 
                 context.modContext.defaultExportExpression = defaultExpression;
-                addExportBinding(begin, "default");
+                addExportBinding(begin, DEFAULT_EXPORT_NAME);
 
                 return new ExportDeclaration(begin, ts.endPosition(), defaultExpression);
+            }
             }
         }
         }
@@ -2106,7 +2119,8 @@ public final class Parser {
 
     private ExportDefaultExpression defaultExpression() {
         long begin = ts.beginPosition();
-        BindingIdentifier binding = new BindingIdentifier(begin, ts.endPosition(), "*default*");
+        BindingIdentifier binding = new BindingIdentifier(begin, ts.endPosition(),
+                DEFAULT_EXPORT_BINDING_NAME);
         Expression expression = assignmentExpression(true);
         semicolon();
 
@@ -2332,8 +2346,8 @@ public final class Parser {
                 identifier = bindingIdentifierFunctionName(true);
                 functionName = identifier.getName().getIdentifier();
             } else {
-                identifier = new BindingIdentifier(0, 0, ANONYMOUS_EXPORT_DECLARATION);
-                functionName = "default";
+                identifier = new BindingIdentifier(0, 0, DEFAULT_EXPORT_BINDING_NAME);
+                functionName = DEFAULT_EXPORT_NAME;
             }
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -3182,8 +3196,8 @@ public final class Parser {
                 identifier = bindingIdentifierFunctionName(true);
                 functionName = identifier.getName().getIdentifier();
             } else {
-                identifier = new BindingIdentifier(0, 0, ANONYMOUS_EXPORT_DECLARATION);
-                functionName = "default";
+                identifier = new BindingIdentifier(0, 0, DEFAULT_EXPORT_BINDING_NAME);
+                functionName = DEFAULT_EXPORT_NAME;
             }
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -3428,37 +3442,57 @@ public final class Parser {
      * <strong>[14.5] Class Definitions</strong>
      * 
      * <pre>
-     * ClassDeclaration<span><sub>[Yield]</sub></span> :
+     * ClassDeclaration<span><sub>[Yield, Default]</sub></span> :
      *     class BindingIdentifier<span><sub>[?Yield]</sub></span> ClassTail<span><sub>[?Yield]</sub></span>
+     *     [+Default] class ClassTail[?Yield]
      * ClassTail<span><sub>[Yield, GeneratorParameter]</sub></span> :
      *     [~GeneratorParameter] ClassHeritage<span><sub>[?Yield]opt</sub></span> { ClassBody<span><sub>[?Yield]opt</sub></span> }
      *     [+GeneratorParameter] ClassHeritage<span><sub>opt</sub></span> { ClassBody<span><sub>opt</sub></span> }
      * </pre>
      * 
+     * @param isDefault
+     *            the flag to select whether or not the declaration is part of a default export
      * @return the parsed class declaration
      */
-    private ClassDeclaration classDeclaration() {
+    private ClassDeclaration classDeclaration(boolean isDefault) {
         StrictMode strictMode = context.strictMode;
         try {
             // 10.2.1 - ClassDeclaration and ClassExpression is always strict code
             context.strictMode = StrictMode.Strict;
             long begin = ts.beginPosition();
             consume(Token.CLASS);
-            BindingIdentifier name = bindingIdentifierClassName();
+            boolean hasName = !isDefault || (token() != Token.EXTENDS && token() != Token.LC);
+            BindingIdentifier identifier;
+            String className;
+            if (hasName) {
+                identifier = bindingIdentifierClassName();
+                className = identifier.getName().getIdentifier();
+            } else {
+                // TODO: source location in Reflect.parse?
+                identifier = new BindingIdentifier(0, 0, DEFAULT_EXPORT_BINDING_NAME);
+                className = DEFAULT_EXPORT_NAME;
+            }
             Expression heritage = null;
             if (token() == Token.EXTENDS) {
                 heritage = classHeritage();
             }
             consume(Token.LC);
-            BlockContext scope = enterBlockContext(name);
-            List<MethodDefinition> methods = classBody(name);
-            exitBlockContext();
+            BlockContext scope = null;
+            if (hasName) {
+                scope = enterBlockContext(identifier);
+            }
+            List<MethodDefinition> methods = classBody(identifier);
+            if (hasName) {
+                exitBlockContext();
+            }
             consume(Token.RC);
 
-            ClassDeclaration decl = new ClassDeclaration(begin, ts.endPosition(), scope, name,
-                    heritage, methods);
-            scope.node = decl;
-            addLexDeclaredName(name);
+            ClassDeclaration decl = new ClassDeclaration(begin, ts.endPosition(), scope,
+                    identifier, heritage, methods, className);
+            if (hasName) {
+                scope.node = decl;
+            }
+            addLexDeclaredName(identifier);
             addLexScopedDeclaration(decl);
             return decl;
         } finally {
@@ -4139,7 +4173,7 @@ public final class Parser {
         case FUNCTION:
             return hoistableDeclaration(false);
         case CLASS:
-            return classDeclaration();
+            return classDeclaration(false);
         case LET:
         case CONST:
             return lexicalDeclaration(true);
@@ -5751,8 +5785,8 @@ public final class Parser {
      * 
      * <pre>
      * BindingIdentifier<span><sub>[Yield]</sub></span> :
-     *     <span><sub>[~Yield]</sub></span> yield
      *     Identifier
+     *     <span><sub>[~Yield]</sub></span> yield
      * </pre>
      * 
      * @return the parsed binding identifier
@@ -5766,8 +5800,8 @@ public final class Parser {
      * 
      * <pre>
      * BindingIdentifier<span><sub>[Yield]</sub></span> :
-     *     <span><sub>[~Yield]</sub></span> yield
      *     Identifier
+     *     <span><sub>[~Yield]</sub></span> yield
      * </pre>
      * 
      * @param allowLet
@@ -5799,8 +5833,8 @@ public final class Parser {
      * 
      * <pre>
      * BindingIdentifier<span><sub>[Yield]</sub></span> :
-     *     <span><sub>[~Yield]</sub></span> yield
      *     Identifier
+     *     <span><sub>[~Yield]</sub></span> yield
      * </pre>
      * 
      * @return the parsed binding identifier
@@ -5817,8 +5851,8 @@ public final class Parser {
      * 
      * <pre>
      * BindingIdentifier<span><sub>[Yield]</sub></span> :
-     *     <span><sub>[~Yield]</sub></span> yield
      *     Identifier
+     *     <span><sub>[~Yield]</sub></span> yield
      * </pre>
      * 
      * @param isDeclaration
@@ -5846,8 +5880,8 @@ public final class Parser {
      * 
      * <pre>
      * BindingIdentifier<span><sub>[Yield]</sub></span> :
-     *     <span><sub>[~Yield]</sub></span> yield
      *     Identifier
+     *     <span><sub>[~Yield]</sub></span> yield
      * </pre>
      * 
      * @return the parsed binding identifier
@@ -7157,7 +7191,8 @@ public final class Parser {
     private void superNew() {
         ParseContext superContext = context.findSuperContext();
         super_EarlyErrors(superContext);
-        // FIXME: spec bug - allow in constructor methods.
+        // 12.2.5.1 Static Semantics: Early Errors
+        // 14.5.1 Static Semantics: Early Errors
         if (superContext.kind.isMethod() && !superContext.isConstructor) {
             reportSyntaxError(Messages.Key.InvalidNewSuperExpression);
         }
@@ -7165,6 +7200,9 @@ public final class Parser {
 
     private void super_EarlyErrors(ParseContext superContext) {
         // FIXME: spec bug - search for first non-lexical context.
+        // FIXME: spec bug - super within eval code (bug 1204)
+        // 15.1.1 Static Semantics: Early Errors
+        // 15.2.1.1 Static Semantics: Early Errors
         if (superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionCode)
                 || superContext.kind == ContextKind.Module) {
             reportSyntaxError(Messages.Key.InvalidSuperExpression);
@@ -7701,6 +7739,7 @@ public final class Parser {
     /**
      * Static Semantics: IsValidSimpleAssignmentTarget
      * <ul>
+     * <li>12.1.3 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.2.0.4 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.2.10.3 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.3.1.4 Static Semantics: IsValidSimpleAssignmentTarget
@@ -7895,7 +7934,7 @@ public final class Parser {
             } else if (e instanceof SpreadElement) {
                 // AssignmentRestElement : ... DestructuringAssignmentTarget
                 Expression expression = ((SpreadElement) e).getExpression();
-                LeftHandSideExpression target = assignmentRestElement_EarlyErrors(expression);
+                LeftHandSideExpression target = destructuringAssignmentTarget_EarlyErrors(expression);
                 element = new AssignmentRestElement(e.getBeginPosition(), e.getEndPosition(),
                         target);
                 // no further elements after AssignmentRestElement allowed
@@ -7950,18 +7989,6 @@ public final class Parser {
             return (ArrayAssignmentPattern) lhs;
         }
         return validateAssignment(lhs, ExceptionType.SyntaxError, Messages.Key.InvalidDestructuring);
-    }
-
-    /**
-     * 12.14.5.1 Static Semantics: Early Errors
-     * 
-     * @param lhs
-     *            the left-hand side expression to check
-     * @return the {@code lhs} parameter as a left-hand side expression node
-     */
-    private LeftHandSideExpression assignmentRestElement_EarlyErrors(Expression lhs) {
-        return validateSimpleAssignment(lhs, ExceptionType.SyntaxError,
-                Messages.Key.InvalidDestructuring);
     }
 
     /**

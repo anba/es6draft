@@ -18,10 +18,12 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Creatable;
@@ -214,24 +216,20 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         } else {
             /* step 21 */
             /* steps 21.a-21.b */
-            Object bufferConstructor = Get(cx, srcData, "constructor");
+            Constructor bufferConstructor = SpeciesConstructor(cx, srcData, Intrinsics.ArrayBuffer);
             /* step 21.c */
-            if (Type.isUndefined(bufferConstructor)) {
-                bufferConstructor = cx.getIntrinsic(Intrinsics.ArrayBuffer);
-            }
-            /* step 21.d */
             data = AllocateArrayBuffer(cx, bufferConstructor);
-            /* step 21.e */
+            /* step 21.d */
             if (IsDetachedBuffer(srcData)) {
                 throw newTypeError(cx, Messages.Key.BufferDetached);
             }
-            /* steps 21.f-21.g */
+            /* steps 21.e-21.f */
             SetArrayBufferData(cx, data, byteLength);
-            /* step 21.h */
+            /* step 21.g */
             long srcByteIndex = srcByteOffset;
-            /* step 21.i */
+            /* step 21.h */
             long targetByteIndex = 0;
-            /* steps 21.j-21.k */
+            /* steps 21.i-21.j */
             for (long count = elementLength; count > 0; --count) {
                 double value = GetValueFromBuffer(srcData, srcByteIndex, srcType);
                 SetValueInBuffer(data, targetByteIndex, elementType, value);
@@ -480,8 +478,6 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
                 throw newTypeError(cx, Messages.Key.NotConstructor);
             }
             /* steps 3-4 */
-            ScriptObject items = ToObject(cx, source);
-            /* steps 5-6 */
             Callable f = null;
             if (!Type.isUndefined(mapfn)) {
                 if (!IsCallable(mapfn)) {
@@ -489,9 +485,25 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
                 }
                 f = (Callable) mapfn;
             }
-            /* step 7 (omitted) */
-            /* step 8 */
-            return TypedArrayFrom(cx, (Constructor) c, null, items, f, thisArg);
+            /* step 5 (omitted) */
+            /* step 6 */
+            return TypedArrayFrom(cx, (Constructor) c, null, source, f, thisArg);
+        }
+
+        /**
+         * 22.2.2.4 get %TypedArray% [ @@species ]
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the species object
+         */
+        @Accessor(name = "get [Symbol.species]", symbol = BuiltinSymbol.species,
+                type = Accessor.Type.Getter)
+        public static Object species(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
+            return thisValue;
         }
     }
 
@@ -513,7 +525,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
      * @return the new typed array object
      */
     public static ScriptObject TypedArrayFrom(ExecutionContext cx, Constructor constructor,
-            TypedArrayObject target, ScriptObject items, Callable mapfn, Object thisArg) {
+            TypedArrayObject target, Object items, Callable mapfn, Object thisArg) {
         /* step 1 (omitted) */
         /* step 2 */
         assert constructor == null ^ target == null;
@@ -521,16 +533,15 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         /* step 4 */
         assert target == null || (target.getElementType() != null && target.getBuffer() == null);
         /* step 5 (not applicable) */
-        /* step 6 (not applicable) */
-        /* steps 7-8 */
+        /* steps 6-7 */
         boolean mapping = mapfn != null;
-        /* steps 9-10 */
+        /* steps 8-9 */
         Object usingIterator = CheckIterable(cx, items);
-        /* step 11 */
+        /* step 10 */
         if (!Type.isUndefined(usingIterator)) {
-            /* steps 11.a-11.b */
+            /* steps 10.a-10.b */
             ScriptObject iterator = GetIterator(cx, items, usingIterator);
-            /* steps 11.c-11.f */
+            /* steps 10.c-10.f */
             ArrayList<Object> values = new ArrayList<>();
             for (;;) {
                 ScriptObject next = IteratorStep(cx, iterator);
@@ -540,11 +551,11 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
                 Object nextValue = IteratorValue(cx, next);
                 values.add(nextValue);
             }
-            /* step 11.g */
+            /* step 10.g */
             int len = values.size();
-            /* steps 11.h-11.i */
+            /* steps 10.h-10.i */
             ScriptObject targetObj = TypedArrayAllocOrInit(cx, constructor, target, len);
-            /* steps 11.j-11.l */
+            /* steps 10.j-10.l */
             for (int k = 0; k < len; ++k) {
                 long pk = k;
                 Object kValue = values.get(k);
@@ -556,20 +567,22 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
                 }
                 Put(cx, targetObj, pk, mappedValue, true);
             }
-            /* step 11.m */
+            /* step 10.m */
             return targetObj;
         }
-        /* step 12 (?) */
-        /* step 13 */
-        Object lenValue = Get(cx, items, "length");
-        /* steps 14-15 */
+        /* step 11 (?) */
+        /* steps 12-13 */
+        ScriptObject arrayLike = ToObject(cx, items);
+        /* step 14 */
+        Object lenValue = Get(cx, arrayLike, "length");
+        /* steps 15-16 */
         long len = ToLength(cx, lenValue);
-        /* steps 16-17 */
+        /* steps 17-18 */
         ScriptObject targetObj = TypedArrayAllocOrInit(cx, constructor, target, len);
-        /* steps 18-19 */
+        /* steps 19-20 */
         for (long k = 0; k < len; ++k) {
             long pk = k;
-            Object kValue = Get(cx, items, pk);
+            Object kValue = Get(cx, arrayLike, pk);
             Object mappedValue;
             if (mapping) {
                 mappedValue = mapfn.call(cx, thisArg, kValue, k);
@@ -578,7 +591,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
             }
             Put(cx, targetObj, pk, mappedValue, true);
         }
-        /* step 20 */
+        /* step 21 */
         return targetObj;
     }
 

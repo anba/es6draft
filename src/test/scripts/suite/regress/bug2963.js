@@ -44,7 +44,9 @@ const {
   let getterCalled = false;
   Object.defineProperty(buf, "constructor", {
     get() {
-      return Object.defineProperty(function Constructor() { }.bind(null), "prototype", {
+      let Constructor = function Constructor() { }.bind(null);
+      Constructor[Symbol.species] = Constructor;
+      return Object.defineProperty(Constructor, "prototype", {
         get() {
           assertFalse(getterCalled);
           getterCalled = true;

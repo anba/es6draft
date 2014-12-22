@@ -6,15 +6,15 @@
  */
 
 const {
-  assertSame, assertFalse
+  assertSame, assertTrue, assertThrows
 } = Assert;
 
 // Globals not treated as var bindings
 // https://bugs.ecmascript.org/show_bug.cgi?id=3301
 
-evalScript("function f(x) { return x === undefined }");
-evalScript("let undefined = 666;");
+evalScript("function f(x) { return x === undefined }")
+assertThrows(SyntaxError, () => evalScript("let undefined = 666;"));
 
 // FIXME: Update after spec bug was fixed
-assertSame(666, undefined);
-assertFalse(f());
+assertSame(void 0, undefined);
+assertTrue(f());

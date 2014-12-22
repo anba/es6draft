@@ -49,7 +49,7 @@ abstract class DeclarationBindingInstantiationGenerator {
 
         static final MethodDesc EnvironmentRecord_createImmutableBinding = MethodDesc.create(
                 MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "createImmutableBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String));
+                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
         static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
                 MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "initializeBinding",
@@ -234,7 +234,7 @@ abstract class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * Emit function call for: {@link EnvironmentRecord#createImmutableBinding(String)}
+     * Emit function call for: {@link EnvironmentRecord#createImmutableBinding(String, boolean)}
      * <p>
      * stack: [] {@literal ->} []
      * 
@@ -246,9 +246,10 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     protected void createImmutableBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
-            InstructionVisitor mv) {
+            boolean strict, InstructionVisitor mv) {
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
+        mv.iconst(strict);
         mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
     }
 
