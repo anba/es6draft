@@ -12,8 +12,16 @@ import java.util.Arrays;
  * Simple string buffer class for internal use.
  */
 final class StrBuffer {
-    private char[] array = new char[512];
-    private int length = 0;
+    private char[] array;
+    private int length;
+
+    public StrBuffer(int requestedCapacity) {
+        array = new char[initialCapacity(requestedCapacity)];
+    }
+
+    private static int initialCapacity(int requestedCapacity) {
+        return Math.max(Math.min(Integer.highestOneBit(requestedCapacity), 512), 8);
+    }
 
     /**
      * Returns the underlying character array.

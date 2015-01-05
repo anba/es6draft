@@ -431,6 +431,21 @@ public abstract class Reference<BASE, NAME> {
                 throw new AssertionError();
             }
         }
+
+        protected static final OrdinaryObject getPrimitiveBaseProto(ExecutionContext cx, Type type) {
+            switch (type) {
+            case Boolean:
+                return cx.getIntrinsic(Intrinsics.BooleanPrototype);
+            case Number:
+                return cx.getIntrinsic(Intrinsics.NumberPrototype);
+            case String:
+                return cx.getIntrinsic(Intrinsics.StringPrototype);
+            case Symbol:
+                return cx.getIntrinsic(Intrinsics.SymbolPrototype);
+            default:
+                throw new AssertionError();
+            }
+        }
     }
 
     /**
@@ -507,6 +522,26 @@ public abstract class Reference<BASE, NAME> {
                 }
             }
             return getPrimitiveBaseProto(cx).get(cx, refName, getBase());
+        }
+
+        public static Object GetValue(ExecutionContext cx, Object base, long referencedName) {
+            assert !Type.isUndefinedOrNull(base);
+            if (base instanceof ScriptObject) {
+                return ((ScriptObject) base).get(cx, referencedName, base);
+            }
+            return GetValuePrimitive(cx, base, referencedName);
+        }
+
+        private static Object GetValuePrimitive(ExecutionContext cx, Object base,
+                long referencedName) {
+            if (Type.isString(base) && 0 <= referencedName && referencedName < 0x7FFF_FFFFL) {
+                int index = (int) referencedName;
+                CharSequence str = Type.stringValue(base);
+                if (index < str.length()) {
+                    return String.valueOf(str.charAt(index));
+                }
+            }
+            return getPrimitiveBaseProto(cx, Type.of(base)).get(cx, referencedName, base);
         }
     }
 
@@ -590,6 +625,32 @@ public abstract class Reference<BASE, NAME> {
             }
             return getPrimitiveBaseProto(cx).get(cx, referencedName, getBase());
         }
+
+        public static Object GetValue(ExecutionContext cx, Object base, String referencedName) {
+            assert !Type.isUndefinedOrNull(base);
+            if (base instanceof ScriptObject) {
+                return ((ScriptObject) base).get(cx, referencedName, base);
+            }
+            return GetValuePrimitive(cx, base, referencedName);
+        }
+
+        private static Object GetValuePrimitive(ExecutionContext cx, Object base,
+                String referencedName) {
+            if (Type.isString(base)) {
+                if ("length".equals(referencedName)) {
+                    CharSequence str = Type.stringValue(base);
+                    return str.length();
+                }
+                int index = Strings.toStringIndex(referencedName);
+                if (index >= 0) {
+                    CharSequence str = Type.stringValue(base);
+                    if (index < str.length()) {
+                        return String.valueOf(str.charAt(index));
+                    }
+                }
+            }
+            return getPrimitiveBaseProto(cx, Type.of(base)).get(cx, referencedName, base);
+        }
     }
 
     /**
@@ -660,6 +721,19 @@ public abstract class Reference<BASE, NAME> {
 
         private Object GetValuePrimitive(ExecutionContext cx) {
             return getPrimitiveBaseProto(cx).get(cx, referencedName, getBase());
+        }
+
+        public static Object GetValue(ExecutionContext cx, Object base, Symbol referencedName) {
+            assert !Type.isUndefinedOrNull(base);
+            if (base instanceof ScriptObject) {
+                return ((ScriptObject) base).get(cx, referencedName, base);
+            }
+            return GetValuePrimitive(cx, base, referencedName);
+        }
+
+        private static Object GetValuePrimitive(ExecutionContext cx, Object base,
+                Symbol referencedName) {
+            return getPrimitiveBaseProto(cx, Type.of(base)).get(cx, referencedName, base);
         }
     }
 

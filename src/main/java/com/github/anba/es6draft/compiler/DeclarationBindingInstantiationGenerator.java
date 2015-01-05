@@ -10,8 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.AsyncFunctionDeclaration;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
@@ -19,7 +17,8 @@ import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.ast.LegacyGeneratorDeclaration;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -34,90 +33,85 @@ import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 abstract class DeclarationBindingInstantiationGenerator {
     private static final class Methods {
         // class: IllegalStateException
-        static final MethodDesc IllegalStateException_init = MethodDesc.create(
-                MethodDesc.Invoke.Special, Types.IllegalStateException, "<init>",
-                Type.getMethodType(Type.VOID_TYPE));
+        static final MethodName IllegalStateException_init = MethodName.findConstructor(
+                Types.IllegalStateException, Type.methodType(Type.VOID_TYPE));
 
         // class: EnvironmentRecord
-        static final MethodDesc EnvironmentRecord_hasBinding = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "hasBinding",
-                Type.getMethodType(Type.BOOLEAN_TYPE, Types.String));
+        static final MethodName EnvironmentRecord_hasBinding = MethodName.findInterface(
+                Types.EnvironmentRecord, "hasBinding",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.String));
 
-        static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "createMutableBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName EnvironmentRecord_createMutableBinding = MethodName.findInterface(
+                Types.EnvironmentRecord, "createMutableBinding",
+                Type.methodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc EnvironmentRecord_createImmutableBinding = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "createImmutableBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName EnvironmentRecord_createImmutableBinding = MethodName
+                .findInterface(Types.EnvironmentRecord, "createImmutableBinding",
+                        Type.methodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "initializeBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
+        static final MethodName EnvironmentRecord_initializeBinding = MethodName.findInterface(
+                Types.EnvironmentRecord, "initializeBinding",
+                Type.methodType(Type.VOID_TYPE, Types.String, Types.Object));
 
-        static final MethodDesc EnvironmentRecord_setMutableBinding = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "setMutableBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object, Type.BOOLEAN_TYPE));
+        static final MethodName EnvironmentRecord_setMutableBinding = MethodName.findInterface(
+                Types.EnvironmentRecord, "setMutableBinding",
+                Type.methodType(Type.VOID_TYPE, Types.String, Types.Object, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc EnvironmentRecord_getBindingValue = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "getBindingValue",
-                Type.getMethodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName EnvironmentRecord_getBindingValue = MethodName.findInterface(
+                Types.EnvironmentRecord, "getBindingValue",
+                Type.methodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
 
         // class: GlobalEnvironmentRecord
-        static final MethodDesc GlobalEnvironmentRecord_createGlobalVarBinding = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.GlobalEnvironmentRecord, "createGlobalVarBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName GlobalEnvironmentRecord_createGlobalVarBinding = MethodName
+                .findVirtual(Types.GlobalEnvironmentRecord, "createGlobalVarBinding",
+                        Type.methodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc GlobalEnvironmentRecord_createGlobalFunctionBinding = MethodDesc
-                .create(MethodDesc.Invoke.Virtual, Types.GlobalEnvironmentRecord,
-                        "createGlobalFunctionBinding", Type.getMethodType(Type.VOID_TYPE,
-                                Types.String, Types.Object, Type.BOOLEAN_TYPE));
+        static final MethodName GlobalEnvironmentRecord_createGlobalFunctionBinding = MethodName
+                .findVirtual(Types.GlobalEnvironmentRecord, "createGlobalFunctionBinding", Type
+                        .methodType(Type.VOID_TYPE, Types.String, Types.Object, Type.BOOLEAN_TYPE));
 
         // class: LexicalEnvironment
-        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.LexicalEnvironment, "getEnvRec",
-                Type.getMethodType(Types.EnvironmentRecord));
+        static final MethodName LexicalEnvironment_getEnvRec = MethodName.findVirtual(
+                Types.LexicalEnvironment, "getEnvRec", Type.methodType(Types.EnvironmentRecord));
 
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_canDeclareGlobalFunctionOrThrow = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareGlobalFunctionOrThrow",
-                Type.getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
-                        Types.GlobalEnvironmentRecord, Types.String));
-
-        static final MethodDesc ScriptRuntime_canDeclareGlobalVarOrThrow = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareGlobalVarOrThrow", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+        static final MethodName ScriptRuntime_canDeclareGlobalFunctionOrThrow = MethodName
+                .findStatic(Types.ScriptRuntime, "canDeclareGlobalFunctionOrThrow", Type
+                        .methodType(Type.VOID_TYPE, Types.ExecutionContext,
                                 Types.GlobalEnvironmentRecord, Types.String));
 
-        static final MethodDesc ScriptRuntime_canDeclareLexicalScopedOrThrow = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareLexicalScopedOrThrow",
-                Type.getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
-                        Types.GlobalEnvironmentRecord, Types.String));
+        static final MethodName ScriptRuntime_canDeclareGlobalVarOrThrow = MethodName.findStatic(
+                Types.ScriptRuntime, "canDeclareGlobalVarOrThrow", Type.methodType(Type.VOID_TYPE,
+                        Types.ExecutionContext, Types.GlobalEnvironmentRecord, Types.String));
 
-        static final MethodDesc ScriptRuntime_canDeclareVarScopedOrThrow = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareVarScopedOrThrow", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
-                                Types.GlobalEnvironmentRecord, Types.String));
+        static final MethodName ScriptRuntime_canDeclareLexicalScopedOrThrow = MethodName
+                .findStatic(Types.ScriptRuntime, "canDeclareLexicalScopedOrThrow", Type.methodType(
+                        Type.VOID_TYPE, Types.ExecutionContext, Types.GlobalEnvironmentRecord,
+                        Types.String));
 
-        static final MethodDesc ScriptRuntime_InstantiateAsyncFunctionObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstantiateAsyncFunctionObject",
-                Type.getMethodType(Types.OrdinaryAsyncFunction, Types.LexicalEnvironment,
+        static final MethodName ScriptRuntime_canDeclareVarScopedOrThrow = MethodName.findStatic(
+                Types.ScriptRuntime, "canDeclareVarScopedOrThrow", Type.methodType(Type.VOID_TYPE,
+                        Types.ExecutionContext, Types.GlobalEnvironmentRecord, Types.String));
+
+        static final MethodName ScriptRuntime_InstantiateAsyncFunctionObject = MethodName
+                .findStatic(Types.ScriptRuntime, "InstantiateAsyncFunctionObject", Type.methodType(
+                        Types.OrdinaryAsyncFunction, Types.LexicalEnvironment,
                         Types.ExecutionContext, Types.RuntimeInfo$Function));
 
-        static final MethodDesc ScriptRuntime_InstantiateFunctionObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstantiateFunctionObject", Type
-                        .getMethodType(Types.OrdinaryFunction, Types.LexicalEnvironment,
-                                Types.ExecutionContext, Types.RuntimeInfo$Function));
+        static final MethodName ScriptRuntime_InstantiateFunctionObject = MethodName.findStatic(
+                Types.ScriptRuntime, "InstantiateFunctionObject", Type.methodType(
+                        Types.OrdinaryFunction, Types.LexicalEnvironment, Types.ExecutionContext,
+                        Types.RuntimeInfo$Function));
 
-        static final MethodDesc ScriptRuntime_InstantiateGeneratorObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstantiateGeneratorObject", Type
-                        .getMethodType(Types.OrdinaryGenerator, Types.LexicalEnvironment,
-                                Types.ExecutionContext, Types.RuntimeInfo$Function));
+        static final MethodName ScriptRuntime_InstantiateGeneratorObject = MethodName.findStatic(
+                Types.ScriptRuntime, "InstantiateGeneratorObject", Type.methodType(
+                        Types.OrdinaryGenerator, Types.LexicalEnvironment, Types.ExecutionContext,
+                        Types.RuntimeInfo$Function));
 
-        static final MethodDesc ScriptRuntime_InstantiateLegacyGeneratorObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstantiateLegacyGeneratorObject",
-                Type.getMethodType(Types.OrdinaryGenerator, Types.LexicalEnvironment,
-                        Types.ExecutionContext, Types.RuntimeInfo$Function));
+        static final MethodName ScriptRuntime_InstantiateLegacyGeneratorObject = MethodName
+                .findStatic(Types.ScriptRuntime, "InstantiateLegacyGeneratorObject", Type
+                        .methodType(Types.OrdinaryGenerator, Types.LexicalEnvironment,
+                                Types.ExecutionContext, Types.RuntimeInfo$Function));
     }
 
     protected final CodeGenerator codegen;

@@ -96,7 +96,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
         assert !hasBinding(name);
         /* step 3 (not applicable) */
         /* step 4 */
-        // FIXME: spec bug
+        // FIXME: spec issue (bug 3479)
         // assert module.getEnvironment() != null : "module not initialized";
         // assert module.getEnvironment().getEnvRec().hasBinding(otherName) : "Missing binding: "
         // + otherName;

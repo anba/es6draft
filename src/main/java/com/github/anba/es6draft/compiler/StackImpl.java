@@ -6,9 +6,8 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.compiler.assembler.Stack;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variables;
 
 /**

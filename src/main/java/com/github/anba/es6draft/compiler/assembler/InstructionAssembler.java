@@ -9,16 +9,13 @@ package com.github.anba.es6draft.compiler.assembler;
 import java.io.PrintWriter;
 import java.util.HashMap;
 
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.CodeSizeEvaluator;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc.Invoke;
 
 /**
  * 
@@ -31,15 +28,62 @@ public class InstructionAssembler {
 
     private static final class Methods {
         // class: StringBuilder
-        static final MethodDesc StringBuilder_append_String = MethodDesc.create(Invoke.Virtual,
-                Types.StringBuilder, "append",
-                Type.getMethodType(Types.StringBuilder, Types.String));
+        static final MethodName StringBuilder_append_String = MethodName.findVirtual(
+                Types.StringBuilder, "append", Type.methodType(Types.StringBuilder, Types.String));
 
-        static final MethodDesc StringBuilder_init_int = MethodDesc.create(Invoke.Special,
-                Types.StringBuilder, "<init>", Type.getMethodType(Type.VOID_TYPE, Type.INT_TYPE));
+        static final MethodName StringBuilder_init_int = MethodName.findConstructor(
+                Types.StringBuilder, Type.methodType(Type.VOID_TYPE, Type.INT_TYPE));
 
-        static final MethodDesc StringBuilder_toString = MethodDesc.create(Invoke.Virtual,
-                Types.StringBuilder, "toString", Type.getMethodType(Types.String));
+        static final MethodName StringBuilder_toString = MethodName.findVirtual(
+                Types.StringBuilder, "toString", Type.methodType(Types.String));
+
+        static final MethodName Boolean_valueOf = MethodName.findStatic(Types.Boolean, "valueOf",
+                Type.methodType(Types.Boolean, Type.BOOLEAN_TYPE));
+
+        static final MethodName Boolean_booleanValue = MethodName.findVirtual(Types.Boolean,
+                "booleanValue", Type.methodType(Type.BOOLEAN_TYPE));
+
+        static final MethodName Character_valueOf = MethodName.findStatic(Types.Character,
+                "valueOf", Type.methodType(Types.Character, Type.CHAR_TYPE));
+
+        static final MethodName Character_charValue = MethodName.findVirtual(Types.Character,
+                "charValue", Type.methodType(Type.CHAR_TYPE));
+
+        static final MethodName Byte_valueOf = MethodName.findStatic(Types.Byte, "valueOf",
+                Type.methodType(Types.Byte, Type.BYTE_TYPE));
+
+        static final MethodName Byte_byteValue = MethodName.findVirtual(Types.Byte, "byteValue",
+                Type.methodType(Type.BYTE_TYPE));
+
+        static final MethodName Short_valueOf = MethodName.findStatic(Types.Short, "valueOf",
+                Type.methodType(Types.Short, Type.SHORT_TYPE));
+
+        static final MethodName Short_shortValue = MethodName.findVirtual(Types.Short,
+                "shortValue", Type.methodType(Type.SHORT_TYPE));
+
+        static final MethodName Integer_valueOf = MethodName.findStatic(Types.Integer, "valueOf",
+                Type.methodType(Types.Integer, Type.INT_TYPE));
+
+        static final MethodName Integer_intValue = MethodName.findVirtual(Types.Integer,
+                "intValue", Type.methodType(Type.INT_TYPE));
+
+        static final MethodName Long_valueOf = MethodName.findStatic(Types.Long, "valueOf",
+                Type.methodType(Types.Long, Type.LONG_TYPE));
+
+        static final MethodName Long_longValue = MethodName.findVirtual(Types.Long, "longValue",
+                Type.methodType(Type.LONG_TYPE));
+
+        static final MethodName Float_valueOf = MethodName.findStatic(Types.Float, "valueOf",
+                Type.methodType(Types.Float, Type.FLOAT_TYPE));
+
+        static final MethodName Float_floatValue = MethodName.findVirtual(Types.Float,
+                "floatValue", Type.methodType(Type.FLOAT_TYPE));
+
+        static final MethodName Double_valueOf = MethodName.findStatic(Types.Double, "valueOf",
+                Type.methodType(Types.Double, Type.DOUBLE_TYPE));
+
+        static final MethodName Double_doubleValue = MethodName.findVirtual(Types.Double,
+                "doubleValue", Type.methodType(Type.DOUBLE_TYPE));
     }
 
     private static final class $CodeSizeEvaluator extends CodeSizeEvaluator {
@@ -79,7 +123,6 @@ public class InstructionAssembler {
 
     private final MethodCode method;
     private final MethodVisitor methodVisitor;
-    private final Type methodDescriptor;
     private final ConstantPool constantPool;
     private final Stack stack;
     private final Variables variables = new Variables();
@@ -89,7 +132,7 @@ public class InstructionAssembler {
     private Type getType(Class<?> c) {
         Type type = typeCache.get(c);
         if (type == null) {
-            typeCache.put(c, type = Type.getType(c));
+            typeCache.put(c, type = Type.of(c));
         }
         return type;
     }
@@ -103,7 +146,6 @@ public class InstructionAssembler {
     public InstructionAssembler(MethodCode method) {
         this.method = method;
         this.methodVisitor = decorate(method.methodVisitor);
-        this.methodDescriptor = Type.getMethodType(method.methodDescriptor);
         this.constantPool = method.classCode.constantPool;
         this.stack = createStack(variables);
     }
@@ -197,43 +239,51 @@ public class InstructionAssembler {
             variables.reserveSlot("<this>", Types.Object, slot);
             slot += Types.Object.getSize();
         }
-        for (Type argument : methodDescriptor.getArgumentTypes()) {
+        for (Type argument : method.methodDescriptor.parameterList()) {
             variables.reserveSlot(argument, slot);
             slot += argument.getSize();
         }
     }
 
-    private int parameterSlot(int index, Type[] argumentTypes) {
+    private int parameterSlot(int index) {
+        MethodTypeDescriptor desc = method.methodDescriptor;
         int slot = isInstanceMethod() ? 1 : 0;
         for (int i = 0; i < index; ++i) {
-            slot += argumentTypes[i].getSize();
+            slot += desc.parameterType(i).getSize();
         }
         return slot;
     }
 
-    protected void setParameterName(String name, int index, Type type) {
-        Type[] argTypes = methodDescriptor.getArgumentTypes();
-        if (!argTypes[index].equals(type)) {
+    private void checkParameterType(int index, Type type) {
+        if (!method.methodDescriptor.parameterType(index).equals(type)) {
             throw new IllegalArgumentException();
         }
-        variables.addVariable(name, argTypes[index], parameterSlot(index, argTypes));
+    }
+
+    protected void setParameterName(String name, int index, Type type) {
+        checkParameterType(index, type);
+        MethodTypeDescriptor desc = method.methodDescriptor;
+        variables.addVariable(name, desc.parameterType(index), parameterSlot(index));
     }
 
     public boolean hasParameter(int index, Class<?> clazz) {
-        Type[] argTypes = methodDescriptor.getArgumentTypes();
-        return index < argTypes.length && argTypes[index].equals(getType(clazz));
+        MethodTypeDescriptor desc = method.methodDescriptor;
+        return index < desc.parameterCount() && desc.parameterType(index).equals(getType(clazz));
     }
 
     public <T> Variable<T> getParameter(int index, Class<T> clazz) {
-        Type[] argTypes = methodDescriptor.getArgumentTypes();
-        if (!argTypes[index].equals(getType(clazz))) {
-            throw new IllegalArgumentException();
-        }
-        return new Variable<>("(parameter)", argTypes[index], parameterSlot(index, argTypes));
+        checkParameterType(index, getType(clazz));
+        MethodTypeDescriptor desc = method.methodDescriptor;
+        return new Variable<>("(parameter)", desc.parameterType(index), parameterSlot(index));
     }
 
     public <T> void loadParameter(int index, Class<T> clazz) {
         load(getParameter(index, clazz));
+    }
+
+    public void loadParameter(int index, Type type) {
+        checkParameterType(index, type);
+        load(index, type);
     }
 
     public void enterVariableScope() {
@@ -251,8 +301,8 @@ public class InstructionAssembler {
 
     private void localVariable(Variable<?> variable, Label start, Label end) {
         if (variable.hasSlot()) {
-            methodVisitor.visitLocalVariable(variable.getName(),
-                    variable.getType().getDescriptor(), null, start, end, variable.getSlot());
+            methodVisitor.visitLocalVariable(variable.getName(), variable.getType().descriptor(),
+                    null, start, end, variable.getSlot());
         }
     }
 
@@ -320,7 +370,7 @@ public class InstructionAssembler {
 
     public void mark(TryCatchLabel label) {
         // no stack or resolve!
-        methodVisitor.visitLabel(label);
+        methodVisitor.visitLabel(label.label());
     }
 
     public void mark(Jump jump) {
@@ -355,7 +405,8 @@ public class InstructionAssembler {
      * @see MethodVisitor#visitTryCatchBlock(Label, Label, Label, String)
      */
     public void tryCatch(TryCatchLabel start, TryCatchLabel end, TryCatchLabel handler, Type type) {
-        methodVisitor.visitTryCatchBlock(start, end, handler, type.getInternalName());
+        methodVisitor.visitTryCatchBlock(start.label(), end.label(), handler.label(),
+                type.internalName());
     }
 
     /**
@@ -370,7 +421,7 @@ public class InstructionAssembler {
      * @see MethodVisitor#visitTryCatchBlock(Label, Label, Label, String)
      */
     public void tryFinally(TryCatchLabel start, TryCatchLabel end, TryCatchLabel handler) {
-        methodVisitor.visitTryCatchBlock(start, end, handler, null);
+        methodVisitor.visitTryCatchBlock(start.label(), end.label(), handler.label(), null);
     }
 
     /**
@@ -383,7 +434,7 @@ public class InstructionAssembler {
      * @see #tryCatch(TryCatchLabel, TryCatchLabel, TryCatchLabel, Type)
      */
     public void catchHandler(TryCatchLabel handler, Type exception) {
-        methodVisitor.visitLabel(handler);
+        methodVisitor.visitLabel(handler.label());
         stack.catchHandler(exception);
     }
 
@@ -395,7 +446,7 @@ public class InstructionAssembler {
      * @see #tryFinally(TryCatchLabel, TryCatchLabel, TryCatchLabel)
      */
     public void finallyHandler(TryCatchLabel handler) {
-        methodVisitor.visitLabel(handler);
+        methodVisitor.visitLabel(handler.label());
         stack.catchHandler(Types.Throwable);
     }
 
@@ -510,18 +561,25 @@ public class InstructionAssembler {
      * &#x2205; → handle
      * 
      * @param method
-     *            the method descriptor for the handle
+     *            the method name descriptor
      */
-    public void handle(MethodDesc method) {
-        hconst(new Handle(method.invoke.toTag(), method.owner, method.name, method.desc));
+    public void handle(MethodName method) {
+        hconst(method.toHandle());
     }
 
     public void hconst(Handle handle) {
-        ldc(handle);
+        methodVisitor.visitLdcInsn(handle.handle());
+        stack.hconst();
     }
 
     public void tconst(Type type) {
-        ldc(type);
+        methodVisitor.visitLdcInsn(type.type());
+        stack.tconst(type);
+    }
+
+    public void tconst(MethodTypeDescriptor type) {
+        methodVisitor.visitLdcInsn(type.type());
+        stack.tconst(type);
     }
 
     /* local load instructions */
@@ -540,7 +598,7 @@ public class InstructionAssembler {
     }
 
     private void load(int var, Type type) {
-        assert variables.isActive(var) : "variable is not initialized";
+        assert var >= 0 && variables.isActive(var) : "variable is not initialized";
         switch (type.getOpcode(Opcodes.ILOAD)) {
         case Opcodes.ILOAD:
             iload(var);
@@ -562,27 +620,27 @@ public class InstructionAssembler {
         }
     }
 
-    public void iload(int var) {
+    private void iload(int var) {
         methodVisitor.visitVarInsn(Opcodes.ILOAD, var);
         stack.iload(var);
     }
 
-    public void lload(int var) {
+    private void lload(int var) {
         methodVisitor.visitVarInsn(Opcodes.LLOAD, var);
         stack.lload(var);
     }
 
-    public void fload(int var) {
+    private void fload(int var) {
         methodVisitor.visitVarInsn(Opcodes.FLOAD, var);
         stack.fload(var);
     }
 
-    public void dload(int var) {
+    private void dload(int var) {
         methodVisitor.visitVarInsn(Opcodes.DLOAD, var);
         stack.dload(var);
     }
 
-    public void aload(int var) {
+    private void aload(int var) {
         methodVisitor.visitVarInsn(Opcodes.ALOAD, var);
         stack.aload(var);
     }
@@ -598,6 +656,7 @@ public class InstructionAssembler {
      *            the array type
      */
     public final void aload(int index, Type type) {
+        assert index >= 0;
         iconst(index);
         aload(type);
     }
@@ -681,6 +740,7 @@ public class InstructionAssembler {
     }
 
     private void store(int var, Type type) {
+        assert var >= 0;
         variables.activate(var);
         switch (type.getOpcode(Opcodes.ISTORE)) {
         case Opcodes.ISTORE:
@@ -703,27 +763,27 @@ public class InstructionAssembler {
         }
     }
 
-    public void istore(int var) {
+    private void istore(int var) {
         methodVisitor.visitVarInsn(Opcodes.ISTORE, var);
         stack.istore(var);
     }
 
-    public void lstore(int var) {
+    private void lstore(int var) {
         methodVisitor.visitVarInsn(Opcodes.LSTORE, var);
         stack.lstore(var);
     }
 
-    public void fstore(int var) {
+    private void fstore(int var) {
         methodVisitor.visitVarInsn(Opcodes.FSTORE, var);
         stack.fstore(var);
     }
 
-    public void dstore(int var) {
+    private void dstore(int var) {
         methodVisitor.visitVarInsn(Opcodes.DSTORE, var);
         stack.dstore(var);
     }
 
-    public void astore(int var) {
+    private void astore(int var) {
         methodVisitor.visitVarInsn(Opcodes.ASTORE, var);
         stack.astore(var);
     }
@@ -1371,8 +1431,8 @@ public class InstructionAssembler {
         iinc(variable.getSlot(), increment);
     }
 
-    public void iinc(int var, int increment) {
-        assert Short.MIN_VALUE <= increment && increment <= Short.MAX_VALUE;
+    private void iinc(int var, int increment) {
+        assert var >= 0 && Short.MIN_VALUE <= increment && increment <= Short.MAX_VALUE;
         methodVisitor.visitIincInsn(var, increment);
         // no stack change
     }
@@ -1381,116 +1441,116 @@ public class InstructionAssembler {
 
     public void cast(Type from, Type to) {
         switch (from.getSort()) {
-        case Type.BYTE:
-        case Type.CHAR:
-        case Type.SHORT:
-        case Type.INT:
+        case Type.Sort.BYTE:
+        case Type.Sort.CHAR:
+        case Type.Sort.SHORT:
+        case Type.Sort.INT:
             switch (to.getSort()) {
-            case Type.INT:
+            case Type.Sort.INT:
                 // nop
                 return;
-            case Type.LONG:
+            case Type.Sort.LONG:
                 i2l();
                 return;
-            case Type.FLOAT:
+            case Type.Sort.FLOAT:
                 i2f();
                 return;
-            case Type.DOUBLE:
+            case Type.Sort.DOUBLE:
                 i2d();
                 return;
-            case Type.BYTE:
+            case Type.Sort.BYTE:
                 i2b();
                 return;
-            case Type.CHAR:
+            case Type.Sort.CHAR:
                 i2c();
                 return;
-            case Type.SHORT:
+            case Type.Sort.SHORT:
                 i2s();
                 return;
             default:
                 throw new IllegalArgumentException();
             }
-        case Type.LONG:
+        case Type.Sort.LONG:
             switch (to.getSort()) {
-            case Type.INT:
+            case Type.Sort.INT:
                 l2i();
                 return;
-            case Type.LONG:
+            case Type.Sort.LONG:
                 // nop
                 return;
-            case Type.FLOAT:
+            case Type.Sort.FLOAT:
                 l2f();
                 return;
-            case Type.DOUBLE:
+            case Type.Sort.DOUBLE:
                 l2d();
                 return;
-            case Type.BYTE:
+            case Type.Sort.BYTE:
                 l2i();
                 i2b();
                 return;
-            case Type.CHAR:
+            case Type.Sort.CHAR:
                 l2i();
                 i2c();
                 return;
-            case Type.SHORT:
+            case Type.Sort.SHORT:
                 l2i();
                 i2s();
                 return;
             default:
                 throw new IllegalArgumentException();
             }
-        case Type.FLOAT:
+        case Type.Sort.FLOAT:
             switch (to.getSort()) {
-            case Type.INT:
+            case Type.Sort.INT:
                 f2i();
                 return;
-            case Type.LONG:
+            case Type.Sort.LONG:
                 f2l();
                 return;
-            case Type.FLOAT:
+            case Type.Sort.FLOAT:
                 // nop
                 return;
-            case Type.DOUBLE:
+            case Type.Sort.DOUBLE:
                 f2d();
                 return;
-            case Type.BYTE:
+            case Type.Sort.BYTE:
                 f2i();
                 i2b();
                 return;
-            case Type.CHAR:
+            case Type.Sort.CHAR:
                 f2i();
                 i2c();
                 return;
-            case Type.SHORT:
+            case Type.Sort.SHORT:
                 f2i();
                 i2s();
                 return;
             default:
                 throw new IllegalArgumentException();
             }
-        case Type.DOUBLE:
+        case Type.Sort.DOUBLE:
             switch (to.getSort()) {
-            case Type.INT:
+            case Type.Sort.INT:
                 d2i();
                 return;
-            case Type.LONG:
+            case Type.Sort.LONG:
                 d2l();
                 return;
-            case Type.FLOAT:
+            case Type.Sort.FLOAT:
                 d2f();
                 return;
-            case Type.DOUBLE:
+            case Type.Sort.DOUBLE:
                 // nop
                 return;
-            case Type.BYTE:
+            case Type.Sort.BYTE:
                 d2i();
                 i2b();
                 return;
-            case Type.CHAR:
+            case Type.Sort.CHAR:
                 d2i();
                 i2c();
                 return;
-            case Type.SHORT:
+            case Type.Sort.SHORT:
                 d2i();
                 i2s();
                 return;
@@ -1743,7 +1803,7 @@ public class InstructionAssembler {
      * value → &#x2205;
      */
     public void _return() {
-        Type returnType = methodDescriptor.getReturnType();
+        Type returnType = method.methodDescriptor.returnType();
         switch (returnType.getOpcode(Opcodes.IRETURN)) {
         case Opcodes.IRETURN:
             ireturn();
@@ -1806,13 +1866,13 @@ public class InstructionAssembler {
      * @param field
      *            the field descriptor
      */
-    public void get(FieldDesc field) {
+    public void get(FieldName field) {
         switch (field.allocation) {
         case Instance:
-            getfield(field.owner, field.name, field.desc);
+            getfield(field.owner, field.name, field.descriptor);
             break;
         case Static:
-            getstatic(field.owner, field.name, field.desc);
+            getstatic(field.owner, field.name, field.descriptor);
             break;
         default:
             throw new AssertionError();
@@ -1825,36 +1885,40 @@ public class InstructionAssembler {
      * @param field
      *            the field descriptor
      */
-    public void put(FieldDesc field) {
+    public void put(FieldName field) {
         switch (field.allocation) {
         case Instance:
-            putfield(field.owner, field.name, field.desc);
+            putfield(field.owner, field.name, field.descriptor);
             break;
         case Static:
-            putstatic(field.owner, field.name, field.desc);
+            putstatic(field.owner, field.name, field.descriptor);
             break;
         default:
             throw new AssertionError();
         }
     }
 
-    public void getstatic(String owner, String name, String desc) {
-        methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, owner, name, desc);
+    public void getstatic(Type owner, String name, Type desc) {
+        methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, owner.internalName(), name,
+                desc.descriptor());
         stack.getstatic(desc);
     }
 
-    public void putstatic(String owner, String name, String desc) {
-        methodVisitor.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
+    public void putstatic(Type owner, String name, Type desc) {
+        methodVisitor.visitFieldInsn(Opcodes.PUTSTATIC, owner.internalName(), name,
+                desc.descriptor());
         stack.putstatic(desc);
     }
 
-    public void getfield(String owner, String name, String desc) {
-        methodVisitor.visitFieldInsn(Opcodes.GETFIELD, owner, name, desc);
+    public void getfield(Type owner, String name, Type desc) {
+        methodVisitor.visitFieldInsn(Opcodes.GETFIELD, owner.internalName(), name,
+                desc.descriptor());
         stack.getfield(owner, desc);
     }
 
-    public void putfield(String owner, String name, String desc) {
-        methodVisitor.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
+    public void putfield(Type owner, String name, Type desc) {
+        methodVisitor.visitFieldInsn(Opcodes.PUTFIELD, owner.internalName(), name,
+                desc.descriptor());
         stack.putfield(owner, desc);
     }
 
@@ -1864,53 +1928,57 @@ public class InstructionAssembler {
      * parameters → value
      * 
      * @param method
-     *            the method descriptor for the invocation
+     *            the method for the invocation
      */
-    public void invoke(MethodDesc method) {
+    public void invoke(MethodName method) {
         switch (method.invoke) {
         case Interface:
-            invokeinterface(method.owner, method.name, method.desc);
+            invokeinterface(method.owner, method.name, method.descriptor);
             break;
         case Special:
-            invokespecial(method.owner, method.name, method.desc, false);
+            invokespecial(method.owner, method.name, method.descriptor, false);
             break;
         case SpecialInterface:
-            invokespecial(method.owner, method.name, method.desc, true);
+            invokespecial(method.owner, method.name, method.descriptor, true);
             break;
         case Static:
-            invokestatic(method.owner, method.name, method.desc, false);
+            invokestatic(method.owner, method.name, method.descriptor, false);
             break;
         case StaticInterface:
-            invokestatic(method.owner, method.name, method.desc, true);
+            invokestatic(method.owner, method.name, method.descriptor, true);
             break;
         case Virtual:
-            invokevirtual(method.owner, method.name, method.desc, false);
+            invokevirtual(method.owner, method.name, method.descriptor, false);
             break;
         case VirtualInterface:
-            invokevirtual(method.owner, method.name, method.desc, true);
+            invokevirtual(method.owner, method.name, method.descriptor, true);
             break;
         default:
             throw new AssertionError();
         }
     }
 
-    public void invokevirtual(String owner, String name, String desc, boolean itf) {
-        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner, name, desc, itf);
+    public void invokevirtual(Type owner, String name, MethodTypeDescriptor desc, boolean itf) {
+        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner.internalName(), name,
+                desc.descriptor(), itf);
         stack.invokevirtual(desc);
     }
 
-    public void invokespecial(String owner, String name, String desc, boolean itf) {
-        methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc, itf);
+    public void invokespecial(Type owner, String name, MethodTypeDescriptor desc, boolean itf) {
+        methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, owner.internalName(), name,
+                desc.descriptor(), itf);
         stack.invokespecial(desc);
     }
 
-    public void invokestatic(String owner, String name, String desc, boolean itf) {
-        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner, name, desc, itf);
+    public void invokestatic(Type owner, String name, MethodTypeDescriptor desc, boolean itf) {
+        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner.internalName(), name,
+                desc.descriptor(), itf);
         stack.invokestatic(desc);
     }
 
-    public void invokeinterface(String owner, String name, String desc) {
-        methodVisitor.visitMethodInsn(Opcodes.INVOKEINTERFACE, owner, name, desc, true);
+    public void invokeinterface(Type owner, String name, MethodTypeDescriptor desc) {
+        methodVisitor.visitMethodInsn(Opcodes.INVOKEINTERFACE, owner.internalName(), name,
+                desc.descriptor(), true);
         stack.invokeinterface(desc);
     }
 
@@ -1918,12 +1986,12 @@ public class InstructionAssembler {
 
     private static final Object[] EMPTY_BSM_ARGS = new Object[] {};
 
-    public final void invokedynamic(String name, String desc, Handle bsm) {
+    public final void invokedynamic(String name, MethodTypeDescriptor desc, Handle bsm) {
         invokedynamic(name, desc, bsm, EMPTY_BSM_ARGS);
     }
 
-    public void invokedynamic(String name, String desc, Handle bsm, Object... bsmArgs) {
-        methodVisitor.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+    public void invokedynamic(String name, MethodTypeDescriptor desc, Handle bsm, Object... bsmArgs) {
+        methodVisitor.visitInvokeDynamicInsn(name, desc.descriptor(), bsm.handle(), bsmArgs);
         stack.invokedynamic(desc);
     }
 
@@ -1935,41 +2003,41 @@ public class InstructionAssembler {
      * @param type
      *            the type descriptor
      * @param init
-     *            the init-method descriptor
+     *            the init-method call descriptor
      */
-    public final void anew(Type type, MethodDesc init) {
+    public final void anew(Type type, MethodName init) {
         anew(type);
         dup();
         invoke(init);
     }
 
     public void anew(Type type) {
-        methodVisitor.visitTypeInsn(Opcodes.NEW, type.getInternalName());
+        methodVisitor.visitTypeInsn(Opcodes.NEW, type.internalName());
         stack.anew(type);
     }
 
     private static final int arrayType(Type type) {
         switch (type.getSort()) {
-        case Type.BOOLEAN:
+        case Type.Sort.BOOLEAN:
             return Opcodes.T_BOOLEAN;
-        case Type.CHAR:
+        case Type.Sort.CHAR:
             return Opcodes.T_CHAR;
-        case Type.BYTE:
+        case Type.Sort.BYTE:
             return Opcodes.T_BYTE;
-        case Type.SHORT:
+        case Type.Sort.SHORT:
             return Opcodes.T_SHORT;
-        case Type.INT:
+        case Type.Sort.INT:
             return Opcodes.T_INT;
-        case Type.FLOAT:
+        case Type.Sort.FLOAT:
             return Opcodes.T_FLOAT;
-        case Type.LONG:
+        case Type.Sort.LONG:
             return Opcodes.T_LONG;
-        case Type.DOUBLE:
+        case Type.Sort.DOUBLE:
             return Opcodes.T_DOUBLE;
-        case Type.OBJECT:
-        case Type.ARRAY:
-        case Type.METHOD:
-        case Type.VOID:
+        case Type.Sort.OBJECT:
+        case Type.Sort.ARRAY:
+        case Type.Sort.METHOD:
+        case Type.Sort.VOID:
         default:
             throw new IllegalArgumentException();
         }
@@ -1989,12 +2057,13 @@ public class InstructionAssembler {
      *            the array component type
      */
     public final void anewarray(int length, Type type) {
+        assert length >= 0;
         iconst(length);
         anewarray(type);
     }
 
     public void anewarray(Type type) {
-        methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, type.getInternalName());
+        methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, type.internalName());
         stack.newarray(type);
     }
 
@@ -2009,12 +2078,12 @@ public class InstructionAssembler {
     }
 
     public void checkcast(Type type) {
-        methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, type.getInternalName());
+        methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, type.internalName());
         stack.checkcast(type);
     }
 
     public void instanceOf(Type type) {
-        methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, type.getInternalName());
+        methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, type.internalName());
         stack.instanceOf(type);
     }
 
@@ -2029,8 +2098,8 @@ public class InstructionAssembler {
     }
 
     public void multianewarray(Type type, int dims) {
-        // TODO: getDescriptor() call correct? or getInternalName()?
-        methodVisitor.visitMultiANewArrayInsn(type.getDescriptor(), dims);
+        // TODO: descriptor() call correct? or internalName()?
+        methodVisitor.visitMultiANewArrayInsn(type.descriptor(), dims);
         stack.multianewarray(type, dims);
     }
 
@@ -2040,6 +2109,32 @@ public class InstructionAssembler {
 
     /* boxed wrapper helper */
 
+    private static final MethodName[] boxMethods;
+    private static final MethodName[] unboxMethods;
+    static {
+        MethodName[] bm = new MethodName[12];
+        bm[Type.Sort.BOOLEAN] = Methods.Boolean_valueOf;
+        bm[Type.Sort.CHAR] = Methods.Character_valueOf;
+        bm[Type.Sort.BYTE] = Methods.Byte_valueOf;
+        bm[Type.Sort.SHORT] = Methods.Short_valueOf;
+        bm[Type.Sort.INT] = Methods.Integer_valueOf;
+        bm[Type.Sort.FLOAT] = Methods.Float_valueOf;
+        bm[Type.Sort.LONG] = Methods.Long_valueOf;
+        bm[Type.Sort.DOUBLE] = Methods.Double_valueOf;
+        boxMethods = bm;
+
+        MethodName[] um = new MethodName[12];
+        um[Type.Sort.BOOLEAN] = Methods.Boolean_booleanValue;
+        um[Type.Sort.CHAR] = Methods.Character_charValue;
+        um[Type.Sort.BYTE] = Methods.Byte_byteValue;
+        um[Type.Sort.SHORT] = Methods.Short_shortValue;
+        um[Type.Sort.INT] = Methods.Integer_intValue;
+        um[Type.Sort.FLOAT] = Methods.Float_floatValue;
+        um[Type.Sort.LONG] = Methods.Long_longValue;
+        um[Type.Sort.DOUBLE] = Methods.Double_doubleValue;
+        unboxMethods = um;
+    }
+
     /**
      * value → boxed
      * 
@@ -2047,37 +2142,9 @@ public class InstructionAssembler {
      *            the type kind
      */
     public final void toBoxed(Type type) {
-        switch (type.getSort()) {
-        case Type.VOID:
-            return;
-        case Type.BOOLEAN:
-            invokestatic("java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
-            return;
-        case Type.CHAR:
-            invokestatic("java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
-            return;
-        case Type.BYTE:
-            invokestatic("java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
-            return;
-        case Type.SHORT:
-            invokestatic("java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
-            return;
-        case Type.INT:
-            invokestatic("java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-            return;
-        case Type.FLOAT:
-            invokestatic("java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false);
-            return;
-        case Type.LONG:
-            invokestatic("java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
-            return;
-        case Type.DOUBLE:
-            invokestatic("java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
-            return;
-        case Type.ARRAY:
-        case Type.OBJECT:
-        case Type.METHOD:
-            return;
+        MethodName call = boxMethods[type.getSort()];
+        if (call != null) {
+            invoke(call);
         }
     }
 
@@ -2088,37 +2155,9 @@ public class InstructionAssembler {
      *            the type kind
      */
     public final void toUnboxed(Type type) {
-        switch (type.getSort()) {
-        case Type.VOID:
-            return;
-        case Type.BOOLEAN:
-            invokevirtual("java/lang/Boolean", "booleanValue", "()Z", false);
-            return;
-        case Type.CHAR:
-            invokevirtual("java/lang/Character", "charValue", "()C", false);
-            return;
-        case Type.BYTE:
-            invokevirtual("java/lang/Byte", "byteValue", "()B", false);
-            return;
-        case Type.SHORT:
-            invokevirtual("java/lang/Short", "shortValue", "()S", false);
-            return;
-        case Type.INT:
-            invokevirtual("java/lang/Integer", "intValue", "()I", false);
-            return;
-        case Type.FLOAT:
-            invokevirtual("java/lang/Float", "floatValue", "()F", false);
-            return;
-        case Type.LONG:
-            invokevirtual("java/lang/Long", "longValue", "()J", false);
-            return;
-        case Type.DOUBLE:
-            invokevirtual("java/lang/Double", "doubleValue", "()D", false);
-            return;
-        case Type.ARRAY:
-        case Type.OBJECT:
-        case Type.METHOD:
-            return;
+        MethodName call = unboxMethods[type.getSort()];
+        if (call != null) {
+            invoke(call);
         }
     }
 
@@ -2130,30 +2169,6 @@ public class InstructionAssembler {
      * @return the type's wrapper
      */
     public static final Type wrapper(Type type) {
-        switch (type.getSort()) {
-        case Type.VOID:
-            return Types.Void;
-        case Type.BOOLEAN:
-            return Types.Boolean;
-        case Type.CHAR:
-            return Types.Character;
-        case Type.BYTE:
-            return Types.Byte;
-        case Type.SHORT:
-            return Types.Short;
-        case Type.INT:
-            return Types.Integer;
-        case Type.FLOAT:
-            return Types.Float;
-        case Type.LONG:
-            return Types.Long;
-        case Type.DOUBLE:
-            return Types.Double;
-        case Type.ARRAY:
-        case Type.OBJECT:
-        case Type.METHOD:
-        default:
-            return type;
-        }
+        return type.asWrapper();
     }
 }

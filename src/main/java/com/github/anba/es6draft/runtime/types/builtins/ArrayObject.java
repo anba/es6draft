@@ -141,6 +141,15 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     @Override
+    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value,
+            Property current) {
+        if ("length".equals(propertyKey)) {
+            return ArraySetLength(cx, this, new PropertyDescriptor(value));
+        }
+        return super.setPropertyValue(cx, propertyKey, value, current);
+    }
+
+    @Override
     protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         if ("length".equals(propertyKey)) {
             return true;

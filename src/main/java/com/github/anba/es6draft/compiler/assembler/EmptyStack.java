@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.compiler.assembler;
 
-import org.objectweb.asm.Type;
-
 /**
  * {@link Stack} sub-class to make every operation a no-op.
  */

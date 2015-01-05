@@ -6,11 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
-import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 
 /**
@@ -20,27 +17,25 @@ public final class Errors {
     private Errors() {
     }
 
-    private static ScriptException newError(ExecutionContext cx, Intrinsics constructor,
+    private static ScriptException newError(ExecutionContext cx, Intrinsics prototype,
             String message) {
-        Callable nativeError = (Callable) cx.getIntrinsic(constructor);
-        return ((ErrorObject) nativeError.call(cx, UNDEFINED, message)).getException();
+        return new ErrorObject(cx.getRealm(), prototype, message).getException();
     }
 
-    private static ScriptException newError(ExecutionContext cx, Intrinsics constructor,
+    private static ScriptException newError(ExecutionContext cx, Intrinsics prototype,
             String message, String file, int line, int column) {
-        Callable nativeError = (Callable) cx.getIntrinsic(constructor);
-        return ((ErrorObject) nativeError.call(cx, UNDEFINED, message, file, line, column))
+        return new ErrorObject(cx.getRealm(), prototype, message, file, line, column)
                 .getException();
     }
 
-    private static ScriptException newError(ExecutionContext cx, Intrinsics constructor,
+    private static ScriptException newError(ExecutionContext cx, Intrinsics prototype,
             Messages.Key key) {
-        return newError(cx, constructor, cx.getRealm().message(key));
+        return newError(cx, prototype, cx.getRealm().message(key));
     }
 
-    private static ScriptException newError(ExecutionContext cx, Intrinsics constructor,
+    private static ScriptException newError(ExecutionContext cx, Intrinsics prototype,
             Messages.Key key, String... args) {
-        return newError(cx, constructor, cx.getRealm().message(key, args));
+        return newError(cx, prototype, cx.getRealm().message(key, args));
     }
 
     /**
@@ -53,7 +48,7 @@ public final class Errors {
      * @return the new script exception object
      */
     public static ScriptException newError(ExecutionContext cx, String message) {
-        return newError(cx, Intrinsics.Error, message);
+        return newError(cx, Intrinsics.ErrorPrototype, message);
     }
 
     /**
@@ -66,7 +61,7 @@ public final class Errors {
      * @return the new script exception object
      */
     public static ScriptException newInternalError(ExecutionContext cx, Messages.Key key) {
-        return newError(cx, Intrinsics.InternalError, key);
+        return newError(cx, Intrinsics.InternalErrorPrototype, key);
     }
 
     /**
@@ -82,7 +77,7 @@ public final class Errors {
      */
     public static ScriptException newInternalError(ExecutionContext cx, Messages.Key key,
             String... args) {
-        return newError(cx, Intrinsics.InternalError, key, args);
+        return newError(cx, Intrinsics.InternalErrorPrototype, key, args);
     }
 
     /**
@@ -95,7 +90,7 @@ public final class Errors {
      * @return the new script exception object
      */
     public static ScriptException newTypeError(ExecutionContext cx, Messages.Key key) {
-        return newError(cx, Intrinsics.TypeError, key);
+        return newError(cx, Intrinsics.TypeErrorPrototype, key);
     }
 
     /**
@@ -111,7 +106,7 @@ public final class Errors {
      */
     public static ScriptException newTypeError(ExecutionContext cx, Messages.Key key,
             String... args) {
-        return newError(cx, Intrinsics.TypeError, key, args);
+        return newError(cx, Intrinsics.TypeErrorPrototype, key, args);
     }
 
     /**
@@ -124,7 +119,7 @@ public final class Errors {
      * @return the new script exception object
      */
     public static ScriptException newReferenceError(ExecutionContext cx, Messages.Key key) {
-        return newError(cx, Intrinsics.ReferenceError, key);
+        return newError(cx, Intrinsics.ReferenceErrorPrototype, key);
     }
 
     /**
@@ -140,7 +135,7 @@ public final class Errors {
      */
     public static ScriptException newReferenceError(ExecutionContext cx, Messages.Key key,
             String... args) {
-        return newError(cx, Intrinsics.ReferenceError, key, args);
+        return newError(cx, Intrinsics.ReferenceErrorPrototype, key, args);
     }
 
     /**
@@ -160,7 +155,7 @@ public final class Errors {
      */
     public static ScriptException newReferenceError(ExecutionContext cx, String message,
             String file, int line, int column) {
-        return newError(cx, Intrinsics.ReferenceError, message, file, line, column);
+        return newError(cx, Intrinsics.ReferenceErrorPrototype, message, file, line, column);
     }
 
     /**
@@ -173,7 +168,7 @@ public final class Errors {
      * @return the new script exception object
      */
     public static ScriptException newSyntaxError(ExecutionContext cx, Messages.Key key) {
-        return newError(cx, Intrinsics.SyntaxError, key);
+        return newError(cx, Intrinsics.SyntaxErrorPrototype, key);
     }
 
     /**
@@ -189,7 +184,7 @@ public final class Errors {
      */
     public static ScriptException newSyntaxError(ExecutionContext cx, Messages.Key key,
             String... args) {
-        return newError(cx, Intrinsics.SyntaxError, key, args);
+        return newError(cx, Intrinsics.SyntaxErrorPrototype, key, args);
     }
 
     /**
@@ -209,7 +204,7 @@ public final class Errors {
      */
     public static ScriptException newSyntaxError(ExecutionContext cx, String message, String file,
             int line, int column) {
-        return newError(cx, Intrinsics.SyntaxError, message, file, line, column);
+        return newError(cx, Intrinsics.SyntaxErrorPrototype, message, file, line, column);
     }
 
     /**
@@ -222,7 +217,7 @@ public final class Errors {
      * @return the new script exception object
      */
     public static ScriptException newRangeError(ExecutionContext cx, Messages.Key key) {
-        return newError(cx, Intrinsics.RangeError, key);
+        return newError(cx, Intrinsics.RangeErrorPrototype, key);
     }
 
     /**
@@ -238,7 +233,7 @@ public final class Errors {
      */
     public static ScriptException newRangeError(ExecutionContext cx, Messages.Key key,
             String... args) {
-        return newError(cx, Intrinsics.RangeError, key, args);
+        return newError(cx, Intrinsics.RangeErrorPrototype, key, args);
     }
 
     /**
@@ -251,7 +246,7 @@ public final class Errors {
      * @return the new script exception object
      */
     public static ScriptException newURIError(ExecutionContext cx, Messages.Key key) {
-        return newError(cx, Intrinsics.URIError, key);
+        return newError(cx, Intrinsics.URIErrorPrototype, key);
     }
 
     /**
@@ -266,6 +261,6 @@ public final class Errors {
      * @return the new script exception object
      */
     public static ScriptException newURIError(ExecutionContext cx, Messages.Key key, String... args) {
-        return newError(cx, Intrinsics.URIError, key, args);
+        return newError(cx, Intrinsics.URIErrorPrototype, key, args);
     }
 }

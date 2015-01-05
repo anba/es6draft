@@ -8,16 +8,15 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.FunctionExpression;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.GeneratorComprehension;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.TryCatchLabel;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
@@ -32,48 +31,43 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 final class FunctionCodeGenerator {
     private static final class Methods {
         // ExecutionContext
-        static final MethodDesc ExecutionContext_newFunctionExecutionContext = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ExecutionContext, "newFunctionExecutionContext",
-                Type.getMethodType(Types.ExecutionContext, Types.ExecutionContext,
-                        Types.FunctionObject, Types.Object));
+        static final MethodName ExecutionContext_newFunctionExecutionContext = MethodName
+                .findStatic(Types.ExecutionContext, "newFunctionExecutionContext", Type.methodType(
+                        Types.ExecutionContext, Types.ExecutionContext, Types.FunctionObject,
+                        Types.Object));
 
-        static final MethodDesc ExecutionContext_getCurrentFunction = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "getCurrentFunction",
-                Type.getMethodType(Types.FunctionObject));
+        static final MethodName ExecutionContext_getCurrentFunction = MethodName
+                .findVirtual(Types.ExecutionContext, "getCurrentFunction",
+                        Type.methodType(Types.FunctionObject));
 
         // FunctionObject
-        static final MethodDesc FunctionObject_getLegacyArguments = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.FunctionObject, "getLegacyArguments",
-                Type.getMethodType(Types.Object));
+        static final MethodName FunctionObject_getLegacyArguments = MethodName.findVirtual(
+                Types.FunctionObject, "getLegacyArguments", Type.methodType(Types.Object));
 
-        static final MethodDesc FunctionObject_getLegacyCaller = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.FunctionObject, "getLegacyCaller",
-                Type.getMethodType(Types.Object));
+        static final MethodName FunctionObject_getLegacyCaller = MethodName.findVirtual(
+                Types.FunctionObject, "getLegacyCaller", Type.methodType(Types.Object));
 
-        static final MethodDesc FunctionObject_setLegacyCaller = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.FunctionObject, "setLegacyCaller",
-                Type.getMethodType(Type.VOID_TYPE, Types.FunctionObject));
+        static final MethodName FunctionObject_setLegacyCaller = MethodName.findVirtual(
+                Types.FunctionObject, "setLegacyCaller",
+                Type.methodType(Type.VOID_TYPE, Types.FunctionObject));
 
-        static final MethodDesc FunctionObject_restoreLegacyProperties = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.FunctionObject, "restoreLegacyProperties",
-                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.Object));
+        static final MethodName FunctionObject_restoreLegacyProperties = MethodName.findVirtual(
+                Types.FunctionObject, "restoreLegacyProperties",
+                Type.methodType(Type.VOID_TYPE, Types.Object, Types.Object));
 
         // OrdinaryAsyncFunction
-        static final MethodDesc OrdinaryAsyncFunction_EvaluateBody = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.OrdinaryAsyncFunction, "EvaluateBody", Type
-                        .getMethodType(Types.PromiseObject, Types.ExecutionContext,
-                                Types.OrdinaryAsyncFunction));
+        static final MethodName OrdinaryAsyncFunction_EvaluateBody = MethodName.findStatic(
+                Types.OrdinaryAsyncFunction, "EvaluateBody", Type.methodType(Types.PromiseObject,
+                        Types.ExecutionContext, Types.OrdinaryAsyncFunction));
 
         // OrdinaryGenerator
-        static final MethodDesc OrdinaryGenerator_EvaluateBody = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.OrdinaryGenerator, "EvaluateBody", Type
-                        .getMethodType(Types.GeneratorObject, Types.ExecutionContext,
-                                Types.OrdinaryGenerator));
+        static final MethodName OrdinaryGenerator_EvaluateBody = MethodName.findStatic(
+                Types.OrdinaryGenerator, "EvaluateBody", Type.methodType(Types.GeneratorObject,
+                        Types.ExecutionContext, Types.OrdinaryGenerator));
 
-        static final MethodDesc OrdinaryGenerator_EvaluateBodyComprehension = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.OrdinaryGenerator, "EvaluateBodyComprehension",
-                Type.getMethodType(Types.GeneratorObject, Types.ExecutionContext,
-                        Types.OrdinaryGenerator));
+        static final MethodName OrdinaryGenerator_EvaluateBodyComprehension = MethodName
+                .findStatic(Types.OrdinaryGenerator, "EvaluateBodyComprehension", Type.methodType(
+                        Types.GeneratorObject, Types.ExecutionContext, Types.OrdinaryGenerator));
     }
 
     private static final int FUNCTION = 0;

@@ -66,6 +66,12 @@ ecma_6/Object/assign.js
 # Reflect.set not supported in SM
 ecma_6/Reflect/set.js
 
+# SM bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1115361)
+ecma_6/TypedArray/fill.js
+ecma_6/TypedArray/indexOf-and-lastIndexOf.js
+ecma_6/TypedArray/join.js
+ecma_6/TypedArray/reverse.js
+
 
 ####################################
 # Intl only partially supported    #
@@ -601,6 +607,7 @@ js1_5/Expressions/regress-394673.js
 js1_5/Regress/regress-98901.js
 
 # Intermittent StackOverflow error
+js1_5/Regress/regress-89443.js
 js1_8_5/extensions/recursion.js
 
 # OutOfMemory: Java heap space

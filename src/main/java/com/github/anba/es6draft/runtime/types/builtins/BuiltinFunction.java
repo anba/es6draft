@@ -178,6 +178,14 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     @Override
+    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value,
+            Property current) {
+        assert !(hasDefaultName && "name".equals(propertyKey));
+        assert !(hasDefaultLength && "length".equals(propertyKey));
+        return super.setPropertyValue(cx, propertyKey, value, current);
+    }
+
+    @Override
     protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         if (hasDefaultName && "name".equals(propertyKey)) {
             return true;

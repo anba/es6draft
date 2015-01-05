@@ -11,23 +11,22 @@ import static java.util.Collections.emptySet;
 
 import java.lang.invoke.CallSite;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
-
-import org.objectweb.asm.Handle;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.ScopedNode;
 import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
-import com.github.anba.es6draft.compiler.assembler.FieldDesc;
+import com.github.anba.es6draft.compiler.assembler.FieldName;
+import com.github.anba.es6draft.compiler.assembler.Handle;
 import com.github.anba.es6draft.compiler.assembler.Jump;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.compiler.assembler.VariablesSnapshot;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -39,30 +38,26 @@ import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
  */
 abstract class ExpressionVisitor extends InstructionVisitor {
     private static final class Fields {
-        static final FieldDesc Null_NULL = FieldDesc.create(FieldDesc.Allocation.Static,
-                Types.Null, "NULL", Types.Null);
+        static final FieldName Null_NULL = FieldName.findStatic(Types.Null, "NULL", Types.Null);
 
-        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldDesc.Allocation.Static,
-                Types.Undefined, "UNDEFINED", Types.Undefined);
+        static final FieldName Undefined_UNDEFINED = FieldName.findStatic(Types.Undefined,
+                "UNDEFINED", Types.Undefined);
     }
 
     private static final class Methods {
         // class: ResumptionPoint
-        static final MethodDesc ResumptionPoint_create = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ResumptionPoint, "create", Type.getMethodType(
-                        Types.ResumptionPoint, Types.Object_, Types.Object_, Type.INT_TYPE));
+        static final MethodName ResumptionPoint_create = MethodName
+                .findStatic(Types.ResumptionPoint, "create", Type.methodType(Types.ResumptionPoint,
+                        Types.Object_, Types.Object_, Type.INT_TYPE));
 
-        static final MethodDesc ResumptionPoint_getLocals = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ResumptionPoint, "getLocals",
-                Type.getMethodType(Types.Object_));
+        static final MethodName ResumptionPoint_getLocals = MethodName.findVirtual(
+                Types.ResumptionPoint, "getLocals", Type.methodType(Types.Object_));
 
-        static final MethodDesc ResumptionPoint_getOffset = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ResumptionPoint, "getOffset",
-                Type.getMethodType(Type.INT_TYPE));
+        static final MethodName ResumptionPoint_getOffset = MethodName.findVirtual(
+                Types.ResumptionPoint, "getOffset", Type.methodType(Type.INT_TYPE));
 
-        static final MethodDesc ResumptionPoint_getStack = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ResumptionPoint, "getStack",
-                Type.getMethodType(Types.Object_));
+        static final MethodName ResumptionPoint_getStack = MethodName.findVirtual(
+                Types.ResumptionPoint, "getStack", Type.methodType(Types.Object_));
     }
 
     private static final int CONTEXT_SLOT = 0;
@@ -253,17 +248,15 @@ abstract class ExpressionVisitor extends InstructionVisitor {
 
     private static final class RuntimeBootstrap {
         static final boolean ENABLED = true;
-        static final Object[] EMPTY_BSM_ARGS = new Object[] {};
         static final String STACK = "rt:stack";
         static final String LOCALS = "rt:locals";
 
         private static final Handle BOOTSTRAP;
         static {
-            java.lang.invoke.MethodType mt = java.lang.invoke.MethodType.methodType(CallSite.class,
-                    MethodHandles.Lookup.class, String.class, java.lang.invoke.MethodType.class);
-            BOOTSTRAP = new Handle(Opcodes.H_INVOKESTATIC,
-                    Type.getInternalName(ScriptRuntime.class), "runtimeBootstrap",
-                    mt.toMethodDescriptorString());
+            MethodType mt = MethodType.methodType(CallSite.class, MethodHandles.Lookup.class,
+                    String.class, MethodType.class);
+            BOOTSTRAP = MethodName.findStatic(ScriptRuntime.class, "runtimeBootstrap", mt)
+                    .toHandle();
         }
     }
 
@@ -337,8 +330,8 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         // (1) Save stack
         Type[] stack = state.stack;
         if (RuntimeBootstrap.ENABLED) {
-            invokedynamic(RuntimeBootstrap.STACK, Type.getMethodDescriptor(Types.Object_, stack),
-                    RuntimeBootstrap.BOOTSTRAP, RuntimeBootstrap.EMPTY_BSM_ARGS);
+            invokedynamic(RuntimeBootstrap.STACK, Type.methodType(Types.Object_, stack),
+                    RuntimeBootstrap.BOOTSTRAP);
         } else {
             anewarray(stack.length, Types.Object);
             for (int sp = stack.length - 1; sp >= 0; --sp) {
@@ -372,9 +365,8 @@ abstract class ExpressionVisitor extends InstructionVisitor {
                 llocals[i++] = v.getType();
                 load(v);
             }
-            invokedynamic(RuntimeBootstrap.LOCALS,
-                    Type.getMethodDescriptor(Types.Object_, llocals), RuntimeBootstrap.BOOTSTRAP,
-                    RuntimeBootstrap.EMPTY_BSM_ARGS);
+            invokedynamic(RuntimeBootstrap.LOCALS, Type.methodType(Types.Object_, llocals),
+                    RuntimeBootstrap.BOOTSTRAP);
         } else {
             int i = 0;
             anewarray(locals.getSize(), Types.Object);
@@ -476,7 +468,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
      */
     private void loadFromArray(int index, Type type) {
         aload(index, Types.Object);
-        if (type.getSort() < Type.ARRAY) {
+        if (type.isPrimitive()) {
             checkcast(wrapper(type));
             toUnboxed(type);
         } else if (!Types.Object.equals(type)) {

@@ -746,13 +746,11 @@ public final class ScriptRuntime {
      *            the property name
      * @param cx
      *            the execution context
-     * @param strict
-     *            the strict mode flag
      * @return the property value
      */
     public static Object getPropertyValue(Object baseValue, int propertyNameString,
-            ExecutionContext cx, boolean strict) {
-        return getPropertyValue(baseValue, (long) propertyNameString, cx, strict);
+            ExecutionContext cx) {
+        return getPropertyValue(baseValue, (long) propertyNameString, cx);
     }
 
     /**
@@ -770,19 +768,15 @@ public final class ScriptRuntime {
      *            the property name
      * @param cx
      *            the execution context
-     * @param strict
-     *            the strict mode flag
      * @return the property value
      */
     public static Object getPropertyValue(Object baseValue, long propertyNameString,
-            ExecutionContext cx, boolean strict) {
+            ExecutionContext cx) {
         /* steps 1-6 (generated code) */
         /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
         /* steps 9-11 */
-        Reference<Object, String> ref = new Reference.PropertyIndexReference(baseValue,
-                propertyNameString, strict);
-        return ref.getValue(cx);
+        return Reference.PropertyIndexReference.GetValue(cx, baseValue, propertyNameString);
     }
 
     /**
@@ -800,17 +794,15 @@ public final class ScriptRuntime {
      *            the property name
      * @param cx
      *            the execution context
-     * @param strict
-     *            the strict mode flag
      * @return the property value
      */
     public static Object getPropertyValue(Object baseValue, double propertyNameString,
-            ExecutionContext cx, boolean strict) {
+            ExecutionContext cx) {
         long index = (long) propertyNameString;
         if (index == propertyNameString) {
-            return getPropertyValue(baseValue, index, cx, strict);
+            return getPropertyValue(baseValue, index, cx);
         }
-        return getPropertyValue(baseValue, ToString(propertyNameString), cx, strict);
+        return getPropertyValue(baseValue, ToString(propertyNameString), cx);
     }
 
     /**
@@ -828,19 +820,15 @@ public final class ScriptRuntime {
      *            the property name
      * @param cx
      *            the execution context
-     * @param strict
-     *            the strict mode flag
      * @return the property value
      */
     public static Object getPropertyValue(Object baseValue, String propertyNameString,
-            ExecutionContext cx, boolean strict) {
+            ExecutionContext cx) {
         /* steps 1-6 (generated code) */
         /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
         /* steps 9-11 */
-        Reference<Object, String> ref = new Reference.PropertyNameReference(baseValue,
-                propertyNameString, strict);
-        return ref.getValue(cx);
+        return Reference.PropertyNameReference.GetValue(cx, baseValue, propertyNameString);
     }
 
     /**
@@ -899,19 +887,16 @@ public final class ScriptRuntime {
      *            the property name
      * @param cx
      *            the execution context
-     * @param strict
-     *            the strict mode flag
      * @return the property value
      */
     public static Object getElementValue(Object baseValue, Object propertyNameValue,
-            ExecutionContext cx, boolean strict) {
+            ExecutionContext cx) {
         // TODO: IC
         if (Type.isString(propertyNameValue)) {
-            return getPropertyValue(baseValue, Type.stringValue(propertyNameValue).toString(), cx,
-                    strict);
+            return getPropertyValue(baseValue, Type.stringValue(propertyNameValue).toString(), cx);
         }
         if (Type.isNumber(propertyNameValue)) {
-            return getPropertyValue(baseValue, Type.numberValue(propertyNameValue), cx, strict);
+            return getPropertyValue(baseValue, Type.numberValue(propertyNameValue), cx);
         }
         /* steps 1-6 (generated code) */
         /* steps 7-8 */
@@ -920,13 +905,9 @@ public final class ScriptRuntime {
         Object propertyKey = ToPropertyKey(cx, propertyNameValue);
         /* steps 10-11 */
         if (propertyKey instanceof String) {
-            Reference<Object, String> ref = new Reference.PropertyNameReference(baseValue,
-                    (String) propertyKey, strict);
-            return ref.getValue(cx);
+            return Reference.PropertyNameReference.GetValue(cx, baseValue, (String) propertyKey);
         }
-        Reference<Object, Symbol> ref = new Reference.PropertySymbolReference(baseValue,
-                (Symbol) propertyKey, strict);
-        return ref.getValue(cx);
+        return Reference.PropertySymbolReference.GetValue(cx, baseValue, (Symbol) propertyKey);
     }
 
     /**
@@ -1443,6 +1424,20 @@ public final class ScriptRuntime {
         lstr.toString().getChars(0, llen, ca, 0);
         rstr.toString().getChars(0, rlen, ca, llen);
         return new String(ca);
+    }
+
+    /**
+     * 12.7 Additive Operators<br>
+     * 12.7.3 The Addition operator ( + )
+     * 
+     * @param value
+     *            the argument value
+     * @param cx
+     *            the execution context
+     * @return the result of ToString(ToPrimitive(value))
+     */
+    public static CharSequence toStr(Object value, ExecutionContext cx) {
+        return ToString(cx, ToPrimitive(cx, value));
     }
 
     /**

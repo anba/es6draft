@@ -10,12 +10,11 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunc
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
 
@@ -28,96 +27,86 @@ final class PropertyGenerator extends
         DefaultCodeGenerator<DefaultCodeGenerator.ValType, ExpressionVisitor> {
     private static final class Methods {
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinition = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluatePropertyDefinition", Type
-                        .getMethodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinition = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluatePropertyDefinition", Type.methodType(Type.VOID_TYPE,
+                        Types.OrdinaryObject, Types.Object, Types.RuntimeInfo$Function,
+                        Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinition_String = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinition", Type.methodType(
+                        Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
+                        Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionAsync = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionAsync", Type
+                        .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
                                 Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinition_String = MethodDesc
-                .create(MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                        "EvaluatePropertyDefinition", Type.getMethodType(Type.VOID_TYPE,
-                                Types.OrdinaryObject, Types.String, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionAsync_String = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionAsync", Type
+                        .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
+                                Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionAsync = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluatePropertyDefinitionAsync",
-                Type.getMethodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
-                        Types.RuntimeInfo$Function, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionGenerator = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionGenerator", Type
+                        .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
+                                Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionAsync_String = MethodDesc
-                .create(MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                        "EvaluatePropertyDefinitionAsync", Type.getMethodType(Type.VOID_TYPE,
-                                Types.OrdinaryObject, Types.String, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionGenerator_String = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionGenerator", Type
+                        .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
+                                Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionGenerator = MethodDesc
-                .create(MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                        "EvaluatePropertyDefinitionGenerator", Type.getMethodType(Type.VOID_TYPE,
-                                Types.OrdinaryObject, Types.Object, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionGetter = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionGetter", Type
+                        .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
+                                Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionGenerator_String = MethodDesc
-                .create(MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                        "EvaluatePropertyDefinitionGenerator", Type.getMethodType(Type.VOID_TYPE,
-                                Types.OrdinaryObject, Types.String, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionGetter_String = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionGetter", Type
+                        .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
+                                Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionGetter = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluatePropertyDefinitionGetter",
-                Type.getMethodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
-                        Types.RuntimeInfo$Function, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionSetter = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionSetter", Type
+                        .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
+                                Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionGetter_String = MethodDesc
-                .create(MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                        "EvaluatePropertyDefinitionGetter", Type.getMethodType(Type.VOID_TYPE,
-                                Types.OrdinaryObject, Types.String, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionSetter_String = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionSetter", Type
+                        .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
+                                Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionSetter = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluatePropertyDefinitionSetter",
-                Type.getMethodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
-                        Types.RuntimeInfo$Function, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionSetter_String = MethodDesc
-                .create(MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                        "EvaluatePropertyDefinitionSetter", Type.getMethodType(Type.VOID_TYPE,
-                                Types.OrdinaryObject, Types.String, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_defineMethod = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineMethod", Type.getMethodType(
-                        Type.VOID_TYPE, Types.OrdinaryObject, Types.Object, Types.FunctionObject,
+        static final MethodName ScriptRuntime_defineMethod = MethodName.findStatic(
+                Types.ScriptRuntime, "defineMethod", Type.methodType(Type.VOID_TYPE,
+                        Types.OrdinaryObject, Types.Object, Types.FunctionObject,
                         Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_defineMethod_String = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineMethod", Type.getMethodType(
-                        Type.VOID_TYPE, Types.OrdinaryObject, Types.String, Types.FunctionObject,
+        static final MethodName ScriptRuntime_defineMethod_String = MethodName.findStatic(
+                Types.ScriptRuntime, "defineMethod", Type.methodType(Type.VOID_TYPE,
+                        Types.OrdinaryObject, Types.String, Types.FunctionObject,
                         Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_defineMethod_long = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineMethod", Type.getMethodType(
-                        Type.VOID_TYPE, Types.OrdinaryObject, Type.LONG_TYPE, Types.FunctionObject,
+        static final MethodName ScriptRuntime_defineMethod_long = MethodName.findStatic(
+                Types.ScriptRuntime, "defineMethod", Type.methodType(Type.VOID_TYPE,
+                        Types.OrdinaryObject, Type.LONG_TYPE, Types.FunctionObject,
                         Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_defineProperty = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineProperty", Type
-                        .getMethodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
-                                Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_defineProperty = MethodName.findStatic(
+                Types.ScriptRuntime, "defineProperty", Type.methodType(Type.VOID_TYPE,
+                        Types.OrdinaryObject, Types.Object, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_defineProperty_String = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineProperty", Type
-                        .getMethodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
-                                Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_defineProperty_String = MethodName.findStatic(
+                Types.ScriptRuntime, "defineProperty", Type.methodType(Type.VOID_TYPE,
+                        Types.OrdinaryObject, Types.String, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_defineProperty_long = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineProperty", Type
-                        .getMethodType(Type.VOID_TYPE, Types.OrdinaryObject, Type.LONG_TYPE,
-                                Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_defineProperty_long = MethodName
+                .findStatic(Types.ScriptRuntime, "defineProperty", Type.methodType(Type.VOID_TYPE,
+                        Types.OrdinaryObject, Type.LONG_TYPE, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_defineProtoProperty = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineProtoProperty", Type
-                        .getMethodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
-                                Types.ExecutionContext));
+        static final MethodName ScriptRuntime_defineProtoProperty = MethodName.findStatic(
+                Types.ScriptRuntime, "defineProtoProperty", Type.methodType(Type.VOID_TYPE,
+                        Types.OrdinaryObject, Types.Object, Types.ExecutionContext));
     }
 
     public PropertyGenerator(CodeGenerator codegen) {

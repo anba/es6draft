@@ -135,6 +135,27 @@ public final class LegacyArgumentsObject extends OrdinaryObject {
     }
 
     @Override
+    protected boolean setPropertyValue(ExecutionContext cx, long propertyKey, Object value,
+            Property current) {
+        // this object is effectively unmodifiable
+        return true;
+    }
+
+    @Override
+    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value,
+            Property current) {
+        // this object is effectively unmodifiable
+        return true;
+    }
+
+    @Override
+    protected boolean setPropertyValue(ExecutionContext cx, Symbol propertyKey, Object value,
+            Property current) {
+        // this object is effectively unmodifiable
+        return true;
+    }
+
+    @Override
     protected boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
         int index = ParameterMap.toArgumentIndex(propertyKey);
         return 0 <= index && index < arguments.length;

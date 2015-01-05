@@ -19,12 +19,12 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.WeakHashMap;
 
-import org.objectweb.asm.Handle;
-import org.objectweb.asm.Opcodes;
-
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.Scripts;
 import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.compiler.assembler.Handle;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.MethodTypeDescriptor;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -55,14 +55,6 @@ public final class NativeCalls {
     private NativeCalls() {
     }
 
-    private static final class Types {
-        static final org.objectweb.asm.Type Object = org.objectweb.asm.Type.getType(Object.class);
-        static final org.objectweb.asm.Type Object_ = org.objectweb.asm.Type
-                .getType(Object[].class);
-        static final org.objectweb.asm.Type ExecutionContext = org.objectweb.asm.Type
-                .getType(ExecutionContext.class);
-    }
-
     /**
      * Returns the native call name.
      * 
@@ -78,9 +70,7 @@ public final class NativeCalls {
     static {
         MethodType mt = MethodType.methodType(CallSite.class, MethodHandles.Lookup.class,
                 String.class, MethodType.class);
-        BOOTSTRAP = new Handle(Opcodes.H_INVOKESTATIC,
-                org.objectweb.asm.Type.getInternalName(NativeCalls.class), "bootstrapDynamic",
-                mt.toMethodDescriptorString());
+        BOOTSTRAP = MethodName.findStatic(NativeCalls.class, "bootstrapDynamic", mt).toHandle();
     }
 
     /**
@@ -92,15 +82,15 @@ public final class NativeCalls {
         return BOOTSTRAP;
     }
 
-    private static final String OP_NATIVE_CALL = org.objectweb.asm.Type.getMethodDescriptor(
-            Types.Object, Types.Object_, Types.ExecutionContext);
+    private static final MethodTypeDescriptor OP_NATIVE_CALL = MethodTypeDescriptor.methodType(
+            Object.class, Object[].class, ExecutionContext.class);
 
     /**
      * Returns the native call method descriptor.
      * 
      * @return the method descriptor
      */
-    public static String getNativeCallMethodDescriptor() {
+    public static MethodTypeDescriptor getNativeCallMethodDescriptor() {
         return OP_NATIVE_CALL;
     }
 

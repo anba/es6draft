@@ -17,11 +17,13 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.MutableCallSite;
-
-import org.objectweb.asm.Handle;
-import org.objectweb.asm.Opcodes;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.github.anba.es6draft.ast.BinaryExpression;
+import com.github.anba.es6draft.compiler.assembler.Handle;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.MethodTypeDescriptor;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
@@ -36,16 +38,9 @@ public final class Bootstrap {
     private Bootstrap() {
     }
 
-    private static final class Types {
-        static final org.objectweb.asm.Type Object = org.objectweb.asm.Type.getType(Object.class);
-        static final org.objectweb.asm.Type Object_ = org.objectweb.asm.Type
-                .getType(Object[].class);
-        static final org.objectweb.asm.Type ExecutionContext = org.objectweb.asm.Type
-                .getType(ExecutionContext.class);
-    }
-
     private static final class CallNames {
         static final String CALL = "expression::call";
+        static final String CONCAT = "expression::concat";
         static final String ADD = "expression::add";
         static final String EQ = "expression::equals";
         static final String SHEQ = "expression::strictEquals";
@@ -55,26 +50,24 @@ public final class Bootstrap {
         static final String GE = "expression::greaterThanEquals";
     }
 
-    private static final String OP_ADD = org.objectweb.asm.Type.getMethodDescriptor(Types.Object,
-            Types.Object, Types.Object, Types.ExecutionContext);
-    private static final String OP_CMP = org.objectweb.asm.Type
-            .getMethodDescriptor(org.objectweb.asm.Type.BOOLEAN_TYPE, Types.Object, Types.Object,
-                    Types.ExecutionContext);
-    private static final String OP_EQ = org.objectweb.asm.Type
-            .getMethodDescriptor(org.objectweb.asm.Type.BOOLEAN_TYPE, Types.Object, Types.Object,
-                    Types.ExecutionContext);
-    private static final String OP_STRICT_EQ = org.objectweb.asm.Type.getMethodDescriptor(
-            org.objectweb.asm.Type.BOOLEAN_TYPE, Types.Object, Types.Object);
-    private static final String OP_CALL = org.objectweb.asm.Type.getMethodDescriptor(Types.Object,
-            Types.Object, Types.ExecutionContext, Types.Object, Types.Object_);
+    private static final class Descriptors {
+        static final MethodTypeDescriptor ADD = MethodTypeDescriptor.methodType(Object.class,
+                Object.class, Object.class, ExecutionContext.class);
+        static final MethodTypeDescriptor CMP = MethodTypeDescriptor.methodType(boolean.class,
+                Object.class, Object.class, ExecutionContext.class);
+        static final MethodTypeDescriptor EQ = MethodTypeDescriptor.methodType(boolean.class,
+                Object.class, Object.class, ExecutionContext.class);
+        static final MethodTypeDescriptor STRICT_EQ = MethodTypeDescriptor.methodType(
+                boolean.class, Object.class, Object.class);
+        static final MethodTypeDescriptor CALL = MethodTypeDescriptor.methodType(Object.class,
+                Object.class, ExecutionContext.class, Object.class, Object[].class);
+    }
 
     private static final Handle BOOTSTRAP;
     static {
         MethodType mt = MethodType.methodType(CallSite.class, MethodHandles.Lookup.class,
                 String.class, MethodType.class);
-        BOOTSTRAP = new Handle(Opcodes.H_INVOKESTATIC,
-                org.objectweb.asm.Type.getInternalName(Bootstrap.class), "bootstrapDynamic",
-                mt.toMethodDescriptorString());
+        BOOTSTRAP = MethodName.findStatic(Bootstrap.class, "bootstrapDynamic", mt).toHandle();
     }
 
     /**
@@ -91,8 +84,8 @@ public final class Bootstrap {
      * 
      * @return the method descriptor
      */
-    public static String getCallMethodDescriptor() {
-        return OP_CALL;
+    public static MethodTypeDescriptor getCallMethodDescriptor() {
+        return Descriptors.CALL;
     }
 
     /**
@@ -182,6 +175,529 @@ public final class Bootstrap {
     }
 
     /**
+     * Returns the invokedynamic instruction name for concat expressions.
+     * 
+     * @return the invokedynamic instruction name
+     */
+    public static String getConcatName() {
+        return CallNames.CONCAT;
+    }
+
+    /**
+     * Returns the method descriptor for concat expressions.
+     * 
+     * @param numberOfStrings
+     *            the number of strings
+     * @return the method descriptor
+     */
+    public static MethodTypeDescriptor getConcatMethodDescriptor(int numberOfStrings) {
+        Class<?>[] parameters = new Class<?>[numberOfStrings + 1];
+        parameters[0] = ExecutionContext.class;
+        Arrays.fill(parameters, 1, parameters.length, CharSequence.class);
+        return MethodTypeDescriptor.methodType(CharSequence.class, parameters);
+    }
+
+    /**
+     * Returns the bootstrapping handle for concat expressions.
+     * 
+     * @return the bootstrapping handle
+     */
+    public static Handle getConcatBootstrap() {
+        return BOOTSTRAP;
+    }
+
+    private static final int MAX_STRING_SEGMENT_SIZE = 5;
+    private static final int CONCAT_MIN_PARAMS = 2;
+    private static final int CONCAT_MAX_SPECIALIZATION = 10;
+    private static final MethodHandle[] testConcatMH;
+    private static final MethodHandle[] concatConsMH;
+    private static final MethodHandle[] concatMH;
+    static {
+        MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
+        final int methods = CONCAT_MAX_SPECIALIZATION - CONCAT_MIN_PARAMS + 1;
+
+        MethodHandle[] test = new MethodHandle[methods + 1];
+        ArrayList<Class<?>> testParams = new ArrayList<>();
+        testParams.add(CharSequence.class);
+        for (int i = CONCAT_MIN_PARAMS; i <= CONCAT_MAX_SPECIALIZATION; ++i) {
+            testParams.add(CharSequence.class);
+            test[i - CONCAT_MIN_PARAMS] = dropContext(lookup.findStatic("testConcat",
+                    MethodType.methodType(boolean.class, testParams)));
+        }
+        test[methods] = dropContext(lookup.findStatic("testConcat",
+                MethodType.methodType(boolean.class, CharSequence[].class)));
+        testConcatMH = test;
+
+        MethodHandle[] cons = new MethodHandle[methods + 1];
+        ArrayList<Class<?>> consParams = new ArrayList<>();
+        consParams.add(ExecutionContext.class);
+        consParams.add(CharSequence.class);
+        for (int i = CONCAT_MIN_PARAMS; i <= CONCAT_MAX_SPECIALIZATION; ++i) {
+            consParams.add(CharSequence.class);
+            cons[i - CONCAT_MIN_PARAMS] = lookup.findStatic("concatCons",
+                    MethodType.methodType(CharSequence.class, consParams));
+        }
+        cons[methods] = lookup.findStatic("concatCons", MethodType.methodType(CharSequence.class,
+                ExecutionContext.class, CharSequence[].class));
+        concatConsMH = cons;
+
+        MethodHandle[] concat = new MethodHandle[methods + 1];
+        ArrayList<Class<?>> concatParams = new ArrayList<>();
+        concatParams.add(CharSequence.class);
+        for (int i = CONCAT_MIN_PARAMS; i <= CONCAT_MAX_SPECIALIZATION; ++i) {
+            concatParams.add(CharSequence.class);
+            concat[i - CONCAT_MIN_PARAMS] = dropContext(lookup.findStatic("concat",
+                    MethodType.methodType(CharSequence.class, concatParams)));
+        }
+        concat[methods] = dropContext(lookup.findStatic("concat",
+                MethodType.methodType(CharSequence.class, CharSequence[].class)));
+        concatMH = concat;
+    }
+
+    private static MethodHandle dropContext(MethodHandle mh) {
+        return MethodHandles.dropArguments(mh, 0, ExecutionContext.class);
+    }
+
+    private static void concatSetup(MutableCallSite callsite, MethodType type) {
+        MethodHandle target, test, generic;
+        int numberOfStrings = type.parameterCount() - 1; // CharSequence..., ExecutionContext
+        if (numberOfStrings <= CONCAT_MAX_SPECIALIZATION) {
+            assert numberOfStrings >= CONCAT_MIN_PARAMS;
+            int index = numberOfStrings - CONCAT_MIN_PARAMS;
+            target = concatMH[index];
+            test = testConcatMH[index];
+            generic = concatConsMH[index];
+            setCallSiteTarget(callsite, target, test, generic);
+        } else {
+            final int index = CONCAT_MAX_SPECIALIZATION - CONCAT_MIN_PARAMS + 1;
+            target = concatMH[index].asCollector(CharSequence[].class, numberOfStrings);
+            test = testConcatMH[index].asCollector(CharSequence[].class, numberOfStrings);
+            generic = concatConsMH[index].asCollector(CharSequence[].class, numberOfStrings);
+        }
+        setCallSiteTarget(callsite, target, test, generic);
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testConcat(CharSequence s1, CharSequence s2) {
+        return (s1.length() + s2.length()) <= (2 * MAX_STRING_SEGMENT_SIZE);
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3) {
+        return (s1.length() + s2.length() + s3.length()) <= (3 * MAX_STRING_SEGMENT_SIZE);
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3,
+            CharSequence s4) {
+        return (s1.length() + s2.length() + s3.length() + s4.length()) <= (4 * MAX_STRING_SEGMENT_SIZE);
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3,
+            CharSequence s4, CharSequence s5) {
+        int n = s1.length();
+        n += s2.length();
+        n += s3.length();
+        n += s4.length();
+        n += s5.length();
+        return n <= (5 * MAX_STRING_SEGMENT_SIZE);
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3,
+            CharSequence s4, CharSequence s5, CharSequence s6) {
+        int n = s1.length();
+        n += s2.length();
+        n += s3.length();
+        n += s4.length();
+        n += s5.length();
+        n += s6.length();
+        return n <= (6 * MAX_STRING_SEGMENT_SIZE);
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3,
+            CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7) {
+        int n = s1.length();
+        n += s2.length();
+        n += s3.length();
+        n += s4.length();
+        n += s5.length();
+        n += s6.length();
+        n += s7.length();
+        return n <= (7 * MAX_STRING_SEGMENT_SIZE);
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3,
+            CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7, CharSequence s8) {
+        int n = s1.length();
+        n += s2.length();
+        n += s3.length();
+        n += s4.length();
+        n += s5.length();
+        n += s6.length();
+        n += s7.length();
+        n += s8.length();
+        return n <= (8 * MAX_STRING_SEGMENT_SIZE);
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3,
+            CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7, CharSequence s8,
+            CharSequence s9) {
+        int n = s1.length();
+        n += s2.length();
+        n += s3.length();
+        n += s4.length();
+        n += s5.length();
+        n += s6.length();
+        n += s7.length();
+        n += s8.length();
+        n += s9.length();
+        return n <= (9 * MAX_STRING_SEGMENT_SIZE);
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3,
+            CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7, CharSequence s8,
+            CharSequence s9, CharSequence s10) {
+        int n = s1.length();
+        n += s2.length();
+        n += s3.length();
+        n += s4.length();
+        n += s5.length();
+        n += s6.length();
+        n += s7.length();
+        n += s8.length();
+        n += s9.length();
+        n += s10.length();
+        return n <= (10 * MAX_STRING_SEGMENT_SIZE);
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testConcat(CharSequence[] strings) {
+        int n = 0;
+        for (CharSequence charSequence : strings) {
+            n += charSequence.length();
+        }
+        return n <= (strings.length * MAX_STRING_SEGMENT_SIZE);
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concatCons(ExecutionContext cx, CharSequence s1, CharSequence s2) {
+        return ScriptRuntime.add(s1, s2, cx);
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concatCons(ExecutionContext cx, CharSequence s1, CharSequence s2,
+            CharSequence s3) {
+        return ScriptRuntime.add(ScriptRuntime.add(s1, s2, cx), s3, cx);
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concatCons(ExecutionContext cx, CharSequence s1, CharSequence s2,
+            CharSequence s3, CharSequence s4) {
+        return ScriptRuntime.add(ScriptRuntime.add(ScriptRuntime.add(s1, s2, cx), s3, cx), s4, cx);
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concatCons(ExecutionContext cx, CharSequence s1, CharSequence s2,
+            CharSequence s3, CharSequence s4, CharSequence s5) {
+        CharSequence s = ScriptRuntime.add(s1, s2, cx);
+        s = ScriptRuntime.add(s, s3, cx);
+        s = ScriptRuntime.add(s, s4, cx);
+        s = ScriptRuntime.add(s, s5, cx);
+        return s;
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concatCons(ExecutionContext cx, CharSequence s1, CharSequence s2,
+            CharSequence s3, CharSequence s4, CharSequence s5, CharSequence s6) {
+        CharSequence s = ScriptRuntime.add(s1, s2, cx);
+        s = ScriptRuntime.add(s, s3, cx);
+        s = ScriptRuntime.add(s, s4, cx);
+        s = ScriptRuntime.add(s, s5, cx);
+        s = ScriptRuntime.add(s, s6, cx);
+        return s;
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concatCons(ExecutionContext cx, CharSequence s1, CharSequence s2,
+            CharSequence s3, CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7) {
+        CharSequence s = ScriptRuntime.add(s1, s2, cx);
+        s = ScriptRuntime.add(s, s3, cx);
+        s = ScriptRuntime.add(s, s4, cx);
+        s = ScriptRuntime.add(s, s5, cx);
+        s = ScriptRuntime.add(s, s6, cx);
+        s = ScriptRuntime.add(s, s7, cx);
+        return s;
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concatCons(ExecutionContext cx, CharSequence s1, CharSequence s2,
+            CharSequence s3, CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7,
+            CharSequence s8) {
+        CharSequence s = ScriptRuntime.add(s1, s2, cx);
+        s = ScriptRuntime.add(s, s3, cx);
+        s = ScriptRuntime.add(s, s4, cx);
+        s = ScriptRuntime.add(s, s5, cx);
+        s = ScriptRuntime.add(s, s6, cx);
+        s = ScriptRuntime.add(s, s7, cx);
+        s = ScriptRuntime.add(s, s8, cx);
+        return s;
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concatCons(ExecutionContext cx, CharSequence s1, CharSequence s2,
+            CharSequence s3, CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7,
+            CharSequence s8, CharSequence s9) {
+        CharSequence s = ScriptRuntime.add(s1, s2, cx);
+        s = ScriptRuntime.add(s, s3, cx);
+        s = ScriptRuntime.add(s, s4, cx);
+        s = ScriptRuntime.add(s, s5, cx);
+        s = ScriptRuntime.add(s, s6, cx);
+        s = ScriptRuntime.add(s, s7, cx);
+        s = ScriptRuntime.add(s, s8, cx);
+        s = ScriptRuntime.add(s, s9, cx);
+        return s;
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concatCons(ExecutionContext cx, CharSequence s1, CharSequence s2,
+            CharSequence s3, CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7,
+            CharSequence s8, CharSequence s9, CharSequence s10) {
+        CharSequence s = ScriptRuntime.add(s1, s2, cx);
+        s = ScriptRuntime.add(s, s3, cx);
+        s = ScriptRuntime.add(s, s4, cx);
+        s = ScriptRuntime.add(s, s5, cx);
+        s = ScriptRuntime.add(s, s6, cx);
+        s = ScriptRuntime.add(s, s7, cx);
+        s = ScriptRuntime.add(s, s8, cx);
+        s = ScriptRuntime.add(s, s9, cx);
+        s = ScriptRuntime.add(s, s10, cx);
+        return s;
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concatCons(ExecutionContext cx, CharSequence[] strings) {
+        CharSequence s = "";
+        for (CharSequence cs : strings) {
+            s = ScriptRuntime.add(s, cs, cx);
+        }
+        return s;
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concat(CharSequence s1, CharSequence s2) {
+        int s1len = s1.length(), s2len = s2.length();
+        if (s1len == 0) {
+            return s2;
+        }
+        if (s2len == 0) {
+            return s1;
+        }
+        char[] ca = new char[s1len + s2len];
+        s1.toString().getChars(0, s1len, ca, 0);
+        s2.toString().getChars(0, s2len, ca, s1len);
+        return new String(ca);
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concat(CharSequence s1, CharSequence s2, CharSequence s3) {
+        int s1len = s1.length(), s2len = s2.length(), s3len = s3.length();
+        char[] ca = new char[s1len + s2len + s3len];
+        if (s1len != 0)
+            s1.toString().getChars(0, s1len, ca, 0);
+        if (s2len != 0)
+            s2.toString().getChars(0, s2len, ca, s1len);
+        if (s3len != 0)
+            s3.toString().getChars(0, s3len, ca, s1len + s2len);
+        return new String(ca);
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concat(CharSequence s1, CharSequence s2, CharSequence s3,
+            CharSequence s4) {
+        int s1len = s1.length(), s2len = s2.length(), s3len = s3.length(), s4len = s4.length();
+        char[] ca = new char[s1len + s2len + s3len + s4len];
+        if (s1len != 0)
+            s1.toString().getChars(0, s1len, ca, 0);
+        if (s2len != 0)
+            s2.toString().getChars(0, s2len, ca, s1len);
+        if (s3len != 0)
+            s3.toString().getChars(0, s3len, ca, s1len + s2len);
+        if (s4len != 0)
+            s4.toString().getChars(0, s4len, ca, s1len + s2len + s3len);
+        return new String(ca);
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concat(CharSequence s1, CharSequence s2, CharSequence s3,
+            CharSequence s4, CharSequence s5) {
+        int s1len = s1.length(), s2len = s2.length(), s3len = s3.length(), s4len = s4.length();
+        int s5len = s5.length();
+        char[] ca = new char[s1len + s2len + s3len + s4len + s5len];
+        if (s1len != 0)
+            s1.toString().getChars(0, s1len, ca, 0);
+        if (s2len != 0)
+            s2.toString().getChars(0, s2len, ca, s1len);
+        if (s3len != 0)
+            s3.toString().getChars(0, s3len, ca, s1len + s2len);
+        if (s4len != 0)
+            s4.toString().getChars(0, s4len, ca, s1len + s2len + s3len);
+        if (s5len != 0)
+            s5.toString().getChars(0, s5len, ca, s1len + s2len + s3len + s4len);
+        return new String(ca);
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concat(CharSequence s1, CharSequence s2, CharSequence s3,
+            CharSequence s4, CharSequence s5, CharSequence s6) {
+        int s1len = s1.length(), s2len = s2.length(), s3len = s3.length(), s4len = s4.length();
+        int s5len = s5.length(), s6len = s6.length();
+        char[] ca = new char[s1len + s2len + s3len + s4len + s5len + s6len];
+        if (s1len != 0)
+            s1.toString().getChars(0, s1len, ca, 0);
+        if (s2len != 0)
+            s2.toString().getChars(0, s2len, ca, s1len);
+        if (s3len != 0)
+            s3.toString().getChars(0, s3len, ca, s1len + s2len);
+        if (s4len != 0)
+            s4.toString().getChars(0, s4len, ca, s1len + s2len + s3len);
+        if (s5len != 0)
+            s5.toString().getChars(0, s5len, ca, s1len + s2len + s3len + s4len);
+        if (s6len != 0)
+            s6.toString().getChars(0, s6len, ca, s1len + s2len + s3len + s4len + s5len);
+        return new String(ca);
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concat(CharSequence s1, CharSequence s2, CharSequence s3,
+            CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7) {
+        int s1len = s1.length(), s2len = s2.length(), s3len = s3.length(), s4len = s4.length();
+        int s5len = s5.length(), s6len = s6.length(), s7len = s7.length();
+        char[] ca = new char[s1len + s2len + s3len + s4len + s5len + s6len + s7len];
+        if (s1len != 0)
+            s1.toString().getChars(0, s1len, ca, 0);
+        if (s2len != 0)
+            s2.toString().getChars(0, s2len, ca, s1len);
+        if (s3len != 0)
+            s3.toString().getChars(0, s3len, ca, s1len + s2len);
+        if (s4len != 0)
+            s4.toString().getChars(0, s4len, ca, s1len + s2len + s3len);
+        if (s5len != 0)
+            s5.toString().getChars(0, s5len, ca, s1len + s2len + s3len + s4len);
+        if (s6len != 0)
+            s6.toString().getChars(0, s6len, ca, s1len + s2len + s3len + s4len + s5len);
+        if (s7len != 0)
+            s7.toString().getChars(0, s7len, ca, s1len + s2len + s3len + s4len + s5len + s6len);
+        return new String(ca);
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concat(CharSequence s1, CharSequence s2, CharSequence s3,
+            CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7, CharSequence s8) {
+        int s1len = s1.length(), s2len = s2.length(), s3len = s3.length(), s4len = s4.length();
+        int s5len = s5.length(), s6len = s6.length(), s7len = s7.length(), s8len = s8.length();
+        char[] ca = new char[s1len + s2len + s3len + s4len + s5len + s6len + s7len + s8len];
+        if (s1len != 0)
+            s1.toString().getChars(0, s1len, ca, 0);
+        if (s2len != 0)
+            s2.toString().getChars(0, s2len, ca, s1len);
+        if (s3len != 0)
+            s3.toString().getChars(0, s3len, ca, s1len + s2len);
+        if (s4len != 0)
+            s4.toString().getChars(0, s4len, ca, s1len + s2len + s3len);
+        if (s5len != 0)
+            s5.toString().getChars(0, s5len, ca, s1len + s2len + s3len + s4len);
+        if (s6len != 0)
+            s6.toString().getChars(0, s6len, ca, s1len + s2len + s3len + s4len + s5len);
+        if (s7len != 0)
+            s7.toString().getChars(0, s7len, ca, s1len + s2len + s3len + s4len + s5len + s6len);
+        if (s8len != 0)
+            s8.toString().getChars(0, s8len, ca,
+                    s1len + s2len + s3len + s4len + s5len + s6len + s7len);
+        return new String(ca);
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concat(CharSequence s1, CharSequence s2, CharSequence s3,
+            CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7, CharSequence s8,
+            CharSequence s9) {
+        int s1len = s1.length(), s2len = s2.length(), s3len = s3.length(), s4len = s4.length();
+        int s5len = s5.length(), s6len = s6.length(), s7len = s7.length(), s8len = s8.length();
+        int s9len = s9.length();
+        char[] ca = new char[s1len + s2len + s3len + s4len + s5len + s6len + s7len + s8len + s9len];
+        if (s1len != 0)
+            s1.toString().getChars(0, s1len, ca, 0);
+        if (s2len != 0)
+            s2.toString().getChars(0, s2len, ca, s1len);
+        if (s3len != 0)
+            s3.toString().getChars(0, s3len, ca, s1len + s2len);
+        if (s4len != 0)
+            s4.toString().getChars(0, s4len, ca, s1len + s2len + s3len);
+        if (s5len != 0)
+            s5.toString().getChars(0, s5len, ca, s1len + s2len + s3len + s4len);
+        if (s6len != 0)
+            s6.toString().getChars(0, s6len, ca, s1len + s2len + s3len + s4len + s5len);
+        if (s7len != 0)
+            s7.toString().getChars(0, s7len, ca, s1len + s2len + s3len + s4len + s5len + s6len);
+        if (s8len != 0)
+            s8.toString().getChars(0, s8len, ca,
+                    s1len + s2len + s3len + s4len + s5len + s6len + s7len);
+        if (s9len != 0)
+            s9.toString().getChars(0, s9len, ca,
+                    s1len + s2len + s3len + s4len + s5len + s6len + s7len + s8len);
+        return new String(ca);
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concat(CharSequence s1, CharSequence s2, CharSequence s3,
+            CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7, CharSequence s8,
+            CharSequence s9, CharSequence s10) {
+        int s1len = s1.length(), s2len = s2.length(), s3len = s3.length(), s4len = s4.length();
+        int s5len = s5.length(), s6len = s6.length(), s7len = s7.length(), s8len = s8.length();
+        int s9len = s9.length(), s10len = s10.length();
+        char[] ca = new char[s1len + s2len + s3len + s4len + s5len + s6len + s7len + s8len + s9len
+                + s10len];
+        if (s1len != 0)
+            s1.toString().getChars(0, s1len, ca, 0);
+        if (s2len != 0)
+            s2.toString().getChars(0, s2len, ca, s1len);
+        if (s3len != 0)
+            s3.toString().getChars(0, s3len, ca, s1len + s2len);
+        if (s4len != 0)
+            s4.toString().getChars(0, s4len, ca, s1len + s2len + s3len);
+        if (s5len != 0)
+            s5.toString().getChars(0, s5len, ca, s1len + s2len + s3len + s4len);
+        if (s6len != 0)
+            s6.toString().getChars(0, s6len, ca, s1len + s2len + s3len + s4len + s5len);
+        if (s7len != 0)
+            s7.toString().getChars(0, s7len, ca, s1len + s2len + s3len + s4len + s5len + s6len);
+        if (s8len != 0)
+            s8.toString().getChars(0, s8len, ca,
+                    s1len + s2len + s3len + s4len + s5len + s6len + s7len);
+        if (s9len != 0)
+            s9.toString().getChars(0, s9len, ca,
+                    s1len + s2len + s3len + s4len + s5len + s6len + s7len + s8len);
+        if (s10len != 0)
+            s10.toString().getChars(0, s10len, ca,
+                    s1len + s2len + s3len + s4len + s5len + s6len + s7len + s8len + s9len);
+        return new String(ca);
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence concat(CharSequence[] strings) {
+        StringBuilder sb = new StringBuilder(MAX_STRING_SEGMENT_SIZE * CONCAT_MAX_SPECIALIZATION);
+        for (CharSequence s : strings) {
+            sb.append(s);
+        }
+        return sb.toString();
+    }
+
+    /**
      * Returns the invokedynamic instruction name for the given binary operator.
      * 
      * @param binary
@@ -218,21 +734,21 @@ public final class Bootstrap {
      *            the binary operator
      * @return the method descriptor
      */
-    public static String getMethodDescriptor(BinaryExpression.Operator binary) {
+    public static MethodTypeDescriptor getMethodDescriptor(BinaryExpression.Operator binary) {
         switch (binary) {
         case ADD:
-            return OP_ADD;
+            return Descriptors.ADD;
         case EQ:
         case NE:
-            return OP_EQ;
+            return Descriptors.EQ;
         case SHEQ:
         case SHNE:
-            return OP_STRICT_EQ;
+            return Descriptors.STRICT_EQ;
         case LT:
         case GT:
         case LE:
         case GE:
-            return OP_CMP;
+            return Descriptors.CMP;
         default:
             throw new UnsupportedOperationException(binary.toString());
         }
@@ -602,6 +1118,7 @@ public final class Bootstrap {
     private static final ConstantCallSite stackOverFlow_Eq;
     private static final ConstantCallSite stackOverFlow_StrictEq;
     private static final ConstantCallSite stackOverFlow_Call;
+    private static final MethodHandle stackOverFlow_Concat;
     static {
         MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
         stackOverFlow_Add = new ConstantCallSite(lookup.findStatic("stackOverFlow_Add", MethodType
@@ -615,6 +1132,8 @@ public final class Bootstrap {
         stackOverFlow_Call = new ConstantCallSite(lookup.findStatic("stackOverFlow_Call",
                 MethodType.methodType(Object.class, Object.class, ExecutionContext.class,
                         Object.class, Object[].class)));
+        stackOverFlow_Concat = lookup.findStatic("stackOverFlow_Concat",
+                MethodType.methodType(CharSequence.class));
     }
 
     @SuppressWarnings("unused")
@@ -640,6 +1159,11 @@ public final class Bootstrap {
     @SuppressWarnings("unused")
     private static Object stackOverFlow_Call(Object fun, ExecutionContext cx, Object thisValue,
             Object[] arguments) {
+        throw new StackOverflowError("bootstrap stack overflow");
+    }
+
+    @SuppressWarnings("unused")
+    private static CharSequence stackOverFlow_Concat() {
         throw new StackOverflowError("bootstrap stack overflow");
     }
 
@@ -692,6 +1216,9 @@ public final class Bootstrap {
                 setup = MethodHandles.insertArguments(relCmpSetupMH, 0, callsite,
                         RelationalOperator.GreaterThanEquals);
                 break;
+            case CallNames.CONCAT:
+                concatSetup(callsite, type);
+                return callsite;
             default:
                 throw new IllegalArgumentException(name);
             }
@@ -702,6 +1229,9 @@ public final class Bootstrap {
             switch (name) {
             case CallNames.CALL:
                 return stackOverFlow_Call;
+            case CallNames.CONCAT:
+                return new ConstantCallSite(MethodHandles.dropArguments(stackOverFlow_Concat, 0,
+                        type.parameterArray()));
             case CallNames.ADD:
                 return stackOverFlow_Add;
             case CallNames.EQ:

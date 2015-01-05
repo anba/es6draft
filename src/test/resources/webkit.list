@@ -188,6 +188,9 @@ js/script-tests/excessive-comma-usage.js
 # Different maximal stack depth
 js/script-tests/stack-overflow-catch.js
 
+# Different maximal stack depth (intermittent)
+js/script-tests/regress-139548.js
+
 # Timeout (slow)
 js/script-tests/comparison-operators.js
 js/script-tests/comparison-operators-less.js

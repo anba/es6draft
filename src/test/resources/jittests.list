@@ -355,6 +355,8 @@ tests/basic/testBug895774.js
 tests/basic/testEvalInFrameEdgeCase.js
 tests/basic/testGCNewbornGenerator.js
 tests/basic/testGeneratorDieButScopeAlive.js
+tests/tracelogger/drainTraceLogger.js
+tests/tracelogger/setupTraceLogger.js
 
 
 #######################################

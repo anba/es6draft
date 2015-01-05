@@ -6,21 +6,14 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import java.io.PrintWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Formatter;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
-
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.util.Printer;
-import org.objectweb.asm.util.Textifier;
-import org.objectweb.asm.util.TraceClassVisitor;
 
 import com.github.anba.es6draft.ast.FunctionDefinition;
 import com.github.anba.es6draft.ast.FunctionNode;
@@ -34,7 +27,7 @@ import com.github.anba.es6draft.compiler.analyzer.CodeSizeAnalysis;
 import com.github.anba.es6draft.compiler.analyzer.CodeSizeException;
 import com.github.anba.es6draft.compiler.assembler.Code;
 import com.github.anba.es6draft.compiler.assembler.Code.ClassCode;
-import com.github.anba.es6draft.compiler.assembler.SimpleTypeTextifier;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Source;
@@ -65,8 +58,8 @@ public final class Compiler {
         }
 
         // set-up
-        String superClassName = Types.CompiledScript.getInternalName();
-        Code code = new Code(className, superClassName, sourceName(script), sourceMap(script));
+        Code code = new Code(Modifier.PUBLIC | Modifier.FINAL, className, Types.CompiledScript,
+                sourceName(script), sourceMap(script));
 
         // generate code
         CodeGenerator codegen = new CodeGenerator(code, executor, script.getOptions(),
@@ -87,8 +80,8 @@ public final class Compiler {
         }
 
         // set-up
-        String superClassName = Types.CompiledModule.getInternalName();
-        Code code = new Code(className, superClassName, sourceName(module), sourceMap(module));
+        Code code = new Code(Modifier.PUBLIC | Modifier.FINAL, className, Types.CompiledModule,
+                sourceName(module), sourceMap(module));
 
         // generate code
         CodeGenerator codegen = new CodeGenerator(code, executor, module.getOptions(),
@@ -118,8 +111,8 @@ public final class Compiler {
         }
 
         // set-up
-        String superClassName = Types.CompiledFunction.getInternalName();
-        Code code = new Code(className, superClassName, "<Function>", null);
+        Code code = new Code(Modifier.PUBLIC | Modifier.FINAL, className, Types.CompiledFunction,
+                "<Function>", null);
 
         // generate code
         CodeGenerator codegen = new CodeGenerator(code, executor, compatibilityOptions(function),
@@ -136,8 +129,8 @@ public final class Compiler {
         CodeLoader loader = new CodeLoader();
         for (ClassCode classCode : code.getClasses()) {
             if (debugInfo) {
-                classCode.addField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "classBytes",
-                        Type.getDescriptor(byte[].class), null);
+                classCode.addField(Modifier.PRIVATE | Modifier.STATIC, "classBytes",
+                        Type.of(byte[].class), null);
             }
             byte[] bytes = classCode.toByteArray();
             if (printCode) {
@@ -198,17 +191,8 @@ public final class Compiler {
     }
 
     private void printCode(byte[] b) {
-        ClassReader cr = new ClassReader(b);
-        Printer p;
-        if (compilerOptions.contains(Option.PrintFullCode)) {
-            p = new Textifier();
-        } else {
-            p = new SimpleTypeTextifier();
-        }
-        cr.accept(new TraceClassVisitor(null, p, null), ClassReader.EXPAND_FRAMES);
-        PrintWriter pw = new PrintWriter(System.out);
-        p.print(pw);
-        pw.flush();
+        String code = Code.toByteCode(b, !compilerOptions.contains(Option.PrintFullCode));
+        System.out.println(code);
     }
 
     private static String sourceName(Script script) {

@@ -52,6 +52,10 @@ public final class ArgumentsObject extends OrdinaryObject {
         return parameterMap;
     }
 
+    private boolean isMapped(long propertyKey) {
+        return parameterMap != null && parameterMap.hasOwnProperty(propertyKey, false);
+    }
+
     @Override
     public boolean hasIndexedAccessors() {
         return hasIndexedAccessors;
@@ -59,10 +63,17 @@ public final class ArgumentsObject extends OrdinaryObject {
 
     @Override
     Object getIndexed(int propertyKey) {
-        if (parameterMap != null && parameterMap.hasOwnProperty(propertyKey, false)) {
+        if (isMapped(propertyKey)) {
             return parameterMap.get(propertyKey);
         }
         return super.getIndexed(propertyKey);
+    }
+
+    @Override
+    protected boolean setPropertyValue(ExecutionContext cx, long propertyKey, Object value,
+            Property current) {
+        assert !isMapped(propertyKey);
+        return super.setPropertyValue(cx, propertyKey, value, current);
     }
 
     /**

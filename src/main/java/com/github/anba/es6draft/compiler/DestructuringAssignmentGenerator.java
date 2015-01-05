@@ -11,12 +11,11 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
 import java.util.Iterator;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.assembler.Jump;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 
 /**
@@ -29,39 +28,38 @@ import com.github.anba.es6draft.compiler.assembler.Variable;
 final class DestructuringAssignmentGenerator {
     private static final class Methods {
         // class: AbstractOperations
-        static final MethodDesc AbstractOperations_GetV = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "GetV", Type.getMethodType(
-                        Types.Object, Types.ExecutionContext, Types.Object, Types.Object));
+        static final MethodName AbstractOperations_GetV = MethodName.findStatic(
+                Types.AbstractOperations, "GetV",
+                Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Types.Object));
 
-        static final MethodDesc AbstractOperations_GetV_String = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "GetV", Type.getMethodType(
-                        Types.Object, Types.ExecutionContext, Types.Object, Types.String));
+        static final MethodName AbstractOperations_GetV_String = MethodName.findStatic(
+                Types.AbstractOperations, "GetV",
+                Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Types.String));
 
         // class: Reference
-        static final MethodDesc Reference_putValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
-                Types.Reference, "putValue",
-                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
+        static final MethodName Reference_putValue = MethodName.findVirtual(Types.Reference,
+                "putValue", Type.methodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_createRestArray = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "createRestArray",
-                Type.getMethodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_createRestArray = MethodName.findStatic(
+                Types.ScriptRuntime, "createRestArray",
+                Type.methodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getIterator = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getIterator",
-                Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_getIterator = MethodName.findStatic(
+                Types.ScriptRuntime, "getIterator",
+                Type.methodType(Types.Iterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_iteratorNextAndIgnore = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "iteratorNextAndIgnore",
-                Type.getMethodType(Type.VOID_TYPE, Types.Iterator));
+        static final MethodName ScriptRuntime_iteratorNextAndIgnore = MethodName.findStatic(
+                Types.ScriptRuntime, "iteratorNextAndIgnore",
+                Type.methodType(Type.VOID_TYPE, Types.Iterator));
 
-        static final MethodDesc ScriptRuntime_iteratorNextOrUndefined = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "iteratorNextOrUndefined",
-                Type.getMethodType(Types.Object, Types.Iterator));
+        static final MethodName ScriptRuntime_iteratorNextOrUndefined = MethodName.findStatic(
+                Types.ScriptRuntime, "iteratorNextOrUndefined",
+                Type.methodType(Types.Object, Types.Iterator));
 
         // class: Type
-        static final MethodDesc Type_isUndefined = MethodDesc.create(MethodDesc.Invoke.Static,
-                Types._Type, "isUndefined", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
+        static final MethodName Type_isUndefined = MethodName.findStatic(Types._Type,
+                "isUndefined", Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
     private DestructuringAssignmentGenerator() {
@@ -257,7 +255,7 @@ final class DestructuringAssignmentGenerator {
 
             /* steps 5-7 */
             if (!(target instanceof AssignmentPattern)) {
-                // FIXME: spec bug - evaluation order?
+                // FIXME: spec bug - evaluation order? (bug 3463)
 
                 // stack: [rest] -> [lref, rest]
                 ValType refType = expression(target, mv);
@@ -322,7 +320,7 @@ final class DestructuringAssignmentGenerator {
                 // stack: [v'] -> []
                 DestructuringAssignmentEvaluation((AssignmentPattern) target);
             } else {
-                // FIXME: spec bug - evaluation order?
+                // FIXME: spec bug - evaluation order? (bug 3463)
 
                 // stack: [v'] -> [lref, 'v]
                 ValType refType = expression(target, mv);

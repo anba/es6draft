@@ -14,13 +14,12 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
 import java.util.Iterator;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.assembler.Jump;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 
@@ -50,44 +49,43 @@ import com.github.anba.es6draft.runtime.EnvironmentRecord;
 final class BindingInitializationGenerator {
     private static final class Methods {
         // class: AbstractOperations
-        static final MethodDesc AbstractOperations_GetV = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "GetV", Type.getMethodType(
-                        Types.Object, Types.ExecutionContext, Types.Object, Types.Object));
+        static final MethodName AbstractOperations_GetV = MethodName.findStatic(
+                Types.AbstractOperations, "GetV",
+                Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Types.Object));
 
-        static final MethodDesc AbstractOperations_GetV_String = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "GetV", Type.getMethodType(
-                        Types.Object, Types.ExecutionContext, Types.Object, Types.String));
+        static final MethodName AbstractOperations_GetV_String = MethodName.findStatic(
+                Types.AbstractOperations, "GetV",
+                Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Types.String));
 
         // class: EnvironmentRecord
-        static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "initializeBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
+        static final MethodName EnvironmentRecord_initializeBinding = MethodName.findInterface(
+                Types.EnvironmentRecord, "initializeBinding",
+                Type.methodType(Type.VOID_TYPE, Types.String, Types.Object));
 
         // class: Reference
-        static final MethodDesc Reference_putValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
-                Types.Reference, "putValue",
-                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
+        static final MethodName Reference_putValue = MethodName.findVirtual(Types.Reference,
+                "putValue", Type.methodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_createRestArray = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "createRestArray",
-                Type.getMethodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_createRestArray = MethodName.findStatic(
+                Types.ScriptRuntime, "createRestArray",
+                Type.methodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getIterator = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getIterator",
-                Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_getIterator = MethodName.findStatic(
+                Types.ScriptRuntime, "getIterator",
+                Type.methodType(Types.Iterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_iteratorNextAndIgnore = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "iteratorNextAndIgnore",
-                Type.getMethodType(Type.VOID_TYPE, Types.Iterator));
+        static final MethodName ScriptRuntime_iteratorNextAndIgnore = MethodName.findStatic(
+                Types.ScriptRuntime, "iteratorNextAndIgnore",
+                Type.methodType(Type.VOID_TYPE, Types.Iterator));
 
-        static final MethodDesc ScriptRuntime_iteratorNextOrUndefined = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "iteratorNextOrUndefined",
-                Type.getMethodType(Types.Object, Types.Iterator));
+        static final MethodName ScriptRuntime_iteratorNextOrUndefined = MethodName.findStatic(
+                Types.ScriptRuntime, "iteratorNextOrUndefined",
+                Type.methodType(Types.Object, Types.Iterator));
 
         // class: Type
-        static final MethodDesc Type_isUndefined = MethodDesc.create(MethodDesc.Invoke.Static,
-                Types._Type, "isUndefined", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
+        static final MethodName Type_isUndefined = MethodName.findStatic(Types._Type,
+                "isUndefined", Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
     private static final IdentifierResolution identifierResolution = new IdentifierResolution();
@@ -418,7 +416,7 @@ final class BindingInitializationGenerator {
 
         @Override
         public void visit(ObjectBindingPattern node, Void value) {
-            // FIXME: spec bug - invalid assertion
+            // FIXME: spec bug - invalid assertion (bug 3454)
             // step 1: Assert: Type(value) is Object
 
             // stack: [(env), value] -> [(env)]

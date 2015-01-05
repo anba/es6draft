@@ -308,7 +308,7 @@ public final class IntlAbstractOperations {
      */
     public static Set<String> GetAvailableLocales(ULocale[] locales) {
         HashMap<String, String[]> oldTags = oldStyleLanguageTags;
-        HashSet<String> set = new HashSet<>(locales.length);
+        HashSet<String> set = new LRUHashSet(locales.length);
         for (ULocale locale : locales) {
             String tag = locale.toLanguageTag();
             set.add(tag);
@@ -319,6 +319,36 @@ public final class IntlAbstractOperations {
             }
         }
         return set;
+    }
+
+    @SuppressWarnings("serial")
+    private static final class LRUHashSet extends HashSet<String> {
+        final transient LRUEntry<String, Entry<String, Double>> entry = new LRUEntry<>();
+
+        LRUHashSet(int initialCapacity) {
+            super(initialCapacity);
+        }
+
+        static LRUHashSet from(Set<String> set) {
+            return set instanceof LRUHashSet ? (LRUHashSet) set : null;
+        }
+    }
+
+    private static final class LRUEntry<KEY, VALUE> {
+        private KEY key;
+        private VALUE value;
+
+        VALUE get(KEY request) {
+            if (request.equals(key)) {
+                return value;
+            }
+            return null;
+        }
+
+        void set(KEY key, VALUE value) {
+            this.key = key;
+            this.value = value;
+        }
     }
 
     public enum ExtensionKey {
@@ -610,12 +640,14 @@ public final class IntlAbstractOperations {
      */
     public static LocaleMatch BestFitMatcher(ExecutionContext cx,
             Lazy<Set<String>> availableLocales, Set<String> requestedLocales) {
+        if (!BEST_FIT_SUPPORTED) {
+            return LookupMatcher(cx, availableLocales, requestedLocales);
+        }
         // fast path when no specific locale was requested
         if (requestedLocales.isEmpty()) {
             final String defaultLocale = DefaultLocale(cx.getRealm());
             return BestFitMatch(defaultLocale, defaultLocale);
         }
-
         // fast path
         Set<String> available = availableLocales.get();
         for (String locale : requestedLocales) {
@@ -664,6 +696,8 @@ public final class IntlAbstractOperations {
      * Minimum match value for best fit matcher, currently set to 0.5 to match ICU4J's defaults
      */
     private static final double BEST_FIT_MIN_MATCH = 0.5;
+
+    private static final boolean BEST_FIT_SUPPORTED = true;
 
     private static LocaleMatcher CreateDefaultMatcher() {
         LocalePriorityList priorityList = LocalePriorityList.add(ULocale.ROOT).build();
@@ -714,10 +748,39 @@ public final class IntlAbstractOperations {
         if (availableLocales.contains(requestedLocale)) {
             return new SimpleImmutableEntry<>(requestedLocale, 1.0);
         }
+        LRUHashSet lruAvailableLocales = LRUHashSet.from(availableLocales);
+        if (lruAvailableLocales != null) {
+            Entry<String, Double> lastResolved = lruAvailableLocales.entry.get(requestedLocale);
+            if (lastResolved != null) {
+                return lastResolved;
+            }
+        }
         LocaleEntry requested = createLocaleEntry(matcher, requestedLocale);
         String bestMatchLocale = null;
         LocaleEntry bestMatchEntry = null;
         double bestMatch = Double.NEGATIVE_INFINITY;
+
+        for (String available : availableLocales) {
+            LocaleEntry entry = GetMaximizedLocale(matcher, available);
+            if (requested.maximized.equals(entry.maximized)) {
+                double match = matcher.match(requested.getCanonicalized(),
+                        requested.getMaximized(), entry.getCanonicalized(), entry.getMaximized());
+                if (match > bestMatch
+                        || (match == bestMatch && isBetterMatch(requested, bestMatchEntry, entry))) {
+                    bestMatchLocale = available;
+                    bestMatchEntry = entry;
+                    bestMatch = match;
+                }
+            }
+        }
+        if (bestMatchLocale != null) {
+            Entry<String, Double> result = new SimpleImmutableEntry<>(bestMatchLocale, bestMatch);
+            if (lruAvailableLocales != null) {
+                lruAvailableLocales.entry.set(requestedLocale, result);
+            }
+            return result;
+        }
+
         for (String available : availableLocales) {
             LocaleEntry entry = GetMaximizedLocale(matcher, available);
             double match = matcher.match(requested.getCanonicalized(), requested.getMaximized(),
@@ -734,7 +797,11 @@ public final class IntlAbstractOperations {
                 bestMatch = match;
             }
         }
-        return new SimpleImmutableEntry<>(bestMatchLocale, bestMatch);
+        Entry<String, Double> result = new SimpleImmutableEntry<>(bestMatchLocale, bestMatch);
+        if (lruAvailableLocales != null) {
+            lruAvailableLocales.entry.set(requestedLocale, result);
+        }
+        return result;
     }
 
     /**
@@ -1022,6 +1089,9 @@ public final class IntlAbstractOperations {
      */
     public static List<String> BestFitSupportedLocales(ExecutionContext cx,
             Set<String> availableLocales, Set<String> requestedLocales) {
+        if (!BEST_FIT_SUPPORTED) {
+            return LookupSupportedLocales(cx, availableLocales, requestedLocales);
+        }
         int numberOfRequestedLocales = requestedLocales.size();
         if (numberOfRequestedLocales == 0) {
             return emptyList();

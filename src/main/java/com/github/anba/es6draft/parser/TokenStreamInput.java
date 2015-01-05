@@ -25,6 +25,15 @@ final class TokenStreamInput {
     }
 
     /**
+     * Returns the input length.
+     * 
+     * @return the input length
+     */
+    public int length() {
+        return length;
+    }
+
+    /**
      * Returns the current code point or {@link TokenStreamInput#EOF} when the end of the input has
      * been reached.
      * 

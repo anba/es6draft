@@ -121,7 +121,7 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         /* step 12 */
         int elementSize = elementType.size();
         /* step 13 */
-        long indexedPosition = (long) ((index * elementSize) + offset);
+        long indexedPosition = (index * elementSize) + offset;
         /* step 15 */
         return GetValueFromBuffer(buffer, indexedPosition, elementType);
     }
@@ -156,7 +156,7 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         /* step 14 */
         int elementSize = elementType.size();
         /* step 15 */
-        long indexedPosition = (long) ((index * elementSize) + offset);
+        long indexedPosition = (index * elementSize) + offset;
         /* steps 17-18 */
         SetValueInBuffer(buffer, indexedPosition, elementType, numValue);
         /* step 19 */

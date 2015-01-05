@@ -6,12 +6,10 @@
  */
 package com.github.anba.es6draft.compiler.assembler;
 
-import org.objectweb.asm.Type;
-
 /**
  * Field descriptor object.
  */
-public final class FieldDesc {
+public final class FieldName {
     public enum Allocation {
         Instance, Static
     }
@@ -19,12 +17,12 @@ public final class FieldDesc {
     /**
      * The field allocation type.
      */
-    public final FieldDesc.Allocation allocation;
+    public final FieldName.Allocation allocation;
 
     /**
      * Type descriptor of the declaring class.
      */
-    public final String owner;
+    public final Type owner;
 
     /**
      * The field name.
@@ -34,29 +32,42 @@ public final class FieldDesc {
     /**
      * Type descriptor of the field.
      */
-    public final String desc;
+    public final Type descriptor;
 
-    private FieldDesc(FieldDesc.Allocation allocation, String owner, String name, String desc) {
+    private FieldName(FieldName.Allocation allocation, Type owner, String name, Type descriptor) {
         this.allocation = allocation;
         this.owner = owner;
         this.name = name;
-        this.desc = desc;
+        this.descriptor = descriptor;
     }
 
     /**
      * Creates a new field descriptor.
      * 
-     * @param type
-     *            the field type
      * @param owner
      *            the owner class
      * @param name
      *            the field name
-     * @param desc
+     * @param descriptor
      *            the field type descriptor
      * @return the field descriptor
      */
-    public static FieldDesc create(FieldDesc.Allocation type, Type owner, String name, Type desc) {
-        return new FieldDesc(type, owner.getInternalName(), name, desc.getDescriptor());
+    public static FieldName findStatic(Type owner, String name, Type descriptor) {
+        return new FieldName(Allocation.Static, owner, name, descriptor);
+    }
+
+    /**
+     * Creates a new field descriptor.
+     * 
+     * @param owner
+     *            the owner class
+     * @param name
+     *            the field name
+     * @param descriptor
+     *            the field type descriptor
+     * @return the field descriptor
+     */
+    public static FieldName findField(Type owner, String name, Type descriptor) {
+        return new FieldName(Allocation.Instance, owner, name, descriptor);
     }
 }

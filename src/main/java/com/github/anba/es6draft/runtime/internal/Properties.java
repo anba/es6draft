@@ -1389,7 +1389,7 @@ public final class Properties {
 
     private static void createValue(ExecutionContext cx, OrdinaryObject target, ValueLayout layout) {
         Object value = resolveValue(cx, layout.rawValue);
-        defineProperty(cx, target, layout, valueDescriptor(layout, value));
+        defineProperty(cx, target, layout, valueProperty(layout, value));
     }
 
     private static void createFunction(ExecutionContext cx, OrdinaryObject target,
@@ -1401,7 +1401,7 @@ public final class Properties {
         } else {
             fun = new NativeFunction(cx.getRealm(), layout.name, layout.arity, layout.nativeId, mh);
         }
-        defineProperty(cx, target, layout, valueDescriptor(layout, fun));
+        defineProperty(cx, target, layout, valueProperty(layout, fun));
     }
 
     private static void createAccessor(ExecutionContext cx, OrdinaryObject target,
@@ -1472,6 +1472,15 @@ public final class Properties {
         }
     }
 
+    private static void defineProperty(ExecutionContext cx, OrdinaryObject target,
+            PropertyLayout layout, Property property) {
+        if (layout.symbol == null) {
+            target.addPropertyUnchecked(layout.name, property);
+        } else {
+            target.addPropertyUnchecked(layout.symbol, property);
+        }
+    }
+
     private static void defineProperty(ExecutionContext cx, ScriptObject target, String name,
             BuiltinSymbol sym, Attributes attrs, Object value) {
         if (sym == BuiltinSymbol.NONE) {
@@ -1508,6 +1517,10 @@ public final class Properties {
     private static PropertyDescriptor valueDescriptor(PropertyLayout layout, Object value) {
         return new PropertyDescriptor(value, layout.writable(), layout.enumerable(),
                 layout.configurable());
+    }
+
+    private static Property valueProperty(PropertyLayout layout, Object value) {
+        return new Property(value, layout.writable(), layout.enumerable(), layout.configurable());
     }
 
     private static PropertyDescriptor propertyDescriptor(Object value, Attributes attrs) {

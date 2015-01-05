@@ -11,15 +11,13 @@ import static com.github.anba.es6draft.compiler.GeneratorComprehensionGenerator.
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 import static com.github.anba.es6draft.semantics.StaticSemantics.TemplateStrings;
 
+import java.lang.reflect.Modifier;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
@@ -32,8 +30,10 @@ import com.github.anba.es6draft.compiler.ExpressionVisitor.GeneratorState;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.compiler.assembler.Code;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.MethodTypeDescriptor;
 import com.github.anba.es6draft.compiler.assembler.Stack;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.compiler.assembler.Variables;
 import com.github.anba.es6draft.parser.Parser;
@@ -55,82 +55,88 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 final class CodeGenerator {
     private static final class Methods {
         // class: CompiledFunction
-        static final MethodDesc CompiledFunction_Constructor = MethodDesc.create(
-                MethodDesc.Invoke.Special, Types.CompiledFunction, "<init>",
-                Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$Function));
+        static final MethodName CompiledFunction_Constructor = MethodName
+                .findConstructor(Types.CompiledFunction,
+                        Type.methodType(Type.VOID_TYPE, Types.RuntimeInfo$Function));
 
         // class: CompiledModule
-        static final MethodDesc CompiledModule_Constructor = MethodDesc.create(
-                MethodDesc.Invoke.Special, Types.CompiledModule, "<init>",
-                Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$ModuleBody));
+        static final MethodName CompiledModule_Constructor = MethodName
+                .findConstructor(Types.CompiledModule,
+                        Type.methodType(Type.VOID_TYPE, Types.RuntimeInfo$ModuleBody));
 
         // class: CompiledScript
-        static final MethodDesc CompiledScript_Constructor = MethodDesc.create(
-                MethodDesc.Invoke.Special, Types.CompiledScript, "<init>",
-                Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$ScriptBody));
+        static final MethodName CompiledScript_Constructor = MethodName
+                .findConstructor(Types.CompiledScript,
+                        Type.methodType(Type.VOID_TYPE, Types.RuntimeInfo$ScriptBody));
 
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_GetTemplateObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "GetTemplateObject", Type
-                        .getMethodType(Types.ArrayObject, Type.INT_TYPE, Types.MethodHandle,
-                                Types.ExecutionContext));
+        static final MethodName ScriptRuntime_GetTemplateObject = MethodName.findStatic(
+                Types.ScriptRuntime, "GetTemplateObject", Type.methodType(Types.ArrayObject,
+                        Type.INT_TYPE, Types.MethodHandle, Types.ExecutionContext));
     }
 
     private static final class MethodDescriptors {
-        static final String TemplateLiteral = Type.getMethodDescriptor(Types.String_);
+        static final MethodTypeDescriptor FunctionConstructor = Type.methodType(Type.VOID_TYPE);
+        static final MethodTypeDescriptor ModuleConstructor = Type.methodType(Type.VOID_TYPE);
+        static final MethodTypeDescriptor ScriptConstructor = Type.methodType(Type.VOID_TYPE);
 
-        static final String StatementListMethod = Type.getMethodDescriptor(Types.Object,
+        static final MethodTypeDescriptor TemplateLiteral = Type.methodType(Types.String_);
+
+        static final MethodTypeDescriptor StatementListMethod = Type.methodType(Types.Object,
                 Types.ExecutionContext, Types.Object);
 
-        static final String SpreadElementMethod = Type.getMethodDescriptor(Type.INT_TYPE,
+        static final MethodTypeDescriptor SpreadElementMethod = Type.methodType(Type.INT_TYPE,
                 Types.ExecutionContext, Types.ArrayObject, Type.INT_TYPE);
 
-        static final String PropertyDefinitionsMethod = Type.getMethodDescriptor(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.OrdinaryObject);
+        static final MethodTypeDescriptor PropertyDefinitionsMethod = Type.methodType(
+                Type.VOID_TYPE, Types.ExecutionContext, Types.OrdinaryObject);
 
-        static final String MethodDefinitionsMethod = Type.getMethodDescriptor(Type.VOID_TYPE,
+        static final MethodTypeDescriptor MethodDefinitionsMethod = Type.methodType(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.OrdinaryFunction, Types.OrdinaryObject);
 
-        static final String ExpressionMethod = Type.getMethodDescriptor(Types.Object,
+        static final MethodTypeDescriptor ExpressionMethod = Type.methodType(Types.Object,
                 Types.ExecutionContext);
 
-        static final String BlockDeclarationInit = Type.getMethodDescriptor(
+        static final MethodTypeDescriptor BlockDeclarationInit = Type.methodType(
                 Types.LexicalEnvironment, Types.ExecutionContext, Types.LexicalEnvironment);
 
-        static final String AsyncFunction_Call = Type.getMethodDescriptor(Types.Object,
+        static final MethodTypeDescriptor AsyncFunction_Call = Type.methodType(Types.Object,
                 Types.OrdinaryAsyncFunction, Types.ExecutionContext, Types.Object, Types.Object_);
-        static final String Function_Call = Type.getMethodDescriptor(Types.Object,
+        static final MethodTypeDescriptor Function_Call = Type.methodType(Types.Object,
                 Types.OrdinaryFunction, Types.ExecutionContext, Types.Object, Types.Object_);
-        static final String Generator_Call = Type.getMethodDescriptor(Types.Object,
+        static final MethodTypeDescriptor Generator_Call = Type.methodType(Types.Object,
                 Types.OrdinaryGenerator, Types.ExecutionContext, Types.Object, Types.Object_);
 
-        static final String AsyncFunction_Code = Type.getMethodDescriptor(Types.Object,
+        static final MethodTypeDescriptor AsyncFunction_Code = Type.methodType(Types.Object,
                 Types.ExecutionContext, Types.ResumptionPoint);
-        static final String FunctionNode_Code = Type.getMethodDescriptor(Types.Object,
+        static final MethodTypeDescriptor FunctionNode_Code = Type.methodType(Types.Object,
                 Types.ExecutionContext);
-        static final String Generator_Code = Type.getMethodDescriptor(Types.Object,
+        static final MethodTypeDescriptor Generator_Code = Type.methodType(Types.Object,
                 Types.ExecutionContext, Types.ResumptionPoint);
 
-        static final String FunctionNode_Init = Type.getMethodDescriptor(Type.VOID_TYPE,
+        static final MethodTypeDescriptor FunctionNode_Init = Type.methodType(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.FunctionObject, Types.Object_);
-        static final String FunctionNode_RTI = Type.getMethodDescriptor(Types.RuntimeInfo$Function);
-        static final String FunctionNode_DebugInfo = Type.getMethodDescriptor(Types.DebugInfo);
+        static final MethodTypeDescriptor FunctionNode_RTI = Type
+                .methodType(Types.RuntimeInfo$Function);
+        static final MethodTypeDescriptor FunctionNode_DebugInfo = Type.methodType(Types.DebugInfo);
 
-        static final String Script_Code = Type.getMethodDescriptor(Types.Object,
+        static final MethodTypeDescriptor Script_Code = Type.methodType(Types.Object,
                 Types.ExecutionContext);
-        static final String Script_Init = Type.getMethodDescriptor(Type.VOID_TYPE,
+        static final MethodTypeDescriptor Script_Init = Type.methodType(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.LexicalEnvironment);
-        static final String Script_EvalInit = Type.getMethodDescriptor(Type.VOID_TYPE,
+        static final MethodTypeDescriptor Script_EvalInit = Type.methodType(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment);
-        static final String Script_RTI = Type.getMethodDescriptor(Types.RuntimeInfo$ScriptBody);
-        static final String Script_DebugInfo = Type.getMethodDescriptor(Types.DebugInfo);
+        static final MethodTypeDescriptor Script_RTI = Type
+                .methodType(Types.RuntimeInfo$ScriptBody);
+        static final MethodTypeDescriptor Script_DebugInfo = Type.methodType(Types.DebugInfo);
 
-        static final String Module_Code = Type.getMethodDescriptor(Types.Object,
+        static final MethodTypeDescriptor Module_Code = Type.methodType(Types.Object,
                 Types.ExecutionContext);
-        static final String Module_Init = Type.getMethodDescriptor(Type.VOID_TYPE,
+        static final MethodTypeDescriptor Module_Init = Type.methodType(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.LexicalEnvironment, Types.Realm, Types.Map);
-        static final String Module_RTI = Type.getMethodDescriptor(Types.RuntimeInfo$ScriptBody);
-        static final String Module_DebugInfo = Type.getMethodDescriptor(Types.DebugInfo);
+        static final MethodTypeDescriptor Module_RTI = Type
+                .methodType(Types.RuntimeInfo$ScriptBody);
+        static final MethodTypeDescriptor Module_DebugInfo = Type.methodType(Types.DebugInfo);
     }
 
     private static final boolean INCLUDE_SOURCE = true;
@@ -334,39 +340,39 @@ final class CodeGenerator {
 
     /* ----------------------------------------------------------------------------------------- */
 
-    private String methodDescriptor(TemplateLiteral node) {
+    private MethodTypeDescriptor methodDescriptor(TemplateLiteral node) {
         return MethodDescriptors.TemplateLiteral;
     }
 
-    private String methodDescriptor(StatementListMethod node) {
+    private MethodTypeDescriptor methodDescriptor(StatementListMethod node) {
         return MethodDescriptors.StatementListMethod;
     }
 
-    private String methodDescriptor(SpreadElementMethod node) {
+    private MethodTypeDescriptor methodDescriptor(SpreadElementMethod node) {
         return MethodDescriptors.SpreadElementMethod;
     }
 
-    private String methodDescriptor(PropertyDefinitionsMethod node) {
+    private MethodTypeDescriptor methodDescriptor(PropertyDefinitionsMethod node) {
         return MethodDescriptors.PropertyDefinitionsMethod;
     }
 
-    private String methodDescriptor(MethodDefinitionsMethod node) {
+    private MethodTypeDescriptor methodDescriptor(MethodDefinitionsMethod node) {
         return MethodDescriptors.MethodDefinitionsMethod;
     }
 
-    private String methodDescriptor(ExpressionMethod node) {
+    private MethodTypeDescriptor methodDescriptor(ExpressionMethod node) {
         return MethodDescriptors.ExpressionMethod;
     }
 
-    private String methodDescriptor(BlockStatement node) {
+    private MethodTypeDescriptor methodDescriptor(BlockStatement node) {
         return MethodDescriptors.BlockDeclarationInit;
     }
 
-    private String methodDescriptor(SwitchStatement node) {
+    private MethodTypeDescriptor methodDescriptor(SwitchStatement node) {
         return MethodDescriptors.BlockDeclarationInit;
     }
 
-    private String methodDescriptor(FunctionNode node, FunctionName name) {
+    private MethodTypeDescriptor methodDescriptor(FunctionNode node, FunctionName name) {
         switch (name) {
         case Call:
             if (node.isGenerator()) {
@@ -395,7 +401,7 @@ final class CodeGenerator {
         }
     }
 
-    private String methodDescriptor(Script node, ScriptName name) {
+    private MethodTypeDescriptor methodDescriptor(Script node, ScriptName name) {
         switch (name) {
         case Code:
             return MethodDescriptors.Script_Code;
@@ -412,7 +418,7 @@ final class CodeGenerator {
         }
     }
 
-    private String methodDescriptor(Module node, ModuleName name) {
+    private MethodTypeDescriptor methodDescriptor(Module node, ModuleName name) {
         switch (name) {
         case Code:
             return MethodDescriptors.Module_Code;
@@ -432,15 +438,15 @@ final class CodeGenerator {
     /**
      * Map of concrete method names to class names
      */
-    private final HashMap<String, String> methodClasses = new HashMap<>(32 * 4);
+    private final HashMap<String, Type> methodClasses = new HashMap<>(32 * 4);
 
-    private MethodCode publicStaticMethod(String methodName, String methodDescriptor) {
-        final int access = Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC;
+    private MethodCode publicStaticMethod(String methodName, MethodTypeDescriptor methodDescriptor) {
+        final int access = Modifier.PUBLIC | Modifier.STATIC;
         MethodCode method = code.newMethod(access, methodName, methodDescriptor);
         // System.out.printf("add <%s, %s>%n", methodName, method.classCode.className);
         assert !methodClasses.containsKey(methodName) : String.format(
                 "method '%s' already compiled", methodName);
-        methodClasses.put(methodName, method.classCode.className);
+        methodClasses.put(methodName, method.classCode.classType);
         return method;
     }
 
@@ -490,76 +496,65 @@ final class CodeGenerator {
 
     /* ----------------------------------------------------------------------------------------- */
 
-    private String owner(String methodName) {
-        String owner = methodClasses.get(methodName);
+    private Type owner(String methodName) {
+        Type owner = methodClasses.get(methodName);
         assert owner != null : String.format("method '%s' not yet compiled", methodName);
         return owner;
     }
 
-    MethodDesc methodDesc(TemplateLiteral node) {
+    MethodName methodDesc(TemplateLiteral node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
-                methodDescriptor(node));
+        return MethodName.findStatic(owner(methodName), methodName, methodDescriptor(node));
     }
 
-    MethodDesc methodDesc(StatementListMethod node) {
+    MethodName methodDesc(StatementListMethod node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
-                methodDescriptor(node));
+        return MethodName.findStatic(owner(methodName), methodName, methodDescriptor(node));
     }
 
-    MethodDesc methodDesc(SpreadElementMethod node) {
+    MethodName methodDesc(SpreadElementMethod node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
-                methodDescriptor(node));
+        return MethodName.findStatic(owner(methodName), methodName, methodDescriptor(node));
     }
 
-    MethodDesc methodDesc(PropertyDefinitionsMethod node) {
+    MethodName methodDesc(PropertyDefinitionsMethod node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
-                methodDescriptor(node));
+        return MethodName.findStatic(owner(methodName), methodName, methodDescriptor(node));
     }
 
-    MethodDesc methodDesc(MethodDefinitionsMethod node) {
+    MethodName methodDesc(MethodDefinitionsMethod node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
-                methodDescriptor(node));
+        return MethodName.findStatic(owner(methodName), methodName, methodDescriptor(node));
     }
 
-    MethodDesc methodDesc(ExpressionMethod node) {
+    MethodName methodDesc(ExpressionMethod node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
-                methodDescriptor(node));
+        return MethodName.findStatic(owner(methodName), methodName, methodDescriptor(node));
     }
 
-    MethodDesc methodDesc(BlockStatement node) {
+    MethodName methodDesc(BlockStatement node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
-                methodDescriptor(node));
+        return MethodName.findStatic(owner(methodName), methodName, methodDescriptor(node));
     }
 
-    MethodDesc methodDesc(SwitchStatement node) {
+    MethodName methodDesc(SwitchStatement node) {
         String methodName = methodName(node);
-        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
-                methodDescriptor(node));
+        return MethodName.findStatic(owner(methodName), methodName, methodDescriptor(node));
     }
 
-    MethodDesc methodDesc(FunctionNode node, FunctionName name) {
+    MethodName methodDesc(FunctionNode node, FunctionName name) {
         String methodName = methodName(node, name);
-        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
-                methodDescriptor(node, name));
+        return MethodName.findStatic(owner(methodName), methodName, methodDescriptor(node, name));
     }
 
-    MethodDesc methodDesc(Script node, ScriptName name) {
+    MethodName methodDesc(Script node, ScriptName name) {
         String methodName = methodName(node, name);
-        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
-                methodDescriptor(node, name));
+        return MethodName.findStatic(owner(methodName), methodName, methodDescriptor(node, name));
     }
 
-    MethodDesc methodDesc(Module node, ModuleName name) {
+    MethodName methodDesc(Module node, ModuleName name) {
         String methodName = methodName(node, name);
-        return MethodDesc.create(MethodDesc.Invoke.Static, owner(methodName), methodName,
-                methodDescriptor(node, name));
+        return MethodName.findStatic(owner(methodName), methodName, methodDescriptor(node, name));
     }
 
     /* ----------------------------------------------------------------------------------------- */
@@ -638,8 +633,8 @@ final class CodeGenerator {
     }
 
     private void defaultScriptConstructor(Script node) {
-        InstructionVisitor mv = new InstructionVisitor(code.newMainMethod(Opcodes.ACC_PUBLIC,
-                "<init>", "()V"));
+        InstructionVisitor mv = new InstructionVisitor(code.newConstructor(Modifier.PUBLIC,
+                MethodDescriptors.ScriptConstructor));
         mv.begin();
         mv.loadThis();
         mv.invoke(methodDesc(node, ScriptName.RTI));
@@ -682,8 +677,8 @@ final class CodeGenerator {
     }
 
     private void defaultModuleConstructor(Module node) {
-        InstructionVisitor mv = new InstructionVisitor(code.newMainMethod(Opcodes.ACC_PUBLIC,
-                "<init>", "()V"));
+        InstructionVisitor mv = new InstructionVisitor(code.newConstructor(Modifier.PUBLIC,
+                MethodDescriptors.ModuleConstructor));
         mv.begin();
         mv.loadThis();
         mv.invoke(methodDesc(node, ModuleName.RTI));
@@ -706,8 +701,8 @@ final class CodeGenerator {
     }
 
     private void defaultFunctionConstructor(FunctionNode function) {
-        InstructionVisitor mv = new InstructionVisitor(code.newMainMethod(Opcodes.ACC_PUBLIC,
-                "<init>", "()V"));
+        InstructionVisitor mv = new InstructionVisitor(code.newConstructor(Modifier.PUBLIC,
+                MethodDescriptors.FunctionConstructor));
         mv.begin();
         mv.loadThis();
         mv.invoke(methodDesc(function, FunctionName.RTI));

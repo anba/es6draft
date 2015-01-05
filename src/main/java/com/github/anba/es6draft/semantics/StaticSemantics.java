@@ -892,7 +892,7 @@ public final class StaticSemantics {
                 switch (exportDecl.getType()) {
                 case All: {
                     String module = exportDecl.getModuleSpecifier();
-                    entries.add(new ExportEntry(module, "*", null, null));
+                    entries.add(new ExportEntry(module, "*", null, null, item.getBeginPosition()));
                     break;
                 }
                 case External: {
@@ -906,27 +906,30 @@ public final class StaticSemantics {
                 case Variable:
                     for (Name name : BoundNames(exportDecl.getVariableStatement())) {
                         String id = name.getIdentifier();
-                        entries.add(new ExportEntry(null, null, id, id));
+                        entries.add(new ExportEntry(null, null, id, id, item.getBeginPosition()));
                     }
                     break;
                 case Declaration:
                     for (Name name : BoundNames(exportDecl.getDeclaration())) {
                         String id = name.getIdentifier();
-                        entries.add(new ExportEntry(null, null, id, id));
+                        entries.add(new ExportEntry(null, null, id, id, item.getBeginPosition()));
                     }
                     break;
                 case DefaultHoistableDeclaration: {
                     Name localName = BoundName(exportDecl.getHoistableDeclaration());
-                    entries.add(new ExportEntry(null, null, localName.getIdentifier(), "default"));
+                    entries.add(new ExportEntry(null, null, localName.getIdentifier(), "default",
+                            item.getBeginPosition()));
                     break;
                 }
                 case DefaultClassDeclaration: {
                     Name localName = BoundName(exportDecl.getClassDeclaration());
-                    entries.add(new ExportEntry(null, null, localName.getIdentifier(), "default"));
+                    entries.add(new ExportEntry(null, null, localName.getIdentifier(), "default",
+                            item.getBeginPosition()));
                     break;
                 }
                 case DefaultExpression:
-                    entries.add(new ExportEntry(null, null, "*default*", "default"));
+                    entries.add(new ExportEntry(null, null, "*default*", "default", item
+                            .getBeginPosition()));
                     break;
                 default:
                     throw new AssertionError();
@@ -953,14 +956,16 @@ public final class StaticSemantics {
                 String localName = specifier.getSourceName();
                 String importName = null;
                 String exportName = specifier.getExportName();
-                entries.add(new ExportEntry(module, importName, localName, exportName));
+                long position = specifier.getBeginPosition();
+                entries.add(new ExportEntry(module, importName, localName, exportName, position));
             }
         } else {
             for (ExportSpecifier specifier : node.getExports()) {
                 String localName = null;
                 String importName = specifier.getSourceName();
                 String exportName = specifier.getExportName();
-                entries.add(new ExportEntry(module, importName, localName, exportName));
+                long position = specifier.getBeginPosition();
+                entries.add(new ExportEntry(module, importName, localName, exportName, position));
             }
         }
     }
@@ -1009,16 +1014,16 @@ public final class StaticSemantics {
             List<ImportEntry> entries) {
         if (node.getDefaultEntry() != null) {
             String localName = node.getDefaultEntry().getName().getIdentifier();
-            entries.add(new ImportEntry(module, "default", localName));
+            entries.add(new ImportEntry(module, "default", localName, node.getBeginPosition()));
         }
         if (node.getNameSpace() != null) {
             String localName = node.getNameSpace().getName().getIdentifier();
-            entries.add(new ImportEntry(module, "*", localName));
+            entries.add(new ImportEntry(module, "*", localName, node.getBeginPosition()));
         }
         for (ImportSpecifier specifier : node.getNamedImports()) {
             String importName = specifier.getImportName();
             String localName = specifier.getLocalName().getName().getIdentifier();
-            entries.add(new ImportEntry(module, importName, localName));
+            entries.add(new ImportEntry(module, importName, localName, node.getBeginPosition()));
         }
     }
 

@@ -37,12 +37,13 @@ final class JSONTokenStream {
     private long sourcePosition;
 
     // literal data
-    private StrBuffer buffer = new StrBuffer();
+    private final StrBuffer buffer;
     private double number = 0;
 
     public JSONTokenStream(JSONParser parser, TokenStreamInput input) {
         this.parser = parser;
         this.input = input;
+        this.buffer = new StrBuffer(input.length());
         this.line = 1;
         this.linestart = input.position();
         this.current = scanToken();

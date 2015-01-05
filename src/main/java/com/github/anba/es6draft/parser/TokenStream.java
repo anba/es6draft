@@ -48,7 +48,7 @@ final class TokenStream {
     private long nextSourcePosition;
 
     // literal data
-    private StrBuffer buffer = new StrBuffer();
+    private final StrBuffer buffer;
     private String string = null;
     private double number = 0;
     private boolean hasEscape = false;
@@ -112,6 +112,7 @@ final class TokenStream {
     public TokenStream(Parser parser, TokenStreamInput input) {
         this.parser = parser;
         this.input = input;
+        this.buffer = new StrBuffer(input.length());
     }
 
     /**

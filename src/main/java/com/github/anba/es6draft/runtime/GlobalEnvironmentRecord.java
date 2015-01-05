@@ -339,7 +339,6 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     public void createGlobalVarBinding(String name, boolean deletable) {
         /* steps 1-2 (omitted) */
         /* step 3 */
-        // FIXME: spec issue - change to `!HasOwnProperty(cx, globalObject, name)` ?
         if (!objectRec.hasBinding(name)) {
             objectRec.createMutableBinding(name, deletable);
         }

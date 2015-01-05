@@ -12,8 +12,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
@@ -24,7 +22,8 @@ import com.github.anba.es6draft.ast.SwitchStatement;
 import com.github.anba.es6draft.compiler.JumpLabels.BreakLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.compiler.assembler.Jump;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
@@ -38,30 +37,27 @@ final class SwitchStatementGenerator extends
         DefaultCodeGenerator<StatementGenerator.Completion, StatementVisitor> {
     private static final class Methods {
         // class: AbstractOperations
-        static final MethodDesc AbstractOperations_StrictEqualityComparison = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "StrictEqualityComparison",
-                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object));
+        static final MethodName AbstractOperations_StrictEqualityComparison = MethodName
+                .findStatic(Types.AbstractOperations, "StrictEqualityComparison",
+                        Type.methodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object));
 
         // class: CharSequence
-        static final MethodDesc CharSequence_charAt = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.CharSequence, "charAt",
-                Type.getMethodType(Type.CHAR_TYPE, Type.INT_TYPE));
-        static final MethodDesc CharSequence_length = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.CharSequence, "length",
-                Type.getMethodType(Type.INT_TYPE));
-        static final MethodDesc CharSequence_toString = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.CharSequence, "toString",
-                Type.getMethodType(Types.String));
+        static final MethodName CharSequence_charAt = MethodName.findInterface(Types.CharSequence,
+                "charAt", Type.methodType(Type.CHAR_TYPE, Type.INT_TYPE));
+        static final MethodName CharSequence_length = MethodName.findInterface(Types.CharSequence,
+                "length", Type.methodType(Type.INT_TYPE));
+        static final MethodName CharSequence_toString = MethodName.findInterface(
+                Types.CharSequence, "toString", Type.methodType(Types.String));
 
         // class: Number
-        static final MethodDesc Number_doubleValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
-                Types.Number, "doubleValue", Type.getMethodType(Type.DOUBLE_TYPE));
+        static final MethodName Number_doubleValue = MethodName.findVirtual(Types.Number,
+                "doubleValue", Type.methodType(Type.DOUBLE_TYPE));
 
         // class: String
-        static final MethodDesc String_equals = MethodDesc.create(MethodDesc.Invoke.Virtual,
-                Types.String, "equals", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
-        static final MethodDesc String_hashCode = MethodDesc.create(MethodDesc.Invoke.Virtual,
-                Types.String, "hashCode", Type.getMethodType(Type.INT_TYPE));
+        static final MethodName String_equals = MethodName.findVirtual(Types.String, "equals",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+        static final MethodName String_hashCode = MethodName.findVirtual(Types.String, "hashCode",
+                Type.methodType(Type.INT_TYPE));
     }
 
     private enum SwitchType {

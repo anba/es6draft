@@ -16,15 +16,7 @@ import static java.util.Collections.emptyList;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -142,7 +134,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         for (PreloadedModule preloadModule : modules) {
             Realm realm = global.getRealm();
             String moduleName = preloadModule.getModuleName();
-            Map<String, ModuleRecord> newModuleSet = preloadModule.copyRequires();
+            LinkedHashMap<String, ModuleRecord> newModuleSet = preloadModule.copyRequires();
             assert newModuleSet.containsKey(moduleName);
             ModuleRecord module = newModuleSet.get(moduleName);
             LinkModules(realm.defaultContext(), realm, newModuleSet);
@@ -198,7 +190,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         for (String moduleName : toStrings(moduleNames)) {
             String normalizedModuleName = NormalizeModuleName(realm, moduleName, null);
             if (!realm.getModules().containsKey(normalizedModuleName)) {
-                HashMap<String, ModuleRecord> newModules = new HashMap<>();
+                LinkedHashMap<String, ModuleRecord> newModules = new LinkedHashMap<>();
                 ModuleRecord module = ParseModuleAndImports(realm, normalizedModuleName, newModules);
                 realm.getModules().putAll(newModules);
                 modules.add(new PreloadedModule(module, newModules));
@@ -209,9 +201,9 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
 
     private static final class PreloadedModule {
         private final ModuleRecord module;
-        private final Map<String, ModuleRecord> requires;
+        private final LinkedHashMap<String, ModuleRecord> requires;
 
-        PreloadedModule(ModuleRecord module, Map<String, ModuleRecord> requires) {
+        PreloadedModule(ModuleRecord module, LinkedHashMap<String, ModuleRecord> requires) {
             this.module = module;
             this.requires = requires;
         }
@@ -220,8 +212,8 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
             return module.getModuleId();
         }
 
-        public Map<String, ModuleRecord> copyRequires() {
-            HashMap<String, ModuleRecord> requiresCopy = new HashMap<>(requires);
+        public LinkedHashMap<String, ModuleRecord> copyRequires() {
+            LinkedHashMap<String, ModuleRecord> requiresCopy = new LinkedHashMap<>(requires);
             for (Map.Entry<String, ModuleRecord> entry : requiresCopy.entrySet()) {
                 entry.setValue(entry.getValue().clone());
             }

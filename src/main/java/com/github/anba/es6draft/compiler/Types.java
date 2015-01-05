@@ -13,8 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.objectweb.asm.Type;
-
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
@@ -64,103 +63,102 @@ final class Types {
     }
 
     // java.lang
-    static final Type Boolean = Type.getType(Boolean.class);
-    static final Type Byte = Type.getType(Byte.class);
-    static final Type Character = Type.getType(Character.class);
-    static final Type CharSequence = Type.getType(CharSequence.class);
-    static final Type Class = Type.getType(Class.class);
-    static final Type Double = Type.getType(Double.class);
-    static final Type Error = Type.getType(Error.class);
-    static final Type Float = Type.getType(Float.class);
-    static final Type IllegalStateException = Type.getType(IllegalStateException.class);
-    static final Type Integer = Type.getType(Integer.class);
-    static final Type Long = Type.getType(Long.class);
-    static final Type Math = Type.getType(Math.class);
-    static final Type Number = Type.getType(Number.class);
-    static final Type Object = Type.getType(Object.class);
-    static final Type Object_ = Type.getType(Object[].class);
-    static final Type Short = Type.getType(Short.class);
-    static final Type StackOverflowError = Type.getType(StackOverflowError.class);
-    static final Type String = Type.getType(String.class);
-    static final Type String_ = Type.getType(String[].class);
-    static final Type StringBuilder = Type.getType(StringBuilder.class);
-    static final Type Throwable = Type.getType(Throwable.class);
-    static final Type Void = Type.getType(Void.class);
+    static final Type Boolean = Type.of(Boolean.class);
+    static final Type Byte = Type.of(Byte.class);
+    static final Type Character = Type.of(Character.class);
+    static final Type CharSequence = Type.of(CharSequence.class);
+    static final Type Class = Type.of(Class.class);
+    static final Type Double = Type.of(Double.class);
+    static final Type Error = Type.of(Error.class);
+    static final Type Float = Type.of(Float.class);
+    static final Type IllegalStateException = Type.of(IllegalStateException.class);
+    static final Type Integer = Type.of(Integer.class);
+    static final Type Long = Type.of(Long.class);
+    static final Type Math = Type.of(Math.class);
+    static final Type Number = Type.of(Number.class);
+    static final Type Object = Type.of(Object.class);
+    static final Type Object_ = Type.of(Object[].class);
+    static final Type Short = Type.of(Short.class);
+    static final Type StackOverflowError = Type.of(StackOverflowError.class);
+    static final Type String = Type.of(String.class);
+    static final Type String_ = Type.of(String[].class);
+    static final Type StringBuilder = Type.of(StringBuilder.class);
+    static final Type Throwable = Type.of(Throwable.class);
+    static final Type Void = Type.of(Void.class);
 
     // java.lang.invoke
-    static final Type MethodHandle = Type.getType(MethodHandle.class);
+    static final Type MethodHandle = Type.of(MethodHandle.class);
 
     // java.util
-    static final Type ArrayList = Type.getType(ArrayList.class);
-    static final Type Arrays = Type.getType(Arrays.class);
-    static final Type Iterator = Type.getType(Iterator.class);
-    static final Type List = Type.getType(List.class);
-    static final Type Map = Type.getType(Map.class);
+    static final Type ArrayList = Type.of(ArrayList.class);
+    static final Type Arrays = Type.of(Arrays.class);
+    static final Type Iterator = Type.of(Iterator.class);
+    static final Type List = Type.of(List.class);
+    static final Type Map = Type.of(Map.class);
 
     // compiler
-    static final Type CompiledFunction = Type.getType(CompiledFunction.class);
-    static final Type CompiledModule = Type.getType(CompiledModule.class);
-    static final Type CompiledScript = Type.getType(CompiledScript.class);
+    static final Type CompiledFunction = Type.of(CompiledFunction.class);
+    static final Type CompiledModule = Type.of(CompiledModule.class);
+    static final Type CompiledScript = Type.of(CompiledScript.class);
 
     // runtime
-    static final Type AbstractOperations = Type.getType(AbstractOperations.class);
-    static final Type DeclarativeEnvironmentRecord = Type
-            .getType(DeclarativeEnvironmentRecord.class);
+    static final Type AbstractOperations = Type.of(AbstractOperations.class);
+    static final Type DeclarativeEnvironmentRecord = Type.of(DeclarativeEnvironmentRecord.class);
     static final Type DeclarativeEnvironmentRecord$Binding = Type
-            .getType(DeclarativeEnvironmentRecord.Binding.class);
-    static final Type EnvironmentRecord = Type.getType(EnvironmentRecord.class);
-    static final Type ExecutionContext = Type.getType(ExecutionContext.class);
-    static final Type FunctionEnvironmentRecord = Type.getType(FunctionEnvironmentRecord.class);
-    static final Type GlobalEnvironmentRecord = Type.getType(GlobalEnvironmentRecord.class);
-    static final Type LexicalEnvironment = Type.getType(LexicalEnvironment.class);
-    static final Type ModuleEnvironmentRecord = Type.getType(ModuleEnvironmentRecord.class);
-    static final Type Realm = Type.getType(Realm.class);
-    static final Type ScriptRuntime = Type.getType(ScriptRuntime.class);
+            .of(DeclarativeEnvironmentRecord.Binding.class);
+    static final Type EnvironmentRecord = Type.of(EnvironmentRecord.class);
+    static final Type ExecutionContext = Type.of(ExecutionContext.class);
+    static final Type FunctionEnvironmentRecord = Type.of(FunctionEnvironmentRecord.class);
+    static final Type GlobalEnvironmentRecord = Type.of(GlobalEnvironmentRecord.class);
+    static final Type LexicalEnvironment = Type.of(LexicalEnvironment.class);
+    static final Type ModuleEnvironmentRecord = Type.of(ModuleEnvironmentRecord.class);
+    static final Type Realm = Type.of(Realm.class);
+    static final Type ScriptRuntime = Type.of(ScriptRuntime.class);
 
     // runtime.modules
-    static final Type ModuleExport = Type.getType(ModuleExport.class);
-    static final Type ModuleRecord = Type.getType(ModuleRecord.class);
-    static final Type ModuleSemantics = Type.getType(ModuleSemantics.class);
+    static final Type ModuleExport = Type.of(ModuleExport.class);
+    static final Type ModuleRecord = Type.of(ModuleRecord.class);
+    static final Type ModuleSemantics = Type.of(ModuleSemantics.class);
 
     // runtime.objects
-    static final Type Eval = Type.getType(Eval.class);
-    static final Type PromiseObject = Type.getType(PromiseObject.class);
-    static final Type RegExpConstructor = Type.getType(RegExpConstructor.class);
-    static final Type RegExpObject = Type.getType(RegExpObject.class);
+    static final Type Eval = Type.of(Eval.class);
+    static final Type PromiseObject = Type.of(PromiseObject.class);
+    static final Type RegExpConstructor = Type.of(RegExpConstructor.class);
+    static final Type RegExpObject = Type.of(RegExpObject.class);
 
     // runtime.objects.iteration
-    static final Type GeneratorObject = Type.getType(GeneratorObject.class);
+    static final Type GeneratorObject = Type.of(GeneratorObject.class);
 
     // runtime.types
-    static final Type Callable = Type.getType(Callable.class);
-    static final Type Intrinsics = Type.getType(Intrinsics.class);
-    static final Type Null = Type.getType(Null.class);
-    static final Type Reference = Type.getType(Reference.class);
-    static final Type ScriptObject = Type.getType(ScriptObject.class);
-    static final Type ScriptObject_ = Type.getType(ScriptObject[].class);
-    static final Type Symbol = Type.getType(Symbol.class);
-    static final Type _Type = Type.getType(com.github.anba.es6draft.runtime.types.Type.class);
-    static final Type Undefined = Type.getType(Undefined.class);
+    static final Type Callable = Type.of(Callable.class);
+    static final Type Intrinsics = Type.of(Intrinsics.class);
+    static final Type Null = Type.of(Null.class);
+    static final Type Reference = Type.of(Reference.class);
+    static final Type ScriptObject = Type.of(ScriptObject.class);
+    static final Type ScriptObject_ = Type.of(ScriptObject[].class);
+    static final Type Symbol = Type.of(Symbol.class);
+    static final Type _Type = Type.of(com.github.anba.es6draft.runtime.types.Type.class);
+    static final Type Undefined = Type.of(Undefined.class);
 
     // runtime.types.builtins
-    static final Type ArgumentsObject = Type.getType(ArgumentsObject.class);
-    static final Type ArrayObject = Type.getType(ArrayObject.class);
-    static final Type FunctionObject = Type.getType(FunctionObject.class);
-    static final Type LegacyArgumentsObject = Type.getType(LegacyArgumentsObject.class);
-    static final Type ModuleNamespaceObject = Type.getType(ModuleNamespaceObject.class);
-    static final Type OrdinaryAsyncFunction = Type.getType(OrdinaryAsyncFunction.class);
-    static final Type OrdinaryGenerator = Type.getType(OrdinaryGenerator.class);
-    static final Type OrdinaryFunction = Type.getType(OrdinaryFunction.class);
-    static final Type OrdinaryObject = Type.getType(OrdinaryObject.class);
+    static final Type ArgumentsObject = Type.of(ArgumentsObject.class);
+    static final Type ArrayObject = Type.of(ArrayObject.class);
+    static final Type FunctionObject = Type.of(FunctionObject.class);
+    static final Type LegacyArgumentsObject = Type.of(LegacyArgumentsObject.class);
+    static final Type ModuleNamespaceObject = Type.of(ModuleNamespaceObject.class);
+    static final Type OrdinaryAsyncFunction = Type.of(OrdinaryAsyncFunction.class);
+    static final Type OrdinaryGenerator = Type.of(OrdinaryGenerator.class);
+    static final Type OrdinaryFunction = Type.of(OrdinaryFunction.class);
+    static final Type OrdinaryObject = Type.of(OrdinaryObject.class);
 
     // runtime.internal
-    static final Type DebugInfo = Type.getType(DebugInfo.class);
-    static final Type ResumptionPoint = Type.getType(ResumptionPoint.class);
-    static final Type ReturnValue = Type.getType(ReturnValue.class);
-    static final Type RuntimeInfo = Type.getType(RuntimeInfo.class);
-    static final Type RuntimeInfo$Function = Type.getType(RuntimeInfo.Function.class);
-    static final Type RuntimeInfo$ModuleBody = Type.getType(RuntimeInfo.ModuleBody.class);
-    static final Type RuntimeInfo$ScriptBody = Type.getType(RuntimeInfo.ScriptBody.class);
-    static final Type ScriptException = Type.getType(ScriptException.class);
-    static final Type ScriptIterator = Type.getType(ScriptIterator.class);
+    static final Type DebugInfo = Type.of(DebugInfo.class);
+    static final Type ResumptionPoint = Type.of(ResumptionPoint.class);
+    static final Type ReturnValue = Type.of(ReturnValue.class);
+    static final Type RuntimeInfo = Type.of(RuntimeInfo.class);
+    static final Type RuntimeInfo$Function = Type.of(RuntimeInfo.Function.class);
+    static final Type RuntimeInfo$ModuleBody = Type.of(RuntimeInfo.ModuleBody.class);
+    static final Type RuntimeInfo$ScriptBody = Type.of(RuntimeInfo.ScriptBody.class);
+    static final Type ScriptException = Type.of(ScriptException.class);
+    static final Type ScriptIterator = Type.of(ScriptIterator.class);
 }

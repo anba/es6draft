@@ -8,10 +8,6 @@ package com.github.anba.es6draft.compiler.assembler;
 
 import java.util.Arrays;
 
-import org.objectweb.asm.Handle;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-
 /**
  * Basic stack type information tracking, complex control instructions are not supported.
  */
@@ -111,36 +107,6 @@ public class Stack {
         return sb.toString();
     }
 
-    private static Type type(int sort) {
-        switch (sort) {
-        case Type.VOID:
-            return Type.VOID_TYPE;
-        case Type.BOOLEAN:
-            return Type.BOOLEAN_TYPE;
-        case Type.CHAR:
-            return Type.CHAR_TYPE;
-        case Type.BYTE:
-            return Type.BYTE_TYPE;
-        case Type.SHORT:
-            return Type.SHORT_TYPE;
-        case Type.INT:
-            return Type.INT_TYPE;
-        case Type.FLOAT:
-            return Type.FLOAT_TYPE;
-        case Type.LONG:
-            return Type.LONG_TYPE;
-        case Type.DOUBLE:
-            return Type.DOUBLE_TYPE;
-        case Type.ARRAY:
-            return Types.Object_;
-        case Type.OBJECT:
-            return Types.Object;
-        case Type.METHOD:
-        default:
-            return null;
-        }
-    }
-
     private static boolean assertEqualTypes(Type[] stack, int sp, Type[] labelStack, int labelsp) {
         assert sp == labelsp : String.format("%d != %d (%s, %s)", sp, labelsp,
                 Arrays.toString(stack), Arrays.toString(labelStack));
@@ -158,9 +124,10 @@ public class Stack {
             Type t0 = stack[i], t1 = labelStack[i];
             if (!t0.equals(t1)) {
                 assert compatibleTypes(t0, t1);
-                if (t0.getSort() <= Type.INT) {
-                    stack[i] = type(Math.max(Math.max(t0.getSort(), t1.getSort()), Type.INT));
-                } else if (t0.getSort() <= Type.DOUBLE) {
+                if (t0.getSort() <= Type.Sort.INT) {
+                    stack[i] = Type
+                            .of(Math.max(Math.max(t0.getSort(), t1.getSort()), Type.Sort.INT));
+                } else if (t0.getSort() <= Type.Sort.DOUBLE) {
                     stack[i] = Type.DOUBLE_TYPE;
                 } else {
                     stack[i] = commonType(t0, t1);
@@ -171,7 +138,7 @@ public class Stack {
 
     private static boolean compatibleTypes(Type left, Type right) {
         return left == right || left.getSize() == right.getSize()
-                && left.getSort() < Type.ARRAY == right.getSort() < Type.ARRAY;
+                && left.getSort() < Type.Sort.ARRAY == right.getSort() < Type.Sort.ARRAY;
     }
 
     protected Type commonType(Type left, Type right) {
@@ -293,14 +260,11 @@ public class Stack {
     }
 
     public final void tconst(Type type) {
-        int sort = type.getSort();
-        if (sort == Type.OBJECT || sort == Type.ARRAY) {
-            push(Types.Class);
-        } else if (sort == Type.METHOD) {
-            push(Types.MethodType);
-        } else {
-            throw new IllegalArgumentException();
-        }
+        push(Types.Class);
+    }
+
+    public final void tconst(MethodTypeDescriptor type) {
+        push(Types.MethodType);
     }
 
     public final void ldc(Object cst) {
@@ -322,10 +286,6 @@ public class Stack {
             push(Type.DOUBLE_TYPE);
         } else if (cst instanceof String) {
             push(Types.String);
-        } else if (cst instanceof Type) {
-            tconst((Type) cst);
-        } else if (cst instanceof Handle) {
-            hconst();
         } else {
             throw new IllegalArgumentException();
         }
@@ -1186,7 +1146,7 @@ public class Stack {
     /* return instructions */
 
     private void areturn(Type type) {
-        if (type.getSort() != Type.VOID) {
+        if (type.getSort() != Type.Sort.VOID) {
             pop(type);
         }
         assert sp == 0 : String.format("sp=%d, stack=%s", sp, getStackString());
@@ -1243,8 +1203,8 @@ public class Stack {
      * @param desc
      *            the field descriptor
      */
-    public final void getstatic(String desc) {
-        push(Type.getType(desc));
+    public final void getstatic(Type desc) {
+        push(desc);
     }
 
     /**
@@ -1253,8 +1213,8 @@ public class Stack {
      * @param desc
      *            the field descriptor
      */
-    public final void putstatic(String desc) {
-        pop(Type.getType(desc));
+    public final void putstatic(Type desc) {
+        pop(desc);
     }
 
     /**
@@ -1265,9 +1225,9 @@ public class Stack {
      * @param desc
      *            the field descriptor
      */
-    public final void getfield(String owner, String desc) {
-        pop(Type.getObjectType(owner));
-        push(Type.getType(desc));
+    public final void getfield(Type owner, Type desc) {
+        pop(owner);
+        push(desc);
     }
 
     /**
@@ -1278,26 +1238,22 @@ public class Stack {
      * @param desc
      *            the field descriptor
      */
-    public final void putfield(String owner, String desc) {
-        pop(Type.getType(desc));
-        pop(Type.getObjectType(owner));
+    public final void putfield(Type owner, Type desc) {
+        pop(desc);
+        pop(owner);
     }
 
     /* invoke instructions */
 
-    private void invoke(int opcode, String desc) {
-        Type ret = Type.getReturnType(desc);
-        Type[] arguments = Type.getArgumentTypes(desc);
-        for (int i = arguments.length - 1; i >= 0; --i) {
-            pop(arguments[i]);
+    private void invoke(MethodTypeDescriptor desc, boolean consumeThis) {
+        for (int i = desc.parameterCount(); i > 0;) {
+            pop(desc.parameterType(--i));
         }
-        switch (opcode) {
-        case Opcodes.INVOKEVIRTUAL:
-        case Opcodes.INVOKESPECIAL:
-        case Opcodes.INVOKEINTERFACE:
+        if (consumeThis) {
             pop(OBJECT_TYPE);
         }
-        if (ret.getSort() != Type.VOID) {
+        Type ret = desc.returnType();
+        if (ret.getSort() != Type.Sort.VOID) {
             push(ret);
         }
     }
@@ -1308,8 +1264,8 @@ public class Stack {
      * @param desc
      *            the method descriptor
      */
-    public final void invokevirtual(String desc) {
-        invoke(Opcodes.INVOKEVIRTUAL, desc);
+    public final void invokevirtual(MethodTypeDescriptor desc) {
+        invoke(desc, true);
     }
 
     /**
@@ -1318,8 +1274,8 @@ public class Stack {
      * @param desc
      *            the method descriptor
      */
-    public final void invokespecial(String desc) {
-        invoke(Opcodes.INVOKESPECIAL, desc);
+    public final void invokespecial(MethodTypeDescriptor desc) {
+        invoke(desc, true);
     }
 
     /**
@@ -1328,8 +1284,8 @@ public class Stack {
      * @param desc
      *            the method descriptor
      */
-    public final void invokestatic(String desc) {
-        invoke(Opcodes.INVOKESTATIC, desc);
+    public final void invokestatic(MethodTypeDescriptor desc) {
+        invoke(desc, false);
     }
 
     /**
@@ -1338,8 +1294,8 @@ public class Stack {
      * @param desc
      *            the method descriptor
      */
-    public final void invokeinterface(String desc) {
-        invoke(Opcodes.INVOKEINTERFACE, desc);
+    public final void invokeinterface(MethodTypeDescriptor desc) {
+        invoke(desc, true);
     }
 
     /**
@@ -1348,8 +1304,8 @@ public class Stack {
      * @param desc
      *            the method descriptor
      */
-    public final void invokedynamic(String desc) {
-        invoke(Opcodes.INVOKEDYNAMIC, desc);
+    public final void invokedynamic(MethodTypeDescriptor desc) {
+        invoke(desc, false);
     }
 
     /* other instructions */
@@ -1372,7 +1328,7 @@ public class Stack {
      */
     public final void newarray(Type type) {
         pop(Type.INT_TYPE);
-        push(Type.getType("[" + type.getDescriptor()));
+        push(type.asArray());
     }
 
     /**

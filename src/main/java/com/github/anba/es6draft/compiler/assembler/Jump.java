@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.compiler.assembler;
 
 import org.objectweb.asm.Label;
-import org.objectweb.asm.Type;
 
 /**
  * 
@@ -22,22 +21,22 @@ public class Jump {
         this.label = new Label();
     }
 
-    void setStack(Type[] stack) {
+    final void setStack(Type[] stack) {
         this.stack = stack;
     }
 
-    Label label() {
+    final Label label() {
         assert !resolved;
         resolved = true;
         return label;
     }
 
-    Label target() {
+    final Label target() {
         target = true;
         return label;
     }
 
-    Type[] stack() {
+    final Type[] stack() {
         return stack;
     }
 

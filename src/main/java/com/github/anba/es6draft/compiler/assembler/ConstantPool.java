@@ -13,7 +13,7 @@ import java.util.Map.Entry;
  * 
  */
 abstract class ConstantPool {
-    private final HashMap<Object, Integer> constantPool = new HashMap<>(64);
+    private final HashMap<Object, Integer> constantsMap = new HashMap<>(64);
     private ConstantPool next;
     private int integers = 0;
     private int longs = 0;
@@ -22,7 +22,7 @@ abstract class ConstantPool {
     private int strings = 0;
 
     protected final Code code;
-    protected final int limit;
+    private final int limit;
 
     protected ConstantPool(Code code, int limit) {
         assert 0 <= limit && limit <= Short.MAX_VALUE;
@@ -37,7 +37,7 @@ abstract class ConstantPool {
      */
     protected final Integer[] getIntegers() {
         Integer[] constants = new Integer[integers];
-        for (Entry<Object, Integer> entry : constantPool.entrySet()) {
+        for (Entry<Object, Integer> entry : constantsMap.entrySet()) {
             if (entry.getKey() instanceof Integer) {
                 constants[entry.getValue()] = (Integer) entry.getKey();
             }
@@ -52,7 +52,7 @@ abstract class ConstantPool {
      */
     protected final Long[] getLongs() {
         Long[] constants = new Long[longs];
-        for (Entry<Object, Integer> entry : constantPool.entrySet()) {
+        for (Entry<Object, Integer> entry : constantsMap.entrySet()) {
             if (entry.getKey() instanceof Long) {
                 constants[entry.getValue()] = (Long) entry.getKey();
             }
@@ -67,7 +67,7 @@ abstract class ConstantPool {
      */
     protected final Float[] getFloats() {
         Float[] constants = new Float[floats];
-        for (Entry<Object, Integer> entry : constantPool.entrySet()) {
+        for (Entry<Object, Integer> entry : constantsMap.entrySet()) {
             if (entry.getKey() instanceof Float) {
                 constants[entry.getValue()] = (Float) entry.getKey();
             }
@@ -82,7 +82,7 @@ abstract class ConstantPool {
      */
     protected final Double[] getDoubles() {
         Double[] constants = new Double[doubles];
-        for (Entry<Object, Integer> entry : constantPool.entrySet()) {
+        for (Entry<Object, Integer> entry : constantsMap.entrySet()) {
             if (entry.getKey() instanceof Double) {
                 constants[entry.getValue()] = (Double) entry.getKey();
             }
@@ -97,7 +97,7 @@ abstract class ConstantPool {
      */
     protected final String[] getStrings() {
         String[] constants = new String[strings];
-        for (Entry<Object, Integer> entry : constantPool.entrySet()) {
+        for (Entry<Object, Integer> entry : constantsMap.entrySet()) {
             if (entry.getKey() instanceof String) {
                 constants[entry.getValue()] = (String) entry.getKey();
             }
@@ -106,7 +106,16 @@ abstract class ConstantPool {
     }
 
     private boolean isConstantPoolFull() {
-        return constantPool.size() >= limit;
+        return constantsMap.size() >= limit;
+    }
+
+    private int getConstantIndex(Object cst) {
+        Integer index = constantsMap.get(cst);
+        return index != null ? index : -1;
+    }
+
+    private void putConstant(Object cst, int index) {
+        constantsMap.put(cst, index);
     }
 
     private ConstantPool getNext() {
@@ -117,67 +126,61 @@ abstract class ConstantPool {
     }
 
     public final void iconst(InstructionAssembler assembler, Integer cst) {
-        Integer index = constantPool.get(cst);
-        if (index == null) {
+        int index = getConstantIndex(cst);
+        if (index < 0) {
             if (isConstantPoolFull()) {
                 getNext().iconst(assembler, cst);
                 return;
             }
-            index = Integer.valueOf(integers++);
-            constantPool.put(cst, index);
+            putConstant(cst, index = integers++);
         }
         iconst(assembler, cst, index);
     }
 
     public final void lconst(InstructionAssembler assembler, Long cst) {
-        Integer index = constantPool.get(cst);
-        if (index == null) {
+        int index = getConstantIndex(cst);
+        if (index < 0) {
             if (isConstantPoolFull()) {
                 getNext().lconst(assembler, cst);
                 return;
             }
-            index = Integer.valueOf(longs++);
-            constantPool.put(cst, index);
+            putConstant(cst, index = longs++);
         }
         lconst(assembler, cst, index);
     }
 
     public final void fconst(InstructionAssembler assembler, Float cst) {
-        Integer index = constantPool.get(cst);
-        if (index == null) {
+        int index = getConstantIndex(cst);
+        if (index < 0) {
             if (isConstantPoolFull()) {
                 getNext().fconst(assembler, cst);
                 return;
             }
-            index = Integer.valueOf(floats++);
-            constantPool.put(cst, index);
+            putConstant(cst, index = floats++);
         }
         fconst(assembler, cst, index);
     }
 
     public final void dconst(InstructionAssembler assembler, Double cst) {
-        Integer index = constantPool.get(cst);
-        if (index == null) {
+        int index = getConstantIndex(cst);
+        if (index < 0) {
             if (isConstantPoolFull()) {
                 getNext().dconst(assembler, cst);
                 return;
             }
-            index = Integer.valueOf(doubles++);
-            constantPool.put(cst, index);
+            putConstant(cst, index = doubles++);
         }
         dconst(assembler, cst, index);
     }
 
     public final void aconst(InstructionAssembler assembler, String cst) {
-        String key = cst;
-        Integer index = constantPool.get(key);
-        if (index == null) {
+        int index = getConstantIndex(cst);
+        if (index < 0) {
             if (isConstantPoolFull()) {
                 getNext().aconst(assembler, cst);
                 return;
             }
-            index = Integer.valueOf(strings++);
-            constantPool.put(key, index);
+            putConstant(cst, index = strings++);
         }
         aconst(assembler, cst, index);
     }

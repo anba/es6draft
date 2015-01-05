@@ -14,6 +14,7 @@ import java.util.Objects;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.GeneratorThread;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -45,6 +46,50 @@ public final class ErrorObject extends OrdinaryObject {
         super(realm);
         this.exception = new ScriptException(this);
         this.stackTraces = collectStackTraces();
+    }
+
+    /**
+     * Constructs a new Error object.
+     * 
+     * @param realm
+     *            the realm object
+     * @param prototype
+     *            the error prototype
+     * @param message
+     *            the error message
+     */
+    public ErrorObject(Realm realm, Intrinsics prototype, String message) {
+        this(realm);
+        setPrototype(realm.getIntrinsic(prototype));
+        addPropertyUnchecked("message", new Property(message, true, false, true));
+        this.initialized = true;
+    }
+
+    /**
+     * Constructs a new Error object.
+     * 
+     * @param realm
+     *            the realm object
+     * @param prototype
+     *            the error prototype
+     * @param message
+     *            the error message
+     * @param fileName
+     *            the file name
+     * @param lineNumber
+     *            the line number
+     * @param columnNumber
+     *            the column number
+     */
+    public ErrorObject(Realm realm, Intrinsics prototype, String message, String fileName,
+            int lineNumber, int columnNumber) {
+        this(realm);
+        setPrototype(realm.getIntrinsic(prototype));
+        addPropertyUnchecked("message", new Property(message, true, false, true));
+        addPropertyUnchecked("fileName", new Property(fileName, true, true, true));
+        addPropertyUnchecked("lineNumber", new Property(lineNumber, true, true, true));
+        addPropertyUnchecked("columnNumber", new Property(columnNumber, true, true, true));
+        this.initialized = true;
     }
 
     private List<StackTraceElement[]> collectStackTraces() {

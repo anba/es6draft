@@ -16,13 +16,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -44,70 +43,66 @@ final class FunctionDeclarationInstantiationGenerator extends
         DeclarationBindingInstantiationGenerator {
     private static final class Methods {
         // class: Arrays
-        static final MethodDesc Arrays_asList = MethodDesc.create(MethodDesc.Invoke.Static,
-                Types.Arrays, "asList", Type.getMethodType(Types.List, Types.Object_));
+        static final MethodName Arrays_asList = MethodName.findStatic(Types.Arrays, "asList",
+                Type.methodType(Types.List, Types.Object_));
 
         // class: ExecutionContext
-        static final MethodDesc ExecutionContext_getVariableEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "getVariableEnvironment",
-                Type.getMethodType(Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_getVariableEnvironment = MethodName.findVirtual(
+                Types.ExecutionContext, "getVariableEnvironment",
+                Type.methodType(Types.LexicalEnvironment));
 
-        static final MethodDesc ExecutionContext_setLexicalEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "setLexicalEnvironment",
-                Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_setLexicalEnvironment = MethodName.findVirtual(
+                Types.ExecutionContext, "setLexicalEnvironment",
+                Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
-        static final MethodDesc ExecutionContext_setVariableEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "setVariableEnvironment",
-                Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_setVariableEnvironment = MethodName.findVirtual(
+                Types.ExecutionContext, "setVariableEnvironment",
+                Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
         // class: ArgumentsObject
-        static final MethodDesc ArgumentsObject_CreateMappedArgumentsObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ArgumentsObject, "CreateMappedArgumentsObject",
-                Type.getMethodType(Types.ArgumentsObject, Types.ExecutionContext,
-                        Types.FunctionObject, Types.String_, Types.Object_,
-                        Types.LexicalEnvironment));
+        static final MethodName ArgumentsObject_CreateMappedArgumentsObject = MethodName
+                .findStatic(Types.ArgumentsObject, "CreateMappedArgumentsObject", Type.methodType(
+                        Types.ArgumentsObject, Types.ExecutionContext, Types.FunctionObject,
+                        Types.String_, Types.Object_, Types.LexicalEnvironment));
 
-        static final MethodDesc ArgumentsObject_CreateUnmappedArgumentsObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ArgumentsObject, "CreateUnmappedArgumentsObject",
-                Type.getMethodType(Types.ArgumentsObject, Types.ExecutionContext, Types.Object_));
+        static final MethodName ArgumentsObject_CreateUnmappedArgumentsObject = MethodName
+                .findStatic(Types.ArgumentsObject, "CreateUnmappedArgumentsObject", Type
+                        .methodType(Types.ArgumentsObject, Types.ExecutionContext, Types.Object_));
 
-        static final MethodDesc LegacyArgumentsObject_CreateLegacyArgumentsObject = MethodDesc
-                .create(MethodDesc.Invoke.Static, Types.LegacyArgumentsObject,
-                        "CreateLegacyArgumentsObject", Type.getMethodType(
-                                Types.LegacyArgumentsObject, Types.ExecutionContext,
+        static final MethodName LegacyArgumentsObject_CreateLegacyArgumentsObject = MethodName
+                .findStatic(Types.LegacyArgumentsObject, "CreateLegacyArgumentsObject", Type
+                        .methodType(Types.LegacyArgumentsObject, Types.ExecutionContext,
                                 Types.FunctionObject, Types.Object_, Types.String_,
                                 Types.LexicalEnvironment));
 
-        static final MethodDesc LegacyArgumentsObject_CreateLegacyArgumentsObjectFrom = MethodDesc
-                .create(MethodDesc.Invoke.Static, Types.LegacyArgumentsObject,
-                        "CreateLegacyArgumentsObject", Type.getMethodType(
-                                Types.LegacyArgumentsObject, Types.ExecutionContext,
+        static final MethodName LegacyArgumentsObject_CreateLegacyArgumentsObjectFrom = MethodName
+                .findStatic(Types.LegacyArgumentsObject, "CreateLegacyArgumentsObject", Type
+                        .methodType(Types.LegacyArgumentsObject, Types.ExecutionContext,
                                 Types.FunctionObject, Types.Object_, Types.ArgumentsObject));
 
-        static final MethodDesc LegacyArgumentsObject_CreateLegacyArgumentsObjectUnmapped = MethodDesc
-                .create(MethodDesc.Invoke.Static, Types.LegacyArgumentsObject,
-                        "CreateLegacyArgumentsObject", Type.getMethodType(
-                                Types.LegacyArgumentsObject, Types.ExecutionContext,
+        static final MethodName LegacyArgumentsObject_CreateLegacyArgumentsObjectUnmapped = MethodName
+                .findStatic(Types.LegacyArgumentsObject, "CreateLegacyArgumentsObject", Type
+                        .methodType(Types.LegacyArgumentsObject, Types.ExecutionContext,
                                 Types.FunctionObject, Types.Object_));
 
         // FunctionObject
-        static final MethodDesc FunctionEnvironmentRecord_setTopLex = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.FunctionEnvironmentRecord, "setTopLex",
-                Type.getMethodType(Type.VOID_TYPE, Types.DeclarativeEnvironmentRecord));
+        static final MethodName FunctionEnvironmentRecord_setTopLex = MethodName.findVirtual(
+                Types.FunctionEnvironmentRecord, "setTopLex",
+                Type.methodType(Type.VOID_TYPE, Types.DeclarativeEnvironmentRecord));
 
         // FunctionObject
-        static final MethodDesc FunctionObject_setLegacyArguments = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.FunctionObject, "setLegacyArguments",
-                Type.getMethodType(Type.VOID_TYPE, Types.LegacyArgumentsObject));
+        static final MethodName FunctionObject_setLegacyArguments = MethodName.findVirtual(
+                Types.FunctionObject, "setLegacyArguments",
+                Type.methodType(Type.VOID_TYPE, Types.LegacyArgumentsObject));
 
         // class: LexicalEnvironment
-        static final MethodDesc LexicalEnvironment_newDeclarativeEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.LexicalEnvironment, "newDeclarativeEnvironment",
-                Type.getMethodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
+        static final MethodName LexicalEnvironment_newDeclarativeEnvironment = MethodName
+                .findStatic(Types.LexicalEnvironment, "newDeclarativeEnvironment",
+                        Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
         // class: List
-        static final MethodDesc List_iterator = MethodDesc.create(MethodDesc.Invoke.Interface,
-                Types.List, "iterator", Type.getMethodType(Types.Iterator));
+        static final MethodName List_iterator = MethodName.findInterface(Types.List, "iterator",
+                Type.methodType(Types.Iterator));
     }
 
     private static final int EXECUTION_CONTEXT = 0;

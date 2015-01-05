@@ -6,13 +6,10 @@
  */
 package com.github.anba.es6draft.compiler.assembler;
 
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import java.lang.reflect.Modifier;
 
 import com.github.anba.es6draft.compiler.assembler.Code.ClassCode;
+import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 
 /**
  * 
@@ -23,15 +20,20 @@ final class ExternConstantPool extends ConstantPool {
 
     private static final class TypeSpec<T> {
         final String methodName;
-        final String methodDescriptor;
-        final Type type;
+        final MethodTypeDescriptor methodDescriptor;
         final T defaultValue;
 
         private TypeSpec(String methodName, Type type, T defaultValue) {
             this.methodName = methodName;
-            this.methodDescriptor = Type.getMethodDescriptor(type, Type.INT_TYPE);
-            this.type = type;
+            this.methodDescriptor = MethodTypeDescriptor.methodType(type, Type.INT_TYPE);
             this.defaultValue = defaultValue;
+        }
+
+        String methodName(int index) {
+            if (index < 0) {
+                return methodName;
+            }
+            return methodName + "_" + index;
         }
 
         static final TypeSpec<Integer> INT = new TypeSpec<>("getInt", Type.INT_TYPE, 0);
@@ -39,6 +41,17 @@ final class ExternConstantPool extends ConstantPool {
         static final TypeSpec<Float> FLOAT = new TypeSpec<>("getFloat", Type.FLOAT_TYPE, 0f);
         static final TypeSpec<Double> DOUBLE = new TypeSpec<>("getDouble", Type.DOUBLE_TYPE, 0d);
         static final TypeSpec<String> STRING = new TypeSpec<>("getString", Types.String, "");
+    }
+
+    private static final class ConstantClassAssembler extends InstructionAssembler {
+        public ConstantClassAssembler(MethodCode method) {
+            super(method);
+        }
+
+        @Override
+        protected Stack createStack(Variables variables) {
+            return new EmptyStack(variables);
+        }
     }
 
     private final ClassCode classCode;
@@ -57,83 +70,82 @@ final class ExternConstantPool extends ConstantPool {
     @Override
     protected void close() {
         assert !closed && (closed = true) : "constant pool closed";
-        ClassWriter cw = classCode.classWriter;
-        generate(cw, TypeSpec.INT, getIntegers());
-        generate(cw, TypeSpec.LONG, getLongs());
-        generate(cw, TypeSpec.FLOAT, getFloats());
-        generate(cw, TypeSpec.DOUBLE, getDoubles());
-        generate(cw, TypeSpec.STRING, getStrings());
+        generate(TypeSpec.INT, getIntegers());
+        generate(TypeSpec.LONG, getLongs());
+        generate(TypeSpec.FLOAT, getFloats());
+        generate(TypeSpec.DOUBLE, getDoubles());
+        generate(TypeSpec.STRING, getStrings());
     }
 
-    private <T> void generate(ClassWriter cw, TypeSpec<T> spec, T[] values) {
+    private <T> void generate(TypeSpec<T> spec, T[] values) {
         if (values.length <= METHOD_LIMIT) {
-            generate(cw, spec, "", values, 0, values.length);
+            generate(spec, -1, values, 0, values.length);
         } else {
-            generateSplit(cw, spec, values);
+            generateSplit(spec, values);
         }
     }
 
-    private <T> void generateSplit(ClassWriter cw, TypeSpec<T> spec, T[] values) {
+    private <T> void generateSplit(TypeSpec<T> spec, T[] values) {
         // split into multiple methods
         for (int i = 0, index = 0; i < values.length; i += METHOD_LIMIT, ++index) {
             int from = i, to = Math.min(from + METHOD_LIMIT, values.length);
-            generate(cw, spec, "_" + index, values, from, to);
+            generate(spec, index, values, from, to);
         }
         // generate entry method
-        MethodVisitor mv = cw.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, spec.methodName,
-                spec.methodDescriptor, null, null);
-        mv.visitCode();
+        InstructionAssembler asm = newMethod(spec.methodName, spec);
+        asm.begin();
         for (int i = 0, index = 0; i < values.length; i += METHOD_LIMIT, ++index) {
             int from = i, to = Math.min(from + METHOD_LIMIT, values.length);
-            Label label = new Label();
-            mv.visitVarInsn(Opcodes.ILOAD, 0);
-            mv.visitIntInsn(Opcodes.SIPUSH, to);
-            mv.visitJumpInsn(Opcodes.IF_ICMPGE, label);
-            mv.visitVarInsn(Opcodes.ILOAD, 0);
-            mv.visitMethodInsn(Opcodes.INVOKESTATIC, classCode.className, spec.methodName + "_"
-                    + index, spec.methodDescriptor, false);
-            mv.visitInsn(spec.type.getOpcode(Opcodes.IRETURN));
-            mv.visitLabel(label);
+            Jump jump = new Jump();
+            asm.loadParameter(0, Type.INT_TYPE);
+            asm.sipush(to);
+            asm.ificmpge(jump);
+            asm.loadParameter(0, Type.INT_TYPE);
+            asm.invokestatic(classCode.classType, spec.methodName(index), spec.methodDescriptor,
+                    false);
+            asm._return();
+            asm.mark(jump);
         }
-        mv.visitLdcInsn(spec.defaultValue);
-        mv.visitInsn(spec.type.getOpcode(Opcodes.IRETURN));
-        mv.visitMaxs(0, 0);
-        mv.visitEnd();
+        asm.ldc(spec.defaultValue);
+        asm._return();
+        asm.end();
     }
 
-    private <T> void generate(ClassWriter cw, TypeSpec<T> spec, String suffix, T[] values,
-            int from, int to) {
+    private <T> void generate(TypeSpec<T> spec, int index, T[] values, int from, int to) {
         int length = to - from;
         if (length == 0) {
             return;
         }
-        String methodName = spec.methodName + suffix;
-        MethodVisitor mv = cw.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, methodName,
+        Jump dflt = new Jump();
+        Jump[] jumps = new Jump[length];
+        for (int caseIndex = 0; caseIndex < length; ++caseIndex) {
+            jumps[caseIndex] = new Jump();
+        }
+        InstructionAssembler asm = newMethod(spec.methodName(index), spec);
+        asm.begin();
+        asm.loadParameter(0, Type.INT_TYPE);
+        asm.tableswitch(from, to - 1, dflt, jumps);
+        for (int caseIndex = 0; caseIndex < length; ++caseIndex) {
+            asm.mark(jumps[caseIndex]);
+            asm.ldc(values[from + caseIndex]);
+            asm._return();
+        }
+        asm.mark(dflt);
+        asm.ldc(spec.defaultValue);
+        asm._return();
+        asm.end();
+    }
+
+    private <T> ConstantClassAssembler newMethod(String methodName, TypeSpec<T> spec) {
+        MethodCode method = classCode.newMethod(Modifier.PUBLIC | Modifier.STATIC, methodName,
                 spec.methodDescriptor, null, null);
-        Label dflt = new Label();
-        Label[] labels = new Label[length];
-        for (int index = 0; index < length; ++index) {
-            labels[index] = new Label();
-        }
-        mv.visitCode();
-        mv.visitVarInsn(Opcodes.ILOAD, 0);
-        mv.visitTableSwitchInsn(from, to - 1, dflt, labels);
-        for (int index = 0; index < length; ++index) {
-            mv.visitLabel(labels[index]);
-            mv.visitLdcInsn(values[from + index]);
-            mv.visitInsn(spec.type.getOpcode(Opcodes.IRETURN));
-        }
-        mv.visitLabel(dflt);
-        mv.visitLdcInsn(spec.defaultValue);
-        mv.visitInsn(spec.type.getOpcode(Opcodes.IRETURN));
-        mv.visitMaxs(0, 0);
-        mv.visitEnd();
+        return new ConstantClassAssembler(method);
     }
 
     private void load(InstructionAssembler assembler, Object cst, int index, TypeSpec<?> spec) {
         assert 0 <= index && index <= EXTERN_CONSTANTS_LIMIT;
         assembler.iconst(index);
-        assembler.invokestatic(classCode.className, spec.methodName, spec.methodDescriptor, false);
+        assembler.invokestatic(classCode.classType, spec.methodName, spec.methodDescriptor, false);
     }
 
     @Override

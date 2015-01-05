@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.compiler.assembler;
 
-import org.objectweb.asm.Type;
-
 /**
  * Object to represent a parameter or local variable.
  * 

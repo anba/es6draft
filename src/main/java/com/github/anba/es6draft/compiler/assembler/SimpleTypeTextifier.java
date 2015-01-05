@@ -6,6 +6,9 @@
  */
 package com.github.anba.es6draft.compiler.assembler;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -17,6 +20,15 @@ import org.objectweb.asm.util.Textifier;
 public final class SimpleTypeTextifier extends Textifier {
     public SimpleTypeTextifier() {
         super(Opcodes.ASM5);
+    }
+
+    @Override
+    public String toString() {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        this.print(pw);
+        pw.flush();
+        return sw.toString();
     }
 
     @Override

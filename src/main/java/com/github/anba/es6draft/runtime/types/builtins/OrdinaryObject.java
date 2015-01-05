@@ -94,6 +94,22 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
+     * Returns {@code true} if arguments {@code x} and {@code y} are both NaN values and not the
+     * same object reference.
+     * 
+     * @param x
+     *            the first argument
+     * @param y
+     *            the second argument
+     * @return {@code true} if x and y are both NaN values
+     */
+    private static final boolean SameValueNaN(Object x, Object y) {
+        return x != y && x instanceof Double && y instanceof Double
+                && Double.isNaN(((Double) x).doubleValue())
+                && Double.isNaN(((Double) y).doubleValue());
+    }
+
+    /**
      * Returns the string valued properties.
      * 
      * @return the string valued properties
@@ -118,6 +134,24 @@ public class OrdinaryObject implements ScriptObject {
      */
     final IndexedMap<Property> indexedProperties() {
         return indexedProperties;
+    }
+
+    public final void addPropertyUnchecked(String propertyKey, Property property) {
+        assert extensible : "object not extensible";
+        long index = IndexedMap.toIndex(propertyKey);
+        if (IndexedMap.isIndex(index)) {
+            assert !indexedProperties.containsKey(index) : "illegal property = " + propertyKey;
+            indexedProperties.put(index, property);
+        } else {
+            assert !properties.containsKey(propertyKey) : "illegal property = " + propertyKey;
+            properties.put(propertyKey, property);
+        }
+    }
+
+    public final void addPropertyUnchecked(Symbol propertyKey, Property property) {
+        assert extensible : "object not extensible";
+        assert !symbolProperties.containsKey(propertyKey) : "illegal property = " + propertyKey;
+        symbolProperties.put(propertyKey, property);
     }
 
     /**
@@ -1269,6 +1303,9 @@ public class OrdinaryObject implements ScriptObject {
             } else {
                 ownDesc = new Property(UNDEFINED, true, true, true);
             }
+        } else if (receiver == this && ownDesc.isWritable()) {
+            // Optimize the common case for own, writable properties
+            return setPropertyValue(cx, propertyKey, value, ownDesc);
         }
         /* step 5 */
         if (ownDesc.isDataDescriptor()) {
@@ -1294,6 +1331,15 @@ public class OrdinaryObject implements ScriptObject {
             return false;
         }
         setter.call(cx, receiver, value);
+        return true;
+    }
+
+    protected boolean setPropertyValue(ExecutionContext cx, long propertyKey, Object value,
+            Property current) {
+        assert current.isDataDescriptor() && current.isWritable();
+        if (!SameValueNaN(current.getValue(), value)) {
+            current.setValue(value);
+        }
         return true;
     }
 
@@ -1323,6 +1369,9 @@ public class OrdinaryObject implements ScriptObject {
             } else {
                 ownDesc = new Property(UNDEFINED, true, true, true);
             }
+        } else if (receiver == this && ownDesc.isWritable()) {
+            // Optimize the common case for own, writable properties
+            return setPropertyValue(cx, propertyKey, value, ownDesc);
         }
         /* step 5 */
         if (ownDesc.isDataDescriptor()) {
@@ -1348,6 +1397,15 @@ public class OrdinaryObject implements ScriptObject {
             return false;
         }
         setter.call(cx, receiver, value);
+        return true;
+    }
+
+    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value,
+            Property current) {
+        assert current.isDataDescriptor() && current.isWritable();
+        if (!SameValueNaN(current.getValue(), value)) {
+            current.setValue(value);
+        }
         return true;
     }
 
@@ -1377,6 +1435,9 @@ public class OrdinaryObject implements ScriptObject {
             } else {
                 ownDesc = new Property(UNDEFINED, true, true, true);
             }
+        } else if (receiver == this && ownDesc.isWritable()) {
+            // Optimize the common case for own, writable properties
+            return setPropertyValue(cx, propertyKey, value, ownDesc);
         }
         /* step 5 */
         if (ownDesc.isDataDescriptor()) {
@@ -1402,6 +1463,15 @@ public class OrdinaryObject implements ScriptObject {
             return false;
         }
         setter.call(cx, receiver, value);
+        return true;
+    }
+
+    protected boolean setPropertyValue(ExecutionContext cx, Symbol propertyKey, Object value,
+            Property current) {
+        assert current.isDataDescriptor() && current.isWritable();
+        if (!SameValueNaN(current.getValue(), value)) {
+            current.setValue(value);
+        }
         return true;
     }
 

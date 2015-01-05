@@ -11,8 +11,6 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.util.List;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.Name;
@@ -21,8 +19,9 @@ import com.github.anba.es6draft.compiler.JumpLabels.BreakLabel;
 import com.github.anba.es6draft.compiler.JumpLabels.ContinueLabel;
 import com.github.anba.es6draft.compiler.JumpLabels.TempLabel;
 import com.github.anba.es6draft.compiler.assembler.Jump;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.TryCatchLabel;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
@@ -109,85 +108,77 @@ final class StatementGenerator extends
 
     private static final class Methods {
         // class: AbstractOperations
-        static final MethodDesc AbstractOperations_IteratorClose = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "IteratorClose", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext, Types.ScriptObject,
-                                Type.BOOLEAN_TYPE));
+        static final MethodName AbstractOperations_IteratorClose = MethodName.findStatic(
+                Types.AbstractOperations, "IteratorClose", Type.methodType(Type.VOID_TYPE,
+                        Types.ExecutionContext, Types.ScriptObject, Type.BOOLEAN_TYPE));
 
         // class: EnvironmentRecord
-        static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "createMutableBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName EnvironmentRecord_createMutableBinding = MethodName.findInterface(
+                Types.EnvironmentRecord, "createMutableBinding",
+                Type.methodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc EnvironmentRecord_createImmutableBinding = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "createImmutableBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName EnvironmentRecord_createImmutableBinding = MethodName
+                .findInterface(Types.EnvironmentRecord, "createImmutableBinding",
+                        Type.methodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
         // class: GeneratorObject
-        static final MethodDesc GeneratorObject_isLegacyGenerator = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.GeneratorObject, "isLegacyGenerator",
-                Type.getMethodType(Type.BOOLEAN_TYPE));
+        static final MethodName GeneratorObject_isLegacyGenerator = MethodName.findVirtual(
+                Types.GeneratorObject, "isLegacyGenerator", Type.methodType(Type.BOOLEAN_TYPE));
 
         // class: Iterator
-        static final MethodDesc Iterator_hasNext = MethodDesc.create(MethodDesc.Invoke.Interface,
-                Types.Iterator, "hasNext", Type.getMethodType(Type.BOOLEAN_TYPE));
+        static final MethodName Iterator_hasNext = MethodName.findInterface(Types.Iterator,
+                "hasNext", Type.methodType(Type.BOOLEAN_TYPE));
 
-        static final MethodDesc Iterator_next = MethodDesc.create(MethodDesc.Invoke.Interface,
-                Types.Iterator, "next", Type.getMethodType(Types.Object));
+        static final MethodName Iterator_next = MethodName.findInterface(Types.Iterator, "next",
+                Type.methodType(Types.Object));
 
         // class: LexicalEnvironment
-        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.LexicalEnvironment, "getEnvRec",
-                Type.getMethodType(Types.EnvironmentRecord));
+        static final MethodName LexicalEnvironment_getEnvRec = MethodName.findVirtual(
+                Types.LexicalEnvironment, "getEnvRec", Type.methodType(Types.EnvironmentRecord));
 
         // class: Reference
-        static final MethodDesc Reference_putValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
-                Types.Reference, "putValue",
-                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
+        static final MethodName Reference_putValue = MethodName.findVirtual(Types.Reference,
+                "putValue", Type.methodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
         // class: ScriptException
-        static final MethodDesc ScriptException_create = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptException, "create",
-                Type.getMethodType(Types.ScriptException, Types.Object));
+        static final MethodName ScriptException_create = MethodName.findStatic(
+                Types.ScriptException, "create",
+                Type.methodType(Types.ScriptException, Types.Object));
 
-        static final MethodDesc ScriptException_getValue = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ScriptException, "getValue",
-                Type.getMethodType(Types.Object));
+        static final MethodName ScriptException_getValue = MethodName.findVirtual(
+                Types.ScriptException, "getValue", Type.methodType(Types.Object));
 
         // class: ScriptIterator
-        static final MethodDesc ScriptIterator_getScriptObject = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.ScriptIterator, "getScriptObject",
-                Type.getMethodType(Types.ScriptObject));
+        static final MethodName ScriptIterator_getScriptObject = MethodName.findInterface(
+                Types.ScriptIterator, "getScriptObject", Type.methodType(Types.ScriptObject));
 
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_debugger = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "debugger",
-                Type.getMethodType(Type.VOID_TYPE));
+        static final MethodName ScriptRuntime_debugger = MethodName.findStatic(Types.ScriptRuntime,
+                "debugger", Type.methodType(Type.VOID_TYPE));
 
-        static final MethodDesc ScriptRuntime_enumerate = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "enumerate",
-                Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_enumerate = MethodName.findStatic(
+                Types.ScriptRuntime, "enumerate",
+                Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_enumerateValues = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "enumerateValues",
-                Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_enumerateValues = MethodName.findStatic(
+                Types.ScriptRuntime, "enumerateValues",
+                Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getStackOverflowError = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getStackOverflowError",
-                Type.getMethodType(Types.StackOverflowError, Types.Error));
+        static final MethodName ScriptRuntime_getStackOverflowError = MethodName.findStatic(
+                Types.ScriptRuntime, "getStackOverflowError",
+                Type.methodType(Types.StackOverflowError, Types.Error));
 
-        static final MethodDesc ScriptRuntime_initializeFunctionBlockBinding = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "initializeFunctionBlockBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_initializeFunctionBlockBinding = MethodName
+                .findStatic(Types.ScriptRuntime, "initializeFunctionBlockBinding",
+                        Type.methodType(Type.VOID_TYPE, Types.String, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodDesc.Invoke.Static,
-                Types.ScriptRuntime, "iterate",
-                Type.getMethodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_iterate = MethodName.findStatic(Types.ScriptRuntime,
+                "iterate",
+                Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_toInternalError = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "toInternalError", Type
-                        .getMethodType(Types.ScriptException, Types.StackOverflowError,
-                                Types.ExecutionContext));
+        static final MethodName ScriptRuntime_toInternalError = MethodName.findStatic(
+                Types.ScriptRuntime, "toInternalError", Type.methodType(Types.ScriptException,
+                        Types.StackOverflowError, Types.ExecutionContext));
     }
 
     public StatementGenerator(CodeGenerator codegen) {

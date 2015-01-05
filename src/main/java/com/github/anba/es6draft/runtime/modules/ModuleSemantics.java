@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -160,8 +161,8 @@ public final class ModuleSemantics {
      *             if the module source contains any syntax errors
      */
     public static ModuleRecord ParseModuleAndImports(ShadowRealm realm, String moduleId,
-            Map<String, ModuleRecord> visited) throws IOException, MalformedNameException,
-            ParserException {
+            LinkedHashMap<String, ModuleRecord> visited) throws IOException,
+            MalformedNameException, ParserException {
         /* step 1 (not applicable) */
         /* step 2 */
         assert isHostNormalizedModuleName(moduleId);
@@ -214,7 +215,7 @@ public final class ModuleSemantics {
      *             if the module source contains any syntax errors
      */
     private static ModuleRecord ParseModuleAndImports(ShadowRealm realm, String moduleId,
-            String src, Path file, Map<String, ModuleRecord> visited) throws IOException,
+            String src, Path file, LinkedHashMap<String, ModuleRecord> visited) throws IOException,
             MalformedNameException, ParserException {
         HashMap<String, String> normalizedNames = new HashMap<>();
         /* steps 1-7 (not applicable) */
@@ -552,7 +553,7 @@ public final class ModuleSemantics {
         /* step 6 */
         if (m == null) {
             /* step 6.a */
-            HashMap<String, ModuleRecord> newModules = new HashMap<>();
+            LinkedHashMap<String, ModuleRecord> newModules = new LinkedHashMap<>();
             /* steps 6.b-6.c */
             m = ParseModuleAndImports(realm, moduleId, newModules);
             /* steps 6.d-6.e */
@@ -664,7 +665,7 @@ public final class ModuleSemantics {
         /* step 6 */
         if (m == null) {
             /* step 6.a */
-            HashMap<String, ModuleRecord> newModules = new HashMap<>();
+            LinkedHashMap<String, ModuleRecord> newModules = new LinkedHashMap<>();
             /* steps 6.b-6.c */
             m = ParseModuleAndImports(realm, moduleId, sourceCode, null, newModules);
             /* steps 6.d-6.e */
@@ -687,7 +688,7 @@ public final class ModuleSemantics {
      *             if any export binding cannot be resolved
      */
     public static void LinkModules(ExecutionContext cx, Realm realm,
-            Map<String, ModuleRecord> newModuleSet) throws ResolutionException {
+            LinkedHashMap<String, ModuleRecord> newModuleSet) throws ResolutionException {
         /* step 1 */
         HashMap<String, ModuleRecord> modules = new HashMap<>(realm.getModules());
         /* step 2 */

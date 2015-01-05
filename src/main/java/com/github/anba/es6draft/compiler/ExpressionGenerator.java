@@ -16,8 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.ast.scope.Scope;
@@ -33,9 +31,10 @@ import com.github.anba.es6draft.ast.synthetic.SuperElementAccessorValue;
 import com.github.anba.es6draft.ast.synthetic.SuperPropertyAccessorValue;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.assembler.FieldDesc;
+import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.Jump;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.runtime.internal.Bootstrap;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.NativeCalls;
@@ -46,301 +45,267 @@ import com.github.anba.es6draft.runtime.objects.Eval.EvalFlags;
  */
 final class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisitor> {
     private static final class Fields {
-        static final FieldDesc Intrinsics_ObjectPrototype = FieldDesc.create(
-                FieldDesc.Allocation.Static, Types.Intrinsics, "ObjectPrototype", Types.Intrinsics);
+        static final FieldName Intrinsics_ObjectPrototype = FieldName.findStatic(Types.Intrinsics,
+                "ObjectPrototype", Types.Intrinsics);
 
-        static final FieldDesc ScriptRuntime_EMPTY_ARRAY = FieldDesc.create(
-                FieldDesc.Allocation.Static, Types.ScriptRuntime, "EMPTY_ARRAY", Types.Object_);
+        static final FieldName ScriptRuntime_EMPTY_ARRAY = FieldName.findStatic(
+                Types.ScriptRuntime, "EMPTY_ARRAY", Types.Object_);
     }
 
     private static final class Methods {
         // class: Eval
-        static final MethodDesc Eval_directEvalWithTranslate = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.Eval, "directEval", Type.getMethodType(
-                        Types.Object, Types.Object_, Types.ExecutionContext, Type.INT_TYPE));
-
-        static final MethodDesc Eval_directEval = MethodDesc.create(MethodDesc.Invoke.Static,
-                Types.Eval, "directEval", Type.getMethodType(Types.Object, Types.Object,
+        static final MethodName Eval_directEvalWithTranslate = MethodName
+                .findStatic(Types.Eval, "directEval", Type.methodType(Types.Object, Types.Object_,
                         Types.ExecutionContext, Type.INT_TYPE));
 
-        // class: EnvironmentRecord
-        static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "createMutableBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName Eval_directEval = MethodName.findStatic(Types.Eval, "directEval",
+                Type.methodType(Types.Object, Types.Object, Types.ExecutionContext, Type.INT_TYPE));
 
-        static final MethodDesc EnvironmentRecord_withBaseObject = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "withBaseObject",
-                Type.getMethodType(Types.ScriptObject));
+        // class: EnvironmentRecord
+        static final MethodName EnvironmentRecord_createMutableBinding = MethodName.findInterface(
+                Types.EnvironmentRecord, "createMutableBinding",
+                Type.methodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
+
+        static final MethodName EnvironmentRecord_withBaseObject = MethodName.findInterface(
+                Types.EnvironmentRecord, "withBaseObject", Type.methodType(Types.ScriptObject));
 
         // class: ExecutionContext
-        static final MethodDesc ExecutionContext_resolveThisBinding = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "resolveThisBinding",
-                Type.getMethodType(Types.Object));
+        static final MethodName ExecutionContext_resolveThisBinding = MethodName.findVirtual(
+                Types.ExecutionContext, "resolveThisBinding", Type.methodType(Types.Object));
 
         // class: ArrayObject
-        static final MethodDesc ArrayObject_ArrayCreate = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ArrayObject, "ArrayCreate",
-                Type.getMethodType(Types.ArrayObject, Types.ExecutionContext, Type.LONG_TYPE));
+        static final MethodName ArrayObject_ArrayCreate = MethodName.findStatic(Types.ArrayObject,
+                "ArrayCreate",
+                Type.methodType(Types.ArrayObject, Types.ExecutionContext, Type.LONG_TYPE));
 
-        static final MethodDesc ArrayObject_DenseArrayCreate = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ArrayObject, "DenseArrayCreate",
-                Type.getMethodType(Types.ArrayObject, Types.ExecutionContext, Types.Object_));
+        static final MethodName ArrayObject_DenseArrayCreate = MethodName.findStatic(
+                Types.ArrayObject, "DenseArrayCreate",
+                Type.methodType(Types.ArrayObject, Types.ExecutionContext, Types.Object_));
 
-        static final MethodDesc ArrayObject_SparseArrayCreate = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ArrayObject, "SparseArrayCreate",
-                Type.getMethodType(Types.ArrayObject, Types.ExecutionContext, Types.Object_));
+        static final MethodName ArrayObject_SparseArrayCreate = MethodName.findStatic(
+                Types.ArrayObject, "SparseArrayCreate",
+                Type.methodType(Types.ArrayObject, Types.ExecutionContext, Types.Object_));
 
         // class: LexicalEnvironment
-        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.LexicalEnvironment, "getEnvRec",
-                Type.getMethodType(Types.EnvironmentRecord));
+        static final MethodName LexicalEnvironment_getEnvRec = MethodName.findVirtual(
+                Types.LexicalEnvironment, "getEnvRec", Type.methodType(Types.EnvironmentRecord));
 
         // class: Math
-        static final MethodDesc Math_pow = MethodDesc.create(MethodDesc.Invoke.Static, Types.Math,
-                "pow", Type.getMethodType(Type.DOUBLE_TYPE, Type.DOUBLE_TYPE, Type.DOUBLE_TYPE));
+        static final MethodName Math_pow = MethodName.findStatic(Types.Math, "pow",
+                Type.methodType(Type.DOUBLE_TYPE, Type.DOUBLE_TYPE, Type.DOUBLE_TYPE));
 
         // class: OrdinaryObject
-        static final MethodDesc OrdinaryObject_ObjectCreate = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.OrdinaryObject, "ObjectCreate",
-                Type.getMethodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Intrinsics));
+        static final MethodName OrdinaryObject_ObjectCreate = MethodName.findStatic(
+                Types.OrdinaryObject, "ObjectCreate",
+                Type.methodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Intrinsics));
 
         // class: Reference
-        static final MethodDesc Reference_getBase = MethodDesc.create(MethodDesc.Invoke.Virtual,
-                Types.Reference, "getBase", Type.getMethodType(Types.Object));
+        static final MethodName Reference_getBase = MethodName.findVirtual(Types.Reference,
+                "getBase", Type.methodType(Types.Object));
 
-        static final MethodDesc Reference_getThisValue = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.Reference, "getThisValue",
-                Type.getMethodType(Types.Object));
+        static final MethodName Reference_getThisValue = MethodName.findVirtual(Types.Reference,
+                "getThisValue", Type.methodType(Types.Object));
 
-        static final MethodDesc Reference_getValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
-                Types.Reference, "getValue",
-                Type.getMethodType(Types.Object, Types.ExecutionContext));
+        static final MethodName Reference_getValue = MethodName.findVirtual(Types.Reference,
+                "getValue", Type.methodType(Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc Reference_putValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
-                Types.Reference, "putValue",
-                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
+        static final MethodName Reference_putValue = MethodName.findVirtual(Types.Reference,
+                "putValue", Type.methodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc Reference_delete = MethodDesc.create(MethodDesc.Invoke.Virtual,
-                Types.Reference, "delete",
-                Type.getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext));
+        static final MethodName Reference_delete = MethodName.findVirtual(Types.Reference,
+                "delete", Type.methodType(Type.BOOLEAN_TYPE, Types.ExecutionContext));
 
         // class: RegExpConstructor
-        static final MethodDesc RegExpConstructor_RegExpCreate = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.RegExpConstructor, "RegExpCreate", Type
-                        .getMethodType(Types.RegExpObject, Types.ExecutionContext, Types.Object,
-                                Types.Object));
+        static final MethodName RegExpConstructor_RegExpCreate = MethodName.findStatic(
+                Types.RegExpConstructor, "RegExpCreate", Type.methodType(Types.RegExpObject,
+                        Types.ExecutionContext, Types.Object, Types.Object));
 
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_add_str = MethodDesc.create(MethodDesc.Invoke.Static,
-                Types.ScriptRuntime, "add", Type.getMethodType(Types.CharSequence,
-                        Types.CharSequence, Types.CharSequence, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_in = MethodDesc.create(MethodDesc.Invoke.Static,
-                Types.ScriptRuntime, "in", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object,
-                        Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_typeof = MethodDesc.create(MethodDesc.Invoke.Static,
-                Types.ScriptRuntime, "typeof",
-                Type.getMethodType(Types.String, Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_InstanceofOperator = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "InstanceofOperator", Type
-                        .getMethodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object,
-                                Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_ArrayAccumulationSpreadElement = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "ArrayAccumulationSpreadElement",
-                Type.getMethodType(Type.INT_TYPE, Types.ArrayObject, Type.INT_TYPE, Types.Object,
+        static final MethodName ScriptRuntime_add_str = MethodName.findStatic(Types.ScriptRuntime,
+                "add", Type.methodType(Types.CharSequence, Types.CharSequence, Types.CharSequence,
                         Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_CheckCallable = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "CheckCallable",
-                Type.getMethodType(Types.Callable, Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_defineLength = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineLength",
-                Type.getMethodType(Type.VOID_TYPE, Types.ArrayObject, Type.INT_TYPE));
-
-        static final MethodDesc ScriptRuntime_defineProperty__int = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "defineProperty", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ArrayObject, Type.INT_TYPE,
-                                Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_directEvalFallbackArguments = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "directEvalFallbackArguments", Type
-                        .getMethodType(Types.Object_, Types.Object, Types.Object_, Types.Callable,
-                                Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_directEvalFallbackThisArgument = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "directEvalFallbackThisArgument",
-                Type.getMethodType(Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_directEvalFallbackHook = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "directEvalFallbackHook",
-                Type.getMethodType(Types.Callable, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_EvaluateArrowFunction = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateArrowFunction", Type
-                        .getMethodType(Types.OrdinaryFunction, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_EvaluateAsyncArrowFunction = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateAsyncArrowFunction", Type
-                        .getMethodType(Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_EvaluateAsyncFunctionExpression = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateAsyncFunctionExpression",
-                Type.getMethodType(Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function,
+        static final MethodName ScriptRuntime_in = MethodName.findStatic(Types.ScriptRuntime, "in",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object,
                         Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluateConstructorCall = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateConstructorCall", Type
-                        .getMethodType(Types.ScriptObject, Types.Object, Types.Object_,
-                                Types.ExecutionContext));
+        static final MethodName ScriptRuntime_typeof = MethodName.findStatic(Types.ScriptRuntime,
+                "typeof", Type.methodType(Types.String, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluateConstructorTailCall = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateConstructorTailCall", Type
-                        .getMethodType(Types.Object, Types.Object, Types.Object_,
-                                Types.ExecutionContext));
+        static final MethodName ScriptRuntime_InstanceofOperator = MethodName.findStatic(
+                Types.ScriptRuntime, "InstanceofOperator", Type.methodType(Type.BOOLEAN_TYPE,
+                        Types.Object, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluateFunctionExpression = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateFunctionExpression", Type
-                        .getMethodType(Types.OrdinaryFunction, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_EvaluateGeneratorComprehension = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateGeneratorComprehension",
-                Type.getMethodType(Types.GeneratorObject, Types.RuntimeInfo$Function,
+        static final MethodName ScriptRuntime_ArrayAccumulationSpreadElement = MethodName
+                .findStatic(Types.ScriptRuntime, "ArrayAccumulationSpreadElement", Type.methodType(
+                        Type.INT_TYPE, Types.ArrayObject, Type.INT_TYPE, Types.Object,
                         Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluateLegacyGeneratorComprehension = MethodDesc
-                .create(MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                        "EvaluateLegacyGeneratorComprehension", Type.getMethodType(
-                                Types.GeneratorObject, Types.RuntimeInfo$Function,
+        static final MethodName ScriptRuntime_CheckCallable = MethodName.findStatic(
+                Types.ScriptRuntime, "CheckCallable",
+                Type.methodType(Types.Callable, Types.Object, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_defineLength = MethodName.findStatic(
+                Types.ScriptRuntime, "defineLength",
+                Type.methodType(Type.VOID_TYPE, Types.ArrayObject, Type.INT_TYPE));
+
+        static final MethodName ScriptRuntime_defineProperty__int = MethodName.findStatic(
+                Types.ScriptRuntime, "defineProperty", Type.methodType(Type.VOID_TYPE,
+                        Types.ArrayObject, Type.INT_TYPE, Types.Object, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_directEvalFallbackArguments = MethodName.findStatic(
+                Types.ScriptRuntime, "directEvalFallbackArguments", Type.methodType(Types.Object_,
+                        Types.Object, Types.Object_, Types.Callable, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_directEvalFallbackThisArgument = MethodName
+                .findStatic(Types.ScriptRuntime, "directEvalFallbackThisArgument",
+                        Type.methodType(Types.Object, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_directEvalFallbackHook = MethodName.findStatic(
+                Types.ScriptRuntime, "directEvalFallbackHook",
+                Type.methodType(Types.Callable, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluateArrowFunction = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluateArrowFunction", Type.methodType(
+                        Types.OrdinaryFunction, Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluateAsyncArrowFunction = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluateAsyncArrowFunction", Type.methodType(
+                        Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function,
+                        Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluateAsyncFunctionExpression = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluateAsyncFunctionExpression", Type
+                        .methodType(Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluateGeneratorExpression = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateGeneratorExpression", Type
-                        .getMethodType(Types.OrdinaryGenerator, Types.RuntimeInfo$Function,
+        static final MethodName ScriptRuntime_EvaluateConstructorCall = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluateConstructorCall", Type.methodType(Types.ScriptObject,
+                        Types.Object, Types.Object_, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluateConstructorTailCall = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluateConstructorTailCall",
+                Type.methodType(Types.Object, Types.Object, Types.Object_, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluateFunctionExpression = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluateFunctionExpression", Type.methodType(
+                        Types.OrdinaryFunction, Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluateGeneratorComprehension = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluateGeneratorComprehension", Type.methodType(
+                        Types.GeneratorObject, Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluateLegacyGeneratorComprehension = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluateLegacyGeneratorComprehension", Type
+                        .methodType(Types.GeneratorObject, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluateLegacyGeneratorExpression = MethodDesc
-                .create(MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                        "EvaluateLegacyGeneratorExpression", Type.getMethodType(
-                                Types.OrdinaryGenerator, Types.RuntimeInfo$Function,
+        static final MethodName ScriptRuntime_EvaluateGeneratorExpression = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluateGeneratorExpression", Type
+                        .methodType(Types.OrdinaryGenerator, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getElement = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getElement", Type.getMethodType(
-                        Types.Reference, Types.Object, Types.Object, Types.ExecutionContext,
-                        Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_EvaluateLegacyGeneratorExpression = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluateLegacyGeneratorExpression", Type
+                        .methodType(Types.OrdinaryGenerator, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getElementValue = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getElementValue", Type
-                        .getMethodType(Types.Object, Types.Object, Types.Object,
-                                Types.ExecutionContext, Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_getElement = MethodName.findStatic(
+                Types.ScriptRuntime, "getElement", Type.methodType(Types.Reference, Types.Object,
+                        Types.Object, Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_getProperty = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getProperty", Type.getMethodType(
-                        Types.Reference, Types.Object, Types.String, Types.ExecutionContext,
-                        Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_getElementValue = MethodName.findStatic(
+                Types.ScriptRuntime, "getElementValue",
+                Type.methodType(Types.Object, Types.Object, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getProperty_int = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getProperty", Type.getMethodType(
-                        Types.Reference, Types.Object, Type.INT_TYPE, Types.ExecutionContext,
-                        Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_getProperty = MethodName.findStatic(
+                Types.ScriptRuntime, "getProperty", Type.methodType(Types.Reference, Types.Object,
+                        Types.String, Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_getProperty_long = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getProperty", Type.getMethodType(
-                        Types.Reference, Types.Object, Type.LONG_TYPE, Types.ExecutionContext,
-                        Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_getProperty_int = MethodName.findStatic(
+                Types.ScriptRuntime, "getProperty", Type.methodType(Types.Reference, Types.Object,
+                        Type.INT_TYPE, Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_getProperty_double = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getProperty", Type.getMethodType(
-                        Types.Reference, Types.Object, Type.DOUBLE_TYPE, Types.ExecutionContext,
-                        Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_getProperty_long = MethodName.findStatic(
+                Types.ScriptRuntime, "getProperty", Type.methodType(Types.Reference, Types.Object,
+                        Type.LONG_TYPE, Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_getPropertyValue = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getPropertyValue", Type
-                        .getMethodType(Types.Object, Types.Object, Types.String,
-                                Types.ExecutionContext, Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_getProperty_double = MethodName.findStatic(
+                Types.ScriptRuntime, "getProperty", Type.methodType(Types.Reference, Types.Object,
+                        Type.DOUBLE_TYPE, Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_getPropertyValue_int = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getPropertyValue", Type
-                        .getMethodType(Types.Object, Types.Object, Type.INT_TYPE,
-                                Types.ExecutionContext, Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_getPropertyValue = MethodName.findStatic(
+                Types.ScriptRuntime, "getPropertyValue",
+                Type.methodType(Types.Object, Types.Object, Types.String, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getPropertyValue_long = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getPropertyValue", Type
-                        .getMethodType(Types.Object, Types.Object, Type.LONG_TYPE,
-                                Types.ExecutionContext, Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_getPropertyValue_int = MethodName.findStatic(
+                Types.ScriptRuntime, "getPropertyValue",
+                Type.methodType(Types.Object, Types.Object, Type.INT_TYPE, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getPropertyValue_double = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getPropertyValue", Type
-                        .getMethodType(Types.Object, Types.Object, Type.DOUBLE_TYPE,
-                                Types.ExecutionContext, Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_getPropertyValue_long = MethodName
+                .findStatic(Types.ScriptRuntime, "getPropertyValue", Type.methodType(Types.Object,
+                        Types.Object, Type.LONG_TYPE, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_GetSuperConstructor = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "GetSuperConstructor",
-                Type.getMethodType(Types.Callable, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_getPropertyValue_double = MethodName.findStatic(
+                Types.ScriptRuntime, "getPropertyValue", Type.methodType(Types.Object,
+                        Types.Object, Type.DOUBLE_TYPE, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getSuperPropertyReferenceValue = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getSuperPropertyReferenceValue",
-                Type.getMethodType(Types.Object, Types.ExecutionContext, Types.Object,
-                        Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_GetSuperConstructor = MethodName.findStatic(
+                Types.ScriptRuntime, "GetSuperConstructor",
+                Type.methodType(Types.Callable, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getSuperPropertyReferenceValue_String = MethodDesc
-                .create(MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                        "getSuperPropertyReferenceValue", Type.getMethodType(Types.Object,
-                                Types.ExecutionContext, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_getSuperPropertyReferenceValue = MethodName
+                .findStatic(Types.ScriptRuntime, "getSuperPropertyReferenceValue", Type.methodType(
+                        Types.Object, Types.ExecutionContext, Types.Object, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_IsBuiltinEval = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "IsBuiltinEval",
-                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Callable, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_getSuperPropertyReferenceValue_String = MethodName
+                .findStatic(Types.ScriptRuntime, "getSuperPropertyReferenceValue", Type.methodType(
+                        Types.Object, Types.ExecutionContext, Types.String, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_MakeSuperPropertyReference = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "MakeSuperPropertyReference", Type
-                        .getMethodType(Types.Reference, Types.ExecutionContext, Types.Object,
-                                Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_IsBuiltinEval = MethodName.findStatic(
+                Types.ScriptRuntime, "IsBuiltinEval",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.Callable, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_MakeSuperPropertyReference_String = MethodDesc
-                .create(MethodDesc.Invoke.Static, Types.ScriptRuntime,
-                        "MakeSuperPropertyReference", Type.getMethodType(Types.Reference,
-                                Types.ExecutionContext, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_MakeSuperPropertyReference = MethodName.findStatic(
+                Types.ScriptRuntime, "MakeSuperPropertyReference", Type.methodType(Types.Reference,
+                        Types.ExecutionContext, Types.Object, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_PrepareForTailCall = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "PrepareForTailCall",
-                Type.getMethodType(Types.Object, Types.Object, Types.Object_, Types.Callable));
+        static final MethodName ScriptRuntime_MakeSuperPropertyReference_String = MethodName
+                .findStatic(Types.ScriptRuntime, "MakeSuperPropertyReference", Type.methodType(
+                        Types.Reference, Types.ExecutionContext, Types.String, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_PrepareForTailCallUnchecked = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "PrepareForTailCall", Type
-                        .getMethodType(Types.Object, Types.Object, Types.ExecutionContext,
-                                Types.Object, Types.Object_));
+        static final MethodName ScriptRuntime_PrepareForTailCall = MethodName.findStatic(
+                Types.ScriptRuntime, "PrepareForTailCall",
+                Type.methodType(Types.Object, Types.Object, Types.Object_, Types.Callable));
 
-        static final MethodDesc ScriptRuntime_SpreadArray = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "SpreadArray",
-                Type.getMethodType(Types.Object_, Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_PrepareForTailCallUnchecked = MethodName.findStatic(
+                Types.ScriptRuntime, "PrepareForTailCall", Type.methodType(Types.Object,
+                        Types.Object, Types.ExecutionContext, Types.Object, Types.Object_));
 
-        static final MethodDesc ScriptRuntime_toFlatArray = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "toFlatArray",
-                Type.getMethodType(Types.Object_, Types.Object_, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_SpreadArray = MethodName.findStatic(
+                Types.ScriptRuntime, "SpreadArray",
+                Type.methodType(Types.Object_, Types.Object, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_toFlatArray = MethodName.findStatic(
+                Types.ScriptRuntime, "toFlatArray",
+                Type.methodType(Types.Object_, Types.Object_, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_toStr = MethodName.findStatic(Types.ScriptRuntime,
+                "toStr", Type.methodType(Types.CharSequence, Types.Object, Types.ExecutionContext));
 
         // class: StringBuilder
-        static final MethodDesc StringBuilder_append_Charsequence = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.StringBuilder, "append",
-                Type.getMethodType(Types.StringBuilder, Types.CharSequence));
+        static final MethodName StringBuilder_append_Charsequence = MethodName.findVirtual(
+                Types.StringBuilder, "append",
+                Type.methodType(Types.StringBuilder, Types.CharSequence));
 
-        static final MethodDesc StringBuilder_append_String = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.StringBuilder, "append",
-                Type.getMethodType(Types.StringBuilder, Types.String));
+        static final MethodName StringBuilder_append_String = MethodName.findVirtual(
+                Types.StringBuilder, "append", Type.methodType(Types.StringBuilder, Types.String));
 
-        static final MethodDesc StringBuilder_init = MethodDesc.create(MethodDesc.Invoke.Special,
-                Types.StringBuilder, "<init>", Type.getMethodType(Type.VOID_TYPE));
+        static final MethodName StringBuilder_init = MethodName.findConstructor(
+                Types.StringBuilder, Type.methodType(Type.VOID_TYPE));
 
-        static final MethodDesc StringBuilder_toString = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.StringBuilder, "toString",
-                Type.getMethodType(Types.String));
+        static final MethodName StringBuilder_toString = MethodName.findVirtual(
+                Types.StringBuilder, "toString", Type.methodType(Types.String));
     }
 
     private final IdentifierResolution identifierResolution;
@@ -350,25 +315,28 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         this.identifierResolution = new IdentifierResolution();
     }
 
-    private static final Object[] EMPTY_BSM_ARGS = new Object[] {};
-
     private void invokeDynamicCall(ExpressionVisitor mv) {
         // stack: [func(Callable), cx, thisValue, args] -> [result]
         mv.invokedynamic(Bootstrap.getCallName(), Bootstrap.getCallMethodDescriptor(),
-                Bootstrap.getCallBootstrap(), EMPTY_BSM_ARGS);
+                Bootstrap.getCallBootstrap());
     }
 
     private void invokeDynamicNativeCall(String name, ExpressionVisitor mv) {
         // stack: [args, cx] -> [result]
         mv.invokedynamic(NativeCalls.getNativeCallName(name),
-                NativeCalls.getNativeCallMethodDescriptor(), NativeCalls.getNativeCallBootstrap(),
-                EMPTY_BSM_ARGS);
+                NativeCalls.getNativeCallMethodDescriptor(), NativeCalls.getNativeCallBootstrap());
     }
 
     private void invokeDynamicOperator(BinaryExpression.Operator operator, ExpressionVisitor mv) {
         // stack: [lval, rval, cx] -> [result]
         mv.invokedynamic(Bootstrap.getName(operator), Bootstrap.getMethodDescriptor(operator),
-                Bootstrap.getBootstrap(operator), EMPTY_BSM_ARGS);
+                Bootstrap.getBootstrap(operator));
+    }
+
+    private void invokeDynamicConcat(int numberOfStrings, ExpressionVisitor mv) {
+        mv.invokedynamic(Bootstrap.getConcatName(),
+                Bootstrap.getConcatMethodDescriptor(numberOfStrings),
+                Bootstrap.getConcatBootstrap());
     }
 
     /**
@@ -551,8 +519,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             ExpressionVisitor mv) {
         switch (CallType.of(call, base, mv.getScope())) {
         case Property:
-        case SuperProperty:
             return EvaluateCallProperty(call, (LeftHandSideExpression) base, arguments, mv);
+        case SuperProperty:
+            return EvaluateCallSuperProperty(call, (LeftHandSideExpression) base, arguments, mv);
         case Value:
             return EvaluateCallValue(call, base, arguments, mv);
         case Identifier:
@@ -571,6 +540,58 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     private ValType EvaluateCallProperty(Expression call, LeftHandSideExpression base,
             List<Expression> arguments, ExpressionVisitor mv) {
         // Only called for the property reference case (`obj.method(...)` or `obj[method](...)`).
+
+        // stack: [] -> [ref]
+        ValType type;
+        if (base instanceof PropertyAccessor) {
+            PropertyAccessor property = (PropertyAccessor) base;
+            // Inlined: Property accessor evaluation
+            // stack: [] -> [thisValue, func]
+            {
+                /* steps 1-3 (12.3.2.1) */
+                evalAndGetBoxedValue(property.getBase(), mv);
+                mv.dup();
+                /* steps 4-6 (12.3.2.1) */
+                mv.aconst(property.getName());
+                /* steps 7-11 (12.3.2.1) */
+                mv.lineInfo(property);
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_getPropertyValue);
+                /* step 11 (12.3.2.1, return) */
+                type = ValType.Any;
+            }
+            // stack: [thisValue, func] -> [func, thisValue]
+            mv.swap();
+
+            /* steps 1-2 (not applicable) */
+            /* steps 3-4 (not applicable) */
+        } else {
+            type = base.accept(this, mv);
+            assert type == ValType.Reference;
+
+            /* steps 1-2 */
+            // stack: [ref] -> [func, ref]
+            mv.dup();
+            GetValue(base, type, mv);
+            mv.swap();
+
+            /* steps 3-4 */
+            // stack: [func, ref] -> [func, thisValue]
+            mv.invoke(Methods.Reference_getThisValue);
+        }
+
+        // stack: [func, thisValue] -> [func, cx, thisValue]
+        mv.loadExecutionContext();
+        mv.swap();
+
+        /* step 5 */
+        // stack: [func, cx, thisValue] -> [result]
+        return EvaluateDirectCall(call, arguments, mv);
+    }
+
+    private ValType EvaluateCallSuperProperty(Expression call, LeftHandSideExpression base,
+            List<Expression> arguments, ExpressionVisitor mv) {
+        // Only called for the super property case (`super.method(...)` or `super[method](...)`).
 
         // stack: [] -> [ref]
         ValType type = base.accept(this, mv);
@@ -1632,12 +1653,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         }
         case ADD: {
             // 12.7.1 The Addition operator ( + )
-            // Handle 'a' + b + ...
-            if (left instanceof BinaryExpression && isStringConcat((BinaryExpression) left)) {
-                return stringConcatLeft(node, mv);
-            }
-            if (right instanceof BinaryExpression && isStringConcat((BinaryExpression) right)) {
-                return stringConcatRight(node, mv);
+            // Handle 'a' + b + c + ...
+            if (left instanceof BinaryExpression && isStringConcat((BinaryExpression) left)
+                    && stringConcat(node, mv)) {
+                return ValType.String;
             }
             // Handle 'a' + b
             if (left instanceof StringLiteral) {
@@ -1665,15 +1684,50 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             }
 
             ValType ltype = evalAndGetValue(left, mv);
-            if (ltype.isNumeric() && right instanceof Literal) {
-                ToNumber(ltype, mv);
+            if (ltype == ValType.String) {
                 ValType rtype = evalAndGetValue(right, mv);
-                ToNumber(rtype, mv);
-                mv.dadd();
-                return ValType.Number;
+                toStringForConcat(rtype, mv);
+                addStrings(ltype, ValType.String, mv);
+                return ValType.String;
+            }
+            if (ltype.isNumeric()) {
+                ValType expected = expressionType(right);
+                if (expected.isPrimitive() && expected != ValType.String) {
+                    ToNumber(ltype, mv);
+                    ValType rtype = evalAndGetValue(right, mv);
+                    assert rtype.isPrimitive() && rtype != ValType.String : String.format(
+                            "expected=%s, actual=%s", expected, rtype);
+                    ToNumber(rtype, mv);
+                    mv.dadd();
+                    return ValType.Number;
+                }
+            }
+            if (right instanceof BinaryExpression && isStringConcat((BinaryExpression) right)) {
+                if (ltype.isPrimitive()) {
+                    ToString(ltype, mv);
+                }
+                ValType rtype = evalAndGetValue(right, mv);
+                assert rtype == ValType.String;
+                if (!ltype.isPrimitive()) {
+                    mv.swap(ValType.Any, rtype);
+                    toStringForConcat(ltype, mv);
+                    mv.swap(rtype, ValType.String);
+                }
+                addStrings(ValType.String, rtype, mv);
+                return ValType.String;
             }
             mv.toBoxed(ltype);
             ValType rtype = evalAndGetValue(right, mv);
+            if (rtype == ValType.String) {
+                mv.swap(ValType.Any, rtype);
+                if (ltype.isPrimitive()) {
+                    mv.toUnboxed(ltype);
+                }
+                toStringForConcat(ltype, mv);
+                mv.swap(rtype, ValType.String);
+                addStrings(ValType.String, rtype, mv);
+                return ValType.String;
+            }
             mv.toBoxed(rtype);
 
             mv.loadExecutionContext();
@@ -1901,7 +1955,21 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             // 12.12 Binary Logical Operators
             Jump after = new Jump();
 
-            evalAndGetBoxedValue(left, mv);
+            ValType ltype = evalAndGetValue(left, mv);
+            if (ltype == ValType.Boolean && expressionType(right) == ValType.Boolean) {
+                mv.dup();
+                if (node.getOperator() == BinaryExpression.Operator.AND) {
+                    mv.ifeq(after);
+                } else {
+                    mv.ifne(after);
+                }
+                mv.pop();
+                ValType rtype = evalAndGetValue(right, mv);
+                assert rtype == ValType.Boolean;
+                mv.mark(after);
+                return ValType.Boolean;
+            }
+            mv.toBoxed(ltype);
             mv.dup();
             ToBoolean(ValType.Any, mv);
             if (node.getOperator() == BinaryExpression.Operator.AND) {
@@ -1920,40 +1988,68 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         }
     }
 
-    private ValType stringConcatLeft(BinaryExpression binary, ExpressionVisitor mv) {
-        mv.anew(Types.StringBuilder, Methods.StringBuilder_init);
-        stringConcat(binary, mv);
-        mv.invoke(Methods.StringBuilder_toString);
-
-        return ValType.String;
+    private static final int MAX_JVM_ARGUMENTS = 255;
+    private static final int MAX_DYN_ARGUMENTS = 127;
+    static {
+        // JVM max-arguments is fixed to 255, invokedynamic can also receive up to 255 arguments,
+        // but for now restrict to the half.
+        assert MAX_DYN_ARGUMENTS < MAX_JVM_ARGUMENTS;
     }
 
-    private ValType stringConcatRight(BinaryExpression binary, ExpressionVisitor mv) {
-        mv.anew(Types.StringBuilder, Methods.StringBuilder_init);
-        stringConcat(binary, mv);
-        mv.invoke(Methods.StringBuilder_toString);
-
-        return ValType.String;
+    private boolean stringConcat(BinaryExpression binary, ExpressionVisitor mv) {
+        int strings = countStringConcats(binary);
+        if (strings > MAX_DYN_ARGUMENTS) {
+            return false;
+        }
+        if (strings == 0) {
+            mv.aconst("");
+        } else if (strings == 1) {
+            stringConcatWith(binary, mv);
+        } else {
+            mv.loadExecutionContext();
+            stringConcatWith(binary, mv);
+            invokeDynamicConcat(strings, mv);
+        }
+        return true;
     }
 
-    private int stringConcat(Expression node, ExpressionVisitor mv) {
-        // TODO: Tests?
-        // TODO: Performance regression for code like:
-        // for (var i = 0; i < n; ++i) s = "a" + s + "b";
-        // TODO: Replace with invokedynamic
-        // expr:concat(s1, s2, s3) -> CharSequence
+    private ValType stringConcatWith(Expression node, ExpressionVisitor mv) {
         if (node instanceof StringLiteral) {
-            node.accept(this, mv);
-            mv.invoke(Methods.StringBuilder_append_String);
+            if (!((StringLiteral) node).getValue().isEmpty()) {
+                node.accept(this, mv);
+            }
+            return ValType.String;
         } else if (node instanceof TemplateLiteral) {
             node.accept(this, mv);
-            mv.invoke(Methods.StringBuilder_append_String);
+            return ValType.String;
         } else if (node instanceof BinaryExpression && isStringConcat((BinaryExpression) node)) {
-            return stringConcat(((BinaryExpression) node).getLeft(), mv)
-                    + stringConcat(((BinaryExpression) node).getRight(), mv);
+            Expression left = ((BinaryExpression) node).getLeft();
+            Expression right = ((BinaryExpression) node).getRight();
+
+            ValType ltype = stringConcatWith(left, mv);
+            if (ltype.isPrimitive() || right instanceof Literal) {
+                toStringForConcat(ltype, mv);
+            }
+            ValType rtype = stringConcatWith(right, mv);
+            assert ltype == ValType.String || rtype == ValType.String;
+            if (!(ltype.isPrimitive() || right instanceof Literal)) {
+                mv.swap(ltype, rtype);
+                toStringForConcat(ltype, mv);
+                mv.swap(rtype, ValType.String);
+            }
+            toStringForConcat(rtype, mv);
+            return ValType.String;
         } else {
-            evalToString(node, mv);
-            mv.invoke(Methods.StringBuilder_append_Charsequence);
+            return evalAndGetValue(node, mv);
+        }
+    }
+
+    private int countStringConcats(Expression node) {
+        if (node instanceof StringLiteral && ((StringLiteral) node).getValue().isEmpty()) {
+            return 0;
+        } else if (node instanceof BinaryExpression && isStringConcat((BinaryExpression) node)) {
+            return countStringConcats(((BinaryExpression) node).getLeft())
+                    + countStringConcats(((BinaryExpression) node).getRight());
         }
         return 1;
     }
@@ -1973,14 +2069,17 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         if (left instanceof BinaryExpression && isStringConcat((BinaryExpression) left)) {
             return true;
         }
-        if (right instanceof BinaryExpression && isStringConcat((BinaryExpression) right)) {
-            return true;
-        }
         return false;
     }
 
     private ValType toStringForConcat(ValType type, ExpressionVisitor mv) {
-        ToString(ToPrimitive(type, mv), mv);
+        // ToString(ToPrimitive(type, mv), mv);
+        if (type.isPrimitive()) {
+            ToString(type, mv);
+        } else {
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_toStr);
+        }
         return ValType.String;
     }
 
@@ -2006,6 +2105,100 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_add_str);
         return ValType.String;
+    }
+
+    private static ValType expressionType(Expression node) {
+        if (node instanceof Literal) {
+            if (node instanceof NullLiteral) {
+                return ValType.Null;
+            } else {
+                assert node instanceof ValueLiteral;
+                if (node instanceof NumericLiteral) {
+                    return ((NumericLiteral) node).isInt() ? ValType.Number_int : ValType.Number;
+                }
+                if (node instanceof StringLiteral) {
+                    return ValType.String;
+                }
+                assert node instanceof BooleanLiteral;
+                return ValType.Boolean;
+            }
+        }
+        if (node instanceof BinaryExpression) {
+            BinaryExpression binary = (BinaryExpression) node;
+            switch (binary.getOperator()) {
+            case BITAND:
+            case BITOR:
+            case BITXOR:
+            case SHL:
+            case SHR:
+                return ValType.Number_int;
+            case USHR:
+                return ValType.Number_uint;
+            case DIV:
+            case EXP:
+            case MOD:
+            case MUL:
+            case SUB:
+                return ValType.Number;
+            case EQ:
+            case GE:
+            case GT:
+            case IN:
+            case INSTANCEOF:
+            case LE:
+            case LT:
+            case NE:
+            case SHEQ:
+            case SHNE:
+                return ValType.Boolean;
+            case ADD:
+                // Pessimistically assume any-type
+                return ValType.Any;
+            case AND:
+            case OR:
+                return expressionType(binary.getLeft()) == ValType.Boolean
+                        && expressionType(binary.getRight()) == ValType.Boolean ? ValType.Boolean
+                        : ValType.Any;
+            default:
+                throw new AssertionError();
+            }
+        }
+        if (node instanceof UnaryExpression) {
+            UnaryExpression unary = (UnaryExpression) node;
+            switch (unary.getOperator()) {
+            case BITNOT:
+                return ValType.Number_int;
+            case NEG:
+            case POS:
+            case POST_DEC:
+            case POST_INC:
+            case PRE_DEC:
+            case PRE_INC:
+                return ValType.Number;
+            case DELETE:
+            case NOT:
+                return ValType.Boolean;
+            case VOID:
+                return ValType.Undefined;
+            case TYPEOF:
+                return ValType.String;
+            default:
+                throw new AssertionError();
+            }
+        }
+        if (node instanceof ConditionalExpression) {
+            ConditionalExpression conditional = (ConditionalExpression) node;
+            ValType ltype = expressionType(conditional.getThen());
+            ValType rtype = expressionType(conditional.getOtherwise());
+            if (ltype != rtype && (ltype.isNumeric() && rtype.isNumeric())) {
+                return ValType.Number;
+            }
+            return ltype == rtype ? ltype : ValType.Any;
+        }
+        if (node instanceof TemplateLiteral) {
+            return ValType.String;
+        }
+        return ValType.Any;
     }
 
     /**
@@ -2086,14 +2279,36 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         ToBoolean(typeTest, mv);
         /* step 3 */
         mv.ifeq(l0);
-        evalAndGetBoxedValue(node.getThen(), mv);
+        ValType typeThen = evalAndGetValue(node.getThen(), mv);
+        if (typeThen.isJavaPrimitive()) {
+            // Try to avoid boxing if then-and-otherwise are both compatible primitive types.
+            ValType expected = expressionType(node.getOtherwise());
+            boolean sameType = typeThen == expected;
+            if (sameType || (typeThen.isNumeric() && expected.isNumeric())) {
+                if (!sameType) {
+                    ToNumber(typeThen, mv);
+                }
+                mv.goTo(l1);
+                mv.mark(l0);
+                ValType typeOtherwise = evalAndGetValue(node.getOtherwise(), mv);
+                assert expected == typeOtherwise : String.format("expected=%s, got=%s", expected,
+                        typeOtherwise);
+                if (!sameType) {
+                    ToNumber(typeOtherwise, mv);
+                }
+                mv.mark(l1);
+                return sameType ? typeThen : ValType.Number;
+            }
+        }
+        mv.toBoxed(typeThen);
         mv.goTo(l1);
         /* step 4 */
         mv.mark(l0);
-        evalAndGetBoxedValue(node.getOtherwise(), mv);
+        ValType typeOtherwise = evalAndGetValue(node.getOtherwise(), mv);
+        mv.toBoxed(typeOtherwise);
         mv.mark(l1);
 
-        return ValType.Any;
+        return typeThen == typeOtherwise ? typeThen : ValType.Any;
     }
 
     /**
@@ -2156,17 +2371,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         switch (elementType) {
         case Number:
             mv.loadExecutionContext();
-            mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getPropertyValue_double);
             break;
         case Number_int:
             mv.loadExecutionContext();
-            mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getPropertyValue_int);
             break;
         case Number_uint:
             mv.loadExecutionContext();
-            mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getPropertyValue_long);
             break;
         case Boolean:
@@ -2175,12 +2387,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         case Undefined:
             ToFlatString(elementType, mv);
             mv.loadExecutionContext();
-            mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getPropertyValue);
             break;
         default:
             mv.loadExecutionContext();
-            mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getElementValue);
             break;
         }
@@ -2434,7 +2644,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 7-11 */
         mv.lineInfo(node);
         mv.loadExecutionContext();
-        mv.iconst(mv.isStrict());
         mv.invoke(Methods.ScriptRuntime_getPropertyValue);
         /* step 11 */
         return ValType.Any;
@@ -2607,6 +2816,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             TemplateCharacters chars = (TemplateCharacters) elements.get(0);
             mv.aconst(chars.getValue());
         } else {
+            // TODO: change to expression::concat?
             mv.anew(Types.StringBuilder, Methods.StringBuilder_init);
 
             for (Expression expr : elements) {

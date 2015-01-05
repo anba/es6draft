@@ -11,15 +11,14 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMeth
 
 import java.util.EnumSet;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
-import com.github.anba.es6draft.compiler.assembler.FieldDesc;
+import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.Jump;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.types.Null;
@@ -35,231 +34,217 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         DefaultNodeVisitor<R, V> {
     private static final class Fields {
-        static final FieldDesc Double_NaN = FieldDesc.create(FieldDesc.Allocation.Static,
-                Types.Double, "NaN", Type.DOUBLE_TYPE);
+        static final FieldName Double_NaN = FieldName.findStatic(Types.Double, "NaN",
+                Type.DOUBLE_TYPE);
     }
 
     private static final class Methods {
         // class: AbstractOperations
-        static final MethodDesc AbstractOperations_CreateIterResultObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "CreateIterResultObject", Type
-                        .getMethodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Object,
-                                Type.BOOLEAN_TYPE));
+        static final MethodName AbstractOperations_CreateIterResultObject = MethodName.findStatic(
+                Types.AbstractOperations, "CreateIterResultObject", Type.methodType(
+                        Types.OrdinaryObject, Types.ExecutionContext, Types.Object,
+                        Type.BOOLEAN_TYPE));
 
-        static final MethodDesc AbstractOperations_HasOwnProperty = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "HasOwnProperty", Type
-                        .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
-                                Types.ScriptObject, Types.String));
+        static final MethodName AbstractOperations_HasOwnProperty = MethodName.findStatic(
+                Types.AbstractOperations, "HasOwnProperty", Type.methodType(Type.BOOLEAN_TYPE,
+                        Types.ExecutionContext, Types.ScriptObject, Types.String));
 
-        static final MethodDesc AbstractOperations_HasProperty = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "HasProperty", Type
-                        .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
-                                Types.ScriptObject, Types.String));
+        static final MethodName AbstractOperations_HasProperty = MethodName.findStatic(
+                Types.AbstractOperations, "HasProperty", Type.methodType(Type.BOOLEAN_TYPE,
+                        Types.ExecutionContext, Types.ScriptObject, Types.String));
 
-        static final MethodDesc AbstractOperations_IteratorComplete = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "IteratorComplete",
-                Type.getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Types.ScriptObject));
+        static final MethodName AbstractOperations_IteratorComplete = MethodName.findStatic(
+                Types.AbstractOperations, "IteratorComplete",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Types.ScriptObject));
 
-        static final MethodDesc AbstractOperations_IteratorNext = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "IteratorNext", Type
-                        .getMethodType(Types.ScriptObject, Types.ExecutionContext,
-                                Types.ScriptObject, Types.Object));
+        static final MethodName AbstractOperations_IteratorNext = MethodName.findStatic(
+                Types.AbstractOperations, "IteratorNext", Type.methodType(Types.ScriptObject,
+                        Types.ExecutionContext, Types.ScriptObject, Types.Object));
 
-        static final MethodDesc AbstractOperations_IteratorReturn = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "IteratorReturn", Type
-                        .getMethodType(Types.Object, Types.ExecutionContext, Types.ScriptObject,
-                                Types.Object));
+        static final MethodName AbstractOperations_IteratorReturn = MethodName.findStatic(
+                Types.AbstractOperations, "IteratorReturn", Type.methodType(Types.Object,
+                        Types.ExecutionContext, Types.ScriptObject, Types.Object));
 
-        static final MethodDesc AbstractOperations_IteratorThrow = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "IteratorThrow", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext, Types.ScriptObject,
-                                Types.Object));
+        static final MethodName AbstractOperations_IteratorThrow = MethodName.findStatic(
+                Types.AbstractOperations, "IteratorThrow", Type.methodType(Type.VOID_TYPE,
+                        Types.ExecutionContext, Types.ScriptObject, Types.Object));
 
-        static final MethodDesc AbstractOperations_IteratorValue = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "IteratorValue",
-                Type.getMethodType(Types.Object, Types.ExecutionContext, Types.ScriptObject));
+        static final MethodName AbstractOperations_IteratorValue = MethodName.findStatic(
+                Types.AbstractOperations, "IteratorValue",
+                Type.methodType(Types.Object, Types.ExecutionContext, Types.ScriptObject));
 
-        static final MethodDesc AbstractOperations_ToPrimitive = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToPrimitive",
-                Type.getMethodType(Types.Object, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToPrimitive = MethodName.findStatic(
+                Types.AbstractOperations, "ToPrimitive",
+                Type.methodType(Types.Object, Types.ExecutionContext, Types.Object));
 
-        static final MethodDesc AbstractOperations_ToBoolean = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToBoolean",
-                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
+        static final MethodName AbstractOperations_ToBoolean = MethodName.findStatic(
+                Types.AbstractOperations, "ToBoolean",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
 
-        static final MethodDesc AbstractOperations_ToBoolean_double = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToBoolean",
-                Type.getMethodType(Type.BOOLEAN_TYPE, Type.DOUBLE_TYPE));
+        static final MethodName AbstractOperations_ToBoolean_double = MethodName.findStatic(
+                Types.AbstractOperations, "ToBoolean",
+                Type.methodType(Type.BOOLEAN_TYPE, Type.DOUBLE_TYPE));
 
-        static final MethodDesc AbstractOperations_ToFlatString = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToFlatString",
-                Type.getMethodType(Types.String, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToFlatString = MethodName.findStatic(
+                Types.AbstractOperations, "ToFlatString",
+                Type.methodType(Types.String, Types.ExecutionContext, Types.Object));
 
-        static final MethodDesc AbstractOperations_ToNumber = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToNumber",
-                Type.getMethodType(Type.DOUBLE_TYPE, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToNumber = MethodName.findStatic(
+                Types.AbstractOperations, "ToNumber",
+                Type.methodType(Type.DOUBLE_TYPE, Types.ExecutionContext, Types.Object));
 
-        static final MethodDesc AbstractOperations_ToNumber_CharSequence = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToNumber",
-                Type.getMethodType(Type.DOUBLE_TYPE, Types.CharSequence));
+        static final MethodName AbstractOperations_ToNumber_CharSequence = MethodName.findStatic(
+                Types.AbstractOperations, "ToNumber",
+                Type.methodType(Type.DOUBLE_TYPE, Types.CharSequence));
 
-        static final MethodDesc AbstractOperations_ToInt32 = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToInt32",
-                Type.getMethodType(Type.INT_TYPE, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToInt32 = MethodName.findStatic(
+                Types.AbstractOperations, "ToInt32",
+                Type.methodType(Type.INT_TYPE, Types.ExecutionContext, Types.Object));
 
-        static final MethodDesc AbstractOperations_ToInt32_double = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToInt32",
-                Type.getMethodType(Type.INT_TYPE, Type.DOUBLE_TYPE));
+        static final MethodName AbstractOperations_ToInt32_double = MethodName.findStatic(
+                Types.AbstractOperations, "ToInt32",
+                Type.methodType(Type.INT_TYPE, Type.DOUBLE_TYPE));
 
-        static final MethodDesc AbstractOperations_ToUint32 = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToUint32",
-                Type.getMethodType(Type.LONG_TYPE, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToUint32 = MethodName.findStatic(
+                Types.AbstractOperations, "ToUint32",
+                Type.methodType(Type.LONG_TYPE, Types.ExecutionContext, Types.Object));
 
-        static final MethodDesc AbstractOperations_ToUint32_double = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToUint32",
-                Type.getMethodType(Type.LONG_TYPE, Type.DOUBLE_TYPE));
+        static final MethodName AbstractOperations_ToUint32_double = MethodName.findStatic(
+                Types.AbstractOperations, "ToUint32",
+                Type.methodType(Type.LONG_TYPE, Type.DOUBLE_TYPE));
 
-        static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToObject",
-                Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToObject = MethodName.findStatic(
+                Types.AbstractOperations, "ToObject",
+                Type.methodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
 
-        static final MethodDesc AbstractOperations_ToPropertyKey = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToPropertyKey",
-                Type.getMethodType(Types.Object, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToPropertyKey = MethodName.findStatic(
+                Types.AbstractOperations, "ToPropertyKey",
+                Type.methodType(Types.Object, Types.ExecutionContext, Types.Object));
 
-        static final MethodDesc AbstractOperations_ToString = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToString",
-                Type.getMethodType(Types.CharSequence, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToString = MethodName.findStatic(
+                Types.AbstractOperations, "ToString",
+                Type.methodType(Types.CharSequence, Types.ExecutionContext, Types.Object));
 
-        static final MethodDesc AbstractOperations_ToString_int = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToString",
-                Type.getMethodType(Types.String, Type.INT_TYPE));
+        static final MethodName AbstractOperations_ToString_int = MethodName.findStatic(
+                Types.AbstractOperations, "ToString", Type.methodType(Types.String, Type.INT_TYPE));
 
-        static final MethodDesc AbstractOperations_ToString_long = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToString",
-                Type.getMethodType(Types.String, Type.LONG_TYPE));
+        static final MethodName AbstractOperations_ToString_long = MethodName
+                .findStatic(Types.AbstractOperations, "ToString",
+                        Type.methodType(Types.String, Type.LONG_TYPE));
 
-        static final MethodDesc AbstractOperations_ToString_double = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "ToString",
-                Type.getMethodType(Types.String, Type.DOUBLE_TYPE));
+        static final MethodName AbstractOperations_ToString_double = MethodName.findStatic(
+                Types.AbstractOperations, "ToString",
+                Type.methodType(Types.String, Type.DOUBLE_TYPE));
 
         // class: Boolean
-        static final MethodDesc Boolean_toString = MethodDesc.create(MethodDesc.Invoke.Static,
-                Types.Boolean, "toString", Type.getMethodType(Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName Boolean_toString = MethodName.findStatic(Types.Boolean, "toString",
+                Type.methodType(Types.String, Type.BOOLEAN_TYPE));
 
         // class: CharSequence
-        static final MethodDesc CharSequence_length = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.CharSequence, "length",
-                Type.getMethodType(Type.INT_TYPE));
-        static final MethodDesc CharSequence_toString = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.CharSequence, "toString",
-                Type.getMethodType(Types.String));
+        static final MethodName CharSequence_length = MethodName.findInterface(Types.CharSequence,
+                "length", Type.methodType(Type.INT_TYPE));
+        static final MethodName CharSequence_toString = MethodName.findInterface(
+                Types.CharSequence, "toString", Type.methodType(Types.String));
 
         // class: EnvironmentRecord
-        static final MethodDesc EnvironmentRecord_createImmutableBinding = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "createImmutableBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName EnvironmentRecord_createImmutableBinding = MethodName
+                .findInterface(Types.EnvironmentRecord, "createImmutableBinding",
+                        Type.methodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
-                MethodDesc.Invoke.Interface, Types.EnvironmentRecord, "initializeBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
+        static final MethodName EnvironmentRecord_initializeBinding = MethodName.findInterface(
+                Types.EnvironmentRecord, "initializeBinding",
+                Type.methodType(Type.VOID_TYPE, Types.String, Types.Object));
 
         // class: ExecutionContext
-        static final MethodDesc ExecutionContext_getLexicalEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "getLexicalEnvironment",
-                Type.getMethodType(Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_getLexicalEnvironment = MethodName.findVirtual(
+                Types.ExecutionContext, "getLexicalEnvironment",
+                Type.methodType(Types.LexicalEnvironment));
 
-        static final MethodDesc ExecutionContext_pushLexicalEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "pushLexicalEnvironment",
-                Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_pushLexicalEnvironment = MethodName.findVirtual(
+                Types.ExecutionContext, "pushLexicalEnvironment",
+                Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
-        static final MethodDesc ExecutionContext_popLexicalEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "popLexicalEnvironment",
-                Type.getMethodType(Type.VOID_TYPE));
+        static final MethodName ExecutionContext_popLexicalEnvironment = MethodName.findVirtual(
+                Types.ExecutionContext, "popLexicalEnvironment", Type.methodType(Type.VOID_TYPE));
 
-        static final MethodDesc ExecutionContext_replaceLexicalEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "replaceLexicalEnvironment",
-                Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_replaceLexicalEnvironment = MethodName
+                .findVirtual(Types.ExecutionContext, "replaceLexicalEnvironment",
+                        Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
-        static final MethodDesc ExecutionContext_restoreLexicalEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "restoreLexicalEnvironment",
-                Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_restoreLexicalEnvironment = MethodName
+                .findVirtual(Types.ExecutionContext, "restoreLexicalEnvironment",
+                        Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
         // class: LexicalEnvironment
-        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.LexicalEnvironment, "getEnvRec",
-                Type.getMethodType(Types.EnvironmentRecord));
+        static final MethodName LexicalEnvironment_getEnvRec = MethodName.findVirtual(
+                Types.LexicalEnvironment, "getEnvRec", Type.methodType(Types.EnvironmentRecord));
 
-        static final MethodDesc LexicalEnvironment_cloneDeclarativeEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.LexicalEnvironment, "cloneDeclarativeEnvironment",
-                Type.getMethodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
+        static final MethodName LexicalEnvironment_cloneDeclarativeEnvironment = MethodName
+                .findStatic(Types.LexicalEnvironment, "cloneDeclarativeEnvironment",
+                        Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
-        static final MethodDesc LexicalEnvironment_newDeclarativeEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.LexicalEnvironment, "newDeclarativeEnvironment",
-                Type.getMethodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
+        static final MethodName LexicalEnvironment_newDeclarativeEnvironment = MethodName
+                .findStatic(Types.LexicalEnvironment, "newDeclarativeEnvironment",
+                        Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
-        static final MethodDesc LexicalEnvironment_newObjectEnvironment = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.LexicalEnvironment, "newObjectEnvironment", Type
-                        .getMethodType(Types.LexicalEnvironment, Types.ScriptObject,
-                                Types.LexicalEnvironment, Type.BOOLEAN_TYPE));
+        static final MethodName LexicalEnvironment_newObjectEnvironment = MethodName.findStatic(
+                Types.LexicalEnvironment, "newObjectEnvironment", Type.methodType(
+                        Types.LexicalEnvironment, Types.ScriptObject, Types.LexicalEnvironment,
+                        Type.BOOLEAN_TYPE));
 
         // class: OrdinaryFunction
-        static final MethodDesc OrdinaryFunction_SetFunctionName_String = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.OrdinaryFunction, "SetFunctionName",
-                Type.getMethodType(Type.VOID_TYPE, Types.FunctionObject, Types.String));
+        static final MethodName OrdinaryFunction_SetFunctionName_String = MethodName.findStatic(
+                Types.OrdinaryFunction, "SetFunctionName",
+                Type.methodType(Type.VOID_TYPE, Types.FunctionObject, Types.String));
 
-        static final MethodDesc OrdinaryFunction_SetFunctionName_Symbol = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.OrdinaryFunction, "SetFunctionName",
-                Type.getMethodType(Type.VOID_TYPE, Types.FunctionObject, Types.Symbol));
+        static final MethodName OrdinaryFunction_SetFunctionName_Symbol = MethodName.findStatic(
+                Types.OrdinaryFunction, "SetFunctionName",
+                Type.methodType(Type.VOID_TYPE, Types.FunctionObject, Types.Symbol));
 
         // class: ReturnValue
-        static final MethodDesc ReturnValue_getValue = MethodDesc.create(MethodDesc.Invoke.Virtual,
-                Types.ReturnValue, "getValue", Type.getMethodType(Types.Object));
+        static final MethodName ReturnValue_getValue = MethodName.findVirtual(Types.ReturnValue,
+                "getValue", Type.methodType(Types.Object));
 
         // class: ScriptException
-        static final MethodDesc ScriptException_getValue = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ScriptException, "getValue",
-                Type.getMethodType(Types.Object));
+        static final MethodName ScriptException_getValue = MethodName.findVirtual(
+                Types.ScriptException, "getValue", Type.methodType(Types.Object));
 
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_CreateDefaultConstructor = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "CreateDefaultConstructor",
-                Type.getMethodType(Types.RuntimeInfo$Function));
+        static final MethodName ScriptRuntime_CreateDefaultConstructor = MethodName.findStatic(
+                Types.ScriptRuntime, "CreateDefaultConstructor",
+                Type.methodType(Types.RuntimeInfo$Function));
 
-        static final MethodDesc ScriptRuntime_CreateDefaultEmptyConstructor = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "CreateDefaultEmptyConstructor",
-                Type.getMethodType(Types.RuntimeInfo$Function));
+        static final MethodName ScriptRuntime_CreateDefaultEmptyConstructor = MethodName
+                .findStatic(Types.ScriptRuntime, "CreateDefaultEmptyConstructor",
+                        Type.methodType(Types.RuntimeInfo$Function));
 
-        static final MethodDesc ScriptRuntime_delegatedYield = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "delegatedYield",
-                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_delegatedYield = MethodName.findStatic(
+                Types.ScriptRuntime, "delegatedYield",
+                Type.methodType(Types.Object, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluateConstructorMethod = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "EvaluateConstructorMethod", Type
-                        .getMethodType(Types.OrdinaryFunction, Types.ScriptObject,
-                                Types.OrdinaryObject, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
+        static final MethodName ScriptRuntime_EvaluateConstructorMethod = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluateConstructorMethod", Type.methodType(
+                        Types.OrdinaryFunction, Types.ScriptObject, Types.OrdinaryObject,
+                        Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getClassProto = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getClassProto",
-                Type.getMethodType(Types.ScriptObject_, Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_getClassProto = MethodName.findStatic(
+                Types.ScriptRuntime, "getClassProto",
+                Type.methodType(Types.ScriptObject_, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getDefaultClassProto = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getDefaultClassProto",
-                Type.getMethodType(Types.ScriptObject_, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_getDefaultClassProto = MethodName.findStatic(
+                Types.ScriptRuntime, "getDefaultClassProto",
+                Type.methodType(Types.ScriptObject_, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_getIteratorObject = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "getIteratorObject",
-                Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_getIteratorObject = MethodName.findStatic(
+                Types.ScriptRuntime, "getIteratorObject",
+                Type.methodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_yield = MethodDesc.create(MethodDesc.Invoke.Static,
-                Types.ScriptRuntime, "yield",
-                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_yield = MethodName.findStatic(Types.ScriptRuntime,
+                "yield", Type.methodType(Types.Object, Types.Object, Types.ExecutionContext));
 
         // class: Type
-        static final MethodDesc Type_isUndefinedOrNull = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types._Type, "isUndefinedOrNull",
-                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
+        static final MethodName Type_isUndefinedOrNull = MethodName.findStatic(Types._Type,
+                "isUndefinedOrNull", Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
     protected final CodeGenerator codegen;

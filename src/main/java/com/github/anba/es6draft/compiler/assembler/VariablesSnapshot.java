@@ -10,8 +10,6 @@ import java.util.BitSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import org.objectweb.asm.Type;
-
 /**
  * 
  */
@@ -38,14 +36,10 @@ public final class VariablesSnapshot implements Iterable<Variable<?>> {
         return types;
     }
 
-    private static boolean isReserved(Type type) {
-        return type.getSort() == Type.METHOD && "reserved".equals(type.toString());
-    }
-
     private Variable<?> getVariable(int slot) {
         assert 0 <= slot && slot <= types.length : String.format("slot=%d not in [%d, %d]", slot,
                 0, types.length);
-        assert variables.get(slot) && types[slot] != null && !isReserved(types[slot]) : String
+        assert variables.get(slot) && types[slot] != null && types[slot] != Type.RESERVED : String
                 .format("slot=%d, used=%b, type=%s", slot, variables.get(slot), types[slot]);
         return new Variable<>(null, types[slot], slot);
     }
@@ -54,8 +48,9 @@ public final class VariablesSnapshot implements Iterable<Variable<?>> {
         assert 0 <= slot && slot <= types.length : String.format("slot=%d not in [%d, %d]", slot,
                 0, types.length);
         assert variables.get(slot) && active.get(slot) && types[slot] != null
-                && !isReserved(types[slot]) : String.format("slot=%d, used=%b, active=%b, type=%s",
-                slot, variables.get(slot), active.get(slot), types[slot]);
+                && types[slot] != Type.RESERVED : String.format(
+                "slot=%d, used=%b, active=%b, type=%s", slot, variables.get(slot),
+                active.get(slot), types[slot]);
         return active.nextSetBit(slot + types[slot].getSize());
     }
 

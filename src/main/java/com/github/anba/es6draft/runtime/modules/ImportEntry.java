@@ -24,10 +24,14 @@ public final class ImportEntry {
     /** [[ModuleRequestId]] */
     private String moduleRequestId;
 
-    public ImportEntry(String moduleRequest, String importName, String localName) {
+    private final long sourcePosition;
+
+    public ImportEntry(String moduleRequest, String importName, String localName,
+            long sourcePosition) {
         this.moduleRequest = moduleRequest;
         this.importName = importName;
         this.localName = localName;
+        this.sourcePosition = sourcePosition;
     }
 
     public boolean isStarImport() {
@@ -80,5 +84,23 @@ public final class ImportEntry {
      */
     public String getLocalName() {
         return localName;
+    }
+
+    /**
+     * Returns the source line position.
+     * 
+     * @return the source line
+     */
+    public int getLine() {
+        return (int) sourcePosition;
+    }
+
+    /**
+     * Returns the source column position.
+     * 
+     * @return the source column
+     */
+    public int getColumn() {
+        return (int) (sourcePosition >>> 32);
     }
 }

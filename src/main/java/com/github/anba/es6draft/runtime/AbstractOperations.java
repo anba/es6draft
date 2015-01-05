@@ -731,8 +731,7 @@ public final class AbstractOperations {
         }
         /* step 3 */
         double n = ToNumber(value);
-        // FIXME: spec issue https://bugs.ecmascript.org/show_bug.cgi?id=2049
-        // FIXME: not resolved in rev26 - reopen bug report!
+        // FIXME: spec issue (bug 3272)
         /* step 4 */
         if (!value.equals(ToString(n))) {
             return -1;

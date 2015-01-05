@@ -114,4 +114,14 @@ class InstructionVisitor extends InstructionAssembler {
     public void toBoxed(ValType type) {
         toBoxed(type.toType());
     }
+
+    /**
+     * boxed → value
+     * 
+     * @param type
+     *            the value type
+     */
+    public void toUnboxed(ValType type) {
+        toUnboxed(type.toType());
+    }
 }

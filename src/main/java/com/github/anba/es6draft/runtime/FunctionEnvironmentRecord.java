@@ -54,7 +54,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
      * @return the {@code topLex} component
      */
     public DeclarativeEnvironmentRecord getTopLex() {
-        // FIXME: spec bug - eval in default parameter initializer
+        // FIXME: spec bug - eval in default parameter initializer (bug 3383)
         if (topLex == null) {
             return this;
         }

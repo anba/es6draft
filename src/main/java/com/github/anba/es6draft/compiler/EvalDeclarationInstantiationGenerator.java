@@ -14,8 +14,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.HoistableDeclaration;
 import com.github.anba.es6draft.ast.Script;
@@ -25,7 +23,8 @@ import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.Jump;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
@@ -46,21 +45,19 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
     private static final class Methods {
         // class: FunctionEnvironmentRecord
-        static final MethodDesc FunctionEnvironmentRecord_getTopLex = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.FunctionEnvironmentRecord, "getTopLex",
-                Type.getMethodType(Types.DeclarativeEnvironmentRecord));
+        static final MethodName FunctionEnvironmentRecord_getTopLex = MethodName.findVirtual(
+                Types.FunctionEnvironmentRecord, "getTopLex",
+                Type.methodType(Types.DeclarativeEnvironmentRecord));
 
         // class: ExecutionContext
-        static final MethodDesc ExecutionContext_getFunctionVariableEnvironment = MethodDesc
-                .create(MethodDesc.Invoke.Virtual, Types.ExecutionContext,
-                        "getFunctionVariableEnvironment",
-                        Type.getMethodType(Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_getFunctionVariableEnvironment = MethodName
+                .findVirtual(Types.ExecutionContext, "getFunctionVariableEnvironment",
+                        Type.methodType(Types.LexicalEnvironment));
 
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_canDeclareVarOrThrow = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "canDeclareVarOrThrow", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
-                                Types.DeclarativeEnvironmentRecord, Types.String));
+        static final MethodName ScriptRuntime_canDeclareVarOrThrow = MethodName.findStatic(
+                Types.ScriptRuntime, "canDeclareVarOrThrow", Type.methodType(Type.VOID_TYPE,
+                        Types.ExecutionContext, Types.DeclarativeEnvironmentRecord, Types.String));
     }
 
     private static final int EXECUTION_CONTEXT = 0;

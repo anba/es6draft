@@ -8,11 +8,10 @@ package com.github.anba.es6draft.compiler;
 
 import java.util.ArrayList;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.ArrayComprehension;
 import com.github.anba.es6draft.ast.Expression;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 
 /**
@@ -25,16 +24,16 @@ import com.github.anba.es6draft.compiler.assembler.Variable;
 final class ArrayComprehensionGenerator extends ComprehensionGenerator {
     private static final class Methods {
         // class: AbstractOperations
-        static final MethodDesc AbstractOperations_CreateArrayFromList = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.AbstractOperations, "CreateArrayFromList",
-                Type.getMethodType(Types.ArrayObject, Types.ExecutionContext, Types.List));
+        static final MethodName AbstractOperations_CreateArrayFromList = MethodName.findStatic(
+                Types.AbstractOperations, "CreateArrayFromList",
+                Type.methodType(Types.ArrayObject, Types.ExecutionContext, Types.List));
 
         // class: ArrayList
-        static final MethodDesc ArrayList_init = MethodDesc.create(MethodDesc.Invoke.Special,
-                Types.ArrayList, "<init>", Type.getMethodType(Type.VOID_TYPE));
+        static final MethodName ArrayList_init = MethodName.findConstructor(Types.ArrayList,
+                Type.methodType(Type.VOID_TYPE));
 
-        static final MethodDesc ArrayList_add = MethodDesc.create(MethodDesc.Invoke.Virtual,
-                Types.ArrayList, "add", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
+        static final MethodName ArrayList_add = MethodName.findVirtual(Types.ArrayList, "add",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
     @SuppressWarnings("rawtypes")

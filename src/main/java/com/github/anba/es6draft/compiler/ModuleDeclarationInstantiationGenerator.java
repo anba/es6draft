@@ -13,8 +13,6 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.VarScopedDeclar
 import java.util.List;
 import java.util.Map;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.ExportDefaultExpression;
 import com.github.anba.es6draft.ast.HoistableDeclaration;
@@ -24,7 +22,8 @@ import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.ModuleName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -49,34 +48,30 @@ final class ModuleDeclarationInstantiationGenerator extends
         DeclarationBindingInstantiationGenerator {
     private static final class Methods {
         // class: ModuleEnvironmentRecord
-        static final MethodDesc ModuleEnvironmentRecord_createImportBinding = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ModuleEnvironmentRecord, "createImportBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String, Types.ModuleRecord, Types.String));
+        static final MethodName ModuleEnvironmentRecord_createImportBinding = MethodName
+                .findVirtual(Types.ModuleEnvironmentRecord, "createImportBinding", Type.methodType(
+                        Type.VOID_TYPE, Types.String, Types.ModuleRecord, Types.String));
 
         // class: ModuleSemantics
-        static final MethodDesc ModuleSemantics_GetModuleNamespace = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ModuleSemantics, "GetModuleNamespace", Type
-                        .getMethodType(Types.ModuleNamespaceObject, Types.ExecutionContext,
-                                Types.Realm, Types.Map, Types.String));
+        static final MethodName ModuleSemantics_GetModuleNamespace = MethodName.findStatic(
+                Types.ModuleSemantics, "GetModuleNamespace", Type.methodType(
+                        Types.ModuleNamespaceObject, Types.ExecutionContext, Types.Realm,
+                        Types.Map, Types.String));
 
         // class: ResolvedExport
-        static final MethodDesc ResolvedExport_getModule = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ModuleExport, "getModule",
-                Type.getMethodType(Types.ModuleRecord));
-        static final MethodDesc ResolvedExport_getBindingName = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ModuleExport, "getBindingName",
-                Type.getMethodType(Types.String));
+        static final MethodName ResolvedExport_getModule = MethodName.findVirtual(
+                Types.ModuleExport, "getModule", Type.methodType(Types.ModuleRecord));
+        static final MethodName ResolvedExport_getBindingName = MethodName.findVirtual(
+                Types.ModuleExport, "getBindingName", Type.methodType(Types.String));
 
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_resolveExportOrThrow = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "resolveExportOrThrow", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext, Types.Map,
-                                Types.String, Types.String));
+        static final MethodName ScriptRuntime_resolveExportOrThrow = MethodName.findStatic(
+                Types.ScriptRuntime, "resolveExportOrThrow", Type.methodType(Type.VOID_TYPE,
+                        Types.ExecutionContext, Types.Map, Types.String, Types.String));
 
-        static final MethodDesc ScriptRuntime_resolveImportOrThrow = MethodDesc.create(
-                MethodDesc.Invoke.Static, Types.ScriptRuntime, "resolveImportOrThrow", Type
-                        .getMethodType(Types.ModuleExport, Types.ExecutionContext, Types.Map,
-                                Types.String, Types.String));
+        static final MethodName ScriptRuntime_resolveImportOrThrow = MethodName.findStatic(
+                Types.ScriptRuntime, "resolveImportOrThrow", Type.methodType(Types.ModuleExport,
+                        Types.ExecutionContext, Types.Map, Types.String, Types.String));
     }
 
     private static final int EXECUTION_CONTEXT = 0;
@@ -137,6 +132,7 @@ final class ModuleDeclarationInstantiationGenerator extends
         /* step 2 (not applicable) */
         /* step 3 */
         for (ExportEntry exportEntry : moduleRecord.getIndirectExportEntries()) {
+            mv.lineInfo(exportEntry.getLine());
             mv.load(context);
             mv.load(moduleSet);
             mv.aconst(moduleName);
@@ -152,6 +148,7 @@ final class ModuleDeclarationInstantiationGenerator extends
                 mv.load(envRec);
                 mv.aconst(importEntry.getLocalName());
                 {
+                    mv.lineInfo(importEntry.getLine());
                     mv.load(context);
                     mv.load(realm);
                     mv.load(moduleSet);
@@ -160,6 +157,7 @@ final class ModuleDeclarationInstantiationGenerator extends
                 }
                 initializeBinding(mv);
             } else {
+                mv.lineInfo(importEntry.getLine());
                 mv.load(context);
                 mv.load(moduleSet);
                 mv.aconst(importEntry.getModuleRequestId());

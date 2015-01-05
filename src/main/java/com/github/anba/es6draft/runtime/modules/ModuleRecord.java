@@ -230,7 +230,7 @@ public final class ModuleRecord implements Cloneable {
      * @return the lexical environment of this module
      */
     public LexicalEnvironment<ModuleEnvironmentRecord> getEnvironment() {
-        assert environment != null : "module not instantiated";
+        assert environment != null : "module not instantiated: " + moduleId;
         return environment;
     }
 

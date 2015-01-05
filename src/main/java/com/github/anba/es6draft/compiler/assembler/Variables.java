@@ -9,13 +9,10 @@ package com.github.anba.es6draft.compiler.assembler;
 import java.util.Arrays;
 import java.util.BitSet;
 
-import org.objectweb.asm.Type;
-
 /**
  * 
  */
 public final class Variables {
-    private static final Type RESERVED = Type.getType("reserved");
     private static final int INITIAL_SIZE = 8;
     private final BitSet variables = new BitSet();
     private final BitSet active = new BitSet();
@@ -33,8 +30,9 @@ public final class Variables {
             types[slot] = type;
             variables.set(slot);
         } else {
+            assert type.getSize() == 2;
             types[slot] = type;
-            types[slot + 1] = RESERVED;
+            types[slot + 1] = Type.RESERVED;
             variables.set(slot, slot + 2);
         }
     }
@@ -49,7 +47,7 @@ public final class Variables {
     Type getVariable(int slot) {
         assert 0 <= slot && slot <= types.length : String.format("slot=%d not in [%d, %d]", slot,
                 0, types.length);
-        assert variables.get(slot) && types[slot] != null && types[slot] != RESERVED : String
+        assert variables.get(slot) && types[slot] != null && types[slot] != Type.RESERVED : String
                 .format("slot=%d, used=%b, type=%s", slot, variables.get(slot), types[slot]);
         return types[slot];
     }
@@ -124,10 +122,12 @@ public final class Variables {
      */
     void reserveSlot(Type type, int slot) {
         assert slot >= 0;
-        if (slot + type.getSize() > types.length) {
+        final int size = type.getSize();
+        assert size == 1 || size == 2;
+        if (slot + size > types.length) {
             types = grow(types);
         }
-        assert types[slot] == null && (type.getSize() == 1 || types[slot + 1] == null);
+        assert types[slot] == null && (size == 1 || types[slot + 1] == null);
         assign(slot, type);
         activate(slot);
     }
@@ -193,7 +193,9 @@ public final class Variables {
     }
 
     private int newVariable(Type type) {
-        for (int slot = varScope.firstSlot, size = type.getSize();;) {
+        final int size = type.getSize();
+        assert size == 1 || size == 2;
+        for (int slot = varScope.firstSlot;;) {
             slot = variables.nextClearBit(slot);
             if (slot + size > types.length) {
                 types = grow(types);
@@ -205,7 +207,7 @@ public final class Variables {
                     return slot;
                 }
             } else if (old.equals(type)) {
-                assert size == 1 || types[slot + 1] == RESERVED;
+                assert size == 1 || types[slot + 1] == Type.RESERVED;
                 assign(slot, type);
                 return -slot;
             }

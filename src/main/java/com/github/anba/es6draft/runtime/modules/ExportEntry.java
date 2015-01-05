@@ -27,11 +27,15 @@ public final class ExportEntry {
     /** [[ModuleRequestId]] */
     private String moduleRequestId;
 
-    public ExportEntry(String moduleRequest, String importName, String localName, String exportName) {
+    private final long sourcePosition;
+
+    public ExportEntry(String moduleRequest, String importName, String localName,
+            String exportName, long sourcePosition) {
         this.moduleRequest = moduleRequest;
         this.importName = importName;
         this.localName = localName;
         this.exportName = exportName;
+        this.sourcePosition = sourcePosition;
     }
 
     @Override
@@ -99,5 +103,23 @@ public final class ExportEntry {
      */
     public String getExportName() {
         return exportName;
+    }
+
+    /**
+     * Returns the source line position.
+     * 
+     * @return the source line
+     */
+    public int getLine() {
+        return (int) sourcePosition;
+    }
+
+    /**
+     * Returns the source column position.
+     * 
+     * @return the source column
+     */
+    public int getColumn() {
+        return (int) (sourcePosition >>> 32);
     }
 }

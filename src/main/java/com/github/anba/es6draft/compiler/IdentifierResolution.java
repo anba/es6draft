@@ -6,13 +6,12 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.BindingIdentifier;
 import com.github.anba.es6draft.ast.IdentifierReference;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.assembler.MethodDesc;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Type;
 
 /**
  * 8.3.1 ResolveBinding(name)
@@ -20,14 +19,14 @@ import com.github.anba.es6draft.compiler.assembler.MethodDesc;
 final class IdentifierResolution {
     private static final class Methods {
         // identifierResolution()
-        static final MethodDesc ExecutionContext_resolveBinding = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "resolveBinding",
-                Type.getMethodType(Types.Reference, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName ExecutionContext_resolveBinding = MethodName.findVirtual(
+                Types.ExecutionContext, "resolveBinding",
+                Type.methodType(Types.Reference, Types.String, Type.BOOLEAN_TYPE));
 
         // identifierValue()
-        static final MethodDesc ExecutionContext_resolveBindingValue = MethodDesc.create(
-                MethodDesc.Invoke.Virtual, Types.ExecutionContext, "resolveBindingValue",
-                Type.getMethodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName ExecutionContext_resolveBindingValue = MethodName.findVirtual(
+                Types.ExecutionContext, "resolveBindingValue",
+                Type.methodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
     }
 
     ValType resolve(IdentifierReference node, ExpressionVisitor mv) {
