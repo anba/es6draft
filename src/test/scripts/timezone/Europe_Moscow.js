@@ -1,10 +1,9 @@
 /*
- * Copyright (c) 2012-2014 André Bargull
+ * Copyright (c) 2012-2015 André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
-
 {
   let local = new DateTime.Local(1970, Month.January, 1, DayOfWeek.Thursday, 0, 0, 0);
   let utc = new DateTime.UTC(1969, Month.December, 31, DayOfWeek.Wednesday, 21, 0, 0);

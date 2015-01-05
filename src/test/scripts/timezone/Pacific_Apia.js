@@ -1,10 +1,9 @@
 /*
- * Copyright (c) 2012-2014 André Bargull
+ * Copyright (c) 2012-2015 André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
-
 // Pacific/Apia switched from -11:00 to +13:00 on 2011 Dec 29 24:00.
 
 {

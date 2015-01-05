@@ -1,10 +1,9 @@
 /*
- * Copyright (c) 2012-2014 André Bargull
+ * Copyright (c) 2012-2015 André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
-
 // excess function expressions
 eval(new Array(0xfff).fill(0).map((x, i) => `a=function f${i}(){}`).join(";"))
 
