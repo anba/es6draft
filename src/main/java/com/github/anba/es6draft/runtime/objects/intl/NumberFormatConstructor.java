@@ -41,7 +41,6 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
-import com.ibm.icu.text.NumberFormat;
 import com.ibm.icu.text.NumberingSystem;
 import com.ibm.icu.util.ULocale;
 
@@ -58,7 +57,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
     private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
         protected Set<String> computeValue() {
-            return GetAvailableLocales(NumberFormat.getAvailableULocales());
+            return GetAvailableLocales(LanguageData.getAvailableNumberFormatLocales());
         }
     };
 

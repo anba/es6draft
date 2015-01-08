@@ -56,7 +56,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
     private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
         protected Set<String> computeValue() {
-            return GetAvailableLocales(Collator.getAvailableULocales());
+            return GetAvailableLocales(LanguageData.getAvailableCollatorLocales());
         }
     };
 

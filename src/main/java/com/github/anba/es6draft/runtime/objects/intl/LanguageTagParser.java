@@ -213,16 +213,21 @@ final class LanguageTagParser {
         }
     }
 
-    public LanguageTagParser(String input) {
-        this.input = toLowerASCIIOrNull(input);
-        this.length = input.length();
-    }
-
-    public LanguageTag parse() {
-        if (input == null) {
+    public static LanguageTag parse(String locale) {
+        String lower = toLowerASCIIOrNull(locale);
+        if (lower == null) {
             // input contains invalid characters
             return null;
         }
+        return new LanguageTagParser(lower).parse();
+    }
+
+    private LanguageTagParser(String input) {
+        this.input = input;
+        this.length = input.length();
+    }
+
+    private LanguageTag parse() {
         tag = new LanguageTag(input);
         rollback(0);
         if (languageTag() && pos >= length && token == NONE) {

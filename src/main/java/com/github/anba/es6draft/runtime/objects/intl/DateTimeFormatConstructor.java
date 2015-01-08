@@ -68,7 +68,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
         protected Set<String> computeValue() {
-            return GetAvailableLocales(DateFormat.getAvailableULocales());
+            return GetAvailableLocales(LanguageData.getAvailableDateFormatLocales());
         }
     };
 

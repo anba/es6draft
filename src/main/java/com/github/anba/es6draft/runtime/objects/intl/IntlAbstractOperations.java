@@ -150,7 +150,7 @@ public final class IntlAbstractOperations {
      * @return the parsed language tag
      */
     public static LanguageTag IsStructurallyValidLanguageTag(String locale) {
-        return new LanguageTagParser(locale).parse();
+        return LanguageTagParser.parse(locale);
     }
 
     /**
@@ -306,27 +306,23 @@ public final class IntlAbstractOperations {
      *            the supported locales
      * @return the set of available locales
      */
-    public static Set<String> GetAvailableLocales(ULocale[] locales) {
+    public static Set<String> GetAvailableLocales(Collection<String> locales) {
         HashMap<String, String[]> oldTags = oldStyleLanguageTags;
-        HashSet<String> set = new LRUHashSet(locales.length);
-        for (ULocale locale : locales) {
-            String tag = locale.toLanguageTag();
-            set.add(tag);
-            if (oldTags.containsKey(tag)) {
-                for (String old : oldTags.get(tag)) {
-                    set.add(old);
-                }
+        HashSet<String> available = new LRUHashSet(locales);
+        for (String oldTag : oldTags.keySet()) {
+            if (available.contains(oldTag)) {
+                available.addAll(Arrays.asList(oldTags.get(oldTag)));
             }
         }
-        return set;
+        return available;
     }
 
     @SuppressWarnings("serial")
     private static final class LRUHashSet extends HashSet<String> {
         final transient LRUEntry<String, Entry<String, Double>> entry = new LRUEntry<>();
 
-        LRUHashSet(int initialCapacity) {
-            super(initialCapacity);
+        LRUHashSet(Collection<String> c) {
+            super(c);
         }
 
         static LRUHashSet from(Set<String> set) {
@@ -822,23 +818,22 @@ public final class IntlAbstractOperations {
      */
     private static boolean isBetterMatch(LocaleEntry requested, LocaleEntry oldMatch,
             LocaleEntry newMatch) {
-        // prefer more detailed information over less
         ULocale canonicalized = requested.getCanonicalized();
         ULocale oldCanonicalized = oldMatch.getCanonicalized();
         ULocale newCanonicalized = newMatch.getCanonicalized();
         String language = canonicalized.getLanguage();
-        if (newCanonicalized.getLanguage().equals(language)
-                && !oldCanonicalized.getLanguage().equals(language)) {
+        if ((newCanonicalized.getLanguage().equals(language) || newCanonicalized.getLanguage()
+                .isEmpty()) && !oldCanonicalized.getLanguage().equals(language)) {
             return true;
         }
         String script = canonicalized.getScript();
-        if (newCanonicalized.getScript().equals(script)
+        if ((newCanonicalized.getScript().equals(script) || newCanonicalized.getScript().isEmpty())
                 && !oldCanonicalized.getScript().equals(script)) {
             return true;
         }
         String region = canonicalized.getCountry();
-        if (newCanonicalized.getCountry().equals(region)
-                && !oldCanonicalized.getCountry().equals(region)) {
+        if ((newCanonicalized.getCountry().equals(region) || newCanonicalized.getCountry()
+                .isEmpty()) && !oldCanonicalized.getCountry().equals(region)) {
             return true;
         }
         return false;
