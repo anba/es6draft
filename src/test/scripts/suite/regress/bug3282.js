@@ -11,6 +11,6 @@ const {
 // 12.3.5.3 step 6: throw TypeError instead of ReferenceError
 // https://bugs.ecmascript.org/show_bug.cgi?id=3282
 
-assertThrows(ReferenceError, () => {
+assertThrows(TypeError, () => {
   Object.setPrototypeOf(function(){ new super }, null)();
 });

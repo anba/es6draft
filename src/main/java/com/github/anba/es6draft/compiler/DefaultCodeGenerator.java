@@ -1224,6 +1224,18 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
+     * stack: [envRec, value] {@literal ->} []
+     * 
+     * @param name
+     *            the binding name
+     * @param mv
+     *            the expression visitor
+     */
+    protected final void BindingInitializationWithEnvironment(Name name, ExpressionVisitor mv) {
+        BindingInitializationGenerator.BindingInitializationWithEnvironment(codegen, name, mv);
+    }
+
+    /**
      * stack: [value] {@literal ->} []
      * 
      * @param node
@@ -1248,7 +1260,26 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     protected final void ClassDefinitionEvaluation(ClassDefinition def, String className,
             ExpressionVisitor mv) {
         mv.enterClassDefinition();
-        // steps 1-3
+
+        // step 1 (not applicable)
+        // step 2
+        if (className != null) {
+            // stack: [] -> [classScope]
+            newDeclarativeEnvironment(mv);
+
+            // stack: [classScope] -> [classScope]
+            mv.dup();
+            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+            mv.aconst(className);
+            mv.iconst(true);
+            mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
+
+            // stack: [classScope] -> []
+            pushLexicalEnvironment(mv);
+            mv.enterScope(def);
+        }
+
+        // steps 3-5
         // stack: [] -> [<proto,ctor>]
         if (def.getHeritage() == null) {
             mv.loadExecutionContext();
@@ -1262,33 +1293,16 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // stack: [<proto,ctor>] -> [ctor, proto]
         mv.dup();
         mv.iconst(1);
-        mv.aload(Types.ScriptObject_);
+        mv.aload(Types.ScriptObject);
         mv.swap();
         mv.iconst(0);
-        mv.aload(Types.ScriptObject_);
+        mv.aload(Types.ScriptObject);
         mv.checkcast(Types.OrdinaryObject);
 
         // stack: [ctor, proto] -> [proto, ctor, proto]
         mv.dupX1();
 
-        // steps 4-5
-        if (className != null) {
-            // stack: [proto, ctor, proto] -> [proto, ctor, proto, scope]
-            newDeclarativeEnvironment(mv);
-
-            // stack: [proto, ctor, proto, scope] -> [proto, ctor, proto, scope]
-            mv.dup();
-            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
-            mv.aconst(className);
-            mv.iconst(true);
-            mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
-
-            // stack: [proto, ctor, proto, scope] -> [proto, ctor, proto]
-            pushLexicalEnvironment(mv);
-            mv.enterScope(def);
-        }
-
-        // steps 6-7
+        // steps 6-8
         MethodDefinition constructor = ConstructorMethod(def);
         if (constructor != null) {
             codegen.compile(constructor);
@@ -1304,7 +1318,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         }
 
         // step 9 (empty)
-        // steps 10-14
+        // step 10 (not applicable)
+        // steps 11-15
         // stack: [proto, ctor, proto, <rti>] -> [proto, F]
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
@@ -1316,14 +1331,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.store(F);
         mv.store(proto);
 
-        // steps 15-17
+        // steps 16-18
         ClassPropertyEvaluation(codegen, def, def.getProperties(), F, proto, mv);
 
-        // step 19
+        // step 20 (moved)
         if (className != null) {
             // stack: [] -> [envRec, name, F]
-            getLexicalEnvironment(mv);
-            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+            getEnvironmentRecord(mv);
             mv.aconst(className);
             mv.load(F);
 
@@ -1331,7 +1345,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.EnvironmentRecord_initializeBinding);
         }
 
-        // step 18
+        // step 19
         if (className != null) {
             mv.exitScope();
             // restore previous lexical environment
@@ -1344,7 +1358,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.freeVariable(proto);
         mv.freeVariable(F);
 
-        // step 20 (return F)
+        // step 21 (return F)
         mv.exitClassDefinition();
     }
 

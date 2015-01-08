@@ -72,6 +72,19 @@ ecma_6/TypedArray/indexOf-and-lastIndexOf.js
 ecma_6/TypedArray/join.js
 ecma_6/TypedArray/reverse.js
 
+# ES6: spec bug undefined/null in String.prototype methods
+ecma/String/15.5.4.8-2.js
+ecma_3/String/regress-83293.js
+ecma_5/misc/regexp-functions-with-undefined.js
+js1_5/extensions/regress-452329.js
+
+# ES6: Negative RegExp.prototype.lastIndex coerced to 0
+ecma_3/RegExp/15.10.6.2-2.js
+
+# ES6: evaluation order changed in for-in/of
+js1_5/Regress/regress-299641.js
+js1_7/regress/regress-372331.js
+
 
 ####################################
 # Intl only partially supported    #

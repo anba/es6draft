@@ -40,7 +40,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
         }
 
         @Override
-        void initialize(Object value) {
+        public void initialize(Object value) {
             throw new AssertionError();
         }
 
@@ -102,5 +102,6 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
         // + otherName;
         /* step 5 */
         createBinding(name, new IndirectBinding(module, otherName));
+        /* step 6 (return) */
     }
 }

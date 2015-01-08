@@ -137,6 +137,7 @@ public final class Messages {
         InvalidIdentifier("parser.invalid_identifier"),
         DuplicateExport("parser.duplicate_export"),
         DuplicateImport("parser.duplicate_import"),
+        MissingExportBinding("parser.missing_export_binding"),
 
         // strict mode TokenStream/Parser errors
         StrictModeRestrictedIdentifier("parser.strict.restricted_identifier"),

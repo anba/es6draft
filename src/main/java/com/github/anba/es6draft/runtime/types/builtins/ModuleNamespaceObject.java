@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ResolveExport;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -130,56 +131,47 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
 
     @Override
     protected boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
-        // FIXME: spec bug - inconsistent with [[Get]]
-        // throw newTypeError(cx, Messages.Key.ModulesOwnProperty);
-        return hasOwnProperty(cx, ToString(propertyKey));
+        throw newTypeError(cx, Messages.Key.ModulesOwnProperty);
     }
 
     @Override
     protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
-        // FIXME: spec bug - inconsistent with [[Get]]
-        // throw newTypeError(cx, Messages.Key.ModulesOwnProperty);
-        return exports.contains(propertyKey);
+        throw newTypeError(cx, Messages.Key.ModulesOwnProperty);
     }
 
     @Override
     protected boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey) {
-        // FIXME: spec bug - inconsistent with [[Get]]
-        // throw newTypeError(cx, Messages.Key.ModulesOwnProperty);
-        return super.hasOwnProperty(cx, propertyKey);
+        return ordinaryHasOwnProperty(propertyKey);
     }
 
     /** 9.4.6.5 [[GetOwnProperty]] (P) */
     @Override
     protected Property getProperty(ExecutionContext cx, long propertyKey) {
-        // FIXME: spec bug - inconsistent with [[Get]]
-        // throw newTypeError(cx, Messages.Key.ModulesOwnProperty);
-        return getProperty(cx, ToString(propertyKey));
+        /* step 1 (not applicable) */
+        /* step 2 */
+        throw newTypeError(cx, Messages.Key.ModulesOwnProperty);
     }
 
     /** 9.4.6.5 [[GetOwnProperty]] (P) */
     @Override
     protected Property getProperty(ExecutionContext cx, String propertyKey) {
-        // FIXME: spec bug - inconsistent with [[Get]]
-        // throw newTypeError(cx, Messages.Key.ModulesOwnProperty);
-        if (!exports.contains(propertyKey)) {
-            return null;
-        }
-        Object value = getValue(cx, propertyKey, this);
-        return new Property(value, false, true, false);
+        /* step 1 (not applicable) */
+        /* step 2 */
+        throw newTypeError(cx, Messages.Key.ModulesOwnProperty);
     }
 
     /** 9.4.6.5 [[GetOwnProperty]] (P) */
     @Override
     protected Property getProperty(ExecutionContext cx, Symbol propertyKey) {
-        // FIXME: spec bug - inconsistent with [[Get]]
-        // throw newTypeError(cx, Messages.Key.ModulesOwnProperty);
-        return super.getProperty(cx, propertyKey);
+        /* step 1 */
+        /* step 2 (not applicable) */
+        return ordinaryGetOwnProperty(propertyKey);
     }
 
     /** 9.4.6.6 [[DefineOwnProperty]] (P, Desc) */
     @Override
     protected boolean defineProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
+        /* step 1 */
         return false;
     }
 
@@ -187,6 +179,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
     @Override
     protected boolean defineProperty(ExecutionContext cx, String propertyKey,
             PropertyDescriptor desc) {
+        /* step 1 */
         return false;
     }
 
@@ -194,6 +187,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
     @Override
     protected boolean defineProperty(ExecutionContext cx, Symbol propertyKey,
             PropertyDescriptor desc) {
+        /* step 1 */
         return false;
     }
 
@@ -206,15 +200,17 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
     /** 9.4.6.7 [[HasProperty]] (P) */
     @Override
     protected boolean has(ExecutionContext cx, String propertyKey) {
-        /* steps 1-3 */
+        /* step 1 (not applicable) */
+        /* steps 2-4 */
         return exports.contains(propertyKey);
     }
 
     /** 9.4.6.7 [[HasProperty]] (P) */
     @Override
     protected boolean has(ExecutionContext cx, Symbol propertyKey) {
-        // FIXME: spec bug - inconsistent with [[Get]]
-        return super.has(cx, propertyKey);
+        /* step 1 */
+        /* steps 2-4 (not applicable) */
+        return ordinaryHasProperty(cx, propertyKey);
     }
 
     /** 9.4.6.8 [[Get]] (P, Receiver) */
@@ -269,13 +265,14 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
     protected Object getValue(ExecutionContext cx, Symbol propertyKey, Object receiver) {
         /* step 1 (not applicable) */
         /* step 2 */
-        return super.getValue(cx, propertyKey, receiver);
         /* steps 3-16 (not applicable) */
+        return super.getValue(cx, propertyKey, receiver);
     }
 
     /** 9.4.6.9 [[Set]] ( P, V, Receiver) */
     @Override
     protected boolean setValue(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
+        /* step 1 */
         return false;
     }
 
@@ -283,6 +280,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
     @Override
     protected boolean setValue(ExecutionContext cx, String propertyKey, Object value,
             Object receiver) {
+        /* step 1 */
         return false;
     }
 
@@ -290,6 +288,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
     @Override
     protected boolean setValue(ExecutionContext cx, Symbol propertyKey, Object value,
             Object receiver) {
+        /* step 1 */
         return false;
     }
 

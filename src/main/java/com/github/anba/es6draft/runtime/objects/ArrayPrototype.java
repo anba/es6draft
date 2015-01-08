@@ -78,6 +78,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 && ((NativeFunction) next).getId() == ArrayPrototypeValues.class;
     }
 
+    private static final long ARRAY_LENGTH_LIMIT = 0x1F_FFFF_FFFF_FFFFL;
     private static final boolean NO_ARRAY_OPTIMIZATION = false;
     private static final int MIN_SPARSE_LENGTH = 100; // Arbitrarily chosen limit
     private static final int MAX_PROTO_DEPTH = 10; // Arbitrarily chosen limit
@@ -372,6 +373,23 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             Object arrayLen = Get(cx, array, "length");
             /* steps 4-5 */
             long len = ToLength(cx, arrayLen);
+            /* steps 6-14 */
+            return toLocaleString(cx, array, len);
+        }
+
+        /**
+         * 22.1.3.26 Array.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the locale specific string representation
+         * @see #toLocaleString(ExecutionContext, Object)
+         * @see TypedArrayPrototypePrototype.Properties#toLocaleString(ExecutionContext)
+         */
+        public static Object toLocaleString(ExecutionContext cx, ScriptObject array, long len) {
+            /* steps 1-5 (not applicable) */
             /* step 6 */
             String separator = cx.getRealm().getListSeparator();
             /* step 7 */
@@ -453,16 +471,25 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                         boolean exists = HasProperty(cx, e, p);
                         if (exists) {
                             Object subElement = Get(cx, e, p);
+                            if (n >= ARRAY_LENGTH_LIMIT) {
+                                throw newTypeError(cx, Messages.Key.InvalidArrayLength);
+                            }
                             CreateDataPropertyOrThrow(cx, a, n, subElement);
                         }
                     }
                 } else {
                     /* step 7.e */
+                    if (n >= ARRAY_LENGTH_LIMIT) {
+                        throw newTypeError(cx, Messages.Key.InvalidArrayLength);
+                    }
                     CreateDataPropertyOrThrow(cx, a, n++, item);
                 }
             }
             /* steps 8-9 */
-            // TODO: handle 2^53-1 limit
+            // FIXME: Handle 2^53-1 limit
+            /*
+             * [].concat({[Symbol.isConcatSpreadable]:true, length:Number.MAX_SAFE_INTEGER}, {[Symbol.isConcatSpreadable]:true, length:Number.MAX_SAFE_INTEGER}) 
+             */
             Put(cx, a, "length", n, true);
             /* step 10 */
             return a;
@@ -473,6 +500,9 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             for (ForwardIter iter = forwardIter(e, 0, length, inherited); iter.hasNext();) {
                 long k = iter.next();
                 Object subElement = Get(cx, e, k);
+                if (n + k >= ARRAY_LENGTH_LIMIT) {
+                    throw newTypeError(cx, Messages.Key.InvalidArrayLength);
+                }
                 CreateDataPropertyOrThrow(cx, a, n + k, subElement);
             }
         }
@@ -483,6 +513,9 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             long actualLength = Math.min(length, e.getArrayLength());
             for (long k = 0; k < actualLength; ++k) {
                 Object subElement = Get(cx, e, k);
+                if (n + k >= ARRAY_LENGTH_LIMIT) {
+                    throw newTypeError(cx, Messages.Key.InvalidArrayLength);
+                }
                 CreateDataPropertyOrThrow(cx, a, n + k, subElement);
             }
         }
@@ -509,7 +542,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 return ToBoolean(spreadable);
             }
             /* step 5 */
-            return IsArray(cx, object);
+            return IsArray(object);
         }
 
         /**
@@ -692,11 +725,14 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             long n = ToLength(cx, lenVal);
             /* steps 6-7 */
             for (Object e : items) {
+                if (n >= ARRAY_LENGTH_LIMIT) {
+                    throw newTypeError(cx, Messages.Key.InvalidArrayLength);
+                }
                 Put(cx, o, n, e, true);
                 n += 1;
             }
             /* steps 8-9 */
-            // TODO: handle 2^53-1 limit
+            assert n <= ARRAY_LENGTH_LIMIT;
             Put(cx, o, "length", n, true);
             /* step 10 */
             return n;
@@ -1193,24 +1229,32 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 actualStart = (long) Math.min(relativeStart, len);
             }
             /* steps 9-11 */
+            int insertCount;
             long actualDeleteCount;
             if (start == null) {
+                insertCount = 0;
                 actualDeleteCount = 0;
             } else if (deleteCount == null) {
+                insertCount = 0;
                 actualDeleteCount = len - actualStart;
             } else {
+                insertCount = items.length - 2;
                 double dc = ToInteger(cx, deleteCount);
                 actualDeleteCount = (long) Math.min(Math.max(dc, 0), len - actualStart);
             }
-            /* steps 12-13 */
+            /* step 12 */
+            if (len + insertCount - actualDeleteCount >= ARRAY_LENGTH_LIMIT) {
+                throw newTypeError(cx, Messages.Key.InvalidArrayLength);
+            }
+            /* steps 13-14 */
             ScriptObject a = ArraySpeciesCreate(cx, o, actualDeleteCount);
             IterationKind iterationCopy = iterationKind(a, o, actualDeleteCount);
             if (iterationCopy.isSparse()) {
-                /* steps 14-15 */
+                /* steps 15-16 */
                 spliceSparseCopy(cx, (OrdinaryObject) a, (OrdinaryObject) o, actualStart,
                         actualDeleteCount, iterationCopy.isInherited());
             } else {
-                /* steps 14-15 */
+                /* steps 15-16 */
                 for (long k = 0; k < actualDeleteCount; ++k) {
                     long from = actualStart + k;
                     boolean fromPresent = HasProperty(cx, o, from);
@@ -1220,19 +1264,19 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     }
                 }
             }
-            /* steps 16-17 */
+            /* steps 17-18 */
             Put(cx, a, "length", actualDeleteCount, true);
-            /* steps 18-19 */
+            /* steps 19-20 */
             int itemCount = items.length;
             if (itemCount < actualDeleteCount) {
-                /* step 20 */
+                /* step 21 */
                 IterationKind iterationMove = iterationKind(o, len);
                 if (iterationMove.isSparse()) {
-                    /* steps 20.a-20.b */
+                    /* steps 21.a-21.b */
                     spliceSparseMoveLeft(cx, (OrdinaryObject) o, len, actualStart,
                             actualDeleteCount, itemCount, iterationMove.isInherited());
                 } else {
-                    /* steps 20.a-20.b */
+                    /* steps 21.a-21.b */
                     for (long k = actualStart; k < (len - actualDeleteCount); ++k) {
                         long from = k + actualDeleteCount;
                         long to = k + itemCount;
@@ -1247,24 +1291,24 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 }
                 IterationKind iterationDelete = iterationKind(o, len);
                 if (iterationDelete.isSparse()) {
-                    /* steps 20.c-20.d */
+                    /* steps 21.c-21.d */
                     spliceSparseDelete(cx, (OrdinaryObject) o, len, actualDeleteCount, itemCount,
                             iterationDelete.isInherited());
                 } else {
-                    /* steps 20.c-20.d */
+                    /* steps 21.c-21.d */
                     for (long k = len; k > (len - actualDeleteCount + itemCount); --k) {
                         DeletePropertyOrThrow(cx, o, k - 1);
                     }
                 }
             } else if (itemCount > actualDeleteCount) {
-                /* step 21 */
+                /* step 22 */
                 IterationKind iterationMove = iterationKind(o, len);
                 if (iterationMove.isSparse()) {
-                    /* step 21 */
+                    /* step 22 */
                     spliceSparseMoveRight(cx, (OrdinaryObject) o, len, actualStart,
                             actualDeleteCount, itemCount, iterationMove.isInherited());
                 } else {
-                    /* step 21 */
+                    /* step 22 */
                     for (long k = (len - actualDeleteCount); k > actualStart; --k) {
                         long from = k + actualDeleteCount - 1;
                         long to = k + itemCount - 1;
@@ -1278,17 +1322,17 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     }
                 }
             }
-            /* step 22 */
-            long k = actualStart;
             /* step 23 */
+            long k = actualStart;
+            /* step 24 */
             for (int i = 0; i < itemCount; ++k, ++i) {
                 Object e = items[i];
                 Put(cx, o, k, e, true);
             }
-            /* steps 24-25 */
-            // TODO: handle 2^53-1 limit
+            /* steps 25-26 */
+            assert len - actualDeleteCount + itemCount <= ARRAY_LENGTH_LIMIT;
             Put(cx, o, "length", len - actualDeleteCount + itemCount, true);
-            /* step 26 */
+            /* step 27 */
             return a;
         }
 
@@ -1431,12 +1475,16 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             int argCount = items.length;
             /* step 7 */
             if (argCount > 0) {
+                /* step 7.a */
+                if (len + argCount >= ARRAY_LENGTH_LIMIT) {
+                    throw newTypeError(cx, Messages.Key.InvalidArrayLength);
+                }
                 IterationKind iteration = iterationKind(o, len);
                 if (iteration.isSparse()) {
-                    /* steps 7.a-7.b (Optimization: Sparse Array objects) */
+                    /* steps 7.b-7.c (Optimization: Sparse Array objects) */
                     unshiftSparse(cx, (OrdinaryObject) o, len, argCount, iteration.isInherited());
                 } else {
-                    /* steps 7.a-7.b */
+                    /* steps 7.b-7.c */
                     for (long k = len; k > 0; --k) {
                         long from = k - 1;
                         long to = k + argCount - 1;
@@ -1449,14 +1497,14 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                         }
                     }
                 }
-                /* steps 7.c-7.e */
+                /* steps 7.d-7.f */
                 for (int j = 0; j < items.length; ++j) {
                     Object e = items[j];
                     Put(cx, o, j, e, true);
                 }
             }
             /* steps 8-9 */
-            // TODO: handle 2^53-1 limit
+            assert len + argCount <= ARRAY_LENGTH_LIMIT;
             Put(cx, o, "length", len + argCount, true);
             /* step 10 */
             return len + argCount;

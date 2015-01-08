@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMeth
 import java.util.List;
 
 import com.github.anba.es6draft.ast.scope.BlockScope;
+import com.github.anba.es6draft.ast.scope.Name;
 
 /**
  * <h1>14 ECMAScript Language: Functions and Classes</h1>
@@ -21,6 +22,7 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
 public final class ClassDeclaration extends Declaration implements ClassDefinition {
     private final BlockScope scope;
     private final BindingIdentifier identifier;
+    private final Name name;
     private final Expression heritage;
     private final List<MethodDefinition> methods;
     private final MethodDefinition constructor;
@@ -33,6 +35,7 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
+        this.name = identifier != null ? identifier.getName() : new Name(Name.DEFAULT_EXPORT);
         this.heritage = heritage;
         this.methods = methods;
         this.constructor = ConstructorMethod(methods);
@@ -49,9 +52,24 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
         return className;
     }
 
+    /**
+     * Returns the binding identifier of this class declaration or {@code null} for anonymous
+     * default export declarations.
+     * 
+     * @return the binding identifier or {@code null}
+     */
     @Override
     public BindingIdentifier getIdentifier() {
         return identifier;
+    }
+
+    /**
+     * Returns the bound name of this class declaration.
+     * 
+     * @return the bound name
+     */
+    public Name getName() {
+        return name;
     }
 
     @Override

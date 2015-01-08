@@ -17,7 +17,7 @@ var ta = Object.defineProperty(new Int8Array([1,2,3]), "length", {
 });
 
 assertSame("1,2,3", ta.toString());
-assertSame("1", ta.toLocaleString());
+assertSame("1,2,3", ta.toLocaleString());
 
 assertSame("1,4,9", ta.map(v => v * v).toString());
-assertSame("1", Int8Array.from(ta, v => v * v).toString());
+assertSame("1,4,9", Int8Array.from(ta, v => v * v).toString());

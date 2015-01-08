@@ -18,7 +18,7 @@ import org.joni.Region;
 /**
  * {@link MatchState} implementation for Joni {@link Regex} regular expressions
  */
-final class JoniMatchState implements MatchState, IterableMatchResult {
+final class JoniMatchState implements MatchState, IterableMatchResult, RawMatchResult {
     private final Matcher matcher;
     private final CharSequence string;
     private final BitSet negativeLAGroups;
@@ -97,6 +97,12 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
     }
 
     @Override
+    public RawMatchResult toRawMatchResult() {
+        return new JoniMatchState(string, negativeLAGroups, begin, end,
+                region != null ? region.clone() : null);
+    }
+
+    @Override
     public boolean find() {
         int start = end != begin ? end : end + 2;
         return update(matcher.search(start, byteLength(), Option.NONE));
@@ -158,5 +164,15 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
     public int groupCount() {
         Region region = this.region;
         return region != null ? region.numRegs - 1 : 0;
+    }
+
+    @Override
+    public Object rawGroup() {
+        return group();
+    }
+
+    @Override
+    public Object rawGroup(int group) {
+        return group(group);
     }
 }

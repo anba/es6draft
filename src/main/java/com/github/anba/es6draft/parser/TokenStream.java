@@ -76,6 +76,15 @@ final class TokenStream {
     }
 
     /**
+     * Returns {@code true} if parsing module code.
+     * 
+     * @return {@code true} if parsing module code
+     */
+    private boolean isModule() {
+        return parser.isModule();
+    }
+
+    /**
      * Updates line state information for line breaks within literals, does <strong>not</strong> set
      * the {@link #hasLineTerminator} flag.
      */
@@ -857,7 +866,7 @@ final class TokenStream {
             } else if (match('=')) {
                 return Token.LE;
             } else if (input.peek(0) == '!' && input.peek(1) == '-' && input.peek(2) == '-'
-                    && isEnabled(CompatibilityOption.HTMLComments)) {
+                    && isEnabled(CompatibilityOption.HTMLComments) && !isModule()) {
                 // html start-comment
                 mustMatch('!');
                 mustMatch('-');
@@ -918,7 +927,7 @@ final class TokenStream {
         case '-':
             if (match('-')) {
                 if (input.peek(0) == '>' && hasLineTerminator
-                        && isEnabled(CompatibilityOption.HTMLComments)) {
+                        && isEnabled(CompatibilityOption.HTMLComments) && !isModule()) {
                     // html end-comment at line start
                     mustMatch('>');
                     readSingleLineComment();

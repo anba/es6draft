@@ -6,7 +6,10 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.SetFunctionName;
 import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.ToPropertyKey;
+import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
+import static com.github.anba.es6draft.semantics.StaticSemantics.IsIdentifierRef;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
 import java.util.Iterator;
@@ -106,13 +109,13 @@ final class DestructuringAssignmentGenerator {
         }
 
         protected final void KeyedDestructuringAssignmentEvaluation(AssignmentProperty node,
-                String key) {
-            node.accept(new LiteralKeyedDestructuringAssignmentEvaluation(codegen, mv), key);
+                String key, Variable<Object> value) {
+            node.accept(new LiteralKeyedDestructuringAssignmentEvaluation(codegen, mv, value), key);
         }
 
         protected final void KeyedDestructuringAssignmentEvaluation(AssignmentProperty node,
-                ComputedPropertyName key) {
-            node.accept(new ComputedKeyedDestructuringAssignmentEvaluation(codegen, mv), key);
+                ComputedPropertyName key, Variable<Object> value) {
+            node.accept(new ComputedKeyedDestructuringAssignmentEvaluation(codegen, mv, value), key);
         }
 
         protected final ValType expression(Expression node, ExpressionVisitor mv) {
@@ -143,7 +146,7 @@ final class DestructuringAssignmentGenerator {
 
         @Override
         public void visit(ArrayAssignmentPattern node, Void value) {
-            // stack: [value] -> [iterator]
+            // stack: [value] -> []
             Variable<Iterator<?>> iterator = mv.newScratchVariable(Iterator.class).uncheckedCast();
             mv.lineInfo(node);
             mv.loadExecutionContext();
@@ -159,30 +162,31 @@ final class DestructuringAssignmentGenerator {
 
         @Override
         public void visit(ObjectAssignmentPattern node, Void value) {
+            // stack: [value] -> []
+            Variable<Object> val = mv.newScratchVariable(Object.class);
+            mv.store(val);
+
             for (AssignmentProperty property : node.getProperties()) {
-                // stack: [value] -> [value, value]
-                mv.dup();
-                // stack: [value, value] -> [value]
                 if (property.getPropertyName() == null) {
                     // AssignmentProperty : IdentifierReference Initializer{opt}
                     assert property.getTarget() instanceof IdentifierReference;
                     String name = ((IdentifierReference) property.getTarget()).getName();
-                    KeyedDestructuringAssignmentEvaluation(property, name);
+                    KeyedDestructuringAssignmentEvaluation(property, name, val);
                 } else {
                     // AssignmentProperty : PropertyName : AssignmentElement
                     String name = PropName(property.getPropertyName());
                     if (name != null) {
-                        KeyedDestructuringAssignmentEvaluation(property, name);
+                        KeyedDestructuringAssignmentEvaluation(property, name, val);
                     } else {
                         PropertyName propertyName = property.getPropertyName();
                         assert propertyName instanceof ComputedPropertyName;
                         KeyedDestructuringAssignmentEvaluation(property,
-                                (ComputedPropertyName) propertyName);
+                                (ComputedPropertyName) propertyName, val);
                     }
                 }
             }
-            // stack: [value] -> []
-            mv.pop();
+
+            mv.freeVariable(val);
         }
     }
 
@@ -219,7 +223,7 @@ final class DestructuringAssignmentGenerator {
             mv.load(iterator);
             mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
 
-            /* step 6 */
+            /* steps 6-7 */
             // stack: [(lref), v] -> [(lref), v']
             if (initializer != null) {
                 Jump undef = new Jump();
@@ -229,11 +233,17 @@ final class DestructuringAssignmentGenerator {
                 {
                     mv.pop();
                     expressionBoxedValue(initializer, mv);
+                    /* step 9 (moved) */
+                    if (!(target instanceof AssignmentPattern)
+                            && IsAnonymousFunctionDefinition(initializer)
+                            && IsIdentifierRef(target)) {
+                        SetFunctionName(initializer, ((IdentifierReference) target).getName(), mv);
+                    }
                 }
                 mv.mark(undef);
             }
 
-            /* steps 7-8 */
+            /* steps 8-10 */
             if (target instanceof AssignmentPattern) {
                 // stack: [v'] -> []
                 DestructuringAssignmentEvaluation((AssignmentPattern) target);
@@ -247,20 +257,21 @@ final class DestructuringAssignmentGenerator {
         public void visit(AssignmentRestElement node, Variable<Iterator<?>> iterator) {
             LeftHandSideExpression target = node.getTarget();
 
-            /* steps 1-4 */
-            // stack: [] -> [rest]
+            /* step 1 */
+            ValType refType = null;
+            if (!(target instanceof AssignmentPattern)) {
+                // stack: [] -> [lref]
+                refType = expression(target, mv);
+            }
+
+            /* steps 2-5 */
+            // stack: [(lref)] -> [(lref), rest]
             mv.load(iterator);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_createRestArray);
 
-            /* steps 5-7 */
+            /* steps 6-8 */
             if (!(target instanceof AssignmentPattern)) {
-                // FIXME: spec bug - evaluation order? (bug 3463)
-
-                // stack: [rest] -> [lref, rest]
-                ValType refType = expression(target, mv);
-                mv.swap();
-
                 // stack: [lref, rest] -> []
                 PutValue(target, refType, mv);
             } else {
@@ -275,34 +286,71 @@ final class DestructuringAssignmentGenerator {
      */
     private static abstract class KeyedDestructuringAssignmentEvaluation<PROPERTYNAME> extends
             RuntimeSemantics<PROPERTYNAME> {
-        KeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
+        private final Variable<Object> value;
+
+        KeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv,
+                Variable<Object> value) {
             super(codegen, mv);
+            this.value = value;
         }
 
         abstract ValType evaluatePropertyName(PROPERTYNAME propertyName);
+
+        abstract boolean isSimplePropertyName(PROPERTYNAME propertyName);
 
         @Override
         public void visit(AssignmentProperty node, PROPERTYNAME propertyName) {
             LeftHandSideExpression target = node.getTarget();
             Expression initializer = node.getInitializer();
 
-            // stack: [value] -> [cx, value]
-            mv.loadExecutionContext();
-            mv.swap();
+            ValType type, refType;
+            if (target instanceof AssignmentPattern) {
+                /* step 1 (not applicable) */
+                refType = null;
 
-            // stack: [cx, value] -> [cx, value, propertyName]
-            ValType type = evaluatePropertyName(propertyName);
+                // stack: [] -> [cx, value]
+                mv.loadExecutionContext();
+                mv.load(value);
 
-            /* steps 1-2 */
-            // stack: [cx, value, propertyName] -> [v]
+                // stack: [cx, value] -> [cx, value, propertyName]
+                type = evaluatePropertyName(propertyName);
+            } else if (isSimplePropertyName(propertyName)) {
+                /* step 1 */
+                // stack: [] -> [lref]
+                refType = expression(target, mv);
+
+                // stack: [lref] -> [lref, cx, value]
+                mv.loadExecutionContext();
+                mv.load(value);
+
+                // stack: [lref, cx, value] -> [lref, cx, value, propertyName]
+                type = evaluatePropertyName(propertyName);
+            } else {
+                // stack: [] -> [propertyName]
+                type = evaluatePropertyName(propertyName);
+
+                /* step 1 */
+                // stack: [propertyName] -> [lref, propertyName]
+                refType = expression(target, mv);
+                mv.swap();
+
+                // stack: [lref, propertyName] -> [lref, cx, value, propertyName]
+                mv.loadExecutionContext();
+                mv.swap();
+                mv.load(value);
+                mv.swap();
+            }
+
+            /* steps 2-3 */
+            // stack: [(lref), cx, value, propertyName] -> [(lref), v]
             if (type == ValType.String) {
                 mv.invoke(Methods.AbstractOperations_GetV_String);
             } else {
                 mv.invoke(Methods.AbstractOperations_GetV);
             }
 
-            /* step 3 */
-            // stack: [v] -> [v']
+            /* steps 4-5 */
+            // stack: [(lref), v] -> [(lref), v']
             if (initializer != null) {
                 Jump undef = new Jump();
                 mv.dup();
@@ -311,21 +359,21 @@ final class DestructuringAssignmentGenerator {
                 {
                     mv.pop();
                     expressionBoxedValue(initializer, mv);
+                    /* step 7 (moved) */
+                    if (!(target instanceof AssignmentPattern)
+                            && IsAnonymousFunctionDefinition(initializer)
+                            && IsIdentifierRef(target)) {
+                        SetFunctionName(initializer, ((IdentifierReference) target).getName(), mv);
+                    }
                 }
                 mv.mark(undef);
             }
 
-            /* steps 4-6 */
+            /* steps 6-8 */
             if (target instanceof AssignmentPattern) {
                 // stack: [v'] -> []
                 DestructuringAssignmentEvaluation((AssignmentPattern) target);
             } else {
-                // FIXME: spec bug - evaluation order? (bug 3463)
-
-                // stack: [v'] -> [lref, 'v]
-                ValType refType = expression(target, mv);
-                mv.swap();
-
                 // stack: [lref, 'v] -> []
                 PutValue(target, refType, mv);
             }
@@ -337,14 +385,20 @@ final class DestructuringAssignmentGenerator {
      */
     private static final class LiteralKeyedDestructuringAssignmentEvaluation extends
             KeyedDestructuringAssignmentEvaluation<String> {
-        LiteralKeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
-            super(codegen, mv);
+        LiteralKeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv,
+                Variable<Object> value) {
+            super(codegen, mv, value);
         }
 
         @Override
         ValType evaluatePropertyName(String propertyName) {
             mv.aconst(propertyName);
             return ValType.String;
+        }
+
+        @Override
+        boolean isSimplePropertyName(String propertyName) {
+            return true;
         }
     }
 
@@ -353,8 +407,9 @@ final class DestructuringAssignmentGenerator {
      */
     private static final class ComputedKeyedDestructuringAssignmentEvaluation extends
             KeyedDestructuringAssignmentEvaluation<ComputedPropertyName> {
-        ComputedKeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
-            super(codegen, mv);
+        ComputedKeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv,
+                Variable<Object> value) {
+            super(codegen, mv, value);
         }
 
         @Override
@@ -363,6 +418,11 @@ final class DestructuringAssignmentGenerator {
             // ComputedPropertyName : [ AssignmentExpression ]
             ValType propType = expressionValue(propertyName.getExpression(), mv);
             return ToPropertyKey(propType, mv);
+        }
+
+        @Override
+        boolean isSimplePropertyName(ComputedPropertyName propertyName) {
+            return propertyName.getExpression() instanceof Literal;
         }
     }
 }

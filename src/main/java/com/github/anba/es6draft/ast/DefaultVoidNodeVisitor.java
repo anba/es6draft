@@ -296,7 +296,7 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(ExportDefaultExpression node, V value) {
-        visit((Node) node, value);
+        visit((Declaration) node, value);
     }
 
     @Override

@@ -130,7 +130,7 @@ final class SwitchStatementGenerator extends
     }
 
     /**
-     * 13.11.7 Runtime Semantics: Evaluation
+     * 13.11.11 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(SwitchClause node, StatementVisitor mv) {
@@ -138,7 +138,7 @@ final class SwitchStatementGenerator extends
     }
 
     /**
-     * 13.11.7 Runtime Semantics: Evaluation
+     * 13.11.11 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(SwitchStatement node, StatementVisitor mv) {
@@ -218,7 +218,7 @@ final class SwitchStatementGenerator extends
     }
 
     /**
-     * 13.11.5 Runtime Semantics: CaseBlockEvaluation
+     * 13.11.9 Runtime Semantics: CaseBlockEvaluation
      * 
      * @param node
      *            the switch statement
@@ -380,6 +380,7 @@ final class SwitchStatementGenerator extends
             Expression expr = switchClause.getExpression();
             if (expr != null) {
                 mv.load(switchValue);
+                // 13.11.10 Runtime Semantics: CaseSelectorEvaluation
                 expressionBoxedValue(expr, mv);
                 mv.invoke(Methods.AbstractOperations_StrictEqualityComparison);
                 mv.ifne(caseLabel);

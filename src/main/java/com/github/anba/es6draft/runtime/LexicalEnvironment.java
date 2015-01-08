@@ -26,7 +26,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     private final LexicalEnvironment<?> outer;
     private final RECORD envRec;
 
-    LexicalEnvironment(ExecutionContext cx, RECORD envRec) {
+    private LexicalEnvironment(ExecutionContext cx, RECORD envRec) {
         assert envRec instanceof GlobalEnvironmentRecord;
         this.cx = cx;
         this.outer = null;
@@ -53,7 +53,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * Clones the given declarative {@link LexicalEnvironment}.
+     * Returns a clone of the declarative {@link LexicalEnvironment}.
      * <p>
      * [Called from generated code]
      * 
@@ -180,8 +180,8 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(
             ExecutionContext callerContext, FunctionObject f, Object t) {
         /* step 1 */
-        assert f.getThisMode() != ThisMode.Lexical || t == null;
-        assert f.getThisMode() == ThisMode.Lexical || t != null;
+        assert t == null || f.getThisMode() != ThisMode.Lexical;
+        assert t != null || f.getThisMode() == ThisMode.Lexical;
         /* step 2 (note) */
         /* step 7 */
         if (f.isNeedsSuper() && f.getHomeObject() == null) {

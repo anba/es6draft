@@ -30,9 +30,7 @@ import com.github.anba.es6draft.runtime.modules.ImportEntry;
  * <li>BoundNames</li>
  * <li>ConstructorMethod</li>
  * <li>ContainsExpression</li>
- * <li>DeclaredNames</li>
  * <li>ExpectedArgumentCount</li>
- * <li>ExportedBindings</li>
  * <li>ExportEntries</li>
  * <li>HasInitializer</li>
  * <li>HasName</li>
@@ -45,15 +43,12 @@ import com.github.anba.es6draft.runtime.modules.ImportEntry;
  * <li>IsSimpleParameterList</li>
  * <li>IsStrict</li>
  * <li>IsValidSimpleAssignmentTarget</li>
- * <li>LexicalDeclarations</li>
  * <li>LexicallyDeclaredNames</li>
  * <li>LexicallyScopedDeclarations</li>
+ * <li>MethodDefinitions</li>
  * <li>ModuleRequests</li>
  * <li>PropName</li>
- * <li>PrototypeMethodDefinitions</li>
  * <li>SpecialMethod</li>
- * <li>StaticMethodDefinitions</li>
- * <li>UnknownExportEntries</li>
  * <li>VarDeclaredNames</li>
  * <li>VarScopedDeclarations</li>
  * </ul>
@@ -88,7 +83,7 @@ public final class StaticSemantics {
      * @return the bound name
      */
     public static Name BoundName(HoistableDeclaration node) {
-        return node.getIdentifier().getName();
+        return node.getName();
     }
 
     /**
@@ -102,7 +97,7 @@ public final class StaticSemantics {
      * @return the bound name
      */
     public static Name BoundName(ClassDeclaration node) {
-        return node.getIdentifier().getName();
+        return node.getName();
     }
 
     /**
@@ -863,20 +858,6 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.0.2 Static Semantics: DeclaredNames
-     * 
-     * @param node
-     *            the module node
-     * @return the set of declared names
-     */
-    public static Set<Name> DeclaredNames(Module node) {
-        HashSet<Name> names = new HashSet<>();
-        names.addAll(LexicallyDeclaredNames(node));
-        names.addAll(VarDeclaredNames(node));
-        return names;
-    }
-
-    /**
      * 15.2.0.4 Static Semantics: ExportEntries<br>
      * 15.2.2.3 Static Semantics: ExportEntries
      * 
@@ -927,10 +908,12 @@ public final class StaticSemantics {
                             item.getBeginPosition()));
                     break;
                 }
-                case DefaultExpression:
-                    entries.add(new ExportEntry(null, null, "*default*", "default", item
-                            .getBeginPosition()));
+                case DefaultExpression: {
+                    Name localName = BoundName(exportDecl.getExpression().getBinding());
+                    entries.add(new ExportEntry(null, null, localName.getIdentifier(), "default",
+                            item.getBeginPosition()));
                     break;
+                }
                 default:
                     throw new AssertionError();
                 }
@@ -1028,23 +1011,6 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.0.8 Static Semantics: KnownExportEntries
-     * 
-     * @param node
-     *            the module node
-     * @return the list of known export entries
-     */
-    public static List<ExportEntry> KnownExportEntries(Module node) {
-        ArrayList<ExportEntry> knownExports = new ArrayList<>();
-        for (ExportEntry entry : ExportEntries(node)) {
-            if (!entry.isStarExport()) {
-                knownExports.add(entry);
-            }
-        }
-        return knownExports;
-    }
-
-    /**
      * 15.2.0.9 Static Semantics: ModuleRequests<br>
      * 15.2.1.5 Static Semantics: ModuleRequests<br>
      * 15.2.2.5 Static Semantics: ModuleRequests
@@ -1103,25 +1069,7 @@ public final class StaticSemantics {
      * @return the list of lexically scoped declarations
      */
     public static List<Declaration> LexicallyScopedDeclarations(Module node) {
-        // FIXME: Does not include ImportDeclaration nodes! May need to change class structure...
         return node.getScope().lexicallyScopedDeclarations();
-    }
-
-    /**
-     * 15.2.0.12 Static Semantics: UnknownExportEntries
-     * 
-     * @param node
-     *            the module node
-     * @return the list of unknown export entries
-     */
-    public static List<ExportEntry> UnknownExportEntries(Module node) {
-        ArrayList<ExportEntry> unknownExports = new ArrayList<>();
-        for (ExportEntry entry : ExportEntries(node)) {
-            if (entry.isStarExport()) {
-                unknownExports.add(entry);
-            }
-        }
-        return unknownExports;
     }
 
     /**

@@ -254,27 +254,28 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
         @Function(name = "toMethod", arity = 1)
         public static Object toMethod(ExecutionContext cx, Object thisValue, Object newHome) {
             /* step 1 */
+            if (!(thisValue instanceof Callable)) {
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            Callable func = (Callable) thisValue;
+            /* step 2 */
             if (!Type.isObject(newHome)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             ScriptObject newHomeObject = Type.objectValue(newHome);
-            /* step 2 */
-            if (thisValue instanceof FunctionObject) {
-                return CloneMethod(cx, (FunctionObject) thisValue, newHomeObject);
-            }
-            if (thisValue instanceof BuiltinFunction) {
-                return CloneMethod(cx, (BuiltinFunction) thisValue);
-            }
             /* step 3 */
-            if (thisValue instanceof BoundFunctionObject) {
-                return BoundFunctionClone(cx, (BoundFunctionObject) thisValue);
+            if (func instanceof FunctionObject) {
+                return CloneMethod(cx, (FunctionObject) func, newHomeObject);
+            }
+            if (func instanceof BuiltinFunction) {
+                return CloneMethod(cx, (BuiltinFunction) func);
             }
             /* step 4 */
-            if (thisValue instanceof Callable) {
-                return ((Callable) thisValue).clone(cx);
+            if (func instanceof BoundFunctionObject) {
+                return BoundFunctionClone(cx, (BoundFunctionObject) func);
             }
-            /* step 5 */
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            /* steps 5-6 */
+            return func.clone(cx);
         }
 
         /**

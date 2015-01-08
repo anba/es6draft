@@ -134,13 +134,11 @@ public class ProxyObject implements ScriptObject {
     /**
      * Repeatedly unwraps the proxy object and returns the underlying target object.
      * 
-     * @param cx
-     *            the execution context
-     * @return the proxy target object
+     * @return the proxy target object or {@code null} if the proxy has been revoked
      */
-    public final ScriptObject unwrap(ExecutionContext cx) {
+    public final ScriptObject unwrap() {
         ScriptObject target;
-        for (ProxyObject proxy = this; (target = proxy.getProxyTarget(cx)) instanceof ProxyObject;) {
+        for (ProxyObject proxy = this; (target = proxy.proxyTarget) instanceof ProxyObject;) {
             proxy = (ProxyObject) target;
         }
         return target;
@@ -1079,14 +1077,10 @@ public class ProxyObject implements ScriptObject {
         /* steps 13-15 */
         List<?> targetKeys = target.ownPropertyKeys(cx);
         /* step 16 */
-        // FIXME: spec bug
-        @SuppressWarnings("unused")
-        int targetLength = targetKeys.size();
-        /* step 17 */
         ArrayList<Object> targetConfigurableKeys = new ArrayList<>();
-        /* step 18 */
+        /* step 17 */
         ArrayList<Object> targetNonConfigurableKeys = new ArrayList<>();
-        /* step 19 */
+        /* step 18 */
         for (Object key : targetKeys) {
             Property desc;
             if (key instanceof String) {
@@ -1100,11 +1094,11 @@ public class ProxyObject implements ScriptObject {
                 targetConfigurableKeys.add(key);
             }
         }
-        /* step 20 */
+        /* step 19 */
         if (extensibleTarget && targetNonConfigurableKeys.isEmpty()) {
             return trapResult;
         }
-        /* step 21 */
+        /* step 20 */
         HashSet<Object> uncheckedResultKeys = new HashSet<>();
         HashMap<Object, Integer> uncheckedDuplicateKeys = null;
         for (Object key : trapResult) {
@@ -1117,7 +1111,7 @@ public class ProxyObject implements ScriptObject {
                 uncheckedDuplicateKeys.put(key, (count != null ? count + 1 : 1));
             }
         }
-        /* steps 22 */
+        /* steps 21 */
         for (Object key : targetNonConfigurableKeys) {
             if (!uncheckedResultKeys.remove(key)) {
                 throw newTypeError(cx, Messages.Key.ProxyNotConfigurable);
@@ -1126,11 +1120,11 @@ public class ProxyObject implements ScriptObject {
                 updateUncheckedWithDuplicates(uncheckedResultKeys, uncheckedDuplicateKeys, key);
             }
         }
-        /* step 23 */
+        /* step 22 */
         if (extensibleTarget) {
             return trapResult;
         }
-        /* step 24 */
+        /* step 23 */
         for (Object key : targetConfigurableKeys) {
             if (!uncheckedResultKeys.remove(key)) {
                 throw newTypeError(cx, Messages.Key.ProxyNotExtensible);
@@ -1139,11 +1133,11 @@ public class ProxyObject implements ScriptObject {
                 updateUncheckedWithDuplicates(uncheckedResultKeys, uncheckedDuplicateKeys, key);
             }
         }
-        /* step 25 */
+        /* step 24 */
         if (!uncheckedResultKeys.isEmpty()) {
             throw newTypeError(cx, Messages.Key.ProxyAbsentNotExtensible);
         }
-        /* step 26 */
+        /* step 25 */
         return trapResult;
     }
 

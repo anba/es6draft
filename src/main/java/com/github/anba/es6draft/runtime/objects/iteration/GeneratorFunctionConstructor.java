@@ -113,25 +113,25 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         /* step 11 */
         boolean strict = function.isStrict();
         /* step 12 */
-        LexicalEnvironment<GlobalEnvironmentRecord> scope = calleeContext.getRealm().getGlobalEnv();
-        /* step 13 */
         Object f = thisValue;
-        /* step 14 */
+        /* step 13 */
         if (!(f instanceof FunctionObject) || ((FunctionObject) f).getCode() != null) {
             ScriptObject proto = GetPrototypeFromConstructor(calleeContext, this,
                     Intrinsics.Generator);
             f = FunctionAllocate(calleeContext, proto, strict, FunctionKind.Normal);
         }
-        /* step 15 */
+        /* step 14 */
         if (!(f instanceof OrdinaryGenerator)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         OrdinaryGenerator fn = (OrdinaryGenerator) f;
-        /* steps 16-18 */
+        /* steps 15-16 */
+        LexicalEnvironment<GlobalEnvironmentRecord> scope = fn.getRealm().getGlobalEnv();
+        /* steps 17-19 */
         if (!IsExtensible(calleeContext, fn)) {
             throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
-        /* steps 19-20 */
+        /* step 20 */
         FunctionInitialize(calleeContext, fn, FunctionKind.Normal, strict, function, scope, exec);
         /* step 21 */
         OrdinaryObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);

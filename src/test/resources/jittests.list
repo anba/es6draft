@@ -43,6 +43,13 @@ tests/collections/constructor-errors.js
 tests/basic/bug1091757.js
 tests/basic/string-contains.js
 
+# ES6: String.prototype.search throws if called with undefined regexp parameter
+tests/basic/testCallApply.js
+
+# ES6: evaluation order changed in for-in/of
+tests/for-of/semantics-09.js
+tests/for-of/semantics-10.js
+
 
 ###################
 # Misc issues     #

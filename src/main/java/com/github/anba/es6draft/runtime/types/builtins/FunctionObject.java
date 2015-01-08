@@ -217,6 +217,12 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
     }
 
     @Override
+    protected boolean has(ExecutionContext cx, String propertyKey) {
+        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
+        return ordinaryHasPropertyVirtual(cx, propertyKey);
+    }
+
+    @Override
     protected final boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         boolean has = super.hasOwnProperty(cx, propertyKey);
         if (has) {
@@ -521,7 +527,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
      */
     protected final void setCreateAction(CreateAction<?> createAction) {
         assert this instanceof Constructor : "[[CreateAction]] set on non-Constructor";
-        // assert this.createAction == null : "[[CreateAction]] already defined";
+        assert this.createAction == null : "[[CreateAction]] already defined";
         assert createAction != null;
         this.createAction = createAction;
     }

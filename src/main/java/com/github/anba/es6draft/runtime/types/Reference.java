@@ -106,6 +106,15 @@ public abstract class Reference<BASE, NAME> {
     public abstract Object getThisValue();
 
     /**
+     * [6.2.3.4] InitializeReferencedBinding (V, W)
+     * 
+     * 
+     * @param w
+     *            the new reference value
+     */
+    public abstract void initializeReferencedBinding(Object w);
+
+    /**
      * 12.5.4 The delete Operator<br>
      * Runtime Semantics: Evaluation 12.5.4.2
      * 
@@ -251,6 +260,11 @@ public abstract class Reference<BASE, NAME> {
         public Object getThisValue() {
             throw new AssertionError();
         }
+
+        @Override
+        public void initializeReferencedBinding(Object w) {
+            binding.initialize(w);
+        }
     }
 
     /**
@@ -352,6 +366,17 @@ public abstract class Reference<BASE, NAME> {
         public EnvironmentRecord getThisValue() {
             throw new AssertionError();
         }
+
+        @Override
+        public void initializeReferencedBinding(Object w) {
+            /* steps 1-3 (not applicable) */
+            /* step 4 */
+            assert !isUnresolvableReference();
+            /* steps 5-6 */
+            RECORD base = getBase();
+            /* step 7 */
+            base.initializeBinding(getReferencedName(), w);
+        }
     }
 
     /**
@@ -415,6 +440,11 @@ public abstract class Reference<BASE, NAME> {
             /* steps 1-2 (not applicable) */
             /* step 3 */
             return getBase();
+        }
+
+        @Override
+        public void initializeReferencedBinding(Object w) {
+            throw new AssertionError();
         }
 
         protected final OrdinaryObject getPrimitiveBaseProto(ExecutionContext cx) {
@@ -804,6 +834,11 @@ public abstract class Reference<BASE, NAME> {
         @Override
         public final boolean delete(ExecutionContext cx) {
             throw newReferenceError(cx, Messages.Key.SuperDelete);
+        }
+
+        @Override
+        public void initializeReferencedBinding(Object w) {
+            throw new AssertionError();
         }
     }
 

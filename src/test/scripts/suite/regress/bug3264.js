@@ -13,12 +13,12 @@ const {
 
 var fident;
 ({fident = function(){}} = {});
-assertSame("", fident.name);
+assertSame("fident", fident.name);
 
 var fiter;
 ([fiter = function(){}] = []);
-assertSame("", fiter.name);
+assertSame("fiter", fiter.name);
 
 var fkey;
 ({k: fkey = function(){}} = {});
-assertSame("", fkey.name);
+assertSame("fkey", fkey.name);

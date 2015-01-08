@@ -1053,7 +1053,7 @@ final class CodeGenerator {
     }
 
     Completion statements(List<? extends ModuleItem> statements, StatementVisitor mv) {
-        // 13.1.10 Runtime Semantics: Evaluation<br>
+        // 13.1.13 Runtime Semantics: Evaluation<br>
         // StatementList : StatementList StatementListItem
         /* steps 1-6 */
         Completion result = Completion.Normal;

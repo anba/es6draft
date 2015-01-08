@@ -18,9 +18,9 @@ assertEquals([0], Array.from({*[Symbol.iterator](){ yield 0 }}));
 // No error if Symbol.iterator not present or undefined
 assertEquals([], Array.from({}));
 assertEquals([], Array.from({[Symbol.iterator]: void 0}));
+assertEquals([], Array.from({[Symbol.iterator]: null}));
 
 // Throw TypeError if Symbol.iterator is not callable
-assertThrows(TypeError, () => Array.from({[Symbol.iterator]: null}));
 assertThrows(TypeError, () => Array.from({[Symbol.iterator]: 0}));
 assertThrows(TypeError, () => Array.from({[Symbol.iterator]: 1}));
 assertThrows(TypeError, () => Array.from({[Symbol.iterator]: {}}));

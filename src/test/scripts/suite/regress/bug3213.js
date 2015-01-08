@@ -16,7 +16,7 @@ function testFunction() {
   with (scope) {
     var x = (delete scope.x, 1);
   }
-  assertSame(void 0, scope.x);
-  assertSame(1, x);
+  assertSame(1, scope.x);
+  assertSame(void 0, x);
 }
 testFunction();

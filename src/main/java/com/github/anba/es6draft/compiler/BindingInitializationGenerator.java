@@ -136,6 +136,25 @@ final class BindingInitializationGenerator {
     }
 
     /**
+     * stack: [envRec, value] {@literal ->} []
+     * 
+     * @param codegen
+     *            the code generator
+     * @param node
+     *            the binding node
+     * @param mv
+     *            the expression visitor
+     */
+    static void BindingInitializationWithEnvironment(CodeGenerator codegen, Name name,
+            ExpressionVisitor mv) {
+        // stack: [envRec, value] -> [envRec, id, value]
+        mv.aconst(name.getIdentifier());
+        mv.swap();
+        // stack: [envRec, id, value] -> []
+        mv.invoke(Methods.EnvironmentRecord_initializeBinding);
+    }
+
+    /**
      * stack: [] {@literal ->} []
      * 
      * @param codegen
@@ -175,7 +194,7 @@ final class BindingInitializationGenerator {
     }
 
     /**
-     * 12.1.4.1 Runtime Semantics: InitializeBoundName(name, value, environment)
+     * 12.1.5.1 Runtime Semantics: InitializeBoundName(name, value, environment)
      * <p>
      * stack: [value] {@literal ->} []
      * 
@@ -185,29 +204,15 @@ final class BindingInitializationGenerator {
      *            the expression visitor
      */
     static void InitializeBoundName(BindingIdentifier identifier, ExpressionVisitor mv) {
-        InitializeBoundName(identifier.getName(), mv);
-    }
-
-    /**
-     * 12.1.4.1 Runtime Semantics: InitializeBoundName(name, value, environment)
-     * <p>
-     * stack: [value] {@literal ->} []
-     * 
-     * @param name
-     *            the binding name
-     * @param mv
-     *            the expression visitor
-     */
-    static void InitializeBoundName(Name name, ExpressionVisitor mv) {
         // stack: [value] -> [reference, value]
-        ResolveBinding(name, mv);
+        ResolveBinding(identifier, mv);
         mv.swap();
         // stack: [reference, value] -> []
         PutValue(mv);
     }
 
     /**
-     * 12.1.4.1 Runtime Semantics: InitializeBoundName(name, value, environment)
+     * 12.1.5.1 Runtime Semantics: InitializeBoundName(name, value, environment)
      * <p>
      * stack: [envRec, value] {@literal ->} []
      * 
@@ -218,24 +223,25 @@ final class BindingInitializationGenerator {
      */
     static void InitializeBoundNameWithEnvironment(BindingIdentifier identifier,
             ExpressionVisitor mv) {
-        InitializeBoundNameWithEnvironment(identifier.getName(), mv);
+        // stack: [envRec, value] -> [envRec, id, value]
+        mv.aconst(identifier.getName().getIdentifier());
+        mv.swap();
+        // stack: [envRec, id, value] -> []
+        mv.invoke(Methods.EnvironmentRecord_initializeBinding);
     }
 
     /**
-     * 12.1.4.1 Runtime Semantics: InitializeBoundName(name, value, environment)
+     * 12.1.5.1 Runtime Semantics: InitializeBoundName(name, value, environment)
      * <p>
-     * stack: [envRec, value] {@literal ->} []
+     * stack: [envRec, name, value] {@literal ->} []
      * 
      * @param name
      *            the binding name
      * @param mv
      *            the expression visitor
      */
-    static void InitializeBoundNameWithEnvironment(Name name, ExpressionVisitor mv) {
-        // stack: [envRec, value] -> [envRec, id, value]
-        mv.aconst(name.getIdentifier());
-        mv.swap();
-        // stack: [envRec, id, value] -> []
+    static void InitializeBoundNameWithValue(ExpressionVisitor mv) {
+        // stack: [envRec, name, value] -> []
         mv.invoke(Methods.EnvironmentRecord_initializeBinding);
     }
 
@@ -247,20 +253,8 @@ final class BindingInitializationGenerator {
      * @param mv
      *            the expression visitor
      */
-    private static void ResolveBinding(BindingIdentifier node, ExpressionVisitor mv) {
+    static void ResolveBinding(BindingIdentifier node, ExpressionVisitor mv) {
         identifierResolution.resolve(node, mv);
-    }
-
-    /**
-     * stack: [] {@literal ->} [Reference]
-     * 
-     * @param node
-     *            the binding name
-     * @param mv
-     *            the expression visitor
-     */
-    private static void ResolveBinding(Name name, ExpressionVisitor mv) {
-        identifierResolution.resolve(name, mv);
     }
 
     /**
@@ -297,10 +291,6 @@ final class BindingInitializationGenerator {
             node.accept(new BindingInitialization(codegen, mv, environment, envRec), null);
         }
 
-        protected final void BindingInitialization(BindingIdentifier node) {
-            initializeBoundName(node);
-        }
-
         protected final void IteratorBindingInitialization(ArrayBindingPattern node,
                 Variable<Iterator<?>> iterator) {
             node.accept(new IteratorBindingInitialization(codegen, mv, environment, envRec),
@@ -332,51 +322,44 @@ final class BindingInitializationGenerator {
             return codegen.expressionBoxedValue(node, mv);
         }
 
-        protected final void dupEnv() {
+        protected final void dupEnvIfPresent() {
             if (environment == EnvironmentType.EnvironmentFromStack) {
                 mv.dup();
             }
         }
 
-        protected final void popEnv() {
+        protected final void popEnvIfPresent() {
             if (environment == EnvironmentType.EnvironmentFromStack) {
                 mv.pop();
             }
         }
 
-        protected final void prepareInitializeBoundName(BindingIdentifier identifier) {
-            // Load environment record and binding identifier on stack to avoid swap instructions
+        protected final void prepareInitializeReferencedBindingOrPut(BindingIdentifier identifier) {
+            // TODO: Enable asserts for non-legacy code
+            // Load environment record and binding identifier on stack to avoid swap instructions.
             if (environment == EnvironmentType.EnvironmentFromLocal) {
+                // assert mv.getScope().isDeclared(identifier.getName());
                 // stack: [] -> [envRec, id]
                 mv.load(envRec);
                 mv.aconst(identifier.getName().getIdentifier());
             } else if (environment == EnvironmentType.EnvironmentFromStack) {
+                // assert mv.getScope().isDeclared(identifier.getName());
                 // stack: [envRec] -> [envRec, id]
                 mv.aconst(identifier.getName().getIdentifier());
             } else {
                 assert environment == EnvironmentType.NoEnvironment;
+                // stack: [] -> [ref]
+                ResolveBinding(identifier, mv);
             }
         }
 
-        /**
-         * 12.1.4.1 Runtime Semantics: InitializeBoundName(name, value, environment)
-         * 
-         * @param identifier
-         *            the binding identifier
-         */
-        protected final void initializeBoundName(BindingIdentifier identifier) {
-            if (environment == EnvironmentType.EnvironmentFromLocal) {
-                // stack: [envRec, id, value] -> []
-                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
-            } else if (environment == EnvironmentType.EnvironmentFromStack) {
-                // stack: [envRec, id, value] -> []
-                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
-            } else {
-                assert environment == EnvironmentType.NoEnvironment;
-                // stack: [value] -> []
-                ResolveBinding(identifier, mv);
-                mv.swap();
+        protected final void initializeReferencedBindingOrPut(BindingIdentifier identifier) {
+            if (environment == EnvironmentType.NoEnvironment) {
+                // stack: [ref, value] -> []
                 PutValue(mv);
+            } else {
+                // stack: [envRec, id, value] -> []
+                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
             }
         }
     }
@@ -384,8 +367,6 @@ final class BindingInitializationGenerator {
     /**
      * <h1>Runtime Semantics: BindingInitialization</h1>
      * <ul>
-     * <li>12.1.4 Runtime Semantics: BindingInitialization
-     * <li>12.1.4.1 Runtime Semantics: InitializeBoundName(name, value, environment)
      * <li>13.2.3.5 Runtime Semantics: BindingInitialization
      * </ul>
      */
@@ -411,19 +392,16 @@ final class BindingInitializationGenerator {
             mv.freeVariable(iterator);
 
             // stack: [(env)] -> []
-            popEnv();
+            popEnvIfPresent();
         }
 
         @Override
         public void visit(ObjectBindingPattern node, Void value) {
-            // FIXME: spec bug - invalid assertion (bug 3454)
-            // step 1: Assert: Type(value) is Object
-
             // stack: [(env), value] -> [(env)]
             Variable<Object> val = mv.newScratchVariable(Object.class);
             mv.store(val);
 
-            // step 2: [...]
+            // step 1: [...]
             for (BindingProperty property : node.getProperties()) {
                 if (property.getPropertyName() == null) {
                     // BindingProperty : SingleNameBinding
@@ -446,12 +424,7 @@ final class BindingInitializationGenerator {
             mv.freeVariable(val);
 
             // stack: [(env)] -> []
-            popEnv();
-        }
-
-        @Override
-        public void visit(BindingIdentifier node, Void value) {
-            initializeBoundName(node);
+            popEnvIfPresent();
         }
     }
 
@@ -502,20 +475,20 @@ final class BindingInitializationGenerator {
             if (binding instanceof BindingIdentifier) {
                 // BindingElement : SingleNameBinding
                 // SingleNameBinding : BindingIdentifier Initializer{opt}
+                /* step 1 */
                 BindingIdentifier bindingIdentifier = (BindingIdentifier) binding;
 
-                // stack: [(env)] -> [(env), (env)]
-                dupEnv();
+                /* step 2 */
+                // stack: [(env)] -> [(env), <env, id>|ref]
+                dupEnvIfPresent();
+                prepareInitializeReferencedBindingOrPut(bindingIdentifier);
 
-                // stack: [(env)] -> [(env), (env, id)]
-                prepareInitializeBoundName(bindingIdentifier);
-
-                /* steps 1-4 */
+                /* steps 3-6 */
                 mv.load(iterator);
                 mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
 
-                /* step 5 */
-                // stack: [(env), (env, id), v] -> [(env), (env, id), v']
+                /* step 7 */
+                // stack: [(env), <env, id>|ref, v] -> [(env), <env, id>|ref, v']
                 if (initializer != null) {
                     Jump undef = new Jump();
                     mv.dup();
@@ -525,22 +498,21 @@ final class BindingInitializationGenerator {
                         mv.pop();
                         expressionBoxedValue(initializer, mv);
                         if (IsAnonymousFunctionDefinition(initializer)) {
-                            SetFunctionName(initializer, ((BindingIdentifier) binding).getName(),
-                                    mv);
+                            SetFunctionName(initializer, bindingIdentifier.getName(), mv);
                         }
                     }
                     mv.mark(undef);
                 }
 
-                /* step 6 */
-                // stack: [(env), (env, id), v'] -> [(env)]
-                BindingInitialization(bindingIdentifier);
+                /* steps 8-9 */
+                // stack: [(env), <env, id>|ref, v'] -> [(env)]
+                initializeReferencedBindingOrPut(bindingIdentifier);
             } else {
                 // BindingElement : BindingPattern Initializer{opt}
                 assert binding instanceof BindingPattern;
 
                 // stack: [(env)] -> [(env), (env)]
-                dupEnv();
+                dupEnvIfPresent();
 
                 /* steps 1-4 */
                 mv.load(iterator);
@@ -560,10 +532,7 @@ final class BindingInitializationGenerator {
                     mv.mark(undef);
                 }
 
-                // FIXME: spec issue - wrong indent
-                // step 6 (ReturnIfAbrupt)
-
-                /* step 7 */
+                /* step 6 */
                 // stack: [(env), (env), v'] -> [(env)]
                 BindingInitialization((BindingPattern) binding);
             }
@@ -571,21 +540,20 @@ final class BindingInitializationGenerator {
 
         @Override
         public void visit(BindingRestElement node, Variable<Iterator<?>> iterator) {
-            // stack: [(env)] -> [(env), (env)]
-            dupEnv();
+            /* step 1 */
+            // stack: [(env)] -> [(env), <env, id>|ref]
+            dupEnvIfPresent();
+            prepareInitializeReferencedBindingOrPut(node.getBindingIdentifier());
 
-            // stack: [(env)] -> [(env), (env, id)]
-            prepareInitializeBoundName(node.getBindingIdentifier());
-
-            /* steps 1-3 */
+            /* steps 2-4 */
             mv.load(iterator);
             mv.loadExecutionContext();
-            // stack: [(env), (env, id), iterator, cx] -> [(env), (env, id), rest]
+            // stack: [(env), <env, id>|ref, iterator, cx] -> [(env), <env, id>|ref, array]
             mv.invoke(Methods.ScriptRuntime_createRestArray);
 
-            /* step 3.c */
-            // stack: [(env), (env, id), rest] -> [(env)]
-            BindingInitialization(node.getBindingIdentifier());
+            /* step 4.c */
+            // stack: [(env), <env, id>|ref, array] -> [(env)]
+            initializeReferencedBindingOrPut(node.getBindingIdentifier());
         }
     }
 
@@ -608,37 +576,107 @@ final class BindingInitializationGenerator {
 
         abstract ValType evaluatePropertyName(PROPERTYNAME propertyName);
 
+        abstract boolean isSimplePropertyName(PROPERTYNAME propertyName);
+
         @Override
         public void visit(BindingProperty node, PROPERTYNAME propertyName) {
             Binding binding = node.getBinding();
             Expression initializer = node.getInitializer();
 
-            // stack: [(env)] -> [(env), (env)]
-            dupEnv();
+            if (binding instanceof BindingPattern) {
+                // stack: [(env)] -> [(env), (env), cx, value]
+                dupEnvIfPresent();
+                mv.loadExecutionContext();
+                mv.load(value);
 
-            if (binding instanceof BindingIdentifier) {
-                // stack: [(env)] -> [(env), (env, id)]
-                prepareInitializeBoundName((BindingIdentifier) binding);
+                /* steps 1-2 (Runtime Semantics: BindingInitialization 13.2.3.5) */
+                // stack: [(env), (env), cx, value] -> [(env), (env), cx, value, propertyName]
+                ValType type = evaluatePropertyName(propertyName);
+
+                /* steps 1-2 */
+                // stack: [(env), (env), cx, value, propertyName] -> [(env), (env), v]
+                if (type == ValType.String) {
+                    mv.invoke(Methods.AbstractOperations_GetV_String);
+                } else {
+                    mv.invoke(Methods.AbstractOperations_GetV);
+                }
+
+                /* step 3 */
+                // stack: [(env), (env), v] -> [(env), (env), v']
+                if (initializer != null) {
+                    Jump undef = new Jump();
+                    mv.dup();
+                    mv.invoke(Methods.Type_isUndefined);
+                    mv.ifeq(undef);
+                    {
+                        mv.pop();
+                        expressionBoxedValue(initializer, mv);
+                    }
+                    mv.mark(undef);
+                }
+
+                /* step 4 */
+                // stack: [(env), (env), v'] -> [(env)]
+                BindingInitialization((BindingPattern) binding);
+                return;
+            }
+            assert binding instanceof BindingIdentifier;
+            /* step 1 */
+            BindingIdentifier bindingId = (BindingIdentifier) binding;
+
+            ValType type;
+            if (environment != EnvironmentType.NoEnvironment) {
+                /* step 2 */
+                // stack: [(env)] -> [(env), env, id]
+                dupEnvIfPresent();
+                prepareInitializeReferencedBindingOrPut(bindingId);
+
+                // stack: [(env), env, id] -> [(env), env, id, cx, value]
+                mv.loadExecutionContext();
+                mv.load(value);
+
+                /* steps 1-2 (Runtime Semantics: BindingInitialization 13.2.3.5) */
+                // stack: [(env), env, id, cx, value] -> [(env), env, id, cx, value, propertyName]
+                type = evaluatePropertyName(propertyName);
+            } else if (isSimplePropertyName(propertyName)) {
+                /* step 2 */
+                // stack: [] -> [ref]
+                prepareInitializeReferencedBindingOrPut(bindingId);
+
+                // stack: [ref] -> [ref, cx, value]
+                mv.loadExecutionContext();
+                mv.load(value);
+
+                /* steps 1-2 (Runtime Semantics: BindingInitialization 13.2.3.5) */
+                // stack: [ref, cx, value] -> [ref, cx, value, propertyName]
+                type = evaluatePropertyName(propertyName);
+            } else {
+                /* steps 1-2 (Runtime Semantics: BindingInitialization 13.2.3.5) */
+                // stack: [] -> [propertyName]
+                type = evaluatePropertyName(propertyName);
+
+                /* step 2 */
+                // stack: [propertyName] -> [ref, propertyName]
+                prepareInitializeReferencedBindingOrPut(bindingId);
+                mv.swap();
+
+                // stack: [ref, propertyName] -> [ref, cx, value, propertyName]
+                mv.loadExecutionContext();
+                mv.swap();
+                mv.load(value);
+                mv.swap();
             }
 
-            // stack: [(env), (env)] -> [(env), (env), cx, value]
-            mv.loadExecutionContext();
-            mv.load(value);
-
-            /* steps 1-2 (Runtime Semantics: BindingInitialization 13.2.3.5) */
-            // stack: [(env), (env), cx, value] -> [(env), (env), cx, value, propertyName]
-            ValType type = evaluatePropertyName(propertyName);
-
-            /* steps 1-2 */
-            // stack: [(env), (env), cx, value, propertyName] -> [(env), (env), v]
+            /* steps 3-4 */
+            // stack: [(env), <env, id>|ref, cx, value, propertyName] -> [(env), <env, id>|ref, v]
             if (type == ValType.String) {
                 mv.invoke(Methods.AbstractOperations_GetV_String);
             } else {
                 mv.invoke(Methods.AbstractOperations_GetV);
             }
 
-            /* step 3 */
-            // stack: [(env), (env), v] -> [(env), (env), v']
+            /* step 5 */
+            // stack: [(env), <env, id>|ref, v] -> [(env), <env, id>|ref, v']
             if (initializer != null) {
                 Jump undef = new Jump();
                 mv.dup();
@@ -647,22 +685,16 @@ final class BindingInitializationGenerator {
                 {
                     mv.pop();
                     expressionBoxedValue(initializer, mv);
-                    if (binding instanceof BindingIdentifier
-                            && IsAnonymousFunctionDefinition(initializer)) {
-                        SetFunctionName(initializer, ((BindingIdentifier) binding).getName(), mv);
+                    if (IsAnonymousFunctionDefinition(initializer)) {
+                        SetFunctionName(initializer, bindingId.getName(), mv);
                     }
                 }
                 mv.mark(undef);
             }
 
-            /* step 4 */
-            if (binding instanceof BindingPattern) {
-                // stack: [(env), (env), v'] -> [(env)]
-                BindingInitialization((BindingPattern) binding);
-            } else {
-                // stack: [(env), (env, id), v'] -> [(env)]
-                BindingInitialization((BindingIdentifier) binding);
-            }
+            /* steps 6-7 */
+            // stack: [(env), <env, id>|ref, v'] -> [(env)]
+            initializeReferencedBindingOrPut(bindingId);
         }
     }
 
@@ -684,6 +716,11 @@ final class BindingInitializationGenerator {
         ValType evaluatePropertyName(String propertyName) {
             mv.aconst(propertyName);
             return ValType.String;
+        }
+
+        @Override
+        boolean isSimplePropertyName(String propertyName) {
+            return true;
         }
     }
 
@@ -707,6 +744,11 @@ final class BindingInitializationGenerator {
             // ComputedPropertyName : [ AssignmentExpression ]
             ValType propType = expressionValue(propertyName.getExpression(), mv);
             return ToPropertyKey(propType, mv);
+        }
+
+        @Override
+        boolean isSimplePropertyName(ComputedPropertyName propertyName) {
+            return propertyName.getExpression() instanceof Literal;
         }
     }
 }

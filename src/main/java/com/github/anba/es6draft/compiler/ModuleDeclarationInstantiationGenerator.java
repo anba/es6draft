@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.github.anba.es6draft.ast.Declaration;
-import com.github.anba.es6draft.ast.ExportDefaultExpression;
 import com.github.anba.es6draft.ast.HoistableDeclaration;
 import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.ast.StatementListItem;
@@ -179,8 +178,6 @@ final class ModuleDeclarationInstantiationGenerator extends
             }
         }
         /* step 11 */
-        // FIXME: LexicallyScopedDeclarations includes ImportDeclaration!
-        // FIXME: LexicallyScopedDeclarations includes ExportDeclaration!
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(module);
         /* step 12 */
         for (Declaration d : lexDeclarations) {
@@ -203,11 +200,6 @@ final class ModuleDeclarationInstantiationGenerator extends
                     initializeBinding(mv);
                 }
             }
-        }
-        // Emit binding for 'export default AssignmentExpression'.
-        ExportDefaultExpression defaultExport = module.getScope().getDefaultExportExpression();
-        if (defaultExport != null) {
-            createImmutableBinding(envRec, defaultExport.getBinding().getName(), true, mv);
         }
         /* step 13 */
         mv._return();

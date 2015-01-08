@@ -345,14 +345,11 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* steps 2-3 */
             CharSequence s = ToString(cx, obj);
             /* steps 4-5 */
-            // FIXME: spec bug - missing type check
-            Callable matcher = Type.isObject(regexp) ? GetMethod(cx, Type.objectValue(regexp),
-                    BuiltinSymbol.match.get()) : null;
+            Callable matcher = GetMethod(cx, regexp, BuiltinSymbol.match.get());
             /* steps 6 */
             if (matcher != null) {
                 return matcher.call(cx, regexp, s);
             }
-            // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3425)
             /* step 7 */
             RegExpObject rx = RegExpCreate(cx, regexp, UNDEFINED);
             /* step 8 */
@@ -380,9 +377,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* steps 2-3 */
             String string = ToFlatString(cx, obj);
             /* steps 4-5 */
-            // FIXME: spec bug - missing type check
-            Callable replacer = Type.isObject(searchValue) ? GetMethod(cx,
-                    Type.objectValue(searchValue), BuiltinSymbol.replace.get()) : null;
+            Callable replacer = GetMethod(cx, searchValue, BuiltinSymbol.replace.get());
             /* step 6 */
             if (replacer != null) {
                 return replacer.call(cx, searchValue, string, replaceValue);
@@ -498,14 +493,11 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* steps 2-3 */
             CharSequence string = ToString(cx, obj);
             /* steps 4-5 */
-            // FIXME: spec bug - missing type check
-            Callable searcher = Type.isObject(regexp) ? GetMethod(cx, Type.objectValue(regexp),
-                    BuiltinSymbol.search.get()) : null;
+            Callable searcher = GetMethod(cx, regexp, BuiltinSymbol.search.get());
             /* steps 6 */
             if (searcher != null) {
                 return searcher.call(cx, regexp, string);
             }
-            // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3425)
             /* step 7 */
             RegExpObject rx = RegExpCreate(cx, regexp, UNDEFINED);
             /* step 8 */
@@ -567,12 +559,13 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* steps 1-2 */
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 3-4 */
-            // FIXME: spec bug - missing type check
-            Callable splitter = Type.isObject(separator) ? GetMethod(cx,
-                    Type.objectValue(separator), BuiltinSymbol.split.get()) : null;
-            /* step 5 */
-            if (splitter != null) {
-                return splitter.call(cx, separator, obj, limit);
+            // FIXME: spec bug - undefined separator not handled correctly!
+            if (!Type.isUndefined(separator)) {
+                Callable splitter = GetMethod(cx, separator, BuiltinSymbol.split.get());
+                /* step 5 */
+                if (splitter != null) {
+                    return splitter.call(cx, separator, obj, limit);
+                }
             }
             /* steps 6-7 */
             String s = ToFlatString(cx, obj);

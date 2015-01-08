@@ -25,7 +25,7 @@ if (typeof Assert === "undefined") {
 }
 
 for (let name of knownExports) {
-  if (!Object.prototype.hasOwnProperty.call(Assert, name)) {
+  if (Assert[name] === void 0) {
     throw `Assert.${name} not exported`;
   }
 }

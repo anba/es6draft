@@ -5,55 +5,69 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertFalse
+  assertSame, assertTrue, assertDataProperty
 } = Assert;
 
-function assertAnonymousFunction(f) {
-  return assertFalse(f.hasOwnProperty("name"));
+function assertFunctionName(f, name) {
+  return assertDataProperty(f, "name", {value: name, writable: false, enumerable: false, configurable: true});
+}
+
+function assertClassName(c, name) {
+  assertTrue(c.hasOwnProperty("name"));
+  return assertSame(name, c.name);
 }
 
 
-// anonymous function/generator/arrow/class expression in object destructuring assignment are not renamed
+// anonymous function/generator/arrow/class expression
 (function() {
   // 12.13.5.4 Runtime Semantics: KeyedDestructuringAssignmentEvaluation
   // - AssignmentElement[Yield] : DestructuringAssignmentTarget Initializer{opt}
-  var f7, g7, a7, c7;
-  var f10, g10, a10, c10;
-  var f13, g13, a13, c13;
+  var f7, g7, a7, c7, d7;
+  var f10, g10, a10, c10, d10;
+  var f13, g13, a13, c13, d13;
 
   ({f7 = function (){}}) = [];
-  assertAnonymousFunction(f7);
+  assertFunctionName(f7, "f7");
 
   ({g7 = function* (){}}) = [];
-  assertAnonymousFunction(g7);
+  assertFunctionName(g7, "g7");
 
   ({a7 = () => {}}) = [];
-  assertAnonymousFunction(a7);
+  assertFunctionName(a7, "a7");
 
   ({c7 = class {}}) = [];
-  assertAnonymousFunction(c7);
+  assertFunctionName(c7, "c7");
+
+  ({d7 = class { static get name() { return "<class-name>" } }}) = [];
+  assertClassName(d7, "<class-name>");
 
   ({key: f10 = function (){}}) = [];
-  assertAnonymousFunction(f10);
+  assertFunctionName(f10, "f10");
 
   ({key: g10 = function* (){}}) = [];
-  assertAnonymousFunction(g10);
+  assertFunctionName(g10, "g10");
 
   ({key: a10 = () => {}}) = [];
-  assertAnonymousFunction(a10);
+  assertFunctionName(a10, "a10");
 
   ({key: c10 = class {}}) = [];
-  assertAnonymousFunction(c10);
+  assertFunctionName(c10, "c10");
+
+  ({key: d10 = class { static get name() { return "<class-name>" } }}) = [];
+  assertClassName(d10, "<class-name>");
 
   ({["key"]: f13 = function (){}}) = [];
-  assertAnonymousFunction(f13);
+  assertFunctionName(f13, "f13");
 
   ({["key"]: g13 = function* (){}}) = [];
-  assertAnonymousFunction(g13);
+  assertFunctionName(g13, "g13");
 
   ({["key"]: a13 = () => {}}) = [];
-  assertAnonymousFunction(a13);
+  assertFunctionName(a13, "a13");
 
   ({["key"]: c13 = class {}}) = [];
-  assertAnonymousFunction(c13);
+  assertFunctionName(c13, "c13");
+
+  ({["key"]: d13 = class { static get name() { return "<class-name>" } }}) = [];
+  assertClassName(d13, "<class-name>");
 })();

@@ -10,7 +10,7 @@ package com.github.anba.es6draft.ast;
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Modules</h2>
  */
-public class ExportDefaultExpression extends AstNode {
+public final class ExportDefaultExpression extends Declaration {
     private final BindingIdentifier binding;
     private final Expression expression;
 
@@ -27,6 +27,11 @@ public class ExportDefaultExpression extends AstNode {
 
     public Expression getExpression() {
         return expression;
+    }
+
+    @Override
+    public boolean isConstDeclaration() {
+        return true;
     }
 
     @Override

@@ -10,6 +10,7 @@ package com.github.anba.es6draft.ast.scope;
  * 
  */
 public final class Name {
+    public static final String DEFAULT_EXPORT = "*default*";
     private final String identifier;
     private Scope scope;
 

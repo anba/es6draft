@@ -21,6 +21,7 @@ import java.util.regex.MatchResult;
 
 import com.github.anba.es6draft.regexp.IterableMatchResult;
 import com.github.anba.es6draft.regexp.MatchState;
+import com.github.anba.es6draft.regexp.RawMatchResult;
 import com.github.anba.es6draft.regexp.RegExpMatcher;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -117,7 +118,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 21.2.5.3 get RegExp.prototype.flags ( )
+         * 21.2.5.3 get RegExp.prototype.flags
          * 
          * @param cx
          *            the execution context
@@ -147,7 +148,6 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             if (ToBoolean(Get(cx, r, "multiline"))) {
                 result.append('m');
             }
-            // FIXME: spec bug - alphabetical order (bug 3423)
             /* steps 13-15 */
             if (ToBoolean(Get(cx, r, "unicode"))) {
                 result.append('u');
@@ -354,32 +354,24 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 Put(cx, rx, "lastIndex", 0, true);
                 /* step 8.c */
                 ArrayObject array = ArrayCreate(cx, 0);
-                /* step 8.d */
-                // double previousLastIndex = 0;
-                /* steps 8.e-8.f */
-                for (int n = 0;;) {
+                /* steps 8.d-8.e */
+                for (int n = 0;; ++n) {
                     // ScriptObject result = RegExpExec(cx, rx, s);
-                    MatchResult result = getMatcherOrNull(cx, rx, s, true);
+                    RawMatchResult result = getMatcherOrNull(cx, rx, s, true);
                     if (result == null) {
                         return n == 0 ? NULL : array;
                     }
-                    // FIXME: spec issue (bug 1467)
-                    // double thisIndex = ToInteger(cx, Get(cx, rx, "lastIndex"));
-                    // if (thisIndex == previousLastIndex) {
-                    // Put(cx, rx, "lastIndex", thisIndex + 1, true);
-                    // previousLastIndex = thisIndex + 1;
-                    // } else {
-                    // previousLastIndex = thisIndex;
-                    // }
+                    // TODO: spec issue - directly call ToString(matchValue)?
                     // Object matchStr = Get(cx, result, "0");
-                    String matchStr = result.group(0);
-                    if (matchStr.isEmpty()) {
-                        double thisIndex = ToInteger(cx, Get(cx, rx, "lastIndex"));
+                    Object matchValue = result.rawGroup(0);
+                    assert matchValue != null;
+                    boolean status = CreateDataProperty(cx, array, n, matchValue);
+                    assert status;
+                    CharSequence matchStr = ToString(cx, matchValue);
+                    if (matchStr.length() == 0) {
+                        long thisIndex = ToLength(cx, Get(cx, rx, "lastIndex"));
                         Put(cx, rx, "lastIndex", thisIndex + 1, true);
                     }
-                    boolean status = CreateDataProperty(cx, array, n, matchStr);
-                    assert status;
-                    n += 1;
                 }
             }
         }
@@ -442,27 +434,16 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                     done = true;
                 } else {
                     /* step 14.d */
+                    results.add(result);
                     if (!global) {
                         done = true;
                     } else {
-                        // FIXME: spec issue (bug 1467)
-                        // double thisIndex = ToInteger(cx, Get(cx, rx, "lastIndex"));
-                        // if (thisIndex == previousLastIndex) {
-                        // Put(cx, rx, "lastIndex", thisIndex + 1, true);
-                        // previousLastIndex = thisIndex + 1;
-                        // } else {
-                        // previousLastIndex = thisIndex;
-                        // }
                         String matchStr = result.group(0);
                         if (matchStr.isEmpty()) {
-                            double thisIndex = ToInteger(cx, Get(cx, rx, "lastIndex"));
+                            long thisIndex = ToLength(cx, Get(cx, rx, "lastIndex"));
                             Put(cx, rx, "lastIndex", thisIndex + 1, true);
                         }
                     }
-                }
-                /* step 14.e */
-                if (result != null) {
-                    results.add(result);
                 }
             }
             // fast-path if matches were found
@@ -588,8 +569,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             String newFlags = flags.indexOf('y') != -1 ? flags : flags + 'y';
             /* steps 11-12 */
             ScriptObject splitter = c.construct(cx, rx, newFlags);
-            /* step 13 (FIXME: spec bug - unreachable) */
-            /* step 17 (moved) */
+            /* step 15 (moved) */
             long lim = Type.isUndefined(limit) ? 0x1F_FFFF_FFFF_FFFFL : ToLength(cx, limit);
 
             // Optimization
@@ -597,20 +577,20 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 return RegExpSplit(cx, (RegExpObject) splitter, s, lim);
             }
 
-            /* steps 14-15 */
+            /* step 13 */
             ArrayObject a = ArrayCreate(cx, 0);
-            /* step 16 */
+            /* step 14 */
             int lengthA = 0;
-            /* step 17 (above) */
-            /* step 18 */
+            /* step 15 (above) */
+            /* step 16 */
             int size = s.length();
-            /* step 19 */
+            /* step 17 */
             int p = 0;
-            /* step 20 */
+            /* step 18 */
             if (lim == 0) {
                 return a;
             }
-            /* step 21 */
+            /* step 19 */
             if (size == 0) {
                 // TODO: Optimize and check whether or not to save legacy match result
                 // ScriptObject z = RegExpExec(cx, splitter, s);
@@ -621,43 +601,35 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 CreateDataProperty(cx, a, 0, s);
                 return a;
             }
-            /* step 22 */
+            /* step 20 */
             int q = p;
-            /* step 23 */
+            /* step 21 */
             while (q < size) {
-                /* steps 23.a-b */
+                /* steps 21.a-b */
                 Put(cx, splitter, "lastIndex", q, true);
-                /* steps 23.c-d */
+                /* steps 21.c-d */
                 // ScriptObject z = RegExpExec(cx, splitter, s);
                 MatchResult z = getMatcherOrNull(cx, splitter, s, true);
-                /* step 23.e */
+                /* step 21.e */
                 if (z == null) {
-                    // FIXME: spec bug - missing update if not surrogate pair
-                    q = nextSplitPosition(s, q, unicodeMatching);
+                    q += isSurrogatePair(s, q, unicodeMatching) ? 2 : 1;
                     continue;
                 }
-                /* step 23.f */
-                /* step 23.f.i-ii */
+                /* step 21.f */
+                /* step 21.f.i-ii */
                 int e = (int) ToLength(cx, Get(cx, splitter, "lastIndex"));
-                /* step 23.f.iii */
+                /* step 21.f.iii */
                 if (e == p) {
-                    // FIXME: spec bug - missing update if not surrogate pair
-                    q = nextSplitPosition(s, q, unicodeMatching);
+                    q += isSurrogatePair(s, q, unicodeMatching) ? 2 : 1;
                     continue;
                 }
-                /* step 23.f.iv */
+                /* step 21.f.iv */
                 String t = s.substring(p, q);
                 CreateDataProperty(cx, a, lengthA, t);
                 lengthA += 1;
                 if (lengthA == lim) {
                     return a;
                 }
-                // long numberOfCaptures = ToLength(cx, Get(cx, z, "length"));
-                // FIXME: spec bug - numberOfCaptures is `z.length - 1`
-                // numberOfCaptures = Math.max(numberOfCaptures - 1, 0);
-                // for (int i = 0; i != numberOfCaptures;) {
-                // i = i + 1;
-                // Object nextCapture = Get(cx, z, i);
                 Iterator<String> iterator = groupIterator(z, z.groupCount());
                 while (iterator.hasNext()) {
                     Object nextCap = iterator.next();
@@ -670,15 +642,11 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 p = e;
                 q = p;
             }
-            // FIXME: spec issue - this step is not present in the spec, create test case?
-            if (p == size) {
-
-            }
-            /* step 24 */
+            /* step 22 */
             String t = s.substring(p, size);
-            /* steps 25-26 */
+            /* steps 23-24 */
             CreateDataProperty(cx, a, lengthA, t);
-            /* step 27 */
+            /* step 25 */
             return a;
         }
     }
@@ -774,7 +742,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      *            {@code true} if the match result is stored
      * @return the match result object or null
      */
-    private static MatchResult getMatcherOrNull(ExecutionContext cx, ScriptObject r,
+    private static RawMatchResult getMatcherOrNull(ExecutionContext cx, ScriptObject r,
             CharSequence s, boolean storeResult) {
         /* steps 1-2 (not applicable) */
         /* steps 3-4 */
@@ -788,7 +756,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         /* steps 6-7 */
         RegExpObject rx = thisRegExpObject(cx, r);
         /* step 8 */
-        MatchResult m = getMatcherOrNull(cx, rx, s);
+        RawMatchResult m = getMatcherOrNull(cx, rx, s);
         if (m == null) {
             return null;
         }
@@ -866,7 +834,8 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      *            the string
      * @return the match result or {@code null}
      */
-    private static MatchResult getMatcherOrNull(ExecutionContext cx, RegExpObject r, CharSequence s) {
+    private static RawMatchResult getMatcherOrNull(ExecutionContext cx, RegExpObject r,
+            CharSequence s) {
         /* step 1 */
         assert r.isInitialized();
         /* step 2 (not applicable) */
@@ -875,7 +844,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         /* step 4 */
         Object lastIndex = Get(cx, r, "lastIndex");
         /* steps 5-6 */
-        double i = ToInteger(cx, lastIndex);
+        long i = ToLength(cx, lastIndex);
         /* steps 7-8 */
         boolean global = ToBoolean(Get(cx, r, "global"));
         /* steps 9-10 */
@@ -885,7 +854,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             i = 0;
         }
         /* step 16.a */
-        if (i < 0 || i > length) {
+        if (i > length) {
             Put(cx, r, "lastIndex", 0, true);
             return null;
         }
@@ -911,7 +880,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         if (global || sticky) {
             Put(cx, r, "lastIndex", e, true);
         }
-        return m.toMatchResult();
+        return m.toRawMatchResult();
     }
 
     /**
@@ -1195,24 +1164,22 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      * @return the split result array
      */
     private static ArrayObject RegExpSplit(ExecutionContext cx, RegExpObject rx, String s, long lim) {
-        // TODO: update step comments
-        /* steps 1-4, 6-7, 11 (not applicable) */
-        /* steps 8-9 */
-        ArrayObject a = ArrayCreate(cx, 0);
-        /* step 10 */
-        int lengthA = 0;
-        /* step 12 */
-        int size = s.length();
+        /* steps 1-12, 15 (not applicable) */
         /* step 13 */
-        int p = 0;
+        ArrayObject a = ArrayCreate(cx, 0);
         /* step 14 */
+        int lengthA = 0;
+        /* step 16 */
+        int size = s.length();
+        /* step 17 */
+        int p = 0;
+        /* step 18 */
         if (lim == 0) {
             return a;
         }
-        /* step 5 */
-        MatchState matcher = rx.getRegExpMatcher().matcher(s);
-        /* step 15 */
+        /* step 19 */
         if (size == 0) {
+            MatchState matcher = rx.getRegExpMatcher().matcher(s);
             if (matcher.find()) {
                 RegExpConstructor.storeLastMatchResult(cx, s, matcher.toMatchResult());
                 return a;
@@ -1220,9 +1187,11 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             CreateDataProperty(cx, a, 0, s);
             return a;
         }
-        /* step 16 */
+        /* step 20 */
         int q = p;
+        /* step 21 */
         int lastStart = -1;
+        MatchState matcher = rx.getRegExpMatcher().matcher(s);
         while (q != size) {
             boolean match = matcher.find();
             if (!match) {
@@ -1240,7 +1209,6 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 if (lengthA == lim) {
                     return a;
                 }
-                p = e;
                 Iterator<String> iterator = groupIterator(matcher, matcher.groupCount());
                 while (iterator.hasNext()) {
                     String cap = iterator.next();
@@ -1250,17 +1218,18 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                         return a;
                     }
                 }
+                p = e;
                 q = p;
             }
         }
         if (lastStart == size) {
             return a;
         }
-        /* step 18 */
+        /* step 22 */
         String t = s.substring(p, size);
-        /* steps 19-20 */
+        /* steps 23-24 */
         CreateDataProperty(cx, a, lengthA, t);
-        /* step 21 */
+        /* step 25 */
         return a;
     }
 
@@ -1312,14 +1281,14 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         return m;
     }
 
-    private static int nextSplitPosition(String s, int p, boolean unicodeMatching) {
+    private static boolean isSurrogatePair(String s, int p, boolean unicodeMatching) {
         if (unicodeMatching) {
             if (Character.isHighSurrogate(s.charAt(p)) && p + 1 < s.length()
                     && Character.isLowSurrogate(s.charAt(p + 1))) {
-                return p + 2;
+                return true;
             }
         }
-        return p + 1;
+        return false;
     }
 
     /**
@@ -1385,7 +1354,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         }
     }
 
-    private static final class ScriptObjectMatchResult implements MatchResult {
+    private static final class ScriptObjectMatchResult implements MatchResult, RawMatchResult {
         private final ExecutionContext cx;
         private final ScriptObject object;
 
@@ -1435,6 +1404,16 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         public int groupCount() {
             long nCaptures = ToLength(cx, Get(cx, object, "length"));
             return (int) Math.max(nCaptures - 1, 0);
+        }
+
+        @Override
+        public Object rawGroup() {
+            return Get(cx, object, 0);
+        }
+
+        @Override
+        public Object rawGroup(int group) {
+            return Get(cx, object, group);
         }
     }
 }

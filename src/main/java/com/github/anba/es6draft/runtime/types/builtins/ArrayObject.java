@@ -150,6 +150,12 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     @Override
+    protected boolean has(ExecutionContext cx, String propertyKey) {
+        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
+        return ordinaryHasPropertyVirtual(cx, propertyKey);
+    }
+
+    @Override
     protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         if ("length".equals(propertyKey)) {
             return true;
@@ -375,37 +381,35 @@ public final class ArrayObject extends OrdinaryObject {
         /* step 2 (not applicable) */
         /* step 3 */
         Object c = UNDEFINED;
-        /* steps 4-5 */
-        boolean isArray = IsArray(cx, orginalArray);
-        /* step 6 */
-        if (isArray) {
-            /* steps 6.a-6.b */
+        /* step 4 */
+        if (IsArray(orginalArray)) {
+            /* steps 4.a-4.b */
             c = Get(cx, orginalArray, "constructor");
-            /* step 6.c */
+            /* step 4.c */
             if (IsConstructor(c)) {
                 Constructor constructor = (Constructor) c;
-                /* step 6.c.i */
+                /* step 4.c.i */
                 Realm thisRealm = cx.getRealm();
-                /* step 6.c.ii */
+                /* step 4.c.ii */
                 Realm realmC = constructor.getRealm(cx);
-                /* step 6.c.iii, 7 */
+                /* step 4.c.iii, 5 */
                 if (thisRealm != realmC && constructor == realmC.getIntrinsic(Intrinsics.Array)) {
                     c = UNDEFINED;
                 } else {
-                    /* step 6.c.iv */
+                    /* step 4.c.iv */
                     c = Get(cx, constructor, BuiltinSymbol.species.get());
                 }
             }
         }
-        /* step 7 */
+        /* step 5 */
         if (Type.isUndefinedOrNull(c)) {
             return ArrayCreate(cx, length);
         }
-        /* step 8 */
+        /* step 6 */
         if (!IsConstructor(c)) {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         }
-        /* step 9 */
+        /* step 7 */
         return ((Constructor) c).construct(cx, length);
     }
 

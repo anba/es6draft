@@ -81,6 +81,10 @@ harmony/array-from.js
 # RegExp.prototype.flags is non-configurable in v8
 harmony/regexp-flags.js
 
+# ES6: evaluation order changed in for-in/of
+compiler/complex-for-in.js
+regress/regress-815.js
+
 
 ###################
 # Misc issues     #

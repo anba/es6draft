@@ -385,9 +385,9 @@ public final class Parser {
     }
 
     private static final class ModuleContext extends TopContext implements ModuleScope {
-        HashSet<String> exportBindings = new HashSet<>();
+        HashSet<String> exportNames = new HashSet<>();
         HashSet<Name> importBindings = new HashSet<>();
-        ExportDefaultExpression defaultExportExpression;
+        LinkedHashMap<Name, Long> undeclaredExportBindings = new LinkedHashMap<>();
         Module node = null;
 
         ModuleContext(ScopeContext enclosing) {
@@ -399,13 +399,14 @@ public final class Parser {
             return node;
         }
 
-        @Override
-        public ExportDefaultExpression getDefaultExportExpression() {
-            return defaultExportExpression;
+        void addUndeclaredExportBinding(long position, Name name) {
+            if (!undeclaredExportBindings.containsKey(name)) {
+                undeclaredExportBindings.put(name, position);
+            }
         }
 
-        boolean addExportBinding(String binding) {
-            return exportBindings.add(binding);
+        boolean addExportName(String exportName) {
+            return exportNames.add(exportName);
         }
 
         boolean addImportBinding(Name name) {
@@ -742,6 +743,10 @@ public final class Parser {
         return parserOptions.contains(option);
     }
 
+    boolean isModule() {
+        return moduleCode;
+    }
+
     private ParseContext newContext(ContextKind kind) {
         return context = new ParseContext(context, kind);
     }
@@ -807,30 +812,28 @@ public final class Parser {
         return context.scopeContext = parent;
     }
 
-    private void addFunctionDeclaration(FunctionDeclaration decl) {
-        addDeclaration(decl);
+    private void addFunctionDeclaration(FunctionDeclaration decl, boolean isNamedDefault) {
+        addDeclaration(decl, isNamedDefault);
         if (isBlockScopedFunction()) {
             context.parent.funContext.addBlockFunction(decl);
         }
     }
 
-    private void addDeclaration(HoistableDeclaration decl) {
-        Name name = BoundName(decl);
+    private void addDeclaration(HoistableDeclaration decl, boolean isNamedDefault) {
         ParseContext parentContext = context.parent;
         ScopeContext parentScope = parentContext.scopeContext;
         TopContext topScope = parentContext.topContext;
         if (parentScope == topScope && !parentContext.kind.isModule()) {
             // top-level function declaration in scripts/functions context
+            addVarDeclaredName(decl, topScope, BoundName(decl));
             topScope.addVarScopedDeclaration(decl);
-            if (!topScope.addVarDeclaredName(name)) {
-                reportSyntaxError(decl, Messages.Key.VariableRedeclaration, name);
-            }
         } else {
             // lexical-scoped function declaration in module/block context
-            parentScope.addLexScopedDeclaration(decl);
-            if (!parentScope.addLexDeclaredName(name)) {
-                reportSyntaxError(decl, Messages.Key.VariableRedeclaration, name);
+            addLexDeclaredName(decl, parentScope, BoundName(decl));
+            if (isNamedDefault) {
+                addLexDeclaredName(decl, parentScope, new Name(DEFAULT_EXPORT_BINDING_NAME));
             }
+            parentScope.addLexScopedDeclaration(decl);
         }
     }
 
@@ -842,13 +845,23 @@ public final class Parser {
                 && isEnabled(CompatibilityOption.BlockFunctionDeclaration);
     }
 
-    private void addLexScopedDeclaration(Declaration decl) {
+    private void addDeclaration(ClassDeclaration decl, boolean isNamedDefault) {
+        addLexDeclaredName(decl, context.scopeContext, BoundName(decl));
+        if (isNamedDefault) {
+            addLexDeclaredName(decl, context.scopeContext, new Name(DEFAULT_EXPORT_BINDING_NAME));
+        }
         context.scopeContext.addLexScopedDeclaration(decl);
     }
 
-    private void addLexScopedDeclaration(ImportDeclaration decl) {
+    private void addDeclaration(ExportDefaultExpression defaultExpression) {
         assert context.scopeContext == context.modContext : "not in module scope";
-        // TODO: check if ImportDeclarations really need to be stored as lexically scoped
+        addLexDeclaredName(defaultExpression, context.scopeContext,
+                BoundName(defaultExpression.getBinding()));
+        context.scopeContext.addLexScopedDeclaration(defaultExpression);
+    }
+
+    private void addLexScopedDeclaration(LexicalDeclaration decl) {
+        context.scopeContext.addLexScopedDeclaration(decl);
     }
 
     private void addVarScopedDeclaration(VariableStatement decl) {
@@ -888,18 +901,21 @@ public final class Parser {
     }
 
     private void addVarDeclaredName(Binding binding, Name name) {
-        ScopeContext scope = context.scopeContext;
-        if (!scope.addVarDeclaredName(name)) {
-            reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
-        }
-        for (ScopeContext parent; (parent = scope.parent) != null; scope = parent) {
-            if (!parent.allowVarDeclaredName(name)) {
+        addVarDeclaredName(binding, context.scopeContext, name);
+        for (ScopeContext next = context.scopeContext.parent; next != null; next = next.parent) {
+            if (!next.allowVarDeclaredName(name)) {
                 if (isEnabled(CompatibilityOption.CatchVarStatement)
-                        && parent instanceof CatchContext) {
+                        && next instanceof CatchContext) {
                     continue;
                 }
                 reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
             }
+        }
+    }
+
+    private void addVarDeclaredName(Node node, ScopeContext scope, Name name) {
+        if (!scope.addVarDeclaredName(name)) {
+            reportSyntaxError(node, Messages.Key.VariableRedeclaration, name);
         }
     }
 
@@ -957,19 +973,18 @@ public final class Parser {
 
     private void addLexDeclaredName(BindingIdentifier bindingIdentifier) {
         Name name = BoundName(bindingIdentifier);
-        addLexDeclaredName(bindingIdentifier, name);
+        addLexDeclaredName(bindingIdentifier, context.scopeContext, name);
     }
 
     private void addLexDeclaredName(BindingPattern bindingPattern) {
         for (Name name : BoundNames(bindingPattern)) {
-            addLexDeclaredName(bindingPattern, name);
+            addLexDeclaredName(bindingPattern, context.scopeContext, name);
         }
     }
 
-    private void addLexDeclaredName(Binding binding, Name name) {
-        ScopeContext scope = context.scopeContext;
+    private void addLexDeclaredName(Node node, ScopeContext scope, Name name) {
         if (!scope.addLexDeclaredName(name)) {
-            reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
+            reportSyntaxError(node, Messages.Key.VariableRedeclaration, name);
         }
     }
 
@@ -992,16 +1007,37 @@ public final class Parser {
         return names;
     }
 
-    private void addExportBindings(long sourcePosition, List<Name> bindings) {
-        for (Name binding : bindings) {
-            addExportBinding(sourcePosition, binding.getIdentifier());
+    private void addExportBindings(long sourcePosition, List<Name> names) {
+        for (Name name : names) {
+            addExportBinding(sourcePosition, name);
         }
     }
 
-    private void addExportBinding(long sourcePosition, String binding) {
+    private void addExportBinding(long sourcePosition, Name name) {
         assert context.scopeContext == context.modContext : "not in module scope";
-        if (!context.modContext.addExportBinding(binding)) {
-            reportSyntaxError(sourcePosition, Messages.Key.DuplicateExport, binding);
+        if (!context.modContext.isDeclared(name)) {
+            context.modContext.addUndeclaredExportBinding(sourcePosition, name);
+        }
+    }
+
+    private void addExportBinding(long sourcePosition, String name) {
+        addExportBinding(sourcePosition, new Name(name));
+    }
+
+    private void addExportNames(long sourcePosition, List<Name> names) {
+        for (Name name : names) {
+            addExportName(sourcePosition, name);
+        }
+    }
+
+    private void addExportName(long sourcePosition, Name name) {
+        addExportName(sourcePosition, name.getIdentifier());
+    }
+
+    private void addExportName(long sourcePosition, String name) {
+        assert context.scopeContext == context.modContext : "not in module scope";
+        if (!context.modContext.addExportName(name)) {
+            reportSyntaxError(sourcePosition, Messages.Key.DuplicateExport, name);
         }
     }
 
@@ -1741,12 +1777,27 @@ public final class Parser {
         }
     }
 
+    /**
+     * 15.2.1.1 Static Semantics: Early Errors
+     * 
+     * @param module
+     *            the module node
+     */
     private void module_EarlyErrors(Module module) {
         assert context.scopeContext == context.modContext;
 
         ModuleContext scope = context.modContext;
-        // FIXME: spec bug - early error restrictions for export bindings are invalid
-        scope.exportBindings = null;
+        if (!scope.undeclaredExportBindings.isEmpty()) {
+            for (Map.Entry<Name, Long> export : scope.undeclaredExportBindings.entrySet()) {
+                Name exportBinding = export.getKey();
+                if (!scope.isDeclared(exportBinding)) {
+                    reportSyntaxError(export.getValue(), Messages.Key.MissingExportBinding,
+                            exportBinding.getIdentifier());
+                }
+            }
+        }
+        scope.exportNames = null;
+        scope.undeclaredExportBindings = null;
         scope.importBindings = null;
     }
 
@@ -1802,15 +1853,7 @@ public final class Parser {
             String moduleSpecifier = fromClause();
             semicolon();
 
-            // Only lexically scoped if BoundNames(ImportDeclaration) is not empty
-            boolean isLexicallyScoped = importClause.getDefaultEntry() != null
-                    || importClause.getNameSpace() != null
-                    || !importClause.getNamedImports().isEmpty();
-
             decl = new ImportDeclaration(begin, ts.endPosition(), importClause, moduleSpecifier);
-            if (isLexicallyScoped) {
-                addLexScopedDeclaration(decl);
-            }
         } else {
             String moduleSpecifier = moduleSpecifier();
             semicolon();
@@ -2042,21 +2085,27 @@ public final class Parser {
             String moduleSpecifier;
             if (isName("from")) {
                 moduleSpecifier = fromClause();
+
+                // 15.2.3.4 Static Semantics: ExportedNames
+                for (ExportSpecifier export : exportsClause.getExports()) {
+                    addExportName(export.getBeginPosition(), export.getExportName());
+                }
             } else {
                 moduleSpecifier = null;
 
+                // 15.2.3.1 Static Semantics: Early Errors
+                // 15.2.3.3 Static Semantics: ExportedBindings
+                // 15.2.3.4 Static Semantics: ExportedNames
                 for (ExportSpecifier export : exportsClause.getExports()) {
                     String sourceName = export.getSourceName();
                     if (isModuleReservedName(sourceName)) {
                         throw reportSyntaxError(Messages.Key.InvalidIdentifier, sourceName);
                     }
+                    addExportBinding(export.getBeginPosition(), export.getSourceName());
+                    addExportName(export.getBeginPosition(), export.getExportName());
                 }
             }
             semicolon();
-
-            for (ExportSpecifier export : exportsClause.getExports()) {
-                addExportBinding(export.getBeginPosition(), export.getExportName());
-            }
 
             return new ExportDeclaration(begin, ts.endPosition(), exportsClause, moduleSpecifier);
         }
@@ -2065,7 +2114,10 @@ public final class Parser {
             // export VariableStatement
             VariableStatement variableStatement = variableStatement();
 
+            // 15.2.3.3 Static Semantics: ExportedBindings
+            // 15.2.3.4 Static Semantics: ExportedNames
             addExportBindings(begin, BoundNames(variableStatement));
+            addExportNames(begin, BoundNames(variableStatement));
 
             return new ExportDeclaration(begin, ts.endPosition(), variableStatement);
         }
@@ -2078,7 +2130,10 @@ public final class Parser {
             // export Declaration
             Declaration declaration = declaration();
 
+            // 15.2.3.3 Static Semantics: ExportedBindings
+            // 15.2.3.4 Static Semantics: ExportedNames
             addExportBindings(begin, BoundNames(declaration));
+            addExportNames(begin, BoundNames(declaration));
 
             return new ExportDeclaration(begin, ts.endPosition(), declaration);
         }
@@ -2093,22 +2148,52 @@ public final class Parser {
             case FUNCTION: {
                 HoistableDeclaration declaration = hoistableDeclaration(true);
 
-                addExportBinding(begin, DEFAULT_EXPORT_NAME);
+                // 15.2.3.2 Static Semantics: BoundNames
+                // 15.2.3.3 Static Semantics: ExportedBindings
+                // 15.2.3.4 Static Semantics: ExportedNames
+                addExportBinding(begin, declaration.getName());
+                if (declaration.getIdentifier() != null) {
+                    addExportBinding(begin, DEFAULT_EXPORT_BINDING_NAME);
+                }
+                addExportName(begin, DEFAULT_EXPORT_NAME);
 
                 return new ExportDeclaration(begin, ts.endPosition(), declaration);
             }
             case CLASS: {
                 ClassDeclaration declaration = classDeclaration(true);
 
-                addExportBinding(begin, DEFAULT_EXPORT_NAME);
+                // 15.2.3.2 Static Semantics: BoundNames
+                // 15.2.3.3 Static Semantics: ExportedBindings
+                // 15.2.3.4 Static Semantics: ExportedNames
+                addExportBinding(begin, declaration.getName());
+                if (declaration.getIdentifier() != null) {
+                    addExportBinding(begin, DEFAULT_EXPORT_BINDING_NAME);
+                }
+                addExportName(begin, DEFAULT_EXPORT_NAME);
 
                 return new ExportDeclaration(begin, ts.endPosition(), declaration);
             }
+            case ASYNC:
+                if (isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION)
+                        && noNextLineTerminator()) {
+                    HoistableDeclaration declaration = asyncFunctionDeclaration(true);
+
+                    // 15.2.3.2 Static Semantics: BoundNames
+                    // 15.2.3.3 Static Semantics: ExportedBindings
+                    addExportBinding(begin, declaration.getName());
+                    if (declaration.getIdentifier() != null) {
+                        addExportBinding(begin, DEFAULT_EXPORT_BINDING_NAME);
+                    }
+                    addExportName(begin, DEFAULT_EXPORT_NAME);
+
+                    return new ExportDeclaration(begin, ts.endPosition(), declaration);
+                }
+                // fall-through
             default: {
                 ExportDefaultExpression defaultExpression = defaultExpression();
 
-                context.modContext.defaultExportExpression = defaultExpression;
-                addExportBinding(begin, DEFAULT_EXPORT_NAME);
+                addExportBinding(begin, DEFAULT_EXPORT_BINDING_NAME);
+                addExportName(begin, DEFAULT_EXPORT_NAME);
 
                 return new ExportDeclaration(begin, ts.endPosition(), defaultExpression);
             }
@@ -2124,9 +2209,10 @@ public final class Parser {
         Expression expression = assignmentExpression(true);
         semicolon();
 
-        addLexDeclaredName(binding);
-
-        return new ExportDefaultExpression(begin, ts.endPosition(), binding, expression);
+        ExportDefaultExpression defaultExpression = new ExportDefaultExpression(begin,
+                ts.endPosition(), binding, expression);
+        addDeclaration(defaultExpression);
+        return defaultExpression;
     }
 
     private static boolean isModuleReservedName(String name) {
@@ -2340,13 +2426,14 @@ public final class Parser {
         try {
             long begin = ts.beginPosition();
             consume(Token.FUNCTION);
+            boolean hasName = !isDefault || token() != Token.LP;
             BindingIdentifier identifier;
             String functionName;
-            if (!isDefault || token() != Token.LP) {
+            if (hasName) {
                 identifier = bindingIdentifierFunctionName(true);
                 functionName = identifier.getName().getIdentifier();
             } else {
-                identifier = new BindingIdentifier(0, 0, DEFAULT_EXPORT_BINDING_NAME);
+                identifier = null;
                 functionName = DEFAULT_EXPORT_NAME;
             }
             consume(Token.LP);
@@ -2380,8 +2467,7 @@ public final class Parser {
             scope.node = function;
 
             function_EarlyErrors(function);
-
-            addFunctionDeclaration(function);
+            addFunctionDeclaration(function, hasName && isDefault);
 
             return inheritStrictness(function);
         } finally {
@@ -3190,13 +3276,14 @@ public final class Parser {
             if (!isLegacy) {
                 consume(Token.MUL);
             }
+            boolean hasName = !isDefault || token() != Token.LP;
             BindingIdentifier identifier;
             String functionName;
-            if (!isDefault || token() != Token.LP) {
+            if (hasName) {
                 identifier = bindingIdentifierFunctionName(true);
                 functionName = identifier.getName().getIdentifier();
             } else {
-                identifier = new BindingIdentifier(0, 0, DEFAULT_EXPORT_BINDING_NAME);
+                identifier = null;
                 functionName = DEFAULT_EXPORT_NAME;
             }
             consume(Token.LP);
@@ -3224,8 +3311,7 @@ public final class Parser {
             scope.node = generator;
 
             generator_EarlyErrors(generator);
-
-            addDeclaration(generator);
+            addDeclaration(generator, hasName && isDefault);
 
             return inheritStrictness(generator);
         } finally {
@@ -3468,19 +3554,18 @@ public final class Parser {
                 identifier = bindingIdentifierClassName();
                 className = identifier.getName().getIdentifier();
             } else {
-                // TODO: source location in Reflect.parse?
-                identifier = new BindingIdentifier(0, 0, DEFAULT_EXPORT_BINDING_NAME);
+                identifier = null;
                 className = DEFAULT_EXPORT_NAME;
+            }
+            BlockContext scope = null;
+            if (hasName) {
+                scope = enterBlockContext(identifier);
             }
             Expression heritage = null;
             if (token() == Token.EXTENDS) {
                 heritage = classHeritage();
             }
             consume(Token.LC);
-            BlockContext scope = null;
-            if (hasName) {
-                scope = enterBlockContext(identifier);
-            }
             List<MethodDefinition> methods = classBody(identifier);
             if (hasName) {
                 exitBlockContext();
@@ -3492,8 +3577,9 @@ public final class Parser {
             if (hasName) {
                 scope.node = decl;
             }
-            addLexDeclaredName(identifier);
-            addLexScopedDeclaration(decl);
+
+            addDeclaration(decl, isDefault && hasName);
+
             return decl;
         } finally {
             context.strictMode = strictMode;
@@ -3524,15 +3610,15 @@ public final class Parser {
             if (token() != Token.EXTENDS && token() != Token.LC) {
                 name = bindingIdentifierClassName();
             }
+            BlockContext scope = null;
+            if (name != null) {
+                scope = enterBlockContext(name);
+            }
             Expression heritage = null;
             if (token() == Token.EXTENDS) {
                 heritage = classHeritage();
             }
             consume(Token.LC);
-            BlockContext scope = null;
-            if (name != null) {
-                scope = enterBlockContext(name);
-            }
             List<MethodDefinition> methods = classBody(name);
             if (name != null) {
                 exitBlockContext();
@@ -3608,8 +3694,8 @@ public final class Parser {
             methods.add(method);
         }
 
-        classBody_EarlyErrors(className, staticMethods, true);
-        classBody_EarlyErrors(className, prototypeMethods, false);
+        classBody_EarlyErrors(staticMethods, true);
+        classBody_EarlyErrors(prototypeMethods, false);
 
         return methods;
     }
@@ -3617,15 +3703,12 @@ public final class Parser {
     /**
      * 14.5.1 Static Semantics: Early Errors
      * 
-     * @param className
-     *            the class' name if present, otherwise {@code null}
      * @param defs
      *            the method definitions to validate
      * @param isStatic
      *            the flag to select whether to perform static or prototype method error detection
      */
-    private void classBody_EarlyErrors(BindingIdentifier className, List<MethodDefinition> defs,
-            boolean isStatic) {
+    private void classBody_EarlyErrors(List<MethodDefinition> defs, boolean isStatic) {
         boolean hasConstructor = false;
         HashMap<String, Integer> values = null;
         if (isEnabled(CompatibilityOption.DuplicateProperties)) {
@@ -3686,6 +3769,7 @@ public final class Parser {
      * <pre>
      * AsyncFunctionDeclaration<span><sub>[Default]</sub></span> :
      *     async [no <i>LineTerminator</i> here] function BindingIdentifier ( FormalParameters ) { FunctionBody }
+     *     <span><sub>[+Default]</sub></span> async [no <i>LineTerminator</i> here] function ( FormalParameters ) { FunctionBody }
      * </pre>
      * 
      * @param isDefault
@@ -3701,8 +3785,16 @@ public final class Parser {
                 reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
             }
             consume(Token.FUNCTION);
-            BindingIdentifier identifier = bindingIdentifierFunctionName(true);
-            String functionName = identifier.getName().getIdentifier();
+            boolean hasName = !isDefault || token() != Token.LP;
+            BindingIdentifier identifier;
+            String functionName;
+            if (hasName) {
+                identifier = bindingIdentifierFunctionName(true);
+                functionName = identifier.getName().getIdentifier();
+            } else {
+                identifier = null;
+                functionName = DEFAULT_EXPORT_NAME;
+            }
             consume(Token.LP);
             int startFunction = ts.position() - 1;
             FormalParameterList parameters = formalParameters(Token.RP);
@@ -3724,8 +3816,7 @@ public final class Parser {
             scope.node = function;
 
             asyncFunction_EarlyErrors(function);
-
-            addDeclaration(function);
+            addDeclaration(function, hasName && isDefault);
 
             return inheritStrictness(function);
         } finally {
@@ -7070,11 +7161,13 @@ public final class Parser {
      *     NewSuper
      * CallExpression<span><sub>[Yield]</sub></span> :
      *     MemberExpression<span><sub>[?Yield]</sub></span> Arguments<span><sub>[?Yield]</sub></span>
-     *     super Arguments<span><sub>[?Yield]</sub></span>
+     *     SuperCall<span><sub>[?Yield]</sub></span>
      *     CallExpression<span><sub>[?Yield]</sub></span> Arguments<span><sub>[?Yield]</sub></span>
      *     CallExpression<span><sub>[?Yield]</sub></span> [ Expression<span><sub>[In, ?Yield]</sub></span> ]
      *     CallExpression<span><sub>[?Yield]</sub></span> . IdentifierName
      *     CallExpression<span><sub>[?Yield]</sub></span> TemplateLiteral<span><sub>[?Yield]</sub></span>
+     * SuperCall<span><sub>[Yield]</sub></span> :
+     *     super Arguments<span><sub>[?Yield]</sub></span>
      * LeftHandSideExpression<span><sub>[Yield]</sub></span> :
      *     NewExpression<span><sub>[?Yield]</sub></span>
      *     CallExpression<span><sub>[?Yield]</sub></span>
@@ -7182,7 +7275,8 @@ public final class Parser {
     private void superCall() {
         ParseContext superContext = context.findSuperContext();
         super_EarlyErrors(superContext);
-        // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=3284
+        // 12.2.5.1 Static Semantics: Early Errors
+        // 14.5.1 Static Semantics: Early Errors
         if (superContext.kind.isMethod() && !superContext.isConstructor) {
             reportSyntaxError(Messages.Key.InvalidSuperCallExpression);
         }

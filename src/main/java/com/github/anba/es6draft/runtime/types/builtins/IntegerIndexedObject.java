@@ -45,6 +45,18 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
         return true;
     }
 
+    @Override
+    protected boolean has(ExecutionContext cx, long propertyKey) {
+        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
+        return ordinaryHasPropertyVirtual(cx, propertyKey);
+    }
+
+    @Override
+    protected boolean has(ExecutionContext cx, String propertyKey) {
+        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
+        return ordinaryHasPropertyVirtual(cx, propertyKey);
+    }
+
     /** [[HasOwnProperty]] (P) */
     @Override
     protected final boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {

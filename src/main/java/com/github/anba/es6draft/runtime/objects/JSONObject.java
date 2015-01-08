@@ -97,9 +97,10 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             /* step 8 */
             if (IsCallable(reviver)) {
                 OrdinaryObject root = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-                boolean status = CreateDataProperty(cx, root, "", unfiltered);
+                String rootName = "";
+                boolean status = CreateDataProperty(cx, root, rootName, unfiltered);
                 assert status;
-                return Walk(cx, (Callable) reviver, root, "");
+                return Walk(cx, (Callable) reviver, root, rootName);
             }
             /* step 9 */
             return unfiltered;
@@ -130,20 +131,17 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             /* step 3 */
             LinkedHashSet<String> propertyList = null;
             Callable replacerFunction = null;
-            /* step 6 */
+            /* step 4 */
             if (Type.isObject(replacer)) {
-                ScriptObject objReplacer = (ScriptObject) replacer;
-                /* steps 4-5 (moved) */
-                boolean replacerIsArray = IsArray(cx, objReplacer);
                 if (IsCallable(replacer)) {
                     replacerFunction = (Callable) replacer;
-                } else if (replacerIsArray) {
-                    // https://bugs.ecmascript.org/show_bug.cgi?id=170
+                } else if (IsArray(replacer)) {
                     propertyList = new LinkedHashSet<>();
+                    ScriptObject objReplacer = (ScriptObject) replacer;
                     long len = ToLength(cx, Get(cx, objReplacer, "length"));
-                    for (long i = 0; i < len; ++i) {
+                    for (long k = 0; k < len; ++k) {
                         String item = null;
-                        Object v = Get(cx, objReplacer, i);
+                        Object v = Get(cx, objReplacer, k);
                         if (Type.isString(v)) {
                             item = Type.stringValue(v).toString();
                         } else if (Type.isNumber(v)) {
@@ -160,7 +158,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                     }
                 }
             }
-            /* step 7 */
+            /* step 5 */
             if (Type.isObject(space)) {
                 ScriptObject o = Type.objectValue(space);
                 if (o instanceof NumberObject) {
@@ -169,7 +167,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                     space = ToString(cx, space);
                 }
             }
-            /* steps 8-10 */
+            /* steps 6-8 */
             String gap;
             if (Type.isNumber(space)) {
                 int nspace = (int) Math.max(0, Math.min(10, ToInteger(Type.numberValue(space))));
@@ -180,12 +178,12 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             } else {
                 gap = "";
             }
-            /* step 11 */
+            /* step 9 */
             OrdinaryObject wrapper = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-            /* steps 12-13 */
+            /* steps 10-11 */
             boolean status = CreateDataProperty(cx, wrapper, "", value);
             assert status;
-            /* step 14 */
+            /* step 12 */
             String result = Str(cx, stack, propertyList, replacerFunction, indent, gap, "", wrapper);
             if (result == null) {
                 return UNDEFINED;
@@ -221,13 +219,11 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         /* step 3 */
         if (Type.isObject(val)) {
             ScriptObject objVal = Type.objectValue(val);
-            /* steps 3.a-3.b */
-            boolean isArray = IsArray(cx, objVal);
-            if (isArray) {
-                /* step 3.c */
+            if (IsArray(objVal)) {
+                /* step 3.a */
                 walkArray(cx, reviver, objVal);
             } else {
-                /* step 3.d */
+                /* step 3.b */
                 walkObject(cx, reviver, objVal);
             }
         }
@@ -254,13 +250,11 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         /* step 3 */
         if (Type.isObject(val)) {
             ScriptObject objVal = Type.objectValue(val);
-            /* steps 3.a-3.b */
-            boolean isArray = IsArray(cx, objVal);
-            if (isArray) {
-                /* step 3.c */
+            if (IsArray(objVal)) {
+                /* step 3.a */
                 walkArray(cx, reviver, objVal);
             } else {
-                /* step 3.d */
+                /* step 3.b */
                 walkObject(cx, reviver, objVal);
             }
         }
@@ -269,7 +263,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
     }
 
     private static void walkArray(ExecutionContext cx, Callable reviver, ScriptObject val) {
-        /* step 3.c */
+        /* step 3.a */
         long len = ToLength(cx, Get(cx, val, "length"));
         for (long i = 0; i < len; ++i) {
             Object newElement = Walk(cx, reviver, val, i);
@@ -282,7 +276,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
     }
 
     private static void walkObject(ExecutionContext cx, Callable reviver, ScriptObject val) {
-        /* step 3.d */
+        /* step 3.b */
         for (String p : EnumerableOwnNames(cx, val)) {
             Object newElement = Walk(cx, reviver, val, p);
             if (Type.isUndefined(newElement)) {
@@ -360,8 +354,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         case Object:
             if (!IsCallable(value)) {
                 ScriptObject valueObj = Type.objectValue(value);
-                boolean valueIsArray = IsArray(cx, valueObj);
-                if (valueIsArray) {
+                if (IsArray(valueObj)) {
                     return JA(cx, stack, propertyList, replacerFunction, indent, gap, valueObj);
                 } else {
                     return JO(cx, stack, propertyList, replacerFunction, indent, gap, valueObj);
@@ -546,9 +539,9 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         indent = indent + gap;
         /* step 5 */
         ArrayList<String> partial = new ArrayList<>();
-        /* steps 6-9 */
+        /* steps 6-8 */
         long len = ToLength(cx, Get(cx, value, "length"));
-        /* steps 10-11 */
+        /* steps 9-10 */
         for (long index = 0; index < len; ++index) {
             String strP = Str(cx, stack, propertyList, replacerFunction, indent, gap,
                     ToString(index), value);
@@ -558,7 +551,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 partial.add(strP);
             }
         }
-        /* steps 12-13 */
+        /* steps 11-12 */
         String _final;
         if (partial.isEmpty()) {
             _final = "[]";
@@ -580,10 +573,10 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 _final = properties.toString();
             }
         }
-        /* step 14 */
+        /* step 13 */
         stack.remove(value);
-        /* step 15 (not applicable) */
-        /* step 16 */
+        /* step 14 (not applicable) */
+        /* step 15 */
         return _final;
     }
 }

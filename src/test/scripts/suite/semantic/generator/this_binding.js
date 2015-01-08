@@ -8,6 +8,7 @@ const {
   assertSame,
   assertNotSame,
   assertTrue,
+  assertFalse,
   assertUndefined,
 } = Assert;
 
@@ -138,8 +139,8 @@ const global = this;
   let g = new GClone("yield this");
   let gen = new g();
   let {value: result} = gen.next();
-  assertNotSame(gen, result);
-  assertTrue(Array.isArray(result));
+  assertSame(gen, result);
+  assertFalse(Array.isArray(result));
   assertSame(g.prototype, Object.getPrototypeOf(result));
   assertSame(GeneratorFunction.prototype.prototype, Object.getPrototypeOf(Object.getPrototypeOf(result)));
 }
@@ -156,8 +157,8 @@ const global = this;
   let g = new GClone("yield this");
   let gen = new g();
   let {value: result} = gen.next();
-  assertNotSame(gen, result);
-  assertTrue(Array.isArray(result));
+  assertSame(gen, result);
+  assertFalse(Array.isArray(result));
   assertSame(g.prototype, Object.getPrototypeOf(result));
   assertSame(GeneratorFunction.prototype.prototype, Object.getPrototypeOf(Object.getPrototypeOf(result)));
 }
@@ -175,8 +176,8 @@ const global = this;
   let g = new GClone("yield this");
   let gen = new g();
   let {value: result} = gen.next();
-  assertNotSame(gen, result);
-  assertTrue(Array.isArray(result));
+  assertSame(gen, result);
+  assertFalse(Array.isArray(result));
   assertSame(g.prototype, Object.getPrototypeOf(result));
   assertSame(GeneratorFunction.prototype.prototype, Object.getPrototypeOf(Object.getPrototypeOf(result)));
 }

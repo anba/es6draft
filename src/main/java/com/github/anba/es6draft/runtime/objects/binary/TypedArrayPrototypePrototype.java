@@ -432,9 +432,11 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          *            the execution context
          * @return the locale specific string representation
          */
-        @Value(name = "toLocaleString")
-        public static Object toLocaleString(ExecutionContext cx) {
-            return Get(cx, cx.getIntrinsic(Intrinsics.ArrayPrototype), "toLocaleString");
+        @Function(name = "toLocaleString", arity = 0)
+        public static Object toLocaleString(ExecutionContext cx, Object thisValue) {
+            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
+            long len = array.getArrayLength();
+            return ArrayPrototype.Properties.toLocaleString(cx, array, len);
         }
 
         /**

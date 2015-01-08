@@ -73,18 +73,18 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         int numberOfArgs = args.length;
         if (numberOfArgs == 0) {
             // [22.1.1.1]
-            /* steps 1-6 */
+            /* steps 1-5 */
             ArrayObject array = initOrCreateArray(calleeContext, thisValue, 0);
-            /* steps 7-8 */
+            /* steps 6-7 */
             Put(calleeContext, array, "length", 0, true);
-            /* step 9 */
+            /* step 8 */
             return array;
         } else if (numberOfArgs == 1) {
             // [22.1.1.2]
-            /* steps 1-6 */
+            /* steps 1-5 */
             ArrayObject array = initOrCreateArray(calleeContext, thisValue, 0);
             Object len = args[0];
-            /* steps 7-8 */
+            /* steps 6-7 */
             long intLen;
             if (!Type.isNumber(len)) {
                 CreateDataPropertyOrThrow(calleeContext, array, 0, len);
@@ -96,9 +96,9 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                     throw newRangeError(calleeContext, Messages.Key.InvalidArrayLength);
                 }
             }
-            /* steps 9-10 */
+            /* steps 8-9 */
             Put(calleeContext, array, "length", intLen, true);
-            /* step 11 */
+            /* step 10 */
             return array;
         } else {
             // [22.1.1.3]
@@ -195,7 +195,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         @Function(name = "isArray", arity = 1)
         public static Object isArray(ExecutionContext cx, Object thisValue, Object arg) {
             /* step 1 */
-            return IsArray(cx, arg);
+            return IsArray(arg);
         }
 
         /**
@@ -267,9 +267,9 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                 mapper = (Callable) mapfn;
             }
             /* steps 4-5 */
-            Object usingIterator = CheckIterable(cx, items);
+            Callable usingIterator = GetMethod(cx, items, BuiltinSymbol.iterator.get());
             /* step 6 */
-            if (!Type.isUndefined(usingIterator)) {
+            if (usingIterator != null) {
                 /* steps 6a-6c */
                 ScriptObject a;
                 if (IsConstructor(c)) {

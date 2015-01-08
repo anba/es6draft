@@ -118,8 +118,8 @@ function testAssignment_2() {
   with (scope) {
     var x = (scope.x = 0, 1);
   }
-  assertSame(1, scope.x);
-  assertSame(void 0, x);
+  assertSame(0, scope.x);
+  assertSame(1, x);
 }
 testAssignment_2();
 
@@ -139,8 +139,8 @@ function testAssignment_4a() {
   with (scope) {
     var x = (delete scope.x, 1);
   }
-  assertSame(void 0, scope.x);
-  assertSame(1, x);
+  assertSame(1, scope.x);
+  assertSame(void 0, x);
 }
 testAssignment_4a();
 
@@ -149,8 +149,8 @@ function testAssignment_4b() {
   with (scope) {
     var x = (delete x, 1);
   }
-  assertSame(void 0, scope.x);
-  assertSame(1, x);
+  assertSame(1, scope.x);
+  assertSame(void 0, x);
 }
 testAssignment_4b();
 

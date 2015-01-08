@@ -20,6 +20,13 @@ public interface MatchState extends MatchResult {
     MatchResult toMatchResult();
 
     /**
+     * Returns {@link MatchResult} object.
+     * 
+     * @return the match result object
+     */
+    RawMatchResult toRawMatchResult();
+
+    /**
      * Attempts to find the next match.
      * 
      * @return {@code true} if a new pattern match was found

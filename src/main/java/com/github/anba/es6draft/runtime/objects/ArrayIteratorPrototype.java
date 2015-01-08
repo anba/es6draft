@@ -24,6 +24,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -163,31 +164,35 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
             long index = iter.nextIndex;
             /* step 7 */
             ArrayIterationKind itemKind = iter.kind;
-            /* step 8 */
-            Object lenValue = Get(cx, array, "length");
-            /* steps 9-10 */
-            long len = ToLength(cx, lenValue);
-            /* step 11 */
+            /* steps 8-9 */
+            long len;
+            if (array instanceof TypedArrayObject) {
+                len = ((TypedArrayObject) array).getArrayLength();
+            } else {
+                Object lenValue = Get(cx, array, "length");
+                len = ToLength(cx, lenValue);
+            }
+            /* step 10 */
             if (index >= len) {
                 iter.iteratedObject = null;
                 return CreateIterResultObject(cx, UNDEFINED, true);
             }
-            /* step 12 */
+            /* step 11 */
             iter.nextIndex = index + 1;
-            /* steps 13-16 */
+            /* steps 12-15 */
             Object result;
             if (itemKind == ArrayIterationKind.Key) {
-                /* step 13 */
+                /* step 12 */
                 result = index;
             } else {
-                /* step 14 */
+                /* step 13 */
                 long elementKey = index;
                 Object elementValue = Get(cx, array, elementKey);
                 if (itemKind == ArrayIterationKind.Value) {
-                    /* step 15 */
+                    /* step 14 */
                     result = elementValue;
                 } else {
-                    /* step 16 */
+                    /* step 15 */
                     assert itemKind == ArrayIterationKind.KeyValue;
                     ArrayObject _result = ArrayCreate(cx, 2);
                     CreateDataProperty(cx, _result, 0, (Long) index);
@@ -195,7 +200,7 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
                     result = _result;
                 }
             }
-            /* step 17 */
+            /* step 16 */
             return CreateIterResultObject(cx, result, false);
         }
 

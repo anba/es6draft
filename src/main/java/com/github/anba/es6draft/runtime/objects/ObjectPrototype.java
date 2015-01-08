@@ -36,7 +36,6 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
-import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.LegacyArgumentsObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.github.anba.es6draft.runtime.types.builtins.StringObject;
@@ -101,7 +100,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 4-13 */
             String builtinTag;
-            if (o instanceof ArrayObject) {
+            if (IsArray(o)) {
                 builtinTag = "Array";
             } else if (o instanceof StringObject) {
                 builtinTag = "String";

@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.ast.scope;
 
-import com.github.anba.es6draft.ast.ExportDefaultExpression;
 import com.github.anba.es6draft.ast.Module;
 
 /**
@@ -15,6 +14,4 @@ import com.github.anba.es6draft.ast.Module;
 public interface ModuleScope extends TopLevelScope {
     @Override
     Module getNode();
-
-    ExportDefaultExpression getDefaultExportExpression();
 }

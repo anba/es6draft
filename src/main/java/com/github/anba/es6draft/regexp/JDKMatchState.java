@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 /**
  * {@link MatchState} implementation for standard JDK {@link Pattern} regular expressions
  */
-final class JDKMatchState implements MatchState, IterableMatchResult {
+final class JDKMatchState implements MatchState, IterableMatchResult, RawMatchResult {
     private final Matcher matcher;
     private final BitSet negativeLAGroups;
 
@@ -36,6 +36,13 @@ final class JDKMatchState implements MatchState, IterableMatchResult {
 
     @Override
     public MatchResult toMatchResult() {
+        MatchResult matchResult = matcher.toMatchResult();
+        assert matchResult instanceof Matcher;
+        return new JDKMatchState((Matcher) matchResult, negativeLAGroups);
+    }
+
+    @Override
+    public RawMatchResult toRawMatchResult() {
         MatchResult matchResult = matcher.toMatchResult();
         assert matchResult instanceof Matcher;
         return new JDKMatchState((Matcher) matchResult, negativeLAGroups);
@@ -89,5 +96,15 @@ final class JDKMatchState implements MatchState, IterableMatchResult {
     @Override
     public int groupCount() {
         return matcher.groupCount();
+    }
+
+    @Override
+    public Object rawGroup() {
+        return group();
+    }
+
+    @Override
+    public Object rawGroup(int group) {
+        return group(group);
     }
 }

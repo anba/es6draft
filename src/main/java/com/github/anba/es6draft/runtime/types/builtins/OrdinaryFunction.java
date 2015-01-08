@@ -291,19 +291,23 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 6 */
         ScriptObject superF = f.getPrototype();
         /* step 7 */
-        if (superF instanceof Creatable) {
+        if (f instanceof OrdinaryGenerator) {
+            f.setCreateAction(OrdinaryGenerator.getDefaultCreateAction());
+        }
+        /* step 8 */
+        else if (superF instanceof Creatable) {
             CreateAction<?> createAction = ((Creatable<?>) superF).createAction();
             if (createAction != null) {
                 f.setCreateAction(createAction);
             }
         }
-        /* step 8 */
+        /* step 9 */
         DefinePropertyOrThrow(cx, prototype, "constructor", new PropertyDescriptor(f,
                 writablePrototype, false, writablePrototype));
-        /* steps 9-10 */
+        /* steps 10-11 */
         DefinePropertyOrThrow(cx, f, "prototype", new PropertyDescriptor(prototype,
                 writablePrototype, false, false));
-        /* step 11 (return) */
+        /* step 12 (return) */
     }
 
     /**
@@ -327,7 +331,11 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 6 */
         ScriptObject superF = f.getPrototype();
         /* step 7 */
-        if (superF instanceof Creatable) {
+        if (f instanceof OrdinaryGenerator) {
+            f.setCreateAction(OrdinaryGenerator.getDefaultCreateAction());
+        }
+        /* step 8 */
+        else if (superF instanceof Creatable) {
             CreateAction<?> createAction = ((Creatable<?>) superF).createAction();
             if (createAction != null) {
                 f.setCreateAction(createAction);

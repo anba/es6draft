@@ -533,7 +533,7 @@ public final class ScriptRuntime {
     /**
      * 12.2.8 Template Literals
      * <p>
-     * 12.2.8.2.2 Runtime Semantics: GetTemplateObject
+     * 12.2.8.2.2 Runtime Semantics: GetTemplateObject ( templateLiteral )
      * 
      * @param key
      *            the template literal key
@@ -1087,7 +1087,7 @@ public final class ScriptRuntime {
     /**
      * 12.3.5 The super Keyword
      * <p>
-     * 12.3.5.3 Runtime Semantics: GetSuperConstructor ( )
+     * 12.3.5.2 Runtime Semantics: GetSuperConstructor ( )
      * 
      * @param cx
      *            the execution context
@@ -1106,8 +1106,7 @@ public final class ScriptRuntime {
         /* step 6 */
         if (!IsCallable(superConstructor)) {
             // TODO: Change error message?
-            // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3282)
-            throw newReferenceError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.NotCallable);
         }
         /* step 7 */
         return (Callable) superConstructor;
@@ -1116,7 +1115,7 @@ public final class ScriptRuntime {
     /**
      * 12.3.5 The super Keyword
      * <p>
-     * 12.3.5.4 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
+     * 12.3.5.3 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
      * 
      * @param cx
      *            the execution context
@@ -1384,7 +1383,7 @@ public final class ScriptRuntime {
             CharSequence rstr = ToString(cx, rprim);
             return add(lstr, rstr, cx);
         }
-        /* step 12 */
+        /* steps 12-16 */
         return ToNumber(cx, lprim) + ToNumber(cx, rprim);
     }
 
@@ -1587,7 +1586,7 @@ public final class ScriptRuntime {
     /**
      * 13.6.4 The for-in and for-of Statements
      * <p>
-     * 13.6.4.8 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * 13.6.4.12 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
      * 
      * @param value
      *            the object to enumerate
@@ -1605,7 +1604,7 @@ public final class ScriptRuntime {
     /**
      * 13.6.4 The for-in and for-of Statements
      * <p>
-     * 13.6.4.8 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * 13.6.4.12 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
      * 
      * @param value
      *            the object to iterate
@@ -1622,7 +1621,7 @@ public final class ScriptRuntime {
      * 13.6.4 The for-in and for-of Statements<br>
      * Extension: 'for-each' statement
      * <p>
-     * 13.6.4.8 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * 13.6.4.12 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
      * 
      * @param value
      *            the object to enumerate
@@ -2174,7 +2173,7 @@ public final class ScriptRuntime {
     /**
      * 14.4 Generator Function Definitions
      * <p>
-     * 14.4.14 Runtime Semantics: InstantiateFunctionObject
+     * 14.4.13 Runtime Semantics: InstantiateFunctionObject
      * 
      * @param scope
      *            the current lexical scope
@@ -2614,21 +2613,27 @@ public final class ScriptRuntime {
     public static ScriptObject[] getClassProto(Object superClass, ExecutionContext cx) {
         ScriptObject protoParent;
         ScriptObject constructorParent;
-        // step 2
+        // step 4
         if (Type.isNull(superClass)) {
             protoParent = null;
             constructorParent = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         } else if (!IsConstructor(superClass)) {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         } else {
-            Object p = Get(cx, Type.objectValue(superClass), "prototype");
+            Constructor superClassObj = (Constructor) superClass;
+            if (superClassObj instanceof OrdinaryGenerator) {
+                // TODO: also restrict OrdinaryAsyncFunction?
+                // FIXME: error message
+                throw newTypeError(cx, Messages.Key.NotConstructor);
+            }
+            Object p = Get(cx, superClassObj, "prototype");
             if (!Type.isObjectOrNull(p)) {
                 throw newTypeError(cx, Messages.Key.NotObjectOrNull);
             }
             protoParent = Type.objectValueOrNull(p);
-            constructorParent = Type.objectValue(superClass);
+            constructorParent = superClassObj;
         }
-        // step 3
+        // step 5
         OrdinaryObject proto = ObjectCreate(cx, protoParent);
         return new ScriptObject[] { proto, constructorParent };
     }
@@ -3017,7 +3022,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * B.3.2 Web Legacy Compatibility for Block-Level Function Declarations
+     * B.3.2 Block-Level Function Declarations Web Legacy Compatibility Semantics
      * 
      * @param name
      *            the binding name
@@ -3025,7 +3030,7 @@ public final class ScriptRuntime {
      *            the execution context
      */
     @SuppressWarnings("unchecked")
-    public static void initializeFunctionBlockBinding(String name, ExecutionContext cx) {
+    public static void setFunctionBlockBinding(String name, ExecutionContext cx) {
         assert cx.getVariableEnvironment().getEnvRec() instanceof DeclarativeEnvironmentRecord;
         assert cx.getLexicalEnvironment().getEnvRec() instanceof DeclarativeEnvironmentRecord;
         /* step 2.b.1 */

@@ -536,9 +536,9 @@ public final class TypedArrayConstructorPrototype extends BuiltinFunction implem
         /* steps 6-7 */
         boolean mapping = mapfn != null;
         /* steps 8-9 */
-        Object usingIterator = CheckIterable(cx, items);
+        Callable usingIterator = GetMethod(cx, items, BuiltinSymbol.iterator.get());
         /* step 10 */
-        if (!Type.isUndefined(usingIterator)) {
+        if (usingIterator != null) {
             /* steps 10.a-10.b */
             ScriptObject iterator = GetIterator(cx, items, usingIterator);
             /* steps 10.c-10.f */

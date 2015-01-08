@@ -442,7 +442,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
             if (!Type.isObject(target)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
-            /* steps 2-3 */
+            /* step 2 */
             return Type.objectValue(target).enumerate(cx);
         }
 

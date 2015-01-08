@@ -18,15 +18,15 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
     static final BoundNames INSTANCE = new BoundNames();
 
     @Override
-    protected List<Name> visit(Node node, List<Name> value) {
+    protected List<Name> visit(Node node, List<Name> names) {
         throw new IllegalStateException();
     }
 
-    private List<Name> forEach(Iterable<? extends Node> list, List<Name> value) {
+    private List<Name> forEach(Iterable<? extends Node> list, List<Name> names) {
         for (Node node : list) {
-            node.accept(this, value);
+            node.accept(this, names);
         }
-        return value;
+        return names;
     }
 
     /**
@@ -36,8 +36,8 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(LexicalDeclaration node, List<Name> value) {
-        return forEach(node.getElements(), value);
+    public List<Name> visit(LexicalDeclaration node, List<Name> names) {
+        return forEach(node.getElements(), names);
     }
 
     /**
@@ -47,8 +47,8 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(LexicalBinding node, List<Name> value) {
-        return node.getBinding().accept(this, value);
+    public List<Name> visit(LexicalBinding node, List<Name> names) {
+        return node.getBinding().accept(this, names);
     }
 
     /**
@@ -57,9 +57,9 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(BindingIdentifier node, List<Name> value) {
-        value.add(node.getName());
-        return value;
+    public List<Name> visit(BindingIdentifier node, List<Name> names) {
+        names.add(node.getName());
+        return names;
     }
 
     /**
@@ -68,8 +68,8 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(VariableStatement node, List<Name> value) {
-        return forEach(node.getElements(), value);
+    public List<Name> visit(VariableStatement node, List<Name> names) {
+        return forEach(node.getElements(), names);
     }
 
     /**
@@ -79,8 +79,8 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(VariableDeclaration node, List<Name> value) {
-        return node.getBinding().accept(this, value);
+    public List<Name> visit(VariableDeclaration node, List<Name> names) {
+        return node.getBinding().accept(this, names);
     }
 
     /**
@@ -94,8 +94,8 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(ArrayBindingPattern node, List<Name> value) {
-        return forEach(node.getElements(), value);
+    public List<Name> visit(ArrayBindingPattern node, List<Name> names) {
+        return forEach(node.getElements(), names);
     }
 
     /**
@@ -105,8 +105,8 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(ObjectBindingPattern node, List<Name> value) {
-        return forEach(node.getProperties(), value);
+    public List<Name> visit(ObjectBindingPattern node, List<Name> names) {
+        return forEach(node.getProperties(), names);
     }
 
     /**
@@ -116,8 +116,8 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(BindingProperty node, List<Name> value) {
-        return node.getBinding().accept(this, value);
+    public List<Name> visit(BindingProperty node, List<Name> names) {
+        return node.getBinding().accept(this, names);
     }
 
     /**
@@ -128,8 +128,8 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(BindingElement node, List<Name> value) {
-        return node.getBinding().accept(this, value);
+    public List<Name> visit(BindingElement node, List<Name> names) {
+        return node.getBinding().accept(this, names);
     }
 
     /**
@@ -138,8 +138,8 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(BindingRestElement node, List<Name> value) {
-        return node.getBindingIdentifier().accept(this, value);
+    public List<Name> visit(BindingRestElement node, List<Name> names) {
+        return node.getBindingIdentifier().accept(this, names);
     }
 
     /**
@@ -149,8 +149,8 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(BindingElision node, List<Name> value) {
-        return value;
+    public List<Name> visit(BindingElision node, List<Name> names) {
+        return names;
     }
 
     /**
@@ -160,11 +160,11 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(ForEachStatement node, List<Name> value) {
+    public List<Name> visit(ForEachStatement node, List<Name> names) {
         if (node.getHead() instanceof LexicalDeclaration) {
-            return node.getHead().accept(this, value);
+            return node.getHead().accept(this, names);
         }
-        return value;
+        return names;
     }
 
     /**
@@ -174,11 +174,11 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(ForInStatement node, List<Name> value) {
+    public List<Name> visit(ForInStatement node, List<Name> names) {
         if (node.getHead() instanceof LexicalDeclaration) {
-            return node.getHead().accept(this, value);
+            return node.getHead().accept(this, names);
         }
-        return value;
+        return names;
     }
 
     /**
@@ -188,21 +188,35 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(ForOfStatement node, List<Name> value) {
+    public List<Name> visit(ForOfStatement node, List<Name> names) {
         if (node.getHead() instanceof LexicalDeclaration) {
-            return node.getHead().accept(this, value);
+            return node.getHead().accept(this, names);
         }
-        return value;
+        return names;
     }
 
     /**
      * <pre>
      * FunctionDeclaration : function BindingIdentifier ( FormalParameterList ) { FunctionBody }
+     * FunctionDeclaration : function ( FormalParameters ) { FunctionBody }
      * </pre>
      */
     @Override
-    public List<Name> visit(FunctionDeclaration node, List<Name> value) {
-        return node.getIdentifier().accept(this, value);
+    public List<Name> visit(FunctionDeclaration node, List<Name> names) {
+        names.add(node.getName());
+        return names;
+    }
+
+    /**
+     * <pre>
+     * GeneratorDeclaration : function * BindingIdentifier ( FormalParameterList ) { FunctionBody }
+     * GeneratorDeclaration : function * ( FormalParameters ) { GeneratorBody }
+     * </pre>
+     */
+    @Override
+    public List<Name> visit(GeneratorDeclaration node, List<Name> names) {
+        names.add(node.getName());
+        return names;
     }
 
     /**
@@ -211,38 +225,33 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(GeneratorDeclaration node, List<Name> value) {
-        return node.getIdentifier().accept(this, value);
+    public List<Name> visit(LegacyGeneratorDeclaration node, List<Name> names) {
+        assert node.getIdentifier() != null;
+        return node.getIdentifier().accept(this, names);
     }
 
     /**
      * <pre>
-     * GeneratorDeclaration : function * BindingIdentifier ( FormalParameterList ) { FunctionBody }
+     * ClassDeclaration : class BindingIdentifier ClassTail
+     * ClassDeclaration : class ClassTail
      * </pre>
      */
     @Override
-    public List<Name> visit(LegacyGeneratorDeclaration node, List<Name> value) {
-        return node.getIdentifier().accept(this, value);
-    }
-
-    /**
-     * <pre>
-     * ClassDeclaration: class BindingIdentifier ClassTail
-     * </pre>
-     */
-    @Override
-    public List<Name> visit(ClassDeclaration node, List<Name> value) {
-        return node.getIdentifier().accept(this, value);
+    public List<Name> visit(ClassDeclaration node, List<Name> names) {
+        names.add(node.getName());
+        return names;
     }
 
     /**
      * <pre>
      * AsyncFunctionDeclaration : async function BindingIdentifier ( FormalParameterList ) { FunctionBody }
+     * AsyncFunctionDeclaration : async function ( FormalParameterList ) { FunctionBody }
      * </pre>
      */
     @Override
-    public List<Name> visit(AsyncFunctionDeclaration node, List<Name> value) {
-        return node.getIdentifier().accept(this, value);
+    public List<Name> visit(AsyncFunctionDeclaration node, List<Name> names) {
+        names.add(node.getName());
+        return names;
     }
 
     /**
@@ -262,8 +271,8 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(FormalParameterList node, List<Name> value) {
-        return forEach(node.getFormals(), value);
+    public List<Name> visit(FormalParameterList node, List<Name> names) {
+        return forEach(node.getFormals(), names);
     }
 
     /**
@@ -274,12 +283,12 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(ImportDeclaration node, List<Name> value) {
+    public List<Name> visit(ImportDeclaration node, List<Name> names) {
         switch (node.getType()) {
         case ImportFrom:
-            return node.getImportClause().accept(this, value);
+            return node.getImportClause().accept(this, names);
         case ImportModule:
-            return value;
+            return names;
         default:
             throw new AssertionError();
         }
@@ -292,14 +301,14 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(ImportClause node, List<Name> value) {
+    public List<Name> visit(ImportClause node, List<Name> names) {
         if (node.getDefaultEntry() != null) {
-            node.getDefaultEntry().accept(this, value);
+            node.getDefaultEntry().accept(this, names);
         }
         if (node.getNameSpace() != null) {
-            node.getNameSpace().accept(this, value);
+            node.getNameSpace().accept(this, names);
         }
-        return forEach(node.getNamedImports(), value);
+        return forEach(node.getNamedImports(), names);
     }
 
     /**
@@ -308,8 +317,8 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(ImportSpecifier node, List<Name> value) {
-        return node.getLocalName().accept(this, value);
+    public List<Name> visit(ImportSpecifier node, List<Name> names) {
+        return node.getLocalName().accept(this, names);
     }
 
     /**
@@ -326,26 +335,41 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      * </pre>
      */
     @Override
-    public List<Name> visit(ExportDeclaration node, List<Name> value) {
+    public List<Name> visit(ExportDeclaration node, List<Name> names) {
         switch (node.getType()) {
         case All:
         case External:
         case Local:
-            return value;
+            return names;
         case Variable:
-            return node.getVariableStatement().accept(this, value);
+            return node.getVariableStatement().accept(this, names);
         case Declaration:
-            return node.getDeclaration().accept(this, value);
+            return node.getDeclaration().accept(this, names);
         case DefaultHoistableDeclaration:
-            // TODO: Necessary to include "*default*" if not present?
-            return node.getHoistableDeclaration().accept(this, value);
+            if (node.getHoistableDeclaration().getIdentifier() != null) {
+                names.add(new Name(Name.DEFAULT_EXPORT));
+            }
+            return node.getHoistableDeclaration().accept(this, names);
         case DefaultClassDeclaration:
-            // TODO: Necessary to include "*default*" if not present?
-            return node.getClassDeclaration().accept(this, value);
+            if (node.getClassDeclaration().getIdentifier() != null) {
+                names.add(new Name(Name.DEFAULT_EXPORT));
+            }
+            return node.getClassDeclaration().accept(this, names);
         case DefaultExpression:
-            return node.getExpression().getBinding().accept(this, value);
+            return node.getExpression().accept(this, names);
         default:
             throw new AssertionError();
         }
+    }
+
+    /**
+     * <pre>
+     * ExportDeclaration :
+     *     export default AssignmentExpression ;
+     * </pre>
+     */
+    @Override
+    public List<Name> visit(ExportDefaultExpression node, List<Name> names) {
+        return node.getBinding().accept(this, names);
     }
 }

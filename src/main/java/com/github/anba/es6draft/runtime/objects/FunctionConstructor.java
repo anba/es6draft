@@ -108,37 +108,37 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         /* step 11 */
         boolean strict = function.isStrict();
         /* step 12 */
-        LexicalEnvironment<GlobalEnvironmentRecord> scope = calleeContext.getRealm().getGlobalEnv();
-        /* step 13 */
         Object f = thisValue;
-        /* step 14 */
+        /* step 13 */
         if (!(f instanceof FunctionObject) || ((FunctionObject) f).getCode() != null) {
             ScriptObject proto = GetPrototypeFromConstructor(calleeContext, this,
                     Intrinsics.FunctionPrototype);
             f = FunctionAllocate(calleeContext, proto, strict, FunctionKind.Normal);
         }
-        /* step 15 */
+        /* step 14 */
         if (!(f instanceof OrdinaryFunction)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         OrdinaryFunction fn = (OrdinaryFunction) f;
-        /* steps 16-18 */
+        /* steps 15-16 */
+        LexicalEnvironment<GlobalEnvironmentRecord> scope = fn.getRealm().getGlobalEnv();
+        /* steps 17-19 */
         if (!IsExtensible(calleeContext, fn)) {
             throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
-        /* steps 19-20 */
+        /* steps 20-21 */
         FunctionInitialize(calleeContext, fn, FunctionKind.Normal, strict, function, scope, exec);
-        /* step 21 */
+        /* step 22 */
         if (function.hasSuperReference()) {
             MakeMethod(fn, null);
         }
-        /* steps 22-23 */
+        /* steps 23-24 */
         MakeConstructor(calleeContext, fn);
-        /* steps 24-26 */
+        /* steps 25-27 */
         if (!HasOwnProperty(calleeContext, fn, "name")) {
             SetFunctionName(fn, "anonymous");
         }
-        /* step 27 */
+        /* step 28 */
         return fn;
     }
 

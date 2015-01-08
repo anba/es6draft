@@ -1043,21 +1043,7 @@ public class OrdinaryObject implements ScriptObject {
      * @return {@code true} if the property was found
      */
     protected boolean has(ExecutionContext cx, long propertyKey) {
-        /* step 1 (implicit) */
-        /* steps 2-3 */
-        boolean hasOwn = hasOwnProperty(cx, propertyKey);
-        /* step 4 */
-        if (hasOwn) {
-            return true;
-        }
-        /* steps 5-6 */
-        ScriptObject parent = getPrototypeOf(cx);
-        /* step 7 */
-        if (parent != null) {
-            return parent.hasProperty(cx, propertyKey);
-        }
-        /* step 8 */
-        return false;
+        return ordinaryHasProperty(cx, propertyKey);
     }
 
     /**
@@ -1070,6 +1056,114 @@ public class OrdinaryObject implements ScriptObject {
      * @return {@code true} if the property was found
      */
     protected boolean has(ExecutionContext cx, String propertyKey) {
+        return ordinaryHasProperty(cx, propertyKey);
+    }
+
+    /**
+     * 9.1.7 [[HasProperty]](P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property was found
+     */
+    protected boolean has(ExecutionContext cx, Symbol propertyKey) {
+        return ordinaryHasProperty(cx, propertyKey);
+    }
+
+    /**
+     * 9.1.7.1 OrdinaryHasProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property was found
+     */
+    protected final boolean ordinaryHasProperty(ExecutionContext cx, long propertyKey) {
+        /* step 1 (implicit) */
+        /* steps 2-3 */
+        boolean hasOwn = ordinaryHasOwnProperty(propertyKey);
+        /* step 4 */
+        if (hasOwn) {
+            return true;
+        }
+        /* steps 5-6 */
+        ScriptObject parent = getPrototypeOf(cx);
+        /* step 7 */
+        if (parent != null) {
+            return parent.hasProperty(cx, propertyKey);
+        }
+        /* step 8 */
+        return false;
+    }
+
+    /**
+     * 9.1.7.1 OrdinaryHasProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property was found
+     */
+    protected final boolean ordinaryHasProperty(ExecutionContext cx, String propertyKey) {
+        /* step 1 (implicit) */
+        /* steps 2-3 */
+        boolean hasOwn = ordinaryHasOwnProperty(propertyKey);
+        /* step 4 */
+        if (hasOwn) {
+            return true;
+        }
+        /* steps 5-6 */
+        ScriptObject parent = getPrototypeOf(cx);
+        /* step 7 */
+        if (parent != null) {
+            return parent.hasProperty(cx, propertyKey);
+        }
+        /* step 8 */
+        return false;
+    }
+
+    /**
+     * 9.1.7.1 OrdinaryHasProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property was found
+     */
+    protected final boolean ordinaryHasProperty(ExecutionContext cx, Symbol propertyKey) {
+        /* step 1 (implicit) */
+        /* steps 2-3 */
+        boolean hasOwn = ordinaryHasOwnProperty(propertyKey);
+        /* step 4 */
+        if (hasOwn) {
+            return true;
+        }
+        /* steps 5-6 */
+        ScriptObject parent = getPrototypeOf(cx);
+        /* step 7 */
+        if (parent != null) {
+            return parent.hasProperty(cx, propertyKey);
+        }
+        /* step 8 */
+        return false;
+    }
+
+    /**
+     * 9.1.7.1 OrdinaryHasProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property was found
+     */
+    protected final boolean ordinaryHasPropertyVirtual(ExecutionContext cx, long propertyKey) {
+        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
         /* step 1 (implicit) */
         /* steps 2-3 */
         boolean hasOwn = hasOwnProperty(cx, propertyKey);
@@ -1088,7 +1182,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.7 [[HasProperty]](P)
+     * 9.1.7.1 OrdinaryHasProperty (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1096,7 +1190,36 @@ public class OrdinaryObject implements ScriptObject {
      *            the property key
      * @return {@code true} if the property was found
      */
-    protected boolean has(ExecutionContext cx, Symbol propertyKey) {
+    protected final boolean ordinaryHasPropertyVirtual(ExecutionContext cx, String propertyKey) {
+        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
+        /* step 1 (implicit) */
+        /* steps 2-3 */
+        boolean hasOwn = hasOwnProperty(cx, propertyKey);
+        /* step 4 */
+        if (hasOwn) {
+            return true;
+        }
+        /* steps 5-6 */
+        ScriptObject parent = getPrototypeOf(cx);
+        /* step 7 */
+        if (parent != null) {
+            return parent.hasProperty(cx, propertyKey);
+        }
+        /* step 8 */
+        return false;
+    }
+
+    /**
+     * 9.1.7.1 OrdinaryHasProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property was found
+     */
+    protected final boolean ordinaryHasPropertyVirtual(ExecutionContext cx, Symbol propertyKey) {
+        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
         /* step 1 (implicit) */
         /* steps 2-3 */
         boolean hasOwn = hasOwnProperty(cx, propertyKey);
@@ -1886,57 +2009,12 @@ public class OrdinaryObject implements ScriptObject {
      * @return the new object
      */
     public static final OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx,
-            Object constructor, Intrinsics intrinsicDefaultProto) {
-        /* step 1 (not applicable) */
-        /* steps 2-3 */
-        ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
-        /* step 4 */
-        return ObjectCreate(cx, proto);
-    }
-
-    /**
-     * 9.1.14 OrdinaryCreateFromConstructor (constructor, intrinsicDefaultProto, internalSlotsList)
-     * 
-     * @param cx
-     *            the execution context
-     * @param constructor
-     *            the constructor function
-     * @param intrinsicDefaultProto
-     *            the default prototype
-     * @return the new object
-     */
-    public static final OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx,
             Constructor constructor, Intrinsics intrinsicDefaultProto) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
         ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
         /* step 4 */
         return ObjectCreate(cx, proto);
-    }
-
-    /**
-     * 9.1.14 OrdinaryCreateFromConstructor (constructor, intrinsicDefaultProto, internalSlotsList)
-     * 
-     * @param <OBJECT>
-     *            the object type
-     * @param cx
-     *            the execution context
-     * @param constructor
-     *            the constructor function
-     * @param intrinsicDefaultProto
-     *            the default prototype
-     * @param allocator
-     *            the object allocator
-     * @return the new object
-     */
-    public static final <OBJECT extends OrdinaryObject> OBJECT OrdinaryCreateFromConstructor(
-            ExecutionContext cx, Object constructor, Intrinsics intrinsicDefaultProto,
-            ObjectAllocator<OBJECT> allocator) {
-        /* step 1 (not applicable) */
-        /* steps 2-3 */
-        ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
-        /* step 4 */
-        return ObjectCreate(cx, proto, allocator);
     }
 
     /**

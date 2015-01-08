@@ -55,7 +55,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
 
         public abstract boolean isInitialized();
 
-        abstract void initialize(Object value);
+        public abstract void initialize(Object value);
 
         @Override
         public abstract Binding clone();
@@ -91,7 +91,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         }
 
         @Override
-        void initialize(Object value) {
+        public void initialize(Object value) {
             assert this.value == null : "binding already initialized";
             this.value = value;
         }
@@ -236,6 +236,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         assert !bindings.containsKey(name) : "binding redeclaration: " + name;
         /* step 3 */
         bindings.put(name, new DirectBinding(false, false, strict));
+        /* step 4 (return) */
     }
 
     /**
@@ -251,6 +252,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         assert !b.isInitialized() : "binding already initialized: " + name;
         /* steps 3-4 */
         b.initialize(value);
+        /* step 5 (return) */
     }
 
     /**
@@ -262,8 +264,10 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         Binding b = bindings.get(name);
         /* step 1 (omitted) */
         /* step 2 */
-        // assert b != null : "binding not found: " + name; // FIXME: spec bug (bug 159)
         if (b == null) {
+            if (strict) {
+                throw newReferenceError(cx, Messages.Key.UnresolvableReference, name);
+            }
             createMutableBinding(name, true);
             initializeBinding(name, value);
             return;

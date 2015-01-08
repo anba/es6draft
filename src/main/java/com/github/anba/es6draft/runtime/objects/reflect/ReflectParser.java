@@ -798,7 +798,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(AsyncFunctionDeclaration node, Void value) {
-        Object id = node.getIdentifier().accept(this, value);
+        Object id = acceptOrNull(node.getIdentifier(), value);
         ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
         ArrayObject defaults = createList(getParameterDefaults(node.getParameters()), value);
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
@@ -1004,7 +1004,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(ClassDeclaration node, Void value) {
-        Object id = node.getIdentifier().accept(this, value);
+        Object id = acceptOrNull(node.getIdentifier(), value);
         Object superClass = acceptOrNull(node.getHeritage(), value);
         Object body = createClassBody(node, value);
         OrdinaryObject classDef = createClass(node, Type.ClassDeclaration);
@@ -1338,7 +1338,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(FunctionDeclaration node, Void value) {
-        Object id = node.getIdentifier().accept(this, value);
+        Object id = acceptOrNull(node.getIdentifier(), value);
         ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
         ArrayObject defaults = createList(getParameterDefaults(node.getParameters()), value);
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
@@ -1398,7 +1398,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(GeneratorDeclaration node, Void value) {
-        Object id = node.getIdentifier().accept(this, value);
+        Object id = acceptOrNull(node.getIdentifier(), value);
         ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
         ArrayObject defaults = createList(getParameterDefaults(node.getParameters()), value);
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);

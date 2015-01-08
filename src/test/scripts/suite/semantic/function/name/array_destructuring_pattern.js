@@ -5,29 +5,37 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertFalse
+  assertSame, assertTrue, assertDataProperty
 } = Assert;
 
-function assertAnonymousFunction(f) {
-  return assertFalse(f.hasOwnProperty("name"));
+function assertFunctionName(f, name) {
+  return assertDataProperty(f, "name", {value: name, writable: false, enumerable: false, configurable: true});
+}
+
+function assertClassName(c, name) {
+  assertTrue(c.hasOwnProperty("name"));
+  return assertSame(name, c.name);
 }
 
 
-// anonymous function/generator/arrow/class expression in array destructuring assignment are not renamed
+// anonymous function/generator/arrow/class expression
 (function() {
   // 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
   // - AssignmentElement[Yield] : DestructuringAssignmentTarget Initializer{opt}
   var f4, g4, a4, c4, d4;
 
   [f4 = function (){}] = [];
-  assertAnonymousFunction(f4);
+  assertFunctionName(f4, "f4");
 
   [g4 = function* (){}] = [];
-  assertAnonymousFunction(g4);
+  assertFunctionName(g4, "g4");
 
   [a4 = () => {}] = [];
-  assertAnonymousFunction(a4);
+  assertFunctionName(a4, "a4");
 
   [c4 = class {}] = [];
-  assertAnonymousFunction(c4);
+  assertFunctionName(c4, "c4");
+
+  [d4 = class { static get name() { return "<class-name>" } }] = [];
+  assertClassName(d4, "<class-name>");
 })();

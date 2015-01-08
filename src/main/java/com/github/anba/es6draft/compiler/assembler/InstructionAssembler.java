@@ -653,7 +653,7 @@ public class InstructionAssembler {
      * @param index
      *            the array index
      * @param type
-     *            the array type
+     *            the array element type
      */
     public final void aload(int index, Type type) {
         assert index >= 0;

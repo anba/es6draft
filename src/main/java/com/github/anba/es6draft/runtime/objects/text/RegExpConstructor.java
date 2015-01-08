@@ -82,11 +82,8 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
         /* steps 1-2 (omitted) */
         /* steps 3-4 */
-        @SuppressWarnings("unused")
-        boolean thisValueIsRegExp = IsRegExp(calleeContext, thisValue);
-        /* steps 5-6 */
         boolean patternIsRegExp = IsRegExp(calleeContext, pattern);
-        /* step 7 */
+        /* step 5 */
         RegExpObject obj;
         if (!(thisValue instanceof RegExpObject) || ((RegExpObject) thisValue).isInitialized()) {
             if (patternIsRegExp && Type.isUndefined(flags)) {
@@ -101,35 +98,35 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
             obj = (RegExpObject) thisValue;
         }
 
-        /* steps 8-10 */
+        /* steps 6-8 */
         Object p, f;
         if (pattern instanceof RegExpObject) {
-            /* step 8 */
+            /* step 6 */
             RegExpObject regexp = (RegExpObject) pattern;
-            /* step 8.a */
+            /* step 6.a */
             if (!regexp.isInitialized()) {
                 throw newTypeError(calleeContext, Messages.Key.UninitializedObject);
             }
-            /* step 8.b */
+            /* step 6.b */
             p = regexp.getOriginalSource();
-            /* steps 8.c-8.d */
+            /* steps 6.c-6.d */
             if (Type.isUndefined(flags)) {
                 f = regexp.getOriginalFlags();
             } else {
                 f = flags;
             }
         } else if (patternIsRegExp) {
-            /* step 9 */
+            /* step 7 */
             ScriptObject patternObject = Type.objectValue(pattern);
             p = Get(calleeContext, patternObject, "source");
             f = Get(calleeContext, patternObject, "flags");
         } else {
-            /* step 10 */
+            /* step 8 */
             p = pattern;
             f = flags;
         }
 
-        /* step 11 */
+        /* step 9 */
         return RegExpInitialize(calleeContext, obj, p, f);
     }
 
@@ -219,13 +216,11 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         } catch (ParserException e) {
             throw e.toScriptException(cx);
         }
-        /* steps 11-12, 14 */
+        /* steps 11-13 */
         obj.initialize(p, f, matcher);
-        /* step 13 */
-        // FIXME: spec bug - invalid test for initialization, cf. RegExp.prototype.compile
-        /* steps 15-16 */
+        /* steps 14-15 */
         Put(cx, obj, "lastIndex", 0, true);
-        /* step 17 */
+        /* step 16 */
         return obj;
     }
 

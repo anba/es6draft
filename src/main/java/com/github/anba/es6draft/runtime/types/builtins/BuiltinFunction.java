@@ -186,6 +186,12 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     @Override
+    protected boolean has(ExecutionContext cx, String propertyKey) {
+        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
+        return ordinaryHasPropertyVirtual(cx, propertyKey);
+    }
+
+    @Override
     protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         if (hasDefaultName && "name".equals(propertyKey)) {
             return true;

@@ -176,6 +176,10 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         }
     }
 
+    /*package*/static final CreateAction<GeneratorObject> getDefaultCreateAction() {
+        return GeneratorCreate.INSTANCE;
+    }
+
     /* ***************************************************************************************** */
 
     /**
@@ -200,8 +204,6 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         OrdinaryGenerator f = new OrdinaryGenerator(realm);
         /* steps 9-13 */
         f.allocate(realm, functionPrototype, strict, kind, uninitializedGeneratorMH);
-        // FIXME: spec issue - unclear when [[CreateAction]] is set (25.2.4)
-        f.setCreateAction(GeneratorCreate.INSTANCE);
         /* step 14 */
         return f;
     }

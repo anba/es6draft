@@ -9,6 +9,7 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.scope.FunctionScope;
+import com.github.anba.es6draft.ast.scope.Name;
 
 /**
  * <h1>14 ECMAScript Language: Functions and Classes</h1>
@@ -19,6 +20,7 @@ import com.github.anba.es6draft.ast.scope.FunctionScope;
 public final class FunctionDeclaration extends HoistableDeclaration implements FunctionDefinition {
     private final FunctionScope scope;
     private final BindingIdentifier identifier;
+    private final Name name;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
     private final String functionName;
@@ -34,6 +36,7 @@ public final class FunctionDeclaration extends HoistableDeclaration implements F
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
+        this.name = identifier != null ? identifier.getName() : new Name(Name.DEFAULT_EXPORT);
         this.parameters = parameters;
         this.statements = statements;
         this.functionName = functionName;
@@ -49,6 +52,11 @@ public final class FunctionDeclaration extends HoistableDeclaration implements F
     @Override
     public BindingIdentifier getIdentifier() {
         return identifier;
+    }
+
+    @Override
+    public Name getName() {
+        return name;
     }
 
     @Override
