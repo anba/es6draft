@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Task;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.MutRef;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -51,6 +52,27 @@ public final class PromiseAbstractOperations {
         }
     }
 
+    private static final class FinalizablePromiseObjectAllocator implements
+            ObjectAllocator<FinalizablePromiseObject> {
+        static final ObjectAllocator<FinalizablePromiseObject> INSTANCE = new FinalizablePromiseObjectAllocator();
+
+        @Override
+        public FinalizablePromiseObject newInstance(Realm realm) {
+            return new FinalizablePromiseObject(realm);
+        }
+    }
+
+    /**
+     * 
+     * @param realm
+     *            the realm object
+     * @return the promise allocator
+     */
+    public static ObjectAllocator<? extends PromiseObject> GetPromiseAllocator(Realm realm) {
+        return realm.isEnabled(CompatibilityOption.PromiseRejection) ? FinalizablePromiseObjectAllocator.INSTANCE
+                : PromiseObjectAllocator.INSTANCE;
+    }
+
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
@@ -65,7 +87,7 @@ public final class PromiseAbstractOperations {
     public static PromiseObject AllocatePromise(ExecutionContext cx, Constructor constructor) {
         /* step 1 */
         PromiseObject obj = OrdinaryCreateFromConstructor(cx, constructor,
-                Intrinsics.PromisePrototype, PromiseObjectAllocator.INSTANCE);
+                Intrinsics.PromisePrototype, GetPromiseAllocator(cx.getRealm()));
         /* step 2 */
         obj.setConstructor(constructor);
         /* step 3 */

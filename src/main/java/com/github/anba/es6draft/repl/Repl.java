@@ -311,6 +311,9 @@ public final class Repl {
         @Option(name = "--native-calls", hidden = true, usage = "options.native_calls")
         boolean nativeCalls;
 
+        @Option(name = "--promise-rejection", hidden = true, usage = "options.promise_rejection")
+        boolean promiseRejection;
+
         @Option(name = "--xhelp", hidden = true, usage = "options.extended_help")
         boolean showExtendedHelp;
 
@@ -469,6 +472,12 @@ public final class Repl {
         printStackTrace(e, options);
     }
 
+    private void handleException(Realm realm, UnhandledRejectionException e) {
+        String message = formatMessage("unhandled_rejection", e.getMessage(realm.defaultContext()));
+        console.printf("%s%n", message);
+        printStackTrace(e.getCauseIfPresent(), options);
+    }
+
     private void handleException(ParserExceptionWithSource exception) {
         ParserException e = exception.getCause();
         String sourceCode = exception.getSourceCode();
@@ -591,6 +600,8 @@ public final class Repl {
             } catch (ParserExceptionWithSource e) {
                 handleException(e);
             } catch (ScriptException e) {
+                handleException(realm, e);
+            } catch (UnhandledRejectionException e) {
                 handleException(realm, e);
             } catch (InternalException | StackOverflowError e) {
                 handleException(e);
@@ -890,6 +901,9 @@ public final class Repl {
         }
         if (options.parser) {
             compatibilityOptions.add(CompatibilityOption.ReflectParse);
+        }
+        if (options.promiseRejection) {
+            compatibilityOptions.add(CompatibilityOption.PromiseRejection);
         }
         return compatibilityOptions;
     }

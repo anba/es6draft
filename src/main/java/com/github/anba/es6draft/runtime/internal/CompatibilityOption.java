@@ -198,6 +198,11 @@ public enum CompatibilityOption {
      */
     ArrayIncludes,
 
+    /**
+     * Track unhandled rejected promise objects
+     */
+    PromiseRejection,
+
     ;
 
     /**

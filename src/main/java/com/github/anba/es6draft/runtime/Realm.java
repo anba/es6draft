@@ -543,6 +543,10 @@ public final class Realm implements ShadowRealm {
         world.enqueuePromiseTask(task);
     }
 
+    public void enqueueUnhandledPromiseRejection(Object reason) {
+        world.enqueueUnhandledPromiseRejection(reason);
+    }
+
     /**
      * Returns a {@link Collator} for this realm's locale
      * 

@@ -20,7 +20,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>25.4.6 Properties of Promise Instances
  * </ul>
  */
-public final class PromiseObject extends OrdinaryObject {
+public class PromiseObject extends OrdinaryObject {
     public enum State {
         Pending, Fulfilled, Rejected
     }
@@ -55,11 +55,24 @@ public final class PromiseObject extends OrdinaryObject {
      * <p>
      * <strong>Must not be called on initialized Promise objects!</strong>
      */
-    public void initialize() {
+    public final void initialize() {
         assert state == null;
         state = PromiseObject.State.Pending;
         fulfillReactions = new ArrayList<>();
         rejectReactions = new ArrayList<>();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s, state=%s", super.toString(), state);
+    }
+
+    /*package*/void notifyRejectReaction(PromiseReaction reaction) {
+        // override in sub-class
+    }
+
+    /*package*/void notifyReject(Object reason) {
+        // override in sub-class
     }
 
     /**
@@ -67,7 +80,7 @@ public final class PromiseObject extends OrdinaryObject {
      * 
      * @return the promise state
      */
-    public State getState() {
+    public final State getState() {
         return state;
     }
 
@@ -76,7 +89,7 @@ public final class PromiseObject extends OrdinaryObject {
      * 
      * @return the promise constructor function
      */
-    public Constructor getConstructor() {
+    public final Constructor getConstructor() {
         return constructor;
     }
 
@@ -86,7 +99,7 @@ public final class PromiseObject extends OrdinaryObject {
      * @param constructor
      *            the promise constructor function
      */
-    public void setConstructor(Constructor constructor) {
+    public final void setConstructor(Constructor constructor) {
         assert this.constructor == null && constructor != null;
         this.constructor = constructor;
     }
@@ -96,7 +109,8 @@ public final class PromiseObject extends OrdinaryObject {
      * 
      * @return the promise result value
      */
-    public Object getResult() {
+    public final Object getResult() {
+        assert state == State.Fulfilled || state == State.Rejected;
         return result;
     }
 
@@ -106,7 +120,7 @@ public final class PromiseObject extends OrdinaryObject {
      * @param reaction
      *            the fulfill reaction
      */
-    public void addFulfillReaction(PromiseReaction reaction) {
+    public final void addFulfillReaction(PromiseReaction reaction) {
         assert state == State.Pending;
         fulfillReactions.add(reaction);
     }
@@ -117,7 +131,7 @@ public final class PromiseObject extends OrdinaryObject {
      * @param reaction
      *            the reject reaction
      */
-    public void addRejectReaction(PromiseReaction reaction) {
+    public final void addRejectReaction(PromiseReaction reaction) {
         assert state == State.Pending;
         rejectReactions.add(reaction);
     }
@@ -129,7 +143,7 @@ public final class PromiseObject extends OrdinaryObject {
      *            the fulfillment value
      * @return the list of collected promise reaction records
      */
-    public List<PromiseReaction> fufill(Object value) {
+    public final List<PromiseReaction> fufill(Object value) {
         List<PromiseReaction> reactions = fulfillReactions;
         resolve(State.Fulfilled, value);
         return reactions;
@@ -142,9 +156,10 @@ public final class PromiseObject extends OrdinaryObject {
      *            the rejection value
      * @return the list of collected promise reaction records
      */
-    public List<PromiseReaction> reject(Object reason) {
+    public final List<PromiseReaction> reject(Object reason) {
         List<PromiseReaction> reactions = rejectReactions;
         resolve(State.Rejected, reason);
+        notifyReject(reason);
         return reactions;
     }
 

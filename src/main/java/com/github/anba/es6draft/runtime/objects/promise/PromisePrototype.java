@@ -169,6 +169,7 @@ public final class PromisePrototype extends OrdinaryObject implements Initializa
         if (promise.getState() == PromiseObject.State.Pending) {
             promise.addFulfillReaction(fulfillReaction);
             promise.addRejectReaction(rejectReaction);
+            promise.notifyRejectReaction(rejectReaction);
         }
         /* step 8 */
         else if (promise.getState() == PromiseObject.State.Fulfilled) {
@@ -181,6 +182,7 @@ public final class PromisePrototype extends OrdinaryObject implements Initializa
             Object reason = promise.getResult();
             Realm realm = cx.getRealm();
             realm.enqueuePromiseTask(new PromiseReactionTask(realm, rejectReaction, reason));
+            promise.notifyRejectReaction(rejectReaction);
         }
         /* step 10 */
         return resultCapability.getPromise();

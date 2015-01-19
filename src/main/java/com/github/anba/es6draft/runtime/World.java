@@ -23,6 +23,7 @@ import com.github.anba.es6draft.runtime.internal.ModuleLoader;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.TaskSource;
+import com.github.anba.es6draft.runtime.internal.UnhandledRejectionException;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
@@ -44,6 +45,7 @@ public final class World<GLOBAL extends GlobalObject> {
     // TODO: move to custom class
     private final ArrayDeque<Task> scriptTasks = new ArrayDeque<>();
     private final ArrayDeque<Task> promiseTasks = new ArrayDeque<>();
+    private final ArrayDeque<Object> unhandledRejections = new ArrayDeque<>();
 
     private static final TaskSource EMPTY_TASK_SOURCE = new TaskSource() {
         @Override
@@ -184,6 +186,16 @@ public final class World<GLOBAL extends GlobalObject> {
     }
 
     /**
+     * Enqueue a promise rejection reason to the global rejection list.
+     * 
+     * @param reason
+     *            the promise rejection reason
+     */
+    public void enqueueUnhandledPromiseRejection(Object reason) {
+        unhandledRejections.offer(reason);
+    }
+
+    /**
      * Executes the queue of pending tasks.
      * 
      * @throws InterruptedException
@@ -203,10 +215,14 @@ public final class World<GLOBAL extends GlobalObject> {
      */
     public void runEventLoop(TaskSource taskSource) throws InterruptedException {
         ArrayDeque<Task> scriptTasks = this.scriptTasks, promiseTasks = this.promiseTasks;
+        ArrayDeque<Object> unhandledRejections = this.unhandledRejections;
         for (;;) {
             while (!(scriptTasks.isEmpty() && promiseTasks.isEmpty())) {
                 executeTasks(scriptTasks);
                 executeTasks(promiseTasks);
+            }
+            if (!unhandledRejections.isEmpty()) {
+                throw new UnhandledRejectionException(unhandledRejections.poll());
             }
             Task task = taskSource.nextTask();
             if (task == null) {
