@@ -1287,6 +1287,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         } else {
             expressionBoxedValue(def.getHeritage(), mv);
             mv.loadExecutionContext();
+            mv.lineInfo(def);
             mv.invoke(Methods.ScriptRuntime_getClassProto);
         }
 
@@ -1322,6 +1323,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // steps 11-15
         // stack: [proto, ctor, proto, <rti>] -> [proto, F]
         mv.loadExecutionContext();
+        mv.lineInfo(def);
         mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
 
         Variable<OrdinaryFunction> F = mv.newScratchVariable(OrdinaryFunction.class);

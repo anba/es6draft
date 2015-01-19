@@ -77,6 +77,16 @@ final class JoniRegExpMatcher implements RegExpMatcher {
 
     @Override
     public String toString() {
-        return String.format("regex=%s, flags=%d", regex, flags);
+        StringBuilder sb = new StringBuilder(3);
+        if ((flags & Pattern.CASE_INSENSITIVE) != 0) {
+            sb.append('i');
+        }
+        if ((flags & Pattern.MULTILINE) != 0) {
+            sb.append('m');
+        }
+        if ((flags & Pattern.UNICODE_CASE) != 0) {
+            sb.append('u');
+        }
+        return String.format("regex=%s, flags=%s", regex, sb);
     }
 }

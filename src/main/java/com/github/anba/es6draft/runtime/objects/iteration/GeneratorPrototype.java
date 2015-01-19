@@ -72,7 +72,7 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
          *            the value object
          * @return the iterator result object
          */
-        @Function(name = "next", arity = 0)
+        @Function(name = "next", arity = 1)
         public static Object next(ExecutionContext cx, Object thisValue, Object value) {
             return GeneratorResume(cx, thisValue, value);
         }

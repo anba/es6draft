@@ -78,6 +78,8 @@ public final class PromiseCapability<PROMISE extends ScriptObject> {
     /**
      * 25.4.1.1.1 IfAbruptRejectPromise (value, capability)
      * 
+     * @param <PROMISE>
+     *            the promise type
      * @param cx
      *            the execution context
      * @param e
@@ -86,8 +88,8 @@ public final class PromiseCapability<PROMISE extends ScriptObject> {
      *            the promise capability record
      * @return the promise capability
      */
-    public static ScriptObject IfAbruptRejectPromise(ExecutionContext cx, ScriptException e,
-            PromiseCapability<?> capability) {
+    public static <PROMISE extends ScriptObject> PROMISE IfAbruptRejectPromise(ExecutionContext cx,
+            ScriptException e, PromiseCapability<PROMISE> capability) {
         /* steps 1.a-1.b */
         capability.getReject().call(cx, UNDEFINED, e.getValue());
         /* step 1.c */

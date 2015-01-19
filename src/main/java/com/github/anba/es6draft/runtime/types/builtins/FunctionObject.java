@@ -532,6 +532,16 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
         this.createAction = createAction;
     }
 
+    protected void setCreateActionFrom(ScriptObject superFunction) {
+        // 9.2.9 MakeConstructor, step 8
+        if (superFunction instanceof Creatable) {
+            CreateAction<?> createAction = ((Creatable<?>) superFunction).createAction();
+            if (createAction != null) {
+                setCreateAction(createAction);
+            }
+        }
+    }
+
     @Override
     public String toString() {
         return String.format("%s, kind=%s, mode=%s, create=%s, cloned=%b", super.toString(),

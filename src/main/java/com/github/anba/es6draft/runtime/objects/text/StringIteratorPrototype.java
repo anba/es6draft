@@ -139,13 +139,20 @@ public final class StringIteratorPrototype extends OrdinaryObject implements Ini
             }
             /* steps 9-11 */
             int cp = string.codePointAt(position);
-            String resultString = new String(Character.toChars(cp));
+            String resultString = fromCodePoint(cp);
             /* step 12 */
             int resultSize = Character.charCount(cp);
             /* step 13 */
             iterator.nextIndex = position + resultSize;
             /* step 14 */
             return CreateIterResultObject(cx, resultString, false);
+        }
+
+        private static String fromCodePoint(int cp) {
+            if (Character.isBmpCodePoint(cp)) {
+                return String.valueOf((char) cp);
+            }
+            return String.valueOf(Character.toChars(cp));
         }
 
         /**

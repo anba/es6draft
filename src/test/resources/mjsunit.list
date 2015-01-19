@@ -85,6 +85,12 @@ harmony/regexp-flags.js
 compiler/complex-for-in.js
 regress/regress-815.js
 
+# v8 issue - Object.seal does not work on typed arrays
+compiler/regress-447567.js
+
+# v8 issue - .prototype on classes not set to non-configurable
+harmony/computed-property-names-classes.js
+
 
 ###################
 # Misc issues     #
@@ -379,6 +385,9 @@ regress/regress-353551.js
 # StackOverflowError during invokedynamic linking (intermittent)
 regress/regress-1132.js
 regress/regress-148378.js
+
+# OutOfMemory: Java heap space
+compiler/regress-445907.js
 
 # Timeout (slow)
 json-parser-recursive.js

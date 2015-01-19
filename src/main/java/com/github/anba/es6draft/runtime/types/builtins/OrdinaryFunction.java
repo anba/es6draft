@@ -19,8 +19,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -290,17 +288,8 @@ public class OrdinaryFunction extends FunctionObject {
         boolean writablePrototype = true;
         /* step 6 */
         ScriptObject superF = f.getPrototype();
-        /* step 7 */
-        if (f instanceof OrdinaryGenerator) {
-            f.setCreateAction(OrdinaryGenerator.getDefaultCreateAction());
-        }
-        /* step 8 */
-        else if (superF instanceof Creatable) {
-            CreateAction<?> createAction = ((Creatable<?>) superF).createAction();
-            if (createAction != null) {
-                f.setCreateAction(createAction);
-            }
-        }
+        /* steps 7-8 */
+        f.setCreateActionFrom(superF);
         /* step 9 */
         DefinePropertyOrThrow(cx, prototype, "constructor", new PropertyDescriptor(f,
                 writablePrototype, false, writablePrototype));
@@ -330,22 +319,13 @@ public class OrdinaryFunction extends FunctionObject {
         /* steps 3-5 (not applicable) */
         /* step 6 */
         ScriptObject superF = f.getPrototype();
-        /* step 7 */
-        if (f instanceof OrdinaryGenerator) {
-            f.setCreateAction(OrdinaryGenerator.getDefaultCreateAction());
-        }
-        /* step 8 */
-        else if (superF instanceof Creatable) {
-            CreateAction<?> createAction = ((Creatable<?>) superF).createAction();
-            if (createAction != null) {
-                f.setCreateAction(createAction);
-            }
-        }
-        /* step 8 (not applicable) */
-        /* steps 9-10 */
+        /* steps 7-8 */
+        f.setCreateActionFrom(superF);
+        /* step 9 (not applicable) */
+        /* steps 10-11 */
         DefinePropertyOrThrow(cx, f, "prototype", new PropertyDescriptor(prototype,
                 writablePrototype, false, false));
-        /* step 11 (return) */
+        /* step 12 (return) */
     }
 
     /**

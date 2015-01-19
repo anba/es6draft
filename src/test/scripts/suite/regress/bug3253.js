@@ -24,6 +24,19 @@ function nonStrictMode() {
 }
 nonStrictMode();
 
+function nonStrictModeLegacy() {
+  // Enclose in with-statement so it's not possible to statically determine if
+  // 'c' refers to the const binding.
+  (function c() {
+    var expected = c;
+    with ({}) {
+      c = 1;
+    }
+    assertSame(expected, c);
+  })();
+}
+nonStrictModeLegacy();
+
 function strictMode() {
   const c = 0;
   // Enclose in with-statement so it's not possible to statically determine if
@@ -37,3 +50,19 @@ function strictMode() {
   assertSame(0, c);
 }
 strictMode();
+
+function strictModeLegacy() {
+  // Enclose in with-statement so it's not possible to statically determine if
+  // 'c' refers to the const binding.
+  (function c() {
+    var expected = c;
+    with ({}) {
+      assertThrows(TypeError, () => {
+        "use strict";
+        c = 1;
+      });
+    }
+    assertSame(expected, c);
+  })();
+}
+strictModeLegacy();

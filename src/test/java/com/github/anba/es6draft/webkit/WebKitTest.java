@@ -94,12 +94,12 @@ public final class WebKitTest {
     public WebKitTestInfo test;
 
     private static class WebKitTestInfo extends TestInfo {
-        final boolean expect;
+        final boolean negative;
 
         public WebKitTestInfo(Path basedir, Path script) {
             super(basedir, script);
             // negative tests end with "-n"
-            this.expect = !script.getFileName().toString().endsWith("-n.js");
+            this.negative = script.getFileName().toString().endsWith("-n.js");
         }
     }
 
@@ -113,13 +113,13 @@ public final class WebKitTest {
         global = globals.newGlobal(new WebKitTestConsole(collector), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
 
-        if (test.expect) {
-            errorHandler.match(StandardErrorHandler.defaultMatcher());
-            exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
-        } else {
+        if (test.negative) {
             expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher())
                     .or(ScriptExceptionHandler.defaultMatcher())
                     .or(Matchers.instanceOf(MultipleFailureException.class)));
+        } else {
+            errorHandler.match(StandardErrorHandler.defaultMatcher());
+            exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
         }
     }
 

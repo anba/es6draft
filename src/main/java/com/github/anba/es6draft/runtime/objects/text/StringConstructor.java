@@ -212,8 +212,7 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
                 if (Character.isBmpCodePoint(cp)) {
                     return String.valueOf((char) cp);
                 }
-                return String.valueOf(new char[] { Character.highSurrogate(cp),
-                        Character.lowSurrogate(cp) });
+                return String.valueOf(Character.toChars(cp));
             }
             /* step 3 */
             int elements[] = new int[length];

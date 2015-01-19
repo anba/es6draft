@@ -183,6 +183,7 @@ public final class Messages {
         CyclicProto("type.cyclic_proto"),
         FunctionNotCloneable("type.function_not_cloneable"),
         PropertyNotCallable("type.property_not_callable"),
+        InvalidSuperClass("type.invalid_super_class"),
 
         // TODO: unused
         MethodNotFound("type.method_not_found"),

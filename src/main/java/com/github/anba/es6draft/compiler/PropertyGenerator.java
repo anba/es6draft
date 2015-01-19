@@ -162,6 +162,7 @@ final class PropertyGenerator extends
 
             mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
             mv.loadExecutionContext();
+            mv.lineInfo(node);
 
             switch (node.getType()) {
             case AsyncFunction:
@@ -186,6 +187,7 @@ final class PropertyGenerator extends
             mv.aconst(propName);
             mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
             mv.loadExecutionContext();
+            mv.lineInfo(node);
 
             switch (node.getType()) {
             case AsyncFunction:
@@ -225,6 +227,7 @@ final class PropertyGenerator extends
         mv.aconst(propName);
         expressionBoxedValue(propertyName, mv);
         mv.loadExecutionContext();
+        mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_defineProperty_String);
 
         return null;
@@ -278,6 +281,7 @@ final class PropertyGenerator extends
                 SetFunctionName(propertyValue, type, mv);
             }
             mv.loadExecutionContext();
+            mv.lineInfo(node);
             if (defineMethod) {
                 mv.invoke(Methods.ScriptRuntime_defineMethod);
             } else {
@@ -288,6 +292,7 @@ final class PropertyGenerator extends
             expressionBoxedValue(propertyValue, mv);
             // TODO: SetFunctionName() ?
             mv.loadExecutionContext();
+            mv.lineInfo(node);
             mv.invoke(Methods.ScriptRuntime_defineProtoProperty);
         } else if (IndexedMap.isIndex(propIndex)) {
             mv.lconst(propIndex);
@@ -296,6 +301,7 @@ final class PropertyGenerator extends
                 SetFunctionName(propertyValue, propName, mv);
             }
             mv.loadExecutionContext();
+            mv.lineInfo(node);
             if (defineMethod) {
                 mv.invoke(Methods.ScriptRuntime_defineMethod_long);
             } else {
@@ -308,6 +314,7 @@ final class PropertyGenerator extends
                 SetFunctionName(propertyValue, propName, mv);
             }
             mv.loadExecutionContext();
+            mv.lineInfo(node);
             if (defineMethod) {
                 mv.invoke(Methods.ScriptRuntime_defineMethod_String);
             } else {

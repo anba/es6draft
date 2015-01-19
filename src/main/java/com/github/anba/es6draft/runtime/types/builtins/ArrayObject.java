@@ -140,11 +140,20 @@ public final class ArrayObject extends OrdinaryObject {
         return succeeded;
     }
 
+    private boolean defineLength(long newLength) {
+        assert newLength >= 0;
+        boolean succeeded = (lengthWritable || newLength == length);
+        if (succeeded) {
+            length = newLength;
+        }
+        return succeeded;
+    }
+
     @Override
     protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value,
             Property current) {
         if ("length".equals(propertyKey)) {
-            return ArraySetLength(cx, this, new PropertyDescriptor(value));
+            return ArraySetLength(cx, this, value);
         }
         return super.setPropertyValue(cx, propertyKey, value, current);
     }
@@ -479,6 +488,42 @@ public final class ArrayObject extends OrdinaryObject {
         if (!newWritable) {
             array.lengthWritable = false;
         }
+        /* step 19 */
+        return true;
+    }
+
+    private static boolean ArraySetLength(ExecutionContext cx, ArrayObject array, Object lenValue) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        long newLen = ToUint32(cx, lenValue);
+        /* step 4 */
+        if (newLen != ToNumber(cx, lenValue)) {
+            throw newRangeError(cx, Messages.Key.InvalidArrayLength);
+        }
+        /* steps 5-8 (not applicable) */
+        /* step 9 */
+        long oldLen = array.length;
+        /* step 10 */
+        if (newLen >= oldLen) {
+            return array.defineLength(newLen);
+        }
+        /* step 11 */
+        if (!array.lengthWritable) {
+            return false;
+        }
+        /* steps 12-13 (not applicable) */
+        /* steps 14-15 */
+        boolean succeeded = array.defineLength(newLen);
+        /* step 16 */
+        assert succeeded;
+        /* step 17 */
+        oldLen = ArraySetLength(array, newLen, oldLen);
+        /* step 17.d */
+        if (oldLen >= 0) {
+            array.length = oldLen + 1;
+            return false;
+        }
+        /* step 18 (not applicable) */
         /* step 19 */
         return true;
     }

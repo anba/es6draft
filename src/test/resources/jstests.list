@@ -68,9 +68,13 @@ ecma_6/Reflect/set.js
 
 # SM bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1115361)
 ecma_6/TypedArray/fill.js
+ecma_6/TypedArray/every-and-some.js
 ecma_6/TypedArray/indexOf-and-lastIndexOf.js
 ecma_6/TypedArray/join.js
+ecma_6/TypedArray/keys.js
+ecma_6/TypedArray/reduce-and-reduceRight.js
 ecma_6/TypedArray/reverse.js
+ecma_6/TypedArray/values.js
 
 # ES6: spec bug undefined/null in String.prototype methods
 ecma/String/15.5.4.8-2.js
@@ -84,6 +88,18 @@ ecma_3/RegExp/15.10.6.2-2.js
 # ES6: evaluation order changed in for-in/of
 js1_5/Regress/regress-299641.js
 js1_7/regress/regress-372331.js
+
+# SM issue: __proto__ not listed in Object.getOwnPropertyNames
+ecma_6/TypedArray/entries.js
+
+# ES6: multiline etc. properties on RegExp.prototype
+ecma_6/TypedArray/from_constructor.js
+
+# SM issue: Missing return value in [[Set]] proxy trap
+ecma_6/TypedArray/from_proxy.js
+
+# SM issue: Different property iteration order
+ecma_6/TypedArray/of.js
 
 
 ####################################
@@ -354,9 +370,6 @@ ecma/String/15.5.4.11-1.js
 ecma_5/Function/function-bind.js
 ecma_5/Object/15.2.3.6-function-length.js
 ecma_5/strict/15.3.5.1.js
-
-# function .name property is configurable=true
-ecma_5/strict/function-name.js
 
 # String.prototype.split changed to use ToLength instead of ToUint32
 ecma_2/String/split-002.js

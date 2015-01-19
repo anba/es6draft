@@ -318,14 +318,33 @@ function MakeBuiltinIterator(tag, throwErrorIfPrototype) {
 
   // values currently disabled in SpiderMonkey :(
   delete Array.prototype.values;
-}
 
-{
   const TypedArray = Object.getPrototypeOf(Int8Array);
+  const {
+    keys: TypedArray_prototype_keys,
+    entries: TypedArray_prototype_entries,
+    values: TypedArray_prototype_values,
+  } = TypedArray.prototype;
 
-  // share "@@iterator" with Array.prototype
+  Object.defineProperties(Object.assign(TypedArray.prototype, {
+    keys() {
+      return new BuiltinIterator(this, TypedArray_prototype_keys);
+    },
+    entries() {
+      return new BuiltinIterator(this, TypedArray_prototype_entries);
+    },
+    values() {
+      return new BuiltinIterator(this, TypedArray_prototype_values);
+    },
+  }), {
+    values: {enumerable: false},
+    keys: {enumerable: false},
+    entries: {enumerable: false},
+  });
+
+  // share "@@iterator" with TypedArray.prototype
   Object.defineProperty(TypedArray.prototype, iteratorSym, {
-    value: Array.prototype[iteratorSym],
+    value: TypedArray.prototype.values,
     writable: true, enumerable: false, configurable: true
   });
 }

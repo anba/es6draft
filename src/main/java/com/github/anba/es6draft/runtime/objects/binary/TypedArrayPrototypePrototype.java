@@ -430,6 +430,8 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          * 
          * @param cx
          *            the execution context
+         * @param thisValue
+         *            the function this-value
          * @return the locale specific string representation
          */
         @Function(name = "toLocaleString", arity = 0)

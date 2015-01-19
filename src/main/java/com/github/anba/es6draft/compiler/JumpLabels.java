@@ -11,7 +11,7 @@ import com.github.anba.es6draft.compiler.assembler.Jump;
 /**
  * Specialized {@link Jump} objects.
  */
-final class JumpLabels extends Jump {
+final class JumpLabels {
     private JumpLabels() {
     }
 

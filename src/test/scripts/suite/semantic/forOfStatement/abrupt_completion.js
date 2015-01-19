@@ -49,6 +49,9 @@ const {
   // outer break
   testIter(iter => { L: { for (let v of iter) break L; } });
 
+  // outer continue
+  testIter(iter => { L: do { for (let v of iter) continue L; } while(0); });
+
   // break + return
   testIter(iter => { for (let v of iter) { if (Math.random() >= 0) break; return; } });
 
@@ -60,6 +63,12 @@ const {
 
   // return + outer break
   testIter(iter => { L: { for (let v of iter) { if (Math.random() >= 0) return; break L; } } });
+
+  // outer continue + return
+  testIter(iter => { L: do { for (let v of iter) { if (Math.random() >= 0) continue L; return; } } while(0); });
+
+  // return + outer continue
+  testIter(iter => { L: do { for (let v of iter) { if (Math.random() >= 0) return; continue L; } } while(0); });
 
   // yield, no expression
   testGen(function* g(iter) { for (let v of iter) yield; throw new Error("unreachable"); }, void 0);
@@ -244,6 +253,72 @@ function drainBreak(g) {
     }
   }
   let rval = drainBreak(g);
+  assertSame(0, rval);
+  assertTrue(finallyExecuted);
+}
+
+// Generators (continue)
+function drainContinue(g) {
+  let v;
+  L: do for (v of g()) continue L; while(0);
+  return v;
+}
+
+{
+  function* g() {
+    yield 0;
+    throw new Error("unreachable");
+  }
+  let rval = drainContinue(g);
+  assertSame(0, rval);
+}
+
+{
+  let finallyExecuted = false;
+  function* g() {
+    try {
+      yield 0;
+    } finally {
+      finallyExecuted = true;
+      return 1;
+    }
+  }
+  let rval = drainContinue(g);
+  assertSame(0, rval);
+  assertTrue(finallyExecuted);
+}
+
+{
+  let finallyExecuted = false;
+  function* g() {
+    try {
+      yield 0;
+    } finally {
+      finallyExecuted = true;
+      throw 1;
+    }
+  }
+  let caught;
+  try {
+    drainContinue(g);
+  } catch (e) {
+    caught = e;
+  }
+  assertSame(1, caught);
+  assertTrue(finallyExecuted);
+}
+
+{
+  let finallyExecuted = false;
+  function* g() {
+    try {
+      yield 0;
+    } finally {
+      finallyExecuted = true;
+      yield 1;
+    }
+  }
+  let rval = drainContinue(g);
   assertSame(0, rval);
   assertTrue(finallyExecuted);
 }

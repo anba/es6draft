@@ -124,7 +124,7 @@ public final class MozillaJSTest {
     private static final class MozTest extends TestInfo {
         List<Entry<Condition, String>> conditions = new ArrayList<>();
         boolean random = false;
-        boolean expect = true;
+        boolean negative = false;
 
         public MozTest(Path basedir, Path script) {
             super(basedir, script);
@@ -158,13 +158,13 @@ public final class MozillaJSTest {
         if (moztest.random) {
             // Results from random tests are simply ignored...
             ignoreHandler.match(IgnoreExceptionHandler.defaultMatcher());
-        } else if (moztest.expect) {
-            errorHandler.match(StandardErrorHandler.defaultMatcher());
-            exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
-        } else {
+        } else if (moztest.negative) {
             expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher())
                     .or(ScriptExceptionHandler.defaultMatcher())
                     .or(Matchers.instanceOf(MultipleFailureException.class)));
+        } else {
+            errorHandler.match(StandardErrorHandler.defaultMatcher());
+            exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
         }
     }
 
@@ -217,7 +217,7 @@ public final class MozillaJSTest {
             }
             switch (entry.getKey()) {
             case FailsIf:
-                moztest.expect = false;
+                moztest.negative = true;
                 break;
             case RandomIf:
                 moztest.random = true;
@@ -258,7 +258,7 @@ public final class MozillaJSTest {
             MozTest test = new MozTest(basedir, file);
             // Negative tests end with "-n"
             if (file.getFileName().toString().endsWith("-n.js")) {
-                test.expect = false;
+                test.negative = true;
             }
             String line = lines.next();
             Matcher m = testInfoPattern.matcher(line);
@@ -273,7 +273,7 @@ public final class MozillaJSTest {
             String content = m.group(2);
             for (String p : split(content)) {
                 if (p.equals("fails")) {
-                    test.expect = false;
+                    test.negative = true;
                 } else if (p.equals("skip")) {
                     test.setEnabled(false);
                 } else if (p.equals("random")) {

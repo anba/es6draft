@@ -960,7 +960,6 @@ public class ProxyObject implements ScriptObject {
         /* step 8 */
         if (trap == null) {
             return target.delete(cx, propertyKey);
-
         }
         /* step 9 */
         Object trapResult = trap.call(cx, handler, target, propertyKey);

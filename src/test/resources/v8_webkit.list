@@ -99,6 +99,9 @@ fast/js/exception-properties.js
 # property key enumeration order
 fast/js/array-functions-non-arrays.js
 
+# Invalid octal escape sequences in regular expressions
+fast/js/regexp-no-extensions.js
+
 
 ###############################################################
 # ES6 <Object>.prototype no longer instance of <Type>         #

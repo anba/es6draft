@@ -382,11 +382,13 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
          * 
          * @param cx
          *            the execution context
-         * @param thisValue
-         *            the function this-value
+         * @param array
+         *            the script object
+         * @param len
+         *            the length value
          * @return the locale specific string representation
          * @see #toLocaleString(ExecutionContext, Object)
-         * @see TypedArrayPrototypePrototype.Properties#toLocaleString(ExecutionContext)
+         * @see TypedArrayPrototypePrototype.Properties#toLocaleString(ExecutionContext, Object)
          */
         public static Object toLocaleString(ExecutionContext cx, ScriptObject array, long len) {
             /* steps 1-5 (not applicable) */
@@ -1238,7 +1240,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 insertCount = 0;
                 actualDeleteCount = len - actualStart;
             } else {
-                insertCount = items.length - 2;
+                insertCount = items.length;
                 double dc = ToInteger(cx, deleteCount);
                 actualDeleteCount = (long) Math.min(Math.max(dc, 0), len - actualStart);
             }

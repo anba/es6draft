@@ -355,6 +355,8 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
     /**
      * 25.4.4.1.1 PerformPromiseAll( iterator, constructor, resultCapability) Abstract Operation
      * 
+     * @param <PROMISE>
+     *            the promise type
      * @param cx
      *            the execution context
      * @param iterator
@@ -365,8 +367,9 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
      *            the new promise capability record
      * @return the new promise object
      */
-    public static ScriptObject PerformPromiseAll(ExecutionContext cx, ScriptObject iterator,
-            Constructor constructor, PromiseCapability<?> resultCapability) {
+    public static <PROMISE extends ScriptObject> PROMISE PerformPromiseAll(ExecutionContext cx,
+            ScriptObject iterator, Constructor constructor,
+            PromiseCapability<PROMISE> resultCapability) {
         /* steps 1-3 (not applicable) */
         /* step 4 */
         ArrayList<Object> values = new ArrayList<>();

@@ -84,6 +84,7 @@ js/script-tests/function-constructor-error.js
 js/script-tests/reserved-words-strict.js
 js/script-tests/array-find.js
 js/script-tests/parser-error-messages.js
+js/script-tests/string-repeat.js
 
 # Date.parse incompatibility
 js/script-tests/date-constructor.js
@@ -116,6 +117,9 @@ js/script-tests/static-put-in-prototype-chain.js
 
 # Requires proper numberOfDFGCompiles() support
 js/script-tests/dfg-min-max.js
+
+# Invalid octal escape sequences in regular expressions
+js/script-tests/regexp-no-extensions.js
 
 
 ###############################################################

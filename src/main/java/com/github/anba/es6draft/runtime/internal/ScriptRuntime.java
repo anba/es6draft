@@ -852,7 +852,6 @@ public final class ScriptRuntime {
      */
     public static Reference<Object, ?> getElement(Object baseValue, Object propertyNameValue,
             ExecutionContext cx, boolean strict) {
-        // TODO: IC
         if (Type.isString(propertyNameValue)) {
             return getProperty(baseValue, Type.stringValue(propertyNameValue).toString(), cx,
                     strict);
@@ -891,7 +890,6 @@ public final class ScriptRuntime {
      */
     public static Object getElementValue(Object baseValue, Object propertyNameValue,
             ExecutionContext cx) {
-        // TODO: IC
         if (Type.isString(propertyNameValue)) {
             return getPropertyValue(baseValue, Type.stringValue(propertyNameValue).toString(), cx);
         }
@@ -2621,10 +2619,9 @@ public final class ScriptRuntime {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         } else {
             Constructor superClassObj = (Constructor) superClass;
-            if (superClassObj instanceof OrdinaryGenerator) {
-                // TODO: also restrict OrdinaryAsyncFunction?
-                // FIXME: error message
-                throw newTypeError(cx, Messages.Key.NotConstructor);
+            if (superClassObj instanceof OrdinaryGenerator
+                    || superClassObj instanceof OrdinaryAsyncFunction) {
+                throw newTypeError(cx, Messages.Key.InvalidSuperClass);
             }
             Object p = Get(cx, superClassObj, "prototype");
             if (!Type.isObjectOrNull(p)) {

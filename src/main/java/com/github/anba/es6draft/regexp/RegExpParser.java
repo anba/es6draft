@@ -33,6 +33,10 @@ public final class RegExpParser {
     private static final char[] HEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
             'A', 'B', 'C', 'D', 'E', 'F' };
 
+    // JSC treats /\8/ the same as /\\8/ whereas other engines treat it as /8/, follow the majority
+    // and use /8/, too.
+    private static final boolean INVALID_OCTAL_WITH_BACKSLASH = false;
+
     // CharacterClass \s
     private static final String characterClass_s = "[ \\t\\n\\u000B\\f\\r\\u2028\\u2029\\u00A0\\uFEFF\\p{gc=Zs}]";
     // CharacterClass \S
@@ -364,40 +368,40 @@ public final class RegExpParser {
     }
 
     private int readUnicodeEscapeSequence() {
-        boolean unicode = isUnicode();
-        if (unicode && match('{')) {
-            if (eof() || match('}')) {
-                throw error(Messages.Key.InvalidUnicodeEscape);
-            }
-            int c = 0;
-            for (char d; (d = get()) != '}';) {
-                c = (c << 4) | hexDigit(d);
-                if (!Character.isValidCodePoint(c) || eof()) {
-                    throw error(Messages.Key.InvalidUnicodeEscape);
-                }
-            }
-            return c;
-        } else {
-            int start = pos;
-            int c = hex4Digits();
-            SURROGATE: if (unicode && Character.isHighSurrogate((char) c)) {
-                int startLow = pos;
-                if (match('\\') && match('u')) {
-                    int d = hex4Digits();
-                    if (Character.isLowSurrogate((char) d)) {
-                        c = Character.toCodePoint((char) c, (char) d);
-                        break SURROGATE;
-                    }
-                }
-                // lone high surrogate, discard parsed characters
-                reset(startLow);
-            }
-            if (!Character.isValidCodePoint(c)) {
-                // invalid unicode escape sequence, discard parsed characters
-                reset(start);
-            }
+        int start = pos;
+        int c = hex4Digits();
+        if (c < 0) {
+            // invalid unicode escape sequence, discard parsed characters
+            reset(start);
             return c;
         }
+        if (isUnicode() && Character.isHighSurrogate((char) c)) {
+            int startLow = pos;
+            if (match('\\') && match('u')) {
+                int d = hex4Digits();
+                if (Character.isLowSurrogate((char) d)) {
+                    return Character.toCodePoint((char) c, (char) d);
+                }
+            }
+            // lone high surrogate, discard parsed characters
+            reset(startLow);
+        }
+        return c;
+    }
+
+    private int readExtendedUnicodeEscapeSequence() {
+        assert isUnicode();
+        if (eof() || match('}')) {
+            throw error(Messages.Key.InvalidUnicodeEscape);
+        }
+        int c = 0;
+        for (char d; (d = get()) != '}';) {
+            c = (c << 4) | hexDigit(d);
+            if (!Character.isValidCodePoint(c) || eof()) {
+                throw error(Messages.Key.InvalidUnicodeEscape);
+            }
+        }
+        return c;
     }
 
     private int hex2Digits() {
@@ -524,10 +528,10 @@ public final class RegExpParser {
                 switch (peek(0)) {
                 case 'd':
                 case 'D':
-                case 'w':
-                case 'W':
                 case 's':
-                case 'S': {
+                case 'S':
+                case 'w':
+                case 'W': {
                     // class escape (cannot start/end range)
                     if (inrange) {
                         if (!web || unicode) {
@@ -631,16 +635,22 @@ public final class RegExpParser {
                 case 'u': {
                     // CharacterEscape :: RegExpUnicodeEscapeSequence
                     mustMatch('u');
-                    int u = readUnicodeEscapeSequence();
-                    if (Character.isValidCodePoint(u)) {
-                        appendUnicodeEscapeSequence(u, true);
+                    if (unicode && match('{')) {
+                        int u = readExtendedUnicodeEscapeSequence();
+                        appendExtendedUnicodeEscapeSequence(u, true);
                         cv = u;
-                    } else if (!web || unicode) {
-                        throw error(Messages.Key.RegExpInvalidEscape, "u");
                     } else {
-                        // invalid unicode escape sequence, use "u"
-                        out.append("u");
-                        cv = 'u';
+                        int u = readUnicodeEscapeSequence();
+                        if (u >= 0) {
+                            appendUnicodeEscapeSequence(u, true);
+                            cv = u;
+                        } else if (!web || unicode) {
+                            throw error(Messages.Key.RegExpInvalidEscape, "u");
+                        } else {
+                            // invalid unicode escape sequence, use "u"
+                            out.append("u");
+                            cv = 'u';
+                        }
                     }
                     break classatom;
                 }
@@ -676,7 +686,10 @@ public final class RegExpParser {
                         throw error(Messages.Key.RegExpInvalidEscape, +1, peek(0));
                     }
                     char d = get();
-                    out.append("\\\\").append(d);
+                    if (INVALID_OCTAL_WITH_BACKSLASH) {
+                        out.append("\\\\");
+                    }
+                    out.append(d);
                     cv = d;
                     break classatom;
                 }
@@ -1054,14 +1067,19 @@ public final class RegExpParser {
                 case 'u': {
                     // CharacterEscape :: RegExpUnicodeEscapeSequence
                     mustMatch('u');
-                    int u = readUnicodeEscapeSequence();
-                    if (Character.isValidCodePoint(u)) {
-                        appendUnicodeEscapeSequence(u, false);
-                    } else if (!web || unicode) {
-                        throw error(Messages.Key.RegExpInvalidEscape, "u");
+                    if (unicode && match('{')) {
+                        int u = readExtendedUnicodeEscapeSequence();
+                        appendExtendedUnicodeEscapeSequence(u, false);
                     } else {
-                        // invalid unicode escape sequence, use "u"
-                        out.append("u");
+                        int u = readUnicodeEscapeSequence();
+                        if (u >= 0) {
+                            appendUnicodeEscapeSequence(u, false);
+                        } else if (!web || unicode) {
+                            throw error(Messages.Key.RegExpInvalidEscape, "u");
+                        } else {
+                            // invalid unicode escape sequence, use "u"
+                            out.append("u");
+                        }
                     }
                     break atom;
                 }
@@ -1107,7 +1125,9 @@ public final class RegExpParser {
                             appendOctalEscapeSequence(readOctalEscapeSequence(), false);
                         } else {
                             // case 2 (\8 or \9): invalid octal escape sequence
-                            out.append("\\\\");
+                            if (INVALID_OCTAL_WITH_BACKSLASH) {
+                                out.append("\\\\");
+                            }
                         }
                     } else {
                         if (num > backrefmax) {
@@ -1533,6 +1553,15 @@ public final class RegExpParser {
         }
     }
 
+    private void appendExtendedUnicodeEscapeSequence(int u, boolean characterClass) {
+        if (isIgnoreCase()) {
+            assert isUnicode();
+            appendCaseInsensitiveExtendedUnicode(u, characterClass);
+        } else {
+            appendCodePoint(u);
+        }
+    }
+
     private void appendPatternCharacter(int ch, boolean characterClass) {
         if (isIgnoreCase()) {
             if (isUnicode()) {
@@ -1571,7 +1600,6 @@ public final class RegExpParser {
     }
 
     private void appendCodePoint(int codePoint) {
-        assert Character.isSupplementaryCodePoint(codePoint);
         out.append("\\x{").append(Integer.toHexString(codePoint)).append("}");
     }
 
@@ -1751,6 +1779,17 @@ public final class RegExpParser {
             }
         } else {
             appendCharacter(codePoint);
+        }
+    }
+
+    private void appendCaseInsensitiveExtendedUnicode(int codePoint, boolean characterClass) {
+        if (Character.isBmpCodePoint(codePoint) && Character.isSurrogate((char) codePoint)) {
+            assert !CaseFoldData.hasAdditionalUnicodeCaseFold(codePoint);
+            assert !CaseFoldData.hasRestrictedUnicodeCaseFold(codePoint);
+            // output unpaired surrogate in extended form
+            appendCodePoint(codePoint);
+        } else {
+            appendCaseInsensitiveUnicode(codePoint, characterClass);
         }
     }
 

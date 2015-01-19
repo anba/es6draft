@@ -410,6 +410,7 @@ tests/bug793385.js
 tests/basic/bug623859.js
 tests/basic/bug720675.js
 tests/basic/bug858097.js
+tests/basic/bug1118996.js
 tests/basic/testBug756919.js
 tests/basic/testBug840012.js
 # countHeap
@@ -443,6 +444,10 @@ tests/basic/bug1057571.js
 tests/basic/bug1061534.js
 # saveStack
 tests/parser/columnNumber.js
+# getBacktrace
+tests/basic/bug1015339.js
+# relazifyFunctions
+tests/basic/relazify.js
 
 
 #######################################

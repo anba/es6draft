@@ -14,6 +14,5 @@ const {
 evalScript("function f(x) { return x === undefined }")
 assertThrows(SyntaxError, () => evalScript("let undefined = 666;"));
 
-// FIXME: Update after spec bug was fixed
 assertSame(void 0, undefined);
 assertTrue(f());

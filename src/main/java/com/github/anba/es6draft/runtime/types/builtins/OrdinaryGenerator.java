@@ -176,8 +176,9 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         }
     }
 
-    /*package*/static final CreateAction<GeneratorObject> getDefaultCreateAction() {
-        return GeneratorCreate.INSTANCE;
+    @Override
+    protected void setCreateActionFrom(ScriptObject superFunction) {
+        setCreateAction(GeneratorCreate.INSTANCE);
     }
 
     /* ***************************************************************************************** */

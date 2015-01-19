@@ -951,16 +951,9 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                 }
                 if (j < i) {
                     // append substring before '%'
-                    // sb.append(s.substring(j, i));
                     sb.append(s, j, i);
                 }
-                // sb.appendCodePoint(cp);
-                if (Character.isBmpCodePoint(cp)) {
-                    sb.append((char) cp);
-                } else {
-                    sb.append(Character.highSurrogate(cp));
-                    sb.append(Character.lowSurrogate(cp));
-                }
+                sb.appendCodePoint(cp);
                 j = i + k;
                 i = s.indexOf('%', j);
             }
@@ -969,7 +962,6 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
             }
             if (j < len) {
                 // append remaining substring
-                // sb.append(s.substring(j, len));
                 sb.append(s, j, len);
             }
             return sb.toString();
@@ -1036,8 +1028,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
             if (Character.isBmpCodePoint(cp)) {
                 return String.valueOf((char) cp);
             }
-            return String.valueOf(new char[] { Character.highSurrogate(cp),
-                    Character.lowSurrogate(cp) });
+            return String.valueOf(Character.toChars(cp));
         }
 
         /* embedded BitMaskUtil */

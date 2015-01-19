@@ -2882,55 +2882,11 @@ public final class AbstractOperations {
      *            the execution context
      * @param obj
      *            the script object
-     * @return the script iterator object
-     */
-    public static ScriptObject GetIterator(ExecutionContext cx, ScriptObject obj) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        Callable method = GetMethod(cx, obj, BuiltinSymbol.iterator.get());
-        /* steps 3-6 */
-        return GetIterator(cx, obj, method);
-    }
-
-    /**
-     * 7.4.2 GetIterator ( obj )
-     * 
-     * @param cx
-     *            the execution context
-     * @param obj
-     *            the script object
      * @param method
      *            the iterator method
      * @return the script iterator object
      */
     public static ScriptObject GetIterator(ExecutionContext cx, Object obj, Callable method) {
-        /* steps 1-2 (not applicable) */
-        /* steps 3-4 (inlined Call operation) */
-        if (method == null) {
-            throw newTypeError(cx, Messages.Key.PropertyNotCallable,
-                    BuiltinSymbol.iterator.toString());
-        }
-        Object iterator = method.call(cx, obj);
-        /* step 5 */
-        if (!Type.isObject(iterator)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* step 6 */
-        return Type.objectValue(iterator);
-    }
-
-    /**
-     * 7.4.2 GetIterator ( obj )
-     * 
-     * @param cx
-     *            the execution context
-     * @param obj
-     *            the script object
-     * @param method
-     *            the iterator method
-     * @return the script iterator object
-     */
-    public static ScriptObject GetIterator(ExecutionContext cx, ScriptObject obj, Callable method) {
         /* steps 1-2 (not applicable) */
         /* steps 3-4 (inlined Call operation) */
         if (method == null) {

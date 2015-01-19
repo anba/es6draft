@@ -45,12 +45,10 @@ abstract class StatementVisitor extends ExpressionVisitor {
 
         final Labels parent;
         final Variable<Object> completion;
-        final boolean isFinallyScope;
 
-        Labels(Labels parent, Variable<Object> completion, boolean isFinallyScope) {
+        Labels(Labels parent, Variable<Object> completion) {
             this.parent = parent;
             this.completion = completion;
-            this.isFinallyScope = isFinallyScope;
         }
 
         private TempLabel newTemp(Jump actual) {
@@ -113,10 +111,8 @@ abstract class StatementVisitor extends ExpressionVisitor {
             Jump label = getContinueLabel(name);
             if (label == null) {
                 assert parent != null : "Label not found: " + name;
-                label = parent.continueLabel(name);
-                if (isFinallyScope) {
-                    setContinueLabel(name, label = newTemp(label));
-                }
+                label = newTemp(parent.continueLabel(name));
+                setContinueLabel(name, label);
             }
             return label;
         }
@@ -133,7 +129,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
     private final boolean isScriptCode;
     private final boolean isGeneratorOrAsync;
     private Variable<Object> completionValue;
-    private Labels labels = new Labels(null, null, false);
+    private Labels labels = new Labels(null, null);
     private int finallyDepth = 0;
 
     // tail-call support
@@ -250,7 +246,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
         return labels.parent != null;
     }
 
-    private Variable<Object> enterAbruptRegion(boolean isFinallyScope) {
+    private Variable<Object> enterAbruptRegion() {
         assert labels != null;
         Variable<Object> completion = labels.completion;
         if (completion == null) {
@@ -259,12 +255,11 @@ abstract class StatementVisitor extends ExpressionVisitor {
             aconst(null);
             store(completion);
         }
-        labels = new Labels(labels, completion, isFinallyScope);
+        labels = new Labels(labels, completion);
         return completion;
     }
 
-    private List<TempLabel> exitAbruptRegion(boolean isFinallyScope) {
-        assert labels.isFinallyScope == isFinallyScope;
+    private List<TempLabel> exitAbruptRegion() {
         ArrayList<TempLabel> tempLabels = labels.tempLabels;
         labels = labels.parent;
         assert labels != null;
@@ -274,19 +269,36 @@ abstract class StatementVisitor extends ExpressionVisitor {
     /**
      * Enter an iteration body block.
      * 
+     * @param node
+     *            the iteration statement
      * @return the temporary completion object variable
      */
-    Variable<Object> enterIterationBody() {
-        return enterAbruptRegion(false);
+    Variable<Object> enterIterationBody(IterationStatement node) {
+        Variable<Object> completion = enterAbruptRegion();
+        if (node.hasContinue()) {
+            // Copy current continue labels from parent to new labelset, so we won't create
+            // temp-labels for own continue labels.
+            Labels labels = this.labels;
+            assert !labels.parent.continueTargets.isEmpty();
+            Jump lblContinue = labels.parent.continueTargets.peek();
+            assert lblContinue instanceof ContinueLabel;
+            labels.continueTargets.push(lblContinue);
+            for (String label : node.getLabelSet()) {
+                labels.namedContinueLabels.put(label, lblContinue);
+            }
+        }
+        return completion;
     }
 
     /**
      * Exit an iteration body block.
      * 
+     * @param node
+     *            the iteration statement
      * @return the list of generated labels
      */
-    List<TempLabel> exitIterationBody() {
-        return exitAbruptRegion(false);
+    List<TempLabel> exitIterationBody(IterationStatement node) {
+        return exitAbruptRegion();
     }
 
     /**
@@ -295,7 +307,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * @return the temporary completion object variable
      */
     Variable<Object> enterFinallyScoped() {
-        return enterAbruptRegion(true);
+        return enterAbruptRegion();
     }
 
     /**
@@ -304,7 +316,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * @return the list of generated labels
      */
     List<TempLabel> exitFinallyScoped() {
-        return exitAbruptRegion(true);
+        return exitAbruptRegion();
     }
 
     /**

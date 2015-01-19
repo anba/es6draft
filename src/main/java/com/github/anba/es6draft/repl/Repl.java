@@ -606,8 +606,7 @@ public final class Repl {
             sources.add(new InteractiveTaskSource(realm));
         }
         if (options.timers) {
-            Timers timers = install(realm, new Timers(), Timers.class);
-            sources.add(timers);
+            sources.add(createTimersTaskSource(realm));
         }
         switch (sources.size()) {
         case 0:
@@ -617,6 +616,13 @@ public final class Repl {
         default:
             return new MultiTaskSource(sources);
         }
+    }
+
+    private static Timers createTimersTaskSource(Realm realm) {
+        Timers timers = new Timers();
+        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), timers,
+                Timers.class);
+        return timers;
     }
 
     private static final class EmptyTaskSource implements TaskSource {
@@ -751,11 +757,6 @@ public final class Repl {
                 }
             }
         }
-    }
-
-    private static <T> T install(Realm realm, T object, Class<T> clazz) {
-        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
-        return object;
     }
 
     private Realm newRealm() {

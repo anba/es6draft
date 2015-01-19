@@ -16,3 +16,4 @@ assertEquals(["", "", "", ""], /\b/g[Symbol.match]("aa aa"));
 
 assertSame("baab", /^|$/g[Symbol.replace]("aa", "b"));
 assertSame("baab baab", /\b/g[Symbol.replace]("aa aa", "b"))
+assertSame("bbaabb", /^|$/g[Symbol.replace]("aa", "bb"));

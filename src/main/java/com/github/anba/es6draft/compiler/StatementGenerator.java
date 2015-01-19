@@ -867,7 +867,7 @@ final class StatementGenerator extends
         }
 
         mv.enterVariableScope();
-        Variable<Object> completion = mv.enterIterationBody();
+        Variable<Object> completion = mv.enterIterationBody(node);
 
         // Emit loop body
         mv.mark(startIteration);
@@ -880,7 +880,7 @@ final class StatementGenerator extends
         mv.mark(endIteration);
 
         // Restore temporary abrupt targets
-        List<TempLabel> tempLabels = mv.exitIterationBody();
+        List<TempLabel> tempLabels = mv.exitIterationBody(node);
 
         // Emit throw handler
         Completion throwResult = emitForInOfThrowHandler(iterator, handlerCatch,

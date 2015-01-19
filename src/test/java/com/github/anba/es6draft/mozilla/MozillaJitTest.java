@@ -237,13 +237,17 @@ public final class MozillaJitTest {
                     case "no-ion":
                     case "ion-eager":
                     case "dump-bytecode":
+                    case "--fuzzing-safe":
+                    case "--no-threads":
+                    case "--no-ion":
                         // Ignore for now...
                         break;
                     case "":
                         // Ignore empty string
                         break;
                     default:
-                        System.err.printf("unknown option '%s' in line: %s\n", name, content);
+                        System.err.printf("unknown option '%s' in line: %s [%s]\n", name, content,
+                                file);
                     }
                 }
             }

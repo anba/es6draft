@@ -118,7 +118,7 @@ public final class TraceurTest {
     public TraceurTestInfo test;
 
     private static final class TraceurTestInfo extends TestInfo {
-        boolean expect = true;
+        boolean negative = false;
         boolean async = false;
 
         TraceurTestInfo(Path basedir, Path script) {
@@ -153,12 +153,12 @@ public final class TraceurTest {
             async = global.install(new AsyncHelper(), AsyncHelper.class);
             timers = global.install(new Timers(), Timers.class);
         }
-        if (test.expect) {
-            errorHandler.match(StandardErrorHandler.defaultMatcher());
-            exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
-        } else {
+        if (test.negative) {
             expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher()).or(
                     ScriptExceptionHandler.defaultMatcher()));
+        } else {
+            errorHandler.match(StandardErrorHandler.defaultMatcher());
+            exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
         }
     }
 
@@ -224,7 +224,7 @@ public final class TraceurTest {
                     } else if (s.equals("Async.")) {
                         test.async = true;
                     } else if (s.startsWith("Error:")) {
-                        test.expect = false;
+                        test.negative = true;
                     } else if (s.startsWith("Options:")) {
                         // ignore
                     } else {
