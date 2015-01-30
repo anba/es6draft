@@ -39,7 +39,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.Parallelized;
-import com.github.anba.es6draft.util.ParallelizedRunnerFactory;
+import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -50,7 +50,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  * Test suite for the native, v8 tests.
  */
 @RunWith(Parallelized.class)
-@UseParametersRunnerFactory(ParallelizedRunnerFactory.class)
+@UseParametersRunnerFactory(ParameterizedRunnerFactory.class)
 @TestConfiguration(name = "natives.test.v8", file = "resource:/test-configuration.properties")
 public final class NativesV8Test {
     private static final Configuration configuration = loadConfiguration(NativesV8Test.class);

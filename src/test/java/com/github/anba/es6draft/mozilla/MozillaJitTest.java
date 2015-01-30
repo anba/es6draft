@@ -48,7 +48,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.Parallelized;
-import com.github.anba.es6draft.util.ParallelizedRunnerFactory;
+import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -60,7 +60,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StopExecutionHandle
  * Test suite for the Mozilla jit-tests.
  */
 @RunWith(Parallelized.class)
-@UseParametersRunnerFactory(ParallelizedRunnerFactory.class)
+@UseParametersRunnerFactory(ParameterizedRunnerFactory.class)
 @TestConfiguration(name = "mozilla.test.jittests", file = "resource:/test-configuration.properties")
 public final class MozillaJitTest {
     private static final Configuration configuration = loadConfiguration(MozillaJitTest.class);

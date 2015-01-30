@@ -46,7 +46,7 @@ import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -92,7 +92,7 @@ final class CodeGenerator {
                 Type.VOID_TYPE, Types.ExecutionContext, Types.OrdinaryObject);
 
         static final MethodTypeDescriptor MethodDefinitionsMethod = Type.methodType(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.OrdinaryFunction, Types.OrdinaryObject);
+                Types.ExecutionContext, Types.OrdinaryConstructorFunction, Types.OrdinaryObject);
 
         static final MethodTypeDescriptor ExpressionMethod = Type.methodType(Types.Object,
                 Types.ExecutionContext);
@@ -100,12 +100,25 @@ final class CodeGenerator {
         static final MethodTypeDescriptor BlockDeclarationInit = Type.methodType(
                 Types.LexicalEnvironment, Types.ExecutionContext, Types.LexicalEnvironment);
 
-        static final MethodTypeDescriptor AsyncFunction_Call = Type.methodType(Types.Object,
+        static final MethodTypeDescriptor AsyncFunction_Call = Type.methodType(Types.PromiseObject,
                 Types.OrdinaryAsyncFunction, Types.ExecutionContext, Types.Object, Types.Object_);
         static final MethodTypeDescriptor Function_Call = Type.methodType(Types.Object,
                 Types.OrdinaryFunction, Types.ExecutionContext, Types.Object, Types.Object_);
-        static final MethodTypeDescriptor Generator_Call = Type.methodType(Types.Object,
+        static final MethodTypeDescriptor Generator_Call = Type.methodType(Types.GeneratorObject,
                 Types.OrdinaryGenerator, Types.ExecutionContext, Types.Object, Types.Object_);
+
+        static final MethodTypeDescriptor AsyncFunction_Construct = Type.methodType(
+                Types.PromiseObject, Types.OrdinaryAsyncFunction, Types.ExecutionContext,
+                Types.Constructor, Types.Object_);
+        static final MethodTypeDescriptor Function_Construct = Type.methodType(Types.ScriptObject,
+                Types.OrdinaryConstructorFunction, Types.ExecutionContext, Types.Constructor,
+                Types.Object_);
+        static final MethodTypeDescriptor Function_ConstructTailCall = Type.methodType(
+                Types.Object, Types.OrdinaryConstructorFunction, Types.ExecutionContext,
+                Types.Constructor, Types.Object_);
+        static final MethodTypeDescriptor Generator_Construct = Type.methodType(
+                Types.GeneratorObject, Types.OrdinaryGenerator, Types.ExecutionContext,
+                Types.Constructor, Types.Object_);
 
         static final MethodTypeDescriptor AsyncFunction_Code = Type.methodType(Types.Object,
                 Types.ExecutionContext, Types.ResumptionPoint);
@@ -196,7 +209,7 @@ final class CodeGenerator {
     }
 
     enum FunctionName {
-        Call, Code, Init, RTI, DebugInfo
+        Call, Construct, ConstructTailCall, Code, Init, RTI, DebugInfo
     }
 
     /**
@@ -306,6 +319,9 @@ final class CodeGenerator {
             return insertMarker("!", fname, "_call");
         case Code:
             return insertMarker("", fname, "");
+        case Construct:
+        case ConstructTailCall:
+            return insertMarker("!", fname, "_construct");
         case Init:
             return insertMarker("", fname, "_init");
         case RTI:
@@ -382,6 +398,18 @@ final class CodeGenerator {
                 return MethodDescriptors.AsyncFunction_Call;
             }
             return MethodDescriptors.Function_Call;
+        case ConstructTailCall:
+            assert node.isConstructor() && !node.isGenerator() && !node.isAsync();
+            return MethodDescriptors.Function_ConstructTailCall;
+        case Construct:
+            assert node.isConstructor();
+            if (node.isGenerator()) {
+                return MethodDescriptors.Generator_Construct;
+            }
+            if (node.isAsync()) {
+                return MethodDescriptors.AsyncFunction_Construct;
+            }
+            return MethodDescriptors.Function_Construct;
         case Code:
             if (node.isGenerator()) {
                 return MethodDescriptors.Generator_Code;
@@ -662,6 +690,7 @@ final class CodeGenerator {
         StatementVisitor body = new ModuleStatementVisitor(method, node);
         body.lineInfo(node);
         body.begin();
+        // TODO: completion value not needed
         body.loadUndefined();
         body.storeCompletionValue(ValType.Undefined);
 
@@ -764,7 +793,7 @@ final class CodeGenerator {
             }
 
             // call method
-            new FunctionCodeGenerator(this).generate(node);
+            new FunctionCodeGenerator(this).generate(node, tailCall);
 
             // runtime-info method
             new RuntimeInfoGenerator(this).runtimeInfo(node, tailCall, source);
@@ -812,8 +841,8 @@ final class CodeGenerator {
         body.exitScope();
 
         if (!result.isAbrupt()) {
-            // fall-thru, return `undefined` from function
-            body.loadUndefined();
+            // fall-thru, return <null> from function
+            body.anull();
             body._return();
         }
 
@@ -867,8 +896,9 @@ final class CodeGenerator {
         body.exitScope();
 
         if (!result.isAbrupt()) {
-            // fall-thru, return `undefined` from function
-            body.loadUndefined();
+            // TODO: change back to <undefined> and update GeneratorObject
+            // fall-thru, return <null> from function
+            body.anull();
             body._return();
         }
 
@@ -960,16 +990,16 @@ final class CodeGenerator {
         }
     }
 
-    void compile(ClassDefinition def, MethodDefinitionsMethod node, ExpressionVisitor mv) {
+    void compile(MethodDefinitionsMethod node, ExpressionVisitor mv) {
         if (!isCompiled(node)) {
             MethodCode method = newMethod(node);
             MethodDefinitionsMethodVisitor body = new MethodDefinitionsMethodVisitor(method, mv);
             body.lineInfo(node);
             body.begin();
 
-            Variable<OrdinaryFunction> function = body.getFunctionParameter();
+            Variable<OrdinaryConstructorFunction> function = body.getFunctionParameter();
             Variable<OrdinaryObject> proto = body.getPrototypeParameter();
-            ClassPropertyEvaluation(this, def, node.getProperties(), function, proto, body);
+            ClassPropertyEvaluation(this, node.getProperties(), function, proto, body);
 
             body._return();
             body.end();
@@ -1255,12 +1285,12 @@ final class CodeGenerator {
         public void begin() {
             super.begin();
             setParameterName("cx", 0, Types.ExecutionContext);
-            setParameterName("F", 1, Types.OrdinaryFunction);
+            setParameterName("F", 1, Types.OrdinaryConstructorFunction);
             setParameterName("proto", 2, Types.OrdinaryObject);
         }
 
-        Variable<OrdinaryFunction> getFunctionParameter() {
-            return getParameter(1, OrdinaryFunction.class);
+        Variable<OrdinaryConstructorFunction> getFunctionParameter() {
+            return getParameter(1, OrdinaryConstructorFunction.class);
         }
 
         Variable<OrdinaryObject> getPrototypeParameter() {

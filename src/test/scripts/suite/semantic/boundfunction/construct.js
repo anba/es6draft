@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertConstructor, assertNotConstructor,
+  assertConstructor,
 } = Assert;
 
 // [[Construct]] is assigned to BoundFunction objects if the [[BoundTargetFunction]]
@@ -13,7 +13,6 @@ const {
 {
   class Fn extends Function {
     constructor(...args) {
-      this.preBound = this.bind(null);
       // [[Construct]] was already assigned when allocated
       super(...args);
       this.postBound = this.bind(null);
@@ -21,6 +20,5 @@ const {
   }
 
   let fn = new Fn("");
-  assertConstructor(fn.preBound);
   assertConstructor(fn.postBound);
 }

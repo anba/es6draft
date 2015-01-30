@@ -57,9 +57,9 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
-        createProperties(cx, this, AdditionalProperties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
+        createProperties(realm, this, AdditionalProperties.class);
     }
 
     private static final String ISO_FORMAT = "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ";
@@ -166,11 +166,7 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
          */
         private static double thisTimeValue(ExecutionContext cx, Object object) {
             if (object instanceof DateObject) {
-                DateObject obj = (DateObject) object;
-                if (obj.isInitialized()) {
-                    return obj.getDateValue();
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return ((DateObject) object).getDateValue();
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -264,9 +260,9 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
 
             // ECMA-402
             options = ToDateTimeOptions(cx, options, "any", "all");
-            DateTimeFormatConstructor constructor = (DateTimeFormatConstructor) cx
+            DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
-            DateTimeFormatObject dateTimeFormat = constructor.construct(cx, locales, options);
+            DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
             return FormatDateTime(cx, dateTimeFormat, t);
         }
 
@@ -294,9 +290,9 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
 
             // ECMA-402
             options = ToDateTimeOptions(cx, options, "date", "date");
-            DateTimeFormatConstructor constructor = (DateTimeFormatConstructor) cx
+            DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
-            DateTimeFormatObject dateTimeFormat = constructor.construct(cx, locales, options);
+            DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
             return FormatDateTime(cx, dateTimeFormat, t);
         }
 
@@ -324,9 +320,9 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
 
             // ECMA-402
             options = ToDateTimeOptions(cx, options, "time", "time");
-            DateTimeFormatConstructor constructor = (DateTimeFormatConstructor) cx
+            DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
-            DateTimeFormatObject dateTimeFormat = constructor.construct(cx, locales, options);
+            DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
             return FormatDateTime(cx, dateTimeFormat, t);
         }
 
@@ -1346,11 +1342,7 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
          */
         private static double thisTimeValue(ExecutionContext cx, Object object) {
             if (object instanceof DateObject) {
-                DateObject obj = (DateObject) object;
-                if (obj.isInitialized()) {
-                    return obj.getDateValue();
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return ((DateObject) object).getDateValue();
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

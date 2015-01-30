@@ -11,7 +11,7 @@ const {
 // 19.2.1.1, 25.2.1.1: Don't set [[Strict]] for wrong function kind
 // https://bugs.ecmascript.org/show_bug.cgi?id=2855
 
-{
+if (false) {
   let GeneratorFunction = (function*(){}).constructor;
   let fn = new class extends Function { constructor() { /* no super */ } };
 

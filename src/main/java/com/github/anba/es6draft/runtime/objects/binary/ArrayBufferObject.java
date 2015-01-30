@@ -95,13 +95,4 @@ public final class ArrayBufferObject extends OrdinaryObject {
     public boolean isDetached() {
         return detached;
     }
-
-    /**
-     * Returns {@code true} if this array buffer object has been initialized.
-     * 
-     * @return {@code true} if this array buffer object is initialized
-     */
-    /* package */boolean isInitialized() {
-        return detached || data != null;
-    }
 }

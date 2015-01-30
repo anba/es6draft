@@ -6,15 +6,12 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.objects.async.AsyncAbstractOperations.Spawn;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -42,35 +39,13 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
     }
 
     /**
-     * 9.2.1 [[Construct]] (argumentsList)
+     * 9.2.2 [[Call]] ( thisArgument, argumentsList)
      */
     @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        if (getCode() == null) {
-            throw newTypeError(callerContext, Messages.Key.UninitializedObject);
-        }
-        return Construct(callerContext, this, args);
-    }
-
-    /**
-     * 9.2.1 [[Construct]] (argumentsList)
-     */
-    @Override
-    public ScriptObject tailConstruct(ExecutionContext callerContext, Object... args)
-            throws Throwable {
-        if (getCode() == null) {
-            throw newTypeError(callerContext, Messages.Key.UninitializedObject);
-        }
-        return construct(callerContext, args);
-    }
-
-    /**
-     * 9.2.4 [[Call]] (thisArgument, argumentsList)
-     */
-    @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public PromiseObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         try {
-            return getCallMethod().invokeExact(this, callerContext, thisValue, args);
+            return (PromiseObject) getCallMethod()
+                    .invokeExact(this, callerContext, thisValue, args);
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable e) {
@@ -79,12 +54,39 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
     }
 
     /**
-     * 9.2.4 [[Call]] (thisArgument, argumentsList)
+     * 9.2.2 [[Call]] ( thisArgument, argumentsList)
      */
     @Override
-    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
+    public PromiseObject tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
             throws Throwable {
-        return getTailCallMethod().invokeExact(this, callerContext, thisValue, args);
+        return (PromiseObject) getTailCallMethod()
+                .invokeExact(this, callerContext, thisValue, args);
+    }
+
+    /**
+     * 9.2.3 [[Construct]] ( argumentsList, newTarget)
+     */
+    @Override
+    public PromiseObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... argumentsList) {
+        try {
+            return (PromiseObject) getConstructMethod().invokeExact(this, callerContext, newTarget,
+                    argumentsList);
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 9.2.3 [[Construct]] ( argumentsList, newTarget)
+     */
+    @Override
+    public PromiseObject tailConstruct(ExecutionContext callerContext, Constructor newTarget,
+            Object... argumentsList) throws Throwable {
+        return (PromiseObject) getTailConstructMethod().invokeExact(this, callerContext, newTarget,
+                argumentsList);
     }
 
     /**
@@ -124,7 +126,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
         /* steps 4-8 */
         OrdinaryAsyncFunction f = new OrdinaryAsyncFunction(realm);
         /* steps 9-13 */
-        f.allocate(realm, functionPrototype, strict, kind, uninitializedAsyncFunctionMH);
+        f.allocate(realm, functionPrototype, strict, kind, ConstructorKind.Derived);
         /* step 14 */
         return f;
     }
@@ -150,7 +152,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
         /* step 2 */
         OrdinaryAsyncFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
-        return FunctionInitialize(f, kind, function.isStrict(), function, scope,
-                cx.getCurrentExecutable());
+        FunctionInitialize(f, kind, function.isStrict(), function, scope, cx.getCurrentExecutable());
+        return f;
     }
 }

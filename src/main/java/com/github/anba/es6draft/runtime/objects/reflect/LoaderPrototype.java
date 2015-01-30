@@ -43,9 +43,9 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
-        createProperties(cx, this, RealmProperty.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
+        createProperties(realm, this, RealmProperty.class);
     }
 
     /**

@@ -37,15 +37,32 @@ final class StackImpl extends Stack {
                 commonType = Types.OrdinaryObject;
             } else if (isScriptObject(right)) {
                 commonType = Types.ScriptObject;
+            } else if (isCallable(right) || isConstructor(right)) {
+                commonType = Types.Callable;
             }
         } else if (isOrdinaryObject(left)) {
             if (isFunctionObject(right) || isOrdinaryObject(right)) {
                 commonType = Types.OrdinaryObject;
-            } else if (isScriptObject(right)) {
+            } else if (isScriptObject(right) || isCallable(right) || isConstructor(right)) {
                 commonType = Types.ScriptObject;
             }
         } else if (isScriptObject(left)) {
-            if (isFunctionObject(right) || isOrdinaryObject(right) || isScriptObject(right)) {
+            if (isFunctionObject(right) || isOrdinaryObject(right) || isScriptObject(right)
+                    || isCallable(right) || isConstructor(right)) {
+                commonType = Types.ScriptObject;
+            }
+        } else if (isCallable(left)) {
+            if (isFunctionObject(right) || isCallable(right) || isConstructor(right)) {
+                commonType = Types.Callable;
+            } else if (isOrdinaryObject(right) || isScriptObject(right)) {
+                commonType = Types.ScriptObject;
+            }
+        } else if (isConstructor(left)) {
+            if (isConstructor(right)) {
+                commonType = Types.Constructor;
+            } else if (isFunctionObject(right) || isCallable(right)) {
+                commonType = Types.Callable;
+            } else if (isOrdinaryObject(right) || isScriptObject(right)) {
                 commonType = Types.ScriptObject;
             }
         }
@@ -61,14 +78,24 @@ final class StackImpl extends Stack {
     }
 
     private static boolean isFunctionObject(Type type) {
-        return Types.OrdinaryFunction.equals(type) || Types.OrdinaryGenerator.equals(type)
-                || Types.OrdinaryAsyncFunction.equals(type) || Types.FunctionObject.equals(type);
+        return Types.OrdinaryFunction.equals(type)
+                || Types.OrdinaryConstructorFunction.equals(type)
+                || Types.OrdinaryGenerator.equals(type) || Types.OrdinaryAsyncFunction.equals(type)
+                || Types.FunctionObject.equals(type);
     }
 
     private static boolean isOrdinaryObject(Type type) {
         return Types.OrdinaryObject.equals(type) || Types.ArrayObject.equals(type)
                 || Types.ArgumentsObject.equals(type) || Types.LegacyArgumentsObject.equals(type)
                 || Types.RegExpObject.equals(type) || Types.GeneratorObject.equals(type);
+    }
+
+    private static boolean isConstructor(Type type) {
+        return Types.Constructor.equals(type);
+    }
+
+    private static boolean isCallable(Type type) {
+        return Types.Callable.equals(type);
     }
 
     private static boolean isScriptObject(Type type) {

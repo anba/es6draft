@@ -15,6 +15,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.AbstractOperations.CanonicalNumericString;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.builtins.IntegerIndexedObject;
 
@@ -51,51 +52,64 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         super(realm);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public long getLength() {
         return getArrayLength();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    protected long getLength(ExecutionContext cx) {
-        ArrayBufferObject buffer = getBuffer();
-        if (buffer == null) {
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        return getArrayLength();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected boolean elementHas(ExecutionContext cx, long index) {
+    protected boolean elementHasOwn(ExecutionContext cx, long index) {
         assert index >= 0;
-        // Steps 1-6 of elementGet to support hasOwnProperty
+        // Steps 1-8 of elementGet to support hasOwnProperty
         /* steps 1-2 (not applicable) */
         /* step 3 */
         ArrayBufferObject buffer = getBuffer();
         /* step 4 */
-        if (buffer == null) {
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        /* step 5 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* steps 6-9 */
+        /* steps 5-8 */
         return index < getArrayLength();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
+    protected boolean elementHas(ExecutionContext cx, long index) {
+        assert index >= 0;
+        // 9.4.5.2 [[HasProperty]](P)
+        /* step 3.c.i */
+        ArrayBufferObject buffer = getBuffer();
+        /* step 3.c.ii */
+        if (IsDetachedBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
+        }
+        /* steps 3.c.iii-v */
+        // FIXME: spec bug - or: index < [[ArrayLength]] ? (bug 3619)
+        return true;
+    }
+
+    @Override
+    protected boolean elementHas(ExecutionContext cx, CanonicalNumericString numericString) {
+        // 9.4.5.2 [[HasProperty]](P)
+        /* step 3.c.i */
+        ArrayBufferObject buffer = getBuffer();
+        /* step 3.c.ii */
+        if (IsDetachedBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
+        }
+        /* steps 3.c.iii-v */
+        switch (numericString) {
+        case NegativeZero:
+        case NonInteger:
+            return false;
+        case NegativeInteger:
+        case PositiveInteger:
+            return true;
+        case None:
+        default:
+            throw new AssertionError();
+        }
+    }
+
     @Override
     protected Object elementGet(ExecutionContext cx, long index) {
         assert index >= 0;
@@ -103,32 +117,25 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         /* step 3 */
         ArrayBufferObject buffer = getBuffer();
         /* step 4 */
-        if (buffer == null) {
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        /* step 5 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* steps 6-9 */
+        /* steps 5-8 */
         if (index >= getArrayLength()) {
             return UNDEFINED;
         }
-        /* step 10 */
+        /* step 9 */
         long offset = getByteOffset();
-        /* steps 11, 14 */
+        /* steps 10, 13 */
         ElementType elementType = getElementType();
-        /* step 12 */
+        /* step 11 */
         int elementSize = elementType.size();
-        /* step 13 */
+        /* step 12 */
         long indexedPosition = (index * elementSize) + offset;
-        /* step 15 */
+        /* step 14 */
         return GetValueFromBuffer(buffer, indexedPosition, elementType);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected boolean elementSet(ExecutionContext cx, long index, Object value) {
         assert index >= 0;
@@ -138,28 +145,24 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         /* step 5 */
         ArrayBufferObject buffer = getBuffer();
         /* step 6 */
-        if (buffer == null) {
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        /* step 7 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* steps 8-11 */
+        /* steps 7-10 */
         if (index >= getArrayLength()) {
             return false;
         }
-        /* step 12 */
+        /* step 11 */
         long offset = getByteOffset();
-        /* steps 13, 16 */
+        /* steps 12, 15 */
         ElementType elementType = getElementType();
-        /* step 14 */
+        /* step 13 */
         int elementSize = elementType.size();
-        /* step 15 */
+        /* step 14 */
         long indexedPosition = (index * elementSize) + offset;
-        /* steps 17-18 */
+        /* steps 16-17 */
         SetValueInBuffer(buffer, indexedPosition, elementType, numValue);
-        /* step 19 */
+        /* step 18 */
         return true;
     }
 
@@ -178,7 +181,7 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
      *            the new array buffer object
      */
     public void setBuffer(ArrayBufferObject buffer) {
-        assert buffer != null && buffer.isInitialized() : "ArrayBufferObject not initialized";
+        assert buffer != null : "ArrayBufferObject not initialized";
         assert this.buffer == null : "TypedArrayObject already initialized";
         this.buffer = buffer;
     }

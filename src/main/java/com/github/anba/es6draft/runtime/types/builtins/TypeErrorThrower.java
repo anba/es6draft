@@ -34,7 +34,7 @@ public final class TypeErrorThrower extends BuiltinFunction {
         super(realm, ANONYMOUS, 0);
         setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
         // 'length' is non-configurable to ensure %ThrowTypeError% is not a communication channel
-        properties().put("length", new Property(0, false, false, false));
+        infallibleDefineOwnProperty("length", new Property(0, false, false, false));
         // [[Extensible]] slot is false
         setExtensible(false);
     }
@@ -56,12 +56,12 @@ public final class TypeErrorThrower extends BuiltinFunction {
     /**
      * 9.2.8.1 %ThrowTypeError% ( )
      * 
-     * @param cx
-     *            the execution context
+     * @param realm
+     *            the realm instance
      * @return the %ThrowTypeError% function object
      */
-    public static TypeErrorThrower createThrowTypeError(ExecutionContext cx) {
-        assert cx.getIntrinsic(Intrinsics.FunctionPrototype) != null : "%FunctionPrototype% not initialized";
-        return new TypeErrorThrower(cx.getRealm());
+    public static TypeErrorThrower createThrowTypeError(Realm realm) {
+        assert realm.getIntrinsic(Intrinsics.FunctionPrototype) != null : "%FunctionPrototype% not initialized";
+        return new TypeErrorThrower(realm);
     }
 }

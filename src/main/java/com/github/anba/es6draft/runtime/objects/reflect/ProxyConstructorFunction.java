@@ -21,8 +21,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.Ref;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
@@ -38,8 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ProxyObject;
  * <li>26.5.2 Properties of the Proxy Constructor Function
  * </ul>
  */
-public final class ProxyConstructorFunction extends BuiltinConstructor implements Initializable,
-        Creatable<ProxyObject> {
+public final class ProxyConstructorFunction extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Proxy constructor function.
      * 
@@ -51,8 +49,8 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -72,17 +70,12 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
      * 26.5.1.2 new Proxy ( target, handler )
      */
     @Override
-    public ProxyObject construct(ExecutionContext callerContext, Object... args) {
+    public ProxyObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
         Object target = argument(args, 0);
         Object handler = argument(args, 1);
         /* step 1 */
         return ProxyCreate(callerContext, target, handler);
-    }
-
-    @Override
-    public CreateAction<ProxyObject> createAction() {
-        // FIXME: spec bug - not defined
-        return null;
     }
 
     /**

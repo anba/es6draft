@@ -50,8 +50,8 @@ public final class PromisePrototype extends OrdinaryObject implements Initializa
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     /**

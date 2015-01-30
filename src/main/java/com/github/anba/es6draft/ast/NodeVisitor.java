@@ -178,6 +178,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(NewExpression node, V value);
 
+    R visit(NewTarget node, V value);
+
     R visit(NullLiteral node, V value);
 
     R visit(NumericLiteral node, V value);

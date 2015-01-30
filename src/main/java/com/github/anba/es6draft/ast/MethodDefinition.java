@@ -29,7 +29,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     private boolean syntheticNodes;
 
     public enum MethodType {
-        AsyncFunction, Function, Generator, Getter, Setter
+        AsyncFunction, Constructor, Function, Generator, Getter, Setter
     }
 
     public MethodDefinition(long beginPosition, long endPosition, FunctionScope scope,
@@ -124,6 +124,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         case Setter:
             return "set " + fname;
         case AsyncFunction:
+        case Constructor:
         case Function:
         case Generator:
         default:
@@ -152,6 +153,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         case Setter:
             return "set " + fname;
         case AsyncFunction:
+        case Constructor:
         case Function:
         case Generator:
         default:
@@ -212,6 +214,21 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     @Override
     public boolean isAsync() {
         return getType() == MethodType.AsyncFunction;
+    }
+
+    @Override
+    public boolean isConstructor() {
+        switch (getType()) {
+        case AsyncFunction:
+        case Constructor:
+        case Generator:
+            return true;
+        case Function:
+        case Getter:
+        case Setter:
+        default:
+            return false;
+        }
     }
 
     @Override

@@ -17,9 +17,9 @@ function create(c, f, ...args) {
   return c.call(o, ...args);
 }
 
-assertSame("anonymous", create(Function, () => {}).name);
-assertSame("asdf", create(Function, f => { Object.defineProperty(f, "name", {value: "asdf"}) }).name);
+// assertSame("anonymous", create(Function, () => {}).name);
+// assertSame("asdf", create(Function, f => { Object.defineProperty(f, "name", {value: "asdf"}) }).name);
 
 let GeneratorFunction = function*(){}.constructor;
-assertSame("anonymous", create(GeneratorFunction, () => {}).name);
-assertSame("asdf", create(GeneratorFunction, f => { Object.defineProperty(f, "name", {value: "asdf"}) }).name);
+// assertSame("anonymous", create(GeneratorFunction, () => {}).name);
+// assertSame("asdf", create(GeneratorFunction, f => { Object.defineProperty(f, "name", {value: "asdf"}) }).name);

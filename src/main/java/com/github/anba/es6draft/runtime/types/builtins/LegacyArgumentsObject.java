@@ -157,20 +157,29 @@ public final class LegacyArgumentsObject extends OrdinaryObject {
 
     @Override
     protected boolean has(ExecutionContext cx, long propertyKey) {
-        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
-        return ordinaryHasPropertyVirtual(cx, propertyKey);
+        if (hasOwnProperty(cx, propertyKey)) {
+            return true;
+        }
+        ScriptObject parent = getPrototypeOf(cx);
+        return parent != null && parent.hasProperty(cx, propertyKey);
     }
 
     @Override
     protected boolean has(ExecutionContext cx, String propertyKey) {
-        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
-        return ordinaryHasPropertyVirtual(cx, propertyKey);
+        if (hasOwnProperty(cx, propertyKey)) {
+            return true;
+        }
+        ScriptObject parent = getPrototypeOf(cx);
+        return parent != null && parent.hasProperty(cx, propertyKey);
     }
 
     @Override
     protected boolean has(ExecutionContext cx, Symbol propertyKey) {
-        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
-        return ordinaryHasPropertyVirtual(cx, propertyKey);
+        if (hasOwnProperty(cx, propertyKey)) {
+            return true;
+        }
+        ScriptObject parent = getPrototypeOf(cx);
+        return parent != null && parent.hasProperty(cx, propertyKey);
     }
 
     @Override
@@ -198,14 +207,14 @@ public final class LegacyArgumentsObject extends OrdinaryObject {
 
     @Override
     protected List<String> getEnumerableKeys(ExecutionContext cx) {
-        ArrayList<String> keys = new ArrayList<>();
+        ArrayList<String> keys = new ArrayList<>(arguments.length + 2);
         addArgumentIndices(keys);
         return keys;
     }
 
     @Override
     protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        ArrayList<Object> keys = new ArrayList<>();
+        ArrayList<Object> keys = new ArrayList<>(arguments.length + 2);
         addArgumentIndices(keys);
         return keys;
     }

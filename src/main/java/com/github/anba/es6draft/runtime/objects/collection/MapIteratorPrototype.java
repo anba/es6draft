@@ -50,8 +50,8 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     public enum MapIterationKind {
@@ -107,18 +107,14 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
         }
         MapObject map = (MapObject) obj;
         /* step 3 */
-        if (!map.isInitialized()) {
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        /* step 4 */
         MapIterator iterator = ObjectCreate(cx, Intrinsics.MapIteratorPrototype,
                 MapIteratorAllocator.INSTANCE);
-        /* steps 5-7 */
+        /* steps 4-6 */
         iterator.map = map;
         iterator.nextIndex = 0;
         iterator.iterationKind = kind;
         iterator.iterator = map.getMapData().iterator();
-        /* step 8 */
+        /* step 7 */
         return iterator;
     }
 

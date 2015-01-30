@@ -56,12 +56,13 @@ final class RuntimeInfoGenerator {
         static final MethodName RTI_newFunction = MethodName.findStatic(Types.RuntimeInfo,
                 "newFunction", Type.methodType(Types.RuntimeInfo$Function, Types.String,
                         Type.INT_TYPE, Type.INT_TYPE, Types.String, Type.INT_TYPE,
-                        Types.MethodHandle, Types.MethodHandle));
+                        Types.MethodHandle, Types.MethodHandle, Types.MethodHandle));
 
         static final MethodName RTI_newFunctionDebug = MethodName.findStatic(Types.RuntimeInfo,
                 "newFunction", Type.methodType(Types.RuntimeInfo$Function, Types.String,
                         Type.INT_TYPE, Type.INT_TYPE, Types.String, Type.INT_TYPE,
-                        Types.MethodHandle, Types.MethodHandle, Types.MethodHandle));
+                        Types.MethodHandle, Types.MethodHandle, Types.MethodHandle,
+                        Types.MethodHandle));
     }
 
     private final CodeGenerator codegen;
@@ -171,8 +172,14 @@ final class RuntimeInfoGenerator {
         mv.iconst(node.getHeaderSource().length());
         mv.handle(codegen.methodDesc(node, FunctionName.Code));
         mv.handle(codegen.methodDesc(node, FunctionName.Call));
+        if (node.isConstructor()) {
+            mv.handle(codegen.methodDesc(node, tailCall ? FunctionName.ConstructTailCall
+                    : FunctionName.Construct));
+        } else {
+            mv.anull();
+        }
         if (codegen.isEnabled(Compiler.Option.DebugInfo)) {
-            debugInfo(node);
+            debugInfo(node, tailCall);
             mv.handle(codegen.methodDesc(node, FunctionName.DebugInfo));
             mv.invoke(Methods.RTI_newFunctionDebug);
         } else {
@@ -225,7 +232,7 @@ final class RuntimeInfoGenerator {
         mv.end();
     }
 
-    private void debugInfo(FunctionNode node) {
+    private void debugInfo(FunctionNode node, boolean tailCall) {
         InstructionVisitor mv = new InstructionVisitor(codegen.newMethod(node,
                 FunctionName.DebugInfo));
         mv.begin();
@@ -237,6 +244,15 @@ final class RuntimeInfoGenerator {
         mv.tconst(callDesc.owner);
         mv.aconst(callDesc.name);
         mv.invoke(Methods.DebugInfo_addMethod);
+
+        if (node.isConstructor()) {
+            MethodName constructDesc = codegen.methodDesc(node,
+                    tailCall ? FunctionName.ConstructTailCall : FunctionName.Construct);
+            mv.dup();
+            mv.tconst(constructDesc.owner);
+            mv.aconst(constructDesc.name);
+            mv.invoke(Methods.DebugInfo_addMethod);
+        }
 
         MethodName initDesc = codegen.methodDesc(node, FunctionName.Init);
         mv.dup();

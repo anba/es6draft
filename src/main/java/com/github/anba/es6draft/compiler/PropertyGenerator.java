@@ -168,6 +168,7 @@ final class PropertyGenerator extends
             case AsyncFunction:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionAsync);
                 break;
+            case Constructor:
             case Function:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinition);
                 break;
@@ -193,6 +194,7 @@ final class PropertyGenerator extends
             case AsyncFunction:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionAsync_String);
                 break;
+            case Constructor:
             case Function:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinition_String);
                 break;

@@ -6,11 +6,12 @@
  */
 package com.github.anba.es6draft.runtime.objects.promise;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
+import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor.InitializePromise;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.OrdinaryCreateFromConstructor;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -73,27 +74,6 @@ public final class PromiseAbstractOperations {
                 : PromiseObjectAllocator.INSTANCE;
     }
 
-    /**
-     * <h2>25.4.1 Promise Abstract Operations</h2>
-     * <p>
-     * 25.4.1.3 AllocatePromise ( constructor )
-     * 
-     * @param cx
-     *            the execution context
-     * @param constructor
-     *            the constructor function
-     * @return the new promise object
-     */
-    public static PromiseObject AllocatePromise(ExecutionContext cx, Constructor constructor) {
-        /* step 1 */
-        PromiseObject obj = OrdinaryCreateFromConstructor(cx, constructor,
-                Intrinsics.PromisePrototype, GetPromiseAllocator(cx.getRealm()));
-        /* step 2 */
-        obj.setConstructor(constructor);
-        /* step 3 */
-        return obj;
-    }
-
     public static final class ResolvingFunctions {
         /** [[Resolve]] */
         private final PromiseResolveFunction resolve;
@@ -128,7 +108,7 @@ public final class PromiseAbstractOperations {
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
-     * 25.4.1.4 CreateResolvingFunctions ( promise )
+     * 25.4.1.3 CreateResolvingFunctions ( promise )
      * 
      * @param cx
      *            the execution context
@@ -152,7 +132,7 @@ public final class PromiseAbstractOperations {
     }
 
     /**
-     * 25.4.1.4.1 Promise Reject Functions
+     * 25.4.1.3.1 Promise Reject Functions
      */
     public static final class PromiseRejectFunction extends BuiltinFunction {
         /** [[Promise]] */
@@ -197,7 +177,7 @@ public final class PromiseAbstractOperations {
     }
 
     /**
-     * 25.4.1.4.2 Promise Resolve Functions
+     * 25.4.1.3.2 Promise Resolve Functions
      */
     public static final class PromiseResolveFunction extends BuiltinFunction {
         /** [[Promise]] */
@@ -236,7 +216,7 @@ public final class PromiseAbstractOperations {
                 return UNDEFINED;
             }
             /* step 6 */
-            if (SameValue(resolution, promise)) {
+            if (resolution == promise) { // SameValue
                 ScriptException selfResolutionError = newTypeError(calleeContext,
                         Messages.Key.PromiseSelfResolution);
                 RejectPromise(calleeContext, promise, selfResolutionError.getValue());
@@ -273,7 +253,7 @@ public final class PromiseAbstractOperations {
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
-     * 25.4.1.5 FulfillPromise (promise, value)
+     * 25.4.1.4 FulfillPromise (promise, value)
      * 
      * @param cx
      *            the execution context
@@ -290,7 +270,7 @@ public final class PromiseAbstractOperations {
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
-     * 25.4.1.6 NewPromiseCapability ( C )
+     * 25.4.1.5 NewPromiseCapability ( C )
      * 
      * @param cx
      *            the execution context
@@ -303,18 +283,14 @@ public final class PromiseAbstractOperations {
         if (!IsConstructor(c)) {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         }
-        Constructor constructor = (Constructor) c;
-        /* step 2 (not applicable) */
-        /* steps 3-4 */
-        ScriptObject promise = CreateFromConstructor(cx, constructor);
-        /* step 5 */
-        return CreatePromiseCapabilityRecord(cx, promise, constructor);
+        /* steps 2-11 */
+        return NewPromiseCapability(cx, (Constructor) c);
     }
 
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
-     * 25.4.1.6 NewPromiseCapability ( C )
+     * 25.4.1.5 NewPromiseCapability ( C )
      * 
      * @param cx
      *            the execution context
@@ -325,32 +301,11 @@ public final class PromiseAbstractOperations {
     public static PromiseCapability<ScriptObject> NewPromiseCapability(ExecutionContext cx,
             Constructor c) {
         /* steps 1-2 (not applicable) */
-        /* steps 3-4 */
-        ScriptObject promise = CreateFromConstructor(cx, c);
-        /* step 5 */
-        return CreatePromiseCapabilityRecord(cx, promise, c);
-    }
-
-    /**
-     * 25.4.1.6.1 CreatePromiseCapabilityRecord( promise, constructor )
-     * 
-     * @param <PROMISE>
-     *            the promise type
-     * @param cx
-     *            the execution context
-     * @param promise
-     *            the promise object
-     * @param constructor
-     *            the promise constructor function
-     * @return the new promise capability record
-     */
-    public static <PROMISE extends ScriptObject> PromiseCapability<PROMISE> CreatePromiseCapabilityRecord(
-            ExecutionContext cx, PROMISE promise, Constructor constructor) {
-        /* steps 1-2 (not applicable) */
-        /* steps 3-5 */
+        /* step 3 (moved) */
+        /* steps 4-5 */
         GetCapabilitiesExecutor executor = new GetCapabilitiesExecutor(cx.getRealm());
         /* steps 6-7 */
-        Object constructorResult = constructor.call(cx, promise, executor);
+        ScriptObject promise = c.construct(cx, c, executor);
         /* step 8 */
         Object resolve = executor.resolve.get();
         if (!IsCallable(resolve)) {
@@ -361,16 +316,12 @@ public final class PromiseAbstractOperations {
         if (!IsCallable(reject)) {
             throw newTypeError(cx, Messages.Key.NotCallable);
         }
-        /* step 10 */
-        if (Type.isObject(constructorResult) && !SameValue(promise, constructorResult)) {
-            throw newTypeError(cx, Messages.Key.PromiseConstructorSameObject);
-        }
-        /* steps 3, 11 */
+        /* steps 3, 10-11 */
         return new PromiseCapability<>(promise, (Callable) resolve, (Callable) reject);
     }
 
     /**
-     * 25.4.1.6.2 GetCapabilitiesExecutor Functions
+     * 25.4.1.5.1 GetCapabilitiesExecutor Functions
      */
     public static final class GetCapabilitiesExecutor extends BuiltinFunction {
         /** [[Resolve]] */
@@ -422,25 +373,21 @@ public final class PromiseAbstractOperations {
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
-     * 25.4.1.7 IsPromise ( x )
+     * 25.4.1.6 IsPromise ( x )
      * 
      * @param x
      *            the object
      * @return {@code true} if <var>x</var> is an initialized promise object
      */
     public static boolean IsPromise(Object x) {
-        /* steps 1-2 */
-        if (!(x instanceof PromiseObject)) {
-            return false;
-        }
-        /* steps 3-4 */
-        return ((PromiseObject) x).getState() != null;
+        /* steps 1-3 */
+        return x instanceof PromiseObject;
     }
 
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
-     * 25.4.1.8 RejectPromise (promise, reason)
+     * 25.4.1.7 RejectPromise (promise, reason)
      * 
      * @param cx
      *            the execution context
@@ -457,7 +404,7 @@ public final class PromiseAbstractOperations {
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
-     * 25.4.1.9 TriggerPromiseReactions ( reactions, argument )
+     * 25.4.1.8 TriggerPromiseReactions ( reactions, argument )
      * 
      * @param cx
      *            the execution context
@@ -569,11 +516,8 @@ public final class PromiseAbstractOperations {
      * @return the new promise object
      */
     public static PromiseObject PromiseNew(ExecutionContext cx, Callable executor) {
-        /* step 1 */
-        PromiseObject promise = AllocatePromise(cx,
-                (Constructor) cx.getIntrinsic(Intrinsics.Promise));
-        /* step 2 */
-        return InitializePromise(cx, promise, executor);
+        PromiseConstructor ctor = (PromiseConstructor) cx.getIntrinsic(Intrinsics.Promise);
+        return ctor.construct(cx, ctor, executor);
     }
 
     /**
@@ -583,13 +527,12 @@ public final class PromiseAbstractOperations {
      *            the execution context
      * @return the promise capability record
      */
+    @SuppressWarnings("unchecked")
     public static PromiseCapability<PromiseObject> PromiseBuiltinCapability(ExecutionContext cx) {
-        /* step 1 */
-        PromiseObject promise = AllocatePromise(cx,
-                (Constructor) cx.getIntrinsic(Intrinsics.Promise));
-        /* step 2 */
-        return CreatePromiseCapabilityRecord(cx, promise,
-                (Constructor) cx.getIntrinsic(Intrinsics.Promise));
+        PromiseConstructor constructor = (PromiseConstructor) cx.getIntrinsic(Intrinsics.Promise);
+        PromiseCapability<ScriptObject> capability = NewPromiseCapability(cx, constructor);
+        assert capability.getPromise() instanceof PromiseObject;
+        return (PromiseCapability<PromiseObject>) (PromiseCapability<?>) capability;
     }
 
     /**

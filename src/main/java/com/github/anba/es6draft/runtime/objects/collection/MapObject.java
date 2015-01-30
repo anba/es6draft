@@ -20,7 +20,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class MapObject extends OrdinaryObject {
     /** [[MapData]] */
-    private LinkedMap<Object, Object> mapData = null;
+    private final LinkedMap<Object, Object> mapData = new LinkedMapImpl<Object>();
 
     /**
      * Constructs a new Map object.
@@ -41,22 +41,5 @@ public final class MapObject extends OrdinaryObject {
      */
     public LinkedMap<Object, Object> getMapData() {
         return mapData;
-    }
-
-    /**
-     * Initializes this Map instance.
-     */
-    public void initialize() {
-        assert this.mapData == null : "Map already initialized";
-        this.mapData = new LinkedMapImpl<Object>();
-    }
-
-    /**
-     * Returns {@code true} if this Map instance is initialized.
-     * 
-     * @return {@code true} if this object is initialized
-     */
-    public boolean isInitialized() {
-        return mapData != null;
     }
 }

@@ -57,13 +57,13 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
     }
 
     @Override
-    public final void initialize(ExecutionContext cx) {
-        createProperties(cx, this, ValueProperties.class);
-        createProperties(cx, this, FunctionProperties.class);
-        createProperties(cx, this, ConstructorProperties.class);
-        createProperties(cx, this, OtherProperties.class);
-        createProperties(cx, this, SystemProperty.class);
-        createProperties(cx, this, AdditionalProperties.class);
+    public final void initialize(Realm realm) {
+        createProperties(realm, this, ValueProperties.class);
+        createProperties(realm, this, FunctionProperties.class);
+        createProperties(realm, this, ConstructorProperties.class);
+        createProperties(realm, this, OtherProperties.class);
+        createProperties(realm, this, SystemProperty.class);
+        createProperties(realm, this, AdditionalProperties.class);
     }
 
     /**

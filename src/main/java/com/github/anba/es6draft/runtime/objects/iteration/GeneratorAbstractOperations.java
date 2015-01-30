@@ -66,9 +66,8 @@ public final class GeneratorAbstractOperations {
         GeneratorObject gen = (GeneratorObject) generator;
         /* step 3 (not applicable) */
         /* steps 4-5 */
-        if (gen.getState() == null) {
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
+        // FIXME: spec bug - [[GeneratorState]] never undefined
+        assert gen.getState() != null;
         /* step 6 */
         return gen;
     }

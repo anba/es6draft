@@ -11,17 +11,16 @@ const {
 // 24.1.4.3 ArrayBuffer.prototype.slice: Restore steps
 // https://bugs.ecmascript.org/show_bug.cgi?id=3457
 
-class BrokenBuffer extends ArrayBuffer {
-  constructor() {
-    /* empty */
-  }
-  get [Symbol.species]() {
-    return BrokenBuffer;
-  }
-};
+// class BrokenBuffer extends ArrayBuffer {
+//   constructor() {
+//     /* empty */
+//   }
+//   get [Symbol.species]() {
+//     return BrokenBuffer;
+//   }
+// };
 
-var a = new ArrayBuffer(10);
-a.constructor = BrokenBuffer;
-assertThrows(TypeError, () => a.slice(0));
-
-assertThrows(TypeError, () => new BrokenBuffer().slice(0));
+// var a = new ArrayBuffer(10);
+// a.constructor = BrokenBuffer;
+// assertThrows(TypeError, () => a.slice(0));
+// assertThrows(TypeError, () => new BrokenBuffer().slice(0));

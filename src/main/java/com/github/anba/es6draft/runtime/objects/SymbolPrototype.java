@@ -42,12 +42,12 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     /**
-     * 19.4.3.3 SymbolDescriptiveString ( sym ) Abstract Operation
+     * 19.4.3.2.1 SymbolDescriptiveString ( sym ) Abstract Operation
      * 
      * @param sym
      *            the symbol value
@@ -128,7 +128,7 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
-            /* steps 1-4 */
+            /* steps 1-5 */
             return thisSymbolValue(cx, thisValue);
         }
 
@@ -146,7 +146,7 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
         @Function(name = "[Symbol.toPrimitive]", symbol = BuiltinSymbol.toPrimitive, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object toPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
-            /* steps 1-4 */
+            /* steps 1-5 */
             return thisSymbolValue(cx, thisValue);
         }
 

@@ -21,16 +21,19 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class SymbolObject extends OrdinaryObject {
     /** [[SymbolData]] */
-    private Symbol symbolData;
+    private final Symbol symbolData;
 
     /**
      * Constructs a new Symbol object.
      * 
      * @param realm
      *            the realm object
+     * @param symbolData
+     *            the symbol data
      */
-    public SymbolObject(Realm realm) {
+    public SymbolObject(Realm realm, Symbol symbolData) {
         super(realm);
+        this.symbolData = symbolData;
     }
 
     /**
@@ -39,19 +42,7 @@ public final class SymbolObject extends OrdinaryObject {
      * @return the symbol value
      */
     public Symbol getSymbolData() {
-        assert symbolData != null : "SymbolData not initialized";
         return symbolData;
-    }
-
-    /**
-     * [[SymbolData]]
-     * 
-     * @param symbolData
-     *            the new symbol value
-     */
-    public void setSymbolData(Symbol symbolData) {
-        assert this.symbolData == null : "SymbolData already initialized";
-        this.symbolData = symbolData;
     }
 
     /**
@@ -64,9 +55,8 @@ public final class SymbolObject extends OrdinaryObject {
      * @return the new symbol object
      */
     public static SymbolObject SymbolCreate(ExecutionContext cx, Symbol symbolData) {
-        SymbolObject obj = new SymbolObject(cx.getRealm());
+        SymbolObject obj = new SymbolObject(cx.getRealm(), symbolData);
         obj.setPrototype(cx.getIntrinsic(Intrinsics.SymbolPrototype));
-        obj.setSymbolData(symbolData);
         return obj;
     }
 }

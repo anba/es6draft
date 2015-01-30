@@ -20,8 +20,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -35,8 +33,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>23.3.2 Properties of the WeakMap Constructor
  * </ul>
  */
-public final class WeakMapConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<WeakMapObject> {
+public final class WeakMapConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new WeakMap constructor function.
      * 
@@ -48,8 +45,8 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -61,21 +58,25 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
      * 23.3.1.1 WeakMap ([ iterable ])
      */
     @Override
-    public WeakMapObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        /* step 1 */
+        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "WeakMap");
+    }
+
+    /**
+     * 23.3.1.1 WeakMap ([ iterable ])
+     */
+    @Override
+    public WeakMapObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object iterable = argument(args, 0);
 
-        /* steps 1-4 */
-        if (!Type.isObject(thisValue)) {
-            throw newTypeError(calleeContext, Messages.Key.NotObjectType);
-        }
-        if (!(thisValue instanceof WeakMapObject)) {
-            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
-        }
-        WeakMapObject map = (WeakMapObject) thisValue;
-        if (map.isInitialized()) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
+        /* step 1 (not applicable) */
+        /* steps 2-4 */
+        WeakMapObject map = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.WeakMapPrototype, WeakMapObjectAllocator.INSTANCE);
 
         /* steps 5-7 */
         ScriptObject iter;
@@ -91,19 +92,11 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
             iter = GetIterator(calleeContext, iterable);
         }
 
-        /* steps 8-9 */
-        if (map.isInitialized()) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
-
-        /* step 10 */
-        map.initialize();
-
-        /* step 11 */
+        /* step 8 */
         if (iter == null) {
             return map;
         }
-        /* step 12 */
+        /* step 9 */
         for (;;) {
             ScriptObject next = IteratorStep(calleeContext, iter);
             if (next == null) {
@@ -120,17 +113,13 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
         }
     }
 
-    /**
-     * 23.3.1.2 new WeakMap (...argumentsList)
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
+    private static final class WeakMapObjectAllocator implements ObjectAllocator<WeakMapObject> {
+        static final ObjectAllocator<WeakMapObject> INSTANCE = new WeakMapObjectAllocator();
 
-    @Override
-    public CreateAction<WeakMapObject> createAction() {
-        return WeakMapCreate.INSTANCE;
+        @Override
+        public WeakMapObject newInstance(Realm realm) {
+            return new WeakMapObject(realm);
+        }
     }
 
     /**
@@ -156,24 +145,5 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.WeakMapPrototype;
-    }
-
-    private static final class WeakMapObjectAllocator implements ObjectAllocator<WeakMapObject> {
-        static final ObjectAllocator<WeakMapObject> INSTANCE = new WeakMapObjectAllocator();
-
-        @Override
-        public WeakMapObject newInstance(Realm realm) {
-            return new WeakMapObject(realm);
-        }
-    }
-
-    private static class WeakMapCreate implements CreateAction<WeakMapObject> {
-        static final CreateAction<WeakMapObject> INSTANCE = new WeakMapCreate();
-
-        @Override
-        public WeakMapObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.WeakMapPrototype,
-                    WeakMapObjectAllocator.INSTANCE);
-        }
     }
 }

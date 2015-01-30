@@ -23,13 +23,7 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.DebugInfo;
-import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
-import com.github.anba.es6draft.runtime.internal.ReturnValue;
-import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.internal.ScriptIterator;
-import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
+import com.github.anba.es6draft.runtime.internal.*;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ModuleSemantics;
@@ -39,21 +33,14 @@ import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.objects.text.RegExpConstructor;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Undefined;
-import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
-import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
-import com.github.anba.es6draft.runtime.types.builtins.LegacyArgumentsObject;
-import com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.github.anba.es6draft.runtime.types.builtins.*;
 
 /**
  *
@@ -131,6 +118,7 @@ final class Types {
 
     // runtime.types
     static final Type Callable = Type.of(Callable.class);
+    static final Type Constructor = Type.of(Constructor.class);
     static final Type Intrinsics = Type.of(Intrinsics.class);
     static final Type Null = Type.of(Null.class);
     static final Type Reference = Type.of(Reference.class);
@@ -144,15 +132,20 @@ final class Types {
     static final Type ArgumentsObject = Type.of(ArgumentsObject.class);
     static final Type ArrayObject = Type.of(ArrayObject.class);
     static final Type FunctionObject = Type.of(FunctionObject.class);
+    static final Type FunctionObject$ConstructorKind = Type
+            .of(FunctionObject.ConstructorKind.class);
     static final Type LegacyArgumentsObject = Type.of(LegacyArgumentsObject.class);
     static final Type ModuleNamespaceObject = Type.of(ModuleNamespaceObject.class);
     static final Type OrdinaryAsyncFunction = Type.of(OrdinaryAsyncFunction.class);
-    static final Type OrdinaryGenerator = Type.of(OrdinaryGenerator.class);
+    static final Type OrdinaryConstructorFunction = Type.of(OrdinaryConstructorFunction.class);
     static final Type OrdinaryFunction = Type.of(OrdinaryFunction.class);
+    static final Type OrdinaryGenerator = Type.of(OrdinaryGenerator.class);
     static final Type OrdinaryObject = Type.of(OrdinaryObject.class);
 
     // runtime.internal
     static final Type DebugInfo = Type.of(DebugInfo.class);
+    static final Type Errors = Type.of(Errors.class);
+    static final Type Messages$Key = Type.of(Messages.Key.class);
     static final Type ResumptionPoint = Type.of(ResumptionPoint.class);
     static final Type ReturnValue = Type.of(ReturnValue.class);
     static final Type RuntimeInfo = Type.of(RuntimeInfo.class);
@@ -161,4 +154,5 @@ final class Types {
     static final Type RuntimeInfo$ScriptBody = Type.of(RuntimeInfo.ScriptBody.class);
     static final Type ScriptException = Type.of(ScriptException.class);
     static final Type ScriptIterator = Type.of(ScriptIterator.class);
+    static final Type TailCallInvocation = Type.of(TailCallInvocation.class);
 }

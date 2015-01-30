@@ -25,7 +25,7 @@ import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -224,12 +224,16 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         static final MethodName ScriptRuntime_EvaluateConstructorMethod = MethodName.findStatic(
                 Types.ScriptRuntime, "EvaluateConstructorMethod", Type.methodType(
-                        Types.OrdinaryFunction, Types.ScriptObject, Types.OrdinaryObject,
-                        Types.RuntimeInfo$Function, Types.ExecutionContext));
+                        Types.OrdinaryConstructorFunction, Types.ScriptObject,
+                        Types.OrdinaryObject, Types.RuntimeInfo$Function, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_getClassProto = MethodName.findStatic(
                 Types.ScriptRuntime, "getClassProto",
                 Type.methodType(Types.ScriptObject_, Types.Object, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_getClassProto_Null = MethodName.findStatic(
+                Types.ScriptRuntime, "getClassProto",
+                Type.methodType(Types.ScriptObject_, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_getDefaultClassProto = MethodName.findStatic(
                 Types.ScriptRuntime, "getDefaultClassProto",
@@ -243,6 +247,9 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 "yield", Type.methodType(Types.Object, Types.Object, Types.ExecutionContext));
 
         // class: Type
+        static final MethodName Type_isNull = MethodName.findStatic(Types._Type, "isNull",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+
         static final MethodName Type_isUndefinedOrNull = MethodName.findStatic(Types._Type,
                 "isUndefinedOrNull", Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
     }
@@ -1262,7 +1269,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.enterClassDefinition();
 
         // step 1 (not applicable)
-        // step 2
+        // steps 2-4
         if (className != null) {
             // stack: [] -> [classScope]
             newDeclarativeEnvironment(mv);
@@ -1279,64 +1286,83 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.enterScope(def);
         }
 
-        // steps 3-5
-        // stack: [] -> [<proto,ctor>]
-        if (def.getHeritage() == null) {
+        // steps 5-7
+        // stack: [] -> [superCls?, <constructorParent,proto>]
+        Expression classHeritage = def.getHeritage();
+        if (classHeritage == null) {
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getDefaultClassProto);
+        } else if (classHeritage instanceof NullLiteral) {
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_getClassProto_Null);
         } else {
-            expressionBoxedValue(def.getHeritage(), mv);
+            expressionBoxedValue(classHeritage, mv);
+            if (ConstructorMethod(def) == null) {
+                mv.dup();
+            }
             mv.loadExecutionContext();
             mv.lineInfo(def);
             mv.invoke(Methods.ScriptRuntime_getClassProto);
         }
 
-        // stack: [<proto,ctor>] -> [ctor, proto]
+        // stack: [superCls?, <constructorParent,proto>] -> [superCls?, <constructorParent,proto>]
+        Variable<OrdinaryObject> proto = mv.newScratchVariable(OrdinaryObject.class);
         mv.dup();
-        mv.iconst(1);
-        mv.aload(Types.ScriptObject);
-        mv.swap();
-        mv.iconst(0);
-        mv.aload(Types.ScriptObject);
+        mv.aload(1, Types.ScriptObject);
         mv.checkcast(Types.OrdinaryObject);
+        mv.store(proto);
 
-        // stack: [ctor, proto] -> [proto, ctor, proto]
-        mv.dupX1();
+        // stack: [superCls?, <constructorParent,proto>] -> [superCls?, constructorParent]
+        mv.aload(0, Types.ScriptObject);
 
-        // steps 6-8
+        // steps 8-10
+        // stack: [superCls?, constructorParent] -> [constructorParent, proto, <rti>]
         MethodDefinition constructor = ConstructorMethod(def);
         if (constructor != null) {
+            mv.load(proto);
             codegen.compile(constructor);
             // Runtime Semantics: Evaluation -> MethodDefinition
             mv.invoke(codegen.methodDesc(constructor, FunctionName.RTI));
         } else {
-            // step 8
-            if (def.getHeritage() != null) {
+            // step 10
+            if (classHeritage != null && !(classHeritage instanceof NullLiteral)) {
+                // stack: [superCls, constructorParent] -> [constructorParent, superCls]
+                mv.swap();
+                // stack: [constructorParent, superCls] -> [constructorParent, proto, <rti>]
+                Jump superClassIsNull = new Jump(), after = new Jump();
+                mv.invoke(Methods.Type_isNull);
+                mv.ifeq(superClassIsNull);
+                {
+                    mv.load(proto);
+                    mv.invoke(Methods.ScriptRuntime_CreateDefaultEmptyConstructor);
+                    mv.goTo(after);
+                }
+                mv.mark(superClassIsNull);
+                mv.load(proto);
                 mv.invoke(Methods.ScriptRuntime_CreateDefaultConstructor);
+                mv.mark(after);
             } else {
+                mv.load(proto);
                 mv.invoke(Methods.ScriptRuntime_CreateDefaultEmptyConstructor);
             }
         }
 
-        // step 9 (empty)
-        // step 10 (not applicable)
-        // steps 11-15
-        // stack: [proto, ctor, proto, <rti>] -> [proto, F]
+        // step 11 (not applicable)
+        // steps 12-17
+        // stack: [constructorParent, proto, <rti>] -> [F]
         mv.loadExecutionContext();
         mv.lineInfo(def);
         mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
 
-        Variable<OrdinaryFunction> F = mv.newScratchVariable(OrdinaryFunction.class);
-        Variable<OrdinaryObject> proto = mv.newScratchVariable(OrdinaryObject.class);
-
-        // stack: [proto, F] -> []
+        // stack: [F] -> []
+        Variable<OrdinaryConstructorFunction> F = mv
+                .newScratchVariable(OrdinaryConstructorFunction.class);
         mv.store(F);
-        mv.store(proto);
 
-        // steps 16-18
-        ClassPropertyEvaluation(codegen, def, def.getProperties(), F, proto, mv);
+        // steps 18-20
+        ClassPropertyEvaluation(codegen, def.getProperties(), F, proto, mv);
 
-        // step 20 (moved)
+        // step 22 (moved)
         if (className != null) {
             // stack: [] -> [envRec, name, F]
             getEnvironmentRecord(mv);
@@ -1347,7 +1373,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.EnvironmentRecord_initializeBinding);
         }
 
-        // step 19
+        // step 21
         if (className != null) {
             mv.exitScope();
             // restore previous lexical environment
@@ -1360,7 +1386,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.freeVariable(proto);
         mv.freeVariable(F);
 
-        // step 21 (return F)
+        // step 23 (return F)
         mv.exitClassDefinition();
     }
 

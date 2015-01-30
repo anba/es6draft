@@ -14,10 +14,10 @@ import org.junit.runners.parameterized.TestWithParameters;
 /**
  *
  */
-public class ParallelizedRunnerFactory implements ParametersRunnerFactory {
+public class ParameterizedRunnerFactory implements ParametersRunnerFactory {
     @Override
     public Runner createRunnerForTestWithParameters(TestWithParameters test)
             throws InitializationError {
-        return new ParallelizedRunner(test);
+        return new ParameterizedRunner(test);
     }
 }

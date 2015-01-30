@@ -22,9 +22,9 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 /**
  * <h1>7 Abstract Operations</h1><br>
  * <h2>7.4 Operations on Iterator Objects</h2><br>
- * <h3>7.4.10 CreateCompoundIterator ( iterator1, iterator2 )</h3>
+ * <h3>7.4.9 CreateCompoundIterator ( iterator1, iterator2 )</h3>
  * <ul>
- * <li>7.4.10.1 CompoundIterator next( )
+ * <li>7.4.9.1 CompoundIterator next( )
  * </ul>
  */
 public final class CompoundIteratorNext extends BuiltinFunction {

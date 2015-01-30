@@ -8,14 +8,12 @@ package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
-import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -44,40 +42,29 @@ public final class NativeErrorPrototype extends OrdinaryObject implements Initia
         this.type = type;
     }
 
-    /**
-     * Package private accessor for {@link ErrorObject#toString()}
-     * 
-     * @param propertyKey
-     *            the property key
-     * @return the property record or {@code null} if none found
-     */
-    Property getOwnProperty(String propertyKey) {
-        return ordinaryGetOwnProperty(propertyKey);
-    }
-
     @Override
-    public void initialize(ExecutionContext cx) {
+    public void initialize(Realm realm) {
         switch (type) {
         case EvalError:
-            createProperties(cx, this, EvalErrorPrototypeProperties.class);
+            createProperties(realm, this, EvalErrorPrototypeProperties.class);
             break;
         case RangeError:
-            createProperties(cx, this, RangeErrorPrototypeProperties.class);
+            createProperties(realm, this, RangeErrorPrototypeProperties.class);
             break;
         case ReferenceError:
-            createProperties(cx, this, ReferenceErrorPrototypeProperties.class);
+            createProperties(realm, this, ReferenceErrorPrototypeProperties.class);
             break;
         case SyntaxError:
-            createProperties(cx, this, SyntaxErrorPrototypeProperties.class);
+            createProperties(realm, this, SyntaxErrorPrototypeProperties.class);
             break;
         case TypeError:
-            createProperties(cx, this, TypeErrorPrototypeProperties.class);
+            createProperties(realm, this, TypeErrorPrototypeProperties.class);
             break;
         case URIError:
-            createProperties(cx, this, URIErrorPrototypeProperties.class);
+            createProperties(realm, this, URIErrorPrototypeProperties.class);
             break;
         case InternalError:
-            createProperties(cx, this, InternalErrorPrototypeProperties.class);
+            createProperties(realm, this, InternalErrorPrototypeProperties.class);
             break;
         default:
             throw new AssertionError();

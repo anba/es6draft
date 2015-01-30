@@ -6,17 +6,15 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
-
-import java.util.ArrayList;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompoundList;
+import com.github.anba.es6draft.runtime.internal.StringPropertyKeyList;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
@@ -28,26 +26,24 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  */
 public final class StringObject extends OrdinaryObject {
     /** [[StringData]] */
-    private CharSequence stringData = null;
+    private final CharSequence stringData;
 
     /**
      * Constructs a new String object.
      * 
      * @param realm
      *            the realm object
+     * @param prototype
+     *            the prototype object
+     * @param stringData
+     *            the string data
      */
-    public StringObject(Realm realm) {
+    public StringObject(Realm realm, ScriptObject prototype, CharSequence stringData) {
         super(realm);
-    }
-
-    /**
-     * Returns the [[StringData]] internal data property. If the property is undefined, the empty
-     * string is returned.
-     * 
-     * @return the string data or the empty string
-     */
-    private CharSequence getStringDataOrEmpty() {
-        return stringData != null ? stringData : "";
+        this.stringData = stringData;
+        setPrototype(prototype);
+        infallibleDefineOwnProperty("length",
+                new Property(stringData.length(), false, false, false));
     }
 
     /**
@@ -59,26 +55,9 @@ public final class StringObject extends OrdinaryObject {
         return stringData;
     }
 
-    /**
-     * [[StringData]]
-     * 
-     * @param stringData
-     *            the new string value
-     */
-    public void setStringData(CharSequence stringData) {
-        assert this.stringData == null;
-        this.stringData = stringData;
-    }
-
     @Override
     public boolean hasSpecialIndexedProperties() {
         return true;
-    }
-
-    @Override
-    protected boolean has(ExecutionContext cx, long propertyKey) {
-        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
-        return ordinaryHasPropertyVirtual(cx, propertyKey);
     }
 
     /**
@@ -86,11 +65,7 @@ public final class StringObject extends OrdinaryObject {
      */
     @Override
     protected boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
-        boolean has = super.hasOwnProperty(cx, propertyKey);
-        if (has) {
-            return true;
-        }
-        return propertyKey < getStringDataOrEmpty().length();
+        return super.hasOwnProperty(cx, propertyKey) || propertyKey < getStringData().length();
     }
 
     /**
@@ -105,98 +80,81 @@ public final class StringObject extends OrdinaryObject {
         if (desc != null) {
             return desc;
         }
-        /* steps 4-9 (not applicable) */
-        /* step 10 */
-        CharSequence str = getStringDataOrEmpty();
-        /* step 11 */
+        /* step 4 */
+        return StringGetIndexProperty(this, propertyKey);
+    }
+
+    /**
+     * 9.4.3.1.1 StringGetIndexProperty (S, P)
+     * 
+     * @param s
+     *            the string object
+     * @param propertyKey
+     *            the property key
+     * @return the property descriptor or {@code null}
+     */
+    private static Property StringGetIndexProperty(StringObject s, long propertyKey) {
+        /* steps 1-6 (not applicable) */
+        assert propertyKey >= 0;
+        /* step 7 */
+        CharSequence str = s.getStringData();
+        /* step 8 */
         int len = str.length();
-        /* step 12 */
+        /* step 9 */
         if (len <= propertyKey) {
             return null;
         }
         int index = (int) propertyKey;
-        /* step 13 */
+        /* step 10 */
         String resultStr = String.valueOf(str.charAt(index));
-        /* step 14 */
+        /* step 11 */
         return new Property(resultStr, false, true, false);
     }
 
     /**
-     * 9.4.3.2 [[Enumerate]] ()
+     * 9.4.3.2 [[HasProperty]](P)
      */
     @Override
-    protected List<String> getEnumerableKeys(ExecutionContext cx) {
-        /* step 1 */
-        ArrayList<String> keys = new ArrayList<>();
-        /* steps 2-4 */
-        addStringIndices(keys);
-        /* steps 5-6 */
-        if (!indexedProperties().isEmpty()) {
-            keys.addAll(indexedProperties().keys(getStringDataOrEmpty().length(),
-                    0x1F_FFFF_FFFF_FFFFL));
+    protected boolean has(ExecutionContext cx, long propertyKey) {
+        // FIXME: spec bug - don't traverse proto chain for own indexed properties!
+        boolean hasOrdinary = ordinaryHasOwnProperty(propertyKey);
+        if (hasOrdinary) {
+            return true;
         }
-        if (!properties().isEmpty()) {
-            keys.addAll(properties().keySet());
-        }
-        /* step 7 */
-        return keys;
+        return propertyKey < getStringData().length();
     }
 
     /**
-     * 9.4.3.3 [[OwnPropertyKeys]] ()
+     * 9.4.3.3 [[Enumerate]] ()
+     */
+    @Override
+    protected List<String> getEnumerableKeys(ExecutionContext cx) {
+        /* steps 1-7 */
+        return new CompoundList<>(new StringPropertyKeyList(getStringData().length()),
+                super.getEnumerableKeys(cx));
+    }
+
+    /**
+     * 9.4.3.4 [[OwnPropertyKeys]] ()
      */
     @Override
     protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        /* step 1 */
-        ArrayList<Object> ownKeys = new ArrayList<>();
-        /* steps 2-4 */
-        addStringIndices(ownKeys);
-        /* step 5 */
-        if (!indexedProperties().isEmpty()) {
-            ownKeys.addAll(indexedProperties().keys(getStringDataOrEmpty().length(),
-                    0x1F_FFFF_FFFF_FFFFL));
-        }
-        /* step 6 */
-        if (!properties().isEmpty()) {
-            ownKeys.addAll(properties().keySet());
-        }
-        /* step 7 */
-        if (!symbolProperties().isEmpty()) {
-            ownKeys.addAll(symbolProperties().keySet());
-        }
-        /* step 8 */
-        return ownKeys;
+        /* steps 1-8 */
+        return new CompoundList<>(new StringPropertyKeyList(getStringData().length()),
+                super.getOwnPropertyKeys(cx));
     }
 
     @Override
     protected Enumerability isEnumerableOwnProperty(String key) {
         int index = Strings.toStringIndex(key);
-        if (0 <= index && index < getStringDataOrEmpty().length() && !ordinaryHasOwnProperty(index)) {
+        if (0 <= index && index < getStringData().length()) {
             return Enumerability.Enumerable;
         }
         return super.isEnumerableOwnProperty(key);
     }
 
     /**
-     * 9.4.3.5 StringCreate Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param prototype
-     *            the prototype object
-     * @return the new string object
-     */
-    public static StringObject StringCreate(ExecutionContext cx, ScriptObject prototype) {
-        /* steps 1-5, 7 (implicit) */
-        StringObject obj = new StringObject(cx.getRealm());
-        /* step 6 */
-        obj.setPrototype(prototype);
-        /* step 8 */
-        return obj;
-    }
-
-    /**
-     * Custom helper function.
+     * 9.4.3.6 StringCreate Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -205,22 +163,24 @@ public final class StringObject extends OrdinaryObject {
      * @return the new string object
      */
     public static StringObject StringCreate(ExecutionContext cx, CharSequence stringData) {
-        StringObject obj = StringCreate(cx, cx.getIntrinsic(Intrinsics.StringPrototype));
-        DefinePropertyOrThrow(cx, obj, "length", new PropertyDescriptor(stringData.length(), false,
-                false, false));
-        obj.setStringData(stringData);
-        return obj;
+        return StringCreate(cx, cx.getIntrinsic(Intrinsics.StringPrototype), stringData);
     }
 
     /**
-     * Append string indices to {@code keys} collection.
+     * 9.4.3.6 StringCreate Abstract Operation
      * 
-     * @param keys
-     *            the property keys
+     * @param cx
+     *            the execution context
+     * @param prototype
+     *            the prototype object
+     * @param stringData
+     *            the string value
+     * @return the new string object
      */
-    private void addStringIndices(ArrayList<? super String> keys) {
-        for (int i = 0, length = getStringDataOrEmpty().length(); i < length; ++i) {
-            keys.add(Integer.toString(i));
-        }
+    public static StringObject StringCreate(ExecutionContext cx, ScriptObject prototype,
+            CharSequence stringData) {
+        /* step 1 (not applicable) */
+        /* steps 2-9 */
+        return new StringObject(cx.getRealm(), prototype, stringData);
     }
 }

@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertBuiltinFunction, assertThrows, assertInstanceOf, assertFalse
+  assertBuiltinFunction, assertThrows, assertInstanceOf, assertFalse, assertTrue
 } = Assert;
 
 
@@ -20,27 +20,6 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
   }
 }
 
-// .then() called with value where IsPromise(value) = false, value is a Promise Object
-{
-  // IsPromise() returns false if the argument is an uninitialized promise object
-  let uninitPromise = new class extends Promise{ constructor(){ /* no super */ } };
-  let onFulfilled = () => {};
-  let onRejected = () => {};
-
-  // Test with and without arguments
-  assertThrows(TypeError, () => uninitPromise.then());
-  assertThrows(TypeError, () => uninitPromise.then(onFulfilled, onRejected));
-  assertThrows(TypeError, () => uninitPromise.then(0, 0));
-
-  // Test .constructor property is not accessed before IsPromise() check
-  class ConstructorAccessed extends Error {}
-  let uninitPromiseWithConstructor = new class extends Promise{ constructor(){ /* no super */ } };
-  Object.defineProperty(uninitPromiseWithConstructor, "constructor", {
-    get() { throw new ConstructorAccessed }, configurable: true
-  });
-  assertThrows(TypeError, () => uninitPromiseWithConstructor.then());
-}
-
 // Accesses .constructor property
 {
   class ConstructorAccessed extends Error {}
@@ -52,7 +31,10 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
 
 // .constructor property is not a Constructor object
 {
-  for (let constructor of [null, void 0, 0, ""]) {
+  // undefined .constructor defaults to intrinsic %Promise%
+  Object.assign(new Promise(() => {}), {constructor: void 0}).then();
+
+  for (let constructor of [null, 0, ""]) {
     let promise = Object.assign(new Promise(() => {}), {constructor});
     assertThrows(TypeError, () => promise.then());
   }
@@ -69,16 +51,25 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
   }
 }
 
-// Throws TypeError if constructor returns a different object
+// Does not throw TypeError if constructor returns a different object
 {
+  let thenCalled = false;
   let promise = new Promise(() => {});
   function Constructor(executor) {
     executor(() => {}, () => {});
-    return {};
+    return {
+      then() {
+        assertFalse(thenCalled);
+        thenCalled = true;
+      }
+    };
   }
   Constructor[Symbol.species] = Constructor;
   promise.constructor = Constructor;
-  assertThrows(TypeError, () => promise.then());
+  let thenPromise = promise.then();
+  assertFalse(thenCalled);
+  thenPromise.then();
+  assertTrue(thenCalled);
 }
 
 // Throws TypeError if executor is called multiple times (1)

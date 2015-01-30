@@ -34,10 +34,10 @@ const {
     }
   }
   new class Derived extends Base {
-    constructor() { new super }
+    constructor() { /* call super to initialize this */ super(); new super }
   }
   assertSame(0, inner);
-  assertSame(1, outer);
+  assertSame(2, outer);
 }
 
 {
@@ -49,10 +49,10 @@ const {
     }
   }
   new class Derived extends Base {
-    constructor() { new super() }
+    constructor() { /* call super to initialize this */ super(); new super() }
   }
   assertSame(0, inner);
-  assertSame(1, outer);
+  assertSame(2, outer);
 }
 
 {
@@ -64,8 +64,8 @@ const {
     }
   }
   new class Derived extends Base {
-    constructor() { (new super)() }
+    constructor() { /* call super to initialize this */ super(); (new super)() }
   }
   assertSame(1, inner);
-  assertSame(1, outer);
+  assertSame(2, outer);
 }

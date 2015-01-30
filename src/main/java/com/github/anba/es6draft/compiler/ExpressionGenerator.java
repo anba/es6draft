@@ -187,9 +187,19 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Types.ScriptRuntime, "EvaluateConstructorTailCall",
                 Type.methodType(Types.Object, Types.Object, Types.Object_, Types.ExecutionContext));
 
+        static final MethodName ScriptRuntime_EvaluateSuperConstructorCall = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluateSuperConstructorCall", Type.methodType(
+                        Types.ScriptObject, Types.Constructor, Types.Constructor, Types.Object_,
+                        Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluateSuperConstructorTailCall = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluateSuperConstructorTailCall", Type
+                        .methodType(Types.Object, Types.Constructor, Types.Constructor,
+                                Types.Object_, Types.ExecutionContext));
+
         static final MethodName ScriptRuntime_EvaluateFunctionExpression = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluateFunctionExpression", Type.methodType(
-                        Types.OrdinaryFunction, Types.RuntimeInfo$Function, Types.ExecutionContext));
+                        Types.OrdinaryConstructorFunction, Types.RuntimeInfo$Function, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluateGeneratorComprehension = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluateGeneratorComprehension", Type.methodType(
@@ -250,9 +260,25 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Types.ScriptRuntime, "getPropertyValue", Type.methodType(Types.Object,
                         Types.Object, Type.DOUBLE_TYPE, Types.ExecutionContext));
 
+        static final MethodName ScriptRuntime_BindThisValue = MethodName.findStatic(
+                Types.ScriptRuntime, "BindThisValue",
+                Type.methodType(Type.VOID_TYPE, Types.ScriptObject, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_GetNewTargetOrNull = MethodName.findStatic(
+                Types.ScriptRuntime, "GetNewTargetOrNull",
+                Type.methodType(Types.Object, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_GetNewTarget = MethodName.findStatic(
+                Types.ScriptRuntime, "GetNewTarget",
+                Type.methodType(Types.Constructor, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_GetNewTargetAndThisUninitialized = MethodName
+                .findStatic(Types.ScriptRuntime, "GetNewTargetAndThisUninitialized",
+                        Type.methodType(Types.Constructor, Types.ExecutionContext));
+
         static final MethodName ScriptRuntime_GetSuperConstructor = MethodName.findStatic(
                 Types.ScriptRuntime, "GetSuperConstructor",
-                Type.methodType(Types.Callable, Types.ExecutionContext));
+                Type.methodType(Types.Constructor, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_getSuperPropertyReferenceValue = MethodName
                 .findStatic(Types.ScriptRuntime, "getSuperPropertyReferenceValue", Type.methodType(
@@ -2571,6 +2597,16 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
+     * 12.3.8.1 Runtime Semantics: Evaluation
+     */
+    @Override
+    public ValType visit(NewTarget node, ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_GetNewTargetOrNull);
+        return ValType.Any;
+    }
+
+    /**
      * 12.2.3.1 Runtime Semantics: Evaluation
      */
     @Override
@@ -2679,20 +2715,33 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(SuperCallExpression node, ExpressionVisitor mv) {
-        /* steps 1-2 */
-        // stack: [] -> [func]
+        /* steps 1-3 */
+        // stack: [] -> [newTarget]
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_GetNewTargetAndThisUninitialized);
+
+        /* steps 4-5 */
+        // stack: [newTarget] -> [newTarget, constructor]
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_GetSuperConstructor);
 
-        /* step 3 */
-        // stack: [func] -> [func, cx, thisValue]
-        mv.loadExecutionContext();
-        mv.dup();
-        mv.invoke(Methods.ExecutionContext_resolveThisBinding);
+        /* steps 6-7 */
+        // stack: [newTarget, constructor] -> [newTarget, constructor, argList]
+        ArgumentListEvaluation(node.getArguments(), mv);
 
-        /* steps 4-6 */
-        // stack: [func, cx, thisValue] -> [result]
-        return EvaluateDirectCall(node, node.getArguments(), mv);
+        /* steps 8-9 */
+        // stack: [newTarget, constructor, argList] -> [result]
+        mv.lineInfo(node);
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_EvaluateSuperConstructorCall);
+
+        /* steps 10-11 */
+        // stack: [result] -> [result]
+        mv.dup();
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_BindThisValue);
+
+        return ValType.Object;
     }
 
     /**
@@ -2734,19 +2783,23 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     public ValType visit(SuperNewExpression node, ExpressionVisitor mv) {
         /* steps 1-2 */
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_GetSuperConstructor);
+        mv.invoke(Methods.ScriptRuntime_GetNewTarget);
 
         /* steps 3-4 */
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_GetSuperConstructor);
+
+        /* steps 5-6 */
         ArgumentListEvaluation(node.getArguments(), mv);
 
-        /* steps 5-11 */
+        /* steps 7-13 */
         mv.lineInfo(node);
         mv.loadExecutionContext();
         if (isTailCall(node, mv)) {
-            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorTailCall);
+            mv.invoke(Methods.ScriptRuntime_EvaluateSuperConstructorTailCall);
             return ValType.Any;
         }
-        mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);
+        mv.invoke(Methods.ScriptRuntime_EvaluateSuperConstructorCall);
         return ValType.Object;
     }
 

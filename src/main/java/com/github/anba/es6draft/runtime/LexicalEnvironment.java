@@ -9,10 +9,10 @@ package com.github.anba.es6draft.runtime;
 import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1><br>
@@ -167,31 +167,56 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.4 NewFunctionEnvironment (F, T) Abstract Operation
+     * 8.1.2.4 NewFunctionEnvironment (F) Abstract Operation
      * 
      * @param callerContext
      *            the caller execution context
      * @param f
      *            the function object
-     * @param t
-     *            the function this-binding
+     * @param newTarget
+     *            the newTarget constructor object or {@code null}
+     * @param thisValue
+     *            the function this-binding or {@code null}
      * @return the new function environment
      */
     public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(
-            ExecutionContext callerContext, FunctionObject f, Object t) {
-        /* step 1 */
-        assert t == null || f.getThisMode() != ThisMode.Lexical;
-        assert t != null || f.getThisMode() == ThisMode.Lexical;
-        /* step 2 (note) */
-        /* step 7 */
+            ExecutionContext callerContext, FunctionObject f, Constructor newTarget,
+            Object thisValue) {
+        /* step 6 */
         if (f.isNeedsSuper() && f.getHomeObject() == null) {
             throw newReferenceError(callerContext, Messages.Key.MissingSuperBinding);
         }
         LexicalEnvironment<?> e = f.getEnvironment();
-        /* steps 4-8 */
-        FunctionEnvironmentRecord envRec = new FunctionEnvironmentRecord(e.cx, f, t,
-                f.getHomeObject());
-        /* steps 3, 9-10 */
+        /* steps 2-8 */
+        FunctionEnvironmentRecord envRec = new FunctionEnvironmentRecord(e.cx, f, newTarget,
+                thisValue);
+        /* steps 1, 9-10 */
+        LexicalEnvironment<FunctionEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
+        /* step 11 */
+        return env;
+    }
+
+    /**
+     * 8.1.2.4 NewFunctionEnvironment (F) Abstract Operation
+     * 
+     * @param callerContext
+     *            the caller execution context
+     * @param f
+     *            the function object
+     * @param newTarget
+     *            the newTarget constructor object
+     * @return the new function environment
+     */
+    public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(
+            ExecutionContext callerContext, FunctionObject f, Constructor newTarget) {
+        /* step 6 */
+        if (f.isNeedsSuper() && f.getHomeObject() == null) {
+            throw newReferenceError(callerContext, Messages.Key.MissingSuperBinding);
+        }
+        LexicalEnvironment<?> e = f.getEnvironment();
+        /* steps 2-8 */
+        FunctionEnvironmentRecord envRec = new FunctionEnvironmentRecord(e.cx, f, newTarget);
+        /* steps 1, 9-10 */
         LexicalEnvironment<FunctionEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
         /* step 11 */
         return env;

@@ -51,7 +51,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
-import com.github.anba.es6draft.util.ParallelizedRunnerFactory;
+import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.Resources;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
@@ -62,7 +62,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  * The standard test262 test suite
  */
 @RunWith(Parallelized.class)
-@UseParametersRunnerFactory(ParallelizedRunnerFactory.class)
+@UseParametersRunnerFactory(ParameterizedRunnerFactory.class)
 @TestConfiguration(name = "test262.test.web", file = "resource:/test-configuration.properties")
 public final class Test262Web {
     private static final boolean USE_SHARED_EXECUTOR = false;

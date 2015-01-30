@@ -178,6 +178,8 @@ public interface VoidNodeVisitor<V> {
 
     void visit(NewExpression node, V value);
 
+    void visit(NewTarget node, V value);
+
     void visit(NullLiteral node, V value);
 
     void visit(NumericLiteral node, V value);

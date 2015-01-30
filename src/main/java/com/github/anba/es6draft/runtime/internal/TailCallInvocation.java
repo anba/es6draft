@@ -19,77 +19,115 @@ import com.github.anba.es6draft.runtime.types.Type;
 /**
  * Object representing a tail-call invocation.
  */
-public final class TailCallInvocation {
-    private enum InvokeType {
-        Call, Construct
+public abstract class TailCallInvocation {
+    private TailCallInvocation() {
     }
 
-    private final InvokeType type;
-    private final Callable function;
-    private final Object thisValue;
-    private final Object[] argumentsList;
-    private final ScriptObject object;
-
-    /**
-     * Constructs a new tail-call object.
-     * 
-     * @param function
-     *            the target callable
-     * @param thisValue
-     *            the this-value for the function
-     * @param argumentsList
-     *            the function arguments
-     */
-    TailCallInvocation(Callable function, Object thisValue, Object[] argumentsList) {
-        this.type = InvokeType.Call;
-        this.function = function;
-        this.thisValue = thisValue;
-        this.argumentsList = argumentsList;
-        this.object = null;
-    }
-
-    private TailCallInvocation(Callable function, Object thisValue, Object[] argumentsList,
-            ScriptObject object) {
-        this.type = InvokeType.Construct;
-        this.function = function;
-        this.thisValue = thisValue;
-        this.argumentsList = argumentsList;
-        this.object = object;
-    }
-
-    private Object apply(ExecutionContext callerContext) throws Throwable {
-        Object result;
-        if (thisValue == null) {
-            // cf. ScriptRuntime#EvaluateConstructorTailCall
-            result = ((Constructor) function).tailConstruct(callerContext, argumentsList);
-        } else {
-            result = function.tailCall(callerContext, thisValue, argumentsList);
-        }
-        // cf. OrdinaryFunction#OrdinaryConstructTailCall, steps 9-10
-        if (type == InvokeType.Construct && !(result instanceof TailCallInvocation)
-                && !Type.isObject(result)) {
-            result = object;
-        }
-        return result;
-    }
+    protected abstract Object apply(ExecutionContext callerContext) throws Throwable;
 
     /**
      * Converts this tail-call invocation into a construct tail-call invocation.
      * 
      * @param object
-     *            the constructor object
+     *            the constructor object or {@code null} if called from derived constructor
      * @return the tail call trampoline object
      */
-    public TailCallInvocation toConstructTailCall(ScriptObject object) {
-        if (this.type == InvokeType.Construct) {
+    // Called from generated code
+    public abstract TailCallInvocation toConstructTailCall(ScriptObject object);
+
+    public static TailCallInvocation newTailCallInvocation(Callable function, Object thisValue,
+            Object[] argumentsList) {
+        return new CallTailCallInvocation(function, thisValue, argumentsList);
+    }
+
+    public static TailCallInvocation newTailCallInvocation(Constructor constructor,
+            Constructor newTarget, Object[] argumentsList) {
+        return new ConstructTailCallInvocation(constructor, newTarget, argumentsList);
+    }
+
+    private static final class CallTailCallInvocation extends TailCallInvocation {
+        private final Callable function;
+        private final Object thisValue;
+        private final Object[] argumentsList;
+
+        CallTailCallInvocation(Callable function, Object thisValue, Object[] argumentsList) {
+            this.function = function;
+            this.thisValue = thisValue;
+            this.argumentsList = argumentsList;
+        }
+
+        @Override
+        protected Object apply(ExecutionContext callerContext) throws Throwable {
+            return function.tailCall(callerContext, thisValue, argumentsList);
+        }
+
+        @Override
+        public TailCallInvocation toConstructTailCall(ScriptObject object) {
+            return new ConstructResultTailCallInvocation(this, object);
+        }
+    }
+
+    private static final class ConstructTailCallInvocation extends TailCallInvocation {
+        private final Constructor constructor;
+        private final Constructor newTarget;
+        private final Object[] argumentsList;
+
+        ConstructTailCallInvocation(Constructor constructor, Constructor newTarget,
+                Object[] argumentsList) {
+            this.constructor = constructor;
+            this.newTarget = newTarget;
+            this.argumentsList = argumentsList;
+        }
+
+        @Override
+        protected Object apply(ExecutionContext callerContext) throws Throwable {
+            return constructor.tailConstruct(callerContext, newTarget, argumentsList);
+        }
+
+        @Override
+        public TailCallInvocation toConstructTailCall(ScriptObject object) {
+            return new ConstructResultTailCallInvocation(this, object);
+        }
+    }
+
+    private static final class ConstructResultTailCallInvocation extends TailCallInvocation {
+        private final TailCallInvocation invocation;
+        private final ScriptObject object;
+
+        private ConstructResultTailCallInvocation(TailCallInvocation invocation, ScriptObject object) {
+            this.invocation = invocation;
+            this.object = object;
+        }
+
+        @Override
+        protected Object apply(ExecutionContext callerContext) throws Throwable {
+            Object result = invocation.apply(callerContext);
+            if (result instanceof TailCallInvocation) {
+                return ((TailCallInvocation) result).toConstructTailCall(object);
+            }
+            if (!Type.isObject(result)) {
+                result = object;
+                if (result == null) {
+                    throw Errors.newTypeError(callerContext,
+                            Messages.Key.NotObjectTypeFromConstructor);
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public TailCallInvocation toConstructTailCall(ScriptObject object) {
             return this;
         }
-        return new TailCallInvocation(function, thisValue, argumentsList, object);
     }
 
     private static final MethodHandle tailCallTrampolineMH = MethodLookup.findStatic(
             MethodHandles.lookup(), "tailCallTrampoline",
             MethodType.methodType(Object.class, Object.class, ExecutionContext.class));
+
+    private static final MethodHandle tailConstructTrampolineMH = MethodLookup.findStatic(
+            MethodHandles.lookup(), "tailConstructTrampoline",
+            MethodType.methodType(ScriptObject.class, Object.class, ExecutionContext.class));
 
     /**
      * (Object, ExecutionContext) {@literal ->} Object.
@@ -100,6 +138,15 @@ public final class TailCallInvocation {
         return tailCallTrampolineMH;
     }
 
+    /**
+     * (Object, ExecutionContext) {@literal ->} ScriptObject.
+     * 
+     * @return the tail call method handler
+     */
+    public static MethodHandle getTailConstructHandler() {
+        return tailConstructTrampolineMH;
+    }
+
     @SuppressWarnings("unused")
     private static Object tailCallTrampoline(Object result, ExecutionContext callerContext)
             throws Throwable {
@@ -108,5 +155,15 @@ public final class TailCallInvocation {
             result = ((TailCallInvocation) result).apply(callerContext);
         }
         return result;
+    }
+
+    @SuppressWarnings("unused")
+    private static ScriptObject tailConstructTrampoline(Object result,
+            ExecutionContext callerContext) throws Throwable {
+        // tail-call with trampoline
+        while (result instanceof TailCallInvocation) {
+            result = ((TailCallInvocation) result).apply(callerContext);
+        }
+        return (ScriptObject) result;
     }
 }

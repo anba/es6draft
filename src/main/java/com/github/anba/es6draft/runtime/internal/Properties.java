@@ -32,6 +32,7 @@ import java.util.Objects;
 import com.github.anba.es6draft.repl.global.StopExecutionException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.NativeConstructor;
@@ -477,16 +478,16 @@ public final class Properties {
      * Sets the {@link Prototype} and creates own properties for {@link Value}, {@link Function} and
      * {@link Accessor} fields.
      * 
-     * @param cx
-     *            the execution context
+     * @param realm
+     *            the realm instance
      * @param target
      *            the object instance
      * @param holder
      *            the class which holds the properties
      */
-    public static void createProperties(ExecutionContext cx, OrdinaryObject target, Class<?> holder) {
+    public static void createProperties(Realm realm, OrdinaryObject target, Class<?> holder) {
         assert holder.getName().startsWith(INTERNAL_PACKAGE);
-        createInternalProperties(cx, target, holder);
+        createInternalProperties(realm, target, holder);
     }
 
     /**
@@ -517,8 +518,6 @@ public final class Properties {
      *            the execution context
      * @param className
      *            the class-name
-     * @param createAction
-     *            the create action operation for this class
      * @param constructorProperties
      *            the class which holds the constructor properties
      * @param prototypeProperties
@@ -526,12 +525,10 @@ public final class Properties {
      * @return the new native script class
      */
     public static Constructor createClass(ExecutionContext cx, String className,
-            CreateAction<?> createAction, Class<?> constructorProperties,
-            Class<?> prototypeProperties) {
+            Class<?> constructorProperties, Class<?> prototypeProperties) {
         assert !constructorProperties.getName().startsWith(INTERNAL_PACKAGE);
         assert !prototypeProperties.getName().startsWith(INTERNAL_PACKAGE);
-        return createExternalClass(cx, className, createAction, constructorProperties,
-                prototypeProperties);
+        return createExternalClass(cx, className, constructorProperties, prototypeProperties);
     }
 
     private static final String INTERNAL_PACKAGE = "com.github.anba.es6draft.runtime.objects.";
@@ -804,8 +801,7 @@ public final class Properties {
     }
 
     private static Constructor createExternalClass(ExecutionContext cx, String className,
-            CreateAction<?> createAction, Class<?> constructorProperties,
-            Class<?> prototypeProperties) {
+            Class<?> constructorProperties, Class<?> prototypeProperties) {
         ObjectLayout ctorLayout = externalClassLayouts.get(constructorProperties);
         ObjectLayout protoLayout = externalClassLayouts.get(prototypeProperties);
         Converter converter = new Converter(cx);
@@ -815,8 +811,8 @@ public final class Properties {
         ScriptObject constructorParent = objects[1];
         assert constructorParent == cx.getIntrinsic(Intrinsics.FunctionPrototype);
 
-        OrdinaryObject constructor = createConstructor(cx, className, createAction, proto,
-                constructorParent, converter, protoLayout);
+        OrdinaryObject constructor = createConstructor(cx, className, proto, constructorParent,
+                converter, protoLayout);
         assert constructor instanceof Constructor;
         if (ctorLayout.functions != null) {
             createExternalFunctions(cx, constructor, ctorLayout, converter);
@@ -834,23 +830,25 @@ public final class Properties {
     }
 
     private static OrdinaryObject createConstructor(ExecutionContext cx, String className,
-            CreateAction<?> createAction, OrdinaryObject proto, ScriptObject constructorParent,
-            Converter converter, ObjectLayout layout) {
+            OrdinaryObject proto, ScriptObject constructorParent, Converter converter,
+            ObjectLayout layout) {
         Entry<Function, MethodHandle> constructorEntry = findConstructor(layout);
         if (constructorEntry != null) {
             // User supplied method, perform manual ClassDefinitionEvaluation for constructors
             Function function = constructorEntry.getKey();
             MethodHandle unreflect = constructorEntry.getValue();
-            MethodHandle mh = getStaticMethodHandle(cx, converter, unreflect);
+            MethodHandle callMethod = getConstructorStaticMethodHandle(cx, converter, unreflect,
+                    MethodKind.Call);
+            MethodHandle constructMethod = getConstructorStaticMethodHandle(cx, converter,
+                    unreflect, MethodKind.Construct);
             NativeConstructor constructor = new NativeConstructor(cx.getRealm(), className,
-                    function.arity(), createAction, mh);
+                    function.arity(), callMethod, constructMethod);
             constructor.defineOwnProperty(cx, "prototype", new PropertyDescriptor(proto, false,
                     false, false));
             proto.defineOwnProperty(cx, "constructor", new PropertyDescriptor(constructor, true,
                     false, true));
             return constructor;
         }
-        // TODO: Support create action when no user defined constructor is present
         // Create default constructor
         RuntimeInfo.Function fd = ScriptRuntime.CreateDefaultEmptyConstructor();
         OrdinaryFunction constructor = ScriptRuntime.EvaluateConstructorMethod(constructorParent,
@@ -928,7 +926,7 @@ public final class Properties {
         BuiltinSymbol symbol = accessor.symbol();
         Attributes attributes = accessor.attributes();
         String functionName = accessorName(type, name, symbol);
-        int arity = (type == Accessor.Type.Getter ? 0 : 1);
+        int arity = accessorArity(type);
         NativeFunction fun = new NativeFunction(cx.getRealm(), functionName, arity, mh);
 
         PropertyDescriptor existing;
@@ -1104,8 +1102,22 @@ public final class Properties {
         return handle;
     }
 
+    private enum MethodKind {
+        Default, Call, Construct
+    }
+
     private static MethodHandle getStaticMethodHandle(ExecutionContext cx, Converter converter,
             MethodHandle unreflect) {
+        return getStaticMethodHandle(cx, converter, unreflect, MethodKind.Default);
+    }
+
+    private static MethodHandle getConstructorStaticMethodHandle(ExecutionContext cx,
+            Converter converter, MethodHandle unreflect, MethodKind methodKind) {
+        return getStaticMethodHandle(cx, converter, unreflect, methodKind);
+    }
+
+    private static MethodHandle getStaticMethodHandle(ExecutionContext cx, Converter converter,
+            MethodHandle unreflect, MethodKind methodKind) {
         // var-args collector flag is not preserved when applying method handle combinators
         boolean varargs = unreflect.isVarargsCollector();
         MethodHandle handle = unreflect;
@@ -1113,7 +1125,15 @@ public final class Properties {
         final int fixedArguments = callerContext ? 2 : 1;
 
         handle = bindContext(handle, cx);
-        handle = convertThis(handle, converter);
+        if (methodKind == MethodKind.Default) {
+            handle = convertThis(handle, converter);
+        } else if (methodKind == MethodKind.Call) {
+            handle = MethodHandles.insertArguments(handle, fixedArguments, (Constructor) null);
+            handle = convertThis(handle, converter);
+        } else {
+            assert methodKind == MethodKind.Construct;
+            handle = MethodHandles.insertArguments(handle, fixedArguments + 1, (Object) null);
+        }
         handle = convertArgumentsAndReturn(handle, fixedArguments, varargs, converter);
         handle = catchExceptions(handle, converter);
         handle = toCanonical(handle, fixedArguments, varargs, null);
@@ -1121,11 +1141,19 @@ public final class Properties {
             handle = MethodHandles.dropArguments(handle, 0, ExecutionContext.class);
         }
 
-        assert handle.type().parameterCount() == 3;
-        assert handle.type().parameterType(0) == ExecutionContext.class;
-        assert handle.type().parameterType(1) == Object.class;
-        assert handle.type().parameterType(2) == Object[].class;
-        assert handle.type().returnType() == Object.class;
+        if (methodKind != MethodKind.Construct) {
+            assert handle.type().parameterCount() == 3;
+            assert handle.type().parameterType(0) == ExecutionContext.class;
+            assert handle.type().parameterType(1) == Object.class;
+            assert handle.type().parameterType(2) == Object[].class;
+            assert handle.type().returnType() == Object.class;
+        } else {
+            assert handle.type().parameterCount() == 3;
+            assert handle.type().parameterType(0) == ExecutionContext.class;
+            assert handle.type().parameterType(1) == Constructor.class;
+            assert handle.type().parameterType(2) == Object[].class;
+            assert handle.type().returnType() == Object.class;
+        }
 
         return handle;
     }
@@ -1351,29 +1379,28 @@ public final class Properties {
         }
     }
 
-    private static void createInternalProperties(ExecutionContext cx, OrdinaryObject target,
-            Class<?> holder) {
+    private static void createInternalProperties(Realm realm, OrdinaryObject target, Class<?> holder) {
         CompactLayout layout = internalLayouts.get(holder);
-        if (layout.option != null && !cx.getRealm().isEnabled(layout.option)) {
+        if (layout.option != null && !realm.isEnabled(layout.option)) {
             // return if extension is not enabled
             return;
         }
         if (layout.prototype != CompactLayout.EMPTY) {
-            createPrototype(cx, target, layout.prototype);
+            createPrototype(realm, target, layout.prototype);
         }
         for (PropertyLayout property : layout.properties) {
             switch (property.tag()) {
             case Value:
-                createValue(cx, target, (ValueLayout) property);
+                createValue(realm, target, (ValueLayout) property);
                 break;
             case Function:
-                createFunction(cx, target, (FunctionLayout) property);
+                createFunction(realm, target, (FunctionLayout) property);
                 break;
             case Accessor:
-                createAccessor(cx, target, (AccessorLayout) property);
+                createAccessor(realm, target, (AccessorLayout) property);
                 break;
             case Alias:
-                createAliasFunction(cx, target, (AliasFunctionLayout) property);
+                createAliasFunction(realm, target, (AliasFunctionLayout) property);
                 break;
             default:
                 throw new AssertionError();
@@ -1381,59 +1408,69 @@ public final class Properties {
         }
     }
 
-    private static void createPrototype(ExecutionContext cx, OrdinaryObject target, Object rawValue) {
-        Object value = resolveValue(cx, rawValue);
+    private static void createPrototype(Realm realm, OrdinaryObject target, Object rawValue) {
+        Object value = resolveValue(realm, rawValue);
         assert value == null || value instanceof ScriptObject;
         target.setPrototype((ScriptObject) value);
     }
 
-    private static void createValue(ExecutionContext cx, OrdinaryObject target, ValueLayout layout) {
-        Object value = resolveValue(cx, layout.rawValue);
-        defineProperty(cx, target, layout, valueProperty(layout, value));
+    private static void createValue(Realm realm, OrdinaryObject target, ValueLayout layout) {
+        Object value = resolveValue(realm, layout.rawValue);
+        defineProperty(target, layout, valueProperty(layout, value));
     }
 
-    private static void createFunction(ExecutionContext cx, OrdinaryObject target,
-            FunctionLayout layout) {
-        MethodHandle mh = MethodHandles.insertArguments(layout.methodHandle, 0, cx);
+    private static void createFunction(Realm realm, OrdinaryObject target, FunctionLayout layout) {
+        MethodHandle mh = MethodHandles.insertArguments(layout.methodHandle, 0,
+                realm.defaultContext());
         BuiltinFunction fun;
         if (layout.isTailCall()) {
-            fun = new NativeTailCallFunction(cx.getRealm(), layout.name, layout.arity, mh);
+            fun = new NativeTailCallFunction(realm, layout.name, layout.arity, mh);
         } else {
-            fun = new NativeFunction(cx.getRealm(), layout.name, layout.arity, layout.nativeId, mh);
+            fun = new NativeFunction(realm, layout.name, layout.arity, layout.nativeId, mh);
         }
-        defineProperty(cx, target, layout, valueProperty(layout, fun));
+        defineProperty(target, layout, valueProperty(layout, fun));
     }
 
-    private static void createAccessor(ExecutionContext cx, OrdinaryObject target,
-            AccessorLayout layout) {
-        MethodHandle mh = MethodHandles.insertArguments(layout.methodHandle, 0, cx);
-        int arity = (layout.type == Accessor.Type.Getter ? 0 : 1);
-        NativeFunction fun = new NativeFunction(cx.getRealm(), layout.accessorName, arity,
-                layout.nativeId, mh);
-        defineProperty(cx, target, layout, accessorDescriptor(layout, fun));
+    private static void createAccessor(Realm realm, OrdinaryObject target, AccessorLayout layout) {
+        MethodHandle mh = MethodHandles.insertArguments(layout.methodHandle, 0,
+                realm.defaultContext());
+        int arity = accessorArity(layout.type);
+        NativeFunction fun = new NativeFunction(realm, layout.accessorName, arity, layout.nativeId,
+                mh);
+        Property accessorProperty = lookupOwnProperty(target, layout);
+        if (accessorProperty == null) {
+            defineProperty(target, layout, accessorProperty(layout, fun));
+        } else {
+            assert accessorProperty.isAccessorDescriptor();
+            assert accessorProperty.isConfigurable() == layout.configurable();
+            assert accessorProperty.isEnumerable() == layout.enumerable();
+            assert (layout.type == Accessor.Type.Getter ? accessorProperty.getGetter()
+                    : accessorProperty.getSetter()) == null;
+            accessorProperty.apply(accessorPropertyDescriptor(layout, fun));
+        }
     }
 
-    private static void createAliasFunction(ExecutionContext cx, OrdinaryObject target,
+    private static void createAliasFunction(Realm realm, OrdinaryObject target,
             AliasFunctionLayout layout) {
         Object propertyKey = layout.propertyKey;
         Property fun;
         if (propertyKey instanceof String) {
-            fun = target.getOwnProperty(cx, (String) propertyKey);
+            fun = target.lookupOwnProperty((String) propertyKey);
         } else {
-            fun = target.getOwnProperty(cx, ((BuiltinSymbol) propertyKey).get());
+            fun = target.lookupOwnProperty(((BuiltinSymbol) propertyKey).get());
         }
         assert fun != null;
-        defineProperty(cx, target, layout, valueDescriptor(layout, fun.getValue()));
+        defineProperty(target, layout, valueProperty(layout, fun.getValue()));
     }
 
-    private static Object resolveValue(ExecutionContext cx, Object value) {
+    private static Object resolveValue(Realm realm, Object value) {
         Object resolvedValue;
         if (value instanceof Intrinsics) {
-            resolvedValue = cx.getIntrinsic((Intrinsics) value);
+            resolvedValue = realm.getIntrinsic((Intrinsics) value);
             assert resolvedValue != null : "intrinsic not defined: " + value;
         } else if (value instanceof MethodHandle) {
             try {
-                resolvedValue = (Object) ((MethodHandle) value).invokeExact(cx);
+                resolvedValue = (Object) ((MethodHandle) value).invokeExact(realm.defaultContext());
             } catch (RuntimeException | Error e) {
                 throw e;
             } catch (Throwable e) {
@@ -1463,21 +1500,20 @@ public final class Properties {
         return defaults;
     }
 
-    private static void defineProperty(ExecutionContext cx, OrdinaryObject target,
-            PropertyLayout layout, PropertyDescriptor desc) {
+    private static void defineProperty(OrdinaryObject target, PropertyLayout layout,
+            Property property) {
         if (layout.symbol == null) {
-            target.defineOwnProperty(cx, layout.name, desc);
+            target.infallibleDefineOwnProperty(layout.name, property);
         } else {
-            target.defineOwnProperty(cx, layout.symbol, desc);
+            target.infallibleDefineOwnProperty(layout.symbol, property);
         }
     }
 
-    private static void defineProperty(ExecutionContext cx, OrdinaryObject target,
-            PropertyLayout layout, Property property) {
+    private static Property lookupOwnProperty(OrdinaryObject target, PropertyLayout layout) {
         if (layout.symbol == null) {
-            target.addPropertyUnchecked(layout.name, property);
+            return target.lookupOwnProperty(layout.name);
         } else {
-            target.addPropertyUnchecked(layout.symbol, property);
+            return target.lookupOwnProperty(layout.symbol);
         }
     }
 
@@ -1501,26 +1537,16 @@ public final class Properties {
         }
     }
 
-    private static PropertyDescriptor accessorDescriptor(AccessorLayout layout,
-            NativeFunction accessor) {
-        PropertyDescriptor desc = new PropertyDescriptor();
-        desc.setEnumerable(layout.enumerable());
-        desc.setConfigurable(layout.configurable());
-        if (layout.type == Accessor.Type.Getter) {
-            desc.setGetter(accessor);
-        } else {
-            desc.setSetter(accessor);
-        }
-        return desc;
-    }
-
-    private static PropertyDescriptor valueDescriptor(PropertyLayout layout, Object value) {
-        return new PropertyDescriptor(value, layout.writable(), layout.enumerable(),
-                layout.configurable());
-    }
-
     private static Property valueProperty(PropertyLayout layout, Object value) {
         return new Property(value, layout.writable(), layout.enumerable(), layout.configurable());
+    }
+
+    private static Property accessorProperty(AccessorLayout layout, NativeFunction accessor) {
+        if (layout.type == Accessor.Type.Getter) {
+            return new Property(accessor, null, layout.enumerable(), layout.configurable());
+        } else {
+            return new Property(null, accessor, layout.enumerable(), layout.configurable());
+        }
     }
 
     private static PropertyDescriptor propertyDescriptor(Object value, Attributes attrs) {
@@ -1533,6 +1559,19 @@ public final class Properties {
         return new PropertyDescriptor(getter, setter, attrs.enumerable(), attrs.configurable());
     }
 
+    private static PropertyDescriptor accessorPropertyDescriptor(AccessorLayout layout,
+            NativeFunction accessor) {
+        PropertyDescriptor descriptor = new PropertyDescriptor();
+        descriptor.setEnumerable(layout.enumerable());
+        descriptor.setConfigurable(layout.configurable());
+        if (layout.type == Accessor.Type.Getter) {
+            descriptor.setGetter(accessor);
+        } else {
+            descriptor.setSetter(accessor);
+        }
+        return descriptor;
+    }
+
     private static String accessorName(Accessor.Type type, String name, BuiltinSymbol symbol) {
         return symbol == BuiltinSymbol.NONE ? (type == Accessor.Type.Getter ? "get " : "set ")
                 + name : name;
@@ -1540,5 +1579,9 @@ public final class Properties {
 
     private static String accessorName(Accessor.Type type, String name, Symbol symbol) {
         return symbol == null ? (type == Accessor.Type.Getter ? "get " : "set ") + name : name;
+    }
+
+    private static int accessorArity(Accessor.Type type) {
+        return type == Accessor.Type.Getter ? 0 : 1;
     }
 }

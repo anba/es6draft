@@ -46,21 +46,11 @@ public final class RegExpObject extends OrdinaryObject {
     }
 
     /**
-     * Returns {@code true} if this RegExp object is initialized.
-     * 
-     * @return {@code true} if the object is initialized
-     */
-    protected boolean isInitialized() {
-        return regExpMatcher != null;
-    }
-
-    /**
      * [[OriginalSource]]
      * 
      * @return the regular expression source
      */
     public String getOriginalSource() {
-        assert originalSource != null;
         return originalSource;
     }
 
@@ -70,7 +60,6 @@ public final class RegExpObject extends OrdinaryObject {
      * @return the regular expression flags
      */
     public String getOriginalFlags() {
-        assert originalFlags != null;
         return originalFlags;
     }
 
@@ -80,7 +69,6 @@ public final class RegExpObject extends OrdinaryObject {
      * @return the regular expression matcher object
      */
     public RegExpMatcher getRegExpMatcher() {
-        assert regExpMatcher != null;
         return regExpMatcher;
     }
 

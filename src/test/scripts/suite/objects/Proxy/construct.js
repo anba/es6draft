@@ -5,15 +5,14 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertConstructor, assertNotConstructor,
+  assertConstructor,
 } = Assert;
 
 // [[Construct]] is assigned to ExoticProxy objects if the [[ProxyTarget]]
-// has [[Construct]] at initialisation time
+// has [[Construct]] at initialization time
 {
   class Fn extends Function {
     constructor(...args) {
-      this.preProxy = new Proxy(this, {});
       // [[Construct]] was assigned when allocated
       super(...args);
       this.postProxy = new Proxy(this, {});
@@ -21,6 +20,5 @@ const {
   }
 
   let fn = new Fn("");
-  assertConstructor(fn.preProxy);
   assertConstructor(fn.postProxy);
 }

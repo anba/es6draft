@@ -8,19 +8,23 @@ package com.github.anba.es6draft.runtime.internal;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.*;
+import static com.github.anba.es6draft.runtime.internal.TailCallInvocation.newTailCallInvocation;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ResolveExport;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorYield;
+import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject.CreateUnmappedArgumentsObject;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction.AsyncFunctionCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction.ConstructorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeMethod;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.SetFunctionName;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.OrdinaryCreateFromConstructor;
 import static java.util.Arrays.asList;
 
 import java.lang.invoke.CallSite;
@@ -52,14 +56,9 @@ import com.github.anba.es6draft.runtime.objects.ArrayPrototype;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
-import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.*;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ConstructorKind;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
-import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * Runtime support methods
@@ -202,10 +201,11 @@ public final class ScriptRuntime {
     public static void resolveExportOrThrow(ExecutionContext cx,
             Map<String, ModuleRecord> moduleSet, String moduleName, String exportName)
             throws ResolutionException {
-        /* steps 3.a-3.b */
-        ModuleExport resolution = ResolveExport(moduleSet, moduleName, exportName,
-                new HashMap<String, Set<String>>());
-        /* step 3.c */
+        ModuleRecord module = moduleSet.get(moduleName);
+        /* steps 2.a-2.b */
+        ModuleExport resolution = ResolveExport(module, exportName,
+                new HashMap<ModuleRecord, Set<String>>());
+        /* step 2.c */
         if (resolution == null) {
             throw new ResolutionException(Messages.Key.ModulesUnresolvedExport, exportName);
         }
@@ -227,10 +227,11 @@ public final class ScriptRuntime {
     public static ModuleExport resolveImportOrThrow(ExecutionContext cx,
             Map<String, ModuleRecord> moduleSet, String moduleName, String importName)
             throws ResolutionException {
-        /* steps 8.b.i-8.b.ii */
-        ModuleExport resolution = ResolveExport(moduleSet, moduleName, importName,
-                new HashMap<String, Set<String>>());
-        /* step 8.b.iii */
+        ModuleRecord module = moduleSet.get(moduleName);
+        /* steps 7.b.i-7.b.ii */
+        ModuleExport resolution = ResolveExport(module, importName,
+                new HashMap<ModuleRecord, Set<String>>());
+        /* step 7.b.iii */
         if (resolution == null) {
             throw new ResolutionException(Messages.Key.ModulesUnresolvedImport, importName);
         }
@@ -935,7 +936,7 @@ public final class ScriptRuntime {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         }
         /* steps 5/7/8 */
-        return ((Constructor) constructor).construct(cx, args);
+        return ((Constructor) constructor).construct(cx, (Constructor) constructor, args);
     }
 
     /**
@@ -965,7 +966,7 @@ public final class ScriptRuntime {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         }
         /* steps 5/7/8 */
-        return PrepareForTailCall((Constructor) constructor, null, args);
+        return PrepareForTailCall((Constructor) constructor, (Constructor) constructor, args);
     }
 
     /**
@@ -1083,6 +1084,69 @@ public final class ScriptRuntime {
     }
 
     /**
+     * 12.3.8 Meta Properties
+     * 
+     * @param cx
+     *            the execution context
+     * @return the NewTarget constructor object
+     */
+    public static Object GetNewTargetOrNull(ExecutionContext cx) {
+        Constructor newTarget = cx.getNewTarget();
+        if (newTarget == null) {
+            return NULL;
+        }
+        return newTarget;
+    }
+
+    /**
+     * 12.3.5 The super Keyword
+     * 
+     * @param cx
+     *            the execution context
+     * @return the NewTarget constructor object
+     */
+    public static Constructor GetNewTarget(ExecutionContext cx) {
+        Constructor newTarget = cx.getNewTarget();
+        if (newTarget == null) {
+            throw newTypeError(cx, Messages.Key.MissingNewTarget);
+        }
+        return newTarget;
+    }
+
+    /**
+     * 12.3.5 The super Keyword
+     * 
+     * @param cx
+     *            the execution context
+     * @return the NewTarget constructor object
+     */
+    public static Constructor GetNewTargetAndThisUninitialized(ExecutionContext cx) {
+        // FIXME: spec bug - invert condition
+        if (cx.isThisInitialized()) {
+            throw newTypeError(cx, Messages.Key.InitializedThis);
+        }
+        Constructor newTarget = cx.getNewTarget();
+        if (newTarget == null) {
+            throw newTypeError(cx, Messages.Key.MissingNewTarget);
+        }
+        return newTarget;
+    }
+
+    /**
+     * 12.3.5 The super Keyword
+     * 
+     * @param result
+     *            the new {@code this} binding value
+     * @param cx
+     *            the execution context
+     */
+    public static void BindThisValue(ScriptObject result, ExecutionContext cx) {
+        EnvironmentRecord thisEnvironment = cx.getThisEnvironment();
+        assert thisEnvironment instanceof FunctionEnvironmentRecord;
+        ((FunctionEnvironmentRecord) thisEnvironment).bindThisValue(result);
+    }
+
+    /**
      * 12.3.5 The super Keyword
      * <p>
      * 12.3.5.2 Runtime Semantics: GetSuperConstructor ( )
@@ -1091,7 +1155,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the super reference
      */
-    public static Callable GetSuperConstructor(ExecutionContext cx) {
+    public static Constructor GetSuperConstructor(ExecutionContext cx) {
         /* step 1 */
         EnvironmentRecord envRec = cx.getThisEnvironment();
         /* step 2 */
@@ -1102,12 +1166,64 @@ public final class ScriptRuntime {
         /* steps 4-5 */
         ScriptObject superConstructor = activeFunction.getPrototypeOf(cx);
         /* step 6 */
-        if (!IsCallable(superConstructor)) {
+        if (!IsConstructor(superConstructor)) {
             // TODO: Change error message?
-            throw newTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.NotConstructor);
         }
         /* step 7 */
-        return (Callable) superConstructor;
+        return (Constructor) superConstructor;
+    }
+
+    /**
+     * 12.3.5 The super Keyword
+     * <p>
+     * 12.3.5.1 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>MemberExpression : NewSuper Arguments
+     * <li>NewExpression : NewSuper
+     * </ul>
+     * 
+     * @param newTarget
+     *            the NewTarget constructor object
+     * @param constructor
+     *            the constructor object
+     * @param args
+     *            the arguments for the new-call
+     * @param cx
+     *            the execution context
+     * @return the constructor call return value
+     */
+    public static ScriptObject EvaluateSuperConstructorCall(Constructor newTarget,
+            Constructor constructor, Object[] args, ExecutionContext cx) {
+        /* steps 1-6/1-5  (generated code) */
+        /* steps 7-13/6-12 */
+        return constructor.construct(cx, newTarget, args);
+    }
+
+    /**
+     * 12.3.5 The super Keyword
+     * <p>
+     * 12.3.5.1 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>MemberExpression : NewSuper Arguments
+     * <li>NewExpression : NewSuper
+     * </ul>
+     * 
+     * @param newTarget
+     *            the NewTarget constructor object
+     * @param constructor
+     *            the constructor object
+     * @param args
+     *            the arguments for the new-call
+     * @param cx
+     *            the execution context
+     * @return the tail call trampoline object
+     */
+    public static Object EvaluateSuperConstructorTailCall(Constructor newTarget,
+            Constructor constructor, Object[] args, ExecutionContext cx) {
+        /* steps 1-6/1-5  (generated code) */
+        /* steps 7-13/6-12 */
+        return PrepareForTailCall(constructor, newTarget, args);
     }
 
     /**
@@ -1135,7 +1251,7 @@ public final class ScriptRuntime {
     /**
      * 12.3.5 The super Keyword
      * <p>
-     * 12.3.5.4 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
+     * 12.3.5.3 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
      * 
      * @param cx
      *            the execution context
@@ -1155,23 +1271,23 @@ public final class ScriptRuntime {
         }
         assert envRec instanceof FunctionEnvironmentRecord;
         FunctionEnvironmentRecord fEnvRec = (FunctionEnvironmentRecord) envRec;
-        /* step 3 */
+        /* steps 3-4 */
         Object actualThis = fEnvRec.getThisBinding();
-        /* step 4 */
+        /* step 5 */
         ScriptObject baseValue = fEnvRec.getSuperBase();
-        /* steps 5-6 */
+        /* steps 6-7 */
         // RequireObjectCoercible(cx.getRealm(), baseValue);
         if (baseValue == null) {
             throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         }
-        /* step 7 */
+        /* step 8 */
         return new Reference.SuperNameReference(baseValue, propertyKey, strict, actualThis);
     }
 
     /**
      * 12.3.5 The super Keyword
      * <p>
-     * 12.3.5.4 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
+     * 12.3.5.3 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
      * 
      * @param cx
      *            the execution context
@@ -1191,23 +1307,23 @@ public final class ScriptRuntime {
         }
         assert envRec instanceof FunctionEnvironmentRecord;
         FunctionEnvironmentRecord fEnvRec = (FunctionEnvironmentRecord) envRec;
-        /* step 3 */
+        /* steps 3-4 */
         Object actualThis = fEnvRec.getThisBinding();
-        /* step 4 */
+        /* step 5 */
         ScriptObject baseValue = fEnvRec.getSuperBase();
-        /* steps 5-6 */
+        /* steps 6-7 */
         // RequireObjectCoercible(cx.getRealm(), baseValue);
         if (baseValue == null) {
             throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         }
-        /* step 7 */
+        /* step 8 */
         return new Reference.SuperSymbolReference(baseValue, propertyKey, strict, actualThis);
     }
 
     /**
      * 12.3.5 The super Keyword
      * <p>
-     * 12.3.5.4 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
+     * 12.3.5.3 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
      * 
      * @param cx
      *            the execution context
@@ -1225,7 +1341,7 @@ public final class ScriptRuntime {
     /**
      * 12.3.5 The super Keyword
      * <p>
-     * 12.3.5.4 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
+     * 12.3.5.3 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
      * 
      * @param cx
      *            the execution context
@@ -1481,8 +1597,7 @@ public final class ScriptRuntime {
                 BuiltinSymbol.hasInstance.get());
         /* step 4 */
         if (instOfHandler != null) {
-            Object result = instOfHandler.call(cx, constructor, obj);
-            return ToBoolean(result);
+            return ToBoolean(instOfHandler.call(cx, constructor, obj));
         }
         /* step 5 */
         if (!IsCallable(constructor)) {
@@ -1720,13 +1835,14 @@ public final class ScriptRuntime {
      *            the function runtime info object
      * @return the new function instance
      */
-    public static OrdinaryFunction InstantiateFunctionObject(LexicalEnvironment<?> scope,
-            ExecutionContext cx, RuntimeInfo.Function fd) {
+    public static OrdinaryConstructorFunction InstantiateFunctionObject(
+            LexicalEnvironment<?> scope, ExecutionContext cx, RuntimeInfo.Function fd) {
         /* step 1 (not applicable) */
         /* step 2 */
         String name = fd.functionName();
         /* step 3 */
-        OrdinaryFunction f = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        OrdinaryConstructorFunction f = ConstructorFunctionCreate(cx, FunctionKind.Normal, fd,
+                scope);
         /* step 4 */
         if (fd.hasSuperReference()) {
             MakeMethod(f, null);
@@ -1754,15 +1870,15 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the new function instance
      */
-    public static OrdinaryFunction EvaluateFunctionExpression(RuntimeInfo.Function fd,
+    public static OrdinaryConstructorFunction EvaluateFunctionExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
-        OrdinaryFunction closure;
+        OrdinaryConstructorFunction closure;
         if (!fd.hasScopedName()) {
             /* step 1 (not applicable) */
             /* step 2 */
             LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
             /* step 3 */
-            closure = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
+            closure = ConstructorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
             /* step 4 */
             if (fd.hasSuperReference()) {
                 MakeMethod(closure, null);
@@ -1783,7 +1899,7 @@ public final class ScriptRuntime {
             /* step 6 */
             envRec.createImmutableBinding(name, false);
             /* step 7 */
-            closure = FunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
+            closure = ConstructorFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
             /* step 8 */
             if (fd.hasSuperReference()) {
                 MakeMethod(closure, null);
@@ -1840,25 +1956,28 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the new function instance
      */
-    public static OrdinaryFunction EvaluateConstructorMethod(ScriptObject constructorParent,
-            OrdinaryObject proto, RuntimeInfo.Function fd, ExecutionContext cx) {
-        // ClassDefinitionEvaluation - steps 9-10
+    public static OrdinaryConstructorFunction EvaluateConstructorMethod(
+            ScriptObject constructorParent, OrdinaryObject proto, RuntimeInfo.Function fd,
+            ExecutionContext cx) {
+        // ClassDefinitionEvaluation - steps 12-17
         // -> calls DefineMethod
         String propKey = "constructor";
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
-        OrdinaryFunction constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd,
-                scope, constructorParent);
+        OrdinaryConstructorFunction constructor = ConstructorFunctionCreate(cx,
+                FunctionKind.ConstructorMethod, fd, scope, constructorParent);
         if (fd.hasSuperReference()) {
             MakeMethod(constructor, proto);
         }
 
-        // ClassDefinitionEvaluation - step 11
+        // ClassDefinitionEvaluation - step 14 (see FunctionCreate)
+
+        // ClassDefinitionEvaluation - step 15
         MakeConstructor(cx, constructor, false, proto);
 
-        // ClassDefinitionEvaluation - step 13
+        // ClassDefinitionEvaluation - step 16
         PropertyDescriptor desc = new PropertyDescriptor(constructor, true, false, true);
 
-        // ClassDefinitionEvaluation - step 14
+        // ClassDefinitionEvaluation - step 17
         proto.defineOwnProperty(cx, propKey, desc);
 
         return constructor;
@@ -2589,12 +2708,30 @@ public final class ScriptRuntime {
      * @return the tuple (prototype, constructorParent)
      */
     public static ScriptObject[] getDefaultClassProto(ExecutionContext cx) {
-        // step 1
+        // step 5
         ScriptObject protoParent = cx.getIntrinsic(Intrinsics.ObjectPrototype);
         ScriptObject constructorParent = cx.getIntrinsic(Intrinsics.FunctionPrototype);
-        // step 3
+        // step 7
         OrdinaryObject proto = ObjectCreate(cx, protoParent);
-        return new ScriptObject[] { proto, constructorParent };
+        return new ScriptObject[] { constructorParent, proto };
+    }
+
+    /**
+     * 14.5 Class Definitions
+     * <p>
+     * 14.5.14 Runtime Semantics: ClassDefinitionEvaluation
+     * 
+     * @param cx
+     *            the execution context
+     * @return the tuple (prototype, constructorParent)
+     */
+    public static ScriptObject[] getClassProto(ExecutionContext cx) {
+        // step 6
+        ScriptObject protoParent = null;
+        ScriptObject constructorParent = cx.getIntrinsic(Intrinsics.FunctionPrototype);
+        // step 7
+        OrdinaryObject proto = ObjectCreate(cx, protoParent);
+        return new ScriptObject[] { constructorParent, proto };
     }
 
     /**
@@ -2611,7 +2748,7 @@ public final class ScriptRuntime {
     public static ScriptObject[] getClassProto(Object superClass, ExecutionContext cx) {
         ScriptObject protoParent;
         ScriptObject constructorParent;
-        // step 4
+        // step 6
         if (Type.isNull(superClass)) {
             protoParent = null;
             constructorParent = cx.getIntrinsic(Intrinsics.FunctionPrototype);
@@ -2630,9 +2767,9 @@ public final class ScriptRuntime {
             protoParent = Type.objectValueOrNull(p);
             constructorParent = superClassObj;
         }
-        // step 5
+        // step 7
         OrdinaryObject proto = ObjectCreate(cx, protoParent);
-        return new ScriptObject[] { proto, constructorParent };
+        return new ScriptObject[] { constructorParent, proto };
     }
 
     /**
@@ -2646,12 +2783,11 @@ public final class ScriptRuntime {
         String functionName = "constructor";
         int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue()
                 | RuntimeInfo.FunctionFlags.ImplicitStrict.getValue()
-                | RuntimeInfo.FunctionFlags.Method.getValue()
-                | RuntimeInfo.FunctionFlags.Super.getValue();
+                | RuntimeInfo.FunctionFlags.Method.getValue();
         int expectedArguments = 0;
         RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
                 expectedArguments, DefaultConstructorSource, DefaultConstructorSourceBody,
-                DefaultConstructorMH, DefaultConstructorCallMH);
+                DefaultConstructorMH, DefaultConstructorCallMH, DefaultConstructorConstructMH);
 
         return function;
     }
@@ -2672,12 +2808,13 @@ public final class ScriptRuntime {
         RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
                 expectedArguments, DefaultEmptyConstructorSource,
                 DefaultEmptyConstructorSourceBody, DefaultEmptyConstructorMH,
-                DefaultEmptyConstructorCallMH);
+                DefaultEmptyConstructorCallMH, DefaultEmptyConstructorConstructMH);
 
         return function;
     }
 
-    private static final MethodHandle DefaultConstructorMH, DefaultConstructorCallMH;
+    private static final MethodHandle DefaultConstructorMH, DefaultConstructorCallMH,
+            DefaultConstructorConstructMH;
     private static final String DefaultConstructorSource;
     private static final int DefaultConstructorSourceBody;
     private static final boolean DefaultConstructorArguments = false;
@@ -2685,49 +2822,64 @@ public final class ScriptRuntime {
         MethodLookup lookup = new MethodLookup(MethodHandles.publicLookup());
         DefaultConstructorMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
                 MethodType.methodType(Object.class, ExecutionContext.class));
-        DefaultConstructorCallMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
+        DefaultConstructorCallMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructorCall",
                 MethodType.methodType(Object.class, OrdinaryFunction.class, ExecutionContext.class,
                         Object.class, Object[].class));
+        DefaultConstructorConstructMH = lookup.findStatic(ScriptRuntime.class,
+                "DefaultConstructorConstruct", MethodType.methodType(ScriptObject.class,
+                        OrdinaryConstructorFunction.class, ExecutionContext.class,
+                        Constructor.class, Object[].class));
         String parameters = "(...args)", body = "super(...args);", source = parameters + body;
         DefaultConstructorSource = SourceCompressor.compressToString(source);
         DefaultConstructorSourceBody = parameters.length();
     }
 
     private static void DefaultConstructorInit(ExecutionContext cx, FunctionObject f, Object[] args) {
-        EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
+        LexicalEnvironment<?> env = cx.getVariableEnvironment();
+        FunctionEnvironmentRecord envRec = (FunctionEnvironmentRecord) env.getEnvRec();
 
         envRec.createMutableBinding("args", false);
-        envRec.initializeBinding("args", UNDEFINED);
         if (DefaultConstructorArguments) {
             envRec.createImmutableBinding("arguments", false);
-        }
-
-        cx.resolveBinding("args", true).putValue(createRestArray(asList(args).iterator(), cx), cx);
-
-        if (DefaultConstructorArguments) {
             envRec.initializeBinding("arguments", CreateUnmappedArgumentsObject(cx, args));
         }
+        envRec.initializeBinding("args", createRestArray(asList(args).iterator(), cx));
+
+        envRec.setTopLex(envRec);
+        cx.setLexicalEnvironment(env);
     }
 
     public static Object DefaultConstructor(ExecutionContext cx) {
-        // super()
-        Callable superConstructor = GetSuperConstructor(cx);
-        Object thisValue = cx.resolveThisBinding();
         // EvaluateCall: super(...args)
+        Constructor newTarget = GetNewTargetAndThisUninitialized(cx);
+        Constructor superConstructor = GetSuperConstructor(cx);
         Object[] argList = SpreadArray(cx.resolveBindingValue("args", true), cx);
-        superConstructor.call(cx, thisValue, argList);
+        ScriptObject result = EvaluateSuperConstructorCall(newTarget, superConstructor, argList, cx);
+        BindThisValue(result, cx);
+        return null;
+    }
+
+    public static Object DefaultConstructorCall(OrdinaryFunction callee,
+            ExecutionContext callerContext, Object thisValue, Object[] args) {
+        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(
+                callerContext, callee, null, thisValue);
+        DefaultConstructorInit(calleeContext, callee, args);
+        DefaultConstructor(calleeContext);
         return UNDEFINED;
     }
 
-    public static Object DefaultConstructor(OrdinaryFunction callee,
-            ExecutionContext callerContext, Object thisValue, Object[] args) {
+    public static ScriptObject DefaultConstructorConstruct(OrdinaryConstructorFunction callee,
+            ExecutionContext callerContext, Constructor newTarget, Object[] args) {
+        assert callee.getConstructorKind() == ConstructorKind.Derived;
         ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(
-                callerContext, callee, thisValue);
+                callerContext, callee, newTarget);
         DefaultConstructorInit(calleeContext, callee, args);
-        return DefaultConstructor(calleeContext);
+        DefaultConstructor(calleeContext);
+        return (ScriptObject) calleeContext.resolveThisBinding();
     }
 
-    private static final MethodHandle DefaultEmptyConstructorMH, DefaultEmptyConstructorCallMH;
+    private static final MethodHandle DefaultEmptyConstructorMH, DefaultEmptyConstructorCallMH,
+            DefaultEmptyConstructorConstructMH;
     private static final String DefaultEmptyConstructorSource;
     private static final int DefaultEmptyConstructorSourceBody;
     private static final boolean DefaultEmptyConstructorArguments = false;
@@ -2737,9 +2889,13 @@ public final class ScriptRuntime {
                 "DefaultEmptyConstructor",
                 MethodType.methodType(Object.class, ExecutionContext.class));
         DefaultEmptyConstructorCallMH = lookup.findStatic(ScriptRuntime.class,
-                "DefaultEmptyConstructor", MethodType.methodType(Object.class,
+                "DefaultEmptyConstructorCall", MethodType.methodType(Object.class,
                         OrdinaryFunction.class, ExecutionContext.class, Object.class,
                         Object[].class));
+        DefaultEmptyConstructorConstructMH = lookup.findStatic(ScriptRuntime.class,
+                "DefaultEmptyConstructorConstruct", MethodType.methodType(ScriptObject.class,
+                        OrdinaryConstructorFunction.class, ExecutionContext.class,
+                        Constructor.class, Object[].class));
         String parameters = "()", body = "", source = parameters + body;
         DefaultEmptyConstructorSource = SourceCompressor.compressToString(source);
         DefaultEmptyConstructorSourceBody = parameters.length();
@@ -2747,23 +2903,41 @@ public final class ScriptRuntime {
 
     private static void DefaultEmptyConstructorInit(ExecutionContext cx, FunctionObject f,
             Object[] args) {
+        LexicalEnvironment<?> env = cx.getVariableEnvironment();
+        FunctionEnvironmentRecord envRec = (FunctionEnvironmentRecord) env.getEnvRec();
+
         if (DefaultEmptyConstructorArguments) {
-            EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
             envRec.createImmutableBinding("arguments", false);
             envRec.initializeBinding("arguments", CreateUnmappedArgumentsObject(cx, args));
         }
+
+        envRec.setTopLex(envRec);
+        cx.setLexicalEnvironment(env);
     }
 
     public static Object DefaultEmptyConstructor(ExecutionContext cx) {
+        return null;
+    }
+
+    public static Object DefaultEmptyConstructorCall(OrdinaryFunction callee,
+            ExecutionContext callerContext, Object thisValue, Object[] args) {
+        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(
+                callerContext, callee, null, thisValue);
+        DefaultEmptyConstructorInit(calleeContext, callee, args);
+        DefaultEmptyConstructor(calleeContext);
         return UNDEFINED;
     }
 
-    public static Object DefaultEmptyConstructor(OrdinaryFunction callee,
-            ExecutionContext callerContext, Object thisValue, Object[] args) {
+    public static ScriptObject DefaultEmptyConstructorConstruct(OrdinaryConstructorFunction callee,
+            ExecutionContext callerContext, Constructor newTarget, Object[] args) {
+        assert callee.getConstructorKind() == ConstructorKind.Base;
+        OrdinaryObject thisArgument = OrdinaryCreateFromConstructor(callerContext, newTarget,
+                Intrinsics.ObjectPrototype);
         ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(
-                callerContext, callee, thisValue);
+                callerContext, callee, newTarget, thisArgument);
         DefaultEmptyConstructorInit(calleeContext, callee, args);
-        return DefaultEmptyConstructor(calleeContext);
+        DefaultEmptyConstructor(calleeContext);
+        return thisArgument;
     }
 
     /**
@@ -2985,18 +3159,23 @@ public final class ScriptRuntime {
      * @return the tail call trampoline object
      */
     public static Object PrepareForTailCall(Callable function, Object thisValue, Object[] args) {
-        return new TailCallInvocation(function, thisValue, args);
+        return newTailCallInvocation(function, thisValue, args);
+    }
+
+    public static Object PrepareForTailCall(Constructor constructor, Constructor newTarget,
+            Object[] args) {
+        return newTailCallInvocation(constructor, newTarget, args);
     }
 
     // Called from generated code
     public static Object PrepareForTailCall(Object thisValue, Object[] args, Callable function) {
-        return new TailCallInvocation(function, thisValue, args);
+        return newTailCallInvocation(function, thisValue, args);
     }
 
     // Called from generated code
     public static Object PrepareForTailCall(Object function, ExecutionContext cx, Object thisValue,
             Object[] args) {
-        return new TailCallInvocation(CheckCallable(function, cx), thisValue, args);
+        return newTailCallInvocation(CheckCallable(function, cx), thisValue, args);
     }
 
     /* ***************************************************************************************** */

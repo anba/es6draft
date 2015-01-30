@@ -125,6 +125,11 @@ public final class FunctionExpression extends Expression implements FunctionDefi
     }
 
     @Override
+    public boolean isConstructor() {
+        return true;
+    }
+
+    @Override
     public boolean hasSyntheticNodes() {
         return syntheticNodes;
     }

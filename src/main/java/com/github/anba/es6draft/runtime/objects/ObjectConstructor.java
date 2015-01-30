@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +24,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -46,8 +44,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>19.1.2 Properties of the Object Constructor
  * </ul>
  */
-public final class ObjectConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<ScriptObject> {
+public final class ObjectConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Object constructor function.
      * 
@@ -59,8 +56,8 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -75,26 +72,35 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object value = argument(args, 0);
-        /* step 1 */
+        /* step 1 (not applicable) */
+        /* step 2 */
         if (Type.isUndefinedOrNull(value)) {
             // TODO: spec issue - change to OrdinaryCreateFromConstructor()? (bug 3136)
             return ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
         }
-        /* step 2 */
+        /* step 3 */
         return ToObject(calleeContext, value);
     }
 
     /**
-     * 19.1.2.1 new Object ( [ value ] )
+     * 19.1.1.1 Object ( [ value ] )
      */
     @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return call(callerContext, UNDEFINED, args);
-    }
-
-    @Override
-    public CreateAction<ScriptObject> createAction() {
-        return null;
+    public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        Object value = argument(args, 0);
+        /* step 1 */
+        // FIXME: spec bug `new Object(1)` no longer returns `new Number(1)`
+        // return OrdinaryCreateFromConstructor(calleeContext, newTarget,
+        // Intrinsics.ObjectPrototype);
+        /* step 2 */
+        if (Type.isUndefinedOrNull(value)) {
+            // TODO: spec issue - change to OrdinaryCreateFromConstructor()? (bug 3136)
+            return ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
+        }
+        /* step 3 */
+        return ToObject(calleeContext, value);
     }
 
     /**

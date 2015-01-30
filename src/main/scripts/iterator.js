@@ -50,13 +50,6 @@ const Iterator = MakeIterator();
 function MakeIterator() {
   const nextSym = Symbol.for(`std::BuiltinIterator::next`);
 
-  function mixin(target, source) {
-    for (let name of Reflect.ownKeys(source)) {
-      Reflect.defineProperty(target, name, Reflect.getOwnPropertyDescriptor(source, name));
-    }
-    return target;
-  }
-
   function ToIteratorKey(name) {
     let int32 = name | 0;
     if (int32 >= 0 && int32 <= 0x7fffffff && int32 + "" === name) {
@@ -103,34 +96,18 @@ function MakeIterator() {
     return new Proxy(instance, {enumerate: () => iter});
   }
 
-  function IsUninitializedIterator(o) {
-    return Object(o) === o
-        && %CallFunction(Object_prototype_isPrototypeOf, IteratorPrototype, o)
-        && !%CallFunction(Object_prototype_hasOwnProperty, o, nextSym);
-  }
-
   function IsInitializedIterator(o) {
     return Object(o) === o && %CallFunction(Object_prototype_hasOwnProperty, o, nextSym);
   }
 
-  function Iterator(obj, keys) {
-    if (IsUninitializedIterator(this)) {
-      return ToIterator(this, obj, keys);
-    } else {
-      return new Iterator(obj, keys);
+  class IteratorTemplate {
+    constructor(obj, keys) {
+      if (new.target) {
+        return ToIterator(this, obj, keys);
+      } else {
+        return new Iterator(obj, keys);
+      }
     }
-  }
-  const IteratorPrototype = ToIterator(Object.create(Object.prototype), []);
-  Iterator.prototype = IteratorPrototype;
-
-  Object.defineProperties(mixin(Iterator.prototype, {
-    constructor: Iterator,
-    get [toStringTagSym]() {
-      return "Iterator";
-    },
-    [iteratorSym]() {
-      return new LegacyIterator(this);
-    },
     next() {
       if (!IsInitializedIterator(this)) {
         throw new TypeError();
@@ -143,12 +120,24 @@ function MakeIterator() {
         return next.value;
       }
     }
-  }), {
+    [iteratorSym]() {
+      return new LegacyIterator(this);
+    }
+    get [toStringTagSym]() {
+      return "Iterator";
+    }
+  }
+
+  Object.defineProperties(IteratorTemplate.prototype, {
     constructor: {enumerable: false},
-    [toStringTagSym]: {enumerable: false},
-    [iteratorSym]: {enumerable: false},
     next: {enumerable: false},
+    [iteratorSym]: {enumerable: false},
+    [toStringTagSym]: {enumerable: false},
   });
+
+  const Iterator = IteratorTemplate.toMethod({});
+  Reflect.defineProperty(Iterator, "length", {value: 2, configurable: true});
+  Reflect.defineProperty(Iterator, "prototype", {value: ToIterator(IteratorTemplate.prototype, [])});
 
   return Iterator;
 }
@@ -165,7 +154,7 @@ const LegacyIterator = MakeLegacyIterator();
 function MakeLegacyIterator() {
   const iterSym = Symbol("iter");
 
-  class LegacyIterator extends Iterator {
+  class LegacyIterator {
     constructor(iter) {
       Object_defineProperty(this, iterSym, {__proto__: null, value: iter});
     }
@@ -194,6 +183,9 @@ function MakeLegacyIterator() {
     [iteratorSym]: {enumerable: false},
   });
 
+  Object.setPrototypeOf(LegacyIterator, Iterator);
+  Object.setPrototypeOf(LegacyIterator.prototype, Iterator.prototype);
+
   return LegacyIterator;
 }
 
@@ -201,7 +193,7 @@ function MakeLegacyIterator() {
 function MakeBuiltinIterator(tag, throwErrorIfPrototype) {
   const iterSym = Symbol.for(`std::Builtin${tag}Iterator::iterator`);
 
-  class BuiltinIterator extends Iterator {
+  class BuiltinIterator {
     constructor(obj, iterF) {
       Object_defineProperty(this, iterSym, {__proto__: null, value: %CallFunction(iterF, obj)});
     }
@@ -233,6 +225,9 @@ function MakeBuiltinIterator(tag, throwErrorIfPrototype) {
     [iteratorSym]: {enumerable: false},
     [toStringTagSym]: {enumerable: false},
   });
+
+  Object.setPrototypeOf(BuiltinIterator, Iterator);
+  Object.setPrototypeOf(BuiltinIterator.prototype, Iterator.prototype);
 
   return BuiltinIterator;
 }

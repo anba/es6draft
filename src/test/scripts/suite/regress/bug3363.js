@@ -14,6 +14,7 @@ const {
 class Base { }
 class Derived extends Base {
   constructor() {
+    super(); // Initialize this
     assertTrue((new super) instanceof Base);
   }
 }

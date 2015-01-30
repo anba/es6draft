@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
@@ -18,10 +17,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
@@ -32,8 +28,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>19.3.2 Properties of the Boolean Constructor
  * </ul>
  */
-public final class BooleanConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<BooleanObject> {
+public final class BooleanConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Boolean constructor function.
      * 
@@ -45,8 +40,8 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -58,33 +53,39 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
      * 19.3.1.1 Boolean (value)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        /* step 1 (omitted) */
-        /* step 2 */
+    public Boolean call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        /* step 1 */
         boolean b = args.length > 0 ? ToBoolean(args[0]) : false;
-        /* step 3 */
-        if (thisValue instanceof BooleanObject) {
-            BooleanObject obj = (BooleanObject) thisValue;
-            if (!obj.isInitialized()) {
-                obj.setBooleanData(b);
-                return obj;
-            }
-        }
-        /* step 4 */
+        /* step 2 */
         return b;
     }
 
     /**
-     * 19.3.1.2 new Boolean (... argumentsList)
+     * 19.3.1.1 Boolean (value)
      */
     @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
+    public BooleanObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        /* step 1 */
+        boolean b = args.length > 0 ? ToBoolean(args[0]) : false;
+        /* step 2 (not applicable) */
+        /* steps 3-4 */
+        BooleanObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.BooleanPrototype, BooleanObjectAllocator.INSTANCE);
+        /* step 5 */
+        obj.setBooleanData(b);
+        /* step 6 */
+        return obj;
     }
 
-    @Override
-    public CreateAction<BooleanObject> createAction() {
-        return BooleanCreate.INSTANCE;
+    private static final class BooleanObjectAllocator implements ObjectAllocator<BooleanObject> {
+        static final ObjectAllocator<BooleanObject> INSTANCE = new BooleanObjectAllocator();
+
+        @Override
+        public BooleanObject newInstance(Realm realm) {
+            return new BooleanObject(realm);
+        }
     }
 
     /**
@@ -110,24 +111,5 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.BooleanPrototype;
-    }
-
-    private static final class BooleanObjectAllocator implements ObjectAllocator<BooleanObject> {
-        static final ObjectAllocator<BooleanObject> INSTANCE = new BooleanObjectAllocator();
-
-        @Override
-        public BooleanObject newInstance(Realm realm) {
-            return new BooleanObject(realm);
-        }
-    }
-
-    private static final class BooleanCreate implements CreateAction<BooleanObject> {
-        static final CreateAction<BooleanObject> INSTANCE = new BooleanCreate();
-
-        @Override
-        public BooleanObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.BooleanPrototype,
-                    BooleanObjectAllocator.INSTANCE);
-        }
     }
 }

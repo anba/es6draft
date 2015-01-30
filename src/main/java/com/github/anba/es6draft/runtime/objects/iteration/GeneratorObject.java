@@ -335,6 +335,10 @@ public final class GeneratorObject extends OrdinaryObject {
                 return (ScriptObject) stackTop;
             }
             genObject.close();
+            // FIXME: spec bug - handle implicit return
+            if (result == null) {
+                result = UNDEFINED;
+            }
             return CreateIterResultObject(cx, result, true);
         }
 
@@ -420,6 +424,10 @@ public final class GeneratorObject extends OrdinaryObject {
                         throw new RuntimeException(e);
                     }
                     out.put(COMPLETED);
+                    // FIXME: spec bug - handle implicit return
+                    if (result == null) {
+                        result = UNDEFINED;
+                    }
                     return result;
                 }
             });

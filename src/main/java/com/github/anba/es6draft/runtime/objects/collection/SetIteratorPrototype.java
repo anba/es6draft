@@ -50,8 +50,8 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     public enum SetIterationKind {
@@ -107,18 +107,14 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
         }
         SetObject set = (SetObject) obj;
         /* step 3 */
-        if (!set.isInitialized()) {
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        /* step 4 */
         SetIterator iterator = ObjectCreate(cx, Intrinsics.SetIteratorPrototype,
                 SetIteratorAllocator.INSTANCE);
-        /* steps 5-7 */
+        /* steps 4-6 */
         iterator.set = set;
         iterator.nextIndex = 0;
         iterator.iterationKind = kind;
         iterator.iterator = set.getSetData().iterator();
-        /* step 8 */
+        /* step 7 */
         return iterator;
     }
 
@@ -162,8 +158,7 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
             if (s == null) {
                 return CreateIterResultObject(cx, UNDEFINED, true);
             }
-            /* step 8 */
-            assert s.getSetData() != null;
+            /* step 8 (implicit) */
             /* step 9 */
             Iterator<Entry<Object, Void>> iter = o.iterator;
             /* step 10 */

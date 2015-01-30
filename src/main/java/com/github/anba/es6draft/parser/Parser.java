@@ -2948,6 +2948,7 @@ public final class Parser {
             return getterMethod(isStatic);
         case Setter:
             return setterMethod(isStatic);
+        case Constructor:
         case Function:
         default:
             return normalMethod(isClass, isStatic);
@@ -2995,7 +2996,7 @@ public final class Parser {
             String body = ts.range(startBody, endFunction);
 
             FunctionContext scope = context.funContext;
-            MethodType type = MethodType.Function;
+            MethodType type = context.isConstructor ? MethodType.Constructor : MethodType.Function;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
                     isStatic, propertyName, parameters, statements, header, body);
             scope.node = method;
@@ -3158,7 +3159,7 @@ public final class Parser {
                 return MethodType.AsyncFunction;
             }
         }
-        return MethodType.Function;
+        return MethodType.Function; // or Constructor
     }
 
     private static boolean isPropertyName(Token token) {
@@ -3185,6 +3186,7 @@ public final class Parser {
 
         switch (method.getType()) {
         case AsyncFunction:
+        case Constructor:
         case Function:
         case Generator: {
             checkFormalParameterDuplication(method, boundNames, scope.parameterNames);
@@ -7149,6 +7151,7 @@ public final class Parser {
      *     MemberExpression<span><sub>[?Yield]</sub></span> TemplateLiteral<span><sub>[?Yield]</sub></span>
      *     SuperProperty<span><sub>[?Yield]</sub></span>
      *     NewSuper Arguments<span><sub>[?Yield]</sub></span>
+     *     MetaProperty
      *     new MemberExpression<span><sub>[?Yield]</sub></span> Arguments<span><sub>[?Yield]</sub></span>
      * SuperProperty<span><sub>[Yield]</sub></span> :
      *     super [ Expression<span><sub>[In, ?Yield]</sub></span> ]
@@ -7159,6 +7162,8 @@ public final class Parser {
      *     MemberExpression<span><sub>[?Yield]</sub></span>
      *     new NewExpression<span><sub>[?Yield]</sub></span>
      *     NewSuper
+     * MetaProperty :
+     *     new . target
      * CallExpression<span><sub>[Yield]</sub></span> :
      *     MemberExpression<span><sub>[?Yield]</sub></span> Arguments<span><sub>[?Yield]</sub></span>
      *     SuperCall<span><sub>[?Yield]</sub></span>
@@ -7182,7 +7187,13 @@ public final class Parser {
         Expression lhs;
         if (token() == Token.NEW) {
             consume(Token.NEW);
-            if (token() == Token.SUPER && !(LOOKAHEAD(Token.DOT) || LOOKAHEAD(Token.LB))) {
+            if (token() == Token.DOT) {
+                newTarget();
+
+                consume(Token.DOT);
+                consume("target");
+                return new NewTarget(begin, ts.endPosition());
+            } else if (token() == Token.SUPER && !(LOOKAHEAD(Token.DOT) || LOOKAHEAD(Token.LB))) {
                 superNew();
 
                 consume(Token.SUPER);
@@ -7277,7 +7288,7 @@ public final class Parser {
         super_EarlyErrors(superContext);
         // 12.2.5.1 Static Semantics: Early Errors
         // 14.5.1 Static Semantics: Early Errors
-        if (superContext.kind.isMethod() && !superContext.isConstructor) {
+        if (!(superContext.kind.isMethod() && superContext.isConstructor)) {
             reportSyntaxError(Messages.Key.InvalidSuperCallExpression);
         }
     }
@@ -7286,9 +7297,20 @@ public final class Parser {
         ParseContext superContext = context.findSuperContext();
         super_EarlyErrors(superContext);
         // 12.2.5.1 Static Semantics: Early Errors
+        // 14.1.2 Static Semantics: Early Errors
+        // 14.4.1 Static Semantics: Early Errors
         // 14.5.1 Static Semantics: Early Errors
-        if (superContext.kind.isMethod() && !superContext.isConstructor) {
+        if (superContext.kind.isMethod() && !superContext.isConstructor
+                || superContext.kind.isGenerator()) {
             reportSyntaxError(Messages.Key.InvalidNewSuperExpression);
+        }
+    }
+
+    private void newTarget() {
+        ParseContext superContext = context.findSuperContext();
+        super_EarlyErrors(superContext);
+        if (superContext.kind.isMethod() && !superContext.isConstructor) {
+            reportSyntaxError(Messages.Key.InvalidNewTarget);
         }
     }
 

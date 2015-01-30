@@ -45,8 +45,8 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     /**
@@ -57,11 +57,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
 
         private static WeakMapObject thisWeakMapObject(ExecutionContext cx, Object obj) {
             if (obj instanceof WeakMapObject) {
-                WeakMapObject map = (WeakMapObject) obj;
-                if (map.isInitialized()) {
-                    return map;
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return (WeakMapObject) obj;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -88,15 +84,15 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object key) {
-            /* steps 1-4 */
+            /* steps 1-3 */
             WeakMapObject m = thisWeakMapObject(cx, thisValue);
-            /* step 5 */
+            /* step 4 */
             WeakHashMap<ScriptObject, Object> entries = m.getWeakMapData();
-            /* step 6 */
+            /* step 5 */
             if (!Type.isObject(key)) {
                 return false;
             }
-            /* steps 7-8 */
+            /* steps 6-7 */
             return entries.remove(key);
         }
 
@@ -113,15 +109,15 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
          */
         @Function(name = "get", arity = 1)
         public static Object get(ExecutionContext cx, Object thisValue, Object key) {
-            /* steps 1-4 */
+            /* steps 1-3 */
             WeakMapObject m = thisWeakMapObject(cx, thisValue);
-            /* step 5 */
+            /* step 4 */
             WeakHashMap<ScriptObject, Object> entries = m.getWeakMapData();
-            /* step 6 */
+            /* step 5 */
             if (!Type.isObject(key)) {
                 return UNDEFINED;
             }
-            /* steps 7-8 */
+            /* steps 6-7 */
             Object value = entries.get(key);
             return value != null ? value : UNDEFINED;
         }
@@ -139,15 +135,15 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
          */
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object key) {
-            /* steps 1-4 */
+            /* steps 1-3 */
             WeakMapObject m = thisWeakMapObject(cx, thisValue);
-            /* step 5 */
+            /* step 4 */
             WeakHashMap<ScriptObject, Object> entries = m.getWeakMapData();
-            /* step 6 */
+            /* step 5 */
             if (!Type.isObject(key)) {
                 return false;
             }
-            /* steps 7-8 */
+            /* steps 6-7 */
             return entries.containsKey(key);
         }
 
@@ -166,17 +162,16 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
          */
         @Function(name = "set", arity = 2)
         public static Object set(ExecutionContext cx, Object thisValue, Object key, Object value) {
-            /* steps 1-4 */
+            /* steps 1-3 */
             WeakMapObject m = thisWeakMapObject(cx, thisValue);
-            /* step 5 */
+            /* step 4 */
             WeakHashMap<ScriptObject, Object> entries = m.getWeakMapData();
-            /* step 6 */
+            /* step 5 */
             if (!Type.isObject(key)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
-            /* steps 7-9 */
+            /* steps 6-9 */
             entries.put(Type.objectValue(key), value);
-            /* step 7.a.ii, 10 */
             return m;
         }
 

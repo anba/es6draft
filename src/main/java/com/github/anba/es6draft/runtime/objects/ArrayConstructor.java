@@ -24,8 +24,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -40,8 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>22.1.2 Properties of the Array Constructor
  * </ul>
  */
-public final class ArrayConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<ArrayObject> {
+public final class ArrayConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Array constructor function.
      * 
@@ -53,8 +50,8 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -69,22 +66,39 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
      */
     @Override
     public ArrayObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        /* steps 1-9/1-11/1-13 */
+        return construct(callerContext, this, args);
+    }
+
+    /**
+     * 22.1.1.1 Array ( )<br>
+     * 22.1.1.2 Array (len)<br>
+     * 22.1.1.3 Array (...items )
+     */
+    @Override
+    public ArrayObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
         ExecutionContext calleeContext = calleeContext();
+        /* step 1 */
         int numberOfArgs = args.length;
+        /* steps 2-3 (not applicable) */
+        /* steps 4-5 */
+        ScriptObject proto = GetPrototypeFromConstructor(calleeContext, newTarget,
+                Intrinsics.ArrayPrototype);
         if (numberOfArgs == 0) {
             // [22.1.1.1]
-            /* steps 1-5 */
-            ArrayObject array = initOrCreateArray(calleeContext, thisValue, 0);
-            /* steps 6-7 */
+            /* step 6 */
+            ArrayObject array = ArrayCreate(calleeContext, 0, proto);
+            /* steps 7-8 */
             Put(calleeContext, array, "length", 0, true);
-            /* step 8 */
+            /* step 9 */
             return array;
         } else if (numberOfArgs == 1) {
             // [22.1.1.2]
-            /* steps 1-5 */
-            ArrayObject array = initOrCreateArray(calleeContext, thisValue, 0);
             Object len = args[0];
-            /* steps 6-7 */
+            /* step 6 */
+            ArrayObject array = ArrayCreate(calleeContext, 0, proto);
+            /* steps 7-8 */
             long intLen;
             if (!Type.isNumber(len)) {
                 CreateDataPropertyOrThrow(calleeContext, array, 0, len);
@@ -96,65 +110,25 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                     throw newRangeError(calleeContext, Messages.Key.InvalidArrayLength);
                 }
             }
-            /* steps 8-9 */
+            /* steps 9-10 */
             Put(calleeContext, array, "length", intLen, true);
-            /* step 10 */
+            /* step 11 */
             return array;
         } else {
             // [22.1.1.3]
-            /* steps 1-6 */
-            ArrayObject array = initOrCreateArray(calleeContext, thisValue, numberOfArgs);
-            /* steps 7-9 */
+            /* steps 6-7 */
+            ArrayObject array = ArrayCreate(calleeContext, numberOfArgs, proto);
+            /* steps 8-10 */
             for (int k = 0; k < numberOfArgs; ++k) {
                 int pk = k;
                 Object itemK = args[k];
                 CreateDataPropertyOrThrow(calleeContext, array, pk, itemK);
             }
-            /* steps 10-11 */
+            /* steps 11-12 */
             Put(calleeContext, array, "length", numberOfArgs, true);
-            /* step 12 */
+            /* step 13 */
             return array;
         }
-    }
-
-    private ArrayObject initOrCreateArray(ExecutionContext cx, Object thisValue, int length) {
-        /* [22.1.1.1] steps 3-6 */
-        /* [22.1.1.2] steps 3-6 */
-        /* [22.1.1.3] steps 3-6 */
-        if (thisValue instanceof ArrayObject) {
-            ArrayObject array = (ArrayObject) thisValue;
-            if (array.initialize()) {
-                return array;
-            }
-        }
-        ScriptObject proto = GetPrototypeFromConstructor(cx, this, Intrinsics.ArrayPrototype);
-        return ArrayCreate(cx, length, proto);
-    }
-
-    /**
-     * 22.1.1.3 new Array ( ... argumentsList)
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
-
-    private static final class ArrayCreate implements CreateAction<ArrayObject> {
-        static final CreateAction<ArrayObject> INSTANCE = new ArrayCreate();
-
-        @Override
-        public ArrayObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            /* steps 1-2 */
-            ScriptObject proto = GetPrototypeFromConstructor(cx, constructor,
-                    Intrinsics.ArrayPrototype);
-            /* step 3 */
-            return ArrayCreate(cx, proto);
-        }
-    }
-
-    @Override
-    public CreateAction<ArrayObject> createAction() {
-        return ArrayCreate.INSTANCE;
     }
 
     /**
@@ -218,7 +192,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             /* steps 4-6 */
             ScriptObject a;
             if (IsConstructor(c)) {
-                a = ((Constructor) c).construct(cx, len);
+                a = ((Constructor) c).construct(cx, (Constructor) c, len);
             } else {
                 a = ArrayCreate(cx, len);
             }
@@ -273,7 +247,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                 /* steps 6a-6c */
                 ScriptObject a;
                 if (IsConstructor(c)) {
-                    a = ((Constructor) c).construct(cx);
+                    a = ((Constructor) c).construct(cx, (Constructor) c);
                 } else {
                     a = ArrayCreate(cx, 0);
                 }
@@ -300,18 +274,16 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             /* step 7 (?) */
             /* steps 8-9 */
             ScriptObject arrayLike = ToObject(cx, items);
-            /* step 10 */
-            Object lenValue = Get(cx, arrayLike, "length");
-            /* steps 11-12 */
-            long len = ToLength(cx, lenValue);
-            /* steps 13-15 */
+            /* steps 10-11 */
+            long len = ToLength(cx, Get(cx, arrayLike, "length"));
+            /* steps 12-14 */
             ScriptObject a;
             if (IsConstructor(c)) {
-                a = ((Constructor) c).construct(cx, len);
+                a = ((Constructor) c).construct(cx, (Constructor) c, len);
             } else {
                 a = ArrayCreate(cx, len);
             }
-            /* steps 16-17 */
+            /* steps 15-16 */
             for (long k = 0; k < len; ++k) {
                 long pk = k;
                 Object kValue = Get(cx, arrayLike, pk);
@@ -323,9 +295,9 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                 }
                 CreateDataPropertyOrThrow(cx, a, pk, mappedValue);
             }
-            /* steps 18-19 */
+            /* steps 17-18 */
             Put(cx, a, "length", len, true);
-            /* step 20 */
+            /* step 19 */
             return a;
         }
 

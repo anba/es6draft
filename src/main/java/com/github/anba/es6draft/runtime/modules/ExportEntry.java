@@ -24,8 +24,8 @@ public final class ExportEntry {
     /** [[ExportName]] */
     private final String exportName;
 
-    /** [[ModuleRequestId]] */
-    private String moduleRequestId;
+    /** [[ImportModule]] */
+    private ModuleRecord importModule;
 
     private final long sourcePosition;
 
@@ -42,7 +42,7 @@ public final class ExportEntry {
     public String toString() {
         return String
                 .format("ExportEntry {moduleRequest=%s, importName=%s, localName=%s, exportName=%s, moduleRequestId=%s}",
-                        moduleRequest, importName, localName, exportName, moduleRequestId);
+                        moduleRequest, importName, localName, exportName, importModule);
     }
 
     /**
@@ -55,23 +55,23 @@ public final class ExportEntry {
     }
 
     /**
-     * [[ModuleRequestId]]
+     * [[ImportModule]]
      * 
-     * @return the module request identifier
+     * @return the resolved import module
      */
-    public String getModuleRequestId() {
-        assert moduleRequestId != null;
-        return moduleRequestId;
+    public ModuleRecord getImportModule() {
+        assert importModule != null;
+        return importModule;
     }
 
     /**
-     * [[ModuleRequestId]]
+     * [[ImportModule]]
      * 
-     * @param moduleRequestId
-     *            the module request identifier
+     * @param importModule
+     *            the resolved import module
      */
-    public void setModuleRequestId(String moduleRequestId) {
-        this.moduleRequestId = moduleRequestId;
+    public void setImportModule(ModuleRecord importModule) {
+        this.importModule = importModule;
     }
 
     public boolean isStarExport() {

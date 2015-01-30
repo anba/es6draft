@@ -21,8 +21,8 @@ public final class ImportEntry {
     /** [[LocalName]] */
     private final String localName;
 
-    /** [[ModuleRequestId]] */
-    private String moduleRequestId;
+    /** [[ImportModule]] */
+    private ModuleRecord importModule;
 
     private final long sourcePosition;
 
@@ -48,24 +48,24 @@ public final class ImportEntry {
     }
 
     /**
-     * [[ModuleRequestId]]
+     * [[ImportModule]]
      * 
-     * @return the module request identifier
+     * @return the resolved import module
      */
-    public String getModuleRequestId() {
-        assert moduleRequestId != null;
-        return moduleRequestId;
+    public ModuleRecord getImportModule() {
+        assert importModule != null;
+        return importModule;
     }
 
     /**
-     * [[ModuleRequestId]]
+     * [[ImportModule]]
      * 
-     * @param moduleRequestId
-     *            the module request identifier
+     * @param importModule
+     *            the resolved import module
      */
-    public void setModuleRequestId(String moduleRequestId) {
-        assert this.moduleRequestId == null && moduleRequestId != null;
-        this.moduleRequestId = moduleRequestId;
+    public void setImportModule(ModuleRecord importModule) {
+        assert this.importModule == null && importModule != null;
+        this.importModule = importModule;
     }
 
     /**

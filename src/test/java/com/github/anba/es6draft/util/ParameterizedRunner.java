@@ -21,10 +21,10 @@ import org.junit.runners.parameterized.BlockJUnit4ClassRunnerWithParameters;
 import org.junit.runners.parameterized.TestWithParameters;
 
 /**
- *
+ * 
  */
-public class ParallelizedRunner extends BlockJUnit4ClassRunnerWithParameters {
-    public ParallelizedRunner(TestWithParameters test) throws InitializationError {
+public class ParameterizedRunner extends BlockJUnit4ClassRunnerWithParameters {
+    public ParameterizedRunner(TestWithParameters test) throws InitializationError {
         super(test);
     }
 

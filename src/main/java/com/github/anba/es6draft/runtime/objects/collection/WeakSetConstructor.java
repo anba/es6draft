@@ -20,8 +20,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -35,8 +33,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>23.4.2 Properties of the WeakSet Constructor
  * </ul>
  */
-public final class WeakSetConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<WeakSetObject> {
+public final class WeakSetConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new WeakSet constructor function.
      * 
@@ -48,8 +45,8 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -61,21 +58,25 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
      * 23.4.1.1 WeakSet ([ iterable ])
      */
     @Override
-    public WeakSetObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        /* step 1 */
+        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "WeakSet");
+    }
+
+    /**
+     * 23.4.1.1 WeakSet ([ iterable ])
+     */
+    @Override
+    public WeakSetObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object iterable = argument(args, 0);
 
-        /* steps 1-4 */
-        if (!Type.isObject(thisValue)) {
-            throw newTypeError(calleeContext, Messages.Key.NotObjectType);
-        }
-        if (!(thisValue instanceof WeakSetObject)) {
-            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
-        }
-        WeakSetObject set = (WeakSetObject) thisValue;
-        if (set.isInitialized()) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
+        /* step 1 (not applicable) */
+        /* steps 2-4 */
+        WeakSetObject set = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.WeakSetPrototype, WeakSetObjectAllocator.INSTANCE);
 
         /* steps 5-7 */
         ScriptObject iter;
@@ -91,19 +92,11 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
             iter = GetIterator(calleeContext, iterable);
         }
 
-        /* steps 8-9 */
-        if (set.isInitialized()) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
-
-        /* step 10 */
-        set.initialize();
-
-        /* step 11 */
+        /* step 8 */
         if (iter == null) {
             return set;
         }
-        /* step 12 */
+        /* step 9 */
         for (;;) {
             ScriptObject next = IteratorStep(calleeContext, iter);
             if (next == null) {
@@ -114,17 +107,13 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
         }
     }
 
-    /**
-     * 23.4.1.2 new WeakSet (...argumentsList)
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
+    private static final class WeakSetObjectAllocator implements ObjectAllocator<WeakSetObject> {
+        static final ObjectAllocator<WeakSetObject> INSTANCE = new WeakSetObjectAllocator();
 
-    @Override
-    public CreateAction<WeakSetObject> createAction() {
-        return WeakSetCreate.INSTANCE;
+        @Override
+        public WeakSetObject newInstance(Realm realm) {
+            return new WeakSetObject(realm);
+        }
     }
 
     /**
@@ -150,24 +139,5 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.WeakSetPrototype;
-    }
-
-    private static final class WeakSetObjectAllocator implements ObjectAllocator<WeakSetObject> {
-        static final ObjectAllocator<WeakSetObject> INSTANCE = new WeakSetObjectAllocator();
-
-        @Override
-        public WeakSetObject newInstance(Realm realm) {
-            return new WeakSetObject(realm);
-        }
-    }
-
-    private static class WeakSetCreate implements CreateAction<WeakSetObject> {
-        static final CreateAction<WeakSetObject> INSTANCE = new WeakSetCreate();
-
-        @Override
-        public WeakSetObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.WeakSetPrototype,
-                    WeakSetObjectAllocator.INSTANCE);
-        }
     }
 }

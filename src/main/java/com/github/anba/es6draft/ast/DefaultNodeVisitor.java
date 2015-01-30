@@ -501,6 +501,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(NewTarget node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public R visit(NullLiteral node, V value) {
         return visit((Literal) node, value);
     }

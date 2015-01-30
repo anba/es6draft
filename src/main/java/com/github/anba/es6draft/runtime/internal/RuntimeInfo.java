@@ -41,13 +41,15 @@ public final class RuntimeInfo {
      *            the method handle
      * @param callMethod
      *            the call method handle
+     * @param constructMethod
+     *            the construct method handle
      * @return the new function object
      */
     public static Function newFunction(String functionName, int functionFlags,
             int expectedArgumentCount, String source, int bodySourceStart, MethodHandle handle,
-            MethodHandle callMethod) {
+            MethodHandle callMethod, MethodHandle constructMethod) {
         return new CompiledFunction(functionName, functionFlags, expectedArgumentCount, source,
-                bodySourceStart, handle, callMethod, null);
+                bodySourceStart, handle, callMethod, constructMethod, null);
     }
 
     /**
@@ -67,15 +69,17 @@ public final class RuntimeInfo {
      *            the method handle
      * @param callMethod
      *            the call method handle
+     * @param constructMethod
+     *            the construct method handle
      * @param debugInfo
      *            the debug info method handle
      * @return the new function object
      */
     public static Function newFunction(String functionName, int functionFlags,
             int expectedArgumentCount, String source, int bodySourceStart, MethodHandle handle,
-            MethodHandle callMethod, MethodHandle debugInfo) {
+            MethodHandle callMethod, MethodHandle constructMethod, MethodHandle debugInfo) {
         return new CompiledFunction(functionName, functionFlags, expectedArgumentCount, source,
-                bodySourceStart, handle, callMethod, debugInfo);
+                bodySourceStart, handle, callMethod, constructMethod, debugInfo);
     }
 
     /**
@@ -624,6 +628,13 @@ public final class RuntimeInfo {
         MethodHandle callMethod();
 
         /**
+         * (? extends FunctionObject, ExecutionContext, Constructor, Object[]) {@literal ->} Object.
+         * 
+         * @return the method handle for normal construct calls
+         */
+        MethodHandle constructMethod();
+
+        /**
          * (ExecutionContext, ...?) {@literal ->} Object
          * 
          * @return the method handle for tail calls
@@ -646,11 +657,12 @@ public final class RuntimeInfo {
         private final int bodySourceStart;
         private final MethodHandle handle;
         private final MethodHandle callMethod;
+        private final MethodHandle constructMethod;
         private final MethodHandle debugInfo;
 
         CompiledFunction(String functionName, int functionFlags, int expectedArgumentCount,
                 String source, int bodySourceStart, MethodHandle handle, MethodHandle callMethod,
-                MethodHandle debugInfo) {
+                MethodHandle constructMethod, MethodHandle debugInfo) {
             this.functionName = functionName;
             this.functionFlags = functionFlags;
             this.expectedArgumentCount = expectedArgumentCount;
@@ -658,6 +670,7 @@ public final class RuntimeInfo {
             this.bodySourceStart = bodySourceStart;
             this.handle = handle;
             this.callMethod = callMethod;
+            this.constructMethod = constructMethod;
             this.debugInfo = debugInfo;
         }
 
@@ -734,6 +747,11 @@ public final class RuntimeInfo {
         @Override
         public MethodHandle callMethod() {
             return callMethod;
+        }
+
+        @Override
+        public MethodHandle constructMethod() {
+            return constructMethod;
         }
 
         @Override

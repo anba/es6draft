@@ -27,10 +27,10 @@ class C {
 }
 `);
 
-function fdecl() { super(); }
+assertSyntaxError(`function fdecl() { super(); }`);
 
-(function fexpr() { super(); });
+assertSyntaxError(`(function fexpr() { super(); });`);
 
-function* gdecl() { super(); }
+assertSyntaxError(`function* gdecl() { super(); }`);
 
-(function* gexpr() { super(); });
+assertSyntaxError(`(function* gexpr() { super(); });`);

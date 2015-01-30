@@ -6,6 +6,12 @@
  */
 package com.github.anba.es6draft.runtime;
 
+import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+
+import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
@@ -19,39 +25,71 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  */
 public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecord {
     private final FunctionObject functionObject;
-    private final Object thisValue;
+    private final Constructor newTarget;
     private final ScriptObject homeObject;
+    private Object thisValue;
+    private boolean thisInitializationState;
     private DeclarativeEnvironmentRecord topLex;
 
     public FunctionEnvironmentRecord(ExecutionContext cx, FunctionObject functionObject,
-            Object thisValue, ScriptObject homeObject) {
+            Constructor newTarget, Object thisValue) {
         super(cx);
         this.functionObject = functionObject;
+        this.newTarget = newTarget;
+        this.homeObject = functionObject.getHomeObject();
         this.thisValue = thisValue;
-        this.homeObject = homeObject;
+        this.thisInitializationState = true;
+    }
+
+    public FunctionEnvironmentRecord(ExecutionContext cx, FunctionObject functionObject,
+            Constructor newTarget) {
+        super(cx);
+        this.functionObject = functionObject;
+        this.newTarget = newTarget;
+        this.homeObject = functionObject.getHomeObject();
+        this.thisValue = UNDEFINED;
+        this.thisInitializationState = false;
     }
 
     @Override
     public String toString() {
-        return String.format(
-                "%s:{%n\tfunctionObject=%s,%n\tthisValue=%s,%n\thomeObject=%s,%n\tbindings=%s%n}",
-                getClass().getSimpleName(), functionObject, thisValue, homeObject,
-                bindingsToString());
+        return String
+                .format("%s:{%n\tfunctionObject=%s,%n\tnewTarget=%s,%n\thomeObject=%s,%n\tthisValue=%s,%n\tthisInitializationState=%b,%n\tbindings=%s%n}",
+                        getClass().getSimpleName(), functionObject, newTarget, homeObject,
+                        thisValue, thisInitializationState, bindingsToString());
     }
 
     /**
-     * Returns the {@code FunctionObject} state component.
+     * Returns the {@code FunctionObject} state field.
      * 
-     * @return the {@code FunctionObject} component
+     * @return the {@code FunctionObject} field
      */
     public FunctionObject getFunctionObject() {
         return functionObject;
     }
 
     /**
-     * Returns the {@code topLex} state component.
+     * Returns the {@code newTarget} state field.
      * 
-     * @return the {@code topLex} component
+     * @return the {@code newTarget} field
+     */
+    public Constructor getNewTarget() {
+        return newTarget;
+    }
+
+    /**
+     * Returns the {@code thisInitializationState} state field.
+     * 
+     * @return the {@code thisInitializationState} field
+     */
+    public boolean isThisInitialized() {
+        return thisInitializationState;
+    }
+
+    /**
+     * Returns the {@code topLex} state field.
+     * 
+     * @return the {@code topLex} field
      */
     public DeclarativeEnvironmentRecord getTopLex() {
         // FIXME: spec bug - eval in default parameter initializer (bug 3383)
@@ -72,7 +110,27 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     }
 
     /**
-     * 8.1.1.3.1 HasThisBinding ()
+     * 8.1.1.3.1 BindThisValue(V)
+     * 
+     * @param thisValue
+     *            the function {@code this} value
+     */
+    public void bindThisValue(ScriptObject thisValue) {
+        /* step 1 */
+        // FIXME: spec bug - throw TypeError (bug 3675)
+        // assert !thisInitializationState;
+        if (thisInitializationState) {
+            throw newTypeError(cx, Messages.Key.InitializedThis);
+        }
+        /* step 2 */
+        this.thisValue = thisValue;
+        /* step 3 */
+        this.thisInitializationState = true;
+        /* step 4 (not applicable) */
+    }
+
+    /**
+     * 8.1.1.3.2 HasThisBinding ()
      */
     @Override
     public boolean hasThisBinding() {
@@ -81,7 +139,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     }
 
     /**
-     * 8.1.1.3.2 HasSuperBinding ()
+     * 8.1.1.3.3 HasSuperBinding ()
      */
     @Override
     public boolean hasSuperBinding() {
@@ -90,16 +148,20 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     }
 
     /**
-     * 8.1.1.3.3 GetThisBinding ()
+     * 8.1.1.3.4 GetThisBinding ()
      */
     @Override
     public Object getThisBinding() {
         /* step 1 */
+        if (!thisInitializationState) {
+            throw newReferenceError(cx, Messages.Key.UninitializedThis);
+        }
+        /* step 2 */
         return thisValue;
     }
 
     /**
-     * 8.1.1.3.4 GetSuperBase ()
+     * 8.1.1.3.5 GetSuperBase ()
      * 
      * @return the prototype of the home object or {@code null} if no super binding was set
      */

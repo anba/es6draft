@@ -22,8 +22,6 @@ public final class BooleanObject extends OrdinaryObject {
     /** [[BooleanData]] */
     private boolean booleanData;
 
-    private boolean initialized = false;
-
     /**
      * Constructs a new Boolean object.
      * 
@@ -35,21 +33,11 @@ public final class BooleanObject extends OrdinaryObject {
     }
 
     /**
-     * Returns {@code true} if this Boolean object is initialized.
-     * 
-     * @return {@code true} if the object is initialized
-     */
-    public boolean isInitialized() {
-        return initialized;
-    }
-
-    /**
      * [[BooleanData]]
      * 
      * @return the boolean value
      */
     public boolean getBooleanData() {
-        assert this.initialized : "BooleanObject not initialized";
         return booleanData;
     }
 
@@ -60,8 +48,6 @@ public final class BooleanObject extends OrdinaryObject {
      *            the new boolean value
      */
     public void setBooleanData(boolean booleanData) {
-        assert !this.initialized : "BooleanObject already initialized";
-        this.initialized = true;
         this.booleanData = booleanData;
     }
 

@@ -33,7 +33,7 @@ import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.Parallelized;
-import com.github.anba.es6draft.util.ParallelizedRunnerFactory;
+import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -44,7 +44,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  * Test suite for the Reflect API tests.
  */
 @RunWith(Parallelized.class)
-@UseParametersRunnerFactory(ParallelizedRunnerFactory.class)
+@UseParametersRunnerFactory(ParameterizedRunnerFactory.class)
 @TestConfiguration(name = "reflect.test", file = "resource:/test-configuration.properties")
 public class ReflectTest {
     private static final Configuration configuration = loadConfiguration(ReflectTest.class);

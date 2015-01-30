@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstru
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsDetachedBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
+import static com.github.anba.es6draft.runtime.objects.binary.TypedArrayConstructorPrototype.AllocateTypedArray;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
@@ -62,8 +63,8 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     /**
@@ -74,38 +75,40 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
 
         private static ArrayBufferView thisArrayBufferView(ExecutionContext cx, Object m) {
             if (m instanceof ArrayBufferView) {
-                ArrayBufferView view = (ArrayBufferView) m;
-                ArrayBufferObject buffer = view.getBuffer();
-                if (buffer == null) {
-                    throw newTypeError(cx, Messages.Key.UninitializedObject);
-                }
-                return view;
+                return (ArrayBufferView) m;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         private static TypedArrayObject thisTypedArrayObject(ExecutionContext cx, Object thisValue) {
             if (thisValue instanceof TypedArrayObject) {
-                // initialization status intentionally not checked here!
                 return (TypedArrayObject) thisValue;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
+        /**
+         * 22.2.3.5.1 Runtime Semantics: ValidateTypedArray ( O )
+         * 
+         * @param cx
+         * @param thisValue
+         * @return
+         */
         private static TypedArrayObject thisTypedArrayObjectChecked(ExecutionContext cx,
                 Object thisValue) {
-            if (thisValue instanceof TypedArrayObject) {
-                TypedArrayObject typedArray = (TypedArrayObject) thisValue;
-                ArrayBufferObject buffer = typedArray.getBuffer();
-                if (buffer == null) {
-                    throw newTypeError(cx, Messages.Key.UninitializedObject);
-                }
-                if (IsDetachedBuffer(buffer)) {
-                    throw newTypeError(cx, Messages.Key.BufferDetached);
-                }
-                return typedArray;
+            /* steps 1-3 */
+            if (!(thisValue instanceof TypedArrayObject)) {
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            TypedArrayObject typedArray = (TypedArrayObject) thisValue;
+            /* step 4 */
+            ArrayBufferObject buffer = typedArray.getBuffer();
+            /* step 5 */
+            if (IsDetachedBuffer(buffer)) {
+                throw newTypeError(cx, Messages.Key.BufferDetached);
+            }
+            /* step 6 (not applicable) */
+            return typedArray;
         }
 
         @Prototype
@@ -128,7 +131,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Accessor(name = "buffer", type = Accessor.Type.Getter)
         public static Object buffer(ExecutionContext cx, Object thisValue) {
-            /* steps 1-6 */
+            /* steps 1-5 */
             return thisArrayBufferView(cx, thisValue).getBuffer();
         }
 
@@ -143,10 +146,14 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
-            /* steps 1-5 */
+            /* steps 1-3 */
             ArrayBufferView view = thisArrayBufferView(cx, thisValue);
-            /* steps 6-8 */
-            return IsDetachedBuffer(view.getBuffer()) ? 0 : view.getByteLength();
+            /* steps 4-5 */
+            if (IsDetachedBuffer(view.getBuffer())) {
+                return 0;
+            }
+            /* steps 6-7 */
+            return view.getByteLength();
         }
 
         /**
@@ -160,10 +167,14 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Accessor(name = "byteOffset", type = Accessor.Type.Getter)
         public static Object byteOffset(ExecutionContext cx, Object thisValue) {
-            /* steps 1-5 */
+            /* steps 1-4 */
             ArrayBufferView view = thisArrayBufferView(cx, thisValue);
-            /* steps 6-8 */
-            return IsDetachedBuffer(view.getBuffer()) ? 0 : view.getByteOffset();
+            /* steps 4-5 */
+            if (IsDetachedBuffer(view.getBuffer())) {
+                return 0;
+            }
+            /* steps 6-7 */
+            return view.getByteOffset();
         }
 
         /**
@@ -179,23 +190,20 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         public static Object length(ExecutionContext cx, Object thisValue) {
             /* steps 1-4 */
             TypedArrayObject typedArray = thisTypedArrayObject(cx, thisValue);
-            /* step 5 */
-            ArrayBufferObject buffer = typedArray.getBuffer();
-            /* step 6 */
-            if (buffer == null) {
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
-            }
-            /* step 7 */
-            if (IsDetachedBuffer(buffer)) {
+            /* steps 5-6 */
+            if (IsDetachedBuffer(typedArray.getBuffer())) {
                 return 0;
             }
-            /* steps 8-9 */
+            /* steps 7-8 */
             return typedArray.getArrayLength();
         }
 
         /**
-         * 22.2.3.22 %TypedArray%.prototype.set(array [ , offset ] ) <br>
-         * 22.2.3.23 %TypedArray%.prototype.set(typedArray [ offset ] )
+         * 22.2.3.22 %TypedArray%.prototype.set ( overloaded [ , offset ])
+         * <ul>
+         * <li>22.2.3.22.1 %TypedArray%.prototype.set (array [ , offset ] )
+         * <li>22.2.3.22.2 %TypedArray%.prototype.set(typedArray [, offset ] )
+         * </ul>
          * 
          * @param cx
          *            the execution context
@@ -210,7 +218,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "set", arity = 2)
         public static Object set(ExecutionContext cx, Object thisValue, Object array, Object offset) {
             if (!(array instanceof TypedArrayObject)) {
-                // 22.2.3.22
+                // 22.2.3.22.1
                 /* steps 1-5 */
                 TypedArrayObject target = thisTypedArrayObject(cx, thisValue);
                 /* steps 6-7 */
@@ -223,56 +231,57 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 /* step 9 */
                 ArrayBufferObject targetBuffer = target.getBuffer();
                 /* step 10 */
-                if (targetBuffer == null) {
-                    throw newTypeError(cx, Messages.Key.UninitializedObject);
-                }
-                /* step 11 */
                 if (IsDetachedBuffer(targetBuffer)) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
-                /* step 12 */
+                /* step 11 */
                 long targetLength = target.getArrayLength();
-                /* steps 13, 15 */
+                /* steps 12, 14 */
                 ElementType targetType = target.getElementType();
-                /* step 14 */
+                /* step 13 */
                 int targetElementSize = targetType.size();
-                /* step 16 */
+                /* step 15 */
                 long targetByteOffset = target.getByteOffset();
-                /* steps 17-18 */
+                /* steps 16-17 */
                 ScriptObject src = ToObject(cx, array);
-                /* step 19 */
+                /* step 18 */
                 Object srcLen = Get(cx, src, "length");
-                /* step 20 */
+                /* step 19 */
                 double numberLength = ToNumber(cx, srcLen);
-                /* steps 21-22 */
+                /* steps 20-21 */
                 double srcLength = ToInteger(numberLength);// TODO: spec bug - call ToLength()?
-                /* step 23 */
+                /* step 22 */
                 if (numberLength != srcLength || srcLength < 0) {
                     throw newRangeError(cx, Messages.Key.InvalidByteLength);
                 }
-                /* step 24 */
+                /* step 23 */
                 if (srcLength + targetOffset > targetLength) {
                     throw newRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
                 }
-                /* step 25 */
+                /* step 24 */
                 long targetByteIndex = (long) (targetOffset * targetElementSize + targetByteOffset);
-                /* step 27 */
+                /* step 26 */
                 long limit = (long) (targetByteIndex + targetElementSize
                         * Math.min(srcLength, targetLength - targetOffset));
-                /* steps 26, 28 */
+                /* steps 25, 27 */
                 for (long k = 0; targetByteIndex < limit; ++k, targetByteIndex += targetElementSize) {
+                    /* step 27.a */
                     long pk = k;
+                    /* step 27.b */
                     Object kValue = Get(cx, src, pk);
+                    /* step 27.c-d */
                     double kNumber = ToNumber(cx, kValue);
+                    /* step 27.e */
                     if (IsDetachedBuffer(targetBuffer)) {
                         throw newTypeError(cx, Messages.Key.BufferDetached);
                     }
+                    /* step 27.f */
                     SetValueInBuffer(targetBuffer, targetByteIndex, targetType, kNumber);
                 }
-                /* step 29 */
+                /* step 28 */
                 return UNDEFINED;
             } else {
-                // 22.2.3.23
+                // 22.2.3.22.2
                 TypedArrayObject typedArray = (TypedArrayObject) array;
                 /* steps 1-5 */
                 TypedArrayObject target = thisTypedArrayObject(cx, thisValue);
@@ -286,24 +295,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 /* step 9 */
                 ArrayBufferObject targetBuffer = target.getBuffer();
                 /* step 10 */
-                if (targetBuffer == null) {
-                    throw newTypeError(cx, Messages.Key.UninitializedObject);
-                }
-                /* step 11 */
                 if (IsDetachedBuffer(targetBuffer)) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
-                /* step 13 */
+                /* step 12 */
                 ArrayBufferObject srcBuffer = typedArray.getBuffer();
-                /* step 14 */
-                if (srcBuffer == null) {
-                    throw newTypeError(cx, Messages.Key.UninitializedObject);
-                }
-                /* step 15 */
+                /* step 13 */
                 if (IsDetachedBuffer(srcBuffer)) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
-                /* step 12 */
+                /* step 11 */
                 long targetLength = target.getArrayLength();
                 /* steps 14-15 */
                 ElementType targetType = target.getElementType();
@@ -327,6 +328,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 long srcByteIndex;
                 if (SameValue(srcBuffer, targetBuffer)) {
                     srcBuffer = CloneArrayBuffer(cx, srcBuffer, srcByteOffset);
+                    // FIXME: spec bug - change to assert?
                     if (IsDetachedBuffer(targetBuffer)) {
                         throw newTypeError(cx, Messages.Key.BufferDetached);
                     }
@@ -341,7 +343,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                         * Math.min(srcLength, targetLength - targetOffset));
                 /* step 28 */
                 for (; targetByteIndex < limit; srcByteIndex += srcElementSize, targetByteIndex += targetElementSize) {
+                    /* step 28.a */
                     double value = GetValueFromBuffer(srcBuffer, srcByteIndex, srcType);
+                    /* step 28.b */
                     SetValueInBuffer(targetBuffer, targetByteIndex, targetType, value);
                 }
                 /* step 29 */
@@ -370,47 +374,41 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             /* step 5 */
             ArrayBufferObject buffer = array.getBuffer();
             /* step 6 */
-            if (buffer == null) {
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
-            }
-            /* step 7 */
             long srcLength = array.getArrayLength();
-            /* steps 8-9 */
+            /* steps 7-8 */
             double beginInt = (begin == UNDEFINED ? 0 : ToInteger(cx, begin));
-            /* step 10 */
+            /* step 9 */
             if (beginInt < 0) {
                 beginInt = srcLength + beginInt;
             }
-            /* step 11 */
+            /* step 10 */
             double beginIndex = Math.min(srcLength, Math.max(0, beginInt));
-            /* steps 12-14 */
+            /* steps 11-13 */
             double endInt = (end == UNDEFINED ? srcLength : ToInteger(cx, end));
-            /* step 15 */
+            /* step 14 */
             if (endInt < 0) {
                 endInt = srcLength + endInt;
             }
-            /* step 16 */
+            /* step 15 */
             double endIndex = Math.max(0, Math.min(srcLength, endInt));
-            /* step 17 */
+            /* step 16 */
             if (endIndex < beginIndex) {
                 endIndex = beginIndex;
             }
-            /* step 18 */
+            /* step 17 */
             double newLength = endIndex - beginIndex;
-            /* steps 19-20 */
-            ElementType elementType = array.getElementType();
-            /* step 21 */
-            int elementSize = elementType.size();
-            /* step 22 */
+            /* steps 18-19 */
+            int elementSize = array.getElementType().size();
+            /* step 20 */
             double srcByteOffset = array.getByteOffset();
-            /* step 23 */
+            /* step 21 */
             double beginByteOffset = srcByteOffset + beginIndex * elementSize;
-            /* step 24 */
+            /* step 22 */
             Intrinsics defaultConstructor = array.getElementType().getConstructor();
-            /* steps 25-26 */
+            /* steps 23-24 */
             Constructor constructor = SpeciesConstructor(cx, array, defaultConstructor);
-            /* steps 27-28 */
-            return constructor.construct(cx, buffer, beginByteOffset, newLength);
+            /* steps 25-26 */
+            return constructor.construct(cx, constructor, buffer, beginByteOffset, newLength);
         }
 
         /**
@@ -490,48 +488,51 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
-            /* steps 1-7 */
+            /* steps 1-3 */
             TypedArrayObject o = thisTypedArrayObjectChecked(cx, thisValue);
-            /* step 8 */
+            /* step 4 */
             long len = o.getArrayLength();
-            /* steps 9-10 */
+            /* steps 5-6 */
             double relativeStart = ToInteger(cx, start);
-            /* step 11 */
+            /* step 7 */
             long k;
             if (relativeStart < 0) {
                 k = (long) Math.max(len + relativeStart, 0);
             } else {
                 k = (long) Math.min(relativeStart, len);
             }
-            /* steps 12-13 */
+            /* steps 8-9 */
             double relativeEnd;
             if (Type.isUndefined(end)) {
                 relativeEnd = len;
             } else {
                 relativeEnd = ToInteger(cx, end);
             }
-            /* step 14 */
+            /* step 10 */
             long finall;
             if (relativeEnd < 0) {
                 finall = (long) Math.max(len + relativeEnd, 0);
             } else {
                 finall = (long) Math.min(relativeEnd, len);
             }
-            /* step 15 */
+            /* step 11 */
             long count = Math.max(finall - k, 0);
-            /* step 16 */
+            /* step 12 */
             Intrinsics defaultConstructor = o.getElementType().getConstructor();
-            /* steps 17-18 */
+            /* steps 13-14 */
             Constructor c = SpeciesConstructor(cx, o, defaultConstructor);
-            /* steps 19-20 */
-            ScriptObject a = ((Constructor) c).construct(cx, count);
-            /* steps 21-22 */
+            /* steps 15-16 */
+            TypedArrayObject a = AllocateTypedArray(cx, c, count);
+            /* steps 17-18 */
             for (long n = 0; k < finall; ++k, ++n) {
+                /* step 18.a */
                 long pk = k;
+                /* step 18.b-c */
                 Object kvalue = Get(cx, o, pk);
+                /* step 18.d-e */
                 Put(cx, a, n, kvalue, true);
             }
-            /* step 23 */
+            /* step 19 */
             return a;
         }
 
@@ -578,9 +579,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Function(name = "sort", arity = 1)
         public static Object sort(ExecutionContext cx, Object thisValue, Object comparefn) {
-            /* steps 1-5 */
+            /* steps 1-3 */
             TypedArrayObject obj = thisTypedArrayObjectChecked(cx, thisValue);
-            /* step 6 */
+            /* step 4 */
             long len = obj.getArrayLength();
 
             // handle OOM early
@@ -592,7 +593,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 return obj;
             }
             if (length == 1) {
-                // just to trigger possible side-effects (which shouldn't actually be possible
+                // Just to trigger possible side-effects (which shouldn't actually be possible
                 // unless there's a spec bug...)
                 Object e = Get(cx, obj, 0);
                 assert Type.isNumber(e);
@@ -756,30 +757,30 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "map", arity = 1)
         public static Object map(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
-            /* steps 1-6 */
+            /* steps 1-3 */
             TypedArrayObject o = thisTypedArrayObjectChecked(cx, thisValue);
-            /* step 7 */
+            /* step 4 */
             long len = o.getArrayLength();
-            /* step 8 */
+            /* step 5 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            /* step 9 (omitted) */
-            /* step 10 */
+            /* step 6 (omitted) */
+            /* step 7 */
             Intrinsics defaultConstructor = o.getElementType().getConstructor();
-            /* steps 11-12 */
+            /* steps 8-9 */
             Constructor c = SpeciesConstructor(cx, o, defaultConstructor);
-            /* steps 13-14 */
-            ScriptObject a = c.construct(cx, len);
-            /* steps 15-16 */
+            /* steps 10-11 */
+            TypedArrayObject a = AllocateTypedArray(cx, c, len);
+            /* steps 12-13 */
             for (long k = 0; k < len; ++k) {
                 long pk = k;
                 Object kvalue = Get(cx, o, pk);
                 Object mappedValue = callback.call(cx, thisArg, kvalue, k, o);
                 Put(cx, a, pk, mappedValue, true);
             }
-            /* step 17 */
+            /* step 14 */
             return a;
         }
 
@@ -799,39 +800,39 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "filter", arity = 1)
         public static Object filter(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
-            /* steps 1-6 */
+            /* steps 1-3 */
             TypedArrayObject o = thisTypedArrayObjectChecked(cx, thisValue);
-            /* step 7 */
+            /* step 4 */
             long len = o.getArrayLength();
-            /* step 8 */
+            /* step 5 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            /* step 9 (omitted) */
-            /* step 10 */
+            /* step 6 (omitted) */
+            /* step 7 */
             Intrinsics defaultConstructor = o.getElementType().getConstructor();
-            /* steps 11-12 */
+            /* steps 8-9 */
             Constructor c = SpeciesConstructor(cx, o, defaultConstructor);
-            /* steps 13, 15 */
+            /* steps 10, 12 */
             ArrayList<Object> kept = new ArrayList<>();
-            /* steps 14, 16 */
+            /* steps 11, 13 */
             for (long k = 0; k < len; ++k) {
                 long pk = k;
                 Object kvalue = Get(cx, o, pk);
-                Object selected = callback.call(cx, thisArg, kvalue, k, o);
-                if (ToBoolean(selected)) {
+                boolean selected = ToBoolean(callback.call(cx, thisArg, kvalue, k, o));
+                if (selected) {
                     kept.add(kvalue);
                 }
             }
-            /* steps 17-18 */
-            ScriptObject a = c.construct(cx, kept.size());
-            /* steps 19-20 */
+            /* steps 14-15 */
+            TypedArrayObject a = AllocateTypedArray(cx, c, kept.size());
+            /* steps 16-17 */
             for (int n = 0; n < kept.size(); ++n) {
                 Object e = kept.get(n);
                 Put(cx, a, n, e, true);
             }
-            /* step 21 */
+            /* step 18 */
             return a;
         }
 
@@ -976,9 +977,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Function(name = "entries", arity = 0)
         public static Object entries(ExecutionContext cx, Object thisValue) {
-            /* steps 1-6 */
+            /* steps 1-3 */
             TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            /* step 7 */
+            /* step 4 */
             return CreateArrayIterator(cx, array, ArrayIterationKind.KeyValue);
         }
 
@@ -993,9 +994,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Function(name = "keys", arity = 0)
         public static Object keys(ExecutionContext cx, Object thisValue) {
-            /* steps 1-6 */
+            /* steps 1-3 */
             TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            /* step7 */
+            /* step 4 */
             return CreateArrayIterator(cx, array, ArrayIterationKind.Key);
         }
 
@@ -1012,9 +1013,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "values", arity = 0)
         @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
         public static Object values(ExecutionContext cx, Object thisValue) {
-            /* steps 1-6 */
+            /* steps 1-3 */
             TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            /* step 7 */
+            /* step 4 */
             return CreateArrayIterator(cx, array, ArrayIterationKind.Value);
         }
 
@@ -1037,9 +1038,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             }
             TypedArrayObject array = (TypedArrayObject) thisValue;
             /* steps 4-5 */
-            if (array.getElementType() == null) {
-                return UNDEFINED;
-            }
+            // FIXME: spec bug - `name` is never undefined
             /* step 6 (not applicable) */
             /* step 7 */
             return array.getTypedArrayName();

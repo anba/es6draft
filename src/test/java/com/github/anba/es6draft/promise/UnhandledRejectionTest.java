@@ -41,7 +41,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.UnhandledRejectionException;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
-import com.github.anba.es6draft.util.ParallelizedRunnerFactory;
+import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -52,7 +52,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  * Test class for unhandled promise rejection.
  */
 @RunWith(Parallelized.class)
-@UseParametersRunnerFactory(ParallelizedRunnerFactory.class)
+@UseParametersRunnerFactory(ParameterizedRunnerFactory.class)
 @TestConfiguration(name = "promise.test.rejection",
         file = "resource:/test-configuration.properties")
 public final class UnhandledRejectionTest {

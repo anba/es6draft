@@ -49,8 +49,8 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     /**
@@ -61,11 +61,7 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
 
         private static SetObject thisSetObject(ExecutionContext cx, Object obj) {
             if (obj instanceof SetObject) {
-                SetObject set = (SetObject) obj;
-                if (set.isInitialized()) {
-                    return set;
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return (SetObject) obj;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -92,13 +88,12 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
          */
         @Function(name = "add", arity = 1)
         public static Object add(ExecutionContext cx, Object thisValue, Object value) {
-            /* steps 1-4 */
+            /* steps 1-3 */
             SetObject s = thisSetObject(cx, thisValue);
-            /* step 5 */
+            /* step 4 */
             LinkedMap<Object, Void> entries = s.getSetData();
-            /* steps 6-8 */
+            /* steps 5-8 */
             entries.set(value, null);
-            /* step 6.a.i, 9 */
             return s;
         }
 
@@ -113,13 +108,13 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
          */
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
-            /* steps 1-4 */
+            /* steps 1-3 */
             SetObject s = thisSetObject(cx, thisValue);
-            /* step 5 */
+            /* step 4 */
             LinkedMap<Object, Void> entries = s.getSetData();
-            /* step 6 */
+            /* step 5 */
             entries.clear();
-            /* step 7 */
+            /* step 6 */
             return UNDEFINED;
         }
 
@@ -136,11 +131,11 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object value) {
-            /* steps 1-4 */
+            /* steps 1-3 */
             SetObject s = thisSetObject(cx, thisValue);
-            /* step 5 */
+            /* step 4 */
             LinkedMap<Object, Void> entries = s.getSetData();
-            /* steps 6-9 */
+            /* steps 5-6 */
             return entries.delete(value);
         }
 
@@ -175,21 +170,21 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
         @Function(name = "forEach", arity = 1)
         public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
-            /* steps 1-4 */
+            /* steps 1-3 */
             SetObject s = thisSetObject(cx, thisValue);
-            /* step 5 */
+            /* step 4 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            /* step 6 (omitted) */
-            /* step 7 */
+            /* step 5 (omitted) */
+            /* step 6 */
             LinkedMap<Object, Void> entries = s.getSetData();
-            /* step 8 */
+            /* step 7 */
             for (Entry<Object, Void> e : entries) {
                 callback.call(cx, thisArg, e.getKey(), e.getKey(), s);
             }
-            /* step 9 */
+            /* step 8 */
             return UNDEFINED;
         }
 
@@ -206,11 +201,11 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
          */
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object value) {
-            /* steps 1-4 */
+            /* steps 1-3 */
             SetObject s = thisSetObject(cx, thisValue);
-            /* step 5 */
+            /* step 4 */
             LinkedMap<Object, Void> entries = s.getSetData();
-            /* steps 6-9 */
+            /* steps 5-6 */
             return entries.has(value);
         }
 
@@ -225,11 +220,11 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
          */
         @Accessor(name = "size", type = Accessor.Type.Getter)
         public static Object size(ExecutionContext cx, Object thisValue) {
-            /* steps 1-4 */
+            /* steps 1-3 */
             SetObject s = thisSetObject(cx, thisValue);
-            /* step 5 */
+            /* step 4 */
             LinkedMap<Object, Void> entries = s.getSetData();
-            /* steps 6-8 */
+            /* steps 5-7 */
             return entries.size();
         }
 

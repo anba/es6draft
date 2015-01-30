@@ -54,8 +54,8 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     /**

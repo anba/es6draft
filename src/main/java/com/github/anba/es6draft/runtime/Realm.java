@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecutionContext;
 import static com.github.anba.es6draft.runtime.LexicalEnvironment.newGlobalEnvironment;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -167,12 +166,12 @@ public final class Realm implements ShadowRealm {
         CreateIntrinsics(this);
 
         // Initialize global object
-        globalObject.initialize(defaultContext);
+        globalObject.initialize(this);
 
         // Store reference to built-in eval
-        builtinEval = (Callable) Get(defaultContext, globalObject, "eval");
+        builtinEval = (Callable) globalObject.lookupOwnProperty("eval").getValue();
 
-        // [[Prototype]] for default global is implementation defined
+        // [[Prototype]] for default global is implementation-dependent
         globalThis.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
 
         // Set [[Prototype]] after intrinsics are initialized
@@ -192,10 +191,10 @@ public final class Realm implements ShadowRealm {
         CreateIntrinsics(this);
 
         // Initialize global object
-        globalObject.initialize(defaultContext);
+        globalObject.initialize(this);
 
         // Store reference to built-in eval
-        builtinEval = (Callable) Get(defaultContext, globalObject, "eval");
+        builtinEval = (Callable) globalObject.lookupOwnProperty("eval").getValue();
 
         // Set prototype to %ObjectPrototype%, cf. 8.2.3 SetRealmGlobalObj
         globalThis.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
@@ -214,10 +213,10 @@ public final class Realm implements ShadowRealm {
         CreateIntrinsics(this);
 
         // Initialize global object
-        globalObject.initialize(defaultContext);
+        globalObject.initialize(this);
 
         // Store reference to built-in eval
-        builtinEval = (Callable) Get(defaultContext, globalObject, "eval");
+        builtinEval = (Callable) globalObject.lookupOwnProperty("eval").getValue();
     }
 
     private static final class RealmScript implements Script {
@@ -730,7 +729,6 @@ public final class Realm implements ShadowRealm {
      */
     private static void initializeFundamentalObjects(Realm realm) {
         EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
-        ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
         ObjectConstructor objectConstructor = new ObjectConstructor(realm);
@@ -745,21 +743,21 @@ public final class Realm implements ShadowRealm {
         intrinsics.put(Intrinsics.FunctionPrototype, functionPrototype);
 
         // Create [[ThrowTypeError]] function before initializing intrinsics.
-        realm.throwTypeError = TypeErrorThrower.createThrowTypeError(defaultContext);
+        realm.throwTypeError = TypeErrorThrower.createThrowTypeError(realm);
 
         // Also stored in intrinsics table.
         intrinsics.put(Intrinsics.ThrowTypeError, realm.throwTypeError);
 
         // initialization phase
-        objectConstructor.initialize(defaultContext);
-        objectPrototype.initialize(defaultContext);
-        functionConstructor.initialize(defaultContext);
-        functionPrototype.initialize(defaultContext);
+        objectConstructor.initialize(realm);
+        objectPrototype.initialize(realm);
+        functionConstructor.initialize(realm);
+        functionPrototype.initialize(realm);
 
-        AddRestrictedFunctionProperties(defaultContext, functionPrototype, realm);
+        AddRestrictedFunctionProperties(functionPrototype, realm);
 
         // Object.prototype.toString is also an intrinsic
-        Object objectPrototypeToString = Get(defaultContext, objectPrototype, "toString");
+        Object objectPrototypeToString = objectPrototype.lookupOwnProperty("toString").getValue();
         intrinsics.put(Intrinsics.ObjProto_toString, (OrdinaryObject) objectPrototypeToString);
     }
 
@@ -773,7 +771,6 @@ public final class Realm implements ShadowRealm {
      */
     private static void initializeStandardObjects(Realm realm) {
         EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
-        ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
         ArrayConstructor arrayConstructor = new ArrayConstructor(realm);
@@ -822,30 +819,30 @@ public final class Realm implements ShadowRealm {
         intrinsics.put(Intrinsics.IteratorPrototype, iteratorPrototype);
 
         // initialization phase
-        arrayConstructor.initialize(defaultContext);
-        arrayPrototype.initialize(defaultContext);
-        arrayIteratorPrototype.initialize(defaultContext);
-        stringConstructor.initialize(defaultContext);
-        stringPrototype.initialize(defaultContext);
-        stringIteratorPrototype.initialize(defaultContext);
-        symbolConstructor.initialize(defaultContext);
-        symbolPrototype.initialize(defaultContext);
-        booleanConstructor.initialize(defaultContext);
-        booleanPrototype.initialize(defaultContext);
-        numberConstructor.initialize(defaultContext);
-        numberPrototype.initialize(defaultContext);
-        mathObject.initialize(defaultContext);
-        dateConstructor.initialize(defaultContext);
-        datePrototype.initialize(defaultContext);
-        regExpConstructor.initialize(defaultContext);
-        regExpPrototype.initialize(defaultContext);
-        errorConstructor.initialize(defaultContext);
-        errorPrototype.initialize(defaultContext);
-        jsonObject.initialize(defaultContext);
-        iteratorPrototype.initialize(defaultContext);
+        arrayConstructor.initialize(realm);
+        arrayPrototype.initialize(realm);
+        arrayIteratorPrototype.initialize(realm);
+        stringConstructor.initialize(realm);
+        stringPrototype.initialize(realm);
+        stringIteratorPrototype.initialize(realm);
+        symbolConstructor.initialize(realm);
+        symbolPrototype.initialize(realm);
+        booleanConstructor.initialize(realm);
+        booleanPrototype.initialize(realm);
+        numberConstructor.initialize(realm);
+        numberPrototype.initialize(realm);
+        mathObject.initialize(realm);
+        dateConstructor.initialize(realm);
+        datePrototype.initialize(realm);
+        regExpConstructor.initialize(realm);
+        regExpPrototype.initialize(realm);
+        errorConstructor.initialize(realm);
+        errorPrototype.initialize(realm);
+        jsonObject.initialize(realm);
+        iteratorPrototype.initialize(realm);
 
         // Array.prototype.values is also an intrinsic
-        Object arrayPrototypeValues = Get(defaultContext, arrayPrototype, "values");
+        Object arrayPrototypeValues = arrayPrototype.lookupOwnProperty("values").getValue();
         intrinsics.put(Intrinsics.ArrayProto_values, (OrdinaryObject) arrayPrototypeValues);
     }
 
@@ -859,7 +856,6 @@ public final class Realm implements ShadowRealm {
      */
     private static void initializeNativeErrors(Realm realm) {
         EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
-        ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
         NativeErrorConstructor evalErrorConstructor = new NativeErrorConstructor(realm,
@@ -907,20 +903,20 @@ public final class Realm implements ShadowRealm {
         intrinsics.put(Intrinsics.InternalErrorPrototype, internalErrorPrototype);
 
         // initialization phase
-        evalErrorConstructor.initialize(defaultContext);
-        evalErrorPrototype.initialize(defaultContext);
-        rangeErrorConstructor.initialize(defaultContext);
-        rangeErrorPrototype.initialize(defaultContext);
-        referenceErrorConstructor.initialize(defaultContext);
-        referenceErrorPrototype.initialize(defaultContext);
-        syntaxErrorConstructor.initialize(defaultContext);
-        syntaxErrorPrototype.initialize(defaultContext);
-        typeErrorConstructor.initialize(defaultContext);
-        typeErrorPrototype.initialize(defaultContext);
-        uriErrorConstructor.initialize(defaultContext);
-        uriErrorPrototype.initialize(defaultContext);
-        internalErrorConstructor.initialize(defaultContext);
-        internalErrorPrototype.initialize(defaultContext);
+        evalErrorConstructor.initialize(realm);
+        evalErrorPrototype.initialize(realm);
+        rangeErrorConstructor.initialize(realm);
+        rangeErrorPrototype.initialize(realm);
+        referenceErrorConstructor.initialize(realm);
+        referenceErrorPrototype.initialize(realm);
+        syntaxErrorConstructor.initialize(realm);
+        syntaxErrorPrototype.initialize(realm);
+        typeErrorConstructor.initialize(realm);
+        typeErrorPrototype.initialize(realm);
+        uriErrorConstructor.initialize(realm);
+        uriErrorPrototype.initialize(realm);
+        internalErrorConstructor.initialize(realm);
+        internalErrorPrototype.initialize(realm);
     }
 
     /**
@@ -931,7 +927,6 @@ public final class Realm implements ShadowRealm {
      */
     private static void initializeCollectionModule(Realm realm) {
         EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
-        ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
         MapConstructor mapConstructor = new MapConstructor(realm);
@@ -958,16 +953,16 @@ public final class Realm implements ShadowRealm {
         intrinsics.put(Intrinsics.WeakSetPrototype, weakSetPrototype);
 
         // initialization phase
-        mapConstructor.initialize(defaultContext);
-        mapPrototype.initialize(defaultContext);
-        mapIteratorPrototype.initialize(defaultContext);
-        weakMapConstructor.initialize(defaultContext);
-        weakMapPrototype.initialize(defaultContext);
-        setConstructor.initialize(defaultContext);
-        setPrototype.initialize(defaultContext);
-        setIteratorPrototype.initialize(defaultContext);
-        weakSetConstructor.initialize(defaultContext);
-        weakSetPrototype.initialize(defaultContext);
+        mapConstructor.initialize(realm);
+        mapPrototype.initialize(realm);
+        mapIteratorPrototype.initialize(realm);
+        weakMapConstructor.initialize(realm);
+        weakMapPrototype.initialize(realm);
+        setConstructor.initialize(realm);
+        setPrototype.initialize(realm);
+        setIteratorPrototype.initialize(realm);
+        weakSetConstructor.initialize(realm);
+        weakSetPrototype.initialize(realm);
     }
 
     /**
@@ -978,7 +973,6 @@ public final class Realm implements ShadowRealm {
      */
     private static void initializeReflectModule(Realm realm) {
         EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
-        ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
         ProxyConstructorFunction proxy = new ProxyConstructorFunction(realm);
@@ -989,7 +983,7 @@ public final class Realm implements ShadowRealm {
         intrinsics.put(Intrinsics.Reflect, reflect);
 
         // initialization phase
-        proxy.initialize(defaultContext);
+        proxy.initialize(realm);
 
         if (realm.isEnabled(CompatibilityOption.Realm)) {
             RealmConstructor realmConstructor = new RealmConstructor(realm);
@@ -998,8 +992,8 @@ public final class Realm implements ShadowRealm {
             intrinsics.put(Intrinsics.Realm, realmConstructor);
             intrinsics.put(Intrinsics.RealmPrototype, realmPrototype);
 
-            realmConstructor.initialize(defaultContext);
-            realmPrototype.initialize(defaultContext);
+            realmConstructor.initialize(realm);
+            realmPrototype.initialize(realm);
         }
 
         if (realm.isEnabled(CompatibilityOption.Loader)) {
@@ -1009,8 +1003,8 @@ public final class Realm implements ShadowRealm {
             intrinsics.put(Intrinsics.Loader, loaderConstructor);
             intrinsics.put(Intrinsics.LoaderPrototype, loaderPrototype);
 
-            loaderConstructor.initialize(defaultContext);
-            loaderPrototype.initialize(defaultContext);
+            loaderConstructor.initialize(realm);
+            loaderPrototype.initialize(realm);
         }
 
         if (realm.isEnabled(CompatibilityOption.System)) {
@@ -1018,10 +1012,10 @@ public final class Realm implements ShadowRealm {
 
             intrinsics.put(Intrinsics.System, systemObject);
 
-            systemObject.initialize(defaultContext);
+            systemObject.initialize(realm);
         }
 
-        reflect.initialize(defaultContext);
+        reflect.initialize(realm);
     }
 
     /**
@@ -1032,7 +1026,6 @@ public final class Realm implements ShadowRealm {
      */
     private static void initializeIterationModule(Realm realm) {
         EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
-        ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
         GeneratorFunctionConstructor generatorFunctionConstructor = new GeneratorFunctionConstructor(
@@ -1046,12 +1039,12 @@ public final class Realm implements ShadowRealm {
         intrinsics.put(Intrinsics.Generator, generator);
 
         // initialization phase
-        generatorFunctionConstructor.initialize(defaultContext);
-        generatorPrototype.initialize(defaultContext);
-        generator.initialize(defaultContext);
+        generatorFunctionConstructor.initialize(realm);
+        generatorPrototype.initialize(realm);
+        generator.initialize(realm);
 
         if (realm.isEnabled(CompatibilityOption.LegacyGenerator)) {
-            OrdinaryObject legacyGeneratorPrototype = ObjectCreate(defaultContext,
+            OrdinaryObject legacyGeneratorPrototype = ObjectCreate(realm,
                     Intrinsics.ObjectPrototype);
             intrinsics.put(Intrinsics.LegacyGeneratorPrototype, legacyGeneratorPrototype);
         }
@@ -1065,7 +1058,6 @@ public final class Realm implements ShadowRealm {
      */
     private static void initializeBinaryModule(Realm realm) {
         EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
-        ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
         ArrayBufferConstructor arrayBufferConstructor = new ArrayBufferConstructor(realm);
@@ -1135,30 +1127,30 @@ public final class Realm implements ShadowRealm {
         intrinsics.put(Intrinsics.DataViewPrototype, dataViewPrototype);
 
         // initialization phase
-        arrayBufferConstructor.initialize(defaultContext);
-        arrayBufferPrototype.initialize(defaultContext);
-        typedArrayConstructor.initialize(defaultContext);
-        typedArrayPrototype.initialize(defaultContext);
-        int8ArrayConstructor.initialize(defaultContext);
-        int8ArrayPrototype.initialize(defaultContext);
-        uint8ArrayConstructor.initialize(defaultContext);
-        uint8ArrayPrototype.initialize(defaultContext);
-        uint8CArrayConstructor.initialize(defaultContext);
-        uint8CArrayPrototype.initialize(defaultContext);
-        int16ArrayConstructor.initialize(defaultContext);
-        int16ArrayPrototype.initialize(defaultContext);
-        uint16ArrayConstructor.initialize(defaultContext);
-        uint16ArrayPrototype.initialize(defaultContext);
-        int32ArrayConstructor.initialize(defaultContext);
-        int32ArrayPrototype.initialize(defaultContext);
-        uint32ArrayConstructor.initialize(defaultContext);
-        uint32ArrayPrototype.initialize(defaultContext);
-        float32ArrayConstructor.initialize(defaultContext);
-        float32ArrayPrototype.initialize(defaultContext);
-        float64ArrayConstructor.initialize(defaultContext);
-        float64ArrayPrototype.initialize(defaultContext);
-        dataViewConstructor.initialize(defaultContext);
-        dataViewPrototype.initialize(defaultContext);
+        arrayBufferConstructor.initialize(realm);
+        arrayBufferPrototype.initialize(realm);
+        typedArrayConstructor.initialize(realm);
+        typedArrayPrototype.initialize(realm);
+        int8ArrayConstructor.initialize(realm);
+        int8ArrayPrototype.initialize(realm);
+        uint8ArrayConstructor.initialize(realm);
+        uint8ArrayPrototype.initialize(realm);
+        uint8CArrayConstructor.initialize(realm);
+        uint8CArrayPrototype.initialize(realm);
+        int16ArrayConstructor.initialize(realm);
+        int16ArrayPrototype.initialize(realm);
+        uint16ArrayConstructor.initialize(realm);
+        uint16ArrayPrototype.initialize(realm);
+        int32ArrayConstructor.initialize(realm);
+        int32ArrayPrototype.initialize(realm);
+        uint32ArrayConstructor.initialize(realm);
+        uint32ArrayPrototype.initialize(realm);
+        float32ArrayConstructor.initialize(realm);
+        float32ArrayPrototype.initialize(realm);
+        float64ArrayConstructor.initialize(realm);
+        float64ArrayPrototype.initialize(realm);
+        dataViewConstructor.initialize(realm);
+        dataViewPrototype.initialize(realm);
     }
 
     /**
@@ -1170,7 +1162,6 @@ public final class Realm implements ShadowRealm {
      */
     private static void initializePromiseObjects(Realm realm) {
         EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
-        ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
         PromiseConstructor promiseConstructor = new PromiseConstructor(realm);
@@ -1181,8 +1172,8 @@ public final class Realm implements ShadowRealm {
         intrinsics.put(Intrinsics.PromisePrototype, promisePrototype);
 
         // initialization phase
-        promiseConstructor.initialize(defaultContext);
-        promisePrototype.initialize(defaultContext);
+        promiseConstructor.initialize(realm);
+        promisePrototype.initialize(realm);
     }
 
     /**
@@ -1196,7 +1187,6 @@ public final class Realm implements ShadowRealm {
      */
     private static void initializeInternationalisation(Realm realm) {
         EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
-        ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
         IntlObject intlObject = new IntlObject(realm);
@@ -1217,12 +1207,12 @@ public final class Realm implements ShadowRealm {
         intrinsics.put(Intrinsics.Intl_DateTimeFormatPrototype, dateTimeFormatPrototype);
 
         // initialization phase
-        intlObject.initialize(defaultContext);
-        collatorConstructor.initialize(defaultContext);
-        collatorPrototype.initialize(defaultContext);
-        numberFormatConstructor.initialize(defaultContext);
-        numberFormatPrototype.initialize(defaultContext);
-        dateTimeFormatConstructor.initialize(defaultContext);
-        dateTimeFormatPrototype.initialize(defaultContext);
+        intlObject.initialize(realm);
+        collatorConstructor.initialize(realm);
+        collatorPrototype.initialize(realm);
+        numberFormatConstructor.initialize(realm);
+        numberFormatPrototype.initialize(realm);
+        dateTimeFormatConstructor.initialize(realm);
+        dateTimeFormatPrototype.initialize(realm);
     }
 }

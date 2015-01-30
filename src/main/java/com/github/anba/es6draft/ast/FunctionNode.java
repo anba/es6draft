@@ -117,4 +117,11 @@ public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNod
      * @return <code>true</code> if this node is an async function
      */
     boolean isAsync();
+
+    /**
+     * Returns <code>true</code> if this function is a constructor function.
+     * 
+     * @return <code>true</code> if this node is a constructor function
+     */
+    boolean isConstructor();
 }

@@ -39,8 +39,8 @@ public final class BooleanPrototype extends OrdinaryObject implements Initializa
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     /**
@@ -63,11 +63,7 @@ public final class BooleanPrototype extends OrdinaryObject implements Initializa
                 return Type.booleanValue(object);
             }
             if (object instanceof BooleanObject) {
-                BooleanObject obj = (BooleanObject) object;
-                if (obj.isInitialized()) {
-                    return obj.getBooleanData();
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return ((BooleanObject) object).getBooleanData();
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

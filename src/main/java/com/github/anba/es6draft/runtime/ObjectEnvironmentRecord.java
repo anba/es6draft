@@ -50,8 +50,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
     @Override
     public Set<String> bindingNames() {
         HashSet<String> names = new HashSet<>();
-        Iterator<?> keys = bindings.enumerateKeys(cx);
-        while (keys.hasNext()) {
+        for (Iterator<?> keys = bindings.enumerateKeys(cx); keys.hasNext();) {
             Object key = keys.next();
             Object propertyKey = ToPropertyKey(cx, key);
             if (propertyKey instanceof String) {

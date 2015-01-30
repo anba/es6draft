@@ -6,7 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.SameValueZero;
+import static com.github.anba.es6draft.runtime.AbstractOperations.SpeciesConstructor;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -26,10 +29,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
@@ -42,8 +42,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>24.1.3 Properties of the ArrayBuffer Constructor
  * </ul>
  */
-public final class ArrayBufferConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<ArrayBufferObject> {
+public final class ArrayBufferConstructor extends BuiltinConstructor implements Initializable {
     // set default byte-order to little-endian - implementation specific choice
     private static final ByteOrder DEFAULT_BYTE_ORDER = ByteOrder.LITTLE_ENDIAN;
     private static final boolean IS_LITTLE_ENDIAN = true;
@@ -62,8 +61,8 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -78,16 +77,6 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         @Override
         public ArrayBufferObject newInstance(Realm realm) {
             return new ArrayBufferObject(realm);
-        }
-    }
-
-    private static final class ArrayBufferCreate implements CreateAction<ArrayBufferObject> {
-        static final CreateAction<ArrayBufferObject> INSTANCE = new ArrayBufferCreate();
-
-        @Override
-        public ArrayBufferObject create(ExecutionContext cx, Constructor constructor,
-                Object... args) {
-            return AllocateArrayBuffer(cx, constructor);
         }
     }
 
@@ -150,48 +139,31 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.1 AllocateArrayBuffer (constructor)
-     * 
-     * @param cx
-     *            the execution context
-     * @return the new array buffer object
-     */
-    public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx) {
-        /* steps 1-4 */
-        return AllocateArrayBuffer(cx, (Constructor) cx.getIntrinsic(Intrinsics.ArrayBuffer));
-    }
-
-    /**
-     * 24.1.1.1 AllocateArrayBuffer (constructor)
+     * 24.1.1.1 AllocateArrayBuffer( constructor, byteLength )
      * 
      * @param cx
      *            the execution context
      * @param constructor
      *            the constructor function
+     * @param byteLength
+     *            the buffer byte length
      * @return the new array buffer object
      */
-    public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Object constructor) {
-        // TODO: Moved check from GetPrototypeFromConstructor
-        if (!IsConstructor(constructor)) {
-            throw newTypeError(cx, Messages.Key.NotConstructor);
-        }
-        /* steps 1-4 */
-        return AllocateArrayBuffer(cx, (Constructor) constructor);
-    }
-
-    /**
-     * 24.1.1.1 AllocateArrayBuffer (constructor)
-     * 
-     * @param cx
-     *            the execution context
-     * @param constructor
-     *            the constructor function
-     * @return the new array buffer object
-     */
-    public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Constructor constructor) {
-        /* steps 1-4 */
-        return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.ArrayBufferPrototype,
-                ArrayBufferObjectAllocator.INSTANCE);
+    public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx,
+            Constructor constructor, long byteLength) {
+        /* steps 1-2 */
+        ArrayBufferObject arrayBuffer = OrdinaryCreateFromConstructor(cx, constructor,
+                Intrinsics.ArrayBufferPrototype, ArrayBufferObjectAllocator.INSTANCE);
+        /* step 3 */
+        assert byteLength >= 0;
+        /* steps 4-5 */
+        ByteBuffer block = CreateByteDataBlock(cx, byteLength);
+        /* step 6 */
+        arrayBuffer.setData(block);
+        /* step 7 */
+        arrayBuffer.setByteLength(byteLength);
+        /* step 8 */
+        return arrayBuffer;
     }
 
     /**
@@ -216,7 +188,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      *            the array buffer object
      */
     public static void DetachArrayBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer) {
-        // TODO: Perform any checks here? E.g. initialized or already detached?
+        // TODO: Perform any checks here? E.g. already detached?
         /* step 1 (not applicable) */
         /* steps 2-3 */
         arrayBuffer.detach();
@@ -224,34 +196,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.4 SetArrayBufferData (arrayBuffer, bytes)
-     * 
-     * @param cx
-     *            the execution context
-     * @param arrayBuffer
-     *            the array buffer object
-     * @param bytes
-     *            the buffer size in bytes
-     * @return the array buffer object
-     */
-    public static ArrayBufferObject SetArrayBufferData(ExecutionContext cx,
-            ArrayBufferObject arrayBuffer, long bytes) {
-        /* step 1 (not applicable) */
-        /* step 2 (implicit) */
-        /* step 3 */
-        assert bytes >= 0;
-        /* steps 4-5 */
-        ByteBuffer block = CreateByteDataBlock(cx, bytes);
-        /* step 6 */
-        arrayBuffer.setData(block);
-        /* step 7 */
-        arrayBuffer.setByteLength(bytes);
-        /* step 8 */
-        return arrayBuffer;
-    }
-
-    /**
-     * 24.1.1.5 CloneArrayBuffer (srcBuffer, srcByteOffset)
+     * 24.1.1.4 CloneArrayBuffer (srcBuffer, srcByteOffset)
      * 
      * @param cx
      *            the execution context
@@ -264,44 +209,39 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx,
             ArrayBufferObject srcBuffer, long srcByteOffset) {
         /* step 1 (implicit) */
-        /* step 2 */
-        ByteBuffer srcBlock = srcBuffer.getData();
-        /* step 3 */
-        if (!srcBuffer.isInitialized()) {
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
+        /* steps 2-3 */
+        Constructor bufferConstructor = SpeciesConstructor(cx, srcBuffer, Intrinsics.ArrayBuffer);
         /* step 4 */
         if (IsDetachedBuffer(srcBuffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* steps 5-6 */
-        Constructor bufferConstructor = SpeciesConstructor(cx, srcBuffer, Intrinsics.ArrayBuffer);
+        /* step 5 */
+        ByteBuffer srcBlock = srcBuffer.getData();
+        /* step 6 */
+        long srcLength = srcBuffer.getByteLength();
         /* step 7 */
-        ArrayBufferObject targetBuffer = AllocateArrayBuffer(cx, bufferConstructor);
-        /* steps 8-9 */
+        assert srcByteOffset <= srcLength;
+        /* step 8 */
+        long cloneLength = srcLength - srcByteOffset;
+        /* step 9 */
+        // FIXME: spec issue - unnecessary step (bug 3661)
+        assert srcBlock == srcBuffer.getData();
+        /* steps 10-11 */
+        ArrayBufferObject targetBuffer = AllocateArrayBuffer(cx, bufferConstructor, cloneLength);
+        // FIXME: spec bug - missing test (bug 3678)
         if (IsDetachedBuffer(srcBuffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* step 10 */
-        long srcLength = srcBuffer.getByteLength();
-        /* step 11 */
-        assert srcByteOffset <= srcLength;
         /* step 12 */
-        long cloneLength = srcLength - srcByteOffset;
-        /* step 13 */
-        assert srcBlock == srcBuffer.getData();
-        /* steps 14-15 */
-        SetArrayBufferData(cx, targetBuffer, cloneLength);
-        /* step 16 */
         ByteBuffer targetBlock = targetBuffer.getData();
-        /* step 17 */
+        /* step 13 */
         CopyDataBlockBytes(targetBlock, 0, srcBlock, srcByteOffset, cloneLength);
-        /* step 18 */
+        /* step 14 */
         return targetBuffer;
     }
 
     /**
-     * 24.1.1.6 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
+     * 24.1.1.5 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
      * 
      * @param arrayBuffer
      *            the array buffer object
@@ -317,7 +257,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.6 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
+     * 24.1.1.5 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
      * 
      * @param arrayBuffer
      *            the array buffer object
@@ -332,14 +272,12 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     public static double GetValueFromBuffer(ArrayBufferObject arrayBuffer, long byteIndex,
             ElementType type, boolean isLittleEndian) {
         /* step 1 */
-        assert arrayBuffer.isInitialized() : "ArrayBuffer not initialized";
-        /* step 2 */
         assert !IsDetachedBuffer(arrayBuffer) : "ArrayBuffer is detached";
-        /* steps 3-4 */
+        /* steps 2-3 */
         assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
-        /* step 5 */
+        /* step 4 */
         ByteBuffer block = arrayBuffer.getData();
-        /* steps 8-9 */
+        /* steps 7-8 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
             block.order(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
         }
@@ -347,17 +285,17 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         int index = (int) byteIndex;
         switch (type) {
         case Float32: {
-            /* steps 6-7, 10 */
+            /* steps 5-6, 9 */
             double rawValue = block.getFloat(index);
             return Double.isNaN(rawValue) ? Double.NaN : rawValue;
         }
         case Float64: {
-            /* steps 6-7, 11 */
+            /* steps 5-6, 10 */
             double rawValue = block.getDouble(index);
             return Double.isNaN(rawValue) ? Double.NaN : rawValue;
         }
 
-        /* steps 6-7, 12, 14 */
+        /* steps 5-6, 11, 13 */
         case Uint8:
         case Uint8C:
             return block.get(index) & 0xffL;
@@ -366,7 +304,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         case Uint32:
             return block.getInt(index) & 0xffffffffL;
 
-            /* steps 6-7, 13-14 */
+            /* steps 5-6, 12-13 */
         case Int8:
             return (long) block.get(index);
         case Int16:
@@ -380,7 +318,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.7 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
+     * 24.1.1.6 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
      * 
      * @param arrayBuffer
      *            the array buffer object
@@ -397,7 +335,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.7 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
+     * 24.1.1.6 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
      * 
      * @param arrayBuffer
      *            the array buffer object
@@ -413,17 +351,15 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     public static void SetValueInBuffer(ArrayBufferObject arrayBuffer, long byteIndex,
             ElementType type, double value, boolean isLittleEndian) {
         /* step 1 */
-        assert arrayBuffer.isInitialized() : "ArrayBuffer not initialized";
-        /* step 2 */
         assert !IsDetachedBuffer(arrayBuffer) : "ArrayBuffer is detached";
-        /* steps 3-4 */
+        /* steps 2-3 */
         assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
-        /* step 5 (not applicable) */
-        /* step 6 */
+        /* step 4 (not applicable) */
+        /* step 5 */
         ByteBuffer block = arrayBuffer.getData();
-        /* step 7 */
+        /* step 6 */
         assert block != null;
-        /* step 9 */
+        /* step 8 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
             block.order(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
         }
@@ -431,15 +367,15 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         int index = (int) byteIndex;
         switch (type) {
         case Float32:
-            /* steps 6, 10, 13-14 */
+            /* steps 5, 9, 12-13 */
             block.putFloat(index, (float) value);
             return;
         case Float64:
-            /* steps 6, 11, 13-14 */
+            /* steps 5, 10, 12-13 */
             block.putDouble(index, value);
             return;
 
-            /* steps 6, 12-14 */
+            /* steps 5, 11-13 */
         case Int8:
             block.put(index, ElementType.ToInt8(value));
             return;
@@ -475,47 +411,34 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     @Override
     public ArrayBufferObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
+        /* step 1 */
+        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "ArrayBuffer");
+        /* steps 2-6 (not applicable) */
+    }
+
+    /**
+     * 24.1.2.1 ArrayBuffer(length)
+     */
+    @Override
+    public ArrayBufferObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        ExecutionContext calleeContext = calleeContext();
         Object length = argument(args, 0);
-        /* step 1 (omitted) */
-        /* step 2 */
-        if (!(thisValue instanceof ArrayBufferObject)) {
-            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
-        }
-        ArrayBufferObject buf = (ArrayBufferObject) thisValue;
-        if (buf.isInitialized()) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
+        /* step 1 (not applicable) */
         // FIXME: spec issue? - undefined length is same as 0 for bwcompat?
         if (Type.isUndefined(length)) {
             length = 0;
         }
-        /* step 3 */
+        /* step 2 */
         double numberLength = ToNumber(calleeContext, length);
-        /* steps 4-5 */
+        /* steps 3-4 */
         long byteLength = ToLength(numberLength);
-        /* step 6 */
+        /* step 5 */
         if (!SameValueZero(numberLength, byteLength)) {
             throw newRangeError(calleeContext, Messages.Key.InvalidBufferSize);
         }
-        /* step 7 */
-        if (buf.isInitialized()) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
-        /* step 8 */
-        return SetArrayBufferData(calleeContext, buf, byteLength);
-    }
-
-    /**
-     * 24.1.2.2 new ArrayBuffer(...argumentsList)
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
-
-    @Override
-    public CreateAction<ArrayBufferObject> createAction() {
-        return ArrayBufferCreate.INSTANCE;
+        /* step 6 */
+        return AllocateArrayBuffer(calleeContext, newTarget, byteLength);
     }
 
     /**

@@ -8,7 +8,7 @@ const {
   assertThrows
 } = Assert;
 
-// Indexed access on uninitialized typed array throws TypeError from currently active realm
+// Indexed access on detached typed array throws TypeError from currently active realm
 
 const foreignRealm = new Reflect.Realm();
 foreignRealm.eval(`
@@ -17,6 +17,8 @@ foreignRealm.eval(`
   }
 `);
 
-let int8Array = new class extends Int8Array {constructor() { /* no super */ }};
+let int8Array = new Int8Array(0);
+detachArrayBuffer(int8Array.buffer);
+
 assertThrows(TypeError, () => int8Array[0]);
 assertThrows(foreignRealm.global.TypeError, () => foreignRealm.global.indexedAccess(int8Array));

@@ -129,6 +129,11 @@ public class GeneratorDeclaration extends HoistableDeclaration implements Genera
     }
 
     @Override
+    public boolean isConstructor() {
+        return true;
+    }
+
+    @Override
     public boolean isConstDeclaration() {
         return false;
     }

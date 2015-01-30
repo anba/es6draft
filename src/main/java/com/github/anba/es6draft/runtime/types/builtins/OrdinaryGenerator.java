@@ -6,21 +6,16 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorStart;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 
-import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -51,9 +46,10 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
      * 9.2.2 [[Call]] (thisArgument, argumentsList)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public GeneratorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         try {
-            return getCallMethod().invokeExact(this, callerContext, thisValue, args);
+            return (GeneratorObject) getCallMethod().invokeExact(this, callerContext, thisValue,
+                    args);
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable e) {
@@ -65,31 +61,36 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
      * 9.2.2 [[Call]] (thisArgument, argumentsList)
      */
     @Override
-    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
-            throws Throwable {
-        return getTailCallMethod().invokeExact(this, callerContext, thisValue, args);
+    public GeneratorObject tailCall(ExecutionContext callerContext, Object thisValue,
+            Object... args) throws Throwable {
+        return (GeneratorObject) getTailCallMethod().invokeExact(this, callerContext, thisValue,
+                args);
     }
 
     /**
-     * 9.2.3 [[Construct]] (argumentsList)
+     * 9.2.3 [[Construct]] ( argumentsList, newTarget)
      */
     @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        if (getCode() == null) {
-            throw newTypeError(callerContext, Messages.Key.UninitializedObject);
+    public GeneratorObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... argumentsList) {
+        try {
+            return (GeneratorObject) getConstructMethod().invokeExact(this, callerContext,
+                    newTarget, argumentsList);
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
         }
-        return Construct(callerContext, this, args);
     }
 
     /**
-     * 9.2.3 [[Construct]] (argumentsList)
+     * 9.2.3 [[Construct]] ( argumentsList, newTarget)
      */
     @Override
-    public ScriptObject tailConstruct(ExecutionContext callerContext, Object... args) {
-        if (getCode() == null) {
-            throw newTypeError(callerContext, Messages.Key.UninitializedObject);
-        }
-        return construct(callerContext, args);
+    public GeneratorObject tailConstruct(ExecutionContext callerContext, Constructor newTarget,
+            Object... argumentsList) throws Throwable {
+        return (GeneratorObject) getTailConstructMethod().invokeExact(this, callerContext,
+                newTarget, argumentsList);
     }
 
     /**
@@ -110,48 +111,11 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     public static GeneratorObject EvaluateBody(ExecutionContext cx, OrdinaryGenerator functionObject) {
         /* step 1 */
         assert cx.getFunctionVariableEnvironment() != null;
-        /* step 2 */
-        EnvironmentRecord env = cx.getThisEnvironment();
-        /* step 3 */
-        Object g = env.getThisBinding();
-        /* step 4 */
-        GeneratorObject gen;
-        if (!(g instanceof GeneratorObject) || ((GeneratorObject) g).getState() != null) {
-            gen = OrdinaryCreateFromConstructor(cx, functionObject, Intrinsics.GeneratorPrototype,
-                    GeneratorObjectAllocator.INSTANCE);
-        } else {
-            gen = (GeneratorObject) g;
-        }
-        /* step 5 */
-        return GeneratorStart(cx, gen, functionObject.getCode());
-    }
-
-    /**
-     * 14.4 Generator Function Definitions
-     * <p>
-     * 14.4.11 Runtime Semantics: EvaluateBody
-     * 
-     * <pre>
-     * GeneratorBody : Comprehension
-     * </pre>
-     * 
-     * @param cx
-     *            the execution context
-     * @param functionObject
-     *            the generator function object
-     * @return the generator result value
-     */
-    public static GeneratorObject EvaluateBodyComprehension(ExecutionContext cx,
-            OrdinaryGenerator functionObject) {
-        /* steps 1-2 */
-        GeneratorObject g = OrdinaryCreateFromConstructor(cx, functionObject,
+        /* steps 2-3 */
+        GeneratorObject gen = OrdinaryCreateFromConstructor(cx, functionObject,
                 Intrinsics.GeneratorPrototype, GeneratorObjectAllocator.INSTANCE);
-        /* step 3 */
-        assert g.getState() == null;
-        /* steps 4-5 */
-        GeneratorStart(cx, g, functionObject.getCode());
-        /* step 6 */
-        return g;
+        /* step 4 */
+        return GeneratorStart(cx, gen, functionObject.getCode());
     }
 
     private static final class GeneratorObjectAllocator implements ObjectAllocator<GeneratorObject> {
@@ -161,24 +125,6 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         public GeneratorObject newInstance(Realm realm) {
             return new GeneratorObject(realm);
         }
-    }
-
-    /**
-     * 25.2.4 GeneratorFunction Instances
-     */
-    private static final class GeneratorCreate implements CreateAction<GeneratorObject> {
-        static final CreateAction<GeneratorObject> INSTANCE = new GeneratorCreate();
-
-        @Override
-        public GeneratorObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.GeneratorPrototype,
-                    GeneratorObjectAllocator.INSTANCE);
-        }
-    }
-
-    @Override
-    protected void setCreateActionFrom(ScriptObject superFunction) {
-        setCreateAction(GeneratorCreate.INSTANCE);
     }
 
     /* ***************************************************************************************** */
@@ -204,7 +150,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         /* steps 4-8 */
         OrdinaryGenerator f = new OrdinaryGenerator(realm);
         /* steps 9-13 */
-        f.allocate(realm, functionPrototype, strict, kind, uninitializedGeneratorMH);
+        f.allocate(realm, functionPrototype, strict, kind, ConstructorKind.Derived);
         /* step 14 */
         return f;
     }
@@ -230,7 +176,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         /* step 2 */
         OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
-        return FunctionInitialize(f, kind, function.isStrict(), function, scope,
-                cx.getCurrentExecutable());
+        FunctionInitialize(f, kind, function.isStrict(), function, scope, cx.getCurrentExecutable());
+        return f;
     }
 }

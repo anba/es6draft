@@ -52,8 +52,8 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     /**
@@ -169,8 +169,7 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
             if (array instanceof TypedArrayObject) {
                 len = ((TypedArrayObject) array).getArrayLength();
             } else {
-                Object lenValue = Get(cx, array, "length");
-                len = ToLength(cx, lenValue);
+                len = ToLength(cx, Get(cx, array, "length"));
             }
             /* step 10 */
             if (index >= len) {

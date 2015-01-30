@@ -248,19 +248,19 @@ public final class ArgumentsObject extends OrdinaryObject {
         ArgumentsObject obj = new ArgumentsObject(cx.getRealm());
         obj.setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
         /* step 4 */
-        obj.properties().put("length", new Property(len, true, false, true));
+        obj.infallibleDefineOwnProperty("length", new Property(len, true, false, true));
         /* steps 5-6 */
         for (int index = 0; index < len; ++index) {
             obj.setIndexed(index, argumentsList[index]);
         }
         Callable thrower = cx.getRealm().getThrowTypeError();
         /* step 7 */
-        obj.symbolProperties().put(BuiltinSymbol.iterator.get(),
+        obj.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(),
                 new Property(cx.getIntrinsic(Intrinsics.ArrayProto_values), true, false, true));
         /* step 8 */
-        obj.properties().put("caller", new Property(thrower, thrower, false, false));
+        obj.infallibleDefineOwnProperty("caller", new Property(thrower, thrower, false, false));
         /* step 9 */
-        obj.properties().put("callee", new Property(thrower, thrower, false, false));
+        obj.infallibleDefineOwnProperty("callee", new Property(thrower, thrower, false, false));
         /* step 10 (not applicable) */
         /* step 11 */
         return obj;
@@ -298,14 +298,14 @@ public final class ArgumentsObject extends OrdinaryObject {
             obj.setIndexed(index, argumentsList[index]);
         }
         /* step 16 */
-        obj.properties().put("length", new Property(len, true, false, true));
+        obj.infallibleDefineOwnProperty("length", new Property(len, true, false, true));
         /* steps 17-21 */
         obj.parameterMap = ParameterMap.create(len, formals, env);
         /* step 22 */
-        obj.symbolProperties().put(BuiltinSymbol.iterator.get(),
+        obj.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(),
                 new Property(cx.getIntrinsic(Intrinsics.ArrayProto_values), true, false, true));
         /* steps 23-24 */
-        obj.properties().put("callee", new Property(func, true, false, true));
+        obj.infallibleDefineOwnProperty("callee", new Property(func, true, false, true));
         /* step 25 */
         return obj;
     }

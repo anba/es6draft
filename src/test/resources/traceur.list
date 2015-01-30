@@ -23,6 +23,16 @@ feature/ArrayExtras/From.js
 # yield* no longer performs complete error recovery
 feature/Yield/GeneratorReturn.js
 
+# Derived class without super() constructor call
+feature/Classes/ConstructorMember.js
+
+# Invalid super() constructor call when class derives from null
+feature/Classes/ExtendStrange.js
+
+# Access to 'this' before super() constructor call
+feature/Classes/NestedClassSuperAnimal.js
+feature/Classes/SimpleSuper.js
+
 
 ############################################
 # Implementation specific differences      #

@@ -9,36 +9,14 @@ const {
   assertEquals,
 } = Assert;
 
-function assertArrayEquals(expected, actual) {
-  return assertEquals(expected.sort(), actual.sort());
-}
-
-// [[Enumerate]] and [[OwnPropertyKeys]] need to handle indexed property keys created before initialisation
+// Test [[Enumerate]] and [[OwnPropertyKeys]] on String subclass
 {
-  let s = new (class extends String { constructor(){} })();
-  Object.defineProperty(s, "0", {value: "hello", enumerable: true});
-  String.call(s, "world");
-  let names = [...{[Symbol.iterator]: () => Reflect.enumerate(s)}];
-  let ownNames = Object.getOwnPropertyNames(s);
+  let string = new (class extends String { constructor(s){super(s)} })("world");
+  let names = [...Reflect.enumerate(string)];
+  let ownNames = Object.getOwnPropertyNames(string);
 
-  assertSame("hello", s[0]);
   assertSame(5, names.length);
   assertSame(5 + 1, ownNames.length);
-  assertArrayEquals(["0","1","2","3","4"], names);
-  assertArrayEquals(["0","length","1","2","3","4"], ownNames);
-}
-
-// [[Enumerate]] and [[OwnPropertyKeys]] need to handle indexed property keys created before initialisation
-{
-  let s = new (class extends String { constructor(){} })();
-  Object.defineProperty(s, "0", {value: "hello", enumerable: false});
-  String.call(s, "world");
-  let names = [...{[Symbol.iterator]: () => Reflect.enumerate(s)}];
-  let ownNames = Object.getOwnPropertyNames(s);
-
-  assertSame("hello", s[0]);
-  assertSame(4, names.length);
-  assertSame(5 + 1, ownNames.length);
-  assertArrayEquals(["1","2","3","4"], names);
-  assertArrayEquals(["0","length","1","2","3","4"], ownNames);
+  assertEquals(["0","1","2","3","4"], names);
+  assertEquals(["0","1","2","3","4","length"], ownNames);
 }

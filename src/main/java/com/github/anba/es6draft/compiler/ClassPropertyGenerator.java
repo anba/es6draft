@@ -8,13 +8,12 @@ package com.github.anba.es6draft.compiler;
 
 import java.util.List;
 
-import com.github.anba.es6draft.ast.ClassDefinition;
 import com.github.anba.es6draft.ast.MethodDefinition;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.PropertyDefinition;
 import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
 import com.github.anba.es6draft.compiler.assembler.Variable;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -24,22 +23,21 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
-    private final ClassDefinition classDefinition;
-    private final Variable<OrdinaryFunction> F;
+    private final Variable<OrdinaryConstructorFunction> F;
     private final Variable<OrdinaryObject> proto;
 
-    private ClassPropertyGenerator(CodeGenerator codegen, ClassDefinition classDefinition,
-            Variable<OrdinaryFunction> F, Variable<OrdinaryObject> proto) {
+    private ClassPropertyGenerator(CodeGenerator codegen, Variable<OrdinaryConstructorFunction> F,
+            Variable<OrdinaryObject> proto) {
         super(codegen);
-        this.classDefinition = classDefinition;
         this.F = F;
         this.proto = proto;
     }
 
-    static void ClassPropertyEvaluation(CodeGenerator codegen, ClassDefinition def,
-            List<? extends PropertyDefinition> properties, Variable<OrdinaryFunction> function,
-            Variable<OrdinaryObject> proto, ExpressionVisitor mv) {
-        ClassPropertyGenerator cdg = new ClassPropertyGenerator(codegen, def, function, proto);
+    static void ClassPropertyEvaluation(CodeGenerator codegen,
+            List<? extends PropertyDefinition> properties,
+            Variable<OrdinaryConstructorFunction> function, Variable<OrdinaryObject> proto,
+            ExpressionVisitor mv) {
+        ClassPropertyGenerator cdg = new ClassPropertyGenerator(codegen, function, proto);
         for (PropertyDefinition property : properties) {
             property.accept(cdg, mv);
         }
@@ -52,7 +50,7 @@ final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, Expression
 
     @Override
     public Void visit(MethodDefinition node, ExpressionVisitor mv) {
-        if (node != classDefinition.getConstructor()) {
+        if (node.getType() != MethodDefinition.MethodType.Constructor) {
             if (node.isStatic()) {
                 mv.load(F);
             } else {
@@ -60,13 +58,12 @@ final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, Expression
             }
             codegen.propertyDefinition(node, mv);
         }
-
         return null;
     }
 
     @Override
     public Void visit(MethodDefinitionsMethod node, ExpressionVisitor mv) {
-        codegen.compile(classDefinition, node, mv);
+        codegen.compile(node, mv);
 
         // stack: [] -> [cx, F, proto]
         mv.loadExecutionContext();

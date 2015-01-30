@@ -10,8 +10,8 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.AllocatePromise;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.CreateResolvingFunctions;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.GetPromiseAllocator;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.IsPromise;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.NewPromiseCapability;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseCapability.IfAbruptRejectPromise;
@@ -35,8 +35,6 @@ import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperation
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -52,8 +50,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>25.4.4 Properties of the Promise Constructor
  * </ul>
  */
-public final class PromiseConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<PromiseObject> {
+public final class PromiseConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Promise constructor function.
      * 
@@ -65,8 +62,8 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -78,81 +75,46 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
      * 25.4.3.1 Promise ( executor )
      */
     @Override
-    public PromiseObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        /* step 1 */
+        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "Promise");
+    }
+
+    /**
+     * 25.4.3.1 Promise ( executor )
+     */
+    @Override
+    public PromiseObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object executor = argument(args, 0);
-        /* steps 2-3 */
-        if (!(thisValue instanceof PromiseObject)) {
-            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
-        }
-        /* step 1 */
-        PromiseObject promise = (PromiseObject) thisValue;
-        /* step 4 */
-        if (promise.getState() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
-        /* step 5 */
+
+        /* step 1 (not applicable) */
+        /* step 2 */
         if (!IsCallable(executor)) {
             throw newTypeError(calleeContext, Messages.Key.NotCallable);
         }
-        /* step 6 */
-        return InitializePromise(calleeContext, promise, (Callable) executor);
-    }
-
-    /**
-     * 25.4.3.1.1 InitializePromise ( promise, executor )
-     * 
-     * @param cx
-     *            the execution context
-     * @param promise
-     *            the promise object
-     * @param executor
-     *            the promise executor function
-     * @return the promise object
-     */
-    public static PromiseObject InitializePromise(ExecutionContext cx, PromiseObject promise,
-            Callable executor) {
-        /* step 1 */
-        assert promise.getState() == null;
-        /* step 2 (not applicable) */
-        /* steps 3-5 */
+        /* step 3 */
+        PromiseObject promise = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.PromisePrototype, GetPromiseAllocator(calleeContext.getRealm()));
+        /* step 4 */
+        promise.setConstructor(newTarget);
+        /* steps 5-7 */
         promise.initialize();
-        /* step 6 */
-        ResolvingFunctions resolvingFunctions = CreateResolvingFunctions(cx, promise);
-        /* step 7 */
+        /* step 8 */
+        ResolvingFunctions resolvingFunctions = CreateResolvingFunctions(calleeContext, promise);
+        /* steps 9-10 */
         try {
-            executor.call(cx, UNDEFINED, resolvingFunctions.getResolve(),
+            /* step 9 */
+            ((Callable) executor).call(calleeContext, UNDEFINED, resolvingFunctions.getResolve(),
                     resolvingFunctions.getReject());
         } catch (ScriptException e) {
-            /* step 8 */
-            resolvingFunctions.getReject().call(cx, UNDEFINED, e.getValue());
+            /* step 10 */
+            resolvingFunctions.getReject().call(calleeContext, UNDEFINED, e.getValue());
         }
-        /* step 9 */
+        /* step 11 */
         return promise;
-    }
-
-    /**
-     * 25.4.3.2 new Promise ( ... argumentsList )
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        /* steps 1-3 */
-        return Construct(callerContext, this, args);
-    }
-
-    private static final class PromiseCreate implements CreateAction<PromiseObject> {
-        static final CreateAction<PromiseObject> INSTANCE = new PromiseCreate();
-
-        @Override
-        public PromiseObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            /* steps 1-2 */
-            return AllocatePromise(cx, constructor);
-        }
-    }
-
-    @Override
-    public CreateAction<PromiseObject> createAction() {
-        return PromiseCreate.INSTANCE;
     }
 
     /**
@@ -162,11 +124,15 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         ;
 
         private static Constructor promiseConstructorFromSpecies(ExecutionContext cx, Object c) {
+            /* step 1 */
             if (!Type.isObject(c)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
+            /* steps 2-3 */
             Object species = Get(cx, Type.objectValue(c), BuiltinSymbol.species.get());
+            /* step 4 */
             Object constructor = !Type.isUndefinedOrNull(species) ? species : c;
+            /* (type check from NewPromiseCapability) */
             if (!IsConstructor(constructor)) {
                 throw newTypeError(cx, Messages.Key.NotConstructor);
             }
@@ -321,7 +287,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* step 2 */
             if (IsPromise(x)) {
                 Constructor constructor = ((PromiseObject) x).getConstructor();
-                if (SameValue(constructor, thisValue)) {
+                if (constructor == thisValue) { // SameValue
                     return x;
                 }
             }

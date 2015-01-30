@@ -9,7 +9,12 @@ traceur = {
     if (name !== "./Options.js") {
       throw new Error("unknown module: " + name);
     }
-    return class Options { };
+    class Options {
+      get symbols() {
+        return true;
+      }
+    }
+    return {Options};
   }
 };
 

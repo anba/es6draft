@@ -6,21 +6,15 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ConstructTailCall;
-import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
-
 import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 
@@ -41,49 +35,19 @@ public class OrdinaryFunction extends FunctionObject {
         super(realm);
     }
 
-    private static final class OrdinaryConstructorFunction extends OrdinaryFunction implements
-            Constructor {
-        public OrdinaryConstructorFunction(Realm realm) {
-            super(realm);
-        }
-
-        /**
-         * 9.2.3 [[Construct]] (argumentsList)
-         */
-        @Override
-        public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-            if (getCode() == null) {
-                throw newTypeError(callerContext, Messages.Key.UninitializedObject);
-            }
-            return Construct(callerContext, this, args);
-        }
-
-        /**
-         * 9.2.3 [[Construct]] (argumentsList)
-         */
-        @Override
-        public Object tailConstruct(ExecutionContext callerContext, Object... args)
-                throws Throwable {
-            if (getCode() == null) {
-                throw newTypeError(callerContext, Messages.Key.UninitializedObject);
-            }
-            return ConstructTailCall(callerContext, this, args);
-        }
-    }
-
     @Override
     protected OrdinaryFunction allocateNew() {
         return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(),
-                getFunctionKind());
+                getFunctionKind(), getConstructorKind());
     }
 
     /**
      * 9.2.2 [[Call]] (thisArgument, argumentsList)
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... argumentsList) {
         try {
-            return getCallMethod().invokeExact(this, callerContext, thisValue, args);
+            return getCallMethod().invokeExact(this, callerContext, thisValue, argumentsList);
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable e) {
@@ -95,9 +59,9 @@ public class OrdinaryFunction extends FunctionObject {
      * 9.2.2 [[Call]] (thisArgument, argumentsList)
      */
     @Override
-    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
-            throws Throwable {
-        return getTailCallMethod().invokeExact(this, callerContext, thisValue, args);
+    public Object tailCall(ExecutionContext callerContext, Object thisValue,
+            Object... argumentsList) throws Throwable {
+        return getTailCallMethod().invokeExact(this, callerContext, thisValue, argumentsList);
     }
 
     /* ***************************************************************************************** */
@@ -111,32 +75,29 @@ public class OrdinaryFunction extends FunctionObject {
      *            the function prototype
      * @param strict
      *            the strict mode flag
-     * @param kind
+     * @param functionKind
      *            the function kind
+     * @param constructorKind
+     *            the constructor kind
      * @return the new function object
      */
     public static OrdinaryFunction FunctionAllocate(ExecutionContext cx,
-            ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
+            ScriptObject functionPrototype, boolean strict, FunctionKind functionKind,
+            ConstructorKind constructorKind) {
+        assert !(functionKind == FunctionKind.Normal || functionKind == FunctionKind.ConstructorMethod);
         Realm realm = cx.getRealm();
-        /* steps 1-3 (implicit) */
-        /* steps 4-6 */
-        OrdinaryFunction f;
-        if (kind == FunctionKind.Normal || kind == FunctionKind.ConstructorMethod) {
-            f = new OrdinaryConstructorFunction(realm);
-        } else {
-            f = new OrdinaryFunction(realm);
-        }
-        /* steps 9-13 */
-        f.allocate(realm, functionPrototype, strict, kind, uninitializedFunctionMH);
-        /* step 14 */
+        /* steps 1-5 (implicit) */
+        /* steps 6-11 */
+        OrdinaryFunction f = new OrdinaryFunction(realm);
+        /* steps 12-16 */
+        f.allocate(realm, functionPrototype, strict, functionKind, constructorKind);
+        /* step 17 */
         return f;
     }
 
     /**
      * 9.2.5 FunctionInitialize (F, kind, Strict, ParameterList, Body, Scope) Abstract Operation
      * 
-     * @param <FUNCTION>
-     *            the function type
      * @param f
      *            the function object
      * @param kind
@@ -149,27 +110,22 @@ public class OrdinaryFunction extends FunctionObject {
      *            the lexical environment
      * @param executable
      *            the executable object
-     * @return the function object
      */
-    /*package*/static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialize(FUNCTION f,
-            FunctionKind kind, boolean strict, RuntimeInfo.Function function,
-            LexicalEnvironment<?> scope, Executable executable) {
+    /*package*/static void FunctionInitialize(FunctionObject f, FunctionKind kind, boolean strict,
+            RuntimeInfo.Function function, LexicalEnvironment<?> scope, Executable executable) {
         /* step 1 */
         int len = function.expectedArgumentCount();
         /* step 2 (not applicable) */
         /* steps 3-4 */
-        f.infallibleDefineOwnProperty("length", new PropertyDescriptor(len, false, false, true));
+        f.infallibleDefineOwnProperty("length", new Property(len, false, false, true));
         /* steps 5-11 */
         f.initialize(kind, strict, function, scope, executable);
-        /* step 12 */
-        return f;
+        /* step 12 (return) */
     }
 
     /**
      * 9.2.5 FunctionInitialize (F, kind, Strict, ParameterList, Body, Scope) Abstract Operation
      * 
-     * @param <FUNCTION>
-     *            the function type
      * @param cx
      *            the execution context
      * @param f
@@ -184,20 +140,18 @@ public class OrdinaryFunction extends FunctionObject {
      *            the lexical environment
      * @param executable
      *            the executable object
-     * @return the function object
      */
-    public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialize(
-            ExecutionContext cx, FUNCTION f, FunctionKind kind, boolean strict,
-            RuntimeInfo.Function function, LexicalEnvironment<?> scope, Executable executable) {
+    public static void FunctionInitialize(ExecutionContext cx, FunctionObject f, FunctionKind kind,
+            boolean strict, RuntimeInfo.Function function, LexicalEnvironment<?> scope,
+            Executable executable) {
         /* step 1 */
         int len = function.expectedArgumentCount();
         /* step 2 (not applicable) */
         /* steps 3-4 */
-        DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, true));
+        f.infallibleDefineOwnProperty("length", new Property(len, false, false, true));
         /* steps 5-11 */
         f.initialize(kind, strict, function, scope, executable);
-        /* step 12 */
-        return f;
+        /* step 12 (return) */
     }
 
     /**
@@ -215,93 +169,71 @@ public class OrdinaryFunction extends FunctionObject {
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
-        return FunctionCreate(cx, kind, function, scope, null);
-    }
-
-    /**
-     * 9.2.6 FunctionCreate (kind, ParameterList, Body, Scope, Strict) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param kind
-     *            the function kind
-     * @param function
-     *            the function code
-     * @param scope
-     *            the lexical environment
-     * @param functionPrototype
-     *            the function prototype
-     * @return the new function object
-     */
-    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment<?> scope,
-            ScriptObject functionPrototype) {
-        assert !function.isGenerator();
+        assert !function.isGenerator() && !function.isAsync();
+        OrdinaryObject intrinsicFunctionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         /* step 1 */
-        if (functionPrototype == null) {
-            functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
-        }
+        ScriptObject functionPrototype = intrinsicFunctionPrototype;
+        ConstructorKind constructorKind = ConstructorKind.Base;
         /* step 2 */
-        OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
+        OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind,
+                constructorKind);
         /* step 3 */
-        return FunctionInitialize(f, kind, function.isStrict(), function, scope,
-                cx.getCurrentExecutable());
+        FunctionInitialize(f, kind, function.isStrict(), function, scope, cx.getCurrentExecutable());
+        return f;
     }
 
     /**
      * 9.2.8 AddRestrictedFunctionProperties ( F, realm ) Abstract Operation
      * 
-     * @param cx
-     *            the execution context
+     * @param <FUNCTION>
+     *            the function type
      * @param f
      *            the function object
      * @param realm
      *            the realm object
      */
-    public static void AddRestrictedFunctionProperties(ExecutionContext cx, Callable f, Realm realm) {
+    public static <FUNCTION extends OrdinaryObject & Callable> void AddRestrictedFunctionProperties(
+            FUNCTION f, Realm realm) {
         /* steps 1-2 */
         Callable thrower = realm.getThrowTypeError();
         /* steps 3-4 */
-        DefinePropertyOrThrow(cx, f, "caller",
-                new PropertyDescriptor(thrower, thrower, false, true));
+        f.infallibleDefineOwnProperty("caller", new Property(thrower, thrower, false, true));
         /* steps 5-6 */
-        DefinePropertyOrThrow(cx, f, "arguments", new PropertyDescriptor(thrower, thrower, false,
-                true));
+        f.infallibleDefineOwnProperty("arguments", new Property(thrower, thrower, false, true));
     }
 
     /**
      * 9.2.9 MakeConstructor (F, writablePrototype, prototype) Abstract Operation
      * 
+     * @param <CONSTRUCTOR>
+     *            the constructor function type
      * @param cx
      *            the execution context
      * @param f
      *            the function object
      */
-    public static void MakeConstructor(ExecutionContext cx, FunctionObject f) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
-        /* step 3 (not applicable) */
+    public static <CONSTRUCTOR extends FunctionObject & Constructor> void MakeConstructor(
+            ExecutionContext cx, CONSTRUCTOR f) {
+        /* steps 1-3 (not applicable) */
         /* step 4 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         /* step 5 */
         boolean writablePrototype = true;
-        /* step 6 */
-        ScriptObject superF = f.getPrototype();
-        /* steps 7-8 */
-        f.setCreateActionFrom(superF);
-        /* step 9 */
-        DefinePropertyOrThrow(cx, prototype, "constructor", new PropertyDescriptor(f,
-                writablePrototype, false, writablePrototype));
-        /* steps 10-11 */
-        DefinePropertyOrThrow(cx, f, "prototype", new PropertyDescriptor(prototype,
-                writablePrototype, false, false));
-        /* step 12 (return) */
+        /* step 6 (FIXME: spec bug) */
+        /* step 7 */
+        prototype.infallibleDefineOwnProperty("constructor", new Property(f, writablePrototype,
+                false, writablePrototype));
+        /* steps 8-9 */
+        f.infallibleDefineOwnProperty("prototype", new Property(prototype, writablePrototype,
+                false, false));
+        /* step 10 (return) */
     }
 
     /**
      * 9.2.9 MakeConstructor (F, writablePrototype, prototype) Abstract Operation
      * 
+     * @param <CONSTRUCTOR>
+     *            the constructor function type
      * @param cx
      *            the execution context
      * @param f
@@ -311,21 +243,15 @@ public class OrdinaryFunction extends FunctionObject {
      * @param prototype
      *            the prototype object
      */
-    public static void MakeConstructor(ExecutionContext cx, FunctionObject f,
-            boolean writablePrototype, ScriptObject prototype) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
-        /* steps 3-5 (not applicable) */
-        /* step 6 */
-        ScriptObject superF = f.getPrototype();
-        /* steps 7-8 */
-        f.setCreateActionFrom(superF);
-        /* step 9 (not applicable) */
-        /* steps 10-11 */
-        DefinePropertyOrThrow(cx, f, "prototype", new PropertyDescriptor(prototype,
-                writablePrototype, false, false));
-        /* step 12 (return) */
+    public static <CONSTRUCTOR extends FunctionObject & Constructor> void MakeConstructor(
+            ExecutionContext cx, CONSTRUCTOR f, boolean writablePrototype, ScriptObject prototype) {
+        /* steps 1-5 (not applicable) */
+        /* step 6 (FIXME: spec bug) */
+        /* step 7 (not applicable) */
+        /* steps 8-9 */
+        f.infallibleDefineOwnProperty("prototype", new Property(prototype, writablePrototype,
+                false, false));
+        /* step 10 (return) */
     }
 
     /**
@@ -376,7 +302,7 @@ public class OrdinaryFunction extends FunctionObject {
             name = prefix + " " + name;
         }
         /* step 6 */
-        f.infallibleDefineOwnProperty("name", new PropertyDescriptor(name, false, false, true));
+        f.infallibleDefineOwnProperty("name", new Property(name, false, false, true));
     }
 
     /**
@@ -414,14 +340,12 @@ public class OrdinaryFunction extends FunctionObject {
             sname = prefix + " " + sname;
         }
         /* step 6 */
-        f.infallibleDefineOwnProperty("name", new PropertyDescriptor(sname, false, false, true));
+        f.infallibleDefineOwnProperty("name", new Property(sname, false, false, true));
     }
 
     /**
      * 9.2.11 SetFunctionName (F, name, prefix) Abstract Operation
      * 
-     * @param cx
-     *            the execution context
      * @param f
      *            the function object
      * @param name
@@ -429,8 +353,7 @@ public class OrdinaryFunction extends FunctionObject {
      * @param prefix
      *            the function name prefix
      */
-    public static void SetFunctionName(ExecutionContext cx, BoundFunctionObject f, String name,
-            String prefix) {
+    public static void SetFunctionName(BoundFunctionObject f, String name, String prefix) {
         /* step 1 */
         assert f.isExtensible() : "function is not extensible";
         assert !f.ordinaryHasOwnProperty("name") : "function has 'name' property";
@@ -441,7 +364,7 @@ public class OrdinaryFunction extends FunctionObject {
             name = prefix + " " + name;
         }
         /* step 6 */
-        DefinePropertyOrThrow(cx, f, "name", new PropertyDescriptor(name, false, false, true));
+        f.infallibleDefineOwnProperty("name", new Property(name, false, false, true));
     }
 
     /**

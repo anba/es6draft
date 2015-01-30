@@ -6,7 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.objects.number;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
 import org.mozilla.javascript.StringToNumber;
@@ -22,10 +25,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
@@ -37,8 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>20.1.2 Properties of the Number Constructor
  * </ul>
  */
-public final class NumberConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<NumberObject> {
+public final class NumberConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Number constructor function.
      * 
@@ -50,8 +49,8 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -63,34 +62,40 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
      * 20.1.1.1 Number ( [ value ] )
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public Double call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* step 1 (omitted) */
-        /* steps 2-4 */
-        double n = args.length > 0 ? ToNumber(calleeContext, args[0]) : +0.0;
-        /* step 5 */
-        if (thisValue instanceof NumberObject) {
-            NumberObject obj = (NumberObject) thisValue;
-            if (!obj.isInitialized()) {
-                obj.setNumberData(n);
-                return obj;
-            }
-        }
-        /* step 6 */
-        return n;
+        /* steps 1-4 */
+        return args.length > 0 ? ToNumber(calleeContext, args[0]) : +0.0;
+        /* steps 6-8 (not applicable) */
     }
 
     /**
-     * 20.1.1.2 new Number (...argumentsList)
+     * 20.1.1.1 Number ( [ value ] )
      */
     @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
+    public NumberObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        /* steps 1-3 */
+        double n = args.length > 0 ? ToNumber(calleeContext, args[0]) : +0.0;
+        /* step 4 (not applicable) */
+        /* steps 5-6 */
+        NumberObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.NumberPrototype, NumberObjectAllocator.INSTANCE);
+        /* step 7 */
+        obj.setNumberData(n);
+        /* step 8 */
+        return obj;
     }
 
-    @Override
-    public CreateAction<NumberObject> createAction() {
-        return NumberCreate.INSTANCE;
+    private static final class NumberObjectAllocator implements ObjectAllocator<NumberObject> {
+        static final ObjectAllocator<NumberObject> INSTANCE = new NumberObjectAllocator();
+
+        @Override
+        public NumberObject newInstance(Realm realm) {
+            return new NumberObject(realm);
+        }
     }
 
     /**
@@ -353,25 +358,6 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
             }
             /* steps 5-6 */
             return Math.abs(integer) <= 0x1F_FFFF_FFFF_FFFFL;
-        }
-    }
-
-    private static final class NumberObjectAllocator implements ObjectAllocator<NumberObject> {
-        static final ObjectAllocator<NumberObject> INSTANCE = new NumberObjectAllocator();
-
-        @Override
-        public NumberObject newInstance(Realm realm) {
-            return new NumberObject(realm);
-        }
-    }
-
-    private static final class NumberCreate implements CreateAction<NumberObject> {
-        static final CreateAction<NumberObject> INSTANCE = new NumberCreate();
-
-        @Override
-        public NumberObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.NumberPrototype,
-                    NumberObjectAllocator.INSTANCE);
         }
     }
 

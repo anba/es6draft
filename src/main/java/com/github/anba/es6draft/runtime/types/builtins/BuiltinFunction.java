@@ -13,7 +13,6 @@ import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -37,7 +36,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     private final String name;
     private final int arity;
 
-    // Store default "name" and "length" inline to avoid allocating properties table space
+    // Store default "name" and "length" inline to avoid allocating properties table space.
     private boolean hasDefaultName, hasDefaultLength;
 
     /**
@@ -171,12 +170,6 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         return String.format("%s, name=%s, arity=%d", super.toString(), name, arity);
     }
 
-    private void addProperty(String propertKey, Object value) {
-        assert !IndexedMap.isIndex(IndexedMap.toIndex(propertKey));
-        assert !properties().containsKey(propertKey);
-        properties().put(propertKey, new Property(value, false, false, true));
-    }
-
     @Override
     protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value,
             Property current) {
@@ -187,8 +180,13 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
 
     @Override
     protected boolean has(ExecutionContext cx, String propertyKey) {
-        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
-        return ordinaryHasPropertyVirtual(cx, propertyKey);
+        if (hasDefaultName && "name".equals(propertyKey)) {
+            return true;
+        }
+        if (hasDefaultLength && "length".equals(propertyKey)) {
+            return true;
+        }
+        return super.has(cx, propertyKey);
     }
 
     @Override
@@ -218,11 +216,11 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
             PropertyDescriptor desc) {
         if (hasDefaultName && "name".equals(propertyKey)) {
             hasDefaultName = false;
-            addProperty(propertyKey, name);
+            defineOwnPropertyUnchecked(propertyKey, new Property(name, false, false, true));
         }
         if (hasDefaultLength && "length".equals(propertyKey)) {
             hasDefaultLength = false;
-            addProperty(propertyKey, arity);
+            defineOwnPropertyUnchecked(propertyKey, new Property(arity, false, false, true));
         }
         return super.defineProperty(cx, propertyKey, desc);
     }

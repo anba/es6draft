@@ -6,10 +6,9 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-
-import java.util.EnumMap;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -19,11 +18,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
@@ -39,8 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  * </ul>
  */
-public final class NativeErrorConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<ErrorObject> {
+public final class NativeErrorConstructor extends BuiltinConstructor implements Initializable {
     /**
      * 19.5.5 Native Error Types Used in This Standard
      * <ul>
@@ -93,28 +88,28 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
+    public void initialize(Realm realm) {
         switch (type) {
         case EvalError:
-            createProperties(cx, this, EvalErrorConstructorProperties.class);
+            createProperties(realm, this, EvalErrorConstructorProperties.class);
             break;
         case RangeError:
-            createProperties(cx, this, RangeErrorConstructorProperties.class);
+            createProperties(realm, this, RangeErrorConstructorProperties.class);
             break;
         case ReferenceError:
-            createProperties(cx, this, ReferenceErrorConstructorProperties.class);
+            createProperties(realm, this, ReferenceErrorConstructorProperties.class);
             break;
         case SyntaxError:
-            createProperties(cx, this, SyntaxErrorConstructorProperties.class);
+            createProperties(realm, this, SyntaxErrorConstructorProperties.class);
             break;
         case TypeError:
-            createProperties(cx, this, TypeErrorConstructorProperties.class);
+            createProperties(realm, this, TypeErrorConstructorProperties.class);
             break;
         case URIError:
-            createProperties(cx, this, URIErrorConstructorProperties.class);
+            createProperties(realm, this, URIErrorConstructorProperties.class);
             break;
         case InternalError:
-            createProperties(cx, this, InternalErrorConstructorProperties.class);
+            createProperties(realm, this, InternalErrorConstructorProperties.class);
             break;
         default:
             throw new AssertionError();
@@ -133,58 +128,57 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
      */
     @Override
     public ErrorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        /* steps 1-5 */
+        return construct(callerContext, this, args);
+    }
+
+    /**
+     * 19.5.6.1.1 NativeError (message)
+     * <p>
+     * <strong>Extension</strong>: NativeError (message, fileName, lineNumber, columnNumber)
+     */
+    @Override
+    public ErrorObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object message = argument(args, 0);
 
-        /* step 1 (omitted) */
-        /* steps 2-4 */
-        ErrorObject obj;
-        if (!(thisValue instanceof ErrorObject) || ((ErrorObject) thisValue).isInitialized()) {
-            obj = OrdinaryCreateFromConstructor(calleeContext, this, type.prototype(),
-                    NativeErrorObjectAllocator.INSTANCE);
-        } else {
-            obj = (ErrorObject) thisValue;
-        }
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        ErrorObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget, type.prototype(),
+                NativeErrorObjectAllocator.INSTANCE);
 
-        /* step 5 */
-        obj.initialize();
-
-        /* step 6 */
+        /* step 4 */
         if (!Type.isUndefined(message)) {
             CharSequence msg = ToString(calleeContext, message);
-            PropertyDescriptor msgDesc = new PropertyDescriptor(msg, true, false, true);
-            DefinePropertyOrThrow(calleeContext, obj, "message", msgDesc);
+            obj.infallibleDefineOwnProperty("message", new Property(msg, true, false, true));
         }
 
         /* extension: fileName, lineNumber and columnNumber arguments */
         if (args.length > 1) {
             CharSequence fileName = ToString(calleeContext, args[1]);
-            CreateDataProperty(calleeContext, obj, "fileName", fileName);
+            obj.infallibleDefineOwnProperty("fileName", new Property(fileName, true, true, true));
         }
         if (args.length > 2) {
-            int lineNumber = ToInt32(calleeContext, args[2]);
-            CreateDataProperty(calleeContext, obj, "lineNumber", lineNumber);
+            int line = ToInt32(calleeContext, args[2]);
+            obj.infallibleDefineOwnProperty("lineNumber", new Property(line, true, true, true));
         }
         if (args.length > 3) {
-            int columnNumber = ToInt32(calleeContext, args[3]);
-            CreateDataProperty(calleeContext, obj, "columnNumber", columnNumber);
+            int column = ToInt32(calleeContext, args[3]);
+            obj.infallibleDefineOwnProperty("columnNumber", new Property(column, true, true, true));
         }
 
-        /* step 7 */
+        /* step 5 */
         return obj;
     }
 
-    /**
-     * 19.5.6.1.2 new NativeError (...argumentsList)
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
+    private static final class NativeErrorObjectAllocator implements ObjectAllocator<ErrorObject> {
+        static final ObjectAllocator<ErrorObject> INSTANCE = new NativeErrorObjectAllocator();
 
-    @Override
-    public CreateAction<ErrorObject> createAction() {
-        return NativeErrorCreate.INSTANCES.get(type);
+        @Override
+        public ErrorObject newInstance(Realm realm) {
+            return new ErrorObject(realm);
+        }
     }
 
     /**
@@ -360,37 +354,5 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.InternalErrorPrototype;
-    }
-
-    private static final class NativeErrorObjectAllocator implements ObjectAllocator<ErrorObject> {
-        static final ObjectAllocator<ErrorObject> INSTANCE = new NativeErrorObjectAllocator();
-
-        @Override
-        public ErrorObject newInstance(Realm realm) {
-            return new ErrorObject(realm);
-        }
-    }
-
-    private static final class NativeErrorCreate implements CreateAction<ErrorObject> {
-        private static final EnumMap<ErrorType, NativeErrorCreate> INSTANCES;
-        static {
-            EnumMap<ErrorType, NativeErrorCreate> map = new EnumMap<>(ErrorType.class);
-            for (ErrorType type : ErrorType.values()) {
-                map.put(type, new NativeErrorCreate(type));
-            }
-            INSTANCES = map;
-        }
-
-        private final ErrorType type;
-
-        private NativeErrorCreate(ErrorType type) {
-            this.type = type;
-        }
-
-        @Override
-        public ErrorObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor, type.prototype(),
-                    NativeErrorObjectAllocator.INSTANCE);
-        }
     }
 }

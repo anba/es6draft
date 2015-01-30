@@ -60,9 +60,9 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
-        createProperties(cx, this, AdditionalProperties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
+        createProperties(realm, this, AdditionalProperties.class);
     }
 
     public enum Properties {

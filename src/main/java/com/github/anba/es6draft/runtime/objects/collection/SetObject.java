@@ -20,7 +20,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class SetObject extends OrdinaryObject {
     /** [[SetData]] */
-    private LinkedMap<Object, Void> setData = null;
+    private final LinkedMap<Object, Void> setData = new LinkedMapImpl<Void>();
 
     /**
      * Constructs a new Set object.
@@ -41,22 +41,5 @@ public final class SetObject extends OrdinaryObject {
      */
     public LinkedMap<Object, Void> getSetData() {
         return setData;
-    }
-
-    /**
-     * Initializes this Set instance.
-     */
-    public void initialize() {
-        assert this.setData == null : "Set already initialized";
-        this.setData = new LinkedMapImpl<Void>();
-    }
-
-    /**
-     * Returns {@code true} if this Set instance is initialized.
-     * 
-     * @return {@code true} if this object is initialized
-     */
-    public boolean isInitialized() {
-        return setData != null;
     }
 }

@@ -137,6 +137,11 @@ public final class ArrowFunction extends Expression implements FunctionNode {
     }
 
     @Override
+    public boolean isConstructor() {
+        return false;
+    }
+
+    @Override
     public boolean hasSyntheticNodes() {
         return syntheticNodes;
     }

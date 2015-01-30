@@ -43,13 +43,13 @@ public final class SystemObject extends LoaderObject implements Initializable {
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        Loader loaderRecord = CreateLoader(cx.getRealm(), this);
+    public void initialize(Realm realm) {
+        Loader loaderRecord = CreateLoader(realm, this);
         setLoader(loaderRecord);
 
-        createProperties(cx, this, Properties.class);
-        if (cx.getRealm().isEnabled(CompatibilityOption.Loader)) {
-            setPrototype(cx.getIntrinsic(Intrinsics.LoaderPrototype));
+        createProperties(realm, this, Properties.class);
+        if (realm.isEnabled(CompatibilityOption.Loader)) {
+            setPrototype(realm.getIntrinsic(Intrinsics.LoaderPrototype));
         }
     }
 

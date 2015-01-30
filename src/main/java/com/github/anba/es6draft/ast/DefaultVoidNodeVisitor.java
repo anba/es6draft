@@ -500,6 +500,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(NewTarget node, V value) {
+        visit((Expression) node, value);
+    }
+
+    @Override
     public void visit(NullLiteral node, V value) {
         visit((Literal) node, value);
     }

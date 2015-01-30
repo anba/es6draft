@@ -966,8 +966,7 @@ public final class IntlAbstractOperations {
         // fast path for steps 5-14
         if (r.getExtension() == null && options.getValues().isEmpty()) {
             /* steps 8-11 */
-            for (int i = 0, len = relevantExtensionKeys.size(); i < len; ++i) {
-                ExtensionKey key = relevantExtensionKeys.get(i);
+            for (ExtensionKey key : relevantExtensionKeys) {
                 String value = foundLocaleData.defaultValue(key);
                 values.put(key, value);
             }
@@ -983,9 +982,8 @@ public final class IntlAbstractOperations {
         /* steps 6-7 (not applicable) */
         /* steps 8-11 */
         StringBuilder supportedExtension = new StringBuilder("-u");
-        for (int i = 0, len = relevantExtensionKeys.size(); i < len; ++i) {
-            /* step 11.a */
-            ExtensionKey key = relevantExtensionKeys.get(i);
+        for (ExtensionKey key : relevantExtensionKeys) {
+            /* step 11.a (not applicable) */
             /* steps 11.b-11.c */
             List<String> keyLocaleData = foundLocaleData.entries(key);
             /* step 11.d */
@@ -1028,6 +1026,36 @@ public final class IntlAbstractOperations {
             String postExtension = foundLocale.substring(extensionIndex);
             foundLocale = preExtension + supportedExtension + postExtension;
         }
+        /* steps 13-14 */
+        return new ResolvedLocale(r.getLocale(), foundLocale, values);
+    }
+
+    /**
+     * 9.2.5 ResolveLocale (availableLocales, requestedLocales, options, relevantExtensionKeys,
+     * localeData)
+     * 
+     * @param realm
+     *            the realm record
+     * @param relevantExtensionKeys
+     *            the list of relevant extension keys
+     * @param localeData
+     *            the locale data
+     * @return the resolved locale
+     */
+    public static ResolvedLocale ResolveDefaultLocale(Realm realm,
+            List<ExtensionKey> relevantExtensionKeys, LocaleData localeData) {
+        /* steps 1-3 */
+        LocaleMatch r = new LocaleMatch(DefaultLocale(realm));
+        /* step 4 */
+        String foundLocale = r.getLocale();
+        LocaleDataInfo foundLocaleData = localeData.info(ULocale.forLanguageTag(foundLocale));
+        EnumMap<ExtensionKey, String> values = new EnumMap<>(ExtensionKey.class);
+        /* steps 5-7 (not applicable) */
+        /* steps 8-11 */
+        for (ExtensionKey key : relevantExtensionKeys) {
+            values.put(key, foundLocaleData.defaultValue(key));
+        }
+        /* step 12 (not applicable) */
         /* steps 13-14 */
         return new ResolvedLocale(r.getLocale(), foundLocale, values);
     }
@@ -1164,12 +1192,12 @@ public final class IntlAbstractOperations {
         ArrayObject array = ArrayCreate(cx, subset.size());
         for (int i = 0, size = subset.size(); i < size; ++i) {
             Object value = subset.get(i);
-            DefinePropertyOrThrow(cx, array, i, new PropertyDescriptor(value, false, true, false));
+            array.defineOwnProperty(cx, i, new PropertyDescriptor(value, false, true, false));
         }
         PropertyDescriptor nonConfigurableWritable = new PropertyDescriptor();
         nonConfigurableWritable.setConfigurable(false);
         nonConfigurableWritable.setWritable(false);
-        DefinePropertyOrThrow(cx, array, "length", nonConfigurableWritable);
+        array.defineOwnProperty(cx, "length", nonConfigurableWritable);
         /* step 5 */
         return array;
     }

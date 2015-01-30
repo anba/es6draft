@@ -1011,9 +1011,7 @@ public final class IndexedMap<VALUE> {
     public void remove(long propertyKey) {
         assert isIndex(propertyKey) : "invalid index: " + propertyKey;
         if (0 <= propertyKey && propertyKey < length) {
-            Elements<VALUE> elements = this.elements;
             elements.delete(propertyKey);
-
             updateLength();
         }
     }
@@ -1028,7 +1026,6 @@ public final class IndexedMap<VALUE> {
     public void removeUnchecked(long propertyKey) {
         assert isIndex(propertyKey) : "invalid index: " + propertyKey;
         if (0 <= propertyKey && propertyKey < length) {
-            Elements<VALUE> elements = this.elements;
             elements.delete(propertyKey);
         }
     }
@@ -1179,7 +1176,7 @@ public final class IndexedMap<VALUE> {
     }
 
     /**
-     * Returns an descending iterator over the requested range.
+     * Returns a descending iterator over the requested range.
      * 
      * @param from
      *            from index (inclusive)

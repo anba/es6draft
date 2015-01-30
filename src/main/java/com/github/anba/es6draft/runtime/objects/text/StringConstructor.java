@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.objects.text;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.SymbolPrototype.SymbolDescriptiveString;
 import static com.github.anba.es6draft.runtime.types.builtins.StringObject.StringCreate;
@@ -22,10 +21,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
@@ -39,8 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.StringObject;
  * <li>21.1.2 Properties of the String Constructor
  * </ul>
  */
-public final class StringConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<StringObject> {
+public final class StringConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new String constructor function.
      * 
@@ -52,8 +47,8 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -65,69 +60,44 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
      * 21.1.1.1 String ( value )
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public CharSequence call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        /* step 1 (omitted) */
+        /* step 1 */
+        // FIXME: spec issue
         /* steps 2-3 */
-        boolean initializing = thisValue instanceof StringObject
-                && ((StringObject) thisValue).getStringData() == null;
-        /* steps 4-5 */
         CharSequence s;
         if (args.length == 0) {
-            /* step 4 */
+            /* step 2 */
             s = "";
         } else {
-            /* step 5 */
+            /* step 3 */
             Object value = args[0];
-            if (!initializing && Type.isSymbol(value)) {
+            if (Type.isSymbol(value)) {
                 return SymbolDescriptiveString(Type.symbolValue(value));
             }
             s = ToString(calleeContext, value);
         }
-        /* step 6 (not applicable) */
-        /* step 7 */
-        if (initializing) {
-            StringObject obj = (StringObject) thisValue;
-            if (obj.getStringData() != null) {
-                // TODO: This additional check can probably be removed after the new create
-                // mechanism is fully specified.
-                throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-            }
-            if (!IsExtensible(calleeContext, obj)) {
-                throw newTypeError(calleeContext, Messages.Key.NotExtensible);
-            }
-            int length = s.length();
-            DefinePropertyOrThrow(calleeContext, obj, "length", new PropertyDescriptor(length,
-                    false, false, false));
-            obj.setStringData(s);
-            return obj;
-        }
-        /* step 8 */
+        /* step 5 */
         return s;
+        /* steps 6-12 (not applicable) */
     }
 
     /**
-     * 21.1.1.2 new String ( ... argumentsList )
+     * 21.1.1.1 String ( value )
      */
     @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
-
-    private static final class StringCreate implements CreateAction<StringObject> {
-        static final CreateAction<StringObject> INSTANCE = new StringCreate();
-
-        @Override
-        public StringObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            ScriptObject proto = GetPrototypeFromConstructor(cx, constructor,
-                    Intrinsics.StringPrototype);
-            return StringCreate(cx, proto);
-        }
-    }
-
-    @Override
-    public CreateAction<StringObject> createAction() {
-        return StringCreate.INSTANCE;
+    public StringObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        /* step 1 */
+        // FIXME: spec issue
+        /* steps 2-3 */
+        CharSequence s = args.length == 0 ? "" : ToString(calleeContext, args[0]);
+        /* step 5 (not applicable) */
+        /* steps 6-12 */
+        ScriptObject proto = GetPrototypeFromConstructor(calleeContext, newTarget,
+                Intrinsics.StringPrototype);
+        return StringCreate(calleeContext, proto, s);
     }
 
     /**
@@ -204,11 +174,19 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
             int length = codePoints.length;
             // Optimize:
             if (length == 1) {
+                /* steps 5.a-c */
                 double nextCP = ToNumber(cx, codePoints[0]);
                 int cp = (int) nextCP;
-                if (cp < 0 || cp > 0x10FFFF || nextCP != (double) cp) {
+                /* step 5.e */
+                if (cp < 0 || cp > 0x10FFFF) {
                     throw newRangeError(cx, Messages.Key.InvalidCodePoint);
                 }
+                /* step 5.d */
+                assert !SameValue(nextCP, ToInteger(nextCP)) == (nextCP != (double) cp);
+                if (nextCP != (double) cp) {
+                    throw newRangeError(cx, Messages.Key.InvalidCodePoint);
+                }
+                /* steps 5.f, 6 */
                 if (Character.isBmpCodePoint(cp)) {
                     return String.valueOf((char) cp);
                 }
@@ -218,15 +196,22 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
             int elements[] = new int[length];
             /* steps 4-5 */
             for (int nextIndex = 0; nextIndex < length; ++nextIndex) {
+                /* step 5.a */
                 Object next = codePoints[nextIndex];
+                /* steps 5.b-c */
                 double nextCP = ToNumber(cx, next);
-                if (!SameValue(nextCP, ToInteger(nextCP))) {
+                int cp = (int) nextCP;
+                /* step 5.e */
+                if (cp < 0 || cp > 0x10FFFF) {
                     throw newRangeError(cx, Messages.Key.InvalidCodePoint);
                 }
-                if (nextCP < 0 || nextCP > 0x10FFFF) {
+                /* step 5.d */
+                assert !SameValue(nextCP, ToInteger(nextCP)) == (nextCP != (double) cp);
+                if (nextCP != (double) cp) {
                     throw newRangeError(cx, Messages.Key.InvalidCodePoint);
                 }
-                elements[nextIndex] = (int) nextCP;
+                /* step 5.f */
+                elements[nextIndex] = cp;
             }
             /* step 6 */
             return new String(elements, 0, length);

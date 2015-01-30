@@ -55,11 +55,11 @@ public final class Reflect extends OrdinaryObject implements Initializable {
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
-        createProperties(cx, this, RealmProperty.class);
-        createProperties(cx, this, LoaderProperty.class);
-        createProperties(cx, this, ParseProperty.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
+        createProperties(realm, this, RealmProperty.class);
+        createProperties(realm, this, LoaderProperty.class);
+        createProperties(realm, this, ParseProperty.class);
     }
 
     /**
@@ -101,7 +101,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 26.1.2 Reflect.construct ( target, argumentsList )
+         * 26.1.2 Reflect.construct ( target, argumentsList [, newTarget] )
          * 
          * @param cx
          *            the execution context
@@ -111,19 +111,27 @@ public final class Reflect extends OrdinaryObject implements Initializable {
          *            the target object
          * @param argumentsList
          *            the function arguments
+         * @param newTarget
+         *            the newTarget object
          * @return the new script object
          */
         @Function(name = "construct", arity = 2)
         public static Object construct(ExecutionContext cx, Object thisValue, Object target,
-                Object argumentsList) {
+                Object argumentsList, @Optional(Optional.Default.NONE) Object newTarget) {
             /* step 1 */
             if (!IsConstructor(target)) {
                 throw newTypeError(cx, Messages.Key.NotConstructor);
             }
             /* steps 2-3 */
-            Object[] args = CreateListFromArrayLike(cx, argumentsList);
+            if (newTarget == null) {
+                newTarget = target;
+            } else if (!IsConstructor(newTarget)) {
+                throw newTypeError(cx, Messages.Key.NotConstructor);
+            }
             /* steps 4-5 */
-            return ((Constructor) target).construct(cx, args);
+            Object[] args = CreateListFromArrayLike(cx, argumentsList);
+            /* step 6 */
+            return ((Constructor) target).construct(cx, (Constructor) newTarget, args);
         }
 
         /**

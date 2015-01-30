@@ -276,16 +276,4 @@ Object.defineProperties(Object_assign(Proxy, {
   createFunction: {enumerable: false},
 });
 
-// Enable creating proxies without `new`.
-const newProxy = new Proxy(Proxy, {
-  __proto__: null,
-  apply(target, thisValue, args) {
-    return new target(...args);
-  }
-});
-
-// FIXME: Cannot replace intrinsic because intrinsics are restricted to ordinary objects...
-// %SetIntrinsic("Proxy", newProxy);
-global.Proxy = newProxy;
-
 })();

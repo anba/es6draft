@@ -91,6 +91,12 @@ compiler/regress-447567.js
 # v8 issue - .prototype on classes not set to non-configurable
 harmony/computed-property-names-classes.js
 
+# ES6: duplicate __proto__ not allowed in non-strict mode
+object-literal-multiple-proto-fields.js
+
+# invalid test, RegExp.prototype.source can only be applied on RegExp objects
+regress/regress-447561.js
+
 
 ###################
 # Misc issues     #
@@ -385,6 +391,9 @@ regress/regress-353551.js
 # StackOverflowError during invokedynamic linking (intermittent)
 regress/regress-1132.js
 regress/regress-148378.js
+
+# StackOverflowError in Joni (intermittent)
+regress/regress-crbug-178790.js
 
 # OutOfMemory: Java heap space
 compiler/regress-445907.js

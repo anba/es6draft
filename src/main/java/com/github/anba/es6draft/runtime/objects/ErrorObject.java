@@ -32,7 +32,6 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class ErrorObject extends OrdinaryObject {
-    private boolean initialized = false;
     private final ScriptException exception;
     private final List<StackTraceElement[]> stackTraces;
 
@@ -61,8 +60,7 @@ public final class ErrorObject extends OrdinaryObject {
     public ErrorObject(Realm realm, Intrinsics prototype, String message) {
         this(realm);
         setPrototype(realm.getIntrinsic(prototype));
-        addPropertyUnchecked("message", new Property(message, true, false, true));
-        this.initialized = true;
+        infallibleDefineOwnProperty("message", new Property(message, true, false, true));
     }
 
     /**
@@ -85,11 +83,10 @@ public final class ErrorObject extends OrdinaryObject {
             int lineNumber, int columnNumber) {
         this(realm);
         setPrototype(realm.getIntrinsic(prototype));
-        addPropertyUnchecked("message", new Property(message, true, false, true));
-        addPropertyUnchecked("fileName", new Property(fileName, true, true, true));
-        addPropertyUnchecked("lineNumber", new Property(lineNumber, true, true, true));
-        addPropertyUnchecked("columnNumber", new Property(columnNumber, true, true, true));
-        this.initialized = true;
+        infallibleDefineOwnProperty("message", new Property(message, true, false, true));
+        infallibleDefineOwnProperty("fileName", new Property(fileName, true, true, true));
+        infallibleDefineOwnProperty("lineNumber", new Property(lineNumber, true, true, true));
+        infallibleDefineOwnProperty("columnNumber", new Property(columnNumber, true, true, true));
     }
 
     private List<StackTraceElement[]> collectStackTraces() {
@@ -103,25 +100,6 @@ public final class ErrorObject extends OrdinaryObject {
             stackTraces.add(thread.getStackTrace());
         } while (thread instanceof GeneratorThread);
         return stackTraces;
-    }
-
-    /**
-     * Returns {@code true} if this Error object is initialized.
-     * 
-     * @return {@code true} if the object is initialized
-     */
-    public boolean isInitialized() {
-        return initialized;
-    }
-
-    /**
-     * Initializes an Error object.
-     * <p>
-     * <strong>Must not be called on initialized Error objects!</strong>
-     */
-    public void initialize() {
-        assert !this.initialized : "ErrorObject already initialized";
-        this.initialized = true;
     }
 
     /**
@@ -168,13 +146,13 @@ public final class ErrorObject extends OrdinaryObject {
      */
     private static String getErrorObjectProperty(ErrorObject error, String propertyName,
             String defaultValue) {
-        Property property = error.ordinaryGetOwnProperty(propertyName);
+        Property property = error.lookupOwnProperty(propertyName);
         if (property == null) {
             ScriptObject proto = error.getPrototype();
             if (proto instanceof ErrorPrototype) {
-                property = ((ErrorPrototype) proto).getOwnProperty(propertyName);
+                property = ((ErrorPrototype) proto).lookupOwnProperty(propertyName);
             } else if (proto instanceof NativeErrorPrototype) {
-                property = ((NativeErrorPrototype) proto).getOwnProperty(propertyName);
+                property = ((NativeErrorPrototype) proto).lookupOwnProperty(propertyName);
             }
         }
         Object value = property != null && property.isDataDescriptor() ? property.getValue() : null;

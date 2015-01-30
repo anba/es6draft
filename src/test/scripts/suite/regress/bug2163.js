@@ -21,10 +21,11 @@ Object.defineProperty(source.buffer, "constructor", {
   }
 });
 
-let target = new class extends Int8Array { constructor() { /* no super */ } };
-assertThrows(MyError, () => Int8Array.call(target, source));
-assertSame(1, accessed);
-assertSame("[object Int8Array]", Object.prototype.toString.call(target));
+// let target = new class extends Int8Array { constructor() { /* no super */ } };
+// assertThrows(MyError, () => Int8Array.call(target, source));
+// assertSame(1, accessed);
+// assertSame("[object Int8Array]", Object.prototype.toString.call(target));
+assertThrows(ReferenceError, () => new class extends Int8Array { constructor() { /* no super */ } });
 
 // FIXME: spec bug xxxx
 if (false) {

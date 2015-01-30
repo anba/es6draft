@@ -37,9 +37,8 @@ final class GroupIterator implements Iterator<String> {
         if (result.start(group) >= last && !negativeLAGroups.get(group)) {
             last = result.start(group);
             return result.group(group);
-        } else {
-            return null;
         }
+        return null;
     }
 
     @Override

@@ -78,6 +78,8 @@ js/script-tests/numeric-escapes-in-string-literals.js
 
 # different error message
 js/script-tests/caller-property.js
+js/script-tests/class-syntax-declaration.js
+js/script-tests/class-syntax-expression.js
 js/script-tests/date-proto-generic-invocation.js
 js/script-tests/exception-expression-offset.js
 js/script-tests/function-constructor-error.js

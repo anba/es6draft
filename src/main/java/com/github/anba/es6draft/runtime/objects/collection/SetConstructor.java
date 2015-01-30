@@ -22,8 +22,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -37,8 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>23.2.2 Properties of the Set Constructor
  * </ul>
  */
-public final class SetConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<SetObject> {
+public final class SetConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Set constructor function.
      * 
@@ -50,8 +47,8 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -63,21 +60,25 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
      * 23.2.1.1 Set ([ iterable ])
      */
     @Override
-    public SetObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        /* step 1 */
+        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "Set");
+    }
+
+    /**
+     * 23.2.1.1 Set ([ iterable ])
+     */
+    @Override
+    public SetObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object iterable = argument(args, 0);
 
-        /* steps 1-4 */
-        if (!Type.isObject(thisValue)) {
-            throw newTypeError(calleeContext, Messages.Key.NotObjectType);
-        }
-        if (!(thisValue instanceof SetObject)) {
-            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
-        }
-        SetObject set = (SetObject) thisValue;
-        if (set.isInitialized()) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
+        /* step 1 (not applicable) */
+        /* steps 2-4 */
+        SetObject set = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.SetPrototype, SetObjectAllocator.INSTANCE);
 
         /* steps 5-7 */
         ScriptObject iter;
@@ -93,19 +94,13 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
             iter = GetIterator(calleeContext, iterable);
         }
 
-        /* steps 8-9 */
-        if (set.isInitialized()) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
-
-        /* step 10 */
-        set.initialize();
-
-        /* step 11 */
+        /* step 8 */
+        // FIXME: spec bug
+        /* step 9 */
         if (iter == null) {
             return set;
         }
-        /* step 12 */
+        /* step 11 */
         for (;;) {
             ScriptObject next = IteratorStep(calleeContext, iter);
             if (next == null) {
@@ -116,17 +111,13 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
         }
     }
 
-    /**
-     * 23.2.1.2 new Set (...argumentsList)
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
+    private static final class SetObjectAllocator implements ObjectAllocator<SetObject> {
+        static final ObjectAllocator<SetObject> INSTANCE = new SetObjectAllocator();
 
-    @Override
-    public CreateAction<SetObject> createAction() {
-        return SetCreate.INSTANCE;
+        @Override
+        public SetObject newInstance(Realm realm) {
+            return new SetObject(realm);
+        }
     }
 
     /**
@@ -167,25 +158,6 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
         public static Object species(ExecutionContext cx, Object thisValue) {
             /* step 1 */
             return thisValue;
-        }
-    }
-
-    private static final class SetObjectAllocator implements ObjectAllocator<SetObject> {
-        static final ObjectAllocator<SetObject> INSTANCE = new SetObjectAllocator();
-
-        @Override
-        public SetObject newInstance(Realm realm) {
-            return new SetObject(realm);
-        }
-    }
-
-    private static class SetCreate implements CreateAction<SetObject> {
-        static final CreateAction<SetObject> INSTANCE = new SetCreate();
-
-        @Override
-        public SetObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.SetPrototype,
-                    SetObjectAllocator.INSTANCE);
         }
     }
 }

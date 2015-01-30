@@ -501,6 +501,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
+    public int visit(NewTarget node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public int visit(NullLiteral node, V value) {
         return visit((Literal) node, value);
     }

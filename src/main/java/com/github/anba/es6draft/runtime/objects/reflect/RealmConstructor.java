@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects.reflect;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
 import static com.github.anba.es6draft.runtime.Realm.CreateRealmAndSetRealmGlobalObj;
 import static com.github.anba.es6draft.runtime.Realm.SetDefaultGlobalBindings;
@@ -32,8 +31,6 @@ import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
@@ -46,8 +43,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>26.?.2 Properties of the Reflect.Realm Constructor
  * </ul>
  */
-public final class RealmConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<RealmObject> {
+public final class RealmConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Realm constructor function.
      * 
@@ -59,8 +55,8 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -88,18 +84,23 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
      * 26.?.1.1 Reflect.Realm ( [ target , handler ] )
      */
     @Override
-    public RealmObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        /* step 2 */
-        if (!(thisValue instanceof RealmObject)) {
-            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
-        }
         /* step 1 */
-        RealmObject realmObject = (RealmObject) thisValue;
-        /* step 3 */
-        if (realmObject.getRealm() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
+        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "Realm");
+    }
+
+    /**
+     * 26.?.1.1 Reflect.Realm ( [ target , handler ] )
+     */
+    @Override
+    public RealmObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+
+        /* steps 2-3 */
+        RealmObject realmObject = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.RealmPrototype, RealmObjectAllocator.INSTANCE);
 
         /* steps 4-5 */
         ScriptObject newGlobal;
@@ -123,11 +124,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         Callable indirectEval = GetMethod(calleeContext, realmObject, "indirectEval");
         /* steps 14-16 */
         realm.setExtensionHooks(translate, fallback, indirectEval);
-        /* steps 17-18 */
-        if (realmObject.getRealm() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
-        /* step 19 */
+        /* step 17 */
         realmObject.setRealm(realm);
 
         // Run any initialization scripts, if required. But do _not_ install extensions!
@@ -141,31 +138,27 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
             throw newError(calleeContext, e.getMessage());
         }
 
-        /* steps 20-21 */
+        /* steps 18-19 */
         Callable initGlobal = GetMethod(calleeContext, realmObject, "initGlobal");
-        /* steps 22-23 */
+        /* steps 20-21 */
         if (initGlobal != null) {
-            /* step 22 */
+            /* step 20 */
             initGlobal.call(calleeContext, realmObject);
         } else {
-            /* step 23 */
+            /* step 21 */
             SetDefaultGlobalBindings(calleeContext, realm);
         }
-        /* step 24 */
+        /* step 22 */
         return realmObject;
     }
 
-    /**
-     * 26.?.1.2 new Reflect.Realm ( ... argumentsList )
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
+    private static final class RealmObjectAllocator implements ObjectAllocator<RealmObject> {
+        static final ObjectAllocator<RealmObject> INSTANCE = new RealmObjectAllocator();
 
-    @Override
-    public CreateAction<RealmObject> createAction() {
-        return RealmCreate.INSTANCE;
+        @Override
+        public RealmObject newInstance(Realm realm) {
+            return new RealmObject(realm);
+        }
     }
 
     /**
@@ -191,24 +184,5 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.RealmPrototype;
-    }
-
-    private static final class RealmObjectAllocator implements ObjectAllocator<RealmObject> {
-        static final ObjectAllocator<RealmObject> INSTANCE = new RealmObjectAllocator();
-
-        @Override
-        public RealmObject newInstance(Realm realm) {
-            return new RealmObject(realm);
-        }
-    }
-
-    private static final class RealmCreate implements CreateAction<RealmObject> {
-        static final CreateAction<RealmObject> INSTANCE = new RealmCreate();
-
-        @Override
-        public RealmObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.RealmPrototype,
-                    RealmObjectAllocator.INSTANCE);
-        }
     }
 }

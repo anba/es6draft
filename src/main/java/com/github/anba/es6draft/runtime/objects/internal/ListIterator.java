@@ -25,7 +25,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>7 Abstract Operations</h1><br>
  * <h2>7.4 Operations on Iterator Objects</h2>
  * <ul>
- * <li>7.4.9 CreateListIterator (list)
+ * <li>7.4.8 CreateListIterator (list)
  * </ul>
  */
 public final class ListIterator<T> extends OrdinaryObject {
@@ -57,7 +57,7 @@ public final class ListIterator<T> extends OrdinaryObject {
     }
 
     /**
-     * 7.4.9 CreateListIterator (list)
+     * 7.4.8 CreateListIterator (list)
      * <p>
      * Returns a new {@link ListIterator} object for the internal list {@code iterator}
      * 

@@ -14,6 +14,7 @@ import com.github.anba.es6draft.Module;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -252,49 +253,97 @@ public final class ExecutionContext {
      * </ul>
      * </ul>
      * <p>
-     * 9.2.2 [[Call]] (thisArgument, argumentsList)
+     * 9.2.2.1 PrepareOrdinaryCall( F, newTarget )
      * 
      * @param callerContext
      *            the caller execution context
      * @param f
      *            the callee function object
+     * @param newTarget
+     *            the newTarget for the function call
+     * @return the new function execution context
+     */
+    public static ExecutionContext newFunctionExecutionContext(ExecutionContext callerContext,
+            FunctionObject f, Constructor newTarget) {
+        /* steps 1-3 (not applicable) */
+        /* step 6 */
+        Realm calleeRealm = f.getRealm();
+        /* steps 8-12 */
+        LexicalEnvironment<FunctionEnvironmentRecord> localEnv = newFunctionEnvironment(
+                callerContext, f, newTarget);
+        /* steps 4-5, 7, 13-16 */
+        return new ExecutionContext(calleeRealm, localEnv, localEnv, localEnv, f.getExecutable(), f);
+    }
+
+    /**
+     * <ul>
+     * <li>9 Ordinary and Exotic Objects Behaviours
+     * <ul>
+     * <li>9.2 ECMAScript Function Objects
+     * </ul>
+     * </ul>
+     * <p>
+     * 9.2.2.1 PrepareOrdinaryCall( F, newTarget )<br>
+     * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
+     * 
+     * @param callerContext
+     *            the caller execution context
+     * @param f
+     *            the callee function object
+     * @param newTarget
+     *            the newTarget for the function call
      * @param thisArgument
      *            the this-argument for the function call
      * @return the new function execution context
      */
     public static ExecutionContext newFunctionExecutionContext(ExecutionContext callerContext,
-            FunctionObject f, Object thisArgument) {
-        /* step 1 (checked in caller) */
-        /* steps 2-3 (not applicable) */
+            FunctionObject f, Constructor newTarget, Object thisArgument) {
+        /* steps 1-3 (not applicable) */
         /* step 6 */
         Realm calleeRealm = f.getRealm();
-        /* step 8 */
+        Object thisValue = bindThisValue(f, thisArgument);
+        /* steps 8-12 */
+        LexicalEnvironment<FunctionEnvironmentRecord> localEnv = newFunctionEnvironment(
+                callerContext, f, newTarget, thisValue);
+        /* steps 4-5, 7, 13-16 */
+        return new ExecutionContext(calleeRealm, localEnv, localEnv, localEnv, f.getExecutable(), f);
+    }
+
+    /**
+     * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
+     * 
+     * @param calleeRealm
+     * @param f
+     * @param thisArgument
+     * @return
+     */
+    private static Object bindThisValue(FunctionObject f, Object thisArgument) {
+        /* step 1 */
         ThisMode thisMode = f.getThisMode();
-        /* step 9 (omitted) */
-        /* step 10 (?) */
-        /* steps 11-12, 19 */
-        Object thisValue;
+        /* step 2 */
         if (thisMode == ThisMode.Lexical) {
-            thisValue = null;
+            return null;
+        }
+        /* step 3 */
+        Realm calleeRealm = f.getRealm();
+        /* step 4 (not applicable) */
+        /* steps 5-6 */
+        Object thisValue;
+        if (thisMode == ThisMode.Strict) {
+            /* step 5 */
+            thisValue = thisArgument;
         } else {
-            if (thisMode == ThisMode.Strict) {
+            /* step 6 */
+            if (Type.isUndefinedOrNull(thisArgument)) {
+                thisValue = calleeRealm.getGlobalThis();
+            } else if (Type.isObject(thisArgument)) {
                 thisValue = thisArgument;
             } else {
-                if (Type.isUndefinedOrNull(thisArgument)) {
-                    thisValue = calleeRealm.getGlobalThis();
-                } else if (Type.isObject(thisArgument)) {
-                    thisValue = thisArgument;
-                } else {
-                    /*  step 19 */
-                    thisValue = ToObject(calleeRealm.defaultContext(), thisArgument);
-                }
+                thisValue = ToObject(calleeRealm.defaultContext(), thisArgument);
             }
         }
-        /* steps 13-15 */
-        LexicalEnvironment<FunctionEnvironmentRecord> localEnv = newFunctionEnvironment(
-                callerContext, f, thisValue);
-        /* steps 4-5, 7, 16-18 */
-        return new ExecutionContext(calleeRealm, localEnv, localEnv, localEnv, f.getExecutable(), f);
+        /* steps 7-8 (not applicable) */
+        return thisValue;
     }
 
     /**
@@ -351,13 +400,28 @@ public final class ExecutionContext {
      */
     public Object resolveThisBinding() {
         /* step 1 */
-        EnvironmentRecord env = getThisEnvironment();
+        EnvironmentRecord envRec = getThisEnvironment();
         /* step 2 */
-        return env.getThisBinding();
+        return envRec.getThisBinding();
     }
 
     /**
-     * 8.3.4 GetGlobalObject() Abstract Operation
+     * 8.3.4 GetNewTarget ( ) Abstract Operation
+     * 
+     * @return the NewTarget constructor object
+     */
+    public Constructor getNewTarget() {
+        /* step 1 */
+        EnvironmentRecord envRec = getThisEnvironment();
+        /* step 2 */
+        assert envRec instanceof FunctionEnvironmentRecord : String.format(
+                "Wrong environment kind = %s", envRec.getClass().getSimpleName());
+        /* step 3 */
+        return ((FunctionEnvironmentRecord) envRec).getNewTarget();
+    }
+
+    /**
+     * 8.3.5 GetGlobalObject() Abstract Operation
      * 
      * @return the global object instance
      */
@@ -366,5 +430,21 @@ public final class ExecutionContext {
         Realm currentRealm = realm;
         /* step 3 */
         return currentRealm.getGlobalThis();
+    }
+
+    /**
+     * 8.3.6 IsThisInitialized ( ) Abstract Operation
+     * 
+     * @return the {@code true} if the {@code this} binding has been initialized
+     */
+    public boolean isThisInitialized() {
+        /* step 1 */
+        EnvironmentRecord envRec = getThisEnvironment();
+        /* step 2 */
+        if (!(envRec instanceof FunctionEnvironmentRecord)) {
+            return true;
+        }
+        /* step 3 */
+        return ((FunctionEnvironmentRecord) envRec).isThisInitialized();
     }
 }

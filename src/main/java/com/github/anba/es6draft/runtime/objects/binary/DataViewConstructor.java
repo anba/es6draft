@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
@@ -26,10 +25,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
@@ -42,8 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>24.2.3 Properties of the DataView Constructor
  * </ul>
  */
-public final class DataViewConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<DataViewObject> {
+public final class DataViewConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new DataView constructor function.
      * 
@@ -55,32 +50,13 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
     public DataViewConstructor clone() {
         return new DataViewConstructor(getRealm());
-    }
-
-    private static final class DataViewObjectAllocator implements ObjectAllocator<DataViewObject> {
-        static final ObjectAllocator<DataViewObject> INSTANCE = new DataViewObjectAllocator();
-
-        @Override
-        public DataViewObject newInstance(Realm realm) {
-            return new DataViewObject(realm);
-        }
-    }
-
-    private static final class DataViewCreate implements CreateAction<DataViewObject> {
-        static final CreateAction<DataViewObject> INSTANCE = new DataViewCreate();
-
-        @Override
-        public DataViewObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.DataViewPrototype,
-                    DataViewObjectAllocator.INSTANCE);
-        }
     }
 
     /**
@@ -114,31 +90,27 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         if (numberIndex != getIndex || getIndex < 0) {
             throw newRangeError(cx, Messages.Key.InvalidByteOffset);
         }
-        /* steps 7-8 */
+        /* step 7 */
         boolean littleEndian = ToBoolean(isLittleEndian);
-        /* step 9 */
+        /* step 8 */
         ArrayBufferObject buffer = dataView.getBuffer();
-        /* step 10 */
-        if (buffer == null) {
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        /* step 11 */
+        /* step 9 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* step 12 */
+        /* step 10 */
         long viewOffset = dataView.getByteOffset();
-        /* step 13 */
+        /* step 11 */
         long viewSize = dataView.getByteLength();
-        /* step 14 */
+        /* step 12 */
         int elementSize = type.size();
-        /* step 15 */
+        /* step 13 */
         if (getIndex + elementSize > viewSize) {
             throw newRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
         }
-        /* step 16 */
+        /* step 14 */
         long bufferIndex = (long) getIndex + viewOffset;
-        /* step 17 */
+        /* step 15 */
         return GetValueFromBuffer(buffer, bufferIndex, type, littleEndian);
     }
 
@@ -174,31 +146,27 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         if (numberIndex != getIndex || getIndex < 0) {
             throw newRangeError(cx, Messages.Key.InvalidByteOffset);
         }
-        /* steps 7-8 */
+        /* step 7 */
         boolean littleEndian = ToBoolean(isLittleEndian);
-        /* step 9 */
+        /* step 8 */
         ArrayBufferObject buffer = dataView.getBuffer();
-        /* step 10 */
-        if (buffer == null) {
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        /* step 11 */
+        /* step 9 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* step 11 */
+        /* step 10 */
         long viewOffset = dataView.getByteOffset();
-        /* step 12 */
+        /* step 11 */
         long viewSize = dataView.getByteLength();
-        /* step 13 */
+        /* step 12 */
         int elementSize = type.size();
-        /* step 14 */
+        /* step 13 */
         if (getIndex + elementSize > viewSize) {
             throw newRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
         }
-        /* step 15 */
+        /* step 14 */
         long bufferIndex = (long) getIndex + viewOffset;
-        /* step 16 */
+        /* step 15 */
         SetValueInBuffer(buffer, bufferIndex, type, ToNumber(cx, value), littleEndian);
     }
 
@@ -206,46 +174,52 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
      * 24.2.2.1 DataView (buffer [, byteOffset [, byteLength ] ])
      */
     @Override
-    public DataViewObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        /* step 1 */
+        // FIXME: spec bug
+        /* step 2 */
+        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "DataView");
+        /* steps 3-20 (not applicable) */
+    }
+
+    /**
+     * 24.2.2.1 DataView (buffer [, byteOffset [, byteLength ] ])
+     */
+    @Override
+    public DataViewObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object buffer = argument(args, 0);
         Object byteOffset = argument(args, 1, 0);
         Object byteLength = argument(args, 2);
-        /* step 1 (implicit) */
-        /* step 2 */
-        if (!(thisValue instanceof DataViewObject)) {
-            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
-        }
-        DataViewObject dataView = (DataViewObject) thisValue;
-        /* step 3 (not applicable) */
-        /* step 4 */
-        if (dataView.getBuffer() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
-        /* steps 5-6 */
+        /* step 1 */
+        // FIXME: spec bug
+        /* step 2 (not applicable)*/
+        /* steps 3-4 */
         if (!(buffer instanceof ArrayBufferObject)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         ArrayBufferObject bufferObj = (ArrayBufferObject) buffer;
-        /* step 7 */
-        if (!bufferObj.isInitialized()) {
-            throw newTypeError(calleeContext, Messages.Key.UninitializedObject);
-        }
-        /* step 8 */
+        /* step 5 */
         double numberOffset = ToNumber(calleeContext, byteOffset);
-        /* steps 9-10 */
+        /* steps 6-7 */
         double offset = ToInteger(numberOffset);
-        /* step 11 */
+        /* step 8 */
         if (numberOffset != offset || offset < 0) {
             throw newRangeError(calleeContext, Messages.Key.InvalidByteOffset);
         }
-        /* step 12 */
+        /* step 9 */
+        if (IsDetachedBuffer(bufferObj)) {
+            throw newTypeError(calleeContext, Messages.Key.BufferDetached);
+        }
+        /* step 10 */
         long bufferByteLength = bufferObj.getByteLength();
-        /* step 13 */
+        /* step 11 */
         if (offset > bufferByteLength) {
             throw newRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
         }
-        /* steps 14-15 */
+        /* steps 12-13 */
         long viewByteLength, viewByteOffset = (long) offset;
         if (Type.isUndefined(byteLength)) {
             viewByteLength = bufferByteLength - viewByteOffset;
@@ -261,10 +235,9 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
                 throw newRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
             }
         }
-        /* step 16 */
-        if (dataView.getBuffer() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
+        /* steps 14-16 */
+        DataViewObject dataView = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.DataViewPrototype, DataViewObjectAllocator.INSTANCE);
         /* steps 17-19 */
         dataView.setBuffer(bufferObj);
         dataView.setByteLength(viewByteLength);
@@ -273,17 +246,13 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         return dataView;
     }
 
-    /**
-     * 24.2.2.2 new DataView( ... argumentsList)
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
+    private static final class DataViewObjectAllocator implements ObjectAllocator<DataViewObject> {
+        static final ObjectAllocator<DataViewObject> INSTANCE = new DataViewObjectAllocator();
 
-    @Override
-    public CreateAction<DataViewObject> createAction() {
-        return DataViewCreate.INSTANCE;
+        @Override
+        public DataViewObject newInstance(Realm realm) {
+            return new DataViewObject(realm);
+        }
     }
 
     /**

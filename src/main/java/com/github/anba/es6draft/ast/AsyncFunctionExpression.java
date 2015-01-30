@@ -122,6 +122,11 @@ public final class AsyncFunctionExpression extends Expression implements AsyncFu
     }
 
     @Override
+    public boolean isConstructor() {
+        return true;
+    }
+
+    @Override
     public boolean hasSyntheticNodes() {
         return syntheticNodes;
     }

@@ -125,6 +125,11 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
     }
 
     @Override
+    public boolean isConstructor() {
+        return true;
+    }
+
+    @Override
     public boolean hasSyntheticNodes() {
         return syntheticNodes;
     }

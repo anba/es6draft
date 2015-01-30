@@ -116,6 +116,11 @@ public final class GeneratorComprehension extends Expression implements Function
     }
 
     @Override
+    public boolean isConstructor() {
+        return true;
+    }
+
+    @Override
     public boolean hasSyntheticNodes() {
         return syntheticNodes;
     }

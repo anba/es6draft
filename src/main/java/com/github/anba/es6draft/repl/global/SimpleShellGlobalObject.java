@@ -290,6 +290,17 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
     }
 
     /**
+     * shell-function: {@code putstr(message)}
+     *
+     * @param message
+     *            the message to write
+     */
+    @Function(name = "putstr", arity = 1)
+    public void putstr(String message) {
+        console.putstr(message);
+    }
+
+    /**
      * shell-function: {@code nextTick(function)}
      * 
      * @param cx

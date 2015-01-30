@@ -15,7 +15,6 @@ import static com.github.anba.es6draft.runtime.objects.SymbolObject.SymbolCreate
 import static com.github.anba.es6draft.runtime.objects.number.NumberObject.NumberCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.StringObject.StringCreate;
 
 import java.util.ArrayList;
@@ -34,7 +33,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.internal.Strings;
-import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.internal.CompoundIterator;
 import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
@@ -518,7 +516,7 @@ public final class AbstractOperations {
     public static int ToUint8Clamp(ExecutionContext cx, Object value) {
         /* steps 1-2 */
         double number = ToNumber(cx, value);
-        /* steps 3-8 */
+        /* steps 3-10 */
         return number <= 0 ? +0 : number > 255 ? 255 : (int) Math.rint(number);
     }
 
@@ -531,7 +529,7 @@ public final class AbstractOperations {
      */
     public static int ToUint8Clamp(double number) {
         /* steps 1-2 (not applicable) */
-        /* steps 3-8 */
+        /* steps 3-10 */
         return number <= 0 ? +0 : number > 255 ? 255 : (int) Math.rint(number);
     }
 
@@ -701,13 +699,14 @@ public final class AbstractOperations {
      * @return the length value
      */
     public static long ToLength(ExecutionContext cx, Object value) {
-        /* steps 1-2 */
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
         double len = ToInteger(cx, value);
-        /* step 3 */
+        /* step 4 */
         if (len <= 0) {
             return 0;
         }
-        /* step 4 */
+        /* step 5 */
         return (long) Math.min(len, 0x1F_FFFF_FFFF_FFFFL);
     }
 
@@ -719,12 +718,12 @@ public final class AbstractOperations {
      * @return the length value
      */
     public static long ToLength(double value) {
-        /* steps 1-2 (not applicable) */
-        /* step 3 */
+        /* steps 1-3 (not applicable) */
+        /* step 4 */
         if (value <= 0) {
             return 0;
         }
-        /* step 4 */
+        /* step 5 */
         return (long) Math.min(value, 0x1F_FFFF_FFFF_FFFFL);
     }
 
@@ -754,6 +753,42 @@ public final class AbstractOperations {
         }
         /* step 5 */
         return (long) n;
+    }
+
+    public enum CanonicalNumericString {
+        PositiveInteger, NegativeInteger, NonInteger, NegativeZero, None
+    }
+
+    /**
+     * 7.1.16 CanonicalNumericIndexString ( argument )
+     * 
+     * @param value
+     *            the argument value
+     * @return the canonical number or -1 if not canonical
+     */
+    public static CanonicalNumericString CanonicalNumericIndexStringType(String value) {
+        // TODO: Remove after bug 3619 is fixed
+        /* step 1 (not applicable) */
+        /* step 2 */
+        if ("-0".equals(value)) {
+            return CanonicalNumericString.NegativeZero;
+        }
+        /* step 3 */
+        double n = ToNumber(value);
+        // FIXME: spec issue (bug 3272)
+        /* step 4 */
+        if (!value.equals(ToString(n))) {
+            return CanonicalNumericString.None;
+        }
+        // Directly perform IsInteger() check and encode negative and non-integer indices.
+        if (!IsInteger(n)) {
+            return CanonicalNumericString.NonInteger;
+        }
+        if (n < 0) {
+            return CanonicalNumericString.NegativeInteger;
+        }
+        /* step 5 */
+        return CanonicalNumericString.PositiveInteger;
     }
 
     /**
@@ -864,15 +899,15 @@ public final class AbstractOperations {
             return false;
         }
         double d = Type.numberValue(value);
-        /* step 2 */
+        /* step 3 */
         if (Double.isNaN(d) || Double.isInfinite(d)) {
             return false;
         }
-        /* step 3 */
+        /* step 4 */
         if (Math.floor(Math.abs(d)) != Math.abs(d)) {
             return false;
         }
-        /* step 4 */
+        /* step 5 */
         return true;
     }
 
@@ -884,16 +919,17 @@ public final class AbstractOperations {
      * @return {@code true} if the value is a finite integer
      */
     public static boolean IsInteger(double value) {
+        /* steps 1-2 (not applicable) */
         double d = value;
-        /* step 2 */
+        /* step 3 */
         if (Double.isNaN(d) || Double.isInfinite(d)) {
             return false;
         }
-        /* step 3 */
+        /* step 4 */
         if (Math.floor(Math.abs(d)) != Math.abs(d)) {
             return false;
         }
-        /* step 4 */
+        /* step 5 */
         return true;
     }
 
@@ -1088,8 +1124,8 @@ public final class AbstractOperations {
         /* steps 1-5 (not applicable) */
         /* steps 7-10 (not applicable) */
         /* step 6 */
-        double dx = Type.numberValue(x);
-        double dy = Type.numberValue(y);
+        double dx = x;
+        double dy = y;
         if (dx == 0) {
             return (dy == 0);
         }
@@ -2175,7 +2211,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.11 Call(F, V, [args])
+     * 7.3.11 Call(F, V, [argumentsList])
      * 
      * @param cx
      *            the execution context
@@ -2183,23 +2219,23 @@ public final class AbstractOperations {
      *            the function object
      * @param thisValue
      *            the this value
-     * @param args
+     * @param argumentsList
      *            the function arguments
      * @return the function call return value
      */
     public static Object Call(ExecutionContext cx, Object function, Object thisValue,
-            Object... args) {
+            Object... argumentsList) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         if (!IsCallable(function)) {
             throw newTypeError(cx, Messages.Key.NotCallable);
         }
         /* step 4 */
-        return ((Callable) function).call(cx, thisValue, args);
+        return ((Callable) function).call(cx, thisValue, argumentsList);
     }
 
     /**
-     * 7.3.11 Call(F, V, [args])
+     * 7.3.11 Call(F, V, [argumentsList])
      * 
      * @param cx
      *            the execution context
@@ -2207,19 +2243,19 @@ public final class AbstractOperations {
      *            the function object
      * @param thisValue
      *            the this value
-     * @param args
+     * @param argumentsList
      *            the function arguments
      * @return the function call return value
      */
     public static Object Call(ExecutionContext cx, Callable function, Object thisValue,
-            Object... args) {
+            Object... argumentsList) {
         /* steps 1-3 (not applicable) */
         /* step 4 */
-        return ((Callable) function).call(cx, thisValue, args);
+        return ((Callable) function).call(cx, thisValue, argumentsList);
     }
 
     /**
-     * 7.3.12 Invoke(O,P [,args])
+     * 7.3.12 Invoke(O, P, [argumentsList])
      * 
      * @param cx
      *            the execution context
@@ -2227,21 +2263,21 @@ public final class AbstractOperations {
      *            the script object
      * @param propertyKey
      *            the property key
-     * @param args
+     * @param argumentsList
      *            the method call arguments
      * @return the method return value
      */
     public static Object Invoke(ExecutionContext cx, Object object, Object propertyKey,
-            Object... args) {
+            Object... argumentsList) {
         if (propertyKey instanceof String) {
-            return Invoke(cx, object, (String) propertyKey, args);
+            return Invoke(cx, object, (String) propertyKey, argumentsList);
         } else {
-            return Invoke(cx, object, (Symbol) propertyKey, args);
+            return Invoke(cx, object, (Symbol) propertyKey, argumentsList);
         }
     }
 
     /**
-     * 7.3.12 Invoke(O,P [,args])
+     * 7.3.12 Invoke(O, P, [argumentsList])
      * 
      * @param cx
      *            the execution context
@@ -2249,12 +2285,12 @@ public final class AbstractOperations {
      *            the script object
      * @param propertyKey
      *            the property key
-     * @param args
+     * @param argumentsList
      *            the method call arguments
      * @return the method return value
      */
     public static Object Invoke(ExecutionContext cx, Object object, String propertyKey,
-            Object... args) {
+            Object... argumentsList) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         Object func = GetV(cx, object, propertyKey);
@@ -2263,11 +2299,11 @@ public final class AbstractOperations {
             throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey);
         }
         /* Call - step 4 */
-        return ((Callable) func).call(cx, object, args);
+        return ((Callable) func).call(cx, object, argumentsList);
     }
 
     /**
-     * 7.3.12 Invoke(O,P [,args])
+     * 7.3.12 Invoke(O, P, [argumentsList])
      * 
      * @param cx
      *            the execution context
@@ -2275,12 +2311,12 @@ public final class AbstractOperations {
      *            the script object
      * @param propertyKey
      *            the property key
-     * @param args
+     * @param argumentsList
      *            the method call arguments
      * @return the method return value
      */
     public static Object Invoke(ExecutionContext cx, ScriptObject object, String propertyKey,
-            Object... args) {
+            Object... argumentsList) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         Object func = object.get(cx, propertyKey, object);
@@ -2289,11 +2325,11 @@ public final class AbstractOperations {
             throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey);
         }
         /* Call - step 4 */
-        return ((Callable) func).call(cx, object, args);
+        return ((Callable) func).call(cx, object, argumentsList);
     }
 
     /**
-     * 7.3.12 Invoke(O,P [,args])
+     * 7.3.12 Invoke(O, P, [argumentsList])
      * 
      * @param cx
      *            the execution context
@@ -2301,12 +2337,12 @@ public final class AbstractOperations {
      *            the script object
      * @param propertyKey
      *            the property key
-     * @param args
+     * @param argumentsList
      *            the method call arguments
      * @return the method return value
      */
     public static Object Invoke(ExecutionContext cx, Object object, Symbol propertyKey,
-            Object... args) {
+            Object... argumentsList) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         Object func = GetV(cx, object, propertyKey);
@@ -2315,11 +2351,11 @@ public final class AbstractOperations {
             throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey.toString());
         }
         /* Call - step 4 */
-        return ((Callable) func).call(cx, object, args);
+        return ((Callable) func).call(cx, object, argumentsList);
     }
 
     /**
-     * 7.3.12 Invoke(O,P [,args])
+     * 7.3.12 Invoke(O, P, [argumentsList])
      * 
      * @param cx
      *            the execution context
@@ -2327,12 +2363,12 @@ public final class AbstractOperations {
      *            the script object
      * @param propertyKey
      *            the property key
-     * @param args
+     * @param argumentsList
      *            the method call arguments
      * @return the method return value
      */
     public static Object Invoke(ExecutionContext cx, ScriptObject object, Symbol propertyKey,
-            Object... args) {
+            Object... argumentsList) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         Object func = object.get(cx, propertyKey, object);
@@ -2341,11 +2377,49 @@ public final class AbstractOperations {
             throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey.toString());
         }
         /* Call - step 4 */
-        return ((Callable) func).call(cx, object, args);
+        return ((Callable) func).call(cx, object, argumentsList);
     }
 
     /**
-     * 7.3.13 SetIntegrityLevel (O, level)
+     * 7.3.13 Construct (F, [argumentsList], [newTarget])
+     * 
+     * @param cx
+     *            the execution context
+     * @param f
+     *            the constructor function
+     * @param argumentsList
+     *            the constructor function arguments
+     * @return the new object
+     */
+    public static ScriptObject Construct(ExecutionContext cx, Constructor f,
+            Object... argumentsList) {
+        /* steps 1-4 (not applicable) */
+        /* step 5 */
+        return f.construct(cx, f, argumentsList);
+    }
+
+    /**
+     * 7.3.13 Construct (F, [argumentsList], [newTarget])
+     * 
+     * @param cx
+     *            the execution context
+     * @param f
+     *            the constructor function
+     * @param newTarget
+     *            the newTarget constructor object
+     * @param argumentsList
+     *            the constructor function arguments
+     * @return the new object
+     */
+    public static ScriptObject Construct(ExecutionContext cx, Constructor f, Constructor newTarget,
+            Object... argumentsList) {
+        /* steps 1-4 (not applicable) */
+        /* step 5 */
+        return f.construct(cx, newTarget, argumentsList);
+    }
+
+    /**
+     * 7.3.14 SetIntegrityLevel (O, level)
      * 
      * @param cx
      *            the execution context
@@ -2413,7 +2487,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.14 TestIntegrityLevel (O, level)
+     * 7.3.15 TestIntegrityLevel (O, level)
      * 
      * @param cx
      *            the execution context
@@ -2468,17 +2542,15 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.15 CreateArrayFromList (elements)
+     * 7.3.16 CreateArrayFromList (elements)
      * 
-     * @param <T>
-     *            the element type
      * @param cx
      *            the execution context
      * @param elements
      *            the array elements
      * @return the array object
      */
-    public static <T> ArrayObject CreateArrayFromList(ExecutionContext cx, List<T> elements) {
+    public static ArrayObject CreateArrayFromList(ExecutionContext cx, List<?> elements) {
         /* step 1 (not applicable) */
         /* step 2 */
         ArrayObject array = ArrayCreate(cx, 0);
@@ -2495,7 +2567,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.16 CreateListFromArrayLike (obj [, elementTypes] )
+     * 7.3.17 CreateListFromArrayLike (obj [, elementTypes] )
      * 
      * @param cx
      *            the execution context
@@ -2525,29 +2597,27 @@ public final class AbstractOperations {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject object = Type.objectValue(obj);
-        /* step 4 */
-        Object len = Get(cx, object, "length");
-        /* steps 5-6 */
-        long n = ToLength(cx, len);
+        /* steps 4-5 */
+        long n = ToLength(cx, Get(cx, object, "length"));
         // CreateListFromArrayLike() is (currently) only used for argument arrays
         if (n > FunctionPrototype.getMaxArguments()) {
             throw newRangeError(cx, Messages.Key.FunctionTooManyArguments);
         }
         int length = (int) n;
-        /* step 7 */
+        /* step 6 */
         Object[] list = new Object[length];
-        /* steps 8-9 */
+        /* steps 7-8 */
         for (int index = 0; index < length; ++index) {
             int indexName = index;
             Object next = Get(cx, object, indexName);
             list[index] = next;
         }
-        /* step 10 */
+        /* step 9 */
         return list;
     }
 
     /**
-     * 7.3.16 CreateListFromArrayLike (obj [, elementTypes] )
+     * 7.3.17 CreateListFromArrayLike (obj [, elementTypes] )
      * 
      * @param cx
      *            the execution context
@@ -2591,17 +2661,15 @@ public final class AbstractOperations {
             throw newTypeError(cx, Messages.Key.ProxyNotObject);
         }
         ScriptObject object = Type.objectValue(obj);
-        /* step 4 */
-        Object len = Get(cx, object, "length");
-        /* steps 5-6 */
-        long n = ToLength(cx, len);
+        /* steps 4-5 */
+        long n = ToLength(cx, Get(cx, object, "length"));
         if (n > Integer.MAX_VALUE) {
             throw newInternalError(cx, Messages.Key.OutOfMemory);
         }
         int length = (int) n;
-        /* step 7 */
+        /* step 6 */
         Object[] list = new Object[length];
-        /* steps 8-9 */
+        /* steps 7-8 */
         for (int index = 0; index < length; ++index) {
             int indexName = index;
             Object next = Get(cx, object, indexName);
@@ -2614,12 +2682,12 @@ public final class AbstractOperations {
                 throw newTypeError(cx, Messages.Key.ProxyPropertyKey, Type.of(next).toString());
             }
         }
-        /* step 10 */
+        /* step 9 */
         return Arrays.asList(list);
     }
 
     /**
-     * 7.3.17 OrdinaryHasInstance (C, O)
+     * 7.3.18 OrdinaryHasInstance (C, O)
      * 
      * @param cx
      *            the execution context
@@ -2662,126 +2730,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.18 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
-     * 
-     * @param cx
-     *            the execution context
-     * @param constructor
-     *            the constructor object
-     * @param intrinsicDefaultProto
-     *            the default prototype
-     * @return the prototype object
-     */
-    public static ScriptObject GetPrototypeFromConstructor(ExecutionContext cx,
-            Constructor constructor, Intrinsics intrinsicDefaultProto) {
-        /* step 1 (not applicable) */
-        /* step 2 (not applicable) */
-        /* steps 3-4 */
-        Object proto = Get(cx, constructor, "prototype");
-        /* step 5 */
-        if (!Type.isObject(proto)) {
-            Realm realm = GetFunctionRealm(cx, constructor);
-            proto = realm.getIntrinsic(intrinsicDefaultProto);
-        }
-        /* step 6 */
-        return Type.objectValue(proto);
-    }
-
-    /**
-     * 7.3.19 CreateFromConstructor (F, argumentsList)
-     * 
-     * @param cx
-     *            the execution context
-     * @param f
-     *            the constructor function
-     * @param args
-     *            the arguments array
-     * @return the new allocated object
-     */
-    public static ScriptObject CreateFromConstructor(ExecutionContext cx, Constructor f,
-            Object... args) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        if (f instanceof Creatable) {
-            CreateAction<?> createAction = ((Creatable<?>) f).createAction();
-            if (createAction != null) {
-                /* steps 2.a-2.b */
-                ScriptObject obj = createAction.create(cx, f, args);
-                /* step 2.c */
-                assert obj != null;
-                /* step 2.d */
-                return obj;
-            }
-        }
-        /* steps 3-4 */
-        ScriptObject obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
-        /* step 5 */
-        assert obj != null;
-        /* step 6 */
-        return obj;
-    }
-
-    /**
-     * 7.3.20 Construct (F, argumentsList)
-     * 
-     * @param cx
-     *            the execution context
-     * @param f
-     *            the constructor function
-     * @param args
-     *            the constructor function arguments
-     * @return the new allocated and initialized object
-     */
-    public static ScriptObject Construct(ExecutionContext cx, Constructor f, Object... args) {
-        /* step 1 (not applicable) */
-        /* steps 2-3 */
-        ScriptObject obj = CreateFromConstructor(cx, f, args);
-        /* steps 4-5 */
-        Object result = f.call(cx, obj, args);
-        /* step 6 */
-        if (Type.isObject(result)) {
-            return Type.objectValue(result);
-        }
-        /* step 7 */
-        return obj;
-    }
-
-    /**
-     * 7.3.20 Construct (F, argumentsList)
-     * 
-     * @param cx
-     *            the execution context
-     * @param f
-     *            the constructor function
-     * @param args
-     *            the constructor function arguments
-     * @return the new allocated and initialized object or a tail-call invocation object
-     * @throws Throwable
-     *             if the underlying method throws an error
-     */
-    public static Object ConstructTailCall(ExecutionContext cx, Constructor f, Object... args)
-            throws Throwable {
-        /* step 1 (not applicable) */
-        /* steps 2-3 */
-        ScriptObject obj = CreateFromConstructor(cx, f, args);
-        /* steps 4-5 */
-        // Invoke 'tailCall()' instead of 'call()' to get TailCallInvocation objects
-        Object result = f.tailCall(cx, obj, args);
-        /* steps 6-7 (tail-call) */
-        if (result instanceof TailCallInvocation) {
-            // Don't unwind tail-call yet, instead store reference to 'obj'
-            return ((TailCallInvocation) result).toConstructTailCall(obj);
-        }
-        /* step 6 */
-        if (Type.isObject(result)) {
-            return Type.objectValue(result);
-        }
-        /* step 7 */
-        return obj;
-    }
-
-    /**
-     * 7.3.21 SpeciesConstructor ( O, defaultConstructor )
+     * 7.3.19 SpeciesConstructor ( O, defaultConstructor )
      * 
      * @param cx
      *            the execution context
@@ -2797,25 +2746,29 @@ public final class AbstractOperations {
         /* steps 2-3 */
         Object constructor = Get(cx, object, "constructor");
         /* step 4 */
+        if (Type.isUndefined(constructor)) {
+            return (Constructor) cx.getIntrinsic(defaultConstructor);
+        }
+        /* step 5 */
         if (!Type.isObject(constructor)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
-        /* steps 5-6 */
+        /* steps 6-7 */
         Object species = Get(cx, Type.objectValue(constructor), BuiltinSymbol.species.get());
-        /* step 7 */
+        /* step 8 */
         if (Type.isUndefinedOrNull(species)) {
             return (Constructor) cx.getIntrinsic(defaultConstructor);
         }
-        /* step 8 */
+        /* step 9 */
         if (IsConstructor(species)) {
             return (Constructor) species;
         }
-        /* step 9 */
+        /* step 10 */
         throw newTypeError(cx, Messages.Key.NotConstructor);
     }
 
     /**
-     * 7.3.22 EnumerableOwnNames (O)
+     * 7.3.20 EnumerableOwnNames (O)
      * 
      * @param cx
      *            the execution context
@@ -2845,7 +2798,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.23 GetFunctionRealm ( obj ) Abstract Operation
+     * 7.3.21 GetFunctionRealm ( obj ) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -2859,7 +2812,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.2 GetIterator ( obj )
+     * 7.4.1 GetIterator ( obj )
      * 
      * @param cx
      *            the execution context
@@ -2876,7 +2829,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.2 GetIterator ( obj )
+     * 7.4.1 GetIterator ( obj )
      * 
      * @param cx
      *            the execution context
@@ -2903,7 +2856,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.3 IteratorNext ( iterator, value )
+     * 7.4.2 IteratorNext ( iterator, value )
      * 
      * @param cx
      *            the execution context
@@ -2923,7 +2876,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.3 IteratorNext ( iterator, value )
+     * 7.4.2 IteratorNext ( iterator, value )
      * 
      * @param cx
      *            the execution context
@@ -2978,7 +2931,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.4 IteratorComplete (iterResult)
+     * 7.4.3 IteratorComplete (iterResult)
      * 
      * @param cx
      *            the execution context
@@ -2989,13 +2942,11 @@ public final class AbstractOperations {
     public static boolean IteratorComplete(ExecutionContext cx, ScriptObject iterResult) {
         /* step 1 (not applicable) */
         /* step 2 */
-        Object done = Get(cx, iterResult, "done");
-        /* step 3 */
-        return ToBoolean(done);
+        return ToBoolean(Get(cx, iterResult, "done"));
     }
 
     /**
-     * 7.4.5 IteratorValue (iterResult)
+     * 7.4.4 IteratorValue (iterResult)
      * 
      * @param cx
      *            the execution context
@@ -3010,7 +2961,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.6 IteratorStep ( iterator )
+     * 7.4.5 IteratorStep ( iterator )
      * 
      * @param cx
      *            the execution context
@@ -3032,7 +2983,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.7 IteratorClose( iterator, completion )
+     * 7.4.6 IteratorClose( iterator, completion )
      * 
      * @param cx
      *            the execution context
@@ -3043,8 +2994,7 @@ public final class AbstractOperations {
      */
     public static void IteratorClose(ExecutionContext cx, ScriptObject iterator,
             boolean isThrowCompletion) {
-        /* step 1 (not applicable) */
-        /* step 2 (not applicable) */
+        /* steps 1-2 (not applicable) */
         /* steps 3-4 */
         // FIXME: spec issue - change to GetMethod to avoid Has+Get?
         boolean hasReturn = HasProperty(cx, iterator, "return");
@@ -3060,10 +3010,11 @@ public final class AbstractOperations {
                 Invoke(cx, iterator, "return");
             }
         }
+        /* step 6 (not applicable) */
     }
 
     /**
-     * 7.4.8 CreateIterResultObject (value, done)
+     * 7.4.7 CreateIterResultObject (value, done)
      * 
      * @param cx
      *            the execution context
@@ -3087,7 +3038,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.9 CreateListIterator (list)
+     * 7.4.8 CreateListIterator (list)
      * 
      * @param <T>
      *            the element type
@@ -3102,7 +3053,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.9 CreateListIterator (list)
+     * 7.4.8 CreateListIterator (list)
      * 
      * @param <T>
      *            the element type
@@ -3117,7 +3068,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.10 CreateCompoundIterator ( iterator1, iterator2 )
+     * 7.4.9 CreateCompoundIterator ( iterator1, iterator2 )
      * 
      * @param <T>
      *            the element type

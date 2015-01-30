@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 
 /**
  * Interface for objects with post-construction initialization.
@@ -16,8 +16,8 @@ public interface Initializable {
     /**
      * The initialization method for this object.
      * 
-     * @param cx
-     *            the execution context
+     * @param realm
+     *            the realm instance
      */
-    void initialize(ExecutionContext cx);
+    void initialize(Realm realm);
 }

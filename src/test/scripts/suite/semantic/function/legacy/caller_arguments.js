@@ -10,17 +10,6 @@ const {
 
 const GeneratorFunction = (function*(){}).constructor;
 
-// Uninitialized functions and generators
-{
-  let f = new class extends Function { constructor(){ /* no super */ } };
-  assertTrue(f.hasOwnProperty("caller"));
-  assertTrue(f.hasOwnProperty("arguments"));
-
-  let g = new class extends GeneratorFunction { constructor(){ /* no super */ } };
-  assertFalse(g.hasOwnProperty("caller"));
-  assertFalse(g.hasOwnProperty("arguments"));
-}
-
 // Initialized functions and generators
 {
   let nonStrictF = Function("");
@@ -42,19 +31,19 @@ const GeneratorFunction = (function*(){}).constructor;
 
 // Initialized functions and generators (2)
 {
-  let nonStrictF = Function.call(new class extends Function { constructor(){ /* no super */ } }, "");
+  let nonStrictF = new class extends Function { constructor(){ super("") } };
   assertTrue(nonStrictF.hasOwnProperty("caller"));
   assertTrue(nonStrictF.hasOwnProperty("arguments"));
 
-  let strictF = Function.call(new class extends Function { constructor(){ /* no super */ } }, "'use strict'");
+  let strictF = new class extends Function { constructor(){ super("'use strict'") } };
   assertFalse(strictF.hasOwnProperty("caller"));
   assertFalse(strictF.hasOwnProperty("arguments"));
 
-  let nonStrictG = GeneratorFunction.call(new class extends GeneratorFunction { constructor(){ /* no super */ } }, "");
+  let nonStrictG = new class extends GeneratorFunction { constructor(){ super("") } };
   assertFalse(nonStrictG.hasOwnProperty("caller"));
   assertFalse(nonStrictG.hasOwnProperty("arguments"));
 
-  let strictG = GeneratorFunction.call(new class extends GeneratorFunction { constructor(){ /* no super */ } }, "'use strict'");
+  let strictG = new class extends GeneratorFunction { constructor(){ super("'use strict'") } };
   assertFalse(strictG.hasOwnProperty("caller"));
   assertFalse(strictG.hasOwnProperty("arguments"));
 }
@@ -190,15 +179,4 @@ const GeneratorFunction = (function*(){}).constructor;
   let strict = function(){ "use strict" }.toMethod({});
   assertFalse(strict.hasOwnProperty("caller"));
   assertFalse(strict.hasOwnProperty("arguments"));
-}
-
-// Uninitialized, cloned functions and generators
-{
-  let f = new class extends Function { constructor(){ /* no super */ } }().toMethod({});
-  assertFalse(f.hasOwnProperty("caller"));
-  assertFalse(f.hasOwnProperty("arguments"));
-
-  let g = new class extends GeneratorFunction { constructor(){ /* no super */ } }().toMethod({});
-  assertFalse(g.hasOwnProperty("caller"));
-  assertFalse(g.hasOwnProperty("arguments"));
 }

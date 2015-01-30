@@ -7,8 +7,10 @@
 package com.github.anba.es6draft.runtime.modules;
 
 import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableMap;
 
 import java.util.List;
+import java.util.Map;
 
 import com.github.anba.es6draft.Module;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -20,14 +22,14 @@ import com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject;
  */
 public final class ModuleRecord implements Cloneable {
     /**
-     * [[ModuleId]]
+     * [[SourceCodeId]]
      */
-    private final String moduleId;
+    private final String sourceCodeId;
 
     /**
      * [[ImportedModules]]
      */
-    private List<String> importedModules;
+    private Map<String, ModuleRecord> importedModules;
 
     /**
      * [[ECMAScriptCode]]
@@ -72,17 +74,17 @@ public final class ModuleRecord implements Cloneable {
     /**
      * Creates a module record.
      * 
-     * @param moduleId
-     *            the normalized module identifier
+     * @param sourceCodeId
+     *            the module source code identifier
      */
-    public ModuleRecord(String moduleId) {
-        assert moduleId != null;
-        this.moduleId = moduleId;
+    public ModuleRecord(String sourceCodeId) {
+        assert sourceCodeId != null;
+        this.sourceCodeId = sourceCodeId;
     }
 
     @Override
     public ModuleRecord clone() {
-        ModuleRecord newModule = new ModuleRecord(moduleId);
+        ModuleRecord newModule = new ModuleRecord(sourceCodeId);
         newModule.importedModules = importedModules;
         newModule.scriptCode = scriptCode;
         newModule.importEntries = importEntries;
@@ -95,13 +97,28 @@ public final class ModuleRecord implements Cloneable {
         return newModule;
     }
 
+    @Override
+    public String toString() {
+        return String.format("[Module = %s]", sourceCodeId);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this;
+    }
+
+    @Override
+    public int hashCode() {
+        return sourceCodeId.hashCode();
+    }
+
     /**
-     * [[ModuleId]]
+     * [[SourceCodeId]]
      * 
-     * @return the module identifier
+     * @return the module source code identifier
      */
-    public String getModuleId() {
-        return moduleId;
+    public String getSourceCodeId() {
+        return sourceCodeId;
     }
 
     /**
@@ -109,8 +126,8 @@ public final class ModuleRecord implements Cloneable {
      * 
      * @return the list of imported modules
      */
-    public List<String> getImportedModules() {
-        return unmodifiableList(importedModules);
+    public Map<String, ModuleRecord> getImportedModules() {
+        return unmodifiableMap(importedModules);
     }
 
     /**
@@ -119,7 +136,7 @@ public final class ModuleRecord implements Cloneable {
      * @param importedModules
      *            the list of imported modules
      */
-    public void setImportedModules(List<String> importedModules) {
+    public void setImportedModules(Map<String, ModuleRecord> importedModules) {
         assert this.importedModules == null && importedModules != null;
         this.importedModules = importedModules;
     }
@@ -230,7 +247,7 @@ public final class ModuleRecord implements Cloneable {
      * @return the lexical environment of this module
      */
     public LexicalEnvironment<ModuleEnvironmentRecord> getEnvironment() {
-        assert environment != null : "module not instantiated: " + moduleId;
+        assert environment != null : "module not instantiated: " + sourceCodeId;
         return environment;
     }
 

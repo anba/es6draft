@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
+import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -54,7 +55,8 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
          * 9.4.1.2 [[Construct]]
          */
         @Override
-        public ScriptObject construct(ExecutionContext callerContext, Object... extraArgs) {
+        public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
+                Object... extraArgs) {
             /* step 1 */
             Callable target = getFlattenedTargetFunction();
             /* step 2 */
@@ -64,15 +66,20 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
             /* step 4 */
             Object[] args = concatArguments(callerContext, boundArgs, extraArgs);
             /* step 5 */
-            return ((Constructor) target).construct(callerContext, args);
+            if (SameValue(this, newTarget)) {
+                // FIXME: spec bug
+                newTarget = (Constructor) target;
+            }
+            /* step 6 */
+            return ((Constructor) target).construct(callerContext, newTarget, args);
         }
 
         /**
          * 9.4.1.2 [[Construct]]
          */
         @Override
-        public Object tailConstruct(ExecutionContext callerContext, Object... extraArgs)
-                throws Throwable {
+        public Object tailConstruct(ExecutionContext callerContext, Constructor newTarget,
+                Object... extraArgs) throws Throwable {
             /* step 1 */
             Callable target = getFlattenedTargetFunction();
             /* step 2 */
@@ -82,7 +89,12 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
             /* step 4 */
             Object[] args = concatArguments(callerContext, boundArgs, extraArgs);
             /* step 5 */
-            return ((Constructor) target).tailConstruct(callerContext, args);
+            if (SameValue(this, newTarget)) {
+                // FIXME: spec bug
+                newTarget = (Constructor) target;
+            }
+            /* step 6 */
+            return ((Constructor) target).tailConstruct(callerContext, newTarget, args);
         }
     }
 

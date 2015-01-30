@@ -17,7 +17,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.WeakHashMap;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.Scripts;
@@ -32,8 +31,6 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
-import com.github.anba.es6draft.runtime.objects.collection.MapObject;
-import com.github.anba.es6draft.runtime.objects.collection.SetObject;
 import com.github.anba.es6draft.runtime.objects.collection.WeakMapObject;
 import com.github.anba.es6draft.runtime.objects.collection.WeakSetObject;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
@@ -127,18 +124,6 @@ public final class NativeCalls {
         case "native:IsGenerator":
             target = callIsGeneratorMH;
             break;
-        case "native:IsUninitializedMap":
-            target = callIsUninitializedMapMH;
-            break;
-        case "native:IsUninitializedSet":
-            target = callIsUninitializedSetMH;
-            break;
-        case "native:IsUninitializedWeakMap":
-            target = callIsUninitializedWeakMapMH;
-            break;
-        case "native:IsUninitializedWeakSet":
-            target = callIsUninitializedWeakSetMH;
-            break;
         case "native:RegExpReplace":
             target = callRegExpReplaceMH;
             break;
@@ -178,11 +163,10 @@ public final class NativeCalls {
     }
 
     private static final MethodHandle callIntrinsicMH, callSetIntrinsicMH, callGlobalObjectMH,
-            callGlobalThisMH, callCallFunctionMH, callIsGeneratorMH, callIsUninitializedMapMH,
-            callIsUninitializedSetMH, callIsUninitializedWeakMapMH, callIsUninitializedWeakSetMH,
-            callRegExpReplaceMH, callRegExpTestMH, callIsFunctionExpressionMH,
-            callSymbolDescriptionMH, callIncludeMH, callIsArrayBufferMH, callIsDetachedBufferMH,
-            callToPropertyKeyMH, callWeakMapClearMH, callWeakSetClearMH, invalidNativeCallMH;
+            callGlobalThisMH, callCallFunctionMH, callIsGeneratorMH, callRegExpReplaceMH,
+            callRegExpTestMH, callIsFunctionExpressionMH, callSymbolDescriptionMH, callIncludeMH,
+            callIsArrayBufferMH, callIsDetachedBufferMH, callToPropertyKeyMH, callWeakMapClearMH,
+            callWeakSetClearMH, invalidNativeCallMH;
     static {
         MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
         MethodType callType = MethodType.methodType(Object.class, Object[].class,
@@ -193,10 +177,6 @@ public final class NativeCalls {
         callGlobalThisMH = lookup.findStatic("call_GlobalThis", callType);
         callCallFunctionMH = lookup.findStatic("call_CallFunction", callType);
         callIsGeneratorMH = lookup.findStatic("call_IsGenerator", callType);
-        callIsUninitializedMapMH = lookup.findStatic("call_IsUninitializedMap", callType);
-        callIsUninitializedSetMH = lookup.findStatic("call_IsUninitializedSet", callType);
-        callIsUninitializedWeakMapMH = lookup.findStatic("call_IsUninitializedWeakMap", callType);
-        callIsUninitializedWeakSetMH = lookup.findStatic("call_IsUninitializedWeakSet", callType);
         callRegExpReplaceMH = lookup.findStatic("call_RegExpReplace", callType);
         callRegExpTestMH = lookup.findStatic("call_RegExpTest", callType);
         callIsFunctionExpressionMH = lookup.findStatic("call_IsFunctionExpression", callType);
@@ -265,38 +245,6 @@ public final class NativeCalls {
     private static Object call_IsGenerator(Object[] args, ExecutionContext cx) {
         if (args.length == 1) {
             return IsGenerator(args[0]);
-        }
-        return invalidNativeCallArguments(cx);
-    }
-
-    @SuppressWarnings("unused")
-    private static Object call_IsUninitializedMap(Object[] args, ExecutionContext cx) {
-        if (args.length == 1) {
-            return IsUninitializedMap(args[0]);
-        }
-        return invalidNativeCallArguments(cx);
-    }
-
-    @SuppressWarnings("unused")
-    private static Object call_IsUninitializedSet(Object[] args, ExecutionContext cx) {
-        if (args.length == 1) {
-            return IsUninitializedSet(args[0]);
-        }
-        return invalidNativeCallArguments(cx);
-    }
-
-    @SuppressWarnings("unused")
-    private static Object call_IsUninitializedWeakMap(Object[] args, ExecutionContext cx) {
-        if (args.length == 1) {
-            return IsUninitializedWeakMap(args[0]);
-        }
-        return invalidNativeCallArguments(cx);
-    }
-
-    @SuppressWarnings("unused")
-    private static Object call_IsUninitializedWeakSet(Object[] args, ExecutionContext cx) {
-        if (args.length == 1) {
-            return IsUninitializedWeakSet(args[0]);
         }
         return invalidNativeCallArguments(cx);
     }
@@ -496,58 +444,6 @@ public final class NativeCalls {
     }
 
     /**
-     * Native function: {@code %IsUninitializedMap(<value>)}.
-     * <p>
-     * Tests whether the input argument is an uninitialized map object.
-     * 
-     * @param value
-     *            the input argument
-     * @return {@code true} if the object is an uninitialized map object
-     */
-    public static boolean IsUninitializedMap(Object value) {
-        return value instanceof MapObject && !((MapObject) value).isInitialized();
-    }
-
-    /**
-     * Native function: {@code %IsUninitializedSet(<value>)}.
-     * <p>
-     * Tests whether the input argument is an uninitialized set object.
-     * 
-     * @param value
-     *            the input argument
-     * @return {@code true} if the object is an uninitialized set object
-     */
-    public static boolean IsUninitializedSet(Object value) {
-        return value instanceof SetObject && !((SetObject) value).isInitialized();
-    }
-
-    /**
-     * Native function: {@code %IsUninitializedWeakMap(<value>)}.
-     * <p>
-     * Tests whether the input argument is an uninitialized weak map object.
-     * 
-     * @param value
-     *            the input argument
-     * @return {@code true} if the object is an uninitialized weak map object
-     */
-    public static boolean IsUninitializedWeakMap(Object value) {
-        return value instanceof WeakMapObject && !((WeakMapObject) value).isInitialized();
-    }
-
-    /**
-     * Native function: {@code %IsUninitializedWeakSet(<value>)}.
-     * <p>
-     * Tests whether the input argument is an uninitialized weak set object.
-     * 
-     * @param value
-     *            the input argument
-     * @return {@code true} if the object is an uninitialized weak set object
-     */
-    public static boolean IsUninitializedWeakSet(Object value) {
-        return value instanceof WeakSetObject && !((WeakSetObject) value).isInitialized();
-    }
-
-    /**
      * Native function: {@code %RegExpReplace(<regexp>, <string>, <replacement>)}.
      * <p>
      * Replaces every occurrence of <var>regexp</var> in <var>string</var> with
@@ -708,11 +604,7 @@ public final class NativeCalls {
         if (!(weakMap instanceof WeakMapObject)) {
             throw Errors.newTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        WeakHashMap<ScriptObject, Object> weakMapData = ((WeakMapObject) weakMap).getWeakMapData();
-        if (weakMapData == null) {
-            throw Errors.newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        weakMapData.clear();
+        ((WeakMapObject) weakMap).getWeakMapData().clear();
         return UNDEFINED;
     }
 
@@ -731,11 +623,7 @@ public final class NativeCalls {
         if (!(weakSet instanceof WeakSetObject)) {
             throw Errors.newTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        WeakHashMap<ScriptObject, Boolean> weakSetData = ((WeakSetObject) weakSet).getWeakSetData();
-        if (weakSetData == null) {
-            throw Errors.newTypeError(cx, Messages.Key.UninitializedObject);
-        }
-        weakSetData.clear();
+        ((WeakSetObject) weakSet).getWeakSetData().clear();
         return UNDEFINED;
     }
 }

@@ -6,15 +6,15 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
-
 import java.lang.invoke.MethodHandle;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
+import com.github.anba.es6draft.runtime.internal.Errors;
+import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1>
@@ -22,11 +22,11 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>9.3 Built-in Function Objects
  * </ul>
  */
-public final class NativeConstructor extends BuiltinConstructor implements Creatable<ScriptObject> {
-    /** [[CreateAction]] */
-    private final CreateAction<?> createAction;
+public final class NativeConstructor extends BuiltinConstructor {
     // (ExecutionContext, Object, Object[]) -> Object
-    private final MethodHandle mh;
+    private final MethodHandle callMethod;
+    // (ExecutionContext, Constructor, Object[]) -> Object
+    private final MethodHandle constructMethod;
 
     /**
      * Constructs a new native constructor function.
@@ -37,33 +37,28 @@ public final class NativeConstructor extends BuiltinConstructor implements Creat
      *            the function name
      * @param arity
      *            the function arity
-     * @param createAction
-     *            the create action operation
-     * @param mh
-     *            the method handle to the function code
+     * @param callMethod
+     *            the method handle to the function call code
+     * @param constructMethod
+     *            the method handle to the function construct code
      */
-    public NativeConstructor(Realm realm, String name, int arity, CreateAction<?> createAction,
-            MethodHandle mh) {
+    public NativeConstructor(Realm realm, String name, int arity, MethodHandle callMethod,
+            MethodHandle constructMethod) {
         super(realm, name, arity);
-        this.createAction = createAction;
-        this.mh = mh;
+        this.callMethod = callMethod;
+        this.constructMethod = constructMethod;
         createDefaultFunctionProperties();
     }
 
     private NativeConstructor(NativeConstructor original) {
         super(original.getRealm(), original.getName(), original.getArity());
-        this.createAction = original.createAction;
-        this.mh = original.mh;
+        this.callMethod = original.callMethod;
+        this.constructMethod = original.constructMethod;
     }
 
     @Override
     public NativeConstructor clone() {
         return new NativeConstructor(this);
-    }
-
-    @Override
-    public CreateAction<?> createAction() {
-        return createAction;
     }
 
     /**
@@ -72,7 +67,7 @@ public final class NativeConstructor extends BuiltinConstructor implements Creat
      * @return the call method handle
      */
     public MethodHandle getCallMethod() {
-        return mh;
+        return callMethod;
     }
 
     /**
@@ -81,7 +76,7 @@ public final class NativeConstructor extends BuiltinConstructor implements Creat
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         try {
-            return mh.invokeExact(callerContext, thisValue, args);
+            return callMethod.invokeExact(callerContext, thisValue, args);
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable e) {
@@ -89,8 +84,23 @@ public final class NativeConstructor extends BuiltinConstructor implements Creat
         }
     }
 
+    /**
+     * 9.3.2 [[Construct]] (argumentsList, newTarget)
+     */
     @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
+    public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        Object result;
+        try {
+            result = constructMethod.invokeExact(callerContext, newTarget, args);
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        if (Type.isObject(result)) {
+            return Type.objectValue(result);
+        }
+        throw Errors.newTypeError(callerContext, Messages.Key.NotObjectType);
     }
 }

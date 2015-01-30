@@ -34,8 +34,6 @@ import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.Loca
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.OptionsRecord;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ResolvedLocale;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -50,8 +48,7 @@ import com.ibm.icu.util.ULocale;
  * <li>10.2 Properties of the Intl.Collator Constructor
  * </ul>
  */
-public final class CollatorConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<CollatorObject> {
+public final class CollatorConstructor extends BuiltinConstructor implements Initializable {
     /** [[availableLocales]] */
     private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
@@ -223,8 +220,8 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -326,6 +323,47 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
     }
 
     /**
+     * 10.1.1.1 InitializeCollator (collator, locales, options)
+     * 
+     * @param realm
+     *            the realm instance
+     * @param collator
+     *            the collator object
+     */
+    public static void InitializeDefaultCollator(Realm realm, CollatorObject collator) {
+        /* steps 1-2 */
+        assert !collator.isInitializedIntlObject();
+        collator.setInitializedIntlObject(true);
+        /* steps 3-5 (not applicable) */
+        /* step 6 */
+        String u = "sort";
+        /* step 7 */
+        collator.setUsage(u);
+        /* steps 8-9 */
+        CollatorLocaleData localeData = new CollatorLocaleData(u);
+        /* steps 11-13 (not applicable) */
+        /* steps 14-15 */
+        ResolvedLocale r = ResolveDefaultLocale(realm, relevantExtensionKeys, localeData);
+        /* step 16 */
+        collator.setLocale(r.getLocale());
+        /* steps 17-19 (co-collation) */
+        String collation = r.getValue(ExtensionKey.co);
+        collator.setCollation(collation != null ? collation : "default");
+        /* steps 17-19 (kn-numeric) */
+        collator.setNumeric("true".equals(r.getValue(ExtensionKey.kn)));
+        /* steps 17-19 (kf-caseFirst) */
+        collator.setCaseFirst(r.getValue(ExtensionKey.kf));
+        /* steps 20-22 */
+        collator.setSensitivity("variant");
+        /* steps 23-24 */
+        collator.setIgnorePunctuation(false);
+        /* step 25 */
+        collator.setBoundCompare(null);
+        /* step 26 */
+        collator.setInitializedCollator(true);
+    }
+
+    /**
      * 10.1.2.1 Intl.Collator.call (this [, locales [, options]])
      */
     @Override
@@ -337,7 +375,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         Object options = argument(args, 1);
         /* step 3 */
         if (Type.isUndefined(thisValue) || thisValue == calleeContext.getIntrinsic(Intrinsics.Intl)) {
-            return construct(calleeContext, args);
+            return construct(calleeContext, this, args);
         }
         /* step 4 */
         ScriptObject obj = ToObject(calleeContext, thisValue);
@@ -355,21 +393,27 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
      * 10.1.3.1 new Intl.Collator ([locales [, options]])
      */
     @Override
-    public CollatorObject construct(ExecutionContext callerContext, Object... args) {
-        CollatorObject obj = new CollatorObject(callerContext.getRealm());
-        obj.setPrototype(callerContext.getIntrinsic(Intrinsics.Intl_CollatorPrototype));
+    public CollatorObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        CollatorObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.Intl_CollatorPrototype, CollatorObjectAllocator.INSTANCE);
         /* step 1 */
         Object locales = argument(args, 0);
         /* step 2 */
         Object options = argument(args, 1);
         /* step 3 */
-        InitializeCollator(callerContext, obj, locales, options);
+        InitializeCollator(calleeContext, obj, locales, options);
         return obj;
     }
 
-    @Override
-    public CreateAction<CollatorObject> createAction() {
-        return CollatorCreate.INSTANCE;
+    private static final class CollatorObjectAllocator implements ObjectAllocator<CollatorObject> {
+        static final ObjectAllocator<CollatorObject> INSTANCE = new CollatorObjectAllocator();
+
+        @Override
+        public CollatorObject newInstance(Realm realm) {
+            return new CollatorObject(realm);
+        }
     }
 
     /**
@@ -419,25 +463,6 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
             /* step 4 */
             return SupportedLocales(cx, availableLocales, requestedLocales, options);
-        }
-    }
-
-    private static final class CollatorObjectAllocator implements ObjectAllocator<CollatorObject> {
-        static final ObjectAllocator<CollatorObject> INSTANCE = new CollatorObjectAllocator();
-
-        @Override
-        public CollatorObject newInstance(Realm realm) {
-            return new CollatorObject(realm);
-        }
-    }
-
-    private static final class CollatorCreate implements CreateAction<CollatorObject> {
-        static final CreateAction<CollatorObject> INSTANCE = new CollatorCreate();
-
-        @Override
-        public CollatorObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor,
-                    Intrinsics.Intl_CollatorPrototype, CollatorObjectAllocator.INSTANCE);
         }
     }
 }

@@ -69,9 +69,9 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
-        createProperties(cx, this, AdditionalProperties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
+        createProperties(realm, this, AdditionalProperties.class);
     }
 
     /**
@@ -90,16 +90,15 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
          * @return the string value
          */
         private static CharSequence thisStringValue(ExecutionContext cx, Object object) {
+            /* step 1 */
             if (Type.isString(object)) {
                 return Type.stringValue(object);
             }
+            /* step 2 */
             if (object instanceof StringObject) {
-                CharSequence s = ((StringObject) object).getStringData();
-                if (s != null) {
-                    return s;
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return ((StringObject) object).getStringData();
             }
+            /* step 3 */
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
@@ -321,9 +320,9 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             // return cx.getRealm().getCollator().compare(s, t);
 
             // ECMA-402
-            CollatorConstructor constructor = (CollatorConstructor) cx
+            CollatorConstructor ctor = (CollatorConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_Collator);
-            CollatorObject collator = constructor.construct(cx, locales, options);
+            CollatorObject collator = ctor.construct(cx, ctor, locales, options);
             return CompareStrings(cx, collator, s, t);
         }
 
@@ -344,15 +343,18 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             CharSequence s = ToString(cx, obj);
-            /* steps 4-5 */
-            Callable matcher = GetMethod(cx, regexp, BuiltinSymbol.match.get());
-            /* steps 6 */
-            if (matcher != null) {
-                return matcher.call(cx, regexp, s);
+            /* step 4 */
+            if (!Type.isUndefined(regexp)) {
+                /* steps 4.a-b */
+                Callable matcher = GetMethod(cx, regexp, BuiltinSymbol.match.get());
+                /* step 4.c */
+                if (matcher != null) {
+                    return matcher.call(cx, regexp, s);
+                }
             }
-            /* step 7 */
+            /* step 5 */
             RegExpObject rx = RegExpCreate(cx, regexp, UNDEFINED);
-            /* step 8 */
+            /* step 6 */
             return Invoke(cx, rx, BuiltinSymbol.match.get(), s);
         }
 
@@ -376,17 +378,20 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String string = ToFlatString(cx, obj);
-            /* steps 4-5 */
-            Callable replacer = GetMethod(cx, searchValue, BuiltinSymbol.replace.get());
-            /* step 6 */
-            if (replacer != null) {
-                return replacer.call(cx, searchValue, string, replaceValue);
+            /* step 4 */
+            if (!Type.isUndefined(searchValue)) {
+                /* steps 4.a-b */
+                Callable replacer = GetMethod(cx, searchValue, BuiltinSymbol.replace.get());
+                /* step 4.c */
+                if (replacer != null) {
+                    return replacer.call(cx, searchValue, string, replaceValue);
+                }
             }
-            /* steps 7-8 */
+            /* steps 5-6 */
             String searchString = ToFlatString(cx, searchValue);
-            /* step 9 */
+            /* step 7 */
             boolean functionalReplace = IsCallable(replaceValue);
-            /* step 10 */
+            /* step 8 */
             String replaceValueString = null;
             Callable replaceValueCallable = null;
             if (!functionalReplace) {
@@ -394,13 +399,13 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             } else {
                 replaceValueCallable = (Callable) replaceValue;
             }
-            /* step 11 */
+            /* step 9 */
             int pos = string.indexOf(searchString);
             if (pos < 0) {
                 return string;
             }
             String matched = searchString;
-            /* steps 12-13 */
+            /* steps 10-11 */
             String replStr;
             if (functionalReplace) {
                 Object replValue = replaceValueCallable.call(cx, UNDEFINED, matched, pos, string);
@@ -408,9 +413,9 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             } else {
                 replStr = GetReplaceSubstitution(matched, string, pos, replaceValueString);
             }
-            /* step 14 */
+            /* step 12 */
             int tailPos = pos + searchString.length();
-            /* steps 15-16 */
+            /* steps 13-14 */
             return string.substring(0, pos) + replStr + string.substring(tailPos);
         }
 
@@ -492,15 +497,18 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             CharSequence string = ToString(cx, obj);
-            /* steps 4-5 */
-            Callable searcher = GetMethod(cx, regexp, BuiltinSymbol.search.get());
-            /* steps 6 */
-            if (searcher != null) {
-                return searcher.call(cx, regexp, string);
+            /* step 4 */
+            if (!Type.isUndefined(regexp)) {
+                /* steps 4.a-b */
+                Callable searcher = GetMethod(cx, regexp, BuiltinSymbol.search.get());
+                /* step 4.c */
+                if (searcher != null) {
+                    return searcher.call(cx, regexp, string);
+                }
             }
-            /* step 7 */
+            /* steps 5-6 */
             RegExpObject rx = RegExpCreate(cx, regexp, UNDEFINED);
-            /* step 8 */
+            /* step 7 */
             return Invoke(cx, rx, BuiltinSymbol.search.get(), string);
         }
 
@@ -558,39 +566,39 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             // FIXME: spec inconsistent w.r.t. ToString(this value)
             /* steps 1-2 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 3-4 */
-            // FIXME: spec bug - undefined separator not handled correctly!
+            /* step 3 */
             if (!Type.isUndefined(separator)) {
+                /* steps 3.a-b */
                 Callable splitter = GetMethod(cx, separator, BuiltinSymbol.split.get());
-                /* step 5 */
+                /* step 3.c */
                 if (splitter != null) {
                     return splitter.call(cx, separator, obj, limit);
                 }
             }
-            /* steps 6-7 */
+            /* steps 4-5 */
             String s = ToFlatString(cx, obj);
-            /* step 8 */
+            /* step 6 */
             ArrayObject a = ArrayCreate(cx, 0);
-            /* step 9 */
+            /* step 7 */
             int lengthA = 0;
-            /* step 10 */
+            /* steps 8-9 */
             long lim = Type.isUndefined(limit) ? 0x1F_FFFF_FFFF_FFFFL : ToLength(cx, limit);
-            /* step 11 */
+            /* step 10 */
             int size = s.length();
-            /* step 12 */
+            /* step 11 */
             int p = 0;
-            /* steps 13-14 */
+            /* steps 12-13 */
             String r = ToFlatString(cx, separator);
-            /* step 15 */
+            /* step 14 */
             if (lim == 0) {
                 return a;
             }
-            /* step 16 */
+            /* step 15 */
             if (Type.isUndefined(separator)) {
                 CreateDataProperty(cx, a, 0, s);
                 return a;
             }
-            /* step 17 */
+            /* step 16 */
             if (size == 0) {
                 if (r.length() == 0) {
                     return a;
@@ -598,9 +606,9 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
                 CreateDataProperty(cx, a, 0, s);
                 return a;
             }
-            /* step 18 */
+            /* step 17 */
             int q = p;
-            /* step 19 */
+            /* step 18 */
             while (q != size) {
                 int z = SplitMatch(s, q, r);
                 if (z == -1) {
@@ -621,11 +629,11 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
                     }
                 }
             }
-            /* step 20 */
+            /* step 19 */
             String t = s.substring(p, size);
-            /* steps 21-22 */
+            /* steps 20-21 */
             CreateDataProperty(cx, a, lengthA, t);
-            /* step 23 */
+            /* step 22 */
             return a;
         }
 
@@ -866,26 +874,25 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
-            /* step 4 */
-            // FIXME: spec issue - unnecessary Type(seachString) check
+            /* steps 4-6 */
             if (IsRegExp(cx, searchString)) {
                 throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
             }
-            /* steps 5-6 */
-            String searchStr = ToFlatString(cx, searchString);
             /* steps 7-8 */
+            String searchStr = ToFlatString(cx, searchString);
+            /* steps 9-10 */
             double pos = ToInteger(cx, position);
-            /* step 9 */
-            int len = s.length();
-            /* step 10 */
-            int start = (int) Math.min(Math.max(pos, 0), len);
             /* step 11 */
-            int searchLength = searchStr.length();
+            int len = s.length();
             /* step 12 */
+            int start = (int) Math.min(Math.max(pos, 0), len);
+            /* step 13 */
+            int searchLength = searchStr.length();
+            /* step 14 */
             if (searchLength + start > len) {
                 return false;
             }
-            /* steps 13-14 */
+            /* steps 15-16 */
             return s.startsWith(searchStr, start);
         }
 
@@ -909,28 +916,27 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
-            /* step 4 */
-            // FIXME: spec issue - unnecessary Type(seachString) check
+            /* steps 4-6 */
             if (IsRegExp(cx, searchString)) {
                 throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
             }
-            /* steps 5-6 */
+            /* steps 7-8 */
             String searchStr = ToFlatString(cx, searchString);
-            /* step 7 */
+            /* step 9 */
             int len = s.length();
-            /* steps 8-9 */
+            /* steps 10-11 */
             double pos = Type.isUndefined(endPosition) ? len : ToInteger(cx, endPosition);
-            /* step 10 */
-            int end = (int) Math.min(Math.max(pos, 0), len);
-            /* step 11 */
-            int searchLength = searchStr.length();
             /* step 12 */
-            int start = end - searchLength;
+            int end = (int) Math.min(Math.max(pos, 0), len);
             /* step 13 */
+            int searchLength = searchStr.length();
+            /* step 14 */
+            int start = end - searchLength;
+            /* step 15 */
             if (start < 0) {
                 return false;
             }
-            /* steps 14-15 */
+            /* steps 16-17 */
             return s.startsWith(searchStr, start);
         }
 
@@ -954,22 +960,21 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
-            /* step 4 */
-            // FIXME: spec issue - unnecessary Type(seachString) check
+            /* steps 4-6 */
             if (IsRegExp(cx, searchString)) {
                 throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
             }
-            /* steps 5-6 */
-            String searchStr = ToFlatString(cx, searchString);
             /* steps 7-8 */
+            String searchStr = ToFlatString(cx, searchString);
+            /* steps 9-10 */
             double pos = ToInteger(cx, position);
-            /* step 9 */
-            int len = s.length();
-            /* step 10 */
-            int start = (int) Math.min(Math.max(pos, 0), len);
             /* step 11 */
-            // int searchLen = searchStr.length();
+            int len = s.length();
             /* step 12 */
+            int start = (int) Math.min(Math.max(pos, 0), len);
+            /* step 13 */
+            // int searchLen = searchStr.length();
+            /* step 14 */
             return s.indexOf(searchStr, start) != -1;
         }
 

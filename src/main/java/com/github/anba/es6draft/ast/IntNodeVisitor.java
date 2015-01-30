@@ -178,6 +178,8 @@ public interface IntNodeVisitor<V> {
 
     int visit(NewExpression node, V value);
 
+    int visit(NewTarget node, V value);
+
     int visit(NullLiteral node, V value);
 
     int visit(NumericLiteral node, V value);

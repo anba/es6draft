@@ -40,7 +40,7 @@ import com.github.anba.es6draft.runtime.types.Undefined;
  * <h2>15.2 Modules</h2><br>
  * <h3>15.2.1 Module Semantics</h3>
  * <ul>
- * <li>15.2.1.18 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
+ * <li>15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
  * </ul>
  */
 final class ModuleDeclarationInstantiationGenerator extends
@@ -126,10 +126,9 @@ final class ModuleDeclarationInstantiationGenerator extends
         mv.loadUndefined();
         mv.store(undef);
 
-        /* step 1 */
-        String moduleName = moduleRecord.getModuleId();
-        /* step 2 (not applicable) */
-        /* step 3 */
+        String moduleName = moduleRecord.getSourceCodeId();
+        /* step 1 (not applicable) */
+        /* step 2 */
         for (ExportEntry exportEntry : moduleRecord.getIndirectExportEntries()) {
             mv.lineInfo(exportEntry.getLine());
             mv.load(context);
@@ -138,28 +137,29 @@ final class ModuleDeclarationInstantiationGenerator extends
             mv.aconst(exportEntry.getExportName());
             mv.invoke(Methods.ScriptRuntime_resolveExportOrThrow);
         }
-        /* steps 4-7 (not applicable) */
-        /* step 8 */
+        /* steps 3-6 (not applicable) */
+        /* step 7 */
         for (ImportEntry importEntry : moduleRecord.getImportEntries()) {
+            mv.lineInfo(importEntry.getLine());
+            ModuleRecord importedModule = importEntry.getImportModule();
+            assert importedModule != null;
             if (importEntry.isStarImport()) {
                 createImmutableBinding(envRec, importEntry.getLocalName(), true, mv);
 
                 mv.load(envRec);
                 mv.aconst(importEntry.getLocalName());
                 {
-                    mv.lineInfo(importEntry.getLine());
                     mv.load(context);
                     mv.load(realm);
                     mv.load(moduleSet);
-                    mv.aconst(importEntry.getModuleRequestId());
+                    mv.aconst(importedModule.getSourceCodeId());
                     mv.invoke(Methods.ModuleSemantics_GetModuleNamespace);
                 }
                 initializeBinding(mv);
             } else {
-                mv.lineInfo(importEntry.getLine());
                 mv.load(context);
                 mv.load(moduleSet);
-                mv.aconst(importEntry.getModuleRequestId());
+                mv.aconst(importedModule.getSourceCodeId());
                 mv.aconst(importEntry.getImportName());
                 mv.invoke(Methods.ScriptRuntime_resolveImportOrThrow);
                 mv.store(resolved);
@@ -167,9 +167,9 @@ final class ModuleDeclarationInstantiationGenerator extends
                 createImportBinding(envRec, importEntry.getLocalName(), resolved, mv);
             }
         }
-        /* step 9 */
+        /* step 8 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(module);
-        /* step 10 */
+        /* step 9 */
         for (StatementListItem d : varDeclarations) {
             assert d instanceof VariableStatement;
             for (Name dn : BoundNames((VariableStatement) d)) {
@@ -177,9 +177,9 @@ final class ModuleDeclarationInstantiationGenerator extends
                 initializeBinding(envRec, dn, undef, mv);
             }
         }
-        /* step 11 */
+        /* step 10 */
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(module);
-        /* step 12 */
+        /* step 11 */
         for (Declaration d : lexDeclarations) {
             for (Name dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
@@ -201,7 +201,7 @@ final class ModuleDeclarationInstantiationGenerator extends
                 }
             }
         }
-        /* step 13 */
+        /* step 12 */
         mv._return();
     }
 

@@ -6,7 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -17,11 +18,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
@@ -33,8 +31,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>19.5.2 Properties of the Error Constructor
  * </ul>
  */
-public final class ErrorConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<ErrorObject> {
+public final class ErrorConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Error constructor function.
      * 
@@ -46,8 +43,8 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -62,58 +59,57 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
      */
     @Override
     public ErrorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        /* steps 1-5 */
+        return construct(callerContext, this, args);
+    }
+
+    /**
+     * 19.5.1.1 Error (message)
+     * <p>
+     * <strong>Extension</strong>: Error (message, fileName, lineNumber, columnNumber)
+     */
+    @Override
+    public ErrorObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object message = argument(args, 0);
 
-        /* step 1 (omitted) */
-        /* steps 2-4 */
-        ErrorObject obj;
-        if (!(thisValue instanceof ErrorObject) || ((ErrorObject) thisValue).isInitialized()) {
-            obj = OrdinaryCreateFromConstructor(calleeContext, this, Intrinsics.ErrorPrototype,
-                    ErrorObjectAllocator.INSTANCE);
-        } else {
-            obj = (ErrorObject) thisValue;
-        }
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        ErrorObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.ErrorPrototype, ErrorObjectAllocator.INSTANCE);
 
-        /* step 5 */
-        obj.initialize();
-
-        /* step 6 */
+        /* step 4 */
         if (!Type.isUndefined(message)) {
             CharSequence msg = ToString(calleeContext, message);
-            PropertyDescriptor msgDesc = new PropertyDescriptor(msg, true, false, true);
-            DefinePropertyOrThrow(calleeContext, obj, "message", msgDesc);
+            obj.infallibleDefineOwnProperty("message", new Property(msg, true, false, true));
         }
 
         /* extension: fileName, lineNumber and columnNumber arguments */
         if (args.length > 1) {
             CharSequence fileName = ToString(calleeContext, args[1]);
-            CreateDataProperty(calleeContext, obj, "fileName", fileName);
+            obj.infallibleDefineOwnProperty("fileName", new Property(fileName, true, true, true));
         }
         if (args.length > 2) {
-            int lineNumber = ToInt32(calleeContext, args[2]);
-            CreateDataProperty(calleeContext, obj, "lineNumber", lineNumber);
+            int line = ToInt32(calleeContext, args[2]);
+            obj.infallibleDefineOwnProperty("lineNumber", new Property(line, true, true, true));
         }
         if (args.length > 3) {
-            int columnNumber = ToInt32(calleeContext, args[3]);
-            CreateDataProperty(calleeContext, obj, "columnNumber", columnNumber);
+            int column = ToInt32(calleeContext, args[3]);
+            obj.infallibleDefineOwnProperty("columnNumber", new Property(column, true, true, true));
         }
 
-        /* step 7 */
+        /* step 5 */
         return obj;
     }
 
-    /**
-     * 19.5.1.2 new Error(...argumentsList)
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
+    private static final class ErrorObjectAllocator implements ObjectAllocator<ErrorObject> {
+        static final ObjectAllocator<ErrorObject> INSTANCE = new ErrorObjectAllocator();
 
-    @Override
-    public CreateAction<ErrorObject> createAction() {
-        return ErrorCreate.INSTANCE;
+        @Override
+        public ErrorObject newInstance(Realm realm) {
+            return new ErrorObject(realm);
+        }
     }
 
     /**
@@ -139,24 +135,5 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.ErrorPrototype;
-    }
-
-    private static final class ErrorObjectAllocator implements ObjectAllocator<ErrorObject> {
-        static final ObjectAllocator<ErrorObject> INSTANCE = new ErrorObjectAllocator();
-
-        @Override
-        public ErrorObject newInstance(Realm realm) {
-            return new ErrorObject(realm);
-        }
-    }
-
-    private static final class ErrorCreate implements CreateAction<ErrorObject> {
-        static final CreateAction<ErrorObject> INSTANCE = new ErrorCreate();
-
-        @Override
-        public ErrorObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.ErrorPrototype,
-                    ErrorObjectAllocator.INSTANCE);
-        }
     }
 }

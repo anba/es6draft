@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.Date;
 
@@ -53,11 +52,11 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
 
         // initialize Intl.DateTimeFormat.prototype's internal state
-        DateTimeFormatConstructor.InitializeDateTimeFormat(cx, this, UNDEFINED, UNDEFINED);
+        DateTimeFormatConstructor.InitializeDefaultDateTimeFormat(realm, this);
     }
 
     /**

@@ -50,6 +50,9 @@ tests/basic/testCallApply.js
 tests/for-of/semantics-09.js
 tests/for-of/semantics-10.js
 
+# SM issue: destructuring and default parameters not supported in Function
+tests/basic/destructuring-default.js
+
 
 ###################
 # Misc issues     #

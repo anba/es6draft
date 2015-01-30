@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProp
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -44,11 +43,11 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
 
         // initialize Intl.Collator.prototype's internal state
-        CollatorConstructor.InitializeCollator(cx, this, UNDEFINED, UNDEFINED);
+        CollatorConstructor.InitializeDefaultCollator(realm, this);
     }
 
     /**

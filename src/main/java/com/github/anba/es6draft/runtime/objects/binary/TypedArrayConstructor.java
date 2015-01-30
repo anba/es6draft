@@ -6,8 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
-import static com.github.anba.es6draft.runtime.AbstractOperations.GetFunctionRealm;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
@@ -18,8 +17,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
@@ -32,8 +30,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>22.2.5 Properties of the TypedArray Constructors
  * </ul>
  */
-public final class TypedArrayConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<TypedArrayObject> {
+public final class TypedArrayConstructor extends BuiltinConstructor implements Initializable {
     /** [[ElementType]] */
     private final ElementType elementType;
 
@@ -60,34 +57,34 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
+    public void initialize(Realm realm) {
         switch (elementType) {
         case Int8:
-            createProperties(cx, this, Properties_Int8Array.class);
+            createProperties(realm, this, Properties_Int8Array.class);
             break;
         case Uint8:
-            createProperties(cx, this, Properties_Uint8Array.class);
+            createProperties(realm, this, Properties_Uint8Array.class);
             break;
         case Uint8C:
-            createProperties(cx, this, Properties_Uint8Clamped.class);
+            createProperties(realm, this, Properties_Uint8Clamped.class);
             break;
         case Int16:
-            createProperties(cx, this, Properties_Int16Array.class);
+            createProperties(realm, this, Properties_Int16Array.class);
             break;
         case Uint16:
-            createProperties(cx, this, Properties_Uint16Array.class);
+            createProperties(realm, this, Properties_Uint16Array.class);
             break;
         case Int32:
-            createProperties(cx, this, Properties_Int32Array.class);
+            createProperties(realm, this, Properties_Int32Array.class);
             break;
         case Uint32:
-            createProperties(cx, this, Properties_Uint32Array.class);
+            createProperties(realm, this, Properties_Uint32Array.class);
             break;
         case Float32:
-            createProperties(cx, this, Properties_Float32Array.class);
+            createProperties(realm, this, Properties_Float32Array.class);
             break;
         case Float64:
-            createProperties(cx, this, Properties_Float64Array.class);
+            createProperties(realm, this, Properties_Float64Array.class);
             break;
         default:
             throw new AssertionError();
@@ -100,44 +97,33 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
     }
 
     /**
-     * 22.2.4.1 TypedArray (...args)
+     * 22.2.4.1 TypedArray( ... argumentsList)
      */
     @Override
-    public TypedArrayObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* step 1 */
-        Object obj = thisValue;
-        /* steps 2-3 */
-        if (!(obj instanceof TypedArrayObject)) {
-            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
-        }
-        TypedArrayObject array = (TypedArrayObject) obj;
-        /* step 4 */
-        if (array.getElementType() != null) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
-        /* step 5 */
-        array.setElementType(getElementType());
-        /* steps 6-7 */
-        Realm realmF = GetFunctionRealm(calleeContext, this);
-        /* step 8 */
-        ScriptObject super_ = realmF.getIntrinsic(Intrinsics.TypedArray);
-        assert super_ instanceof TypedArrayConstructorPrototype;
-        /* step 9 */
-        return ((TypedArrayConstructorPrototype) super_).call(calleeContext, thisValue, args);
+        throw newTypeError(calleeContext, Messages.Key.InvalidCall,
+                elementType.getConstructorName());
     }
 
     /**
-     * 22.2.4.2 new TypedArray (...args)
+     * 22.2.4.1 TypedArray( ... argumentsList)
      */
     @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
-
-    @Override
-    public CreateAction<TypedArrayObject> createAction() {
-        return TypedArrayConstructorPrototype.TypedArrayCreate.INSTANCE;
+    public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        /* step 1 (not applicable) */
+        /* steps 2-4 */
+        ScriptObject super_ = getPrototypeOf(calleeContext);
+        /* step 5 (not applicable) */
+        /* step 6 */
+        // FIXME: Missing type check
+        if (!IsConstructor(super_)) {
+            throw newTypeError(calleeContext, Messages.Key.NotConstructor);
+        }
+        return ((Constructor) super_).construct(calleeContext, newTarget, args);
     }
 
     /**

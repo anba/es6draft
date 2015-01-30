@@ -6,12 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,16 +19,11 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.MethodLookup;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Property;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
@@ -39,33 +32,15 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>9.2 ECMAScript Function Objects
  * </ul>
  */
-public abstract class FunctionObject extends OrdinaryObject implements Callable,
-        Creatable<ScriptObject> {
-    protected static final MethodHandle uninitializedFunctionMH;
-    protected static final MethodHandle uninitializedGeneratorMH;
-    protected static final MethodHandle uninitializedAsyncFunctionMH;
-    static {
-        MethodHandle mh = MethodLookup.findStatic(MethodHandles.lookup(),
-                "uninitializedFunctionObject",
-                MethodType.methodType(Object.class, ExecutionContext.class));
-        mh = MethodHandles.dropArguments(mh, 1, Object.class, Object[].class);
-        uninitializedFunctionMH = MethodHandles.dropArguments(mh, 0, OrdinaryFunction.class);
-        uninitializedGeneratorMH = MethodHandles.dropArguments(mh, 0, OrdinaryGenerator.class);
-        uninitializedAsyncFunctionMH = MethodHandles.dropArguments(mh, 0,
-                OrdinaryAsyncFunction.class);
-    }
-
-    @SuppressWarnings("unused")
-    private static final Object uninitializedFunctionObject(ExecutionContext cx) {
-        throw newTypeError(cx, Messages.Key.UninitializedObject);
-    }
-
+public abstract class FunctionObject extends OrdinaryObject implements Callable {
     /** [[Environment]] */
     private LexicalEnvironment<?> environment;
     /** [[FunctionKind]] */
     private FunctionKind functionKind;
     /** [[FormalParameters]] / [[Code]] */
     private RuntimeInfo.Function function;
+    /** [[ConstructorKind]] */
+    private ConstructorKind constructorKind;
     /** [[Realm]] */
     private Realm realm;
     /** [[ThisMode]] */
@@ -76,14 +51,14 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
     private boolean needsSuper;
     /** [[HomeObject]] */
     private ScriptObject homeObject;
-    /** [[CreateAction]] */
-    private CreateAction<?> createAction;
 
     private boolean isClone;
     private Executable executable;
     private String source;
     private MethodHandle callMethod;
     private MethodHandle tailCallMethod;
+    private MethodHandle constructMethod;
+    private MethodHandle tailConstructMethod;
 
     private Property caller = new Property(NULL, false, false, false);
     private Property arguments = new Property(NULL, false, false, false);
@@ -102,16 +77,16 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
         Normal, ConstructorMethod, Method, Arrow
     }
 
+    public enum ConstructorKind {
+        Base, Derived
+    }
+
     public enum ThisMode {
         Lexical, Strict, Global
     }
 
     public static boolean isStrictFunction(Object v) {
         return v instanceof FunctionObject && ((FunctionObject) v).isStrict();
-    }
-
-    private final boolean isInitialized() {
-        return function != null;
     }
 
     /**
@@ -121,14 +96,14 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
      * @return {@code true} if legacy properties are supported
      */
     private final boolean isLegacy() {
-        // Uninitialized and non-strict functions have legacy support
-        return !(isInitialized() && strict) && !isClone
-                && (functionKind == FunctionKind.Normal && this instanceof OrdinaryFunction)
+        // non-strict functions have legacy support
+        return !strict && !isClone && functionKind == FunctionKind.Normal
+                && this instanceof OrdinaryConstructorFunction
                 && realm.isEnabled(CompatibilityOption.FunctionPrototype);
     }
 
     /**
-     * Returns the {@link MethodHandle} for the function entry method.
+     * Returns the {@link MethodHandle} for the function call entry method.
      * 
      * @return the call method handle
      */
@@ -143,6 +118,24 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
      */
     public final MethodHandle getTailCallMethod() {
         return tailCallMethod;
+    }
+
+    /**
+     * Returns the {@link MethodHandle} for the function construct entry method.
+     * 
+     * @return the call method handle
+     */
+    public final MethodHandle getConstructMethod() {
+        return constructMethod;
+    }
+
+    /**
+     * Returns the {@link MethodHandle} for the function tail-construct entry method.
+     * 
+     * @return the tail-call method handle
+     */
+    public final MethodHandle getTailConstructMethod() {
+        return tailConstructMethod;
     }
 
     /**
@@ -202,9 +195,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
 
     @Override
     public final String toSource(SourceSelector selector) {
-        if (!isInitialized()) {
-            return FunctionSource.noSource(selector);
-        }
         if (selector == SourceSelector.Body) {
             return FunctionSource.toSourceString(selector, this);
         }
@@ -217,21 +207,19 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
     }
 
     @Override
-    protected boolean has(ExecutionContext cx, String propertyKey) {
-        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
-        return ordinaryHasPropertyVirtual(cx, propertyKey);
+    protected final boolean has(ExecutionContext cx, String propertyKey) {
+        if (isLegacy() && ("arguments".equals(propertyKey) || "caller".equals(propertyKey))) {
+            return true;
+        }
+        return super.has(cx, propertyKey);
     }
 
     @Override
     protected final boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
-        boolean has = super.hasOwnProperty(cx, propertyKey);
-        if (has) {
+        if (isLegacy() && ("arguments".equals(propertyKey) || "caller".equals(propertyKey))) {
             return true;
         }
-        if (isLegacy() && ("caller".equals(propertyKey) || "arguments".equals(propertyKey))) {
-            return true;
-        }
-        return false;
+        return super.hasOwnProperty(cx, propertyKey);
     }
 
     /**
@@ -239,41 +227,38 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
      */
     @Override
     protected final Property getProperty(ExecutionContext cx, String propertyKey) {
-        Property desc = ordinaryGetOwnProperty(propertyKey);
-        if (desc != null) {
-            return desc;
-        }
         if (isLegacy()) {
+            if ("arguments".equals(propertyKey)) {
+                return arguments;
+            }
             if ("caller".equals(propertyKey)) {
                 assert !isStrictFunction(caller.getValue());
                 return caller;
             }
-            if ("arguments".equals(propertyKey)) {
-                return arguments;
-            }
         }
-        return null;
+        return ordinaryGetOwnProperty(propertyKey);
     }
 
     @Override
     protected final List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        ArrayList<Object> ownKeys = new ArrayList<>();
-        if (!indexedProperties().isEmpty()) {
+        int indexedSize = indexedProperties().size();
+        int propertiesSize = properties().size();
+        int symbolsSize = symbolProperties().size();
+        boolean isLegacy = isLegacy();
+        int totalSize = indexedSize + propertiesSize + symbolsSize + (isLegacy ? 2 : 0);
+        ArrayList<Object> ownKeys = new ArrayList<>(totalSize);
+        if (indexedSize != 0) {
             ownKeys.addAll(indexedProperties().keys());
         }
-        if (!properties().isEmpty()) {
+        if (isLegacy) {
+            // TODO: add test case for property order
+            ownKeys.add("arguments");
+            ownKeys.add("caller");
+        }
+        if (propertiesSize != 0) {
             ownKeys.addAll(properties().keySet());
         }
-        if (isLegacy()) {
-            // TODO: add test case for property order
-            if (!ordinaryHasOwnProperty("caller")) {
-                ownKeys.add("caller");
-            }
-            if (!ordinaryHasOwnProperty("arguments")) {
-                ownKeys.add("arguments");
-            }
-        }
-        if (!symbolProperties().isEmpty()) {
+        if (symbolsSize != 0) {
             ownKeys.addAll(symbolProperties().keySet());
         }
         return ownKeys;
@@ -285,11 +270,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
         /* steps 4-6 */
         FunctionObject clone = allocateNew();
         clone.isClone = true;
-        clone.createAction = createAction;
-        if (isInitialized()) {
-            clone.initialize(getFunctionKind(), isStrict(), getCode(), getEnvironment(),
-                    getExecutable());
-        }
+        clone.initialize(getFunctionKind(), isStrict(), getCode(), getEnvironment(),
+                getExecutable());
         /* step 7 */
         assert clone.isExtensible() : "cloned function not extensible";
         /* step 8 (not applicable) */
@@ -313,25 +295,25 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
      *            the prototype object
      * @param strict
      *            the strict mode flag
-     * @param kind
+     * @param functionKind
      *            the function kind
-     * @param defaultCallMethod
-     *            the default call method handle
+     * @param constructorKind
+     *            the constructor kind
      */
     protected final void allocate(Realm realm, ScriptObject functionPrototype, boolean strict,
-            FunctionKind kind, MethodHandle defaultCallMethod) {
+            FunctionKind functionKind, ConstructorKind constructorKind) {
         assert this.realm == null && realm != null : "function object already allocated";
-        this.callMethod = defaultCallMethod;
-        this.tailCallMethod = defaultCallMethod;
-        /* step 9 */
-        this.strict = strict;
-        /* step 10 */
-        this.functionKind = kind;
         /* step 11 */
-        this.setPrototype(functionPrototype);
+        this.constructorKind = constructorKind;
         /* step 12 */
-        // f.[[Extensible]] = true (implicit)
+        this.strict = strict;
         /* step 13 */
+        this.functionKind = functionKind;
+        /* step 14 */
+        this.setPrototype(functionPrototype);
+        /* step 15 */
+        // f.[[Extensible]] = true (implicit)
+        /* step 16 */
         this.realm = realm;
     }
 
@@ -362,6 +344,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
         this.function = function;
         this.callMethod = tailCallAdapter(function);
         this.tailCallMethod = function.callMethod();
+        this.constructMethod = tailConstructAdapter(function);
+        this.tailConstructMethod = dropConstructReturnType(function);
         /* steps 10-12 */
         if (kind == FunctionKind.Arrow) {
             this.thisMode = ThisMode.Lexical;
@@ -373,16 +357,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
         this.executable = executable;
     }
 
-    protected final boolean infallibleDefineOwnProperty(String propertyKey, PropertyDescriptor desc) {
-        // Same as ordinaryDefineOwnProperty(), except infallible ordinaryGetOwnProperty() is used.
-        /* step 1 */
-        Property current = ordinaryGetOwnProperty(propertyKey);
-        /* step 2 */
-        boolean extensible = isExtensible();
-        /* step 3 */
-        return ValidateAndApplyPropertyDescriptor(this, propertyKey, extensible, desc, current);
-    }
-
     /**
      * 9.2.10 MakeMethod ( F, homeObject ) Abstract Operation
      * 
@@ -390,7 +364,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
      *            the new home object
      */
     protected final void toMethod(ScriptObject homeObject) {
-        assert isInitialized() : "uninitialized function object";
         assert !needsSuper : "function object already method";
         this.needsSuper = true;
         this.homeObject = homeObject;
@@ -405,6 +378,29 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
             result = MethodHandles.dropArguments(result, 3, Object.class, Object[].class);
             result = MethodHandles.foldArguments(result, mh);
             return result;
+        }
+        return mh;
+    }
+
+    private static MethodHandle tailConstructAdapter(RuntimeInfo.Function function) {
+        MethodHandle mh = function.constructMethod();
+        if (mh != null && function.hasTailCall()) {
+            assert !function.isGenerator() && !function.isAsync() && function.isStrict();
+            MethodHandle result = TailCallInvocation.getTailConstructHandler();
+            result = MethodHandles.dropArguments(result, 1, OrdinaryConstructorFunction.class);
+            result = MethodHandles.dropArguments(result, 3, Constructor.class, Object[].class);
+            result = MethodHandles.foldArguments(result, mh);
+            return result;
+        }
+        return mh;
+    }
+
+    private static MethodHandle dropConstructReturnType(RuntimeInfo.Function function) {
+        MethodHandle mh = function.constructMethod();
+        if (mh != null && !function.isGenerator() && !function.isAsync() && !function.hasTailCall()) {
+            // Non-tail-call constructor functions return ScriptObject, but in order to use
+            // invokeExact() the return-type needs to be changed from ScriptObject to Object.
+            return mh.asType(mh.type().changeReturnType(Object.class));
         }
         return mh;
     }
@@ -503,60 +499,24 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable,
      *            the new home object
      */
     public final void setHomeObject(OrdinaryObject homeObject) {
-        assert isInitialized() : "uninitialized function object";
         assert needsSuper : "function object not method";
         assert homeObject != null;
         this.homeObject = homeObject;
     }
 
     /**
-     * [[CreateAction]]
+     * [[ConstructorKind]]
      * 
-     * @return the create action operation
+     * @return the constructor kind field
      */
-    @Override
-    public final CreateAction<?> createAction() {
-        return createAction;
-    }
-
-    /**
-     * [[CreateAction]]
-     * 
-     * @param createAction
-     *            the new create action operation for this function
-     */
-    protected final void setCreateAction(CreateAction<?> createAction) {
-        assert this instanceof Constructor : "[[CreateAction]] set on non-Constructor";
-        assert this.createAction == null : "[[CreateAction]] already defined";
-        assert createAction != null;
-        this.createAction = createAction;
-    }
-
-    protected void setCreateActionFrom(ScriptObject superFunction) {
-        // 9.2.9 MakeConstructor, step 8
-        if (superFunction instanceof Creatable) {
-            CreateAction<?> createAction = ((Creatable<?>) superFunction).createAction();
-            if (createAction != null) {
-                setCreateAction(createAction);
-            }
-        }
+    public final ConstructorKind getConstructorKind() {
+        return constructorKind;
     }
 
     @Override
     public String toString() {
-        return String.format("%s, kind=%s, mode=%s, create=%s, cloned=%b", super.toString(),
-                functionKind, thisMode, classNameWithEnclosing(createAction), isClone);
-    }
-
-    private static String classNameWithEnclosing(Object object) {
-        if (object == null) {
-            return "<null>";
-        }
-        Class<?> clazz = object.getClass();
-        Class<?> enclosing = clazz.getEnclosingClass();
-        if (enclosing == null) {
-            return clazz.getSimpleName();
-        }
-        return enclosing.getSimpleName() + "." + clazz.getSimpleName();
+        return String.format(
+                "%s, functionKind=%s, constructorKind=%s, thisMode=%s, needsSuper=%b, cloned=%b",
+                super.toString(), functionKind, constructorKind, thisMode, needsSuper, isClone);
     }
 }

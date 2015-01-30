@@ -22,8 +22,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -37,8 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>23.1.2 Properties of the Map Constructor
  * </ul>
  */
-public final class MapConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<MapObject> {
+public final class MapConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Map constructor function.
      * 
@@ -50,8 +47,8 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -63,21 +60,25 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
      * 23.1.1.1 Map ([ iterable ])
      */
     @Override
-    public MapObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        /* step 1 */
+        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "Map");
+    }
+
+    /**
+     * 23.1.1.1 Map ([ iterable ])
+     */
+    @Override
+    public MapObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object iterable = argument(args, 0);
 
-        /* steps 1-4 */
-        if (!Type.isObject(thisValue)) {
-            throw newTypeError(calleeContext, Messages.Key.NotObjectType);
-        }
-        if (!(thisValue instanceof MapObject)) {
-            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
-        }
-        MapObject map = (MapObject) thisValue;
-        if (map.isInitialized()) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
+        /* step 1 (not applicable) */
+        /* steps 2-4 */
+        MapObject map = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.MapPrototype, MapObjectAllocator.INSTANCE);
 
         /* steps 5-7 */
         ScriptObject iter;
@@ -92,20 +93,11 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
             adder = (Callable) _adder;
             iter = GetIterator(calleeContext, iterable);
         }
-
         /* step 8 */
-        if (map.isInitialized()) {
-            throw newTypeError(calleeContext, Messages.Key.InitializedObject);
-        }
-
-        /* steps 9-10 */
-        map.initialize();
-
-        /* step 11 */
         if (iter == null) {
             return map;
         }
-        /* step 12 */
+        /* step 9 */
         for (;;) {
             ScriptObject next = IteratorStep(calleeContext, iter);
             if (next == null) {
@@ -122,17 +114,13 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
         }
     }
 
-    /**
-     * 23.1.1.2 new Map (...argumentsList)
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
+    private static final class MapObjectAllocator implements ObjectAllocator<MapObject> {
+        static final ObjectAllocator<MapObject> INSTANCE = new MapObjectAllocator();
 
-    @Override
-    public CreateAction<MapObject> createAction() {
-        return MapCreate.INSTANCE;
+        @Override
+        public MapObject newInstance(Realm realm) {
+            return new MapObject(realm);
+        }
     }
 
     /**
@@ -173,25 +161,6 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
         public static Object species(ExecutionContext cx, Object thisValue) {
             /* step 1 */
             return thisValue;
-        }
-    }
-
-    private static final class MapObjectAllocator implements ObjectAllocator<MapObject> {
-        static final ObjectAllocator<MapObject> INSTANCE = new MapObjectAllocator();
-
-        @Override
-        public MapObject newInstance(Realm realm) {
-            return new MapObject(realm);
-        }
-    }
-
-    private static class MapCreate implements CreateAction<MapObject> {
-        static final CreateAction<MapObject> INSTANCE = new MapCreate();
-
-        @Override
-        public MapObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.MapPrototype,
-                    MapObjectAllocator.INSTANCE);
         }
     }
 }

@@ -218,9 +218,10 @@ final class StatementGenerator extends
      * @param mv
      *            the statement visitor
      */
-    private void PutValue(ValType type, StatementVisitor mv) {
+    private void PutValue(Node node, ValType type, StatementVisitor mv) {
         assert type == ValType.Reference : "lhs is not reference: " + type;
         mv.loadExecutionContext();
+        mv.lineInfo(node);
         mv.invoke(Methods.Reference_putValue);
     }
 
@@ -690,27 +691,33 @@ final class StatementGenerator extends
                 mv.invoke(Methods.GeneratorObject_isLegacyGenerator);
                 mv.ifeq(l0);
                 mv.loadExecutionContext();
+                mv.lineInfo(expr);
                 mv.invoke(Methods.ScriptRuntime_iterate);
                 mv.goTo(l1);
                 mv.mark(l0);
                 mv.loadExecutionContext();
                 if (iterationKind == IterationKind.Enumerate) {
+                    mv.lineInfo(expr);
                     mv.invoke(Methods.ScriptRuntime_enumerate);
                 } else {
+                    mv.lineInfo(expr);
                     mv.invoke(Methods.ScriptRuntime_enumerateValues);
                 }
                 mv.mark(l1);
             } else if (iterationKind == IterationKind.Enumerate) {
                 mv.loadExecutionContext();
+                mv.lineInfo(expr);
                 mv.invoke(Methods.ScriptRuntime_enumerate);
             } else {
                 mv.loadExecutionContext();
+                mv.lineInfo(expr);
                 mv.invoke(Methods.ScriptRuntime_enumerateValues);
             }
         } else {
             /* steps 8-10 */
             assert iterationKind == IterationKind.Iterate;
             mv.loadExecutionContext();
+            mv.lineInfo(expr);
             mv.invoke(Methods.ScriptRuntime_iterate);
         }
 
@@ -761,6 +768,7 @@ final class StatementGenerator extends
 
         /* steps 5g-5h */
         mv.load(iterator);
+        mv.lineInfo(node);
         mv.invoke(Methods.Iterator_next);
 
         if (lhs instanceof LexicalDeclaration) {
@@ -833,6 +841,7 @@ final class StatementGenerator extends
 
         /* steps 5c-5e */
         mv.load(iterator);
+        mv.lineInfo(node);
         mv.invoke(Methods.Iterator_hasNext);
         mv.ifne(loopbody);
 
@@ -883,12 +892,12 @@ final class StatementGenerator extends
         List<TempLabel> tempLabels = mv.exitIterationBody(node);
 
         // Emit throw handler
-        Completion throwResult = emitForInOfThrowHandler(iterator, handlerCatch,
+        Completion throwResult = emitForInOfThrowHandler(node, iterator, handlerCatch,
                 handlerCatchStackOverflow, mv);
 
         // Emit return handler
-        Completion returnResult = emitForInOfReturnHandler(iterator, completion, handlerReturn,
-                tempLabels, mv);
+        Completion returnResult = emitForInOfReturnHandler(node, iterator, completion,
+                handlerReturn, tempLabels, mv);
 
         mv.exitVariableScope();
         mv.tryCatch(startIteration, endIteration, handlerCatch, Types.ScriptException);
@@ -904,8 +913,9 @@ final class StatementGenerator extends
         return returnResult.select(throwResult.select(loopBodyResult));
     }
 
-    private Completion emitForInOfThrowHandler(Variable<ScriptIterator<?>> iterator,
-            TryCatchLabel handlerCatch, TryCatchLabel handlerCatchStackOverflow, StatementVisitor mv) {
+    private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion emitForInOfThrowHandler(
+            FORSTATEMENT node, Variable<ScriptIterator<?>> iterator, TryCatchLabel handlerCatch,
+            TryCatchLabel handlerCatchStackOverflow, StatementVisitor mv) {
         mv.enterVariableScope();
         Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
 
@@ -914,7 +924,7 @@ final class StatementGenerator extends
         mv.catchHandler(handlerCatch, Types.ScriptException);
         mv.store(throwable);
 
-        IteratorClose(iterator, true, mv);
+        IteratorClose(node, iterator, true, mv);
 
         mv.load(throwable);
         mv.athrow();
@@ -923,9 +933,9 @@ final class StatementGenerator extends
         return Completion.Throw;
     }
 
-    private Completion emitForInOfReturnHandler(Variable<ScriptIterator<?>> iterator,
-            Variable<Object> completion, TryCatchLabel handlerReturn, List<TempLabel> tempLabels,
-            StatementVisitor mv) {
+    private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion emitForInOfReturnHandler(
+            FORSTATEMENT node, Variable<ScriptIterator<?>> iterator, Variable<Object> completion,
+            TryCatchLabel handlerReturn, List<TempLabel> tempLabels, StatementVisitor mv) {
         // (1) Optional ReturnValue exception handler
         if (handlerReturn != null) {
             mv.enterVariableScope();
@@ -933,7 +943,7 @@ final class StatementGenerator extends
             mv.catchHandler(handlerReturn, Types.ReturnValue);
             mv.store(returnValue);
 
-            IteratorClose(iterator, false, mv);
+            IteratorClose(node, iterator, false, mv);
 
             mv.load(returnValue);
             mv.athrow();
@@ -945,7 +955,7 @@ final class StatementGenerator extends
             if (temp.isTarget()) {
                 mv.mark(temp);
 
-                IteratorClose(iterator, false, mv);
+                IteratorClose(node, iterator, false, mv);
 
                 mv.goTo(temp, completion);
             }
@@ -954,12 +964,14 @@ final class StatementGenerator extends
         return Completion.Abrupt; // Return or Break
     }
 
-    private void IteratorClose(Variable<ScriptIterator<?>> iterator, boolean throwCompletion,
+    private <FORSTATEMENT extends IterationStatement & ScopedNode> void IteratorClose(
+            FORSTATEMENT node, Variable<ScriptIterator<?>> iterator, boolean throwCompletion,
             StatementVisitor mv) {
         mv.loadExecutionContext();
         mv.load(iterator);
         mv.invoke(Methods.ScriptIterator_getScriptObject);
         mv.iconst(throwCompletion);
+        mv.lineInfo(node);
         mv.invoke(Methods.AbstractOperations_IteratorClose);
     }
 
@@ -983,7 +995,7 @@ final class StatementGenerator extends
                 mv.load(lhsRef);
                 mv.swap();
                 // stack: [lhsRef, nextValue] -> []
-                PutValue(ValType.Reference, mv);
+                PutValue(lhs, ValType.Reference, mv);
             }
         } else {
             /* step 3j, 3k */
@@ -1206,6 +1218,7 @@ final class StatementGenerator extends
         if (node.isLegacyBlockScoped()) {
             mv.aconst(node.getIdentifier().getName().toString());
             mv.loadExecutionContext();
+            mv.lineInfo(node);
             mv.invoke(Methods.ScriptRuntime_setFunctionBlockBinding);
         }
 
@@ -1490,6 +1503,7 @@ final class StatementGenerator extends
     public Completion visit(ThrowStatement node, StatementVisitor mv) {
         /* steps 1-3 */
         expressionBoxedValue(node.getExpression(), mv);
+        mv.lineInfo(node);
         mv.invoke(Methods.ScriptException_create);
 
         /* step 4 */
@@ -1949,7 +1963,7 @@ final class StatementGenerator extends
                 SetFunctionName(initializer, bindingId.getName(), mv);
             }
             /* step 7 */
-            PutValue(ValType.Reference, mv);
+            PutValue(binding, ValType.Reference, mv);
         } else {
             // VariableDeclaration : BindingPattern Initializer
             assert binding instanceof BindingPattern;

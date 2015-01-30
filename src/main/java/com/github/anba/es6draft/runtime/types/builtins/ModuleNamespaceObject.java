@@ -15,15 +15,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompoundList;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.PropertyMap;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
@@ -46,6 +45,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
     private final ModuleRecord module;
 
     /** [[Realm]] */
+    @SuppressWarnings("unused")
     private final Realm realm;
 
     /** [[Exports]] */
@@ -233,30 +233,26 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         /* step 5 */
         ModuleRecord m = this.module;
         /* step 6 */
-        Realm realm = this.realm;
-        /* step 7 */
-        Map<String, ModuleRecord> modules = realm.getModules();
-        /* step 8 */
-        String moduleName = m.getModuleId();
-        /* steps 9-10 */
+        // FIXME: spec bug - no longer needed
+        // Realm realm = this.realm;
+        /* steps 7-9 */
         ModuleExport binding;
         try {
-            /* steps 9, 11 */
-            binding = ResolveExport(modules, moduleName, propertyKey,
-                    new HashMap<String, Set<String>>());
+            /* steps 7, 9 */
+            binding = ResolveExport(m, propertyKey, new HashMap<ModuleRecord, Set<String>>());
         } catch (ResolutionException e) {
-            /* step 10 */
+            /* step 8 */
             throw Errors.newReferenceError(cx, Messages.Key.ModulesAmbiguousExport, propertyKey);
         }
-        /* step 12 */
+        /* step 10 */
         assert binding != null;
-        /* step 13 */
+        /* step 11 */
         ModuleRecord targetModule = binding.getModule();
-        /* step 14 */
+        /* step 12 */
         assert targetModule != null;
-        /* step 15 */
+        /* step 13 */
         ModuleEnvironmentRecord targetEnvRec = targetModule.getEnvironment().getEnvRec();
-        /* step 16 */
+        /* step 14 */
         return targetEnvRec.getBindingValue(binding.getBindingName(), true);
     }
 
@@ -328,18 +324,8 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
     /** 9.4.6.12 [[OwnPropertyKeys]] ( ) */
     @Override
     protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        /* step 1 */
-        @SuppressWarnings("unchecked")
-        List<Object> exports = (List<Object>) (List<?>) getSortedExports();
-        /* step 2 */
-        PropertyMap<Symbol, Property> symbolProperties = symbolProperties();
-        /* step 3 */
-        if (!symbolProperties.isEmpty()) {
-            exports = new ArrayList<>(exports);
-            exports.addAll(symbolProperties.keySet());
-        }
-        /* step 4 */
-        return exports;
+        /* steps 1-4 */
+        return new CompoundList<>(getSortedExports(), super.getOwnPropertyKeys(cx));
     }
 
     /**
@@ -364,13 +350,12 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         /* steps 5-9 */
         ModuleNamespaceObject m = new ModuleNamespaceObject(cx.getRealm(), module, realm, exports);
         /* step 10 */
-        PropertyMap<Symbol, Property> symbolProperties = m.symbolProperties();
         // 26.3.1 @@toStringTag
-        symbolProperties.put(BuiltinSymbol.toStringTag.get(), new Property("Module", false, false,
-                true));
+        m.infallibleDefineOwnProperty(BuiltinSymbol.toStringTag.get(), new Property("Module",
+                false, false, true));
         // 26.3.2 [ @@iterator ] ( )
-        symbolProperties.put(BuiltinSymbol.iterator.get(), new Property(new ModuleIteratorFunction(
-                cx.getRealm()), true, false, true));
+        m.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(), new Property(
+                new ModuleIteratorFunction(cx.getRealm()), true, false, true));
         /* step 11 */
         module.setNamespace(m);
         /* step 12 */

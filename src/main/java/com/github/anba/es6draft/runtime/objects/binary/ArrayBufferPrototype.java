@@ -49,8 +49,8 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     /**
@@ -61,11 +61,7 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
 
         private static ArrayBufferObject thisArrayBufferObject(ExecutionContext cx, Object m) {
             if (m instanceof ArrayBufferObject) {
-                ArrayBufferObject buffer = (ArrayBufferObject) m;
-                if (!buffer.isInitialized()) {
-                    throw newTypeError(cx, Messages.Key.UninitializedObject);
-                }
-                return buffer;
+                return (ArrayBufferObject) m;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -73,9 +69,6 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
         private static ArrayBufferObject thisArrayBufferObjectChecked(ExecutionContext cx, Object m) {
             if (m instanceof ArrayBufferObject) {
                 ArrayBufferObject buffer = (ArrayBufferObject) m;
-                if (!buffer.isInitialized()) {
-                    throw newTypeError(cx, Messages.Key.UninitializedObject);
-                }
                 if (IsDetachedBuffer(buffer)) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
@@ -104,9 +97,9 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
-            /* steps 1-5 */
+            /* steps 1-4 */
             ArrayBufferObject obj = thisArrayBufferObjectChecked(cx, thisValue);
-            /* steps 6-7 */
+            /* steps 5-6 */
             return obj.getByteLength();
         }
 
@@ -125,51 +118,51 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
-            /* steps 1-5 */
+            /* steps 1-4 */
             ArrayBufferObject obj = thisArrayBufferObjectChecked(cx, thisValue);
-            /* step 6 */
+            /* step 5 */
             long len = obj.getByteLength();
-            /* steps 7-8 */
+            /* steps 6-7 */
             double relativeStart = ToInteger(cx, start);
-            /* step 9 */
+            /* step 8 */
             long first = (long) (relativeStart < 0 ? Math.max((len + relativeStart), 0) : Math.min(
                     relativeStart, len));
-            /* steps 10-11 */
+            /* steps 9-10 */
             double relativeEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
-            /* step 12 */
+            /* step 11 */
             long _final = (long) (relativeEnd < 0 ? Math.max((len + relativeEnd), 0) : Math.min(
                     relativeEnd, len));
-            /* step 13 */
+            /* step 12 */
             long newLen = Math.max(_final - first, 0);
-            /* steps 14-15 */
+            /* steps 13-14 */
             Constructor ctor = SpeciesConstructor(cx, obj, Intrinsics.ArrayBuffer);
-            /* steps 16-19 */
-            ArrayBufferObject _new = thisArrayBufferObject(cx, ctor.construct(cx, newLen));
-            /* step 20 */
+            /* steps 15-17 */
+            ArrayBufferObject _new = thisArrayBufferObject(cx, ctor.construct(cx, ctor, newLen));
+            /* step 18 */
             if (IsDetachedBuffer(_new)) {
                 throw newTypeError(cx, Messages.Key.BufferDetached);
             }
-            /* step 21 */
+            /* step 19 */
             if (_new == obj) {
                 // TODO: better error message
                 throw newTypeError(cx, Messages.Key.BufferInvalid);
             }
-            /* step 22 */
+            /* step 20 */
             if (_new.getByteLength() < newLen) {
                 // FIXME: spec bug - throw RangeError instead of TypeError?
                 throw newTypeError(cx, Messages.Key.InvalidBufferSize);
             }
-            /* steps 23-24 */
+            /* steps 21-22 */
             if (IsDetachedBuffer(obj)) {
                 throw newTypeError(cx, Messages.Key.BufferDetached);
             }
-            /* step 25 */
+            /* step 23 */
             ByteBuffer fromBuf = obj.getData();
-            /* step 26 */
+            /* step 24 */
             ByteBuffer toBuf = _new.getData();
-            /* steps 27 */
+            /* steps 25 */
             CopyDataBlockBytes(toBuf, 0, fromBuf, first, newLen);
-            /* step 28 */
+            /* step 26 */
             return _new;
         }
 

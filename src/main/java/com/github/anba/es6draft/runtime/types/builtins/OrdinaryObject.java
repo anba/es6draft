@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -136,22 +137,33 @@ public class OrdinaryObject implements ScriptObject {
         return indexedProperties;
     }
 
-    public final void addPropertyUnchecked(String propertyKey, Property property) {
-        assert extensible : "object not extensible";
-        long index = IndexedMap.toIndex(propertyKey);
-        if (IndexedMap.isIndex(index)) {
-            assert !indexedProperties.containsKey(index) : "illegal property = " + propertyKey;
-            indexedProperties.put(index, property);
-        } else {
-            assert !properties.containsKey(propertyKey) : "illegal property = " + propertyKey;
-            properties.put(propertyKey, property);
-        }
+    final void defineOwnPropertyUnchecked(String propertyKey, Property property) {
+        // Same as infallibleDefineOwnProperty except extensible removed.
+        assert !IndexedMap.isIndex(IndexedMap.toIndex(propertyKey));
+        assert !properties.containsKey(propertyKey) : "illegal property = " + propertyKey;
+        properties.put(propertyKey, property);
     }
 
-    public final void addPropertyUnchecked(Symbol propertyKey, Property property) {
+    public final void infallibleDefineOwnProperty(String propertyKey, Property property) {
+        assert extensible : "object not extensible";
+        assert !IndexedMap.isIndex(IndexedMap.toIndex(propertyKey));
+        assert !properties.containsKey(propertyKey) : "illegal property = " + propertyKey;
+        properties.put(propertyKey, property);
+    }
+
+    public final void infallibleDefineOwnProperty(Symbol propertyKey, Property property) {
         assert extensible : "object not extensible";
         assert !symbolProperties.containsKey(propertyKey) : "illegal property = " + propertyKey;
         symbolProperties.put(propertyKey, property);
+    }
+
+    public final Property lookupOwnProperty(String propertyKey) {
+        assert !IndexedMap.isIndex(IndexedMap.toIndex(propertyKey));
+        return properties.get(propertyKey);
+    }
+
+    public final Property lookupOwnProperty(Symbol propertyKey) {
+        return symbolProperties.get(propertyKey);
     }
 
     /**
@@ -178,12 +190,65 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
+     * Deletes all indexed properties within the range {@code [startIndex, endIndex)} in reverse
+     * order, i.e. starting from index {@code endIndex - 1}. The range must not be empty.
+     * 
+     * @param startIndex
+     *            the start index (inclusive)
+     * @param endIndex
+     *            the end index (exclusive)
+     * @return {@code -1} if all indexed properties over the requested range have been removed
+     *         successfully; otherwise the index of the first property which is not deletable.
+     */
+    final long deleteRange(long startIndex, long endIndex) {
+        assert startIndex < endIndex;
+        IndexedMap<Property> indexed = indexedProperties;
+        if (indexed.isEmpty()) {
+            return -1;
+        }
+        long lastIndex;
+        if (indexed.isSparse()) {
+            lastIndex = deleteRangeSparse(startIndex, endIndex);
+        } else {
+            lastIndex = deleteRangeDense(startIndex, endIndex);
+        }
+        // Need to call updateLength() manually.
+        indexed.updateLength();
+        return lastIndex;
+    }
+
+    private long deleteRangeDense(long startIndex, long endIndex) {
+        IndexedMap<Property> indexed = indexedProperties;
+        for (long index = endIndex; startIndex < index;) {
+            Property prop = indexed.get(--index);
+            if (prop != null && !prop.isConfigurable()) {
+                return index;
+            }
+            indexed.removeUnchecked(index);
+        }
+        return -1;
+    }
+
+    private long deleteRangeSparse(long startIndex, long endIndex) {
+        for (Iterator<Map.Entry<Long, Property>> iter = indexedProperties.descendingIterator(
+                startIndex, endIndex); iter.hasNext();) {
+            Map.Entry<Long, Property> entry = iter.next();
+            if (!entry.getValue().isConfigurable()) {
+                return entry.getKey();
+            }
+            // Cannot call remove[Unchecked]() directly b/c of ConcurrentModificationException.
+            iter.remove();
+        }
+        return -1;
+    }
+
+    /**
      * Returns the list of integer indexed properties.
      * 
      * @return the list of integer indexed properties
      */
     public final long[] indices() {
-        return indexedProperties().indices();
+        return indexedProperties.indices();
     }
 
     /**
@@ -196,7 +261,7 @@ public class OrdinaryObject implements ScriptObject {
      * @return the list of integer indexed properties
      */
     public final long[] indices(long from, long to) {
-        return indexedProperties().indices(from, to);
+        return indexedProperties.indices(from, to);
     }
 
     /**
@@ -256,7 +321,7 @@ public class OrdinaryObject implements ScriptObject {
      */
     public final boolean isDenseArray(long length) {
         assert !hasSpecialIndexedProperties() : "cannot report dense if special indexed present";
-        IndexedMap<Property> ix = indexedProperties();
+        IndexedMap<Property> ix = indexedProperties;
         return !hasIndexedAccessors() && ix.getLength() == length && !ix.isSparse()
                 && !ix.hasHoles();
     }
@@ -267,7 +332,6 @@ public class OrdinaryObject implements ScriptObject {
      * @return {@code true} if this object has special indexed properties
      */
     public boolean hasSpecialIndexedProperties() {
-        // TODO: Rename method...
         return false;
     }
 
@@ -1153,90 +1217,6 @@ public class OrdinaryObject implements ScriptObject {
         return false;
     }
 
-    /**
-     * 9.1.7.1 OrdinaryHasProperty (O, P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param propertyKey
-     *            the property key
-     * @return {@code true} if the property was found
-     */
-    protected final boolean ordinaryHasPropertyVirtual(ExecutionContext cx, long propertyKey) {
-        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
-        /* step 1 (implicit) */
-        /* steps 2-3 */
-        boolean hasOwn = hasOwnProperty(cx, propertyKey);
-        /* step 4 */
-        if (hasOwn) {
-            return true;
-        }
-        /* steps 5-6 */
-        ScriptObject parent = getPrototypeOf(cx);
-        /* step 7 */
-        if (parent != null) {
-            return parent.hasProperty(cx, propertyKey);
-        }
-        /* step 8 */
-        return false;
-    }
-
-    /**
-     * 9.1.7.1 OrdinaryHasProperty (O, P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param propertyKey
-     *            the property key
-     * @return {@code true} if the property was found
-     */
-    protected final boolean ordinaryHasPropertyVirtual(ExecutionContext cx, String propertyKey) {
-        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
-        /* step 1 (implicit) */
-        /* steps 2-3 */
-        boolean hasOwn = hasOwnProperty(cx, propertyKey);
-        /* step 4 */
-        if (hasOwn) {
-            return true;
-        }
-        /* steps 5-6 */
-        ScriptObject parent = getPrototypeOf(cx);
-        /* step 7 */
-        if (parent != null) {
-            return parent.hasProperty(cx, propertyKey);
-        }
-        /* step 8 */
-        return false;
-    }
-
-    /**
-     * 9.1.7.1 OrdinaryHasProperty (O, P)
-     * 
-     * @param cx
-     *            the execution context
-     * @param propertyKey
-     *            the property key
-     * @return {@code true} if the property was found
-     */
-    protected final boolean ordinaryHasPropertyVirtual(ExecutionContext cx, Symbol propertyKey) {
-        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=3511)
-        /* step 1 (implicit) */
-        /* steps 2-3 */
-        boolean hasOwn = hasOwnProperty(cx, propertyKey);
-        /* step 4 */
-        if (hasOwn) {
-            return true;
-        }
-        /* steps 5-6 */
-        ScriptObject parent = getPrototypeOf(cx);
-        /* step 7 */
-        if (parent != null) {
-            return parent.hasProperty(cx, propertyKey);
-        }
-        /* step 8 */
-        return false;
-    }
-
     /** 9.1.8 [[Get]] (P, Receiver) */
     @Override
     public final Object get(ExecutionContext cx, long propertyKey, Object receiver) {
@@ -1998,6 +1978,72 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
+     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
+     *
+     * @param realm
+     *            the realm instance
+     * @param proto
+     *            the prototype object
+     * @return the new object
+     */
+    public static final OrdinaryObject ObjectCreate(Realm realm, ScriptObject proto) {
+        return ObjectCreate(realm, proto, DefaultAllocator.INSTANCE);
+    }
+
+    /**
+     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
+     *
+     * @param realm
+     *            the realm instance
+     * @param proto
+     *            the prototype object
+     * @return the new object
+     */
+    public static final OrdinaryObject ObjectCreate(Realm realm, Intrinsics proto) {
+        return ObjectCreate(realm, proto, DefaultAllocator.INSTANCE);
+    }
+
+    /**
+     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
+     *
+     * @param <OBJECT>
+     *            the object type
+     * @param realm
+     *            the realm instance
+     * @param proto
+     *            the prototype object
+     * @param allocator
+     *            the object allocator
+     * @return the new object
+     */
+    public static final <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(Realm realm,
+            ScriptObject proto, ObjectAllocator<OBJECT> allocator) {
+        OBJECT obj = allocator.newInstance(realm);
+        obj.setPrototype(proto);
+        return obj;
+    }
+
+    /**
+     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
+     *
+     * @param <OBJECT>
+     *            the object type
+     * @param realm
+     *            the realm instance
+     * @param proto
+     *            the prototype object
+     * @param allocator
+     *            the object allocator
+     * @return the new object
+     */
+    public static final <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(Realm realm,
+            Intrinsics proto, ObjectAllocator<OBJECT> allocator) {
+        OBJECT obj = allocator.newInstance(realm);
+        obj.setPrototype(realm.getIntrinsic(proto));
+        return obj;
+    }
+
+    /**
      * 9.1.14 OrdinaryCreateFromConstructor (constructor, intrinsicDefaultProto, internalSlotsList)
      * 
      * @param cx
@@ -2040,5 +2086,31 @@ public class OrdinaryObject implements ScriptObject {
         ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
         /* step 4 */
         return ObjectCreate(cx, proto, allocator);
+    }
+
+    /**
+     * 9.1.15 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
+     * 
+     * @param cx
+     *            the execution context
+     * @param constructor
+     *            the constructor object
+     * @param intrinsicDefaultProto
+     *            the default prototype
+     * @return the prototype object
+     */
+    public static ScriptObject GetPrototypeFromConstructor(ExecutionContext cx,
+            Constructor constructor, Intrinsics intrinsicDefaultProto) {
+        /* step 1 (not applicable) */
+        /* step 2 (not applicable) */
+        /* steps 3-4 */
+        Object proto = Get(cx, constructor, "prototype");
+        /* step 5 */
+        if (!Type.isObject(proto)) {
+            Realm realm = GetFunctionRealm(cx, constructor);
+            proto = realm.getIntrinsic(intrinsicDefaultProto);
+        }
+        /* step 6 */
+        return Type.objectValue(proto);
     }
 }

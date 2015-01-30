@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects.text;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -23,7 +22,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -32,10 +30,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
@@ -48,8 +44,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>21.2.4 Properties of the RegExp Constructor
  * </ul>
  */
-public final class RegExpConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<RegExpObject> {
+public final class RegExpConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new RegExp constructor function.
      * 
@@ -61,9 +56,9 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
-        createProperties(cx, this, RegExpStatics.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
+        createProperties(realm, this, RegExpStatics.class);
     }
 
     @Override
@@ -80,62 +75,68 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         Object pattern = argument(args, 0);
         Object flags = argument(args, 1);
 
-        /* steps 1-2 (omitted) */
-        /* steps 3-4 */
+        /* steps 1-2 */
         boolean patternIsRegExp = IsRegExp(calleeContext, pattern);
-        /* step 5 */
-        RegExpObject obj;
-        if (!(thisValue instanceof RegExpObject) || ((RegExpObject) thisValue).isInitialized()) {
-            if (patternIsRegExp && Type.isUndefined(flags)) {
-                ScriptObject patternObject = Type.objectValue(pattern);
-                Object patternConstructor = Get(calleeContext, patternObject, "constructor");
-                if (SameValue(this, patternConstructor)) {
-                    return patternObject;
-                }
+        /* step 3 (not applicable) */
+        /* step 4 */
+        if (patternIsRegExp && Type.isUndefined(flags)) {
+            ScriptObject patternObject = Type.objectValue(pattern);
+            Object patternConstructor = Get(calleeContext, patternObject, "constructor");
+            if (this == patternConstructor) { // SameValue
+                return patternObject;
             }
-            obj = RegExpAlloc(calleeContext, this);
-        } else {
-            obj = (RegExpObject) thisValue;
         }
+        /* steps 5-10 */
+        return createRegExp(calleeContext, this, pattern, flags, patternIsRegExp);
+    }
 
-        /* steps 6-8 */
+    /**
+     * 21.2.3.1 RegExp ( pattern, flags )
+     */
+    @Override
+    public RegExpObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        Object pattern = argument(args, 0);
+        Object flags = argument(args, 1);
+
+        /* steps 1-2 */
+        boolean patternIsRegExp = IsRegExp(calleeContext, pattern);
+        /* step 3 (omitted) */
+        /* step 4 (not applicable) */
+        /* steps 5-10 */
+        return createRegExp(calleeContext, newTarget, pattern, flags, patternIsRegExp);
+    }
+
+    private RegExpObject createRegExp(ExecutionContext cx, Constructor newTarget, Object pattern,
+            Object flags, boolean patternIsRegExp) {
+        /* steps 5-7 */
         Object p, f;
         if (pattern instanceof RegExpObject) {
-            /* step 6 */
+            /* step 5 */
             RegExpObject regexp = (RegExpObject) pattern;
-            /* step 6.a */
-            if (!regexp.isInitialized()) {
-                throw newTypeError(calleeContext, Messages.Key.UninitializedObject);
-            }
-            /* step 6.b */
+            /* step 5.a */
             p = regexp.getOriginalSource();
-            /* steps 6.c-6.d */
+            /* steps 5.b-5.c */
             if (Type.isUndefined(flags)) {
                 f = regexp.getOriginalFlags();
             } else {
                 f = flags;
             }
         } else if (patternIsRegExp) {
-            /* step 7 */
+            /* step 6 */
             ScriptObject patternObject = Type.objectValue(pattern);
-            p = Get(calleeContext, patternObject, "source");
-            f = Get(calleeContext, patternObject, "flags");
+            p = Get(cx, patternObject, "source");
+            f = Get(cx, patternObject, "flags");
         } else {
-            /* step 8 */
+            /* step 7 */
             p = pattern;
             f = flags;
         }
-
-        /* step 9 */
-        return RegExpInitialize(calleeContext, obj, p, f);
-    }
-
-    /**
-     * 21.2.3.2 new RegExp(...argumentsList)
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
+        /* steps 8-9 */
+        RegExpObject obj = RegExpAlloc(cx, newTarget);
+        /* step 10 */
+        return RegExpInitialize(cx, obj, p, f);
     }
 
     private static final class RegExpObjectAllocator implements ObjectAllocator<RegExpObject> {
@@ -147,23 +148,9 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         }
     }
 
-    private static final class RegExpCreate implements CreateAction<RegExpObject> {
-        static final CreateAction<RegExpObject> INSTANCE = new RegExpCreate();
-
-        @Override
-        public RegExpObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return RegExpAlloc(cx, constructor);
-        }
-    }
-
-    @Override
-    public CreateAction<RegExpObject> createAction() {
-        return RegExpCreate.INSTANCE;
-    }
-
     /**
-     * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
-     * 21.2.3.3.1 Runtime Semantics: RegExpAlloc Abstract Operation
+     * 21.2.3.2 Abstract Operations for the RegExp Constructor<br>
+     * 21.2.3.2.1 Runtime Semantics: RegExpAlloc Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -176,15 +163,14 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         RegExpObject obj = OrdinaryCreateFromConstructor(cx, constructor,
                 Intrinsics.RegExpPrototype, RegExpObjectAllocator.INSTANCE);
         /* steps 2-3 */
-        DefinePropertyOrThrow(cx, obj, "lastIndex", new PropertyDescriptor(UNDEFINED, true, false,
-                false));
+        obj.infallibleDefineOwnProperty("lastIndex", new Property(0, true, false, false));
         /* step 4 */
         return obj;
     }
 
     /**
-     * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
-     * 21.2.3.3.2 Runtime Semantics: RegExpInitialize Abstract Operation
+     * 21.2.3.2 Abstract Operations for the RegExp Constructor<br>
+     * 21.2.3.2.2 Runtime Semantics: RegExpInitialize Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -225,8 +211,8 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
-     * 21.2.3.3.3 Runtime Semantics: RegExpCreate Abstract Operation
+     * 21.2.3.2 Abstract Operations for the RegExp Constructor<br>
+     * 21.2.3.2.3 Runtime Semantics: RegExpCreate Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -244,8 +230,8 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
-     * 21.2.3.3.4 Runtime Semantics: EscapeRegExpPattern Abstract Operation
+     * 21.2.3.2 Abstract Operations for the RegExp Constructor<br>
+     * 21.2.3.2.4 Runtime Semantics: EscapeRegExpPattern Abstract Operation
      * 
      * @param p
      *            the regular expression pattern

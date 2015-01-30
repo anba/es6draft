@@ -121,32 +121,14 @@ for (let t of ["", "abc"]) {
 }
 
 
-// [[Enumerate]] and [[OwnPropertyKeys]] need to handle indexed property keys created before initialisation
+// Test [[Enumerate]] and [[OwnPropertyKeys]] on String subclass
 {
-  let s = new (class extends String { constructor(){} })();
-  Object.defineProperty(s, "0", {value: "hello", enumerable: true});
-  String.call(s, "world");
+  let s = new (class extends String { constructor(){super("world")} })();
   let names = enumerableNames(s);
   let ownNames = Object.getOwnPropertyNames(s);
   let ownKeys = getOwnKeys(s);
 
-  assertSame("hello", s[0]);
   assertEquals(["0","1","2","3","4"], names);
-  assertEquals(["0","1","2","3","4","length"], ownNames);
-  assertEquals(["0","1","2","3","4","length"], ownKeys);
-}
-
-// [[Enumerate]] and [[OwnPropertyKeys]] need to handle indexed property keys created before initialisation
-{
-  let s = new (class extends String { constructor(){} })();
-  Object.defineProperty(s, "0", {value: "hello", enumerable: false});
-  String.call(s, "world");
-  let names = enumerableNames(s);
-  let ownNames = Object.getOwnPropertyNames(s);
-  let ownKeys = getOwnKeys(s);
-
-  assertSame("hello", s[0]);
-  assertEquals(["1","2","3","4"], names);
   assertEquals(["0","1","2","3","4","length"], ownNames);
   assertEquals(["0","1","2","3","4","length"], ownKeys);
 }

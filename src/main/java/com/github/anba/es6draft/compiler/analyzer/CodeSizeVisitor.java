@@ -588,6 +588,11 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     }
 
     @Override
+    public int visit(NewTarget node, CodeSizeHandler value) {
+        return 5;
+    }
+
+    @Override
     public int visit(NullLiteral node, CodeSizeHandler handler) {
         return 5;
     }

@@ -28,10 +28,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.TailCall;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.Undefined;
@@ -47,8 +45,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * <li>19.2.4 Properties of Function Instances
  * </ul>
  */
-public final class FunctionPrototype extends BuiltinFunction implements Initializable,
-        Creatable<ScriptObject> {
+public final class FunctionPrototype extends BuiltinFunction implements Initializable {
     private static final int MAX_ARGUMENTS = 0x10000;
 
     /**
@@ -62,8 +59,8 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -86,11 +83,6 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
     @Override
     public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
         return UNDEFINED;
-    }
-
-    @Override
-    public CreateAction<?> createAction() {
-        return null;
     }
 
     /**
@@ -227,7 +219,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
                 }
             }
             /* steps 9-10 */
-            DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(l, false, false, true));
+            f.infallibleDefineOwnProperty("length", new Property(l, false, false, true));
             /* steps 11-12 */
             Object targetName = Get(cx, target, "name");
             /* step 13 */
@@ -235,7 +227,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
                 targetName = "";
             }
             /* steps 14-15 */
-            SetFunctionName(cx, f, Type.stringValue(targetName).toString(), "bound");
+            SetFunctionName(f, Type.stringValue(targetName).toString(), "bound");
             /* step 16 */
             return f;
         }

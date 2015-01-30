@@ -9,11 +9,12 @@ const {
 } = Assert;
 
 class Fn extends Function {
-  constructor() {}
+  constructor(...args) {
+    super(...args);
+  }
 }
-var f = new Fn();
+var f = new Fn("return Object");
 var r = new Reflect.Realm();
-var g = r.global.Function.call(f, "return Object");
+var result = r.global.Function.prototype.call.call(f);
 
-assertSame(f, g);
-assertSame(Object, g());
+assertSame(Object, result);

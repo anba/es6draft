@@ -22,8 +22,6 @@ public final class NumberObject extends OrdinaryObject {
     /** [[NumberData]] */
     private double numberData;
 
-    private boolean initialized = false;
-
     /**
      * Constructs a new Number object.
      * 
@@ -32,15 +30,6 @@ public final class NumberObject extends OrdinaryObject {
      */
     public NumberObject(Realm realm) {
         super(realm);
-    }
-
-    /**
-     * Returns {@code true} if this Number object is initialized.
-     * 
-     * @return {@code true} if the object is initialized
-     */
-    public boolean isInitialized() {
-        return initialized;
     }
 
     /**
@@ -59,8 +48,6 @@ public final class NumberObject extends OrdinaryObject {
      *            the new number value
      */
     public void setNumberData(double numberData) {
-        assert !this.initialized : "NumberObject already initialized";
-        this.initialized = true;
         this.numberData = numberData;
     }
 

@@ -41,8 +41,6 @@ import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.Loca
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.OptionsRecord;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ResolvedLocale;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -62,8 +60,7 @@ import com.ibm.icu.util.ULocale;
  * <li>12.2 Properties of the Intl.DateTimeFormat Constructor
  * </ul>
  */
-public final class DateTimeFormatConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<DateTimeFormatObject> {
+public final class DateTimeFormatConstructor extends BuiltinConstructor implements Initializable {
     /** [[availableLocales]] */
     private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
@@ -226,8 +223,8 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -333,6 +330,46 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         } else {
             pattern = new BestFitFormatPattern(formatRecord, dataLocale);
         }
+        /* step 30 */
+        dateTimeFormat.setPattern(pattern);
+        /* step 31 */
+        dateTimeFormat.setBoundFormat(null);
+        /* step 32 */
+        dateTimeFormat.setInitializedDateTimeFormat(true);
+    }
+
+    /**
+     * 12.1.1.1 InitializeDateTimeFormat (dateTimeFormat, locales, options)
+     * 
+     * @param realm
+     *            the realm instance
+     * @param dateTimeFormat
+     *            the date format object
+     */
+    public static void InitializeDefaultDateTimeFormat(Realm realm,
+            DateTimeFormatObject dateTimeFormat) {
+        /* steps 1-2 */
+        assert !dateTimeFormat.isInitializedIntlObject();
+        dateTimeFormat.setInitializedIntlObject(true);
+        /* steps 3-7 (not applicable) */
+        /* steps 8-9 */
+        DateTimeFormatLocaleData localeData = new DateTimeFormatLocaleData();
+        /* step 10 */
+        ResolvedLocale r = ResolveDefaultLocale(realm, relevantExtensionKeys, localeData);
+        /* step 11 */
+        dateTimeFormat.setLocale(r.getLocale());
+        /* step 12 */
+        dateTimeFormat.setCalendar(r.getValue(ExtensionKey.ca));
+        /* step 13 */
+        dateTimeFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
+        /* step 14 */
+        String dataLocale = r.getDataLocale();
+        /* steps 15-18 */
+        dateTimeFormat.setTimeZone(DefaultTimeZone(realm));
+        /* steps 20-29 */
+        FormatMatcherRecord formatRecord = new FormatMatcherRecord(null, null, "numeric",
+                "numeric", "numeric", null, null, null, null, null);
+        Lazy<String> pattern = new BestFitFormatPattern(formatRecord, dataLocale);
         /* step 30 */
         dateTimeFormat.setPattern(pattern);
         /* step 31 */
@@ -788,7 +825,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         Object options = argument(args, 1);
         /* step 3 */
         if (Type.isUndefined(thisValue) || thisValue == calleeContext.getIntrinsic(Intrinsics.Intl)) {
-            return construct(calleeContext, args);
+            return construct(calleeContext, this, args);
         }
         /* step 4 */
         ScriptObject obj = ToObject(calleeContext, thisValue);
@@ -806,21 +843,28 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      * 12.1.3.1 new Intl.DateTimeFormat ([locales [, options]])
      */
     @Override
-    public DateTimeFormatObject construct(ExecutionContext callerContext, Object... args) {
-        DateTimeFormatObject obj = new DateTimeFormatObject(callerContext.getRealm());
-        obj.setPrototype(callerContext.getIntrinsic(Intrinsics.Intl_DateTimeFormatPrototype));
+    public DateTimeFormatObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        DateTimeFormatObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.Intl_DateTimeFormatPrototype, DateTimeFormatObjectAllocator.INSTANCE);
         /* step 1 */
         Object locales = argument(args, 0);
         /* step 2 */
         Object options = argument(args, 1);
         /* step 3 */
-        InitializeDateTimeFormat(callerContext, obj, locales, options);
+        InitializeDateTimeFormat(calleeContext, obj, locales, options);
         return obj;
     }
 
-    @Override
-    public CreateAction<DateTimeFormatObject> createAction() {
-        return DateTimeFormatCreate.INSTANCE;
+    private static final class DateTimeFormatObjectAllocator implements
+            ObjectAllocator<DateTimeFormatObject> {
+        static final ObjectAllocator<DateTimeFormatObject> INSTANCE = new DateTimeFormatObjectAllocator();
+
+        @Override
+        public DateTimeFormatObject newInstance(Realm realm) {
+            return new DateTimeFormatObject(realm);
+        }
     }
 
     /**
@@ -870,27 +914,6 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
             /* step 4 */
             return SupportedLocales(cx, availableLocales, requestedLocales, options);
-        }
-    }
-
-    private static final class DateTimeFormatObjectAllocator implements
-            ObjectAllocator<DateTimeFormatObject> {
-        static final ObjectAllocator<DateTimeFormatObject> INSTANCE = new DateTimeFormatObjectAllocator();
-
-        @Override
-        public DateTimeFormatObject newInstance(Realm realm) {
-            return new DateTimeFormatObject(realm);
-        }
-    }
-
-    private static final class DateTimeFormatCreate implements CreateAction<DateTimeFormatObject> {
-        static final CreateAction<DateTimeFormatObject> INSTANCE = new DateTimeFormatCreate();
-
-        @Override
-        public DateTimeFormatObject create(ExecutionContext cx, Constructor constructor,
-                Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor,
-                    Intrinsics.Intl_DateTimeFormatPrototype, DateTimeFormatObjectAllocator.INSTANCE);
         }
     }
 }

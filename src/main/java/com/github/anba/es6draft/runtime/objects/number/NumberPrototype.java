@@ -49,8 +49,8 @@ public final class NumberPrototype extends OrdinaryObject implements Initializab
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     /**
@@ -73,11 +73,7 @@ public final class NumberPrototype extends OrdinaryObject implements Initializab
                 return Type.numberValue(object);
             }
             if (object instanceof NumberObject) {
-                NumberObject obj = (NumberObject) object;
-                if (obj.isInitialized()) {
-                    return obj.getNumberData();
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return ((NumberObject) object).getNumberData();
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -157,9 +153,9 @@ public final class NumberPrototype extends OrdinaryObject implements Initializab
 
             // ECMA-402
             double x = thisNumberValue(cx, thisValue);
-            NumberFormatConstructor constructor = (NumberFormatConstructor) cx
+            NumberFormatConstructor ctor = (NumberFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_NumberFormat);
-            NumberFormatObject numberFormat = constructor.construct(cx, locales, options);
+            NumberFormatObject numberFormat = ctor.construct(cx, ctor, locales, options);
             return FormatNumber(cx, numberFormat, x);
         }
 

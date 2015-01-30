@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -22,8 +21,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
@@ -38,8 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>19.4.2 Properties of the Symbol Constructor
  * </ul>
  */
-public final class SymbolConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<SymbolObject> {
+public final class SymbolConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Symbol constructor function.
      * 
@@ -51,8 +47,8 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -67,33 +63,23 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
     public Symbol call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object description = argument(args, 0);
-        /* steps 1-3 */
+        /* step 1 (not applicable) */
+        /* steps 2-4 */
         String descString = Type.isUndefined(description) ? null : ToFlatString(calleeContext,
                 description);
-        /* step 4 */
+        /* step 5 */
         return new Symbol(descString);
     }
 
     /**
-     * 19.4.1.2 new Symbol (... argumentsList)
+     * 19.4.1.1 Symbol ( [ description ] )
      */
     @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
-
-    private static final class SymbolCreate implements CreateAction<SymbolObject> {
-        static final CreateAction<SymbolObject> INSTANCE = new SymbolCreate();
-
-        @Override
-        public SymbolObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            throw newTypeError(cx, Messages.Key.SymbolCreate);
-        }
-    }
-
-    @Override
-    public CreateAction<SymbolObject> createAction() {
-        return SymbolCreate.INSTANCE;
+    public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        /* step 1 */
+        throw newTypeError(calleeContext, Messages.Key.SymbolCreate);
     }
 
     /**

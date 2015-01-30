@@ -6,10 +6,14 @@
  */
 const {
   assertFalse, assertTrue, assertUndefined,
-  assertSame, assertThrows,
+  assertSame, assertThrows, assertEquals,
 } = Assert;
 
-// MOP access on uninitialized typed arrays
+// MOP access on detached typed arrays
+
+const integerIndexedPropertiesValidZero = [
+  -0, +0, "0",
+];
 
 const integerIndexedProperties = [
   -0, +0, "-0", "0",
@@ -31,24 +35,23 @@ const notIntegerIndexedProperties = [
 function MyConstructor() { }
 const TypedArray = Object.getPrototypeOf(Int8Array);
 
-// Test with concrete TypedArray constructor and normal function constructor
-for (let constructor of [/* TypedArray, */ Int8Array]) {
-  function create() {
-    class C extends constructor {
-      constructor() {
-        /* no super */
-        Object.setPrototypeOf(this, constructor.prototype);
-      }
-    };
-    return new C;
+// Test with concrete TypedArray constructors
+for (let constructor of [Int8Array]) {
+  function create(length = 0) {
+    let array = new constructor(length);
+    detachArrayBuffer(array.buffer);
+    return array;
   }
 
   // [[GetPrototypeOf]]
   assertSame(constructor.prototype, Reflect.getPrototypeOf(create()));
 
   // [[DefineOwnProperty]]
+  for (let p of integerIndexedPropertiesValidZero) {
+    assertThrows(TypeError, () => Reflect.defineProperty(create(1), p, {value: 0}));
+  }
   for (let p of integerIndexedProperties) {
-    assertThrows(TypeError, () => Reflect.defineProperty(create(), p, {value: 0}));
+    assertFalse(Reflect.defineProperty(create(), p, {value: 0}));
   }
   for (let p of notIntegerIndexedProperties) {
     assertTrue(Reflect.defineProperty(create(), p, {value: 0}));
@@ -115,8 +118,10 @@ for (let constructor of [/* TypedArray, */ Int8Array]) {
   }
 
   // [[Enumerate]]
-  assertThrows(TypeError, () => Reflect.enumerate(create()));
+  assertEquals([], [...Reflect.enumerate(create())]);
+  assertEquals(["0"], [...Reflect.enumerate(create(1))]);
 
   // [[OwnPropertyKeys]]
-  assertThrows(TypeError, () => Reflect.ownKeys(create()));
+  assertEquals([], Reflect.ownKeys(create()));
+  assertEquals(["0"], Reflect.ownKeys(create(1)));
 }

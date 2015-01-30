@@ -134,6 +134,11 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
     }
 
     @Override
+    public boolean isConstructor() {
+        return true;
+    }
+
+    @Override
     public boolean hasSyntheticNodes() {
         return syntheticNodes;
     }

@@ -100,8 +100,8 @@ abstract class DeclarationBindingInstantiationGenerator {
 
         static final MethodName ScriptRuntime_InstantiateFunctionObject = MethodName.findStatic(
                 Types.ScriptRuntime, "InstantiateFunctionObject", Type.methodType(
-                        Types.OrdinaryFunction, Types.LexicalEnvironment, Types.ExecutionContext,
-                        Types.RuntimeInfo$Function));
+                        Types.OrdinaryConstructorFunction, Types.LexicalEnvironment,
+                        Types.ExecutionContext, Types.RuntimeInfo$Function));
 
         static final MethodName ScriptRuntime_InstantiateGeneratorObject = MethodName.findStatic(
                 Types.ScriptRuntime, "InstantiateGeneratorObject", Type.methodType(

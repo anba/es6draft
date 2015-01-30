@@ -44,8 +44,8 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     /**
@@ -56,11 +56,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
 
         private static WeakSetObject thisWeakSetObject(ExecutionContext cx, Object obj) {
             if (obj instanceof WeakSetObject) {
-                WeakSetObject set = (WeakSetObject) obj;
-                if (set.isInitialized()) {
-                    return set;
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return (WeakSetObject) obj;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -87,17 +83,16 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
          */
         @Function(name = "add", arity = 1)
         public static Object set(ExecutionContext cx, Object thisValue, Object value) {
-            /* steps 1-4 */
+            /* steps 1-3 */
             WeakSetObject s = thisWeakSetObject(cx, thisValue);
-            /* step 5 */
+            /* step 4 */
             if (!Type.isObject(value)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
-            /* step 6 */
+            /* step 5 */
             WeakHashMap<ScriptObject, Boolean> entries = s.getWeakSetData();
-            /* steps 7-8 */
+            /* steps 6-8 */
             entries.put(Type.objectValue(value), Boolean.TRUE);
-            /* step 7.a.i, 9 */
             return s;
         }
 
@@ -114,15 +109,15 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object value) {
-            /* steps 1-4 */
+            /* steps 1-3 */
             WeakSetObject s = thisWeakSetObject(cx, thisValue);
-            /* step 5 */
+            /* step 4 */
             if (!Type.isObject(value)) {
                 return false;
             }
-            /* step 6 */
+            /* step 5 */
             WeakHashMap<ScriptObject, Boolean> entries = s.getWeakSetData();
-            /* steps 7-8 */
+            /* steps 6-7 */
             return entries.remove(value) != null;
         }
 
@@ -139,13 +134,13 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
          */
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object value) {
-            /* steps 1-4 */
+            /* steps 1-3 */
             WeakSetObject s = thisWeakSetObject(cx, thisValue);
-            /* step ? */
+            /* step 5 */
             if (!Type.isObject(value)) {
                 return false;
             }
-            /* step 5 */
+            /* step 4 */
             WeakHashMap<ScriptObject, Boolean> entries = s.getWeakSetData();
             /* steps 6-7 */
             return entries.containsKey(value);

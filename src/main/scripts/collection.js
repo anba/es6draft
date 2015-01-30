@@ -10,8 +10,12 @@
 const global = %GlobalObject();
 
 const {
-  Object, Function, Symbol
+  Object, Function, Symbol, Reflect
 } = global;
+
+const {
+  construct: Reflect_construct
+} = Reflect;
 
 // Create overrides for Map/Set/WeakMap/WeakSet to enable construction without `new`.
 
@@ -19,12 +23,12 @@ const {
   const BuiltinMap = global.Map;
   const BuiltinMap_prototype_size = Object.getOwnPropertyDescriptor(BuiltinMap.prototype, "size").get;
 
-  class Map extends BuiltinMap {
+  class Map {
     constructor(iterable) {
-      if (!%IsUninitializedMap(this)) {
+      if (!new.target) {
         return new Map(iterable);
       }
-      return %CallFunction(BuiltinMap, this, iterable);
+      return %CallFunction(Reflect_construct, null, BuiltinMap, [iterable], new.target);
     }
 
     clear() {
@@ -72,9 +76,6 @@ const {
     }
   }
 
-  Object.setPrototypeOf(Map, Function.prototype);
-  Object.setPrototypeOf(Map.prototype, Object.prototype);
-
   Object.defineProperties(Map.prototype, {
     clear: {enumerable: false},
     delete: {enumerable: false},
@@ -98,12 +99,12 @@ const {
   const BuiltinSet = global.Set;
   const BuiltinSet_prototype_size = Object.getOwnPropertyDescriptor(BuiltinSet.prototype, "size").get;
 
-  class Set extends BuiltinSet {
+  class Set {
     constructor(iterable) {
-      if (!%IsUninitializedSet(this)) {
+      if (!new.target) {
         return new Set(iterable);
       }
-      return %CallFunction(BuiltinSet, this, iterable);
+      return %CallFunction(Reflect_construct, null, BuiltinSet, [iterable], new.target);
     }
 
     add(value) {
@@ -143,9 +144,6 @@ const {
     }
   }
 
-  Object.setPrototypeOf(Set, Function.prototype);
-  Object.setPrototypeOf(Set.prototype, Object.prototype);
-
   Object.defineProperties(Set.prototype, {
     add: {enumerable: false},
     clear: {enumerable: false},
@@ -167,12 +165,12 @@ const {
 { /* WeakMap */
   const BuiltinWeakMap = global.WeakMap;
 
-  class WeakMap extends BuiltinWeakMap {
+  class WeakMap {
     constructor(iterable) {
-      if (!%IsUninitializedWeakMap(this)) {
+      if (!new.target) {
         return new WeakMap(iterable);
       }
-      return %CallFunction(BuiltinWeakMap, this, iterable);
+      return %CallFunction(Reflect_construct, null, BuiltinWeakMap, [iterable], new.target);
     }
 
     clear() {
@@ -204,9 +202,6 @@ const {
     }
   }
 
-  Object.setPrototypeOf(WeakMap, Function.prototype);
-  Object.setPrototypeOf(WeakMap.prototype, Object.prototype);
-
   Object.defineProperties(WeakMap.prototype, {
     clear: {enumerable: false},
     delete: {enumerable: false},
@@ -223,9 +218,9 @@ const {
 { /* WeakSet */
   const BuiltinWeakSet = global.WeakSet;
 
-  class WeakSet extends BuiltinWeakSet {
+  class WeakSet {
     constructor(iterable) {
-      return %CallFunction(BuiltinWeakSet, this, iterable);
+      return %CallFunction(Reflect_construct, null, BuiltinWeakSet, [iterable], new.target);
     }
 
     add(value) {
@@ -249,9 +244,6 @@ const {
       return "WeakSet";
     }
   }
-
-  Object.setPrototypeOf(WeakSet, Function.prototype);
-  Object.setPrototypeOf(WeakSet.prototype, Object.prototype);
 
   Object.defineProperties(WeakSet.prototype, {
     add: {enumerable: false},

@@ -5,16 +5,20 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSame
+  assertSame, assertThrows
 } = Assert;
 
 // 15.11.1, 15.11.6.1: Subclass initialisation for Error and NativeError
 // https://bugs.ecmascript.org/show_bug.cgi?id=1663
 
 class MyError extends Error { constructor(){} }
-let err1 = new MyError();
-assertSame(err1, TypeError.call(err1));
+// let err1 = new MyError();
+// assertSame(err1, TypeError.call(err1));
+
+assertThrows(ReferenceError, () => new MyError());
 
 class MyTypeError extends TypeError { constructor(){} }
-let err2 = new MyTypeError();
-assertSame(err2, Error.call(err2));
+// let err2 = new MyTypeError();
+// assertSame(err2, Error.call(err2));
+
+assertThrows(ReferenceError, () => new MyTypeError());

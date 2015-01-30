@@ -29,7 +29,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
@@ -54,19 +53,8 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
-    }
-
-    /**
-     * Package private accessor for {@link ErrorObject#toString()}
-     * 
-     * @param propertyKey
-     *            the property key
-     * @return the property record or {@code null} if none found
-     */
-    Property getOwnProperty(String propertyKey) {
-        return ordinaryGetOwnProperty(propertyKey);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     /**

@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects.reflect;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
@@ -14,15 +13,11 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
@@ -33,8 +28,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>26.?.2 Properties of the Reflect.Loader Constructor
  * </ul>
  */
-public final class LoaderConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<LoaderObject> {
+public final class LoaderConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Loader constructor function.
      * 
@@ -46,8 +40,8 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -59,22 +53,19 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
      * 26.?.1.1 Reflect.Loader (options = { })
      */
     @Override
-    public LoaderObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
+        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "Loader");
     }
 
     /**
-     * 26.?.1.2 new Reflect.Loader ( ... argumentsList )
+     * 26.?.1.1 Reflect.Loader (options = { })
      */
     @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
-
-    @Override
-    public CreateAction<LoaderObject> createAction() {
-        return LoaderCreate.INSTANCE;
+    public LoaderObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
     }
 
     /**
@@ -100,24 +91,5 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.LoaderPrototype;
-    }
-
-    private static final class LoaderObjectAllocator implements ObjectAllocator<LoaderObject> {
-        static final ObjectAllocator<LoaderObject> INSTANCE = new LoaderObjectAllocator();
-
-        @Override
-        public LoaderObject newInstance(Realm realm) {
-            return new LoaderObject(realm);
-        }
-    }
-
-    private static final class LoaderCreate implements CreateAction<LoaderObject> {
-        static final CreateAction<LoaderObject> INSTANCE = new LoaderCreate();
-
-        @Override
-        public LoaderObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.LoaderPrototype,
-                    LoaderObjectAllocator.INSTANCE);
-        }
     }
 }

@@ -57,8 +57,8 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     public enum Properties {
@@ -333,11 +333,8 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             } else if (o instanceof StringObject) {
                 value = ToString(cx, value);
             } else if (o instanceof BooleanObject) {
-                BooleanObject bool = (BooleanObject) o;
-                if (!bool.isInitialized()) {
-                    throw newTypeError(cx, Messages.Key.UninitializedObject);
-                }
-                value = bool.getBooleanData();
+                // FIXME: spec bug - invalid check
+                value = ((BooleanObject) o).getBooleanData();
             }
         }
         /* steps 6-12 */
@@ -539,9 +536,9 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         indent = indent + gap;
         /* step 5 */
         ArrayList<String> partial = new ArrayList<>();
-        /* steps 6-8 */
+        /* steps 6-7 */
         long len = ToLength(cx, Get(cx, value, "length"));
-        /* steps 9-10 */
+        /* steps 8-9 */
         for (long index = 0; index < len; ++index) {
             String strP = Str(cx, stack, propertyList, replacerFunction, indent, gap,
                     ToString(index), value);
@@ -551,7 +548,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 partial.add(strP);
             }
         }
-        /* steps 11-12 */
+        /* steps 10-11 */
         String _final;
         if (partial.isEmpty()) {
             _final = "[]";
@@ -573,10 +570,10 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 _final = properties.toString();
             }
         }
-        /* step 13 */
+        /* step 12 */
         stack.remove(value);
-        /* step 14 (not applicable) */
-        /* step 15 */
+        /* step 13 (not applicable) */
+        /* step 14 */
         return _final;
     }
 }

@@ -20,8 +20,6 @@ public final class DateObject extends OrdinaryObject {
     /** [[DateValue]] */
     private double dateValue;
 
-    private boolean initialized = false;
-
     /**
      * Constructs a new Date object.
      * 
@@ -30,15 +28,6 @@ public final class DateObject extends OrdinaryObject {
      */
     public DateObject(Realm realm) {
         super(realm);
-    }
-
-    /**
-     * Returns {@code true} if this Date object is initialized.
-     * 
-     * @return {@code true} if the object is initialized
-     */
-    public boolean isInitialized() {
-        return initialized;
     }
 
     /**
@@ -57,7 +46,6 @@ public final class DateObject extends OrdinaryObject {
      *            the new date value
      */
     public void setDateValue(double dateValue) {
-        this.initialized = true;
         this.dateValue = dateValue;
     }
 }

@@ -101,6 +101,11 @@ ecma_6/TypedArray/from_proxy.js
 # SM issue: Different property iteration order
 ecma_6/TypedArray/of.js
 
+# ES6: TypedArray.from only works on TypedArray objects
+ecma_6/TypedArray/from_errors.js
+ecma_6/TypedArray/from_mapping.js
+ecma_6/TypedArray/from_string.js
+
 
 ####################################
 # Intl only partially supported    #

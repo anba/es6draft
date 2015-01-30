@@ -36,8 +36,8 @@ public final class IteratorPrototype extends OrdinaryObject implements Initializ
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     /**

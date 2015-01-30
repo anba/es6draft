@@ -209,7 +209,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         }
 
         public String getModuleName() {
-            return module.getModuleId();
+            return module.getSourceCodeId();
         }
 
         public LinkedHashMap<String, ModuleRecord> copyRequires() {

@@ -6,8 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.objects.iteration;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
@@ -24,7 +24,6 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.DebugInfo;
 import com.github.anba.es6draft.runtime.internal.Initializable;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -32,12 +31,9 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -50,8 +46,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>25.2.2 Properties of the GeneratorFunction Constructor
  * </ul>
  */
-public final class GeneratorFunctionConstructor extends BuiltinConstructor implements
-        Initializable, Creatable<OrdinaryGenerator> {
+public final class GeneratorFunctionConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Generator Function constructor function.
      * 
@@ -63,8 +58,8 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -78,101 +73,82 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
     @Override
     public OrdinaryGenerator call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
+        /* steps 1-3 */
+        return CreateDynamicFunction(calleeContext, this, args);
+    }
 
-        /* steps 1-7 */
+    /**
+     * 25.2.1.1 GeneratorFunction (p1, p2, ... , pn, body)
+     */
+    @Override
+    public OrdinaryGenerator construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        /* steps 1-3 */
+        return CreateDynamicFunction(calleeContext, newTarget, args);
+    }
+
+    private OrdinaryGenerator CreateDynamicFunction(ExecutionContext cx, Constructor newTarget,
+            Object[] args) {
+        /* step 1 (not applicable) */
+        /* step 2 (not applicable) */
+        /* step 3 */
+        Intrinsics fallbackProto = Intrinsics.Generator;
+        /* steps 4-10 */
         int argCount = args.length;
         StringBuilder p = new StringBuilder();
         String bodyText;
         if (argCount == 0) {
             bodyText = "";
         } else if (argCount == 1) {
-            bodyText = ToFlatString(calleeContext, args[0]);
+            bodyText = ToFlatString(cx, args[0]);
         } else {
             Object firstArg = args[0];
-            p.append(ToFlatString(calleeContext, firstArg));
+            p.append(ToFlatString(cx, firstArg));
             int k = 2;
             for (; k < argCount; ++k) {
                 Object nextArg = args[k - 1];
-                CharSequence nextArgString = ToFlatString(calleeContext, nextArg);
+                String nextArgString = ToFlatString(cx, nextArg);
                 p.append(',').append(nextArgString);
             }
-            bodyText = ToFlatString(calleeContext, args[k - 1]);
+            bodyText = ToFlatString(cx, args[k - 1]);
         }
 
-        /* steps 8-10 */
-        Source source = generatorSource(callerContext);
+        /* steps 11-13 */
+        Source source = generatorSource(cx);
         CompiledGenerator exec = new CompiledGenerator(source);
         RuntimeInfo.Function function;
         try {
-            ScriptLoader scriptLoader = calleeContext.getRealm().getScriptLoader();
+            ScriptLoader scriptLoader = cx.getRealm().getScriptLoader();
             function = scriptLoader.generator(source, p.toString(), bodyText).getFunction();
         } catch (ParserException | CompilationException e) {
-            throw e.toScriptException(calleeContext);
+            throw e.toScriptException(cx);
         }
 
-        /* step 11 */
-        boolean strict = function.isStrict();
-        /* step 12 */
-        Object f = thisValue;
-        /* step 13 */
-        if (!(f instanceof FunctionObject) || ((FunctionObject) f).getCode() != null) {
-            ScriptObject proto = GetPrototypeFromConstructor(calleeContext, this,
-                    Intrinsics.Generator);
-            f = FunctionAllocate(calleeContext, proto, strict, FunctionKind.Normal);
-        }
         /* step 14 */
-        if (!(f instanceof OrdinaryGenerator)) {
-            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
-        }
-        OrdinaryGenerator fn = (OrdinaryGenerator) f;
+        boolean strict = function.isStrict();
         /* steps 15-16 */
-        LexicalEnvironment<GlobalEnvironmentRecord> scope = fn.getRealm().getGlobalEnv();
-        /* steps 17-19 */
-        if (!IsExtensible(calleeContext, fn)) {
-            throw newTypeError(calleeContext, Messages.Key.NotExtensible);
-        }
-        /* step 20 */
-        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, strict, function, scope, exec);
-        /* step 21 */
-        OrdinaryObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
-        /* step 22 */
+        ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget, fallbackProto);
+        /* steps 17-18 */
+        OrdinaryGenerator f = FunctionAllocate(cx, proto, strict, FunctionKind.Normal);
+        /* steps 19-20 */
+        LexicalEnvironment<GlobalEnvironmentRecord> scope = f.getRealm().getGlobalEnv();
+        /* steps 21-22 */
+        FunctionInitialize(cx, f, FunctionKind.Normal, strict, function, scope, exec);
+        /* step 23 */
         if (function.hasSuperReference()) {
-            MakeMethod(fn, null);
+            MakeMethod(f, null);
         }
-        /* steps 23-24 */
-        MakeConstructor(calleeContext, fn, true, prototype);
-        /* steps 25-27 */
-        if (!HasOwnProperty(calleeContext, fn, "name")) {
-            SetFunctionName(fn, "anonymous");
+        /* step 25 (not applicable) */
+        /* steps 24, 26 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+        MakeConstructor(cx, f, true, prototype);
+        /* steps 27-29 */
+        if (!HasOwnProperty(cx, f, "name")) {
+            SetFunctionName(f, "anonymous");
         }
-        /* step 28 */
-        return fn;
-    }
-
-    /**
-     * 25.2.1.2 new GeneratorFunction (...argumentsList)
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
-
-    private static final class GeneratorCreate implements CreateAction<OrdinaryGenerator> {
-        static final CreateAction<OrdinaryGenerator> INSTANCE = new GeneratorCreate();
-
-        @Override
-        public OrdinaryGenerator create(ExecutionContext cx, Constructor constructor,
-                Object... args) {
-            /* steps 1-2 */
-            ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, Intrinsics.Generator);
-            /* step 3 */
-            return FunctionAllocate(cx, proto, false, FunctionKind.Normal);
-        }
-    }
-
-    @Override
-    public CreateAction<OrdinaryGenerator> createAction() {
-        return GeneratorCreate.INSTANCE;
+        /* step 30 */
+        return f;
     }
 
     /**

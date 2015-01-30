@@ -51,7 +51,7 @@ public final class DataViewObject extends OrdinaryObject implements ArrayBufferV
      *            the new array buffer object
      */
     public void setBuffer(ArrayBufferObject buffer) {
-        assert buffer != null && buffer.isInitialized() : "ArrayBufferObject not initialized";
+        assert buffer != null : "ArrayBufferObject not initialized";
         assert this.buffer == null : "DataViewObject already initialized";
         this.buffer = buffer;
     }

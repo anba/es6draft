@@ -21,7 +21,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class WeakSetObject extends OrdinaryObject {
     /** [[WeakSetData]] */
-    private WeakHashMap<ScriptObject, Boolean> weakSetData = null;
+    // no ephemeron tables in java :(
+    private final WeakHashMap<ScriptObject, Boolean> weakSetData = new WeakHashMap<>();
 
     /**
      * Constructs a new WeakSet object.
@@ -42,23 +43,5 @@ public final class WeakSetObject extends OrdinaryObject {
      */
     public WeakHashMap<ScriptObject, Boolean> getWeakSetData() {
         return weakSetData;
-    }
-
-    /**
-     * Initializes this WeakSet instance.
-     */
-    public void initialize() {
-        assert this.weakSetData == null : "WeakSet already initialized";
-        // no ephemeron tables in java :(
-        this.weakSetData = new WeakHashMap<>();
-    }
-
-    /**
-     * Returns {@code true} if this WeakSet instance is initialized.
-     * 
-     * @return {@code true} if this object is initialized
-     */
-    public boolean isInitialized() {
-        return weakSetData != null;
     }
 }

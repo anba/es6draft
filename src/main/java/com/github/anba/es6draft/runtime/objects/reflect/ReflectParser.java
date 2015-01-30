@@ -137,6 +137,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         MethodDefinition(),
         SuperExpression(),
         AwaitExpression(),
+        NewTarget(),
 
         ;
         /* @formatter:on */
@@ -611,6 +612,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         case Setter:
             return "set";
         case AsyncFunction:
+        case Constructor:
         case Function:
         case Generator:
         default:
@@ -624,6 +626,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         case Setter:
             return true;
         case AsyncFunction:
+        case Constructor:
         case Function:
         case Generator:
         default:
@@ -1733,6 +1736,11 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         addProperty(expression, "callee", callee);
         addProperty(expression, "arguments", arguments);
         return expression;
+    }
+
+    @Override
+    public Object visit(NewTarget node, Void value) {
+        return createExpression(node, Type.NewTarget);
     }
 
     @Override

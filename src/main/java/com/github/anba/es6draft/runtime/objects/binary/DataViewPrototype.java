@@ -45,8 +45,8 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     /**
@@ -57,11 +57,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
 
         private static ArrayBufferView thisArrayBufferView(ExecutionContext cx, Object m) {
             if (m instanceof ArrayBufferView) {
-                ArrayBufferView view = (ArrayBufferView) m;
-                if (view.getBuffer() == null) {
-                    throw newTypeError(cx, Messages.Key.UninitializedObject);
-                }
-                return view;
+                return (ArrayBufferView) m;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -69,11 +65,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
         private static ArrayBufferView thisArrayBufferViewChecked(ExecutionContext cx, Object m) {
             if (m instanceof ArrayBufferView) {
                 ArrayBufferView view = (ArrayBufferView) m;
-                ArrayBufferObject buffer = view.getBuffer();
-                if (buffer == null) {
-                    throw newTypeError(cx, Messages.Key.UninitializedObject);
-                }
-                if (IsDetachedBuffer(buffer)) {
+                if (IsDetachedBuffer(view.getBuffer())) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
                 return view;
@@ -101,7 +93,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          */
         @Accessor(name = "buffer", type = Accessor.Type.Getter)
         public static Object buffer(ExecutionContext cx, Object thisValue) {
-            /* steps 1-6 */
+            /* steps 1-5 */
             return thisArrayBufferView(cx, thisValue).getBuffer();
         }
 
@@ -116,7 +108,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
-            /* steps 1-8 */
+            /* steps 1-7 */
             return thisArrayBufferViewChecked(cx, thisValue).getByteLength();
         }
 
@@ -131,7 +123,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          */
         @Accessor(name = "byteOffset", type = Accessor.Type.Getter)
         public static Object byteOffset(ExecutionContext cx, Object thisValue) {
-            /* steps 1-8 */
+            /* steps 1-7 */
             return thisArrayBufferViewChecked(cx, thisValue).getByteOffset();
         }
 

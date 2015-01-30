@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
-import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -41,34 +40,34 @@ public final class TypedArrayPrototype extends OrdinaryObject implements Initial
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
+    public void initialize(Realm realm) {
         switch (elementKind) {
         case Int8:
-            createProperties(cx, this, Properties_Int8Array.class);
+            createProperties(realm, this, Properties_Int8Array.class);
             break;
         case Uint8:
-            createProperties(cx, this, Properties_Uint8Array.class);
+            createProperties(realm, this, Properties_Uint8Array.class);
             break;
         case Uint8C:
-            createProperties(cx, this, Properties_Uint8Clamped.class);
+            createProperties(realm, this, Properties_Uint8Clamped.class);
             break;
         case Int16:
-            createProperties(cx, this, Properties_Int16Array.class);
+            createProperties(realm, this, Properties_Int16Array.class);
             break;
         case Uint16:
-            createProperties(cx, this, Properties_Uint16Array.class);
+            createProperties(realm, this, Properties_Uint16Array.class);
             break;
         case Int32:
-            createProperties(cx, this, Properties_Int32Array.class);
+            createProperties(realm, this, Properties_Int32Array.class);
             break;
         case Uint32:
-            createProperties(cx, this, Properties_Uint32Array.class);
+            createProperties(realm, this, Properties_Uint32Array.class);
             break;
         case Float32:
-            createProperties(cx, this, Properties_Float32Array.class);
+            createProperties(realm, this, Properties_Float32Array.class);
             break;
         case Float64:
-            createProperties(cx, this, Properties_Float64Array.class);
+            createProperties(realm, this, Properties_Float64Array.class);
             break;
         default:
             throw new AssertionError();

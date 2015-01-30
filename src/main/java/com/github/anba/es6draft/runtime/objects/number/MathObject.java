@@ -41,11 +41,11 @@ public final class MathObject extends OrdinaryObject implements Initializable {
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
+    public void initialize(Realm realm) {
+        setPrototype(realm.getIntrinsic(Intrinsics.ObjectPrototype));
 
-        createProperties(cx, this, ValueProperties.class);
-        createProperties(cx, this, FunctionProperties.class);
+        createProperties(realm, this, ValueProperties.class);
+        createProperties(realm, this, FunctionProperties.class);
     }
 
     /**

@@ -37,8 +37,8 @@ assertSame(Math.pow(2, 53) - 1, Number.MAX_SAFE_INTEGER);
   let a = {length: Number.MAX_SAFE_INTEGER - 2};
   assertThrows(TypeError, () => Array.prototype.push.call(a, ..."abc"));
   assertSame(Number.MAX_SAFE_INTEGER - 2, a.length);
-  assertSame("a", a["9007199254740989"]);
-  assertSame("b", a["9007199254740990"]);
+  assertUndefined(a["9007199254740989"]);
+  assertUndefined(a["9007199254740990"]);
   assertUndefined(a["9007199254740991"]);
 }
 
@@ -46,7 +46,7 @@ assertSame(Math.pow(2, 53) - 1, Number.MAX_SAFE_INTEGER);
   let a = {length: Number.MAX_SAFE_INTEGER - 1};
   assertThrows(TypeError, () => Array.prototype.push.call(a, ..."abc"));
   assertSame(Number.MAX_SAFE_INTEGER - 1, a.length);
-  assertSame("a", a["9007199254740990"]);
+  assertUndefined(a["9007199254740990"]);
   assertUndefined(a["9007199254740991"]);
   assertUndefined(a["9007199254740992"]);
 }
@@ -207,11 +207,11 @@ assertSame(Math.pow(2, 53) - 1, Number.MAX_SAFE_INTEGER);
 
 {
   let a = {length: Number.MAX_SAFE_INTEGER - 3};
-  assertThrows(TypeError, () => Array.prototype.splice.call(a, a.length, 0, ..."abc"));
-  assertSame(Number.MAX_SAFE_INTEGER - 3, a.length);
-  assertUndefined(a["9007199254740988"]);
-  assertUndefined(a["9007199254740989"]);
-  assertUndefined(a["9007199254740990"]);
+  Array.prototype.splice.call(a, a.length, 0, ..."abc");
+  assertSame(Number.MAX_SAFE_INTEGER, a.length);
+  assertSame("a", a["9007199254740988"]);
+  assertSame("b", a["9007199254740989"]);
+  assertSame("c", a["9007199254740990"]);
 }
 
 {
@@ -253,11 +253,11 @@ assertSame(Math.pow(2, 53) - 1, Number.MAX_SAFE_INTEGER);
 
 {
   let a = {length: Number.MAX_SAFE_INTEGER - 3};
-  assertThrows(TypeError, () => Array.prototype.splice.call(a, 0, 0, ..."abc"));
-  assertSame(Number.MAX_SAFE_INTEGER - 3, a.length);
-  assertUndefined(a["0"]);
-  assertUndefined(a["1"]);
-  assertUndefined(a["2"]);
+  Array.prototype.splice.call(a, 0, 0, ..."abc");
+  assertSame(Number.MAX_SAFE_INTEGER, a.length);
+  assertSame("a", a["0"]);
+  assertSame("b", a["1"]);
+  assertSame("c", a["2"]);
 }
 
 {
@@ -300,11 +300,11 @@ assertSame(Math.pow(2, 53) - 1, Number.MAX_SAFE_INTEGER);
 
 {
   let a = {length: Number.MAX_SAFE_INTEGER - 3};
-  assertThrows(TypeError, () => Array.prototype.unshift.call(a, ..."abc"));
-  assertSame(Number.MAX_SAFE_INTEGER - 3, a.length);
-  assertUndefined(a["0"]);
-  assertUndefined(a["1"]);
-  assertUndefined(a["2"]);
+  Array.prototype.unshift.call(a, ..."abc");
+  assertSame(Number.MAX_SAFE_INTEGER, a.length);
+  assertSame("a", a["0"]);
+  assertSame("b", a["1"]);
+  assertSame("c", a["2"]);
 }
 
 {

@@ -8,10 +8,12 @@
 {
   class P extends Promise {
     constructor(exec) {
+      let pending;
       super((resolve, reject) => {
         exec(resolve, reject);
-        Object.assign(this, {resolve, reject});
+        pending = {resolve, reject};
       });
+      Object.assign(this, pending);
     }
   }
 

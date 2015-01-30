@@ -35,8 +35,6 @@ import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.Loca
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.OptionsRecord;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ResolvedLocale;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -51,8 +49,7 @@ import com.ibm.icu.util.ULocale;
  * <li>11.2 Properties of the Intl.NumberFormat Constructor
  * </ul>
  */
-public final class NumberFormatConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<NumberFormatObject> {
+public final class NumberFormatConstructor extends BuiltinConstructor implements Initializable {
     /** [[availableLocales]] */
     private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
@@ -131,8 +128,8 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -258,6 +255,50 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
     }
 
     /**
+     * 11.1.1.1 InitializeNumberFormat (numberFormat, locales, options)
+     * 
+     * @param realm
+     *            the realm instance
+     * @param numberFormat
+     *            the number format object
+     */
+    public static void InitializeDefaultNumberFormat(Realm realm, NumberFormatObject numberFormat) {
+        /* steps 1-2 */
+        assert !numberFormat.isInitializedIntlObject();
+        numberFormat.setInitializedIntlObject(true);
+        /* steps 3-8 (not applicable) */
+        /* steps 9-10 */
+        NumberFormatLocaleData localeData = new NumberFormatLocaleData();
+        /* step 11 */
+        ResolvedLocale r = ResolveDefaultLocale(realm, relevantExtensionKeys, localeData);
+        /* step 12 */
+        numberFormat.setLocale(r.getLocale());
+        /* step 13 */
+        numberFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
+        /* step 14 */
+        @SuppressWarnings("unused")
+        String dataLocale = r.getDataLocale();
+        /* steps 15-16 */
+        numberFormat.setStyle("decimal");
+        /* steps 17-22 (not applicable) */
+        /* steps 23-24 */
+        numberFormat.setMinimumIntegerDigits(1);
+        /* steps 25-27 */
+        numberFormat.setMinimumFractionDigits(0);
+        /* steps 28-30 */
+        numberFormat.setMaximumFractionDigits(3);
+        /* steps 31-33 (not applicable) */
+        /* steps 34-35 */
+        numberFormat.setUseGrouping(true);
+        /* steps 36-41 */
+        // not applicable
+        /* step 42 */
+        numberFormat.setBoundFormat(null);
+        /* step 43 */
+        numberFormat.setInitializedNumberFormat(true);
+    }
+
+    /**
      * Abstract Operation: CurrencyDigits
      * 
      * @param c
@@ -314,7 +355,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         Object options = argument(args, 1);
         /* step 3 */
         if (Type.isUndefined(thisValue) || thisValue == calleeContext.getIntrinsic(Intrinsics.Intl)) {
-            return construct(calleeContext, args);
+            return construct(calleeContext, this, args);
         }
         /* step 4 */
         ScriptObject obj = ToObject(calleeContext, thisValue);
@@ -332,21 +373,28 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
      * 11.1.3.1 new Intl.NumberFormat ([locales [, options]])
      */
     @Override
-    public NumberFormatObject construct(ExecutionContext callerContext, Object... args) {
-        NumberFormatObject obj = new NumberFormatObject(callerContext.getRealm());
-        obj.setPrototype(callerContext.getIntrinsic(Intrinsics.Intl_NumberFormatPrototype));
+    public NumberFormatObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        NumberFormatObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.Intl_NumberFormatPrototype, NumberFormatObjectAllocator.INSTANCE);
         /* step 1 */
         Object locales = argument(args, 0);
         /* step 2 */
         Object options = argument(args, 1);
         /* step 3 */
-        InitializeNumberFormat(callerContext, obj, locales, options);
+        InitializeNumberFormat(calleeContext, obj, locales, options);
         return obj;
     }
 
-    @Override
-    public CreateAction<NumberFormatObject> createAction() {
-        return NumberFormatCreate.INSTANCE;
+    private static final class NumberFormatObjectAllocator implements
+            ObjectAllocator<NumberFormatObject> {
+        static final ObjectAllocator<NumberFormatObject> INSTANCE = new NumberFormatObjectAllocator();
+
+        @Override
+        public NumberFormatObject newInstance(Realm realm) {
+            return new NumberFormatObject(realm);
+        }
     }
 
     /**
@@ -396,27 +444,6 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
             /* step 4 */
             return SupportedLocales(cx, availableLocales, requestedLocales, options);
-        }
-    }
-
-    private static final class NumberFormatObjectAllocator implements
-            ObjectAllocator<NumberFormatObject> {
-        static final ObjectAllocator<NumberFormatObject> INSTANCE = new NumberFormatObjectAllocator();
-
-        @Override
-        public NumberFormatObject newInstance(Realm realm) {
-            return new NumberFormatObject(realm);
-        }
-    }
-
-    private static final class NumberFormatCreate implements CreateAction<NumberFormatObject> {
-        static final CreateAction<NumberFormatObject> INSTANCE = new NumberFormatCreate();
-
-        @Override
-        public NumberFormatObject create(ExecutionContext cx, Constructor constructor,
-                Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor,
-                    Intrinsics.Intl_NumberFormatPrototype, NumberFormatObjectAllocator.INSTANCE);
         }
     }
 }

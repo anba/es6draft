@@ -130,6 +130,11 @@ public final class FunctionDeclaration extends HoistableDeclaration implements F
     }
 
     @Override
+    public boolean isConstructor() {
+        return true;
+    }
+
+    @Override
     public boolean isConstDeclaration() {
         return false;
     }

@@ -6,7 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.objects.date;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToPrimitive;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.date.DateAbstractOperations.*;
@@ -24,10 +27,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.date.DatePrototype.DateString;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Creatable;
-import com.github.anba.es6draft.runtime.types.CreateAction;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
@@ -39,8 +39,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>20.3.3 Properties of the Date Constructor
  * </ul>
  */
-public final class DateConstructor extends BuiltinConstructor implements Initializable,
-        Creatable<DateObject> {
+public final class DateConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Date constructor function.
      * 
@@ -52,8 +51,8 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
     }
 
     @Override
-    public void initialize(ExecutionContext cx) {
-        createProperties(cx, this, Properties.class);
+    public void initialize(Realm realm) {
+        createProperties(realm, this, Properties.class);
     }
 
     @Override
@@ -67,60 +66,74 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
      * 20.3.2.3 Date ( )<br>
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public String call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = calleeContext();
+        /* steps 1-3 (not applicable) */
+        /* step 4 */
+        long now = System.currentTimeMillis();
+        return DatePrototype.ToDateString(calleeContext, now, DateString.DateTime);
+    }
+
+    /**
+     * 20.3.2.1 Date (year, month [, date [, hours [, minutes [, seconds [, ms ] ] ] ] ] )<br>
+     * 20.3.2.2 Date (value)<br>
+     * 20.3.2.3 Date ( )<br>
+     */
+    @Override
+    public DateObject construct(ExecutionContext callerContext, Constructor newTarget,
+            Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Realm realm = calleeContext.getRealm();
         /* steps 1-2 */
         int numberOfArgs = args.length;
-        /* steps 3-4 */
+        /* step 3 */
+        final double dateValue;
         if (numberOfArgs >= 2) {
             // [20.3.2.1]
-            if (isUninitializedDateObject(thisValue)) {
-                DateObject obj = (DateObject) thisValue;
-                double year = ToNumber(calleeContext, args[0]);
-                double month = ToNumber(calleeContext, args[1]);
-                double date = (args.length > 2 ? ToNumber(calleeContext, args[2]) : 1);
-                double hour = (args.length > 3 ? ToNumber(calleeContext, args[3]) : 0);
-                double min = (args.length > 4 ? ToNumber(calleeContext, args[4]) : 0);
-                double sec = (args.length > 5 ? ToNumber(calleeContext, args[5]) : 0);
-                double ms = (args.length > 6 ? ToNumber(calleeContext, args[6]) : 0);
-                if (!Double.isNaN(year) && 0 <= ToInteger(year) && ToInteger(year) <= 99) {
-                    year = 1900 + ToInteger(year);
-                }
-                double finalDate = MakeDate(MakeDay(year, month, date),
-                        MakeTime(hour, min, sec, ms));
-                obj.setDateValue(TimeClip(UTC(realm, finalDate)));
-                return obj;
+            double year = ToNumber(calleeContext, args[0]);
+            double month = ToNumber(calleeContext, args[1]);
+            double date = (args.length > 2 ? ToNumber(calleeContext, args[2]) : 1);
+            double hour = (args.length > 3 ? ToNumber(calleeContext, args[3]) : 0);
+            double min = (args.length > 4 ? ToNumber(calleeContext, args[4]) : 0);
+            double sec = (args.length > 5 ? ToNumber(calleeContext, args[5]) : 0);
+            double ms = (args.length > 6 ? ToNumber(calleeContext, args[6]) : 0);
+            if (!Double.isNaN(year) && 0 <= ToInteger(year) && ToInteger(year) <= 99) {
+                year = 1900 + ToInteger(year);
             }
+            double finalDate = MakeDate(MakeDay(year, month, date), MakeTime(hour, min, sec, ms));
+            dateValue = TimeClip(UTC(realm, finalDate));
         } else if (numberOfArgs == 1) {
             // [20.3.2.2]
-            if (isUninitializedDateObject(thisValue)) {
-                DateObject obj = (DateObject) thisValue;
-                double tv;
-                if (args[0] instanceof DateObject) {
-                    tv = thisTimeValue(calleeContext, args[0]);
+            double tv;
+            if (args[0] instanceof DateObject) {
+                tv = thisTimeValue(calleeContext, args[0]);
+            } else {
+                Object v = ToPrimitive(calleeContext, args[0]);
+                if (Type.isString(v)) {
+                    tv = (double) Properties.parse(calleeContext, null, v);
                 } else {
-                    Object v = ToPrimitive(calleeContext, args[0]);
-                    if (Type.isString(v)) {
-                        tv = (double) Properties.parse(calleeContext, null, v);
-                    } else {
-                        tv = ToNumber(calleeContext, v);
-                    }
+                    tv = ToNumber(calleeContext, v);
                 }
-                obj.setDateValue(TimeClip(tv));
-                return obj;
             }
+            dateValue = TimeClip(tv);
         } else {
             // [20.3.2.3]
-            if (isUninitializedDateObject(thisValue)) {
-                DateObject obj = (DateObject) thisValue;
-                obj.setDateValue(System.currentTimeMillis());
-                return obj;
-            }
+            dateValue = System.currentTimeMillis();
         }
-        /* step 5 */
-        long now = System.currentTimeMillis();
-        return DatePrototype.ToDateString(calleeContext, now, DateString.DateTime);
+        DateObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.DatePrototype, DateObjectAllocator.INSTANCE);
+        obj.setDateValue(dateValue);
+        return obj;
+        /* step 4 (not applicable) */
+    }
+
+    private static final class DateObjectAllocator implements ObjectAllocator<DateObject> {
+        static final ObjectAllocator<DateObject> INSTANCE = new DateObjectAllocator();
+
+        @Override
+        public DateObject newInstance(Realm realm) {
+            return new DateObject(realm);
+        }
     }
 
     /**
@@ -134,33 +147,9 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
      */
     private static double thisTimeValue(ExecutionContext cx, Object object) {
         if (object instanceof DateObject) {
-            DateObject obj = (DateObject) object;
-            if (obj.isInitialized()) {
-                return obj.getDateValue();
-            }
-            throw newTypeError(cx, Messages.Key.UninitializedObject);
+            return ((DateObject) object).getDateValue();
         }
         throw newTypeError(cx, Messages.Key.IncompatibleObject);
-    }
-
-    private static boolean isUninitializedDateObject(Object thisValue) {
-        if (thisValue instanceof DateObject) {
-            return !((DateObject) thisValue).isInitialized();
-        }
-        return false;
-    }
-
-    /**
-     * 20.3.2.4 new Date ( ... argumentsList)
-     */
-    @Override
-    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return Construct(callerContext, this, args);
-    }
-
-    @Override
-    public CreateAction<DateObject> createAction() {
-        return DateCreate.INSTANCE;
     }
 
     /**
@@ -272,25 +261,6 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
         @Function(name = "now", arity = 0)
         public static Object now(ExecutionContext cx, Object thisValue) {
             return (double) System.currentTimeMillis();
-        }
-    }
-
-    private static final class DateObjectAllocator implements ObjectAllocator<DateObject> {
-        static final ObjectAllocator<DateObject> INSTANCE = new DateObjectAllocator();
-
-        @Override
-        public DateObject newInstance(Realm realm) {
-            return new DateObject(realm);
-        }
-    }
-
-    private static final class DateCreate implements CreateAction<DateObject> {
-        static final CreateAction<DateObject> INSTANCE = new DateCreate();
-
-        @Override
-        public DateObject create(ExecutionContext cx, Constructor constructor, Object... args) {
-            return OrdinaryCreateFromConstructor(cx, constructor, Intrinsics.DatePrototype,
-                    DateObjectAllocator.INSTANCE);
         }
     }
 }

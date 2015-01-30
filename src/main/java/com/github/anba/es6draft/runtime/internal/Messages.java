@@ -120,6 +120,7 @@ public final class Messages {
         InvalidSuperExpression("parser.invalid_super_expression"),
         InvalidNewSuperExpression("invalid_new_super_expression"),
         InvalidSuperCallExpression("invalid_super_call_expression"),
+        InvalidNewTarget("parser.invalid_new_target"),
         MissingColonAfterPropertyId("parser.missing_colon_after_property_id"),
         DuplicatePropertyDefinition("parser.duplicate_property_definition"),
         InvalidReturnStatement("parser.invalid_return_statement"),
@@ -158,6 +159,7 @@ public final class Messages {
         UninitializedBinding("reference.uninitialized_binding"),
         UnresolvableReference("reference.unresolvable_reference"),
         InvalidReference("reference.invalid_reference"),
+        UninitializedThis("reference.uninitialized_this"),
         // TypeError
         ImmutableBinding("type.immutable_binding"),
         PropertyNotModifiable("type.property_not_modifiable"),
@@ -184,6 +186,10 @@ public final class Messages {
         FunctionNotCloneable("type.function_not_cloneable"),
         PropertyNotCallable("type.property_not_callable"),
         InvalidSuperClass("type.invalid_super_class"),
+        InvalidCall("type.invalid_call"),
+        MissingNewTarget("type.missing_new_target"),
+        NotObjectTypeFromConstructor("type.not_object_type_from_constructor"),
+        InitializedThis("type.initialized_this"),
 
         // TODO: unused
         MethodNotFound("type.method_not_found"),
@@ -273,6 +279,7 @@ public final class Messages {
         InvalidByteLength("binary.invalid_bytelength"),
         InvalidByteOffset("binary.invalid_byteoffset"),
         InvalidBufferSize("binary.invalid_buffersize"),
+        InvalidTypedArrayConstructor("binary.invalid_typed_array_constructor"),
 
         // 25.3 Generator Objects
         GeneratorExecuting("generator.executing"),
