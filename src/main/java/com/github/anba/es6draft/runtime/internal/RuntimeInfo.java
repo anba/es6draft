@@ -16,6 +16,7 @@ import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 
 /**
  * Classes for function and script code bootstrapping.
@@ -329,12 +330,15 @@ public final class RuntimeInfo {
          *            the realm
          * @param moduleSet
          *            the module set
+         * @param identifierMap
+         *            the source identifier map
          * @throws ResolutionException
          *             if any export or import binding cannot be resolved
          */
         void moduleDeclarationInstantiation(ExecutionContext cx,
                 LexicalEnvironment<ModuleEnvironmentRecord> env, Realm realm,
-                Map<String, ModuleRecord> moduleSet) throws ResolutionException;
+                Map<SourceIdentifier, ModuleRecord> moduleSet,
+                Map<String, SourceIdentifier> identifierMap) throws ResolutionException;
 
         /**
          * Performs 15.2.1.22 Runtime Semantics: ModuleEvaluation.
@@ -370,9 +374,10 @@ public final class RuntimeInfo {
         @Override
         public void moduleDeclarationInstantiation(ExecutionContext cx,
                 LexicalEnvironment<ModuleEnvironmentRecord> env, Realm realm,
-                Map<String, ModuleRecord> moduleSet) {
+                Map<SourceIdentifier, ModuleRecord> moduleSet,
+                Map<String, SourceIdentifier> identifierMap) {
             try {
-                initialization.invokeExact(cx, env, realm, moduleSet);
+                initialization.invokeExact(cx, env, realm, moduleSet, identifierMap);
             } catch (RuntimeException | Error e) {
                 throw e;
             } catch (Throwable e) {

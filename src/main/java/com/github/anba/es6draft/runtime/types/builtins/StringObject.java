@@ -116,7 +116,7 @@ public final class StringObject extends OrdinaryObject {
      */
     @Override
     protected boolean has(ExecutionContext cx, long propertyKey) {
-        // FIXME: spec bug - don't traverse proto chain for own indexed properties!
+        // FIXME: spec bug - don't traverse proto chain for own indexed properties! (bug 3618)
         boolean hasOrdinary = ordinaryHasOwnProperty(propertyKey);
         if (hasOrdinary) {
             return true;

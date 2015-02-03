@@ -34,6 +34,7 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.Source;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
 import com.github.anba.es6draft.runtime.objects.collection.WeakMapObject;
@@ -199,7 +200,7 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         } else {
             realm = cx.getRealm();
         }
-        String normalizedModuleName = NormalizeModuleName(cx, realm, moduleName, null);
+        SourceIdentifier normalizedModuleName = NormalizeModuleName(cx, realm, moduleName, null);
         ModuleEvaluationJob(cx, realm, normalizedModuleName);
         return GetModuleNamespace(cx, realm, normalizedModuleName);
     }

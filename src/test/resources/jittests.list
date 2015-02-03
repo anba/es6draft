@@ -53,6 +53,9 @@ tests/for-of/semantics-10.js
 # SM issue: destructuring and default parameters not supported in Function
 tests/basic/destructuring-default.js
 
+# SM: toStringTag not implemented
+tests/proxy/operations-on-revoked.js
+
 
 ###################
 # Misc issues     #

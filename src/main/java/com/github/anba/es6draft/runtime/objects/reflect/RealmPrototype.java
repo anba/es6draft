@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects.reflect;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataPropertyOrThrow;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListFromArrayLike;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.Realm.SetDefaultGlobalBindings;
@@ -199,15 +198,13 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
                     String propertyKey = (String) key;
                     Property prop = globalObject.getOwnProperty(cx, propertyKey);
                     if (prop != null) {
-                        Object desc = FromPropertyDescriptor(cx, prop);
-                        CreateDataPropertyOrThrow(cx, props, propertyKey, desc);
+                        CreateDataProperty(cx, props, propertyKey, FromPropertyDescriptor(cx, prop));
                     }
                 } else {
                     Symbol propertyKey = (Symbol) key;
                     Property prop = globalObject.getOwnProperty(cx, propertyKey);
                     if (prop != null) {
-                        Object desc = FromPropertyDescriptor(cx, prop);
-                        CreateDataPropertyOrThrow(cx, props, propertyKey, desc);
+                        CreateDataProperty(cx, props, propertyKey, FromPropertyDescriptor(cx, prop));
                     }
                 }
             }

@@ -31,7 +31,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -224,10 +223,7 @@ public class ProxyObject implements ScriptObject {
 
         @Override
         public String toSource(SourceSelector selector) {
-            if (isRevoked()) {
-                return FunctionSource.noSource(selector);
-            }
-            return ((Callable) getProxyTarget()).toSource(selector);
+            return FunctionSource.nativeCode(selector, "");
         }
     }
 
@@ -339,17 +335,6 @@ public class ProxyObject implements ScriptObject {
     }
 
     /**
-     * Java {@code null} to {@link Null#NULL}.
-     * 
-     * @param value
-     *            the value
-     * @return either <var>value</var> or {@link Null#NULL}
-     */
-    private static Object maskNull(Object value) {
-        return value != null ? value : NULL;
-    }
-
-    /**
      * 9.5.1 [[GetPrototypeOf]] ( )
      */
     @Override
@@ -404,7 +389,8 @@ public class ProxyObject implements ScriptObject {
             return target.setPrototypeOf(cx, prototype);
         }
         /* steps 9-10 */
-        boolean trapResult = ToBoolean(trap.call(cx, handler, target, maskNull(prototype)));
+        Object prototypeValue = prototype != null ? prototype : NULL;
+        boolean trapResult = ToBoolean(trap.call(cx, handler, target, prototypeValue));
         /* steps 11-12 */
         boolean extensibleTarget = IsExtensible(cx, target);
         /* step 13 */

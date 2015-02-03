@@ -143,7 +143,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
             throw newRangeError(cx, Messages.Key.InvalidBufferSize);
         }
         /* steps 6-8 */
-        // FIXME: spec bug
+        // FIXME: spec bug (bug 3653)
         /* step 9 */
         return AllocateTypedArray(cx, newTarget, elementLength);
     }

@@ -8,8 +8,10 @@ package com.github.anba.es6draft.traceur;
 
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.github.anba.es6draft.runtime.internal.FileModuleLoader;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 
 /**
  * 
@@ -20,11 +22,13 @@ final class TraceurFileModuleLoader extends FileModuleLoader {
     }
 
     @Override
-    public String normalizeName(String unnormalizedName, String referrerId) {
+    public FileSourceIdentifier normalizeName(String unnormalizedName, SourceIdentifier referrerId) {
         try {
-            String normalizedName = super.normalizeName(unnormalizedName, referrerId);
-            if (!normalizedName.endsWith(".js")) {
-                normalizedName += ".js";
+            FileSourceIdentifier normalizedName = super.normalizeName(unnormalizedName, referrerId);
+            Path fileName = normalizedName.getPath().getFileName();
+            if (!fileName.toString().endsWith(".js")) {
+                Path path = Paths.get(normalizedName.getPath() + ".js");
+                normalizedName = new FileSourceIdentifier(path);
             }
             return normalizedName;
         } catch (InvalidPathException e) {

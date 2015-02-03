@@ -328,7 +328,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 long srcByteIndex;
                 if (SameValue(srcBuffer, targetBuffer)) {
                     srcBuffer = CloneArrayBuffer(cx, srcBuffer, srcByteOffset);
-                    // FIXME: spec bug - change to assert?
+                    // FIXME: spec bug - change to assert? (bug 3699)
                     if (IsDetachedBuffer(targetBuffer)) {
                         throw newTypeError(cx, Messages.Key.BufferDetached);
                     }
@@ -584,23 +584,17 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             /* step 4 */
             long len = obj.getArrayLength();
 
+            // return if array is empty or has only one element
+            if (len <= 1) {
+                return obj;
+            }
             // handle OOM early
             if (len > Integer.MAX_VALUE) {
                 throw newInternalError(cx, Messages.Key.OutOfMemory);
             }
-            int length = (int) len;
-            if (length == 0) {
-                return obj;
-            }
-            if (length == 1) {
-                // Just to trigger possible side-effects (which shouldn't actually be possible
-                // unless there's a spec bug...)
-                Object e = Get(cx, obj, 0);
-                assert Type.isNumber(e);
-                Put(cx, obj, 0, e, true);
-                return obj;
-            }
 
+            // collect elements
+            int length = (int) len;
             double[] elements = new double[length];
             for (int i = 0; i < length; ++i) {
                 int index = i;
@@ -1038,7 +1032,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             }
             TypedArrayObject array = (TypedArrayObject) thisValue;
             /* steps 4-5 */
-            // FIXME: spec bug - `name` is never undefined
+            // FIXME: spec bug - `name` is never undefined (bug 3656)
             /* step 6 (not applicable) */
             /* step 7 */
             return array.getTypedArrayName();

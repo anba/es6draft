@@ -15,6 +15,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -71,6 +72,9 @@ import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.*;
+import com.github.anba.es6draft.runtime.modules.ModuleLoader;
+import com.github.anba.es6draft.runtime.modules.ModuleSource;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -166,7 +170,9 @@ public final class Repl {
 
         String getSourceCode() throws IOException;
 
-        String getModuleName();
+        SourceIdentifier getModuleName();
+
+        ModuleSource getModuleSource() throws IOException;
     }
 
     private static final class EvalString implements EvalScript {
@@ -188,8 +194,14 @@ public final class Repl {
         }
 
         @Override
-        public String getModuleName() {
-            return "eval-module-" + moduleIds.incrementAndGet();
+        public SourceIdentifier getModuleName() {
+            return new EvalSourceIdentifier("eval-module-" + moduleIds.incrementAndGet(),
+                    URI.create(""));
+        }
+
+        @Override
+        public ModuleSource getModuleSource() {
+            return new EvalModuleSource(getSourceCode(), getSource());
         }
     }
 
@@ -213,13 +225,74 @@ public final class Repl {
                 throw new FileNotFoundException(message);
             }
             byte[] content = Files.readAllBytes(filePath);
-            String source = new String(content, StandardCharsets.UTF_8);
-            return source;
+            return new String(content, StandardCharsets.UTF_8);
         }
 
         @Override
-        public String getModuleName() {
-            return Paths.get("").toAbsolutePath().toUri().relativize(path.toUri()).toString();
+        public SourceIdentifier getModuleName() {
+            URI file = Paths.get("").toAbsolutePath().toUri().relativize(path.toUri());
+            return new EvalSourceIdentifier(file.toString(), file);
+        }
+
+        @Override
+        public ModuleSource getModuleSource() throws IOException {
+            return new EvalModuleSource(getSourceCode(), getSource());
+        }
+    }
+
+    private static final class EvalSourceIdentifier implements SourceIdentifier {
+        private final String name;
+        private final URI uri;
+
+        EvalSourceIdentifier(String name, URI uri) {
+            this.name = name;
+            this.uri = uri;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof EvalSourceIdentifier) {
+                return name.equals(((EvalSourceIdentifier) obj).name);
+            }
+            if (obj instanceof SourceIdentifier) {
+                return uri.equals(((SourceIdentifier) obj).toUri());
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return name.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        @Override
+        public URI toUri() {
+            return uri;
+        }
+    }
+
+    private static final class EvalModuleSource implements ModuleSource {
+        private final String sourceCode;
+        private final Source source;
+
+        public EvalModuleSource(String sourceCode, Source source) {
+            this.sourceCode = sourceCode;
+            this.source = source;
+        }
+
+        @Override
+        public String sourceCode() {
+            return sourceCode;
+        }
+
+        @Override
+        public Source toSource() {
+            return source;
         }
     }
 
@@ -870,13 +943,12 @@ public final class Repl {
         @Override
         public void execute() {
             try {
-                Source source = evalScript.getSource();
-                String sourceCode = evalScript.getSourceCode();
-                String moduleName = evalScript.getModuleName();
+                ModuleSource source = evalScript.getModuleSource();
+                SourceIdentifier moduleName = evalScript.getModuleName();
                 try {
-                    ModuleEvaluationJob(realm, moduleName, sourceCode);
+                    ModuleEvaluationJob(realm, moduleName, source);
                 } catch (ParserException e) {
-                    throw new ParserExceptionWithSource(e, source, sourceCode);
+                    throw new ParserExceptionWithSource(e, source.toSource(), source.sourceCode());
                 }
             } catch (IOException e) {
                 throw new UncheckedIOException(e);

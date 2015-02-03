@@ -402,7 +402,6 @@ public class InstructionAssembler {
      *            the catch handler label
      * @param type
      *            the exception type
-     * @see MethodVisitor#visitTryCatchBlock(Label, Label, Label, String)
      */
     public void tryCatch(TryCatchLabel start, TryCatchLabel end, TryCatchLabel handler, Type type) {
         methodVisitor.visitTryCatchBlock(start.label(), end.label(), handler.label(),
@@ -418,7 +417,6 @@ public class InstructionAssembler {
      *            the end label of the try-finally block
      * @param handler
      *            the finally handler label
-     * @see MethodVisitor#visitTryCatchBlock(Label, Label, Label, String)
      */
     public void tryFinally(TryCatchLabel start, TryCatchLabel end, TryCatchLabel handler) {
         methodVisitor.visitTryCatchBlock(start.label(), end.label(), handler.label(), null);

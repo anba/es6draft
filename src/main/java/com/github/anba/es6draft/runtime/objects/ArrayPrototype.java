@@ -30,7 +30,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.ArrayIterationKind;
-import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypePrototype;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
@@ -150,8 +149,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
     }
 
     private static IterationKind iterationKind(TypedArrayObject typedArray) {
-        ArrayBufferObject buffer = typedArray.getBuffer();
-        if (buffer == null || buffer.isDetached()) {
+        if (typedArray.getBuffer().isDetached()) {
             return IterationKind.Slow;
         }
         return IterationKind.TypedArray;
@@ -447,7 +445,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     /* steps 7.d.ii-7.d.iii */
                     long len = ToLength(cx, Get(cx, e, "length"));
                     /* step 7.d.iv */
-                    // FIXME: spec bug - change ">=" to ">"
+                    // FIXME: spec bug - change ">=" to ">" (bug 3649)
                     if (n + len > ARRAY_LENGTH_LIMIT) {
                         throw newTypeError(cx, Messages.Key.InvalidArrayLength);
                     }
@@ -483,10 +481,6 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 }
             }
             /* steps 8-9 */
-            // FIXME: Handle 2^53-1 limit
-            /*
-             * [].concat({[Symbol.isConcatSpreadable]:true, length:Number.MAX_SAFE_INTEGER}, {[Symbol.isConcatSpreadable]:true, length:Number.MAX_SAFE_INTEGER}) 
-             */
             assert n <= ARRAY_LENGTH_LIMIT;
             Put(cx, a, "length", n, true);
             /* step 10 */
@@ -509,6 +503,13 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             for (long k = 0; k < actualLength; ++k) {
                 Object subElement = Get(cx, e, k);
                 CreateDataPropertyOrThrow(cx, a, offset + k, subElement);
+            }
+            // FIXME: spec bug - (bug 3619)
+            // Fill remaining entries with undefined
+            if (length > actualLength) {
+                for (long k = actualLength; k < length; ++k) {
+                    CreateDataPropertyOrThrow(cx, a, offset + k, UNDEFINED);
+                }
             }
         }
 
@@ -711,7 +712,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             long len = ToLength(cx, Get(cx, o, "length"));
             /* step 5 (not applicable) */
             /* steps 6-7 */
-            // FIXME: spec bug - change ">=" to ">"
+            // FIXME: spec bug - change ">=" to ">" (bug 3650)
             if (len + items.length > ARRAY_LENGTH_LIMIT) {
                 throw newTypeError(cx, Messages.Key.InvalidArrayLength);
             }
@@ -1080,6 +1081,10 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* steps 2-3 */
             long len = ToLength(cx, Get(cx, obj, "length"));
 
+            // return if array is empty or has only one element
+            if (len <= 1) {
+                return obj;
+            }
             IterationKind iteration = iterationKind(obj, len);
             if (iteration.isSparse()) {
                 sortSparse(cx, (OrdinaryObject) obj, len, comparefn, iteration.isInherited());

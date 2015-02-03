@@ -48,6 +48,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.Parallelized;
@@ -175,7 +176,8 @@ public final class TraceurTest {
         if (test.isModule()) {
             Realm realm = global.getRealm();
             ExecutionContext cx = realm.defaultContext();
-            String normalizedModuleName = NormalizeModuleName(cx, realm, test.toModuleName(), null);
+            SourceIdentifier normalizedModuleName = NormalizeModuleName(cx, realm,
+                    test.toModuleName(), null);
             ModuleEvaluationJob(cx, realm, normalizedModuleName);
         } else {
             global.eval(test.getScript(), test.toFile());

@@ -1592,8 +1592,8 @@ public final class Parser {
                 String functionName = "anonymous";
                 BindingIdentifier identifier = new BindingIdentifier(beginSource(), beginSource(),
                         functionName);
-                String header = String.format("(%s) ", formals);
-                String body = String.format("\n%s\n", bodyText);
+                String header = formatParameters(formals);
+                String body = formatBody(bodyText);
 
                 FunctionContext scope = context.funContext;
                 function = new FunctionDeclaration(beginSource(), ts.endPosition(), scope,
@@ -1661,8 +1661,8 @@ public final class Parser {
                 String functionName = "anonymous";
                 BindingIdentifier identifier = new BindingIdentifier(beginSource(), beginSource(),
                         functionName);
-                String header = String.format("(%s) ", formals);
-                String body = String.format("\n%s\n", bodyText);
+                String header = formatParameters(formals);
+                String body = formatBody(bodyText);
 
                 FunctionContext scope = context.funContext;
                 generator = new GeneratorDeclaration(beginSource(), ts.endPosition(), scope,
@@ -1694,6 +1694,16 @@ public final class Parser {
         scope.node = script;
 
         return script;
+    }
+
+    private static String formatParameters(String formals) {
+        return new StringBuilder(formals.length() + 3).append('(').append(formals).append(')')
+                .append(' ').toString();
+    }
+
+    private static String formatBody(String body) {
+        return new StringBuilder(body.length() + 2).append('\n').append(body).append('\n')
+                .toString();
     }
 
     private static boolean hasUnsafeTrailingCharacters(String s, int start) {
@@ -2290,9 +2300,13 @@ public final class Parser {
      * @return the parsed list of directives
      */
     private List<StatementListItem> directivePrologue() {
+        if (token() != Token.STRING) {
+            applyStrictMode(false);
+            return emptyList();
+        }
         InlineArrayList<StatementListItem> statements = newList();
         boolean strict = false;
-        directive: while (token() == Token.STRING) {
+        directive: do {
             long begin = ts.beginPosition();
             boolean hasEscape = ts.hasEscape(); // peek() clears hasEscape if next token is string
             Token next = peek();
@@ -2315,7 +2329,7 @@ public final class Parser {
             StringLiteral stringLiteral = new StringLiteral(begin, ts.endPosition(), string);
             semicolon();
             statements.add(new ExpressionStatement(begin, ts.endPosition(), stringLiteral));
-        }
+        } while (token() == Token.STRING);
         applyStrictMode(strict);
         return statements;
     }
@@ -7279,50 +7293,58 @@ public final class Parser {
 
     private void superPropertyAccess() {
         ParseContext superContext = context.findSuperContext();
-        super_EarlyErrors(superContext);
+        // 15.1.1 Static Semantics: Early Errors
+        // 15.2.1.1 Static Semantics: Early Errors
+        if ((superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionCode))
+                || superContext.kind == ContextKind.Module) {
+            reportSyntaxError(Messages.Key.InvalidSuperExpression);
+        }
         superContext.setNeedsSuperBinding();
     }
 
     private void superCall() {
         ParseContext superContext = context.findSuperContext();
-        super_EarlyErrors(superContext);
         // 12.2.5.1 Static Semantics: Early Errors
+        // 14.1.2 Static Semantics: Early Errors
+        // 14.4.1 Static Semantics: Early Errors
         // 14.5.1 Static Semantics: Early Errors
-        if (!(superContext.kind.isMethod() && superContext.isConstructor)) {
+        // 15.1.1 Static Semantics: Early Errors
+        // 15.2.1.1 Static Semantics: Early Errors
+        if ((superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionCode))
+                || superContext.kind == ContextKind.Module
+                || superContext.kind == ContextKind.Function
+                || superContext.kind == ContextKind.Generator
+                || superContext.kind == ContextKind.AsyncFunction
+                || (superContext.kind.isMethod() && !superContext.isConstructor)) {
             reportSyntaxError(Messages.Key.InvalidSuperCallExpression);
         }
     }
 
     private void superNew() {
         ParseContext superContext = context.findSuperContext();
-        super_EarlyErrors(superContext);
         // 12.2.5.1 Static Semantics: Early Errors
-        // 14.1.2 Static Semantics: Early Errors
         // 14.4.1 Static Semantics: Early Errors
         // 14.5.1 Static Semantics: Early Errors
-        if (superContext.kind.isMethod() && !superContext.isConstructor
-                || superContext.kind.isGenerator()) {
+        // 15.1.1 Static Semantics: Early Errors
+        // 15.2.1.1 Static Semantics: Early Errors
+        if ((superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionCode))
+                || superContext.kind == ContextKind.Module
+                || superContext.kind == ContextKind.Generator
+                || superContext.kind == ContextKind.AsyncFunction
+                || (superContext.kind.isMethod() && !superContext.isConstructor)) {
             reportSyntaxError(Messages.Key.InvalidNewSuperExpression);
         }
     }
 
     private void newTarget() {
         ParseContext superContext = context.findSuperContext();
-        super_EarlyErrors(superContext);
-        if (superContext.kind.isMethod() && !superContext.isConstructor) {
-            reportSyntaxError(Messages.Key.InvalidNewTarget);
-        }
-    }
-
-    private void super_EarlyErrors(ParseContext superContext) {
-        // FIXME: spec bug - search for first non-lexical context.
-        // FIXME: spec bug - super within eval code (bug 1204)
         // 15.1.1 Static Semantics: Early Errors
         // 15.2.1.1 Static Semantics: Early Errors
-        if (superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionCode)
+        if ((superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionCode))
                 || superContext.kind == ContextKind.Module) {
-            reportSyntaxError(Messages.Key.InvalidSuperExpression);
+            reportSyntaxError(Messages.Key.InvalidNewTarget);
         }
+        // FIXME: spec bug - add early error for `new.target` outside of constructor functions?
     }
 
     /**

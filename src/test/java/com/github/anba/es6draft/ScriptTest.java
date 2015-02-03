@@ -38,6 +38,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.TestConfiguration;
@@ -118,7 +119,8 @@ public class ScriptTest {
         if (test.isModule()) {
             Realm realm = global.getRealm();
             ExecutionContext cx = realm.defaultContext();
-            String normalizedModuleName = NormalizeModuleName(cx, realm, test.toModuleName(), null);
+            SourceIdentifier normalizedModuleName = NormalizeModuleName(cx, realm,
+                    test.toModuleName(), null);
             ModuleEvaluationJob(cx, realm, normalizedModuleName);
         } else {
             global.eval(test.getScript(), test.toFile());

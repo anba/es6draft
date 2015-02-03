@@ -35,12 +35,13 @@ import com.github.anba.es6draft.runtime.ShadowRealm;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.FileModuleLoader;
-import com.github.anba.es6draft.runtime.internal.ModuleLoader;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
+import com.github.anba.es6draft.runtime.modules.ModuleLoader;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
@@ -133,11 +134,12 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         // Evaluate additional initialization scripts and modules
         for (PreloadedModule preloadModule : modules) {
             Realm realm = global.getRealm();
-            String moduleName = preloadModule.getModuleName();
-            LinkedHashMap<String, ModuleRecord> newModuleSet = preloadModule.copyRequires();
+            SourceIdentifier moduleName = preloadModule.getModuleName();
+            LinkedHashMap<SourceIdentifier, ModuleRecord> newModuleSet = preloadModule
+                    .getRequires();
             assert newModuleSet.containsKey(moduleName);
             ModuleRecord module = newModuleSet.get(moduleName);
-            LinkModules(realm.defaultContext(), realm, newModuleSet);
+            LinkModules(realm, newModuleSet);
             ModuleEvaluation(module, realm);
         }
         for (Script script : scripts) {
@@ -188,9 +190,9 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         PreloaderRealm realm = new PreloaderRealm(moduleLoader, scriptLoader);
         ArrayList<PreloadedModule> modules = new ArrayList<>();
         for (String moduleName : toStrings(moduleNames)) {
-            String normalizedModuleName = NormalizeModuleName(realm, moduleName, null);
+            SourceIdentifier normalizedModuleName = NormalizeModuleName(realm, moduleName, null);
             if (!realm.getModules().containsKey(normalizedModuleName)) {
-                LinkedHashMap<String, ModuleRecord> newModules = new LinkedHashMap<>();
+                LinkedHashMap<SourceIdentifier, ModuleRecord> newModules = new LinkedHashMap<>();
                 ModuleRecord module = ParseModuleAndImports(realm, normalizedModuleName, newModules);
                 realm.getModules().putAll(newModules);
                 modules.add(new PreloadedModule(module, newModules));
@@ -201,20 +203,21 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
 
     private static final class PreloadedModule {
         private final ModuleRecord module;
-        private final LinkedHashMap<String, ModuleRecord> requires;
+        private final LinkedHashMap<SourceIdentifier, ModuleRecord> requires;
 
-        PreloadedModule(ModuleRecord module, LinkedHashMap<String, ModuleRecord> requires) {
+        PreloadedModule(ModuleRecord module, LinkedHashMap<SourceIdentifier, ModuleRecord> requires) {
             this.module = module;
             this.requires = requires;
         }
 
-        public String getModuleName() {
+        public SourceIdentifier getModuleName() {
             return module.getSourceCodeId();
         }
 
-        public LinkedHashMap<String, ModuleRecord> copyRequires() {
-            LinkedHashMap<String, ModuleRecord> requiresCopy = new LinkedHashMap<>(requires);
-            for (Map.Entry<String, ModuleRecord> entry : requiresCopy.entrySet()) {
+        public LinkedHashMap<SourceIdentifier, ModuleRecord> getRequires() {
+            LinkedHashMap<SourceIdentifier, ModuleRecord> requiresCopy = new LinkedHashMap<>(
+                    requires);
+            for (Map.Entry<SourceIdentifier, ModuleRecord> entry : requiresCopy.entrySet()) {
                 entry.setValue(entry.getValue().clone());
             }
             return requiresCopy;
@@ -224,7 +227,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
     private static final class PreloaderRealm implements ShadowRealm {
         private final ModuleLoader moduleLoader;
         private final ScriptLoader scriptLoader;
-        private final HashMap<String, ModuleRecord> modules = new HashMap<>();
+        private final HashMap<SourceIdentifier, ModuleRecord> modules = new HashMap<>();
 
         PreloaderRealm(ModuleLoader moduleLoader, ScriptLoader scriptLoader) {
             this.moduleLoader = moduleLoader;
@@ -242,7 +245,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         }
 
         @Override
-        public Map<String, ModuleRecord> getModules() {
+        public Map<SourceIdentifier, ModuleRecord> getModules() {
             return modules;
         }
     }

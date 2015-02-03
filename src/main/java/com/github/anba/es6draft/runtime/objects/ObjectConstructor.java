@@ -75,7 +75,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         /* step 1 (not applicable) */
         /* step 2 */
         if (Type.isUndefinedOrNull(value)) {
-            // TODO: spec issue - change to OrdinaryCreateFromConstructor()? (bug 3136)
+            // TODO: spec issue - change to OrdinaryCreateFromConstructor()? (bug 3136, 3550)
             return ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
         }
         /* step 3 */
@@ -91,12 +91,13 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         ExecutionContext calleeContext = calleeContext();
         Object value = argument(args, 0);
         /* step 1 */
-        // FIXME: spec bug `new Object(1)` no longer returns `new Number(1)`
-        // return OrdinaryCreateFromConstructor(calleeContext, newTarget,
-        // Intrinsics.ObjectPrototype);
+        if (newTarget != this) {
+            return OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                    Intrinsics.ObjectPrototype);
+        }
         /* step 2 */
         if (Type.isUndefinedOrNull(value)) {
-            // TODO: spec issue - change to OrdinaryCreateFromConstructor()? (bug 3136)
+            // TODO: spec issue - change to OrdinaryCreateFromConstructor()? (bug 3136, 3550)
             return ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
         }
         /* step 3 */

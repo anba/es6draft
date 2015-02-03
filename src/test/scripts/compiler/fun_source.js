@@ -29,9 +29,12 @@ assertEq(Function.prototype.bind().toString(), "function BoundFunction() { [nati
 
 function testProxy() {
   let {proxy, revoke} = Proxy.revocable(() => {}, {});
-  assertEq(proxy.toString(), "() => {}");
+  let err;
+  try { err = null; proxy.toString(); } catch (e) { err = e; }
+  assertEq(err instanceof TypeError, true);
   revoke();
-  assertEq(Function.prototype.toString.call(proxy), "function F() { [no source] }");
+  try { err = null; proxy.toString(); } catch (e) { err = e; }
+  assertEq(err instanceof TypeError, true);
 }
 testProxy();
 

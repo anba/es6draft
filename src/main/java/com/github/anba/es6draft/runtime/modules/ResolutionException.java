@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
+import java.util.Locale;
+
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.InternalException;
@@ -21,9 +23,22 @@ public final class ResolutionException extends InternalException {
     private final String messageArgument;
 
     public ResolutionException(Messages.Key messageKey, String messageArgument) {
-        super(messageKey.toString() + ": " + messageArgument);
         this.messageKey = messageKey;
         this.messageArgument = messageArgument;
+    }
+
+    private String getFormattedMessage(Locale locale) {
+        return Messages.create(locale).getMessage(messageKey, messageArgument);
+    }
+
+    @Override
+    public String getMessage() {
+        return getFormattedMessage(Locale.ROOT);
+    }
+
+    @Override
+    public String getLocalizedMessage() {
+        return getFormattedMessage(Locale.getDefault());
     }
 
     @Override

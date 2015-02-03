@@ -19,7 +19,7 @@ import com.github.anba.es6draft.ast.NumericLiteral;
 import com.github.anba.es6draft.ast.StringLiteral;
 import com.github.anba.es6draft.ast.SwitchClause;
 import com.github.anba.es6draft.ast.SwitchStatement;
-import com.github.anba.es6draft.compiler.JumpLabels.BreakLabel;
+import com.github.anba.es6draft.compiler.Labels.BreakLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;

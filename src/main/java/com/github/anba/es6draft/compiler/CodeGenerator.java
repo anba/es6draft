@@ -145,8 +145,9 @@ final class CodeGenerator {
 
         static final MethodTypeDescriptor Module_Code = Type.methodType(Types.Object,
                 Types.ExecutionContext);
-        static final MethodTypeDescriptor Module_Init = Type.methodType(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.LexicalEnvironment, Types.Realm, Types.Map);
+        static final MethodTypeDescriptor Module_Init = Type
+                .methodType(Type.VOID_TYPE, Types.ExecutionContext, Types.LexicalEnvironment,
+                        Types.Realm, Types.Map, Types.Map);
         static final MethodTypeDescriptor Module_RTI = Type
                 .methodType(Types.RuntimeInfo$ScriptBody);
         static final MethodTypeDescriptor Module_DebugInfo = Type.methodType(Types.DebugInfo);

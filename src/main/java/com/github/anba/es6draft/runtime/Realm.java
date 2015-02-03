@@ -26,12 +26,13 @@ import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ModuleLoader;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo.SourceObject;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
+import com.github.anba.es6draft.runtime.modules.ModuleLoader;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.objects.*;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
@@ -120,7 +121,7 @@ public final class Realm implements ShadowRealm {
     /**
      * [[modules]]
      */
-    private final HashMap<String, ModuleRecord> modules = new HashMap<>();
+    private final HashMap<SourceIdentifier, ModuleRecord> modules = new HashMap<>();
 
     /**
      * [[ThrowTypeError]]
@@ -331,7 +332,7 @@ public final class Realm implements ShadowRealm {
      * @return the map of resolved modules
      */
     @Override
-    public Map<String, ModuleRecord> getModules() {
+    public Map<SourceIdentifier, ModuleRecord> getModules() {
         return modules;
     }
 

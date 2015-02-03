@@ -5,13 +5,13 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSame
+  assertThrows
 } = Assert;
 
 // Call Function.prototype.toString() on revoked function proxy
 {
   let {proxy, revoke} = Proxy.revocable(function(){}, {});
-  assertSame("string", typeof Function.prototype.toString.call(proxy));
+  assertThrows(TypeError, () => Function.prototype.toString.call(proxy));
   revoke();
-  assertSame("string", typeof Function.prototype.toString.call(proxy));
+  assertThrows(TypeError, () => Function.prototype.toString.call(proxy));
 }

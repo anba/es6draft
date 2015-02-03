@@ -33,6 +33,7 @@ import com.github.anba.es6draft.runtime.modules.ExportEntry;
 import com.github.anba.es6draft.runtime.modules.ImportEntry;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.types.Undefined;
 
 /**
@@ -51,12 +52,6 @@ final class ModuleDeclarationInstantiationGenerator extends
                 .findVirtual(Types.ModuleEnvironmentRecord, "createImportBinding", Type.methodType(
                         Type.VOID_TYPE, Types.String, Types.ModuleRecord, Types.String));
 
-        // class: ModuleSemantics
-        static final MethodName ModuleSemantics_GetModuleNamespace = MethodName.findStatic(
-                Types.ModuleSemantics, "GetModuleNamespace", Type.methodType(
-                        Types.ModuleNamespaceObject, Types.ExecutionContext, Types.Realm,
-                        Types.Map, Types.String));
-
         // class: ResolvedExport
         static final MethodName ResolvedExport_getModule = MethodName.findVirtual(
                 Types.ModuleExport, "getModule", Type.methodType(Types.ModuleRecord));
@@ -64,19 +59,25 @@ final class ModuleDeclarationInstantiationGenerator extends
                 Types.ModuleExport, "getBindingName", Type.methodType(Types.String));
 
         // class: ScriptRuntime
+        static final MethodName ScriptRuntime_getModuleNamespace = MethodName.findStatic(
+                Types.ScriptRuntime, "getModuleNamespace", Type.methodType(
+                        Types.ModuleNamespaceObject, Types.ExecutionContext, Types.Realm,
+                        Types.Map, Types.Map, Types.String));
+
         static final MethodName ScriptRuntime_resolveExportOrThrow = MethodName.findStatic(
-                Types.ScriptRuntime, "resolveExportOrThrow", Type.methodType(Type.VOID_TYPE,
-                        Types.ExecutionContext, Types.Map, Types.String, Types.String));
+                Types.ScriptRuntime, "resolveExportOrThrow",
+                Type.methodType(Type.VOID_TYPE, Types.Map, Types.Map, Types.String, Types.String));
 
         static final MethodName ScriptRuntime_resolveImportOrThrow = MethodName.findStatic(
                 Types.ScriptRuntime, "resolveImportOrThrow", Type.methodType(Types.ModuleExport,
-                        Types.ExecutionContext, Types.Map, Types.String, Types.String));
+                        Types.Map, Types.Map, Types.String, Types.String));
     }
 
     private static final int EXECUTION_CONTEXT = 0;
     private static final int MODULE_ENV = 1;
     private static final int REALM = 2;
     private static final int MODULE_SET = 3;
+    private static final int IDENTIFIER_MAP = 4;
 
     private static final class ModuleDeclInitMethodGenerator extends ExpressionVisitor {
         ModuleDeclInitMethodGenerator(MethodCode method, Module module) {
@@ -90,6 +91,7 @@ final class ModuleDeclarationInstantiationGenerator extends
             setParameterName("moduleEnv", MODULE_ENV, Types.LexicalEnvironment);
             setParameterName("realm", REALM, Types.Realm);
             setParameterName("moduleSet", MODULE_SET, Types.Map);
+            setParameterName("identifierMap", IDENTIFIER_MAP, Types.Map);
         }
     }
 
@@ -113,8 +115,10 @@ final class ModuleDeclarationInstantiationGenerator extends
         Variable<LexicalEnvironment<ModuleEnvironmentRecord>> env = mv.getParameter(MODULE_ENV,
                 LexicalEnvironment.class).uncheckedCast();
         Variable<Realm> realm = mv.getParameter(REALM, Realm.class);
-        Variable<Map<String, ModuleRecord>> moduleSet = mv.getParameter(MODULE_SET, Map.class)
-                .uncheckedCast();
+        Variable<Map<SourceIdentifier, ModuleRecord>> moduleSet = mv.getParameter(MODULE_SET,
+                Map.class).uncheckedCast();
+        Variable<Map<String, SourceIdentifier>> identifierMap = mv.getParameter(IDENTIFIER_MAP,
+                Map.class).uncheckedCast();
 
         Variable<ModuleEnvironmentRecord> envRec = mv.newVariable("envRec",
                 ModuleEnvironmentRecord.class);
@@ -126,14 +130,14 @@ final class ModuleDeclarationInstantiationGenerator extends
         mv.loadUndefined();
         mv.store(undef);
 
-        String moduleName = moduleRecord.getSourceCodeId();
+        SourceIdentifier moduleName = moduleRecord.getSourceCodeId();
         /* step 1 (not applicable) */
         /* step 2 */
         for (ExportEntry exportEntry : moduleRecord.getIndirectExportEntries()) {
             mv.lineInfo(exportEntry.getLine());
-            mv.load(context);
             mv.load(moduleSet);
-            mv.aconst(moduleName);
+            mv.load(identifierMap);
+            mv.aconst(moduleName.toString());
             mv.aconst(exportEntry.getExportName());
             mv.invoke(Methods.ScriptRuntime_resolveExportOrThrow);
         }
@@ -152,14 +156,15 @@ final class ModuleDeclarationInstantiationGenerator extends
                     mv.load(context);
                     mv.load(realm);
                     mv.load(moduleSet);
-                    mv.aconst(importedModule.getSourceCodeId());
-                    mv.invoke(Methods.ModuleSemantics_GetModuleNamespace);
+                    mv.load(identifierMap);
+                    mv.aconst(importedModule.getSourceCodeId().toString());
+                    mv.invoke(Methods.ScriptRuntime_getModuleNamespace);
                 }
                 initializeBinding(mv);
             } else {
-                mv.load(context);
                 mv.load(moduleSet);
-                mv.aconst(importedModule.getSourceCodeId());
+                mv.load(identifierMap);
+                mv.aconst(importedModule.getSourceCodeId().toString());
                 mv.aconst(importEntry.getImportName());
                 mv.invoke(Methods.ScriptRuntime_resolveImportOrThrow);
                 mv.store(resolved);

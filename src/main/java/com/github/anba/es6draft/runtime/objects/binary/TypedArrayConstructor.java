@@ -119,7 +119,7 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
         ScriptObject super_ = getPrototypeOf(calleeContext);
         /* step 5 (not applicable) */
         /* step 6 */
-        // FIXME: Missing type check
+        // FIXME: Missing type check (bug 3655)
         if (!IsConstructor(super_)) {
             throw newTypeError(calleeContext, Messages.Key.NotConstructor);
         }

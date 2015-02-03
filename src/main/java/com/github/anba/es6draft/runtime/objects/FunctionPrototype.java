@@ -36,6 +36,7 @@ import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.ProxyObject;
 
 /**
  * <h1>19 Fundamental Objects</h1><br>
@@ -119,10 +120,12 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
-            if (!IsCallable(thisValue)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            /* steps 1-2 */
+            if (thisValue instanceof Callable && !(thisValue instanceof ProxyObject)) {
+                return ((Callable) thisValue).toSource(SourceSelector.Function);
             }
-            return ((Callable) thisValue).toSource(SourceSelector.Function);
+            /* step 3 */
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         /**

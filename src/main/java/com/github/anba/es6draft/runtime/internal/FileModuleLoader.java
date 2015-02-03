@@ -14,18 +14,84 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import com.github.anba.es6draft.runtime.modules.ModuleLoader;
+import com.github.anba.es6draft.runtime.modules.ModuleSource;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
+
 /**
  * 
  */
-public class FileModuleLoader extends ModuleLoader {
+public class FileModuleLoader implements ModuleLoader {
     private final URI baseDirectory;
 
     public FileModuleLoader(Path baseDirectory) {
         this.baseDirectory = baseDirectory.toUri();
     }
 
+    public static final class FileSourceIdentifier implements SourceIdentifier {
+        private final String file;
+
+        FileSourceIdentifier(String file) {
+            this.file = file;
+        }
+
+        public FileSourceIdentifier(Path path) {
+            this(Paths.get("").toAbsolutePath().toUri().relativize(path.toUri()).toString());
+        }
+
+        public Path getPath() {
+            return Paths.get(file);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof FileSourceIdentifier) {
+                return file.equals(((FileSourceIdentifier) obj).file);
+            }
+            if (obj instanceof SourceIdentifier) {
+                return toUri().equals(((SourceIdentifier) obj).toUri());
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return file.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return file;
+        }
+
+        @Override
+        public URI toUri() {
+            return URI.create(file);
+        }
+    }
+
+    public static final class FileModuleSource implements ModuleSource {
+        private final FileSourceIdentifier sourceId;
+        private final Path sourceFile;
+
+        public FileModuleSource(FileSourceIdentifier sourceId, Path sourceFile) {
+            this.sourceId = sourceId;
+            this.sourceFile = sourceFile;
+        }
+
+        @Override
+        public String sourceCode() throws IOException {
+            return new String(Files.readAllBytes(sourceFile), StandardCharsets.UTF_8);
+        }
+
+        @Override
+        public Source toSource() {
+            return new Source(sourceFile, sourceId.file, 1);
+        }
+    }
+
     @Override
-    public String normalizeName(String unnormalizedName, String referrerId) {
+    public FileSourceIdentifier normalizeName(String unnormalizedName, SourceIdentifier referrerId) {
         try {
             URI moduleName = new URI(unnormalizedName);
             if (hasIllegalComponents(moduleName) || hasEmptyPath(moduleName)) {
@@ -40,24 +106,23 @@ public class FileModuleLoader extends ModuleLoader {
                 return null;
             }
             if (referrerId != null && isRelative(moduleName)) {
-                moduleName = new URI(referrerId).resolve(moduleName);
+                moduleName = referrerId.toUri().resolve(moduleName);
             }
-            return moduleName.normalize().getPath();
+            return new FileSourceIdentifier(moduleName.normalize().getPath());
         } catch (URISyntaxException e) {
             return null;
         }
     }
 
     @Override
-    public String getSource(String normalizedName) throws IOException {
-        Path path = getSourceFile(normalizedName);
-        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-    }
-
-    @Override
-    public Path getSourceFile(String normalizedName) {
-        URI moduleName = URI.create(normalizedName);
-        return Paths.get(baseDirectory.resolve(moduleName));
+    public FileModuleSource getSource(SourceIdentifier normalizedName)
+            throws IllegalArgumentException {
+        if (!(normalizedName instanceof FileSourceIdentifier)) {
+            throw new IllegalArgumentException();
+        }
+        FileSourceIdentifier sourceId = (FileSourceIdentifier) normalizedName;
+        Path path = Paths.get(baseDirectory.resolve(sourceId.toUri()));
+        return new FileModuleSource(sourceId, path);
     }
 
     private static boolean isAbsolute(URI moduleName) {

@@ -24,12 +24,12 @@ public final class ModuleRecord implements Cloneable {
     /**
      * [[SourceCodeId]]
      */
-    private final String sourceCodeId;
+    private final SourceIdentifier sourceCodeId;
 
     /**
      * [[ImportedModules]]
      */
-    private Map<String, ModuleRecord> importedModules;
+    private Map<SourceIdentifier, ModuleRecord> importedModules;
 
     /**
      * [[ECMAScriptCode]]
@@ -77,7 +77,7 @@ public final class ModuleRecord implements Cloneable {
      * @param sourceCodeId
      *            the module source code identifier
      */
-    public ModuleRecord(String sourceCodeId) {
+    public ModuleRecord(SourceIdentifier sourceCodeId) {
         assert sourceCodeId != null;
         this.sourceCodeId = sourceCodeId;
     }
@@ -117,7 +117,7 @@ public final class ModuleRecord implements Cloneable {
      * 
      * @return the module source code identifier
      */
-    public String getSourceCodeId() {
+    public SourceIdentifier getSourceCodeId() {
         return sourceCodeId;
     }
 
@@ -126,7 +126,7 @@ public final class ModuleRecord implements Cloneable {
      * 
      * @return the list of imported modules
      */
-    public Map<String, ModuleRecord> getImportedModules() {
+    public Map<SourceIdentifier, ModuleRecord> getImportedModules() {
         return unmodifiableMap(importedModules);
     }
 
@@ -136,7 +136,7 @@ public final class ModuleRecord implements Cloneable {
      * @param importedModules
      *            the list of imported modules
      */
-    public void setImportedModules(Map<String, ModuleRecord> importedModules) {
+    public void setImportedModules(Map<SourceIdentifier, ModuleRecord> importedModules) {
         assert this.importedModules == null && importedModules != null;
         this.importedModules = importedModules;
     }

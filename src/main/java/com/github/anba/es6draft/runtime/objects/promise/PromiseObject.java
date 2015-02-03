@@ -54,10 +54,14 @@ public class PromiseObject extends OrdinaryObject {
      * Initializes a Promise object.
      * <p>
      * <strong>Must not be called on initialized Promise objects!</strong>
+     * 
+     * @param promiseConstructor
+     *            the promise constructor function
      */
-    public final void initialize() {
-        assert state == null;
+    public final void initialize(Constructor promiseConstructor) {
+        assert state == null && promiseConstructor != null;
         state = PromiseObject.State.Pending;
+        constructor = promiseConstructor;
         fulfillReactions = new ArrayList<>();
         rejectReactions = new ArrayList<>();
     }
@@ -91,17 +95,6 @@ public class PromiseObject extends OrdinaryObject {
      */
     public final Constructor getConstructor() {
         return constructor;
-    }
-
-    /**
-     * [[PromiseConstructor]]
-     * 
-     * @param constructor
-     *            the promise constructor function
-     */
-    public final void setConstructor(Constructor constructor) {
-        assert this.constructor == null && constructor != null;
-        this.constructor = constructor;
     }
 
     /**

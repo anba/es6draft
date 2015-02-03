@@ -195,11 +195,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         static final MethodName ScriptRuntime_EvaluateSuperConstructorTailCall = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluateSuperConstructorTailCall", Type
                         .methodType(Types.Object, Types.Constructor, Types.Constructor,
-                                Types.Object_, Types.ExecutionContext));
+                                Types.Object_));
 
-        static final MethodName ScriptRuntime_EvaluateFunctionExpression = MethodName
-                .findStatic(Types.ScriptRuntime, "EvaluateFunctionExpression", Type.methodType(
-                        Types.OrdinaryConstructorFunction, Types.RuntimeInfo$Function, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_EvaluateFunctionExpression = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluateFunctionExpression", Type.methodType(
+                        Types.OrdinaryConstructorFunction, Types.RuntimeInfo$Function,
+                        Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluateGeneratorComprehension = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluateGeneratorComprehension", Type.methodType(
@@ -2794,11 +2795,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         /* steps 7-13 */
         mv.lineInfo(node);
-        mv.loadExecutionContext();
         if (isTailCall(node, mv)) {
             mv.invoke(Methods.ScriptRuntime_EvaluateSuperConstructorTailCall);
             return ValType.Any;
         }
+        mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateSuperConstructorCall);
         return ValType.Object;
     }

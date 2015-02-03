@@ -8,9 +8,10 @@ package com.github.anba.es6draft.runtime;
 
 import java.util.Map;
 
-import com.github.anba.es6draft.runtime.internal.ModuleLoader;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
+import com.github.anba.es6draft.runtime.modules.ModuleLoader;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 
 /**
  * 
@@ -35,5 +36,5 @@ public interface ShadowRealm {
      * 
      * @return the map of resolved modules
      */
-    Map<String, ModuleRecord> getModules();
+    Map<SourceIdentifier, ModuleRecord> getModules();
 }

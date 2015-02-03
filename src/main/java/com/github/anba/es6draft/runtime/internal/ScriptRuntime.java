@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.internal;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.*;
 import static com.github.anba.es6draft.runtime.internal.TailCallInvocation.newTailCallInvocation;
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModuleNamespace;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ResolveExport;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorYield;
@@ -48,9 +49,11 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.ArrayPrototype;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
@@ -189,19 +192,20 @@ public final class ScriptRuntime {
     /**
      * 15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
      * 
-     * @param cx
-     *            the execution context
      * @param moduleSet
      *            the list of available modules
+     * @param identifierMap
+     *            the source identifier map
      * @param moduleName
      *            the normalized module name
      * @param exportName
      *            the requested export name
      */
-    public static void resolveExportOrThrow(ExecutionContext cx,
-            Map<String, ModuleRecord> moduleSet, String moduleName, String exportName)
+    public static void resolveExportOrThrow(Map<SourceIdentifier, ModuleRecord> moduleSet,
+            Map<String, SourceIdentifier> identifierMap, String moduleName, String exportName)
             throws ResolutionException {
-        ModuleRecord module = moduleSet.get(moduleName);
+        SourceIdentifier moduleId = identifierMap.get(moduleName);
+        ModuleRecord module = moduleSet.get(moduleId);
         /* steps 2.a-2.b */
         ModuleExport resolution = ResolveExport(module, exportName,
                 new HashMap<ModuleRecord, Set<String>>());
@@ -214,20 +218,21 @@ public final class ScriptRuntime {
     /**
      * 15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
      * 
-     * @param cx
-     *            the execution context
      * @param moduleSet
      *            the list of available modules
+     * @param identifierMap
+     *            the source identifier map
      * @param moduleName
      *            the normalized module name
      * @param importName
      *            the requested import name
      * @return the resolved module import
      */
-    public static ModuleExport resolveImportOrThrow(ExecutionContext cx,
-            Map<String, ModuleRecord> moduleSet, String moduleName, String importName)
+    public static ModuleExport resolveImportOrThrow(Map<SourceIdentifier, ModuleRecord> moduleSet,
+            Map<String, SourceIdentifier> identifierMap, String moduleName, String importName)
             throws ResolutionException {
-        ModuleRecord module = moduleSet.get(moduleName);
+        SourceIdentifier moduleId = identifierMap.get(moduleName);
+        ModuleRecord module = moduleSet.get(moduleId);
         /* steps 7.b.i-7.b.ii */
         ModuleExport resolution = ResolveExport(module, importName,
                 new HashMap<ModuleRecord, Set<String>>());
@@ -236,6 +241,28 @@ public final class ScriptRuntime {
             throw new ResolutionException(Messages.Key.ModulesUnresolvedImport, importName);
         }
         return resolution;
+    }
+
+    /**
+     * 15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
+     * 
+     * @param cx
+     *            the execution context
+     * @param realm
+     *            the realm instance
+     * @param moduleSet
+     *            the list of modules
+     * @param identifierMap
+     *            the source identifier map
+     * @param moduleName
+     *            the module identifier
+     * @return the module namespace object
+     */
+    public static ModuleNamespaceObject getModuleNamespace(ExecutionContext cx, Realm realm,
+            Map<SourceIdentifier, ModuleRecord> moduleSet,
+            Map<String, SourceIdentifier> identifierMap, String moduleName) {
+        SourceIdentifier moduleId = identifierMap.get(moduleName);
+        return GetModuleNamespace(cx, realm, moduleSet, moduleId);
     }
 
     /* ***************************************************************************************** */
@@ -495,7 +522,7 @@ public final class ScriptRuntime {
         /* step 6 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 7 */
-        MakeConstructor(cx, closure, true, prototype);
+        MakeConstructor(closure, true, prototype);
         /* step 8 */
         GeneratorObject iterator = (GeneratorObject) closure.call(cx, UNDEFINED);
         /* step 9 */
@@ -524,7 +551,7 @@ public final class ScriptRuntime {
         /* step 6 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
         /* step 7 */
-        MakeConstructor(cx, closure, true, prototype);
+        MakeConstructor(closure, true, prototype);
         /* step 8 */
         GeneratorObject iterator = (GeneratorObject) closure.call(cx, UNDEFINED);
         /* step 9 */
@@ -1215,12 +1242,10 @@ public final class ScriptRuntime {
      *            the constructor object
      * @param args
      *            the arguments for the new-call
-     * @param cx
-     *            the execution context
      * @return the tail call trampoline object
      */
     public static Object EvaluateSuperConstructorTailCall(Constructor newTarget,
-            Constructor constructor, Object[] args, ExecutionContext cx) {
+            Constructor constructor, Object[] args) {
         /* steps 1-6/1-5  (generated code) */
         /* steps 7-13/6-12 */
         return PrepareForTailCall(constructor, newTarget, args);
@@ -1972,7 +1997,7 @@ public final class ScriptRuntime {
         // ClassDefinitionEvaluation - step 14 (see FunctionCreate)
 
         // ClassDefinitionEvaluation - step 15
-        MakeConstructor(cx, constructor, false, proto);
+        MakeConstructor(constructor, false, proto);
 
         // ClassDefinitionEvaluation - step 16
         PropertyDescriptor desc = new PropertyDescriptor(constructor, true, false, true);
@@ -2314,7 +2339,7 @@ public final class ScriptRuntime {
         /* step 6 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 7 */
-        MakeConstructor(cx, f, true, prototype);
+        MakeConstructor(f, true, prototype);
         /* steps 8-9 */
         SetFunctionName(f, name);
         /* step 10 */
@@ -2348,7 +2373,7 @@ public final class ScriptRuntime {
         /* step 6 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
         /* step 7 */
-        MakeConstructor(cx, f, true, prototype);
+        MakeConstructor(f, true, prototype);
         /* steps 8-9 */
         SetFunctionName(f, name);
         /* step 10 */
@@ -2414,7 +2439,7 @@ public final class ScriptRuntime {
         /* step 8 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 9 */
-        MakeConstructor(cx, closure, true, prototype);
+        MakeConstructor(closure, true, prototype);
         /* steps 10-11 */
         SetFunctionName(closure, propKey);
         /* step 12 */
@@ -2454,7 +2479,7 @@ public final class ScriptRuntime {
         /* step 8 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 9 */
-        MakeConstructor(cx, closure, true, prototype);
+        MakeConstructor(closure, true, prototype);
         /* steps 10-11 */
         SetFunctionName(closure, propKey);
         /* step 12 */
@@ -2492,7 +2517,7 @@ public final class ScriptRuntime {
             /* step 6 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
             /* step 7 */
-            MakeConstructor(cx, closure, true, prototype);
+            MakeConstructor(closure, true, prototype);
         } else {
             /* steps 1-2 (generated code) */
             /* step 3 */
@@ -2515,7 +2540,7 @@ public final class ScriptRuntime {
             /* step 10 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
             /* step 11 */
-            MakeConstructor(cx, closure, true, prototype);
+            MakeConstructor(closure, true, prototype);
             /* steps 12-13 */
             SetFunctionName(closure, name);
             /* step 14 */
@@ -2556,7 +2581,7 @@ public final class ScriptRuntime {
             /* step 6 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
             /* step 7 */
-            MakeConstructor(cx, closure, true, prototype);
+            MakeConstructor(closure, true, prototype);
         } else {
             /* steps 1-2 (generated code) */
             /* step 3 */
@@ -2579,7 +2604,7 @@ public final class ScriptRuntime {
             /* step 10 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
             /* step 11 */
-            MakeConstructor(cx, closure, true, prototype);
+            MakeConstructor(closure, true, prototype);
             /* step 12 */
             SetFunctionName(closure, name);
             /* step 13 */
@@ -2965,7 +2990,7 @@ public final class ScriptRuntime {
         /* step 6 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
         /* step 7 */
-        MakeConstructor(cx, f, true, prototype);
+        MakeConstructor(f, true, prototype);
         /* step 8 */
         SetFunctionName(f, name);
         /* step 9 */
@@ -2997,7 +3022,7 @@ public final class ScriptRuntime {
             /* step 6 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
             /* step 7 */
-            MakeConstructor(cx, closure, true, prototype);
+            MakeConstructor(closure, true, prototype);
         } else {
             /* steps 1-2 (generated code) */
             /* step 3 */
@@ -3020,7 +3045,7 @@ public final class ScriptRuntime {
             /* step 10 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
             /* step 11 */
-            MakeConstructor(cx, closure, true, prototype);
+            MakeConstructor(closure, true, prototype);
             /* step 12 */
             SetFunctionName(closure, name);
             /* step 13 */
@@ -3049,7 +3074,7 @@ public final class ScriptRuntime {
         /* step ? */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
         /* step ? */
-        MakeConstructor(cx, closure, true, prototype);
+        MakeConstructor(closure, true, prototype);
         /* step 5 */
         return closure;
     }
@@ -3103,7 +3128,7 @@ public final class ScriptRuntime {
         /* step 8 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
         /* step 9 */
-        MakeConstructor(cx, closure, true, prototype);
+        MakeConstructor(closure, true, prototype);
         /* steps 10-11 */
         SetFunctionName(closure, propKey);
         /* step 12 */
@@ -3138,7 +3163,7 @@ public final class ScriptRuntime {
         /* step 8 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
         /* step 9 */
-        MakeConstructor(cx, closure, true, prototype);
+        MakeConstructor(closure, true, prototype);
         /* steps 10-11 */
         SetFunctionName(closure, propKey);
         /* step 12 */

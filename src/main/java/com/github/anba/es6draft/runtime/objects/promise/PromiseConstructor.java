@@ -98,10 +98,8 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         /* step 3 */
         PromiseObject promise = OrdinaryCreateFromConstructor(calleeContext, newTarget,
                 Intrinsics.PromisePrototype, GetPromiseAllocator(calleeContext.getRealm()));
-        /* step 4 */
-        promise.setConstructor(newTarget);
-        /* steps 5-7 */
-        promise.initialize();
+        /* steps 4-7 */
+        promise.initialize(newTarget);
         /* step 8 */
         ResolvingFunctions resolvingFunctions = CreateResolvingFunctions(calleeContext, promise);
         /* steps 9-10 */

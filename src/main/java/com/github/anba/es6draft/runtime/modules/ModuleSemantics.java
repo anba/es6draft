@@ -16,7 +16,6 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.ImportEntries;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ModuleRequests;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,10 +34,8 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.ShadowRealm;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ModuleLoader;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
-import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject;
 
 /**
@@ -63,11 +60,6 @@ public final class ModuleSemantics {
     private ModuleSemantics() {
     }
 
-    private static boolean isHostNormalizedModuleName(String moduleId) {
-        // TODO: Add custom classes to represent module source code and source code identifiers
-        return moduleId != null;
-    }
-
     /**
      * 8.6.1 HostGetSource (sourceCodeId) Abstract Operation
      * 
@@ -79,8 +71,8 @@ public final class ModuleSemantics {
      * @throws IOException
      *             if there was any I/O error
      */
-    public static String HostGetSource(ModuleLoader moduleLoader, String sourceCodeId)
-            throws IOException {
+    public static ModuleSource HostGetSource(ModuleLoader moduleLoader,
+            SourceIdentifier sourceCodeId) throws IOException {
         return moduleLoader.getSource(sourceCodeId);
     }
 
@@ -95,23 +87,9 @@ public final class ModuleSemantics {
      *            the parent module identifier or {@code null}
      * @return the normalized module identifier or {@code null}
      */
-    public static String HostNormalizeModuleName(ModuleLoader moduleLoader,
-            String unnormalizedName, String referrerId) {
-        assert referrerId == null || isHostNormalizedModuleName(referrerId);
+    public static SourceIdentifier HostNormalizeModuleName(ModuleLoader moduleLoader,
+            String unnormalizedName, SourceIdentifier referrerId) {
         return moduleLoader.normalizeName(unnormalizedName, referrerId);
-    }
-
-    /**
-     * HostGetSourceFile (sourceCodeId) Abstract Operation
-     * 
-     * @param moduleLoader
-     *            the module loader
-     * @param sourceCodeId
-     *            the module source code identifier
-     * @return the module source code file
-     */
-    public static Path HostGetSourceFile(ModuleLoader moduleLoader, String sourceCodeId) {
-        return moduleLoader.getSourceFile(sourceCodeId);
     }
 
     /**
@@ -121,7 +99,7 @@ public final class ModuleSemantics {
      *            the module source code identifier
      * @return a new module record
      */
-    public static ModuleRecord CreateModule(String sourceCodeId) {
+    public static ModuleRecord CreateModule(SourceIdentifier sourceCodeId) {
         /* steps 1-5 */
         return new ModuleRecord(sourceCodeId);
     }
@@ -135,10 +113,9 @@ public final class ModuleSemantics {
      *            the module source code identifier
      * @return the requested module or {@code null}
      */
-    public static ModuleRecord ModuleAt(Map<String, ModuleRecord> list, String sourceCodeId) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        assert isHostNormalizedModuleName(sourceCodeId);
+    public static ModuleRecord ModuleAt(Map<SourceIdentifier, ModuleRecord> list,
+            SourceIdentifier sourceCodeId) {
+        /* steps 1-2 (not applicable) */
         /* steps 3-4 */
         return list.get(sourceCodeId);
     }
@@ -160,12 +137,10 @@ public final class ModuleSemantics {
      * @throws ParserException
      *             if the module source contains any syntax errors
      */
-    public static ModuleRecord ParseModuleAndImports(ShadowRealm realm, String moduleSrcId,
-            LinkedHashMap<String, ModuleRecord> visited) throws IOException,
-            MalformedNameException, ParserException {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        assert isHostNormalizedModuleName(moduleSrcId);
+    public static ModuleRecord ParseModuleAndImports(ShadowRealm realm,
+            SourceIdentifier moduleSrcId, LinkedHashMap<SourceIdentifier, ModuleRecord> visited)
+            throws IOException, MalformedNameException, ParserException {
+        /* steps 1-2 (not applicable) */
         /* step 3 */
         ModuleRecord visitedModule = ModuleAt(visited, moduleSrcId);
         /* step 4 */
@@ -176,7 +151,7 @@ public final class ModuleSemantics {
             return visitedModule;
         }
         /* step 5 */
-        Map<String, ModuleRecord> mods = realm.getModules();
+        Map<SourceIdentifier, ModuleRecord> mods = realm.getModules();
         /* step 6 */
         ModuleRecord realmModule = ModuleAt(mods, moduleSrcId);
         /* step 7 */
@@ -187,10 +162,9 @@ public final class ModuleSemantics {
             return realmModule;
         }
         /* steps 10-11 */
-        String src = HostGetSource(realm.getModuleLoader(), moduleSrcId);
-        Path file = HostGetSourceFile(realm.getModuleLoader(), moduleSrcId);
+        ModuleSource src = HostGetSource(realm.getModuleLoader(), moduleSrcId);
         /* steps 8-9, 12-30 */
-        return ParseModuleAndImports(realm, moduleSrcId, src, file, visited);
+        return ParseModuleAndImports(realm, moduleSrcId, src, visited);
     }
 
     /**
@@ -200,10 +174,8 @@ public final class ModuleSemantics {
      *            the realm instance
      * @param moduleSrcId
      *            the module source code identifier
-     * @param src
+     * @param source
      *            the module source code
-     * @param file
-     *            the module source file
      * @param visited
      *            the list of previously visited modules
      * @return the parsed module record
@@ -214,10 +186,11 @@ public final class ModuleSemantics {
      * @throws ParserException
      *             if the module source contains any syntax errors
      */
-    private static ModuleRecord ParseModuleAndImports(ShadowRealm realm, String moduleSrcId,
-            String src, Path file, LinkedHashMap<String, ModuleRecord> visited) throws IOException,
+    private static ModuleRecord ParseModuleAndImports(ShadowRealm realm,
+            SourceIdentifier moduleSrcId, ModuleSource source,
+            LinkedHashMap<SourceIdentifier, ModuleRecord> visited) throws IOException,
             MalformedNameException, ParserException {
-        HashMap<String, String> normalizedNames = new HashMap<>();
+        HashMap<String, SourceIdentifier> normalizedNames = new HashMap<>();
         /* steps 1-7 (not applicable) */
         /* step 8 */
         ModuleRecord m = CreateModule(moduleSrcId);
@@ -225,18 +198,18 @@ public final class ModuleSemantics {
         visited.put(moduleSrcId, m);
         /* steps 10-11 (not applicable) */
         /* steps 12-13 */
-        Source source = new Source(file, moduleSrcId, 1);
         ScriptLoader scriptLoader = realm.getScriptLoader();
-        com.github.anba.es6draft.ast.Module parsedBody = scriptLoader.parseModule(source, src);
+        com.github.anba.es6draft.ast.Module parsedBody = scriptLoader.parseModule(
+                source.toSource(), source.sourceCode());
         /* step 14 (moved) */
         /* step 15 */
         Set<String> requestedModules = ModuleRequests(parsedBody);
         /* step 16 */
-        LinkedHashMap<String, ModuleRecord> importedModules = new LinkedHashMap<>();
+        LinkedHashMap<SourceIdentifier, ModuleRecord> importedModules = new LinkedHashMap<>();
         /* step 17 */
         for (String requestedName : requestedModules) {
-            String requestedSrcId = NormalizeModuleName(realm, normalizedNames, requestedName,
-                    moduleSrcId);
+            SourceIdentifier requestedSrcId = NormalizeModuleName(realm, normalizedNames,
+                    requestedName, moduleSrcId);
             ModuleRecord importedModule = ParseModuleAndImports(realm, requestedSrcId, visited);
             importedModules.put(requestedSrcId, importedModule);
         }
@@ -246,7 +219,7 @@ public final class ModuleSemantics {
         List<ImportEntry> importEntries = ImportEntries(parsedBody);
         /* step 20 */
         for (ImportEntry importEntry : importEntries) {
-            String requestedSrcId = NormalizeModuleName(realm, normalizedNames,
+            SourceIdentifier requestedSrcId = NormalizeModuleName(realm, normalizedNames,
                     importEntry.getModuleRequest(), moduleSrcId);
             ModuleRecord importedModule = importedModules.get(requestedSrcId);
             assert importedModule != null;
@@ -267,7 +240,7 @@ public final class ModuleSemantics {
             if (exportEntry.getModuleRequest() == null) {
                 localExportEntries.add(exportEntry);
             } else {
-                String requestedSrcId = NormalizeModuleName(realm, normalizedNames,
+                SourceIdentifier requestedSrcId = NormalizeModuleName(realm, normalizedNames,
                         exportEntry.getModuleRequest(), moduleSrcId);
                 ModuleRecord importedModule = importedModules.get(requestedSrcId);
                 assert importedModule != null;
@@ -307,8 +280,8 @@ public final class ModuleSemantics {
      * @throws ScriptException
      *             if the module name cannot be normalized
      */
-    public static String NormalizeModuleName(ExecutionContext cx, Realm realm,
-            String unnormalizedName, String referrerSrcId) throws ScriptException {
+    public static SourceIdentifier NormalizeModuleName(ExecutionContext cx, Realm realm,
+            String unnormalizedName, SourceIdentifier referrerSrcId) throws ScriptException {
         try {
             return NormalizeModuleName(realm, unnormalizedName, referrerSrcId);
         } catch (MalformedNameException e) {
@@ -331,10 +304,10 @@ public final class ModuleSemantics {
      * @throws MalformedNameException
      *             if the module name cannot be normalized
      */
-    private static String NormalizeModuleName(ShadowRealm realm,
-            Map<String, String> normalizedNames, String unnormalizedName, String referrerSrcId)
-            throws MalformedNameException {
-        String moduleSrcId = normalizedNames.get(unnormalizedName);
+    private static SourceIdentifier NormalizeModuleName(ShadowRealm realm,
+            Map<String, SourceIdentifier> normalizedNames, String unnormalizedName,
+            SourceIdentifier referrerSrcId) throws MalformedNameException {
+        SourceIdentifier moduleSrcId = normalizedNames.get(unnormalizedName);
         if (moduleSrcId == null) {
             moduleSrcId = NormalizeModuleName(realm, unnormalizedName, referrerSrcId);
             normalizedNames.put(unnormalizedName, moduleSrcId);
@@ -355,11 +328,11 @@ public final class ModuleSemantics {
      * @throws MalformedNameException
      *             if the module name cannot be normalized
      */
-    public static String NormalizeModuleName(ShadowRealm realm, String unnormalizedName,
-            String referrerSrcId) throws MalformedNameException {
+    public static SourceIdentifier NormalizeModuleName(ShadowRealm realm, String unnormalizedName,
+            SourceIdentifier referrerSrcId) throws MalformedNameException {
         /* step 1 */
-        String moduleSrcId = HostNormalizeModuleName(realm.getModuleLoader(), unnormalizedName,
-                referrerSrcId);
+        SourceIdentifier moduleSrcId = HostNormalizeModuleName(realm.getModuleLoader(),
+                unnormalizedName, referrerSrcId);
         if (DEBUG) {
             System.out.printf("Normalized '%s' -> '%s'%n", unnormalizedName, moduleSrcId);
         }
@@ -466,8 +439,8 @@ public final class ModuleSemantics {
         if ("default".equals(exportName)) {
             /* step 6.a (not applicable) */
             /* step 6.b */
-            throw new ResolutionException(Messages.Key.ModulesMissingDefaultExport,
-                    module.getSourceCodeId());
+            throw new ResolutionException(Messages.Key.ModulesMissingDefaultExport, module
+                    .getSourceCodeId().toString());
         }
         /* step 7 */
         ModuleExport starResolution = null;
@@ -506,8 +479,8 @@ public final class ModuleSemantics {
      * @throws ScriptException
      *             if the module cannot be loaded
      */
-    public static ModuleRecord LoadModule(ExecutionContext cx, Realm realm, String sourceCodeId)
-            throws ScriptException {
+    public static ModuleRecord LoadModule(ExecutionContext cx, Realm realm,
+            SourceIdentifier sourceCodeId) throws ScriptException {
         try {
             return LoadModule(realm, sourceCodeId);
         } catch (MalformedNameException | ParserException | ResolutionException e) {
@@ -534,24 +507,22 @@ public final class ModuleSemantics {
      * @throws ResolutionException
      *             if any export binding cannot be resolved
      */
-    public static ModuleRecord LoadModule(Realm realm, String sourceCodeId) throws IOException,
-            MalformedNameException, ParserException, ResolutionException {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        assert isHostNormalizedModuleName(sourceCodeId);
+    public static ModuleRecord LoadModule(Realm realm, SourceIdentifier sourceCodeId)
+            throws IOException, MalformedNameException, ParserException, ResolutionException {
+        /* steps 1-2 (not applicable) */
         /* step 3 (not applicable) */
         /* step 4 */
-        Map<String, ModuleRecord> modules = realm.getModules();
+        Map<SourceIdentifier, ModuleRecord> modules = realm.getModules();
         /* step 5 */
         ModuleRecord m = ModuleAt(modules, sourceCodeId);
         /* step 6 */
         if (m == null) {
             /* step 6.a */
-            LinkedHashMap<String, ModuleRecord> newModules = new LinkedHashMap<>();
+            LinkedHashMap<SourceIdentifier, ModuleRecord> newModules = new LinkedHashMap<>();
             /* steps 6.b-6.c */
             m = ParseModuleAndImports(realm, sourceCodeId, newModules);
             /* steps 6.d-6.e */
-            LinkModules(realm.defaultContext(), realm, newModules);
+            LinkModules(realm, newModules);
         }
         return m;
     }
@@ -568,8 +539,8 @@ public final class ModuleSemantics {
      * @throws ScriptException
      *             if the module cannot be evaluated
      */
-    public static void ModuleEvaluationJob(ExecutionContext cx, Realm realm, String sourceCodeId)
-            throws ScriptException {
+    public static void ModuleEvaluationJob(ExecutionContext cx, Realm realm,
+            SourceIdentifier sourceCodeId) throws ScriptException {
         try {
             ModuleEvaluationJob(realm, sourceCodeId);
         } catch (MalformedNameException | ParserException | ResolutionException e) {
@@ -595,8 +566,8 @@ public final class ModuleSemantics {
      * @throws ResolutionException
      *             if any export binding cannot be resolved
      */
-    public static void ModuleEvaluationJob(Realm realm, String sourceCodeId) throws IOException,
-            MalformedNameException, ParserException, ResolutionException {
+    public static void ModuleEvaluationJob(Realm realm, SourceIdentifier sourceCodeId)
+            throws IOException, MalformedNameException, ParserException, ResolutionException {
         /* steps 1-6 */
         ModuleRecord m = LoadModule(realm, sourceCodeId);
         /* steps 7-8 */
@@ -612,15 +583,15 @@ public final class ModuleSemantics {
      *            the realm instance
      * @param sourceCodeId
      *            the module source code identifier
-     * @param sourceCode
+     * @param source
      *            the module source code
      * @throws ScriptException
      *             if the module cannot be evaluated
      */
-    public static void ModuleEvaluationJob(ExecutionContext cx, Realm realm, String sourceCodeId,
-            String sourceCode) throws ScriptException {
+    public static void ModuleEvaluationJob(ExecutionContext cx, Realm realm,
+            SourceIdentifier sourceCodeId, ModuleSource source) throws ScriptException {
         try {
-            ModuleEvaluationJob(realm, sourceCodeId, sourceCode);
+            ModuleEvaluationJob(realm, sourceCodeId, source);
         } catch (MalformedNameException | ParserException | ResolutionException e) {
             throw e.toScriptException(cx);
         } catch (IOException e) {
@@ -635,7 +606,7 @@ public final class ModuleSemantics {
      *            the realm instance
      * @param sourceCodeId
      *            the module source code identifier
-     * @param sourceCode
+     * @param source
      *            the module source code
      * @throws IOException
      *             if there was any I/O error
@@ -646,24 +617,23 @@ public final class ModuleSemantics {
      * @throws ResolutionException
      *             if any export binding cannot be resolved
      */
-    public static void ModuleEvaluationJob(Realm realm, String sourceCodeId, String sourceCode)
-            throws IOException, MalformedNameException, ParserException, ResolutionException {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        assert isHostNormalizedModuleName(sourceCodeId);
+    public static void ModuleEvaluationJob(Realm realm, SourceIdentifier sourceCodeId,
+            ModuleSource source) throws IOException, MalformedNameException, ParserException,
+            ResolutionException {
+        /* steps 1-2 (not applicable) */
         /* step 3 (not applicable) */
         /* step 4 */
-        Map<String, ModuleRecord> modules = realm.getModules();
+        Map<SourceIdentifier, ModuleRecord> modules = realm.getModules();
         /* step 5 */
         ModuleRecord m = ModuleAt(modules, sourceCodeId);
         /* step 6 */
         if (m == null) {
             /* step 6.a */
-            LinkedHashMap<String, ModuleRecord> newModules = new LinkedHashMap<>();
+            LinkedHashMap<SourceIdentifier, ModuleRecord> newModules = new LinkedHashMap<>();
             /* steps 6.b-6.c */
-            m = ParseModuleAndImports(realm, sourceCodeId, sourceCode, null, newModules);
+            m = ParseModuleAndImports(realm, sourceCodeId, source, newModules);
             /* steps 6.d-6.e */
-            LinkModules(realm.defaultContext(), realm, newModules);
+            LinkModules(realm, newModules);
         }
         /* steps 7-8 */
         ModuleEvaluation(m, realm);
@@ -672,8 +642,6 @@ public final class ModuleSemantics {
     /**
      * 15.2.1.20 Runtime Semantics: LinkModules( realm, newModuleSet)
      * 
-     * @param cx
-     *            the execution context
      * @param realm
      *            the realm instance
      * @param newModuleSet
@@ -681,15 +649,15 @@ public final class ModuleSemantics {
      * @throws ResolutionException
      *             if any export binding cannot be resolved
      */
-    public static void LinkModules(ExecutionContext cx, Realm realm,
-            LinkedHashMap<String, ModuleRecord> newModuleSet) throws ResolutionException {
+    public static void LinkModules(Realm realm,
+            LinkedHashMap<SourceIdentifier, ModuleRecord> newModuleSet) throws ResolutionException {
         /* step 1 */
-        HashMap<String, ModuleRecord> modules = new HashMap<>(realm.getModules());
+        HashMap<SourceIdentifier, ModuleRecord> modules = new HashMap<>(realm.getModules());
         /* step 2 */
         modules.putAll(newModuleSet);
         /* step 3 */
         for (ModuleRecord m : newModuleSet.values()) {
-            ModuleDeclarationInstantiation(cx, m, realm, modules);
+            ModuleDeclarationInstantiation(m, realm, modules);
         }
         /* step 4 (not applicable) */
         /* step 5 */
@@ -700,8 +668,6 @@ public final class ModuleSemantics {
     /**
      * 15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
      * 
-     * @param cx
-     *            the execution context
      * @param module
      *            the module record
      * @param realm
@@ -711,8 +677,8 @@ public final class ModuleSemantics {
      * @throws ResolutionException
      *             if any export binding cannot be resolved
      */
-    public static void ModuleDeclarationInstantiation(ExecutionContext cx, ModuleRecord module,
-            Realm realm, Map<String, ModuleRecord> moduleSet) throws ResolutionException {
+    public static void ModuleDeclarationInstantiation(ModuleRecord module, Realm realm,
+            Map<SourceIdentifier, ModuleRecord> moduleSet) throws ResolutionException {
         /* steps 1, 3-4, 6 (not applicable) */
         /* step 2 */
         Module code = module.getScriptCode();
@@ -722,7 +688,8 @@ public final class ModuleSemantics {
         module.setEnvironment(env);
         /* steps 8-13 */
         ExecutionContext context = newModuleDeclarationExecutionContext(realm, code);
-        code.getModuleBody().moduleDeclarationInstantiation(context, env, realm, moduleSet);
+        code.getModuleBody().moduleDeclarationInstantiation(context, env, realm, moduleSet,
+                sourceIdentifierMap(module));
     }
 
     /**
@@ -737,7 +704,7 @@ public final class ModuleSemantics {
      * @return the module namespace object
      */
     public static ModuleNamespaceObject GetModuleNamespace(ExecutionContext cx, Realm realm,
-            String moduleId) {
+            SourceIdentifier moduleId) {
         /* steps 8.a.ii-8.a.v */
         return GetModuleNamespace(cx, realm, realm.getModules(), moduleId);
     }
@@ -755,9 +722,8 @@ public final class ModuleSemantics {
      *            the module identifier
      * @return the module namespace object
      */
-    // Called from generated code
     public static ModuleNamespaceObject GetModuleNamespace(ExecutionContext cx, Realm realm,
-            Map<String, ModuleRecord> moduleSet, String moduleId) {
+            Map<SourceIdentifier, ModuleRecord> moduleSet, SourceIdentifier moduleId) {
         /* step 7.a.i */
         ModuleRecord importedModule = ModuleAt(moduleSet, moduleId);
         /* step 7.a.ii */
@@ -790,7 +756,8 @@ public final class ModuleSemantics {
         /* step 2 */
         module.setEvaluated(true);
         /* step 3 */
-        for (Map.Entry<String, ModuleRecord> required : module.getImportedModules().entrySet()) {
+        for (Map.Entry<SourceIdentifier, ModuleRecord> required : module.getImportedModules()
+                .entrySet()) {
             assert realm.getModules().containsKey(required.getKey());
             ModuleEvaluation(required.getValue(), realm);
         }
@@ -816,5 +783,16 @@ public final class ModuleSemantics {
             entry.setValue(new HashSet<>(entry.getValue()));
         }
         return copy;
+    }
+
+    private static Map<String, SourceIdentifier> sourceIdentifierMap(ModuleRecord module) {
+        HashMap<String, SourceIdentifier> identifierMap = new HashMap<>();
+        identifierMap.put(module.getSourceCodeId().toString(), module.getSourceCodeId());
+        for (ImportEntry importEntry : module.getImportEntries()) {
+            ModuleRecord importedModule = importEntry.getImportModule();
+            SourceIdentifier id = importedModule.getSourceCodeId();
+            identifierMap.put(id.toString(), id);
+        }
+        return identifierMap;
     }
 }

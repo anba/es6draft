@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.internal;
 
 /**
- * Method execution resumption point
+ * Method execution resumption point.
  */
 public final class ResumptionPoint {
     private final Object[] stack;
@@ -37,22 +37,22 @@ public final class ResumptionPoint {
     }
 
     /**
-     * Returns the stack top value.
+     * Returns the suspend value.
      * 
-     * @return the stack top
+     * @return the suspend value
      */
-    public Object getStackTop() {
+    public Object getSuspendValue() {
         assert stack.length > 0;
         return stack[stack.length - 1];
     }
 
     /**
-     * Returns the stack top value.
+     * Sets the resume value.
      * 
      * @param value
-     *            the new stack top
+     *            the resume value
      */
-    public void setStackTop(Object value) {
+    public void setResumeValue(Object value) {
         assert stack.length > 0;
         stack[stack.length - 1] = value;
     }

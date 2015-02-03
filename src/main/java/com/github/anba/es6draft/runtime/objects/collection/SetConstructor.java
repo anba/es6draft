@@ -95,7 +95,7 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
         }
 
         /* step 8 */
-        // FIXME: spec bug
+        // FIXME: spec bug (bug 3658)
         /* step 9 */
         if (iter == null) {
             return set;

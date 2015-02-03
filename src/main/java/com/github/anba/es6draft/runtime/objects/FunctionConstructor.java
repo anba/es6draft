@@ -95,23 +95,27 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         /* step 2 */
         Intrinsics fallbackProto = Intrinsics.FunctionPrototype;
         /* step 3 (not applicable) */
+
         /* steps 4-10 */
         int argCount = args.length;
-        StringBuilder p = new StringBuilder();
-        String bodyText;
+        String p, bodyText;
         if (argCount == 0) {
+            p = "";
             bodyText = "";
         } else if (argCount == 1) {
+            p = "";
             bodyText = ToFlatString(cx, args[0]);
         } else {
+            StringBuilder sb = new StringBuilder();
             Object firstArg = args[0];
-            p.append(ToFlatString(cx, firstArg));
+            sb.append(ToFlatString(cx, firstArg));
             int k = 2;
             for (; k < argCount; ++k) {
                 Object nextArg = args[k - 1];
                 String nextArgString = ToFlatString(cx, nextArg);
-                p.append(',').append(nextArgString);
+                sb.append(',').append(nextArgString);
             }
+            p = sb.toString();
             bodyText = ToFlatString(cx, args[k - 1]);
         }
 
@@ -121,7 +125,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         RuntimeInfo.Function function;
         try {
             ScriptLoader scriptLoader = cx.getRealm().getScriptLoader();
-            function = scriptLoader.function(source, p.toString(), bodyText).getFunction();
+            function = scriptLoader.function(source, p, bodyText).getFunction();
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         }
@@ -136,7 +140,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         /* steps 19-20 */
         LexicalEnvironment<GlobalEnvironmentRecord> scope = f.getRealm().getGlobalEnv();
         /* steps 21-22 */
-        FunctionInitialize(cx, f, FunctionKind.Normal, strict, function, scope, exec);
+        FunctionInitialize(f, FunctionKind.Normal, strict, function, scope, exec);
         /* step 23 */
         if (function.hasSuperReference()) {
             MakeMethod(f, null);

@@ -11,9 +11,9 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CanonicalNumer
 
 import java.util.List;
 
+import com.github.anba.es6draft.runtime.AbstractOperations.CanonicalNumericString;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.AbstractOperations.CanonicalNumericString;
 import com.github.anba.es6draft.runtime.internal.CompoundList;
 import com.github.anba.es6draft.runtime.internal.IndexedPropertyKeyList;
 import com.github.anba.es6draft.runtime.types.Property;

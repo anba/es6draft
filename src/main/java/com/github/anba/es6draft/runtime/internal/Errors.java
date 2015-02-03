@@ -11,7 +11,7 @@ import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 
 /**
- * Static helper methods to create {@link ScriptException} objects
+ * Static helper methods to create {@link ScriptException} objects.
  */
 public final class Errors {
     private Errors() {
@@ -30,12 +30,14 @@ public final class Errors {
 
     private static ScriptException newError(ExecutionContext cx, Intrinsics prototype,
             Messages.Key key) {
-        return newError(cx, prototype, cx.getRealm().message(key));
+        String message = cx.getRealm().message(key);
+        return new ErrorObject(cx.getRealm(), prototype, message).getException();
     }
 
     private static ScriptException newError(ExecutionContext cx, Intrinsics prototype,
             Messages.Key key, String... args) {
-        return newError(cx, prototype, cx.getRealm().message(key, args));
+        String message = cx.getRealm().message(key, args);
+        return new ErrorObject(cx.getRealm(), prototype, message).getException();
     }
 
     /**

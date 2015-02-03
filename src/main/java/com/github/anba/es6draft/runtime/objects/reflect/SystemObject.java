@@ -22,8 +22,11 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.Loader;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.ModuleSource;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -50,6 +53,26 @@ public final class SystemObject extends LoaderObject implements Initializable {
         createProperties(realm, this, Properties.class);
         if (realm.isEnabled(CompatibilityOption.Loader)) {
             setPrototype(realm.getIntrinsic(Intrinsics.LoaderPrototype));
+        }
+    }
+
+    private static final class StringModuleSource implements ModuleSource {
+        private final SourceIdentifier sourceId;
+        private final String sourceCode;
+
+        StringModuleSource(SourceIdentifier sourceId, String sourceCode) {
+            this.sourceId = sourceId;
+            this.sourceCode = sourceCode;
+        }
+
+        @Override
+        public String sourceCode() {
+            return sourceCode;
+        }
+
+        @Override
+        public Source toSource() {
+            return new Source(sourceId.toString(), 1);
         }
     }
 
@@ -101,8 +124,10 @@ public final class SystemObject extends LoaderObject implements Initializable {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
             String unnormalizedName = ToFlatString(cx, moduleName);
-            String normalizedModuleName = NormalizeModuleName(cx, realm, unnormalizedName, null);
-            String src = ToFlatString(cx, source);
+            SourceIdentifier normalizedModuleName = NormalizeModuleName(cx, realm,
+                    unnormalizedName, null);
+            String sourceCode = ToFlatString(cx, source);
+            ModuleSource src = new StringModuleSource(normalizedModuleName, sourceCode);
             try {
                 ModuleEvaluationJob(cx, realm, normalizedModuleName, src);
             } catch (ScriptException e) {
@@ -127,7 +152,8 @@ public final class SystemObject extends LoaderObject implements Initializable {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
             String unnormalizedName = ToFlatString(cx, moduleName);
-            String normalizedModuleName = NormalizeModuleName(cx, realm, unnormalizedName, null);
+            SourceIdentifier normalizedModuleName = NormalizeModuleName(cx, realm,
+                    unnormalizedName, null);
             try {
                 ModuleEvaluationJob(cx, realm, normalizedModuleName);
             } catch (ScriptException e) {
@@ -152,7 +178,8 @@ public final class SystemObject extends LoaderObject implements Initializable {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
             String unnormalizedName = ToFlatString(cx, moduleName);
-            String normalizedModuleName = NormalizeModuleName(cx, realm, unnormalizedName, null);
+            SourceIdentifier normalizedModuleName = NormalizeModuleName(cx, realm,
+                    unnormalizedName, null);
             try {
                 LoadModule(cx, realm, normalizedModuleName);
             } catch (ScriptException e) {
@@ -177,7 +204,8 @@ public final class SystemObject extends LoaderObject implements Initializable {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
             String unnormalizedName = ToFlatString(cx, moduleName);
-            String normalizedModuleName = NormalizeModuleName(cx, realm, unnormalizedName, null);
+            SourceIdentifier normalizedModuleName = NormalizeModuleName(cx, realm,
+                    unnormalizedName, null);
             ModuleRecord module = ModuleAt(realm.getModules(), normalizedModuleName);
             if (module == null) {
                 return UNDEFINED;
@@ -202,7 +230,7 @@ public final class SystemObject extends LoaderObject implements Initializable {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
             String unnormalizedName = ToFlatString(cx, moduleName);
-            return NormalizeModuleName(cx, realm, unnormalizedName, null);
+            return NormalizeModuleName(cx, realm, unnormalizedName, null).toString();
         }
     }
 }

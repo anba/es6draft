@@ -14,10 +14,10 @@ import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.JumpLabels.BreakLabel;
-import com.github.anba.es6draft.compiler.JumpLabels.ContinueLabel;
-import com.github.anba.es6draft.compiler.JumpLabels.ReturnLabel;
-import com.github.anba.es6draft.compiler.JumpLabels.TempLabel;
+import com.github.anba.es6draft.compiler.Labels.BreakLabel;
+import com.github.anba.es6draft.compiler.Labels.ContinueLabel;
+import com.github.anba.es6draft.compiler.Labels.ReturnLabel;
+import com.github.anba.es6draft.compiler.Labels.TempLabel;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.Variable;

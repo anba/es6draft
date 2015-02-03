@@ -27,7 +27,7 @@ var p = new Proxy(target, {
   let {constructor, argumentsList, newTarget} = constructArgs.pop();
   assertSame(target, constructor);
   assertEquals([], argumentsList);
-  assertSame(p, newTarget); // FIXME: spec bug?
+  assertSame(p, newTarget);
 }
 
 {
@@ -37,7 +37,7 @@ var p = new Proxy(target, {
   let {constructor, argumentsList, newTarget} = constructArgs.pop();
   assertSame(target, constructor);
   assertEquals([], argumentsList);
-  assertSame(p, newTarget); // FIXME: spec bug?
+  assertSame(p, newTarget);
 }
 
 {
@@ -47,7 +47,7 @@ var p = new Proxy(target, {
   let {constructor, argumentsList, newTarget} = constructArgs.pop();
   assertSame(target, constructor);
   assertEquals([], argumentsList);
-  assertSame(p, newTarget); // FIXME: spec bug?
+  assertSame(p, newTarget);
 }
 
 {

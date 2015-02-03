@@ -24,9 +24,6 @@ js/script-tests/basic-map.js
 js/script-tests/basic-set.js
 js/script-tests/basic-spread.js
 
-# JSC has legacy Name builtin
-js/script-tests/names.js
-
 # invalid tests
 js/script-tests/JSON-parse-reviver.js
 js/script-tests/number-clz.js
@@ -87,6 +84,10 @@ js/script-tests/reserved-words-strict.js
 js/script-tests/array-find.js
 js/script-tests/parser-error-messages.js
 js/script-tests/string-repeat.js
+js/script-tests/symbol-abstract-relational-comparison.js
+js/script-tests/symbol-object.js
+js/script-tests/symbol-prototype-is-ordinary-object.js
+js/script-tests/symbol-tostring.js
 
 # Date.parse incompatibility
 js/script-tests/date-constructor.js

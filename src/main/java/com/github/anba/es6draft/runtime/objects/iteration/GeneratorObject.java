@@ -285,21 +285,21 @@ public final class GeneratorObject extends OrdinaryObject {
         @Override
         public ScriptObject resume(ExecutionContext cx, Object value) {
             assert resumptionPoint != null && value != null;
-            resumptionPoint.setStackTop(value);
+            resumptionPoint.setResumeValue(value);
             return execute(cx);
         }
 
         @Override
         public ScriptObject _return(ExecutionContext cx, ReturnValue value) {
             assert resumptionPoint != null && value != null;
-            resumptionPoint.setStackTop(value);
+            resumptionPoint.setResumeValue(value);
             return execute(cx);
         }
 
         @Override
         public ScriptObject _throw(ExecutionContext cx, ScriptException exception) {
             assert resumptionPoint != null && exception != null;
-            resumptionPoint.setStackTop(exception);
+            resumptionPoint.setResumeValue(exception);
             return execute(cx);
         }
 
@@ -330,12 +330,12 @@ public final class GeneratorObject extends OrdinaryObject {
             if (result instanceof ResumptionPoint) {
                 genObject.suspend();
                 resumptionPoint = (ResumptionPoint) result;
-                Object stackTop = resumptionPoint.getStackTop();
-                assert stackTop instanceof ScriptObject : Objects.toString(stackTop);
-                return (ScriptObject) stackTop;
+                Object value = resumptionPoint.getSuspendValue();
+                assert value instanceof ScriptObject : Objects.toString(value);
+                return (ScriptObject) value;
             }
             genObject.close();
-            // FIXME: spec bug - handle implicit return
+            // FIXME: spec bug - handle implicit return (bug 3669)
             if (result == null) {
                 result = UNDEFINED;
             }
@@ -424,7 +424,7 @@ public final class GeneratorObject extends OrdinaryObject {
                         throw new RuntimeException(e);
                     }
                     out.put(COMPLETED);
-                    // FIXME: spec bug - handle implicit return
+                    // FIXME: spec bug - handle implicit return (bug 3669)
                     if (result == null) {
                         result = UNDEFINED;
                     }

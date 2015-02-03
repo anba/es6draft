@@ -66,7 +66,7 @@ public final class GeneratorAbstractOperations {
         GeneratorObject gen = (GeneratorObject) generator;
         /* step 3 (not applicable) */
         /* steps 4-5 */
-        // FIXME: spec bug - [[GeneratorState]] never undefined
+        // FIXME: spec bug - [[GeneratorState]] never undefined (bug 3670)
         assert gen.getState() != null;
         /* step 6 */
         return gen;
